@@ -18,19 +18,29 @@
 }
 
 /* ---- the store */
+/* A section is a small brown caps word with a rule running off to the right
+ * (M5): the word names the shelf, the rule is the shelf. */
 .store-section {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin: 14px 0 6px;
-  padding-bottom: 3px;
-  border-bottom: 2px solid var(--wood-dark);
+  gap: 8px;
+  margin: 12px 0 6px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-muted);
+  color: var(--wood);
 }
+.store-section::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(92, 58, 30, 0.28);
+}
+.store-section > .store-balance { order: 2; }
+.store-section:first-child { margin-top: 2px; }
 .store-balance {
   display: inline-flex;
   align-items: center;
@@ -54,47 +64,207 @@
   align-items: stretch;
 }
 
-/* ---- the hero banner, first on the store */
+/* ---- the hero banner, first on the store (M5) ----
+ * A parchment card in a thin wood border, the key standing in a square
+ * parchment vignette down the left, the words and the two slabs to its
+ * right, the key note across the bottom. */
+.store-banners { display: flex; flex-direction: column; gap: 10px; }
 .store-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, rgba(160, 120, 220, 0.2), rgba(160, 120, 220, 0.06));
-  border: 2px solid rgba(120, 90, 180, 0.45);
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-areas:
+    'art head'
+    'art lines'
+    'art calls'
+    'note note';
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
-.store-banner-head { display: flex; align-items: center; gap: 8px; }
+.store-banner-art {
+  grid-area: art;
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 88px;
+  align-self: start;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+}
+/* The painted pieces from sheets/ui-s1-store.png: keys and the hammer. The
+ * vignette draws them as a background so the nine files stay in CSS. */
+.store-art {
+  display: block;
+  width: 42px;
+  height: 42px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
+}
+.store-banner-art .store-art { width: 72px; height: 72px; }
+.store-art.is-SilverKey { background-image: url('../../assets/art-key-silver.png'); }
+.store-art.is-GoldKey { background-image: url('../../assets/art-key-gold.png'); }
+.store-art.is-hammer { background-image: url('../../assets/art-hammer.png'); }
+.store-banner-head { grid-area: head; min-width: 0; }
+.store-banner-title { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
+.store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
+/* The odds read as prose, "label · value", not as a ledger. */
+.store-banner .ban-breakdown { grid-area: lines; gap: 0; }
+.store-banner .ban-line {
+  justify-content: flex-start;
+  gap: 0;
+  color: var(--ink-muted);
+  line-height: 1.3;
+}
+.store-banner .ban-line > span::after { content: '\00a0\00b7\00a0'; }
+.store-banner .ban-line b { color: var(--ink); }
+.store-banner .ban-line.is-total { margin: 0; padding: 0; border: 0; font-size: var(--text-helper); }
 /* The two calls sit SIDE BY SIDE — one press is the ×1 slot (a call, a free
- * call, or an ad that pays for one), the other is always the ten. Equal
- * columns and a stretch, so the ×1 growing a "Free in" line does not leave
- * the ten short beside it. */
+ * call, or an ad that pays for one), the other is always the ten. */
 .store-banner-calls {
+  grid-area: calls;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   align-items: stretch;
+  margin-top: 2px;
 }
-.store-banner-calls > .k-btn { width: 100%; }
-.store-banner-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
-.store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
+.store-banner-calls > .k-btn { width: 100%; min-width: 0; min-height: 38px; padding: 6px; white-space: nowrap; }
+.store-banner-calls .k-btn-label { gap: 6px; }
+.store-banner .ban-note { grid-area: note; font-size: 12px; line-height: 1.25; }
+/* The ×1 slot is a blue slab, the ten is wood; on the golden call both are
+ * gold with ink on them (M5). */
+.store-banner-calls > .k-btn:first-child { --slab: #2f86d8; --slab-lip: #1b5390; }
+.store-banner-calls > .k-btn:last-child { --slab: var(--wood); --slab-lip: var(--wood-dark); }
+.store-banner.is-advanced .store-banner-calls > .k-btn {
+  --slab: var(--gold);
+  --slab-lip: var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
+}
+.store-banner-calls > .k-btn:disabled { --slab: var(--locked); --slab-lip: #a79470; color: var(--ink-muted); }
 
-/* ---- the gem packs: three across, two rows, upright cards */
+/* ---- the rows: keys and the builder. A bigger vignette than a list row,
+ * and the price rides beside the verb rather than under it (M5). */
+.store .k-card { min-height: 61px; padding: 6px 8px; border-radius: var(--radius); }
+.store .k-card > .k-slot { width: 48px; height: 48px; border-radius: var(--radius-sm); }
+.store .k-card > .k-slot .icon { --icon-size: 36px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
+.store .k-card > .k-btn { min-height: 34px; }
+.store .k-card .k-name { font-size: 18px; }
+.store .k-card > .k-btn { --slab: var(--wood); --slab-lip: var(--wood-dark); }
+.store .k-btn.has-cost { flex-direction: row; gap: 8px; padding: 6px 12px; }
+.store .k-btn.has-cost .k-btn-cost { font-size: var(--text-body); font-weight: 700; }
+
+/* ---- the Cards shelf (M23): the keys' row, with the odds inside the card
+ * under the line that sells it.
+ *
+ * The card body is a THREE-line column — name, promise, odds — where the
+ * keys' is two, so the row is taller by one small line and nothing else
+ * changes. The odds are the smallest type on the shelf on purpose: they are
+ * a promise the store has to keep, not a thing it is selling. */
+.store .k-card > .k-slot .store-pack-row-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
+}
+.store .k-card > .k-slot .store-pack-row-art.is-fallback { display: grid; place-items: center; }
+/* The odds wrap to their OWN line under the row rather than squeezing the
+   body, so the slab keeps the width it needs and the name keeps its size.
+   Indented to the body's left edge, so the column reads as one block. */
+.store .k-card:has(> .store-odds) { flex-wrap: wrap; }
+.store .k-card > .store-odds {
+  order: 1;
+  flex: 1 0 100%;
+  margin: -2px 0 0 58px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* One line of fine print under the shelf, in the player's words: what the
+   store does NOT sell, and where it comes from instead. */
+.store-note {
+  margin: -4px 2px 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+/* ---- the aimed wildcard offer (M24): the shelf's own row, raised.
+ *
+ * It is the ONE row on the shelf that was put there for this player, so it
+ * says so twice and quietly: an amber ground instead of parchment, and a clay
+ * ribbon in the corner. Louder than that would make the rest of the store
+ * look like it was not for them. */
+.store-offer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 61px;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 3px solid var(--gold-dark);
+  background: linear-gradient(180deg, #f8d98a, #efbe5c);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 3px 0 rgba(60, 36, 18, 0.3);
+  overflow: hidden;
+}
+.store-offer > .k-body { flex: 1; min-width: 0; }
+.store-offer .k-name { font-size: 18px; }
+.store-offer > .store-odds { margin-left: 68px; }
+/* The album's own medallion, in the carved ring the Collection uses: the
+   offer has to be recognisably ABOUT that album before a word is read. */
+.store-offer-ring {
+  display: grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.store-offer-medal { width: 100%; height: 100%; object-fit: cover; }
+.store-offer-medal.is-fallback { display: grid; place-items: center; }
+.store-offer-ribbon {
+  position: absolute;
+  left: -22px;
+  top: 8px;
+  width: 86px;
+  padding: 1px 0;
+  transform: rotate(-32deg);
+  background: var(--clay);
+  color: var(--ink-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ---- the gem packs: three across, two rows, upright cards (M5) */
 .store-packs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 .store-pack {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 8px 6px;
-  border-radius: var(--radius-sm);
+  padding: 10px 8px 8px;
+  border-radius: var(--radius);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
-  box-shadow: 0 2px 0 var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
   cursor: pointer;
   text-align: center;
 }
@@ -105,13 +275,13 @@
   white-space: nowrap;
 }
 .store-pack-art {
-  width: 64px;
-  height: 64px;
-  image-rendering: pixelated;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
+  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
 }
 .store-pack-art.is-fallback { display: grid; place-items: center; }
-.store-pack .k-btn { width: 100%; }
+.store-pack .k-btn { width: 100%; min-width: 0; min-height: 36px; padding: 4px 6px; }
 
 /* ---- the payer profile */
 .payer-lede {
@@ -123,6 +293,8 @@
   line-height: 1.35;
 }
 .payer-lede p { margin: 0 0 6px; }
+.payer-lede > .icon { --icon-size: 48px; flex: none; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
+/* Each profile is a parchment card in a thin wood border (M14). */
 .payer-options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .payer-option {
   display: flex;
@@ -130,11 +302,14 @@
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
+  border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
+.payer-option > .k-btn { flex: none; min-width: 0; white-space: nowrap; }
 .payer-copy { min-width: 0; }
-.payer-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--wood-dark); }
+.payer-name { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; color: var(--ink); }
 .payer-budget { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
 .payer-blurb { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 .payer-fine {
@@ -149,15 +324,27 @@
 
 /* ---- the confirmation */
 .iap-head { display: flex; gap: 12px; align-items: center; }
-.iap-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
-.iap-grant { font-family: var(--font-body); font-weight: 700; }
-.iap-rows { margin-top: 10px; font-family: var(--font-body); font-size: var(--text-body); }
+.iap-head > .icon,
+.iap-head > img { --icon-size: 64px; width: 64px; height: 64px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
+.iap-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-title); line-height: 1.1; }
+.iap-grant { font-family: var(--font-body); font-weight: 700; color: var(--ink-muted); }
+/* The ledger is one parchment card, ruled between its rows (M14). */
+.iap-rows {
+  margin-top: 10px;
+  padding: 2px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+}
 .iap-row {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--parchment-shade);
+  padding: 8px 0;
+  border-bottom: 2px solid rgba(92, 58, 30, 0.14);
 }
+.iap-row:last-child { border-bottom: 0; }
 .iap-row.is-ok b { color: var(--leaf-dark); }
 .iap-row.is-short b { color: var(--clay); }
 .iap-note {
@@ -169,8 +356,30 @@
   font-size: var(--text-helper);
 }
 .iap-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  justify-content: flex-end;
   margin-top: 14px;
 }
+.iap-actions > .k-btn { width: 100%; min-width: 0; }
+
+/* ---- the banner's odds ledger -------------------------------------------
+ * A two-column line: the chance, the pity count, the price. It lived in the
+ * Reliquary's stylesheet until the collection rework replaced that screen —
+ * the banner panel is its only consumer, so it lives here now. */
+.ban-breakdown { display: flex; flex-direction: column; gap: 2px; }
+.ban-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.ban-line b { font-family: var(--font-body); }
+.ban-line.is-cost b { color: var(--clay); }
+.ban-line.is-total {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 2px solid rgba(72, 96, 168, 0.35);
+  font-size: var(--text-body);
+}
+.ban-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }

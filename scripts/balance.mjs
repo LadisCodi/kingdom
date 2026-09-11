@@ -132,6 +132,8 @@ const HERO_TRAITS = [
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
 ];
+/** The four pack tiers, easiest faucet first (Docs/features/09-relics.md §6). */
+const PACK_IDS = ['Bronze', 'Silver', 'Gold', 'Star'];
 
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
@@ -263,27 +265,54 @@ const SETTINGS = [
   // pool, so the price is never per Mana: what rises is the rung, not the
   // pool.
   ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
-  ['attunement.base_slots', 'attunement.baseSlots'],
-  ['attunement.max_slots', 'attunement.maxSlots'],
-  ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
-  ['attunement.slot_gem_cost_growth', 'attunement.slotGemCostGrowth'],
-  ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
-  // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
-  // Fragments raise a tier cap; Knowledge buys levels within it.
+  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 30 days
+  // on a shared calendar; the five albums are one per relic and every list
+  // below is indexed the same way, easy album first.
+  ['collection.season_days', 'collection.seasonDays'],
+  // 2,000 an album and 25,000 for the five keeps the season's Gem budget at
+  // the 35,000 the monetisation doc argues against a Royal chest
+  // (14-monetization.md §"Faucet").
+  ['collection.album_gems', 'collection.albumGems'],
+  ['collection.prize_gems', 'collection.prizeGems'],
+  // The chest an album pays, in HOURS of everything the city makes right now.
+  // The easy albums pay a morning, the hard ones the whole offline cap and
+  // never more — a chest that outpaid a night's sleep would make the night
+  // look small.
+  ['collection.album_hours', 'collection.albumHours', 'list'],
+  ['collection.album_silver_keys', 'collection.albumSilverKeys', 'list'],
+  ['collection.album_gold_keys', 'collection.albumGoldKeys', 'list'],
+  // The floor under that chest, per hour, per city coin: an early album lands
+  // in a city with two workers, and a chest of almost nothing would read as a
+  // bug rather than as a reward.
+  ['collection.chest_floor_per_hour', 'collection.chestFloorPerHour'],
+  // Stars a duplicate is worth, by rarity, and what a gold edition doubles.
+  ['collection.stars_per_rarity', 'collection.starsPerRarity', 'list'],
+  ['collection.star_gold_multiplier', 'collection.starGoldMultiplier'],
+  // The vault's two thresholds — what stars buy when nobody is sending you
+  // cards.
+  ['collection.vault_gold_stars', 'collection.vaultGoldStars'],
+  ['collection.vault_star_stars', 'collection.vaultStarStars'],
+  // A WILDCARD's Gem price, by the rarity it covers (1★ first). It stands in
+  // for its rarity OR LOWER, so the top one covers everything a wildcard can
+  // and is priced at a gold key — there is no gold wildcard at any price
+  // (Docs/features/09-relics.md §9).
+  ['collection.wildcard_gem_costs', 'collection.wildcardGemCosts', 'list'],
+  // How many cards short an album must be for the store to AIM an offer at
+  // it. An offer answers a shortage rather than interrupting
+  // (14-monetization.md §6), and an album nine cards short is not a shortage,
+  // it is a season.
+  ['collection.wildcard_offer_at', 'collection.wildcardOfferAt'],
+  // The HERO ladder (Docs/features/10-heroes.md §4): Fragments raise a tier
+  // cap and Hero XP buys levels within it. A relic has none of this any more.
   // The completed-depth XP trickle, per tier per depth per hour
   // (Docs/features/10-heroes.md §5). Read by the daily chest's Royal track.
   ['collection.xp_trickle_per_tier_depth', 'collection.xpTricklePerTierDepth'],
-  ['collection.level_cost_base', 'collection.levelCostBase'],
-  ['collection.level_cost_growth', 'collection.levelCostGrowth'],
-  ['collection.max_level', 'collection.maxLevel'],
-  ['collection.levels_per_tier', 'collection.levelsPerTier'],
   ['collection.max_tier', 'collection.maxTier'],
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
-  // The Stardust TOLL on an ascension, which only HEROES pay: a relic's tier
-  // is ingredients and nothing else (Docs/features/10-heroes.md §4). It lives
-  // in the shared block rather than under `heroes.` because that key is the
-  // Heroes SHEET — thirty-two rows — and a setting written into it would be a
+  // The Stardust TOLL on an ascension, which only HEROES pay. It lives in
+  // this block rather than under `heroes.` because that key is the Heroes
+  // SHEET — thirty-two rows — and a setting written into it would be a
   // thirty-third hero with no stats.
   ['collection.ascension_stardust_base', 'collection.ascensionStardustBase'],
   ['collection.ascension_stardust_growth', 'collection.ascensionStardustGrowth'],
@@ -485,10 +514,26 @@ const SHEETS = {
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
     'reward_gems', 'reward_stardust', 'reward_knowledge', 'reward_mana'],
-  // A relic is WORN by the kingdom or it is on the shelf, so it has no
-  // battlefield stats of its own (Docs/features/09-relics.md §5).
+  // A relic is ONE permanent passive with no ceiling, so it has two numbers:
+  // what it is worth at level 1 and what a level adds
+  // (Docs/features/09-relics.md §2). It has no battlefield stats — nothing
+  // carries one anywhere.
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius'],
+  // ONE ROW PER PACK TIER (Docs/features/09-relics.md §6). `cards` is how many
+  // it holds; `weight_1star`..`weight_5star` are the PUBLISHED odds, as
+  // weights rather than percentages so a designer can add a rarity without
+  // rebalancing the column to 100. `gold_chance` is the chance a 4★ or 5★
+  // comes up as its gold edition, and `gold_guaranteed` forces the last card
+  // of the pack gold — the Star pack's promise.
+  //
+  // `gem_cost` is what the STORE charges for one, priced to the key ladder
+  // (§12): a Gold pack about a silver key, a Star pack about a gold one.
+  // **BLANK means the store does not sell it**, which is how Bronze and
+  // Silver stay the ruins' faucet — selling what a room already drips would
+  // undercut the only free source the collection has.
+  Packs: ['id', 'cards', 'weight_1star', 'weight_2star', 'weight_3star',
+    'weight_4star', 'weight_5star', 'gold_chance', 'gold_guaranteed', 'gem_cost'],
   // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
   // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
   // every squad of its own type on that side, applied at battle start and
@@ -747,11 +792,11 @@ async function importXlsx() {
     store: {}, payer: {},
     research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
-    mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
+    mana: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
     delve: {}, party: {}, heroes: {}, ads: {}, depths: [], garrisons: [], raid: {},
     artifacts: {},
-    quests: [], banners: {},
+    quests: [], banners: {}, packs: {},
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
@@ -1216,6 +1261,26 @@ async function importXlsx() {
     };
   }
 
+  for (const [id, r] of byId(readSheet(workbook, 'Packs'), PACK_IDS)) {
+    const weights = [1, 2, 3, 4, 5].map((n) => num(r, `weight_${n}star`, { blankAs: 0 }));
+    if (weights.every((w) => w === 0)) {
+      fail(where(r), 'weights every rarity at 0 — the pack can roll nothing');
+    }
+    const chance = num(r, 'gold_chance', { blankAs: 0 });
+    if (chance > 1) fail(where(r), `"gold_chance" is ${chance}, not a fraction`);
+    const guaranteed = num(r, 'gold_guaranteed', { blankAs: 0 });
+    if (guaranteed === 1 && weights[3] === 0 && weights[4] === 0) {
+      fail(where(r), 'guarantees a gold card but weights 4★ and 5★ at 0 — gold is an edition of those two');
+    }
+    out.packs[id] = {
+      cards: num(r, 'cards'),
+      weights,
+      goldChance: chance,
+      goldGuaranteed: guaranteed,
+      gemCost: num(r, 'gem_cost', { blankAs: 0 }),
+    };
+  }
+
   const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
@@ -1358,6 +1423,12 @@ async function exportXlsx() {
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
     q.rewardKnowledge || '', q.rewardMana || '',
   ]));
+
+  addSheet(workbook, 'Packs', PACK_IDS.map((id) => {
+    const k = b.packs[id];
+    return [id, k.cards, ...k.weights.map((w) => w || ''),
+      k.goldChance || '', k.goldGuaranteed || '', k.gemCost || ''];
+  }));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];

@@ -100,6 +100,18 @@ export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number
   Math.max(1000, Math.round(resolve(state, 'cellRecovery',
     techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))));
 
+/**
+ * How long a CONSUMED feature waits before it reappears somewhere else — the
+ * other harvest clock, and the one the Verdant Seal moves
+ * (Docs/features/09-relics.md §2).
+ *
+ * Priced when the wait STARTS and stored on the respawn entry, the same rule
+ * a training item and a workshop order already follow: a relic that levels
+ * must never reprice a bush already on its way back.
+ */
+export const effectiveRespawnMs = (state: GameState, spec: HarvestSpec): number =>
+  Math.max(1000, Math.round(resolve(state, 'cellRespawn', spec.respawnSeconds * 1000)));
+
 /** A depot with no capacity never runs down and never recovers, because it
  *  never went anywhere: `stock` 0 is how the workbook says "this is bedrock".
  *  Checked before the finite branch, so a 0 recovery on such a source cannot
@@ -212,7 +224,7 @@ export function drawFromCell(
       state.featureRespawns.push({
         origin: meta.origin,
         feature,
-        readyAt: now + spec.respawnSeconds * 1000,
+        readyAt: now + effectiveRespawnMs(state, spec),
         generation: meta.generation + 1,
       });
     }

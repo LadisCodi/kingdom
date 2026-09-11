@@ -72,15 +72,16 @@
 
 .dc-portrait {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 104px;
+  height: 104px;
   display: grid;
   place-items: center;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
 }
-.dc-portrait img { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+.dc-portrait img { width: 92px; height: 92px; object-fit: contain; image-rendering: pixelated; }
+.dc-name { font-family: var(--font-body); font-weight: 700; }
 
 /* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
    bleeds a pixel or two must not make the card draggable sideways. */
@@ -681,6 +682,12 @@
   border-color: rgba(92, 58, 30, 0.55);
 }
 .tr-roster-slot.is-queued .tr-roster-art { opacity: 0.55; }
+/* No bed here yet: the socket is drawn, and only just. */
+.tr-roster-slot.is-none {
+  background: transparent;
+  border-style: dashed;
+  border-color: rgba(92, 58, 30, 0.3);
+}
 .tr-roster-art { width: 30px; height: 30px; object-fit: contain; border-radius: 50%; }
 /* The clock on the face being trained: small, dark, under the chin. */
 .tr-roster-timer {
@@ -704,3 +711,62 @@
   font-weight: 700;
   color: var(--ink-muted);
 }
+
+/* ---- the villagers' row and the level-up's before → after (M2) ---- */
+.tr-info.is-villagers { display: block; }
+.tr-villagers { display: flex; align-items: center; gap: 10px; }
+.tr-villagers > .tr-roster { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 5px; }
+.tr-villagers .tr-roster-slot { width: 40px; height: 40px; }
+.tr-villagers .tr-roster-art { width: 34px; height: 34px; }
+.tr-villagers .k-btn { min-height: 34px; }
+.tr-villagers > .k-action,
+.tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
+.tr-villagers > .tr-blocked { font-size: var(--text-helper); line-height: 1.3; }
+.dc-up-art {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 4px 0 8px;
+}
+.dc-up-tile {
+  display: grid;
+  place-items: center;
+  width: 94px;
+  height: 94px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment);
+}
+.dc-up-sprite { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.dc-up-arrow {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 2px 0 var(--gold-dark);
+}
+/* M2's numbers: the block's title at 19px, the tiles one line tall. */
+.dc-up-title { font-size: 19px; font-weight: 700; }
+.dc-up-figures .tr-fig { padding: 4px 8px; gap: 0; }
+.dc-up-figures .tr-fig-head { font-size: 12px; }
+.dc-up-figures .tr-fig-value { font-size: 15px; }
+/* M2's order for the block: the heading, the two portraits, the tiles, and
+   the verb (or the padlock line where the verb would be) centred at the
+   bottom. `display: contents` lets the top row's children take their own
+   places in the grid without a markup change. */
+.dc-up { grid-template-columns: 1fr; }
+.dc-up-mark { display: none; }
+.dc-up-top { display: contents; }
+.dc-up-heading { order: 1; }
+.dc-up-art { order: 2; }
+.dc-up-figures { order: 3; grid-column: 1; }
+.dc-up-top > .k-action,
+.dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
+.dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
+.dc-up-sub { font-size: var(--text-helper); }
+/* A gate beside a soldier's name takes only the room it needs, so the name
+   keeps its line. */
+.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; }

@@ -219,21 +219,29 @@ still derived by the script, never drawn. No emoji anywhere —
 - Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
   9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`). Mockups:
   **1080×2340** (§7.19). Measured against the iPhone 17, 402×874 CSS px.
-- Safe zones: the header is 44px plus the top inset (`env(safe-area-inset-top)`,
-  reserved once, in `hud.css`); the nav is 52px plus the bottom inset
-  (reserved once, in `nav.css`). Both are measured at runtime into `--hud-h`
-  / `--nav-h`.
+- Safe zones: the header is a ~34px plank (two 30px painted plates, 14px
+  figures, 18px icons — M12 measured at 402) plus the top inset
+  (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
+  beam of 57px painted plates (28px icons, 14px labels) with 4px above and
+  below, plus the bottom inset (reserved once, in `nav.css`). Both are
+  measured at runtime into `--hud-h` / `--nav-h`.
 - Bottom sheets fit their content, capped at **70%** of the frame (decided on
   the board, 2026-09-11); only the research page, the heroes roster, the
   reliquary and the battle board are `tall`. **A card about something on the
   map frames it**: when the district or site card mounts, the camera centres
   the building in the band between the header and the card's top edge, once
-  (`Camera.centerFootprintWithin`). A sheet sits `hud-h + 24px` below the top and `nav-h + 8px` above
-  the bottom, with `--gutter` (12px) at the sides. Panel frame 6px + 10px
-  padding; plank 40px with the close knob inside it (board, 2026-09-11); grab
-  handle 40×4.
-- Targets: buttons `min-height: 44px` (56 with a price), knobs 40 with a
-  44px hit area, list rows 60px, grid gap 8px.
+  (`Camera.centerFootprintWithin`). A sheet sits `hud-h + 24px` below the top
+  and `nav-h + 8px` above the bottom, with `--gutter` (12px) at the sides.
+  Panel frame 9px (the P1 nine-slice) + 8px padding; plank 38px with the
+  title centred and the close knob at its right end; rope grab handle 72×20
+  riding the frame's top edge.
+- Sizes are the mockups' at 402px (2026-09-11, measured on a 50px grid over
+  M12, M5, M2, M6 and scaled ×0.472): slabs 40px (the mockups' ~38; 48 with a
+  price), knobs 36–44, list rows 60px, store cards ~110px with a 100×88
+  vignette, the daily pill 127×47, the builder plaque 30px, the quest scroll
+  226 wide, the Townhall's portrait 104px and its villagers 40px, hero tiles
+  3 across at 6px gaps with 13px ribbons and 20px feet. Where a mockup
+  measures under 44px the mockup wins; a slab under a thumb still has 40.
 
 ### 3.7 Motion (spec only, no mockup needed)
 
@@ -1732,7 +1740,7 @@ Locked variants and the 16px `-sm` cells are still **derived**, not drawn
 
 ### 7.19 Screen mockups, phone-exact
 
-Four full screens at **1080×2340** (the iPhone 17's 9:19.5; the frame in the
+Full screens at **1080×2340** (the iPhone 17's 9:19.5; the frame in the
 game is pillarboxed to 9:16 on desktop but full-bleed on the phone). Each
 one shows the chrome at the density the pass targets: header 44px, nav 52px,
 sheets no taller than 70% of the screen, 44px targets, 16px body, 22px
@@ -1809,6 +1817,137 @@ titles. Image models misspell; judge layout and material, never the words.
 > a medallion thumbnail, "Bureaucracy", one line, a small book chip "12"
 > and an hourglass "2m", and a compact green "Start" slab.
 
+**M5 — the Store sheet**
+
+> [style block v2] Full phone screen. The kingdom map fills the top 28%, warm-dimmed but visible, with the slim resource plank at the top. A bottom sheet covers the lower 72%, above the slim five-tab wooden nav beam where the gem "Store" tab is lit gold: a parchment panel in a thin carved wooden frame, a small rope grab-handle, and a narrow wooden header strip reading "Store" with a small round "✕" knob at its right end. Inside, a tiny sepia caps label "HEROES", then a parchment card with a thin wood border: a silver key icon at the left, "The common call" in bold, one short line "Every miss still pays fragments.", two tiny stat lines "Chance of a hero right now · 6%" and "A hero guaranteed within · 60 calls", and a row of two slabs — a blue "Free" slab and a wood-brown "Call ×10" slab with a small silver key chip "9". Below it a second, shorter card with a gold key: "The golden call", one line, and a gold "Call" slab with a violet gem chip "300". Then a caps label "BUILDERS" and a single row card: a hammer icon, "Another builder — build two things at once", and a wood slab with a gem chip "2500". Then a caps label "GEMS" and a 3-column grid of gem pack tiles: each a small parchment tile with a pile of violet gems (a small pouch, a chest) drawn smooth, a title "500 gems", and a leaf-green price slab "$0.99", "$4.99", "$9.99". Tight, evenly spaced, tappable; small type; everything smooth and tactile.
+
+**M6 — the Heroes sheet**
+
+> Same style, same materials and chrome as the mockups above. M6 — the Heroes sheet. Full phone screen. The kingdom map fills the top 22%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 78%, above the slim five-tab wooden nav beam where the helmet "Heroes" tab is lit gold: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Heroes" with a small round "✕" knob at its right end. Under the header a slim parchment strip reads "3 of 32 found". Below, a 3-column grid of hero cards, four rows visible: each card is a parchment tile with a thin wood border, a small ribbon at its top-left corner naming the class ("Warrior", "Lancer", "Archer", "Cavalry"), a smooth painted bust of the hero filling most of the tile, and a footer strip: for found heroes "Lv 3" with a row of five tiny gold stars (some lit); for unfound heroes the bust is a dim sepia silhouette and the footer shows a small blue stardust chip "4 / 10". One card wears a small gold "NEW" wax seal. Compact, even spacing, everything smooth and tactile, no pixel art in the interface.
+
+**M7 — the Reliquary sheet**
+
+> Same style, same materials and chrome as the mockups above. M7 — the Reliquary sheet. Full phone screen. The kingdom map fills the top 22%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 78%, above the slim five-tab wooden nav beam where the glowing chest "Relics" tab is lit gold: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Reliquary" with a small round "✕" knob at its right end. Inside, top: a slim parchment row with a pinch of glittering blue dust icon, "Stardust" in bold, one tiny line "Won from dungeons and the banner", and the number "50" at the right. Then a section title "Attuned" with a small right-aligned note "1 of 5 sockets" and a row of five round sockets like carved wooden rings: one holds a glowing relic, one is an empty dashed ring labelled "Empty", three are dim locked rings each with a tiny violet gem chip "1000". One short helper line. Then a section title "Relics" with a note "2 of 5 found" and a 3-column grid of relic cards: parchment tiles with a thin wood border, a smooth painted relic object in each — a forked dowsing rod, a green verdant seal, a foreman's iron sigil, a gilded ledger book, a brass wanderer's compass — the name under it in bold and a tiny line with a ruin icon naming where it is won ("Hollow Barrow", "Sunken Chapel"). Unfound relics are drawn as dim sepia silhouettes. Compact, tactile, smooth, no pixel art in the interface.
+
+**M8 — the Daily chest sheet**
+
+> Same style, same materials and chrome as the mockups above. M8 — the Daily chest sheet. Full phone screen. The kingdom map fills the top 25%, warm-dimmed, with the slim resource plank at the top. A bottom sheet covers the lower 75%, above the slim five-tab wooden nav beam (no tab lit): a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Daily chest" with a small round "✕" knob at its right end. Inside, a top line with a small sand-timer "Season ends in 13d" at the left and "3 of 14" at the right, then one short helper sentence. Then two column headers side by side: a wood-brown slab "Free" and a gold slab with a tiny crown "Royal chest €9.99". Below them a ladder of rungs, one per day, numbered 1 to 7 visible on small round wooden day-badges down the middle: each rung is a row with a small parchment reward chip on the left (a violet gem icon "34", or "50" with a gold coin "200") and a wider parchment reward chip on the right (gold "500", a stardust pinch "1", a hero fragment). Days 1–3 are stamped taken with a small green wax tick; day 4 is lit gold and slightly raised as today's; days 5–7 are plain. At the bottom of the sheet a small centred line "Tap day 4 to take it." Compact, tactile, smooth, no pixel art in the interface.
+
+**M9 — Settings and the Mana sheet, stacked**
+
+> Same style, same materials and chrome as the mockups above. M9 — two small sheets on one phone screen, stacked to show both. Full phone screen over the kingdom map, warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom. UPPER HALF: the "Settings" sheet — a parchment panel in a thin carved wooden frame with a narrow wooden header strip reading "Settings" and a small round "✕" knob; inside, a tiny sepia caps label "SOUND" over three rows — "Music / The harp loop", "Sound effects / Taps, coins, construction", "Ambience / Wind, waves, birdsong" — each with a chunky wooden toggle switch at the right, a rounded wood trough with a round brass knob, the first two switched on (leaf-green trough) and the third off; then a caps label "YOUR KINGDOM" and one row "Saved to this device"; then a caps label "START OVER" with a clay-red slab "Start over". LOWER HALF: the "Mana" sheet — the same parchment panel and header strip reading "Mana"; inside, a big violet mana orb at the left, "Mana" in bold and "Full in about 8h" at the right, a slim violet-blue gauge trough reading "64 / 100" filled two thirds, a line "Drawn from the land · +12/h", one tiny helper line, then a parchment card: "Refill now — a whole pool, on top of what you have", a large violet orb chip "+100", and two slabs side by side — a blue slab "Refill" with a violet gem chip "400" and a leaf-green slab "Watch a short ad". Compact, tactile, smooth, no pixel art in the interface.
+
+**M10 — the battle board**
+
+> Same style, same materials and chrome as the mockups above. M10 — the battle board, before a fight. Full phone screen. The kingdom map fills the top 15%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 85%, above the slim five-tab wooden nav beam: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Boars at the gate" with a small round "✕" knob at its right end. Inside, top: a square parchment vignette at the left with a small painted ruin (a mossy stone barrow with a dark doorway), and beside it "Hollow Barrow · tier 1" in bold and two short lines with a sand-timer "They come for the city in 2h 10m" and "Cleared, every unit of what they took comes home." Then a parchment card titled "Enemy army" with a bold power number "48" at the right and a row of three round wooden slots holding small painted boar-warrior busts with tiny "×4" "×2" "×1" count tags. Then a parchment card titled "Your army" with a power number "36" in clay red at the right, a row of four round slots — two holding painted soldier busts (a swordsman, an archer) with a tiny "×" corner mark, two empty slots with a "+" — a small sub-label "Heroes" and a second row of three round slots: one holding a hero portrait, one empty with a "+", one shut with a padlock and a tiny violet gem chip "300". Then a parchment card titled "Rewards" with a row of reward chips — a gold coin "699", logs "40", a rising golden chevron "+1" — and one small line. At the bottom a wide leaf-green slab "Clear the gate" with a small wheat chip "12" inside it, and one tiny line of small print under it. Compact, tactile, smooth, no pixel art in the interface.
+
+**M11 — the map's bottom panels (the ruin card, the placement bar)**
+
+> Same style, same materials and chrome as the mockups above. M11 — the map's bottom panels. Full phone screen over the bright pixel kingdom map (NOT dimmed, no sheet), slim resource plank at the top, slim five-tab wooden nav beam at the bottom with the hammer "Build" tab lit gold. Sitting just above the nav, a ruin card about 45% of the screen tall: a parchment panel in a carved wooden frame that is open at the bottom where it meets the nav (frame on three sides only), no header strip. Inside, top-left a square parchment vignette with a painted mossy stone barrow with a dark doorway; to its right "Hollow Barrow" in bold, a small line "Tier 1 ruin", and one short sentence. Below, a row of three compact stat tiles: a dungeon door "2 / 6 rooms", a sparkle "1·3 frontier", an archer helmet "Archers answer best". Then a small band with a boar-shield mark reading "Boars hold the way in" and "They raid the city in 2h 10m" with a sand-timer, and a wide leaf-green slab "Clear the gate" with a small wheat chip "12" inside. Floating above the card's top edge, a second, slimmer bar to show the other panel: a narrow parchment strip in a thin wood frame, a small cottage picture at the left, "Housing" in bold with one tiny line "Drag it, or tap where it should go" and a sand-timer "20s", and at the right two small slabs — wood "Cancel" and leaf-green "Build" with a logs chip "10" inside. On the map above, one cell is outlined gold with a faint cottage ghost on it. Compact, tactile, smooth; the interface is not pixel art.
+
+**M12 — the things that float over the map**
+
+> Same style, same materials and chrome as the mockups above. M12 — the small things that float over the map. Full phone screen over the bright pixel kingdom map (NOT dimmed, no sheet), slim resource plank at the top, slim five-tab wooden nav beam at the bottom. Show all of these at once, each where it lives: (1) top-left just under the plank, a small parchment pill with a gold border holding a painted treasure chest icon and two lines "Daily chest" / "Day 4 of 14"; (2) top-right under the plank, the round wooden knob with a cog; (3) hanging from the plank in the middle, a small gold cloth pennant with a rope along its top and a swallowtail bottom, holding a tiny cottage picture and three lines "NEW BUILDING" in small caps, "Housing" in bold, "Villagers live here and pay taxes"; (4) on the right edge, half-way down, two tabs sticking in from the edge, stacked: a dark clay-red wooden tab with a shield icon and two lines "Boar raid in 2h 10m" / "Hollow Barrow", and under it a small violet slab with a mana orb, "+100" and a little play triangle; (5) bottom-left above the nav, the parchment quest scroll from M1 ("Timber!", a slim gold trough "6/10", a wood "Show me" slab) with a red wax seal on its top-right corner; (6) just above the quest scroll, a small parchment slip with a thick clay-red left edge reading "Builders are at the ceiling"; (7) top-left under the daily pill, a tiny parchment chip with a hammer icon reading "1/1". Compact, tactile, smooth; the interface is not pixel art.
+
+**M13 — Welcome back**
+
+> Same style, same materials and chrome as the mockups above. M13 — the Welcome back sheet, the one a player sees on returning. Full phone screen. The kingdom map fills the top 35%, warm-dimmed, with the slim resource plank at the top. A bottom sheet covers the lower 65%, above the slim five-tab wooden nav beam: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Welcome back" (no close knob). Inside, a lede in bold "Your kingdom worked for 3h 20m." and a small line with a sand-timer "Your stores filled up before you got back." Then a parchment ledger card with one row per resource, each a painted icon, the name and a bold green "+" amount at the right: a gold coin "Gold +1,240", an apple "Food +86", logs "Wood +312", a stone "Stone +40", three villager heads "Villagers +2". Then a small brown caps label "WHILE YOU WERE AWAY" with a rule, and three parchment rows each with a small picture and a green wax tick at the right: a cottage "Housing #3 finished", a scroll with a candle "Forestry researched", a sparkle "A festival came and went". At the bottom a wide leaf-green slab "Collect". Compact, tactile, smooth, no pixel art in the interface.
+
+**M14 — the payer profile and the purchase confirmation, stacked**
+
+> Same style, same materials and chrome as the mockups above. M14 — two centred dialogs on one phone screen, stacked to show both, over the kingdom map warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom. UPPER: "Who are you playing as?" — a parchment panel in a thin carved wooden frame with a narrow wooden header strip reading "Who are you playing as?" and NO close knob; inside, a large violet gem at the left of two short lines of copy, then four parchment option rows each with a bold name and a budget line at the left and a slab at the right: "F2P — No purchases" with a wood slab "Play as this", "Minnow — $10 a month", "Dolphin — $50 a month", "Whale — $200 a month" each with a violet slab "Play as this"; a tiny padlock line of fine print at the bottom. LOWER: "Confirm purchase" — the same parchment panel and header strip reading "Confirm purchase" with a small round "✕" knob; inside, a pile of violet gems at the left, "Purse of Gems" in bold and "2500 Gems" under it; then a small parchment ledger of three rows "Price · $4.99", "Left this month · $50.00", "After · $45.01" in green; two slabs side by side — wood "Not now" and leaf-green "Buy for $4.99"; and under them a small dashed clay-red stamp reading "SIMULADO — no real money changes hands". Compact, tactile, smooth, no pixel art in the interface.
+
+**M15 — the hero call's reveal and the curtain**
+
+> Same style, same materials and chrome as the mockups above. M15 — the hero call's reveal, full screen. Full phone screen: the kingdom map and the store sheet are dimmed to near-dark behind a warm translucent veil, the slim resource plank still visible at the top, the slim nav beam at the bottom. Centred at the top of the veil, a small wooden plaque with a gold rim reading "Rewards". Under it, a 3×2 grid of small parchment tiles in thin wood borders dealt onto the veil: a pinch of blue stardust "50", a gold coin "300", a hero fragment tile showing a dim portrait with a small blue shard badge "3", a violet gem "20", and one tile bigger than the others with a gold border and a painted hero bust with a small name tag "Warden" under it. Under the grid a small parchment caption "One call" and, faint, "Tap anywhere to finish". Also show, drawn at the right half of the screen as an inset to compare, the curtain a new hero gets: a full dark veil with gold rays, a small caps kicker "A NEW HERO ANSWERS", a large painted hero bust, the name "Warden" in bold, a line "Keeper of the gate", the word "Common" in a small parchment chip, and "Tap to continue". Compact, tactile, smooth; the interface is not pixel art.
+
+**M16 — the battle playback**
+
+> Same style, same materials and chrome as the mockups above. M16 — the battle playback, full screen. Full phone screen on a dark-earth cloth backdrop with faint parchment grain (no map visible), the slim resource plank at the top and the slim nav beam at the bottom. Across the top, a wooden power bar: a slim trough split by a fill, our number "36" at the left in leaf green, theirs "48" at the right in clay red, crossed swords at the split point. Under it a small parchment caption "Hollow Barrow · the gate" and a tiny line "Boars at the gate". The board fills the middle: two facing formations of round wooden slots. Theirs at the top: a hero row (one slot, a boar chieftain bust), a back row (two slots, boar archers), a front row (three slots, boar warriors), each with a small parchment count tag "×4" "×2" "×1". A gap with a faint dotted line and crossed swords. Ours at the bottom: a front row (three slots, swordsmen), a back row (two slots, archers), a hero row (one slot, a crowned hero). One slot in each front row is hit — ringed clay red with a small burst — and one enemy slot is knocked out, dimmed with a small skull badge. Over the middle, a wooden plaque with a gold rim reading "Victory" and under it a wood slab "Leave the field". Compact, tactile, smooth; the interface is not pixel art.
+
+**M17 — the hero's and the relic's cards, stacked**
+
+> Same style, same materials and chrome as the mockups above. M17 — two centred detail cards on one phone screen, stacked to show both, over the kingdom map warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom. UPPER: a hero's card — a parchment panel in a thin carved wooden frame with no header strip; inside, a stage: a wide parchment vignette with a soft blue wash for a common hero, a small ribbon "Warrior" at its top-left, a round "✕" knob top-right, "Common" in a small parchment chip, two round wooden arrow knobs "‹" "›" at the sides of a large painted hero bust, and riding the vignette's bottom edge a row of five big gold stars (three lit) beside a leaf-green slab "Ascend" with a stardust chip "20" and a shard chip "10 / 10"; under the stage "Warden" in bold with the line "Keeper of the gate", three small parchment stat tiles (a sword "atk 12", a shield "def 8", a heart "hp 40"), a sparkle line "Warriors beside them hit 10% harder", and a bottom row "Level 3 of 10" with a leaf-green slab "Level Up" carrying a golden chevron chip "120". LOWER: a relic's card — the same panel; a stage with a small "Attuned" green wax tick badge, two round arrow knobs around a painted forked dowsing rod, and five small pips under it (two lit); "Dowsing Rod" in bold with "Level 2 of 5", a sparkle line "reveal costs −15%", a small block "Divination — reveal a cell for Mana, not Gold", two slabs side by side — wood "Remove" and a violet slab "Cast Divination" with a mana orb chip "25" — and under them a wood slab "Study" with a stardust chip "30". Compact, tactile, smooth; the interface is not pixel art.
+
+**M18 — the tech card, the builder offer and the purse**
+
+> Same style, same materials and chrome as the mockups above. M18 — three small surfaces on one phone screen over the kingdom map warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom, arranged top to bottom. TOP: the research card that floats over the parchment tome page (as in M4): a small parchment card in a thin carved wooden frame, a round wax medallion with a golden axe at the left, "Forestry" in bold, one line "Unlocks the forests and the berry bushes", a small line with a sand-timer "Duration 3s", and two slabs side by side — a violet slab "Instant" with a violet gem chip "1441" and a leaf-green slab "Start" with a book chip "2"; a tiny line under them "Enough Knowledge in about 2h". MIDDLE: a "Builders" dialog — a parchment panel with a narrow wooden header strip reading "Builders" and a round "✕" knob; inside, a hammer in a small parchment vignette beside "Your builder is busy" in bold and one small line, a row of four round wooden rings — one holding a hammer on gold, three empty — and two slabs side by side: wood "Not now" and violet "Hire a builder" with a violet gem chip "2500". BOTTOM: a "Your purse" drawer — a parchment panel with a header strip "Your purse" and a round "✕" knob; inside one parchment ledger card with rows "Gold 1,240", "Gems 500", "Silver key 2", "Stardust 50", each a painted icon, the name and a bold number at the right, ruled between. Compact, tactile, smooth; the interface is not pixel art.
+
+**M19 — a relic's card**
+
+> Same style, same materials and chrome as the mockups above. M19 — a relic's card, centred on one phone screen over the kingdom map warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom. A parchment panel in a thin carved wooden frame with no header strip, only a small round "✕" knob at its top-right. Inside, a stage: a wide parchment vignette with a warm amber wash, and centred on it a large smooth painted forked wooden dowsing rod with a faint golden glow behind it; riding the vignette's bottom edge a small wooden plaque with a gold rim reading "Level 3". Under the stage "Dowsing Rod" in bold, and beneath it a small sepia line with a sand-timer "+1 level when its album closes". Then a parchment ledger card of two ruled rows, each with a sparkle at the left: the first in dark ink, "Now — forests, crops and stone recover 30% faster", the second in faint muted ink, "At level 4 — 40% faster". Under it one slim parchment strip with a small round album medallion at the left, "First Furrow" in bold, and a gold-filled trough "7/9" at the right. NO buttons of any kind anywhere on the card except the "✕" knob. Compact, tactile, smooth; the interface is not pixel art.
+
+M19 **replaces the lower half of M17**, which drew the relic card of the
+previous model — attunement, a level cap, a cast button and a Stardust study
+toll, every one of which the collection rework removed
+([`../features/09-relics.md`](../features/09-relics.md) §13). Keep M17 for its
+hero card.
+
+**M20 — the season pill on the map**
+
+> Same style, same materials and chrome as the mockups above. M20 — the season pill where it lives on the map. Full phone screen over the bright pixel kingdom map (NOT dimmed, no sheet), slim resource plank at the top, slim five-tab wooden nav beam at the bottom. Down the left edge under the plank, three things stacked in a column with small gaps, left-aligned: (1) at the top, the daily chest pill — a small parchment pill with a gold border, a painted treasure chest icon and two lines "Daily chest" / "Day 4 of 14"; (2) directly under it and slightly wider, THE SUBJECT OF THE IMAGE: the season pill — a parchment pill with a gold border and a soft golden glow around it, holding at its left a small round wax-and-gold season crest with a wheat sheaf on it, then three lines, "Sowing Season" in bold, a slim gold-filled trough with "12/45" on it, and a small sepia line with a sand-timer "9d left"; (3) under it, a tiny parchment chip with a hammer icon reading "1/1". Bottom-left above the nav, the parchment quest scroll ("Timber!", a slim gold trough "6/10", a wood "Show me" slab). The map is the hero of the image and the two pills read as a pair. Compact, tactile, smooth; the interface is not pixel art.
+
+**M21 — the Collection sheet**
+
+> Same style, same materials and chrome as the mockups above. M21 — the Collection sheet, the season's albums. Full phone screen. The kingdom map fills the top 20%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 80%, above the slim five-tab wooden nav beam where a "Collection" tab showing a small stack of cards is lit gold: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Sowing Season" with a small round "✕" knob at its right end. Inside, top: a wide banner card in a thin wood frame on a warm amber ground — a small caps line "COMPLETE ALL FIVE TO WIN", and under it two big reward chips side by side, a golden hero call (an ornate gold key with a painted hero bust behind it) and a heap of violet gems with "25,000" on it. Under the banner one slim line: a sand-timer "9d left" at the left and "12/45" at the right on a thin gold-filled trough. Then the five albums as ROUND MEDALLIONS, three across the first row and two centred on the second: each a circular painted vignette inside a carved wooden ring, its name in bold small caps under it and a small dark parchment pill under that with a count — first row "FIRST FURROW" with a painted dowsing rod over a ploughed field and "7/9", "THE WILD WOOD" with berries and a stag and "4/9", "HANDS AT WORK" with a hammer and a hard hat and "2/9"; second row "THE KING'S COIN" with a gilded ledger and coins and "0/9", "THE STAR ROAD" with a brass compass under stars and "0/9". Each ring carries a small badge at its lower-right, a tiny relic object on wax with a gold rim reading "Lv 3", "Lv 1", and the last three dim and padlocked. The "FIRST FURROW" medallion's ring is gold and slightly raised. At the bottom-right of the sheet, floating over its edge, a round wooden knob holding a small painted iron safe with a tiny gold star chip reading "38". Compact, tactile, smooth; the interface is not pixel art.
+
+**M22 — an album's page**
+
+> Same style, same materials and chrome as the mockups above. M22 — one album's page, the nine cards. Full phone screen. The kingdom map fills the top 12%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 88%, above the slim five-tab wooden nav beam: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "The King's Coin" with a small round "✕" knob at its right end. Inside, top: a wide reward band in a thin wood frame on a warm amber ground — at its left a square framed vignette with a smooth painted gilded ledger book and a small plaque "Lv 2" on it, and to its right a small caps line "COMPLETE THE ALBUM TO WIN" over a row of three reward chips: a parchment chip with the same ledger and a bold gold "+1 LEVEL", a chip with a sand-timer and "8h of everything", and a chip with an ornate gold key and a violet gem "2,000". Below, a 3×3 grid of tall rounded cards filling most of the sheet, each card with a row of small stars ABOVE it and its name on a dark green ribbon along its bottom: row 1 — "Market Day" held, three gold stars, a painted market stall with coins; "Tax Ledger" missing, four grey stars, an empty grey card with a faint pattern and the name in grey; "The Mint" held, four gold stars, a painted coin press, a small white "+1" tag at its lower-left corner; row 2 — "Toll Bridge" held, three gold stars, a painted stone bridge with a gate; "Tithe Barn" missing, three grey stars; "Merchant's Seal" missing, four grey stars; row 3 — "Counting House" missing, five grey stars; "The Royal Purse" HELD AND GOLD, five gold stars, the whole card framed in ornate gold with a faint shine and a "+2" tag; "The Treasury" missing, five grey stars. Under the grid a small centred line "Album 4 of 5" and, in the two bottom corners, a round wooden "‹" knob and a round wooden "›" knob. Compact, tactile, smooth; the interface is not pixel art.
+
+**M23 — the store's Cards shelf**
+
+> Same style, same materials and chrome as the mockups above. M23 — the Store sheet, scrolled to its CARDS shelf. Full phone screen. The kingdom map fills the top 20%, warm-dimmed, with the slim resource plank at the top. A tall bottom sheet covers the lower 80%, above the slim five-tab wooden nav beam where the gem "Store" tab is lit gold: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Store" with a small round "X" knob at its right end. Inside, from the top: a tiny sepia caps label "CARDS" at the left with a small violet gem chip "1,155" at the right of the same line; then TWO parchment row cards, each in a thin wood border, and each laid out the same way — a square framed vignette at the left holding a painted sealed pack of cards, then a column of text, then a slab at the right. FIRST ROW: the vignette holds a warm cream pack with a gold wax seal; the text is "A gold pack" in bold, a small line "Five cards, and a chance of a gold edition", and a tiny sepia odds line "2★ 40% · 3★ 38% · 4★ 22%"; the slab is wood-brown reading "Buy" with a small violet gem chip "500" inside it. SECOND ROW: the vignette holds a deep violet pack with a gold star seal and three sparkles; the text is "A star pack" in bold, a small line "Six cards, one gold edition guaranteed", and a tiny sepia odds line "3★ 55% · 4★ 33% · 5★ 12%"; the slab is GOLD reading "Buy" with a violet gem chip "1,500" inside it. Under the two rows one small sepia line of fine print: "Bronze and silver packs come from the ruins." Below that, a tiny caps label "KEYS" and the top edge of the next row card, cut off by the bottom of the sheet to show the shelf continues. Compact, tactile, smooth; the interface is not pixel art.
+
+**M24 — the wildcard, aimed and armed**
+
+Two surfaces of ONE mechanic on one screen: the aimed offer that sells a
+wildcard, and the album page with it armed. One generation keeps the two
+halves consistent with each other, which two prompts would not guarantee.
+
+> Same style, same materials and chrome as the mockups above. M24 - the wildcard, on two surfaces stacked on one phone screen to show both, over the kingdom map warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom. UPPER HALF - the Store sheet scrolled to its CARDS shelf, the same shelf as the mockup above but with an AIMED OFFER at the top of it: a tiny sepia caps label CARDS with a small violet gem chip 655 at the right; then a wider offer card in a thin wood frame on a warm amber ground, slightly raised, with a tiny clay-red ribbon in its top-left corner reading FOR YOU - inside it a round carved wooden medallion at the left holding a small painted ploughed field at dawn, then a column of text, First Furrow in bold, a small line Two cards short, and a tiny sepia line A 3 star wildcard fills any of them, and at the right a violet slab reading Buy with a small violet gem chip 400 inside it; under the offer the two ordinary pack rows from before, cut off by the half. LOWER HALF - an album page, the 3 by 3 grid of the album First Furrow, where a wildcard is ARMED: across the top of the grid a slim clay-red strip with a small painted blank card at its left reading Tap a card to use your 3 star wildcard and a small wood knob at its right end reading Cancel; in the grid, four cards are held and painted, and the three MISSING cards that the wildcard could fill are outlined in bright gold with a soft glow and a small gold plus mark in the middle of each, while two other missing cards stay plain grey and dashed. Compact, tactile, smooth; the interface is not pixel art.
+
+**A prompt this long loses itself on the way into the composer.** M23 and M24
+both arrived as a stub on the first send. Type them with **no quotation marks
+and no ★ glyphs** — spell the stars out, "3 star 55 percent" — and
+**screenshot the composer before pressing send**; if it holds a stub, `ctrl+a`
+`Delete` and retype.
+
+The M5–M14 prompts open with "Same style, same materials and chrome as the
+mockups above" instead of the style block because they were sent into the
+conversation that already held it and M0; sent cold, paste the block first.
+
+### 7.26 The collection's pieces (C1, C2, C3)
+
+The four screens of [`../features/09-relics.md`](../features/09-relics.md) §11
+need three sheets. **C1 is the art the screens are built on** — the five album
+medallions M21 draws as round vignettes, and the four packs the reveal deals —
+and **C2 is four atlas marks**, which append to `ui-e2-marks`'s empty fourth
+row rather than redrawing the twelve that sheet already holds.
+
+The 45 card faces are NOT here and are a content job, not a sheet: a card is
+drawn as its album's medallion behind its name and its rarity stars, which is
+what makes a nine-card page read as one album.
+
+**C1 — the medallions and the packs**
+
+> Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). One square sprite sheet, 1024x1024, a strict 3x3 grid of equal 341px cells with a fully TRANSPARENT background, one subject centred in each cell filling about 80% of it and NOTHING crossing the lines between cells (leave a clear 40px band). Cells 1 to 5 are ROUND painted vignettes, a circular scene inside a thin carved wooden ring: 1 a ploughed field at dawn with a forked wooden dowsing rod standing in the furrow; 2 a mossy woodland with a stag, red berries and a beehive; 3 a timber scaffold with a hammer, a hard hat and a stone block; 4 a market counter with a gilded ledger book, stacked gold coins and a purse; 5 a night road under stars with a brass compass and a lantern post. Cells 6 to 9 are OBJECTS, not vignettes — four card packs seen at a slight angle, each a small sealed paper wallet of cards with a wax seal and two or three card corners fanning out of the top: 6 a plain brown one with a bronze seal; 7 a pale grey-blue one with a silver seal; 8 a warm cream one with a gold seal and one tiny sparkle; 9 a deep violet one with a gold star seal, a gold rim and three sparkles. No text, no labels, no numbers, no frame lines between cells. Do not run any code to check or correct the alpha channel.
+
+**C3 — the five relics, repainted**
+
+The relic card (M19) draws its subject at 170px on parchment, and the shipped
+sprites were 128px MAP pixel art borrowed by a UI screen. Same grid and same
+reading order as `spr-c-relics`'s manifest entry, so it replaces that sheet
+rather than adding one — and the entry gains `evenGrid` (the rod lies
+diagonally over its cell's edge) and `spriteSize: 256` (128 is a map sprite's
+size, and these are never on the map).
+
+> Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). These are the five RELICS, each drawn as a single object on its own, the way the card in the mockup above draws the dowsing rod — they sit on a parchment card at about 170px tall, never on the map. One square sprite sheet, 1024x1024, a strict 3x2 grid of six equal cells with a fully TRANSPARENT background, one object centred in each cell filling about 80% of it and NOTHING crossing the lines between cells (leave a clear 40px band), seen from slightly above at a three-quarter angle, in this exact reading order: 1 a forked wooden dowsing rod, a Y of two peeled branches with a leather-wrapped grip and a small blue crystal bound at the fork; 2 a round green wax seal on a short oak handle, a curling leaf pressed into the wax and two ivy leaves growing from the handle; 3 an iron foreman's sigil, a heavy square medallion stamped with a crossed hammer and set-square, hanging from a short leather strap; 4 a thick ledger book bound in deep red leather with gilded page edges, a gold clasp and a small gold crown on the cover; 5 a brass pocket compass, open, its lid at an angle, a star engraved on the dial; 6 leave this cell EMPTY, nothing drawn in it. No text, no labels, no numbers, no frame lines between cells. Do not run any code to check or correct the alpha channel.
+
+**C2 — the collection's marks**
+
+> Same style as the icon sheets above: these must be SYMBOLS, not little characters — no faces, no bodies, no people. THICK and CHUNKY, at least 20 pixels of stroke at this canvas size, so they survive being shrunk to 64px. One square sprite sheet, 1024x1024, a strict 2x2 grid of equal 512px cells with a fully TRANSPARENT background, one symbol centred in each cell filling about 86% of it and nothing crossing the lines between cells, in this exact reading order: 1 a sealed pack of cards with two card corners fanning out of the top; 2 a fan of three playing cards, face down, as a stack; 3 a small iron safe with a round brass dial and two hinges; 4 a round wax seal with a gold rim and a wheat sheaf pressed into it. No text, no labels, no numbers. Do not run any code to check or correct the alpha channel.
+
 ### 7.20 Export and where it lands
 
 - Sheets: 1024×1024, true alpha — use the **"Download the corrected PNG"**
@@ -1819,7 +1958,7 @@ titles. Image models misspell; judge layout and material, never the words.
   `Docs/art/ui/sheets/ui-{a2,b2,c2,d2,e2}-*.png`; then
   `node scripts/ui-atlas.mjs build` (cell 64, smooth resample) and
   `npm run art:check`.
-- Mockups: 1080×2340 PNG, opaque, to `Docs/art/ui/mockups/m{1..4}-*.png`.
+- Mockups: 1080×2340 PNG, opaque, to `Docs/art/ui/mockups/m{1..22}-*.png`.
   They are references for the board and the CSS, never assets.
 - Every generation is logged in `ui/CONVERSATION.md`: date, conversation
   link, model, file, which prompt and which iteration phrases.
@@ -1951,3 +2090,53 @@ behind `.tech-card-glyph`.
    so counters stay tabular without a `tnum` feature. Still self-hosted OFL,
    still vendored as subset woff2 with the licence, still 19 KB total. See
    §3.4 and `src/ui/fonts/README.md`.
+
+### 7.23 The store's painted pieces (S1)
+
+Keys, the hammer and the six gem packs, drawn as objects rather than atlas
+coins so the store's vignettes and pack cards (M5) hold at 76–96px. Sent into
+the M0 conversation after the style block:
+
+> Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). One square sprite sheet, 1024×1024, a strict 3×3 grid of equal 341px cells with a fully TRANSPARENT background (true alpha, no checkerboard, no card, no shadow on the ground), one object centred in each cell filling about 75% of it, in this exact reading order: 1 an ornate silver key seen at an angle; 2 an ornate gold key with two tiny sparkles; 3 a builder's hammer with a wooden handle and steel head; 4 a small pile of three violet cut gems; 5 a heap of six violet gems; 6 a small brown leather pouch spilling violet gems; 7 a large heap of violet gems with a coin-purse behind; 8 an open wooden chest with brass fittings full of violet gems; 9 a big iron-bound treasure chest overflowing with violet gems and a gold crown on top. No text, no labels, no frame lines between cells.
+
+The sheet comes back 1254×1254; cut it on an even 3×3 grid, `-trim` each
+cell, square it with `-extent` and resample to 256px (`Docs/art/ui/
+CONVERSATION.md`). Reading order is the file order: `art-key-silver`,
+`art-key-gold`, `art-hammer`, then `gems_pouch`, `gems_purse`, `gems_chest`,
+`gems_vault`, `gems_hoard`, `gems_treasury` — the pack files keep the names
+`definitions.ts` already gives the SKUs, so nothing but the picture changed.
+
+### 7.24 The plates the chrome is nailed together from (P1)
+
+The header's plank, the nav's beam and its tabs, and the parchment cards on
+the map (the daily pill, the builder plaque, the quest scroll) are painted
+pieces nine-sliced by CSS `border-image` — the bevel, the rim, the grain and
+the corner nails are in the art, so the flat kit's lips and highlights come
+off. Sent into the M0 conversation with `mockups/m12-map-floaters.png`
+attached as the anchor:
+
+> Same materials as the attached mockup's chrome, drawn as UI pieces to be sliced. One sheet, 1024×1024, fully TRANSPARENT background (true alpha, no checkerboard), a strict 2×2 grid of equal 512px cells, each piece centred in its cell with 40px of clear margin, straight uniform edges and identical corner blocks so each can be nine-sliced: 1 (top-left) the raised wooden PLATE the nav tabs are made of — a rounded rectangle 432×220, warm mid wood grain face, a lighter bevel along the top edge, a darker lip along the bottom, a thin dark-brown rim; 2 (top-right) the wooden HEADER PLANK segment — a rounded rectangle 432×160, the same wood a shade darker with the same bevel and rim; 3 (bottom-left) the PARCHMENT CARD the daily pill and quest scroll are made of — a rounded rectangle 432×220, aged cream parchment face inside a 12px dark wood frame with a lit inner bevel, a small iron nail head in each corner; 4 (bottom-right) the dark wood BEAM the nav sits on — a rectangle 432×200 of dark wood grain with a lit top edge and a shadowed bottom edge, seamless left to right. No text, no icons, no drop shadow on the ground, nothing outside the cells.
+
+The sheet comes back 1254×1254; cut it on an even 2×2 grid and `-fuzz 6%
+-trim` each cell (the painted shadow leaves a faint halo). Files:
+`src/ui/assets/plate-wood.png` (nav tabs, slice 44 at 12px),
+`plate-plank.png` (the header's two plates, slice 44 at 8px),
+`plate-parchment.png` (the cards, slice 64 at 16px so the nails land in the
+corners), `beam-wood.png` (the header's and the nav's beam, repeated along
+x at full height). `fill` keeps the painted face as the element's
+background.
+
+### 7.25 The Settings marks (I1)
+
+Five row marks for the Settings dialog (M9) — music, sound effects,
+ambience, the save, the payer profile — plus a start-over mark held in
+reserve. They are not `IconName`s: nothing but the Settings rows shows
+them, so they ship as `src/ui/assets/set-{music,sfx,ambience,save,payer,
+restart}.png` (128px, squared) and are drawn as CSS backgrounds in the
+row's parchment vignette. Sent into the M0 conversation with
+`mockups/m9-settings-mana.png` attached:
+
+> Same icon style as the settings rows in the attached mockup: chunky, simple, smooth silhouettes with a thin dark-brown outline, soft two-tone shading and a small highlight, NO pixel art. One sheet, 1024×1024, fully TRANSPARENT background (true alpha, no checkerboard, no card, no shadow on the ground), a strict 3×2 grid of equal cells (341×512), one object centred in each cell filling about 70% of it, in this exact reading order: 1 a golden music note; 2 a wooden loudspeaker horn with two sound waves; 3 a round green tree with a small bird; 4 a rolled parchment scroll tied with a red ribbon and a wax seal (saving the kingdom); 5 a small leather coin purse with a gold coin peeking out (who is playing); 6 two curved golden arrows chasing each other in a circle (start over). No text, no labels, no frame lines between cells.
+
+The sheet comes back 1254×1254; cut it 3×2, `-fuzz 4% -trim`, square
+with `-extent` and resample to 128px.

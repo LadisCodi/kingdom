@@ -22,7 +22,7 @@ import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
 import { el, formatDuration } from './format';
-import { btn, iconEl } from './kit';
+import { btn } from './kit';
 
 export function bannerPanel(game: Game): HTMLElement {
   return el('div', { class: 'store-banners' },
@@ -37,32 +37,33 @@ function oneBanner(game: Game, banner: BannerId): HTMLElement {
   const toLegendary = pullsToLegendary(game.state, banner);
 
   const lines: HTMLElement[] = [
-    el('div', { class: 'rel-line' },
+    el('div', { class: 'ban-line' },
       el('span', {}, 'Chance of a hero right now'),
       el('b', {}, `${Math.round(chance * 100)}%`)),
-    el('div', { class: toLegendary === null ? 'rel-line is-total' : 'rel-line' },
+    el('div', { class: toLegendary === null ? 'ban-line is-total' : 'ban-line' },
       el('span', {}, 'A hero guaranteed within'),
       el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`)),
   ];
   // Only the golden call has a Legendary to guarantee, so the basic one shows
   // two lines rather than a third reading "never".
   if (toLegendary !== null) {
-    lines.push(el('div', { class: 'rel-line is-total' },
+    lines.push(el('div', { class: 'ban-line is-total' },
       el('span', {}, 'A legend guaranteed within'),
       el('b', {}, `${toLegendary} call${toLegendary === 1 ? '' : 's'}`)));
   }
 
   return el('div', { class: `store-banner is-${banner}` },
+    // The key is a painted piece (S1), not the 64px coin from the atlas.
+    el('div', { class: 'store-banner-art' },
+      el('span', { class: `store-art is-${def.key}`, role: 'img', 'aria-label': def.key })),
     el('div', { class: 'store-banner-head' },
-      iconEl(def.key, { size: 'lg' }),
-      el('div', {},
-        el('div', { class: 'store-banner-title' }, def.name),
-        el('div', { class: 'store-banner-hint' }, hint(banner)))),
-    el('div', { class: 'rel-breakdown' }, ...lines),
+      el('div', { class: 'store-banner-title' }, def.name),
+      el('div', { class: 'store-banner-hint' }, hint(banner))),
+    el('div', { class: 'ban-breakdown' }, ...lines),
     el('div', { class: 'store-banner-calls' },
       callSlot(game, banner),
       tenCall(game, banner)),
-    el('div', { class: 'rel-note' }, keyNote(game, banner)),
+    el('div', { class: 'ban-note' }, keyNote(game, banner)),
   );
 }
 

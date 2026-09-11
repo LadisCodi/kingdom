@@ -19,7 +19,8 @@ import {
 import {
   accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
 } from '../src/sim/mana';
-import { LANDMARKS } from '../src/sim/data/definitions';
+import { ARTIFACT_ORDER, LANDMARKS } from '../src/sim/data/definitions';
+import { grantArtifactLevel } from '../src/sim/artifacts';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, getWallet, parseCoordKey, townhall, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
@@ -133,18 +134,16 @@ describe('the two dials', () => {
 });
 
 describe('what draws against the pool', () => {
-  // Nothing does. Relics used to charge an hourly upkeep while attuned, which
-  // was removed once Mana became the energy every tap is paid from: at
-  // Townhall 1 the full set drew exactly what the Townhall made, so wearing
-  // everything stalled the pool dead and left nothing to play with. The pool
-  // is a tap budget now, and only the player spends it.
-  it('is nothing — wearing every relic does not slow the fill', () => {
+  // Nothing does. Relics used to charge an hourly upkeep, which was removed
+  // once Mana became the energy every tap is paid from: at Townhall 1 the
+  // full set drew exactly what the Townhall made, so holding everything
+  // stalled the pool dead and left nothing to play with. The pool is a tap
+  // budget now, and only the player spends it.
+  it('is nothing — holding every relic does not slow the fill', () => {
     const state = freshGame();
     const bare = manaNetRegen(state);
     expect(bare).toBe(manaProduction(state));
-    state.artifacts.attuned = [
-      'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
-    ];
+    for (const id of ARTIFACT_ORDER) grantArtifactLevel(state, id);
     expect(manaNetRegen(state)).toBe(bare);
   });
 

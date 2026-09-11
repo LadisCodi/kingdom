@@ -118,10 +118,11 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 - A relic is a **permanent kingdom passive with no ceiling**: one effect, one
   number, rising with the relic's level. Every relic the player has is on.
 - Relics are **levelled by a card collection**: a 30-day season on a shared
-  calendar, ten albums of nine cards, two albums per relic. The first album a
-  relic ever completes hands it over; every album after adds a level.
+  calendar, **five albums of nine cards, one per relic**. The first season a
+  relic's album is completed hands it over; every season after adds a level,
+  so a relic rises at most once a season.
 - Cards come in **packs** — every ruin room pays one — and an album pays a
-  level, a chest of production hours, keys and Gems. Completing all ten pays
+  level, a chest of production hours, keys and Gems. Completing all five pays
   the season hero and a pile of Gems.
 - At the close the cards are wiped and the levels stay. A duplicate is free to
   give, which is what makes trading work.

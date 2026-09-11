@@ -13,7 +13,7 @@
 // where the decisions live.
 import { describe, expect, it } from 'vitest';
 import { armyCap } from '../src/sim/army';
-import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
+import { grantArtifactLevel, ownsArtifact } from '../src/sim/artifacts';
 import { RUINS, UNITS, roomCount } from '../src/sim/data/definitions';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
@@ -197,17 +197,16 @@ describe('the pre-filled party is always launchable', () => {
   });
 });
 
-// A relic never leaves the shelf (Docs/features/09-relics.md §5).
+// A relic never leaves the kingdom (Docs/features/09-relics.md §1).
 //
 // Sending one down was a whole band of this sheet and a whole decision in
-// front of a room; it is gone, and the only socket a relic can sit in is the
-// kingdom's. What is left to prove is that owning one changes nothing about
-// entering a room, in either direction.
+// front of a room; it is gone, and so is the socket that replaced it — every
+// relic the player has is simply on. What is left to prove is that owning one
+// changes nothing about entering a room, in either direction.
 describe('a relic the player owns is no part of a room', () => {
   const armed = () => {
     const state = ready();
-    grantArtifact(state, 'ForemansSigil');
-    normaliseSlots(state);
+    grantArtifactLevel(state, 'ForemansSigil');
     const game = freshPresenter(state);
     game.openExpedition(BARROW);
     return game;
@@ -217,22 +216,22 @@ describe('a relic the player owns is no part of a room', () => {
     const game = armed();
     const bare = game.expeditionPreview()!.stats.atk;
     expect(game.expeditionLaunchBlock()).toBeNull();
-    // Attuned or on the shelf, the party that walks in is the same party.
-    attune(game.state, 0, 'ForemansSigil', game.now());
+    // Held or not, the party that walks in is the same party: nothing
+    // carries a relic anywhere.
+    grantArtifactLevel(game.state, 'ForemansSigil');
     expect(game.expeditionLaunchBlock()).toBeNull();
     expect(game.expeditionPreview()!.stats.atk).toBe(bare);
   });
 
-  it('is still the kingdom\'s to wear after a room is fought', () => {
+  it('is still the kingdom\'s after a room is fought', () => {
     const game = freshPresenter((() => {
       const state = ready(HOST);
-      grantArtifact(state, 'ForemansSigil');
-      normaliseSlots(state);
+      grantArtifactLevel(state, 'ForemansSigil');
       return state;
     })());
     game.openExpedition(BARROW);
     game.doLaunchExpedition();
     expect(game.ruinProgress(BARROW).cleared).toBe(1);
-    expect(attune(game.state, 0, 'ForemansSigil', game.now())).toBe('Attuned');
+    expect(ownsArtifact(game.state, 'ForemansSigil')).toBe(true);
   });
 });

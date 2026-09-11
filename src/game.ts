@@ -12,6 +12,7 @@ import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  COLLECTION, PACKS, PACK_ORDER, type PackTier,
 } from './sim/data/definitions';
 import { formatDuration } from './ui/format';
 import type { IconName } from './ui/kit/icon';
@@ -32,7 +33,17 @@ import {
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   trainingCompletesAt,
 } from './sim/army';
-import { attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier } from './sim/artifacts';
+import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
+import {
+  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, buyWildcard, cardCount,
+  heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
+  placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
+  wildcardCovers, wildcardOffers, wildcardsHeld,
+  SEASON_CARDS, type AlbumPayout, type PackOpening, type VaultTier,
+} from './sim/collection';
+import {
+  ALBUMS, ALBUM_ORDER, albumOfRelic, RARITIES, type AlbumId, type Rarity,
+} from './sim/data/seasons';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -124,7 +135,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
+  | 'collection' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
@@ -166,7 +177,10 @@ export interface Banner {
 export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number }
-  | { kind: 'relicFragments'; artifactId: ArtifactId; amount: number }
+  // A card pack, which a room pays and a call never does.
+  | { kind: 'pack'; tier: PackTier }
+  // One card turning over in a pack's reveal (Docs/features/09-relics.md §11.5).
+  | { kind: 'card'; album: AlbumId; slot: number; isNew: boolean; count: number }
   | { kind: 'currency'; currency: CurrencyId; amount: number };
 
 /**
@@ -306,7 +320,22 @@ export class Game {
   /** The relic whose card is open on the Reliquary screen, or null for the
    *  grid. Same shape and same reason as `openHeroId`: the two screens are
    *  one pattern — a collection, and one piece of it opened. */
+  /** The relic whose card is open over the Collection, or null (§11.4). */
   openRelicId: ArtifactId | null = null;
+  /** The album page open behind it, or null for the album grid itself. */
+  openAlbumId: AlbumId | null = null;
+  /** The wildcard the next card tap would spend, or null. Select-then-place,
+   *  the same idiom placement and cast modes use. */
+  armedWildcard: Rarity | null = null;
+  /**
+   * Albums whose ninth card has just landed, waiting for their sheet.
+   *
+   * A completed album interrupts nothing (§11.5): the cards finish turning,
+   * and the payout sheet follows the reveal. Transient by design — an album
+   * is already paid and already in `completed`, so a sheet missed at quit
+   * simply does not replay.
+   */
+  pendingPayouts: AlbumPayout[] = [];
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -852,7 +881,7 @@ export class Game {
     const block = castBlock(this.state, artifactId);
     if (block !== null) {
       if (block === 'NotEnoughMana') this.shake(['Mana']);
-      else if (block === 'NotAttuned') this.toast('Attune it first — a relic must be worn to be cast');
+      else if (block === 'NotOwned') this.toast('Finish its album first');
       this.notify();
       return;
     }
@@ -940,34 +969,372 @@ export class Game {
 
   // ---------------------------------------------------------------- relics
 
-  doAttune(slot: number, artifactId: ArtifactId | null): void {
-    const result = attune(this.state, slot, artifactId, this.now());
-    if (result === 'Attuned' || result === 'Unattuned') playSfx('upgradeBought');
-    else if (result === 'SlotLocked') this.toast('That socket is still settling');
-    else if (result === 'AlreadyAttuned') this.toast('It is already worn in another socket');
+  /** What the pill and the Collection header both read (§11.1, §11.2). */
+  seasonInfo(): {
+    name: string; frame: string; held: number; total: number;
+    leftMs: number; packs: number; stars: number; complete: boolean;
+  } {
+    const { collection } = this.state;
+    const def = seasonDef(collection.season);
+    return {
+      name: def.name,
+      frame: def.frame,
+      held: seasonHeld(this.state),
+      total: SEASON_CARDS,
+      leftMs: seasonLeftMs(this.state, this.now()),
+      packs: collection.packs.length,
+      stars: collection.stars,
+      complete: collection.completed.length >= ALBUM_ORDER.length,
+    };
+  }
+
+  /** The pill hides behind any sheet and never shows before the first card. */
+  seasonPillState(): { showing: boolean; glowing: boolean } | null {
+    const info = this.seasonInfo();
+    if (info.held === 0 && info.packs === 0) return null;
+    return { showing: !this.hasOpenSheet(), glowing: info.packs > 0 };
+  }
+
+  /** One row per album, in season order — the medallions of §11.2. */
+  albumRows(): Array<{
+    id: AlbumId; name: string; held: number; total: number; complete: boolean;
+    relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
+  }> {
+    return ALBUM_ORDER.map((id) => {
+      const def = ALBUMS[id];
+      const relic = ARTIFACTS[def.relic];
+      return {
+        id,
+        name: def.name,
+        held: albumHeld(this.state, id),
+        total: def.cards.length,
+        complete: albumIsComplete(this.state, id),
+        relic: def.relic,
+        relicName: relic.name,
+        relicLevel: artifactLevel(this.state, def.relic),
+        sprite: relic.sprite,
+        glyph: relic.glyph,
+      };
+    });
+  }
+
+  /** The nine slots of one album, for the 3×3 grid (§11.3). */
+  albumPage(id: AlbumId): {
+    id: AlbumId; name: string; index: number; of: number; complete: boolean;
+    relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
+    rewards: { hours: number; silverKeys: number; goldKeys: number; gems: number };
+    cards: Array<{
+      slot: number; name: string; rarity: number; gold: boolean;
+      count: number; stars: number;
+    }>;
+  } {
+    const def = ALBUMS[id];
+    const relic = ARTIFACTS[def.relic];
+    return {
+      id,
+      name: def.name,
+      index: ALBUM_ORDER.indexOf(id) + 1,
+      of: ALBUM_ORDER.length,
+      complete: albumIsComplete(this.state, id),
+      relic: def.relic,
+      relicName: relic.name,
+      relicLevel: artifactLevel(this.state, def.relic),
+      sprite: relic.sprite,
+      glyph: relic.glyph,
+      rewards: albumRewards(id),
+      cards: def.cards.map((card, slot) => ({
+        slot,
+        name: card.name,
+        rarity: card.rarity,
+        gold: card.gold === true,
+        count: cardCount(this.state, { album: id, slot }),
+        stars: starsFor({ album: id, slot }),
+      })),
+    };
+  }
+
+  /** The relic's card (§11.4): its level, what it does now and next, and the
+   *  album that raises it. No actions — there is nothing to do to a relic. */
+  relicCard(id: ArtifactId): {
+    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
+    owned: boolean; now: string; next: string; album: AlbumId; albumName: string;
+    held: number; total: number;
+  } {
+    const def = ARTIFACTS[id];
+    const album = albumOfRelic(id);
+    return {
+      id,
+      name: def.name,
+      sprite: def.sprite,
+      glyph: def.glyph,
+      level: artifactLevel(this.state, id),
+      owned: artifactLevel(this.state, id) >= 1,
+      now: relicEffectText(id, passiveValue(this.state, id)),
+      next: relicEffectText(id, nextPassiveValue(this.state, id)),
+      album,
+      albumName: ALBUMS[album].name,
+      held: albumHeld(this.state, album),
+      total: ALBUMS[album].cards.length,
+    };
+  }
+
+  relicStrip(): ArtifactId[] {
+    return ownedArtifacts(this.state);
+  }
+
+  /**
+   * OPEN THE NEXT PACK. The cards turn in the gacha reveal, and an album its
+   * ninth card finished follows the reveal rather than interrupting it (§11.5).
+   */
+  doOpenPack(): void {
+    const opening = openPack(this.state, this.now());
+    if (opening === null) return;
+    playSfx('chainFinished');
+    this.pendingPayouts.push(...opening.payouts);
+    this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
     this.notify();
   }
 
-  doLevelArtifact(id: ArtifactId): void {
-    const result = levelUpArtifact(this.state, id);
-    if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
-    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+  /** What the reveal will deal, asked before it is opened — the album screen
+   *  shows a pack's tier and count without spending it. */
+  peekPack(): { tier: PackTier; cards: number } | null {
+    const pack = this.state.collection.packs[0];
+    if (pack === undefined) return null;
+    return { tier: pack.tier, cards: packCards(this.state.seed, pack).length };
+  }
+
+  /** The Gems the five albums together pay — the prize band's other chip. */
+  prizeGems(): number {
+    return COLLECTION.prizeGems;
+  }
+
+  /** Walk down a level (§11.2 → §11.3 → §11.4). Each one is a field rather
+   *  than a route, so the nav tab stays put and the back knob is local. */
+  openAlbum(id: AlbumId): void {
+    this.openAlbumId = id;
+    this.openRelicId = null;
     this.notify();
   }
 
-  doRaiseArtifactTier(id: ArtifactId): void {
-    const result = raiseArtifactTier(this.state, id);
-    if (result === 'Raised') playSfx('upgradeBought');
-    else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+  closeAlbum(): void {
+    this.armedWildcard = null;
+    if (this.openAlbumId === null) {
+      this.dismiss();
+      return;
+    }
+    this.openAlbumId = null;
     this.notify();
   }
 
-  doBuyAttunementSlot(): void {
-    const result = buyAttunementSlot(this.state);
-    if (result === 'Purchased') playSfx('gemSpend');
-    if (result === 'NotEnoughGems') this.shake(['Gems']);
+  /** The arrows in the album page's bottom corners. Five is a short walk, and
+   *  it wraps: a player checking what they are close to should not hit a wall
+   *  at either end. */
+  stepAlbum(by: number): void {
+    if (this.openAlbumId === null) return;
+    const i = ALBUM_ORDER.indexOf(this.openAlbumId);
+    const n = ALBUM_ORDER.length;
+    this.openAlbumId = ALBUM_ORDER[(((i + by) % n) + n) % n]!;
     this.notify();
+  }
+
+  openRelic(id: ArtifactId): void {
+    this.openRelicId = id;
+    this.notify();
+  }
+
+  closeRelic(): void {
+    this.openRelicId = null;
+    this.notify();
+  }
+
+  /**
+   * A card tapped on an album page.
+   *
+   * A DUPLICATE is a choice the player has to be offered — send it, or leave
+   * it to the vault — and sending needs the social layer (**OQ-89**), so
+   * until that lands the only thing a duplicate can do is say what it is
+   * worth. A MISSING card says what packs it falls from.
+   */
+  tapCard(album: AlbumId, slot: number): void {
+    const card = ALBUMS[album].cards[slot]!;
+    const count = cardCount(this.state, { album, slot });
+    // A WILDCARD IS ARMED: this tap is the placement, and the grid has
+    // already said which slots would take it.
+    if (this.armedWildcard !== null) {
+      const rarity = this.armedWildcard;
+      const result = placeWildcard(this.state, { album, slot }, rarity);
+      if (result.placed) {
+        playSfx('upgradeBought');
+        this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
+        if (result.payout !== null) this.pendingPayouts.push(result.payout);
+        if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
+      } else if (result.reason === 'GoldSlot') {
+        this.toast('No wildcard covers a gold card — it is earned or sent');
+      } else if (result.reason === 'AlreadyHeld') {
+        this.toast('You already hold that one');
+      } else {
+        this.toast(`A ${rarity}★ wildcard does not reach that card`);
+      }
+      this.notify();
+      return;
+    }
+    if (count === 0) {
+      const held = heldWildcardFor(this.state, { album, slot });
+      if (held !== null) {
+        // The doc's own line: a missing card says what packs it falls from,
+        // AND the wildcard if one covers it (§11.3).
+        this.toast(`${card.name} — your ${held}★ wildcard fills it`);
+        this.armWildcard(held);
+      } else {
+        this.toast(card.gold === true
+          ? `${card.name} — gold, so Star packs only`
+          : `${card.name} — ${PACK_ORDER.filter((tier) => PACKS[tier].weights[card.rarity - 1] > 0)
+            .join(', ')} packs`);
+      }
+    } else if (count > 1) {
+      this.toast(`${count - 1} spare — ${starsFor({ album, slot })} stars each in the vault`);
+    } else {
+      this.toast(`${card.name} — ${'★'.repeat(card.rarity)}`);
+    }
+    this.notify();
+  }
+
+  /** The vault knob. One press buys the tier the stars reach. */
+  openVault(): void {
+    const vault = this.vaultInfo();
+    if (!vault.affordable) {
+      this.toast(`${vault.cost} stars for a ${vault.next} pack — ${vault.stars} so far`);
+      this.notify();
+      return;
+    }
+    this.doBuyFromVault(vault.next);
+  }
+
+  /**
+   * The store's Cards shelf (§6): one row per tier the store sells, with its
+   * PUBLISHED ODDS on it.
+   *
+   * The odds are on the shelf rather than behind an info knob because §6 says
+   * "at published odds" and a store is the one place that promise has to be
+   * kept where the money is.
+   */
+  packOffers(): Array<{
+    tier: PackTier; cost: number; cards: number; sprite: string;
+    promise: string; odds: string;
+  }> {
+    return packsForSale().map((tier) => {
+      const def = PACKS[tier];
+      return {
+        tier,
+        cost: packGemCost(tier),
+        cards: def.cards,
+        sprite: `pack_${tier.toLowerCase()}`,
+        promise: def.goldGuaranteed
+          ? `${def.cards} cards, one gold edition guaranteed`
+          : `${def.cards} cards, and a chance of a gold edition`,
+        odds: packOdds(tier).map((o) => `${o.rarity}★ ${o.percent}%`).join(' · '),
+      };
+    });
+  }
+
+  /**
+   * The store's AIMED offers (§9): one per album the player has nearly
+   * finished. An offer with no rarity — an album down to gold slots alone —
+   * is dropped here rather than shown greyed out: there is nothing to sell,
+   * and a dead row on a shelf is worse than no row.
+   */
+  wildcardOffers(): Array<{
+    album: AlbumId; name: string; short: number; rarity: Rarity; cost: number;
+    sprite: string; relic: ArtifactId;
+  }> {
+    return wildcardOffers(this.state)
+      .filter((o): o is typeof o & { rarity: Rarity } => o.rarity !== null)
+      .map((o) => ({
+        album: o.album,
+        name: ALBUMS[o.album].name,
+        short: o.short,
+        rarity: o.rarity,
+        cost: o.cost,
+        sprite: `album_${o.album.toLowerCase()}`,
+        relic: ALBUMS[o.album].relic,
+      }));
+  }
+
+  doBuyWildcard(rarity: Rarity, album?: AlbumId): void {
+    const result = buyWildcard(this.state, rarity);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      // Bought from an aimed offer, the album it was aimed at opens with the
+      // wildcard already in hand: the purchase and the placement are one
+      // intention, and making the player go and find the album again would
+      // be a second errand.
+      if (album !== undefined) {
+        this.openAlbumId = album;
+        this.armedWildcard = rarity;
+        this.setOverlay('collection');
+      } else {
+        this.toast(`A ${rarity}★ wildcard — place it on any card it covers`);
+      }
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
+  /** What the player holds, cheapest first — the album page's strip. */
+  wildcardsHeld(): Array<{ rarity: Rarity; count: number }> {
+    return RARITIES
+      .map((rarity) => ({ rarity, count: wildcardsHeld(this.state, rarity) }))
+      .filter((w) => w.count > 0);
+  }
+
+  /**
+   * ARM a wildcard, then tap the slot: the game's own select-then-place
+   * idiom, which placement mode and cast mode both use.
+   *
+   * A confirmation sheet would be the alternative and it is worse here — a
+   * consumable spent by one tap needs the MODE to be visible, not a dialog
+   * after the fact, and the armed grid shows exactly which slots it can fill.
+   */
+  armWildcard(rarity: Rarity | null): void {
+    this.armedWildcard = rarity === null || wildcardsHeld(this.state, rarity) <= 0
+      ? null
+      : rarity;
+    this.notify();
+  }
+
+  /** Whether an armed wildcard could land on this slot — what the grid lights. */
+  wildcardFits(album: AlbumId, slot: number): boolean {
+    if (this.armedWildcard === null) return false;
+    const ref = { album, slot };
+    return !holdsCard(this.state, ref) && wildcardCovers(this.armedWildcard, ref);
+  }
+
+  doBuyPack(tier: PackTier): void {
+    const result = buyPack(this.state, tier);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      const waiting = this.state.collection.packs.length;
+      this.toast(waiting === 1
+        ? `A ${tier} pack — open it in the Collection`
+        : `A ${tier} pack · ${waiting} waiting in the Collection`);
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
+  doBuyFromVault(tier: VaultTier): void {
+    const result = buyFromVault(this.state, tier);
+    if (result === 'Opened') playSfx('upgradeBought');
+    else this.toast(`${vaultCost(tier)} stars for a ${tier} pack — not yet`);
+    this.notify();
+  }
+
+  vaultInfo(): { stars: number; next: VaultTier; cost: number; affordable: boolean } {
+    const next = vaultNext(this.state);
+    const cost = vaultCost(next);
+    return { stars: this.state.collection.stars, next, cost, affordable: this.state.collection.stars >= cost };
   }
 
   /** Buy a whole pool at today's rung. The Mana sheet's other button. */
@@ -1526,9 +1893,8 @@ export class Game {
           BANNER_ORDER.map((b) => this.keyOffer(b)),
           this.walletValue('Gems'),
         ]);
-      // Not signed: the reliquary counts down attunement slots and reads the
-      // Mana pool for the cast button; the rest draw prices against a purse
-      // that moves every tick.
+      // Not signed: the Collection counts the season down and the rest draw
+      // prices against a purse that moves every tick.
       default: return null;
     }
   }
@@ -1793,8 +2159,8 @@ export class Game {
         break;
       }
       case 'OwnArtifacts':
-        this.setUiHint('reliquary');
-        overlay('reliquary');
+        this.setUiHint('collection');
+        overlay('collection');
         break;
       case 'CollectTaps':
         centerCell(this.nearestCell((c) =>
@@ -2312,18 +2678,6 @@ export class Game {
     // come back down to what is left of them.
     this.reconcileParty();
     if (report.result === 'Cleared') {
-      if (report.artifact !== null) {
-        const relic = ARTIFACTS[report.artifact];
-        this.queueBanner({
-          title: 'A relic comes home!',
-          icon: relic.glyph,
-          name: relic.name,
-          desc: relic.passiveText,
-          sprite: relic.sprite,
-          tone: 'gold',
-          sfx: 'chainFinished',
-        });
-      }
       // The sheet stays open on the NEXT room, because the decision the
       // player just made is the one they are about to make again — and it
       // closes itself when the ruin runs out.
@@ -2347,7 +2701,7 @@ export class Game {
       subtitle: report.depthCompleted
         ? `Depth ${report.depth} is yours`
         : `Depth ${report.depth} · Room ${report.room}`,
-      prizes: report.result === 'Cleared' ? roomPrizes(report, RUINS[ruinId].artifact) : [],
+      prizes: report.result === 'Cleared' ? roomPrizes(report) : [],
     });
     this.notify();
   }
@@ -2572,7 +2926,11 @@ export class Game {
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
-    if (name !== 'reliquary') this.openRelicId = null;
+    if (name !== 'collection') {
+      this.openRelicId = null;
+      this.openAlbumId = null;
+      this.armedWildcard = null;
+    }
     this.notify();
   }
 
@@ -3298,19 +3656,54 @@ function trainerName(unitId: UnitId): string {
  * order the reveal deals them in, and the shards last because they are the
  * thing a player is collecting toward rather than spending.
  */
-function roomPrizes(
-  report: { wallet: Wallet; heroXp: number; fragments: number },
-  artifactId: ArtifactId,
-): GachaPrize[] {
+function roomPrizes(report: { wallet: Wallet; heroXp: number; pack: PackTier }): GachaPrize[] {
   const prizes = walletPrizes(report.wallet);
   if (report.heroXp > 0) {
     prizes.push({ kind: 'currency', currency: 'HeroXp', amount: report.heroXp });
   }
-  if (report.fragments > 0) {
-    prizes.push({ kind: 'relicFragments', artifactId, amount: report.fragments });
-  }
+  // The pack is LAST because it is the thing the player is collecting toward
+  // rather than spending — the same argument the shards had.
+  prizes.push({ kind: 'pack', tier: report.pack });
   return prizes;
 }
+
+/** The cards a pack dealt, worst first: the reveal's own order. */
+function packPrizes(opening: PackOpening): GachaPrize[] {
+  return opening.cards.map((c): GachaPrize => ({
+    kind: 'card',
+    album: c.ref.album,
+    slot: c.ref.slot,
+    isNew: c.isNew,
+    count: c.count,
+  }));
+}
+
+/**
+ * One relic's effect, said in the player's words at a given value.
+ *
+ * A speed reads as "30% faster" (the modifier is a multiplier BELOW 1, so the
+ * saving is 1 − value); a yield reads as "+25%" or "+2". One place, because
+ * the card prints the same sentence twice — now, and at the next level.
+ */
+function relicEffectText(id: ArtifactId, value: number): string {
+  const { passive } = ARTIFACTS[id];
+  const pct = (n: number): string => `${Math.round(n * 100)}%`;
+  if (passive.op === 'mul') {
+    return passive.perLevel < 0
+      ? `${RELIC_SUBJECT[id]} ${pct(Math.max(0, 1 - value))} faster`
+      : `${RELIC_SUBJECT[id]} +${pct(Math.max(0, value - 1))}`;
+  }
+  return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+}
+
+/** What each relic's number is ABOUT, in three or four words. */
+const RELIC_SUBJECT: Record<ArtifactId, string> = {
+  DowsingRod: 'Forests, crops and stone recover',
+  VerdantSeal: 'Berries, game and shoals come back',
+  ForemansSigil: 'Every worker carries',
+  GildedLedger: 'Your villagers pay',
+  WanderersCompass: 'Rooms pay Stardust',
+};
 
 const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) as
   Array<[CurrencyId, number]>)

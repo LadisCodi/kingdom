@@ -1,25 +1,67 @@
 /* Settings (§5.11). Calm and uncluttered — this is a drawer, not a screen. */
 
+/* A section is a small brown caps word with a rule running off it (M9). */
 .set-section {
-  margin: 14px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-muted);
-  border-bottom: 2px solid var(--wood-dark);
-  padding-bottom: 3px;
+  color: var(--wood);
 }
-.set-section:first-child { margin-top: 0; }
+.set-section::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(92, 58, 30, 0.28);
+}
+.set-section:first-child { margin-top: 2px; }
 
+/* Every row is a parchment card in a thin wood border (M9). */
 .set-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
+  min-height: 48px;
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
-.set-label { font-family: var(--font-body); font-size: var(--text-body); }
+.set-label { font-family: var(--font-body); font-weight: 700; font-size: 16px; line-height: 1.15; }
+.set-hint { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-section { margin: 8px 0 6px; }
+.set-words { flex: 1; min-width: 0; }
+/* The mark in its parchment vignette (M9); the pictures come from
+   sheets/ui-i1-settings.png. */
+.set-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment) center / 38px 38px no-repeat;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+.set-icon.is-music { background-image: url('../../assets/set-music.png'); }
+.set-icon.is-sfx { background-image: url('../../assets/set-sfx.png'); }
+.set-icon.is-ambience { background-image: url('../../assets/set-ambience.png'); }
+.set-icon.is-save { background-image: url('../../assets/set-save.png'); }
+.set-icon.is-payer { background-image: url('../../assets/set-payer.png'); }
+.set-row { margin-bottom: 6px; }
+.set > .k-action { margin-top: 2px; }
+.set-print { margin-top: 10px; }
+/* The one destructive control is a clay slab the width of the sheet. */
+.set > .k-action { display: flex; flex-direction: column; align-items: stretch; }
+.set > .k-action > .k-btn { width: 100%; }
 .set-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 
 .set-danger { color: var(--clay); font-weight: 700; }

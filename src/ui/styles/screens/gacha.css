@@ -25,12 +25,14 @@
 /* The banner ribbon. Display face at --text-title, which is the only size it
    is crisp at (tests/fonts.test.ts). */
 .gr-plaque {
-  padding: 6px 28px;
+  padding: 8px 32px;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
-  color: var(--ink);
+  /* A wooden plaque with a gold rim (M15), not a gold bar. */
+  background: var(--wood);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   text-align: center;
@@ -55,22 +57,23 @@
   place-items: center;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
-  background:
-    linear-gradient(170deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.24)),
-    var(--tile, var(--parchment-shade));
+  /* Parchment tiles dealt onto the veil (M15); the rarity is a ring inside
+     the wood, like the roster's. */
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
+  background: var(--parchment-shade);
   overflow: hidden;
 }
 .gr-tile.is-common { --tile: var(--rarity-common); }
 .gr-tile.is-rare { --tile: var(--rarity-rare); }
 .gr-tile.is-legendary { --tile: var(--rarity-legendary); }
-.gr-tile.is-currency { --tile: var(--parchment-shade); }
+.gr-tile.is-currency { --tile: transparent; }
+.gr-tile.is-common { --tile: transparent; }
 
 /* A hero is not a bigger stack of the tile beside it. The light frame and the
    glow are the whole difference, and they have to read at a glance. */
 .gr-tile.is-hero {
-  border-color: var(--parchment);
-  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(244, 228, 193, 0.75);
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(242, 178, 51, 0.75);
 }
 
 .gr-art {
@@ -106,6 +109,76 @@
   border-radius: 4px;
   background: rgba(24, 15, 8, 0.7);
 }
+/* ---- a card and a pack (Docs/features/09-relics.md §11.5) --------------
+ * The reveal deals cards now as well as calls. A card carries three things a
+ * hero tile never did — its rarity ABOVE it, its name on a ribbon, and
+ * whether it is new — so it is a column rather than a centred picture. */
+.gr-tile.is-card,
+.gr-tile.is-pack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1px;
+  padding-top: 11px;
+}
+.gr-tile.is-card .gr-art,
+.gr-tile.is-pack .gr-art {
+  flex: 1;
+  min-height: 0;
+  width: 86%;
+  image-rendering: auto;
+  object-position: center;
+}
+/* Rarity is the card's ground, as it is on the album page. */
+.gr-tile.is-card.r1 { --wash: rgba(79, 163, 199, 0.22); }
+.gr-tile.is-card.r2 { --wash: rgba(111, 191, 74, 0.22); }
+.gr-tile.is-card.r3 { --wash: rgba(95, 143, 168, 0.3); }
+.gr-tile.is-card.r4 { --wash: rgba(138, 107, 196, 0.28); }
+.gr-tile.is-card.r5 { --wash: rgba(217, 154, 43, 0.34); }
+.gr-tile.is-card {
+  background: linear-gradient(var(--wash, transparent), var(--wash, transparent)), var(--parchment-shade);
+}
+.gr-tile.is-card.is-gold {
+  border-color: var(--gold-dark);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 12px rgba(242, 178, 51, 0.7);
+}
+.gr-stars {
+  position: absolute;
+  top: 1px;
+  display: flex;
+  gap: 1px;
+}
+/* The name on a ribbon along the bottom, the album page's idiom. */
+.gr-name {
+  width: 100%;
+  padding: 1px 2px;
+  background: var(--leaf-dark);
+  color: var(--ink-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* NEW is the thing the player is looking for as the pack deals, so it sits
+   where the duplicate count would and reads instead of it. */
+.gr-new {
+  position: absolute;
+  right: 2px;
+  bottom: 18px;
+  padding: 0 4px;
+  border-radius: 5px;
+  border: 2px solid var(--gold-dark);
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+.gr-tile.is-card .gr-count { bottom: 18px; }
+
 .gr-tag {
   position: absolute;
   left: 0;
@@ -136,7 +209,16 @@
 /* A hidden tile must not burn its animation before it is shown. */
 .gr-tile.is-hidden { animation: none; }
 
-.gr-calls { color: var(--locked); font-size: var(--text-helper); }
+/* The caption is a parchment slab under the grid (M15). */
+.gr-calls {
+  padding: 6px 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
 
 /* The way out, and it appears only when there is nothing left to deal. */
 .gr-prompt {
@@ -184,12 +266,16 @@
   filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.45));
 }
 .gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: 96px; }
-.gr-curtain-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
-.gr-curtain-title { color: var(--locked); font-size: var(--text-helper); }
+.gr-curtain-name { font-family: var(--font-body); font-weight: 700; font-size: 28px; line-height: 1.1; }
+.gr-curtain-title { color: var(--parchment-shade); font-size: var(--text-body); }
+.gr-curtain-kicker { font-weight: 700; }
 .gr-curtain-rarity {
-  padding: 2px 12px;
+  padding: 2px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(24, 15, 8, 0.6);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  font-weight: 700;
   font-size: var(--text-helper);
   letter-spacing: 0.06em;
 }

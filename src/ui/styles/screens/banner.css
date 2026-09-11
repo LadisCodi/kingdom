@@ -18,8 +18,11 @@
   position: relative;
   pointer-events: auto; /* the card itself is tap-to-dismiss */
   cursor: pointer;
+  /* A cloth banner HANGING from the plank (M12): narrow, the picture over
+     the words, a point at the bottom. */
+  width: 210px;
   max-width: 92%;
-  padding-bottom: 16px; /* room for the tail */
+  padding-bottom: 0;
   filter: drop-shadow(0 6px 10px rgba(60, 36, 18, 0.45));
   animation: b-drop 0.3s ease-out;
 }
@@ -32,57 +35,60 @@
 
 /* The rope it hangs from. */
 .b-rope {
-  height: 5px;
-  margin: 0 10px;
-  border-radius: 3px;
-  background: var(--tone-dark);
+  /* Two short ropes, one at each top corner, tying the cloth to the plank. */
+  height: 14px;
+  margin: 0 16px;
+  background:
+    linear-gradient(var(--wood-dark), var(--wood-dark)) left / 6px 100% no-repeat,
+    linear-gradient(var(--wood-dark), var(--wood-dark)) right / 6px 100% no-repeat;
 }
 
 .b-body {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  text-align: center;
+  gap: 6px;
+  padding: 12px 12px 8px;
   background: var(--tone);
   border: var(--outline) solid var(--wood-dark);
-  border-radius: 4px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 4px 0 0 rgba(255, 255, 255, 0.18), inset -4px 0 0 rgba(60, 36, 18, 0.12);
 }
 
 /* The swallowtail. The notch has to be most of the tail's height to read at
  * all — a shallow one across this width is indistinguishable from a straight
  * edge, which is exactly how the first attempt looked. */
 .b-tail {
-  height: 16px;
-  margin: -3px 0 0;
+  height: 34px;
+  margin: 0;
   background: var(--tone);
-  border-left: var(--outline) solid var(--wood-dark);
-  border-right: var(--outline) solid var(--wood-dark);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 25%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 3px 0 var(--wood-dark));
 }
 
 /* The subject gets to show itself off — its real sprite, not a glyph. */
 .b-slot {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.35);
-  border: 2px solid var(--wood-dark);
-  border-radius: 8px;
 }
 .b-art {
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgba(60, 36, 18, 0.3));
 }
 .b-glyph { font-size: 30px; line-height: 1; }
 
 .b-text { min-width: 0; }
 .b-title {
   font-family: var(--font-body);
+  font-weight: 700;
   font-size: var(--text-helper);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -90,7 +96,9 @@
 }
 .b-name {
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.1;
   color: var(--ink);
 }
 .b-desc { font-size: var(--text-helper); color: var(--ink); opacity: 0.8; }
@@ -120,15 +128,36 @@
   pointer-events: none;
 }
 .toast-msg {
+  position: relative;
   max-width: 88%;
-  padding: 6px 10px;
+  margin-left: 22px;
+  padding: 8px 12px 8px 14px;
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
+  font-weight: 700;
   color: var(--ink);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
-  border-left: 6px solid var(--clay);
+  border-left: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
   box-shadow: 0 3px 0 rgba(60, 36, 18, 0.3);
   animation: fadeout 2.6s forwards;
+}
+/* The clay tag with the mark on it hangs off the slip's left edge (M12). */
+.toast-msg::before {
+  content: '!';
+  position: absolute;
+  left: -22px;
+  top: -4px;
+  bottom: -4px;
+  width: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--clay);
+  border: 2px solid #8e3323;
+  color: var(--gold);
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
 }

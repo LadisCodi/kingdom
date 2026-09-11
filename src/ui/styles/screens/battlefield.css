@@ -8,7 +8,7 @@
 
 .bs {
   position: absolute;
-  inset: 0;
+  inset: var(--hud-h) 0 var(--nav-h);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -20,7 +20,7 @@
      the board into a ghost of a menu. */
   background:
     radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.12), transparent 70%),
-    #150d07;
+    #3a2416;
   overflow: hidden;
 }
 
@@ -32,37 +32,63 @@
 .bs-bar {
   position: relative;
   width: 100%;
-  height: 42px;
+  height: 40px;
   display: flex;
   align-items: center;
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: 999px;
-  background: var(--clay);
+  border: 3px solid var(--wood-dark);
+  border-radius: 12px;
+  /* A wooden plank (M16): our number in leaf at the left, theirs in clay at
+     the right, the fill a thin leaf band along the bottom edge. */
+  background: var(--wood);
+  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -3px 0 rgba(60, 36, 18, 0.35), 0 3px 0 var(--wood-dark);
   overflow: hidden;
   flex: none;
 }
 .bs-bar-fill {
   position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--sky);
+  inset: auto auto 0 0;
+  height: 6px;
+  background: var(--leaf);
+  box-shadow: inset 0 -2px 0 var(--leaf-dark);
   transition: width 120ms linear;
+}
+.bs-bar::after {
+  /* The crossed swords at the split. */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  translate: -50% -50%;
+  background: var(--parchment);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.9;
 }
 .bs-bar-mine,
 .bs-bar-theirs {
   position: relative;
   font-family: var(--font-body);
-  font-size: var(--text-body);
-  color: var(--parchment);
-  padding: 0 12px;
+  font-weight: 700;
+  font-size: 20px;
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
+  padding: 0 16px;
 }
+.bs-bar-mine { color: #9be36f; }
+.bs-bar-theirs { color: #ff8a70; }
 .bs-bar-mine { margin-right: auto; }
 
 .bs-where {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  color: var(--parchment);
+  gap: 0;
+  padding: 4px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
   text-align: center;
@@ -83,13 +109,21 @@
 }
 /* The two armies facing each other. The one piece of empty space on the
    screen that is doing a job. */
-.bs-gap { height: 36px; flex: none; }
+.bs-gap {
+  position: relative;
+  width: 100%;
+  height: 36px;
+  flex: none;
+  /* The line the two armies face across: dashed rope (M16). */
+  background: linear-gradient(to right, rgba(244, 228, 193, 0.35) 0 60%, transparent 60%) center / 14px 3px repeat-x;
+}
 
 .bs-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   min-height: 12px;
+  padding-bottom: 10px; /* room for the count tag under the ring */
 }
 /* The back rank sits behind the front one, and says so by being smaller —
    the row is what decides who gets hit (Docs/features/combat.md §8). */
@@ -101,12 +135,13 @@
   height: 66px;
   display: grid;
   place-items: center;
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: var(--radius-sm);
+  /* Rings carved in the wood, like the board's slots (M10, M16). */
+  border: 4px solid var(--wood);
+  border-radius: 50%;
   background: var(--parchment-shade);
-  box-shadow: 0 var(--lip) 0 rgba(60, 36, 18, 0.35);
+  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
 }
-.bs-slot.is-hero { background: var(--parchment); border-color: var(--gold-dark); }
+.bs-slot.is-hero { background: var(--parchment); border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-dark), inset 0 0 0 2px var(--gold-dark), 0 var(--lip) 0 var(--gold-dark); }
 
 .bs-portrait {
   width: 48px;
@@ -121,18 +156,22 @@
 }
 .bs-count {
   position: absolute;
-  right: 2px;
-  bottom: 0;
+  left: 50%;
+  translate: -50% 0;
+  bottom: -9px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-weight: 700;
+  font-size: 12px;
   color: var(--ink);
-  text-shadow: 0 1px 0 var(--parchment), 0 -1px 0 var(--parchment),
-    1px 0 0 var(--parchment), -1px 0 0 var(--parchment);
 }
 
 /* HURT: a white frame for two frames. */
 @keyframes bs-hit {
-  from { background: var(--parchment); filter: brightness(2.4); }
+  from { background: var(--parchment); border-color: var(--clay); filter: brightness(2.4); }
   to { background: var(--parchment-shade); filter: none; }
 }
 .bs-slot.is-hit { animation: bs-hit 180ms steps(2); }
@@ -168,14 +207,24 @@
   font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   padding: 12px 36px;
-  border: var(--outline) solid var(--wood-dark);
+  /* A wooden plaque with a gold rim (M16); the verdict is in the rim's tone. */
+  border: 3px solid var(--gold);
   border-radius: var(--radius);
   background: var(--wood);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px var(--wood-dark), 0 6px 0 rgba(0, 0, 0, 0.35);
 }
-.bs-plaque.is-won { background: var(--leaf); }
-.bs-plaque.is-lost { background: var(--clay); }
-.bs-exit { width: 100%; flex: none; }
+.bs-plaque.is-won { color: var(--gold); }
+.bs-plaque.is-lost { border-color: var(--clay); color: var(--parchment); }
+/* The way out hangs under the plaque, in the middle of the field (M16). */
+.bs-exit {
+  position: absolute;
+  top: calc(50% + 44px);
+  left: 50%;
+  translate: -50% 0;
+  width: 60%;
+  flex: none;
+}
 .bs-exit .k-btn { width: 100%; }
 .bs .is-hidden { visibility: hidden; }

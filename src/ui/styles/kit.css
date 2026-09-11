@@ -52,11 +52,14 @@
 .k-plank {
   margin: -10px -10px 8px;
   padding: 6px 10px;
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* The title is CENTRED on the strip (M3–M18); the way out rides at the
+     right end, off the flow, so the word never shifts for it. */
+  justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 38px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   border-radius: 4px 4px 0 0;
@@ -67,8 +70,8 @@
 }
 /* The title grows; the close knob sits at the strip's end, inside it, so the
    plank is the whole of the sheet's chrome above the content. */
-.k-plank > span:first-child { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.k-plank .k-knob { width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
+.k-plank > span:first-child { min-width: 0; max-width: calc(100% - 96px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
 
 /* Rope grab handle on a sheet. */
 .k-grab {
@@ -124,7 +127,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px; /* the brief's minimum target (§2), and not a pixel more */
+  min-height: 40px; /* the mockups' slabs measure ~38px at 402; 40 keeps a thumb's margin */
   /* A FLOOR, so a slab's width comes from the row it sits in rather than from
      how many characters its label happens to have. "Finish 10" next to
      "Upgrade 180 60" read as two different kinds of control when one was half
@@ -248,9 +251,10 @@
   padding: 0;
   margin-bottom: 0;
   border-radius: 16px;
-  background: var(--parchment-shade);
+  /* A wooden trough with a brass knob in it (M9); on, the trough is leaf. */
+  background: var(--wood);
   border: 2px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.25);
+  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.35), 0 2px 0 var(--wood-dark);
   transition: background var(--motion-snap) steps(1);
 }
 .k-switch::after {
@@ -261,8 +265,9 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  background: radial-gradient(circle at 35% 30%, #ffe08a, var(--gold) 55%, var(--gold-dark));
+  border: 2px solid var(--gold-dark);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
   transition: transform var(--motion-snap) steps(1);
 }
 /* The track is 56x32 because that is what an iOS switch looks like; the
@@ -604,3 +609,8 @@
   background: var(--parchment); color: var(--ink);
   border: 2px dashed var(--clay); border-radius: 4px;
 }
+
+/* A centred dialog is narrower than a drawer (M14, M18): ~82% of the frame. */
+.k-sheet.is-centred { max-width: 340px; max-height: 78%; margin-left: auto; margin-right: auto; }
+/* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
+.k-sheet.is-tall { height: auto; max-height: calc(100% - 96px); margin-top: auto; }

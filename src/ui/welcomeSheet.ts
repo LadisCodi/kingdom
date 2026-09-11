@@ -27,31 +27,36 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     earned.set('Gold', (earned.get('Gold') ?? 0) + report.result.goldEarned);
   }
 
-  const rows = [...earned.entries()]
-    .filter(([, n]) => n > 0)
-    .sort((a, b) => b[1] - a[1])
-    .map(([c, n]) => el('div', { class: 'wel-row' },
-      currencyIcon(c),
-      el('span', { class: 'wel-name' }, c),
-      el('span', { class: 'wel-gain' }, `+${n}`)));
-
+  // Mana and Knowledge join the ledger BEFORE it is drawn — they used to be
+  // added after the rows were built, so a night's Knowledge never showed.
   if (report.result.manaEarned > 0) {
     earned.set('Mana', (earned.get('Mana') ?? 0) + report.result.manaEarned);
   }
   if (report.result.knowledgeEarned > 0) {
     earned.set('Knowledge', (earned.get('Knowledge') ?? 0) + report.result.knowledgeEarned);
   }
+  // Gains read in full with their thousands ("+1,240"), as M13 prints them:
+  // this is the one place the whole night's number is the point.
+  const gain = (n: number): string => `+${n.toLocaleString('en-US')}`;
+  const rows = [...earned.entries()]
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([c, n]) => el('div', { class: 'wel-row' },
+      currencyIcon(c),
+      el('span', { class: 'wel-name' }, c),
+      el('span', { class: 'wel-gain' }, gain(n))));
+
   if (report.result.trainedPopulation > 0) {
     rows.push(el('div', { class: 'wel-row' },
       iconEl('population'),
       el('span', { class: 'wel-name' }, 'Villagers'),
-      el('span', { class: 'wel-gain' }, `+${report.result.trainedPopulation}`)));
+      el('span', { class: 'wel-gain' }, gain(report.result.trainedPopulation))));
   }
   for (const [unitId, n] of countBy(report.result.trainedUnits)) {
     rows.push(el('div', { class: 'wel-row' },
       iconEl(unitId),
       el('span', { class: 'wel-name' }, UNITS[unitId].name),
-      el('span', { class: 'wel-gain' }, `+${n}`)));
+      el('span', { class: 'wel-gain' }, gain(n))));
   }
 
   // What finished while away, with its own art.
@@ -63,13 +68,13 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     const url = spriteUrl(`${def.sprite}_l${district.level}`);
     finished.push(el('div', { class: 'wel-done' },
       url ? spriteImgAt(url) : iconEl(def.id, { size: 'lg' }),
-      el('span', {}, def.name),
+      el('span', {}, `${def.name} #${district.ordinal} finished`),
       iconEl('tick', { size: 'sm' })));
   }
   for (const id of report.result.completedResearch) {
     finished.push(el('div', { class: 'wel-done' },
       iconEl('research', { size: 'lg' }),
-      el('span', {}, TECHNOLOGIES[id].name),
+      el('span', {}, `${TECHNOLOGIES[id].name} researched`),
       iconEl('tick', { size: 'sm' })));
   }
 

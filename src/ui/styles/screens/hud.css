@@ -13,7 +13,7 @@
 /* The plank: three coins, a rope divider, then gems set apart. */
 .hud-plank {
   display: flex;
-  align-items: center;
+  align-items: stretch; /* both plates the same height (M12) */
   /* WRAPS WHEN IT MUST, AND ONLY THEN. The row fits one line at every
      realistic wallet, but "realistic" is doing work in that sentence: four
      coins at four digits each is 276px of pills before Mana and Gems are
@@ -29,13 +29,29 @@
      values buy 15px back, which puts the common case on one line and leaves
      the genuinely-too-wide case (four four-digit coins) wrapping, as it
      should. */
-  gap: 2px;
+  gap: 8px;
   row-gap: 4px;
-  padding: 4px 4px;
-  background: var(--wood);
-  border-bottom: var(--outline) solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
+  padding: 3px 6px 4px;
+  /* A dark beam runs the width of the frame; the two PLATES on it carry the
+     lit wood (M12). */
+  background: var(--wood-dark);
+  border-bottom: 2px solid #3a2412;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
 }
+/* A wood plate: lit along the top, shadowed along the bottom, a dark rim. */
+.hud-coins,
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 4px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 10px;
+  background: var(--wood);
+  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -3px 0 rgba(60, 36, 18, 0.35), 0 2px 0 rgba(60, 36, 18, 0.3);
+}
+.hud-right { flex: none; gap: 5px; }
 /* ONE line at any width, and EVERY WIDGET IN IT VISIBLE.
  *
  * §5.1 cut this row to three coins because nine widgets wrapped onto two
@@ -59,9 +75,7 @@
  * fifth currency nobody has designed yet — it should never be reachable with
  * the four that exist. */
 .hud-coins {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+  justify-content: space-around;
   /* `1 0 auto`: grow into spare room, size from content, and NEVER SHRINK.
      Shrinking is what turned this into a scroller that hid two of four coins
      — with `flex-shrink: 1` the row gives up width silently rather than
@@ -74,9 +88,11 @@
 }
 .hud-coins::-webkit-scrollbar { display: none; }
 .hud-coins > * { flex: none; }
-.hud-plank > .hud-mana,
-.hud-plank > .hud-divider,
-.hud-plank > .hud-gems { flex: none; }
+.hud-right > .hud-mana,
+.hud-right > .hud-gems { flex: none; }
+/* No rope between the pool and the Gems: the gap between the two plates is
+   the separation (M12). */
+.hud-divider { display: none; }
 
 /* On a phone the net rate is the first thing to go: "how full is my pool" is
  * the number a refused tap sends you to read, and "+4/h" is not it.
@@ -108,8 +124,7 @@
   /* Gems stays at the right edge, where it is on every other width — which
      also means the rope has nothing left to do: with the two gauges at
      opposite ends of their own row, the gap IS the separation. */
-  .hud-gems { margin-left: auto; }
-  .hud-divider { display: none; }
+  .hud-right { flex: 1 0 100%; justify-content: space-between; }
 }
 
 .hud-coin,
@@ -118,28 +133,21 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  /* 32px pills in a 44px plank: the plank is the tap target the thumb
-     finds, and the pill only has to be read. */
-  min-height: 32px;
-  /* As tight as M1 draws them: four coins, the Mana gauge and Gems have to
-     share one 402px line, and every px of padding here is paid four times. */
-  padding: 2px 4px 2px 3px;
-  gap: 2px;
+  min-height: 20px;
+  padding: 0 1px;
   font-family: var(--font-body);
-  /* 12px, under the helper tier: a plaque with a number in it is a glanceable
-     readout, not something you read a sentence of — and this row is the
-     tightest in the game. Measured: four coins at four digits, the gauge, the
-     rope and Gems come to ~395px at 12, and to 430 at 13, on a 402px frame. */
-  font-size: 12px;
+  /* The numbers are printed on the wood in cream (M12), not set in parchment
+     slots: 13px bold, a dark shadow under each figure so it reads on the
+     grain. */
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  /* A slot cut into the plank, not a pill: M1's counters are rounded plaques
-     with a lip, and the full round read as a chip from another game. */
-  border-radius: 10px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(60, 36, 18, 0.18);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
   cursor: pointer;
 }
 .hud-coin:hover, .hud-gems:hover { filter: brightness(1.05); }
@@ -163,13 +171,13 @@
 }
 /* Parchment like the coins (M1): what sets Gems apart is the rope and the
    green knob, not a colour of its own. */
-.hud-gems { background: var(--parchment); padding-right: 3px; }
+.hud-gems { padding-right: 0; }
 .hud-plus {
   display: grid;
   place-items: center;
-  width: 16px;
-  height: 16px;
-  margin-left: 1px;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
   border-radius: 50%;
   background: var(--leaf);
   border: 2px solid var(--leaf-dark);
@@ -182,28 +190,29 @@
 
 /* 20px icons in the plank pills — the atlas scales smooth now, so a size is
    a layout choice rather than a ratio of the cell. */
-.hud-coin .icon, .hud-gems .icon { --icon-size: 18px; }
+.hud-coin .icon, .hud-gems .icon { --icon-size: 20px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
 
 /* The one contextual plaque, hanging under the plank. */
 .hud-plaque {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  /* 7px, matching the plank's own padding, so the plaque hangs flush under
-     the first coin rather than a hair inside it. */
-  margin: 0 0 0 7px;
-  padding: 3px 12px 4px;
+  /* A small parchment card under the plank, like the daily pill's (M12). */
+  margin: 6px 0 0 12px;
+  padding: 2px 10px;
+  min-height: 30px;
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--parchment);
-  background: var(--wood-dark);
-  border: 2px solid var(--wood-dark);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  color: var(--ink);
+  background: var(--parchment);
+  border: 3px solid var(--wood-dark);
+  border-radius: 10px;
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
   cursor: default;
 }
+.hud-plaque .icon { --icon-size: 20px; }
 .hud-plaque.is-population { cursor: pointer; } /* the only one that leads somewhere */
 .hud-plaque.is-population:hover { filter: brightness(1.15); }
 .hud-plaque:disabled { opacity: 1; } /* a read-out, not a dead button */
@@ -252,17 +261,29 @@
   to { transform: none; opacity: 1; }
 }
 
-.purse { display: flex; flex-direction: column; gap: 2px; }
+.purse {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+}
+/* One parchment ledger, ruled between its rows, like the welcome sheet's (M13). */
 .purse-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 2px;
+  border-bottom: 2px solid rgba(92, 58, 30, 0.14);
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
-.purse-row:nth-child(odd) { background: rgba(92, 58, 30, 0.07); }
-.purse-name { flex: 1; min-width: 0; }
+.purse-row:last-child { border-bottom: 0; }
+.purse-row > .icon { --icon-size: 34px; }
+.purse-name { flex: 1; min-width: 0; font-weight: 700; }
 .purse-value { font-family: var(--font-body); font-weight: 700; }
 /* An equivalent's contribution, indented under the currency it feeds. */
 .purse-row.is-sub { padding-left: 26px; font-size: var(--text-helper); color: var(--ink-muted); }
@@ -294,7 +315,7 @@
   cursor: pointer;
 }
 /* The orb overlaps the gauge's left end, a coin resting on a bar. */
-.hud-mana .icon { --icon-size: 24px; position: relative; z-index: 1; margin-right: -8px; }
+.hud-mana .icon { --icon-size: 22px; position: relative; z-index: 1; margin-right: -8px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
 .hud-plank > .hud-mana { margin-left: 0; }
 /* The gauge: slim, dark, with the fill under a small number. Tabular numerals
  * keep the number from jittering as the pool fills. */
@@ -304,13 +325,13 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  min-width: 40px;
-  height: 18px;
-  padding: 0 5px 0 11px;
+  min-width: 50px;
+  height: 16px;
+  padding: 0 6px 0 11px;
   overflow: hidden;
   border-radius: 9px;
-  background: #2c3c66;
-  border: 2px solid #1b2745;
+  background: #2a2140;
+  border: 2px solid #1b1530;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 12px;
@@ -321,7 +342,7 @@
 .hud-mana-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: linear-gradient(180deg, #6d8ede, #4a63b0);
+  background: linear-gradient(180deg, #9a6fe0, #6b46b8);
   transition: width var(--motion-quick, 160ms) linear;
 }
 .hud-mana-rate { opacity: 0.8; }

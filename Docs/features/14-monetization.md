@@ -61,7 +61,7 @@
 - Faucet: **3,750 up front, ~4,500/month from the chest, and what the
   collection pays** — 500 to start, 750 across the quest chain, 500 a first
   delve clear, **3,000 a daily-chest season** (20 days, so ~4,500 a month —
-  [`12-quests.md`](12-quests.md) §3.2), and **1,000 an album with 25,000 for
+  [`12-quests.md`](12-quests.md) §3.2), and **2,000 an album with 25,000 for
   the whole collection** ([`09-relics.md`](09-relics.md) §5): 35,000 a season
   to a player who completes it, of the order of a Royal chest, and most of it
   behind the gold cards a free player rarely finishes. The chest is the floor
@@ -91,8 +91,8 @@
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
-| **Card pack** | chance | Gems, in offers | a Gold or Star pack of the running season, at published odds ([`09-relics.md`](09-relics.md) §6) — designed |
-| **Wildcard offer** | chance | Gems | a wildcard aimed at an album the player has nearly finished; never gold ([`09-relics.md`](09-relics.md) §9) — designed |
+| **Card packs** | chance | Gems (500 / 1,500) | a Gold or Star pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. Bronze and Silver are not sold: they are the ruins' faucet |
+| **Wildcard** | chance | Gems (100 → 1,500 by rarity) | one card of its rarity or lower, in the slot the player chooses; **never gold** ([`09-relics.md`](09-relics.md) §9) — built, sold as an **aimed offer** on the same shelf |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
 - The second builder is sold in two places: the offer raised by a refused
@@ -303,8 +303,10 @@ One page, refreshed weekly:
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
-| Card pack offer · wildcard offer | priced to the ladder — a Gold pack about a silver key, a wildcard about a gold one | `Packs` sheet, `collection.wildcard_gem_cost` |
-| The collection's Gems | 1,000 an album · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
+| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `Packs` sheet, `gem_cost` |
+| Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
+| How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
+| The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |

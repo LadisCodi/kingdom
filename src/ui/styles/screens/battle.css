@@ -16,9 +16,36 @@
 
 /* ------------------------------------------------------------ the header */
 
-.bt-head { display: flex; align-items: center; gap: 12px; }
-.bt-art { width: 56px; height: 56px; image-rendering: pixelated; }
+/* The head and the info band are ONE parchment card (M10): the ruin in a
+   square vignette down the left, the where-line and the lines beside it. */
+.bt-head {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-areas: 'art where' 'art info';
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: start;
+  padding: 10px;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+}
+.bt-art {
+  grid-area: art;
+  width: 96px;
+  height: 96px;
+  padding: 8px;
+  box-sizing: border-box;
+  object-fit: contain;
+  image-rendering: pixelated;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+}
 .bt-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
+.bt-head > .bt-where { grid-area: where; align-self: end; font-weight: 700; font-size: 18px; color: var(--ink); }
+.bt-head > .bt-info { grid-area: info; }
 .bt-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--ink); }
 .bt-where { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-soft); }
 
@@ -27,20 +54,18 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 8px;
-  background: var(--parchment-shade);
 }
 .bt-info:empty { display: none; }
 .bt-info-line {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  line-height: 1.3;
   color: var(--ink);
 }
+.bt-info-line > .icon { --icon-size: 22px; flex: none; }
 .bt-info-line.is-soft { color: var(--ink-soft); }
 
 /* ------------------------------------------------------- the two armies */
@@ -52,37 +77,55 @@
   gap: 8px;
   padding: 10px;
   border: 2px solid var(--wood-dark);
-  border-radius: 8px;
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
 .bt-army { flex: 1 1 auto; }
-/* Theirs reads cold, ours warm — the two boxes are the same shape, so colour
-   is what tells them apart at a glance. */
-.bt-army.is-enemy { background: rgba(122, 52, 44, 0.14); }
-.bt-army.is-mine { background: rgba(96, 140, 72, 0.16); }
-.bt-army.is-mine.is-short { background: rgba(150, 90, 40, 0.16); }
-.bt-rewards { background: var(--parchment-shade); }
+/* Both boards are parchment (M10); the power number is what tells them
+   apart — ours turns clay when it is short. */
+.bt-army.is-mine.is-short .bt-power { color: var(--clay); }
+.bt-army-head .bt-power::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  vertical-align: -3px;
+  background: var(--ink);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.8;
+}
 
 .bt-army-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .bt-army-head h3 {
   margin: 0;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: var(--text-body);
+  font-size: 20px;
   color: var(--ink);
 }
 .bt-power {
-  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: var(--text-title);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
+/* "Heroes" sits on a rule between the two rows (M10). */
 .bt-army-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: var(--text-helper);
   color: var(--ink-soft);
   text-align: center;
 }
+.bt-army-label::before,
+.bt-army-label::after { content: ''; flex: 1; height: 2px; background: rgba(92, 58, 30, 0.28); border-radius: 1px; }
 .bt-army-note,
 .bt-note {
   font-family: var(--font-body);
@@ -94,7 +137,7 @@
 
 /* One row of squares, wrapping rather than scrolling: a board the player can
    see all of is the point of a board. */
-.bt-slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.bt-slots { display: flex; flex-wrap: wrap; gap: 20px 10px; justify-content: center; padding: 4px 0 14px; }
 
 /* THE SIZE OF THE BARRACKS PICKER (`.tr-pick`, screens/district.css), on
    purpose: a squad on this board and a unit on that one are the same kind of
@@ -110,15 +153,20 @@
   width: 84px;
   height: 84px;
   padding: 4px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 10px;
+  /* A slot is a RING carved in the wood (M10): a filled one shows the face
+     in a parchment disc, an empty one is solid wood with a plus on it. */
+  border: 5px solid var(--wood);
+  border-radius: 50%;
   background: var(--parchment);
+  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
   color: var(--ink);
   cursor: pointer;
 }
-.bt-slot.is-empty { border-style: dashed; background: transparent; }
-.bt-slot.is-locked { border-style: dashed; background: rgba(60, 36, 18, 0.08); }
-.bt-slot.is-filled { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.25); }
+.bt-slot.is-empty,
+.bt-slot.is-locked { background: var(--wood-dark); color: var(--parchment); }
+.bt-slot.is-empty > .icon,
+.bt-slot.is-locked > .icon { --icon-size: 34px; }
+.bt-slot.is-filled { box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark); }
 .bt-slot:hover { filter: brightness(1.05); }
 
 .bt-face { position: relative; display: grid; place-items: center; }
@@ -128,12 +176,13 @@
    height it was given. */
 .bt-count {
   position: absolute;
-  right: -6px;
-  bottom: -4px;
-  padding: 0 4px;
+  right: -10px;
+  bottom: -6px;
+  padding: 0 6px;
   border-radius: 999px;
-  background: var(--wood-dark);
-  color: var(--parchment);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  color: var(--ink);
   font-family: var(--font-body);
   font-weight: 700;
   font-size: var(--text-helper);
@@ -143,27 +192,52 @@
 .bt-portrait.is-glyph { display: grid; place-items: center; font-size: 36px; }
 /* A hero's slot spends some of its height on the one word that matters on it
    — which type its passive buffs — so the portrait gives that room back. */
-.bt-slot.is-hero .bt-portrait { width: 54px; height: 54px; }
-.bt-slot-name { font-family: var(--font-body); font-size: 12px; color: var(--ink-soft); }
-.bt-price {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+/* The type word hangs under the ring, like the price does. */
+.bt-slot-name {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  translate: -50% 0;
   font-family: var(--font-body);
+  font-weight: 700;
   font-size: 12px;
   color: var(--ink-soft);
+  white-space: nowrap;
+}
+.bt-slot.is-hero .bt-portrait { width: 64px; height: 64px; }
+.bt-slot.is-filled { overflow: visible; }
+.bt-slot.is-filled .bt-face,
+.bt-slot.is-filled > .bt-portrait { border-radius: 50%; }
+/* The price hangs off the shut ring as a parchment chip (M10). */
+.bt-price {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 /* The X: a red disc on the corner, the way the mockup has it. It is a button
    inside a button, so it stops the tap from re-opening the panel. */
 .bt-clear {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -8px;
+  right: -8px;
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 2px solid #6d1f1f;
   border-radius: 50%;
@@ -178,20 +252,30 @@
 
 /* ----------------------------------------------------------- the rewards */
 
-.bt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bt-rewards h3 { margin: 0; font-family: var(--font-body); font-weight: 700; font-size: 20px; color: var(--ink); }
+/* Reward chips are parchment tiles sharing the row (M10). */
+.bt-chips { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
 .bt-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
   padding: 4px 8px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  border-radius: var(--radius-sm);
   background: var(--parchment);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-weight: 700;
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
+.bt-chip > .icon { --icon-size: 28px; }
+/* The one verb is the width of the sheet. */
+.bt > .k-action { display: flex; flex-direction: column; align-items: stretch; }
+.bt > .k-action > .k-btn { width: 100%; }
+.bt-note { text-align: center; }
 
 .bt-back { display: flex; justify-content: center; }
 
@@ -210,11 +294,14 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px calc(var(--nav-h) + 10px);
+  /* The picker wears the sheet's carved frame, open at the bottom where it
+     meets the nav, like the district card. */
   border-top: var(--outline) solid var(--wood-dark);
   border-radius: 14px 14px 0 0;
   background: var(--parchment);
   box-shadow: 0 -8px 24px rgba(20, 12, 6, 0.4);
 }
+.bt-picker-head h3 { font-size: 20px; }
 /* The slide runs when the panel ARRIVES and never again: the class is added
    by the mount, which knows the difference between opening and refreshing
    (ui/battlePicker.ts). */

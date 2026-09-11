@@ -450,24 +450,33 @@ evaporating.**
   gift applied during an absence **still leaves the replay assertion true**.
 - **Size:** weeks.
 
-### The collection rework
+### The collection rework — BUILT 2026-09-11
 
-Designed 2026-09-09 and deliberately not sequenced — a reshape of the relics
-rather than an addition, and it wants the repeatable dungeon under it.
-
-| Rework | Design | Blocked on |
+| Rework | Design | State |
 |---|---|---|
-| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **OQ-88** (the free pack faucet — the repeatable dungeon), **OQ-91** (the chain's relic beats). OQ-89 and OQ-90 are numbers, not shape |
+| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
 
-What it touches, so it is sized honestly: `attunement.*` and the slot SKU go;
-`ArtifactDef` loses its level curve and keeps `base` and `per_level`; the
-Fragments counter becomes a per-season card state plus stars; a **seasons
-file** beside the events file names the albums and the hero; the season close
-is one more `consider()` in `nextBoundary` and one branch in `applyDueAt`; a
-pack's cards are rolled by hash on the pack id; the Relics tab becomes the
-Collection tab and the reveal screen gains a second caller. **The migrator
-keeps every relic a player holds at its level and drops the attunement and
-Fragments state** — nothing a player earned converts to less.
+Two bridges were taken deliberately and both are named in the code that owns
+them. The four relic **actives** still live on their relics, gated on owning
+one rather than on a socket, until the Magic tome's spells land
+([`07-research.md`](features/07-research.md) §6) — deleting them would have
+removed working content in exchange for a doc that already says where they
+are going. And a **card's face** is its album's medallion until the 45 are
+painted; the layout is M22's either way.
+
+What it touched, for the record:
+
+`attunement.*` and the slot SKU went; `ArtifactDef` kept `base` and
+`per_level` and lost its level curve; the Fragments counter became a
+per-season card state plus stars; `sim/data/seasons.ts` holds the albums and
+their 45 cards, one album per relic, fixed; the close is one more
+`consider()` in `nextBoundary` and one branch in `applyDueAt`; a pack's cards
+are rolled by hash on the pack id; the Relics tab became the Collection tab
+and the reveal screen gained a second caller. What was the shared collection
+substrate is now `sim/heroLadder.ts` — a hero's tier and a relic's level
+stopped being one thing. **The v44 migrator keeps every relic a player holds
+at its level and drops the sockets, the tiers and the Fragments** — nothing a
+player earned converts to less.
 
 Two notes that will otherwise be rediscovered painfully:
 

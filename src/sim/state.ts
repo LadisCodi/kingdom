@@ -8,6 +8,8 @@ import { DISTRICTS } from './data/definitions';
 import techTree from './data/tech-tree.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
+import type { AlbumId } from './data/seasons';
+import type { PendingPack } from './collection';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
@@ -526,22 +528,39 @@ export interface GameState {
    *  it is dismissed. */
   raidReports: RaidReport[];
   /**
-   * The relic collection. `attuned` is indexed BY SLOT and is exactly as long
-   * as the player has slots, so a null is a visibly empty socket rather than
-   * an absence; `lockedUntil` is per-slot and derived lazily from time, the
-   * same pattern as `exhaustedUntil` on harvest cells.
+   * The five relics, as levels. Absent = not found; a relic is owned iff it
+   * has a level, and every relic the player has is always on
+   * (Docs/features/09-relics.md §1). There is nothing else to keep: no
+   * sockets, no tiers, no Fragments and no cap.
    */
   artifacts: {
-    owned: ArtifactId[];
     levels: Partial<Record<ArtifactId, number>>;
-    /** Fragments raise a TIER cap; Stardust buys levels within it. */
-    tiers: Partial<Record<ArtifactId, number>>;
-    fragments: Partial<Record<ArtifactId, number>>;
-    attuned: Array<ArtifactId | null>;
-    /** Extra slots bought with Gems (escalating price). */
-    slotsPurchased: number;
-    /** Per slot; 0 = free. Swapping is immediate, then the slot locks. */
-    lockedUntil: number[];
+  };
+  /**
+   * The card collection — the live season only. Wiped whole at the close, so
+   * every field here is a season's worth and none of it crosses the boundary
+   * (sim/collection.ts).
+   */
+  collection: {
+    /** Which occurrence of the shared calendar the cards below belong to. */
+    season: number;
+    /** Copies held, per album, indexed by slot. A missing row is an album
+     *  with nothing in it. */
+    cards: Partial<Record<AlbumId, number[]>>;
+    /** Albums that have paid this season. THE guard against a second payout. */
+    completed: AlbumId[];
+    /** Duplicate stars: a counter inside the collection, shown nowhere else. */
+    stars: number;
+    /** Wildcards held, by the rarity they cover. Never gold — there is no
+     *  gold wildcard at any price (Docs/features/09-relics.md §9). */
+    wildcards: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
+    /** Packs earned and not yet opened, oldest first. */
+    packs: PendingPack[];
+    /** Monotonic, per season: the ordinal in every pack's id, which is what
+     *  the roll hashes on. */
+    packsIssued: number;
+    /** The collection prize — a golden call and 25,000 Gems — is paid once. */
+    prizePaid: boolean;
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons

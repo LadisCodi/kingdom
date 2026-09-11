@@ -63,7 +63,9 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill, manaValue, manaRate);
   manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar);
   manaGauge.addEventListener('click', () => game.openMana());
-  plank.append(coins, manaGauge, el('span', { class: 'hud-divider' }), gems);
+  // Two plates on the plank (M12): the coins on the left, the pool and the
+  // Gems on their own plate at the right.
+  plank.append(coins, el('div', { class: 'hud-right' }, manaGauge, el('span', { class: 'hud-divider' }), gems));
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values

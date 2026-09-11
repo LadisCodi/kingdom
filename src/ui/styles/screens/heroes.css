@@ -20,20 +20,23 @@
 .hero-purse {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
-  padding: 8px 12px;
+  min-height: 24px;
+  padding: 1px 12px;
   border-radius: var(--radius-sm);
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.08);
 }
-.hero-purse-found { font-size: var(--text-helper); color: var(--ink-muted); }
+.hero-purse-found { font-size: 14px; font-weight: 700; color: var(--ink); }
 
 /* ---------------------------------------------------------------- the grid */
 
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 /* A narrow frame drops to two rather than squeezing three portraits into
    thumbnails nobody can tell apart. */
@@ -50,25 +53,24 @@
   padding: 0;
   overflow: hidden;
   border: 2px solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  border-radius: var(--radius);
+  /* The rarity is a thin ring INSIDE the wood, on a parchment tile (M6):
+     the collection is parchment cards, and the ladder still reads. */
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 var(--wood-dark);
   cursor: pointer;
   transition: transform var(--motion-snap) steps(1);
-  /* Set per rarity below; the gradient lifts the portrait off a flat fill. */
-  background:
-    linear-gradient(170deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.22)),
-    var(--tile, var(--rarity-common));
+  background: var(--parchment-shade);
 }
 .hero-tile:hover { filter: brightness(1.06); }
-.hero-tile:active { transform: translateY(var(--lip)); box-shadow: none; }
+.hero-tile:active { transform: translateY(var(--lip)); box-shadow: inset 0 0 0 2px var(--tile, transparent); }
 
-.hero-tile.is-common { --tile: var(--rarity-common); }
+.hero-tile.is-common { --tile: transparent; }
 .hero-tile.is-rare { --tile: var(--rarity-rare); }
 .hero-tile.is-legendary { --tile: var(--rarity-legendary); }
 /* An unfound hero keeps its rarity nowhere: a locked tile that still glowed
    gold would advertise a Legendary the player has no way to act on. Warm
    stone, the same treatment every other gated thing gets. */
-.hero-tile.is-locked { --tile: var(--locked); }
+.hero-tile.is-locked { --tile: transparent; }
 
 /* The portrait fills the tile and is CONTAINED, never cropped: the sheet is
    mixed (128² for some, 42×74 for others) and a cover would behead half the
@@ -79,17 +81,19 @@
    so a tall hero and a square one line up across a row. */
 .hero-art {
   position: absolute;
-  top: 6px;
+  top: 8px;
   left: 4px;
   right: 4px;
-  bottom: 22px;
+  bottom: 30px;
   width: calc(100% - 8px);
-  height: calc(100% - 28px);
+  height: calc(100% - 38px);
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
 }
-.hero-art.is-locked { filter: grayscale(0.85) brightness(0.72); }
+/* An unfound hero is a sepia silhouette on the parchment (M6): the shape
+   says who, the tone says not yet. */
+.hero-art.is-locked { filter: brightness(0.4) sepia(1) saturate(1.6) contrast(0.9); opacity: 0.55; }
 /* No hero is without art today; this is the path that keeps a missing sheet
    from drawing a stretched box. */
 .hero-art--glyph {
@@ -113,13 +117,26 @@
 }
 .hero-type.is-tile {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  padding: 0 5px;
-  font-size: 12px;
+  top: 6px;
+  left: -2px;
+  padding: 0 12px 0 8px;
+  border-radius: 0 3px 3px 0;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.5;
-  background: rgba(59, 36, 18, 0.62);
+  color: var(--ink-inverse);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
+  background: var(--ribbon, var(--wood));
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  /* A ribbon: square at the left where it is pinned, a swallowtail at the right. */
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 50%, 100% 100%, 0 100%);
 }
+/* The ribbon takes the class's colour: which of the four it fights as is the
+   one fact a roster is scanned for (M6). */
+.hero-tile.is-Warrior .hero-type.is-tile { --ribbon: #b8452f; }
+.hero-tile.is-Lancer .hero-type.is-tile { --ribbon: #2f6fb3; }
+.hero-tile.is-Archer .hero-type.is-tile { --ribbon: #4f8f2f; }
+.hero-tile.is-Cavalry .hero-type.is-tile { --ribbon: #7a4a26; }
 
 .hero-tile-foot {
   position: relative;
@@ -127,10 +144,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 2px;
-  padding: 2px 5px;
-  background: rgba(59, 36, 18, 0.62);
-  color: var(--ink-inverse);
+  margin: 0 4px 4px;
+  padding: 0 6px;
+  min-height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment);
+  color: var(--ink);
   font-size: 12px;
+  font-weight: 700;
   line-height: 1.4;
 }
 .hero-tile-foot.is-frag { justify-content: center; gap: 4px; }
@@ -182,18 +204,24 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 250px;
+  min-height: 220px;
   /* The bottom padding is the band the foot rides in. The stars overlap the
      art rather than clearing it, so it is deliberately less than the foot is
      tall. */
   padding: 12px 8px 34px;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+  /* A parchment vignette with a soft wash of the rarity's colour (M17), and
+     the rarity ringed inside the wood like the roster's tiles. */
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), inset 0 2px 0 rgba(255, 255, 255, 0.3);
   background:
-    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.32), transparent 70%),
-    var(--tile, var(--rarity-common));
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
+    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
+    var(--parchment);
 }
+.hero-stage.is-common { --wash: rgba(95, 143, 168, 0.18); }
+.hero-stage.is-rare { --wash: rgba(138, 107, 196, 0.2); }
+.hero-stage.is-legendary { --wash: rgba(217, 154, 43, 0.22); }
 .hero-stage.is-common { --tile: var(--rarity-common); }
 .hero-stage.is-rare { --tile: var(--rarity-rare); }
 .hero-stage.is-legendary { --tile: var(--rarity-legendary); }
@@ -202,7 +230,7 @@
   position: static;
   inset: auto;
   width: 60%;
-  height: 200px;
+  height: 170px;
   object-position: center;
 }
 
@@ -251,8 +279,8 @@
    belongs to the way out now. */
 .hero-rarity {
   position: absolute;
-  bottom: 8px;
-  left: 10px;
+  top: 12px;
+  right: 60px; /* beside the way out, as M17 places it */
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   background: rgba(59, 36, 18, 0.6);
@@ -307,12 +335,21 @@
   text-align: right;
 }
 
-.hero-statline {
+/* Three parchment tiles sharing the row, the icon over the number (M17). */
+.hero-statline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.hero-statline > .k-stat {
   display: flex;
-  justify-content: space-around;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment-shade);
 }
+.hero-statline > .k-stat > .icon { --icon-size: 26px; }
 
 .hero-passive {
   display: flex;

@@ -33,21 +33,22 @@
   align-items: center;
   justify-content: center;
   gap: 0;
+  min-height: 57px; /* the plate in M12, at 402 */
   padding: 2px 4px 3px;
   font-family: var(--font-body);
-  /* 12px everywhere, not only under 460px: a label is a word under a
-     picture, and five of them share a phone. */
-  font-size: 12px;
+  /* 14px: a label is a word under a picture, and five of them share a phone
+     (M12). */
+  font-size: 14px;
   font-weight: 700;
   /* A WOOD plate on the wood beam (mockup M1): darker than the beam, a lit
      top edge, the word in cream with a shadow so it reads on the grain. The
      parchment plate it replaced made the bar a row of cards, not a beam. */
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
-  background: #8b5a2f;
+  background: #a06a3a;
   border: 2px solid var(--wood-dark);
-  border-radius: 10px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), 0 3px 0 var(--wood-dark);
+  border-radius: 12px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -3px 0 rgba(60, 36, 18, 0.3), 0 3px 0 var(--wood-dark);
   cursor: pointer;
   transition: transform var(--motion-snap) steps(1);
 }
@@ -81,7 +82,7 @@
 .nav-label { line-height: 1.1; white-space: nowrap; }
 /* 24px icons: the bar is 52px, and a 32px picture over a label does not fit
    it. The atlas scales smooth, so 24 is a size and not a sampling error. */
-#navbar.nav .nav-tab .icon { --icon-size: 26px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
+#navbar.nav .nav-tab .icon { --icon-size: 28px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.5)); }
 @container frame (max-width: 460px) {
   #navbar.nav { gap: 4px; padding-inline: 6px; }
   #navbar.nav .nav-tab { padding-inline: 2px; }
@@ -108,14 +109,15 @@
 .tools-knob {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
   box-shadow: 0 3px 0 var(--wood-dark);
   cursor: pointer;
 }
+.tools-knob .icon { --icon-size: 26px; }
 .tools-knob:hover { filter: brightness(1.08); }
 .tools-knob:active { transform: translateY(3px); box-shadow: none; }
 .tools-knob.is-active { background: var(--gold); border-color: var(--gold-dark); }

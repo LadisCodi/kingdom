@@ -37,7 +37,7 @@ import { recordResourceDiscovery } from './discovery';
 import {
   emptyEntry, heroLevelCapForTier, isHeroMaxLevel, tierBlock, tierCost,
   xpLevelCost, type CollectionEntry,
-} from './collection';
+} from './heroLadder';
 import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';

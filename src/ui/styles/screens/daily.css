@@ -23,14 +23,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px 6px 10px;
+  min-height: 52px;
+  padding: 4px 16px 4px 10px;
   border-radius: 10px;
-  border: 3px solid var(--gold-dark);
+  /* A parchment card in a wood border, nailed at the corners (M12); the
+     glow says it is waiting. */
+  border: 3px solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  position: relative;
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
   /* A glow, not a bob: the quest scroll already bobs when it is claimable and
      two things bobbing at once is a busy screen. */
   animation: dly-glow 2s ease-in-out infinite;
@@ -46,8 +50,9 @@
 /* Every rung taken, the season still running: the pill stays as the door to a
    purchase, and stops asking for anything. */
 .dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
+.dly-pill > .icon { --icon-size: 30px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
-.dly-pill-title { font-family: var(--font-body); font-size: var(--text-body); }
+.dly-pill-title { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.15; }
 .dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* -------------------------------------------------------------- the sheet */
@@ -57,15 +62,24 @@
 
 /* The one clock. Stated plainly and once, at the top, in ink rather than in
    red: the window is a fact about the season, not a threat. */
+/* A parchment strip (M8): the sand-timer, the season, and where it stands. */
 .dly-clock {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: var(--text-helper);
-  color: var(--ink-muted);
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
+.dly-clock > .icon { --icon-size: 24px; }
 .dly-progress { margin-left: auto; font-family: var(--font-body); color: var(--ink); }
+.dly-note { text-align: center; }
 
 /* ---- the two column headers, and the price on the thing it buys */
 
@@ -75,8 +89,8 @@
 .dly-heads,
 .dly-row {
   display: grid;
-  grid-template-columns: 1fr 26px 1.5fr;
-  gap: 4px;
+  grid-template-columns: 1fr 40px 1.5fr;
+  gap: 6px;
   align-items: stretch;
 }
 
@@ -85,29 +99,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
+  min-height: 44px;
   padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius);
+  border: 3px solid var(--wood-dark);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
-  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   text-align: center;
 }
-.dly-head.is-free { background: var(--parchment-shade); }
+/* Two slabs, as M8 draws them: the free track on wood, the Royal on gold. */
+.dly-head.is-free { background: var(--wood); }
 /* The paid column's header IS the buy button while the season is unbought. */
-.dly-head.is-royal { background: var(--gold); border-color: var(--gold-dark); }
-.dly-head.is-buy { cursor: pointer; box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35); }
-.dly-head.is-buy:hover { filter: brightness(1.05); }
-.dly-head.is-buy:active { transform: translateY(2px); box-shadow: none; }
-.dly-head.is-owned { background: var(--leaf); border-color: var(--leaf-dark); }
-.dly-price {
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--parchment);
-  font-variant-numeric: tabular-nums;
+.dly-head.is-royal {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 var(--lip) 0 var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
 }
+.dly-head.is-buy { cursor: pointer; }
+.dly-head.is-buy:hover { filter: brightness(1.05); }
+.dly-head.is-buy:active { transform: translateY(var(--lip)); box-shadow: none; }
+.dly-head.is-owned { background: var(--leaf); border-color: var(--leaf-dark); box-shadow: 0 var(--lip) 0 var(--leaf-dark); }
+.dly-price { font-variant-numeric: tabular-nums; }
 
 /* ---- the ladder */
 
@@ -124,39 +143,56 @@
    (dimmed but fully legible — the price has to show exactly what it buys, on
    the rows the player is already climbing). */
 .dly-cell {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 5px 6px;
+  gap: 10px;
+  min-height: 48px;
+  padding: 5px 34px 5px 8px;
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: 2px solid rgba(92, 58, 30, 0.55);
   background: var(--parchment-shade);
   color: var(--ink);
   font: inherit;
   text-align: center;
 }
-.dly-cell.is-royal { background: #f6e2b0; border-color: var(--gold-dark); }
-.dly-cell.is-locked { opacity: 0.5; }
+.dly-cell.is-locked { opacity: 0.55; }
 
-/* Taken. Lit, never greyed. */
-.dly-cell.is-taken { background: var(--leaf); border-color: var(--leaf-dark); }
+/* Taken. The prize stays lit and a green wax tick is pressed on the cell's
+   right edge (M8) — never a green fill over the prize. */
+.dly-cell.is-taken > .icon:last-child,
+.dly-cell.is-locked > .icon:last-child {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  translate: 0 -50%;
+}
+.dly-cell.is-taken > .icon:last-child {
+  --icon-size: 16px;
+  right: 12px;
+  border-radius: 50%;
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  color: var(--ink-inverse);
+}
+.dly-cell.is-locked > .icon:last-child { opacity: 0.8; }
+.dly-cell:not(.is-taken):not(.is-locked) { padding-right: 8px; }
 
-/* Waiting. The only thing on the sheet that moves, so there is never a
-   question about where the tap goes. */
+/* Waiting. Lit gold and the only thing on the sheet that moves, so there is
+   never a question about where the tap goes. */
 button.dly-cell {
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
-  background: var(--gold);
-  border-color: var(--gold-dark);
+  border: 3px solid var(--gold);
+  box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
   animation: dly-ready 1.6s ease-in-out infinite;
 }
 button.dly-cell:hover { filter: brightness(1.05); }
 button.dly-cell:active { transform: translateY(2px); box-shadow: none; }
 button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 @keyframes dly-ready {
-  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 12px rgba(242, 178, 51, 0.9); }
+  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark), 0 0 14px rgba(242, 178, 51, 0.9); }
 }
 @media (prefers-reduced-motion: reduce) {
   button.dly-cell { animation: none; }
@@ -166,27 +202,56 @@ button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
    track. It darkens once the row has been climbed, which is what draws the
    line between where the player has been and where they have not. */
 .dly-rung {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--wood-dark);
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 2px 0 var(--wood-dark);
   color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 .dly-row.is-climbed .dly-rung { opacity: 1; }
+/* Today's rung is the gold badge (M8). */
+.dly-row:has(button.dly-cell) .dly-rung {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
+  opacity: 1;
+}
+/* The rope the badges hang on, running down the middle column. */
+.dly-ladder { position: relative; }
+.dly-ladder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((100% - 40px - 12px) / 2.5 + 6px + 18px);
+  width: 4px;
+  background: rgba(92, 58, 30, 0.35);
+  border-radius: 2px;
+}
 
 .dly-prize {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
+.dly-prize > .icon { --icon-size: 26px; }
 
 /* Where the season stands. Not a button — pressing the day is what takes the
    day, so there is nothing at the foot to press. */
@@ -197,3 +262,4 @@ button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
   background: var(--parchment);
   text-align: center;
 }
+.dly-foot .dly-note { font-size: var(--text-body); color: var(--ink); }

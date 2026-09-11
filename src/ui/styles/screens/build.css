@@ -13,7 +13,7 @@
      both. Two of these per line fit six cards in a 65% sheet without a
      scroll, which the stacked card never managed. */
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   grid-template-areas:
     'art name'
     'art promise'
@@ -46,10 +46,11 @@
 
 .bld-art {
   grid-area: art;
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
+  align-self: start;
 }
 .bld-art img {
   width: 100%;
@@ -62,7 +63,8 @@
   grid-area: name;
   align-self: end;
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-weight: 700;
+  font-size: 18px;
   line-height: 1.1;
 }
 .bld-promise {
@@ -82,8 +84,18 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 6px;
+}
+/* Cost chips are small parchment pills with the icon and the figure (M3). */
+.bld-cost .k-chip,
+.bld-cost .k-cost {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment);
+  font-weight: 700;
 }
 .bld-meta {
   grid-area: meta;
@@ -159,14 +171,16 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 60px;
-  height: 60px;
-  background: var(--parchment-shade);
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: 10px;
+  width: 72px;
+  height: 72px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
 }
+.bld-offer-mark .icon { --icon-size: 48px; }
 .bld-offer-copy { flex: 1; min-width: 0; }
-.bld-offer-head { font-family: var(--font-body); font-size: var(--text-body); }
+.bld-offer-head { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
 .bld-offer-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
 
 /* The crew as pips: filled = owned, hollow = room left. The ceiling is a
@@ -176,18 +190,25 @@
 .bld-offer-pip {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--parchment-shade);
-  border: 2px dashed var(--wood-dark);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  /* Rings carved in the wood (M18): a shut dark one for a builder not hired,
+     gold with the hammer on it for one that is. */
+  background: var(--wood-dark);
+  border: 4px solid var(--wood);
+  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 3px 0 var(--wood-dark);
 }
 .bld-offer-pip.is-on {
   background: var(--gold);
-  border-style: solid;
-  border-color: var(--gold-dark);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-dark), inset 0 0 0 2px var(--gold-dark), 0 3px 0 var(--gold-dark);
 }
-.bld-offer-pip:not(.is-on) .icon { opacity: 0.35; }
+.bld-offer-pip:not(.is-on) .icon { display: none; }
+.bld-offer-pip .icon { --icon-size: 26px; }
+.bld-offer-actions .k-btn.has-cost { flex-direction: row; gap: 8px; }
+.bld-offer-crew { gap: 12px; justify-content: center; }
 
 .bld-offer-actions { display: flex; gap: 10px; }
-.bld-offer-actions .k-btn { flex: 1; }
+.bld-offer-actions .k-btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 10px; padding-right: 10px; }
+.bld-offer-actions .k-btn:first-child { flex: 0 0 auto; min-width: 104px; }

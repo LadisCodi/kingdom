@@ -57,7 +57,7 @@ export interface BattleView {
   supplies: Wallet;
   /** What winning pays, as icon-and-amount chips. Empty is a legal state and
    *  says so — a gate's reward is the ruin behind it. */
-  rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment'; label: string }>;
+  rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment' | 'pack'; label: string }>;
   /** One line under the chips: what winning is really for. */
   rewardNote?: string;
   actionLabel: string;
@@ -202,10 +202,12 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   const body = el('div', { class: 'bt' },
     // The sheet's plank is the battle's NAME, so the band under the art says
     // where it is and what it is worth instead of saying the name twice.
+    // One parchment card (M10): the art down the left, the where-line and
+    // the band's lines beside it.
     el('div', { class: 'bt-head' },
       art(view.sprite, view.glyph, 'bt-art'),
-      el('div', { class: 'bt-where' }, view.subtitle)),
-    el('div', { class: 'bt-info' }, ...view.info),
+      el('div', { class: 'bt-where' }, view.subtitle),
+      el('div', { class: 'bt-info' }, ...view.info)),
     enemyBox(view),
     partyBox(game, view),
   );
