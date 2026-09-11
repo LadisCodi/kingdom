@@ -137,7 +137,10 @@ export type Mode =
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
   | 'collection' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
-  | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
+  | 'daily' | 'store' | 'payerProfile' | 'iapConfirm'
+  // Buying a level is its own surface now, opened by the card's Upgrade
+  // button (Docs/art/ui-menus-redesign.md §7.27).
+  | 'upgrade';
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
  *  each one into a sentence — nothing is greyed out without a reason. */
@@ -284,6 +287,10 @@ export class Game {
   expeditionOrder: number | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
+  /** Which building the upgrade popup is about. Null when it is closed — the
+   *  overlay name alone would not say WHICH, and the card underneath can be
+   *  a different building by the time it reopens. */
+  upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
   pendingSkuFrom: OverlayName = 'store';
   /** What was asked for while the payer-profile sheet had the screen. The
@@ -1805,6 +1812,31 @@ export class Game {
     this.afterProfileOverlay = null;
     this.openOverlay = next;
     this.notify();
+  }
+
+  /**
+   * Open the upgrade popup for a building.
+   *
+   * The card stays MOUNTED underneath: the popup is a sheet over it, and
+   * closing returns to the card the player was already reading rather than to
+   * the map. That is why `closeUpgrade` clears the overlay rather than
+   * dismissing — `dismiss()` would take the card with it.
+   */
+  openUpgrade(districtUniqueId: string): void {
+    this.upgradeDistrictId = districtUniqueId;
+    this.setOverlay('upgrade');
+  }
+
+  closeUpgrade(): void {
+    this.upgradeDistrictId = null;
+    this.setOverlay(null);
+  }
+
+  /** The building the popup is about, or null if it went away under it. */
+  upgradeDistrict(): District | null {
+    if (this.upgradeDistrictId === null) return null;
+    return this.state.city.districts
+      .find((d) => d.uniqueId === this.upgradeDistrictId) ?? null;
   }
 
   /** A price was tapped: open the confirmation, which is where the price meets

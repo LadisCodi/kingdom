@@ -20,6 +20,7 @@
 @import './screens/build.css';
 @import './screens/placement.css';
 @import './screens/district.css';
+@import './screens/upgrade.css';
 @import './screens/market.css';
 @import './screens/expedition.css';
 @import './screens/settings.css';

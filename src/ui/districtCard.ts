@@ -14,37 +14,32 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, FOG, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
+  DISTRICTS, HARMONY, HARVEST, TAP, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
+import { canMoveDistrict, districtLabel } from '../sim/districts';
 import {
-  canMoveDistrict, districtLabel, requiredPopulation, requiredTechForLevel,
-  requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
-} from '../sim/districts';
-import { getGood } from '../sim/goods';
-import {
-  harmonyBlock, harmonyCost, harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
+  harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
 } from '../sim/harmony';
 import {
   districtCapacity, houseGoldPerMinute, houseTaxBonus,
 } from '../sim/population';
 import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
-import { isTechComplete } from '../sim/research';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import { figure, trainingSection } from './trainingSection';
+import { trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
-import type { IconName } from './kit/icon';
+import { requirements } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { LiveParts, type Screen } from './kit';
 import {
-  coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
+  coordKey, queueProgress, remainingSeconds, type District,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
+import { btn, iconEl, knob, pips, progress, stat } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -79,13 +74,6 @@ function levelStars(level: number, max: number): HTMLElement {
 }
 
 /** The building's own art at a given level, falling back to its icon. */
-/** A building at a level, contained in a parchment tile, for the level-up
- *  block's before → after pair. */
-function levelArt(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
-  const url = spriteUrl(`${def.sprite}_l${Math.min(level, def.maxLevel)}`) ?? spriteUrl(def.sprite);
-  return el('div', { class: 'dc-up-tile' },
-    url ? spriteImgAt(url, 'dc-up-sprite') : iconEl(def.id, { size: 'lg' }));
-}
 
 function portrait(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
   const url = spriteUrl(`${def.sprite}_l${level}`) ?? spriteUrl(def.sprite);
@@ -119,105 +107,6 @@ function influenceThumb(game: Game, district: District): HTMLElement {
   return grid;
 }
 
-/**
- * What a level actually buys, one tile per number, `before → after`.
- *
- * Every per-level number in the sim is here, and it is the ONLY reason to
- * press Upgrade — so a building with nothing to say is a bug in the balance
- * data rather than a card that quietly shows an empty row. The tiles are the
- * training panel's `figure()`: a level is judged the way a soldier is, on a
- * band of numbers under the thing that spends.
- */
-function upgradeDeltas(game: Game, district: District, next: number): HTMLElement[] {
-  const def = DISTRICTS[district.definitionId];
-  const out: HTMLElement[] = [];
-  const delta = (icon: IconName, label: string, from: number | string, to: number | string) =>
-    out.push(figure(icon, label, `${from} → ${to}`));
-
-  if (def.influenceRadiusPerLevel.length > 0) {
-    delta('showme', 'Reach', influenceRadius(district), levelIndexed(def.influenceRadiusPerLevel, next));
-    delta('workers', 'Workers', assignableWorkerLimit(district), levelIndexed(def.maxWorkersPerLevel, next));
-  }
-  // A hall's level IS its army cap, and until now the only place that number
-  // appeared was a note further up the card — nowhere near the button that
-  // spends on it, which is the whole reason to upgrade a Barracks.
-  // Levels 6-10 of a producer buy neither crew nor reach — the plot runs out
-  // of cells long before that — so the card has to name what they DO buy or
-  // the button looks like it does nothing.
-  const term = (list: readonly number[], level: number, blank: number) =>
-    (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
-  if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
-    const from = term(def.extraUnitsPerDeliveryPerLevel, district.level, 0);
-    const to = term(def.extraUnitsPerDeliveryPerLevel, next, 0);
-    if (to !== from) delta('plus', 'Per delivery', `+${from}`, `+${to}`);
-  }
-  if (def.strikeSpeedPerLevel.length > 0) {
-    const from = term(def.strikeSpeedPerLevel, district.level, 1);
-    const to = term(def.strikeSpeedPerLevel, next, 1);
-    if (to !== from) delta('clock', 'Swing', `×${from}`, `×${to}`);
-  }
-  if (def.armyCapPerLevel.length > 0) {
-    delta('army', 'Army cap',
-      levelIndexed(def.armyCapPerLevel, district.level),
-      levelIndexed(def.armyCapPerLevel, next));
-  }
-  // The Infirmary's whole ladder: how many wounded can wait for a bed before
-  // the rest of them die (Docs/features/combat.md §4).
-  if (def.bedsPerLevel.length > 0) {
-    delta('hp', 'Beds',
-      levelIndexed(def.bedsPerLevel, district.level),
-      levelIndexed(def.bedsPerLevel, next));
-  }
-  if (def.populationCapacityPerLevel.length > 0) {
-    const capNow = districtCapacity(game.state, district);
-    // The house mark, the same one the villager's "Room" tile wears: both are
-    // the number of beds the city has.
-    delta('Housing', 'Homes', capNow, capNow
-      + levelIndexed(def.populationCapacityPerLevel, next)
-      - levelIndexed(def.populationCapacityPerLevel, district.level));
-  }
-  // A level buys a house MORE ROOM and BETTER RENT, and the second half is
-  // the reason to keep upgrading a house that is already full.
-  if (def.taxBonusPerLevel.length > 0) {
-    const pct = (level: number) =>
-      `+${Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100)}%`;
-    if (pct(next) !== pct(district.level)) {
-      delta('Gold', 'Rent each', pct(district.level), pct(next));
-    }
-  }
-  // Mana is a per-level number too, on exactly two buildings — and neither
-  // had anything to show before, so both upgrades read as blank.
-  // The Sanctum owns BOTH Mana numbers now — it is the engine as well as the
-  // reservoir, since the Townhall stopped producing (08-magic.md §2).
-  if (district.definitionId === 'Sanctum') {
-    delta('Mana', 'Mana held',
-      levelIndexed(MANA.sanctumCapPerLevel, district.level),
-      levelIndexed(MANA.sanctumCapPerLevel, next));
-    delta('Mana', 'Mana/h',
-      levelIndexed(MANA.sanctumPerHourPerLevel, district.level),
-      levelIndexed(MANA.sanctumPerHourPerLevel, next));
-  }
-  if (district.definitionId === 'Townhall') {
-    // What the capital's level does to every house's rent. The count caps it
-    // also raises are not here: summed across every building they were one
-    // abstract number ("18 → 23") that answered nothing a player asks, and
-    // listed per building they were four tiles. The rent is the one number
-    // the level moves that reads at a glance.
-    const ladder = TAXES.townhallMultiplierPerLevel;
-    if (ladder.length > 0) {
-      delta('Gold', 'Taxes',
-        `×${levelIndexed(ladder, district.level)}`, `×${levelIndexed(ladder, next)}`);
-    }
-    // And how far the fog can be paid for (01-map-and-fog.md §4): a level
-    // that opens no new ring says nothing about it.
-    const reach = FOG.reachPerTownhallLevel;
-    if (reach.length > 0 && levelIndexed(reach, next) !== levelIndexed(reach, district.level)) {
-      delta('Townhall', 'Reach',
-        `ring ${levelIndexed(reach, district.level)}`, `ring ${levelIndexed(reach, next)}`);
-    }
-  }
-  return out;
-}
 
 /**
  * The whole card, built fresh. `live` collects the handful of lines that move
@@ -487,102 +376,27 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       ]);
     }, scaffold));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
+    // ONE BUTTON, and everything it used to say lives behind it now
+    // (upgradeSheet.ts, M25). The card is what the building IS; buying a
+    // level is a decision with its own stats table, its own list of gates and
+    // its own price, and none of the three fitted under a panel that was
+    // already the longest in the game.
+    //
+    // The button still refuses what it cannot open: a gate in the way greys
+    // it and names the first errand, because sending a player into a popup to
+    // read a cross they could have been told about here is a wasted tap.
     const next = district.level + 1;
-    const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
-    const requiredTh = requiredTownhallLevel(district.definitionId, next);
-    const gateTech = requiredTechForLevel(district.definitionId, next);
-
-    // The reason, in plain words, and tappable when it points somewhere.
-    // Being short of the price is NOT one of these any more: the cost now
-    // rides inside the button and turns clay, which says it better than a
-    // sentence beside it could (§6.4).
-    let reason: string | undefined;
-    if (townhall(game.state).level < requiredTh) {
-      reason = `Your Townhall must reach level ${requiredTh}`;
-    } else if (gateTech !== null && !isTechComplete(game.state, gateTech)) {
-      reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
-    } else if (game.state.city.population < requiredPopulation(district.definitionId, next)) {
-      // The one gate with a number that moves on its own: say where it
-      // stands, so the card is a goal rather than a refusal.
-      reason = `Needs ${requiredPopulation(district.definitionId, next)} villagers`
-        + ` · you have ${game.state.city.population}`;
-    } else {
-      // The third errand, and the only one whose answer is a building the
-      // player has not thought of yet — so it says the number and the verb.
-      const short = harmonyBlock(game.state, def, next, district);
-      if (short !== null) reason = `Needs ${short.shortBy} more Harmony — build a decoration`;
-    }
-
-    // Refined goods sit beside the currencies rather than among them: they
-    // are not wallet rows, and being short of one sends the player to a
-    // workshop queue rather than out to the map.
-    const goodsPrice = upgradeGoodsCost(district.definitionId, next);
-    const goodsTerms = (Object.entries(goodsPrice) as Array<[GoodId, number]>)
-      .map(([id, n]) => ({
-        icon: id,
-        amount: String(n),
-        short: getGood(game.state.city.goods, id) < n,
-      }));
-
-    // Harmony rides with the goods rather than with the currencies: it is not
-    // spent and never leaves the city, so it is a REQUIREMENT quoted at the
-    // price — which is what a chip beside the button says and a sentence
-    // above it does not.
-    const harmonyPrice = harmonyCost(def, next);
-    const harmonyTerm = harmonyPrice > harmonyCost(def, district.level)
-      ? [{
-        icon: 'harmony' as const,
-        amount: String(harmonyPrice),
-        short: harmonyBlock(game.state, def, next, district) !== null,
-      }]
-      : [];
-
-    // A GATE takes the button's place, as it does on the training panel: a
-    // Townhall level, a technology or Harmony in the way is one fact, and a
-    // dead button with a caption was two things saying it. Being short of the
-    // price is not a gate — the button stays and turns clay (§6.4).
-    const upgrade = reason !== undefined
-      ? el('div', { class: 'tr-blocked' }, iconEl('padlock', { size: 'sm' }), reason)
-      : action({
+    const gates = requirements(game, district, next);
+    const blocking = gates.find((r) => !r.met);
+    foot.append(el('div', { class: 'dc-upgrade' },
+      btn({
         label: 'Upgrade',
         kind: 'primary',
-        onClick: () => game.doUpgrade(district.uniqueId),
-        cost,
-        costExtra: [...goodsTerms, ...harmonyTerm],
-        have: (c) => game.walletValue(c),
-      });
-    if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
-
-    // The same shape as the training panel above it: the mark, the level and
-    // the button that spends on one row, and under them a band of tiles — one
-    // per number the level buys, `before → after`, and the wait last, the way
-    // a soldier's Time closes its row. The wait used to sit alone beside the
-    // button; it is a number the level costs, so it belongs with the others.
-    // It replaced a before/after pair of building portraits, which drew the
-    // eye hardest while carrying the least — the two pictures are nearly
-    // identical, and the numbers underneath were the whole point.
-    foot.append(el('div', { class: 'dc-up' },
-      // Default size, not lg: the 48px variant overflowed its own 40px well,
-      // and the mark is a symbol rather than a portrait — it has no business
-      // shouting louder than the unit art above it.
-      el('div', { class: 'dc-up-mark' }, iconEl('star')),
-      el('div', { class: 'dc-up-top' },
-        el('div', { class: 'dc-up-heading' },
-          el('div', { class: 'dc-up-title' }, 'Level Up'),
-          // Short on purpose: it shares its row with a 164px button, and a
-          // longer sentence wrapped to four lines and grew the block.
-          el('div', { class: 'dc-up-sub' }, `Upgrade to level ${next} and improve these stats`)),
-        upgrade),
-      // The two portraits with the arrow between them (M2): what it is and
-      // what it becomes, over the numbers that say by how much.
-      el('div', { class: 'dc-up-art' },
-        levelArt(def, district.level),
-        el('span', { class: 'dc-up-arrow' }, '➜'),
-        levelArt(def, next)),
-      el('div', { class: 'tr-figures dc-up-figures' },
-        ...upgradeDeltas(game, district, next),
-        figure('hourglass', 'Time',
-          formatDuration(upgradeDuration(game.state, district.definitionId, district.level))))));
+        onClick: () => game.openUpgrade(district.uniqueId),
+      }),
+      ...(blocking === undefined ? [] : [el('div', { class: 'dc-upgrade-gate' },
+        iconEl('padlock', { size: 'sm' }), blocking.label)]),
+    ));
   }
 
   // Moving is not an upgrade path, so it does not belong in the footer's

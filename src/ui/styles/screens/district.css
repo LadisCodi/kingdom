@@ -103,49 +103,6 @@
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
 .dc-foot { margin-top: 6px; }
-.dc-up {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 8px;
-  align-items: start;
-  padding: 6px;
-  border-radius: 8px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-}
-.dc-up-mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--gold);
-  border: 2px solid var(--gold-dark);
-}
-.dc-up-heading { min-width: 0; }
-.dc-up-title {
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  font-weight: var(--weight-small);
-  line-height: 1.2;
-}
-/* One line of why, under the title, in the room the button leaves — the
-   button is as tall as a label over a price, so two short lines of helper
-   fit beside it without adding a pixel to the block. */
-.dc-up-sub {
-  margin-top: 2px;
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.25;
-  color: var(--ink-muted);
-}
-/* The band runs the FULL width, under the mark too: the mark is a 40px
-   symbol, not a portrait that owns its column, and a band that started at the
-   second column left a well of nothing beneath it — the empty space this
-   block used to be mostly made of. */
-/* `.dc-up >` for specificity: `.tr-figures` below pins itself to column 2 for
-   the training panel's portrait, and a bare class here loses to it. */
-.dc-up > .dc-up-figures { grid-column: 1 / -1; align-self: auto; }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -470,64 +427,8 @@
   background: var(--leaf);
   color: var(--parchment);
 }
-/* The Train button spans both columns, so it is the full width of the panel
- * and unmistakably the thing that spends. */
-/* The button rides in the panel's top-right corner at a FIXED width, sharing
-   its row with the name. It used to stretch the whole column, which made the
-   loudest thing on the panel its own width rather than its label, and left the
-   band underneath empty. */
-/* `.dc-up-top` is the upgrade block's row of the same shape — the level where
-   the name is, Upgrade where Train is — so every rule here names both. */
-.tr-top,
-.dc-up-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
 .tr-heading { min-width: 0; }
-.tr-top > .k-action,
-.dc-up-top > .k-action {
-  flex: none;
-  /* Wide enough for "Train" over three costs without squeezing them — the
-     button's own natural width, pinned so it stops growing with the panel. */
-  width: 164px;
-}
-/* The width has to reach the BUTTON, not just its wrapper: `k-action` is a
-   wrapper around a `k-btn` whose padding and costs set a min-width of their
-   own, and it was overflowing the panel by those few pixels. */
-.tr-top > .k-action .k-btn,
-.dc-up-top > .k-action .k-btn {
-  width: 100%;
-  min-width: 0;
-}
-/* The upgrade row has no 10px of heading above its button to clear: the mark
-   beside it is 40px and the title is centred on that, so the button sits flush
-   with the top of the row. */
-.dc-up-top > .k-action { margin-top: 0; }
-/* A gate in the button's slot: the same 164px, so the heading keeps its
-   measure whether the hall can train or not. The padlock's colour and the
-   helper size are `.k-reason.is-blocked`'s, without its row layout — inside a
-   box this narrow the sentence wrapped around the dead button it captioned,
-   "Nowhere" above and "Housing" below, and a button that cannot be pressed
-   was not earning the room. */
-.tr-top > .tr-blocked,
-.dc-up-top > .tr-blocked {
-  flex: none;
-  width: 164px;
-  margin-top: 10px;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.3;
-  color: var(--clay);
-}
 .tr-blocked .icon { flex: none; margin-top: 2px; }
-.dc-up-top > .tr-blocked { margin-top: 4px; }
 
 /* The band the button gave back: four figures, read left to right in the order
    a soldier is judged in — what it hits for, what it takes, what it has, and
@@ -735,51 +636,35 @@
 .tr-villagers > .k-action,
 .tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
 .tr-villagers > .tr-blocked { font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
-.dc-up-art {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 4px 0 8px;
-}
-.dc-up-tile {
-  display: grid;
-  place-items: center;
-  width: 94px;
-  height: 94px;
-  padding: 6px;
-  box-sizing: border-box;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
-  background: var(--parchment);
-}
-.dc-up-sprite { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.dc-up-arrow {
-  font-size: 30px;
-  line-height: 1;
-  color: var(--gold);
-  text-shadow: 0 2px 0 var(--gold-dark);
-}
-/* M2's numbers: the block's title at 19px, the tiles one line tall. */
-.dc-up-title { font-size: 19px; font-weight: var(--weight-strong); }
-.dc-up-figures .tr-fig { padding: 4px 8px; gap: 0; }
-.dc-up-figures .tr-fig-head { font-size: 12px; font-weight: var(--weight-small); }
-.dc-up-figures .tr-fig-value { font-size: 15px; }
-/* M2's order for the block: the heading, the two portraits, the tiles, and
-   the verb (or the padlock line where the verb would be) centred at the
-   bottom. `display: contents` lets the top row's children take their own
-   places in the grid without a markup change. */
-.dc-up { grid-template-columns: 1fr; }
-.dc-up-mark { display: none; }
-.dc-up-top { display: contents; }
-.dc-up-heading { order: 1; }
-.dc-up-art { order: 2; }
-.dc-up-figures { order: 3; grid-column: 1; }
-.dc-up-top > .k-action,
-.dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
-.dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
-.dc-up-sub { font-size: var(--text-helper); font-weight: var(--weight-small); }
 /* A gate beside a soldier's name takes only the room it needs, so the name
    keeps its line. */
 .tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; font-weight: var(--weight-small); }
+
+/* ---- the Upgrade button (M25)
+ *
+ * All that is left on the card of what used to be its longest block. Buying a
+ * level is a surface of its own now (screens/upgrade.css); this is the door,
+ * and the only thing it says beyond "Upgrade" is the first errand in the way
+ * — because sending a player into a popup to read a cross they could have
+ * been told about here is a wasted tap. */
+.dc-upgrade { display: flex; flex-direction: column; gap: 6px; }
+.dc-upgrade > .k-btn {
+  width: 100%;
+  min-height: 46px;
+  font-size: var(--text-title);
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-image: url('../../../render/assets/slab_green.png') 48 fill / 15px stretch;
+  color: var(--ink-inverse);
+  text-shadow: 0 2px 0 rgba(20, 60, 12, 0.5);
+}
+.dc-upgrade-gate {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}

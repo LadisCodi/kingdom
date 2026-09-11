@@ -48,6 +48,7 @@ import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
+import { renderUpgradeSheet } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
@@ -183,6 +184,12 @@ async function boot(): Promise<void> {
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
+    // The popup needs a building. With none — it was demolished under the
+    // sheet, or a save reloaded — it draws nothing rather than half a sheet.
+    upgrade: (g) => {
+      const d = g.upgradeDistrict();
+      return d === null ? el('div', {}) : renderUpgradeSheet(g, d);
+    },
   };
 
   /**
