@@ -65,7 +65,7 @@
   font-size: var(--text-helper);
   color: var(--ink-muted);
 }
-.col-line .k-meter { flex: 1; }
+.col-line .k-trough { flex: 1; }
 .col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .col-count { font-weight: 700; color: var(--ink); white-space: nowrap; }
 
@@ -326,7 +326,11 @@
 }
 .col-card.is-missing .col-card-stars { filter: grayscale(1) brightness(1.15); opacity: 0.7; }
 
-.col-card-art { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+/* The album's medallion stands in for the card's own face until the 45 are
+   drawn, so it is presented AS a medallion — centred, inset, with the rarity
+   wash showing around it — rather than cropped square and passed off as art
+   it is not. */
+.col-card-art { width: 86%; aspect-ratio: 1; object-fit: contain; margin-top: 2px; }
 .col-card-art.is-silhouette {
   display: grid; place-items: center;
   opacity: 0.4;
@@ -451,7 +455,7 @@
   font: inherit;
   color: inherit;
 }
-.col-relic-album .k-meter { flex: 1; }
+.col-relic-album .k-trough { flex: 1; }
 .col-relic-medal {
   display: grid; place-items: center;
   width: 36px; height: 36px;

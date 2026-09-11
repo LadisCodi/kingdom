@@ -21,7 +21,7 @@ import type { AlbumId } from '../sim/data/seasons';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, iconEl, knob, meter, sheet } from './kit';
+import { action, btn, iconEl, knob, progress, sheet } from './kit';
 
 /** An album's round vignette — its sheet if it has landed, its relic's
  *  otherwise, so the grid is never a row of empty rings. */
@@ -68,11 +68,13 @@ function prizeBand(game: Game): HTMLElement {
 /** One line: how long the season has left, and how much of it is in hand. */
 function seasonLine(game: Game): HTMLElement {
   const info = game.seasonInfo();
+  const bar = progress('gold');
+  bar.set(info.held / info.total);
   return el('div', { class: 'col-line' },
     el('span', { class: 'col-left' },
       iconEl('hourglass', { size: 'sm' }),
       info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`),
-    meter(info.held, info.total),
+    bar.root,
     el('span', { class: 'col-count' }, `${info.held}/${info.total}`));
 }
 
@@ -222,11 +224,12 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   );
 
   // The album, and the way back to it.
+  const bar = progress('gold');
+  bar.set(card.held / card.total, `${card.held}/${card.total}`);
   const albumRow = el('button', { class: 'col-relic-album', type: 'button' },
     el('span', { class: 'col-relic-medal' }, albumArt(card.album, id, 'col-relic-medal-art')),
     el('span', { class: 'col-relic-album-name' }, card.albumName),
-    meter(card.held, card.total),
-    el('span', { class: 'col-count' }, `${card.held}/${card.total}`));
+    bar.root);
   albumRow.addEventListener('click', () => game.openAlbum(card.album));
   body.append(albumRow);
 
