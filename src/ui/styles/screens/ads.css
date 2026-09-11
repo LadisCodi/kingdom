@@ -7,16 +7,18 @@
  * so it reads as attached to the edge rather than floating near it. */
 .ad-tab {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
-  padding: 8px 10px 8px 12px;
+  gap: 8px;
+  padding: 6px 10px 6px 10px;
   color: var(--parchment);
-  background: linear-gradient(160deg, #3a5fbf, #2c3c66);
-  border: var(--outline) solid #1b2745;
+  text-shadow: 0 1px 0 rgba(30, 20, 60, 0.6);
+  /* A violet slab with the orb, the amount and a gold play knob (M12). */
+  background: #6b46b8;
+  border: var(--outline) solid #3c2c73;
   border-right: none;
   border-radius: 12px 0 0 12px;
-  box-shadow: -2px 2px 0 rgba(20, 28, 50, 0.4);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 3px 0 #3c2c73;
   cursor: pointer;
   /* Off-screen by default; `is-in` brings it home. Transform rather than
    * `right`, so it never reflows the frame while it moves. */
@@ -32,21 +34,23 @@
   .ad-tab.is-in { animation: none; }
 }
 .ad-tab:hover { filter: brightness(1.08); }
+.ad-tab > .icon { --icon-size: 28px; }
 .ad-tab-amount {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: var(--text-body);
+  font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
 .ad-tab-play {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--leaf);
-  border: 2px solid var(--leaf-dark);
-  color: var(--ink-inverse);
+  width: 30px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--gold);
+  border: 2px solid var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
   font-size: var(--text-helper);
   line-height: 1;
 }
