@@ -767,3 +767,6 @@
 .dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
 .dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
 .dc-up-sub { font-size: var(--text-helper); }
+/* A gate beside a soldier's name takes only the room it needs, so the name
+   keeps its line. */
+.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; }
