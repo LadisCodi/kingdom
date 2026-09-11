@@ -446,3 +446,36 @@ for.
   kit's own icon sits on the wax.
 - **What to know:** the viewer's download icon moves with the window width —
   find it as the "Guardar" button rather than by coordinates.
+
+---
+
+## M5–M14 · S1 — the rest of the menus, and the store's painted pieces (§7.19, §7.23)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa340fa-60b0-83ed-b4d0-ed8cfa0a64c7>
+  ("Design Mobile Game UI", Codigames workspace), driven from Claude Code
+  through the Chrome extension; `mockups/m0-four-screens.png` attached to the
+  first message as the anchor, the style block v2 sent on its own first, then
+  one screen per message prefixed "Same style, same materials and chrome as
+  the mockups above."
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m5-store-sheet.png`, `m6-heroes-sheet.png`,
+  `m7-reliquary-sheet.png`, `m8-daily-sheet.png`, `m9-settings-mana.png`
+  (two sheets on one screen), `m10-battle-board.png`, `m11-map-panels.png`
+  (the ruin card and the placement bar), `m12-map-floaters.png` (the daily
+  pill, the raid and ad tabs, the toast, the pennant, the builder chip),
+  `m13-welcome-back.png`, `m14-payer-and-iap.png`; all 852×1846, opaque.
+  `sheets/ui-s1-store.png` (3×3, 1254×1254, true alpha) → `src/ui/assets/
+  art-key-silver.png`, `art-key-gold.png`, `art-hammer.png` and the six gem
+  packs in `src/render/assets/gems_*.png`, each trimmed, squared and
+  resampled to 256px.
+- **Prompt:** §7.19 M5–M14 and §7.23 verbatim, one per message.
+- **What worked:** with M0 as the anchor every screen came back in the same
+  materials without restating them — the chrome, the plank, the nav beam and
+  the type held across ten generations. Two sheets stacked on one screen (M9,
+  M14) is a cheap way to get two small dialogs from one image.
+- **What to know:** typing a prompt with a blank line SENDS the first half —
+  the composer treats Enter as send. Keep a prompt to one paragraph. The
+  viewer's download button is still "Guardar"; find it by name. A hung game
+  tab (a hand-edited save) drops the extension's tab group: close the tab,
+  call tabs_context again.
