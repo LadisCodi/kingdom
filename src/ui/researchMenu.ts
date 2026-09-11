@@ -57,9 +57,12 @@ function shelf(game: Game): HTMLElement | null {
   const row = el('div', { class: 'res-shelf' });
   for (const id of open) {
     const def = TOMES[id];
+    // Each book wears its own mark on its plate (M4): the scroll, the
+    // crossed arms, the orb.
+    const mark = id === 'Warfare' ? 'army' : id === 'Magic' ? 'Mana' : 'research';
     const tab = el('button', {
       class: `btn res-tome${id === activeTome ? ' active' : ''}`,
-    }, iconEl('research', { size: 'sm' }), el('span', {}, def.name));
+    }, iconEl(mark, { size: 'sm' }), el('span', {}, def.name));
     tab.addEventListener('click', () => {
       if (activeTome === id) return;
       activeTome = id;
@@ -91,9 +94,12 @@ export function renderResearchMenu(game: Game): HTMLElement {
   close.setAttribute('data-own-close', '');
   const bar = slotStrip(game, busy, slots);
   const tabs = shelf(game);
+  // The bar, the books' plates, then the desks (M4 puts the plates first;
+  // the desks are what the mockup left out, so they take the row under them).
   root.append(el('div', { class: 'research-topbar' },
-    el('h2', {}, TOMES[activeTome].name), bar, close));
+    el('h2', {}, TOMES[activeTome].name), close));
   if (tabs) root.append(tabs);
+  root.append(el('div', { class: 'res-desks' }, bar));
   root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
 
   // ---- the page (as long as what the fog currently shows) ----
@@ -367,8 +373,10 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
   const dismiss = (): void => { selected = null; game.notify(); };
 
   const panel = el('div', { class: 'tech-info', 'data-keep-scroll': 'tech-info' });
+  // The medallion at the left, the name beside it (M18).
   const head = el('div', { class: 'tech-info-head' },
-    el('h3', {}, `${def.glyph} ${def.name}`),
+    el('span', { class: 'tech-info-seal' }, def.glyph),
+    el('h3', {}, def.name),
     knob('✕', dismiss, { label: 'Close' }));
   panel.append(head);
   // WHAT IT DOES, in full. The card carries only the glyph and the name, so

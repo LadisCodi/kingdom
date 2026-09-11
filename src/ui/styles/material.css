@@ -213,17 +213,36 @@
   border: 0;
   box-shadow: none;
   background: url('../assets/seal-plain.png') center / 100% 100% no-repeat;
-  width: 60px;
-  height: 60px;
+  width: 68px;
+  height: 68px;
+  /* The plain seal on the sheet came back grey-green; M4's plain wax is
+     brown, so the plain state is warmed here and the lit states keep their
+     own art. */
+  filter: sepia(1) saturate(1.6) hue-rotate(-12deg) brightness(0.78);
 }
+.tech-card.done .tech-card-glyph,
+.tech-card.available .tech-card-glyph,
+.tech-card.active .tech-card-glyph { filter: none; }
 .tech-card.done .tech-card-glyph { background-image: url('../assets/seal-done.png'); }
 .tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
 .tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
 .tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold); border-radius: 50%; }
 
 /* ---- the research shelf and the quest slot ---- */
-.res-shelf { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
-.res-tome.active { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.res-shelf { background: url('../assets/beam-wood.png') center / auto 100% repeat-x; }
+.res-desks {
+  background:
+    linear-gradient(rgba(40, 22, 10, 0.35), rgba(40, 22, 10, 0.35)),
+    url('../assets/tex-wood.jpg') center / 512px 512px;
+}
+/* The books are plates on the beam (M4): the open one gold. */
+.res-tome:not(.active) {
+  border: 10px solid transparent;
+  border-image: url('../assets/plate-wood.png') 44 fill / 10px round;
+  border-radius: 0;
+  background: none;
+}
+.res-tome.active { background: var(--gold); }
 .q-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .q-cta { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
 .q-scroll.is-complete .q-cta { background: var(--leaf); }
