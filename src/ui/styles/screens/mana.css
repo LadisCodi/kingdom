@@ -6,19 +6,35 @@
 
 .mana-sheet { display: flex; flex-direction: column; gap: 10px; }
 
-.mana-head { display: flex; align-items: center; gap: 8px; }
-.mana-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); flex: 1; }
-.mana-hint { font-size: var(--text-helper); color: var(--ink-muted); text-align: right; }
+/* The orb at the left, big, and the words stacked beside it (M9); the gauge
+   sits under the words, so the head is a grid rather than a row. */
+.mana-head {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-areas: 'orb title' 'orb hint';
+  column-gap: 12px;
+  align-items: center;
+}
+.mana-head > .icon { grid-area: orb; --icon-size: 72px; filter: drop-shadow(0 3px 0 rgba(60, 36, 18, 0.3)); }
+.mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: 700; font-size: var(--text-title); line-height: 1.1; }
+.mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
+/* The gauge is the pool's violet-blue, filled from the orb. */
+.mana-sheet > .k-trough { height: 22px; border-radius: 11px; background: #2c3c66; border-color: #1b2745; }
+.mana-sheet > .k-trough .k-fill { background: #7a5bc7; box-shadow: inset 0 -2px 0 #4c3690; }
+.mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: 700; }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so
  * it stays a fact rather than a spreadsheet. */
 .mana-line {
   display: flex;
-  justify-content: space-between;
+  gap: 0;
   font-size: var(--text-body);
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
-.mana-line b { font-family: var(--font-body); }
+.mana-line > span:first-child::after { content: '\00a0\00b7\00a0'; }
+.mana-line b { font-family: var(--font-body); color: var(--ink); }
+.mana-note { text-align: center; }
 .mana-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
 
 /* -------------------------------------------------------- the two tills --- */
@@ -29,27 +45,33 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, rgba(96, 128, 208, 0.2), rgba(96, 128, 208, 0.06));
-  border: 2px solid rgba(72, 96, 168, 0.4);
+  padding: 10px 12px 12px;
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
-.mana-prize { display: flex; align-items: center; gap: 10px; }
-.mana-prize-copy { flex: 1; min-width: 0; font-size: var(--text-helper); line-height: 1.3; }
+/* The prize is stated once, big: the copy across the top, the orb and the
+   amount under it (M9). */
+.mana-prize { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; }
+.mana-prize-copy { flex: 1 1 100%; min-width: 0; font-size: var(--text-body); line-height: 1.3; text-align: center; }
+.mana-prize-copy::first-line { font-weight: 700; }
 .mana-prize-amount {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex: none;
-  padding: 4px 8px;
+  padding: 2px 8px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: var(--text-title);
+  font-size: 32px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  background: rgba(96, 128, 208, 0.22);
-  border: 2px solid rgba(96, 128, 208, 0.5);
-  border-radius: 8px;
 }
+.mana-prize-amount > .icon { --icon-size: 48px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
+/* Gems first, on a blue slab; the ad on leaf. */
+.mana-tills > .mana-till:first-child > .k-btn { --slab: #2f86d8; --slab-lip: #1b5390; }
+.mana-tills > .mana-till:first-child > .k-btn:disabled { --slab: var(--locked); --slab-lip: #a79470; }
 
 /* Side by side, equal widths, Gems first: two prices for one pool, and a
    player choosing between them is comparing them. A price under a price would
