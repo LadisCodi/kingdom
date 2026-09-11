@@ -71,13 +71,13 @@
 .wel-done img { width: 36px; height: 36px; object-fit: contain; image-rendering: pixelated; }
 .wel-done > .icon:first-child { --icon-size: 32px; }
 .wel-done > .icon:last-child {
-  --icon-size: 16px;
-  margin-left: auto;
-  box-sizing: content-box;
-  padding: 5px;
+  --icon-size: 18px;
+  margin: 0 6px 0 auto;
   border-radius: 50%;
-  background: var(--leaf);
-  border: 2px solid var(--leaf-dark);
+  /* The green wax around the tick is drawn AROUND the atlas cell (padding on
+     an .icon shifts the sheet under it and loses the picture). */
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 5px var(--leaf), 0 0 0 7px var(--leaf-dark);
 }
 .wel-done > span,
 .wel-done > .wel-done-text { flex: 1; }

@@ -171,11 +171,10 @@
 }
 .dly-cell.is-taken > .icon:last-child {
   --icon-size: 16px;
-  box-sizing: content-box;
-  padding: 4px;
+  right: 12px;
   border-radius: 50%;
-  background: var(--leaf);
-  border: 2px solid var(--leaf-dark);
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
   color: var(--ink-inverse);
 }
 .dly-cell.is-locked > .icon:last-child { opacity: 0.8; }
