@@ -121,9 +121,13 @@ async function boot(): Promise<void> {
   // puts a hard ceiling on a slow or failed download.
   await Promise.race([
     Promise.all([
-      document.fonts.load('400 16px "PT Sans"'),
-      document.fonts.load('700 16px "PT Sans"'),
-      document.fonts.load('400 22px "Germania One"'),
+      // All four weights: the roles of tokens.css (--weight-small · body ·
+      // strong · title). A weight left off this list is the one that swaps in
+      // after the first paint and reflows the row it is in.
+      document.fonts.load('400 16px "Nunito"'),
+      document.fonts.load('600 16px "Nunito"'),
+      document.fonts.load('700 16px "Nunito"'),
+      document.fonts.load('800 22px "Nunito"'),
     ]),
     new Promise((resolve) => setTimeout(resolve, 1500)),
   ]);

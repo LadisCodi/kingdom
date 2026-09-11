@@ -26,6 +26,7 @@
   text-align: left;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -63,7 +64,7 @@
   grid-area: name;
   align-self: end;
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: 18px;
   line-height: 1.1;
 }
@@ -95,7 +96,7 @@
   border-radius: 999px;
   border: 2px solid rgba(92, 58, 30, 0.45);
   background: var(--parchment);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 .bld-meta {
   grid-area: meta;
@@ -120,6 +121,7 @@
   margin-bottom: 10px;
   padding: 6px 10px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -135,6 +137,7 @@
   margin: 14px 0 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -152,6 +155,7 @@
   background: var(--clay);
   color: var(--ink-inverse);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   line-height: 1.2;
 }
 
@@ -180,8 +184,8 @@
 }
 .bld-offer-mark .icon { --icon-size: 48px; }
 .bld-offer-copy { flex: 1; min-width: 0; }
-.bld-offer-head { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
-.bld-offer-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+.bld-offer-head { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 18px; line-height: 1.15; }
+.bld-offer-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
 
 /* The crew as pips: filled = owned, hollow = room left. The ceiling is a
  * thing to SEE, so that "4 is as large as a crew gets" lands as a fact the

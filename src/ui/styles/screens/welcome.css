@@ -1,6 +1,6 @@
 /* "Welcome back" (§5.12) — warm, generous, celebratory. */
 
-.wel-lede { font-family: var(--font-body); font-weight: 700; font-size: 18px; text-align: center; margin-bottom: 4px; }
+.wel-lede { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 18px; text-align: center; margin-bottom: 4px; }
 .wel-capped {
   display: flex;
   align-items: center;
@@ -9,6 +9,7 @@
   margin-bottom: 10px;
   color: var(--ink-muted);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 
 /* The ledger is ONE parchment card, a row per resource, ruled between (M13). */
@@ -31,11 +32,11 @@
 }
 .wel-row:last-child { border-bottom: 0; }
 .wel-row > .icon { --icon-size: 28px; }
-.wel-name { flex: 1; font-weight: 700; }
+.wel-name { flex: 1; font-weight: var(--weight-strong); }
 .wel-gain {
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--leaf-dark);
 }
 
@@ -46,7 +47,7 @@
   margin: 14px 0 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--wood);
@@ -66,7 +67,7 @@
   border-radius: var(--radius-sm);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 .wel-done img { width: 36px; height: 36px; object-fit: contain; image-rendering: pixelated; }
 .wel-done > .icon:first-child { --icon-size: 32px; }

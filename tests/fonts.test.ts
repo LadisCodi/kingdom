@@ -1,15 +1,20 @@
 // The type scale is a HIERARCHY with a FLOOR, and nothing else.
 //
 // The pixel faces that shipped until 2026-09-10 had legal sizes — whole
-// multiples of a grid — and a test that held every font-size to that grid. PT
-// Sans is an outline face: every whole pixel is legal, so what is left to hold
-// is what the brief asks for (Docs/art/ui-menus-redesign.md §2): body copy at
-// least 16px, the smallest helper line at least 13px, and a title that stands
-// over both. Plus the three things that rot silently: a base size on <body>
-// (or most of the game inherits the browser default), the weight on every
-// title rule (so a single-weight title face can be swapped in by tokens
-// alone), and @font-face files that actually exist (a renamed woff2 is a
-// system fallback nobody notices until the phone).
+// multiples of a grid — and a test that held every font-size to that grid.
+// Nunito is an outline face: every whole pixel is legal, so what is left to
+// hold is what the brief asks for (Docs/art/ui-menus-redesign.md §2): body
+// copy at least 16px, the smallest helper line at least 13px, and a title that
+// stands over both.
+//
+// And since 2026-09-11 the WEIGHT carries as much as the size: one family sets
+// the whole game, so 800 / 700 / 600 / 400 are what separate a heading from a
+// button from a sentence from the caption under it. Four things rot silently
+// and are held below: a base size AND weight on <body> (or most of the game
+// inherits the browser default), the weight on every title rule, a role for
+// every weight the CSS asks for — with a face that actually ships behind it,
+// or the browser fakes it — and @font-face files that exist (a renamed woff2
+// is a system fallback nobody notices until the phone).
 //
 // Runs in node; reads the stylesheets directly. See tests/node-shim.d.ts for
 // why this is `node:fs` and not Vite's `?raw`.
@@ -65,12 +70,15 @@ describe('the type scale', () => {
 
   // Everything unstyled inherits from <body>; left undeclared, most of the
   // game would be set at the browser default rather than the token.
-  it('declares a base size on body, so nothing inherits the browser default', () => {
+  it('declares a base size and weight on body, so nothing inherits a default', () => {
     const base = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
     // `^body {` — not `\bbody`, which matches the `html, body { … }` reset first.
     const body = /^body\s*\{([^}]*)\}/ms.exec(base);
     expect(body, 'no body rule in style.css').not.toBeNull();
     expect(body![1]).toMatch(/font-size:\s*var\(--text-body\)/);
+    // Ordinary prose is 600. Undeclared, every sentence in the game would come
+    // back at Nunito Regular — thin on parchment, and wrong against the mocks.
+    expect(body![1]).toMatch(/font-weight:\s*var\(--weight-body\)/);
   });
 
   // Hardcoded sizes are allowed — glyph boxes, tags, the nav label — but not
@@ -85,10 +93,10 @@ describe('the type scale', () => {
 });
 
 describe('the title face', () => {
-  // `--font-display` is PT Sans 700 today. A dedicated title face with one
-  // weight (Germania One is the candidate) drops in by changing two tokens —
-  // but only if every rule reads the weight from the token rather than
-  // inheriting a user-agent bold from an <h2> or hardcoding 700.
+  // One family sets the whole game now, so what makes a title a title is the
+  // WEIGHT. That only holds if every rule reads it from the token rather than
+  // inheriting a user-agent bold from an <h2> or hardcoding a number — which
+  // is also what lets a second display face drop back in by one line.
   it('always carries --font-display-weight beside --font-display', () => {
     const bare = blocks().filter((b) => b.body.includes('var(--font-display)'));
     expect(bare.length).toBeGreaterThan(0);
@@ -121,16 +129,46 @@ describe('the font files', () => {
     }
   });
 
-  // Two families, three faces: PT Sans in both weights for copy and
-  // numbers, Germania One in its one weight for titles (board, 2026-09-11).
-  it('ships PT Sans 400 and 700 and Germania One 400, and nothing else', () => {
+  // ONE family, FOUR weights — and the four are the four roles of §2 (board,
+  // 2026-09-11): 800 a heading, 700 a button or an amount or a name, 600
+  // ordinary prose, 400 the small description under it. A fifth face on this
+  // list is a weight nothing names and a download nobody asked for.
+  it('ships Nunito at 400, 600, 700 and 800, and nothing else', () => {
     const faces = [...tokens.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
     const declared = faces.map((f) =>
       `${/font-family:\s*'([^']+)'/.exec(f)?.[1]} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`).sort();
-    expect(declared).toEqual(['Germania One 400', 'PT Sans 400', 'PT Sans 700']);
-    // The display token names the one-weight face and asks for that weight.
-    expect(tokens).toMatch(/--font-display:\s*'Germania One'/);
-    expect(tokens).toMatch(/--font-display-weight:\s*400;/);
+    expect(declared).toEqual(['Nunito 400', 'Nunito 600', 'Nunito 700', 'Nunito 800']);
+    // Both type tokens name the same family: the split is the weight now.
+    expect(tokens).toMatch(/--font-display:\s*'Nunito'/);
+    expect(tokens).toMatch(/--font-body:\s*'Nunito'/);
+  });
+
+  // Every weight the CSS asks for has to be a face that ships, or the browser
+  // synthesises it — a smeared fake bold that looks almost right on the
+  // desktop and wrong on the phone.
+  it('names a role for every weight, and a shipped face for every role', () => {
+    const roles = ['title', 'strong', 'body', 'small'] as const;
+    const shipped = new Set([...tokens.matchAll(/@font-face\s*\{[^}]*font-weight:\s*(\d+)/g)]
+      .map((m) => Number(m[1])));
+    for (const role of roles) {
+      const m = new RegExp(`--weight-${role}:\\s*(\\d+);`).exec(tokens);
+      expect(m, `--weight-${role} is not declared`).not.toBeNull();
+      expect(shipped.has(Number(m![1])), `--weight-${role} is ${m![1]}, which ships no face`)
+        .toBe(true);
+    }
+    // The display weight is the title role, not a number of its own.
+    expect(tokens).toMatch(/--font-display-weight:\s*var\(--weight-title\);/);
+  });
+
+  // The 700s that were the ONLY emphasis PT Sans could offer are now one of
+  // four roles, and a bare number in a rule is a weight that escaped the
+  // system — it cannot be retuned with the others.
+  it('never hardcodes a weight outside the @font-face declarations', () => {
+    const bare = blocks()
+      .filter((b) => !b.sel.includes('@font-face'))
+      .filter((b) => /font-weight:\s*\d+/.test(b.body))
+      .map((b) => `${b.file} ${b.sel}`);
+    expect(bare).toEqual([]);
   });
 });
 

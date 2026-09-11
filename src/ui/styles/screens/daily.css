@@ -52,13 +52,13 @@
 .dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
 .dly-pill > .icon { --icon-size: 30px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
-.dly-pill-title { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.15; }
-.dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }
+.dly-pill-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.15; }
+.dly-pill-day { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* -------------------------------------------------------------- the sheet */
 
 .dly { display: flex; flex-direction: column; gap: 10px; }
-.dly-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+.dly-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
 
 /* The one clock. Stated plainly and once, at the top, in ink rather than in
    red: the window is a fact about the season, not a threat. */
@@ -73,7 +73,7 @@
   border: 2px solid rgba(92, 58, 30, 0.45);
   background: var(--parchment);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -107,7 +107,7 @@
   box-shadow: 0 var(--lip) 0 var(--wood-dark);
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   text-align: center;
@@ -217,7 +217,7 @@ button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
 }

@@ -39,7 +39,7 @@
   /* 14px: a label is a word under a picture, and five of them share a phone
      (M12). */
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   /* A WOOD plate on the wood beam (mockup M1): darker than the beam, a lit
      top edge, the word in cream with a shadow so it reads on the grain. The
      parchment plate it replaced made the bar a row of cards, not a beam. */

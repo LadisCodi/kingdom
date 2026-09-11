@@ -95,6 +95,7 @@
   background: rgba(24, 15, 8, 0.78);
   color: var(--ink-inverse);
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.5;
 }
 /* The mark that says FRAGMENTS rather than the hero — without it a stack of
@@ -156,7 +157,7 @@
   background: var(--leaf-dark);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
   overflow: hidden;
@@ -175,7 +176,7 @@
   background: var(--gold);
   color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 .gr-tile.is-card .gr-count { bottom: 18px; }
 
@@ -188,6 +189,7 @@
   background: rgba(24, 15, 8, 0.75);
   color: var(--ink-inverse);
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.4;
   text-align: center;
   white-space: nowrap;
@@ -217,13 +219,14 @@
   background: var(--parchment);
   color: var(--ink);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 /* The way out, and it appears only when there is nothing left to deal. */
 .gr-prompt {
   color: var(--ink-inverse);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   text-align: center;
   animation: gr-breathe 1.8s ease-in-out infinite;
 }
@@ -256,7 +259,7 @@
 .gr-curtain.is-legendary { --tile: var(--rarity-legendary); }
 @keyframes gr-curtain-in { from { opacity: 0; } to { opacity: 1; } }
 
-.gr-curtain-kicker { color: var(--gold); font-size: var(--text-helper); letter-spacing: 0.08em; }
+.gr-curtain-kicker { color: var(--gold); font-size: var(--text-helper); font-weight: var(--weight-small); letter-spacing: 0.08em; }
 .gr-curtain-art {
   width: 60%;
   max-width: 260px;
@@ -266,16 +269,16 @@
   filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.45));
 }
 .gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: 96px; }
-.gr-curtain-name { font-family: var(--font-body); font-weight: 700; font-size: 28px; line-height: 1.1; }
+.gr-curtain-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 28px; line-height: 1.1; }
 .gr-curtain-title { color: var(--parchment-shade); font-size: var(--text-body); }
-.gr-curtain-kicker { font-weight: 700; }
+.gr-curtain-kicker { font-weight: var(--weight-strong); }
 .gr-curtain-rarity {
   padding: 2px 14px;
   border-radius: var(--radius-sm);
   border: 2px solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   letter-spacing: 0.06em;
 }

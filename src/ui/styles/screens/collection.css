@@ -37,7 +37,7 @@
 .col-band-kicker {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--wood-dark);
@@ -52,7 +52,7 @@
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -63,11 +63,12 @@
   align-items: center;
   gap: 8px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .col-line .k-trough { flex: 1; }
 .col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-.col-count { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.col-count { font-weight: var(--weight-strong); color: var(--ink); white-space: nowrap; }
 
 /* ------------------------------------------------------------- the medallions */
 
@@ -144,7 +145,7 @@
   background: var(--clay);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
 }
 .col-badge.is-locked { background: var(--locked); border-color: var(--wood-dark); }
@@ -163,7 +164,7 @@
 .col-medal-name {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.04em;
   line-height: 1.1;
   text-align: center;
@@ -178,7 +179,7 @@
   background: rgba(60, 36, 18, 0.72);
   color: var(--ink-inverse);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 /* ----------------------------------------------------------------- the vault */
@@ -212,7 +213,7 @@
   border: 2px solid var(--gold-dark);
   background: var(--parchment);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -254,7 +255,7 @@
   background: var(--wood-dark);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 .col-chips { display: flex; gap: 6px; }
@@ -269,11 +270,11 @@
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
   white-space: nowrap;
 }
-.col-chip small { font-weight: 400; font-size: 11px; color: var(--ink-muted); }
+.col-chip small { font-weight: var(--weight-small); font-size: 11px; color: var(--ink-muted); }
 .col-chip.is-relic { color: var(--gold-dark); }
 .col-chip-art { width: 20px; height: 20px; object-fit: contain; }
 .col-chip-art.is-glyph { display: grid; place-items: center; font-size: 14px; }
@@ -292,6 +293,7 @@
   border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink);
 }
 .col-arm.is-armed {
@@ -381,7 +383,7 @@
   background: var(--leaf-dark);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
 }
@@ -396,7 +398,7 @@
   border: 2px solid var(--wood-dark);
   background: #fff;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -408,7 +410,7 @@
   justify-content: space-between;
   gap: 8px;
 }
-.col-walk-label { font-size: var(--text-helper); color: var(--ink-muted); }
+.col-walk-label { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* -------------------------------------------------- §11.4 the relic's card */
 
@@ -456,6 +458,7 @@
   justify-content: center;
   gap: 4px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 
@@ -478,7 +481,7 @@
   color: var(--ink);
 }
 .col-effect + .col-effect { border-top: 2px solid rgba(92, 58, 30, 0.2); }
-.col-effect.is-next { color: var(--ink-muted); font-size: var(--text-helper); }
+.col-effect.is-next { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
 
 /* The album, and the way back to it. */
 .col-relic-album {
@@ -504,7 +507,7 @@
 }
 .col-relic-medal-art { width: 100%; height: 100%; object-fit: cover; }
 .col-relic-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
-.col-relic-album-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
+.col-relic-album-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); }
 
 /* -------------------------------------------------------- §11.1 the pill */
 
@@ -540,7 +543,7 @@
 .sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
 /* Body, not the title face — the daily pill beside it sets its title the same
    way, and the two have to read as a pair. */
-.sea-pill-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.1; }
+.sea-pill-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.1; }
 /* A trough with the count printed ON it, as M20 draws it. */
 .sea-pill-trough {
   position: relative;
@@ -560,7 +563,7 @@
 .sea-pill-count {
   position: relative;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink-inverse);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.8);
 }
@@ -569,5 +572,6 @@
   align-items: center;
   gap: 3px;
   font-size: 11px;
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }

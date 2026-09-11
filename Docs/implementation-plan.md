@@ -68,7 +68,7 @@ Two more that are design-visible:
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** — the Townhall's levels ask for villagers since 2026-09-10 (OQ-93) |
-| The chrome — kit, sheets, nav, header, icons, fonts | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | **rebuilt for the phone 2026-09-10**: PT Sans, smooth 64px icon atlas, 44/52px chrome, sheets ≤ 70%, screens built once (§6.8); the density is OQ-94 until it has been held |
+| The chrome — kit, sheets, nav, header, icons, fonts | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | **rebuilt for the phone 2026-09-10**: Nunito (one family, four weights — 2026-09-11), smooth 64px icon atlas, 44/52px chrome, sheets ≤ 70%, screens built once (§6.8); the density is OQ-94 until it has been held |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |

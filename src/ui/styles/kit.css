@@ -23,7 +23,7 @@
 .k-chip,
 .k-cost,
 .k-stat .k-stat-value,
-.k-trough .k-trough-label { font-family: var(--font-body); font-weight: 700; }
+.k-trough .k-trough-label { font-family: var(--font-body); font-weight: var(--weight-strong); }
 
 /* ---------------------------------------------------------------- surfaces */
 
@@ -109,7 +109,7 @@
   border-radius: 6px;
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
-.k-card .k-desc { font-size: var(--text-helper); color: var(--ink-muted); }
+.k-card .k-desc { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 .k-card > .k-slot .icon { --icon-size: 28px; }
 
 .k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -138,7 +138,7 @@
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink-inverse);
   background: var(--slab);
   border: var(--outline) solid var(--wood-dark);
@@ -171,7 +171,7 @@
  * the slab rather than a second verb competing with the first. */
 .k-btn-note {
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 1;
   opacity: 0.75;
   font-variant-numeric: tabular-nums;
@@ -181,6 +181,7 @@
   align-items: center;
   gap: 10px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
 }
 .k-cost { display: inline-flex; align-items: center; gap: 4px; }
@@ -225,6 +226,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .k-action .k-reason.is-blocked { color: var(--clay); }
@@ -288,6 +290,7 @@
   min-height: 36px;
   padding: 4px 10px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 .k-toggles .k-btn.is-selected { --slab: var(--leaf); --slab-lip: var(--leaf-dark); }
 
@@ -300,7 +303,7 @@
   gap: 4px;
   padding: 4px 8px;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
@@ -314,8 +317,8 @@
 
 /* icon + value + unit, for a rate or a count. */
 .k-stat { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
-.k-stat .k-stat-value { font-weight: 700; font-size: var(--text-body); }
-.k-stat .k-stat-unit { font-size: var(--text-helper); color: var(--ink-muted); }
+.k-stat .k-stat-value { font-weight: var(--weight-strong); font-size: var(--text-body); }
+.k-stat .k-stat-unit { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* Countable progress, when the total is small enough to see at a glance. */
 .k-pips { display: inline-flex; gap: 4px; }
@@ -353,7 +356,7 @@
   display: grid;
   place-items: center;
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -432,6 +435,7 @@
 .gal-item { margin: 8px 0; min-width: 0; }
 .gal-label {
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);
@@ -572,7 +576,7 @@
 .gal-phone-hud .hud-coin {
   display: inline-flex; align-items: center; gap: 4px;
   min-height: 32px; padding: 2px 6px;
-  font-size: var(--text-helper); font-weight: 700; color: var(--ink);
+  font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink);
   background: var(--parchment); border: 2px solid var(--wood-dark); border-radius: 999px;
 }
 .gal-phone-hud .hud-coin .icon { --icon-size: 20px; }
@@ -596,7 +600,8 @@
   flex: 1 1 0; min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 3px 4px 4px;
-  font-size: 12px; color: var(--ink);
+  font-size: 12px;
+  font-weight: var(--weight-small); color: var(--ink);
   background: var(--parchment-shade); border: 2px solid var(--wood-dark); border-radius: var(--radius-sm);
 }
 .gal-phone-nav .nav-tab .icon { --icon-size: 24px; }
@@ -606,6 +611,7 @@
   display: grid; place-items: center;
   width: 44px; height: 44px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   background: var(--parchment); color: var(--ink);
   border: 2px dashed var(--clay); border-radius: 4px;
 }

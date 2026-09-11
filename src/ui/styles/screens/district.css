@@ -48,6 +48,7 @@
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   background: var(--parchment);
   border-top: var(--outline) solid var(--wood-dark);
   box-shadow: 0 -4px 14px rgba(60, 36, 18, 0.35);
@@ -81,7 +82,7 @@
   border-radius: var(--radius-sm);
 }
 .dc-portrait img { width: 92px; height: 92px; object-fit: contain; image-rendering: pixelated; }
-.dc-name { font-family: var(--font-body); font-weight: 700; }
+.dc-name { font-family: var(--font-body); font-weight: var(--weight-strong); }
 
 /* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
    bleeds a pixel or two must not make the card draggable sideways. */
@@ -125,7 +126,7 @@
 .dc-up-title {
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 400;
+  font-weight: var(--weight-small);
   line-height: 1.2;
 }
 /* One line of why, under the title, in the room the button leaves — the
@@ -134,6 +135,7 @@
 .dc-up-sub {
   margin-top: 2px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   line-height: 1.25;
   color: var(--ink-muted);
 }
@@ -200,7 +202,7 @@
   display: flex; align-items: baseline; gap: 6px;
   margin: 4px 0;
 }
-.dc-drip .dc-army-note { font-size: var(--text-helper); }
+.dc-drip .dc-army-note { font-size: var(--text-helper); font-weight: var(--weight-small); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
@@ -209,6 +211,7 @@
   display: flex; align-items: center; gap: 6px;
   margin-top: 4px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -229,7 +232,7 @@
   padding: 4px 10px;
   margin: 4px 0;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   border: 2px solid;
 }
 .dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
@@ -277,6 +280,7 @@
 .dc-army {
   display: flex; align-items: baseline; gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -287,6 +291,7 @@
 .dc-harmony {
   display: flex; align-items: baseline; gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 
 /* ------------------------------------------------- the training section ---
@@ -299,6 +304,7 @@
 .tr-head {
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -350,6 +356,7 @@
   padding: 0 4px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--parchment);
   background: var(--wood-dark);
   border-radius: 999px;
@@ -362,7 +369,7 @@
 
 .tr-queue-row { display: flex; align-items: stretch; gap: 10px; }
 .tr-queue-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); }
+.tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); font-weight: var(--weight-small); }
 
 /* What this hall can turn out. Only drawn when there is a choice to make. */
 /* The picker buttons carry a PORTRAIT now, not a 16px silhouette, so they are
@@ -437,26 +444,27 @@
 .tr-portrait.is-body .tr-portrait-art { object-position: center bottom; }
 .tr-pick.is-locked .tr-pick-art { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 .tr-body { min-width: 0; }
-.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
+.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: var(--weight-small); }
 .tr-tag {
   display: inline-block;
   margin: 1px 0 3px;
   padding: 1px 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--parchment);
   background: var(--wood-dark);
   border-radius: 999px;
 }
-.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); }
+.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
 .tr-stats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; align-items: center; }
 /* The type chart in one phrase, styled like the stats beside it. */
 .tr-beats {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--leaf);
@@ -514,6 +522,7 @@
   gap: 6px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   line-height: 1.3;
   color: var(--clay);
 }
@@ -549,6 +558,7 @@
   gap: 4px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-soft);
   white-space: nowrap;
 }
@@ -604,6 +614,7 @@
   align-items: center;
   gap: 4px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -613,6 +624,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .dc-ws-crew .is-warning { color: var(--clay); }
@@ -646,6 +658,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -698,7 +711,7 @@
   padding: 0 5px;
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 14px;
   color: var(--parchment);
   background: var(--ink);
@@ -708,7 +721,7 @@
 .tr-roster-more {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink-muted);
 }
 
@@ -721,7 +734,7 @@
 .tr-villagers .k-btn { min-height: 34px; }
 .tr-villagers > .k-action,
 .tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
-.tr-villagers > .tr-blocked { font-size: var(--text-helper); line-height: 1.3; }
+.tr-villagers > .tr-blocked { font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
 .dc-up-art {
   grid-column: 1 / -1;
   display: flex;
@@ -749,9 +762,9 @@
   text-shadow: 0 2px 0 var(--gold-dark);
 }
 /* M2's numbers: the block's title at 19px, the tiles one line tall. */
-.dc-up-title { font-size: 19px; font-weight: 700; }
+.dc-up-title { font-size: 19px; font-weight: var(--weight-strong); }
 .dc-up-figures .tr-fig { padding: 4px 8px; gap: 0; }
-.dc-up-figures .tr-fig-head { font-size: 12px; }
+.dc-up-figures .tr-fig-head { font-size: 12px; font-weight: var(--weight-small); }
 .dc-up-figures .tr-fig-value { font-size: 15px; }
 /* M2's order for the block: the heading, the two portraits, the tiles, and
    the verb (or the padlock line where the verb would be) centred at the
@@ -766,7 +779,7 @@
 .dc-up-top > .k-action,
 .dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
 .dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
-.dc-up-sub { font-size: var(--text-helper); }
+.dc-up-sub { font-size: var(--text-helper); font-weight: var(--weight-small); }
 /* A gate beside a soldier's name takes only the room it needs, so the name
    keeps its line. */
-.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; }
+.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; font-weight: var(--weight-small); }

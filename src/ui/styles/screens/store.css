@@ -11,7 +11,7 @@
   color: var(--clay);
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.12em;
   text-align: center;
   text-transform: uppercase;
@@ -27,7 +27,7 @@
   margin: 12px 0 6px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--wood);
@@ -48,7 +48,7 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 .store-owned {
   display: inline-flex;
@@ -56,7 +56,7 @@
   gap: 4px;
   color: var(--leaf-dark);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 .store-price-col {
   display: flex;
@@ -110,8 +110,8 @@
 .store-art.is-GoldKey { background-image: url('../../assets/art-key-gold.png'); }
 .store-art.is-hammer { background-image: url('../../assets/art-hammer.png'); }
 .store-banner-head { grid-area: head; min-width: 0; }
-.store-banner-title { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
-.store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
+.store-banner-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 18px; line-height: 1.15; }
+.store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
 /* The odds read as prose, "label · value", not as a ledger. */
 .store-banner .ban-breakdown { grid-area: lines; gap: 0; }
 .store-banner .ban-line {
@@ -122,7 +122,7 @@
 }
 .store-banner .ban-line > span::after { content: '\00a0\00b7\00a0'; }
 .store-banner .ban-line b { color: var(--ink); }
-.store-banner .ban-line.is-total { margin: 0; padding: 0; border: 0; font-size: var(--text-helper); }
+.store-banner .ban-line.is-total { margin: 0; padding: 0; border: 0; font-size: var(--text-helper); font-weight: var(--weight-small); }
 /* The two calls sit SIDE BY SIDE — one press is the ×1 slot (a call, a free
  * call, or an ad that pays for one), the other is always the ten. */
 .store-banner-calls {
@@ -135,7 +135,7 @@
 }
 .store-banner-calls > .k-btn { width: 100%; min-width: 0; min-height: 38px; padding: 6px; white-space: nowrap; }
 .store-banner-calls .k-btn-label { gap: 6px; }
-.store-banner .ban-note { grid-area: note; font-size: 12px; line-height: 1.25; }
+.store-banner .ban-note { grid-area: note; font-size: 12px; font-weight: var(--weight-small); line-height: 1.25; }
 /* The ×1 slot is a blue slab, the ten is wood; on the golden call both are
  * gold with ink on them (M5). */
 .store-banner-calls > .k-btn:first-child { --slab: #2f86d8; --slab-lip: #1b5390; }
@@ -157,7 +157,7 @@
 .store .k-card .k-name { font-size: 18px; }
 .store .k-card > .k-btn { --slab: var(--wood); --slab-lip: var(--wood-dark); }
 .store .k-btn.has-cost { flex-direction: row; gap: 8px; padding: 6px 12px; }
-.store .k-btn.has-cost .k-btn-cost { font-size: var(--text-body); font-weight: 700; }
+.store .k-btn.has-cost .k-btn-cost { font-size: var(--text-body); font-weight: var(--weight-strong); }
 
 /* ---- the Cards shelf (M23): the keys' row, with the odds inside the card
  * under the line that sells it.
@@ -182,6 +182,7 @@
   flex: 1 0 100%;
   margin: -2px 0 0 58px;
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.3;
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
@@ -205,6 +206,7 @@
   gap: 5px;
   align-items: flex-start;
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.3;
   color: var(--ink);
 }
@@ -222,6 +224,7 @@
 .store-note {
   margin: -4px 2px 2px;
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.3;
   text-align: center;
   color: var(--ink-muted);
@@ -274,7 +277,7 @@
   background: var(--clay);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.06em;
   text-align: center;
   text-transform: uppercase;
@@ -301,7 +304,7 @@
 }
 .store-pack-count {
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: var(--text-body);
   white-space: nowrap;
 }
@@ -340,9 +343,9 @@
 }
 .payer-option > .k-btn { flex: none; min-width: 0; white-space: nowrap; }
 .payer-copy { min-width: 0; }
-.payer-name { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; color: var(--ink); }
-.payer-budget { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
-.payer-blurb { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
+.payer-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 18px; line-height: 1.15; color: var(--ink); }
+.payer-budget { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); }
+.payer-blurb { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
 .payer-fine {
   display: flex;
   gap: 6px;
@@ -350,6 +353,7 @@
   margin-top: 10px;
   color: var(--ink-muted);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   line-height: 1.3;
 }
 
@@ -357,8 +361,8 @@
 .iap-head { display: flex; gap: 12px; align-items: center; }
 .iap-head > .icon,
 .iap-head > img { --icon-size: 64px; width: 64px; height: 64px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
-.iap-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-title); line-height: 1.1; }
-.iap-grant { font-family: var(--font-body); font-weight: 700; color: var(--ink-muted); }
+.iap-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
+.iap-grant { font-family: var(--font-body); font-weight: var(--weight-strong); color: var(--ink-muted); }
 /* A bundle is the one SKU whose grant is a LIST, so the confirmation spells it
    out above the ledger — the hand, then the price it is weighed against. */
 .iap-grants {
@@ -408,6 +412,7 @@
   margin-top: 8px;
   color: var(--ink-muted);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 .iap-actions {
   display: grid;
@@ -426,6 +431,7 @@
   display: flex;
   justify-content: space-between;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
 }
 .ban-line b { font-family: var(--font-body); }
@@ -436,4 +442,4 @@
   border-top: 2px solid rgba(72, 96, 168, 0.35);
   font-size: var(--text-body);
 }
-.ban-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+.ban-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }

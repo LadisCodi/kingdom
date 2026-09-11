@@ -140,7 +140,7 @@
      slots: 13px bold, a dark shadow under each figure so it reads on the
      grain. */
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
@@ -184,7 +184,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   color: var(--ink-inverse);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 1;
 }
 
@@ -203,7 +203,7 @@
   min-height: 30px;
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   background: var(--parchment);
@@ -283,15 +283,15 @@
 }
 .purse-row:last-child { border-bottom: 0; }
 .purse-row > .icon { --icon-size: 34px; }
-.purse-name { flex: 1; min-width: 0; font-weight: 700; }
-.purse-value { font-family: var(--font-body); font-weight: 700; }
+.purse-name { flex: 1; min-width: 0; font-weight: var(--weight-strong); }
+.purse-value { font-family: var(--font-body); font-weight: var(--weight-strong); }
 /* An equivalent's contribution, indented under the currency it feeds. */
-.purse-row.is-sub { padding-left: 26px; font-size: var(--text-helper); color: var(--ink-muted); }
+.purse-row.is-sub { padding-left: 26px; font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 .purse-row.is-total {
   border-top: 2px solid var(--wood-dark);
   border-radius: 0;
   margin-bottom: 6px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 /* The row under the plank: the contextual plaque alone now. Population moved
@@ -333,7 +333,7 @@
   background: #2a2140;
   border: 2px solid #1b1530;
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
@@ -360,5 +360,6 @@
 .hud-coin-rate {
   margin-left: 3px;
   font-size: 12px;
+  font-weight: var(--weight-small);
   opacity: 0.75;
 }

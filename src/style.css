@@ -10,8 +10,13 @@ html, body { height: 100%; overflow: hidden; background: #14100c; }
 body {
   font-family: var(--font-body);
   /* Declared, so every unstyled string reads the token rather than whatever
-   * the browser defaults to (tests/fonts.test.ts holds it). */
+   * the browser defaults to (tests/fonts.test.ts holds it). The WEIGHT is
+   * declared for the same reason and matters more: ordinary prose is 600
+   * (tokens.css), and left undeclared every sentence in the game would come
+   * back at Nunito Regular, which reads thin on parchment. The small
+   * descriptions that DO want 400 ask for it by name. */
   font-size: var(--text-body);
+  font-weight: var(--weight-body);
   color: var(--ink);
   user-select: none;
   -webkit-user-select: none;
