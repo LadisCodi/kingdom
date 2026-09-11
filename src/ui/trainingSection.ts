@@ -283,12 +283,16 @@ function villagerRoster(game: Game, district: District): HTMLElement {
   const cap = maxPopulation(game.state);
   const line = lineFor(game.state, district.uniqueId);
   const queued = line.reduce((n, i) => n + itemCount(i), 0);
-  const shown = Math.min(cap, ROSTER_FACES);
+  // Five sockets are always drawn (M2): a socket past the houses' capacity is
+  // a bed that does not exist yet, and reads fainter than a free one.
+  const shown = Math.max(Math.min(cap, ROSTER_FACES), Math.min(ROSTER_FACES, 5));
   const row = el('div', { class: 'tr-roster' });
   for (let i = 0; i < shown; i++) {
-    const kind = i < living ? 'is-living' : i < living + queued ? 'is-queued' : 'is-empty';
+    const kind = i < living ? 'is-living'
+      : i < living + queued ? 'is-queued'
+        : i < cap ? 'is-empty' : 'is-none';
     const slot = el('div', { class: `tr-roster-slot ${kind}` });
-    if (kind !== 'is-empty') slot.append(unitBust('Villager', 'tr-roster-art'));
+    if (kind === 'is-living' || kind === 'is-queued') slot.append(unitBust('Villager', 'tr-roster-art'));
     // The first queued face carries the clock: it is the one being trained.
     if (kind === 'is-queued' && i === living && line[0] !== undefined) {
       slot.append(el('span', { class: 'tr-roster-timer' },
@@ -389,6 +393,13 @@ function detail(
         ? { info: el('span', { class: 'dc-uptime' }, iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)) }
         : {}),
     });
+  // The villagers' block is the roster and the button on one row (M2): the
+  // faces say who lives here and who is on the way, the slab says what one
+  // more costs. No portrait — the faces are the portrait.
+  if (trainee === 'Villager') {
+    return el('div', { class: 'tr-info is-villagers' },
+      el('div', { class: 'tr-villagers' }, ...copy.figures, buy));
+  }
   return el('div', { class: 'tr-info' },
     el('div', { class: 'tr-portrait is-body' }, unitBody(trainee, 'tr-portrait-art')),
     el('div', { class: 'tr-body' },

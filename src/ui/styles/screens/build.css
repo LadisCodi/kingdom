@@ -13,7 +13,7 @@
      both. Two of these per line fit six cards in a 65% sheet without a
      scroll, which the stacked card never managed. */
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   grid-template-areas:
     'art name'
     'art promise'
@@ -46,10 +46,11 @@
 
 .bld-art {
   grid-area: art;
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
+  align-self: start;
 }
 .bld-art img {
   width: 100%;
@@ -62,7 +63,8 @@
   grid-area: name;
   align-self: end;
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-weight: 700;
+  font-size: 18px;
   line-height: 1.1;
 }
 .bld-promise {
@@ -82,8 +84,18 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 6px;
+}
+/* Cost chips are small parchment pills with the icon and the figure (M3). */
+.bld-cost .k-chip,
+.bld-cost .k-cost {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment);
+  font-weight: 700;
 }
 .bld-meta {
   grid-area: meta;

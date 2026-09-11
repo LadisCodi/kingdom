@@ -52,11 +52,14 @@
 .k-plank {
   margin: -10px -10px 8px;
   padding: 6px 10px;
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* The title is CENTRED on the strip (M3–M18); the way out rides at the
+     right end, off the flow, so the word never shifts for it. */
+  justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   border-radius: 4px 4px 0 0;
@@ -67,8 +70,8 @@
 }
 /* The title grows; the close knob sits at the strip's end, inside it, so the
    plank is the whole of the sheet's chrome above the content. */
-.k-plank > span:first-child { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.k-plank .k-knob { width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
+.k-plank > span:first-child { min-width: 0; max-width: calc(100% - 96px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
 
 /* Rope grab handle on a sheet. */
 .k-grab {

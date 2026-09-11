@@ -363,7 +363,6 @@
   background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
 }
 .site-art,
-.site-gate-head > .icon,
 .plc-art { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .site-stats > .k-stat,
 .site-gate,
@@ -481,3 +480,8 @@
     url('../assets/tex-wood.jpg') center / 200px 200px;
 }
 .bs-exit .k-btn { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+
+/* ---- the Townhall card's blocks (M2) ---- */
+.dc-up-tile,
+.bld-cost .k-chip,
+.bld-cost .k-cost { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }

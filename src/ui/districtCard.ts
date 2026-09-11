@@ -79,6 +79,14 @@ function levelStars(level: number, max: number): HTMLElement {
 }
 
 /** The building's own art at a given level, falling back to its icon. */
+/** A building at a level, contained in a parchment tile, for the level-up
+ *  block's before → after pair. */
+function levelArt(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
+  const url = spriteUrl(`${def.sprite}_l${Math.min(level, def.maxLevel)}`) ?? spriteUrl(def.sprite);
+  return el('div', { class: 'dc-up-tile' },
+    url ? spriteImgAt(url, 'dc-up-sprite') : iconEl(def.id, { size: 'lg' }));
+}
+
 function portrait(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
   const url = spriteUrl(`${def.sprite}_l${level}`) ?? spriteUrl(def.sprite);
   return el('div', { class: 'dc-portrait' }, url
@@ -565,6 +573,12 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
           // longer sentence wrapped to four lines and grew the block.
           el('div', { class: 'dc-up-sub' }, `Upgrade to level ${next} and improve these stats`)),
         upgrade),
+      // The two portraits with the arrow between them (M2): what it is and
+      // what it becomes, over the numbers that say by how much.
+      el('div', { class: 'dc-up-art' },
+        levelArt(def, district.level),
+        el('span', { class: 'dc-up-arrow' }, '➜'),
+        levelArt(def, next)),
       el('div', { class: 'tr-figures dc-up-figures' },
         ...upgradeDeltas(game, district, next),
         figure('hourglass', 'Time',
