@@ -2046,3 +2046,18 @@ The sheet comes back 1254×1254; cut it on an even 2×2 grid and `-fuzz 6%
 corners), `beam-wood.png` (the header's and the nav's beam, repeated along
 x at full height). `fill` keeps the painted face as the element's
 background.
+
+### 7.25 The Settings marks (I1)
+
+Five row marks for the Settings dialog (M9) — music, sound effects,
+ambience, the save, the payer profile — plus a start-over mark held in
+reserve. They are not `IconName`s: nothing but the Settings rows shows
+them, so they ship as `src/ui/assets/set-{music,sfx,ambience,save,payer,
+restart}.png` (128px, squared) and are drawn as CSS backgrounds in the
+row's parchment vignette. Sent into the M0 conversation with
+`mockups/m9-settings-mana.png` attached:
+
+> Same icon style as the settings rows in the attached mockup: chunky, simple, smooth silhouettes with a thin dark-brown outline, soft two-tone shading and a small highlight, NO pixel art. One sheet, 1024×1024, fully TRANSPARENT background (true alpha, no checkerboard, no card, no shadow on the ground), a strict 3×2 grid of equal cells (341×512), one object centred in each cell filling about 70% of it, in this exact reading order: 1 a golden music note; 2 a wooden loudspeaker horn with two sound waves; 3 a round green tree with a small bird; 4 a rolled parchment scroll tied with a red ribbon and a wax seal (saving the kingdom); 5 a small leather coin purse with a gold coin peeking out (who is playing); 6 two curved golden arrows chasing each other in a circle (start over). No text, no labels, no frame lines between cells.
+
+The sheet comes back 1254×1254; cut it 3×2, `-fuzz 4% -trim`, square
+with `-extent` and resample to 128px.

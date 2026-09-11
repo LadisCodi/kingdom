@@ -37,6 +37,26 @@
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
 .set-label { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
+.set-words { flex: 1; min-width: 0; }
+/* The mark in its parchment vignette (M9); the pictures come from
+   sheets/ui-i1-settings.png. */
+.set-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment) center / 38px 38px no-repeat;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+.set-icon.is-music { background-image: url('../../assets/set-music.png'); }
+.set-icon.is-sfx { background-image: url('../../assets/set-sfx.png'); }
+.set-icon.is-ambience { background-image: url('../../assets/set-ambience.png'); }
+.set-icon.is-save { background-image: url('../../assets/set-save.png'); }
+.set-icon.is-payer { background-image: url('../../assets/set-payer.png'); }
+.set-row { margin-bottom: 6px; }
+.set > .k-action { margin-top: 2px; }
+.set-print { margin-top: 10px; }
 /* The one destructive control is a clay slab the width of the sheet. */
 .set > .k-action { display: flex; flex-direction: column; align-items: stretch; }
 .set > .k-action > .k-btn { width: 100%; }

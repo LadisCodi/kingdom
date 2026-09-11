@@ -33,15 +33,22 @@ export function renderSettingsMenu(
   game: Game,
   opts: { saveModeLabel: string; onReset: () => void },
 ): HTMLElement {
+  // Every row leads with a painted mark in a parchment vignette (M9); the
+  // marks are sheets/ui-i1-settings.png, drawn as CSS backgrounds.
+  const mark = (name: string): HTMLElement =>
+    el('span', { class: `set-icon is-${name}`, role: 'img', 'aria-hidden': 'true' });
+  const words = (label: string, hint: string): HTMLElement => el('div', { class: 'set-words' },
+    el('div', { class: 'set-label' }, label),
+    el('div', { class: 'set-hint' }, hint));
   const toggle = (
+    icon: string,
     label: string,
     hint: string,
     on: boolean,
     set: (muted: boolean) => void,
   ): HTMLElement => el('div', { class: 'set-row' },
-    el('div', {},
-      el('div', { class: 'set-label' }, label),
-      el('div', { class: 'set-hint' }, hint)),
+    mark(icon),
+    words(label, hint),
     switchCtl(on, () => { set(on); game.notify(); }, label));
 
   const armed = Date.now() < armedUntil;
@@ -65,25 +72,21 @@ export function renderSettingsMenu(
 
   const body = el('div', { class: 'set' },
     el('div', { class: 'set-section' }, 'Sound'),
-    toggle('Music', 'The harp loop', !musicMuted(), (on) => setMusicMuted(on)),
-    toggle('Sound effects', 'Taps, coins, construction', !sfxMuted(), (on) => setSfxMuted(on)),
-    toggle('Ambience', 'Wind, waves, birdsong', !ambienceMuted(), (on) => setAmbienceMuted(on)),
+    toggle('music', 'Music', 'The harp loop', !musicMuted(), (on) => setMusicMuted(on)),
+    toggle('sfx', 'Sound effects', 'Taps, coins, construction', !sfxMuted(), (on) => setSfxMuted(on)),
+    toggle('ambience', 'Ambience', 'Wind, waves, birdsong', !ambienceMuted(), (on) => setAmbienceMuted(on)),
 
     el('div', { class: 'set-section' }, 'Your kingdom'),
     el('div', { class: 'set-row' },
-      el('div', {},
-        el('div', { class: 'set-label' }, opts.saveModeLabel.includes('cloud')
-          ? 'Saved to the cloud'
-          : 'Saved to this device'),
-        el('div', { class: 'set-hint' },
-          `Your kingdom keeps working for up to ${OFFLINE_CAP_HOURS} hours while you are away.`))),
+      mark('save'),
+      words(opts.saveModeLabel.includes('cloud') ? 'Saved to the cloud' : 'Saved to this device',
+        `Your kingdom keeps working for up to ${OFFLINE_CAP_HOURS} hours while you are away.`)),
 
     el('div', { class: 'set-section' }, 'Playing as'),
     el('div', { class: 'set-row' },
-      el('div', {},
-        el('div', { class: 'set-label' }, game.payerInfo()?.label ?? 'No profile yet'),
-        el('div', { class: 'set-hint' },
-          'Fixed for this kingdom. Starting over lets you pick another.'))),
+      mark('payer'),
+      words(game.payerInfo()?.label ?? 'No profile yet',
+        'Fixed for this kingdom. Starting over lets you pick another.')),
 
     el('div', { class: 'set-section' }, 'Start over'),
     reset,
@@ -91,5 +94,7 @@ export function renderSettingsMenu(
     el('div', { class: 'set-print' }, `${GAME_VERSION} · save format v${SAVE_VERSION}`),
   );
 
-  return sheet({ title: 'Settings', onClose: () => game.dismiss() }, body);
+  // A centred dialog, like the Mana sheet (M9): it asks a few questions and
+  // has no list to scroll.
+  return sheet({ title: 'Settings', onClose: () => game.dismiss(), centred: true }, body);
 }

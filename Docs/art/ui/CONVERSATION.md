@@ -507,3 +507,17 @@ for.
   printed on the wood in cream, two plates on a dark beam, plates on the nav,
   nailed parchment cards, a hanging cloth pennant, a clay "!" tag on the
   toast. The map behind it stays pixel art by design.
+
+---
+
+## I1 — the Settings marks (§7.25)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M18 conversation above, `mockups/m9-settings-mana.png`
+  attached.
+- **File:** `sheets/ui-i1-settings.png` (3×2, 1254×1254, true alpha) →
+  `src/ui/assets/set-*.png`, 128px.
+- **Prompt:** §7.25 verbatim. First time.
+- **What to know:** a CSS `url()` to a file that did not exist when Vite
+  first transformed the stylesheet is left unrewritten (`/assets/x.png`);
+  restart the dev server after dropping new assets in.

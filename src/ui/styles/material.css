@@ -485,3 +485,12 @@
 .dc-up-tile,
 .bld-cost .k-chip,
 .bld-cost .k-cost { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.set-icon {
+  background-image: url('../assets/tex-parchment.jpg');
+  background-size: 384px 384px;
+}
+.set-icon.is-music { background: url('../assets/set-music.png') center / 38px 38px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.set-icon.is-sfx { background: url('../assets/set-sfx.png') center / 38px 38px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.set-icon.is-ambience { background: url('../assets/set-ambience.png') center / 38px 38px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.set-icon.is-save { background: url('../assets/set-save.png') center / 38px 38px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.set-icon.is-payer { background: url('../assets/set-payer.png') center / 38px 38px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
