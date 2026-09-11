@@ -25,8 +25,8 @@
 - Heroes and relics are the game's two collections, and **they are built to
   feel different** ([`09-relics.md`](09-relics.md) §1). A hero is a **ladder**:
   collect → a tier caps the level → a currency buys levels inside the cap →
-  equip into limited slots. A relic is an **album**: nine cards a season,
-  completed once, and a permanent level with no cap and no slot.
+  equip into limited slots. A relic is an **album**: its own nine cards a
+  season, completed once, and a permanent level with no cap and no slot.
 - A hero's ascension is worth **ten levels** and its ladder ends at tier 5 /
   **level 50**. A relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
@@ -288,12 +288,12 @@ Each of these is data, not code:
 | A third banner | one `Banners` row — its weights are its pool |
 | Rebalancing a banner | its row: odds, both pities, weights, key price, free calls |
 | Rebalancing the hero's share of a fight | the rarity multipliers and the 70% target, on the `Heroes` sheet |
-| A new relic | one relic row + two albums in the seasons file ([`09-relics.md`](09-relics.md) §3) |
+| A new relic | one relic row + **its** album in the seasons file ([`09-relics.md`](09-relics.md) §3) |
 
 ## 8. The screens
 
 - **Heroes have a nav tab of their own**, beside the Collection. A roster of
-  thirty-two and an album of ninety cards are two screens with two jobs; the
+  thirty-two and five albums of nine cards are two screens with two jobs; the
   one thing they share is the reveal ([`09-relics.md`](09-relics.md) §11.3).
 
 ### 8.1 The roster

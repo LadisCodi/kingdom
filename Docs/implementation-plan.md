@@ -462,7 +462,8 @@ rather than an addition, and it wants the repeatable dungeon under it.
 What it touches, so it is sized honestly: `attunement.*` and the slot SKU go;
 `ArtifactDef` loses its level curve and keeps `base` and `per_level`; the
 Fragments counter becomes a per-season card state plus stars; a **seasons
-file** beside the events file names the albums and the hero; the season close
+file** beside the events file names the season and its hero — the albums are
+one per relic, fixed; the season close
 is one more `consider()` in `nextBoundary` and one branch in `applyDueAt`; a
 pack's cards are rolled by hash on the pack id; the Relics tab becomes the
 Collection tab and the reveal screen gains a second caller. **The migrator

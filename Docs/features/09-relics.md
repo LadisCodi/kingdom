@@ -1,7 +1,7 @@
 # 9 · Relics and the collection
 
 > **Scope.** The five relics as permanent kingdom passives with no ceiling,
-> and the **collection** that levels them: a 30-day season of ten card albums,
+> and the **collection** that levels them: a 30-day season of five card albums,
 > the packs the cards come in, duplicates, the vault, trading, wildcards, and
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
 > packs fall from are [`11-expeditions.md`](11-expeditions.md).
@@ -18,9 +18,11 @@
   number rises with the relic's **level**. There is no ceiling.
 - **Every relic the player has is always on.** Nothing is worn, socketed or
   swapped, and nothing carries one anywhere.
-- **A relic is unlocked and levelled by completing its albums** (§4). The
-  first album ever completed for a relic hands it over at level 1; every album
-  completed after that adds a level.
+- **A relic is unlocked and levelled by completing its album** (§4). Each
+  relic has **exactly one album, the same one every season**. The first season
+  a player completes it, the relic arrives at level 1; every season after,
+  **+1 level**. A relic rises at most one level a season, and only by its own
+  album.
 - The relic itself never drops. Ruins pay **card packs** (§6), not relics.
 - A relic has no active. Abilities are spells, nodes in the Magic tome
   ([`07-research.md`](07-research.md) §6). **A relic is what the kingdom has;
@@ -43,8 +45,9 @@ never a discount, because a discount dies at 100%.
 | **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
 
 - `X = base + per_level × (level − 1)`, both authored per relic on the
-  `Artifacts` sheet. `per_level` is sized to be **felt on a headline number**
-  — of the order of +10% a level on the Ledger — not to be safe.
+  `Artifacts` sheet. A level is **a season's worth of growth**, so `per_level`
+  is sized to be **felt on a headline number** — of the order of +10% a level
+  on the Ledger — not to be safe.
 - The Rod and the Seal split the two harvest clocks between them: what grows
   back in place and what reappears elsewhere are different numbers, and one
   relic moves each.
@@ -57,16 +60,18 @@ never a discount, because a discount dies at 100%.
   player is in the same season at the same time; the season does not start
   when a player does, and a player who arrives on day 25 has five days, like
   everyone else.
-- A season is **content**: which ten albums it holds, which relic each one
-  levels, the season hero, and its dates. It lives in a hand-written seasons
-  file beside the events file ([`13-events.md`](13-events.md) §1); every
-  number in it — Gems, hours, stars, odds — lives on the `Collection` sheet.
+- A season is **content**: its name, its frame, its dates, the rarity each
+  album's nine slots carry, and the season hero. **Which relic each album
+  levels is not per-season content** — it is one album per relic, in the same
+  order, for ever. It lives in a hand-written seasons file beside the events
+  file ([`13-events.md`](13-events.md) §1); every number in it — Gems, hours,
+  stars, odds — lives on the `Collection` sheet.
 - **At the close, the cards and the stars are wiped.** Relic levels stay. So
   do the keys, the resources and the Gems the albums paid. Nothing else
   crosses the boundary, so hoarding is pointless and a spare card is a spare
   card.
-- The next season opens the moment the last one closes, with the same ten
-  albums — the same 90 cards behind a new season frame and name. New card art
+- The next season opens the moment the last one closes, with the same five
+  albums — the same 45 cards behind a new season frame and name. New card art
   is a decision a season may take, never a requirement.
 - The close is a **timer**, not production: it resolves in the uncapped tail
   of the offline advance, at its absolute timestamp. A player away for a week
@@ -79,16 +84,28 @@ never a discount, because a discount dies at 100%.
 
 ## 4. The albums and the cards
 
-- A season holds **ten albums of nine cards**, two per relic. Each card
-  belongs to exactly one album.
+- A season holds **five albums of nine cards — one per relic**. Each card
+  belongs to exactly one album, and each album to exactly one relic:
+
+| # | Album | Levels | Rarity |
+|---|---|---|---|
+| 1 | the harvest album | **Dowsing Rod** | 1★–2★ |
+| 2 | the wilds album | **Verdant Seal** | 1★–3★ |
+| 3 | the labour album | **Foreman's Sigil** | 2★–4★ |
+| 4 | the coin album | **Gilded Ledger** | 3★–5★, gold |
+| 5 | the stars album | **Wanderer's Compass** | 3★–5★, gold |
+
 - **Completing an album is done once a season.** A ninth card lands, the album
   pays (§5), and it is marked complete; further copies are duplicates.
 - Every card carries a **rarity**: **1★ to 5★**, plus **gold** editions of
   4★ and 5★. Which rarities each of the nine slots carries is authored per
-  album, and albums are ordered from easy to hard: the first albums hold 1★
-  to 3★, the middle ones bring 4★ and its gold, the last two bring 5★ and its
-  gold.
-- **Gold cards are what the last albums turn on.** They fall only from the
+  album, and the five are ordered from easy to hard: the first two hold 1★ to
+  3★, the third brings 4★, and **the last two bring 5★ and the gold
+  editions**.
+- The order is the ladder of what a relic is worth. The two harvest clocks are
+  the cheap levels a first-season player will actually close; the tax rate and
+  the Stardust yield are behind the gold cards.
+- **Gold cards are what the last two albums turn on.** They fall only from the
   best packs (§6), they cannot be sent (§8), and no wildcard stands in for
   them (§9).
 - Cards drop for every album from the first pack, so an unstarted relic is a
@@ -100,20 +117,23 @@ Three things, on the ninth card, in one sheet:
 
 | | What | Why |
 |---|---|---|
-| **The relic** | its first album ever: the relic, at level 1. Any album after: **+1 level**, for ever | the permanent layer — the one the season leaves behind |
+| **The relic** | the first season its album is completed: the relic, at level 1. Every season after: **+1 level**, for ever | the permanent layer — the one the season leaves behind |
 | **A chest of production** | **N hours of everything the city makes right now**, at the album's band | priced in production, so it is the same fraction of a day at every stage and spent as fast as it lands |
-| **Keys and Gems** | silver keys on the early albums, gold on the late ones; **1,000 Gems each, 10,000 across the ten** | the spike that feeds the other collection |
+| **Keys and Gems** | silver keys on the first three, gold on the last two; **2,000 Gems each, 10,000 across the five** | the spike that feeds the other collection |
 
 - The hours are banded: the easy albums pay a morning, the hard ones the whole
   offline cap and never more — a chest that outpays a night's sleep would make
   the night look small.
-- **Completing all ten pays the collection prize**: a **golden call that is
+- **Completing all five pays the collection prize**: a **golden call that is
   guaranteed to be the season hero** (§10) and **25,000 Gems**. The prize is
   dealt in the gacha reveal screen, which is the most exciting screen the game
   has and the right place for the last card to lead.
 - A relic level is not exciting on its own and is not meant to be. The chest
   and the keys sell the pack today; the level is why a player who has done
   three seasons has a kingdom no new player can buy.
+- **Nothing rushes one relic ahead of the others.** A relic's level is the
+  count of seasons its album was completed, so three seasons closed in full is
+  level 3 on all five, and a player's relic levels read their history.
 
 ## 6. Packs
 
@@ -134,9 +154,9 @@ cards it holds and which rarities it can hold, at **published odds**.
   dungeon**, which is designed to follow ([`../implementation-plan.md`](../implementation-plan.md) §4). Until it lands, a player who has bottomed
   every ruin gets packs from the chest, the event, the pass and the store
   only. **OQ-88.**
-- The pace to author against is **how many albums a player who buys nothing
-  completes in 30 days**. That number, not the price of a pack, is what
-  decides whether the collection sells or stalls.
+- The pace to author against is **how many of the five a player who buys
+  nothing completes in 30 days**. That number, not the price of a pack, is
+  what decides whether the collection sells or stalls. **OQ-88.**
 - Opening a pack uses the **gacha reveal** ([`10-heroes.md`](10-heroes.md)
   §8.3): the cards turn one by one, a new card says so, a duplicate shows its
   count. Skippable, never interrupted.
@@ -154,6 +174,9 @@ cards it holds and which rarities it can hold, at **published odds**.
 - A duplicate is spent one of two ways — sent to a friend (§8) or left to the
   vault — and the vault is what makes a duplicate worth something to a player
   with nobody to send it to.
+- **A season of 45 cards deals duplicates early**, so the vault is not a late
+  screen: its first threshold is meant to be reached in the first week, and it
+  is the second faucet a player without friends has.
 - Stars are wiped with the cards at the close.
 
 ## 8. Trading
@@ -174,8 +197,9 @@ cards it holds and which rarities it can hold, at **published odds**.
 
 - A **wildcard** stands in for any card of its rarity or lower in any album.
   It is placed by the player, in the slot they choose, and consumed.
-- **There is no gold wildcard.** The last slot of the last album is earned or
-  sent — never bought outright.
+- **There is no gold wildcard.** The gold slots of the last two albums — the
+  Ledger's and the Compass's — are earned or sent, never bought outright, so
+  the two strongest relics are the two Gems cannot finish.
 - Wildcards are **sold in offers**, aimed at the albums a player has nearly
   finished: an offer names the album, the missing count and a wildcard that
   covers it. They also sit on the season pass's paid column.
@@ -205,16 +229,21 @@ Two levels behind one nav tab, plus the reveal the gacha already owns.
   countdown derives from the close timestamp.
 - The **stars** count and the vault's next threshold on one line; tapping it
   opens the vault.
-- **The ten albums, two to a row**, in season order: the album's art, its
-  name, `7/9`, and the relic it levels as a small badge. A completed album
-  reads as a gold tile with a tick; an album one card short says which.
-- A **relics strip** above the albums — five tiles, level on each, unfound
-  ones in silhouette with *Album 3* under them as a signpost. Tapping one
-  opens the relic's card: art, name, level, the effect at this level and at
-  the next.
+- **The five albums, one to a row**, in season order: the album's art, its
+  name, `7/9`, and **the relic it levels with its current level** on the right
+  of the row — in silhouette while the relic is unfound. A completed album
+  reads as a gold row with a tick; an album one card short says which.
+- **There is no separate relics strip.** One album per relic means the five
+  rows already are the five relics, and a strip above them would be the same
+  list twice. Tapping the relic on a row opens the relic's card: art, name,
+  level, the effect at this level and at the next.
 
 ### 11.2 An album
 
+- A header naming **the relic the album levels**: its art, its level, and the
+  effect at this level and at the next. One album per relic means the album
+  screen *is* the relic screen — what is being built and what it is for sit
+  on the same page.
 - The **3×3 grid**: each slot shows the card or its silhouette, its rarity
   as stars — gold slots framed gold — and its duplicate count as `×3`.
 - A **duplicate can be tapped**: *Send* (three left today) or *To the vault*
@@ -239,18 +268,18 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Dial | Value | Key |
 |---|---|---|
 | Season length | **30 days, fixed**, shared calendar | seasons file |
-| Albums a season · cards an album | **10 · 9, fixed** | seasons file |
-| Albums per relic | **2, fixed** | seasons file |
-| Gems an album pays · the collection prize | **1,000 each, 25,000 at the end, fixed** | `collection.album_gems`, `collection.prize_gems` |
+| Albums a season · cards an album | **5 · 9, fixed** | seasons file |
+| Which relic each album levels | **one each, the same order every season, fixed** | seasons file |
+| Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 10,000 across the five, as before | `collection.album_gems`, `collection.prize_gems` |
 | Sends a day | **3, fixed**; gold never | `collection.sends_per_day` |
 | A relic's `base` and `per_level` | per relic | `Artifacts` sheet |
-| Production hours an album pays, by band | 2 h · 4 h · 8 h | `collection.album_hours_*` |
-| Keys an album pays, by band | 1 silver · 1 silver · 1 gold | `collection.album_keys_*` |
+| Production hours an album pays | 2 h · 2 h · 4 h · 8 h · 8 h | `collection.album_hours_*` |
+| Keys an album pays | silver · silver · silver · gold · gold | `collection.album_keys_*` |
 | Rarity per slot, per album | authored | seasons file |
 | Pack tiers — cards, rarity range, odds | §6 | `Packs` sheet |
 | Stars a duplicate is worth | 1 · 2 · 5 · 10 · 25, gold ×2 | `collection.stars_*` |
 | Vault thresholds | 50 → Gold, 200 → Star | `collection.vault_*` |
-| Free albums a season, target | **the pacing number — OQ-88** | derived, not authored |
+| Free albums a season, target | **the pacing number — OQ-88**; two of five free, five for a Dolphin | derived, not authored |
 | Season hero rate-up weight | — | `Banners.rate_up_weight` |
 
 ## 13. Deliberately not in this design
@@ -266,6 +295,11 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 - **A discount as a relic effect.** Speeds and yields only.
 - **An active on a relic**, or a relic carried into a fight.
 - **A card that survives the season**, or an extension for a late arrival.
+- **Two albums for one relic**, or an album that levels no relic. One relic,
+  one album, one level a season — the relic strip, the badge and the signpost
+  all collapse into the five rows because of it.
+- **Levelling one relic twice in a season.** A wildcard, a gift and the vault
+  all buy the same single level faster; none of them buys a second.
 - **Selling a card.** Packs, and a wildcard that never covers gold.
 - **A season-exclusive hero.** Associated: rated up now, in the pool for ever.
 - **New card art every season** as a requirement.

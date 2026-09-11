@@ -61,7 +61,7 @@
 - Faucet: **3,750 up front, ~4,500/month from the chest, and what the
   collection pays** — 500 to start, 750 across the quest chain, 500 a first
   delve clear, **3,000 a daily-chest season** (20 days, so ~4,500 a month —
-  [`12-quests.md`](12-quests.md) §3.2), and **1,000 an album with 25,000 for
+  [`12-quests.md`](12-quests.md) §3.2), and **2,000 an album with 25,000 for
   the whole collection** ([`09-relics.md`](09-relics.md) §5): 35,000 a season
   to a player who completes it, of the order of a Royal chest, and most of it
   behind the gold cards a free player rarely finishes. The chest is the floor
@@ -304,7 +304,7 @@ One page, refreshed weekly:
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
 | Card pack offer · wildcard offer | priced to the ladder — a Gold pack about a silver key, a wildcard about a gold one | `Packs` sheet, `collection.wildcard_gem_cost` |
-| The collection's Gems | 1,000 an album · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
+| The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
