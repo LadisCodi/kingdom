@@ -618,3 +618,28 @@ for.
   composer; retyped with the quotes dropped and the stars spelled out ("2 star
   40 percent") it went through whole. **Check the composer's screenshot before
   sending, and if it shows a stub, `ctrl+a` `Delete` and retype plainly.**
+
+---
+
+## M24 — the wildcard, aimed and armed (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M23 conversation above, continued.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `mockups/m24-wildcard.png`, 852×1846, opaque.
+- **Prompt:** §7.19 M24, typed plainly — no quotation marks, stars spelled out
+  ("3 star wildcard"). The first send of M23 taught that; this one went
+  through on the retype and not on the first attempt either, so **assume the
+  composer will eat a long prompt and screenshot it before sending**.
+- **What worked:** asking for the two surfaces of ONE mechanic on one screen —
+  the aimed offer that sells it, and the album page with it armed — got both
+  halves consistent with each other in one generation, which two prompts would
+  not have guaranteed. Naming the three lit slots and the two that stay plain
+  ("outlined in bright gold with a soft glow and a small gold plus mark in the
+  middle of each, while two other missing cards stay plain grey and dashed")
+  is what made the mode legible in the picture, and the implementation copies
+  it exactly.
+- **What to know:** it invented card names for First Furrow (Ploughed Field,
+  Seed Basket, Old Windmill…) rather than using the album's own. Harmless in a
+  mockup — the names are authored in `sim/data/seasons.ts` — but do not read
+  content out of a mockup.

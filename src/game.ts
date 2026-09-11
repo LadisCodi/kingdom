@@ -35,12 +35,15 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, cardCount, openPack,
-  packCards, packGemCost, packOdds, packsForSale, seasonDef, seasonHeld, seasonLeftMs,
-  starsFor, vaultCost, vaultNext,
+  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, buyWildcard, cardCount,
+  heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
+  placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
+  wildcardCovers, wildcardOffers, wildcardsHeld,
   SEASON_CARDS, type AlbumPayout, type PackOpening, type VaultTier,
 } from './sim/collection';
-import { ALBUMS, ALBUM_ORDER, albumOfRelic, type AlbumId } from './sim/data/seasons';
+import {
+  ALBUMS, ALBUM_ORDER, albumOfRelic, RARITIES, type AlbumId, type Rarity,
+} from './sim/data/seasons';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -321,6 +324,9 @@ export class Game {
   openRelicId: ArtifactId | null = null;
   /** The album page open behind it, or null for the album grid itself. */
   openAlbumId: AlbumId | null = null;
+  /** The wildcard the next card tap would spend, or null. Select-then-place,
+   *  the same idiom placement and cast modes use. */
+  armedWildcard: Rarity | null = null;
   /**
    * Albums whose ninth card has just landed, waiting for their sheet.
    *
@@ -1111,6 +1117,7 @@ export class Game {
   }
 
   closeAlbum(): void {
+    this.armedWildcard = null;
     if (this.openAlbumId === null) {
       this.dismiss();
       return;
@@ -1151,11 +1158,39 @@ export class Game {
   tapCard(album: AlbumId, slot: number): void {
     const card = ALBUMS[album].cards[slot]!;
     const count = cardCount(this.state, { album, slot });
+    // A WILDCARD IS ARMED: this tap is the placement, and the grid has
+    // already said which slots would take it.
+    if (this.armedWildcard !== null) {
+      const rarity = this.armedWildcard;
+      const result = placeWildcard(this.state, { album, slot }, rarity);
+      if (result.placed) {
+        playSfx('upgradeBought');
+        this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
+        if (result.payout !== null) this.pendingPayouts.push(result.payout);
+        if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
+      } else if (result.reason === 'GoldSlot') {
+        this.toast('No wildcard covers a gold card — it is earned or sent');
+      } else if (result.reason === 'AlreadyHeld') {
+        this.toast('You already hold that one');
+      } else {
+        this.toast(`A ${rarity}★ wildcard does not reach that card`);
+      }
+      this.notify();
+      return;
+    }
     if (count === 0) {
-      this.toast(card.gold === true
-        ? `${card.name} — gold, so Star packs only`
-        : `${card.name} — ${PACK_ORDER.filter((tier) => PACKS[tier].weights[card.rarity - 1] > 0)
-          .join(', ')} packs`);
+      const held = heldWildcardFor(this.state, { album, slot });
+      if (held !== null) {
+        // The doc's own line: a missing card says what packs it falls from,
+        // AND the wildcard if one covers it (§11.3).
+        this.toast(`${card.name} — your ${held}★ wildcard fills it`);
+        this.armWildcard(held);
+      } else {
+        this.toast(card.gold === true
+          ? `${card.name} — gold, so Star packs only`
+          : `${card.name} — ${PACK_ORDER.filter((tier) => PACKS[tier].weights[card.rarity - 1] > 0)
+            .join(', ')} packs`);
+      }
     } else if (count > 1) {
       this.toast(`${count - 1} spare — ${starsFor({ album, slot })} stars each in the vault`);
     } else {
@@ -1200,6 +1235,79 @@ export class Game {
         odds: packOdds(tier).map((o) => `${o.rarity}★ ${o.percent}%`).join(' · '),
       };
     });
+  }
+
+  /**
+   * The store's AIMED offers (§9): one per album the player has nearly
+   * finished. An offer with no rarity — an album down to gold slots alone —
+   * is dropped here rather than shown greyed out: there is nothing to sell,
+   * and a dead row on a shelf is worse than no row.
+   */
+  wildcardOffers(): Array<{
+    album: AlbumId; name: string; short: number; rarity: Rarity; cost: number;
+    sprite: string; relic: ArtifactId;
+  }> {
+    return wildcardOffers(this.state)
+      .filter((o): o is typeof o & { rarity: Rarity } => o.rarity !== null)
+      .map((o) => ({
+        album: o.album,
+        name: ALBUMS[o.album].name,
+        short: o.short,
+        rarity: o.rarity,
+        cost: o.cost,
+        sprite: `album_${o.album.toLowerCase()}`,
+        relic: ALBUMS[o.album].relic,
+      }));
+  }
+
+  doBuyWildcard(rarity: Rarity, album?: AlbumId): void {
+    const result = buyWildcard(this.state, rarity);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      // Bought from an aimed offer, the album it was aimed at opens with the
+      // wildcard already in hand: the purchase and the placement are one
+      // intention, and making the player go and find the album again would
+      // be a second errand.
+      if (album !== undefined) {
+        this.openAlbumId = album;
+        this.armedWildcard = rarity;
+        this.setOverlay('collection');
+      } else {
+        this.toast(`A ${rarity}★ wildcard — place it on any card it covers`);
+      }
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
+  /** What the player holds, cheapest first — the album page's strip. */
+  wildcardsHeld(): Array<{ rarity: Rarity; count: number }> {
+    return RARITIES
+      .map((rarity) => ({ rarity, count: wildcardsHeld(this.state, rarity) }))
+      .filter((w) => w.count > 0);
+  }
+
+  /**
+   * ARM a wildcard, then tap the slot: the game's own select-then-place
+   * idiom, which placement mode and cast mode both use.
+   *
+   * A confirmation sheet would be the alternative and it is worse here — a
+   * consumable spent by one tap needs the MODE to be visible, not a dialog
+   * after the fact, and the armed grid shows exactly which slots it can fill.
+   */
+  armWildcard(rarity: Rarity | null): void {
+    this.armedWildcard = rarity === null || wildcardsHeld(this.state, rarity) <= 0
+      ? null
+      : rarity;
+    this.notify();
+  }
+
+  /** Whether an armed wildcard could land on this slot — what the grid lights. */
+  wildcardFits(album: AlbumId, slot: number): boolean {
+    if (this.armedWildcard === null) return false;
+    const ref = { album, slot };
+    return !holdsCard(this.state, ref) && wildcardCovers(this.armedWildcard, ref);
   }
 
   doBuyPack(tier: PackTier): void {
@@ -2821,6 +2929,7 @@ export class Game {
     if (name !== 'collection') {
       this.openRelicId = null;
       this.openAlbumId = null;
+      this.armedWildcard = null;
     }
     this.notify();
   }

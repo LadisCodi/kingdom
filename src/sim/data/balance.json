@@ -3410,6 +3410,14 @@
     "starGoldMultiplier": 2,
     "vaultGoldStars": 50,
     "vaultStarStars": 200,
+    "wildcardGemCosts": [
+      100,
+      200,
+      400,
+      800,
+      1500
+    ],
+    "wildcardOfferAt": 3,
     "xpTricklePerTierDepth": 10,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,

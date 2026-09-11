@@ -348,6 +348,126 @@ export function productionChest(state: GameState, hours: number): Wallet {
 export const seasonIsComplete = (state: GameState): boolean =>
   state.collection.completed.length >= ALBUM_ORDER.length;
 
+// ------------------------------------------------------------- the wildcard
+
+/**
+ * A WILDCARD stands in for any card of ITS RARITY OR LOWER, in any album
+ * (§9). It is placed by the player, in the slot they choose, and consumed.
+ *
+ * THERE IS NO GOLD WILDCARD, at any price: the gold slots of the last two
+ * albums are earned or sent, which is what keeps the two strongest relics the
+ * two Gems cannot finish.
+ */
+export const wildcardsHeld = (state: GameState, rarity: Rarity): number =>
+  state.collection.wildcards[rarity] ?? 0;
+
+export const wildcardGemCost = (rarity: Rarity): number =>
+  COLLECTION.wildcardGemCosts[rarity - 1] ?? 0;
+
+/** Whether a wildcard of `rarity` may be placed on this slot. */
+export function wildcardCovers(rarity: Rarity, ref: CardRef): boolean {
+  const card = cardAt(ref);
+  if (card.gold === true) return false;
+  return card.rarity <= rarity;
+}
+
+/** The cheapest wildcard the player holds that could fill this slot, or null.
+ *  Cheapest, because a 5★ wildcard spent on a 1★ hole is a waste the screen
+ *  should not make for them. */
+export function heldWildcardFor(state: GameState, ref: CardRef): Rarity | null {
+  for (const r of RARITIES) {
+    if (wildcardsHeld(state, r) > 0 && wildcardCovers(r, ref)) return r;
+  }
+  return null;
+}
+
+export type BuyWildcardResult = 'Purchased' | 'NoGoldWildcard' | 'NotEnoughGems';
+
+export function buyWildcard(state: GameState, rarity: Rarity): BuyWildcardResult {
+  const cost = wildcardGemCost(rarity);
+  if (cost <= 0) return 'NoGoldWildcard';
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  state.collection.wildcards[rarity] = wildcardsHeld(state, rarity) + 1;
+  return 'Purchased';
+}
+
+export type PlaceWildcardResult =
+  | { placed: true; payout: AlbumPayout | null }
+  | { placed: false; reason: 'NoWildcard' | 'AlreadyHeld' | 'GoldSlot' | 'AlbumComplete' };
+
+/**
+ * Spend a wildcard on a slot.
+ *
+ * The card it becomes is a FIRST COPY, never a duplicate — a wildcard that
+ * landed on a slot the player already holds would be stars at a Gem price,
+ * which is the one thing a targeted purchase must not be. So the slot has to
+ * be empty, and the screen only offers the ones that are.
+ */
+export function placeWildcard(
+  state: GameState, ref: CardRef, rarity: Rarity,
+): PlaceWildcardResult {
+  if (cardAt(ref).gold === true) return { placed: false, reason: 'GoldSlot' };
+  if (albumIsComplete(state, ref.album)) return { placed: false, reason: 'AlbumComplete' };
+  if (holdsCard(state, ref)) return { placed: false, reason: 'AlreadyHeld' };
+  if (wildcardsHeld(state, rarity) <= 0 || !wildcardCovers(rarity, ref)) {
+    return { placed: false, reason: 'NoWildcard' };
+  }
+  state.collection.wildcards[rarity] = wildcardsHeld(state, rarity) - 1;
+  const row = state.collection.cards[ref.album] ?? emptyAlbum();
+  state.collection.cards[ref.album] = row;
+  row[ref.slot] = 1;
+  // The same completion path a pack's ninth card takes, which is why
+  // `completeIfDue` is a question about the ALBUM and not about the card.
+  return { placed: true, payout: completeIfDue(state, ref.album) };
+}
+
+/**
+ * THE AIMED OFFER (§9). One per album the player has nearly finished, naming
+ * the album, how many cards it is short and the wildcard that fills any of
+ * them.
+ *
+ * An offer ANSWERS A SHORTAGE rather than interrupting
+ * ([`14-monetization.md`] §6), which is why it is keyed on the gap: an album
+ * nine cards short is not a shortage, it is a season, and the store says
+ * nothing about it.
+ *
+ * The rarity offered is the DEAREST missing slot's, so one purchase can fill
+ * any hole the album still has — a cheaper wildcard that covers only some of
+ * them would be an offer the player has to do arithmetic on.
+ */
+export interface WildcardOffer {
+  album: AlbumId;
+  /** Cards the album is short, gold slots included. */
+  short: number;
+  /** The rarity the offer sells, or null when only gold slots are left — no
+   *  wildcard covers those, so there is nothing to sell. */
+  rarity: Rarity | null;
+  cost: number;
+}
+
+export function wildcardOffers(state: GameState): WildcardOffer[] {
+  const out: WildcardOffer[] = [];
+  for (const album of ALBUM_ORDER) {
+    if (albumIsComplete(state, album)) continue;
+    const missing = ALBUMS[album].cards
+      .map((card, slot) => ({ card, slot }))
+      .filter(({ slot }) => !holdsCard(state, { album, slot }));
+    if (missing.length === 0 || missing.length > COLLECTION.wildcardOfferAt) continue;
+    const fillable = missing.filter(({ card }) => card.gold !== true);
+    const rarity = fillable.length === 0
+      ? null
+      : (Math.max(...fillable.map(({ card }) => card.rarity)) as Rarity);
+    out.push({
+      album,
+      short: missing.length,
+      rarity,
+      cost: rarity === null ? 0 : wildcardGemCost(rarity),
+    });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- the store
 
 /**
@@ -439,6 +559,10 @@ export const freshCollection = (season: number): GameState['collection'] => ({
   cards: {},
   completed: [],
   stars: 0,
+  // A wildcard is a card in waiting, so it goes with the cards at the close:
+  // one held over would be a slot filled in a season whose album it was never
+  // bought for.
+  wildcards: {},
   packs: [],
   packsIssued: 0,
   prizePaid: false,

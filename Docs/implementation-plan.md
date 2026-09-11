@@ -454,7 +454,7 @@ evaporating.**
 
 | Rework | Design | State |
 |---|---|---|
-| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89), wildcards (the store's offers) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
+| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
 
 Two bridges were taken deliberately and both are named in the code that owns
 them. The four relic **actives** still live on their relics, gated on owning

@@ -551,6 +551,9 @@ export interface GameState {
     completed: AlbumId[];
     /** Duplicate stars: a counter inside the collection, shown nowhere else. */
     stars: number;
+    /** Wildcards held, by the rarity they cover. Never gold — there is no
+     *  gold wildcard at any price (Docs/features/09-relics.md §9). */
+    wildcards: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
     /** Packs earned and not yet opened, oldest first. */
     packs: PendingPack[];
     /** Monotonic, per season: the ordinal in every pack's id, which is what

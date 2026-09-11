@@ -151,6 +151,40 @@ function rewardBand(game: Game, page: ReturnType<Game['albumPage']>): HTMLElemen
   );
 }
 
+/**
+ * The strip that says a wildcard is ARMED (§9).
+ *
+ * Select-then-place, the idiom placement and cast modes already use: the MODE
+ * is visible while the thumb is moving, which is what a one-tap consumable
+ * needs — a confirmation dialog after the fact would be the worse answer.
+ */
+function wildcardStrip(game: Game, page: ReturnType<Game['albumPage']>): HTMLElement | '' {
+  const armed = game.armedWildcard;
+  if (armed !== null) {
+    const cancel = knob('✕', () => game.armWildcard(null), { label: 'Put it away' });
+    return el('div', { class: 'col-arm is-armed' },
+      iconEl('cards', { size: 'lg' }),
+      el('span', { class: 'col-arm-line' }, `Tap a card to use your ${armed}★ wildcard`),
+      cancel);
+  }
+  const held = game.wildcardsHeld();
+  if (held.length === 0 || page.complete) return '';
+  return el('div', { class: 'col-arm' },
+    iconEl('cards', { size: 'lg' }),
+    el('span', { class: 'col-arm-line' }, held.length === 1
+      ? `You hold a ${held[0]!.rarity}★ wildcard`
+      : 'You hold wildcards'),
+    ...held.map((w) => {
+      const b = btn({
+        label: `${w.rarity}★${w.count > 1 ? ` ×${w.count}` : ''}`,
+        kind: 'secondary',
+        onClick: () => game.armWildcard(w.rarity),
+      });
+      b.classList.add('col-arm-pick');
+      return b;
+    }));
+}
+
 /** One of the nine slots. Held: its art, its name on a ribbon, its duplicate
  *  count. Missing: a silhouette that still shows the rarity, because what a
  *  page is MISSING is as much of the content as what it holds. */
@@ -159,15 +193,22 @@ function cardTile(
   card: ReturnType<Game['albumPage']>['cards'][number],
 ): HTMLElement {
   const held = card.count >= 1;
+  // While a wildcard is armed the grid says where it can land, so the player
+  // never spends one to find out.
+  const fits = game.wildcardFits(page.id, card.slot);
   const tile = el('button', {
-    class: `col-card r${card.rarity}${card.gold ? ' is-gold' : ''}${held ? '' : ' is-missing'}`,
+    class: `col-card r${card.rarity}${card.gold ? ' is-gold' : ''}`
+      + `${held ? '' : ' is-missing'}${fits ? ' is-fillable' : ''}`,
     type: 'button',
-    'aria-label': held ? `${card.name} ×${card.count}` : `${card.name} — not found`,
+    'aria-label': held
+      ? `${card.name} ×${card.count}`
+      : `${card.name} — ${fits ? 'a wildcard fills it' : 'not found'}`,
   },
     stars(card.rarity, 'col-card-stars'),
     held
       ? albumArt(page.id, page.relic, 'col-card-art')
-      : el('span', { class: 'col-card-art is-silhouette' }, iconEl('unknown', { size: 'lg' })),
+      : el('span', { class: 'col-card-art is-silhouette' },
+        iconEl(fits ? 'plus' : 'unknown', { size: 'lg' })),
     card.count > 1 ? el('span', { class: 'col-dupe' }, `+${card.count - 1}`) : '',
     el('span', { class: 'col-card-name' }, card.name));
   tile.addEventListener('click', () => game.tapCard(page.id, card.slot));
@@ -180,6 +221,7 @@ function albumPage(game: Game, id: AlbumId): HTMLElement {
   const next = knob('›', () => game.stepAlbum(1), { label: 'The album after' });
   return el('div', { class: 'col-page' },
     rewardBand(game, page),
+    wildcardStrip(game, page),
     el('div', { class: 'col-cards' }, ...page.cards.map((c) => cardTile(game, page, c))),
     el('div', { class: 'col-walk' },
       prev,

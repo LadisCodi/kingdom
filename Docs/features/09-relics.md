@@ -6,11 +6,17 @@
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
 > packs fall from are [`11-expeditions.md`](11-expeditions.md).
 >
-> **Status: designed 2026-09-09, not built.** The build still carries the
-> previous model — five relics found at the bottom of a ruin, attunement
-> slots, Stardust levels and a Fragments tier gate — and every one of those is
-> replaced by this document. The rework is sequenced in
-> [`../implementation-plan.md`](../implementation-plan.md) §4.
+> **Status: built 2026-09-11**, with two things deliberately left out and
+> named where they belong: **trading** (§8 — it waits on the social layer,
+> OQ-89) and the **season hero's rate-up** (§10 — it waits on a banner
+> payload in the timeline). Everything else runs: the season, the packs, the
+> albums, the payouts, the stars, the vault, the wildcards and their aimed
+> offers, the close, and the four screens of §11.
+>
+> Two bridges, both temporary and both in the code that owns them: the four
+> relic ACTIVES still live on their relics, gated on owning one, until the
+> Magic tome's spells land ([`07-research.md`](07-research.md) §6); and a
+> card's face is drawn as its album's medallion until the 45 are painted.
 
 ## 1. The model
 
@@ -213,12 +219,34 @@ cards it holds and which rarities it can hold, at **published odds**.
 
 - A **wildcard** stands in for any card of its rarity or lower in any album.
   It is placed by the player, in the slot they choose, and consumed.
+- It is **priced by the rarity it covers** — the 5★ one covers everything a
+  wildcard can, so it costs a gold key. Bought with Gems, never with money.
+- **It can never buy a duplicate.** A slot the player already holds refuses
+  it: a wildcard landing on a card they have would be stars at a Gem price,
+  which is the one thing a targeted purchase must not be.
+- **Placing it is select-then-place**, the idiom placement and casting already
+  use: arm the wildcard, and the grid lights every slot it could fill before a
+  tap is spent finding out. A one-tap consumable needs the MODE to be visible,
+  not a dialog after the fact.
+- A wildcard **goes with the cards at the close** (§3). One held over would
+  fill a slot in a season whose album it was never bought for.
 - **There is no gold wildcard.** The gold slots of the last two albums — the
   Ledger's and the Compass's — are earned or sent, never bought outright, so
   the two strongest relics are the two Gems cannot finish.
 - Wildcards are **sold in offers**, aimed at the albums a player has nearly
   finished: an offer names the album, the missing count and a wildcard that
   covers it. They also sit on the season pass's paid column.
+- **An offer answers a shortage rather than interrupting**
+  ([`14-monetization.md`](14-monetization.md) §6), so it is keyed on the gap:
+  an album nine cards short is not a shortage, it is a season, and the store
+  says nothing about it. An album down to **gold slots alone** has nothing to
+  sell, and the shelf drops the row rather than greying one out.
+- The rarity offered is the **dearest missing slot's**, so one purchase fills
+  any hole the album still has. A cheaper wildcard that covered only some of
+  them would be an offer the player has to do arithmetic on.
+- **Buying from an aimed offer opens that album with the wildcard armed.** The
+  purchase and the placement are one intention, and sending the player off to
+  find the album again would be a second errand.
 - A wildcard is the one targeted purchase in the collection, and it respects
   the line: the same card is in every Bronze pack the ruin pays.
 
@@ -288,8 +316,12 @@ gacha already owns. Mockups: M19–M22 in
   along the bottom, and a **`+N` corner tag** for the duplicates it holds.
 - A **duplicate can be tapped**: *Send* (three left today) or *To the vault*
   (its stars). A gold duplicate offers only the vault.
-- A **missing card** can be tapped: what packs it falls from, and the wildcard
-  offer if one covers it.
+- A **missing card** can be tapped: what packs it falls from, and — if the
+  player holds a wildcard that covers it — that wildcard, **armed**.
+- A **strip above the grid** says what wildcards are in hand, and turns clay
+  while one is armed: the difference between *you have one* and *the next tap
+  spends it* is a colour, not a word. Every slot the armed wildcard can fill
+  is ringed gold; the rest stay as they were.
 - Under the grid, the album's own count — `Album 4 / 9` — and **arrows at the
   two bottom corners** that walk to the previous and the next album without
   going back up. Five albums is a short walk, and it is how a player checks
@@ -333,6 +365,8 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Rarity per slot, per album | authored | seasons file |
 | Pack tiers — cards, rarity range, odds | §6 | `Packs` sheet |
 | What the store charges for a pack | **a Gold pack at a silver key (500), a Star pack at a gold one (1,500)**; blank = not sold | `Packs` sheet, `gem_cost` |
+| A wildcard's price, by the rarity it covers | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
+| How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
 | Stars a duplicate is worth | 1 · 2 · 5 · 10 · 25, gold ×2 | `collection.stars_*` |
 | Vault thresholds | 50 → Gold, 200 → Star | `collection.vault_*` |
 | Free albums a season, target | **the pacing number — OQ-88**; two of five free, five for a Dolphin | derived, not authored |

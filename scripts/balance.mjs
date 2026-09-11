@@ -292,6 +292,16 @@ const SETTINGS = [
   // cards.
   ['collection.vault_gold_stars', 'collection.vaultGoldStars'],
   ['collection.vault_star_stars', 'collection.vaultStarStars'],
+  // A WILDCARD's Gem price, by the rarity it covers (1★ first). It stands in
+  // for its rarity OR LOWER, so the top one covers everything a wildcard can
+  // and is priced at a gold key — there is no gold wildcard at any price
+  // (Docs/features/09-relics.md §9).
+  ['collection.wildcard_gem_costs', 'collection.wildcardGemCosts', 'list'],
+  // How many cards short an album must be for the store to AIM an offer at
+  // it. An offer answers a shortage rather than interrupting
+  // (14-monetization.md §6), and an album nine cards short is not a shortage,
+  // it is a season.
+  ['collection.wildcard_offer_at', 'collection.wildcardOfferAt'],
   // The HERO ladder (Docs/features/10-heroes.md §4): Fragments raise a tier
   // cap and Hero XP buys levels within it. A relic has none of this any more.
   // The completed-depth XP trickle, per tier per depth per hour

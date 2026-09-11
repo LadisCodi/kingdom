@@ -695,6 +695,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Cards: state.collection.cards,
         Completed: state.collection.completed,
         Stars: state.collection.stars,
+        Wildcards: state.collection.wildcards,
         Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
         PacksIssued: state.collection.packsIssued,
         PrizePaid: state.collection.prizePaid,
@@ -1075,6 +1076,7 @@ export function deserialize(
       cards: { ...(collectionDto.Cards ?? {}) },
       completed: [...((collectionDto.Completed ?? []) as AlbumId[])],
       stars: collectionDto.Stars ?? 0,
+      wildcards: { ...(collectionDto.Wildcards ?? {}) },
       packs: ((collectionDto.Packs ?? []) as any[])
         .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
       packsIssued: collectionDto.PacksIssued ?? 0,

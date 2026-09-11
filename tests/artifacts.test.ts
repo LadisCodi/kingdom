@@ -21,9 +21,13 @@ import {
 import {
   albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
-  seasonAt, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost, SEASON_CARDS,
+  seasonAt, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
+  buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
+  wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
-import { ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, SEASON_EPOCH } from '../src/sim/data/seasons';
+import {
+  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, type Rarity,
+} from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
 import { resolve } from '../src/sim/modifiers';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -302,6 +306,140 @@ describe('the store', () => {
     expect(state.collection.packs).toHaveLength(3);
     // Three different ids, so three different hands.
     expect(new Set(state.collection.packs.map((k) => k.id)).size).toBe(3);
+  });
+});
+
+describe('a wildcard', () => {
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    state.collection.season = seasonAt(T0);
+  });
+
+  // §9: it stands in for any card of ITS RARITY OR LOWER, in any album.
+  it('covers its rarity and everything under it, in any album', () => {
+    // First Furrow slot 0 is a 1★; Hands at Work slot 6 is a 4★.
+    expect(wildcardCovers(1, { album: 'FirstFurrow', slot: 0 })).toBe(true);
+    expect(wildcardCovers(4, { album: 'FirstFurrow', slot: 0 })).toBe(true);
+    expect(wildcardCovers(1, { album: 'HandsAtWork', slot: 6 })).toBe(false);
+    expect(wildcardCovers(4, { album: 'HandsAtWork', slot: 6 })).toBe(true);
+  });
+
+  // THE WALL. No wildcard covers gold at any rarity and at any price, which
+  // is what keeps the two strongest relics the two Gems cannot finish.
+  it('never covers a gold card, at any rarity', () => {
+    const gold = ALBUMS.TheKingsCoin.cards.findIndex((c) => c.gold === true);
+    expect(gold).toBeGreaterThanOrEqual(0);
+    for (const r of RARITIES) {
+      expect(wildcardCovers(r, { album: 'TheKingsCoin', slot: gold })).toBe(false);
+    }
+    state.collection.wildcards[5] = 1;
+    const result = placeWildcard(state, { album: 'TheKingsCoin', slot: gold }, 5);
+    expect(result).toEqual({ placed: false, reason: 'GoldSlot' });
+    // And the wildcard is still in hand: a refusal costs nothing.
+    expect(wildcardsHeld(state, 5)).toBe(1);
+  });
+
+  it('is bought with Gems and priced by the rarity it covers', () => {
+    expect(wildcardGemCost(5)).toBe(BANNERS.advanced.keyGemCost);
+    for (let r = 1; r < 5; r++) {
+      expect(wildcardGemCost((r + 1) as Rarity)).toBeGreaterThan(wildcardGemCost(r as Rarity));
+    }
+    state.player.wallet.Gems = wildcardGemCost(3);
+    expect(buyWildcard(state, 3)).toBe('Purchased');
+    expect(wildcardsHeld(state, 3)).toBe(1);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+    expect(buyWildcard(state, 3)).toBe('NotEnoughGems');
+  });
+
+  it('fills the slot the player chose, and is consumed', () => {
+    state.collection.wildcards[2] = 1;
+    const ref = { album: 'FirstFurrow' as const, slot: 2 };
+    const result = placeWildcard(state, ref, 2);
+    expect(result.placed).toBe(true);
+    expect(cardCount(state, ref)).toBe(1);
+    expect(wildcardsHeld(state, 2)).toBe(0);
+  });
+
+  // A wildcard on a slot the player already holds would be stars at a Gem
+  // price, which is the one thing a targeted purchase must not be.
+  it('refuses a slot already held, so it can never buy a duplicate', () => {
+    fill(state, 'FirstFurrow', 1);
+    state.collection.wildcards[2] = 1;
+    const result = placeWildcard(state, { album: 'FirstFurrow', slot: 0 }, 2);
+    expect(result).toEqual({ placed: false, reason: 'AlreadyHeld' });
+    expect(wildcardsHeld(state, 2)).toBe(1);
+  });
+
+  // The ninth card is the ninth card, however it arrived: the same payout
+  // path a pack takes.
+  it('pays the album when it is the ninth card', () => {
+    fill(state, 'TheWildWood', CARDS_PER_ALBUM - 1);
+    state.collection.wildcards[3] = 1;
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const result = placeWildcard(
+      state, { album: 'TheWildWood', slot: CARDS_PER_ALBUM - 1 }, 3);
+    expect(result.placed).toBe(true);
+    expect(result.placed && result.payout?.album).toBe('TheWildWood');
+    expect(albumIsComplete(state, 'TheWildWood')).toBe(true);
+    expect(artifactLevel(state, ALBUMS.TheWildWood.relic)).toBe(1);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.albumGems);
+  });
+
+  it('goes with the cards at the close', () => {
+    state.collection.wildcards[4] = 2;
+    closeSeason(state, seasonEndsAt(state.collection.season));
+    expect(state.collection.wildcards).toEqual({});
+  });
+
+  describe('the aimed offer', () => {
+    // An offer ANSWERS A SHORTAGE rather than interrupting: an album nine
+    // cards short is not a shortage, it is a season.
+    it('says nothing about an album that has barely started', () => {
+      expect(wildcardOffers(state)).toEqual([]);
+      fill(state, 'FirstFurrow', 3);
+      expect(wildcardOffers(state)).toEqual([]);
+    });
+
+    it('appears once an album is nearly finished, and names the gap', () => {
+      fill(state, 'FirstFurrow', CARDS_PER_ALBUM - 2);
+      const offers = wildcardOffers(state);
+      expect(offers).toHaveLength(1);
+      expect(offers[0]!.album).toBe('FirstFurrow');
+      expect(offers[0]!.short).toBe(2);
+    });
+
+    // One purchase has to fill any hole the album still has, or the player is
+    // doing arithmetic on a price tag.
+    it('offers the rarity that covers every missing slot', () => {
+      // Hold everything in Hands at Work but its three 4★ slots.
+      const row = new Array(CARDS_PER_ALBUM).fill(1);
+      ALBUMS.HandsAtWork.cards.forEach((card, slot) => {
+        if (card.rarity === 4) row[slot] = 0;
+      });
+      state.collection.cards.HandsAtWork = row;
+      const offer = wildcardOffers(state).find((o) => o.album === 'HandsAtWork')!;
+      expect(offer.rarity).toBe(4);
+      expect(offer.cost).toBe(wildcardGemCost(4));
+    });
+
+    // Down to gold alone there is nothing to sell, so the offer carries no
+    // rarity and the shelf drops it rather than showing a dead row.
+    it('has nothing to sell when only gold slots are left', () => {
+      const row = ALBUMS.TheKingsCoin.cards.map((c) => (c.gold === true ? 0 : 1));
+      state.collection.cards.TheKingsCoin = row;
+      const offer = wildcardOffers(state).find((o) => o.album === 'TheKingsCoin')!;
+      expect(offer.rarity).toBeNull();
+      expect(offer.cost).toBe(0);
+    });
+
+    it('says nothing about an album that is already complete', () => {
+      fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
+      grantPack(state, 'Bronze', 'dev');
+      openPack(state, T0);
+      expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
+      expect(wildcardOffers(state).some((o) => o.album === 'FirstFurrow')).toBe(false);
+    });
   });
 });
 
