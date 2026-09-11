@@ -415,3 +415,18 @@
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
+
+/* ---- the party picker, its cards, the room's address ---- */
+.bt-picker {
+  border: 12px solid transparent;
+  border-bottom: 0;
+  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
+  border-radius: 0;
+  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
+}
+.bt-card,
+.exp-safe {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}

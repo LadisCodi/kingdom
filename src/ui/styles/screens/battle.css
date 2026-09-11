@@ -294,11 +294,14 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px calc(var(--nav-h) + 10px);
+  /* The picker wears the sheet's carved frame, open at the bottom where it
+     meets the nav, like the district card. */
   border-top: var(--outline) solid var(--wood-dark);
   border-radius: 14px 14px 0 0;
   background: var(--parchment);
   box-shadow: 0 -8px 24px rgba(20, 12, 6, 0.4);
 }
+.bt-picker-head h3 { font-size: 20px; }
 /* The slide runs when the panel ARRIVES and never again: the class is added
    by the mount, which knows the difference between opening and refreshing
    (ui/battlePicker.ts). */
