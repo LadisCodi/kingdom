@@ -279,8 +279,8 @@
    belongs to the way out now. */
 .hero-rarity {
   position: absolute;
-  top: 44px;
-  left: 10px;
+  top: 12px;
+  right: 60px; /* beside the way out, as M17 places it */
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   background: rgba(59, 36, 18, 0.6);

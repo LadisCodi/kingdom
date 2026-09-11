@@ -465,7 +465,9 @@ for.
   (the ruin card and the placement bar), `m12-map-floaters.png` (the daily
   pill, the raid and ad tabs, the toast, the pennant, the builder chip),
   `m13-welcome-back.png`, `m14-payer-and-iap.png` (1024×1536, see below),
-  `m15-gacha-reveal.png`, `m16-battlefield.png`; the rest 852×1846, opaque.
+  `m15-gacha-reveal.png`, `m16-battlefield.png`, `m17-hero-and-relic-cards.png`
+  (chosen from an A/B pair the app offered — the one with M1's header),
+  `m18-small-sheets.png` (941×1672); the rest 852×1846, opaque.
   M15 and M16 were sent after re-attaching `m5-store-sheet.png`, which
   brought the style back after M14 drifted.
   `sheets/ui-s1-store.png` (3×3, 1254×1254, true alpha) → `src/ui/assets/
