@@ -221,39 +221,78 @@ cards it holds and which rarities it can hold, at **published odds**.
 
 ## 11. The screens
 
-Two levels behind one nav tab, plus the reveal the gacha already owns.
+A pill on the map, two levels behind one nav tab, a card, and the reveal the
+gacha already owns. Mockups: M19–M22 in
+[`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md) §7.19.
 
-### 11.1 The Collection
+### 11.1 The season pill
 
-- A header with the **season's name, its frame, and the time left**. The
-  countdown derives from the close timestamp.
-- The **stars** count and the vault's next threshold on one line; tapping it
-  opens the vault.
-- **The five albums, one to a row**, in season order: the album's art, its
-  name, `7/9`, and **the relic it levels with its current level** on the right
-  of the row — in silhouette while the relic is unfound. A completed album
-  reads as a gold row with a tick; an album one card short says which.
+- On the map, in the left column, **directly under the daily chest's pill**
+  ([`12-quests.md`](12-quests.md) §3.4) — the two seasons sit together, and
+  the collection's is the second thing a returning player reads.
+- A parchment pill with the **season's crest**, its name, `12/45` cards and
+  the time left. Tapping it opens the Collection.
+- It **glows while a pack is unopened** and goes quiet once none is; it is
+  never a badge with a count of things owed.
+- **Hidden behind any sheet**, like every other pill, and absent entirely
+  before the first card.
+
+### 11.2 The Collection
+
+- A header plate with the **season's name and its frame**, and under it a
+  **prize band**: *Complete all five to win*, the golden call and **25,000
+  Gems** as two chips. The band is the screen's lede — the prize is what the
+  five albums are for.
+- One line under the band: the **time left** and the season's total, `12/45`.
+  The countdown derives from the close timestamp.
+- **The five albums as round medallions, three to a row** — three, then two
+  centred: the album's art in a carved ring, its name under it, an `x/9` pill
+  under that, and **the relic it levels as a small badge on the ring** with
+  its current level, in silhouette while the relic is unfound. A completed
+  medallion is ringed gold with a wax tick, and an album one card short says
+  so.
 - **There is no separate relics strip.** One album per relic means the five
-  rows already are the five relics, and a strip above them would be the same
-  list twice. Tapping the relic on a row opens the relic's card: art, name,
-  level, the effect at this level and at the next.
+  medallions already are the five relics, and a strip above them would be the
+  same list twice.
+- The **vault** is a round knob at the bottom-right, the way a safe sits in
+  the corner of the screen it belongs to: the **stars** count rides it, and
+  tapping it opens the vault and its next threshold.
 
-### 11.2 An album
+### 11.3 An album
 
-- A header naming **the relic the album levels**: its art, its level, and the
-  effect at this level and at the next. One album per relic means the album
-  screen *is* the relic screen — what is being built and what it is for sit
-  on the same page.
-- The **3×3 grid**: each slot shows the card or its silhouette, its rarity
-  as stars — gold slots framed gold — and its duplicate count as `×3`.
+- A **reward band across the top**: the relic's art in a frame at the left,
+  *Complete the album to win*, and the three rewards as chips — **+1 level**
+  on the relic (or the relic itself, padlocked, if it is unfound), the
+  production chest's hours, and the keys and Gems. The chips are struck
+  through once the album is complete.
+- One album per relic means the album screen *is* the relic screen; the
+  relic's frame in the band opens its card (§11.4).
+- The **3×3 grid**: each slot shows the card or its silhouette, its **rarity
+  as stars above the card** — gold slots framed gold — its name on a ribbon
+  along the bottom, and a **`+N` corner tag** for the duplicates it holds.
 - A **duplicate can be tapped**: *Send* (three left today) or *To the vault*
   (its stars). A gold duplicate offers only the vault.
 - A **missing card** can be tapped: what packs it falls from, and the wildcard
   offer if one covers it.
-- The album's three rewards are printed under the grid before it completes
-  and struck through after.
+- Under the grid, the album's own count — `Album 4 / 9` — and **arrows at the
+  two bottom corners** that walk to the previous and the next album without
+  going back up. Five albums is a short walk, and it is how a player checks
+  what they are close to.
 
-### 11.3 Opening a pack
+### 11.4 A relic's card
+
+- Opened from the album's reward band or from a medallion's badge. The relic's
+  art on a stage, its name, its **level with no *of*** — *Level 3*, because
+  there is no cap — and the season's line: *+1 level when its album closes.*
+- Two rows of the effect: **at this level** and **at the next**, the second in
+  muted ink, so what a level is worth is the card's plainest fact.
+- A line naming **its album and where that album stands**, `7/9`, which is
+  also the way back to it.
+- **The card has no buttons but the way out.** Nothing is attuned, cast,
+  studied or removed (§13) — a relic is what the kingdom has, and reading it
+  is all there is to do.
+
+### 11.5 Opening a pack
 
 - The reveal screen at z 100, one pack per opening, the cards dealt in
   rarity order and the best last. **New** on a first copy; the count on a

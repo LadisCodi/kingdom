@@ -521,3 +521,37 @@ for.
 - **What to know:** a CSS `url()` to a file that did not exist when Vite
   first transformed the stylesheet is left unrewritten (`/assets/x.png`);
   restart the dev server after dropping new assets in.
+
+---
+
+## M19–M22 — the collection's four screens (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa340fa-60b0-83ed-b4d0-ed8cfa0a64c7>
+  ("Design Mobile Game UI", Codigames workspace) — the SAME conversation as
+  M5–M18, continued, driven from Claude Code through the Chrome extension.
+  Nothing re-attached: nineteen prompts in, the chrome, the plank, the nav
+  beam and the type still came back unprompted.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m19-relic-card.png`, `m20-season-pill.png`,
+  `m21-collection-sheet.png`, `m22-album-page.png` — 852×1846 (853×1844 for
+  M22), opaque, the viewer's export.
+- **Prompt:** §7.19 M19–M22 verbatim, one per message, with two substitutions
+  the composer forces: `"✕"` typed as `"X"` and `3×3` as `3x3` (the extension
+  cannot type either glyph). Neither changed the output — the knob came back
+  as a proper ✕ every time.
+- **What worked:** naming the ONE thing the image is about in caps inside the
+  prompt ("THE SUBJECT OF THE IMAGE: the season pill") got M20's two pills
+  drawn as a pair at the right size, instead of a screen where the map wins
+  and the pill is a speck. Saying `NO buttons of any kind anywhere on the
+  card except the "X" knob` was obeyed exactly, which is worth knowing: a
+  negative about the *whole* surface holds, where negatives about one element
+  usually do not.
+- **What to know:** the nav beam still reads **Relics** in M19, M20 and M22 —
+  the anchor's five tabs are that strong. Only M21, where the prompt named the
+  tab and its icon, came back with **Collection** lit gold; if a later mockup
+  needs the new tab, say it in the prompt. M22 also carries the season's
+  `9d left · 12/45` line, which belongs on the Collection sheet and not on an
+  album's page; ignore it. Each generation took about 2m 10s, and the send
+  button MOVES as the composer grows — screenshot before clicking it, or the
+  click lands on the model picker and the prompt sits there unsent.

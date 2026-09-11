@@ -294,7 +294,7 @@ Each of these is data, not code:
 
 - **Heroes have a nav tab of their own**, beside the Collection. A roster of
   thirty-two and five albums of nine cards are two screens with two jobs; the
-  one thing they share is the reveal ([`09-relics.md`](09-relics.md) §11.3).
+  one thing they share is the reveal ([`09-relics.md`](09-relics.md) §11.5).
 
 ### 8.1 The roster
 
