@@ -83,7 +83,10 @@ export type StoreSkuId =
   | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
   /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
    *  chest's Royal track for the season (sim/daily.ts). */
-  | 'RoyalChest';
+  | 'RoyalChest'
+  /** The collection's three bundles: star packs and wildcards for money
+   *  rather than for Gems (Docs/features/09-relics.md §6.1). */
+  | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */

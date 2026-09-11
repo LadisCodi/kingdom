@@ -12,14 +12,16 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  ARTIFACTS, ARTIFACT_ORDER, BANNERS, COLLECTION, PACKS, PACK_ORDER,
+  ARTIFACTS, ARTIFACT_ORDER, BANNERS, CARD_BUNDLE_ORDER, COLLECTION, GEM_PACK_ORDER,
+  PACKS, PACK_ORDER, STORE,
 } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
   passiveValueAtLevel, syncArtifactModifiers,
 } from '../src/sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, cardCount, closeSeason,
+  albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack,
+  bundleGemValue, bundleOf, bundlesForSale, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
   seasonAt, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
@@ -30,7 +32,9 @@ import {
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
 import { resolve } from '../src/sim/modifiers';
+import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
+import { newGame } from '../src/sim/newGame';
 import { freshGame, map } from './helpers';
 
 const T0 = Date.UTC(2026, 1, 2, 9);
@@ -440,6 +444,122 @@ describe('a wildcard', () => {
       expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
       expect(wildcardOffers(state).some((o) => o.album === 'FirstFurrow')).toBe(false);
     });
+  });
+});
+
+// §6.1. A bundle is the collection's two Gem purchases sold together for
+// MONEY, so it walks the simulated budget rather than the purse — and it is
+// the one shelf that has to watch the season's clock, because everything it
+// hands over is wiped at the close.
+describe('a card bundle', () => {
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    state.collection.season = seasonAt(T0);
+  });
+
+  it('is every Store row that names a hand, and no Gem pack is one', () => {
+    expect(CARD_BUNDLE_ORDER).toEqual(['CardsSatchel', 'CardsCase', 'CardsCabinet']);
+    for (const id of CARD_BUNDLE_ORDER) {
+      expect(STORE[id].gems).toBe(0);
+      expect(bundleOf(id)).not.toBeNull();
+    }
+    for (const id of GEM_PACK_ORDER) expect(bundleOf(id)).toBeNull();
+    expect(bundleOf('RoyalChest')).toBeNull();
+  });
+
+  it('spends the monthly budget, logs the purchase, and grants no Gems', () => {
+    const before = budgetRemainingCents(state, T0)!;
+    const gemsBefore = getWallet(state.player.wallet, 'Gems');
+    expect(buyCardBundle(state, 'CardsCase', T0)).toBe('Purchased');
+    expect(budgetRemainingCents(state, T0)).toBe(before - priceCents('CardsCase'));
+    expect(state.player.payer!.purchases.map((p) => p.sku)).toEqual(['CardsCase']);
+    // A bundle hands over the THINGS, not the currency that buys them.
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gemsBefore);
+  });
+
+  it('hands the whole hand over at once, unopened', () => {
+    const bundle = bundleOf('CardsCabinet')!;
+    expect(buyCardBundle(state, 'CardsCabinet', T0)).toBe('Purchased');
+    expect(state.collection.packs).toHaveLength(bundle.packs);
+    for (const pack of state.collection.packs) expect(pack.tier).toBe(bundle.tier);
+    // Distinct ids, so ten packs are ten different hands.
+    expect(new Set(state.collection.packs.map((p) => p.id)).size).toBe(bundle.packs);
+    expect(wildcardsHeld(state, bundle.wildcardRarity)).toBe(bundle.wildcards);
+    // Unopened: the store hands them over, the Collection turns them over.
+    expect(seasonHeld(state)).toBe(0);
+  });
+
+  // §6: the ask is packs that GUARANTEE a gold edition, so every bundle is
+  // built on the tier that promises one. A bundle of Bronze packs would be
+  // the ruins' faucet sold back at a price.
+  it('only sells a tier that guarantees a gold edition', () => {
+    for (const id of CARD_BUNDLE_ORDER) {
+      expect(PACKS[bundleOf(id)!.tier].goldGuaranteed).toBe(true);
+    }
+  });
+
+  // §9: there is no gold wildcard at any price, and money is a price.
+  it('never sells a wildcard past the dearest rarity a wildcard covers', () => {
+    for (const id of CARD_BUNDLE_ORDER) {
+      const { wildcardRarity } = bundleOf(id)!;
+      expect(RARITIES).toContain(wildcardRarity);
+      expect(wildcardGemCost(wildcardRarity)).toBeGreaterThan(0);
+    }
+  });
+
+  // The whole argument of a bundle: it beats buying the parts two rows up.
+  it('is worth more in Gems than the Gem ladder would charge for the money', () => {
+    for (const id of CARD_BUNDLE_ORDER) {
+      const gemsForTheMoney = (STORE[id].priceUsd / STORE.GemsPouch.priceUsd)
+        * STORE.GemsPouch.gems;
+      expect(bundleGemValue(bundleOf(id)!)).toBeGreaterThan(gemsForTheMoney);
+    }
+    // And the ladder climbs: a dearer bundle is a better rate than a cheaper
+    // one, or there is no reason to buy the dearer one.
+    const rate = (id: typeof CARD_BUNDLE_ORDER[number]) =>
+      bundleGemValue(bundleOf(id)!) / STORE[id].priceUsd;
+    expect(rate('CardsCase')).toBeGreaterThan(rate('CardsSatchel'));
+    expect(rate('CardsCabinet')).toBeGreaterThan(rate('CardsCase'));
+  });
+
+  // A bundle is packs and wildcards, and the close wipes both. There is a
+  // window at the end of every season where money would buy something that
+  // expires before it can be spent, and the store says nothing in it.
+  it('comes off the shelf in the last hours of a season, and back on after', () => {
+    const closesAt = seasonEndsAt(state.collection.season);
+    const hour = 3_600_000;
+    const open = closesAt - (COLLECTION.bundleWithdrawHours + 1) * hour;
+    expect(bundlesForSale(state, open)).toEqual([...CARD_BUNDLE_ORDER]);
+
+    const closing = closesAt - hour;
+    expect(bundlesForSale(state, closing)).toEqual([]);
+    expect(buyCardBundle(state, 'CardsSatchel', closing)).toBe('SeasonClosing');
+    // Refused, so nothing was charged and nothing was granted.
+    expect(state.player.payer!.purchases).toEqual([]);
+    expect(state.collection.packs).toEqual([]);
+
+    // The new season opens the shelf again on its own — no timer, no state.
+    state.collection.season += 1;
+    expect(bundlesForSale(state, closesAt + hour)).toEqual([...CARD_BUNDLE_ORDER]);
+  });
+
+  it('refuses a budget it cannot cover, and grants nothing', () => {
+    // A game of its own: `freshGame` already picks a Dolphin, and the only
+    // way to another profile is a fresh save.
+    const poor = newGame(map, T0);
+    poor.collection.season = seasonAt(T0);
+    choosePayerProfile(poor, 'F2P', T0);
+    expect(buyCardBundle(poor, 'CardsSatchel', T0)).toBe('NoBudget');
+    expect(poor.collection.packs).toEqual([]);
+    expect(wildcardsHeld(poor, bundleOf('CardsSatchel')!.wildcardRarity)).toBe(0);
+    // A refusal is unmet demand at that price, and the store counts it.
+    expect(poor.player.payer!.refusals).toBe(1);
+  });
+
+  it('refuses a SKU that is not a bundle, without touching the budget', () => {
+    expect(buyCardBundle(state, 'GemsPouch', T0)).toBe('NotABundle');
+    expect(state.player.payer!.purchases).toEqual([]);
   });
 });
 

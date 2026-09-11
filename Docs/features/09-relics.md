@@ -13,6 +13,8 @@
 > albums, the payouts, the stars, the vault, the wildcards and their aimed
 > offers, the close, and the four screens of §11.
 >
+> The store's three **card bundles** (§6.1) are built with them.
+>
 > Two bridges, both temporary and both in the code that owns them: the four
 > relic ACTIVES still live on their relics, gated on owning one, until the
 > Magic tome's spells land ([`07-research.md`](07-research.md) §6); and a
@@ -185,6 +187,42 @@ cards it holds and which rarities it can hold, at **published odds**.
 - A pack's cards are rolled by **hash on the pack's own id** — the season,
   the source and its ordinal — never on the moment it is opened, so an
   offline replay deals the same hand.
+
+### 6.1 Card bundles
+
+The collection's two Gem purchases — a Star pack (§6) and a wildcard (§9) —
+sold together for **money** rather than for Gems, on the store's own shelf
+([`14-monetization.md`](14-monetization.md) §2.3).
+
+| Bundle | Price | Holds | Worth in Gems |
+|---|---|---|---|
+| **A collector's satchel** | **$4.99** | 2 star packs · one 4★ wildcard | 3,800 |
+| **A collector's case** | **$9.99** | 5 star packs · one 5★ wildcard | 9,000 |
+| **A collector's cabinet** | **$19.99** | 10 star packs · three 5★ wildcards | 19,500 |
+
+- **Every bundle is star packs**, so every pack in one carries §6's guarantee:
+  a gold edition in each. A bundle of Bronze packs would be the ruins' faucet
+  sold back at a price.
+- **A bundle grants no Gems**, on the Royal chest's precedent: it hands over
+  the things, not the currency that buys them. The packs land **unopened**,
+  like every pack that falls — ten bought together are ten to open in the
+  Collection, not ten reveals at the till.
+- **It beats the Gem ladder, and the dearer one beats the cheaper one**:
+  1.5× at the satchel, 1.8× at the case, 2× at the cabinet, against the flat
+  500 Gems to the dollar ([`14-monetization.md`](14-monetization.md) §2.2).
+  Far under the Royal chest's ten times, which is what keeps the season
+  product the season product.
+- **No bundle sells a gold wildcard**, at any price. §9's line holds against
+  money exactly as it holds against Gems: the gold slots of the last two
+  albums are earned or sent.
+- **The shelf closes before the season does.** A bundle is packs and
+  wildcards and the close wipes both (§3), so in the **last 24 hours** of a
+  season the store withdraws the bundles rather than sell an hour of one. No
+  row, no greyed-out price — a withdrawn product is not an offer. The next
+  season opens the shelf again on its own; nothing is scheduled.
+- The row prints **what lands, line by line**, and the confirmation prints
+  the same list above the price: a bundle's whole argument is the hand, and
+  it is not promised on one screen and left off the other.
 
 ## 7. Duplicates and the vault
 
@@ -367,6 +405,8 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | What the store charges for a pack | **a Gold pack at a silver key (500), a Star pack at a gold one (1,500)**; blank = not sold | `Packs` sheet, `gem_cost` |
 | A wildcard's price, by the rarity it covers | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
 | How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
+| What a card bundle holds, and what it costs | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ (§6.1) | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
+| How close to the close the bundles come off the shelf | **24 hours** | `collection.bundle_withdraw_hours` |
 | Stars a duplicate is worth | 1 · 2 · 5 · 10 · 25, gold ×2 | `collection.stars_*` |
 | Vault thresholds | 50 → Gold, 200 → Star | `collection.vault_*` |
 | Free albums a season, target | **the pacing number — OQ-88**; two of five free, five for a Dolphin | derived, not authored |
@@ -391,6 +431,10 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 - **Levelling one relic twice in a season.** A wildcard, a gift and the vault
   all buy the same single level faster; none of them buys a second.
 - **Selling a card.** Packs, and a wildcard that never covers gold.
+- **A gold wildcard in a bundle**, or a bundle of the tiers the ruins drip.
+  Money buys §6.1's hand faster, never a card play cannot reach.
+- **A bundle sold in the last day of a season**, or one whose packs and
+  wildcards survive the close to be spent in the next.
 - **A season-exclusive hero.** Associated: rated up now, in the pool for ever.
 - **New card art every season** as a requirement.
 - **Trading as a swap**, with offers or negotiation.

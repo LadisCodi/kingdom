@@ -35,7 +35,8 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, buyWildcard, cardCount,
+  albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack, buyWildcard,
+  bundleGemValue, bundleOf, bundlesForSale, cardCount,
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
   wildcardCovers, wildcardOffers, wildcardsHeld,
@@ -89,7 +90,7 @@ import {
 } from './sim/upgrades';
 import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
-  monthResetsAt, monthlyBudgetCents,
+  monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
@@ -1238,6 +1239,58 @@ export class Game {
   }
 
   /**
+   * The store's BUNDLE shelf (§6.1): star packs and wildcards for money.
+   *
+   * Empty in the last hours of a season — a bundle is two things the close
+   * wipes, so the store withdraws it rather than sell an hour of it. The UI
+   * renders no shelf at all rather than a row explaining why, because a
+   * withdrawn product is not an offer.
+   */
+  cardBundleOffers(): Array<{
+    id: StoreSkuId; name: string; priceCents: number; sprite: string;
+    packs: number; tier: PackTier; wildcards: number; rarity: Rarity;
+    gemValue: number; lines: string[];
+  }> {
+    return bundlesForSale(this.state, this.now()).map((id) => {
+      const sku = STORE[id];
+      const bundle = bundleOf(id)!;
+      return {
+        id,
+        name: sku.name,
+        priceCents: priceCents(id),
+        sprite: sku.sprite,
+        packs: bundle.packs,
+        tier: bundle.tier,
+        wildcards: bundle.wildcards,
+        rarity: bundle.wildcardRarity,
+        gemValue: bundleGemValue(bundle),
+        lines: this.bundleLines(id),
+      };
+    });
+  }
+
+  /** What a bundle hands over, one line a thing — the shelf's body and the
+   *  confirmation's grant. A star pack's promise is named rather than implied:
+   *  the gold edition is what the player is buying. */
+  bundleLines(id: StoreSkuId): string[] {
+    const bundle = bundleOf(id);
+    if (bundle === null) return [];
+    const out: string[] = [];
+    if (bundle.packs > 0) {
+      const tier = bundle.tier.toLowerCase();
+      out.push(PACKS[bundle.tier].goldGuaranteed
+        ? `${bundle.packs} ${tier} packs — a gold edition guaranteed in each`
+        : `${bundle.packs} ${tier} packs`);
+    }
+    if (bundle.wildcards > 0) {
+      out.push(bundle.wildcards === 1
+        ? `One ${bundle.wildcardRarity}★ wildcard — any slot it covers, your pick`
+        : `${bundle.wildcards} ${bundle.wildcardRarity}★ wildcards — any slots they cover, your pick`);
+    }
+    return out;
+  }
+
+  /**
    * The store's AIMED offers (§9): one per album the player has nearly
    * finished. An offer with no rarity — an album down to gold slots alone —
    * is dropped here rather than shown greyed out: there is nothing to sell,
@@ -1775,20 +1828,33 @@ export class Game {
   confirmIap(): void {
     const id = this.pendingSku;
     if (id === null) return;
-    // The Royal chest is not a grant, it is an unlock plus a back-pay, so it
-    // goes through its own command — which still spends the budget through
-    // `buySku` (sim/daily.ts).
+    // Two SKUs do not grant Gems and so do not go through `buySku` directly.
+    // Both still spend the budget through it, inside their own command: the
+    // Royal chest is an unlock plus a back-pay (sim/daily.ts), and a card
+    // bundle is a hand of packs and wildcards (sim/collection.ts).
     const result = id === 'RoyalChest'
       ? buyRoyalChest(this.state, this.now())
-      : buySku(this.state, id, this.now());
+      : bundleOf(id) !== null
+        ? buyCardBundle(this.state, id, this.now())
+        : buySku(this.state, id, this.now());
     if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
       this.toast(id === 'RoyalChest'
         ? 'The Royal chest is yours for the season'
-        : 'Gems added to your purse');
+        : bundleOf(id) !== null
+          // A bundle is opened in the Collection, like every pack that falls:
+          // the store hands over the things, it does not turn them over.
+          ? `${STORE[id].name} — open it in the Collection`
+          : 'Gems added to your purse');
       this.setOverlay(back);
+    } else if (result === 'SeasonClosing') {
+      // The season turned over while the confirmation was open. Nothing was
+      // charged; say why rather than shake a purse that is not the problem.
+      this.pendingSku = null;
+      this.toast('The season is closing — the bundles are off the shelf');
+      this.setOverlay(this.pendingSkuFrom);
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
       // stays put so the player can read the numbers that said no.

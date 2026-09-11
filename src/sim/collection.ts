@@ -19,15 +19,20 @@
 //  4. STARS ARE A COUNTER IN THIS SCREEN, not a wallet row — the Fragments
 //     precedent (CLAUDE.md, "Money and identity are different things").
 
-import { COLLECTION, CURRENCIES, PACKS, PACK_ORDER, type PackTier } from './data/definitions';
+import {
+  CARD_BUNDLE_ORDER, COLLECTION, CURRENCIES, PACKS, PACK_ORDER, STORE,
+  type CardBundleDef, type PackTier,
+} from './data/definitions';
 import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, SEASON_EPOCH, seasonContent,
   type AlbumId, type CardRef, type Rarity, type SeasonDef,
 } from './data/seasons';
 import { rand } from './rng';
 import {
-  addToWallet, getWallet, type ArtifactId, type CurrencyId, type GameState, type Wallet,
+  addToWallet, getWallet, type ArtifactId, type CurrencyId, type GameState,
+  type StoreSkuId, type Wallet,
 } from './state';
+import { buySku, type BuySkuResult } from './store';
 import { grantArtifactLevel } from './artifacts';
 import { cityGatherPerSecond } from './upgrades';
 import { cityGoldPerMinute } from './population';
@@ -510,6 +515,74 @@ export function buyPack(state: GameState, tier: PackTier): BuyPackResult {
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
   grantPack(state, tier, 'store');
+  return 'Purchased';
+}
+
+// -------------------------------------------------------------- the bundles
+
+/**
+ * A CARD BUNDLE (§6.1). Star packs and wildcards for MONEY rather than for
+ * Gems — the two things the collection already sells, handed over together at
+ * a price the Gem ladder cannot match.
+ *
+ * It is a `Store` row, so it walks the simulated budget like every other
+ * real-money SKU: the purchase is logged, a refusal is counted, and the
+ * monthly allowance is what decides. It grants no Gems, on the Royal chest's
+ * precedent — a bundle hands over the THINGS, not the currency that buys them.
+ */
+export const bundleOf = (sku: StoreSkuId): CardBundleDef | null => STORE[sku].bundle;
+
+/** What the bundle would cost at the Gem prices of its parts. The shelf prints
+ *  it, because a bundle's whole argument is that it beats buying the pieces. */
+export function bundleGemValue(bundle: CardBundleDef): number {
+  return bundle.packs * packGemCost(bundle.tier)
+    + bundle.wildcards * wildcardGemCost(bundle.wildcardRarity);
+}
+
+/**
+ * WHETHER THE SHELF IS OPEN. A bundle is packs and wildcards, and the close
+ * wipes both — so there is a window at the end of every season where money
+ * would buy something that expires before it can be spent. The store says
+ * nothing in that window rather than sell it.
+ *
+ * Read off `seasonLeftMs`, so it is a fact about the clock rather than a
+ * timer: nothing is scheduled, nothing expires, and a player who comes back
+ * after the close finds the shelf open again on its own.
+ */
+export const bundlesWithdrawn = (state: GameState, now: number): boolean =>
+  seasonLeftMs(state, now) <= COLLECTION.bundleWithdrawHours * 3_600_000;
+
+/** The bundles the store will sell right now, cheapest first. */
+export const bundlesForSale = (state: GameState, now: number): StoreSkuId[] =>
+  bundlesWithdrawn(state, now) ? [] : [...CARD_BUNDLE_ORDER];
+
+export type BuyBundleResult = BuySkuResult | 'NotABundle' | 'SeasonClosing';
+
+/**
+ * Buy a bundle. The hand lands at once and UNOPENED, like every pack: the
+ * store hands over the things and the Collection is where they are turned
+ * over. Ten packs bought together are ten to open, not ten reveals at the
+ * till.
+ *
+ * The budget is spent LAST of the checks and FIRST of the effects, so a
+ * refusal — no profile, no allowance — grants nothing and a grant is never
+ * unpaid.
+ */
+export function buyCardBundle(
+  state: GameState, sku: StoreSkuId, now: number,
+): BuyBundleResult {
+  const bundle = bundleOf(sku);
+  if (bundle === null) return 'NotABundle';
+  if (bundlesWithdrawn(state, now)) return 'SeasonClosing';
+  const paid = buySku(state, sku, now);
+  if (paid !== 'Purchased') return paid;
+  // Wildcards first, packs second: the packs are what the player is sent to
+  // open, so they are what the toast counts.
+  if (bundle.wildcards > 0) {
+    state.collection.wildcards[bundle.wildcardRarity] =
+      wildcardsHeld(state, bundle.wildcardRarity) + bundle.wildcards;
+  }
+  for (let i = 0; i < bundle.packs; i++) grantPack(state, bundle.tier, 'store');
   return 'Purchased';
 }
 

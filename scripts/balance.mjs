@@ -85,6 +85,11 @@ const STORE_IDS = [
   // the instrument — the purchase log, the refusal and the monthly allowance
   // all have to see it.
   'RoyalChest',
+  // The collection's three bundles (Docs/features/09-relics.md §6.1): star
+  // packs and wildcards for money rather than for Gems. Like the Royal chest
+  // they grant no Gems, so `gems` is 0 and the four bundle columns carry the
+  // hand instead.
+  'CardsSatchel', 'CardsCase', 'CardsCabinet',
 ];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
@@ -302,6 +307,12 @@ const SETTINGS = [
   // (14-monetization.md §6), and an album nine cards short is not a shortage,
   // it is a season.
   ['collection.wildcard_offer_at', 'collection.wildcardOfferAt'],
+  // How close to the close the CARD BUNDLES come off the shelf. A bundle is
+  // packs and wildcards, and both are wiped with the cards at the close
+  // (§3) — so there is a window at the end of every season where money would
+  // buy something that expires before it can be spent, and the store says
+  // nothing rather than sell it (Docs/features/09-relics.md §6.1).
+  ['collection.bundle_withdraw_hours', 'collection.bundleWithdrawHours'],
   // The HERO ladder (Docs/features/10-heroes.md §4): Fragments raise a tier
   // cap and Hero XP buys levels within it. A relic has none of this any more.
   // The completed-depth XP trickle, per tier per depth per hour
@@ -552,7 +563,12 @@ const SHEETS = {
   // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
   // the hero banner are priced in Gems (Settings), so the store shows them
   // without owning them.
-  Store: ['id', 'price_usd', 'gems'],
+  //
+  // The last four columns are the CARD BUNDLE (Docs/features/09-relics.md
+  // §6.1): how many packs of which tier, and how many wildcards of which
+  // rarity, land the moment the budget is spent. All four blank = this SKU is
+  // not a bundle, which is every Gem pack and the Royal chest.
+  Store: ['id', 'price_usd', 'gems', 'packs', 'pack_tier', 'wildcards', 'wildcard_rarity'],
   // One row per banner. Odds and prices are numbers a designer tunes, so they
   // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
   // date and stays out of the workbook (balance/README.md).
@@ -1219,7 +1235,30 @@ async function importXlsx() {
     const gems = num(r, 'gems');
     if (priceUsd <= 0) fail(where(r), 'a store SKU needs a positive price');
     if (gems < 0) fail(where(r), 'a store SKU cannot grant negative Gems');
-    out.store[id] = { priceUsd, gems };
+    // The card bundle. Its four columns are a HAND, so a count without the
+    // thing it counts is a typo rather than a SKU.
+    const packs = num(r, 'packs', { blankAs: 0 });
+    const packTier = String(r.pack_tier ?? '').trim();
+    const wildcards = num(r, 'wildcards', { blankAs: 0 });
+    const wildcardRarity = num(r, 'wildcard_rarity', { blankAs: 0 });
+    if ((packs > 0) !== (packTier !== '')) {
+      fail(where(r), 'a pack count and a pack tier go together');
+    }
+    if (packTier !== '' && !PACK_IDS.includes(packTier)) {
+      fail(where(r), `"pack_tier" is not a pack ("${packTier}")`);
+    }
+    if ((wildcards > 0) !== (wildcardRarity > 0)) {
+      fail(where(r), 'a wildcard count and a wildcard rarity go together');
+    }
+    if (wildcardRarity > 5) {
+      fail(where(r), `"wildcard_rarity" is ${wildcardRarity}, and 5★ is the dearest wildcard`);
+    }
+    // Gems OR cards, never both: a row that did each would be two products,
+    // and neither shelf of the store could show it whole.
+    if (gems > 0 && (packs > 0 || wildcards > 0)) {
+      fail(where(r), 'grants both Gems and cards — a SKU is one product');
+    }
+    out.store[id] = { priceUsd, gems, packs, packTier, wildcards, wildcardRarity };
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Banners'), BANNER_IDS)) {
@@ -1459,7 +1498,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Store', STORE_IDS.map((id) => {
     const s = b.store[id];
-    return [id, s.priceUsd, s.gems];
+    return [id, s.priceUsd, s.gems, s.packs || '', s.packTier || '',
+      s.wildcards || '', s.wildcardRarity || ''];
   }));
 
   addSheet(workbook, 'Depths', (b.depths ?? []).map((d) =>

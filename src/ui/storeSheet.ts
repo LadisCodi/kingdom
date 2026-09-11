@@ -15,7 +15,10 @@
 //     and a store is the one place that promise has to be kept where the
 //     money is. Bronze and Silver are not here: selling what a ruin already
 //     drips would undercut the only free source the collection has, and the
-//     fine print under the shelf says so in the player's words.
+//     fine print under the shelf says so in the player's words. Under it,
+//     the three CARD BUNDLES — star packs and wildcards for dollars rather
+//     than for Gems, withdrawn in the last hours of a season because the
+//     close wipes both (09-relics.md §6.1).
 //   * Gems — the real-money SKUs, last: six packs on a 3×2 grid of upright
 //     cards (count, art, price). A tap opens the confirmation sheet, which is
 //     where the price meets the monthly budget; nothing is granted from here.
@@ -130,6 +133,34 @@ export function renderStoreSheet(game: Game): HTMLElement {
       }));
   });
 
+  // ---- card bundles: the ROW the Cards shelf already uses, not the upright
+  // tile the Gem packs use. A bundle's argument is what lands, and what lands
+  // is two lines of prose — three of those across a phone sheet would be a
+  // column of broken words. So it reads against the Gem-priced packs above it,
+  // which is the comparison the shelf exists to offer, and the `$` on the
+  // button is what says the till changed.
+  const bundles = game.cardBundleOffers().map((bundle) => {
+    const url = spriteUrl(bundle.sprite);
+    const art = url
+      ? spriteImgAt(url, 'store-pack-row-art')
+      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
+    return card({
+      art,
+      name: bundle.name,
+      // Priced against the shelf it sits on: every part of a bundle has a Gem
+      // price two rows up, so the sum is a claim the player can check.
+      desc: `${bundle.gemValue.toLocaleString('en-US')} gems' worth, at the prices above`,
+    },
+      el('div', { class: 'store-bundle-lines' },
+        ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },
+          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
+      btn({
+        label: formatUsd(bundle.priceCents),
+        kind: 'primary',
+        onClick: () => game.openIap(bundle.id),
+      }));
+  });
+
   // ---- gem packs: upright cards, count over art over price
   // GEM_PACK_ORDER, not every SKU: the Royal chest is a Store row because the
   // budget has to see it, but it is sold on the daily chest where the ladder
@@ -169,6 +200,13 @@ export function renderStoreSheet(game: Game): HTMLElement {
     ...offers,
     ...cardPacks,
     el('div', { class: 'store-note' }, 'Bronze and silver packs come from the ruins.'),
+    // The bundles keep their own heading under Cards: same shelf, other till.
+    // A player scanning for cards finds every way to get one in one place,
+    // and the `$` on the button is what says the rail changed.
+    ...(bundles.length === 0 ? [] : [
+      el('div', { class: 'store-section' }, el('span', {}, 'Card bundles')),
+      ...bundles,
+    ]),
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),

@@ -15,6 +15,7 @@ import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
+import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
@@ -1888,9 +1889,30 @@ export interface StoreSkuDef {
   /** Dollars, as displayed and as deducted from the monthly budget. */
   priceUsd: number;
   gems: number;
+  /** The hand of cards this SKU hands over, or **null for a SKU that is not a
+   *  bundle** — every Gem pack and the Royal chest. */
+  bundle: CardBundleDef | null;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
+}
+
+/**
+ * A CARD BUNDLE (Docs/features/09-relics.md §6.1): the collection's packs and
+ * wildcards for money rather than for Gems.
+ *
+ * It is a `Store` row rather than a Gem price because the BUDGET is the
+ * instrument — the purchase log, the refusal and the monthly allowance all
+ * have to see it — and it grants no Gems, on the Royal chest's precedent: a
+ * bundle hands over the things, not the currency that buys them.
+ */
+export interface CardBundleDef {
+  packs: number;
+  tier: PackTier;
+  wildcards: number;
+  /** The rarity the wildcards cover. Never gold: there is no gold wildcard at
+   *  any price, and money does not buy one either (§9). */
+  wildcardRarity: Rarity;
 }
 
 const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
@@ -1901,6 +1923,11 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
+  // The three bundles, a satchel to a cabinet: the same containment ladder the
+  // Gem packs walk, in a collector's furniture rather than a treasury's.
+  CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
+  CardsCase: { name: "A collector's case", description: 'Star packs and the wildcard that fills any slot.', sprite: 'bundle_case' },
+  CardsCabinet: { name: "A collector's cabinet", description: 'A season of star packs, and three wildcards to aim.', sprite: 'bundle_cabinet' },
 };
 
 /** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
@@ -1909,13 +1936,33 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
 export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
   .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
 
+interface StoreRow {
+  priceUsd: number; gems: number;
+  packs: number; packTier: string; wildcards: number; wildcardRarity: number;
+}
+
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
-    const b = (balance.store as Record<string, { priceUsd: number; gems: number }>)[id];
+    const b = (balance.store as Record<string, StoreRow>)[id];
     if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems }];
+    // A row is a bundle when it names a hand. The importer already refuses
+    // half a hand, so one column deciding it is enough.
+    const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0
+      ? {
+          packs: b.packs,
+          tier: (b.packTier || 'Star') as PackTier,
+          wildcards: b.wildcards,
+          wildcardRarity: (b.wildcardRarity || 1) as Rarity,
+        }
+      : null;
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle }];
   }),
 ) as Record<StoreSkuId, StoreSkuDef>;
+
+/** The card bundles, cheapest first — the store's own bundle shelf
+ *  (Docs/features/09-relics.md §6.1). Workbook row order, like every shelf. */
+export const CARD_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => STORE[id]?.bundle !== null);
 
 /** Workbook row order — the order the store shows them in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];

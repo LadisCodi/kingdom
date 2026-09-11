@@ -3224,31 +3224,83 @@
   "store": {
     "GemsPouch": {
       "priceUsd": 0.99,
-      "gems": 500
+      "gems": 500,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "GemsPurse": {
       "priceUsd": 4.99,
-      "gems": 2500
+      "gems": 2500,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "GemsChest": {
       "priceUsd": 9.99,
-      "gems": 5000
+      "gems": 5000,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "GemsVault": {
       "priceUsd": 19.99,
-      "gems": 10000
+      "gems": 10000,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "GemsHoard": {
       "priceUsd": 49.99,
-      "gems": 25000
+      "gems": 25000,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "GemsTreasury": {
       "priceUsd": 99.99,
-      "gems": 50000
+      "gems": 50000,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
     },
     "RoyalChest": {
       "priceUsd": 9.99,
-      "gems": 0
+      "gems": 0,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
+    },
+    "CardsSatchel": {
+      "priceUsd": 4.99,
+      "gems": 0,
+      "packs": 2,
+      "packTier": "Star",
+      "wildcards": 1,
+      "wildcardRarity": 4
+    },
+    "CardsCase": {
+      "priceUsd": 9.99,
+      "gems": 0,
+      "packs": 5,
+      "packTier": "Star",
+      "wildcards": 1,
+      "wildcardRarity": 5
+    },
+    "CardsCabinet": {
+      "priceUsd": 19.99,
+      "gems": 0,
+      "packs": 10,
+      "packTier": "Star",
+      "wildcards": 3,
+      "wildcardRarity": 5
     }
   },
   "payer": {
@@ -3418,6 +3470,7 @@
       1500
     ],
     "wildcardOfferAt": 3,
+    "bundleWithdrawHours": 24,
     "xpTricklePerTierDepth": 10,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,
