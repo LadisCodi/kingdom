@@ -440,3 +440,9 @@
     linear-gradient(rgba(18, 11, 6, 0.86), rgba(18, 11, 6, 0.86)),
     url('../assets/tex-cloth.jpg') center / 256px 256px;
 }
+.bs-bar {
+  background:
+    linear-gradient(rgba(212, 85, 62, 0.55), rgba(212, 85, 62, 0.55)),
+    url('../assets/tex-wood.jpg') center / 200px 200px;
+}
+.bs-exit .k-btn { background: url('../assets/tex-wood.jpg') center / 200px 200px; }

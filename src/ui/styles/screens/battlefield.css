@@ -92,13 +92,21 @@
 }
 /* The two armies facing each other. The one piece of empty space on the
    screen that is doing a job. */
-.bs-gap { height: 36px; flex: none; }
+.bs-gap {
+  position: relative;
+  width: 100%;
+  height: 36px;
+  flex: none;
+  /* The line the two armies face across: dashed rope (M16). */
+  background: linear-gradient(to right, rgba(244, 228, 193, 0.35) 0 60%, transparent 60%) center / 14px 3px repeat-x;
+}
 
 .bs-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   min-height: 12px;
+  padding-bottom: 10px; /* room for the count tag under the ring */
 }
 /* The back rank sits behind the front one, and says so by being smaller —
    the row is what decides who gets hit (Docs/features/combat.md §8). */
@@ -131,8 +139,9 @@
 }
 .bs-count {
   position: absolute;
-  right: -8px;
-  bottom: -6px;
+  left: 50%;
+  translate: -50% 0;
+  bottom: -9px;
   padding: 0 5px;
   border-radius: 999px;
   background: var(--parchment);
