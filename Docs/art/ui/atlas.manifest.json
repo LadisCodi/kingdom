@@ -1,264 +1,284 @@
 {
-  "cell": 64,
-  "atlasCols": 16,
-  "smooth": true,
-  "note": "Smooth chrome (2026-09-10, Docs/art/ui-menus-redesign.md §7.17-7.18): five 4x4 sheets drawn to be scaled, sliced Lanczos into 64px cells with the alpha left soft. Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. The pixel-era sheets (ui-a..h, currencies-16, the hand-drawn 16px keys) are kept in sheets/ as provenance and are no longer sliced.",
-  "sheets": [
-    {
-      "file": "sheets/ui-a2-currencies.png",
-      "grid": {
-        "rows": 4,
-        "cols": 4
-      },
-      "fill": 0.86,
-      "names": [
-        "Gold",
-        "Food",
-        "Wood",
-        "Stone",
-        "Mana",
-        "Gems",
-        "Knowledge",
-        "Stardust",
-        "HeroXp",
-        "SilverKey",
-        "GoldKey",
-        "Planks",
-        "CutStone",
-        "Iron",
-        "Runestone",
-        "Meat"
-      ],
-      "evenGrid": true
-    },
-    {
-      "file": "sheets/ui-b2-buildings.png",
-      "grid": {
-        "rows": 4,
-        "cols": 4
-      },
-      "fill": 0.86,
-      "names": [
-        "Townhall",
-        "Housing",
-        "Farm",
-        "FarmLands",
-        "Sawmill",
-        "Quarry",
-        "Docks",
-        "Sanctum",
-        "Barracks",
-        "SpearHall",
-        "ShootingGrounds",
-        "Stables",
-        "Infirmary",
-        "Carpenter",
-        "MasonsYard",
-        "Smelter"
-      ],
-      "evenGrid": true
-    },
-    {
-      "file": "sheets/ui-c2-people.png",
-      "grid": {
-        "rows": 4,
-        "cols": 4
-      },
-      "fill": 0.86,
-      "names": [
-        "RuneCarver",
-        "Garden",
-        "Well",
-        "Orchard",
-        "Statue",
-        "Plaza",
-        "Shrine",
-        "Berries",
-        "Fish",
-        "Warrior",
-        "Lancer",
-        "Archer",
-        "Cavalry",
-        "population",
-        "builders",
-        "workers"
-      ],
-      "evenGrid": true
-    },
-    {
-      "file": "sheets/ui-d2-symbols.png",
-      "grid": {
-        "rows": 4,
-        "cols": 4
-      },
-      "fill": 0.86,
-      "names": [
-        "harmony",
-        "build",
-        "army",
-        "research",
-        "settings",
-        "quest",
-        "showme",
-        "padlock",
-        "hourglass",
-        "clock",
-        "tick",
-        "close",
-        "plus",
-        "minus",
-        "sparkle",
-        "unknown"
-      ],
-      "evenGrid": true
-    },
-    {
-      "file": "sheets/ui-e2-marks.png",
-      "grid": {
-        "rows": 4,
-        "cols": 4
-      },
-      "fill": 0.86,
-      "names": [
-        "star",
-        "video",
-        "ascension",
-        "fragment",
-        "atk",
-        "def",
-        "hp",
-        "relics",
-        "dungeon",
-        "chest",
-        "daily",
-        "skull",
-        null,
-        null,
-        null,
-        null
-      ],
-      "note": "Twelve of sixteen: the fourth row is empty on purpose, and with evenGrid the empty cells cost nothing.",
-      "evenGrid": true
-    }
-  ],
-  "worldSheets": [
-    {
-      "file": "sheets/spr-a-sites.png",
-      "grid": {
-        "rows": 2,
-        "cols": 4
-      },
-      "fill": 0.94,
-      "names": [
-        "landmark_shrine",
-        "landmark_stones",
-        "landmark_leyspring",
-        "ruin_barrow",
-        "ruin_chapel",
-        "ruin_ironworks",
-        "ruin_counting_house",
-        "ruin_observatory"
-      ]
-    },
-    {
-      "file": "sheets/spr-b-city.png",
-      "grid": {
-        "rows": 2,
-        "cols": 3
-      },
-      "fill": 0.94,
-      "names": [
-        "sanctum",
-        "barracks",
-        "spear_hall",
-        "shooting_grounds",
-        "stables",
-        null
-      ]
-    },
-    {
-      "file": "sheets/spr-c-relics.png",
-      "grid": {
-        "rows": 2,
-        "cols": 3
-      },
-      "fill": 0.9,
-      "names": [
-        "artifact_dowsing_rod",
-        "artifact_verdant_seal",
-        "artifact_foremans_sigil",
-        "artifact_gilded_ledger",
-        "artifact_wanderers_compass",
-        null
-      ],
-      "gravity": "center"
-    },
-    {
-      "file": "sheets/spr-d-heroes.png",
-      "grid": {
-        "rows": 2,
-        "cols": 3
-      },
-      "fill": 0.92,
-      "gravity": "center",
-      "names": [
-        "hero_warden",
-        "hero_quartermaster",
-        "hero_scholar",
-        "hero_relic_hunter",
-        "hero_scout",
-        null
-      ]
-    }
-  ],
-  "spriteSize": 128,
-  "locked": {
-    "except": [
-      "atk",
-      "chest",
-      "close",
-      "daily",
-      "def",
-      "dungeon",
-      "fragment",
-      "hp",
-      "minus",
-      "padlock",
-      "plus",
-      "relics",
-      "showme",
-      "sparkle",
-      "star",
-      "tick",
-      "unknown"
-    ]
+ "cell": 64,
+ "atlasCols": 16,
+ "smooth": true,
+ "note": "Smooth chrome (2026-09-10, Docs/art/ui-menus-redesign.md §7.17-7.18): five 4x4 sheets drawn to be scaled, sliced Lanczos into 64px cells with the alpha left soft. Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. The pixel-era sheets (ui-a..h, currencies-16, the hand-drawn 16px keys) are kept in sheets/ as provenance and are no longer sliced.",
+ "sheets": [
+  {
+   "file": "sheets/ui-a2-currencies.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "Gold",
+    "Food",
+    "Wood",
+    "Stone",
+    "Mana",
+    "Gems",
+    "Knowledge",
+    "Stardust",
+    "HeroXp",
+    "SilverKey",
+    "GoldKey",
+    "Planks",
+    "CutStone",
+    "Iron",
+    "Runestone",
+    "Meat"
+   ],
+   "evenGrid": true
   },
-  "tiny": {
-    "only": [
-      "Berries",
-      "Fish",
-      "Food",
-      "Gems",
-      "Gold",
-      "GoldKey",
-      "HeroXp",
-      "Iron",
-      "Knowledge",
-      "Mana",
-      "Meat",
-      "SilverKey",
-      "Stardust",
-      "Stone",
-      "Wood",
-      "ascension",
-      "atk",
-      "builders",
-      "def",
-      "fragment",
-      "hp",
-      "padlock",
-      "population",
-      "workers"
-    ]
+  {
+   "file": "sheets/ui-b2-buildings.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "Townhall",
+    "Housing",
+    "Farm",
+    "FarmLands",
+    "Sawmill",
+    "Quarry",
+    "Docks",
+    "Sanctum",
+    "Barracks",
+    "SpearHall",
+    "ShootingGrounds",
+    "Stables",
+    "Infirmary",
+    "Carpenter",
+    "MasonsYard",
+    "Smelter"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-c2-people.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "RuneCarver",
+    "Garden",
+    "Well",
+    "Orchard",
+    "Statue",
+    "Plaza",
+    "Shrine",
+    "Berries",
+    "Fish",
+    "Warrior",
+    "Lancer",
+    "Archer",
+    "Cavalry",
+    "population",
+    "builders",
+    "workers"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-d2-symbols.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "harmony",
+    "build",
+    "army",
+    "research",
+    "settings",
+    "quest",
+    "showme",
+    "padlock",
+    "hourglass",
+    "clock",
+    "tick",
+    "close",
+    "plus",
+    "minus",
+    "sparkle",
+    "unknown"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-e2-marks.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "star",
+    "video",
+    "ascension",
+    "fragment",
+    "atk",
+    "def",
+    "hp",
+    "relics",
+    "dungeon",
+    "chest",
+    "daily",
+    "skull",
+    null,
+    null,
+    null,
+    null
+   ],
+   "note": "Twelve of sixteen: the fourth row is empty on purpose, and with evenGrid the empty cells cost nothing.",
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-j2-marks.png",
+   "grid": {
+    "rows": 2,
+    "cols": 2
+   },
+   "fill": 0.86,
+   "names": [
+    "pack",
+    "cards",
+    "vault",
+    "crest"
+   ],
+   "note": "The card collection's four marks (Docs/art/ui-menus-redesign.md §7.26, C2). A 2x2 of its own rather than ui-e2's empty fourth row: regenerating that sheet would redraw the twelve marks already on it.",
+   "evenGrid": true,
+   "solid": true
   }
+ ],
+ "worldSheets": [
+  {
+   "file": "sheets/spr-a-sites.png",
+   "grid": {
+    "rows": 2,
+    "cols": 4
+   },
+   "fill": 0.94,
+   "names": [
+    "landmark_shrine",
+    "landmark_stones",
+    "landmark_leyspring",
+    "ruin_barrow",
+    "ruin_chapel",
+    "ruin_ironworks",
+    "ruin_counting_house",
+    "ruin_observatory"
+   ]
+  },
+  {
+   "file": "sheets/spr-b-city.png",
+   "grid": {
+    "rows": 2,
+    "cols": 3
+   },
+   "fill": 0.94,
+   "names": [
+    "sanctum",
+    "barracks",
+    "spear_hall",
+    "shooting_grounds",
+    "stables",
+    null
+   ]
+  },
+  {
+   "file": "sheets/spr-c-relics.png",
+   "grid": {
+    "rows": 2,
+    "cols": 3
+   },
+   "fill": 0.9,
+   "names": [
+    "artifact_dowsing_rod",
+    "artifact_verdant_seal",
+    "artifact_foremans_sigil",
+    "artifact_gilded_ledger",
+    "artifact_wanderers_compass",
+    null
+   ],
+   "gravity": "center",
+   "evenGrid": true,
+   "note": "Repainted 2026-09-11 (C3, Docs/art/ui-menus-redesign.md §7.26): the relic card draws these at 170px on parchment, so they are smooth objects rather than map pixel art. evenGrid because the rod lies diagonally across its cell's edge.",
+   "spriteSize": 256
+  },
+  {
+   "file": "sheets/spr-d-heroes.png",
+   "grid": {
+    "rows": 2,
+    "cols": 3
+   },
+   "fill": 0.92,
+   "gravity": "center",
+   "names": [
+    "hero_warden",
+    "hero_quartermaster",
+    "hero_scholar",
+    "hero_relic_hunter",
+    "hero_scout",
+    null
+   ]
+  }
+ ],
+ "spriteSize": 128,
+ "locked": {
+  "except": [
+   "atk",
+   "chest",
+   "close",
+   "daily",
+   "def",
+   "dungeon",
+   "fragment",
+   "hp",
+   "minus",
+   "padlock",
+   "plus",
+   "relics",
+   "showme",
+   "sparkle",
+   "star",
+   "tick",
+   "unknown"
+  ]
+ },
+ "tiny": {
+  "only": [
+   "Berries",
+   "Fish",
+   "Food",
+   "Gems",
+   "Gold",
+   "GoldKey",
+   "HeroXp",
+   "Iron",
+   "Knowledge",
+   "Mana",
+   "Meat",
+   "SilverKey",
+   "Stardust",
+   "Stone",
+   "Wood",
+   "ascension",
+   "atk",
+   "builders",
+   "def",
+   "fragment",
+   "hp",
+   "padlock",
+   "population",
+   "workers"
+  ]
+ }
 }

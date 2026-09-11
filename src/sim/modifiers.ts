@@ -27,11 +27,11 @@ export type ModifierStat =
   | 'autoTapCooldown'
   | 'manaRegen'
   | 'revealCost'
-  | 'cellRecovery'
+  | 'cellRecovery'    // how long a cell waits before it refills in place
+  | 'cellRespawn'     // how long a consumed feature waits before it reappears
   | 'knowledgeYield'
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
-  | 'attunementSlots' // sockets, for a season that lends you one
   // The era-2/3 hooks (Docs/features/tech-tree.md §6.2). Each is reached by
   // the tech tree (a `stat` in `data/techEffectRules.ts`) AND by this stack,
   // in the helper that owns the number — three stages, one place, like

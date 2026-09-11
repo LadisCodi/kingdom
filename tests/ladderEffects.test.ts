@@ -41,7 +41,7 @@ import {
   tapWorkSeconds, workerStrikeMs,
 } from '../src/sim/upgrades';
 import { addHeroXp } from '../src/sim/heroes';
-import { grantArtifact, normaliseSlots } from '../src/sim/artifacts';
+import { grantArtifactLevel } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import {
   addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, openRuin, reveal, T0,
@@ -85,8 +85,7 @@ function probeState(): GameState {
   // keeps that probe independent of the Colours ladder.
   state.army.push({ uniqueId: 'probe_warrior', definitionId: 'Warrior' });
   reveal(state, [RUINS.HollowBarrow.location]);
-  grantArtifact(state, 'VerdantSeal');
-  normaliseSlots(state);
+  grantArtifactLevel(state, 'VerdantSeal');
   state.modifiers = [];
   state.lastAdvance = T0;
   return state;

@@ -19,7 +19,8 @@
 // different size of event from four fragments and must not be a tile the
 // player's thumb is already moving past.
 
-import { ARTIFACTS, HEROES } from '../sim/data/definitions';
+import { HEROES } from '../sim/data/definitions';
+import { ALBUMS } from '../sim/data/seasons';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
@@ -51,16 +52,34 @@ function prizeTile(prize: GachaPrize): HTMLElement {
       iconEl(prize.currency, { size: 'lg' }),
       el('span', { class: 'gr-count' }, String(prize.amount)));
   }
-  // A relic's shards, which a room pays and a call never does. Same tile as a
-  // hero's fragments, keyed on the relic instead.
-  if (prize.kind === 'relicFragments') {
-    const relic = ARTIFACTS[prize.artifactId];
-    const url = spriteUrl(relic.sprite);
-    return el('div', { class: 'gr-tile is-fragment' },
+  // A card pack, which a room pays and a call never does. It is not opened
+  // here — the Collection is where a pack is turned over, so this tile says
+  // "you have one" and nothing more.
+  if (prize.kind === 'pack') {
+    const url = spriteUrl(`pack_${prize.tier.toLowerCase()}`);
+    return el('div', { class: `gr-tile is-pack is-${prize.tier.toLowerCase()}` },
       url ? spriteImgAt(url, 'gr-art')
-        : el('div', { class: 'gr-art is-glyph' }, relic.glyph),
-      el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
-      el('span', { class: 'gr-count' }, String(prize.amount)));
+        : el('span', { class: 'gr-art is-glyph' }, iconEl('pack', { size: 'lg' })),
+      el('span', { class: 'gr-name' }, `${prize.tier} pack`));
+  }
+  // ONE CARD TURNING OVER (Docs/features/09-relics.md §11.5). A new card says
+  // so; a duplicate shows its count, which is the whole difference the player
+  // is looking for as the pack deals.
+  if (prize.kind === 'card') {
+    const card = ALBUMS[prize.album].cards[prize.slot];
+    const url = spriteUrl(`album_${prize.album.toLowerCase()}`);
+    return el('div', {
+      class: `gr-tile is-card r${card.rarity}${card.gold === true ? ' is-gold' : ''}`
+        + (prize.isNew ? ' is-fresh' : ''),
+    },
+      el('span', { class: 'gr-stars' },
+        ...Array.from({ length: card.rarity }, () => iconEl('star', { size: 'sm' }))),
+      url ? spriteImgAt(url, 'gr-art')
+        : el('div', { class: 'gr-art is-glyph' }, ALBUMS[prize.album].name.slice(0, 1)),
+      el('span', { class: 'gr-name' }, card.name),
+      prize.isNew
+        ? el('span', { class: 'gr-new' }, 'New')
+        : el('span', { class: 'gr-count' }, `×${prize.count}`));
   }
   const def = HEROES[prize.heroId];
   if (prize.kind === 'hero') {

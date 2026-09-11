@@ -10,7 +10,7 @@ import {
   ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, levelUpHero,
   ownsHeroId, pull, raiseHeroTier, unlockHero,
 } from '../src/sim/heroes';
-import { heroLevelCapForTier, levelCapForTier, xpLevelCost } from '../src/sim/collection';
+import { heroLevelCapForTier, xpLevelCost } from '../src/sim/heroLadder';
 import type { PullResult } from '../src/sim/heroes';
 import { COLLECTION } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
@@ -255,11 +255,6 @@ describe('a hero ascension is worth ten levels', () => {
     expect(heroLevelCapForTier(1)).toBe(10);
     expect(heroLevelCapForTier(2)).toBe(20);
     expect(heroLevelCapForTier(COLLECTION.maxTier)).toBe(50);
-  });
-
-  it('leaves the relics on their own two-level rungs', () => {
-    expect(levelCapForTier(1)).toBe(2);
-    expect(levelCapForTier(COLLECTION.maxTier)).toBe(10);
   });
 
   it('keeps the XP curve payable over fifty levels', () => {

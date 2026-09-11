@@ -25,7 +25,7 @@
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
-| **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's albums, which level the relics; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
+| **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
 | **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
 | **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |

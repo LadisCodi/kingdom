@@ -1,0 +1,573 @@
+/* The Collection: the season's five albums, one album's nine cards, and one
+ * relic's card. M21, M22 and M19 in Docs/art/ui/mockups/.
+ *
+ * THE MEDALLIONS ARE THE SCREEN. M21 draws the top level as round vignettes,
+ * three and two, and the relic rides its own medallion as a badge — one album
+ * per relic means the five medallions already ARE the five relics, so there is
+ * no strip above them repeating the list.
+ *
+ * RARITY IS THE CARD'S OWN GROUND, not a badge on it, the same argument the
+ * roster makes (screens/heroes.css): the ladder should read at arm's length
+ * with no label. Gold is a FRAME rather than a colour, because a gold edition
+ * is the same card in better clothes.
+ *
+ * WHAT IS MISSING IS AS MUCH OF THE CONTENT AS WHAT IS HELD, so a silhouette
+ * keeps its rarity stars and its name and only loses its picture. */
+
+.col-season, .col-page, .col-relic { display: flex; flex-direction: column; gap: 12px; }
+.k-sheet.is-bare .col-relic { gap: 10px; }
+
+/* ------------------------------------------------------------- the prize band */
+
+/* The screen's lede. A golden ground because what it holds is the only thing
+   on this screen worth 45 cards, and gold is the one CTA colour the chrome
+   allows itself (§2.2). */
+.col-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  border-radius: var(--radius);
+  border: 3px solid var(--gold-dark);
+  background: linear-gradient(180deg, #f8d98a, #efbe5c);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 2px 0 rgba(60, 36, 18, 0.3);
+}
+.col-band.is-done { filter: saturate(0.7); }
+.col-band-kicker {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wood-dark);
+}
+.col-band-prizes { display: flex; gap: 10px; }
+.col-prize {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* -------------------------------------------------------------- the one line */
+
+.col-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+.col-line .k-trough { flex: 1; }
+.col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.col-count { font-weight: 700; color: var(--ink); white-space: nowrap; }
+
+/* ------------------------------------------------------------- the medallions */
+
+/* Three and two, centred — the second row is short by design and centring it
+   is what stops the fifth album reading as an orphan. */
+.col-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 8px;
+}
+.col-medal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: calc((100% - 16px) / 3);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.col-medal:active { transform: translateY(2px); }
+
+/* The carved ring. A radial parchment ground under the art so a missing
+   sheet still reads as a medallion rather than as a hole. */
+.col-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 4px solid var(--wood-dark);
+  background:
+    radial-gradient(circle at 50% 35%, #fdf2d4, var(--parchment-shade));
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -4px 8px rgba(60, 36, 18, 0.22),
+    0 2px 0 rgba(60, 36, 18, 0.3);
+  overflow: visible;
+}
+.col-medal.is-done .col-ring {
+  border-color: var(--gold-dark);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 2px var(--gold),
+    0 2px 0 rgba(60, 36, 18, 0.3);
+}
+.col-medal-art {
+  width: 88%; height: 88%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.col-medal-art.is-glyph {
+  display: grid; place-items: center;
+  font-size: 30px;
+}
+
+/* The relic's badge, at the ring's lower-right: a wax disc with its level. */
+.col-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px;
+  border: 2px solid var(--gold-dark);
+  background: var(--clay);
+  color: var(--ink-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
+}
+.col-badge.is-locked { background: var(--locked); border-color: var(--wood-dark); }
+.col-badge-lv { white-space: nowrap; }
+
+.col-tick {
+  position: absolute;
+  left: -2px; top: -2px;
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--leaf-dark);
+  background: var(--leaf);
+}
+
+.col-medal-name {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+/* The count on a dark plate, as M21 draws it: a pill under the name rather
+   than a number floating on parchment. */
+.col-medal-count {
+  padding: 1px 10px;
+  border-radius: 9px;
+  background: rgba(60, 36, 18, 0.72);
+  color: var(--ink-inverse);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------- the vault */
+
+/* A knob at the bottom-right, the way a safe sits in the corner of the room
+   it belongs to. It is the only round button on the screen, so it never has
+   to compete with the medallions it sits among. */
+.col-vault {
+  align-self: flex-end;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px; height: 58px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--wood-dark);
+  background: radial-gradient(circle at 50% 30%, var(--wood-light), var(--wood));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(60, 36, 18, 0.4);
+  cursor: pointer;
+}
+.col-vault:active { transform: translateY(2px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3); }
+.col-vault.is-ready { border-color: var(--gold-dark); box-shadow: 0 0 12px rgba(242, 178, 51, 0.8); }
+.col-vault-stars {
+  position: absolute;
+  bottom: -6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 2px solid var(--gold-dark);
+  background: var(--parchment);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ----------------------------------------------------- §11.3 the reward band */
+
+.col-reward {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 3px solid var(--gold-dark);
+  background: linear-gradient(180deg, #f8d98a, #efbe5c);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.col-reward.is-done .col-chips { opacity: 0.55; text-decoration: line-through; }
+.col-reward-body { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+
+/* The relic in its own frame at the left — the album page IS the relic
+   screen, so the relic is the first thing on it. */
+.col-relic-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 72px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  cursor: pointer;
+  font: inherit;
+}
+.col-relic-art { width: 48px; height: 48px; object-fit: contain; }
+.col-relic-art.is-glyph { display: grid; place-items: center; font-size: 28px; }
+.col-relic-lv {
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.col-chips { display: flex; gap: 6px; }
+.col-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.col-chip small { font-weight: 400; font-size: 11px; color: var(--ink-muted); }
+.col-chip.is-relic { color: var(--gold-dark); }
+.col-chip-art { width: 20px; height: 20px; object-fit: contain; }
+.col-chip-art.is-glyph { display: grid; place-items: center; font-size: 14px; }
+
+/* --------------------------------------------------- the wildcard's strip */
+
+/* Quiet while it only says what the player holds, CLAY while it is armed:
+   the strip is the mode indicator, so the difference between "you have one"
+   and "the next tap spends it" has to be a colour and not a word. */
+.col-arm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  font-size: var(--text-helper);
+  color: var(--ink);
+}
+.col-arm.is-armed {
+  border-color: var(--clay);
+  background: var(--clay);
+  color: var(--ink-inverse);
+  box-shadow: 0 0 12px rgba(212, 85, 62, 0.55);
+}
+.col-arm-line { flex: 1; min-width: 0; line-height: 1.25; }
+.col-arm .k-btn.col-arm-pick { min-height: 30px; padding: 2px 10px; }
+.col-arm.is-armed .k-knob { flex: 0 0 auto; }
+
+/* ------------------------------------------------------------ the 3x3 grid */
+
+.col-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.col-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 4px 0;
+  border-radius: var(--radius-sm);
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  overflow: hidden;
+}
+.col-card:active { transform: translateY(2px); }
+/* Rarity is the ground. Five steps of one hue family rather than five
+   unrelated colours: a 5★ should look like a better 4★, not like a warning. */
+.col-card.r1 { background: linear-gradient(180deg, #eef4f6, #d8e6ec); }
+.col-card.r2 { background: linear-gradient(180deg, #e7f2e2, #cde4c6); }
+.col-card.r3 { background: linear-gradient(180deg, #e6eef9, #c8d9f2); }
+.col-card.r4 { background: linear-gradient(180deg, #f0e6f8, #ddc9f0); }
+.col-card.r5 { background: linear-gradient(180deg, #fbe9dc, #f4cfae); }
+.col-card.is-gold {
+  border-color: var(--gold-dark);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 2px 0 rgba(60, 36, 18, 0.3);
+}
+.col-card.is-missing {
+  background: var(--parchment-shade);
+  border-style: dashed;
+  border-color: rgba(92, 58, 30, 0.5);
+}
+/* Where an armed wildcard can land. Gold and lit, because the question the
+   player is holding is "which of these can I fill?" and the grid answers it
+   before a tap is spent finding out. */
+.col-card.is-fillable {
+  border-style: solid;
+  border-color: var(--gold-dark);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 12px rgba(242, 178, 51, 0.75);
+}
+.col-card.is-fillable .col-card-art.is-silhouette { opacity: 0.9; }
+
+.col-card-stars {
+  position: absolute;
+  top: 2px;
+  display: flex;
+  gap: 1px;
+}
+.col-card.is-missing .col-card-stars { filter: grayscale(1) brightness(1.15); opacity: 0.7; }
+
+/* The album's medallion stands in for the card's own face until the 45 are
+   drawn, so it is presented AS a medallion — centred, inset, with the rarity
+   wash showing around it — rather than cropped square and passed off as art
+   it is not. */
+.col-card-art { width: 86%; aspect-ratio: 1; object-fit: contain; margin-top: 2px; }
+.col-card-art.is-silhouette {
+  display: grid; place-items: center;
+  opacity: 0.4;
+}
+.col-card-art.is-glyph { display: grid; place-items: center; font-size: 24px; }
+
+/* The name on a ribbon along the bottom, as M22 draws it: the card's picture
+   runs to the edges and the ribbon sits on top of it. */
+.col-card-name {
+  width: calc(100% + 8px);
+  margin: 0 -4px;
+  padding: 3px 2px;
+  background: var(--leaf-dark);
+  color: var(--ink-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.col-card.is-missing .col-card-name { background: rgba(92, 58, 30, 0.35); color: var(--ink-muted); }
+
+.col-dupe {
+  position: absolute;
+  left: 2px;
+  bottom: 22px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 2px solid var(--wood-dark);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------- the walk */
+
+.col-walk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.col-walk-label { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* -------------------------------------------------- §11.4 the relic's card */
+
+.col-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 12px 0 18px;
+  border-radius: var(--radius);
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: radial-gradient(circle at 50% 42%, #ffeec2, var(--parchment-shade));
+}
+.col-stage .k-knob { position: absolute; top: 6px; right: 6px; }
+/* The relic objects are drawn at a three-quarter angle, so most of them lie
+   diagonally in their square: `contain` at 60% left a band of air around
+   them. */
+.col-stage-art { width: 76%; height: 176px; object-fit: contain; }
+.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 90px; }
+
+/* The plaque rides the stage's bottom edge — the level is a fact about the
+   relic, not a line of body copy under it. */
+.col-plaque {
+  position: absolute;
+  bottom: -12px;
+  padding: 3px 18px;
+  border-radius: var(--radius-sm);
+  border: 3px solid var(--gold-dark);
+  background: var(--wood);
+  color: var(--ink-inverse);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 2px 0 rgba(60, 36, 18, 0.4);
+}
+
+.col-relic-name {
+  margin-top: 8px;
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  text-align: center;
+  color: var(--ink);
+}
+.col-relic-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+
+/* Two ruled rows: what it does now, and what the next level is worth. The
+   second in muted ink, because the card's plainest fact is the difference. */
+.col-effects {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment);
+  overflow: hidden;
+}
+.col-effect {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.col-effect + .col-effect { border-top: 2px solid rgba(92, 58, 30, 0.2); }
+.col-effect.is-next { color: var(--ink-muted); font-size: var(--text-helper); }
+
+/* The album, and the way back to it. */
+.col-relic-album {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.col-relic-album .k-trough { flex: 1; }
+.col-relic-medal {
+  display: grid; place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  overflow: hidden;
+}
+.col-relic-medal-art { width: 100%; height: 100%; object-fit: cover; }
+.col-relic-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
+.col-relic-album-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
+
+/* -------------------------------------------------------- §11.1 the pill */
+
+/* Under the daily chest's pill, and wider — the two read as a pair, which is
+   the whole of the placement argument (ui/seasonPill.ts). */
+#season { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#season[hidden] { display: none; }
+
+.sea-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px 5px 8px;
+  border-radius: 10px;
+  border: 3px solid var(--gold-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  /* The glow is the ask: a pack is waiting. */
+  animation: sea-glow 2s ease-in-out infinite;
+}
+.sea-pill:active { transform: translateY(2px); box-shadow: none; }
+@keyframes sea-glow {
+  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 14px rgba(242, 178, 51, 0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sea-pill { animation: none; }
+}
+.sea-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.9; }
+
+.sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
+/* Body, not the title face — the daily pill beside it sets its title the same
+   way, and the two have to read as a pair. */
+.sea-pill-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.1; }
+/* A trough with the count printed ON it, as M20 draws it. */
+.sea-pill-trough {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(60, 36, 18, 0.4);
+  overflow: hidden;
+}
+.sea-pill-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+}
+.sea-pill-count {
+  position: relative;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-inverse);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.8);
+}
+.sea-pill-clock {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ink-muted);
+}

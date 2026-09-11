@@ -12,7 +12,9 @@ import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
-import { grantArtifact, normaliseSlots } from './sim/artifacts';
+import { grantArtifactLevel } from './sim/artifacts';
+import { grantPack } from './sim/collection';
+import { PACK_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
 import { grantBuilder } from './sim/commands';
 import { addGood } from './sim/goods';
@@ -31,6 +33,7 @@ import { renderManaSheet } from './ui/manaSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
 import { mountDailyPill } from './ui/dailyPill';
+import { mountSeasonPill } from './ui/seasonPill';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -39,7 +42,7 @@ import { renderSiteCard } from './ui/siteCard';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
-import { renderReliquarySheet } from './ui/reliquarySheet';
+import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
@@ -128,6 +131,7 @@ async function boot(): Promise<void> {
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
+  mountSeasonPill(game, document.getElementById('season')!);
   mountRaidPill(game, document.getElementById('raids')!);
   // The battle screen's card panel. Its own mount, because the sheet it
   // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
@@ -162,7 +166,7 @@ async function boot(): Promise<void> {
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
-    reliquary: renderReliquarySheet,
+    collection: renderCollectionSheet,
     heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
     gate: renderGateSheet,
@@ -253,7 +257,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
+        'purse', 'collection', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
         'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -398,13 +402,24 @@ async function boot(): Promise<void> {
       game.state.research.active = [];
       runTick();
     };
-    // Relics normally arrive from ruins, which is a delve away — this is how
-    // the reliquary, the sockets and cast mode get exercised in one click.
+    // Relics normally arrive from albums, which is a season of packs away —
+    // this is how the Collection, the relic cards and cast mode get exercised
+    // in one click. Level 2 on every relic, so the card's "now / at the next
+    // level" rows both have something to say.
     const allRelics = () => {
-      for (const id of ARTIFACT_ORDER) grantArtifact(game.state, id);
-      normaliseSlots(game.state);
-      game.state.kingdom.wallet.Stardust = 5000;
+      for (const id of ARTIFACT_ORDER) {
+        grantArtifactLevel(game.state, id);
+        grantArtifactLevel(game.state, id);
+      }
       addMana(game.state, manaCap(game.state));
+      runTick();
+    };
+    // One of every tier, so the reveal, the odds and the album grid can all
+    // be seen without delving for an afternoon.
+    const somePacks = () => {
+      for (const tier of PACK_ORDER) {
+        for (let i = 0; i < 3; i++) grantPack(game.state, tier, 'dev');
+      }
       runTick();
     };
     // "Warp then reload" is the only way to exercise the offline report: the
@@ -418,6 +433,7 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
+      button('🃏 packs', somePacks),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {
