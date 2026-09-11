@@ -31,7 +31,7 @@
      should. */
   gap: 6px;
   row-gap: 4px;
-  padding: 3px 6px;
+  padding: 2px 6px 3px;
   /* A dark beam runs the width of the frame; the two PLATES on it carry the
      lit wood (M12). */
   background: var(--wood-dark);
@@ -43,9 +43,9 @@
 .hud-right {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 2px 8px;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 6px;
   border: 2px solid var(--wood-dark);
   border-radius: 10px;
   background: var(--wood);
@@ -132,14 +132,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 28px;
-  padding: 0 3px;
+  gap: 3px;
+  min-height: 22px;
+  padding: 0 2px;
   font-family: var(--font-body);
   /* The numbers are printed on the wood in cream (M12), not set in parchment
      slots: 13px bold, a dark shadow under each figure so it reads on the
      grain. */
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
@@ -175,9 +175,9 @@
 .hud-plus {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  margin-left: 3px;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
   border-radius: 50%;
   background: var(--leaf);
   border: 2px solid var(--leaf-dark);
@@ -190,7 +190,7 @@
 
 /* 20px icons in the plank pills — the atlas scales smooth now, so a size is
    a layout choice rather than a ratio of the cell. */
-.hud-coin .icon, .hud-gems .icon { --icon-size: 22px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
+.hud-coin .icon, .hud-gems .icon { --icon-size: 18px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
 
 /* The one contextual plaque, hanging under the plank. */
 .hud-plaque {
@@ -199,8 +199,8 @@
   gap: 6px;
   /* A small parchment card under the plank, like the daily pill's (M12). */
   margin: 6px 0 0 12px;
-  padding: 4px 12px;
-  min-height: 36px;
+  padding: 2px 10px;
+  min-height: 30px;
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 700;
@@ -212,7 +212,7 @@
   box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
   cursor: default;
 }
-.hud-plaque .icon { --icon-size: 24px; }
+.hud-plaque .icon { --icon-size: 20px; }
 .hud-plaque.is-population { cursor: pointer; } /* the only one that leads somewhere */
 .hud-plaque.is-population:hover { filter: brightness(1.15); }
 .hud-plaque:disabled { opacity: 1; } /* a read-out, not a dead button */
@@ -315,7 +315,7 @@
   cursor: pointer;
 }
 /* The orb overlaps the gauge's left end, a coin resting on a bar. */
-.hud-mana .icon { --icon-size: 26px; position: relative; z-index: 1; margin-right: -8px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
+.hud-mana .icon { --icon-size: 22px; position: relative; z-index: 1; margin-right: -8px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
 .hud-plank > .hud-mana { margin-left: 0; }
 /* The gauge: slim, dark, with the fill under a small number. Tabular numerals
  * keep the number from jittering as the pool fills. */
@@ -325,9 +325,9 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  min-width: 56px;
-  height: 18px;
-  padding: 0 6px 0 12px;
+  min-width: 52px;
+  height: 16px;
+  padding: 0 6px 0 11px;
   overflow: hidden;
   border-radius: 9px;
   background: #2a2140;

@@ -59,7 +59,7 @@
      right end, off the flow, so the word never shifts for it. */
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 38px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   border-radius: 4px 4px 0 0;
@@ -127,7 +127,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px; /* the brief's minimum target (§2), and not a pixel more */
+  min-height: 40px; /* the mockups' slabs measure ~38px at 402; 40 keeps a thumb's margin */
   /* A FLOOR, so a slab's width comes from the row it sits in rather than from
      how many characters its label happens to have. "Finish 10" next to
      "Upgrade 180 60" read as two different kinds of control when one was half

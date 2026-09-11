@@ -50,7 +50,7 @@
 /* Every rung taken, the season still running: the pill stays as the door to a
    purchase, and stops asking for anything. */
 .dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
-.dly-pill > .icon { --icon-size: 40px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
+.dly-pill > .icon { --icon-size: 30px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
 .dly-pill-title { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.15; }
 .dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }

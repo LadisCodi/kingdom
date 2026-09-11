@@ -81,8 +81,8 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
 
   const scroll = el('button', { class: 'q-scroll', type: 'button' },
     el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, chain, name, desc)),
-    bar.root,
-    el('div', { class: 'q-foot' }, reward, cta));
+    // The trough and the verb share the foot's row (M12).
+    el('div', { class: 'q-foot' }, bar.root, reward, cta));
   // Read the state at CLICK time, not at render time: a tap can land in the
   // same frame the goal completes, and claiming a quest that is not finished
   // is refused by the sim anyway — but pointing at a goal you just met would

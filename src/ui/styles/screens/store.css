@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 14px 0 8px;
+  margin: 12px 0 6px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: 700;
@@ -77,9 +77,9 @@
     'art lines'
     'art calls'
     'note note';
-  column-gap: 12px;
-  row-gap: 6px;
-  padding: 10px;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 8px;
   border-radius: var(--radius);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -89,9 +89,9 @@
   grid-area: art;
   display: grid;
   place-items: center;
-  width: 96px;
-  min-height: 96px;
-  align-self: stretch;
+  width: 100px;
+  height: 88px;
+  align-self: start;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
   background: var(--parchment);
@@ -100,12 +100,12 @@
  * vignette draws them as a background so the nine files stay in CSS. */
 .store-art {
   display: block;
-  width: 60px;
-  height: 60px;
+  width: 42px;
+  height: 42px;
   background: center / contain no-repeat;
   filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
 }
-.store-banner-art .store-art { width: 76px; height: 76px; }
+.store-banner-art .store-art { width: 72px; height: 72px; }
 .store-art.is-SilverKey { background-image: url('../../assets/art-key-silver.png'); }
 .store-art.is-GoldKey { background-image: url('../../assets/art-key-gold.png'); }
 .store-art.is-hammer { background-image: url('../../assets/art-hammer.png'); }
@@ -133,9 +133,9 @@
   align-items: stretch;
   margin-top: 2px;
 }
-.store-banner-calls > .k-btn { width: 100%; min-width: 0; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
+.store-banner-calls > .k-btn { width: 100%; min-width: 0; min-height: 38px; padding: 6px; white-space: nowrap; }
 .store-banner-calls .k-btn-label { gap: 6px; }
-.store-banner .rel-note { grid-area: note; }
+.store-banner .rel-note { grid-area: note; font-size: 12px; line-height: 1.25; }
 /* The ×1 slot is a blue slab, the ten is wood; on the golden call both are
  * gold with ink on them (M5). */
 .store-banner-calls > .k-btn:first-child { --slab: #2f86d8; --slab-lip: #1b5390; }
@@ -150,12 +150,13 @@
 
 /* ---- the rows: keys and the builder. A bigger vignette than a list row,
  * and the price rides beside the verb rather than under it (M5). */
-.store .k-card { padding: 8px 10px; border-radius: var(--radius); }
-.store .k-card > .k-slot { width: 72px; height: 72px; border-radius: var(--radius-sm); }
-.store .k-card > .k-slot .icon { --icon-size: 52px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
+.store .k-card { min-height: 61px; padding: 6px 8px; border-radius: var(--radius); }
+.store .k-card > .k-slot { width: 48px; height: 48px; border-radius: var(--radius-sm); }
+.store .k-card > .k-slot .icon { --icon-size: 36px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
+.store .k-card > .k-btn { min-height: 34px; }
 .store .k-card .k-name { font-size: 18px; }
 .store .k-card > .k-btn { --slab: var(--wood); --slab-lip: var(--wood-dark); }
-.store .k-btn.has-cost { flex-direction: row; gap: 8px; padding: 8px 12px; }
+.store .k-btn.has-cost { flex-direction: row; gap: 8px; padding: 6px 12px; }
 .store .k-btn.has-cost .k-btn-cost { font-size: var(--text-body); font-weight: 700; }
 
 /* ---- the gem packs: three across, two rows, upright cards (M5) */
@@ -184,13 +185,13 @@
   white-space: nowrap;
 }
 .store-pack-art {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
 }
 .store-pack-art.is-fallback { display: grid; place-items: center; }
-.store-pack .k-btn { width: 100%; min-width: 0; padding-left: 6px; padding-right: 6px; }
+.store-pack .k-btn { width: 100%; min-width: 0; min-height: 36px; padding: 4px 6px; }
 
 /* ---- the payer profile */
 .payer-lede {

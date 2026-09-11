@@ -18,10 +18,11 @@
 
 /* ---- panels and sheets ---- */
 .k-panel {
-  border: 12px solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / 16px / 2px round;
+  /* The mockups' frame is ~9px at 402 (M5), the content 15px from the edge. */
+  border: 9px solid transparent;
+  border-image: url('../assets/frame-wood.png') 80 / 12px / 2px round;
   border-radius: 0;
-  padding: 10px;
+  padding: 8px;
   background: url('../assets/tex-parchment.jpg') padding-box;
   background-size: 384px 384px;
   box-shadow:
@@ -29,7 +30,7 @@
     0 12px 26px rgba(60, 36, 18, 0.26);
 }
 .k-plank {
-  margin: -10px -10px 8px;
+  margin: -8px -8px 8px;
   background: url('../assets/tex-wood.jpg') center / 512px 512px;
   border-radius: 0;
 }
@@ -40,7 +41,7 @@
   z-index: 1;
   width: 72px;
   height: 20px;
-  margin: -30px auto 6px;
+  margin: -28px auto 4px;
   border-radius: 0;
   opacity: 1;
   background: url('../assets/deco-rope.png') center / contain no-repeat;
@@ -94,10 +95,10 @@
 }
 .hud-coins,
 .hud-right {
-  border: 8px solid transparent;
-  border-image: url('../assets/plate-plank.png') 44 fill / 8px round;
+  border: 6px solid transparent;
+  border-image: url('../assets/plate-plank.png') 44 fill / 6px round;
   border-radius: 0;
-  padding: 0 4px;
+  padding: 0 3px;
   min-height: 0;
   background: none;
   box-shadow: 0 2px 0 rgba(30, 16, 6, 0.5);
@@ -120,8 +121,8 @@
 }
 /* The tabs are the painted plate (P1), nine-sliced with its face filled. */
 #navbar.nav .nav-tab:not(.is-cta) {
-  border: 12px solid transparent;
-  border-image: url('../assets/plate-wood.png') 44 fill / 12px round;
+  border: 10px solid transparent;
+  border-image: url('../assets/plate-wood.png') 44 fill / 10px round;
   border-radius: 0;
   padding: 0;
   background: none;
@@ -302,9 +303,12 @@
   border-radius: 0;
   background: none;
 }
-.hud-plaque { padding: 0 4px; min-height: 40px; }
-.dly-pill { padding: 0 8px 0 2px; min-height: 56px; }
-.q-scroll { padding: 2px 2px 2px; }
+.hud-plaque,
+.dly-pill,
+.q-scroll { border-width: 10px; border-image-width: 10px; }
+.hud-plaque { padding: 0 4px; min-height: 30px; }
+.dly-pill { padding: 0 6px 0 2px; min-height: 47px; gap: 6px; }
+.q-scroll { padding: 2px 4px 4px; }
 .q-scroll.is-complete { background: none; }
 .q-scroll::after { top: -12px; right: -12px; }
 

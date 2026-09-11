@@ -72,15 +72,15 @@
 
 .dc-portrait {
   flex: none;
-  width: 88px;
-  height: 88px;
+  width: 104px;
+  height: 104px;
   display: grid;
   place-items: center;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
 }
-.dc-portrait img { width: 76px; height: 76px; object-fit: contain; image-rendering: pixelated; }
+.dc-portrait img { width: 92px; height: 92px; object-fit: contain; image-rendering: pixelated; }
 .dc-name { font-family: var(--font-body); font-weight: 700; }
 
 /* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
@@ -716,10 +716,11 @@
 .tr-info.is-villagers { display: block; }
 .tr-villagers { display: flex; align-items: center; gap: 10px; }
 .tr-villagers > .tr-roster { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 5px; }
-.tr-villagers .tr-roster-slot { width: 34px; height: 34px; }
-.tr-villagers .tr-roster-art { width: 28px; height: 28px; }
+.tr-villagers .tr-roster-slot { width: 40px; height: 40px; }
+.tr-villagers .tr-roster-art { width: 34px; height: 34px; }
+.tr-villagers .k-btn { min-height: 34px; }
 .tr-villagers > .k-action,
-.tr-villagers > .tr-blocked { flex: none; max-width: 42%; }
+.tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
 .tr-villagers > .tr-blocked { font-size: var(--text-helper); line-height: 1.3; }
 .dc-up-art {
   grid-column: 1 / -1;
@@ -732,8 +733,8 @@
 .dc-up-tile {
   display: grid;
   place-items: center;
-  width: 84px;
-  height: 84px;
+  width: 94px;
+  height: 94px;
   padding: 6px;
   box-sizing: border-box;
   border-radius: var(--radius-sm);
@@ -747,3 +748,22 @@
   color: var(--gold);
   text-shadow: 0 2px 0 var(--gold-dark);
 }
+/* M2's numbers: the block's title at 19px, the tiles one line tall. */
+.dc-up-title { font-size: 19px; font-weight: 700; }
+.dc-up-figures .tr-fig { padding: 4px 8px; gap: 0; }
+.dc-up-figures .tr-fig-head { font-size: 12px; }
+.dc-up-figures .tr-fig-value { font-size: 15px; }
+/* M2's order for the block: the heading, the two portraits, the tiles, and
+   the verb (or the padlock line where the verb would be) centred at the
+   bottom. `display: contents` lets the top row's children take their own
+   places in the grid without a markup change. */
+.dc-up { grid-template-columns: 1fr; }
+.dc-up-mark { display: none; }
+.dc-up-top { display: contents; }
+.dc-up-heading { order: 1; }
+.dc-up-art { order: 2; }
+.dc-up-figures { order: 3; grid-column: 1; }
+.dc-up-top > .k-action,
+.dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
+.dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
+.dc-up-sub { font-size: var(--text-helper); }
