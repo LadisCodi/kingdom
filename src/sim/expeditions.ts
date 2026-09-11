@@ -22,10 +22,10 @@
 // that opens the ruin in the first place.
 
 import {
-  ARTIFACTS, COLLECTION, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
-  depthCount, depthDef, depthsOf, roomPower,
+  ARTIFACTS, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
+  depthCount, depthDef, depthsOf, roomPower, type PackTier,
 } from './data/definitions';
-import { addArtifactFragments, grantArtifact } from './artifacts';
+import { grantPack } from './collection';
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
@@ -423,10 +423,10 @@ export const isBossRoom = (ruinId: RuinId, depth: number, room: number): boolean
  */
 export function roomReward(
   state: GameState, ruinId: RuinId, depth: number, room: number,
-): { wallet: Wallet; heroXp: number; fragments: number } {
+): { wallet: Wallet; heroXp: number; pack: PackTier } {
   const def = depthDef(ruinId, depth);
   const tier = RUINS[ruinId].tier;
-  if (def === undefined) return { wallet: {}, heroXp: 0, fragments: 0 };
+  if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Bronze' };
   const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
   return {
     wallet: {
@@ -438,8 +438,11 @@ export function roomReward(
         techValue(state, 'stardustYield', 2 * scale))),
     },
     heroXp: Math.round(10 * scale),
-    // Fragments are the collection's own drip, and only a boss carries them.
-    fragments: isBossRoom(ruinId, depth, room) ? tier : 0,
+    // RUINS ARE THE FREE FAUCET (Docs/features/09-relics.md §6): an ordinary
+    // room pays a Bronze pack beside the line above, a boss a Silver one. It
+    // replaced the relic Fragments this room used to drip, which had nothing
+    // left to buy.
+    pack: isBossRoom(ruinId, depth, room) ? 'Silver' : 'Bronze',
   };
 }
 
@@ -499,11 +502,12 @@ export interface RoomReport {
   /** The share of them that reached the infirmary and can be healed back. */
   wounded: Array<{ unitId: UnitId; count: number }>;
   heroXp: number;
-  fragments: number;
+  /** What tier of card pack the room paid, already in the player's lap. */
+  pack: PackTier;
   /** Set when this room was the last of its depth. */
   depthCompleted: boolean;
-  /** Set when the ruin's last room fell, and the relic came home with it. */
-  artifact: ArtifactId | null;
+  /** Set when the ruin's last room fell — its once-only lump and Star pack. */
+  bottomed: boolean;
 }
 
 /**
@@ -529,7 +533,7 @@ export function enterRoom(
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
     power: roomPower(ruinId, at.depth, at.room), log: null, supplies: {},
     losses: [], wounded: [],
-    wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
+    wallet: {}, heroXp: 0, pack: 'Bronze', depthCompleted: false, bottomed: false,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) return { ...empty, result: block };
@@ -564,7 +568,7 @@ export function enterRoom(
     } else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
   addHeroXp(state, reward.heroXp);
-  if (reward.fragments > 0) addArtifactFragments(state, RUINS[ruinId].artifact, reward.fragments);
+  grantPack(state, reward.pack, isBossRoom(ruinId, at.depth, at.room) ? 'boss' : 'room');
 
   const def = depthDef(ruinId, at.depth)!;
   const depthCompleted = at.room >= def.rooms;
@@ -576,13 +580,14 @@ export function enterRoom(
     : { depth: at.depth, cleared: at.room };
   state.deepestDepth = Math.max(state.deepestDepth, at.depth);
 
-  let artifactWon: ArtifactId | null = null;
+  let bottomed = false;
   if (ruinIsFinished(state, ruinId) && state.ruinsCleared[ruinId] !== true) {
-    // The bottom: the relic is guaranteed on the first full clear. No
-    // randomness on the thing that gates a system.
+    // THE BOTTOM NO LONGER PAYS A RELIC. Ruins pay packs, and a relic comes
+    // only from its album (Docs/features/09-relics.md §1) — so what is left
+    // here is the once-per-ruin lump, plus a Star pack for the conquest.
     state.ruinsCleared[ruinId] = true;
-    artifactWon = RUINS[ruinId].artifact;
-    grantArtifact(state, artifactWon, COLLECTION.fragmentsPerTierBase);
+    bottomed = true;
+    grantPack(state, 'Star', 'boss');
     // The recurring Gem faucet the design needs: one per ruin, once. Taking
     // a ruin to its bottom is the conquest, and it pays in the two currencies
     // the long game runs on.
@@ -604,9 +609,9 @@ export function enterRoom(
     wounded,
     wallet: reward.wallet,
     heroXp: reward.heroXp,
-    fragments: reward.fragments,
+    pack: reward.pack,
     depthCompleted,
-    artifact: artifactWon,
+    bottomed,
   };
 }
 
@@ -635,7 +640,7 @@ export interface RoomPreview {
   attack: number;
   stats: { atk: number; def: number; hp: number };
   supplies: Wallet;
-  reward: { wallet: Wallet; heroXp: number; fragments: number };
+  reward: { wallet: Wallet; heroXp: number; pack: PackTier };
   /** True when the party out-powers the room ON PAPER. A shortfall warns and
    *  never blocks — and paper is all it is: the resolver decides the fight,
    *  and it counts things a sum cannot (Docs/features/combat.md §12). */

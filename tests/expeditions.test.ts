@@ -12,7 +12,7 @@ import {
 } from '../src/sim/army';
 import { BEATS, typeMultiplier } from '../src/sim/combat';
 import { buildBoard, resolveBattle } from '../src/sim/battle';
-import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
+import { grantArtifactLevel } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import { techKnowledgeCost } from '../src/sim/research';
 import {
@@ -469,7 +469,11 @@ describe('entering a room', () => {
     const report = enterRoom(state, map, BARROW, ['Warden'],
       [{ unitId: 'Warrior', count: 400 }]);
     expect(report.result).toBe('Cleared');
-    expect(report.artifact).toBe(RUINS[BARROW].artifact);
+    // THE BOTTOM PAYS NO RELIC any more — a relic comes only from its album
+    // (Docs/features/09-relics.md §1). What it pays is the lump and a Star
+    // pack for the conquest.
+    expect(report.bottomed).toBe(true);
+    expect(report.pack).toBe('Silver');
     expect(state.ruinsCleared[BARROW]).toBe(true);
     expect(ruinIsFinished(state, BARROW)).toBe(true);
     // The recurring Gem faucet the design needs: one per ruin, once.
@@ -555,14 +559,12 @@ describe('a relic is no part of a room', () => {
 
   it('neither blocks an attempt nor arms one', () => {
     const state = readyToDelve({ Warrior: 60 });
-    grantArtifact(state, 'ForemansSigil');
-    normaliseSlots(state);
     const bare = previewRoom(state, BARROW, ['Warden'], troops);
-    attune(state, 0, 'ForemansSigil', T0);
+    grantArtifactLevel(state, 'ForemansSigil');
     expect(roomBlock(state, map, BARROW, ['Warden'], troops)).toBeNull();
-    const worn = previewRoom(state, BARROW, ['Warden'], troops);
-    expect(worn.attack).toBe(bare.attack);
-    expect(worn.stats.atk).toBe(bare.stats.atk);
+    const held = previewRoom(state, BARROW, ['Warden'], troops);
+    expect(held.attack).toBe(bare.attack);
+    expect(held.stats.atk).toBe(bare.stats.atk);
   });
 });
 

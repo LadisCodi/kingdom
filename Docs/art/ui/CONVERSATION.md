@@ -521,3 +521,125 @@ for.
 - **What to know:** a CSS `url()` to a file that did not exist when Vite
   first transformed the stylesheet is left unrewritten (`/assets/x.png`);
   restart the dev server after dropping new assets in.
+
+---
+
+## M19–M22 — the collection's four screens (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa340fa-60b0-83ed-b4d0-ed8cfa0a64c7>
+  ("Design Mobile Game UI", Codigames workspace) — the SAME conversation as
+  M5–M18, continued, driven from Claude Code through the Chrome extension.
+  Nothing re-attached: nineteen prompts in, the chrome, the plank, the nav
+  beam and the type still came back unprompted.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m19-relic-card.png`, `m20-season-pill.png`,
+  `m21-collection-sheet.png`, `m22-album-page.png` — 852×1846 (853×1844 for
+  M22), opaque, the viewer's export.
+- **Prompt:** §7.19 M19–M22 verbatim, one per message, with two substitutions
+  the composer forces: `"✕"` typed as `"X"` and `3×3` as `3x3` (the extension
+  cannot type either glyph). Neither changed the output — the knob came back
+  as a proper ✕ every time.
+- **What worked:** naming the ONE thing the image is about in caps inside the
+  prompt ("THE SUBJECT OF THE IMAGE: the season pill") got M20's two pills
+  drawn as a pair at the right size, instead of a screen where the map wins
+  and the pill is a speck. Saying `NO buttons of any kind anywhere on the
+  card except the "X" knob` was obeyed exactly, which is worth knowing: a
+  negative about the *whole* surface holds, where negatives about one element
+  usually do not.
+- **What to know:** the nav beam still reads **Relics** in M19, M20 and M22 —
+  the anchor's five tabs are that strong. Only M21, where the prompt named the
+  tab and its icon, came back with **Collection** lit gold; if a later mockup
+  needs the new tab, say it in the prompt. M22 also carries the season's
+  `9d left · 12/45` line, which belongs on the Collection sheet and not on an
+  album's page; ignore it. Each generation took about 2m 10s, and the send
+  button MOVES as the composer grows — screenshot before clicking it, or the
+  click lands on the model picker and the prompt sits there unsent.
+
+---
+
+## C1–C3 — the collection's art (§7.26)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M22 conversation above, continued; nothing
+  re-attached.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `sheets/ui-j1-collection.png` (3×3) → the five album medallions
+  and the four packs in `src/render/assets/album_*.png`, `pack_*.png`, each
+  trimmed, squared and resampled to 256px; `sheets/ui-j2-marks.png` (2×2) →
+  the atlas cells `pack`, `cards`, `vault`, `crest`;
+  **`sheets/spr-c-relics.png` REPLACED** (C3) — the five relics repainted as
+  smooth objects, sliced by `node scripts/ui-atlas.mjs sprites` at 256px.
+- **Prompt:** §7.26 C1, C2 and C3 verbatim, one per message, each ending
+  "Do not run any code to check or correct the alpha channel" — the line that
+  stops the eleven-minute self-diagnosis loop. All three came back with real
+  alpha and needed no unbaking.
+- **What worked:** mixing ROUND VIGNETTES and OBJECTS in one 3×3 sheet, by
+  saying which cells were which ("Cells 1 to 5 are ROUND painted vignettes…
+  Cells 6 to 9 are OBJECTS, not vignettes"). Nine subjects in one generation
+  instead of two sheets, and the two kinds still read as one set. Naming the
+  sixth cell as deliberately EMPTY worked too — C3 left it empty.
+- **What to know, and it cost two rebuilds:** the builder's alpha gate and its
+  grid detection are both tuned for sheets of thin symbols with air around
+  them, and neither holds for this art.
+  - A 2×2 of SOLID objects inks 0.58 of its canvas where a 4×4 of symbols inks
+    0.28 to 0.46, and the gate failed it as "opaque". `solid: true` on a sheet
+    raises that ceiling to 0.85; the decisive test — no transparent pixel
+    anywhere — is untouched.
+  - The dowsing rod lies diagonally across its cell's edge, so gutter
+    detection read 2 columns where the manifest says 3. `evenGrid` (already in
+    the UI path) now works for a world sheet too.
+  - `spriteSize` is now per-sheet. The default 128 is a MAP sprite's size and
+    the relics are never on the map: their card draws them at 170px, so 128
+    was an upscale of a downscale.
+- The 45 CARD FACES are not drawn and are a content job rather than a sheet: a
+  card is its album's medallion behind its name and its stars, which is what
+  makes a nine-card page read as one album.
+
+---
+
+## M23 — the store's Cards shelf (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M22 conversation above, continued; nothing
+  re-attached, twenty-three prompts in.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `mockups/m23-store-cards.png`, 852×1846, opaque.
+- **Prompt:** §7.19 M23, with every quotation mark and star glyph stripped —
+  see below.
+- **What worked:** asking for the shelf ABOVE the one that already exists
+  ("Below that, a tiny caps label KEYS and the top edge of the next row card,
+  cut off by the bottom of the sheet") got the new section drawn in the keys'
+  own row shape without describing that shape again. It came back with the
+  odds line, the gold slab on the better pack and the fine print all in
+  place, and the implementation follows it 1:1.
+- **What to know:** the first send arrived as `--`. A prompt this long with
+  `"` quotes and `★` glyphs in it loses almost everything on the way into the
+  composer; retyped with the quotes dropped and the stars spelled out ("2 star
+  40 percent") it went through whole. **Check the composer's screenshot before
+  sending, and if it shows a stub, `ctrl+a` `Delete` and retype plainly.**
+
+---
+
+## M24 — the wildcard, aimed and armed (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M23 conversation above, continued.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `mockups/m24-wildcard.png`, 852×1846, opaque.
+- **Prompt:** §7.19 M24, typed plainly — no quotation marks, stars spelled out
+  ("3 star wildcard"). The first send of M23 taught that; this one went
+  through on the retype and not on the first attempt either, so **assume the
+  composer will eat a long prompt and screenshot it before sending**.
+- **What worked:** asking for the two surfaces of ONE mechanic on one screen —
+  the aimed offer that sells it, and the album page with it armed — got both
+  halves consistent with each other in one generation, which two prompts would
+  not have guaranteed. Naming the three lit slots and the two that stay plain
+  ("outlined in bright gold with a soft glow and a small gold plus mark in the
+  middle of each, while two other missing cards stay plain grey and dashed")
+  is what made the mode legible in the picture, and the implementation copies
+  it exactly.
+- **What to know:** it invented card names for First Furrow (Ploughed Field,
+  Seed Basket, Old Windmill…) rather than using the album's own. Harmless in a
+  mockup — the names are authored in `sim/data/seasons.ts` — but do not read
+  content out of a mockup.

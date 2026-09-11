@@ -8,6 +8,17 @@
 //     raises (builderSheet.ts). Here it is the surface the player is SENT to
 //     rather than the one they stumble into, and the two answer different
 //     questions, which is why both exist.
+//   * Cards — an AIMED wildcard offer for each album the player has nearly
+//     finished, then the collection's two paid tiers, Gem-priced, WITH THEIR
+//     ODDS
+//     PRINTED ON THE SHELF. §6 of the relics design says "at published odds",
+//     and a store is the one place that promise has to be kept where the
+//     money is. Bronze and Silver are not here: selling what a ruin already
+//     drips would undercut the only free source the collection has, and the
+//     fine print under the shelf says so in the player's words. Under it,
+//     the three CARD BUNDLES — star packs and wildcards for dollars rather
+//     than for Gems, withdrawn in the last hours of a season because the
+//     close wipes both (09-relics.md §6.1).
 //   * Gems — the real-money SKUs, last: six packs on a 3×2 grid of upright
 //     cards (count, art, price). A tap opens the confirmation sheet, which is
 //     where the price meets the monthly budget; nothing is granted from here.
@@ -68,6 +79,88 @@ export function renderStoreSheet(game: Game): HTMLElement {
     }));
   });
 
+  // ---- the AIMED offers, above the shelf they sit on. An offer ANSWERS A
+  // SHORTAGE (14-monetization.md §6), so it only exists while an album is
+  // nearly finished — and it names the album, the gap and the wildcard that
+  // fills any of it, which is the whole of §9's promise.
+  const offers = game.wildcardOffers().map((offer) => {
+    const url = spriteUrl(offer.sprite);
+    const art = url
+      ? spriteImgAt(url, 'store-offer-medal')
+      : el('span', { class: 'store-offer-medal is-fallback' }, iconEl('cards', { size: 'lg' }));
+    return el('div', { class: 'store-offer' },
+      el('span', { class: 'store-offer-ribbon' }, 'For you'),
+      el('span', { class: 'store-offer-ring' }, art),
+      el('div', { class: 'k-body' },
+        el('div', { class: 'k-name' }, offer.name),
+        el('div', { class: 'k-desc' }, offer.short === 1
+          ? 'One card short'
+          : `${offer.short} cards short`),
+        el('div', { class: 'store-odds' }, `A ${offer.rarity}★ wildcard fills any of them`)),
+      btn({
+        label: 'Buy',
+        kind: 'gem',
+        onClick: () => game.doBuyWildcard(offer.rarity, offer.album),
+        cost: { Gems: offer.cost },
+        have: (c) => game.walletValue(c),
+      }));
+  });
+
+  // ---- card packs: one row per tier the store sells, laid out like the
+  // keys below them, because a key and a pack are the same kind of purchase —
+  // a Gem-priced draw at a collection — and should read against each other.
+  const cardPacks = game.packOffers().map((offer) => {
+    const url = spriteUrl(offer.sprite);
+    const art = url
+      ? spriteImgAt(url, 'store-pack-row-art')
+      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
+    return card({
+      art,
+      name: offer.tier === 'Star' ? 'A star pack' : 'A gold pack',
+      desc: offer.promise,
+    },
+      // The odds go INSIDE the card, under the line that sells it: a player
+      // reading "a chance of a gold edition" is owed the number next to it.
+      el('div', { class: 'store-odds' }, offer.odds),
+      btn({
+        label: 'Buy',
+        // The Star pack is the gold slab, the way the golden call is: it is
+        // the better draw and the shelf should say so before the price does.
+        kind: offer.tier === 'Star' ? 'primary' : 'secondary',
+        onClick: () => game.doBuyPack(offer.tier),
+        cost: { Gems: offer.cost },
+        have: (c) => game.walletValue(c),
+      }));
+  });
+
+  // ---- card bundles: the ROW the Cards shelf already uses, not the upright
+  // tile the Gem packs use. A bundle's argument is what lands, and what lands
+  // is two lines of prose — three of those across a phone sheet would be a
+  // column of broken words. So it reads against the Gem-priced packs above it,
+  // which is the comparison the shelf exists to offer, and the `$` on the
+  // button is what says the till changed.
+  const bundles = game.cardBundleOffers().map((bundle) => {
+    const url = spriteUrl(bundle.sprite);
+    const art = url
+      ? spriteImgAt(url, 'store-pack-row-art')
+      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
+    return card({
+      art,
+      name: bundle.name,
+      // Priced against the shelf it sits on: every part of a bundle has a Gem
+      // price two rows up, so the sum is a claim the player can check.
+      desc: `${bundle.gemValue.toLocaleString('en-US')} gems' worth, at the prices above`,
+    },
+      el('div', { class: 'store-bundle-lines' },
+        ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },
+          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
+      btn({
+        label: formatUsd(bundle.priceCents),
+        kind: 'primary',
+        onClick: () => game.openIap(bundle.id),
+      }));
+  });
+
   // ---- gem packs: upright cards, count over art over price
   // GEM_PACK_ORDER, not every SKU: the Royal chest is a Store row because the
   // budget has to see it, but it is sold on the daily chest where the ladder
@@ -100,6 +193,20 @@ export function renderStoreSheet(game: Game): HTMLElement {
   const body = el('div', { class: 'store' },
     el('div', { class: 'store-section' }, el('span', {}, 'Heroes')),
     bannerPanel(game),
+    el('div', { class: 'store-section' },
+      el('span', {}, 'Cards'),
+      el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
+        String(game.walletValue('Gems')))),
+    ...offers,
+    ...cardPacks,
+    el('div', { class: 'store-note' }, 'Bronze and silver packs come from the ruins.'),
+    // The bundles keep their own heading under Cards: same shelf, other till.
+    // A player scanning for cards finds every way to get one in one place,
+    // and the `$` on the button is what says the rail changed.
+    ...(bundles.length === 0 ? [] : [
+      el('div', { class: 'store-section' }, el('span', {}, 'Card bundles')),
+      ...bundles,
+    ]),
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),

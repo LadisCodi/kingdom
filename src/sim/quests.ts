@@ -4,6 +4,7 @@
 // activate, never dead-ending. RELATIVE goals count recordQuestEvent()
 // calls while active (they hook the sim paths, so offline replay counts).
 
+import { ownedArtifacts } from './artifacts';
 import {
   QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
@@ -86,7 +87,9 @@ export function questValue(state: GameState, quest: QuestDef): number {
     case 'ClearGarrisons':
       return clearedGateCount(state);
     case 'OwnArtifacts':
-      return state.artifacts.owned.length;
+      // A relic arrives by finishing its album, so this counts albums
+      // finished for the first time (Docs/open-questions.md OQ-91).
+      return ownedArtifacts(state).length;
     case 'OwnHeroes':
       return state.heroes.owned.length;
     default:

@@ -334,24 +334,49 @@
 }
 .store-banner.is-advanced .store-banner-calls > .k-btn:not(:disabled) { background: var(--gold); }
 
-/* ---- the heroes' roster and the reliquary (M6, M7): parchment tiles ---- */
-.hero-tile,
-.rel-tile:not(.is-locked),
-.rel-purse {
+/* ---- the heroes' roster (M6): parchment tiles ---- */
+.hero-tile {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
 .hero-purse,
 .hero-tile-foot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.rel-tile.is-locked {
+
+/* ---- the collection (M19, M21, M22): parchment, and wood for the ring ---- */
+.col-relic-frame,
+.col-chip,
+.col-prize,
+.col-card:not(.is-missing),
+.col-relic-album,
+.col-effects,
+.sea-pill {
   background:
-    linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
-/* The sockets are rings of wood; the lit one is gold. */
-.rel-socket { border-image: none; }
-.rel-slot.is-buy .rel-socket { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
+/* A card's rarity is a WASH over the parchment rather than a flat fill, so
+   the ladder reads without the grid turning into nine coloured rectangles. */
+.col-card:not(.is-missing) {
+  background:
+    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.col-card.r1 { --wash: rgba(79, 163, 199, 0.22); }
+.col-card.r2 { --wash: rgba(111, 191, 74, 0.22); }
+.col-card.r3 { --wash: rgba(95, 143, 168, 0.3); }
+.col-card.r4 { --wash: rgba(138, 107, 196, 0.28); }
+.col-card.r5 { --wash: rgba(217, 154, 43, 0.34); }
+.col-card.is-missing {
+  background:
+    linear-gradient(rgba(120, 100, 70, 0.4), rgba(120, 100, 70, 0.4)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+/* The medallion ring and the vault knob are carved WOOD, like the nav's
+   plates — the album art inside the ring is the only picture. */
+.col-ring { border-image: none; }
+.col-vault { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.col-plaque { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
 
 /* ---- the daily chest (M8): parchment cells, wood and gold slabs ---- */
 .dly-clock,
@@ -468,7 +493,7 @@
     linear-gradient(var(--wash, transparent), var(--wash, transparent)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
-.rel-stage {
+.col-stage {
   background:
     radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;

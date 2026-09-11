@@ -172,7 +172,7 @@ The outer scope feeds the inner one.
 
 | The world map pays | Which lands in |
 |---|---|
-| **Star card packs** — a gold card guaranteed ([`09-relics.md`](09-relics.md) §6) | the collection's last albums, whose relic levels improve the province economy |
+| **Star card packs** — a gold card guaranteed ([`09-relics.md`](09-relics.md) §6) | the collection's last two albums — the Ledger's and the Compass's — whose relic levels improve the province economy |
 | **Knowledge cap** — contested landmarks raise it | research, per [`07-research.md`](07-research.md) §7 |
 | Resources the province cannot produce | province sinks |
 

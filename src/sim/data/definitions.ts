@@ -15,6 +15,7 @@ import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
+import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
@@ -1143,16 +1144,52 @@ export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
  *  these are the numbers that decide it — see src/sim/mana.ts. */
 export const MANA = balance.mana;
 
-/** Attunement slots: one at start, one from research, the rest with Gems. */
-export const ATTUNEMENT = balance.attunement;
+/**
+ * The four pack tiers (Docs/features/09-relics.md §6). A tier says how many
+ * cards a pack holds and which rarities it can hold, at PUBLISHED odds — the
+ * whole faucet, in four rows.
+ */
+export type PackTier = 'Bronze' | 'Silver' | 'Gold' | 'Star';
+
+export const PACK_ORDER: readonly PackTier[] = ['Bronze', 'Silver', 'Gold', 'Star'];
+
+export interface PackDef {
+  cards: number;
+  /** Weights per rarity, 1★ first. Weights rather than percentages so a tier
+   *  can be retuned without rebalancing the row to 100. */
+  weights: number[];
+  /** The chance a 4★ or 5★ arrives as its gold edition. */
+  goldChance: number;
+  /** The Star pack's promise: its last card is gold, always. */
+  goldGuaranteed: boolean;
+  /** What the store charges for one, or **0 for a tier the store does not
+   *  sell** — which is how Bronze and Silver stay the ruins' faucet. */
+  gemCost: number;
+}
+
+export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
+  PACK_ORDER.map((id) => {
+    const b = (balance.packs as Record<string, {
+      cards: number; weights: number[]; goldChance: number;
+      goldGuaranteed: number; gemCost: number;
+    }>)[id];
+    return [id, {
+      cards: b.cards,
+      weights: b.weights,
+      goldChance: b.goldChance,
+      goldGuaranteed: b.goldGuaranteed === 1,
+      gemCost: b.gemCost,
+    }];
+  }),
+) as Record<PackTier, PackDef>;
 
 /**
- * The COLLECTION substrate — one set of rules shared by artifacts and heroes.
+ * The HERO collection substrate: Fragments raise a tier cap and Hero XP buys
+ * levels within it.
  *
- * Built as two systems they would teach the player the same lesson twice and
- * neither would feel special. So: Fragments raise a TIER cap, Knowledge buys
- * LEVELS within it, and a hero and a relic are two kinds of thing rather than
- * two systems with two vocabularies.
+ * It used to be shared with the relics, and is not any more: a relic is
+ * levelled by finishing its album and by nothing else, so it has no tier, no
+ * Fragments and no level cap (Docs/features/09-relics.md §13).
  */
 export const COLLECTION = balance.collection;
 
@@ -1186,24 +1223,29 @@ export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
 }));
 
 /**
- * An artifact: a PASSIVE while attuned to the kingdom, and usually one ACTIVE
- * cast on the map. Hand-authored, one legible effect each, no random rolls —
+ * A relic: ONE permanent kingdom passive, always on, whose number rises with
+ * its level and has no ceiling (Docs/features/09-relics.md §1-§2).
+ *
+ * Every effect is a speed or a yield, never a discount, because a discount
+ * dies at 100%. Hand-authored, one legible effect each, no random rolls —
  * which is what keeps a collection system cozy rather than a spreadsheet.
  *
- * Attuning is FREE. Relics used to draw an hourly Mana upkeep, which was
- * removed once Mana became the energy every tap is paid from — the two jobs
- * fought, and a player wearing the set had no pool left to play with.
+ * A relic has no battlefield stats and nothing carries one anywhere: the only
+ * question a relic asks is which album the player finishes.
  *
- * A relic has no battlefield stats: nothing carries one into a fight, so the
- * only question a relic asks is which passive the kingdom wears
- * (Docs/features/09-relics.md §5).
+ * `active` is the ONE piece of the old model still standing. The four
+ * abilities are designed to become Magic-tome SPELLS
+ * (Docs/features/07-research.md §6) and that is not built, so they stay on the
+ * relic that discovers them, gated on owning it rather than on a socket —
+ * deleting them would remove working content in exchange for a doc that
+ * already says where they are going.
  */
 export interface ArtifactDef {
   id: ArtifactId;
   name: string;
   glyph: string;
   sprite: string;
-  /** One line, player-facing, about what wearing it does. */
+  /** One line, player-facing, about what having it does. */
   passiveText: string;
   passive: {
     stat: ModifierStat;
@@ -1213,19 +1255,8 @@ export interface ArtifactDef {
     base: number;
     perLevel: number;
   };
-  /** Mana per hour drawn while attuned. */
-  /**
-   * What the relic is worth when a hero carries it DOWN rather than the
-   * kingdom wearing it — the other half of attune-OR-arm.
-   *
-   * Attuning draws Mana every hour; carrying draws none. That asymmetry is
-   * deliberate and does the real work: the trade is never "which is cheaper"
-   * but "which do I need right now" — a standing economic benefit against a
-   * burst of delve power.
-   */
+  /** A spell in waiting (see the type docblock); null = it never had one. */
   active: ArtifactActive | null;
-  /** The ruin whose full clear grants it. */
-  source: RuinId;
 }
 
 export type ArtifactActiveId = 'Divination' | 'Bloom' | 'Haste' | 'Beckon';
@@ -1253,9 +1284,9 @@ const ab = (id: ArtifactId): ArtifactBalance =>
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
     id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
-    passiveText: 'Fog costs less to clear',
+    passiveText: 'Forests, crops and stone recover faster',
     passive: {
-      stat: 'revealCost', scope: null, op: 'mul',
+      stat: 'cellRecovery', scope: null, op: 'mul',
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     active: {
@@ -1266,13 +1297,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       // relic turns the fog from a chore into a real question: Gold, or Mana?
       text: 'Pays a frontier cell\u2019s entire remaining reveal cost, at any distance',
     },
-    source: 'HollowBarrow',
   },
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
-    passiveText: 'Resource cells recover faster',
+    passiveText: 'Berries, game and shoals come back sooner',
     passive: {
-      stat: 'cellRecovery', scope: null, op: 'mul',
+      stat: 'cellRespawn', scope: null, op: 'mul',
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
     active: {
@@ -1281,7 +1311,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('VerdantSeal').activeRadius,
       text: 'Clears exhaustion from every resource cell nearby',
     },
-    source: 'SunkenChapel',
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
@@ -1298,7 +1327,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       // game played in visits needs a good departure move too.
       text: 'Workers carry double for an hour \u2014 cast it on your way out',
     },
-    source: 'DrownedIronworks',
   },
   GildedLedger: {
     id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
@@ -1307,17 +1335,15 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'taxRate', scope: null, op: 'mul',
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    // No active at all, deliberately: the clearest proof that the SLOT rather
-    // than the ability is the constraint.
+    // No active at all, and never had one.
     active: null,
-    source: 'CountingHouse',
   },
   WanderersCompass: {
     id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
     sprite: 'artifact_wanderers_compass',
-    passiveText: 'Delves teach you more',
+    passiveText: 'Rooms pay more Stardust',
     passive: {
-      stat: 'knowledgeYield', scope: null, op: 'mul',
+      stat: 'stardustYield', scope: null, op: 'mul',
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
     active: {
@@ -1325,7 +1351,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
       text: 'Calls a depleted resource back onto a cell you choose',
     },
-    source: 'StarObservatory',
   },
 };
 
@@ -1864,9 +1889,30 @@ export interface StoreSkuDef {
   /** Dollars, as displayed and as deducted from the monthly budget. */
   priceUsd: number;
   gems: number;
+  /** The hand of cards this SKU hands over, or **null for a SKU that is not a
+   *  bundle** — every Gem pack and the Royal chest. */
+  bundle: CardBundleDef | null;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
+}
+
+/**
+ * A CARD BUNDLE (Docs/features/09-relics.md §6.1): the collection's packs and
+ * wildcards for money rather than for Gems.
+ *
+ * It is a `Store` row rather than a Gem price because the BUDGET is the
+ * instrument — the purchase log, the refusal and the monthly allowance all
+ * have to see it — and it grants no Gems, on the Royal chest's precedent: a
+ * bundle hands over the things, not the currency that buys them.
+ */
+export interface CardBundleDef {
+  packs: number;
+  tier: PackTier;
+  wildcards: number;
+  /** The rarity the wildcards cover. Never gold: there is no gold wildcard at
+   *  any price, and money does not buy one either (§9). */
+  wildcardRarity: Rarity;
 }
 
 const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
@@ -1877,6 +1923,11 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
+  // The three bundles, a satchel to a cabinet: the same containment ladder the
+  // Gem packs walk, in a collector's furniture rather than a treasury's.
+  CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
+  CardsCase: { name: "A collector's case", description: 'Star packs and the wildcard that fills any slot.', sprite: 'bundle_case' },
+  CardsCabinet: { name: "A collector's cabinet", description: 'A season of star packs, and three wildcards to aim.', sprite: 'bundle_cabinet' },
 };
 
 /** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
@@ -1885,13 +1936,33 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
 export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
   .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
 
+interface StoreRow {
+  priceUsd: number; gems: number;
+  packs: number; packTier: string; wildcards: number; wildcardRarity: number;
+}
+
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
-    const b = (balance.store as Record<string, { priceUsd: number; gems: number }>)[id];
+    const b = (balance.store as Record<string, StoreRow>)[id];
     if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems }];
+    // A row is a bundle when it names a hand. The importer already refuses
+    // half a hand, so one column deciding it is enough.
+    const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0
+      ? {
+          packs: b.packs,
+          tier: (b.packTier || 'Star') as PackTier,
+          wildcards: b.wildcards,
+          wildcardRarity: (b.wildcardRarity || 1) as Rarity,
+        }
+      : null;
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle }];
   }),
 ) as Record<StoreSkuId, StoreSkuDef>;
+
+/** The card bundles, cheapest first — the store's own bundle shelf
+ *  (Docs/features/09-relics.md §6.1). Workbook row order, like every shelf. */
+export const CARD_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => STORE[id]?.bundle !== null);
 
 /** Workbook row order — the order the store shows them in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
@@ -1970,4 +2041,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 43;
+export const SAVE_VERSION = 44;

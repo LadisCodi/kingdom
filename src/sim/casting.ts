@@ -1,4 +1,7 @@
-// The four artifact ACTIVES (Docs/features/08-magic.md §2).
+// The four relic ACTIVES — spells in waiting (Docs/features/07-research.md §6).
+//
+// They are gated on OWNING the relic: attunement is gone, so there is no
+// socket to require and no swap to time.
 //
 // Cast mode reuses PLACEMENT mode wholesale: select → valid cells highlight →
 // tap to commit is exactly what placementInfo(), markers() and the priority-300
@@ -19,24 +22,28 @@ import { addModifier, resolve } from './modifiers';
 import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
-import { isAttuned, ownsArtifact } from './artifacts';
+import { ownsArtifact } from './artifacts';
 import { techValue } from './techEffects';
 
 export type CastBlock =
-  | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget' | 'NotAttuned';
+  | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget';
 
 export type CastResult = 'Cast' | CastBlock;
 
-/** Whether the relic can be cast at all, ignoring the target.
+/**
+ * Whether the relic can be cast at all, ignoring the target.
  *
- *  Casting requires the relic to be ATTUNED. That is the whole point of the
- *  slot: an ability you can reach without committing a socket to its passive
- *  would make the loadout limit free. */
+ * HAVING IT IS THE WHOLE GATE. There is no socket to commit and no swap to
+ * time: every relic the player has is on, so an ability is reachable the
+ * moment its relic arrives. These four are spells in waiting
+ * (Docs/features/07-research.md §6) and the gate they are designed to have is
+ * the technology that discovers them; until that exists the relic is the
+ * thing that knows the spell.
+ */
 export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const active = ARTIFACTS[id].active;
   if (active === null) return 'NoActive';
-  if (!isAttuned(state, id)) return 'NotAttuned';
   if (mana(state) < castCost(state, id)) return 'NotEnoughMana';
   return null;
 }

@@ -7,8 +7,9 @@
 > [`10-heroes.md`](10-heroes.md) §6.2.
 >
 > **Status: three ad placements, the builder offer, the Royal chest and the
-> store's first cut are built** — the payer profile and its monthly budget (§3), and four
-> surfaces: builders for Gems, keys for Gems, Gem packs for simulated dollars,
+> store's first cut are built** — the payer profile and its monthly budget (§3), and five
+> surfaces: builders for Gems, keys for Gems, cards for Gems, the three **card
+> bundles** for simulated dollars (§2.3), Gem packs for simulated dollars,
 > and the two hero banners (§2.1). The remaining SKUs, the other four
 > placements and the telemetry pipeline (§4) are designed, not built.
 
@@ -61,7 +62,7 @@
 - Faucet: **3,750 up front, ~4,500/month from the chest, and what the
   collection pays** — 500 to start, 750 across the quest chain, 500 a first
   delve clear, **3,000 a daily-chest season** (20 days, so ~4,500 a month —
-  [`12-quests.md`](12-quests.md) §3.2), and **1,000 an album with 25,000 for
+  [`12-quests.md`](12-quests.md) §3.2), and **2,000 an album with 25,000 for
   the whole collection** ([`09-relics.md`](09-relics.md) §5): 35,000 a season
   to a player who completes it, of the order of a Royal chest, and most of it
   behind the gold cards a free player rarely finishes. The chest is the floor
@@ -70,13 +71,14 @@
 
 ## 2. The catalogue
 
-- Fifteen SKUs in five families.
+- Eighteen SKUs in five families.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in the workbook's `Store` sheet. The
   builders and the two keys are built and priced in Gems — a Gem price is not
   a `Store` row. **A `Store` row is real money**; most of them grant Gems, and
-  the ones that do not (the Royal chest, the banner set) grant a lot for a
-  season or once and never a currency drip. Everything else is designed, not built.
+  the ones that do not (the Royal chest, the three card bundles, the banner
+  set) grant a lot for a season or once and never a currency drip. Everything
+  else is designed, not built.
 
 | SKU | Family | Price | Grants |
 |---|---|---|---|
@@ -91,8 +93,9 @@
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
-| **Card pack** | chance | Gems, in offers | a Gold or Star pack of the running season, at published odds ([`09-relics.md`](09-relics.md) §6) — designed |
-| **Wildcard offer** | chance | Gems | a wildcard aimed at an album the player has nearly finished; never gold ([`09-relics.md`](09-relics.md) §9) — designed |
+| **Card packs** | chance | Gems (500 / 1,500) | a Gold or Star pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. Bronze and Silver are not sold: they are the ruins' faucet |
+| **Card bundles** | chance | **$4.99 / $9.99 / $19.99** | 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards — every pack with a gold edition guaranteed ([`09-relics.md`](09-relics.md) §6.1) — built |
+| **Wildcard** | chance | Gems (100 → 1,500 by rarity) | one card of its rarity or lower, in the slot the player chooses; **never gold** ([`09-relics.md`](09-relics.md) §9) — built, sold as an **aimed offer** on the same shelf |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
 - The second builder is sold in two places: the offer raised by a refused
@@ -103,11 +106,13 @@
 
 - One sheet, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
-- Four sections, in this order:
+- Six sections, in this order:
 
 | Section | Content | Paid with |
 |---|---|---|
 | **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §8). Here until the Tavern is built | a key |
+| **Cards** | an **aimed wildcard offer** for each album the player has nearly finished ([`09-relics.md`](09-relics.md) §9), then the Gold and Star packs **with their odds printed on the row** (§6), then one line of fine print saying Bronze and Silver come from the ruins | Gems |
+| **Card bundles** | the three bundles of §2.3, under the Cards shelf they answer. The only rows on that shelf with a **dollar** price, and the only green slabs among its wood ones | the monthly budget |
 | **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
 | **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
@@ -134,6 +139,35 @@
   key: **400 against 500** — one $0.99 pack buys either, with change on the
   refill. The refill then climbs (`08-magic.md` §6) and the key does not, so
   the second one of the day is already the dearer of the two.
+
+### 2.3 The card bundles
+
+- Three bundles of the collection's two Gem purchases — a **star pack** and a
+  **wildcard** — sold together for money ([`09-relics.md`](09-relics.md)
+  §6.1): **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 packs and 1 / 1 / 3
+  wildcards.
+- **Every pack in one is a star pack**, so every one of them guarantees a gold
+  edition. That is what a bundle is for: the gold cards are what the last two
+  albums turn on, and they are the slowest thing in the collection to earn.
+- **They grant no Gems**, on the Royal chest's precedent. A bundle hands over
+  the things, not the currency that buys them, and the packs land unopened —
+  the Collection is where a pack is turned over, never the till.
+- **Priced at 1.5× to 2× the Gem ladder**, rising with the rung, against the
+  flat 500 Gems to the dollar (§2.2). Well under the Royal chest's ten times:
+  the season product stays the season product, and the bundles stay
+  measurable against a Gem pack of the same price.
+- The row prints **what lands, line by line**, and the confirmation prints the
+  same list above the price. A bundle's argument is the hand; it is not
+  promised on one screen and left off the other.
+- **They come off the shelf in the last 24 hours of a collection season**,
+  because the close wipes packs and wildcards both
+  ([`09-relics.md`](09-relics.md) §3). No row and no greyed-out price — a
+  product withdrawn is not an offer. This is the only SKU in the store whose
+  availability is a clock, and it is a read of the season rather than a timer:
+  nothing is scheduled, and the next season opens the shelf on its own.
+- **The line of §1 holds against money exactly as it holds against Gems**: a
+  bundle sells no gold wildcard, and the star packs it holds are the same
+  packs the vault, the milestones and the pass already pay.
 
 ## 3. The simulated budget
 
@@ -303,10 +337,14 @@ One page, refreshed weekly:
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
-| Card pack offer · wildcard offer | priced to the ladder — a Gold pack about a silver key, a wildcard about a gold one | `Packs` sheet, `collection.wildcard_gem_cost` |
-| The collection's Gems | 1,000 an album · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
+| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `Packs` sheet, `gem_cost` |
+| Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
+| How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
+| The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
+| Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
+| How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundle_withdraw_hours` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
 | Ad eligibility | below half a pool | `ads.eligible_below_fraction` |
 | Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `Store` sheet |
@@ -323,7 +361,10 @@ One page, refreshed weekly:
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.
 - Loot boxes beyond the hero banner and the collection's card packs, both at
-  published odds.
+  published odds. A **card bundle is not a loot box**: it says exactly what is
+  in it, and the randomness inside it is the pack's own published odds.
+- **A bundle that sells a gold wildcard**, or one sold in the hours before a
+  season wipes what it holds.
 - An ad that gates rather than accelerates.
 - A cosmetic pipeline before the probe reports.
 

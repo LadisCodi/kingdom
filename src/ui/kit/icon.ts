@@ -51,7 +51,13 @@ export type UiIconName =
   | 'relics' | 'dungeon' | 'chest' | 'daily'
   // The mark the battle screen paints over a squad that is gone. It is the
   // one icon that is drawn ON something rather than beside it.
-  | 'skull';
+  | 'skull'
+  // THE CARD COLLECTION (Docs/features/09-relics.md §11). `pack` is the thing
+  // a ruin pays and the reveal opens; `cards` is the nav tab, which replaced
+  // the Reliquary's `relics` chest; `vault` is the safe in the corner of the
+  // Collection, where duplicates go; `crest` is the season's wax seal, which
+  // the pill wears and the header plank repeats.
+  | 'pack' | 'cards' | 'vault' | 'crest';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -90,6 +96,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   ascension: '★', fragment: '🧩',
   // destinations that are not nav tabs
   relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅', skull: '💀',
+  pack: '🎴', cards: '🃏', vault: '🔐', crest: '🌾',
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️',
 };

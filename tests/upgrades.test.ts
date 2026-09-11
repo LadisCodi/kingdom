@@ -6,7 +6,7 @@ import {
   ARMY, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
   TECH_ORDER, WORKER, levelIndexed,
 } from '../src/sim/data/definitions';
-import { grantArtifact } from '../src/sim/artifacts';
+import { grantArtifactLevel } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
 import { effectiveDiscoverRadius, revealCostForCell, revealTapCost } from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
@@ -272,7 +272,7 @@ describe('every ladder reaches the number it claims to', () => {
 
   it('Resonance buys down what a relic costs to cast', () => {
     const state = freshGame();
-    grantArtifact(state, 'VerdantSeal');
+    grantArtifactLevel(state, 'VerdantSeal');
     const full = castCost(state, 'VerdantSeal');
     expect(full).toBeGreaterThan(0);
     completeRanks(state, 'Resonance', 2); // −40%

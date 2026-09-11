@@ -27,7 +27,7 @@ import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
 } from '../sim/heroes';
-import { tierCost, xpLevelCost } from '../sim/collection';
+import { tierCost, xpLevelCost } from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
