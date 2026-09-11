@@ -139,7 +139,16 @@
 /* A hidden tile must not burn its animation before it is shown. */
 .gr-tile.is-hidden { animation: none; }
 
-.gr-calls { color: var(--locked); font-size: var(--text-helper); }
+/* The caption is a parchment slab under the grid (M15). */
+.gr-calls {
+  padding: 6px 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
 
 /* The way out, and it appears only when there is nothing left to deal. */
 .gr-prompt {
@@ -187,12 +196,16 @@
   filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.45));
 }
 .gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: 96px; }
-.gr-curtain-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
-.gr-curtain-title { color: var(--locked); font-size: var(--text-helper); }
+.gr-curtain-name { font-family: var(--font-body); font-weight: 700; font-size: 28px; line-height: 1.1; }
+.gr-curtain-title { color: var(--parchment-shade); font-size: var(--text-body); }
+.gr-curtain-kicker { font-weight: 700; }
 .gr-curtain-rarity {
-  padding: 2px 12px;
+  padding: 2px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(24, 15, 8, 0.6);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  font-weight: 700;
   font-size: var(--text-helper);
   letter-spacing: 0.06em;
 }

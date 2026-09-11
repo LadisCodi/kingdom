@@ -474,7 +474,10 @@ for.
   materials without restating them — the chrome, the plank, the nav beam and
   the type held across ten generations. Two sheets stacked on one screen (M9,
   M14) is a cheap way to get two small dialogs from one image.
-- **What to know:** typing a prompt with a blank line SENDS the first half —
+- **What to know:** M14 came back 1024×1536 in a serif face with a different
+  nav — ten generations in, the anchor had faded. Its LAYOUT is what the
+  payer and purchase sheets follow; their materials and type follow M5–M13.
+  Re-attach M0 (or M5) every six or seven prompts. Typing a prompt with a blank line SENDS the first half —
   the composer treats Enter as send. Keep a prompt to one paragraph. The
   viewer's download button is still "Guardar"; find it by name. A hung game
   tab (a hand-edited save) drops the extension's tab group: close the tab,
