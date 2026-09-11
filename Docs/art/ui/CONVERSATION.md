@@ -555,3 +555,43 @@ for.
   album's page; ignore it. Each generation took about 2m 10s, and the send
   button MOVES as the composer grows — screenshot before clicking it, or the
   click lands on the model picker and the prompt sits there unsent.
+
+---
+
+## C1–C3 — the collection's art (§7.26)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M22 conversation above, continued; nothing
+  re-attached.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `sheets/ui-j1-collection.png` (3×3) → the five album medallions
+  and the four packs in `src/render/assets/album_*.png`, `pack_*.png`, each
+  trimmed, squared and resampled to 256px; `sheets/ui-j2-marks.png` (2×2) →
+  the atlas cells `pack`, `cards`, `vault`, `crest`;
+  **`sheets/spr-c-relics.png` REPLACED** (C3) — the five relics repainted as
+  smooth objects, sliced by `node scripts/ui-atlas.mjs sprites` at 256px.
+- **Prompt:** §7.26 C1, C2 and C3 verbatim, one per message, each ending
+  "Do not run any code to check or correct the alpha channel" — the line that
+  stops the eleven-minute self-diagnosis loop. All three came back with real
+  alpha and needed no unbaking.
+- **What worked:** mixing ROUND VIGNETTES and OBJECTS in one 3×3 sheet, by
+  saying which cells were which ("Cells 1 to 5 are ROUND painted vignettes…
+  Cells 6 to 9 are OBJECTS, not vignettes"). Nine subjects in one generation
+  instead of two sheets, and the two kinds still read as one set. Naming the
+  sixth cell as deliberately EMPTY worked too — C3 left it empty.
+- **What to know, and it cost two rebuilds:** the builder's alpha gate and its
+  grid detection are both tuned for sheets of thin symbols with air around
+  them, and neither holds for this art.
+  - A 2×2 of SOLID objects inks 0.58 of its canvas where a 4×4 of symbols inks
+    0.28 to 0.46, and the gate failed it as "opaque". `solid: true` on a sheet
+    raises that ceiling to 0.85; the decisive test — no transparent pixel
+    anywhere — is untouched.
+  - The dowsing rod lies diagonally across its cell's edge, so gutter
+    detection read 2 columns where the manifest says 3. `evenGrid` (already in
+    the UI path) now works for a world sheet too.
+  - `spriteSize` is now per-sheet. The default 128 is a MAP sprite's size and
+    the relics are never on the map: their card draws them at 170px, so 128
+    was an upscale of a downscale.
+- The 45 CARD FACES are not drawn and are a content job rather than a sheet: a
+  card is its album's medallion behind its name and its stars, which is what
+  makes a nine-card page read as one album.

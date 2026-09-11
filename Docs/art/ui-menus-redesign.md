@@ -1899,10 +1899,10 @@ The M5–M14 prompts open with "Same style, same materials and chrome as the
 mockups above" instead of the style block because they were sent into the
 conversation that already held it and M0; sent cold, paste the block first.
 
-### 7.26 The collection's pieces (C1, C2)
+### 7.26 The collection's pieces (C1, C2, C3)
 
 The four screens of [`../features/09-relics.md`](../features/09-relics.md) §11
-need two sheets. **C1 is the art the screens are built on** — the five album
+need three sheets. **C1 is the art the screens are built on** — the five album
 medallions M21 draws as round vignettes, and the four packs the reveal deals —
 and **C2 is four atlas marks**, which append to `ui-e2-marks`'s empty fourth
 row rather than redrawing the twelve that sheet already holds.
@@ -1914,6 +1914,17 @@ what makes a nine-card page read as one album.
 **C1 — the medallions and the packs**
 
 > Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). One square sprite sheet, 1024x1024, a strict 3x3 grid of equal 341px cells with a fully TRANSPARENT background, one subject centred in each cell filling about 80% of it and NOTHING crossing the lines between cells (leave a clear 40px band). Cells 1 to 5 are ROUND painted vignettes, a circular scene inside a thin carved wooden ring: 1 a ploughed field at dawn with a forked wooden dowsing rod standing in the furrow; 2 a mossy woodland with a stag, red berries and a beehive; 3 a timber scaffold with a hammer, a hard hat and a stone block; 4 a market counter with a gilded ledger book, stacked gold coins and a purse; 5 a night road under stars with a brass compass and a lantern post. Cells 6 to 9 are OBJECTS, not vignettes — four card packs seen at a slight angle, each a small sealed paper wallet of cards with a wax seal and two or three card corners fanning out of the top: 6 a plain brown one with a bronze seal; 7 a pale grey-blue one with a silver seal; 8 a warm cream one with a gold seal and one tiny sparkle; 9 a deep violet one with a gold star seal, a gold rim and three sparkles. No text, no labels, no numbers, no frame lines between cells. Do not run any code to check or correct the alpha channel.
+
+**C3 — the five relics, repainted**
+
+The relic card (M19) draws its subject at 170px on parchment, and the shipped
+sprites were 128px MAP pixel art borrowed by a UI screen. Same grid and same
+reading order as `spr-c-relics`'s manifest entry, so it replaces that sheet
+rather than adding one — and the entry gains `evenGrid` (the rod lies
+diagonally over its cell's edge) and `spriteSize: 256` (128 is a map sprite's
+size, and these are never on the map).
+
+> Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). These are the five RELICS, each drawn as a single object on its own, the way the card in the mockup above draws the dowsing rod — they sit on a parchment card at about 170px tall, never on the map. One square sprite sheet, 1024x1024, a strict 3x2 grid of six equal cells with a fully TRANSPARENT background, one object centred in each cell filling about 80% of it and NOTHING crossing the lines between cells (leave a clear 40px band), seen from slightly above at a three-quarter angle, in this exact reading order: 1 a forked wooden dowsing rod, a Y of two peeled branches with a leather-wrapped grip and a small blue crystal bound at the fork; 2 a round green wax seal on a short oak handle, a curling leaf pressed into the wax and two ivy leaves growing from the handle; 3 an iron foreman's sigil, a heavy square medallion stamped with a crossed hammer and set-square, hanging from a short leather strap; 4 a thick ledger book bound in deep red leather with gilded page edges, a gold clasp and a small gold crown on the cover; 5 a brass pocket compass, open, its lid at an angle, a star engraved on the dial; 6 leave this cell EMPTY, nothing drawn in it. No text, no labels, no numbers, no frame lines between cells. Do not run any code to check or correct the alpha channel.
 
 **C2 — the collection's marks**
 

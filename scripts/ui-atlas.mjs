@@ -369,8 +369,15 @@ function sliceWorldSheet(sheet, outDir, size) {
 
   const { rows, cols } = sheet.grid;
   const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
-  const colBands = bands(coverage(file, 'x', w), GUTTER_PX);
-  const rowBands = bands(coverage(file, 'y', h), GUTTER_PX);
+  // `evenGrid`, exactly as the UI path uses it: a sheet asked for as a strict
+  // grid of equal cells comes back that way, and a long object reaching over
+  // a cell boundary — a dowsing rod lying diagonally — is not a reason to
+  // fail a sheet whose boundaries are known.
+  const even = (n, size) => Array.from({ length: n }, (_, i) => ({
+    start: Math.round((i * size) / n), end: Math.round(((i + 1) * size) / n) - 1,
+  }));
+  const colBands = sheet.evenGrid ? even(cols, w) : bands(coverage(file, 'x', w), GUTTER_PX);
+  const rowBands = sheet.evenGrid ? even(rows, h) : bands(coverage(file, 'y', h), GUTTER_PX);
   if (colBands.length !== cols || rowBands.length !== rows) {
     fail(
       `${sheet.file}: found ${colBands.length} columns and ${rowBands.length} rows, ` +
@@ -572,7 +579,10 @@ if (mode === 'sprites') {
   if (worldSheets.length === 0) fail('no world sheets in the manifest');
   const outDir = join(ROOT, 'src/render/assets');
   const size = manifest.spriteSize ?? 128;
-  const written = worldSheets.flatMap((s) => sliceWorldSheet(s, outDir, size));
+  // A sheet may ask for its own size. The default 128 is a MAP sprite's size,
+  // and the relics are never on the map: their card draws them at 170px, so
+  // 128 would be an upscale of a downscale.
+  const written = worldSheets.flatMap((s) => sliceWorldSheet(s, outDir, s.spriteSize ?? size));
   console.log(`ui-atlas: wrote ${written.length} map sprites to src/render/assets`);
   console.log(`ui-atlas:   ${written.join(' ')}`);
   process.exit(0);

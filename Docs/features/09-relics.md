@@ -157,6 +157,13 @@ cards it holds and which rarities it can hold, at **published odds**.
 - The pace to author against is **how many of the five a player who buys
   nothing completes in 30 days**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
+- A pack is **earned where it falls and opened in the Collection**: one
+  earned during an absence waits until the player is looking at it.
+- **A guarantee ignores the rarity roll.** Gold is an edition of the late
+  rarities only, so a Star pack asking for gold at 3★ would find nothing and
+  quietly hand back a plain card; when gold is guaranteed the gold slots are
+  the whole pool. And **gold outranks every plain card**, whatever its
+  rarity, which is what puts the guarantee on the last beat of the reveal.
 - Opening a pack uses the **gacha reveal** ([`10-heroes.md`](10-heroes.md)
   §8.3): the cards turn one by one, a new card says so, a duplicate shows its
   count. Skippable, never interrupted.

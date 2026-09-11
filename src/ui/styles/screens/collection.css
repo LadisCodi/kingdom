@@ -387,7 +387,10 @@
   background: radial-gradient(circle at 50% 42%, #ffeec2, var(--parchment-shade));
 }
 .col-stage .k-knob { position: absolute; top: 6px; right: 6px; }
-.col-stage-art { width: 60%; height: 168px; object-fit: contain; }
+/* The relic objects are drawn at a three-quarter angle, so most of them lie
+   diagonally in their square: `contain` at 60% left a band of air around
+   them. */
+.col-stage-art { width: 76%; height: 176px; object-fit: contain; }
 .col-stage-art.is-glyph { display: grid; place-items: center; font-size: 90px; }
 
 /* The plaque rides the stage's bottom edge — the level is a fact about the

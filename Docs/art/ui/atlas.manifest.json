@@ -208,7 +208,10 @@
     "artifact_wanderers_compass",
     null
    ],
-   "gravity": "center"
+   "gravity": "center",
+   "evenGrid": true,
+   "note": "Repainted 2026-09-11 (C3, Docs/art/ui-menus-redesign.md §7.26): the relic card draws these at 170px on parchment, so they are smooth objects rather than map pixel art. evenGrid because the rod lies diagonally across its cell's edge.",
+   "spriteSize": 256
   },
   {
    "file": "sheets/spr-d-heroes.png",
