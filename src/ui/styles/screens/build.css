@@ -159,14 +159,16 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 60px;
-  height: 60px;
-  background: var(--parchment-shade);
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: 10px;
+  width: 72px;
+  height: 72px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
 }
+.bld-offer-mark .icon { --icon-size: 48px; }
 .bld-offer-copy { flex: 1; min-width: 0; }
-.bld-offer-head { font-family: var(--font-body); font-size: var(--text-body); }
+.bld-offer-head { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
 .bld-offer-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
 
 /* The crew as pips: filled = owned, hollow = room left. The ceiling is a
@@ -176,9 +178,9 @@
 .bld-offer-pip {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   background: var(--parchment-shade);
   border: 2px dashed var(--wood-dark);
 }

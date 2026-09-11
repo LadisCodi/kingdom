@@ -347,3 +347,33 @@
     linear-gradient(rgba(138, 58, 42, 0.78), rgba(138, 58, 42, 0.78)),
     url('../assets/tex-wood.jpg') center / 200px 200px;
 }
+
+/* ---- welcome back (M13) ---- */
+.wel-rows,
+.wel-done {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+
+/* ---- the payer profile and the purchase confirmation (M14) ---- */
+.payer-option,
+.iap-rows {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+
+/* ---- the purse, the builder offer, the tech card ---- */
+.purse {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-offer-mark { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.tech-info {
+  border: 12px solid transparent;
+  border-image: url('../assets/frame-wood.png') 80 / 16px / 2px round;
+  border-radius: 0;
+  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
+}

@@ -297,7 +297,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   padding: 12px 14px;
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
   background: var(--parchment);
   border: var(--outline) solid var(--wood-dark);
   border-radius: var(--radius);
@@ -307,7 +307,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .tech-info-head h3 { flex: 1; min-width: 0; }
 .tech-info-head .k-knob { flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; }
-.tech-info h3 { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
+.tech-info h3 { margin: 0; font-family: var(--font-body); font-size: 20px; font-weight: 700; line-height: 1.15; }
 .tech-info .muted { color: var(--ink-muted); }
 .tech-info .blocked { color: var(--clay); }
 .tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
