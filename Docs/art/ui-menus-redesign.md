@@ -1899,6 +1899,26 @@ The M5–M14 prompts open with "Same style, same materials and chrome as the
 mockups above" instead of the style block because they were sent into the
 conversation that already held it and M0; sent cold, paste the block first.
 
+### 7.26 The collection's pieces (C1, C2)
+
+The four screens of [`../features/09-relics.md`](../features/09-relics.md) §11
+need two sheets. **C1 is the art the screens are built on** — the five album
+medallions M21 draws as round vignettes, and the four packs the reveal deals —
+and **C2 is four atlas marks**, which append to `ui-e2-marks`'s empty fourth
+row rather than redrawing the twelve that sheet already holds.
+
+The 45 card faces are NOT here and are a content job, not a sheet: a card is
+drawn as its album's medallion behind its name and its rarity stars, which is
+what makes a nine-card page read as one album.
+
+**C1 — the medallions and the packs**
+
+> Same style as the interface objects in the mockups above (smooth, chunky, thin dark-brown outline, soft two-tone shading, small highlight, NO pixel art). One square sprite sheet, 1024x1024, a strict 3x3 grid of equal 341px cells with a fully TRANSPARENT background, one subject centred in each cell filling about 80% of it and NOTHING crossing the lines between cells (leave a clear 40px band). Cells 1 to 5 are ROUND painted vignettes, a circular scene inside a thin carved wooden ring: 1 a ploughed field at dawn with a forked wooden dowsing rod standing in the furrow; 2 a mossy woodland with a stag, red berries and a beehive; 3 a timber scaffold with a hammer, a hard hat and a stone block; 4 a market counter with a gilded ledger book, stacked gold coins and a purse; 5 a night road under stars with a brass compass and a lantern post. Cells 6 to 9 are OBJECTS, not vignettes — four card packs seen at a slight angle, each a small sealed paper wallet of cards with a wax seal and two or three card corners fanning out of the top: 6 a plain brown one with a bronze seal; 7 a pale grey-blue one with a silver seal; 8 a warm cream one with a gold seal and one tiny sparkle; 9 a deep violet one with a gold star seal, a gold rim and three sparkles. No text, no labels, no numbers, no frame lines between cells. Do not run any code to check or correct the alpha channel.
+
+**C2 — the collection's marks**
+
+> Same style as the icon sheets above: these must be SYMBOLS, not little characters — no faces, no bodies, no people. THICK and CHUNKY, at least 20 pixels of stroke at this canvas size, so they survive being shrunk to 64px. One square sprite sheet, 1024x1024, a strict 2x2 grid of equal 512px cells with a fully TRANSPARENT background, one symbol centred in each cell filling about 86% of it and nothing crossing the lines between cells, in this exact reading order: 1 a sealed pack of cards with two card corners fanning out of the top; 2 a fan of three playing cards, face down, as a stack; 3 a small iron safe with a round brass dial and two hinges; 4 a round wax seal with a gold rim and a wheat sheaf pressed into it. No text, no labels, no numbers. Do not run any code to check or correct the alpha channel.
+
 ### 7.20 Export and where it lands
 
 - Sheets: 1024×1024, true alpha — use the **"Download the corrected PNG"**

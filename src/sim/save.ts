@@ -18,14 +18,16 @@ import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
-import { normaliseSlots } from './artifacts';
+import { syncArtifactModifiers } from './artifacts';
+import type { AlbumId } from './data/seasons';
+import type { PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
+  type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
   type RuinId, type UnitId,
 } from './state';
@@ -121,6 +123,38 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
+  {
+    // v44 — THE COLLECTION REWORK (Docs/features/09-relics.md). Attunement,
+    // the Stardust level ladder and the Fragments tier gate are gone; a relic
+    // is one level, raised by finishing its album.
+    //
+    // EVERY RELIC A PLAYER HOLDS KEEPS ITS LEVEL — nothing they earned
+    // converts to less — and the sockets, the tiers and the per-relic
+    // Fragments are dropped, because there is no longer anything that reads
+    // them. A relic that was owned at level 1 with nothing spent on it still
+    // reads as level 1, so the common case is identical.
+    //
+    // The Gems spent on sockets are NOT refunded and deliberately so: the
+    // slots bought a benefit the player had for as long as the feature
+    // existed, and the rework hands them the same passives permanently.
+    to: 44,
+    migrate: (modules) => {
+      const dto = modules['kingdom.artifacts'] as {
+        Owned?: string[]; Levels?: Record<string, number>;
+        Tiers?: unknown; Fragments?: unknown;
+        Attuned?: unknown; SlotsPurchased?: unknown; LockedUntil?: unknown;
+      } | undefined;
+      if (dto === undefined) return;
+      const levels: Record<string, number> = {};
+      for (const id of dto.Owned ?? []) levels[id] = Math.max(1, dto.Levels?.[id] ?? 1);
+      // A level without an ownership row was never reachable, but a save that
+      // has one is telling the truth about a relic the player holds.
+      for (const [id, level] of Object.entries(dto.Levels ?? {})) {
+        if (levels[id] === undefined && level >= 1) levels[id] = level;
+      }
+      modules['kingdom.artifacts'] = { Levels: levels };
+    },
+  },
   {
     // v43 — a building carries the ORDINAL it was placed with, and that
     // ordinal prices every level of it for ever
@@ -649,14 +683,21 @@ export function serialize(state: GameState, now: number): SaveFile {
           ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
+      // A relic is a level and nothing else. The passives are re-derived on
+      // load, so nothing about what they DO is written here.
       'kingdom.artifacts': {
-        Owned: state.artifacts.owned,
         Levels: state.artifacts.levels,
-        Tiers: state.artifacts.tiers,
-        Fragments: state.artifacts.fragments,
-        Attuned: state.artifacts.attuned,
-        SlotsPurchased: state.artifacts.slotsPurchased,
-        LockedUntil: state.artifacts.lockedUntil.map(isoOrNull),
+      },
+      // The live season's cards. Wiped whole at the close, so this module is
+      // the one thing in the file that is deliberately short-lived.
+      'kingdom.collection': {
+        Season: state.collection.season,
+        Cards: state.collection.cards,
+        Completed: state.collection.completed,
+        Stars: state.collection.stars,
+        Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
+        PacksIssued: state.collection.packsIssued,
+        PrizePaid: state.collection.prizePaid,
       },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
@@ -1024,15 +1065,20 @@ export function deserialize(
 
   const artifactsDto = modules['kingdom.artifacts'];
   if (artifactsDto) {
-    state.artifacts = {
-      owned: [...((artifactsDto.Owned ?? []) as ArtifactId[])],
-      levels: { ...(artifactsDto.Levels ?? {}) },
-      tiers: { ...(artifactsDto.Tiers ?? {}) },
-      fragments: { ...(artifactsDto.Fragments ?? {}) },
-      attuned: [...((artifactsDto.Attuned ?? [null]) as Array<ArtifactId | null>)],
-      slotsPurchased: artifactsDto.SlotsPurchased ?? 0,
-      lockedUntil: ((artifactsDto.LockedUntil ?? []) as Array<string | null>)
-        .map((v) => msOrNull(v) ?? 0),
+    state.artifacts = { levels: { ...(artifactsDto.Levels ?? {}) } };
+  }
+
+  const collectionDto = modules['kingdom.collection'];
+  if (collectionDto) {
+    state.collection = {
+      season: collectionDto.Season ?? 0,
+      cards: { ...(collectionDto.Cards ?? {}) },
+      completed: [...((collectionDto.Completed ?? []) as AlbumId[])],
+      stars: collectionDto.Stars ?? 0,
+      packs: ((collectionDto.Packs ?? []) as any[])
+        .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
+      packsIssued: collectionDto.PacksIssued ?? 0,
+      prizePaid: collectionDto.PrizePaid === true,
     };
   }
 
@@ -1049,13 +1095,11 @@ export function deserialize(
     }));
   }
 
-  // AFTER the modifier stack is restored: the slot arrays are resized to the
-  // CURRENT slot count and the artifact passives are re-derived from what is
-  // attuned. So a save written before the Attunement tech completed, or before
-  // the passive curve was rebalanced, loads correct rather than stale — while
-  // everything that is genuinely stateful (a Haste still running, a season)
-  // comes back from the file untouched.
-  normaliseSlots(state);
+  // AFTER the modifier stack is restored: the relic passives are re-derived
+  // from the levels, so a save written before the curve was rebalanced loads
+  // correct rather than stale — while everything genuinely stateful (a Haste
+  // still running, a season's cards) comes back from the file untouched.
+  syncArtifactModifiers(state);
 
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };

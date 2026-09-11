@@ -21,7 +21,7 @@
 // or it is on the shelf (Docs/features/09-relics.md §5). Enter, see, decide
 // again.
 
-import { ARTIFACTS, RUINS } from '../sim/data/definitions';
+import { RUINS } from '../sim/data/definitions';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
@@ -51,8 +51,7 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
   const ruinId = game.expeditionRuin!;
   const ruin = RUINS[ruinId];
   const preview = game.expeditionPreview()!;
-  const relic = ARTIFACTS[ruin.artifact];
-  const alreadyHave = game.state.ruinsCleared[ruinId] === true;
+  const bottomed = game.state.ruinsCleared[ruinId] === true;
 
   // THE WIDGET: where the player is standing. A room is one fight and the
   // address is the whole of the context — how far in, how far left, and
@@ -75,9 +74,9 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
     el('div', { class: 'bt-info-line is-soft' },
       'Rooms are fought one at a time, in order, and never again. Clearing the '
       + 'last one of a depth opens the next.'),
-    el('div', { class: 'bt-info-line is-soft' }, alreadyHave
-      ? `${relic.name} is already home; the rooms still pay.`
-      : `${relic.name} is behind the last room of the last depth.`),
+    el('div', { class: 'bt-info-line is-soft' }, bottomed
+      ? 'You have been to the bottom; the rooms still pay their packs.'
+      : 'Every room pays a card pack, and the bottom pays a Star one.'),
   ];
 
   const reward = preview.reward;
@@ -96,8 +95,7 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
         .filter(([, n]) => n > 0)
         .map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
       { icon: 'HeroXp' as CurrencyId, label: `+${reward.heroXp}` },
-      ...(reward.fragments > 0
-        ? [{ icon: 'fragment' as const, label: `+${reward.fragments}` }] : []),
+      { icon: 'pack' as const, label: reward.pack },
     ],
     rewardNote: preview.isBoss
       ? 'A boss pays four times a room, and the depth behind it opens on the way out.'

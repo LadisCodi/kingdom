@@ -54,7 +54,7 @@ describe('the overlay / dismiss state machine', () => {
     expect(normal.hasOpenSheet()).toBe(false);
 
     const withOverlay = freshPresenter(state);
-    withOverlay.setOverlay('reliquary');
+    withOverlay.setOverlay('collection');
     expect(withOverlay.hasOpenSheet()).toBe(true);
 
     const withCard = freshPresenter(state);
@@ -655,7 +655,7 @@ describe('the overlay signatures', () => {
 
   it('screens with a countdown or a regenerating pool are not signed', () => {
     const game = freshPresenter();
-    for (const name of ['reliquary', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
+    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
   });

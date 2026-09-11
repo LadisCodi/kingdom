@@ -1,218 +1,80 @@
-// Artifacts (Docs/features/08-magic.md §2): the relics won from ruins, the
-// slots they compete for, and the four abilities they cast.
+// Relics (Docs/features/09-relics.md §1, §2): five permanent kingdom
+// passives, each one number that rises with its level.
 //
-// WHY RELICS AND NOT A SPELLBOOK. A loadout limit only has weight when the
-// equipped thing works continuously. An active-only slot is trivially
-// circumvented — you swap the ability in at the moment you cast — so the limit
-// would tax casting instead of creating a decision. A passive is consumed every
-// second, so committing a slot to one costs you the alternative for as long as
-// you wear it.
+// EVERY RELIC THE PLAYER HAS IS ALWAYS ON. Nothing is worn, socketed or
+// swapped, and nothing carries one anywhere — so there is no loadout, no swap
+// lock and no slot to buy. What used to be the decision ("which passive do I
+// wear?") is now the collection's: which album do I finish.
 //
-// The lock is not the cost. Swapping applies the new passive immediately and
-// then locks that slot for five minutes, which is exactly long enough to stop
-// hot-swapping a relic in for a single cast, and never long enough to make a
-// player wait for a benefit they have already earned. THE REAL COST OF A SWAP
-// IS GOING WITHOUT THE PASSIVE YOU WERE LIVING OFF.
+// A relic has NO CEILING. `level` is the count of seasons its album was
+// completed, so the ladder is the player's history rather than a curve with a
+// top, and `per_level` is sized as a season's worth of growth.
 
-import { ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, RUINS } from './data/definitions';
-import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
-import { addModifier, resolve, type Modifier } from './modifiers';
-import {
-  addToWallet, getWallet, type ArtifactId, type GameState, type RuinId,
-} from './state';
+import { ARTIFACTS, ARTIFACT_ORDER } from './data/definitions';
+import { addModifier, type Modifier } from './modifiers';
+import type { ArtifactId, GameState } from './state';
 
-// ------------------------------------------------------------ the collection
+// ------------------------------------------------------------------ the five
+
+/** 0 = not found. A relic is owned iff its level is at least 1. */
+export const artifactLevel = (state: GameState, id: ArtifactId): number =>
+  state.artifacts.levels[id] ?? 0;
 
 export const ownsArtifact = (state: GameState, id: ArtifactId): boolean =>
-  state.artifacts.owned.includes(id);
+  artifactLevel(state, id) >= 1;
 
-/** One relic's collection entry, defaulted — an unowned relic reads as level 1
- *  tier 1 so the UI can show what it WOULD be without special-casing. */
-export function artifactEntry(state: GameState, id: ArtifactId): CollectionEntry {
-  return {
-    level: state.artifacts.levels[id] ?? 1,
-    tier: state.artifacts.tiers[id] ?? 1,
-    fragments: state.artifacts.fragments[id] ?? 0,
-  };
-}
+/** Relics the player owns, in authored order (stable across renders). */
+export const ownedArtifacts = (state: GameState): ArtifactId[] =>
+  ARTIFACT_ORDER.filter((id) => ownsArtifact(state, id));
 
-/** Grant a relic. A DUPLICATE is never a dead drop: it converts to that
- *  relic's Fragments, which is the same currency repeat delves pay. */
-export function grantArtifact(state: GameState, id: ArtifactId, duplicateFragments = 10): 'Granted' | 'Duplicate' {
-  if (ownsArtifact(state, id)) {
-    state.artifacts.fragments[id] = (state.artifacts.fragments[id] ?? 0) + duplicateFragments;
-    return 'Duplicate';
-  }
-  state.artifacts.owned.push(id);
-  const fresh = emptyEntry();
-  state.artifacts.levels[id] = fresh.level;
-  state.artifacts.tiers[id] = fresh.tier;
-  state.artifacts.fragments[id] = state.artifacts.fragments[id] ?? 0;
-  return 'Granted';
-}
-
-export function addArtifactFragments(state: GameState, id: ArtifactId, amount: number): void {
-  state.artifacts.fragments[id] = (state.artifacts.fragments[id] ?? 0) + amount;
-}
-
-export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
-
-/** Spend Stardust for one level. Stardust is KINGDOM-scoped deliberately: it
- *  survives a region reset, so it still works when regions become the content
- *  treadmill. Knowledge used to do this job and now buys technologies out of
- *  the CITY purse instead — see Docs/features/07-research.md §4. */
-export function levelUpArtifact(state: GameState, id: ArtifactId): LevelUpResult {
-  if (!ownsArtifact(state, id)) return 'NotOwned';
-  const entry = artifactEntry(state, id);
-  const stardust = getWallet(state.kingdom.wallet, 'Stardust');
-  const block = levelBlock(entry, stardust);
-  if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
-  state.artifacts.levels[id] = entry.level + 1;
-  syncArtifactModifiers(state); // the passive scales with level
-  return 'Levelled';
-}
-
-export type RaiseTierResult = 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments';
-
-export function raiseArtifactTier(state: GameState, id: ArtifactId): RaiseTierResult {
-  if (!ownsArtifact(state, id)) return 'NotOwned';
-  const entry = artifactEntry(state, id);
-  const block = tierBlock(entry);
-  if (block !== null) return block;
-  state.artifacts.fragments[id] = entry.fragments - tierCost(entry.tier);
-  state.artifacts.tiers[id] = entry.tier + 1;
-  return 'Raised';
-}
-
-// ------------------------------------------------------------------- slots
-
-/** One at start, the rest with Gems. No technology grants a socket: slots are
- *  bought with Gems everywhere and by nothing else
- *  (Docs/features/07-research.md §4). Promise 3 survives because Gems
- *  are earnable — the chain pays 75 and a first clear pays 10 — so the earning
- *  moved off the tree rather than disappearing. */
-export function attunementSlots(state: GameState): number {
-  const base = ATTUNEMENT.baseSlots + state.artifacts.slotsPurchased;
-  // A season can LEND a socket for its window. It goes through the modifier
-  // layer like everything else, so it retires itself when the window closes.
-  return Math.max(1, Math.min(Math.round(resolve(state, 'attunementSlots', base)), ATTUNEMENT.maxSlots));
-}
-
-export const attunementSlotGemCost = (state: GameState): number =>
-  Math.round(
-    ATTUNEMENT.slotGemCostBase * ATTUNEMENT.slotGemCostGrowth ** state.artifacts.slotsPurchased,
-  );
-
-export type BuySlotResult = 'Purchased' | 'AtMax' | 'NotEnoughGems';
-
-export function buyAttunementSlot(state: GameState): BuySlotResult {
-  if (attunementSlots(state) >= ATTUNEMENT.maxSlots) return 'AtMax';
-  const cost = attunementSlotGemCost(state);
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  state.artifacts.slotsPurchased += 1;
-  normaliseSlots(state);
-  return 'Purchased';
-}
-
-/** Keep `attuned` and `lockedUntil` exactly as long as the player has slots.
- *  A slot is a visible empty socket, not an absence, so the arrays are dense.
- *  Shrinking never happens today, but un-attuning what falls off keeps the
- *  modifier stack honest if it ever does. */
-export function normaliseSlots(state: GameState): void {
-  const slots = attunementSlots(state);
-  const { artifacts } = state;
-  while (artifacts.attuned.length < slots) artifacts.attuned.push(null);
-  while (artifacts.lockedUntil.length < slots) artifacts.lockedUntil.push(0);
-  if (artifacts.attuned.length > slots) artifacts.attuned.length = slots;
-  if (artifacts.lockedUntil.length > slots) artifacts.lockedUntil.length = slots;
-  syncArtifactModifiers(state);
-}
-
-export const slotLockedUntil = (state: GameState, slot: number): number =>
-  state.artifacts.lockedUntil[slot] ?? 0;
-
-export const isSlotLocked = (state: GameState, slot: number, now: number): boolean =>
-  now < slotLockedUntil(state, slot);
-
-/** Seconds until the slot frees up (0 = free). */
-export const slotUnlocksIn = (state: GameState, slot: number, now: number): number =>
-  Math.max(0, (slotLockedUntil(state, slot) - now) / 1000);
-
-export const attunedIn = (state: GameState, slot: number): ArtifactId | null =>
-  state.artifacts.attuned[slot] ?? null;
-
-export const isAttuned = (state: GameState, id: ArtifactId): boolean =>
-  state.artifacts.attuned.includes(id);
+export type GrantResult = 'Granted' | 'Levelled';
 
 /**
- * THE KINGDOM'S SOCKET IS THE ONLY CLAIM ON A RELIC.
- *
- * Nothing takes a relic anywhere: a relic is worn by the kingdom or it is on
- * the shelf (Docs/features/09-relics.md §5). Kept as its own name because the
- * question — "is this one spoken for?" — is asked from several screens and
- * reads better than the socket it happens to be answered by.
+ * What completing an album pays (§5): the relic at level 1 the first time,
+ * +1 level every time after. It is the ONLY way a relic level moves — there
+ * is no Stardust ladder and no tier gate, and nothing rushes one relic ahead
+ * of the others.
  */
-export const artifactIsCommitted = (state: GameState, id: ArtifactId): boolean =>
-  isAttuned(state, id);
-
-export type AttuneResult =
-  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned';
-
-/**
- * Put `id` in `slot` (or empty it with null). The swap is IMMEDIATE — the new
- * passive applies at once — and then the slot locks.
- */
-export function attune(
-  state: GameState,
-  slot: number,
-  id: ArtifactId | null,
-  now: number,
-): AttuneResult {
-  normaliseSlots(state);
-  if (slot < 0 || slot >= attunementSlots(state)) return 'NoSuchSlot';
-  if (isSlotLocked(state, slot, now)) return 'SlotLocked';
-  if (id !== null) {
-    if (!ownsArtifact(state, id)) return 'NotOwned';
-    const existing = state.artifacts.attuned.indexOf(id);
-    if (existing !== -1 && existing !== slot) return 'AlreadyAttuned';
-  }
-  const was = state.artifacts.attuned[slot];
-  if (was === id) return id === null ? 'Unattuned' : 'Attuned';
-  state.artifacts.attuned[slot] = id;
-  state.artifacts.lockedUntil[slot] = now + ATTUNEMENT.swapLockSeconds * 1000;
+export function grantArtifactLevel(state: GameState, id: ArtifactId): GrantResult {
+  const had = ownsArtifact(state, id);
+  state.artifacts.levels[id] = artifactLevel(state, id) + 1;
   syncArtifactModifiers(state);
-  return id === null ? 'Unattuned' : 'Attuned';
+  return had ? 'Levelled' : 'Granted';
 }
 
 // -------------------------------------------------------------- the passives
 
-/** The passive's value at this relic's current level. */
-export function passiveValue(state: GameState, id: ArtifactId): number {
+/** The passive's value at a level — `base + per_level × (level − 1)`. */
+export function passiveValueAtLevel(id: ArtifactId, level: number): number {
   const { passive } = ARTIFACTS[id];
-  const level = artifactEntry(state, id).level;
-  const value = passive.base + passive.perLevel * (level - 1);
+  const value = passive.base + passive.perLevel * (Math.max(1, level) - 1);
   // A multiplier must never cross zero into a sign flip; an additive one must
   // never subtract what it is meant to add.
   return Math.max(0, value);
 }
 
+/** The passive's value at this relic's current level. */
+export const passiveValue = (state: GameState, id: ArtifactId): number =>
+  passiveValueAtLevel(id, artifactLevel(state, id));
+
+/** What the card promises for the level after this one (§11.4). */
+export const nextPassiveValue = (state: GameState, id: ArtifactId): number =>
+  passiveValueAtLevel(id, artifactLevel(state, id) + 1);
+
 const MODIFIER_PREFIX = 'artifact:';
 
 /**
- * Rebuild the artifact half of the modifier stack from `attuned`.
+ * Rebuild the relic half of the modifier stack from the levels map.
  *
- * Idempotent and total, rather than incremental: attuning, un-attuning,
- * levelling and loading a save all move the same inputs, and one rebuild that
- * cannot drift beats four paths that each have to remember to add AND remove.
- * Artifact passives are PERMANENT modifiers (`expiresAt: null`); the actives
- * are the timed ones.
+ * Idempotent and total, rather than incremental: an album completing, a save
+ * loading and a season closing all move the same inputs, and one rebuild that
+ * cannot drift beats three paths that each have to remember to add AND
+ * remove. Relic passives are PERMANENT modifiers (`expiresAt: null`) at the
+ * base stage — a level is not a technology and never expires.
  */
 export function syncArtifactModifiers(state: GameState): void {
   state.modifiers = state.modifiers.filter((m) => !m.id.startsWith(MODIFIER_PREFIX));
-  for (const id of state.artifacts.attuned) {
-    if (id === null) continue;
+  for (const id of ownedArtifacts(state)) {
     const { passive } = ARTIFACTS[id];
     const modifier: Modifier = {
       id: `${MODIFIER_PREFIX}${id}`,
@@ -226,13 +88,3 @@ export function syncArtifactModifiers(state: GameState): void {
     addModifier(state, modifier);
   }
 }
-
-// ------------------------------------------------------------------ sources
-
-/** Which ruin grants which relic — the guaranteed first-clear reward. No
- *  randomness on the thing that gates a system. */
-export const artifactOfRuin = (ruinId: RuinId): ArtifactId => RUINS[ruinId].artifact;
-
-/** Relics the player owns, in authored order (stable across renders). */
-export const ownedArtifacts = (state: GameState): ArtifactId[] =>
-  ARTIFACT_ORDER.filter((id) => ownsArtifact(state, id));

@@ -156,15 +156,22 @@ function bands(values, minGap = 4) {
  *   * SOMETHING is transparent (`minima === 0`) — the decisive one. A baked
  *     checkerboard is opaque in every pixel, so an alpha channel with a real
  *     zero in it cannot be one;
- *   * the MEAN is under half — only for a file that is mostly gutter, which
- *     is to say a grid of icons on a canvas.
+ *   * the MEAN is under a ceiling — only for a file that is mostly gutter,
+ *     which is to say a grid of icons on a canvas.
  *
  * That last one used to run on everything, and it is wrong for a single
  * hand-authored 16px icon: a chunky one legitimately inks four fifths of its
  * box, and the check called the art a checkerboard for filling the space it
  * was drawn to fill. `sparse` is what the caller knows and this does not.
+ *
+ * `solid` is the same argument one step further. A sheet of THIN SYMBOLS on a
+ * 4x4 grid measures 0.28 to 0.46; a sheet of solid painted OBJECTS — a sealed
+ * pack, a safe, a wax seal — inks most of its box by nature and measures
+ * about 0.58, and the half gate called that art a checkerboard too. The
+ * decisive test is unchanged either way: a baked checkerboard has no
+ * transparent pixel anywhere, which `minima` catches on its own.
  */
-function checkAlpha(file, label, { sparse = true } = {}) {
+function checkAlpha(file, label, { sparse = true, solid = false } = {}) {
   const corner = magick(file, '-format', '%[pixel:p{0,0}]', 'info:');
   const alpha = magick(
     file, '-alpha', 'extract', '-format', '%[fx:mean] %[fx:minima]', 'info:',
@@ -180,7 +187,7 @@ function checkAlpha(file, label, { sparse = true } = {}) {
     + 'NOT the image editor\'s download button (which exports what it displays).';
   if (!(minima < 1)) {
     problems.push(`no pixel is transparent anywhere. ${baked}`);
-  } else if (sparse && !(mean < 0.5)) {
+  } else if (sparse && !(mean < (solid ? 0.85 : 0.5))) {
     problems.push(`alpha mean ${mean.toFixed(3)} — the sheet is opaque. ${baked}`);
   }
   if (problems.length) fail(`${label}: ${problems.join('; ')}`);
@@ -201,7 +208,7 @@ function sliceSheet(sheet, cell, outDir) {
   const file = join(UI_DIR, sheet.file);
   if (!existsSync(file)) fail(`${sheet.file} not found`);
   const label = sheet.file;
-  checkAlpha(file, label);
+  checkAlpha(file, label, { solid: sheet.solid === true });
 
   const { rows, cols } = sheet.grid;
   const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
@@ -356,7 +363,9 @@ function sliceDenseSheet(sheet, cell, outDir) {
 function sliceWorldSheet(sheet, outDir, size) {
   const file = join(UI_DIR, sheet.file);
   if (!existsSync(file)) fail(`${sheet.file} not found`);
-  checkAlpha(file, sheet.file, { sparse: (sheet.dense?.cols ?? 2) > 1 });
+  checkAlpha(file, sheet.file, {
+    sparse: (sheet.dense?.cols ?? 2) > 1, solid: sheet.solid === true,
+  });
 
   const { rows, cols } = sheet.grid;
   const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
@@ -551,7 +560,9 @@ if (sheets.length === 0 && worldSheets.length === 0) fail(`no sheet matches --on
 
 if (mode === 'check') {
   for (const s of [...sheets, ...worldSheets]) {
-    checkAlpha(join(UI_DIR, s.file), s.file, { sparse: (s.dense?.cols ?? 2) > 1 });
+    checkAlpha(join(UI_DIR, s.file), s.file, {
+      sparse: (s.dense?.cols ?? 2) > 1, solid: s.solid === true,
+    });
   }
   console.log(`ui-atlas: ${sheets.length + worldSheets.length} sheet(s) pass the alpha check`);
   process.exit(0);

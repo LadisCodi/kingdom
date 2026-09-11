@@ -57,7 +57,7 @@ export interface BattleView {
   supplies: Wallet;
   /** What winning pays, as icon-and-amount chips. Empty is a legal state and
    *  says so — a gate's reward is the ruin behind it. */
-  rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment'; label: string }>;
+  rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment' | 'pack'; label: string }>;
   /** One line under the chips: what winning is really for. */
   rewardNote?: string;
   actionLabel: string;

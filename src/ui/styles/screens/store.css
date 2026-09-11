@@ -113,16 +113,16 @@
 .store-banner-title { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
 .store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 /* The odds read as prose, "label · value", not as a ledger. */
-.store-banner .rel-breakdown { grid-area: lines; gap: 0; }
-.store-banner .rel-line {
+.store-banner .ban-breakdown { grid-area: lines; gap: 0; }
+.store-banner .ban-line {
   justify-content: flex-start;
   gap: 0;
   color: var(--ink-muted);
   line-height: 1.3;
 }
-.store-banner .rel-line > span::after { content: '\00a0\00b7\00a0'; }
-.store-banner .rel-line b { color: var(--ink); }
-.store-banner .rel-line.is-total { margin: 0; padding: 0; border: 0; font-size: var(--text-helper); }
+.store-banner .ban-line > span::after { content: '\00a0\00b7\00a0'; }
+.store-banner .ban-line b { color: var(--ink); }
+.store-banner .ban-line.is-total { margin: 0; padding: 0; border: 0; font-size: var(--text-helper); }
 /* The two calls sit SIDE BY SIDE — one press is the ×1 slot (a call, a free
  * call, or an ad that pays for one), the other is always the ten. */
 .store-banner-calls {
@@ -135,7 +135,7 @@
 }
 .store-banner-calls > .k-btn { width: 100%; min-width: 0; min-height: 38px; padding: 6px; white-space: nowrap; }
 .store-banner-calls .k-btn-label { gap: 6px; }
-.store-banner .rel-note { grid-area: note; font-size: 12px; line-height: 1.25; }
+.store-banner .ban-note { grid-area: note; font-size: 12px; line-height: 1.25; }
 /* The ×1 slot is a blue slab, the ten is wood; on the golden call both are
  * gold with ink on them (M5). */
 .store-banner-calls > .k-btn:first-child { --slab: #2f86d8; --slab-lip: #1b5390; }
@@ -272,3 +272,24 @@
   margin-top: 14px;
 }
 .iap-actions > .k-btn { width: 100%; min-width: 0; }
+
+/* ---- the banner's odds ledger -------------------------------------------
+ * A two-column line: the chance, the pity count, the price. It lived in the
+ * Reliquary's stylesheet until the collection rework replaced that screen —
+ * the banner panel is its only consumer, so it lives here now. */
+.ban-breakdown { display: flex; flex-direction: column; gap: 2px; }
+.ban-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.ban-line b { font-family: var(--font-body); }
+.ban-line.is-cost b { color: var(--clay); }
+.ban-line.is-total {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 2px solid rgba(72, 96, 168, 0.35);
+  font-size: var(--text-body);
+}
+.ban-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }

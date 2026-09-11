@@ -11,6 +11,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
+import { closeSeason, seasonEndsAt } from './collection';
 import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
 import {
@@ -401,12 +402,15 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
+  /** The season that closed under the player, if one did — the cards and the
+   *  stars are gone and a new season is open (Docs/features/09-relics.md §3). */
+  seasonClosed: { from: number; to: number } | null;
 }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
+  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -462,6 +466,14 @@ function applyDueAt(
     armGates(state, map, t);
     out.raids.push(...advanceRaids(state, t));
     out.scheduleEvents.push(...advanceSchedule(state, t));
+    // THE SEASON'S CLOSE IS A TIMER, NOT PRODUCTION (Docs/features/09-relics.md
+    // §3, and invariant 2 in CLAUDE.md): it resolves in the uncapped tail at
+    // its absolute timestamp, so a player away for a week comes back to the
+    // wiped album and the new season rather than to a stale one that waits
+    // for them. `season` moving is what stops it firing twice.
+    if (t >= seasonEndsAt(state.collection.season)) {
+      out.seasonClosed = closeSeason(state, t);
+    }
     // A finished good lands in the stockpile here rather than in
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
@@ -500,6 +512,9 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextTrainingCompletion(state, after));
   consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
+  // One boundary a month, from a floor division with no state in it: two
+  // clients never disagree about when the season ends.
+  consider(seasonEndsAt(state.collection.season));
   consider(nextWorkshopCompletion(state, after));
   return t;
 }

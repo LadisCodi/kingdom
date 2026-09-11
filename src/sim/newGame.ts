@@ -3,6 +3,7 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { dayIndex } from './daily';
+import { freshCollection, seasonAt } from './collection';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -77,10 +78,8 @@ export function newGame(map: MapData, now: number): GameState {
     // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
     gates: {},
     raidReports: [],
-    artifacts: {
-      owned: [], levels: {}, tiers: {}, fragments: {},
-      attuned: [null], slotsPurchased: 0, lockedUntil: [0],
-    },
+    artifacts: { levels: {} },
+    collection: freshCollection(seasonAt(now)),
     modifiers: [],
     quests: { index: 0, progress: 0 },
     discoveries: {},

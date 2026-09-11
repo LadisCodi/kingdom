@@ -3374,19 +3374,43 @@
       2000
     ]
   },
-  "attunement": {
-    "baseSlots": 1,
-    "maxSlots": 5,
-    "slotGemCostBase": 1000,
-    "slotGemCostGrowth": 2,
-    "swapLockSeconds": 300
-  },
   "collection": {
+    "seasonDays": 30,
+    "albumGems": 2000,
+    "prizeGems": 25000,
+    "albumHours": [
+      2,
+      2,
+      4,
+      8,
+      8
+    ],
+    "albumSilverKeys": [
+      1,
+      1,
+      1,
+      0,
+      0
+    ],
+    "albumGoldKeys": [
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    "chestFloorPerHour": 60,
+    "starsPerRarity": [
+      1,
+      2,
+      5,
+      10,
+      25
+    ],
+    "starGoldMultiplier": 2,
+    "vaultGoldStars": 50,
+    "vaultStarStars": 200,
     "xpTricklePerTierDepth": 10,
-    "levelCostBase": 20,
-    "levelCostGrowth": 1.6,
-    "maxLevel": 10,
-    "levelsPerTier": 2,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,
     "fragmentsPerTierGrowth": 2,
@@ -4316,35 +4340,35 @@
   "artifacts": {
     "DowsingRod": {
       "passiveBase": 0.85,
-      "passivePerLevel": -0.015,
+      "passivePerLevel": -0.05,
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
       "activeRadius": 0
     },
     "VerdantSeal": {
-      "passiveBase": 0.75,
-      "passivePerLevel": -0.02,
+      "passiveBase": 0.85,
+      "passivePerLevel": -0.05,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
       "activeRadius": 2
     },
     "ForemansSigil": {
       "passiveBase": 1,
-      "passivePerLevel": 0.2,
+      "passivePerLevel": 0.5,
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
       "activeRadius": 0
     },
     "GildedLedger": {
-      "passiveBase": 1.2,
-      "passivePerLevel": 0.03,
+      "passiveBase": 1.1,
+      "passivePerLevel": 0.1,
       "activeManaCost": 0,
       "activeDurationSeconds": 0,
       "activeRadius": 0
     },
     "WanderersCompass": {
-      "passiveBase": 1.5,
-      "passivePerLevel": 0.1,
+      "passiveBase": 1.25,
+      "passivePerLevel": 0.25,
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
       "activeRadius": 0
@@ -5236,6 +5260,56 @@
       "pullStardust": 150,
       "freePerDay": 1,
       "freeCooldownSeconds": 0
+    }
+  },
+  "packs": {
+    "Bronze": {
+      "cards": 3,
+      "weights": [
+        70,
+        30,
+        0,
+        0,
+        0
+      ],
+      "goldChance": 0,
+      "goldGuaranteed": 0
+    },
+    "Silver": {
+      "cards": 4,
+      "weights": [
+        45,
+        35,
+        20,
+        0,
+        0
+      ],
+      "goldChance": 0,
+      "goldGuaranteed": 0
+    },
+    "Gold": {
+      "cards": 5,
+      "weights": [
+        0,
+        40,
+        38,
+        22,
+        0
+      ],
+      "goldChance": 0.08,
+      "goldGuaranteed": 0
+    },
+    "Star": {
+      "cards": 6,
+      "weights": [
+        0,
+        0,
+        55,
+        33,
+        12
+      ],
+      "goldChance": 0.2,
+      "goldGuaranteed": 1
     }
   },
   "fog": {
