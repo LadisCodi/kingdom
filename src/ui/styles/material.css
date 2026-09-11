@@ -451,8 +451,8 @@
 .bs-plaque { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
 .bs {
   background:
-    radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.12), transparent 70%),
-    linear-gradient(rgba(20, 10, 4, 0.6), rgba(20, 10, 4, 0.6)),
+    radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.1), transparent 70%),
+    linear-gradient(rgba(58, 34, 18, 0.82), rgba(46, 26, 14, 0.9)),
     url('../assets/tex-cloth.jpg') center / 256px 256px;
 }
 .gr-screen {
@@ -504,11 +504,6 @@
     linear-gradient(rgba(18, 11, 6, 0.86), rgba(18, 11, 6, 0.86)),
     url('../assets/tex-cloth.jpg') center / 256px 256px;
 }
-.bs-bar {
-  background:
-    linear-gradient(rgba(212, 85, 62, 0.55), rgba(212, 85, 62, 0.55)),
-    url('../assets/tex-wood.jpg') center / 200px 200px;
-}
 .bs-exit .k-btn { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
 
 /* ---- the Townhall card's blocks (M2) ---- */
@@ -524,3 +519,5 @@
 .set-icon.is-ambience { background: url('../assets/set-ambience.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .set-icon.is-save { background: url('../assets/set-save.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .set-icon.is-payer { background: url('../assets/set-payer.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.bld-offer-pip:not(.is-on) { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
+.bs-bar { background: url('../assets/tex-wood.jpg') center / 200px 200px; }

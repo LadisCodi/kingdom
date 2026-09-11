@@ -8,7 +8,7 @@
 
 .bs {
   position: absolute;
-  inset: 0;
+  inset: var(--hud-h) 0 var(--nav-h);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -20,7 +20,7 @@
      the board into a ghost of a menu. */
   background:
     radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.12), transparent 70%),
-    #2a1a10;
+    #3a2416;
   overflow: hidden;
 }
 
@@ -36,30 +36,47 @@
   display: flex;
   align-items: center;
   border: 3px solid var(--wood-dark);
-  border-radius: 20px;
-  /* Ours leaf, theirs clay, in a wooden trough (M16). */
-  background: var(--clay);
-  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.35), 0 3px 0 var(--wood-dark);
+  border-radius: 12px;
+  /* A wooden plank (M16): our number in leaf at the left, theirs in clay at
+     the right, the fill a thin leaf band along the bottom edge. */
+  background: var(--wood);
+  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -3px 0 rgba(60, 36, 18, 0.35), 0 3px 0 var(--wood-dark);
   overflow: hidden;
   flex: none;
 }
 .bs-bar-fill {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset: auto auto 0 0;
+  height: 6px;
   background: var(--leaf);
-  box-shadow: inset 0 -3px 0 var(--leaf-dark);
+  box-shadow: inset 0 -2px 0 var(--leaf-dark);
   transition: width 120ms linear;
+}
+.bs-bar::after {
+  /* The crossed swords at the split. */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  translate: -50% -50%;
+  background: var(--parchment);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.9;
 }
 .bs-bar-mine,
 .bs-bar-theirs {
   position: relative;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 18px;
-  color: var(--ink-inverse);
+  font-size: 20px;
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  padding: 0 14px;
+  padding: 0 16px;
 }
+.bs-bar-mine { color: #9be36f; }
+.bs-bar-theirs { color: #ff8a70; }
 .bs-bar-mine { margin-right: auto; }
 
 .bs-where {
@@ -198,8 +215,16 @@
   background: var(--wood);
   box-shadow: 0 0 0 2px var(--wood-dark), 0 6px 0 rgba(0, 0, 0, 0.35);
 }
-.bs-plaque.is-won { border-color: var(--leaf); }
-.bs-plaque.is-lost { border-color: var(--clay); }
-.bs-exit { width: 100%; flex: none; }
+.bs-plaque.is-won { color: var(--gold); }
+.bs-plaque.is-lost { border-color: var(--clay); color: var(--parchment); }
+/* The way out hangs under the plaque, in the middle of the field (M16). */
+.bs-exit {
+  position: absolute;
+  top: calc(50% + 44px);
+  left: 50%;
+  translate: -50% 0;
+  width: 60%;
+  flex: none;
+}
 .bs-exit .k-btn { width: 100%; }
 .bs .is-hidden { visibility: hidden; }
