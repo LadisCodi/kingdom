@@ -1161,18 +1161,23 @@ export interface PackDef {
   goldChance: number;
   /** The Star pack's promise: its last card is gold, always. */
   goldGuaranteed: boolean;
+  /** What the store charges for one, or **0 for a tier the store does not
+   *  sell** — which is how Bronze and Silver stay the ruins' faucet. */
+  gemCost: number;
 }
 
 export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
   PACK_ORDER.map((id) => {
     const b = (balance.packs as Record<string, {
-      cards: number; weights: number[]; goldChance: number; goldGuaranteed: number;
+      cards: number; weights: number[]; goldChance: number;
+      goldGuaranteed: number; gemCost: number;
     }>)[id];
     return [id, {
       cards: b.cards,
       weights: b.weights,
       goldChance: b.goldChance,
       goldGuaranteed: b.goldGuaranteed === 1,
+      gemCost: b.gemCost,
     }];
   }),
 ) as Record<PackTier, PackDef>;

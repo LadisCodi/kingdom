@@ -19,13 +19,15 @@
 //  4. STARS ARE A COUNTER IN THIS SCREEN, not a wallet row — the Fragments
 //     precedent (CLAUDE.md, "Money and identity are different things").
 
-import { COLLECTION, CURRENCIES, PACKS, type PackTier } from './data/definitions';
+import { COLLECTION, CURRENCIES, PACKS, PACK_ORDER, type PackTier } from './data/definitions';
 import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, SEASON_EPOCH, seasonContent,
   type AlbumId, type CardRef, type Rarity, type SeasonDef,
 } from './data/seasons';
 import { rand } from './rng';
-import { addToWallet, type ArtifactId, type CurrencyId, type GameState, type Wallet } from './state';
+import {
+  addToWallet, getWallet, type ArtifactId, type CurrencyId, type GameState, type Wallet,
+} from './state';
 import { grantArtifactLevel } from './artifacts';
 import { cityGatherPerSecond } from './upgrades';
 import { cityGoldPerMinute } from './population';
@@ -345,6 +347,51 @@ export function productionChest(state: GameState, hours: number): Wallet {
 /** Every album finished, so the collection prize is owed (§5). */
 export const seasonIsComplete = (state: GameState): boolean =>
   state.collection.completed.length >= ALBUM_ORDER.length;
+
+// ---------------------------------------------------------------- the store
+
+/**
+ * THE PUBLISHED ODDS (§6). A tier's weights as percentages, only for the
+ * rarities it can actually roll.
+ *
+ * Weights are authored rather than percentages so a tier can be retuned
+ * without rebalancing a column to 100 — but a player is owed the percentage,
+ * so the conversion lives here, once, and the store prints what it returns.
+ */
+export function packOdds(tier: PackTier): Array<{ rarity: Rarity; percent: number }> {
+  const { weights } = PACKS[tier];
+  const total = RARITIES.reduce((n, r) => n + (weights[r - 1] ?? 0), 0);
+  if (total <= 0) return [];
+  return RARITIES
+    .filter((r) => (weights[r - 1] ?? 0) > 0)
+    .map((r) => ({ rarity: r, percent: Math.round(((weights[r - 1] ?? 0) / total) * 100) }));
+}
+
+/** Tiers the store sells, cheapest first. A tier with no price is not for
+ *  sale — which is how Bronze and Silver stay the ruins' faucet. */
+export const packsForSale = (): PackTier[] =>
+  PACK_ORDER.filter((tier) => PACKS[tier].gemCost > 0);
+
+export const packGemCost = (tier: PackTier): number => PACKS[tier].gemCost;
+
+export type BuyPackResult = 'Purchased' | 'NotForSale' | 'NotEnoughGems';
+
+/**
+ * Buy a pack with Gems.
+ *
+ * It lands UNOPENED, like every other pack: the store hands over the thing,
+ * and the Collection is where a pack is turned over (§11.5). So a player who
+ * buys three in a row has three to open rather than three reveals they have
+ * to sit through at the till.
+ */
+export function buyPack(state: GameState, tier: PackTier): BuyPackResult {
+  const cost = packGemCost(tier);
+  if (cost <= 0) return 'NotForSale';
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  grantPack(state, tier, 'store');
+  return 'Purchased';
+}
 
 // --------------------------------------------------------------- the vault
 

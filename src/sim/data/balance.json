@@ -5273,7 +5273,8 @@
         0
       ],
       "goldChance": 0,
-      "goldGuaranteed": 0
+      "goldGuaranteed": 0,
+      "gemCost": 0
     },
     "Silver": {
       "cards": 4,
@@ -5285,7 +5286,8 @@
         0
       ],
       "goldChance": 0,
-      "goldGuaranteed": 0
+      "goldGuaranteed": 0,
+      "gemCost": 0
     },
     "Gold": {
       "cards": 5,
@@ -5297,7 +5299,8 @@
         0
       ],
       "goldChance": 0.08,
-      "goldGuaranteed": 0
+      "goldGuaranteed": 0,
+      "gemCost": 500
     },
     "Star": {
       "cards": 6,
@@ -5309,7 +5312,8 @@
         12
       ],
       "goldChance": 0.2,
-      "goldGuaranteed": 1
+      "goldGuaranteed": 1,
+      "gemCost": 1500
     }
   },
   "fog": {

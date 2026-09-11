@@ -516,8 +516,14 @@ const SHEETS = {
   // rebalancing the column to 100. `gold_chance` is the chance a 4★ or 5★
   // comes up as its gold edition, and `gold_guaranteed` forces the last card
   // of the pack gold — the Star pack's promise.
+  //
+  // `gem_cost` is what the STORE charges for one, priced to the key ladder
+  // (§12): a Gold pack about a silver key, a Star pack about a gold one.
+  // **BLANK means the store does not sell it**, which is how Bronze and
+  // Silver stay the ruins' faucet — selling what a room already drips would
+  // undercut the only free source the collection has.
   Packs: ['id', 'cards', 'weight_1star', 'weight_2star', 'weight_3star',
-    'weight_4star', 'weight_5star', 'gold_chance', 'gold_guaranteed'],
+    'weight_4star', 'weight_5star', 'gold_chance', 'gold_guaranteed', 'gem_cost'],
   // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
   // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
   // every squad of its own type on that side, applied at battle start and
@@ -1261,6 +1267,7 @@ async function importXlsx() {
       weights,
       goldChance: chance,
       goldGuaranteed: guaranteed,
+      gemCost: num(r, 'gem_cost', { blankAs: 0 }),
     };
   }
 
@@ -1410,7 +1417,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Packs', PACK_IDS.map((id) => {
     const k = b.packs[id];
     return [id, k.cards, ...k.weights.map((w) => w || ''),
-      k.goldChance || '', k.goldGuaranteed || ''];
+      k.goldChance || '', k.goldGuaranteed || '', k.gemCost || ''];
   }));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

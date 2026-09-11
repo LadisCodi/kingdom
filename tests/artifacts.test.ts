@@ -12,16 +12,16 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  ARTIFACTS, ARTIFACT_ORDER, COLLECTION, PACKS, PACK_ORDER,
+  ARTIFACTS, ARTIFACT_ORDER, BANNERS, COLLECTION, PACKS, PACK_ORDER,
 } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
   passiveValueAtLevel, syncArtifactModifiers,
 } from '../src/sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyFromVault, cardCount, closeSeason,
-  grantPack, openPack, packCards, productionChest, seasonAt, seasonEndsAt,
-  seasonHeld, seasonStartsAt, starsFor, vaultCost, SEASON_CARDS,
+  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, cardCount, closeSeason,
+  grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
+  seasonAt, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost, SEASON_CARDS,
 } from '../src/sim/collection';
 import { ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, SEASON_EPOCH } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
@@ -239,6 +239,69 @@ describe('a pack', () => {
     grantPack(state, 'Bronze', 'room');
     expect(state.collection.packs).toHaveLength(1);
     expect(seasonHeld(state)).toBe(0);
+  });
+});
+
+describe('the store', () => {
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    state.collection.season = seasonAt(T0);
+  });
+
+  // Bronze and Silver are the RUINS' faucet. Selling what a room already
+  // drips would undercut the only free source the collection has, so a tier
+  // with no price is not on the shelf at all.
+  it('sells the two tiers the ruins do not drip, and only those', () => {
+    expect(packsForSale()).toEqual(['Gold', 'Star']);
+    expect(packGemCost('Bronze')).toBe(0);
+    expect(buyPack(state, 'Bronze')).toBe('NotForSale');
+    expect(state.collection.packs).toEqual([]);
+  });
+
+  // Priced to the key ladder (§12): a Gold pack about a silver key.
+  it('prices a Gold pack at a silver key and a Star pack at a gold one', () => {
+    expect(packGemCost('Gold')).toBe(BANNERS.basic.keyGemCost);
+    expect(packGemCost('Star')).toBe(BANNERS.advanced.keyGemCost);
+  });
+
+  it('takes the Gems and hands over an UNOPENED pack', () => {
+    state.player.wallet.Gems = packGemCost('Star');
+    expect(buyPack(state, 'Star')).toBe('Purchased');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+    // Unopened: the store hands over the thing, the Collection turns it over.
+    expect(state.collection.packs).toHaveLength(1);
+    expect(state.collection.packs[0]!.tier).toBe('Star');
+    expect(seasonHeld(state)).toBe(0);
+  });
+
+  it('refuses a purse that is one Gem short, and takes nothing', () => {
+    state.player.wallet.Gems = packGemCost('Gold') - 1;
+    expect(buyPack(state, 'Gold')).toBe('NotEnoughGems');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(packGemCost('Gold') - 1);
+    expect(state.collection.packs).toEqual([]);
+  });
+
+  // §6 says "at PUBLISHED odds", and the store is where that promise has to
+  // be kept. Weights are authored, so the percentages are derived — and they
+  // must cover the tier and nothing else.
+  it('publishes odds that sum to about 100 over the rarities it can roll', () => {
+    for (const tier of packsForSale()) {
+      const odds = packOdds(tier);
+      expect(odds.length).toBeGreaterThan(0);
+      const total = odds.reduce((n, o) => n + o.percent, 0);
+      expect(Math.abs(total - 100)).toBeLessThanOrEqual(1);
+      for (const o of odds) expect(PACKS[tier].weights[o.rarity - 1]).toBeGreaterThan(0);
+    }
+  });
+
+  // Two bought in a row are two to open, not two reveals at the till.
+  it('stacks what a player buys', () => {
+    state.player.wallet.Gems = packGemCost('Gold') * 3;
+    for (let i = 0; i < 3; i++) expect(buyPack(state, 'Gold')).toBe('Purchased');
+    expect(state.collection.packs).toHaveLength(3);
+    // Three different ids, so three different hands.
+    expect(new Set(state.collection.packs.map((k) => k.id)).size).toBe(3);
   });
 });
 

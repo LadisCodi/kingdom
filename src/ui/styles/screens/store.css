@@ -159,6 +159,43 @@
 .store .k-btn.has-cost { flex-direction: row; gap: 8px; padding: 6px 12px; }
 .store .k-btn.has-cost .k-btn-cost { font-size: var(--text-body); font-weight: 700; }
 
+/* ---- the Cards shelf (M23): the keys' row, with the odds inside the card
+ * under the line that sells it.
+ *
+ * The card body is a THREE-line column — name, promise, odds — where the
+ * keys' is two, so the row is taller by one small line and nothing else
+ * changes. The odds are the smallest type on the shelf on purpose: they are
+ * a promise the store has to keep, not a thing it is selling. */
+.store .k-card > .k-slot .store-pack-row-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25));
+}
+.store .k-card > .k-slot .store-pack-row-art.is-fallback { display: grid; place-items: center; }
+/* The odds wrap to their OWN line under the row rather than squeezing the
+   body, so the slab keeps the width it needs and the name keeps its size.
+   Indented to the body's left edge, so the column reads as one block. */
+.store .k-card:has(> .store-odds) { flex-wrap: wrap; }
+.store .k-card > .store-odds {
+  order: 1;
+  flex: 1 0 100%;
+  margin: -2px 0 0 58px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* One line of fine print under the shelf, in the player's words: what the
+   store does NOT sell, and where it comes from instead. */
+.store-note {
+  margin: -4px 2px 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
 /* ---- the gem packs: three across, two rows, upright cards (M5) */
 .store-packs {
   display: grid;

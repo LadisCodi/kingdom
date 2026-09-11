@@ -35,8 +35,9 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyFromVault, cardCount, openPack,
-  packCards, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
+  albumHeld, albumIsComplete, albumRewards, buyFromVault, buyPack, cardCount, openPack,
+  packCards, packGemCost, packOdds, packsForSale, seasonDef, seasonHeld, seasonLeftMs,
+  starsFor, vaultCost, vaultNext,
   SEASON_CARDS, type AlbumPayout, type PackOpening, type VaultTier,
 } from './sim/collection';
 import { ALBUMS, ALBUM_ORDER, albumOfRelic, type AlbumId } from './sim/data/seasons';
@@ -1172,6 +1173,47 @@ export class Game {
       return;
     }
     this.doBuyFromVault(vault.next);
+  }
+
+  /**
+   * The store's Cards shelf (§6): one row per tier the store sells, with its
+   * PUBLISHED ODDS on it.
+   *
+   * The odds are on the shelf rather than behind an info knob because §6 says
+   * "at published odds" and a store is the one place that promise has to be
+   * kept where the money is.
+   */
+  packOffers(): Array<{
+    tier: PackTier; cost: number; cards: number; sprite: string;
+    promise: string; odds: string;
+  }> {
+    return packsForSale().map((tier) => {
+      const def = PACKS[tier];
+      return {
+        tier,
+        cost: packGemCost(tier),
+        cards: def.cards,
+        sprite: `pack_${tier.toLowerCase()}`,
+        promise: def.goldGuaranteed
+          ? `${def.cards} cards, one gold edition guaranteed`
+          : `${def.cards} cards, and a chance of a gold edition`,
+        odds: packOdds(tier).map((o) => `${o.rarity}★ ${o.percent}%`).join(' · '),
+      };
+    });
+  }
+
+  doBuyPack(tier: PackTier): void {
+    const result = buyPack(this.state, tier);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      const waiting = this.state.collection.packs.length;
+      this.toast(waiting === 1
+        ? `A ${tier} pack — open it in the Collection`
+        : `A ${tier} pack · ${waiting} waiting in the Collection`);
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
   }
 
   doBuyFromVault(tier: VaultTier): void {

@@ -595,3 +595,26 @@ for.
 - The 45 CARD FACES are not drawn and are a content job rather than a sheet: a
   card is its album's medallion behind its name and its stars, which is what
   makes a nine-card page read as one album.
+
+---
+
+## M23 — the store's Cards shelf (§7.19)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M22 conversation above, continued; nothing
+  re-attached, twenty-three prompts in.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `mockups/m23-store-cards.png`, 852×1846, opaque.
+- **Prompt:** §7.19 M23, with every quotation mark and star glyph stripped —
+  see below.
+- **What worked:** asking for the shelf ABOVE the one that already exists
+  ("Below that, a tiny caps label KEYS and the top edge of the next row card,
+  cut off by the bottom of the sheet") got the new section drawn in the keys'
+  own row shape without describing that shape again. It came back with the
+  odds line, the gold slab on the better pack and the fine print all in
+  place, and the implementation follows it 1:1.
+- **What to know:** the first send arrived as `--`. A prompt this long with
+  `"` quotes and `★` glyphs in it loses almost everything on the way into the
+  composer; retyped with the quotes dropped and the stars spelled out ("2 star
+  40 percent") it went through whole. **Check the composer's screenshot before
+  sending, and if it shows a stub, `ctrl+a` `Delete` and retype plainly.**

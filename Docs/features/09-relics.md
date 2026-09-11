@@ -144,9 +144,18 @@ cards it holds and which rarities it can hold, at **published odds**.
 |---|---|---|---|
 | **Bronze** | 3 | 1★–2★ | every ruin room, the daily chest's free track, quests |
 | **Silver** | 4 | 1★–3★ | a depth's boss, the weekly event track |
-| **Gold** | 5 | 2★–4★, a chance of gold | the season pass's paid column, the Royal chest, the vault, store offers |
-| **Star** | 6 | 3★–5★, **one gold guaranteed** | the collection's own late milestones, guild chests, store offers |
+| **Gold** | 5 | 2★–4★, a chance of gold | the season pass's paid column, the Royal chest, the vault, **the store** |
+| **Star** | 6 | 3★–5★, **one gold guaranteed** | the collection's own late milestones, guild chests, **the store** |
 
+- **The store sells the two tiers the ruins do not drip**, and only those:
+  a Gold pack and a Star pack, Gem-priced on the store's own Cards shelf
+  ([`14-monetization.md`](14-monetization.md) §3). Selling a Bronze pack would
+  undercut the only free source the collection has, and the shelf says so in
+  one line of fine print — *Bronze and silver packs come from the ruins.*
+- **The shelf is where the odds are published.** Each row prints what its
+  tier can roll, as percentages: a player reading "a chance of a gold edition"
+  is owed the number beside it, and a store is the one place that promise has
+  to be kept where the money is.
 - **Ruins are the free faucet.** An ordinary room pays a Bronze pack beside
   its formula reward; a boss pays a Silver one in its authored chest
   ([`11-expeditions.md`](11-expeditions.md) §7). The five authored ruins
@@ -323,6 +332,7 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Keys an album pays | silver · silver · silver · gold · gold | `collection.album_keys_*` |
 | Rarity per slot, per album | authored | seasons file |
 | Pack tiers — cards, rarity range, odds | §6 | `Packs` sheet |
+| What the store charges for a pack | **a Gold pack at a silver key (500), a Star pack at a gold one (1,500)**; blank = not sold | `Packs` sheet, `gem_cost` |
 | Stars a duplicate is worth | 1 · 2 · 5 · 10 · 25, gold ×2 | `collection.stars_*` |
 | Vault thresholds | 50 → Gold, 200 → Star | `collection.vault_*` |
 | Free albums a season, target | **the pacing number — OQ-88**; two of five free, five for a Dolphin | derived, not authored |

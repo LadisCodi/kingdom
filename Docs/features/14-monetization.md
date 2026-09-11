@@ -92,6 +92,7 @@
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
 | **Card pack** | chance | Gems, in offers | a Gold or Star pack of the running season, at published odds ([`09-relics.md`](09-relics.md) §6) — designed |
+| **Card packs** | the store's Cards shelf | Gems | a Gold pack at **500** and a Star pack at **1,500** — the key ladder's two prices, because a key and a pack are the same kind of purchase. The shelf prints each tier's **published odds** ([`09-relics.md`](09-relics.md) §6) |
 | **Wildcard offer** | chance | Gems | a wildcard aimed at an album the player has nearly finished; never gold ([`09-relics.md`](09-relics.md) §9) — designed |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
@@ -303,7 +304,8 @@ One page, refreshed weekly:
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
-| Card pack offer · wildcard offer | priced to the ladder — a Gold pack about a silver key, a wildcard about a gold one | `Packs` sheet, `collection.wildcard_gem_cost` |
+| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `Packs` sheet, `gem_cost` |
+| Wildcard offer | priced to the ladder — about a gold key | `collection.wildcard_gem_cost` |
 | The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
