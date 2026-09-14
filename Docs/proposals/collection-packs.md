@@ -65,12 +65,57 @@ Not a faucet — **what duplicates buy**. Bought with stars, never with Gems.
 
 | | Free | Paid |
 |---|---|---|
-| **Verde · Amarillo · Rosa** | ruins, the daily chest, the pass's free track | — |
+| **Verde · Amarillo · Rosa** | the repeatable dungeon, the daily chest, the pass's free track | — |
 | **Azul · Púrpura · Dorado** | — | the daily chest's paid track, the pass's paid column, the store's pack shelf |
 | **Bronce · Silver · Gold** | the vault, for stars | the vault, for stars |
 
 **The vault is the free player's only route to the high rarities**, and §4
 measures exactly how much that matters.
+
+### 2.1 The free 200, and where they come from
+
+| Source | Rate | Packs a season |
+|---|---|---|
+| **The daily chest** | one a day, cycling Verde → Amarillo → Rosa | **28** |
+| **The pass's free track** | one on every other rung, 14 rungs | **7** |
+| **The repeatable dungeon** | one per run | **165** |
+| | | **200** |
+
+- **The dungeon is the engine, and that is deliberate.** The chest and the pass
+  are clocks: they pay the same whether the player plays for two minutes or two
+  hours. The dungeon is the only one of the three that answers *playing more*,
+  so it carries five sixths of the faucet.
+- **The five authored ruins cannot do this.** They hold 15 depths between them
+  and they clear **once** — 15 packs in the lifetime of an account, not 15 a
+  season. Everything in §4 therefore depends on the repeatable dungeon, which
+  is designed and unbuilt
+  ([`../implementation-plan.md`](../implementation-plan.md) §4). **OQ-102.**
+
+### 2.2 What a repeatable run has to look like
+
+165 packs a season is the requirement; the shape that delivers them is a
+choice, and **one pack per authored-sized depth is not playable**:
+
+| Packs a run | Rooms a run | Runs a day | **Fights a day** | Gold a season |
+|---|---|---|---|---|
+| 1 | 12 *(an authored depth)* | 5.9 | **71** | 78,870 |
+| 1 | 5 | 5.9 | 29 | 32,862 |
+| 2 | 8 | 2.9 | 24 | 26,290 |
+| **3** | **5** | **2.0** | **10** | **10,954** |
+| 5 | 10 | 1.2 | 12 | 13,145 |
+
+- **A run should be SHORT and pay SEVERAL packs.** At an authored depth's
+  twelve rooms and one pack, the faucet asks for **71 fights a day** and eats
+  78,870 Gold a season — against a thirty-day harness that ends holding about
+  113,000. That is not a session, it is a job.
+- **The recommendation is three packs for a five-room run**: two runs a day,
+  ten fights, and about 11,000 Gold of supplies a season. A run is then a
+  ten-minute thing a player does twice, which is what a daily loop should feel
+  like.
+- **The repeatable dungeon's own numbers are now downstream of this.** How many
+  rooms a run holds, what it charges in supplies and what else it pays are no
+  longer free parameters: the collection needs 165 packs a season out of it,
+  and that fixes the product of its run length and its frequency.
 
 ## 3. What a season costs
 
@@ -84,10 +129,10 @@ Measured over the eight albums (72 slots), opening the six packs evenly:
 | Opening only Azul | 911 |
 | Opening only Verde, Amarillo, Rosa or Dorado | never |
 
-- **The free faucet is 200 packs a season** — Verde, Amarillo and Rosa from the
-  ruins, the daily chest and the pass's free track. Across 28 days that reads
-  as **about seven a day**, which is what sized the season at four weeks
-  rather than two (§3.1).
+- **The free faucet is 200 packs a season** (§2.1) — Verde, Amarillo and Rosa
+  from the repeatable dungeon, the daily chest and the pass's free track.
+  Across 28 days that reads as **about seven a day**, which is what sized the
+  season at four weeks rather than two (§3.1).
 - A season deals **563 cards for 72 slots: 87% of everything opened is a
   duplicate**, worth **7,590 stars** if none are spent.
 
