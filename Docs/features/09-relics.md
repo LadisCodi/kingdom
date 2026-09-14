@@ -190,6 +190,9 @@ Three things, on the ninth card, in one sheet:
 - **Nothing rushes one relic ahead of the others.** A relic's level is the
   count of seasons its album was completed, so three seasons closed in full is
   level 3 on all five, and a player's relic levels read their history.
+  [`../proposals/album-cycles.md`](../proposals/album-cycles.md) proposes
+  running the five again inside one season, which keeps the breadth rule and
+  drops the one-a-season one — **OQ-100**.
 
 ## 6. Packs
 
@@ -506,5 +509,5 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97, OQ-98 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97, OQ-98, OQ-100 in
 [`../open-questions.md`](../open-questions.md).

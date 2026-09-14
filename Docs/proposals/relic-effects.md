@@ -47,9 +47,14 @@ Seven things are wrong with that table.
   map, so an overlap is a real choice — an area taking two effects is an area
   somewhere else taking none, and chaining the Rod's recovery under the Seal's
   harvest is a combination worth finding rather than a rule to police.
-- **Every active has a 5-minute cooldown**, and **it starts when the window
-  closes**, not when the spell is cast. Otherwise a 10-minute window on a
-  5-minute cooldown is 100% uptime and the cooldown is decoration.
+- **An active walks three states: ACTIVE → COOLDOWN → READY.** It cannot be
+  recast while its own window is still open, the **5-minute cooldown starts
+  when that window closes**, and only then does the relic light up again.
+  A cooldown counted from the cast would be decoration: a 10-minute window on
+  a 5-minute cooldown is 100% uptime.
+- The relic's card shows which of the three it is in, and the countdown derives
+  from a timestamp rather than a decremented integer, so a throttled tab comes
+  back correct.
 - **A cooldown never shrinks with level.** A shrinking cooldown is a discount
   and dies; and a relic that did more *and* did it more often would grow on
   two axes at once.
@@ -65,22 +70,37 @@ Seven things are wrong with that table.
 
 ### 2.2 One growing axis per active
 
-An active has four numbers — power, duration, radius and cooldown. **Exactly
-one of them grows with the relic's level.** Two growing axes multiply, and at
-level 20 that is not a buff, it is a different game.
+An active has four numbers — power, duration, radius and cooldown. **One of
+them grows smoothly with the level, one steps at three named levels, and the
+other two never move.**
 
-| Relic | The axis its level moves | Why that one |
+| Relic | Grows every level | Why that one |
 |---|---|---|
 | **Dowsing Rod** | **duration** | the zone's worth is how many nodes exhaust inside it, which is time |
 | **Verdant Seal** | **taps per Mana** | §3.2 — the spell IS a Mana exchange rate |
 | **Foreman's Sigil** | **power** | a crew either works faster or it does not; a longer window is just a longer wait |
 | **Gilded Ledger** | **taps per Mana** | §3.2 |
-| **Wanderer's Compass** | **radius** | for a reveal, more rings IS the effect |
+| **Wanderer's Compass** | **radius** | for a reveal, more ground IS the effect, so its step ladder is its whole growth |
 
-- **Radius is fixed at 2 for the other four.** A Chebyshev radius covers
-  `(2r+1)²` cells — 25, then 49, then 81 — so growing it grows the effect
-  quadratically. The Compass is the exception because covering more ground is
-  the whole of what it does.
+### 2.3 Radius steps, and it steps loudly
+
+**Radius is the same three-rung ladder on every relic**, and it is deliberately
+the one number that does not creep:
+
+| | **L1–4** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|
+| Radius | 2 | **3** | **4** | **5** |
+| Cells covered | 25 | **49** | **81** | **121** |
+
+- A Chebyshev radius covers `(2r+1)²` cells, so each rung is roughly **double
+  the ground**. That is exactly why it is a step and not a slope: a number
+  that doubles cannot creep, but it makes a superb milestone.
+- **Three loud jumps beat twenty quiet ones.** A player two cards from
+  level 5 knows precisely what those two cards buy, which is what a collection
+  wants its ladder to feel like.
+- **Cooldown never moves**, at any level. A relic that did more *and* did it
+  more often would grow on two axes at once, and a shrinking cooldown is a
+  discount wearing a hat.
 
 ## 3. The five
 
@@ -140,7 +160,7 @@ costs 1 Mana*, and the exception is the design:
 Every number below is a **first pass**. What matters most is the **per-level**
 column, because a relic gains a level a season for ever and nothing caps it.
 
-**Dowsing Rod** — mana 15 · cooldown 5 min · radius 2 (fixed) · power ×5 (fixed)
+**Dowsing Rod** — mana 15 · cooldown 5 min · power ×5 (fixed)
 
 | Dowsing Rod | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
@@ -148,8 +168,9 @@ column, because a relic gains a level a season for ever and nothing caps it.
 | *(a Forest's 90 s wait becomes)* | 75 s | 64 s | 56 s | 45 s | 30 s | 18 s |
 | **Active — duration** | **5 min** | **6 min** | **7 min** | **9 min** | **14 min** | **24 min** |
 | *(uptime, cooldown after)* | 50% | 55% | 58% | 64% | 74% | 83% |
+| Active — radius (§2.3) | 2 | 2 | 2 | **3** | **4** | **5** |
 
-**Verdant Seal** — mana 15 · cooldown 5 min · radius 2 (fixed) · 4 taps a second
+**Verdant Seal** — mana 15 · cooldown 5 min · 4 taps a second
 
 | Verdant Seal | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
@@ -159,16 +180,18 @@ column, because a relic gains a level a season for ever and nothing caps it.
 | **Active — taps per Mana** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
 | Active — taps dealt | 30 | 34 | 38 | 45 | 64 | 101 |
 | Active — window | 7.5 s | 8.5 s | 9.5 s | 11.2 s | 16.0 s | 25.2 s |
+| Active — radius (§2.3) | 2 | 2 | 2 | **3** | **4** | **5** |
 
-**Foreman's Sigil** — mana 20 · cooldown 5 min · radius 2 (fixed) · 5 min (fixed)
+**Foreman's Sigil** — mana 20 · cooldown 5 min · 5 min (fixed)
 
 | Foreman's Sigil | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
 | Passive — crew speed | ×1.10 | ×1.20 | ×1.30 | ×1.50 | ×2.00 | ×3.00 |
 | **Active — crew speed in the zone** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
 | *(uptime, cooldown after)* | 50% | 50% | 50% | 50% | 50% | 50% |
+| Active — radius (§2.3) | 2 | 2 | 2 | **3** | **4** | **5** |
 
-**Gilded Ledger** — mana 20 · cooldown 5 min · radius 2 (fixed) · 4 taps a second
+**Gilded Ledger** — mana 20 · cooldown 5 min · 4 taps a second
 
 | Gilded Ledger | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
@@ -176,14 +199,15 @@ column, because a relic gains a level a season for ever and nothing caps it.
 | **Active — taps per Mana** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
 | Active — taps dealt | 40 | 45 | 50 | 60 | 85 | 135 |
 | Active — window | 10.0 s | 11.2 s | 12.5 s | 15.0 s | 21.2 s | 33.8 s |
+| Active — radius (§2.3) | 2 | 2 | 2 | **3** | **4** | **5** |
 
 **Wanderer's Compass** — mana 25 · cooldown 5 min · 30 s to walk the rings
 
 | Wanderer's Compass | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
 | Passive — Stardust from rooms | ×1.05 | ×1.10 | ×1.15 | ×1.25 | ×1.50 | ×2.00 |
-| **Active — radius** | **2** | **2** | **2** | **3** | **4** | **6** |
-| *(cells the disc covers)* | 25 | 25 | 25 | 49 | 81 | 169 |
+| **Active — radius (§2.3)** | **2** | 2 | 2 | **3** | **4** | **5** |
+| *(cells the disc covers)* | 25 | 25 | 25 | **49** | **81** | **121** |
 
 ### 4.1 Two of these are cuts to live numbers
 
@@ -238,7 +262,8 @@ where a percentage would have rounded away to nothing.
 | Taps a Mana, and its per-level step | **2.00, +0.25** | `Artifacts` sheet |
 | Auto-tap rate | **4 a second** | a setting |
 | Cooldown | **5 min, flat, from when the window closes** | a setting |
-| Radius | **2 everywhere but the Compass** | `active_radius` |
+| Radius | **2 · 3 at L5 · 4 at L10 · 5 at L20**, the same on all five | `active_radius_steps` |
+| The album cycle | see [`album-cycles.md`](album-cycles.md) | — |
 
 ## 7. Deliberately not in this proposal
 
@@ -250,8 +275,8 @@ where a percentage would have rounded away to nothing.
 - **A cooldown that shrinks with level**, which is a discount wearing a hat.
 - **A cooldown that starts at the cast** while the window outlives it, which is
   no cooldown at all.
-- **Radius as the growing axis** on anything but the Compass: area is
-  quadratic.
+- **Radius as a smooth axis.** Area is quadratic, so it steps at three named
+  levels or it does not move (§2.3).
 - **A popup asking whether to overwrite an overlapping zone.** Zones overlap
   freely; the grid shows what a cast would cover before the tap, which is the
   house rule (*pills, not modals*) and the idiom casting already has.
