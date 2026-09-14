@@ -474,6 +474,24 @@ export class Game {
       const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
       this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
     }
+    // THE SEASON ROLLED OVER while the player was here or away. It is the one
+    // event that takes something from them — the album is empty and the stars
+    // are gone — so it is a banner rather than a toast, and it names what the
+    // cards melted into (Docs/features/09-relics.md §3).
+    if (result.seasonClosed !== null) {
+      const closed = result.seasonClosed;
+      const opened = seasonDef(closed.to);
+      this.queueBanner({
+        title: 'A new season!',
+        icon: '\u{1F5D3}',
+        name: opened.name,
+        desc: closed.cards > 0
+          ? `${closed.cards} cards melted down for ${closed.gold.toLocaleString('en-US')} gold. `
+            + 'A fresh album, and your relics keep every level.'
+          : 'A fresh album, and your relics keep every level.',
+        tone: 'gold',
+      });
+    }
     for (const id of result.completedResearch) {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({

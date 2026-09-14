@@ -7,6 +7,7 @@
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
+import { formatDuration } from '../src/ui/format';
 import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
@@ -658,5 +659,26 @@ describe('the overlay signatures', () => {
     for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
+  });
+});
+
+// The countdown every pill and sheet prints. The remainder is ROUNDED, so it
+// can round up into a full unit — and a fortnight's season countdown parks on
+// exactly that edge for the first half hour of every season.
+describe('formatDuration', () => {
+  it('carries a rounded-up remainder into the bigger unit', () => {
+    // A fortnight's season, one minute in: 13d 23h 59m, which rounds to
+    // "13d 24h" without the carry.
+    expect(formatDuration(14 * 86_400 - 60)).toBe('14d');
+    expect(formatDuration(86_400 - 10)).toBe('24h');
+    expect(formatDuration(3600 - 0.4)).toBe('60m');
+  });
+
+  it('still prints the two units when the remainder is real', () => {
+    expect(formatDuration(13 * 86_400 + 12 * 3600)).toBe('13d 12h');
+    expect(formatDuration(2 * 3600 + 30 * 60)).toBe('2h 30m');
+    expect(formatDuration(90)).toBe('1m 30s');
+    expect(formatDuration(45)).toBe('45s');
+    expect(formatDuration(0)).toBe('instant');
   });
 });

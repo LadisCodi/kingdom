@@ -11,7 +11,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, seasonEndsAt } from './collection';
+import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
 import {
@@ -402,9 +402,10 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** The season that closed under the player, if one did — the cards and the
-   *  stars are gone and a new season is open (Docs/features/09-relics.md §3). */
-  seasonClosed: { from: number; to: number } | null;
+  /** The season that closed under the player, if one did — the cards melted
+   *  into Gold, the stars are gone and a new season is open
+   *  (Docs/features/09-relics.md §3). */
+  seasonClosed: SeasonClose | null;
 }
 
 const emptyResult = (): AdvanceResult => ({

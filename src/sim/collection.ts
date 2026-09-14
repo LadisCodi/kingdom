@@ -1,9 +1,9 @@
 // The card collection (Docs/features/09-relics.md).
 //
-// Five albums of nine cards, one album per relic, on a 30-day season every
-// player shares. Finishing an album levels its relic for ever, pays a chest of
-// production, keys and Gems; at the close the cards and the stars are wiped
-// and the levels stay.
+// Five albums of nine cards, one album per relic, on a season every player
+// shares. Finishing an album levels its relic for ever, pays a chest of
+// production, keys and Gems; at the close the cards melt into Gold by their
+// rarity, the stars are wiped and the levels stay.
 //
 // FOUR RULES THIS FILE EXISTS TO KEEP:
 //
@@ -15,7 +15,9 @@
 //     the ninth card is a duplicate, not a second payout.
 //  3. THE CLOSE IS A TIMER, NOT PRODUCTION. It resolves in the uncapped tail
 //     of the offline advance at its absolute timestamp (§3), so a player away
-//     for a week comes back to the wiped album and the new season.
+//     for a week comes back to the wiped album and the new season. The seasons
+//     CYCLE: the content list is read modulo its own length, so the calendar
+//     never runs out of seasons to open.
 //  4. STARS ARE A COUNTER IN THIS SCREEN, not a wallet row — the Fragments
 //     precedent (CLAUDE.md, "Money and identity are different things").
 
@@ -335,11 +337,16 @@ function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
  * an early album lands in a city with two workers, and a chest of almost
  * nothing would read as a bug rather than as a reward.
  */
+/** Gold a second, taxes and gatherers together — what every reward priced in
+ *  production reads, so the chest and the close never disagree about what an
+ *  hour of this city is worth. */
+export const cityGoldPerSecond = (state: GameState): number =>
+  cityGoldPerMinute(state) / 60 + cityGatherPerSecond(state, 'Gold');
+
 export function productionChest(state: GameState, hours: number): Wallet {
   const out: Wallet = {};
   const seconds = hours * 3600;
-  const gold = Math.round(
-    (cityGoldPerMinute(state) / 60 + cityGatherPerSecond(state, 'Gold')) * seconds);
+  const gold = Math.round(cityGoldPerSecond(state) * seconds);
   const floor = Math.round(COLLECTION.chestFloorPerHour * hours);
   out.Gold = Math.max(floor, gold);
   for (const c of ['Food', 'Wood', 'Stone'] as const) {
@@ -612,19 +619,66 @@ export function buyFromVault(state: GameState, tier: VaultTier): VaultResult {
 
 // ---------------------------------------------------------------- the close
 
+export interface SeasonClose {
+  from: number;
+  to: number;
+  /** Distinct cards the wipe took, and what they paid back. */
+  cards: number;
+  gold: number;
+}
+
 /**
- * Roll the season over: the cards and the stars are wiped, the relic levels
- * stay, and the packs go with the cards — an unopened pack is a hand of THIS
- * season's cards and cannot be dealt into the next one.
+ * WHAT THE WIPE PAYS BACK (§3). An album is emptied rather than confiscated:
+ * every card in it melts into Gold by its RARITY, on the same stars ladder a
+ * duplicate is worth, so a gold edition melts for double here exactly as it
+ * does in the vault.
+ *
+ * Priced in SECONDS OF THE CITY'S GOLD PRODUCTION rather than in coins, on the
+ * `tap.workSeconds` rule (CLAUDE.md): a flat number would be a fortune to a
+ * city with two workers and a rounding error to a city with twenty, and it
+ * would go stale on its own as the kingdom grows.
+ *
+ * ONE COPY OF EACH CARD, never every copy. A duplicate already paid its stars
+ * the moment it landed, and paying for it again at the close would pay it
+ * twice — what melts is the card in the slot.
+ */
+export function closeGold(state: GameState): { cards: number; stars: number; gold: number } {
+  let cards = 0;
+  let stars = 0;
+  for (const album of ALBUM_ORDER) {
+    const row = state.collection.cards[album] ?? [];
+    for (let slot = 0; slot < CARDS_PER_ALBUM; slot++) {
+      if ((row[slot] ?? 0) < 1) continue;
+      cards += 1;
+      stars += starsFor({ album, slot });
+    }
+  }
+  const seconds = stars * COLLECTION.closeGoldSecondsPerStar;
+  const floor = Math.round((COLLECTION.chestFloorPerHour * seconds) / 3600);
+  const gold = Math.max(floor, Math.round(cityGoldPerSecond(state) * seconds));
+  return { cards, stars, gold: cards === 0 ? 0 : gold };
+}
+
+/**
+ * Roll the season over: the cards melt into Gold and the stars are wiped, the
+ * relic levels stay, and the packs go with the cards — an unopened pack is a
+ * hand of THIS season's cards and cannot be dealt into the next one.
+ *
+ * THE NEXT SEASON IS WHATEVER THE CALENDAR SAYS, not the one after this one:
+ * `seasonAt` is a floor division from the epoch, so a player away for three
+ * seasons lands in the live one in a single call rather than walking to it.
+ * The content cycles under it (`seasonContent`), so the list never runs out.
  *
  * Idempotent in the only way that matters: it is driven by `applyDueAt` at an
  * absolute boundary, and `season` moving is what stops it firing twice.
  */
-export function closeSeason(state: GameState, at: number): { from: number; to: number } {
+export function closeSeason(state: GameState, at: number): SeasonClose {
   const from = state.collection.season;
   const to = seasonAt(at);
+  const melted = closeGold(state);
+  if (melted.gold > 0) addToWallet(state.city.wallet, 'Gold', melted.gold);
   state.collection = freshCollection(to);
-  return { from, to };
+  return { from, to, cards: melted.cards, gold: melted.gold };
 }
 
 export const freshCollection = (season: number): GameState['collection'] => ({

@@ -270,7 +270,7 @@ const SETTINGS = [
   // pool, so the price is never per Mana: what rises is the rung, not the
   // pool.
   ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
-  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 30 days
+  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 14 days
   // on a shared calendar; the five albums are one per relic and every list
   // below is indexed the same way, easy album first.
   ['collection.season_days', 'collection.seasonDays'],
@@ -293,6 +293,11 @@ const SETTINGS = [
   // Stars a duplicate is worth, by rarity, and what a gold edition doubles.
   ['collection.stars_per_rarity', 'collection.starsPerRarity', 'list'],
   ['collection.star_gold_multiplier', 'collection.starGoldMultiplier'],
+  // What a card is worth when the season wipes it (§3): SECONDS of the city's
+  // Gold production per star the card is worth, so the consolation is the same
+  // fraction of a day at every stage instead of a number that goes stale. The
+  // same stars ladder prices it, so a gold edition is worth double here too.
+  ['collection.close_gold_seconds_per_star', 'collection.closeGoldSecondsPerStar'],
   // The vault's two thresholds — what stars buy when nobody is sending you
   // cards.
   ['collection.vault_gold_stars', 'collection.vaultGoldStars'],

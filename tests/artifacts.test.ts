@@ -13,7 +13,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   ARTIFACTS, ARTIFACT_ORDER, BANNERS, CARD_BUNDLE_ORDER, COLLECTION, GEM_PACK_ORDER,
-  PACKS, PACK_ORDER, STORE,
+  HEROES, PACKS, PACK_ORDER, STORE,
 } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
@@ -23,19 +23,20 @@ import {
   albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack,
   bundleGemValue, bundleOf, bundlesForSale, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
-  seasonAt, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
+  seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
+  closeGold,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
 import {
-  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, type Rarity,
+  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
 import { resolve } from '../src/sim/modifiers';
 import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
 import { newGame } from '../src/sim/newGame';
-import { freshGame, map } from './helpers';
+import { addBuilt, freshGame, map } from './helpers';
 
 const T0 = Date.UTC(2026, 1, 2, 9);
 
@@ -582,8 +583,98 @@ describe('the season', () => {
     const oneSeason = COLLECTION.seasonDays * 86_400_000;
     expect(seasonEndsAt(0)).toBe(SEASON_EPOCH + oneSeason);
     expect(seasonAt(SEASON_EPOCH + oneSeason)).toBe(1);
-    // A player arriving on day 25 is in the same season as everyone else.
-    expect(seasonAt(SEASON_EPOCH + 25 * 86_400_000)).toBe(0);
+    // A player arriving on the last day is in the same season as everyone
+    // else — asked in fractions of a season, so the length stays a dial.
+    expect(seasonAt(SEASON_EPOCH + oneSeason - 1)).toBe(0);
+    expect(seasonAt(seasonEndsAt(7) - 1)).toBe(7);
+    // A WHOLE NUMBER OF WEEKS, so a season always opens on the epoch's
+    // weekday: the shared calendar is the argument for the whole feature and a
+    // season that drifted through the week would undo it.
+    expect(COLLECTION.seasonDays % 7).toBe(0);
+  });
+
+  // THE LIST CYCLES. Two seasons is the prototype's whole catalogue, so the
+  // third occurrence has to be the first one again rather than nothing.
+  it('cycles its content rather than running out', () => {
+    expect(SEASONS.length).toBeGreaterThanOrEqual(2);
+    for (let n = 0; n < SEASONS.length * 3; n++) {
+      expect(seasonDef(n)).toBe(SEASONS[n % SEASONS.length]);
+    }
+    // The wrap itself, named: the season after the last is the first.
+    expect(seasonDef(SEASONS.length)).toBe(seasonDef(0));
+    expect(seasonDef(SEASONS.length - 1)).not.toBe(seasonDef(0));
+    // Every season names a hero the roster actually has (§10).
+    for (const season of SEASONS) expect(HEROES[season.hero]).toBeDefined();
+  });
+
+  // THE WIPE IS A MELT-DOWN, not a confiscation (§3): every card in the album
+  // pays Gold by its rarity on the way out, so a season that ends on eight of
+  // nine leaves something behind.
+  describe('the melt-down', () => {
+    it('pays for every card held, by its rarity', () => {
+      const state = freshGame();
+      state.collection.season = seasonAt(T0);
+      fill(state, 'FirstFurrow', 3);
+      const three = closeGold(state);
+      expect(three.cards).toBe(3);
+      // Ploughshare, Seed Sack, Scarecrow: 1★ + 1★ + 2★ on the stars ladder.
+      expect(three.stars).toBe(
+        2 * COLLECTION.starsPerRarity[0]! + COLLECTION.starsPerRarity[1]!);
+      expect(three.gold).toBeGreaterThan(0);
+
+      fill(state, 'TheKingsCoin', CARDS_PER_ALBUM);
+      const more = closeGold(state);
+      expect(more.cards).toBe(3 + CARDS_PER_ALBUM);
+      // The dearer album is worth more than the cheap one, which is the whole
+      // point of pricing the melt-down by rarity.
+      expect(more.stars - three.stars).toBeGreaterThan(three.stars);
+    });
+
+    // A duplicate already paid its stars the moment it landed. Paying for it
+    // again on the way out would pay it twice.
+    it('pays for the card in the slot, never for every copy', () => {
+      const state = freshGame();
+      fill(state, 'FirstFurrow', 3);
+      const once = closeGold(state);
+      fill(state, 'FirstFurrow', 3);
+      fill(state, 'FirstFurrow', 3);
+      expect(cardCount(state, { album: 'FirstFurrow', slot: 0 })).toBe(3);
+      expect(closeGold(state)).toEqual(once);
+    });
+
+    // Priced in production, like every other reward (CLAUDE.md): the same nine
+    // cards are worth more to a city that makes more, so the consolation never
+    // goes stale on its own.
+    it('is priced in production, with a floor under it', () => {
+      const poor = freshGame();
+      fill(poor, 'TheStarRoad', CARDS_PER_ALBUM);
+      // The floor is what stops a city with two workers melting a whole album
+      // for nothing — a reward of almost zero reads as a bug, not as a reward.
+      expect(closeGold(poor).gold).toBeGreaterThan(0);
+
+      const rich = freshGame();
+      fill(rich, 'TheStarRoad', CARDS_PER_ALBUM);
+      addBuilt(rich, 'Housing', { x: 2, y: 0 });
+      addBuilt(rich, 'Housing', { x: 3, y: 0 });
+      rich.city.population = 4;
+      expect(closeGold(rich).gold).toBeGreaterThan(closeGold(poor).gold);
+    });
+
+    it('pays nothing for an album nobody started', () => {
+      expect(closeGold(freshGame())).toEqual({ cards: 0, stars: 0, gold: 0 });
+    });
+
+    it('puts the Gold in the purse as the season rolls over', () => {
+      const state = freshGame();
+      state.collection.season = seasonAt(T0);
+      fill(state, 'HandsAtWork', CARDS_PER_ALBUM);
+      const owed = closeGold(state);
+      const gold = getWallet(state.city.wallet, 'Gold');
+      const closed = closeSeason(state, seasonEndsAt(state.collection.season));
+      expect(closed.gold).toBe(owed.gold);
+      expect(closed.cards).toBe(CARDS_PER_ALBUM);
+      expect(getWallet(state.city.wallet, 'Gold')).toBe(gold + owed.gold);
+    });
   });
 
   it('wipes the cards and the stars at the close, and keeps the levels', () => {
@@ -642,6 +733,48 @@ describe('the season', () => {
     const result = advance(state, map, seasonEndsAt(state.collection.season) + 1000);
     expect(result.seasonClosed).not.toBeNull();
     expect(result.seasonClosed!.to).toBe(result.seasonClosed!.from + 1);
+  });
+
+  // THE FLOW, END TO END: play a season, let it close, play the next, let that
+  // close too. The content alternates and then comes back round, the album is
+  // empty each time, the Gold lands each time, and the relic keeps a level per
+  // season — which is the whole shape of the feature in one test.
+  it('runs season after season, cycling its content', () => {
+    const state = freshGame();
+    state.collection.season = seasonAt(T0);
+    state.lastAdvance = T0;
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    state.city.population = 2;
+    const names: string[] = [];
+    let t = T0;
+
+    for (let season = 0; season < SEASONS.length + 1; season++) {
+      names.push(seasonDef(state.collection.season).name);
+      // A season's play: the album is closed and the relic takes its level.
+      fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
+      grantPack(state, 'Bronze', 'dev');
+      openPack(state, t);
+      expect(artifactLevel(state, 'DowsingRod')).toBe(season + 1);
+
+      const gold = getWallet(state.city.wallet, 'Gold');
+      t = seasonEndsAt(state.collection.season) + 1000;
+      const closed = advance(state, map, t).seasonClosed;
+      expect(closed).not.toBeNull();
+      // The cards melted — the nine of the album, plus whatever the pack
+      // dealt into the other four — the album is empty, and the level
+      // survived.
+      expect(closed!.cards).toBeGreaterThanOrEqual(CARDS_PER_ALBUM);
+      expect(closed!.gold).toBeGreaterThan(0);
+      expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
+      expect(seasonHeld(state)).toBe(0);
+      expect(artifactLevel(state, 'DowsingRod')).toBe(season + 1);
+      expect(state.collection.season).toBe(seasonAt(t));
+    }
+
+    // Consecutive seasons are different, and the list came back round rather
+    // than running out: nothing about the calendar depends on more content.
+    expect(names[0]).not.toBe(names[1]);
+    expect(names[SEASONS.length]).toBe(names[0]);
   });
 
   // A week away: one boundary, not a thousand. The seatbelt is not a design

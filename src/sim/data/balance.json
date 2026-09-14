@@ -3427,7 +3427,7 @@
     ]
   },
   "collection": {
-    "seasonDays": 30,
+    "seasonDays": 14,
     "albumGems": 2000,
     "prizeGems": 25000,
     "albumHours": [
@@ -3460,6 +3460,7 @@
       25
     ],
     "starGoldMultiplier": 2,
+    "closeGoldSecondsPerStar": 30,
     "vaultGoldStars": 50,
     "vaultStarStars": 200,
     "wildcardGemCosts": [

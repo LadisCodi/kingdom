@@ -454,7 +454,8 @@ evaporating.**
 
 | Rework | Design | State |
 |---|---|---|
-| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
+| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89), the season hero's rate-up (a banner payload) and the **collection prize** (§5: the screen promises a golden call and 25,000 Gems, and `prizePaid` is still never written). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
+| **A fortnight season that cycles, and a close that pays** | [`09`](features/09-relics.md) §3 | **built 2026-09-14, for the prototype.** The season is **14 days**, the seasons list **cycles** (the last is followed by the first, for ever) and the close **melts the cards into Gold by rarity**, priced in production on the stars ladder. `?dev`'s **🗓 end season** warps to the rollover so the whole flow is one click rather than a fortnight |
 
 Two bridges were taken deliberately and both are named in the code that owns
 them. The four relic **actives** still live on their relics, gated on owning

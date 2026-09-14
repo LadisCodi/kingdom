@@ -13,7 +13,7 @@ import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
-import { grantPack } from './sim/collection';
+import { grantPack, seasonLeftMs } from './sim/collection';
 import { PACK_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
 import { grantBuilder } from './sim/commands';
@@ -433,6 +433,23 @@ async function boot(): Promise<void> {
       }
       runTick();
     };
+    // THE SEASON ROLLOVER, on demand.
+    //
+    // The warp above moves the STATE backwards, which is how an absence is
+    // demoed — but a season ends at an absolute instant on a shared calendar,
+    // and no amount of moving the state back reaches a boundary that is still
+    // in the future. So this one moves the CLOCK forwards instead: a dev-only
+    // offset on `game.now()`, which is the one place the UI reads the time.
+    // The sim is untouched — it is still handed a `now` (invariant 3) — and
+    // pressing it twice walks two whole seasons, so the cycle can be watched
+    // rather than argued about.
+    let clockOffset = 0;
+    const realNow = game.now.bind(game);
+    game.now = () => realNow() + clockOffset;
+    const endSeason = () => {
+      clockOffset += seasonLeftMs(game.state, game.now()) + 1_000;
+      runTick();
+    };
     // "Warp then reload" is the only way to exercise the offline report: the
     // in-place time warp above never goes through deserialize().
     const warpReload = (minutes: number) => {
@@ -444,7 +461,7 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
-      button('🃏 packs', somePacks),
+      button('🃏 packs', somePacks), button('🗓 end season', endSeason),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {

@@ -16,7 +16,7 @@
 // harvest clocks are the cheap levels a first-season player will actually
 // close; the tax rate and the Stardust yield sit behind the gold cards.
 
-import type { ArtifactId } from '../state';
+import type { ArtifactId, HeroId } from '../state';
 
 /** 1★ to 5★. `gold` is a separate flag on the slot, not a sixth rarity. */
 export type Rarity = 1 | 2 | 3 | 4 | 5;
@@ -145,31 +145,38 @@ export const albumIndex = (id: AlbumId): number => ALBUM_ORDER.indexOf(id);
 
 // ------------------------------------------------------------ the seasons
 
-/**
- * A season's own content. The list CYCLES: occurrence n is
- * `SEASONS[n % SEASONS.length]`, so the calendar never runs out and a live-ops
- * drop is one more entry here.
- */
+/** A season's own content. */
 export interface SeasonDef {
   /** Shown on the pill, the header plank and the frame. */
   name: string;
-  /** The hero rated up on the golden banner while it runs (§10). */
-  hero: string;
+  /** The hero rated up on the golden banner while it runs (§10). A real
+   *  `HeroId`, so a season cannot name a hero the roster has not got. */
+  hero: HeroId;
   /** A css hook for the frame — the season's colour, not its layout. */
   frame: string;
 }
 
+/**
+ * The seasons, in the order they run. THE LIST CYCLES rather than running out:
+ * the last one is followed by the first again, for ever, so the calendar is
+ * always open and a live-ops drop is one more entry here — never a rewrite of
+ * the clock.
+ *
+ * Two is the minimum that PROVES the cycle: one would never wrap, and a third
+ * would say nothing the second does not.
+ */
 export const SEASONS: readonly SeasonDef[] = [
   { name: 'Sowing Season', hero: 'Warden', frame: 'sowing' },
-  { name: 'Season of Lanterns', hero: 'Emberwright', frame: 'lanterns' },
+  { name: 'Season of Lanterns', hero: 'Witch', frame: 'lanterns' },
 ];
 
 /**
  * THE SHARED CALENDAR. Seasons run back to back from this instant, every
- * player in the same one at the same time — a player who arrives on day 25
- * has five days, like everyone else (§3).
+ * player in the same one at the same time — a player who arrives on the last
+ * day has one day, like everyone else (§3).
  *
- * 2026-01-05T00:00:00Z, a Monday, so a season always opens on one.
+ * 2026-01-05T00:00:00Z, a Monday, so a season always opens on one — which is
+ * why the length is a whole number of weeks.
  */
 export const SEASON_EPOCH = Date.UTC(2026, 0, 5);
 

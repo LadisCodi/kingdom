@@ -1,17 +1,23 @@
 # 9 · Relics and the collection
 
 > **Scope.** The five relics as permanent kingdom passives with no ceiling,
-> and the **collection** that levels them: a 30-day season of five card albums,
+> and the **collection** that levels them: a 14-day season of five card albums,
 > the packs the cards come in, duplicates, the vault, trading, wildcards, and
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
 > packs fall from are [`11-expeditions.md`](11-expeditions.md).
 >
-> **Status: built 2026-09-11**, with two things deliberately left out and
+> **Status: built 2026-09-11**, with three things deliberately left out and
 > named where they belong: **trading** (§8 — it waits on the social layer,
-> OQ-89) and the **season hero's rate-up** (§10 — it waits on a banner
-> payload in the timeline). Everything else runs: the season, the packs, the
+> OQ-89), the **season hero's rate-up** (§10 — it waits on a banner
+> payload in the timeline) and the **collection prize** (§5 — the golden call
+> and the 25,000 Gems are announced on the screen and not yet paid).
+> Everything else runs: the season and its melt-down, the packs, the
 > albums, the payouts, the stars, the vault, the wildcards and their aimed
 > offers, the close, and the four screens of §11.
+>
+> **The season is 14 days for the prototype** and the seasons **cycle**, so a
+> fortnight is all it takes to watch a close, a melt-down and the next season
+> open. `?dev`'s **🗓 end season** does it without the wait.
 >
 > The store's three **card bundles** (§6.1) are built with them.
 >
@@ -64,27 +70,47 @@ never a discount, because a discount dies at 100%.
 
 ## 3. The season
 
-- The collection runs in **seasons of 30 days, on a shared calendar.** Every
+- The collection runs in **seasons of 14 days, on a shared calendar.** Every
   player is in the same season at the same time; the season does not start
-  when a player does, and a player who arrives on day 25 has five days, like
-  everyone else.
+  when a player does, and a player who arrives on the last day has one day,
+  like everyone else.
+- The length is **a whole number of weeks**, so every season opens on the same
+  weekday as the epoch.
 - A season is **content**: its name, its frame, its dates, the rarity each
   album's nine slots carry, and the season hero. **Which relic each album
   levels is not per-season content** — it is one album per relic, in the same
   order, for ever. It lives in a hand-written seasons file beside the events
   file ([`13-events.md`](13-events.md) §1); every number in it — Gems, hours,
   stars, odds — lives on the `Collection` sheet.
-- **At the close, the cards and the stars are wiped.** Relic levels stay. So
-  do the keys, the resources and the Gems the albums paid. Nothing else
-  crosses the boundary, so hoarding is pointless and a spare card is a spare
-  card.
+- **The seasons cycle.** The list is read in order and the last one is
+  followed by the first again, for ever, so the calendar is never short of a
+  season to open and shipping a new one is one more entry in the file. A
+  season being repeated is the same 45 cards behind a frame and a name the
+  player has seen before — which costs nothing, because the cards are wiped
+  either way.
+- **At the close, the cards melt into Gold and the stars are wiped.** Relic
+  levels stay, and so do the keys, the resources and the Gems the albums paid.
+  Nothing else crosses the boundary, so hoarding is pointless and a spare card
+  is a spare card.
+- **What a card melts for is its rarity**, on the same stars ladder a
+  duplicate is worth (§7) — a gold edition melts for double — and it is
+  **priced in production**: so many seconds of the city's Gold income per
+  star, with a floor under it, never a flat number that a late city would
+  laugh at. **One copy of each card, never every copy**: a duplicate already
+  paid its stars the day it landed.
+- The melt-down is a **consolation, not a prize**. An album that ends on eight
+  of nine leaves something behind; it never approaches what completing the
+  album would have paid (§5).
 - The next season opens the moment the last one closes, with the same five
   albums — the same 45 cards behind a new season frame and name. New card art
   is a decision a season may take, never a requirement.
 - The close is a **timer**, not production: it resolves in the uncapped tail
-  of the offline advance, at its absolute timestamp. A player away for a week
-  comes back to the wiped album and the new season, and to whatever their
-  albums had already paid.
+  of the offline advance, at its absolute timestamp. A player away for a month
+  comes back to the melted album and to **the season the calendar is in**, not
+  to the one after the one they left — the season is a floor division from the
+  epoch, so catching up is one step however long the absence was.
+- The rollover **announces itself**: a banner names the new season and what
+  the cards melted down for.
 - This is a different clock from the daily chest's 20-day season
   ([`12-quests.md`](12-quests.md) §3), which counts from the player's own
   first day. Both keep the word: the chest's is *your* season, the
@@ -172,7 +198,7 @@ cards it holds and which rarities it can hold, at **published odds**.
   every ruin gets packs from the chest, the event, the pass and the store
   only. **OQ-88.**
 - The pace to author against is **how many of the five a player who buys
-  nothing completes in 30 days**. That number, not the price of a pack, is
+  nothing completes in a season**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
 - A pack is **earned where it falls and opened in the Collection**: one
   earned during an absence waits until the player is looking at it.
@@ -237,7 +263,8 @@ sold together for **money** rather than for Gems, on the store's own shelf
 - **A season of 45 cards deals duplicates early**, so the vault is not a late
   screen: its first threshold is meant to be reached in the first week, and it
   is the second faucet a player without friends has.
-- Stars are wiped with the cards at the close.
+- Stars are wiped at the close; the cards themselves melt into Gold on the
+  same ladder (§3), so the rarity that prices a duplicate prices the wipe too.
 
 ## 8. Trading
 
@@ -392,7 +419,7 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | **30 days, fixed**, shared calendar | seasons file |
+| Season length | **14 days**, a whole number of weeks, shared calendar | `collection.season_days` |
 | Albums a season · cards an album | **5 · 9, fixed** | seasons file |
 | Which relic each album levels | **one each, the same order every season, fixed** | seasons file |
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 10,000 across the five, as before | `collection.album_gems`, `collection.prize_gems` |
@@ -408,6 +435,7 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | What a card bundle holds, and what it costs | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ (§6.1) | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
 | How close to the close the bundles come off the shelf | **24 hours** | `collection.bundle_withdraw_hours` |
 | Stars a duplicate is worth | 1 · 2 · 5 · 10 · 25, gold ×2 | `collection.stars_*` |
+| What a card melts for at the close | **30 seconds of the city's Gold income per star** it is worth, floored by the chest's floor | `collection.close_gold_seconds_per_star` |
 | Vault thresholds | 50 → Gold, 200 → Star | `collection.vault_*` |
 | Free albums a season, target | **the pacing number — OQ-88**; two of five free, five for a Dolphin | derived, not authored |
 | Season hero rate-up weight | — | `Banners.rate_up_weight` |
@@ -430,7 +458,11 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   all collapse into the five rows because of it.
 - **Levelling one relic twice in a season.** A wildcard, a gift and the vault
   all buy the same single level faster; none of them buys a second.
-- **Selling a card.** Packs, and a wildcard that never covers gold.
+- **Selling a card.** Packs, and a wildcard that never covers gold. The melt-
+  down (§3) is the close doing it once, to everything, on its own clock — not a
+  button the player presses on a card they are tired of.
+- **A stopped clock for a season with nothing after it.** The list cycles, so
+  the calendar never runs out and there is no last season to handle.
 - **A gold wildcard in a bundle**, or a bundle of the tiers the ruins drip.
   Money buys §6.1's hand faster, never a card play cannot reach.
 - **A bundle sold in the last day of a season**, or one whose packs and
@@ -438,7 +470,11 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 - **A season-exclusive hero.** Associated: rated up now, in the pool for ever.
 - **New card art every season** as a requirement.
 - **Trading as a swap**, with offers or negotiation.
-- **A duplicate melted into a currency.** Stars are a counter in this screen.
+- **A duplicate melted into a currency on demand.** Stars are a counter in
+  this screen, and a duplicate's two uses are the vault and a gift.
+- **Stars, packs or wildcards melting at the close.** The card in the slot is
+  what melts (§3); stars were already a duplicate's payout, and a pack or a
+  wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
 **Open questions:** OQ-88, OQ-89, OQ-90, OQ-91 in

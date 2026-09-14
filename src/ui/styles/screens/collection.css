@@ -575,3 +575,23 @@
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
+
+/* --------------------------------------------------------------- the frame */
+
+/* THE SEASON'S COLOUR, NOT ITS LAYOUT (sim/data/seasons.ts). One token per
+   season, and the seam under the count line is where it reads: the prize band
+   stays gold because gold is what a prize is, so the frame has to say
+   "different season" somewhere the eye already goes.
+
+   A season with no rule of its own inherits the default and looks deliberate
+   rather than broken, which is what lets a live-ops season ship before its
+   colour does. */
+.col-season { --season-tint: var(--wood); }
+.col-season.is-sowing { --season-tint: var(--leaf-dark); }
+.col-season.is-lanterns { --season-tint: var(--clay); }
+
+.col-season > .col-line {
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--season-tint);
+}
+.col-season > .col-line .col-count { color: var(--season-tint); }
