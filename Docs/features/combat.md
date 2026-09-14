@@ -24,7 +24,7 @@
 - Every fight fields **troop slots and hero slots**: gates, ruin rooms,
   bosses, PvP. There is no hero-only mode.
 - **At least one hero is mandatory** on the player's side
-  ([`10-heroes.md`](10-heroes.md) §2.6). Troop slots may be empty.
+  ([`10-heroes.md`](10-heroes.md) §2.7). Troop slots may be empty.
 
 ## 3. Board
 

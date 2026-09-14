@@ -554,10 +554,22 @@ const SHEETS = {
   // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
   // every squad of its own type on that side, applied at battle start and
   // surviving its death.
+  //
+  // The last two columns are the BOON (Docs/proposals/legendary-boons.md): one
+  // KINGDOM passive, on while the hero is owned, in the same modifier stack a
+  // relic uses. Blank on every Common and Rare — the boon is what a Legendary
+  // is FOR, and the moment every rarity has one it is a hero property again.
+  //
+  // A BOON IS ALWAYS A MULTIPLIER, AND ALWAYS ABOVE 1. There is no `op`
+  // column because there is no choice: a flat bonus is worth less every hour
+  // the kingdom grows, and a number that falls has a floor — so a boon is a
+  // speed, a yield or a capacity, multiplied, and it stays proportionally
+  // worth the same for ever.
   Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value',
     'dmg', 'def', 'hp', 'cooldown',
     'dmg_per_level', 'def_per_level', 'hp_per_level',
-    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus',
+    'boon_stat', 'boon_value'],
   // A VILLAIN is an enemy hero: same schema, same slots, same rules — only
   // where the stats come from differs, and a villain's are authored (§9).
   Villains: ['id', 'name', 'glyph', 'sprite', 'unit_type',
@@ -1186,6 +1198,28 @@ async function importXlsx() {
     };
   }
 
+  /**
+   * A hero's BOON, or nothing. All three columns blank is the common case —
+   * only a Legendary carries one — and any one of them filled in means all
+   * three must be, because a stat with no value is a bonus of zero and an
+   * op with no stat is a number with nowhere to go.
+   */
+  const boonOf = (r) => {
+    const blank = (v) => v === undefined || v === null || v === '';
+    const filled = ['boon_stat', 'boon_value'].filter((k) => !blank(r[k]));
+    if (filled.length === 0) return {};
+    if (filled.length !== 2) {
+      fail(where(r), `a boon needs both boon_stat and boon_value (got ${filled.join(', ')})`);
+    }
+    const value = num(r, 'boon_value');
+    // ALWAYS A MULTIPLIER, ALWAYS ABOVE 1 — a boon below 1 is a discount and
+    // dies at 100%, and a boon of exactly 1 is a row that does nothing.
+    if (value <= 1) {
+      fail(where(r), `a boon must be more than 1 — ${value} is a discount, and a discount dies at 100%`);
+    }
+    return { boon: { stat: r.boon_stat, value } };
+  };
+
   for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
     if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
     if (!HERO_TRAITS.includes(r.trait)) fail(where(r), `unknown trait "${r.trait}"`);
@@ -1205,6 +1239,7 @@ async function importXlsx() {
       troopDmgMult: num(r, 'troop_dmg_mult'),
       troopHpMult: num(r, 'troop_hp_mult'),
       troopDefBonus: num(r, 'troop_def_bonus'),
+      ...boonOf(r),
     };
   }
 
@@ -1485,7 +1520,8 @@ async function exportXlsx() {
     return [id, h.rarity, h.unitType, h.trait, h.traitValue,
       h.dmg, h.def, h.hp, h.cooldown,
       h.dmgPerLevel, h.defPerLevel, h.hpPerLevel,
-      h.troopDmgMult, h.troopHpMult, h.troopDefBonus];
+      h.troopDmgMult, h.troopHpMult, h.troopDefBonus,
+      h.boon?.stat ?? '', h.boon?.value ?? ''];
   }));
 
   addSheet(workbook, 'Villains', Object.entries(b.villains ?? {}).map(([id, v]) =>

@@ -126,9 +126,14 @@ export interface SquadSpec {
 export interface TroopBonus {
   dmg: (unitId: UnitId) => number;
   def: (unitId: UnitId) => number;
+  /** A MULTIPLIER, unlike the two above: 1 is the identity. It stacks on top
+   *  of the fighters' own `troopHpMult`, so a legendary's boon and a hero's
+   *  type passive both reach the same number without either replacing the
+   *  other. */
+  hpMult: (unitId: UnitId) => number;
 }
 
-const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0 };
+const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0, hpMult: () => 1 };
 
 /** Squads go where their targeting puts them (§11 step 5): the ones that have
  *  to reach the enemy stand in front, the ones that shoot stand behind. */
@@ -160,7 +165,8 @@ export function buildBoard(
   for (const squad of squads) {
     if (squad.count <= 0) continue;
     const u = UNITS[squad.unitId];
-    const hpUnit = Math.max(1, Math.round(u.hp * (hpMult.get(squad.unitId) ?? 1)));
+    const hpUnit = Math.max(1, Math.round(
+      u.hp * (hpMult.get(squad.unitId) ?? 1) * bonus.hpMult(squad.unitId)));
     slots.push({
       id: slots.length,
       kind: 'troop',

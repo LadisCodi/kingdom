@@ -1536,6 +1536,16 @@ export type HeroTrait =
    *  worth bringing precisely when a fight is going to be expensive. */
   | 'WoundedRecovery';
 
+/** One number a Legendary moves for the whole kingdom. */
+export interface HeroBoon {
+  stat: ModifierStat;
+  /** ALWAYS A MULTIPLIER, always above 1 — there is no `op`, because there is
+   *  no choice. A flat bonus is worth less every hour the kingdom grows and a
+   *  falling number has a floor; a multiplier stays proportionally worth the
+   *  same for ever and only ever approaches its limit. */
+  value: number;
+}
+
 export interface HeroDef {
   id: HeroId;
   name: string;
@@ -1567,6 +1577,17 @@ export interface HeroDef {
   troopDmgMult: number;
   troopHpMult: number;
   troopDefBonus: number;
+  /**
+   * THE BOON (Docs/proposals/legendary-boons.md) — a LEGENDARY's kingdom
+   * passive, null on every Common and Rare.
+   *
+   * It is not the type passive above (which acts on the board) and not the
+   * trait beside it (which acts on a party). It is a modifier at the base
+   * stage, on while the hero is OWNED, in the same stack a relic uses — and
+   * it points UP, always: a speed, a yield or a capacity, never a discount,
+   * because a discount dies at 100% and a permanent passive must not.
+   */
+  boon: HeroBoon | null;
 }
 
 /**
@@ -1785,6 +1806,9 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       troopDmgMult: b.troopDmgMult,
       troopHpMult: b.troopHpMult,
       troopDefBonus: b.troopDefBonus,
+      // Only a Legendary has one, so the column is absent on 26 of the 32
+      // rows and the JSON's inferred type says so.
+      boon: ('boon' in b ? (b.boon as HeroBoon) : null),
     }];
   }),
 ) as Record<HeroId, HeroDef>;
@@ -2041,4 +2065,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 44;
+export const SAVE_VERSION = 45;

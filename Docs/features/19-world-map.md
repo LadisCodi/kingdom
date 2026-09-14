@@ -44,6 +44,8 @@ El jugador puede revelar más casillas alrededor suya invirtiendo oro y tiempo. 
 
 El escalado del coste con la distancia es lo que hace caro el anillo exterior. No hace falta ningún otro freno.
 
+El contador de exploración lee `worldRevealSpeed` del stack de modificadores: un multiplicador por el que se **divide** el tiempo, nunca un descuento que se le reste. Hoy solo lo alimenta el boon de The Scout (`Docs/proposals/legendary-boons.md`), que es la razón por la que el stat existe antes que el contador.
+
 ## Anatomía de la casilla
 
 Cada casilla del mundo está definida por lo siguiente, siguiendo el diseño del mapa de la provincia:

@@ -2,13 +2,18 @@
 
 > **What this is.** One **kingdom passive per Legendary hero**, so a Legendary
 > is a different KIND of thing to own rather than a Common with bigger
-> numbers. It is a **proposal**, not a feature doc: the six effects below are
-> candidates, spread across economy, research, exploration and combat, for you
-> to pick from. Nothing here is built. Every number is a first pass.
+> numbers.
 >
-> **Five of the six can be built today.** The Scout's moves the world map's
-> exploration timer ([`../features/19-world-map.md`](../features/19-world-map.md)),
-> which is designed and unbuilt, so his slot is reserved rather than filled.
+> **Status: built 2026-09-14**, all six, less the one call site the world map
+> owes. Every number here is a first pass (**OQ-96**).
+>
+> **The Scout's boon is declared and not yet collected.** It moves the world
+> map's cell-exploration timer
+> ([`../features/19-world-map.md`](../features/19-world-map.md)), which is
+> designed and unbuilt; `worldRevealSpeed` is in the stack, the hero carries
+> it, and the timer reads it the day it exists. This is a prototype and a
+> pending wire is acceptable; `tests/heroBoons.test.ts` names it so it cannot
+> be forgotten.
 >
 > **It contradicts one line of the current design on purpose.**
 > [`../features/10-heroes.md`](../features/10-heroes.md) §2.1 says *"rarity is
@@ -76,10 +81,13 @@
 
 ### 2.1 Every boon points UP
 
-- **A boon is a speed, a yield or a capacity — never a discount, a cost or a
-  time.** The relic rule, applied here: a number that goes DOWN dies when it
-  reaches zero, and a permanent passive that can be finished is a passive with
-  a ceiling.
+- **A boon is always a MULTIPLIER, always above 1.** There is no `op` column,
+  because there is no choice to author: a flat bonus is worth less every hour
+  the kingdom grows, and a multiplier stays proportionally worth the same for
+  ever.
+- **A speed, a yield or a capacity — never a discount, a cost or a time.** The
+  relic rule, applied here: a number that goes DOWN dies when it reaches zero,
+  and a permanent passive that can be finished is a passive with a ceiling.
 - Where the number the game owns is a **time**, the boon moves a **speed** and
   the call site divides by it:
 
@@ -120,56 +128,38 @@ Spread so that **a boon pays off where the hero's sword cannot**: combat is
 where a Legendary already acts, through its stat block and its type passive,
 so it takes one boon and the kingdom takes five.
 
-| Hero | Area | Stat | Op | Proposed | Reads |
-|---|---|---|---|---|---|
-| **The Pharaoh** | economy | `buildSpeed` **(new)** | mul | **×1.20** — the builders work a fifth faster | `upgrades.ts#effectiveBuildTimeMultiplier` |
-| **The Elven Princess** | economy | `manaRegen` | mul | **×1.25** Mana a minute | `mana.ts#manaProduction` |
-| **The Necromancer** | research | `knowledgeYield` | mul | **×1.25** Knowledge an hour | `mana.ts#knowledgePerHour` |
-| **The Scout** | exploration | `worldRevealSpeed` **(new, pending)** | mul | **×1.25** — a world-map cell is scouted faster | the world map's reveal timer — **not built** |
-| **The Vampire Lord** | exploration | `heroXp` | mul | **×1.25** Hero XP out of every room | `heroes.ts#addHeroXp` |
-| **The Golden Dragon** | combat | `unitAtk` | add | **+3 ATK** on every unit | `expeditions.ts#drillOf` |
+| Hero | Area | Stat | Boon | Reads |
+|---|---|---|---|---|
+| **The Pharaoh** | economy | `buildSpeed` | **×1.20** — the builders work a fifth faster | `upgrades.ts#effectiveBuildTimeMultiplier` |
+| **The Elven Princess** | economy | `manaRegen` | **×1.25** Mana a minute | `mana.ts#manaProduction` |
+| **The Necromancer** | research | `researchSpeed` | **×1.25** — research runs a quarter faster | `upgrades.ts#effectiveResearchTimeMultiplier` |
+| **The Scout** | exploration | `worldRevealSpeed` | **×1.25** — a world-map cell is scouted faster | the world map's reveal timer — **pending** |
+| **The Vampire Lord** | exploration | `heroXp` | **×1.25** Hero XP out of every room | `heroes.ts#addHeroXp` |
+| **The Golden Dragon** | combat | `unitHp` | **×1.10** health on every unit | `expeditions.ts#drillOf`, and `battle.ts#buildBoard` |
 
-- **Every one of the six points up**, and none has a level at which it stops
-  being worth having (§2.1). Five are yields or speeds multiplied upward; one
-  is a flat addition to a number with no top.
-- **Five of the six can be built today.** The Scout's waits on the world map
-  and says so.
+- **Every one is a multiplier**, so the six stay proportionally worth the same
+  as the kingdom grows, and none has a level at which it stops being worth
+  having (§2.1).
 - **The Pharaoh builds.** The one boon a city feels on day one and still feels
-  at Townhall 10, because the build queue never stops being the bottleneck. It
-  is a SPEED, so `effectiveBuildTimeMultiplier` divides by it and its floor of
-  0.25 — a hard 4× ceiling — goes away.
+  at Townhall 10, because the build queue never stops being the bottleneck.
 - **The Elven Princess is the tap budget.** Every tap costs 1 Mana, so a
-  quarter more Mana is a quarter more game per session — the most-felt number
-  in the list and the reason she is not given something rarer.
+  quarter more Mana is a quarter more game per session.
 - **The Necromancer asks the previous expedition**, which is the card's own
   line. Research is the only pillar with no relic and no live trait pointed at
-  it, and the yield is the up-shaped half of it: Knowledge an hour grows for
-  ever where research TIME would have run out.
-- **The Scout goes on ahead — on the world map, when there is one.** Revealing
-  a world-map cell costs **Gold and TIME**, with a countdown a player can rush
-  with Gems ([`../features/19-world-map.md`](../features/19-world-map.md),
-  *Niebla y exploración*). That timer is the only exploration clock the game
-  will have: a ruin's depth resolves the instant the player enters it, so there
-  is no delve time for the Scout to shorten. His boon is a **speed on that
-  timer**, divided in exactly as the Pharaoh's is (§2.1).
-- **His boon ships with the world map and not before.** A stat nothing reads
-  is a bonus nobody collects, so `worldRevealSpeed` is declared when the timer
-  that reads it is. Until then the Scout carries his `SupplyDiscount` trait,
-  which works, and no boon. **Writing it down now is the point**: the world
-  map's reveal timer should be built with the hook in it, which costs one
-  `resolve()` at the call site and nothing else — retrofitting it later costs
-  a balance pass on a live number.
-- **`discoverRadius` is deliberately left unassigned.** It was the Scout's in
-  the first draft and it is a better fit for nobody else; a boon is permanent
-  on a hero players own, so handing him a placeholder now means he keeps it
-  when the real one arrives.
+  it, and the speed is the up-shaped half of it: research TIME would have run
+  out, a speed only ever approaches zero.
+- **The Scout goes on ahead.** The world map's reveal timer is the only
+  exploration clock the game will have — a ruin's depth resolves the instant
+  the player enters it, so there is no delve time to shorten.
 - **The Vampire Lord collects, and has done for centuries.** Every room teaches
   the heroes more, which is the one faucet the hero ladder runs on — and the
   nearest live thing to the `FragmentBonus` his card has been promising into
   the void.
-- **The Golden Dragon is the war one**, flat ATK on every unit, through the
-  `Drill` the resolver is already handed. `combat.ts` stays pure and nothing
-  reads rarity at combat time.
+- **The Golden Dragon is the war one.** A multiplier on every unit's health
+  rather than flat ATK, so it is worth the same fraction of a fight at ten
+  Warriors as at a hundred. It reaches the RESOLVER as well as the estimate:
+  a bonus the launch screen shows and the fight does not keep is a promise on
+  the sheet, which `combat.ts` says in its own words.
 
 ### 3.1 What this fixes on the way
 
@@ -179,28 +169,30 @@ so it takes one boon and the kingdom takes five.
 - The Necromancer's card stops promising Stardust it does not pay — **OQ-95**
   is the wider version of that hole, since 14 heroes carry a dead trait.
 
-## 4. What it costs to build
+## 4. What it took
 
 | Step | Where |
 |---|---|
-| Three columns on the `Heroes` sheet — `boon_stat`, `boon_op`, `boon_value` — blank on every Common and Rare | `balance.xlsx`, `scripts/balance.mjs` |
-| `HeroDef.boon: { stat: ModifierStat; op; value } \| null`, the shape `ArtifactDef.passive` already has | `data/definitions.ts` |
+| Two columns on the `Heroes` sheet — `boon_stat`, `boon_value` — blank on every Common and Rare, and refused below 1 | `balance.xlsx`, `scripts/balance.mjs` |
+| `HeroDef.boon: HeroBoon \| null`, the shape `ArtifactDef.passive` already had, minus the op | `data/definitions.ts` |
 | `syncHeroBoons(state)` — filter the `hero:` prefix, re-add one per owned Legendary. A mirror of `syncArtifactModifiers`, idempotent and total | `sim/heroes.ts` |
-| Call it where a hero lands and on load | `heroes.ts#grantHero`, `save.ts` |
-| One line on the hero card, under the type passive | `ui/heroesSheet.ts` (§8.2) |
-| `SAVE_VERSION` bump, **no migrator** — the boon is derived from `heroes.owned` | `sim/save.ts` |
+| Called where a hero lands and on load | `heroes.ts#grantHero`, `save.ts` |
+| `boonText()` — the sentence, GENERATED from the stat and the number, never authored beside them | `sim/heroes.ts` |
+| A second line on the hero card, under a gold rule | `ui/heroesSheet.ts`, `styles/screens/heroes.css` |
+| `SAVE_VERSION` 45, **no migrator** — the boon is derived from `heroes.owned` | `sim/save.ts` |
 
-- **One new `ModifierStat` now: `buildSpeed`.** Four of the six are already
-  declared, resolved at a live call site and not retired — unlike `delveSpeed`
-  and `haulLoss`, which the room model left behind and which nothing reads.
-  The Pharaoh's is new because §2.1 will not take `buildTime`: one line in
-  `modifiers.ts`, and `effectiveBuildTimeMultiplier` becomes
-  `techValue(...) / resolve(state, 'buildSpeed', 1)` with its 0.25 floor
-  deleted. `buildTime` stays exactly as it is for the tree's ranks.
-- **One more later: `worldRevealSpeed`**, declared with the world map's reveal
-  timer and read by it. Nothing to build for it today except the note in
-  [`../features/19-world-map.md`](../features/19-world-map.md).
-- **No new screen.** The hero card already has the line.
+**Four new `ModifierStat`s**, all of them speeds or multipliers:
+
+- `buildSpeed` and `researchSpeed` — the stack's half of two numbers the TREE
+  discounts. The tree keeps `buildTime` and `researchTime` because a rank
+  ladder is bounded; the stack divides by a speed because a passive is not.
+  Both helpers lost nothing: the tree's floor of 0.25 still holds on its own
+  half.
+- `unitHp` — a global multiplier on the `Drill`, which reaches `partyStats`
+  (the estimate) **and** `buildBoard` (the resolver), so the launch screen and
+  the fight agree.
+- `worldRevealSpeed` — declared, in the stack, and read by nothing until the
+  world map's timer exists.
 
 ## 5. Dials, in the order to reach for them
 

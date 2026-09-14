@@ -186,14 +186,35 @@ export const effectiveWorkerSpeed = (state: GameState): number =>
       * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
       * techMultiplier(state, 'workerSpeed')));
 
-/** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
+/**
+ * Multiplier on build and upgrade time (Carpentry: −5%/rank).
+ *
+ * TWO HALVES, and they point opposite ways on purpose. The TREE authors a
+ * discount (`buildTime`, −5% a rank) because a rank ladder is bounded and
+ * cannot run past its own last rank. The MODIFIER STACK authors a SPEED
+ * (`buildSpeed`, a multiplier at or above 1) because what feeds it — a relic,
+ * a season, a legendary's boon — has no ceiling, and a discount would die at
+ * 100% while a speed only ever approaches zero
+ * (Docs/proposals/legendary-boons.md §2.1).
+ *
+ * Dividing is what makes that true: ×2 is half the wait, ×5 a fifth, and no
+ * number of them reaches a build that takes no time.
+ */
 export const effectiveBuildTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)));
+  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)))
+    / Math.max(1, resolve(state, 'buildSpeed', 1));
 
-/** Multiplier on research time (Scriveners: −5%/rank), floor 0.25. Applied
- *  ONCE, when a research starts, and persisted on it — see research.ts. */
+/**
+ * Multiplier on research time (Scriveners: −5%/rank). Applied ONCE, when a
+ * research starts, and persisted on it — see research.ts.
+ *
+ * Two halves pointing opposite ways, for the reason build time gives above:
+ * the tree discounts a bounded ladder, the stack multiplies an unbounded
+ * SPEED, and dividing is what stops a permanent passive reaching zero.
+ */
 export const effectiveResearchTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)));
+  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)))
+    / Math.max(1, resolve(state, 'researchSpeed', 1));
 
 /**
  * Tax gold per housed villager per minute.

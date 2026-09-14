@@ -3672,7 +3672,11 @@
       "hpPerLevel": 48,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "worldRevealSpeed",
+        "value": 1.25
+      }
     },
     "Adventurer": {
       "rarity": "Common",
@@ -4040,7 +4044,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "unitHp",
+        "value": 1.1
+      }
     },
     "VampireLord": {
       "rarity": "Legendary",
@@ -4056,7 +4064,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "heroXp",
+        "value": 1.25
+      }
     },
     "Necromancer": {
       "rarity": "Legendary",
@@ -4072,7 +4084,11 @@
       "hpPerLevel": 72,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "researchSpeed",
+        "value": 1.25
+      }
     },
     "Pharao": {
       "rarity": "Legendary",
@@ -4088,7 +4104,11 @@
       "hpPerLevel": 144,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "buildSpeed",
+        "value": 1.2
+      }
     },
     "ElvenPrincess": {
       "rarity": "Legendary",
@@ -4104,7 +4124,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "manaRegen",
+        "value": 1.25
+      }
     }
   },
   "ads": {

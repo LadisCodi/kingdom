@@ -29,7 +29,7 @@ import { grantPack } from './collection';
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  partyPower, partyStats,
+  NO_DRILL, partyPower, partyStats,
   type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import {
@@ -125,6 +125,9 @@ export function drillOf(state: GameState): Drill {
     disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
       + techFlat(state, 'typeDisadvantage')
       + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
+    // A MULTIPLIER, floored at the identity: nothing in the game may make the
+    // kingdom's own troops frailer than the sheet says.
+    hpMult: Math.max(1, resolve(state, 'unitHp', 1)),
   };
 }
 
@@ -147,7 +150,7 @@ export const partyOf = (
  * Every hero in the party is a fighter with its level's numbers.
  */
 export function partyBoard(party: Party): Board {
-  const drill = party.drill ?? { atk: {}, def: {}, disadvantageOffset: 0 };
+  const drill = party.drill ?? NO_DRILL;
   const fighters: FighterSpec[] = party.heroes.map((h) => {
     const def = HEROES[h.id];
     const step = h.level - 1;
@@ -168,6 +171,7 @@ export function partyBoard(party: Party): Board {
   const bonus = {
     dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags),
     def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags),
+    hpMult: () => drill.hpMult,
   };
   return buildBoard(party.slots.filter((s) => s.count > 0) as SquadSpec[], fighters, bonus);
 }

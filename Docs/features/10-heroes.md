@@ -43,8 +43,12 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ### 2.1 Rarity
 
-- **Rarity is a multiplier and a pool, never a mechanism.** It multiplies the
-  stat block and the passive; nothing reads rarity at combat time.
+- **Rarity multiplies the stat block and the passive, and picks the pool.**
+  Nothing reads rarity at combat time.
+- **A Legendary also carries a BOON** (§2.6) — one kingdom passive no other
+  rarity has. That is the one place rarity is a mechanism, and it is
+  deliberate: a Legendary that was only a bigger number was a thin prize for
+  the golden call's 25% slice.
 
 | Rarity | Count | Stat multiplier | Passive multiplier |
 |---|---|---|---|
@@ -52,8 +56,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | **Rare** | 12 | ×1.2 | ×1.25 |
 | **Legendary** | 6 | ×1.5 | ×1.75 |
 
-- A Legendary is a Common with bigger numbers, so a duplicate role is a real
-  choice about stats rather than a second vocabulary.
+- Below Legendary, a Rare is a Common with bigger numbers, so a duplicate role
+  is a real choice about stats rather than a second vocabulary.
 
 ### 2.2 The roster
 
@@ -114,7 +118,44 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   quartermasters do not buy a free trip, and two medics do not buy a fight
   nobody dies in.
 
-### 2.6 The party rule
+### 2.6 The boon
+
+> **Built 2026-09-14.** Design and rationale:
+> [`../proposals/legendary-boons.md`](../proposals/legendary-boons.md).
+
+- **Every LEGENDARY carries one kingdom passive, and no Common or Rare does.**
+  It is what a Legendary is for; the stat block and the type passive are only
+  bigger numbers.
+- It is **on while the hero is OWNED** — no slot, no equip, no party — and it
+  is a modifier at the base stage, in the same stack a relic uses.
+- **Always a multiplier, always above 1.** A speed, a yield or a capacity,
+  never a discount, a cost or a time: a flat bonus is worth less every hour the
+  kingdom grows, and a falling number has a floor, which is a ceiling on a
+  passive that never ends. Where the game owns a TIME, the boon owns the SPEED
+  and the call site divides by it.
+- **A boon never scales.** Level moves the body, ascension moves the type
+  passive, the boon is what arrives with the hero. Three ladders, three jobs.
+- **Boons stack; a duplicate adds nothing.** Two Legendaries are two heroes —
+  unlike a party trait, which is best-of.
+- The six:
+
+| Hero | Boon |
+|---|---|
+| **The Pharaoh** | the builders work **20% faster** |
+| **The Elven Princess** | the kingdom makes **25% more Mana** |
+| **The Necromancer** | research runs **25% faster** |
+| **The Scout** | world-map cells are scouted **25% faster** *(pending its timer)* |
+| **The Vampire Lord** | every room teaches your heroes **25% more** |
+| **The Golden Dragon** | every unit you field has **10% more health** |
+
+- The **sentence is generated** from the stat and the number, never authored
+  beside them — the technology card's rule, for the same reason.
+- **It breaks §2.1 on purpose**: rarity is now a mechanism, for one rarity.
+  §10's line holds — a boon acts on the kingdom, and the combat one is a
+  multiplier in the `Drill` the resolver is already handed, so nothing reads
+  rarity at combat time.
+
+### 2.7 The party rule
 
 - **At least one hero is mandatory** in every fight: gates, rooms, bosses.
   There is no fight without a hero and no hero-only fight.
@@ -441,7 +482,9 @@ the rewarded video.
   player cannot use.
 - **Guild-gated hero slots**, or a free second slot.
 - **A hero that is busy, away, or parked.** Fights are instant.
-- **A rarity that changes how combat resolves.**
+- **A rarity that changes how combat resolves.** A Legendary's boon (§2.6)
+  acts on the kingdom, and the combat one is a multiplier in the `Drill`; the
+  resolver never reads a rarity.
 - **A gacha currency Gems cannot buy.** The keys are a price on a button and
   a free ad path; nothing else mints them.
 - **A discount on the ten-call.** A batch buys pity walked, not a cheaper key.
@@ -462,10 +505,10 @@ the rewarded video.
   `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
   call site consults either, so those heroes have no off-board effect at all.
   **OQ-95.**
-- **A Legendary is only a bigger number.** One proposal on the table:
-  [`../proposals/legendary-boons.md`](../proposals/legendary-boons.md) gives
-  each of the six a kingdom passive, which deliberately breaks §2.1's *rarity
-  is never a mechanism*. **OQ-96.**
+- **The Scout's boon has no call site.** `worldRevealSpeed` is declared and in
+  the stack; the world map's cell-exploration timer that reads it is designed
+  and unbuilt ([`19-world-map.md`](19-world-map.md)). Accepted for the
+  prototype, and named in `tests/heroBoons.test.ts`. **OQ-96.**
 - **Rate-up is untested.** The timeline still carries a banner payload and the
   activation query exists, but the two banners are permanent rows, so nothing
   exercises a scheduled one. The season hero

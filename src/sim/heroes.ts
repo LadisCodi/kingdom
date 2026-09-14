@@ -27,11 +27,11 @@
 //    odds are the one thing that will eventually HAVE to be server-authoritative,
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
-import { resolve } from './modifiers';
+import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techValue } from './techEffects';
 import {
   BANNERS, COLLECTION, HERO_ORDER, HEROES, PARTY, heroesOfRarity,
-  type BannerId, type HeroRarity,
+  type BannerId, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
@@ -67,8 +67,86 @@ export function grantHero(
   state.heroes.levels[id] = fresh.level;
   state.heroes.tiers[id] = fresh.tier;
   state.heroes.fragments[id] = state.heroes.fragments[id] ?? 0;
+  syncHeroBoons(state);
   return 'Granted';
 }
+
+// -------------------------------------------------------------- the boons
+
+const BOON_PREFIX = 'hero:';
+
+/**
+ * THE BOON (Docs/proposals/legendary-boons.md): one kingdom passive per
+ * LEGENDARY hero, on while that hero is owned.
+ *
+ * Not the type passive (which acts on the board, at battle start) and not the
+ * trait (which acts on a party, best-of and never summed). A boon is a
+ * modifier at the base stage, `expiresAt: null`, in the same stack a relic
+ * uses — and boons SUM, because two Legendaries are two heroes rather than two
+ * quartermasters in one party.
+ *
+ * Idempotent and total, for the reason `syncArtifactModifiers` gives: a call
+ * landing, a save loading and a debug grant all move the same input, and one
+ * rebuild that cannot drift beats three paths that each have to remember.
+ */
+export function syncHeroBoons(state: GameState): void {
+  state.modifiers = state.modifiers.filter((m) => !m.id.startsWith(BOON_PREFIX));
+  for (const id of state.heroes.owned) {
+    const { boon } = HEROES[id];
+    if (boon === null) continue;
+    addModifier(state, {
+      id: `${BOON_PREFIX}${id}`,
+      source: 'hero',
+      stat: boon.stat,
+      scope: null,
+      op: 'mul',
+      value: boon.value,
+      expiresAt: null,
+    });
+  }
+}
+
+/**
+ * WHAT A BOON SAYS, generated rather than authored — the technology card's
+ * rule (`techProse.ts`), for the same reason: a sentence on the sheet drifts
+ * from the number beside it the first time the number moves.
+ *
+ * One line per stat a boon may carry. A stat with no line here is a boon the
+ * player cannot read, which `tests/heroBoons.test.ts` refuses to let ship.
+ */
+const BOON_SAYS: Partial<Record<ModifierStat, (pct: string) => string>> = {
+  buildSpeed: (v) => `The builders work ${v} faster`,
+  researchSpeed: (v) => `Research runs ${v} faster`,
+  worldRevealSpeed: (v) => `World-map cells are scouted ${v} faster`,
+  manaRegen: (v) => `Your kingdom makes ${v} more Mana`,
+  knowledgeYield: (v) => `Your kingdom makes ${v} more Knowledge`,
+  heroXp: (v) => `Every room teaches your heroes ${v} more`,
+  unitHp: (v) => `Every unit you field has ${v} more health`,
+  unitAtk: (v) => `Every unit you field hits ${v} harder`,
+  unitDef: (v) => `Every unit you field takes ${v} less`,
+  armyCap: (v) => `Your halls field ${v} more power`,
+  discoverRadius: (v) => `Your buildings see ${v} further`,
+  tapYield: (v) => `Every tap is worth ${v} more`,
+  stardustYield: (v) => `Rooms pay ${v} more Stardust`,
+  workerSpeed: (v) => `Your workers walk ${v} faster`,
+  manaCap: (v) => `Your Mana pool holds ${v} more`,
+  taxRate: (v) => `Your villagers pay ${v} more tax`,
+  workerYield: (v) => `Every worker carries ${v} more`,
+};
+
+/** The sentence a hero's card prints under its trait, or null if it has no
+ *  boon. A boon is always a multiplier, so the number is always a percent. */
+export function boonText(boon: HeroBoon): string | null {
+  const says = BOON_SAYS[boon.stat];
+  if (says === undefined) return null;
+  return says(`${Math.round((boon.value - 1) * 100)}%`);
+}
+
+/** Every boon the player is collecting — the roster's own summary. */
+export const activeBoons = (state: GameState): Array<{ id: HeroId; boon: HeroBoon }> =>
+  state.heroes.owned
+    .map((id) => ({ id, boon: HEROES[id].boon }))
+    .filter((row): row is { id: HeroId; boon: HeroBoon } => row.boon !== null);
 
 export type HeroLevelResult =
   | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughXp';

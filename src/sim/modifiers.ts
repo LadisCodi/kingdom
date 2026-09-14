@@ -55,7 +55,16 @@ export type ModifierStat =
   | 'unitAtk'         // flat ATK on every unit
   | 'unitDef'         // flat DEF on every unit
   | 'typeDisadvantage' // the multiplier a bad matchup applies
-  | 'discoverRadius';  // how far a building sees into the fog
+  | 'discoverRadius'  // how far a building sees into the fog
+  // THE SPEEDS. A wait is owned by the game as a TIME and moved as a SPEED the
+  // call site DIVIDES by, so the bonus points up and never arrives at zero
+  // (Docs/proposals/legendary-boons.md §2.1). `buildTime` above is the tree's
+  // ranks, which are authored as a discount and stay one; this is the stack's
+  // half of the same number, and the two multiply.
+  | 'buildSpeed'      // how fast the builders work
+  | 'researchSpeed'   // how fast a research runs, fixed at start
+  | 'worldRevealSpeed' // how fast a world-map cell is scouted — NOT READ YET
+  | 'unitHp';         // multiplies every unit's HP, on the board and in the estimate
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

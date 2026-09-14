@@ -9,7 +9,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   COLLECTION, PACKS, PACK_ORDER, type PackTier,
@@ -93,7 +93,7 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
-import { pullPrice } from './sim/heroes';
+import { boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -1106,6 +1106,13 @@ export class Game {
       held: albumHeld(this.state, album),
       total: ALBUMS[album].cards.length,
     };
+  }
+
+  /** The sentence a Legendary's card prints under its trait, or null on the
+   *  26 heroes that carry no boon (Docs/proposals/legendary-boons.md). */
+  heroBoonText(id: HeroId): string | null {
+    const { boon } = HEROES[id];
+    return boon === null ? null : boonText(boon);
   }
 
   relicStrip(): ArtifactId[] {
