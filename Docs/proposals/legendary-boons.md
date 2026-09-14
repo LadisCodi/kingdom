@@ -6,6 +6,10 @@
 > candidates, spread across economy, research, exploration and combat, for you
 > to pick from. Nothing here is built. Every number is a first pass.
 >
+> **Five of the six can be built today.** The Scout's moves the world map's
+> exploration timer ([`../features/19-world-map.md`](../features/19-world-map.md)),
+> which is designed and unbuilt, so his slot is reserved rather than filled.
+>
 > **It contradicts one line of the current design on purpose.**
 > [`../features/10-heroes.md`](../features/10-heroes.md) §2.1 says *"rarity is
 > a multiplier and a pool, never a mechanism"*. The boon makes it a mechanism
@@ -121,13 +125,15 @@ so it takes one boon and the kingdom takes five.
 | **The Pharaoh** | economy | `buildSpeed` **(new)** | mul | **×1.20** — the builders work a fifth faster | `upgrades.ts#effectiveBuildTimeMultiplier` |
 | **The Elven Princess** | economy | `manaRegen` | mul | **×1.25** Mana a minute | `mana.ts#manaProduction` |
 | **The Necromancer** | research | `knowledgeYield` | mul | **×1.25** Knowledge an hour | `mana.ts#knowledgePerHour` |
-| **The Scout** | exploration | `discoverRadius` | add | **+1 ring** on every building's sight | `fog.ts#effectiveDiscoverRadius` |
+| **The Scout** | exploration | `worldRevealSpeed` **(new, pending)** | mul | **×1.25** — a world-map cell is scouted faster | the world map's reveal timer — **not built** |
 | **The Vampire Lord** | exploration | `heroXp` | mul | **×1.25** Hero XP out of every room | `heroes.ts#addHeroXp` |
 | **The Golden Dragon** | combat | `unitAtk` | add | **+3 ATK** on every unit | `expeditions.ts#drillOf` |
 
 - **Every one of the six points up**, and none has a level at which it stops
-  being worth having (§2.1). Four are yields or speeds multiplied upward; two
-  are flat additions to a number with no top.
+  being worth having (§2.1). Five are yields or speeds multiplied upward; one
+  is a flat addition to a number with no top.
+- **Five of the six can be built today.** The Scout's waits on the world map
+  and says so.
 - **The Pharaoh builds.** The one boon a city feels on day one and still feels
   at Townhall 10, because the build queue never stops being the bottleneck. It
   is a SPEED, so `effectiveBuildTimeMultiplier` divides by it and its floor of
@@ -139,10 +145,24 @@ so it takes one boon and the kingdom takes five.
   line. Research is the only pillar with no relic and no live trait pointed at
   it, and the yield is the up-shaped half of it: Knowledge an hour grows for
   ever where research TIME would have run out.
-- **The Scout goes on ahead.** A ring on every building is the only boon that
-  changes the SHAPE of what the player knows rather than a rate — which is why
-  it goes to the hero whose whole card is *goes on ahead*, and not to the fog's
-  price, which is a discount and dies.
+- **The Scout goes on ahead — on the world map, when there is one.** Revealing
+  a world-map cell costs **Gold and TIME**, with a countdown a player can rush
+  with Gems ([`../features/19-world-map.md`](../features/19-world-map.md),
+  *Niebla y exploración*). That timer is the only exploration clock the game
+  will have: a ruin's depth resolves the instant the player enters it, so there
+  is no delve time for the Scout to shorten. His boon is a **speed on that
+  timer**, divided in exactly as the Pharaoh's is (§2.1).
+- **His boon ships with the world map and not before.** A stat nothing reads
+  is a bonus nobody collects, so `worldRevealSpeed` is declared when the timer
+  that reads it is. Until then the Scout carries his `SupplyDiscount` trait,
+  which works, and no boon. **Writing it down now is the point**: the world
+  map's reveal timer should be built with the hook in it, which costs one
+  `resolve()` at the call site and nothing else — retrofitting it later costs
+  a balance pass on a live number.
+- **`discoverRadius` is deliberately left unassigned.** It was the Scout's in
+  the first draft and it is a better fit for nobody else; a boon is permanent
+  on a hero players own, so handing him a placeholder now means he keeps it
+  when the real one arrives.
 - **The Vampire Lord collects, and has done for centuries.** Every room teaches
   the heroes more, which is the one faucet the hero ladder runs on — and the
   nearest live thing to the `FragmentBonus` his card has been promising into
@@ -170,14 +190,16 @@ so it takes one boon and the kingdom takes five.
 | One line on the hero card, under the type passive | `ui/heroesSheet.ts` (§8.2) |
 | `SAVE_VERSION` bump, **no migrator** — the boon is derived from `heroes.owned` | `sim/save.ts` |
 
-- **One new `ModifierStat`: `buildSpeed`.** Five of the six are already
+- **One new `ModifierStat` now: `buildSpeed`.** Four of the six are already
   declared, resolved at a live call site and not retired — unlike `delveSpeed`
   and `haulLoss`, which the room model left behind and which nothing reads.
-  The sixth is the Pharaoh's, and it is new because §2.1 will not take
-  `buildTime`: one line in `modifiers.ts`, and
-  `effectiveBuildTimeMultiplier` becomes
+  The Pharaoh's is new because §2.1 will not take `buildTime`: one line in
+  `modifiers.ts`, and `effectiveBuildTimeMultiplier` becomes
   `techValue(...) / resolve(state, 'buildSpeed', 1)` with its 0.25 floor
   deleted. `buildTime` stays exactly as it is for the tree's ranks.
+- **One more later: `worldRevealSpeed`**, declared with the world map's reveal
+  timer and read by it. Nothing to build for it today except the note in
+  [`../features/19-world-map.md`](../features/19-world-map.md).
 - **No new screen.** The hero card already has the line.
 
 ## 5. Dials, in the order to reach for them
@@ -187,6 +209,7 @@ so it takes one boon and the kingdom takes five.
 | Which rarity has a boon | **Legendary only** | the sheet: blank = none |
 | What each boon moves, and by how much | §3 | `Heroes` sheet, `boon_*` |
 | Which direction a boon may point | **up only** — a speed, a yield or a capacity | §2.1, and a test |
+| When a boon ships | **with the call site that reads it**, never before | the Scout's waits on the world map |
 | Does a boon scale | **no** — a step, fixed for ever | — |
 | Do two boons stack | **yes**, the stack sums | — |
 
@@ -199,6 +222,9 @@ so it takes one boon and the kingdom takes five.
 - **A boon that needs the hero equipped, in a party, or on the board.** There
   is no persistent hero board, and building one to hang this on is a feature,
   not a passive.
+- **A boon that ships before the number it moves exists.** A stat nothing
+  reads is a bonus nobody collects; the slot is reserved in writing instead,
+  and a hero waits rather than carrying a placeholder he would keep.
 - **A boon shaped as a discount, a cost or a time.** A number that falls has
   a floor, and a permanent passive that can be finished is a passive with a
   ceiling (§2.1). Where the game owns a time, the boon owns the speed.
