@@ -57,6 +57,10 @@ never a discount, because a discount dies at 100%.
 | **Gilded Ledger** | tax rate **+X%** | `taxRate` |
 | **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
 
+- **The Rod and the Seal do not keep this rule today.** Both are authored as
+  time multipliers falling 0.05 a level, so both reach zero at level 18 and
+  every season after pays nothing. The shape has to become a SPEED the call
+  site divides by. **OQ-97.**
 - `X = base + per_level × (level − 1)`, both authored per relic on the
   `Artifacts` sheet. A level is **a season's worth of growth**, so `per_level`
   is sized to be **felt on a headline number** — of the order of +10% a level
@@ -497,5 +501,5 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97 in
 [`../open-questions.md`](../open-questions.md).
