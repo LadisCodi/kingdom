@@ -86,7 +86,7 @@ Not features — how content and art are made.
 |---|---|
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
-| [`proposals/relic-effects.md`](proposals/relic-effects.md) | a **proposal**, not a spec: what each of the five relics does — a multiplying passive that never stops being worth having, and an active that is a window of minutes bought with Mana, one of power or duration scaling with the relic's level |
+| [`proposals/relic-effects.md`](proposals/relic-effects.md) | a **proposal**, not a spec: what each of the five relics does, level by level — a passive that never stops being worth having, and an active that is a placed ZONE on a cooldown, with exactly one of its four numbers growing with the relic's level |
 | [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | a **proposal**, not a spec: one kingdom passive per Legendary hero, spread across economy, research, exploration and combat, so a Legendary is a different kind of thing to own rather than a bigger number |
 | [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
 | [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |

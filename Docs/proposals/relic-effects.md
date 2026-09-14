@@ -1,16 +1,15 @@
 # Proposal — what the five relics do
 
-> **What this is.** A review of every relic's **passive** and its **active**,
-> and a proposal for both. It is a **proposal**, not a feature doc: nothing
-> here is built and every number is a first pass.
+> **What this is.** Every relic's **passive** and its **active**, level by
+> level. It is a **proposal**, not a feature doc: nothing here is built, and
+> every number is a first pass.
 >
 > **It decides one open thing on purpose.**
 > [`../features/07-research.md`](../features/07-research.md) §6 plans for the
 > relic actives to leave and become **spells in the Magic tome**, and
 > [`../features/09-relics.md`](../features/09-relics.md) §1 already says *"a
-> relic has no active"*. This proposal keeps the actives **on the relics** and
-> builds them out instead. Pick one: a relic with two halves, or a relic with
-> one half and a tome full of spells. They are not compatible.
+> relic has no active"*. This keeps the actives **on the relics** and builds
+> them out instead. The two are not compatible — **OQ-98**.
 
 ## 1. What the five do today
 
@@ -22,143 +21,244 @@
 | **Gilded Ledger** 🪙 | your villagers pay more tax | `taxRate` mul | ×1.10 | +0.10 | **Beckon** — calls a depleted resource back | **0** | instant |
 | **Wanderer's Compass** 🧭 | rooms pay more Stardust | `stardustYield` mul | ×1.25 | +0.25 | **Beckon** — *the same one* | 5 | instant |
 
-Six things are wrong with that table.
+Seven things are wrong with that table.
 
 - **Two passives die.** The Rod and the Seal fall 0.05 a level and read `0.00`
-  at **level 18** — instant recovery, instant respawn, and every season after
-  pays nothing, on a ladder [`09`](../features/09-relics.md) §2 says has no
-  ceiling. **OQ-97.**
-- **One passive is flat.** The Sigil adds `+1` and `+0.5` a level, so it is
-  enormous on a worker carrying two and a rounding error on one carrying
-  forty. Every other passive is a multiplier.
-- **Two relics share one active.** The Ledger and the Compass both cast
-  `Beckon`, so the fourth relic has no ability of its own.
-- **One active is free.** The Ledger's `Beckon` costs **0 Mana** — the only
-  thing in the game that draws on the pool for nothing.
-- **Four of five actives are instant.** Only Haste is a window, and it is the
-  only one the design writes a sentence about (*cast it on your way out*).
-- **No active reads the relic's level.** A level-18 Dowsing Rod casts exactly
-  the Divination a level-1 one casts. The permanent ladder and the ability are
-  two systems that never meet.
+  at **level 18**. **OQ-97.**
+- **One passive is flat on a growing base.** The Sigil's `+1 a worker` is the
+  biggest number in the game on day two and a rounding error on day twenty.
+- **Two relics share one active**, so the fourth has no ability of its own.
+- **One active is free.** The Ledger's `Beckon` costs **0 Mana**.
+- **Four of five actives are instant**, so only one is a decision about *when*.
+- **No active reads the relic's level**, so the permanent ladder and the
+  ability never meet.
+- **Nothing stops a player casting on every cooldown-free tick** but the Mana
+  pool, and a pool hoarded across an absence empties in seconds.
 
-And the five passives are **four economies and a collection**: nothing points
-at research, combat or the fog.
-
-## 2. The rule this proposes
+## 2. The shape
 
 - **A relic is one idea at two speeds.** The passive is that idea always on;
-  the active is the same number, much larger, for minutes, paid in Mana.
-  Reading a relic is then one sentence, not two.
-- **The passive points UP and is a multiplier**, always — a speed, a yield or a
-  capacity. A discount dies at 100% and a flat bonus goes stale; a multiplier
-  does neither. **Level scales the passive's power**, for ever, with no cap.
-- **The active is a WINDOW.** Minutes, never instant, and always worth more
-  per minute than the passive is — otherwise it is a button that pays less
-  than doing nothing.
-- **Level scales an active's power OR its duration, never both.** Two growing
-  axes on one ability is a number nobody can price, and at level 18 it is two
-  numbers nobody can survive.
-- **An active whose effect is a discount scales DURATION.** Power would walk it
-  to zero and then past it; duration can grow for ever.
-- **Mana is the session budget.** Every tap costs 1 Mana, so a 20-Mana cast is
-  twenty taps not taken. That is the whole cost, and it is why an active does
-  not need a cooldown.
+  the active is the same idea as a **zone on the map**, for a window, bought
+  with Mana.
+- **A zone is placed.** Select-then-place, the idiom placement and casting
+  already use: the grid lights what the zone would cover before a tap is
+  spent finding out.
+- **Zones may overlap.** The cooldown is what stops a player carpeting the
+  map, so an overlap is a real choice — an area taking two effects is an area
+  somewhere else taking none, and chaining the Rod's recovery under the Seal's
+  harvest is a combination worth finding rather than a rule to police.
+- **Every active has a 5-minute cooldown**, and **it starts when the window
+  closes**, not when the spell is cast. Otherwise a 10-minute window on a
+  5-minute cooldown is 100% uptime and the cooldown is decoration.
+- **A cooldown never shrinks with level.** A shrinking cooldown is a discount
+  and dies; and a relic that did more *and* did it more often would grow on
+  two axes at once.
+
+### 2.1 Every number points up
+
+- **A passive is a multiplier above 1, or a flat term on a base that does not
+  grow.** Never a discount, a cost or a time: a falling number has a floor,
+  and a floor is a ceiling on a ladder with no top.
+- Where the game owns a **time**, the relic owns the **speed** and the call
+  site divides by it: ×2 is half the wait, ×5 a fifth, and no level reaches
+  zero.
+
+### 2.2 One growing axis per active
+
+An active has four numbers — power, duration, radius and cooldown. **Exactly
+one of them grows with the relic's level.** Two growing axes multiply, and at
+level 20 that is not a buff, it is a different game.
+
+| Relic | The axis its level moves | Why that one |
+|---|---|---|
+| **Dowsing Rod** | **duration** | the zone's worth is how many nodes exhaust inside it, which is time |
+| **Verdant Seal** | **taps per Mana** | §3.2 — the spell IS a Mana exchange rate |
+| **Foreman's Sigil** | **power** | a crew either works faster or it does not; a longer window is just a longer wait |
+| **Gilded Ledger** | **taps per Mana** | §3.2 |
+| **Wanderer's Compass** | **radius** | for a reveal, more rings IS the effect |
+
+- **Radius is fixed at 2 for the other four.** A Chebyshev radius covers
+  `(2r+1)²` cells — 25, then 49, then 81 — so growing it grows the effect
+  quadratically. The Compass is the exception because covering more ground is
+  the whole of what it does.
 
 ## 3. The five
 
-| Relic | Area | Passive — always on | Active — a window | Mana | Level scales |
-|---|---|---|---|---|---|
-| **Dowsing Rod** 🔮 | the ground | `recoverySpeed` **×1.20**, +0.20 a level | **Bloom** — every harvest cell in radius 2 refills to full at once, and recovery runs **×5** for **10 min** | 15 | **duration**, +1 min a level |
-| **Verdant Seal** 🌱 | the wild | `respawnSpeed` **×1.20**, +0.20 a level | **Beckon** — every feature waiting to respawn returns at once, and respawn runs **×5** for **10 min** | 15 | **duration**, +1 min a level |
-| **Foreman's Sigil** ⚡ | labour | `workerYield` **×1.15**, +0.15 a level | **Haste** — every worker carries **×3** for **60 min** | 20 | **power**, +0.25× a level |
-| **Gilded Ledger** 🪙 | money | `taxRate` **×1.10**, +0.10 a level | **The Ledger's Due** — taxes run **×4** for **30 min** | 20 | **power**, +0.5× a level |
-| **Wanderer's Compass** 🧭 | the frontier | `stardustYield` **×1.25**, +0.25 a level | **Divination** — revealing a cell **costs no Gold** for **5 min** | 25 | **duration**, +30 s a level |
+### 3.1 The zones
 
-- **The Rod and the Seal keep the two harvest clocks**, which is the pairing
-  [`09`](../features/09-relics.md) §2 argues for — but as SPEEDS the call site
-  divides by, so ×2 is half the wait, ×5 a fifth, and no level reaches zero.
-  Their actives become the burst of the same clock: everything back now, and
-  the clock itself hurried while the window runs.
-- **The Sigil's passive becomes a multiplier.** `+1 per worker` was the biggest
-  number in the game on day two and invisible by day twenty; `×1.15` is worth
-  the same fraction for ever.
-- **The Ledger gets an active of its own, and it costs something.** Taxes ×4
-  for half an hour is the money relic doing the money thing, and it replaces
-  the free `Beckon` nobody should have had.
-- **Divination moves to the Compass** — the relic whose whole card is finding
-  the way — and becomes a window instead of one cell. It converts the fog's
-  price from **Gold into Mana**: revealing is free, but every tap still costs
-  1 Mana, so the pool is the brake and the player chooses how hard to push.
-  That is the same question [`09`](../features/09-relics.md) already says the
-  Rod's Divination asked, made into a session move.
-- **No relic moves a stat a legendary boon moves** (`buildSpeed`,
-  `researchSpeed`, `manaRegen`, `worldRevealSpeed`, `heroXp`, `unitHp`), and no
-  boon moves a relic stat. **Research and combat belong to the boons**
-  ([`legendary-boons.md`](legendary-boons.md)); the relics are the city's own
-  layer, and putting both permanent systems on one number would make the
-  second one unreadable.
+| Relic | Passive — always on | Active — a zone | Mana |
+|---|---|---|---|
+| **Dowsing Rod** 🔮 | resource nodes **recover faster** | every node in the zone refills **at once**, and recovery runs **×5** inside it while the window lasts | 15 |
+| **Verdant Seal** 🌱 | every strike takes **+N more units** — the thumb and the crew alike | the nodes in the zone are **auto-tapped, 4 a second**, for as many taps as the Mana bought | 15 |
+| **Foreman's Sigil** ⚡ | crews **work faster** — swing and walk both | the crews of **every building in the zone** work much faster while the window lasts | 20 |
+| **Gilded Ledger** 🪙 | a house pays **more tax** | the houses in the zone are **auto-tapped, 4 a second**, for as many taps as the Mana bought | 20 |
+| **Wanderer's Compass** 🧭 | rooms pay **more Stardust** | reveals outward in **rings from the cell it was cast on, free of Gold**, over 30 s | 25 |
 
-## 4. The three you cast on your way out
+- **The Sigil's zone is placed on BUILDINGS, not on workers.** A worker walks,
+  so a zone that asked where it was standing would flicker as it crossed the
+  edge — and worker travel is Euclidean while a zone is Chebyshev, which is two
+  of the three distance metrics that coexist on purpose. *The Sawmill is in the
+  area, so the Sawmill's crew works faster* is one sentence and one stable
+  answer.
+- **"Faster" for a crew is both numbers**: the swing (`workerStrikeMs`) and the
+  walk (`workerSpeed`). Speeding only the walk would be a fraction of a round
+  trip and would read as nothing.
+- **The Compass is cast on a legal frontier cell** — one already adjacent to
+  revealed ground — and walks outward ring by ring, so the fog still grows from
+  what the player holds rather than appearing as islands.
+  `cellsWithinRadius` is already ordered nearest-first, and the Townhall's
+  reach still gates it: the spell buys the **Gold**, never the ladder.
+- **The Rod's refill must land before its zone matters.** A recovery wait is
+  stamped when the cell is exhausted, not read each tick, so a `×5` zone only
+  reaches cells that exhaust *inside* it — which is exactly what the instant
+  refill arranges by emptying the waiting list first.
 
-- An active is a **timed modifier**, and a timed modifier's expiry is already a
-  boundary in `nextBoundary` — so a window that closes during an absence closes
-  at the right instant, and one still open pays for the whole time it was.
-- **Production stops at the offline cap (8 h) and a timer does not**
-  (CLAUDE.md, invariant 2). So a window shorter than the cap is paid IN FULL
-  during an absence:
+### 3.2 The two auto-tap spells, and the exchange rate they are
 
-| Cast on the way out | Why it pays while away |
-|---|---|
-| **Haste** — 60 min | worker yield is production, and an hour fits inside the cap |
-| **The Ledger's Due** — 30 min | so are taxes |
-| **Bloom** / **Beckon** | the refill lands now, and the hurried clock runs while the crew works through it |
+An auto-tapped tap **costs no Mana** — 30 of them at 1 Mana each would be
+impossible — so these two spells are the one exception to *every player tap
+costs 1 Mana*, and the exception is the design:
 
-- **Divination does not**, and should not: the fog is a thing the player
-  presses, so its window is worth exactly nothing to somebody who has closed
-  the game. That is the difference between a departure move and a session move,
-  and the five should have both.
+> **A cast buys taps at a rate, and the rate is what the relic's level moves.**
+> At level 1 it is **2 taps per Mana**; every level adds **+0.25**.
+
+- A 15-Mana cast at level 1 is **30 taps**; at 4 a second, a **7.5-second**
+  window. The window is *derived* — it is the tap count divided by the rate —
+  and never authored.
+- Taps are dealt to the cells in the zone **nearest-first, round robin**, so
+  the count is the budget and the area is only where it is spent.
+- Holding a finger already auto-taps at 2 a second and costs 1 Mana each. So
+  the spell is **twice the speed at a fraction of the price**, and the player
+  can always see which they would rather spend.
+- **The nodes exhaust and the houses do not.** A 5×5 area holds ~250 units of
+  stock, so the Seal's taps run out of ground before they run out of budget,
+  while the Ledger's keep paying. That is the asymmetry the cooldown exists to
+  hold, and the number to watch first (**OQ-99**).
+
+## 4. Level by level
+
+Every number below is a **first pass**. What matters most is the **per-level**
+column, because a relic gains a level a season for ever and nothing caps it.
+
+**Dowsing Rod** — mana 15 · cooldown 5 min · radius 2 (fixed) · power ×5 (fixed)
+
+| Dowsing Rod | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — recovery speed | ×1.20 | ×1.40 | ×1.60 | ×2.00 | ×3.00 | ×5.00 |
+| *(a Forest's 90 s wait becomes)* | 75 s | 64 s | 56 s | 45 s | 30 s | 18 s |
+| **Active — duration** | **5 min** | **6 min** | **7 min** | **9 min** | **14 min** | **24 min** |
+| *(uptime, cooldown after)* | 50% | 55% | 58% | 64% | 74% | 83% |
+
+**Verdant Seal** — mana 15 · cooldown 5 min · radius 2 (fixed) · 4 taps a second
+
+| Verdant Seal | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — units per strike | +1 | +2 | +3 | +5 | +10 | +20 |
+| Passive — stock a node holds | +1 | +2 | +3 | +5 | +10 | +20 |
+| *(a Forest node: stock / per tap)* | 11 / 2 | 12 / 3 | 13 / 4 | 15 / 6 | 20 / 11 | 30 / 21 |
+| **Active — taps per Mana** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
+| Active — taps dealt | 30 | 34 | 38 | 45 | 64 | 101 |
+| Active — window | 7.5 s | 8.5 s | 9.5 s | 11.2 s | 16.0 s | 25.2 s |
+
+**Foreman's Sigil** — mana 20 · cooldown 5 min · radius 2 (fixed) · 5 min (fixed)
+
+| Foreman's Sigil | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — crew speed | ×1.10 | ×1.20 | ×1.30 | ×1.50 | ×2.00 | ×3.00 |
+| **Active — crew speed in the zone** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
+| *(uptime, cooldown after)* | 50% | 50% | 50% | 50% | 50% | 50% |
+
+**Gilded Ledger** — mana 20 · cooldown 5 min · radius 2 (fixed) · 4 taps a second
+
+| Gilded Ledger | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — tax at a house | ×1.05 | ×1.10 | ×1.15 | ×1.25 | ×1.50 | ×2.00 |
+| **Active — taps per Mana** | **×2.00** | **×2.25** | **×2.50** | **×3.00** | **×4.25** | **×6.75** |
+| Active — taps dealt | 40 | 45 | 50 | 60 | 85 | 135 |
+| Active — window | 10.0 s | 11.2 s | 12.5 s | 15.0 s | 21.2 s | 33.8 s |
+
+**Wanderer's Compass** — mana 25 · cooldown 5 min · 30 s to walk the rings
+
+| Wanderer's Compass | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — Stardust from rooms | ×1.05 | ×1.10 | ×1.15 | ×1.25 | ×1.50 | ×2.00 |
+| **Active — radius** | **2** | **2** | **2** | **3** | **4** | **6** |
+| *(cells the disc covers)* | 25 | 25 | 25 | 49 | 81 | 169 |
+
+### 4.1 Two of these are cuts to live numbers
+
+The Ledger ships at **×1.10, +0.10 a level** and the Compass at **×1.25,
++0.25**. The table halves the first and quarters the second. A player holding
+either would lose what they have. **Either raise those two rows to what ships,
+or accept the nerf knowingly** — the season that closes their album is what
+the player paid for it.
+
+### 4.2 The Seal's `+1 a strike` needs the stock row beside it
+
+A tap can never take more than the cell holds. At `+1` a level, a Forest tap
+asks for 10 units at **level 9** — the node's whole stock — and every level
+after that pays nothing on a 10-stock node:
+
+```
+level  5: the tap asks 6,  the node holds 10 → takes 6
+level  9: the tap asks 10, the node holds 10 → takes 10   ← saturated
+level 20: the tap asks 21, the node holds 10 → takes 10   ← still 10
+```
+
+That is the same death as the Rod's old discount, approached from the other
+end. The fix is the row above it: **the Seal raises the node's STOCK by +1 a
+level too**, so the ground gets richer as fast as the swing gets bigger and
+neither saturates. It also revives the idea in its own name — *a node holds
+more before it is spent* — and `+1` on a 5-stock Stone is a real **+20%**,
+where a percentage would have rounded away to nothing.
 
 ## 5. What it would take
 
 | Step | Where |
 |---|---|
-| `recoverySpeed` and `respawnSpeed` — two `ModifierStat`s the call site DIVIDES by, replacing the two dying discounts | `modifiers.ts`, `harvest.ts#effectiveRecoveryMs`, `#effectiveRespawnMs` |
-| The Sigil's passive from `add` to `mul` | the `Artifacts` sheet |
-| `active_duration_seconds` filled on all five, and a `per_level` column for whichever axis each one scales | the `Artifacts` sheet |
-| `castCost` and the window read the relic's LEVEL | `casting.ts` |
-| Five actives rebuilt: two bursts, two surges, one fog window | `casting.ts` |
-| The relic card prints the active's numbers at this level and at the next, as it already does for the passive | `ui/collectionSheet.ts` §11.4 |
+| `recoverySpeed`, `respawnSpeed`, `workerStrikeSpeed`, `harvestStock`, `unitsPerStrike` as `ModifierStat`s the call sites read | `modifiers.ts`, `harvest.ts`, `upgrades.ts` |
+| **Zones**: a placed, timed, positional effect — new state, a save field, an expiry boundary, and a `resolve()` that knows about cells | new `sim/zones.ts` |
+| **Cooldowns**: one timestamp per relic, and a boundary at each | `casting.ts`, `state.ts` |
+| The auto-tap engine: a tap budget spent 4 a second, nearest-first, charging no Mana | `casting.ts` |
+| `active_*` columns per level on the `Artifacts` sheet | `balance.xlsx`, `scripts/balance.mjs` |
+| The zone preview in cast mode, and the cooldown on the relic's card | `ui/collectionSheet.ts`, the map renderer |
 
-- **No new screen and no new save field.** A timed modifier is already
-  persisted, already expires on a boundary, and already survives a reload.
+- **The one to cost first is zones.** Everything else is a number; a positional
+  timed modifier is a new concept in the sim, and it has to satisfy invariant 1
+  — one-call offline replay equal to stepped ticking — which means its expiry
+  is a boundary and its effect is never integrated over a straddled window.
 
 ## 6. Dials, in the order to reach for them
 
 | Dial | Value | Key |
 |---|---|---|
-| A passive's `base` and `per_level` | §3 | `Artifacts` sheet |
-| A passive's direction | **up only, multiplicative** | a test |
-| What an active costs | 15 · 15 · 20 · 20 · 25 Mana | `Artifacts` sheet, `active_mana_cost` |
-| How long a window runs | 10 · 10 · 60 · 30 · 5 min | `active_duration_seconds` |
-| Which axis a level moves | **one of power or duration, never both** | a new `active_per_level` column, and a test |
-| Bloom's radius | 2, fixed | `active_radius` |
+| Passive power, per level | §4 | `Artifacts` sheet |
+| Which axis a level moves | **one per relic** (§2.2) | a column, and a test |
+| Active power / duration / radius, per level | §4 | `Artifacts` sheet |
+| Taps a Mana, and its per-level step | **2.00, +0.25** | `Artifacts` sheet |
+| Auto-tap rate | **4 a second** | a setting |
+| Cooldown | **5 min, flat, from when the window closes** | a setting |
+| Radius | **2 everywhere but the Compass** | `active_radius` |
 
 ## 7. Deliberately not in this proposal
 
-- **A passive that is a discount, a cost or a time.** It dies at 100%, and a
-  relic's ladder has no top.
-- **A passive that is flat.** It goes stale on its own as the city grows.
-- **An active that is instant.** The window IS the ability; an instant one is
-  a consumable with no decision in it.
-- **A level that moves an active's power AND its duration.** Two growing axes
-  multiply, and at level 18 that is not a buff, it is a different game.
-- **A cooldown on an active.** Mana is the cost, and a second brake on the
-  same button is a second thing to explain.
+- **A passive that is a discount, a cost or a time.** It dies at 100%.
+- **A passive that is flat on a base that grows.** It goes stale on its own.
+- **An active that is instant**, or one that is not placed. The zone is the
+  decision.
+- **A level that moves two of an active's four numbers.** They multiply.
+- **A cooldown that shrinks with level**, which is a discount wearing a hat.
+- **A cooldown that starts at the cast** while the window outlives it, which is
+  no cooldown at all.
+- **Radius as the growing axis** on anything but the Compass: area is
+  quadratic.
+- **A popup asking whether to overwrite an overlapping zone.** Zones overlap
+  freely; the grid shows what a cast would cover before the tap, which is the
+  house rule (*pills, not modals*) and the idiom casting already has.
 - **Two relics sharing an ability**, or one that costs nothing.
-- **A relic that moves a number a legendary boon moves.** The two permanent
-  layers stay legible by staying disjoint.
-- **An active that pays a player who is not there to press it.** Divination is
-  deliberately a session move, not a departure one.
+- **A relic that moves a number a legendary boon moves**
+  ([`legendary-boons.md`](legendary-boons.md)). The two permanent layers stay
+  legible by staying disjoint.
 
-**Open questions:** OQ-97, OQ-98 in
+**Open questions:** OQ-97, OQ-98, OQ-99 in
 [`../open-questions.md`](../open-questions.md).
