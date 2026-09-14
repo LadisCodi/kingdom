@@ -23,7 +23,7 @@
 
 import {
   CARD_BUNDLE_ORDER, COLLECTION, CURRENCIES, PACKS, PACK_ORDER, STORE,
-  type CardBundleDef, type PackTier,
+  type BannerId, type CardBundleDef, type PackTier,
 } from './data/definitions';
 import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, SEASON_EPOCH, seasonContent,
@@ -32,10 +32,11 @@ import {
 import { rand } from './rng';
 import {
   addToWallet, getWallet, type ArtifactId, type CurrencyId, type GameState,
-  type StoreSkuId, type Wallet,
+  type HeroId, type StoreSkuId, type Wallet,
 } from './state';
 import { buySku, type BuySkuResult } from './store';
 import { grantArtifactLevel } from './artifacts';
+import { callGuaranteed } from './heroes';
 import { cityGatherPerSecond } from './upgrades';
 import { cityGoldPerMinute } from './population';
 
@@ -275,6 +276,10 @@ export interface AlbumPayout {
   silverKeys: number;
   goldKeys: number;
   gems: number;
+  /** THE FIFTH ALBUM, and only the fifth: what the five together paid (§5).
+   *  Null on the other four, and null on the fifth in a season that has
+   *  already paid it. */
+  prize: CollectionPrize | null;
 }
 
 /** What an album at this index pays. A TOTAL, banded easy → hard (§5). */
@@ -321,6 +326,53 @@ function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
     found,
     chest,
     ...rewards,
+    // The ninth card of the FIFTH album is also the forty-fifth of the season.
+    prize: payCollectionPrize(state),
+  };
+}
+
+// --------------------------------------------------------------- the prize
+
+/** The golden call — the collection prize is a call on it, not a roll (§5). */
+export const PRIZE_BANNER: BannerId = 'advanced';
+
+export interface CollectionPrize {
+  gems: number;
+  /** The season's hero, handed over rather than rolled for (§10). */
+  hero: HeroId;
+  /** They already had them, so the call paid Fragments. */
+  duplicate: boolean;
+  fragments: number;
+  stardust: number;
+}
+
+/**
+ * WHAT THE FIVE ALBUMS TOGETHER PAY: a golden call guaranteed to be the
+ * season's hero, and 25,000 Gems (§5).
+ *
+ * ONCE A SEASON, and `prizePaid` is the guard — the same guard `completed` is
+ * for an album. It cannot be reached twice anyway (the fifth album completes
+ * once), but the close resets both together and a prize is far too large to
+ * leave that to the shape of the caller.
+ *
+ * A GOLDEN CALL, not a Legendary: the season names the hero, and what the call
+ * is worth to a player who already has them is the Fragments a duplicate pays
+ * on that banner — which §10 says is half the point of a rate-up.
+ */
+export function payCollectionPrize(state: GameState): CollectionPrize | null {
+  if (!seasonIsComplete(state)) return null;
+  if (state.collection.prizePaid) return null;
+  state.collection.prizePaid = true;
+
+  const gems = COLLECTION.prizeGems;
+  if (gems > 0) addToWallet(state.player.wallet, 'Gems', gems);
+  const call = callGuaranteed(state, PRIZE_BANNER, seasonDef(state.collection.season).hero);
+  return {
+    gems,
+    hero: call.heroId,
+    duplicate: call.duplicate,
+    fragments: call.fragments,
+    stardust: call.stardust,
   };
 }
 

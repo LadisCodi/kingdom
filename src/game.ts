@@ -40,7 +40,8 @@ import {
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
   wildcardCovers, wildcardOffers, wildcardsHeld,
-  SEASON_CARDS, type AlbumPayout, type PackOpening, type VaultTier,
+  PRIZE_BANNER, SEASON_CARDS,
+  type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
 } from './sim/collection';
 import {
   ALBUMS, ALBUM_ORDER, albumOfRelic, RARITIES, type AlbumId, type Rarity,
@@ -344,6 +345,9 @@ export class Game {
    * simply does not replay.
    */
   pendingPayouts: AlbumPayout[] = [];
+  /** The collection prize, waiting for the screen the pack reveal is using
+   *  (§5). Transient like the payouts beside it. */
+  private pendingPrize: CollectionPrize | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -1116,9 +1120,58 @@ export class Game {
     const opening = openPack(this.state, this.now());
     if (opening === null) return;
     playSfx('chainFinished');
-    this.pendingPayouts.push(...opening.payouts);
+    this.takePayouts(opening.payouts);
     this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
     this.notify();
+  }
+
+  /**
+   * Bank what a completed album owes and deal whatever the screen is free to
+   * deal. Called from both places an album can finish — a pack turning over
+   * and a wildcard being placed.
+   */
+  private takePayouts(payouts: readonly AlbumPayout[]): void {
+    for (const payout of payouts) {
+      this.pendingPayouts.push(payout);
+      if (payout.prize !== null) this.pendingPrize = payout.prize;
+    }
+    this.dealPayouts();
+  }
+
+  /**
+   * WHAT FOLLOWS A REVEAL (§11.5). A completed album interrupts nothing, so
+   * this deals only into a free screen and is called again every time one is
+   * dismissed.
+   *
+   * The order is the order of what things are worth. THE PRIZE TAKES THE
+   * SCREEN first — it is the most exciting screen the game has and the right
+   * place for the forty-fifth card to lead — and the albums' own banners
+   * follow it, so the run of five ends on the hero rather than on a pennant.
+   */
+  private dealPayouts(): void {
+    if (this.gachaReveal !== null) return;
+    if (this.pendingPrize !== null) {
+      const prize = this.pendingPrize;
+      this.pendingPrize = null;
+      this.gachaReveal = {
+        banner: PRIZE_BANNER, calls: 1, caption: 'The collection prize',
+        prizes: prizePrizes(prize),
+      };
+      return;
+    }
+    for (const payout of this.pendingPayouts.splice(0)) {
+      const relic = ARTIFACTS[payout.relic];
+      this.queueBanner({
+        title: payout.found ? 'A relic is yours!' : 'Album complete!',
+        icon: relic.glyph,
+        sprite: relic.sprite,
+        name: ALBUMS[payout.album].name,
+        desc: payout.found
+          ? `${relic.name}, at level 1.`
+          : `${relic.name} rises to level ${payout.level}.`,
+        tone: 'gold',
+      });
+    }
   }
 
   /** What the reveal will deal, asked before it is opened — the album screen
@@ -1192,7 +1245,7 @@ export class Game {
       if (result.placed) {
         playSfx('upgradeBought');
         this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
-        if (result.payout !== null) this.pendingPayouts.push(result.payout);
+        if (result.payout !== null) this.takePayouts([result.payout]);
         if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
       } else if (result.reason === 'GoldSlot') {
         this.toast('No wildcard covers a gold card — it is earned or sent');
@@ -2029,9 +2082,11 @@ export class Game {
     ].join('|');
   }
 
-  /** The player has read it. */
+  /** The player has read it — and whatever was waiting behind it is dealt
+   *  now that the screen is free (§11.5). */
   dismissGachaReveal(): void {
     this.gachaReveal = null;
+    this.dealPayouts();
     this.notify();
   }
 
@@ -3781,6 +3836,26 @@ function roomPrizes(report: { wallet: Wallet; heroXp: number; pack: PackTier }):
   // rather than spending — the same argument the shards had.
   prizes.push({ kind: 'pack', tier: report.pack });
   return prizes;
+}
+
+/**
+ * THE COLLECTION PRIZE, as the reveal deals it (Docs/features/09-relics.md §5).
+ *
+ * Heroes last, the rule `gachaPrizes` already keeps: the Gems and the Stardust
+ * are the wind-up and the season's hero is what the forty-fifth card was for.
+ * A hero the player already holds is the Fragments tile instead — showing them
+ * as a hero would promise a roster entry that is already there.
+ */
+function prizePrizes(prize: CollectionPrize): GachaPrize[] {
+  const out: GachaPrize[] = [];
+  if (prize.gems > 0) out.push({ kind: 'currency', currency: 'Gems', amount: prize.gems });
+  if (prize.stardust > 0) {
+    out.push({ kind: 'currency', currency: 'Stardust', amount: prize.stardust });
+  }
+  out.push(prize.duplicate
+    ? { kind: 'fragments', heroId: prize.hero, amount: prize.fragments }
+    : { kind: 'hero', heroId: prize.hero });
+  return out;
 }
 
 /** The cards a pack dealt, worst first: the reveal's own order. */

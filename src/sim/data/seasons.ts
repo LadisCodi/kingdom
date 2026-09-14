@@ -149,8 +149,11 @@ export const albumIndex = (id: AlbumId): number => ALBUM_ORDER.indexOf(id);
 export interface SeasonDef {
   /** Shown on the pill, the header plank and the frame. */
   name: string;
-  /** The hero rated up on the golden banner while it runs (§10). A real
-   *  `HeroId`, so a season cannot name a hero the roster has not got. */
+  /** The hero rated up on the golden banner while it runs, and the one the
+   *  collection prize's golden call is guaranteed to be (§5, §10). A real
+   *  `HeroId`, so a season cannot name a hero the roster has not got — and it
+   *  must be one THE GOLDEN CALL CAN GIVE, because that is what the prize is:
+   *  a Common would be a guarantee of something that banner never deals. */
   hero: HeroId;
   /** A css hook for the frame — the season's colour, not its layout. */
   frame: string;
@@ -166,8 +169,8 @@ export interface SeasonDef {
  * would say nothing the second does not.
  */
 export const SEASONS: readonly SeasonDef[] = [
-  { name: 'Sowing Season', hero: 'Warden', frame: 'sowing' },
-  { name: 'Season of Lanterns', hero: 'Witch', frame: 'lanterns' },
+  { name: 'Sowing Season', hero: 'ElvenPrincess', frame: 'sowing' },
+  { name: 'Season of Lanterns', hero: 'GoldenDragon', frame: 'lanterns' },
 ];
 
 /**

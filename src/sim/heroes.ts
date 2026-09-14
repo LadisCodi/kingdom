@@ -498,6 +498,49 @@ export function pull(
   };
 }
 
+// ------------------------------------------------- a call that cannot miss
+
+/** What a guaranteed call paid. The shape a `PullResult` would have if a roll
+ *  had happened — minus every field that describes one, because none did. */
+export interface GuaranteedCall {
+  heroId: HeroId;
+  /** The player already had them, so the call paid Fragments instead. */
+  duplicate: boolean;
+  fragments: number;
+  stardust: number;
+}
+
+/**
+ * A CALL WHOSE HERO IS DECIDED BEFORE IT IS MADE — the collection prize's
+ * golden call (Docs/features/09-relics.md §5, §10), and so far its only
+ * caller.
+ *
+ * It is a CALL, so it pays the banner's Stardust and converts a hero the
+ * player already owns into that banner's duplicate Fragments, exactly as a
+ * rolled one does. It is GUARANTEED, so it does three things a roll does not:
+ *
+ *  - it charges NOTHING. The five albums were the price.
+ *  - it spends NO `rand`. There is nothing to decide, so there is no roll to
+ *    key — which is also why it can never desync a replay (invariant 4).
+ *  - it moves NO counter. `pullCounts` keys future rolls and the two pity
+ *    counters are a promise about them; a call that never rolled must neither
+ *    consume the pity a player has banked nor advance it.
+ */
+export function callGuaranteed(
+  state: GameState, banner: BannerId, heroId: HeroId,
+): GuaranteedCall {
+  const b = BANNERS[banner];
+  addToWallet(state.kingdom.wallet, 'Stardust', b.pullStardust);
+  recordResourceDiscovery(state, 'Stardust');
+  const outcome = grantHero(state, heroId, b.duplicateFragments);
+  return {
+    heroId,
+    duplicate: outcome === 'Duplicate',
+    fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
+    stardust: b.pullStardust,
+  };
+}
+
 export interface PullManyResult {
   result: 'Pulled' | 'NotEnoughKeys' | 'NothingToPull';
   pulls: PullResult[];

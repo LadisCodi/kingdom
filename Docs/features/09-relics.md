@@ -6,14 +6,13 @@
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
 > packs fall from are [`11-expeditions.md`](11-expeditions.md).
 >
-> **Status: built 2026-09-11**, with three things deliberately left out and
+> **Status: built 2026-09-11**, with two things deliberately left out and
 > named where they belong: **trading** (§8 — it waits on the social layer,
-> OQ-89), the **season hero's rate-up** (§10 — it waits on a banner
-> payload in the timeline) and the **collection prize** (§5 — the golden call
-> and the 25,000 Gems are announced on the screen and not yet paid).
-> Everything else runs: the season and its melt-down, the packs, the
-> albums, the payouts, the stars, the vault, the wildcards and their aimed
-> offers, the close, and the four screens of §11.
+> OQ-89) and the **season hero's rate-up** (§10 — it waits on a banner
+> payload in the timeline). Everything else runs: the season and its
+> melt-down, the packs, the albums, the payouts, the collection prize, the
+> stars, the vault, the wildcards and their aimed offers, the close, and the
+> four screens of §11.
 >
 > **The season is 14 days for the prototype** and the seasons **cycle**, so a
 > fortnight is all it takes to watch a close, a melt-down and the next season
@@ -162,6 +161,20 @@ Three things, on the ninth card, in one sheet:
   guaranteed to be the season hero** (§10) and **25,000 Gems**. The prize is
   dealt in the gacha reveal screen, which is the most exciting screen the game
   has and the right place for the last card to lead.
+- The prize rides the **fifth album's payout**, whichever album that turns out
+  to be, and is paid **once a season**.
+- **It is a call, so it pays what a call on the golden banner pays**: that
+  banner's Stardust, and — for a hero the player already holds — that banner's
+  duplicate Fragments rather than a second copy. A rate-up is half about
+  duplicates (§10), and the guarantee is no different.
+- **It is guaranteed, so it is not a roll**: it charges nothing, spends no
+  randomness, and moves neither pity counter. A call that never rolled must
+  not consume the pity a player has banked, nor advance it.
+- The season's hero must therefore be **a hero the golden call can deal**.
+  Naming one that banner never gives would make the prize a guarantee of
+  something that cannot happen.
+- **The album banners follow the prize**, so a run of five ends on the hero
+  rather than on a pennant.
 - A relic level is not exciting on its own and is not meant to be. The chest
   and the keys sell the pack today; the level is why a player who has done
   three seasons has a kingdom no new player can buy.
@@ -324,6 +337,8 @@ sold together for **money** rather than for Gems, on the store's own shelf
   ordinary weight before, during and after; the season makes it easier to
   pull and, through the duplicates a rate-up brings, easier to ascend. Nothing
   about it expires.
+- It is named **from the rarities the golden call deals**, because the prize
+  is a call on that banner (§5).
 - The rate-up is the timeline's existing **banner payload**
   ([`10-heroes.md`](10-heroes.md) §11), scheduled by the seasons file. The
   season is its first consumer.
@@ -409,8 +424,13 @@ gacha already owns. Mockups: M19–M22 in
 
 - The reveal screen at z 100, one pack per opening, the cards dealt in
   rarity order and the best last. **New** on a first copy; the count on a
-  duplicate. A completed album interrupts nothing: its sheet follows the
-  reveal.
+  duplicate.
+- **A completed album interrupts nothing.** The cards finish turning, and what
+  the album paid follows: the **collection prize** as a second reveal if the
+  season just finished (§5), then a **banner per album** naming the relic and
+  the level it reached. Nothing is dealt into a screen that is still busy, and
+  the order holds however an album was finished — a pack dealing the ninth card
+  or a wildcard laying it.
 
 ## 12. Dials, in the order to reach for them
 

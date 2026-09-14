@@ -24,7 +24,7 @@ import {
   bundleGemValue, bundleOf, bundlesForSale, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
   seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
-  closeGold,
+  closeGold, payCollectionPrize, seasonIsComplete, PRIZE_BANNER,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
@@ -32,6 +32,8 @@ import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
+import type { AlbumPayout } from '../src/sim/collection';
+import { bannerRarities, grantHero, ownsHeroId } from '../src/sim/heroes';
 import { resolve } from '../src/sim/modifiers';
 import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -167,6 +169,150 @@ describe('an album', () => {
     const relics = ALBUM_ORDER.map((id) => ALBUMS[id].relic);
     expect(new Set(relics).size).toBe(ARTIFACT_ORDER.length);
     expect(SEASON_CARDS).toBe(ALBUM_ORDER.length * CARDS_PER_ALBUM);
+  });
+});
+
+// WHAT THE FIVE ALBUMS TOGETHER PAY (§5): a golden call guaranteed to be the
+// season's hero, and 25,000 Gems. The one reward in the collection that is not
+// an album's.
+describe('the collection prize', () => {
+  const last = ALBUM_ORDER[ALBUM_ORDER.length - 1]!;
+
+  /** Every album but the last, marked closed. `completed` is what
+   *  `seasonIsComplete` reads, so this is the precondition itself. */
+  const almost = (state: GameState): void => {
+    state.collection.completed = [...ALBUM_ORDER.slice(0, -1)];
+  };
+
+  /** Hold every card of an album except one slot. */
+  const allBut = (state: GameState, album: (typeof ALBUM_ORDER)[number], gap: number): void => {
+    state.collection.cards[album] = ALBUMS[album].cards.map((_, i) => (i === gap ? 0 : 1));
+  };
+
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    state.collection.season = seasonAt(T0);
+    state.lastAdvance = T0;
+  });
+
+  it('says nothing until the fifth album closes', () => {
+    almost(state);
+    expect(payCollectionPrize(state)).toBeNull();
+    expect(state.collection.prizePaid).toBe(false);
+    expect(ownsHeroId(state, seasonDef(state.collection.season).hero)).toBe(false);
+  });
+
+  it('pays the Gems and the season hero when the fifth closes', () => {
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const hero = seasonDef(state.collection.season).hero;
+    state.collection.completed = [...ALBUM_ORDER];
+
+    const prize = payCollectionPrize(state)!;
+    expect(prize).not.toBeNull();
+    expect(prize.gems).toBe(COLLECTION.prizeGems);
+    expect(prize.hero).toBe(hero);
+    expect(prize.duplicate).toBe(false);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.prizeGems);
+    expect(ownsHeroId(state, hero)).toBe(true);
+    expect(state.collection.prizePaid).toBe(true);
+  });
+
+  // A CALL, so it pays what a call on that banner pays.
+  it('pays the golden banner’s Stardust, and its Fragments for a hero held', () => {
+    const b = BANNERS[PRIZE_BANNER];
+    const hero = seasonDef(state.collection.season).hero;
+    grantHero(state, hero);
+    const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+    state.collection.completed = [...ALBUM_ORDER];
+
+    const prize = payCollectionPrize(state)!;
+    expect(prize.duplicate).toBe(true);
+    expect(prize.fragments).toBe(b.duplicateFragments);
+    expect(state.heroes.fragments[hero]).toBe(b.duplicateFragments);
+    expect(prize.stardust).toBe(b.pullStardust);
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(stardust + b.pullStardust);
+  });
+
+  // GUARANTEED means no roll — so it must not spend the pity a player has
+  // banked, advance it, or move the counter that keys every future roll.
+  it('moves no counter and spends no roll', () => {
+    state.gacha.pullCounts[PRIZE_BANNER] = 12;
+    state.gacha.pityCounters[PRIZE_BANNER] = 7;
+    state.gacha.legendaryPity[PRIZE_BANNER] = 21;
+    state.collection.completed = [...ALBUM_ORDER];
+    payCollectionPrize(state);
+    expect(state.gacha.pullCounts[PRIZE_BANNER]).toBe(12);
+    expect(state.gacha.pityCounters[PRIZE_BANNER]).toBe(7);
+    expect(state.gacha.legendaryPity[PRIZE_BANNER]).toBe(21);
+  });
+
+  it('charges nothing — the five albums were the price', () => {
+    const keys = getWallet(state.player.wallet, BANNERS[PRIZE_BANNER].key);
+    state.collection.completed = [...ALBUM_ORDER];
+    payCollectionPrize(state);
+    expect(getWallet(state.player.wallet, BANNERS[PRIZE_BANNER].key)).toBe(keys);
+  });
+
+  // The guard. `prizePaid` is what stops it, not the shape of the caller.
+  it('pays once a season, however it is asked', () => {
+    state.collection.completed = [...ALBUM_ORDER];
+    expect(payCollectionPrize(state)).not.toBeNull();
+    const gems = getWallet(state.player.wallet, 'Gems');
+    expect(payCollectionPrize(state)).toBeNull();
+    expect(payCollectionPrize(state)).toBeNull();
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
+  });
+
+  // IT RIDES THE FIFTH ALBUM'S PAYOUT, through the real path: a season played
+  // out in packs until the forty-fifth card lands.
+  it('rides the payout of the album that finishes the season', () => {
+    const payouts: AlbumPayout[] = [];
+    for (let i = 0; i < 600 && !seasonIsComplete(state); i++) {
+      grantPack(state, PACK_ORDER[i % PACK_ORDER.length]!, 'dev');
+      const opening = openPack(state, T0);
+      if (opening !== null) payouts.push(...opening.payouts);
+    }
+    expect(seasonIsComplete(state)).toBe(true);
+    expect(payouts).toHaveLength(ALBUM_ORDER.length);
+    // Exactly one payout carries it, and it is the last one paid.
+    const withPrize = payouts.filter((p) => p.prize !== null);
+    expect(withPrize).toHaveLength(1);
+    expect(withPrize[0]).toBe(payouts[payouts.length - 1]);
+    expect(withPrize[0]!.prize!.gems).toBe(COLLECTION.prizeGems);
+    expect(ownsHeroId(state, seasonDef(state.collection.season).hero)).toBe(true);
+  });
+
+  // A wildcard can lay the forty-fifth card as easily as a pack can deal it.
+  it('is paid by a wildcard that lays the last card', () => {
+    almost(state);
+    const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
+    allBut(state, last, gap);
+    const rarity = ALBUMS[last].cards[gap]!.rarity;
+    state.collection.wildcards[rarity] = 1;
+
+    const result = placeWildcard(state, { album: last, slot: gap }, rarity);
+    expect(result.placed).toBe(true);
+    expect(result.placed && result.payout?.prize?.gems).toBe(COLLECTION.prizeGems);
+  });
+
+  // The close wipes the albums, so the next season's five pay their own prize.
+  it('comes back with the next season', () => {
+    state.collection.completed = [...ALBUM_ORDER];
+    payCollectionPrize(state);
+    expect(state.collection.prizePaid).toBe(true);
+    closeSeason(state, seasonEndsAt(state.collection.season));
+    expect(state.collection.prizePaid).toBe(false);
+    expect(payCollectionPrize(state)).toBeNull(); // no albums closed yet
+  });
+
+  // The prize IS a golden call, so the hero it guarantees has to be one the
+  // golden call could deal. A Common would be a promise that banner never
+  // keeps (§10).
+  it('names a hero the golden call can actually give', () => {
+    for (const season of SEASONS) {
+      expect(bannerRarities(PRIZE_BANNER)).toContain(HEROES[season.hero].rarity);
+    }
   });
 });
 
