@@ -458,9 +458,17 @@ the rewarded video.
 
 ## 11. Known holes
 
+- **Two of the five traits are never read.** `KnowledgeBonus` and
+  `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
+  call site consults either, so those heroes have no off-board effect at all.
+  **OQ-95.**
+- **A Legendary is only a bigger number.** One proposal on the table:
+  [`../proposals/legendary-boons.md`](../proposals/legendary-boons.md) gives
+  each of the six a kingdom passive, which deliberately breaks §2.1's *rarity
+  is never a mechanism*. **OQ-96.**
 - **Rate-up is untested.** The timeline still carries a banner payload and the
   activation query exists, but the two banners are permanent rows, so nothing
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-95, OQ-96.
