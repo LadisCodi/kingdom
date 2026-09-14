@@ -1,8 +1,14 @@
 # Proposal — the album cycle
 
-> **What this is.** Levelling a relic **more than once a season**, by closing
-> all five albums, claiming, and starting the five again on the same season's
-> cards. It is a **proposal**, not a feature doc: nothing here is built.
+> **What this is.** How a relic's level actually advances — **within** a season
+> by closing all five albums and running them again (§1–§4), and **across**
+> seasons by rotating which relic each album levels (§6). It is a **proposal**,
+> not a feature doc: nothing here is built.
+>
+> **The two halves answer one question each.** The cycle is for a player who
+> has finished everything and has a fortnight left. The rotation is for the
+> player who never reaches the last three albums at all — which is most of
+> them, and which is why the ladder is the one worth fixing first.
 >
 > **It replaces a written rule.**
 > [`../features/09-relics.md`](../features/09-relics.md) §1 says *"a relic
@@ -127,20 +133,125 @@ both ends:
   legitimate thing for it to be, and it should be argued as one rather than as
   a pacing fix for everybody. **OQ-100.**
 
-## 6. What it would take
+## 6. Rotating which relic each album levels
+
+### 6.1 The problem: the difficulty is fixed and the reward is not
+
+The five albums sit on a fixed ladder of rarity, and **every one of them pays
+exactly one relic level**. Same ticket, wildly different price. The chest and
+the keys already scale with the rung — `2 · 2 · 4 · 8 · 8` hours, silver,
+silver, silver, gold, gold — and the **relic level, the only permanent thing,
+does not**.
+
+That does not merely slow the hard relics down. A relic has no ceiling and
+rises a level a season, so a player closing two of five (**OQ-88**'s target)
+diverges for ever:
+
+```
+after six seasons:  Dowsing Rod 6 · Verdant Seal 6
+                    Foreman's Sigil 0 · Gilded Ledger 0 · Wanderer's Compass 0
+```
+
+- Three of the five relics are not *slower*. They **do not exist**, and with
+  the actives of [`relic-effects.md`](relic-effects.md) that is three
+  abilities the player will never cast.
+- The hard albums are also the **strong** ones — the tax rate and the Stardust
+  yield are behind the gold cards — so difficulty and power point the same way.
+- It contradicts [`09`](../features/09-relics.md) §5's own line, *"nothing
+  rushes one relic ahead of the others… a player's relic levels read their
+  history"*, which is true only for somebody who closes all five.
+
+### 6.2 The fix: the album is fixed, the PAIRING rotates
+
+- **An album is its nine cards.** Its name, its art, its card names and their
+  rarities never change. *First Furrow* is always Ploughshare, Seed Sack,
+  Scarecrow — and the Ploughshare is always 1★.
+- **Which relic an album levels is per-season.** One season *First Furrow*
+  levels the Dowsing Rod; the next it levels the Verdant Seal.
+- **Rotate by one a season**, derived from the season's occurrence rather than
+  authored: `relic = ARTIFACT_ORDER[(albumIndex + occurrence) mod 5]`. Derived
+  because the seasons list cycles — with two seasons authored, a hand-written
+  pairing would only ever show two of the five arrangements.
+- **A full rotation is five seasons — 70 days.** In ten weeks every relic has
+  sat on the easy album once, so a player who never buys a pack still levels
+  all five, just one at a time.
+- **A payer skips the wait**: buying Gold and Star packs closes the hard albums
+  in the same season, so they level all five every fortnight instead of one.
+  That is the difference the money buys, and it is a *rate*, not a wall.
+
+### 6.3 Why the pairing rotates and not the rarities
+
+The other way round — albums keep their relic and the **rarities** move — also
+converges, and it is worse:
+
+- **A card's rarity is part of its identity.** It is drawn on the card, it
+  prices the card's stars, it prices its melt, and it decides which wildcard
+  covers it. A Ploughshare that is 1★ this season and 5★ gold the next is not
+  a collectible, it is a slot.
+- It would make the art unauthorable: the same card needs a gold frame some
+  seasons and not others.
+
+**What it costs instead** is a line in [`09`](../features/09-relics.md) §3 —
+*"which relic each album levels is not per-season content — it is one album per
+relic, in the same order, for ever"* — and §13's *"two albums for one relic"*.
+The player now re-learns one badge a season instead of never. That badge is
+already drawn: §11.2 puts the relic on the medallion's ring and §11.3 puts it
+in the album's reward band, so the UI says it without a new pixel.
+
+### 6.4 Keep the ladder exactly as it is
+
+The five compositions already shipped are already the right ladder, and two of
+them are already free:
+
+| Rung | 1★ | 2★ | 3★ | 4★ | 4★g | 5★ | 5★g | Closable from the ruins? |
+|---|---|---|---|---|---|---|---|---|
+| **I** *First Furrow* | 4 | 5 | | | | | | **yes** — Bronze |
+| **II** *The Wild Wood* | 2 | 3 | 4 | | | | | **yes** — Silver |
+| **III** *Hands at Work* | | 3 | 3 | 3 | | | | no — needs Gold |
+| **IV** *The King's Coin* | | | 3 | 2 | 1 | 2 | 1 | no — needs Star |
+| **V** *The Star Road* | | | 3 | 2 | 1 | 2 | 1 | no — needs Star |
+
+- **A rung-I album must stay inside 1★–2★.** Bronze rolls 1★ and 2★ only and
+  Silver adds 3★; **neither can roll a 4★**. A composition like `4×1★, 3×2★,
+  1×3★, 1×4★` would put the easiest album behind a Gold pack and take the free
+  player from two albums a season to **none** — the opposite of what the
+  rotation is for.
+- **Rungs IV and V are identical**, so the ladder has five rungs and four
+  difficulties. Splitting them would make each of the five seasons in a
+  rotation feel distinct; leaving them is harmless.
+
+### 6.5 The one wrinkle
+
+The relic EFFECTS are tiered to match today's difficulty: the cheap albums
+carry the two harvest clocks, which a new city needs, and the dear ones carry
+the tax rate and the Stardust yield. Rotation dissolves that alignment — a
+first-season player can draw the **Wanderer's Compass** on rung I, and
+*"+Stardust from rooms"* is worth nothing to somebody who has never delved.
+
+- **Let it rotate anyway.** A relic whose effect is not useful yet is still a
+  level banked for ever, and the alternative — pinning the Compass to the hard
+  rungs — is the divergence again for one relic.
+
+## 7. What it would take
 
 | Step | Where |
 |---|---|
+| `AlbumDef.relic` becomes `relicOfAlbum(album, occurrence)`, and `albumOfRelic` takes the season | `data/seasons.ts` |
+| The 16 call sites that read `.relic` take the season | `game.ts`, `collection.ts`, `ui/collectionSheet.ts` |
+| A test that five seasons give every relic every rung exactly once | `tests/artifacts.test.ts` |
 | Closing an album spends its nine cards; duplicates survive | `collection.ts#completeIfDue` |
 | `completed` resets when all five are in it — and a `cycle` counter alongside, so a payout knows which lap it is | `collection.ts`, `state.ts` |
 | The prize and the album Gems read the lap (§4.1, §4.2) | `collection.ts#payCollectionPrize`, `#albumRewards` |
 | The album screen says which lap it is on, and the medallion shows the relic's level rising | `ui/collectionSheet.ts` |
 | `SAVE_VERSION` bump; a migrator is needed this time, because `cards` now means *unspent* cards | `sim/save.ts` |
 
-- **The one that needs care is the save.** Every other change here is additive;
-  spending cards changes what an existing save's `cards` map MEANS.
+- **The rotation (§6) needs no save change and no balance change**, because the
+  pairing is derived from the occurrence, which is already derived from the
+  clock. **The cycle's save change is the one that needs care**: every other
+  change here is additive, and spending cards changes what an existing save's
+  `cards` map MEANS.
 
-## 7. Deliberately not in this proposal
+## 8. Deliberately not in this proposal
 
 - **An album completed twice before its four siblings are completed once.**
   Breadth before depth, or a player pumps the cheap album and the five relic
@@ -149,6 +260,10 @@ both ends:
   card free to give (§3 of `09`), and it is the whole reason trading is safe.
 - **A repeat that pays the collection prize**, or the full Gem purse.
 - **Keeping the cards on reset.** It does not terminate (§2).
+- **Rotating a card's RARITY instead of the pairing** (§6.3). A card's rarity is
+  its identity, its stars, its melt and which wildcard covers it.
+- **A rung-I album that reaches past 3★.** Bronze and Silver cannot roll a 4★,
+  so it would take the free player from two albums a season to none (§6.4).
+- **Pinning one relic out of the rotation** because its effect suits a late
+  city. A level banked early is still banked (§6.5).
 
-**Open questions:** OQ-88, OQ-100 in
-[`../open-questions.md`](../open-questions.md).

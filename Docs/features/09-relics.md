@@ -87,7 +87,12 @@ never a discount, because a discount dies at 100%.
 - A season is **content**: its name, its frame, its dates, the rarity each
   album's nine slots carry, and the season hero. **Which relic each album
   levels is not per-season content** — it is one album per relic, in the same
-  order, for ever. It lives in a hand-written seasons file beside the events
+  order, for ever.
+  [`../proposals/album-cycles.md`](../proposals/album-cycles.md) §6 proposes
+  rotating exactly that pairing, one step a season, because a fixed pairing on
+  a fixed rarity ladder means the two dearest relics never level for a player
+  who does not buy packs. The album keeps its cards and their rarities; only
+  the relic it levels moves. **OQ-100.** It lives in a hand-written seasons file beside the events
   file ([`13-events.md`](13-events.md) §1); every number in it — Gems, hours,
   stars, odds — lives on the `Collection` sheet.
 - **The seasons cycle.** The list is read in order and the last one is
