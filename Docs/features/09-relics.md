@@ -39,7 +39,10 @@
 - The relic itself never drops. Ruins pay **card packs** (§6), not relics.
 - A relic has no active. Abilities are spells, nodes in the Magic tome
   ([`07-research.md`](07-research.md) §6). **A relic is what the kingdom has;
-  a spell is what the player knows.**
+  a spell is what the player knows.** The build still carries four actives on
+  the relics as a bridge, and
+  [`../proposals/relic-effects.md`](../proposals/relic-effects.md) proposes
+  keeping them there instead — **OQ-98** is which way it goes.
 - The **Collection** tab replaces the Relics tab in the nav. It is hidden
   until the player holds a card, and appears the moment they open their first
   pack.
@@ -60,7 +63,9 @@ never a discount, because a discount dies at 100%.
 - **The Rod and the Seal do not keep this rule today.** Both are authored as
   time multipliers falling 0.05 a level, so both reach zero at level 18 and
   every season after pays nothing. The shape has to become a SPEED the call
-  site divides by. **OQ-97.**
+  site divides by. **OQ-97.** The Sigil's is flat rather than multiplied, so it
+  goes stale on its own. Both are re-proposed in
+  [`../proposals/relic-effects.md`](../proposals/relic-effects.md).
 - `X = base + per_level × (level − 1)`, both authored per relic on the
   `Artifacts` sheet. A level is **a season's worth of growth**, so `per_level`
   is sized to be **felt on a headline number** — of the order of +10% a level
@@ -501,5 +506,5 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97, OQ-98 in
 [`../open-questions.md`](../open-questions.md).
