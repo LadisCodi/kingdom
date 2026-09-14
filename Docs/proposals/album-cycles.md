@@ -57,7 +57,7 @@ ever.
   ([`09`](../features/09-relics.md) §8).
 - **The relic ladder stops being hostage to the calendar.** A player who is
   playing hard has something to do with the packs they are opening on day 9 of
-  a 14-day season, which today are duplicates and nothing else.
+  a 28-day season, which today are duplicates and nothing else.
 - **It makes the relic actives worth chasing.** Radius steps at levels 5, 10
   and 20 ([`relic-effects.md`](relic-effects.md) §2.3), and a player two cards
   from a step can now reach it this season instead of in five months.

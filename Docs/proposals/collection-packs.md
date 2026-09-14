@@ -84,31 +84,69 @@ Measured over the eight albums (72 slots), opening the six packs evenly:
 | Opening only Azul | 911 |
 | Opening only Verde, Amarillo, Rosa or Dorado | never |
 
-- **158 packs across a 14-day season is about 11 a day.** That is the number
-  the faucet has to be authored against, and the one figure here that is still
-  a guess rather than a measurement.
+- **The free faucet is 200 packs a season** — Verde, Amarillo and Rosa from the
+  ruins, the daily chest and the pass's free track. Across 28 days that reads
+  as **about seven a day**, which is what sized the season at four weeks
+  rather than two (§3.1).
 - A season deals **563 cards for 72 slots: 87% of everything opened is a
   duplicate**, worth **7,590 stars** if none are spent.
+
+### 3.1 Why the season is four weeks
+
+- **200 free packs is the number; the length follows from it.** Seven packs a
+  day reads as a habit; fourteen reads as a chore, and three reads as nothing
+  happening.
+- **Four weeks, not a calendar month.** 30 days is not a whole number of weeks,
+  so each season would open two weekdays later than the last and the shared
+  calendar would drift through the week — Monday, then Wednesday, then Friday.
+  28 days opens every season on the same weekday for ever, which is what
+  [`09-relics.md`](../features/09-relics.md) §3 asks for and what live-ops
+  needs.
+- **The clock no longer has to be short to be testable.** `?dev`'s **🗓 end
+  season** walks the close, the melt-down and the next season's content in one
+  click, so nothing about the prototype argues for a fortnight any more.
 
 ## 4. What a free player actually closes
 
 Verde, Amarillo and Rosa only, cashing the vault as it fills:
 
-| Free packs | A1 | A2 | A3 | **A4** | A5 | A6 | A7 | A8 |
-|---|---|---|---|---|---|---|---|---|
-| 60 | 91% | 84% | 62% | 18% | 0% | 0% | 0% | 0% |
-| 120 | 100% | 100% | 100% | **61%** | 8% | 0% | 0% | 0% |
-| 200 | 100% | 100% | 100% | **90%** | 15% | 0% | 4% | 0% |
-| 400 | 100% | 100% | 100% | 100% | 34% | 10% | 19% | 0% |
+| Free packs | A1 | A2 | A3 | **A4** | A5 | A6 | A7 | A8 | Albums |
+|---|---|---|---|---|---|---|---|---|---|
+| 60 | 91% | 84% | 62% | 18% | 0% | 0% | 0% | 0% | 2.6 |
+| 120 | 100% | 100% | 100% | **61%** | 8% | 0% | 0% | 0% | 3.7 |
+| **200 — the authored rate** | **100%** | **100%** | **100%** | **92%** | **15%** | 1% | 6% | 0% | **4.1** |
+| 400 | 100% | 100% | 100% | 100% | 34% | 10% | 19% | 0% | 4.6 |
 
-- **Three albums always, a fourth usually, a fifth almost never, and never
-  album 8.** At a faucet of ~150 packs a season that is **3–4 of 8**, against
-  **OQ-88**'s target of two of five — proportionally better than today.
-- **The vault is what buys album 4.** Without cashing it, A4 sits at 30% even
-  at 200 packs; with it, 90%. The Bronce and Silver chests guarantee a 4★ and
-  a 5★, and that is the free player's only reliable source of either.
-- **A8 is 0% at every budget.** Five 5★ plus four gold editions is a paid
-  album by construction, and should be called one.
+- **Three albums always, a fourth usually, a fifth almost never, and album 8
+  never.** At the authored 200 that is **4.1 of 8**, against **OQ-88**'s target
+  of two of five — proportionally better than today.
+- **The vault is what buys album 4.** Without cashing it A4 sits at 30% even at
+  200 packs; with it, 92%. The Bronce and Silver chests guarantee a 4★ and a
+  5★, and that is the free player's only reliable source of either.
+- **Doubling the faucet to 400 buys half an album.** The curve is flat past
+  200, which is the other half of why 200 is the right number: more free packs
+  mostly make more duplicates.
+
+### 4.1 And what money adds on top of it
+
+Starting from the same 200 free packs:
+
+| Paid packs | Albums closed | A5 | A6 | A7 | A8 |
+|---|---|---|---|---|---|
+| **0** | **4.1** | 15% | 1% | 6% | 0% |
+| 25 | 6.2 | 78% | 64% | 59% | 24% |
+| 50 | 7.4 | 95% | 92% | 85% | 67% |
+| 100 | 7.9 | 100% | 100% | 95% | 94% |
+| 200 | 8.0 | 100% | 100% | 100% | 99% |
+
+- **A free player gets exactly half the collection**, and the half they get is
+  the bottom four rungs.
+- **The first 25 paid packs are worth more than the next 175.** They buy two
+  albums; the next 25 buy 1.2, the next 50 buy 0.5, and the next 100 buy 0.1.
+  A curve that flattens that hard is a healthy one: the first purchase is the
+  one that matters and there is very little left to sell a whale.
+- **Album 8 is the paywall**, and it is a clean one — 0% free, 24% at 25 paid
+  packs, 94% at 100.
 
 ## 5. The chest prices are right, and I was wrong about them
 
@@ -210,5 +248,5 @@ Every rung that throttles the whale takes album 4 off the free player.
   them back is the line [`09-relics.md`](../features/09-relics.md) §6 already
   draws.
 
-**Open questions:** OQ-88, OQ-100, OQ-101, OQ-102 in
+**Open questions:** OQ-88, OQ-100, OQ-101 in
 [`../open-questions.md`](../open-questions.md).

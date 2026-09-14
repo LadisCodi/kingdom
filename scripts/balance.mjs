@@ -270,8 +270,9 @@ const SETTINGS = [
   // pool, so the price is never per Mana: what rises is the rung, not the
   // pool.
   ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
-  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 14 days
-  // on a shared calendar; the five albums are one per relic and every list
+  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 28 days —
+  // FOUR WEEKS, so it always opens on the epoch's weekday — on a shared
+  // calendar; the five albums are one per relic and every list
   // below is indexed the same way, easy album first.
   ['collection.season_days', 'collection.seasonDays'],
   // 2,000 an album and 25,000 for the five keeps the season's Gem budget at

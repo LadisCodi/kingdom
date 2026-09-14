@@ -1,7 +1,7 @@
 # 9 · Relics and the collection
 
 > **Scope.** The five relics as permanent kingdom passives with no ceiling,
-> and the **collection** that levels them: a 14-day season of five card albums,
+> and the **collection** that levels them: a 28-day season of five card albums,
 > the packs the cards come in, duplicates, the vault, trading, wildcards, and
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
 > packs fall from are [`11-expeditions.md`](11-expeditions.md).
@@ -14,9 +14,12 @@
 > stars, the vault, the wildcards and their aimed offers, the close, and the
 > four screens of §11.
 >
-> **The season is 14 days for the prototype** and the seasons **cycle**, so a
-> fortnight is all it takes to watch a close, a melt-down and the next season
-> open. `?dev`'s **🗓 end season** does it without the wait.
+> **The season is 28 days — four weeks**, sized so the free faucet of ~200
+> packs reads as about seven a day
+> ([`../proposals/collection-packs.md`](../proposals/collection-packs.md)), and
+> the seasons **cycle**. `?dev`'s **🗓 end season** watches a close, a
+> melt-down and the next season open without the wait, which is why the clock
+> no longer has to be short to be testable.
 >
 > The store's three **card bundles** (§6.1) are built with them.
 >
@@ -78,7 +81,8 @@ never a discount, because a discount dies at 100%.
 
 ## 3. The season
 
-- The collection runs in **seasons of 14 days, on a shared calendar.** Every
+- The collection runs in **seasons of 28 days — four weeks — on a shared
+  calendar.** Every
   player is in the same season at the same time; the season does not start
   when a player does, and a player who arrives on the last day has one day,
   like everyone else.
@@ -456,7 +460,7 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | **14 days**, a whole number of weeks, shared calendar | `collection.season_days` |
+| Season length | **28 days**, four weeks exactly, shared calendar | `collection.season_days` |
 | Albums a season · cards an album | **5 · 9, fixed** | seasons file |
 | Which relic each album levels | **one each, the same order every season, fixed** | seasons file |
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 10,000 across the five, as before | `collection.album_gems`, `collection.prize_gems` |
