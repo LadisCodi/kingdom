@@ -1,0 +1,214 @@
+# Proposal — the packs, the chests and the star ladder
+
+> **What this is.** The six packs cards come in, the three vault chests
+> duplicates buy, what a duplicate is worth, and where each of them falls.
+> Authored and checked in a spreadsheet; every figure below is **measured by
+> simulation against those numbers**, not asserted.
+>
+> It is a **proposal**, not a feature doc: nothing here is built. The albums it
+> fills are [`album-cycles.md`](album-cycles.md) §6.4; the relics they level
+> are [`relic-effects.md`](relic-effects.md).
+
+## 1. A pack is guarantees plus filler
+
+The model changes. Today a card rolls a rarity from five weights and then
+flips a **separate coin** for its gold edition, which creates hard walls: a
+Bronze pack can *never* produce a 4★, so some albums are unreachable rather
+than expensive.
+
+The new shape: **a pack has N cards, some of them guaranteed at a named
+rarity, and the rest roll one seven-way distribution that already contains the
+gold editions.**
+
+- **Nothing is unreachable.** Every pack has a path to every rarity. A Verde
+  can hand over a gold 5★ about once in 6,600 — a lottery rather than a route,
+  which is a fine thing for the cheapest pack to be, as long as it is called
+  one.
+- **The guarantee is the pack's identity**, and the six make one ladder a
+  player can read without a legend: Verde 1★, Amarillo 2★, Rosa 3★, Azul 4★,
+  Púrpura 5★, Dorado gold.
+
+### 1.1 The six packs
+
+| Pack | Cards | Guarantees | 1★ | 2★ | 3★ | 4★ | 5★ | 4★G | 5★G |
+|---|---|---|---|---|---|---|---|---|---|
+| **Verde** | 2 | 1× 1★ | 84.920% | 12.005% | 2.500% | 0.400% | 0.100% | 0.060% | 0.015% |
+| **Amarillo** | 3 | 1× 2★ | 69.850% | 25.000% | 4.000% | 0.800% | 0.200% | 0.120% | 0.030% |
+| **Rosa** | 3 | 1× 3★ | 59.800% | 29.900% | 8.000% | 1.500% | 0.500% | 0.225% | 0.075% |
+| **Azul** | 4 | 1× 4★ | 50.000% | 35.000% | 9.000% | 4.000% | 1.200% | 0.550% | 0.250% |
+| **Púrpura** | 6 | 1× 5★ | 40.000% | 34.000% | 14.500% | 7.000% | 3.000% | 1.050% | 0.450% |
+| **Dorado** | 1 | — | | | | | | 75.000% | 25.000% |
+
+The percentages apply to the `Cards − guarantees` slots that are left.
+
+### 1.2 The three vault chests
+
+Not a faucet — **what duplicates buy**. Bought with stars, never with Gems.
+
+| Chest | Cards | Guarantees | Filler distribution | Stars |
+|---|---|---|---|---|
+| **Bronce** | 7 | 1× 3★, 1× 4★ | Verde's | **150** |
+| **Silver** | 9 | 1× 4★, 1× 5★ | Rosa's | **250** |
+| **Gold** | 3 | 1× 5★, 1× 4★G | Dorado's | **400** |
+
+### 1.3 What a duplicate is worth
+
+| | 1★ | 2★ | 3★ | 4★ | 5★ | 4★G | 5★G |
+|---|---|---|---|---|---|---|---|
+| **Stars** | 2 | 6 | 16 | 40 | 100 | **80** | **200** |
+| Slots in the deck | 18 | 16 | 12 | 10 | 8 | 5 | 3 |
+
+- A gold edition is worth **double its rarity**, which is the same rule the
+  melt-down at the close already uses.
+
+## 2. Where each one falls
+
+| | Free | Paid |
+|---|---|---|
+| **Verde · Amarillo · Rosa** | ruins, the daily chest, the pass's free track | — |
+| **Azul · Púrpura · Dorado** | — | the daily chest's paid track, the pass's paid column, the store's pack shelf |
+| **Bronce · Silver · Gold** | the vault, for stars | the vault, for stars |
+
+**The vault is the free player's only route to the high rarities**, and §4
+measures exactly how much that matters.
+
+## 3. What a season costs
+
+Measured over the eight albums (72 slots), opening the six packs evenly:
+
+| | Packs |
+|---|---|
+| **To fill all 72 slots** | **158** |
+| *(the same thing under the current model and today's five albums)* | *74* |
+| Opening only Púrpura | 288 |
+| Opening only Azul | 911 |
+| Opening only Verde, Amarillo, Rosa or Dorado | never |
+
+- **158 packs across a 14-day season is about 11 a day.** That is the number
+  the faucet has to be authored against, and the one figure here that is still
+  a guess rather than a measurement.
+- A season deals **563 cards for 72 slots: 87% of everything opened is a
+  duplicate**, worth **7,590 stars** if none are spent.
+
+## 4. What a free player actually closes
+
+Verde, Amarillo and Rosa only, cashing the vault as it fills:
+
+| Free packs | A1 | A2 | A3 | **A4** | A5 | A6 | A7 | A8 |
+|---|---|---|---|---|---|---|---|---|
+| 60 | 91% | 84% | 62% | 18% | 0% | 0% | 0% | 0% |
+| 120 | 100% | 100% | 100% | **61%** | 8% | 0% | 0% | 0% |
+| 200 | 100% | 100% | 100% | **90%** | 15% | 0% | 4% | 0% |
+| 400 | 100% | 100% | 100% | 100% | 34% | 10% | 19% | 0% |
+
+- **Three albums always, a fourth usually, a fifth almost never, and never
+  album 8.** At a faucet of ~150 packs a season that is **3–4 of 8**, against
+  **OQ-88**'s target of two of five — proportionally better than today.
+- **The vault is what buys album 4.** Without cashing it, A4 sits at 30% even
+  at 200 packs; with it, 90%. The Bronce and Silver chests guarantee a 4★ and
+  a 5★, and that is the free player's only reliable source of either.
+- **A8 is 0% at every budget.** Five 5★ plus four gold editions is a paid
+  album by construction, and should be called one.
+
+## 5. The chest prices are right, and I was wrong about them
+
+A chest **returns stars** when its contents duplicate, so its real price is
+`cost − return`:
+
+| Chest | Price | Returns | Margin | Real price |
+|---|---|---|---|---|
+| Bronce | 150 | 71.8 | ×2.09 | **78** |
+| Silver | 250 | 179.9 | ×1.39 | **70** |
+| Gold | 400 | 290.0 | ×1.38 | **110** |
+
+- **No loop.** Every chest costs more than it gives back, which is the one
+  thing that cannot be got wrong — a chest priced under its own return is a
+  perpetual motion machine.
+- **The margins are thin on Silver and Gold**, and they should stay thin: the
+  free player's entire vault budget is about 11 cash-outs a season, and raising
+  the prices to widen the margin costs them album 4. Simulated at 275 / 600 /
+  750, a free player's A4 falls from 78% to 44%.
+
+### 5.1 Bronce is dominated
+
+| | Net stars per 4★-or-better card |
+|---|---|
+| **Bronce** | **76** |
+| Silver | 32 |
+| Gold | 37 |
+
+Silver has a **higher sticker price and a lower real one** (70 against 78) and
+delivers more than twice as much. Nobody should ever buy Bronce except a player
+who cannot yet afford 250, and that window is thin. To match Silver it wants to
+cost about **105**, not 150 — the one price here that is wrong.
+
+### 5.2 The whale cashes the vault 107 times, and price cannot fix it
+
+A player finishing the season cashes **107 Silver chests** for about 14 new
+cards — **0.18 cards a chest**, and 107 reveal screens.
+
+Raising the price, or escalating it per purchase, does not separate the two
+players, because the free player's whole budget is 11 cash-outs and the
+completionist's is 107:
+
+| Price growth per purchase | Free: cash-outs / A4 | Completionist: cash-outs / A8 |
+|---|---|---|
+| flat | 11.6 / **78%** | 107.0 / 90% |
+| ×1.05 | 7.7 / 68% | 24.5 / 84% |
+| ×1.18 | 5.1 / 60% | 12.0 / 82% |
+
+Every rung that throttles the whale takes album 4 off the free player.
+
+- **The answer is not a price, it is a BATCH.** The problem is 107 screens, not
+  107 chests, and the game already made this argument once: the ten-call exists
+  because *"buying in bulk buys TIME, not a better price"*
+  ([`10-heroes.md`](../features/10-heroes.md) §6.4). A ten-chest button fixes
+  the whole of §5.2 without moving a single number.
+
+## 6. What this decides for the rest of the collection
+
+- **The deck is the eight albums.** The authored distribution — 18 · 16 · 12 ·
+  10 · 8 · 5 · 3 — is exactly the eight albums' 72 slots, so a season runs all
+  eight rather than drawing five of them.
+- **The collection prize and the album cycle are paid content.** Both need all
+  eight albums, and a free player closes three or four. That is a legitimate
+  thing for them to be; it is not a pacing feature and should not be argued as
+  one. **OQ-100.**
+- **The rotation is what saves the free player's relic ladder.** Closing four
+  albums a season against a FIXED pairing means four relics at level 8 after
+  eight seasons and four at zero, for ever. Rotating the pairing one step a
+  season gives them **all eight relics at about level 4** in the same time.
+  **OQ-101** is no longer a nicety; it is what makes seven of the eight relics
+  exist at all for anybody who does not buy packs.
+
+## 7. What it would take
+
+| Step | Where |
+|---|---|
+| `PackDef` becomes `{ cards, guarantees: Partial<Record<Rarity, number>>, weights: [7] }` — gold is a rarity in the distribution, not a separate coin | `data/definitions.ts` |
+| `packCards()` deals guarantees first, then rolls the remainder on seven ways | `sim/collection.ts` |
+| The `Packs` sheet: seven guarantee columns and seven weight columns, replacing five weights + `gold_chance` + `gold_guaranteed` | `balance.xlsx`, `scripts/balance.mjs` |
+| Nine pack ids, and a `source` for each — free, paid, or vault | the sheet |
+| `starsFor` reads the authored ladder rather than `starsPerRarity × goldMultiplier` | `sim/collection.ts` |
+| Three vault thresholds instead of two, and a ten-chest batch | `sim/collection.ts`, `ui/collectionSheet.ts` |
+
+- **The rng is the thing to be careful with.** A pack's cards are rolled by
+  hash on the pack's own id, and the roll order is part of that hash — so
+  changing how many rolls a pack makes changes every pack's contents. Fine
+  before launch, and a migration after it.
+
+## 8. Deliberately not in this proposal
+
+- **A pack that cannot reach a rarity at all.** Walls make albums impossible;
+  odds make them expensive.
+- **A chest priced under its own duplicate return.**
+- **An escalating chest price**, which taxes the free player to throttle the
+  whale (§5.2).
+- **Selling Bronce, Silver or Gold for Gems.** They are what duplicates are
+  for; a Gem price would retire the vault.
+- **Selling Verde, Amarillo or Rosa.** They are the ruins' faucet, and selling
+  them back is the line [`09-relics.md`](../features/09-relics.md) §6 already
+  draws.
+
+**Open questions:** OQ-88, OQ-100, OQ-101, OQ-102 in
+[`../open-questions.md`](../open-questions.md).
