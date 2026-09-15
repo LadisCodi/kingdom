@@ -17,6 +17,7 @@ import {
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
 import { advance, type AdvanceResult } from './commands';
+import { withoutTallies } from './events';
 import type { MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
@@ -627,6 +628,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         Index: state.quests.index,
         Progress: state.quests.progress,
       },
+      // The lifetime odometers the missions read (sim/events.ts). A plain
+      // key→count map, written whole: every live mission stores a BASE
+      // reading of one of these, so losing them would silently complete or
+      // un-complete the whole board.
+      'kingdom.tallies': { Counts: state.tallies },
       'kingdom.discoveries': {
         Keys: Object.keys(state.discoveries),
       },
@@ -1016,6 +1022,9 @@ export function deserialize(
     };
   }
 
+  const talliesDto = modules['kingdom.tallies'];
+  if (talliesDto) state.tallies = { ...(talliesDto.Counts ?? {}) };
+
   const scheduleDto = modules['kingdom.schedule'];
   if (scheduleDto) {
     state.schedule = ((scheduleDto.Entries ?? []) as any[]).map((e) => ({
@@ -1224,8 +1233,15 @@ export function deserialize(
   reconcileSchedule(state, lastSaved);
 
   // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
+  //
+  // THE WHOLE CATCH-UP RUNS WITH THE MISSION ODOMETER HELD STILL
+  // (sim/events.ts). The season pass's missions are active-play only, which is
+  // the one thing in this codebase that is meant to read differently in replay
+  // than live; everything else in `advance()` is untouched by the flag, so
+  // invariant 1 still holds — a six-hour absence replayed in one call and in
+  // six steps agree exactly, because both run with it set.
   const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);
-  const report = advance(state, map, capEnd);
+  const report = withoutTallies(state, () => advance(state, map, capEnd));
   if (capEnd < now) {
     const gap = now - capEnd;
     for (const w of state.workers) {
@@ -1247,7 +1263,7 @@ export function deserialize(
     state.lastAdvance = capEnd;
     // Completes remaining queue work; workers resume at now. Its results are
     // merged in so a build that finished past the cap is still announced.
-    const tail = advance(state, map, now);
+    const tail = withoutTallies(state, () => advance(state, map, now));
     report.deposits.push(...tail.deposits);
     report.completedItems.push(...tail.completedItems);
     report.completedResearch.push(...tail.completedResearch);

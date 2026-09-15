@@ -4037,14 +4037,11 @@ function trainerName(unitId: UnitId): string {
  * order the reveal deals them in, and the shards last because they are the
  * thing a player is collecting toward rather than spending.
  */
-function roomPrizes(report: { wallet: Wallet; heroXp: number; pack: PackTier }): GachaPrize[] {
+function roomPrizes(report: { wallet: Wallet; heroXp: number }): GachaPrize[] {
   const prizes = walletPrizes(report.wallet);
   if (report.heroXp > 0) {
     prizes.push({ kind: 'currency', currency: 'HeroXp', amount: report.heroXp });
   }
-  // The pack is LAST because it is the thing the player is collecting toward
-  // rather than spending — the same argument the shards had.
-  prizes.push({ kind: 'pack', tier: report.pack });
   return prizes;
 }
 

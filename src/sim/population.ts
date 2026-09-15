@@ -4,7 +4,7 @@
 import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
-import { recordQuestEvent } from './quests';
+import { recordEvent } from './events';
 import { techValue } from './techEffects';
 import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
@@ -273,7 +273,7 @@ function accrueTaxes(state: GameState, toTime: number, out: { gold: number }): v
   if (units <= 0) return;
   addToWallet(state.city.wallet, 'Gold', units);
   recordResourceDiscovery(state, 'Gold');
-  recordQuestEvent(state, { kind: 'collect', currency: 'Gold', amount: units });
+  recordEvent(state, { kind: 'collect', currency: 'Gold', amount: units });
   state.city.lastTaxAt += units * msPerGold;
   out.gold += units;
 }

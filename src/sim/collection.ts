@@ -40,6 +40,7 @@ import { grantArtifactLevel } from './artifacts';
 import { callGuaranteed } from './heroes';
 import { cityGatherPerSecond } from './upgrades';
 import { cityGoldPerMinute } from './population';
+import { recordEvent } from './events';
 
 // ---------------------------------------------------------------- the season
 
@@ -259,6 +260,7 @@ export function openPack(state: GameState, now: number): PackOpening | null {
   for (const ref of packCards(state.seed, pack)) {
     opening.cards.push(addCard(state, ref, opening));
   }
+  recordEvent(state, { kind: 'packOpened' });
   return opening;
 }
 

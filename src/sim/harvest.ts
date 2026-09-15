@@ -6,7 +6,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
-import { recordQuestEvent } from './quests';
+import { recordEvent } from './events';
 import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { neighbors, type MapData } from './grid';
@@ -361,10 +361,10 @@ export function tapCell(
   if (units <= 0) return 'Exhausted';
   addToWallet(state.city.wallet, spec.currencyId, units);
   recordResourceDiscovery(state, spec.currencyId);
-  recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
+  recordEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
   // A WORKER's strike deliberately does NOT record this: the two look alike on
   // screen now, but a quest asking the player to tap is asking for the hand.
-  recordQuestEvent(state, { kind: 'tap' });
+  recordEvent(state, { kind: 'tap' });
   return 'Harvested';
 }
 

@@ -5,7 +5,7 @@ import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
-import { recordQuestEvent } from './quests';
+import { recordEvent } from './events';
 import { isTechComplete, revealedCellCount } from './research';
 import {
   addToWallet, coordKey, districtCells, getWallet, townhall,
@@ -257,7 +257,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     // cells, buildable ground, ruins and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead
     // (sim/expeditions.ts), because heroes and relics are all it buys.
-    recordQuestEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
+    recordEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
     // Clearing a cell can bring a whole ring of new ground into view.
     recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc

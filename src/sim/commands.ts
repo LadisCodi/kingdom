@@ -14,6 +14,7 @@ import { advanceTraining, nextTrainingCompletion } from './army';
 import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
+import { recordEvent } from './events';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
 } from './timeline';
@@ -285,8 +286,12 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
   if (item.kind === 'build') {
     district.state = 'Built';
     revealAroundDistrict(state, map, district); // the new building pushes back the fog
+    recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
   } else {
     district.level = item.targetLevel ?? district.level + 1;
+    recordEvent(state, {
+      kind: 'districtLevel', district: district.definitionId, level: district.level,
+    });
   }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
 }

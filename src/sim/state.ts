@@ -614,6 +614,37 @@ export interface GameState {
   /** The quest chain: index into QUESTS (length = all done); progress is the
    *  event counter for RELATIVE goals, reset when a quest is claimed. */
   quests: { index: number; progress: number };
+  /**
+   * THE LIFETIME ODOMETERS the season pass's missions read (sim/events.ts).
+   *
+   * One key per thing the sim announces — `levels`, `troops`, `collect:Wood`,
+   * `levels:Townhall` — and every one of them only ever goes UP. A mission is
+   * relative: it stores a BASE reading and asks for `meter - base`, which is
+   * only honest against a counter that cannot fall. `army.length` falls when a
+   * room kills soldiers and `wallet.Wood` falls when it is spent; baselining
+   * either would un-progress a mission, which reads as the game taking
+   * something back.
+   *
+   * TOP LEVEL, outside every season-stamped block, and deliberately: a live
+   * mission's base is a reading of one of these, so a wipe that touched them
+   * would silently move every mission on the board. A key nobody has bumped
+   * reads as 0, so nothing here needs initialising or migrating.
+   */
+  tallies: Record<string, number>;
+  /**
+   * Set ONLY around the load path's catch-up advance (sim/save.ts), and the
+   * one thing that reads it is the odometer above.
+   *
+   * THE MISSIONS ARE ACTIVE-PLAY-ONLY, which is the single place in this
+   * codebase where offline replay and live ticking are meant to DISAGREE.
+   * Invariant 1 still holds inside each mode — a six-hour replay in one call
+   * and in six steps both run with this set and agree exactly, and the live
+   * path agrees with itself — and the exception is confined to `tallies`.
+   * Nothing else may read this flag.
+   *
+   * Transient, like `lastCollectTapAt`: never saved, false on load.
+   */
+  replaying: boolean;
   /** First-time discoveries already announced (keys like 'resource:Wood'). */
   discoveries: Record<string, true>;
   /** Discoveries made since the UI last drained them. Transient — a banner

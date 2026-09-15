@@ -41,6 +41,7 @@ import {
 import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
+import { recordEvent } from './events';
 
 // ------------------------------------------------------------ the collection
 
@@ -169,6 +170,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
   addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
   state.heroes.levels[id] = entry.level + 1;
+  recordEvent(state, { kind: 'heroLevel', hero: id });
   return 'Levelled';
 }
 

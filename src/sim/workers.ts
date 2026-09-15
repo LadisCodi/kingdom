@@ -14,7 +14,7 @@ import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
 import { drawFromCell, harvestSourceAt, harvestSpecAt, isExhausted, recoversForSpec } from './harvest';
 import { recordResourceDiscovery } from './discovery';
-import { recordQuestEvent } from './quests';
+import { recordEvent } from './events';
 import {
   addToWallet, coordKey, districtById, newId,
   type Coord, type CurrencyId, type District, type GameState,
@@ -314,7 +314,7 @@ function step(
         const amount = w.carrying;
         addToWallet(state.city.wallet, spec.currencyId, amount);
         recordResourceDiscovery(state, spec.currencyId);
-        recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
+        recordEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
         // Deliberately NOT a { kind: 'tap' } event. The two look alike on
         // screen; a quest that asks the player to tap is asking for the hand,
         // and unifying them would complete those with the city idle.

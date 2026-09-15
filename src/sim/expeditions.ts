@@ -23,9 +23,8 @@
 
 import {
   ARTIFACTS, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
-  depthCount, depthDef, depthsOf, roomPower, type PackTier,
+  depthCount, depthDef, depthsOf, roomPower,
 } from './data/definitions';
-import { grantPack } from './collection';
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
@@ -50,6 +49,7 @@ import {
   type UnitId, type Wallet,
 } from './state';
 import { canAfford, pay } from './wallet';
+import { recordEvent } from './events';
 
 // ------------------------------------------------------------------- slots
 
@@ -433,10 +433,10 @@ export function roomReward(
    *  pay, and a preview that burned a charge would cost the player one for
    *  looking. */
   lamplight = 1,
-): { wallet: Wallet; heroXp: number; pack: PackTier } {
+): { wallet: Wallet; heroXp: number } {
   const def = depthDef(ruinId, depth);
   const tier = RUINS[ruinId].tier;
-  if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Green' };
+  if (def === undefined) return { wallet: {}, heroXp: 0 };
   const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
   // THE MATERIAL HALF ONLY (the Delver's Lantern). A room's Stardust already
   // carries the Wanderer's Compass and its Hero XP a legendary's boon, so a
@@ -453,12 +453,6 @@ export function roomReward(
         techValue(state, 'stardustYield', 2 * scale))),
     },
     heroXp: Math.round(10 * scale),
-    // THE AUTHORED RUINS ARE A ONE-OFF FAUCET (Docs/proposals/collection-packs.md
-    // §2.1): fifteen depths cleared once is fifteen packs in the lifetime of an
-    // account, so they are a welcome rather than a supply. The season's 200
-    // free packs come from the REPEATABLE dungeon, which is unbuilt — OQ-102.
-    // A room pays the cheapest sobre, a boss the best of the free three.
-    pack: isBossRoom(ruinId, depth, room) ? 'Rose' : 'Green',
   };
 }
 
@@ -518,11 +512,9 @@ export interface RoomReport {
   /** The share of them that reached the infirmary and can be healed back. */
   wounded: Array<{ unitId: UnitId; count: number }>;
   heroXp: number;
-  /** What tier of card pack the room paid, already in the player's lap. */
-  pack: PackTier;
   /** Set when this room was the last of its depth. */
   depthCompleted: boolean;
-  /** Set when the ruin's last room fell — its once-only lump and Star pack. */
+  /** Set when the ruin's last room fell — its once-only lump. */
   bottomed: boolean;
 }
 
@@ -554,7 +546,7 @@ export function enterRoom(
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
     power: roomPower(ruinId, at.depth, at.room), log: null, supplies: {},
     losses: [], wounded: [],
-    wallet: {}, heroXp: 0, pack: 'Green', depthCompleted: false, bottomed: false,
+    wallet: {}, heroXp: 0, depthCompleted: false, bottomed: false,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) return { ...empty, result: block };
@@ -593,10 +585,16 @@ export function enterRoom(
     } else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
   addHeroXp(state, reward.heroXp);
-  grantPack(state, reward.pack, isBossRoom(ruinId, at.depth, at.room) ? 'boss' : 'room');
+  // NO PACK. The ruins are cleared ONCE — a pack per room is 191 sobres in
+  // the lifetime of an account and then nothing for ever, which is a welcome
+  // rather than a supply. The packs moved onto the season pass's two columns,
+  // which pay every season; what the dungeon feeds the collection now is the
+  // missions it completes (Docs/features/20-season-pass.md §5).
+  recordEvent(state, { kind: 'roomCleared', ruin: ruinId });
 
   const def = depthDef(ruinId, at.depth)!;
   const depthCompleted = at.room >= def.rooms;
+  if (depthCompleted) recordEvent(state, { kind: 'depthCleared', ruin: ruinId });
   state.ruins[ruinId] = depthCompleted
     // The next depth opens the moment this one runs out. The Adventurers'
     // Guild is what gates it in the design (§3) and it is unbuilt, so
@@ -607,12 +605,11 @@ export function enterRoom(
 
   let bottomed = false;
   if (ruinIsFinished(state, ruinId) && state.ruinsCleared[ruinId] !== true) {
-    // THE BOTTOM NO LONGER PAYS A RELIC. Ruins pay packs, and a relic comes
-    // only from its album (Docs/features/09-relics.md §1) — so what is left
-    // here is the once-per-ruin lump, plus a Star pack for the conquest.
+    // THE BOTTOM PAYS NEITHER A RELIC NOR A PACK. A relic comes only from
+    // its album (Docs/features/09-relics.md §1), and the packs are the season
+    // pass's — so what is left here is the once-per-ruin lump.
     state.ruinsCleared[ruinId] = true;
     bottomed = true;
-    grantPack(state, 'Purple', 'boss');
     // The recurring Gem faucet the design needs: one per ruin, once. Taking
     // a ruin to its bottom is the conquest, and it pays in the two currencies
     // the long game runs on.
@@ -634,7 +631,6 @@ export function enterRoom(
     wounded,
     wallet: reward.wallet,
     heroXp: reward.heroXp,
-    pack: reward.pack,
     depthCompleted,
     bottomed,
   };
@@ -665,7 +661,7 @@ export interface RoomPreview {
   attack: number;
   stats: { atk: number; def: number; hp: number };
   supplies: Wallet;
-  reward: { wallet: Wallet; heroXp: number; pack: PackTier };
+  reward: { wallet: Wallet; heroXp: number };
   /** True when the party out-powers the room ON PAPER. A shortfall warns and
    *  never blocks — and paper is all it is: the resolver decides the fight,
    *  and it counts things a sum cannot (Docs/features/combat.md §12). */

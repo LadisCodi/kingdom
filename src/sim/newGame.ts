@@ -82,6 +82,8 @@ export function newGame(map: MapData, now: number): GameState {
     collection: freshCollection(seasonAt(now)),
     modifiers: [],
     quests: { index: 0, progress: 0 },
+    tallies: {},
+    replaying: false,
     discoveries: {},
     pendingDiscoveries: [],
     seed: newSeed(),
