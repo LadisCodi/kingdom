@@ -1,8 +1,10 @@
-# Proposal — what the five relics do
+# Proposal — what the relics do
 
 > **What this is.** Every relic's **passive** and its **active**, level by
-> level. It is a **proposal**, not a feature doc: nothing here is built, and
-> every number is a first pass.
+> level — the five that exist (§3, §4) and the **three that have to be
+> created** to reach the eight albums the collection now needs (§6). It is a
+> **proposal**, not a feature doc: nothing here is built, and every number is a
+> first pass.
 >
 > **It decides one open thing on purpose.**
 > [`../features/07-research.md`](../features/07-research.md) §6 plans for the
@@ -252,7 +254,100 @@ where a percentage would have rounded away to nothing.
   — one-call offline replay equal to stepped ticking — which means its expiry
   is a boundary and its effect is never integrated over a straddled window.
 
-## 6. Dials, in the order to reach for them
+## 6. The three that are missing
+
+The collection is eight albums ([`album-cycles.md`](album-cycles.md) §6.4) and
+there are five relics. The three new ones take the three pillars the city
+relics do not touch: **the dungeon, the war and the tomes**.
+
+| Relic | Pillar | Passive — always on | Active | Mana |
+|---|---|---|---|---|
+| **The Delver's Lantern** 🏮 | the dungeon | every room pays **more Gold and Stone** | **Lamplight** — the next N rooms pay **double** | 20 |
+| **The Muster Horn** 📯 | the war | your halls field a **bigger army** | **The Call** — every unit fights at **+N ATK and DEF** for 10 min | 20 |
+| **The Sealed Codex** 📖 | the tomes | your kingdom **learns faster** | **Study** — Knowledge runs **×4** while it lasts | 15 |
+
+### 6.1 What each one moves, and where it is collected
+
+| Relic | Stat | Reads | New? |
+|---|---|---|---|
+| **Delver's Lantern** | `roomHaul` | `expeditions.ts#roomReward`, on the **wallet line only** | new stat |
+| **Muster Horn** | `armyCap` | `army.ts#armyCap` | live already |
+| **Sealed Codex** | `knowledgeYield` | `mana.ts#knowledgePerHour` | live already |
+
+- **The Lantern takes the room's Gold and Stone and nothing else.** A room's
+  line already pays Stardust through `stardustYield` — the Wanderer's Compass —
+  and Hero XP through `heroXp`, which is the Vampire Lord's boon
+  ([`legendary-boons.md`](legendary-boons.md)). Multiplying the whole `scale`
+  would stack a relic on top of two other permanent layers on the same number.
+  The material half is unclaimed, so that is the half it takes.
+- **The Codex's seat is already reserved.** `knowledgePerHour` carries the
+  comment *"a relic and a rank read the same number the same way"* — the call
+  site was written expecting one and never got it.
+- **None of the three touches a stat a relic or a boon already moves**, which
+  is the rule `tests/heroBoons.test.ts` enforces in the other direction.
+
+### 6.2 These three have no zone
+
+The five city relics place their active **on the map** (§2). These three cannot:
+a dungeon, a fight and a tome are not places on the city grid, and a zone cast
+on the city that changed what happened underground would be a rule nobody could
+read.
+
+- **They are cast untargeted and run as a window**, with everything else
+  unchanged: a Mana price, the ACTIVE → COOLDOWN → READY walk, a 5-minute
+  cooldown counted from the window's close, and exactly one number growing with
+  the level.
+- **The Lantern's window is counted in ROOMS, not minutes** — the only clock a
+  delve has is the player entering the next door, so minutes would be a timer
+  that runs while nothing happens.
+
+### 6.3 Level by level
+
+**The Delver's Lantern** — mana 20 · cooldown 5 min
+
+| Delver's Lantern | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — a room's Gold and Stone | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
+| **Active — rooms paid double** | **3** | **4** | **5** | **7** | **12** | **22** |
+
+**The Muster Horn** — mana 20 · cooldown 5 min · 10 min (fixed)
+
+| Muster Horn | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — army the halls field | ×1.10 | ×1.20 | ×1.30 | ×1.50 | ×2.00 | ×3.00 |
+| *(four halls at level 5 = 3,400 power)* | 3,740 | 4,080 | 4,420 | 5,100 | 6,800 | 10,200 |
+| **Active — ATK and DEF on every unit** | **+5** | **+7** | **+9** | **+13** | **+23** | **+43** |
+
+**The Sealed Codex** — mana 15 · cooldown 5 min · ×4 (fixed)
+
+| Sealed Codex | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+|---|---|---|---|---|---|---|
+| Passive — Knowledge an hour | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
+| **Active — duration** | **20 min** | **22 min** | **24 min** | **28 min** | **38 min** | **58 min** |
+| *(uptime, cooldown after)* | 80% | 81% | 83% | 85% | 88% | 92% |
+
+- **The Codex is the third departure move.** Knowledge is production, so a
+  window shorter than the 8-hour offline cap is paid in full during an absence
+  (CLAUDE.md, invariant 2) — cast it on the way out, like Haste and the
+  Ledger's Due.
+- **The Horn's active is flat and the others are multipliers**, deliberately:
+  `unitAtk` and `unitDef` are flat terms in the `Drill` and there is no
+  multiplier there to take. Flat is safe on an ACTIVE — the level scales it,
+  and it ends.
+
+### 6.4 Why not the world map
+
+It is the obvious eighth pillar and it is the wrong one to take **now**: the
+world map is designed and unbuilt, so a relic pointing at it would move a
+number nothing reads.
+
+- A **boon** can afford to wait — the Scout's `worldRevealSpeed` already does,
+  and a Legendary carries a stat block and a type passive besides.
+- A **relic cannot.** A relic is an entire album — nine cards, a whole season —
+  and one that pays nothing for months is a season spent on a blank. The world
+  map's relic is the **ninth**, and it should arrive with the world map.
+
+## 7. Dials, in the order to reach for them
 
 | Dial | Value | Key |
 |---|---|---|
@@ -263,9 +358,10 @@ where a percentage would have rounded away to nothing.
 | Auto-tap rate | **4 a second** | a setting |
 | Cooldown | **5 min, flat, from when the window closes** | a setting |
 | Radius | **2 · 3 at L5 · 4 at L10 · 5 at L20**, the same on all five | `active_radius_steps` |
+| The three new relics' passives and actives | §6.3 | `Artifacts` sheet |
 | The album cycle | see [`album-cycles.md`](album-cycles.md) | — |
 
-## 7. Deliberately not in this proposal
+## 8. Deliberately not in this proposal
 
 - **A passive that is a discount, a cost or a time.** It dies at 100%.
 - **A passive that is flat on a base that grows.** It goes stale on its own.
@@ -281,6 +377,8 @@ where a percentage would have rounded away to nothing.
   freely; the grid shows what a cast would cover before the tap, which is the
   house rule (*pills, not modals*) and the idiom casting already has.
 - **Two relics sharing an ability**, or one that costs nothing.
+- **A relic for the world map, before the world map.** A boon can wait on an
+  unbuilt call site; an album cannot (§6.4).
 - **A relic that moves a number a legendary boon moves**
   ([`legendary-boons.md`](legendary-boons.md)). The two permanent layers stay
   legible by staying disjoint.

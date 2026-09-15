@@ -169,7 +169,8 @@ after six seasons:  Dowsing Rod 6 · Verdant Seal 6
 - **Which relic an album levels is per-season.** One season *First Furrow*
   levels the Dowsing Rod; the next it levels the Verdant Seal.
 - **Rotate by one a season**, derived from the season's occurrence rather than
-  authored: `relic = ARTIFACT_ORDER[(albumIndex + occurrence) mod 5]`. Derived
+  authored: `relic = ARTIFACT_ORDER[(albumIndex + occurrence) mod 8]` — eight
+  albums and eight relics ([`relic-effects.md`](relic-effects.md) §6). Derived
   because the seasons list cycles — with two seasons authored, a hand-written
   pairing would only ever show two of the five arrangements.
 - **A full rotation is five seasons — 70 days.** In ten weeks every relic has
