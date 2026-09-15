@@ -109,11 +109,13 @@ does everywhere all the time, it does much harder in one place for a while.
 - **Zones overlap freely.** The cooldown is what stops a player carpeting the
   map, so an overlap is a real choice: an area taking two effects is an area
   somewhere else taking none. There is no popup asking whether to overwrite.
-- **Radius is the one number that steps rather than creeps** — 2, then 3 at
-  level 5, 4 at level 10, 5 at level 20. A Chebyshev radius covers `(2r+1)²`
-  cells, so each rung roughly **doubles the ground**: a number that doubles
-  cannot creep, but it makes a superb milestone, and a player two cards from
-  level 5 knows exactly what those two cards buy.
+- **Radius is the one number that steps rather than creeps** — the sheet's
+  base, then **one more ring at levels 5, 10 and 20**, the same three rungs on
+  every relic. A Chebyshev radius covers `(2r+1)²` cells, so each rung roughly
+  **doubles the ground**: a number that doubles cannot creep, but it makes a
+  superb milestone, and a player two cards from level 5 knows exactly what
+  those two cards buy. It **stops at the last rung** — a relic at level 500 is
+  not a relic that covers the map.
 - **Three of the eight are cast on their own pillar** rather than on the city
   grid: the Lantern on a ruin before a delve, the Horn on a world-map
   fortification, the Tally on a tile the player holds.
@@ -566,15 +568,27 @@ Top to bottom:
   the relic moves, each carrying *value → value at the next level*. It is the
   building card's band with a delta in each tile, because a relic's page is its
   upgrade screen too — there is no separate popup to hold the before and after.
-  A level that moves a number **not at all** greys the tile rather than
-  dropping it: a missing row reads as a bug.
+  A number the next level **leaves alone shows no delta** — just the value.
+  The tile stays, so nothing goes missing and the stat is not mistaken for one
+  the relic does not have; what goes is the arrow pointing at the same number
+  again, which is a promise of a change that is not coming.
   - **No heading over it.** The sentence above already named the passive, and
     the section that does need naming is the one under it.
-- **A section named SPELL**: the ability's name, what it does, chips for its
-  Mana price and its window and radius, and the **cast button**. While the
-  ability is running or resting the countdown replaces the button (§2.1). A
-  relic whose spell is not written yet says so in muted ink rather than
-  showing an empty section.
+- **A section named SPELL**, carrying the ability's name, what it does, **the
+  same band of tiles** and the **cast button**. A level moves what the relic
+  does all the time AND what its ability does for a minute, so a player should
+  not have to learn two ways of reading the same kind of fact.
+  - Its tiles are the questions in the order they are asked: **what it costs**,
+    **how long it lasts**, **how far it reaches** and **how long until it comes
+    back**.
+  - **The cooldown is on the band although nothing ever moves it.** *This never
+    gets shorter* is the answer to the obvious question, and a missing row
+    would leave it unasked. It simply never shows a delta.
+  - **Reach names the cells, not just the ring** — `3 · 49 cells` — because
+    `(2r+1)²` is the number the player feels when a rung lands.
+  - While the ability is running or resting the countdown replaces the button
+    (§2.1). A relic whose spell is not written yet says so in muted ink rather
+    than showing an empty section.
 - Then the **album**: its medallion, its name and an `x/9` bar.
 - The **3×3 grid**: each slot shows the card or its silhouette, its **rarity
   as stars above the card** — gold slots framed gold — its name on a ribbon
