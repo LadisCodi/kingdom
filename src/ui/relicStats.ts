@@ -44,9 +44,9 @@ export interface RelicStatChange extends RelicStat {
  * with. Keyed by the stat rather than by the relic, so two relics that ever
  * move the same number say the same words about it.
  *
- * A SPEED reads as a speed. The game owns the wait as a TIME and the relic
- * owns the SPEED the call site divides by, so `×2.00` on the card is *half
- * the wait* — never a percentage of a number that is falling.
+ * A SPEED IS NAMED AS ONE. The game owns the wait as a TIME and the relic owns
+ * the SPEED the call site divides by, so *Recovery speed +100%* is half the
+ * wait — never a percentage of a number that is falling.
  */
 const STAT_FACE: Partial<Record<ModifierStat, { icon: IconName; label: string }>> = {
   recoverySpeed: { icon: 'hourglass', label: 'Recovery speed' },
@@ -61,11 +61,22 @@ const STAT_FACE: Partial<Record<ModifierStat, { icon: IconName; label: string }>
   worldImprovementYield: { icon: 'build', label: 'Improvement yield' },
 };
 
-/** `×1.20` for a multiplier, `+3` for a flat term. The op is the fact; the
+/**
+ * HOW BIG A MULTIPLIER IS, in the player's terms: `+320%`, never `×4.20`.
+ *
+ * ONE PLACE, because the page says the same number twice — as a sentence
+ * beside the art and as a tile under it — and `×4.20` against *"320% faster"*
+ * is the same fact in two currencies. The prose reads this too
+ * (`game.ts#relicEffectText`), so the two cannot drift apart.
+ */
+export const relicPercent = (value: number): string =>
+  `${Math.round(Math.max(0, value - 1) * 100)}%`;
+
+/** `+320%` for a multiplier, `+3` for a flat term. The op is the fact; the
  *  formatting follows it rather than being authored beside it. */
 const say = (op: 'add' | 'mul', value: number): string =>
   op === 'mul'
-    ? `×${value.toFixed(2)}`
+    ? `+${relicPercent(value)}`
     : `+${Math.round(value * 10) / 10}`;
 
 /**

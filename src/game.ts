@@ -16,6 +16,7 @@ import {
   type FaceId, type PackTier,
 } from './sim/data/definitions';
 import { formatDuration } from './ui/format';
+import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
@@ -4028,7 +4029,9 @@ function relicEffectText(id: ArtifactId, value: number): string {
   // move together by construction — so the first one says how to read it.
   const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
   if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
-  const pct = `${Math.round(Math.max(0, value - 1) * 100)}%`;
+  // The tiles under this sentence print the same number, so both read it from
+  // one place rather than each rounding it their own way.
+  const pct = relicPercent(value);
   // A SPEED is a multiplier the call site DIVIDES by, so it reads as "faster"
   // rather than as "more": `recover +280%` is true and says nothing.
   return stat.endsWith('Speed')
