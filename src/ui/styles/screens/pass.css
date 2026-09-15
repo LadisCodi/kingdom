@@ -155,7 +155,19 @@
   color: var(--ink);
 }
 .pss-task.is-done { border-color: var(--leaf-dark); }
-.pss-task-icon { flex: none; display: flex; }
+/* The icon sits in its own little slab, as the mockup draws it — a bare
+   glyph against the row's parchment reads as decoration, and the icon is the
+   fastest way to tell two rows apart when the list is eight long. */
+.pss-task-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 12px solid transparent;
+  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 11px stretch;
+}
 .pss-task-icon > .icon { --icon-size: 30px; }
 .pss-task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .pss-task-goal {
