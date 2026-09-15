@@ -2,7 +2,8 @@
 
 > **What this is.** Every relic's **passive** and its **active**, level by
 > level — the five that exist (§3, §4) and the **three that have to be
-> created** to reach the eight albums the collection now needs (§6). It is a
+> created** to reach the eight albums the collection now needs (§6): the
+> dungeon, the war and the world map. It is a
 > **proposal**, not a feature doc: nothing here is built, and every number is a
 > first pass.
 >
@@ -258,48 +259,56 @@ where a percentage would have rounded away to nothing.
 
 The collection is eight albums ([`album-cycles.md`](album-cycles.md) §6.4) and
 there are five relics. The three new ones take the three pillars the city
-relics do not touch: **the dungeon, the war and the tomes**.
+relics do not touch: **the dungeon, the war and the world map**.
 
 | Relic | Pillar | Passive — always on | Active | Mana |
 |---|---|---|---|---|
 | **The Delver's Lantern** 🏮 | the dungeon | every room pays **more Gold and Stone** | **Lamplight** — the next N rooms pay **double** | 20 |
-| **The Muster Horn** 📯 | the war | your halls field a **bigger army** | **The Call** — every unit fights at **+N ATK and DEF** for 10 min | 20 |
-| **The Sealed Codex** 📖 | the tomes | your kingdom **learns faster** | **Study** — Knowledge runs **×4** while it lasts | 15 |
+| **The Muster Horn** 📯 | the war | your halls field a **bigger army** | **The Call** — cast on a **world-map fortification**: its defenders' DEF ×N for 10 min | 20 |
+| **The Bailiff's Tally** 🧾 | the world map | a **held world tile pays more** | **The Levy** — cast on a held tile: it pays **×3** while it lasts | 15 |
 
 ### 6.1 What each one moves, and where it is collected
 
-| Relic | Stat | Reads | New? |
+| Relic | Stat | Reads | Live today? |
 |---|---|---|---|
-| **Delver's Lantern** | `roomHaul` | `expeditions.ts#roomReward`, on the **wallet line only** | new stat |
-| **Muster Horn** | `armyCap` | `army.ts#armyCap` | live already |
-| **Sealed Codex** | `knowledgeYield` | `mana.ts#knowledgePerHour` | live already |
+| **Delver's Lantern** | `roomHaul` | `expeditions.ts#roomReward`, the **wallet line only** | **yes** — new stat, existing call site |
+| **Muster Horn** | `armyCap` (passive) · `fortDefence` (active) | `army.ts#armyCap` · the world map's siege | passive **yes**, active **pending** |
+| **The Bailiff's Tally** | `worldTileYield` | the world map's tile production | **pending** |
 
 - **The Lantern takes the room's Gold and Stone and nothing else.** A room's
   line already pays Stardust through `stardustYield` — the Wanderer's Compass —
   and Hero XP through `heroXp`, which is the Vampire Lord's boon
   ([`legendary-boons.md`](legendary-boons.md)). Multiplying the whole `scale`
   would stack a relic on top of two other permanent layers on the same number.
-  The material half is unclaimed, so that is the half it takes.
-- **The Codex's seat is already reserved.** `knowledgePerHour` carries the
-  comment *"a relic and a rank read the same number the same way"* — the call
-  site was written expecting one and never got it.
-- **None of the three touches a stat a relic or a boon already moves**, which
-  is the rule `tests/heroBoons.test.ts` enforces in the other direction.
+- **The Horn is the only relic split across two systems**: a passive the city
+  reads today and an active the world map will. That is on purpose — an army is
+  raised at home and spent abroad.
+- **None of the three touches a number a relic or a legendary boon already
+  moves**, which is the rule `tests/heroBoons.test.ts` enforces the other way.
+- **The tomes keep no relic.** Research has the Necromancer's boon
+  (`researchSpeed`), and `knowledgeYield` stays free — for a ninth relic, or
+  for a technology.
 
-### 6.2 These three have no zone
+### 6.2 Where each active is cast
 
-The five city relics place their active **on the map** (§2). These three cannot:
-a dungeon, a fight and a tome are not places on the city grid, and a zone cast
-on the city that changed what happened underground would be a rule nobody could
-read.
+The five city relics place a zone **on the city grid** (§2). These three point
+at their own pillar instead:
 
-- **They are cast untargeted and run as a window**, with everything else
-  unchanged: a Mana price, the ACTIVE → COOLDOWN → READY walk, a 5-minute
-  cooldown counted from the window's close, and exactly one number growing with
-  the level.
-- **The Lantern's window is counted in ROOMS, not minutes** — the only clock a
-  delve has is the player entering the next door, so minutes would be a timer
-  that runs while nothing happens.
+| Active | Cast on |
+|---|---|
+| **Lamplight** | a ruin, before going down |
+| **The Call** | a **fortification** on the world map |
+| **The Levy** | a **tile you hold** on the world map |
+
+- Everything else is unchanged: a Mana price, the ACTIVE → COOLDOWN → READY
+  walk, a 5-minute cooldown counted from the window's close, and exactly one
+  number growing with the level.
+- **Lamplight's window is counted in ROOMS, not minutes** — the only clock a
+  delve has is the player opening the next door, so minutes would be a timer
+  running while nothing happens.
+- **The Call and The Levy are the first two things in the game cast on the
+  world map**, and the map will need the same select-then-place idiom the city
+  already has.
 
 ### 6.3 Level by level
 
@@ -316,36 +325,38 @@ read.
 |---|---|---|---|---|---|---|
 | Passive — army the halls field | ×1.10 | ×1.20 | ×1.30 | ×1.50 | ×2.00 | ×3.00 |
 | *(four halls at level 5 = 3,400 power)* | 3,740 | 4,080 | 4,420 | 5,100 | 6,800 | 10,200 |
-| **Active — ATK and DEF on every unit** | **+5** | **+7** | **+9** | **+13** | **+23** | **+43** |
+| **Active — the defenders' DEF** | **×1.50** | **×1.65** | **×1.80** | **×2.10** | **×2.85** | **×4.35** |
 
-**The Sealed Codex** — mana 15 · cooldown 5 min · ×4 (fixed)
+**The Bailiff's Tally** — mana 15 · cooldown 5 min · the tile pays ×3 (fixed)
 
-| Sealed Codex | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
+| Bailiff's Tally | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
-| Passive — Knowledge an hour | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
+| Passive — what a held tile pays | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
 | **Active — duration** | **20 min** | **22 min** | **24 min** | **28 min** | **38 min** | **58 min** |
 | *(uptime, cooldown after)* | 80% | 81% | 83% | 85% | 88% | 92% |
 
-- **The Codex is the third departure move.** Knowledge is production, so a
+- **The Tally is a departure move.** A tile's production is production, so a
   window shorter than the 8-hour offline cap is paid in full during an absence
-  (CLAUDE.md, invariant 2) — cast it on the way out, like Haste and the
-  Ledger's Due.
-- **The Horn's active is flat and the others are multipliers**, deliberately:
-  `unitAtk` and `unitDef` are flat terms in the `Drill` and there is no
-  multiplier there to take. Flat is safe on an ACTIVE — the level scales it,
-  and it ends.
+  (CLAUDE.md, invariant 2).
 
-### 6.4 Why not the world map
+### 6.4 Two of these wait on the world map, and the card has to say so
 
-It is the obvious eighth pillar and it is the wrong one to take **now**: the
-world map is designed and unbuilt, so a relic pointing at it would move a
-number nothing reads.
+The world map is designed and unbuilt
+([`../features/19-world-map.md`](../features/19-world-map.md)), so the Tally's
+passive and both world-map actives move numbers nothing reads yet. **That is
+not a reason to design them later** — the collection needs eight relics now,
+and a design that waits for its systems never gets written.
 
-- A **boon** can afford to wait — the Scout's `worldRevealSpeed` already does,
-  and a Legendary carries a stat block and a type passive besides.
-- A **relic cannot.** A relic is an entire album — nine cards, a whole season —
-  and one that pays nothing for months is a season spent on a blank. The world
-  map's relic is the **ninth**, and it should arrive with the world map.
+What it does require is one thing, and it is not negotiable:
+
+- **A relic's card must never promise an effect the build cannot deliver.**
+  *"+15% from tiles you hold"* on a kingdom with no world map is the card lying
+  to a player who spent a whole album on it. The card shows the effect in
+  muted ink with the reason — *when the world opens* — the same way an unfound
+  relic's chip is padlocked in the album's reward band (§11.3 of
+  [`09-relics.md`](../features/09-relics.md)).
+- **The level still accrues**, and pays the day the system lands. Nothing is
+  lost, and the player is told what they are banking.
 
 ## 7. Dials, in the order to reach for them
 
@@ -377,8 +388,9 @@ number nothing reads.
   freely; the grid shows what a cast would cover before the tap, which is the
   house rule (*pills, not modals*) and the idiom casting already has.
 - **Two relics sharing an ability**, or one that costs nothing.
-- **A relic for the world map, before the world map.** A boon can wait on an
-  unbuilt call site; an album cannot (§6.4).
+- **A relic card that promises an effect the build cannot deliver.** Two of the
+  three new relics wait on the world map; their cards say so in muted ink
+  (§6.4).
 - **A relic that moves a number a legendary boon moves**
   ([`legendary-boons.md`](legendary-boons.md)). The two permanent layers stay
   legible by staying disjoint.
