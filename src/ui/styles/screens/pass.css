@@ -1,0 +1,395 @@
+/* The season pass: the board you work, and the ladder it climbs.
+ *
+ * Docs/features/20-season-pass.md §6, drawn from
+ * Docs/art/ui/mockups/m27-season-pass.png.
+ *
+ * It borrows `daily.css`'s ladder wholesale — the same two columns on the same
+ * rows, the same rule that a cell is lit when it can be taken and legible when
+ * it cannot, the same argument that a free player has to be able to read the
+ * paid column as the ladder they are already climbing. What is new above it is
+ * the BOARD, and the board is on top because it is the thing the player does.
+ *
+ * It uses no art of its own. `frame_panel_wide.png` is already the parchment
+ * cell in the mockup and `frame_plank_wide.png` the head, so the screen is
+ * nine-sliced out of what ships rather than out of a sheet drawn for it. */
+
+.pss { display: flex; flex-direction: column; gap: 10px; }
+.pss-note {
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+  text-align: center;
+  line-height: 1.35;
+}
+
+/* ---- the clock. One per screen, the daily chest's rule: the season really
+   does end, and it is a fact rather than a threat, so it sits in ink. */
+.pss-clock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.pss-clock > .icon { --icon-size: 24px; }
+.pss-of { margin-left: auto; color: var(--ink); }
+
+/* ---- the level bar. Where you are, the distance, and where you are going. */
+.pss-level { display: flex; align-items: center; gap: 8px; }
+
+.pss-pip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 2px 0 var(--wood-dark);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+/* The level reached is gold; the next one is the same disc, dimmed — so the
+   bar between them reads as a DISTANCE rather than as a percentage. */
+.pss-level .pss-pip.is-now {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
+}
+.pss-level .pss-pip.is-next { opacity: 0.6; }
+
+.pss-xp {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border-radius: 999px;
+  border: 3px solid var(--wood-dark);
+  background: rgba(92, 58, 30, 0.35);
+  overflow: hidden;
+}
+/* A width, not a transform: the bar is a fact about the season. */
+.pss-xp-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--gold);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  transition: width 240ms ease-out;
+}
+.pss-xp-text {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pss-xp-fill { transition: none; }
+}
+
+/* ---- the board */
+
+.pss-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  /* The same 9-slice the upgrade sheet's panel uses, measured off the same
+     art — the ladder below is ~40 rows, so nothing here may be a fixed size. */
+  border: 14px solid transparent;
+  border-image: url('../../../render/assets/frame_panel_wide.png') 58 fill / 14px stretch;
+}
+.pss-board-head {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  text-align: center;
+}
+/* Six rows fit a phone; the rest scrolls, and the cut row at the bottom is
+   what says the list is longer — the mockup's own trick. */
+.pss-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.pss-empty {
+  padding: 18px 8px;
+  text-align: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+
+.pss-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment-shade);
+  color: var(--ink);
+}
+.pss-task.is-done { border-color: var(--leaf-dark); }
+.pss-task-icon { flex: none; display: flex; }
+.pss-task-icon > .icon { --icon-size: 30px; }
+.pss-task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pss-task-goal {
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  line-height: 1.2;
+}
+.pss-task-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(92, 58, 30, 0.5);
+  background: rgba(92, 58, 30, 0.28);
+  overflow: hidden;
+}
+.pss-task-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--gold);
+}
+.pss-task.is-done .pss-task-fill { background: var(--leaf); }
+.pss-task-count {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+/* The green tick, pressed on like the daily ladder's wax seal. */
+.pss-task > .icon {
+  flex: none;
+  --icon-size: 16px;
+  border-radius: 50%;
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  color: var(--ink-inverse);
+  margin-right: 6px;
+}
+
+/* ONE BUTTON, TWO FACES. Green CLAIM when the work is done, a Gem price when
+   it is not — the same object, because it is the same question answered two
+   ways. Two buttons side by side would read as two rewards. */
+.pss-claim,
+.pss-gem {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 76px;
+  min-height: 40px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.pss-claim {
+  background: var(--leaf);
+  border: 3px solid var(--leaf-dark);
+  box-shadow: 0 var(--lip) 0 var(--leaf-dark);
+  color: var(--ink-inverse);
+  text-shadow: 0 1px 0 rgba(30, 60, 20, 0.5);
+}
+.pss-gem {
+  background: var(--gem, #8b4fd0);
+  border: 3px solid rgba(60, 26, 100, 0.85);
+  box-shadow: 0 var(--lip) 0 rgba(60, 26, 100, 0.85);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(40, 16, 70, 0.7);
+}
+.pss-claim:hover,
+.pss-gem:hover { filter: brightness(1.06); }
+.pss-claim:active,
+.pss-gem:active { transform: translateY(var(--lip)); box-shadow: none; }
+.pss-claim:focus-visible,
+.pss-gem:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+/* Only the claimable one pulses, so there is never a question where the tap
+   goes — the daily cell's rule applied to a row. */
+.pss-claim { animation: pss-ready 1.6s ease-in-out infinite; }
+@keyframes pss-ready {
+  50% { box-shadow: 0 var(--lip) 0 var(--leaf-dark), 0 0 14px rgba(120, 200, 90, 0.85); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pss-claim { animation: none; }
+}
+
+/* ---- the ladder. One grid template for the heads and every row, declared
+   once so the columns cannot drift apart: free · the level · paid. */
+.pss-heads,
+.pss-row {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr;
+  gap: 6px;
+  align-items: stretch;
+}
+.pss-heads {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-bottom: 4px;
+  background: var(--parchment);
+}
+.pss-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  border: 3px solid var(--wood-dark);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
+  text-align: center;
+}
+.pss-head.is-free { background: var(--wood); }
+/* The paid column's head IS the buy button while the pass is unbought: the
+   price belongs on the thing it buys, not in a store two taps away. */
+.pss-head.is-paid {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 var(--lip) 0 var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
+}
+.pss-head.is-buy { cursor: pointer; }
+.pss-head.is-buy:hover { filter: brightness(1.05); }
+.pss-head.is-buy:active { transform: translateY(var(--lip)); box-shadow: none; }
+.pss-head.is-owned {
+  background: var(--leaf);
+  border-color: var(--leaf-dark);
+  box-shadow: 0 var(--lip) 0 var(--leaf-dark);
+}
+.pss-price { font-variant-numeric: tabular-nums; }
+
+.pss-ladder { display: flex; flex-direction: column; gap: 4px; }
+.pss-row { min-height: 44px; }
+
+.pss-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 5px 30px 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.55);
+  background: var(--parchment-shade);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+}
+/* Locked, and legible: the price has to show exactly what it buys, on the
+   rows the player is already climbing. */
+.pss-cell.is-locked { opacity: 0.55; }
+/* Not reached yet reads dimmer still than locked — the two are different
+   facts and the player has to be able to tell them apart. */
+.pss-row:not(.is-reached) .pss-cell { opacity: 0.45; }
+
+.pss-cell.is-taken > .icon:last-child,
+.pss-cell.is-locked > .icon:last-child {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  translate: 0 -50%;
+}
+.pss-cell.is-taken > .icon:last-child {
+  --icon-size: 16px;
+  right: 12px;
+  border-radius: 50%;
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  color: var(--ink-inverse);
+}
+.pss-cell:not(.is-taken):not(.is-locked) { padding-right: 8px; }
+
+/* THE GRAND PRIZE, on both columns: the last rung is the one the free track
+   reaches too (13-events.md §2.4), so it is framed rather than gated. */
+.pss-cell.is-grand {
+  border: 3px solid var(--gold);
+  background:
+    linear-gradient(rgba(242, 178, 51, 0.22), rgba(242, 178, 51, 0.22)),
+    var(--parchment-shade);
+  box-shadow: inset 0 0 12px rgba(242, 178, 51, 0.55);
+}
+
+/* Waiting. Lit gold, and the only thing on the ladder that moves. */
+button.pss-cell {
+  cursor: pointer;
+  border: 3px solid var(--gold);
+  box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
+  animation: pss-cell-ready 1.6s ease-in-out infinite;
+}
+button.pss-cell:hover { filter: brightness(1.05); }
+button.pss-cell:active { transform: translateY(2px); box-shadow: none; }
+button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+@keyframes pss-cell-ready {
+  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark), 0 0 14px rgba(242, 178, 51, 0.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.pss-cell { animation: none; }
+}
+
+.pss-prize { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.pss-prize > .icon { --icon-size: 20px; }
+.pss-prize.is-pack b { font-size: var(--text-helper); }
+
+/* The level, between the columns: it belongs to the row, not to either track.
+   It lights once the row has been reached, which is what draws the line
+   between where the player has been and where they have not. */
+.pss-pip.is-rung {
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  opacity: 0.7;
+}
+.pss-row.is-reached .pss-pip.is-rung { opacity: 1; }
+.pss-pip.is-rung.is-here {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  color: var(--ink);
+  text-shadow: none;
+  opacity: 1;
+}

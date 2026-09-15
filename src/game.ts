@@ -15,7 +15,7 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatDuration } from './ui/format';
+import { formatCount, formatDuration } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -108,7 +108,7 @@ import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
-  type FeatureId, type TrainableId,
+  type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type Wallet,
 } from './sim/state';
@@ -117,6 +117,13 @@ import {
   claimRoyalRung, freeReward, ladderLength, nextRung, royalOwned, royalPending,
   royalReward, rungsClaimed, seasonEndsAt,
 } from './sim/daily';
+import {
+  anyCellPending, boardIsFull, boardMissions, buyPass, claimCell, claimMission,
+  finishMissionWithGems, freeCell, levelProgress, ladderLength as passLadderLength,
+  missionGemCost, paidCell, passEndsAt, passLevel, passOwned, passXp,
+  rollMissionsIfDue,
+} from './sim/pass';
+import { missionComplete, missionProgress, nextWindowAt } from './sim/missions';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -149,6 +156,9 @@ export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
   | 'collection' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm'
+  // The season pass, reached from the Sowing Season pill on the map
+  // (Docs/features/20-season-pass.md §6).
+  | 'pass'
   // Buying a level is its own surface now, opened by the card's Upgrade
   // button (Docs/art/ui-menus-redesign.md §7.27).
   | 'upgrade';
@@ -401,6 +411,11 @@ export class Game {
     // lagging it by up to a second. `tick()` calls notify() too, so the
     // "after advance()" ordering the architecture needs still holds.
     refreshAdOffer(this.state, this.now());
+    // The eight-hour window, for `adOffers.ts`'s reason verbatim: the board is
+    // an opportunity offered to a player, not economy, so it is filled from
+    // the LIVE tick and `advance()` never proposes a boundary for it. A stamp
+    // rather than a cursor, so a long absence issues one window's worth.
+    rollMissionsIfDue(this.state, this.now());
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
@@ -1105,11 +1120,20 @@ export class Game {
     };
   }
 
-  /** The pill hides behind any sheet and never shows before the first card. */
+  /**
+   * The pill hides behind any sheet and never shows before the first card.
+   *
+   * IT GLOWS FOR A PASS CELL as well as for an unopened pack, because the pill
+   * is the pass's door now: a reward sitting on the ladder with nothing on
+   * screen to say so is the same missed thing an unopened pack would be.
+   */
   seasonPillState(): { showing: boolean; glowing: boolean } | null {
     const info = this.seasonInfo();
     if (info.held === 0 && info.packs === 0) return null;
-    return { showing: !this.hasOpenSheet(), glowing: info.packs > 0 };
+    return {
+      showing: !this.hasOpenSheet(),
+      glowing: info.packs > 0 || this.passPending(),
+    };
   }
 
   /**
@@ -1737,6 +1761,129 @@ export class Game {
   /** The standing offer, or null. Drives the widget and the popup. */
   // ------------------------------------------------------------ daily chest
 
+  // ------------------------------------------------------- the season pass
+
+  /**
+   * THE WHOLE PASS SCREEN, flattened — the plank, the XP bar, the board and
+   * the two-column ladder (Docs/features/20-season-pass.md §6).
+   *
+   * `dailySeason()`'s shape and for its reason: every cell carries its OWN
+   * `claimable` and `claimed`, because every cell is its own button and
+   * nothing else on the sheet decides what can be taken.
+   */
+  passScreen(): {
+    level: number;
+    length: number;
+    xpInto: number;
+    xpNeed: number;
+    owned: boolean;
+    priceUsd: number;
+    endsIn: string;
+    nextTasksIn: string;
+    boardFull: boolean;
+    missions: Array<{
+      id: string; kind: MissionKind; icon: IconName; goal: string;
+      done: number; target: number; complete: boolean; gemCost: number;
+    }>;
+    ladder: Array<{
+      level: number;
+      reached: boolean;
+      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      paid: {
+        reward: Wallet; pack: PackTier | null;
+        claimed: boolean; claimable: boolean; locked: boolean;
+      };
+    }>;
+  } {
+    const now = this.now();
+    const level = passLevel(this.state, now);
+    const owned = passOwned(this.state, now);
+    const { into, need } = levelProgress(passXp(this.state, now));
+    const length = passLadderLength();
+    const claimedFree = this.state.kingdom.pass.claimedFree;
+    const claimedPaid = this.state.kingdom.pass.claimedPaid;
+    return {
+      level,
+      length,
+      xpInto: into,
+      xpNeed: need,
+      owned,
+      priceUsd: STORE.SeasonPass.priceUsd,
+      endsIn: formatDuration((passEndsAt(now) - now) / 1000),
+      nextTasksIn: formatDuration((nextWindowAt(now) - now) / 1000),
+      boardFull: boardIsFull(this.state, now),
+      missions: boardMissions(this.state, now).map((m) => ({
+        id: m.uniqueId,
+        kind: m.kind,
+        icon: MISSION_ICON[m.kind],
+        goal: missionGoal(m),
+        done: missionProgress(this.state, m),
+        target: m.target,
+        complete: missionComplete(this.state, m),
+        gemCost: missionGemCost(this.state, m),
+      })),
+      ladder: Array.from({ length }, (_, i) => {
+        const n = i + 1;
+        const free = freeCell(n);
+        const paid = paidCell(n);
+        return {
+          level: n,
+          reached: n <= level,
+          free: {
+            reward: free.wallet,
+            pack: free.pack,
+            claimed: claimedFree.includes(n),
+            claimable: n <= level && !claimedFree.includes(n),
+          },
+          paid: {
+            reward: paid.wallet,
+            pack: paid.pack,
+            claimed: owned && claimedPaid.includes(n),
+            claimable: owned && n <= level && !claimedPaid.includes(n),
+            locked: !owned,
+          },
+        };
+      }),
+    };
+  }
+
+  /** The pass is worth opening: a cell waiting, or the pass still on the
+   *  table. The pill decides the glow from this, never the sheet. */
+  passPending(): boolean {
+    return anyCellPending(this.state, this.now());
+  }
+
+  doClaimPassCell(level: number, track: 'free' | 'paid'): void {
+    const result = claimCell(this.state, level, track, this.now());
+    if (result !== 'Claimed') return;
+    playSfx('questComplete');
+    this.notify();
+  }
+
+  doBuyPass(): void {
+    this.openIap('SeasonPass', 'pass');
+  }
+
+  doClaimMission(id: string): void {
+    if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
+    playSfx('questComplete');
+    this.notify();
+  }
+
+  /** Buy a stuck mission out. A refusal shakes the purse and says nothing —
+   *  the price is on the button the player just pressed. */
+  doFinishMissionWithGems(id: string): void {
+    const result = finishMissionWithGems(this.state, id, this.now());
+    if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+      this.notify();
+      return;
+    }
+    if (result !== 'Finished') return;
+    playSfx('gemSpend');
+    this.notify();
+  }
+
   /**
    * The season: the whole ladder, both tracks, and how long is left.
    *
@@ -2126,15 +2273,19 @@ export class Game {
     // bundle is a hand of packs and wildcards (sim/collection.ts).
     const result = id === 'RoyalChest'
       ? buyRoyalChest(this.state, this.now())
-      : bundleOf(id) !== null
-        ? buyCardBundle(this.state, id, this.now())
-        : buySku(this.state, id, this.now());
+      : id === 'SeasonPass'
+        ? buyPass(this.state, this.now())
+        : bundleOf(id) !== null
+          ? buyCardBundle(this.state, id, this.now())
+          : buySku(this.state, id, this.now());
     if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
       this.toast(id === 'RoyalChest'
         ? 'The Royal chest is yours for the season'
+        : id === 'SeasonPass'
+          ? 'The season pass is yours — every level you have reached is open'
         : bundleOf(id) !== null
           // A bundle is opened in the Collection, like every pack that falls:
           // the store hands over the things, it does not turn them over.
@@ -4037,6 +4188,50 @@ function trainerName(unitId: UnitId): string {
  * order the reveal deals them in, and the shards last because they are the
  * thing a player is collecting toward rather than spending.
  */
+/**
+ * THE ICON A MISSION KIND WEARS.
+ *
+ * Every one of them is already in the UI atlas — `tests/icons.test.ts` refuses
+ * an emoji fallback, so a kind with no honest cell would fail the build rather
+ * than quietly draw a glyph.
+ */
+const MISSION_ICON: Record<MissionKind, IconName> = {
+  Population: 'population',
+  UpgradeDistricts: 'arrowUp',
+  RaiseTownhall: 'Townhall',
+  CollectResource: 'workers',
+  DiscoverCells: 'compass',
+  BuildDistricts: 'build',
+  TrainTroops: 'army',
+  LevelHeroes: 'star',
+  ClearRooms: 'dungeon',
+  CompleteDepths: 'skull',
+  OpenPacks: 'pack',
+};
+
+/**
+ * WHAT A MISSION SAYS IT WANTS, in one line.
+ *
+ * Generated from the mission rather than authored per roll, so a target that
+ * scaled with the city cannot disagree with the sentence that names it.
+ */
+function missionGoal(m: Mission): string {
+  const n = formatCount(m.target);
+  switch (m.kind) {
+    case 'Population': return `Grow the town by ${n}`;
+    case 'UpgradeDistricts': return `Upgrade buildings ${n} times`;
+    case 'RaiseTownhall': return 'Raise the Townhall a level';
+    case 'CollectResource': return `Collect ${n} ${(m.subject ?? 'Gold').toLowerCase()}`;
+    case 'DiscoverCells': return `Discover ${n} cells`;
+    case 'BuildDistricts': return `Build ${n} buildings`;
+    case 'TrainTroops': return `Train ${n} soldiers`;
+    case 'LevelHeroes': return `Level heroes ${n} times`;
+    case 'ClearRooms': return `Clear ${n} dungeon rooms`;
+    case 'CompleteDepths': return `Complete ${n} depths`;
+    default: return `Open ${n} card packs`;
+  }
+}
+
 function roomPrizes(report: { wallet: Wallet; heroXp: number }): GachaPrize[] {
   const prizes = walletPrizes(report.wallet);
   if (report.heroXp > 0) {

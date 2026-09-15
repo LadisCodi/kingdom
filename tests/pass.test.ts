@@ -16,7 +16,7 @@ import {
   levelProgress, missionGemCost, paidCell, passEndsAt, passLevel, passOwned,
   passXp, rollMissionsIfDue,
 } from '../src/sim/pass';
-import { missionComplete } from '../src/sim/missions';
+import { missionComplete, windowIndex } from '../src/sim/missions';
 import { choosePayerProfile } from '../src/sim/store';
 import { advance } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
@@ -168,6 +168,16 @@ describe('the cells', () => {
     expect(anyCellPending(state, T0)).toBe(false);
   });
 
+  it('leaves no rung empty on either column', () => {
+    // An empty cell on a ladder reads as a bug, and a free track with holes
+    // in it is a worse advert for the paid one than a thin free track is.
+    for (let l = 1; l <= ladderLength(); l++) {
+      for (const cell of [freeCell(l), paidCell(l)]) {
+        expect(cell.pack !== null || Object.keys(cell.wallet).length > 0).toBe(true);
+      }
+    }
+  });
+
   it('pays the free track all the way to the grand prize', () => {
     // 13-events.md §2.4 binds: the free column reaches the top rung.
     const top = freeCell(ladderLength());
@@ -253,16 +263,18 @@ describe('the Gem shortcut', () => {
 });
 
 describe('it is not a boundary source', () => {
-  it('issues nothing across thirty days in one advance, and adds no steps', () => {
-    const bare = kingdom();
-    const baseline = advance(bare, map, T0 + 30 * 86_400_000).steps;
-    const withPass = kingdom();
-    rollMissionsIfDue(withPass, T0);
-    const steps = advance(withPass, map, T0 + 30 * 86_400_000).steps;
-    expect(steps).toBe(baseline);
-    // The advance issued nothing: the board is exactly what the live tick put
-    // on it.
-    expect(withPass.kingdom.pass.live.length).toBe(MISSIONS.perWindow);
+  it('issues nothing across thirty days in one advance', () => {
+    // Ninety eight-hour windows pass inside one call. If the pass registered
+    // a boundary they would all fire; nothing in the sim reads the board, so
+    // none of them exists. `MAX_BOUNDARY_STEPS` is 10,000 and this is the
+    // shape of thing that eats it (sim/adOffers.ts).
+    const state = kingdom();
+    rollMissionsIfDue(state, T0);
+    const issued = state.kingdom.pass.live.length;
+    expect(issued).toBe(MISSIONS.perWindow);
+    advance(state, map, T0 + 30 * 86_400_000);
+    expect(state.kingdom.pass.live.length).toBe(issued);
+    expect(state.kingdom.pass.lastWindow).toBe(windowIndex(T0));
   });
 });
 

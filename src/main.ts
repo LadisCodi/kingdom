@@ -32,6 +32,7 @@ import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
+import { renderPassSheet } from './ui/passSheet';
 import { mountDailyPill } from './ui/dailyPill';
 import { mountSeasonPill } from './ui/seasonPill';
 import { renderBuildMenu } from './ui/buildMenu';
@@ -178,6 +179,7 @@ async function boot(): Promise<void> {
     mana: renderManaSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
+    pass: renderPassSheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,
