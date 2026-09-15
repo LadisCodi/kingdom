@@ -27,7 +27,9 @@ import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, knob, progress, sheet } from './kit';
-import { relicStatChanges } from './relicStats';
+import {
+  relicStatChanges, spellStatChanges, type RelicStatChange,
+} from './relicStats';
 
 /** An album's round vignette — its sheet if it has landed, its relic's
  *  otherwise, so the grid is never a row of empty rings. */
@@ -300,19 +302,23 @@ function albumHalf(game: Game, id: AlbumId): HTMLElement {
 // ------------------------------------------------- §11.3 one relic's page
 
 /**
- * THE PASSIVE, as a band of small tiles rather than two sentences.
+ * A BAND OF SMALL TILES — the passive's numbers, and the ability's.
  *
  * It is the building card's band (`districtCard.ts`, `.dc-stats`) with a
  * DELTA in each tile, because a relic's page is also its upgrade screen —
  * there is no separate popup to hold the *before → after*, so the two live in
  * one box.
  *
- * NO HEADING OVER IT. The prose beside the art already says what the passive
- * IS; a word saying "passive" above the numbers would be the same fact twice,
- * and the section that DOES need naming is the one under it.
+ * ONE RENDERER FOR BOTH HALVES. A level moves what the relic does all the
+ * time AND what its ability does for a minute, so a player should not have to
+ * learn two ways of reading the same kind of fact.
+ *
+ * NO HEADING OVER THE PASSIVE'S. The prose beside the art already says what
+ * the passive IS; a word saying "passive" above the numbers would be the same
+ * fact twice, and the section that DOES need naming is the one with a button
+ * in it.
  */
-function passiveBand(game: Game, id: ArtifactId, level: number): HTMLElement {
-  const stats = relicStatChanges(id, Math.max(1, level));
+function statBand(stats: readonly RelicStatChange[]): HTMLElement {
   return el('div', { class: 'col-stats' },
     ...stats.map((f) => el('div', { class: `col-stat${f.changed ? '' : ' is-same'}` },
       iconEl(f.icon, { size: 'lg' }),
@@ -322,7 +328,6 @@ function passiveBand(game: Game, id: ArtifactId, level: number): HTMLElement {
           el('b', { class: 'col-stat-value' }, f.value),
           iconEl('arrowUp', { size: 'sm' }),
           el('b', { class: 'col-stat-to' }, f.to))))));
-  void game;
 }
 
 /**
@@ -343,21 +348,15 @@ function spellSection(game: Game, id: ArtifactId, card: ReturnType<Game['relicCa
       el('div', { class: 'col-effect-wait' },
         iconEl('hourglass', { size: 'sm' }), 'Its spell is still being written'));
   }
+  // THE ABILITY'S OWN BAND, the passive's band again: a level moves an active's
+  // numbers too, so the two halves of a relic are read the same way. The
+  // cooldown greys, because nothing ever moves it — which is the design
+  // saying so rather than the row being missing.
   const body = el('div', { class: 'col-spell' }, head,
     el('div', { class: 'col-spell-head' },
       el('div', { class: 'col-spell-name' }, active.name),
       el('div', { class: 'col-spell-what' }, active.text)),
-    el('div', { class: 'col-spell-chips' },
-      el('span', { class: 'col-chip' }, iconEl('Mana', { size: 'sm' }), el('b', {}, String(active.manaCost))),
-      ...(active.durationSeconds > 0
-        ? [el('span', { class: 'col-chip' },
-          iconEl('hourglass', { size: 'sm' }),
-          el('b', {}, formatDuration(active.durationSeconds)))]
-        : []),
-      ...(active.radius > 0
-        ? [el('span', { class: 'col-chip' },
-          iconEl('compass', { size: 'sm' }), el('b', {}, `radius ${active.radius}`))]
-        : [])));
+    statBand(spellStatChanges(id, Math.max(1, card.level))));
 
   if (!card.owned) return body;
   const { phase, leftMs } = card.cast;
@@ -410,7 +409,7 @@ function relicPage(game: Game, id: ArtifactId): HTMLElement {
           : el('div', { class: 'col-effect-wait' },
             iconEl('hourglass', { size: 'sm' }), card.pending),
         el('div', { class: 'col-relic-what' }, card.owned ? card.now : card.next))),
-    passiveBand(game, id, card.level),
+    statBand(relicStatChanges(id, Math.max(1, card.level))),
     spellSection(game, id, card),
     albumHalf(game, card.album),
     el('div', { class: 'col-walk' },

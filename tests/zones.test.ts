@@ -10,10 +10,13 @@
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import {
-  activeDurationMs, cast, castBlock, castState,
+  activeDurationMs, activeRadius, activeRadiusAt, cast, castBlock, castState,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
-import { ARTIFACT_COOLDOWN_SECONDS, HARVEST } from '../src/sim/data/definitions';
+import {
+  ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS, HARVEST,
+} from '../src/sim/data/definitions';
+import { spellStatChanges, spellStatsAt } from '../src/ui/relicStats';
 import { effectiveRecoveryMs } from '../src/sim/harvest';
 import {
   activeZones, addModifier, areaCovers, resolve, resolveAt, type Modifier,
@@ -264,5 +267,75 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
     };
     expect(walk(1)).toBe('Ready');
     expect(walk(240)).toBe('Ready');
+  });
+});
+
+// ------------------------------------------------------------- the radius
+
+/**
+ * THE ONE NUMBER OF AN ABILITY THAT STEPS RATHER THAN CREEPS
+ * (Docs/features/09-relics.md §2.1). A Chebyshev radius covers (2r+1)² cells,
+ * so each rung roughly DOUBLES the ground — which is why it is three named
+ * levels and not a slope.
+ */
+describe('an ability reaches further at three named levels', () => {
+  const RADIUS_RELIC = 'VerdantSeal';
+
+  it('holds its base until the first step, then adds a ring at each', () => {
+    const base = activeRadiusAt(RADIUS_RELIC, 1);
+    expect(base).toBeGreaterThan(0);
+    for (let level = 1; level < ARTIFACT_RADIUS_STEPS[0]!; level++) {
+      expect(activeRadiusAt(RADIUS_RELIC, level), `level ${level}`).toBe(base);
+    }
+    ARTIFACT_RADIUS_STEPS.forEach((at, i) => {
+      expect(activeRadiusAt(RADIUS_RELIC, at), `level ${at}`).toBe(base + i + 1);
+      expect(activeRadiusAt(RADIUS_RELIC, at - 1), `level ${at - 1}`).toBe(base + i);
+    });
+  });
+
+  // MONOTONE AND BOUNDED. It only ever climbs, and it stops climbing once the
+  // last rung is behind it — a relic at level 500 is not a relic that covers
+  // the map.
+  it('never falls, and stops at the last rung', () => {
+    let last = 0;
+    for (let level = 1; level <= 60; level++) {
+      const r = activeRadiusAt(RADIUS_RELIC, level);
+      expect(r).toBeGreaterThanOrEqual(last);
+      last = r;
+    }
+    const top = ARTIFACT_RADIUS_STEPS[ARTIFACT_RADIUS_STEPS.length - 1]!;
+    expect(activeRadiusAt(RADIUS_RELIC, 500)).toBe(activeRadiusAt(RADIUS_RELIC, top));
+  });
+
+  // A STEP LADDER ON A SPELL THAT IS NOT AN AREA would be three rungs of
+  // nothing, so a radius of 0 stays 0 at every level.
+  it('leaves an ability with no area alone', () => {
+    expect(activeRadiusAt('DowsingRod', 1)).toBe(0);
+    expect(activeRadiusAt('DowsingRod', 50)).toBe(0);
+  });
+
+  // THE CARD IS NOT ALLOWED TO LIE. What the tile says the reach is has to be
+  // what the cast actually covers.
+  it('is what the cast really touches', () => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    state.artifacts.levels[RADIUS_RELIC] = ARTIFACT_RADIUS_STEPS[0]!;
+    expect(activeRadius(state, RADIUS_RELIC))
+      .toBe(activeRadiusAt(RADIUS_RELIC, ARTIFACT_RADIUS_STEPS[0]!));
+    // And the band the page prints reads the same ladder.
+    const before = spellStatsAt(RADIUS_RELIC, ARTIFACT_RADIUS_STEPS[0]! - 1);
+    const after = spellStatsAt(RADIUS_RELIC, ARTIFACT_RADIUS_STEPS[0]!);
+    expect(after.find((s) => s.key === 'radius')!.value)
+      .not.toBe(before.find((s) => s.key === 'radius')!.value);
+  });
+
+  // The COOLDOWN is on the band and never moves — which is the design saying
+  // so, not a row going missing.
+  it('never shortens the cooldown, at any level', () => {
+    const cd = (level: number) =>
+      spellStatsAt(RADIUS_RELIC, level).find((s) => s.key === 'cooldown')!.value;
+    expect(cd(1)).toBe(cd(50));
+    expect(spellStatChanges(RADIUS_RELIC, 1).find((s) => s.key === 'cooldown')!.changed)
+      .toBe(false);
   });
 });

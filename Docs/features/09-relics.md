@@ -625,6 +625,9 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.album_gems`, `collection.prize_gems` |
 | Sends a day | **3, fixed**; gold never | `collection.sends_per_day` |
 | A relic's `base` and `per_level` | per relic | `Artifacts` sheet |
+| What an ability costs, lasts and reaches | per relic | `Artifacts` sheet, `active_mana_cost` · `active_duration_seconds` · `active_radius` |
+| An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifacts.active_cooldown_seconds` |
+| Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifacts.active_radius_steps` |
 | Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.album_hours` |
 | Keys an album pays | **silver ×5, then gold ×3** — one key a page | `collection.album_silver_keys`, `…_gold_keys` |
 | Rarity per slot, per album | authored | seasons file |

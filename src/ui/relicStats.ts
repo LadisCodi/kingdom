@@ -15,8 +15,10 @@
 // fold their pair into a single phrase — and neither said which half was
 // which. A box apiece says it without a sentence.
 
-import { ARTIFACTS } from '../sim/data/definitions';
+import { ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS } from '../sim/data/definitions';
+import { activeDurationMs, activeRadiusAt } from '../sim/casting';
 import { passiveValueAtLevel } from '../sim/artifacts';
+import { formatDuration } from './format';
 import type { ModifierStat } from '../sim/modifiers';
 import type { ArtifactId } from '../sim/state';
 import type { IconName } from './kit/icon';
@@ -96,12 +98,62 @@ export function relicStatsAt(id: ArtifactId, level: number): RelicStat[] {
   return out;
 }
 
-/** This relic at its level, against what the next one would make of it. */
-export function relicStatChanges(id: ArtifactId, level: number): RelicStatChange[] {
-  const before = relicStatsAt(id, level);
-  const after = new Map(relicStatsAt(id, level + 1).map((s) => [s.key, s.value]));
+/**
+ * WHAT THE ABILITY IS WORTH AT `level` — the same four facts for every relic
+ * that has one, in the order a player asks them: what it costs, how long it
+ * lasts, how far it reaches, and how long until it comes back.
+ *
+ * The COOLDOWN IS ON THE LIST even though nothing ever moves it. A number the
+ * ladder leaves alone greys rather than disappearing, and a flat cooldown is a
+ * decision the player is owed — *this never gets shorter* is the answer to the
+ * obvious question, and a missing row would leave it unasked.
+ */
+export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
+  const active = ARTIFACTS[id].active;
+  if (active === null) return [];
+  const out: RelicStat[] = [
+    { key: 'mana', icon: 'Mana', label: 'Mana', value: String(active.manaCost) },
+  ];
+  const window = activeDurationMs(id) / 1000;
+  if (window > 0) {
+    out.push({ key: 'window', icon: 'hourglass', label: 'Window', value: formatDuration(window) });
+  }
+  const radius = activeRadiusAt(id, level);
+  if (radius > 0) {
+    // The cells a Chebyshev square covers, because the ring count is the
+    // number the player feels — radius 2 to 3 is 25 cells to 49.
+    out.push({
+      key: 'radius',
+      icon: 'compass',
+      label: 'Reach',
+      value: `${radius} \u00b7 ${(2 * radius + 1) ** 2} cells`,
+    });
+  }
+  out.push({
+    key: 'cooldown',
+    icon: 'clock',
+    label: 'Cooldown',
+    value: formatDuration(ARTIFACT_COOLDOWN_SECONDS),
+  });
+  return out;
+}
+
+/** Two reads of one function, zipped — the shape both bands share. */
+const pairs = (
+  at: (level: number) => RelicStat[], level: number,
+): RelicStatChange[] => {
+  const before = at(level);
+  const after = new Map(at(level + 1).map((s) => [s.key, s.value]));
   return before.map((s) => {
     const to = after.get(s.key) ?? s.value;
     return { ...s, to, changed: to !== s.value };
   });
-}
+};
+
+/** This relic's PASSIVE at its level, against the next one. */
+export const relicStatChanges = (id: ArtifactId, level: number): RelicStatChange[] =>
+  pairs((l) => relicStatsAt(id, l), level);
+
+/** This relic's ABILITY at its level, against the next one. */
+export const spellStatChanges = (id: ArtifactId, level: number): RelicStatChange[] =>
+  pairs((l) => spellStatsAt(id, l), level);

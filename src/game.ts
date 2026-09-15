@@ -50,8 +50,8 @@ import {
   ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
 import {
-  bloomPreview, cast, castBlock, castState, divinationSaving, validCastCells,
-  type CastPhase,
+  activeRadius, bloomPreview, cast, castBlock, castState, divinationSaving,
+  validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -1003,7 +1003,8 @@ export class Game {
       saving: active.id === 'Divination' && selected
         ? divinationSaving(this.state, this.map, selected) : 0,
       blooms: active.id === 'Bloom' && selected
-        ? bloomPreview(this.state, this.map, selected, active.radius).length : 0,
+        ? bloomPreview(this.state, this.map, selected,
+          activeRadius(this.state, this.mode.artifactId)).length : 0,
     };
   }
 
@@ -3405,7 +3406,8 @@ export class Game {
       if (this.mode.selected) {
         if (active.id === 'Bloom') {
           layer.influenceCells = bloomPreview(
-            this.state, this.map, this.mode.selected, active.radius);
+            this.state, this.map, this.mode.selected,
+            activeRadius(this.state, this.mode.artifactId));
         }
         if (active.id === 'Divination') {
           layer.yieldCells = [{

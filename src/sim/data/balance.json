@@ -5744,6 +5744,11 @@
       "power": 160
     }
   },
+  "artifactRadiusSteps": [
+    5,
+    10,
+    20
+  ],
   "combat": {
     "tickMs": 100,
     "timeoutTicks": 600,

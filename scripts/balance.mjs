@@ -189,6 +189,13 @@ const SETTINGS = [
   // did more AND did it more often would grow on two axes at once
   // (Docs/features/09-relics.md §2.1).
   ['artifacts.active_cooldown_seconds', 'artifactCooldownSeconds'],
+  // THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the
+  // same three rungs on every relic (Docs/features/09-relics.md §2.1). It is
+  // the one number of an active that does NOT creep: a Chebyshev radius covers
+  // (2r+1)^2 cells, so each rung roughly DOUBLES the ground — and a number
+  // that doubles cannot creep, but it makes a superb milestone. A player two
+  // cards from level 5 knows exactly what those two cards buy.
+  ['artifacts.active_radius_steps', 'artifactRadiusSteps', 'list'],
   // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
   // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
   // five, so the fifths come out whole; rings 1 and 2 are pennies inside the

@@ -1238,6 +1238,16 @@ export const COLLECTION = balance.collection;
  */
 export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
 
+/**
+ * THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the same
+ * three rungs on every relic (Docs/features/09-relics.md §2.1).
+ *
+ * The one number of an active that does NOT creep. A Chebyshev radius covers
+ * `(2r+1)²` cells, so each rung roughly DOUBLES the ground — and a number that
+ * doubles cannot creep, but it makes a superb milestone.
+ */
+export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSteps;
+
 /** Knowledge drips from every ruin the player has FOUND, whether or not they
  *  ever delve it — so the fog keeps paying even between expeditions. */
 export const KNOWLEDGE = balance.knowledge;

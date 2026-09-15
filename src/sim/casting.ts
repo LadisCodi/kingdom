@@ -14,7 +14,8 @@
 // the moment an effect can only be replayed by re-running the UI.
 
 import {
-  ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS, FEATURES, type ArtifactActiveId,
+  ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS, FEATURES,
+  type ArtifactActiveId,
 } from './data/definitions';
 import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
@@ -24,7 +25,7 @@ import { addModifier, resolve } from './modifiers';
 import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
-import { ownsArtifact } from './artifacts';
+import { artifactLevel, ownsArtifact } from './artifacts';
 import { techValue } from './techEffects';
 
 export type CastBlock =
@@ -72,6 +73,24 @@ export function castState(state: GameState, id: ArtifactId, now: number): CastSt
  *  once and leaves nothing standing. */
 export const activeDurationMs = (id: ArtifactId): number =>
   (ARTIFACTS[id].active?.durationSeconds ?? 0) * 1000;
+
+/**
+ * HOW FAR AN ABILITY REACHES AT A LEVEL — the sheet's base plus one ring for
+ * every step the relic has passed (§2.1).
+ *
+ * Pure in `level`, so the relic's page can ask it for this level and the next
+ * and print the pair. An ability with no radius at all stays at 0: a step
+ * ladder on a spell that is not an area would be three rungs of nothing.
+ */
+export function activeRadiusAt(id: ArtifactId, level: number): number {
+  const base = ARTIFACTS[id].active?.radius ?? 0;
+  if (base <= 0) return 0;
+  return base + ARTIFACT_RADIUS_STEPS.filter((at) => level >= at).length;
+}
+
+/** The radius this relic's ability reaches right now. */
+export const activeRadius = (state: GameState, id: ArtifactId): number =>
+  activeRadiusAt(id, artifactLevel(state, id));
 
 /**
  * Whether the relic can be cast at all, ignoring the target.
@@ -192,7 +211,7 @@ export function cast(
     case 'Bloom': {
       // Clears exhaustion outright rather than shortening it: a "come back
       // sooner" button would just be a worse version of the passive.
-      const cells = [target!, ...cellsWithinRadius(map, target!, active.radius)];
+      const cells = [target!, ...cellsWithinRadius(map, target!, activeRadius(state, id))];
       for (const c of cells) {
         if (harvestSourceAt(state, c) === null) continue;
         if (state.fog.revealed[coordKey(c)] !== true) continue;
