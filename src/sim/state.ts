@@ -87,6 +87,9 @@ export type StoreSkuId =
   /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
    *  chest's Royal track for the season (sim/daily.ts). */
   | 'RoyalChest'
+  /** The season pass's paid column, for one season — the Royal chest's shape
+   *  applied to the other two-track ladder (sim/pass.ts). */
+  | 'SeasonPass'
   /** The collection's three bundles: star packs and wildcards for money
    *  rather than for Gems (Docs/features/09-relics.md §6.1). */
   | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
@@ -361,6 +364,44 @@ export interface RuinProgress {
   cleared: number;
 }
 
+/**
+ * WHAT KIND OF ERRAND a mission is. The id is what the roll scores, so it is
+ * stable for the life of a save: adding a fourteenth kind inserts one score
+ * and leaves the other thirteen in the same relative order.
+ */
+export type MissionKind =
+  | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
+  | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
+  | 'ClearRooms' | 'CompleteDepths' | 'OpenPacks';
+
+/**
+ * ONE ERRAND ON THE BOARD (sim/missions.ts).
+ *
+ * RELATIVE, always: `meter` names an odometer on `state.tallies` and `base` is
+ * what it read the moment this was issued, so progress is `tally - base` and
+ * nothing that happened before counts. There is no counter of its own to keep
+ * in step with the sim.
+ */
+export interface Mission {
+  uniqueId: string;
+  kind: MissionKind;
+  /** The odometer key this watches — `levels`, `collect:Wood`, `rooms`. */
+  meter: string;
+  /** That odometer's reading when this was issued. */
+  base: number;
+  /** How much more of it the mission asks for. */
+  target: number;
+  /** What the mission is ABOUT, when its kind is scoped: the currency to
+   *  collect. Carried so the label and the icon need no second lookup. */
+  subject: CurrencyId | null;
+  /** The window that issued it, and what it was issued for — the rng key, so
+   *  re-rolling the same window is bit-identical. */
+  window: number;
+  slot: number;
+  /** Set once the reward has been taken. A claimed mission leaves the board. */
+  claimed: boolean;
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -398,6 +439,39 @@ export interface GameState {
        *  rung 9 leaves nine of them waiting — so this cannot be a count.
        *  Belongs to `season`: a stale one reads as empty. */
       royalClaimed: number[];
+    };
+    /**
+     * THE SEASON PASS (sim/pass.ts). Kingdom-scoped for the daily chest's
+     * reason verbatim: a habit is a property of the player, not of the city
+     * they happen to be playing. NOT on `state.collection`, which is wiped
+     * whole at the close.
+     */
+    pass: {
+      /** The `seasonAt` occurrence everything below belongs to. A stale one
+       *  reads as a fresh, empty pass — the same pull rule the chest follows,
+       *  so a season turns over with nothing scheduled. */
+      season: number;
+      /** Pass XP earned this season. Levels are DERIVED from it. */
+      xp: number;
+      /** Which cells of each column have been taken, by level. Claimed cell
+       *  by cell and out of order — buying the pass on level 12 leaves twelve
+       *  paid cells waiting — so neither can be a count. */
+      claimedFree: number[];
+      claimedPaid: number[];
+      /** The occurrence the paid column was bought for, or null. A comparison
+       *  rather than a flag, so nothing has to clear it. */
+      paidSeason: number | null;
+      /** The board. At most `MISSIONS.boardSize`; nothing on it expires. */
+      live: Mission[];
+      /** The last eight-hour window ISSUED FOR — a stamp, not a cursor. A
+       *  window that passed while the board was full is never owed later. */
+      lastWindow: number;
+      /** How many of each kind have been issued in `week`, so a board cannot
+       *  fill with eight of the same errand. */
+      issuedThisWeek: Partial<Record<MissionKind, number>>;
+      /** The Monday-aligned week `issuedThisWeek` belongs to. Stale reads as
+       *  an empty quota, the same pull rule as `season`. */
+      week: number;
     };
   };
   player: {

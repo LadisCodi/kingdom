@@ -131,7 +131,7 @@ export const starsFor = (ref: CardRef): number =>
 
 /** Where a pack came from. Part of its id, so two sources can never collide
  *  on an ordinal and deal the same hand. */
-export type PackSource = 'room' | 'boss' | 'daily' | 'quest' | 'vault' | 'store' | 'dev';
+export type PackSource = 'room' | 'boss' | 'daily' | 'quest' | 'vault' | 'store' | 'pass' | 'dev';
 
 export interface PendingPack {
   /** `<season>:<source>:<ordinal>` — what the roll hashes on. */

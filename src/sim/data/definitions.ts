@@ -2167,6 +2167,7 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
+  SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
   // The three bundles, a satchel to a cabinet: the same containment ladder the
   // Gem packs walk, in a collector's furniture rather than a treasury's.
   CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
@@ -2220,6 +2221,31 @@ export const PAYER = balance.payer;
  *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
  *  ones. */
 export const DAILY = balance.daily;
+
+/** The season pass — Docs/features/20-season-pass.md. Two reward columns as
+ *  parallel lists, one per reward kind; their length IS the ladder's, exactly
+ *  as `DAILY`'s is. A pack column holds a `PackTier` or `''` for no pack at
+ *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
+export const PASS = balance.pass as {
+  missionXp: number;
+  levelXpBase: number;
+  levelXpGrowth: number;
+  freePacks: string[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
+  paidPacks: string[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
+};
+
+/** The missions that feed the pass — Docs/features/20-season-pass.md §3. A
+ *  `*Band` is `[min, max]`, inclusive; the collect band is in MINUTES of the
+ *  city's own production rather than in units. */
+export const MISSIONS = balance.missions as {
+  boardSize: number; perWindow: number; windowHours: number; weeklyQuota: number;
+  gemPerRemaining: number; gemFloor: number;
+  collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
+  populationBand: number[]; upgradeBand: number[]; revealBand: number[];
+  buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
+  roomsBand: number[]; depthsBand: number[]; packsBand: number[];
+  rewardHours: number; rewardGems: number;
+};
 
 // ------------------------------------------------------------ the timeline
 

@@ -38,6 +38,10 @@ export function newGame(map: MapData, now: number): GameState {
       builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
       daily: { season: -1, rung: 0, lastClaimedDay: null, royalSeason: null, royalClaimed: [] },
+      pass: {
+        season: -1, xp: 0, claimedFree: [], claimedPaid: [], paidSeason: null,
+        live: [], lastWindow: -1, issuedThisWeek: {}, week: -1,
+      },
       lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet, payer: null },

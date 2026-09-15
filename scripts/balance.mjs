@@ -85,6 +85,11 @@ const STORE_IDS = [
   // the instrument — the purchase log, the refusal and the monthly allowance
   // all have to see it.
   'RoyalChest',
+  // The season pass's paid column, for one season — the same shape as the
+  // Royal chest: it grants no Gems, it opens a column of cells, and it is a
+  // Store row because the budget, the log and the refusal all have to see it
+  // (Docs/features/20-season-pass.md §2).
+  'SeasonPass',
   // The collection's three bundles (Docs/features/09-relics.md §6.1): star
   // packs and wildcards for money rather than for Gems. Like the Royal chest
   // they grant no Gems, so `gems` is 0 and the four bundle columns carry the
@@ -279,6 +284,70 @@ const SETTINGS = [
   // city that has never delved, which is most of them.
   ['daily.premium_xp_hours', 'daily.premiumXpHours', 'list'],
   ['daily.premium_xp_floor', 'daily.premiumXpFloor'],
+  // ------------------------------------------------- the season pass (§20)
+  //
+  // The ladder's LENGTH is the length of these lists, exactly as the daily
+  // chest's is — so lengthening the season is one longer column, not a
+  // constant somewhere else.
+  //
+  // XP is FLAT per mission. The band a mission's target is rolled in is what
+  // makes one harder than another, so paying more for a harder one would
+  // charge the difficulty twice.
+  ['pass.mission_xp', 'pass.missionXp'],
+  ['pass.level_xp_base', 'pass.levelXpBase'],
+  // Added per level, so level 40 costs `base + 39 x growth`. Linear rather
+  // than exponential: a pass is 28 days long and an exponential tail means
+  // the last rungs are decoration.
+  ['pass.level_xp_growth', 'pass.levelXpGrowth'],
+  // The two reward columns, one list per reward kind, indexed by rung. A
+  // blank entry is no reward of that kind at that rung — the INDEX IS THE
+  // RUNG, so a column may never close up its gaps.
+  ['pass.free_packs', 'pass.freePacks', 'names'],
+  ['pass.free_gems', 'pass.freeGems', 'list'],
+  ['pass.free_gold_keys', 'pass.freeGoldKeys', 'list'],
+  ['pass.free_stardust', 'pass.freeStardust', 'list'],
+  ['pass.paid_packs', 'pass.paidPacks', 'names'],
+  ['pass.paid_gems', 'pass.paidGems', 'list'],
+  ['pass.paid_gold_keys', 'pass.paidGoldKeys', 'list'],
+  ['pass.paid_stardust', 'pass.paidStardust', 'list'],
+  // ------------------------------------------------------------- the missions
+  //
+  // How many can sit on the board at once, and how many each eight-hour
+  // window issues. A FULL BOARD BLOCKS: the cap replaces the deadline, and
+  // nothing a window could not fit is owed later.
+  ['missions.board_size', 'missions.boardSize'],
+  ['missions.per_window', 'missions.perWindow'],
+  ['missions.window_hours', 'missions.windowHours'],
+  // How many times one KIND may be issued in a week, so a board cannot fill
+  // with eight of the same errand.
+  ['missions.weekly_quota', 'missions.weeklyQuota'],
+  // What Gems it costs to finish a stuck mission, per unit of progress still
+  // owed, floored — its job is to unclog the board, which is the only thing
+  // the cap makes valuable (Docs/features/14-monetization.md §1).
+  ['missions.gem_per_remaining', 'missions.gemPerRemaining'],
+  ['missions.gem_floor', 'missions.gemFloor'],
+  // A "collect X" target is MINUTES OF THE PLAYER'S OWN PRODUCTION, never an
+  // absolute pile — `tap.workSeconds`'s rule, so the ask is worth the same
+  // fraction of an afternoon at every stage of the game. Everything else is
+  // a count, because a level and a room are the same size for everyone.
+  ['missions.collect_minutes_min', 'missions.collectMinutesMin'],
+  ['missions.collect_minutes_max', 'missions.collectMinutesMax'],
+  ['missions.collect_floor', 'missions.collectFloor'],
+  // The count bands, `min,max`, one list per kind.
+  ['missions.population_band', 'missions.populationBand', 'list'],
+  ['missions.upgrade_band', 'missions.upgradeBand', 'list'],
+  ['missions.reveal_band', 'missions.revealBand', 'list'],
+  ['missions.build_band', 'missions.buildBand', 'list'],
+  ['missions.troops_band', 'missions.troopsBand', 'list'],
+  ['missions.hero_level_band', 'missions.heroLevelBand', 'list'],
+  ['missions.rooms_band', 'missions.roomsBand', 'list'],
+  ['missions.depths_band', 'missions.depthsBand', 'list'],
+  ['missions.packs_band', 'missions.packsBand', 'list'],
+  // What a mission pays on top of the XP, as a fraction of an hour of the
+  // city's own production — `productionChest`'s rule, and the reason a
+  // mission is still worth doing in era three.
+  ['missions.reward_hours', 'missions.rewardHours'],
+  ['missions.reward_gems', 'missions.rewardGems'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -775,6 +844,21 @@ function list(row, col) {
   });
 }
 
+/**
+ * A list of NAMES rather than numbers, comma-separated, blanks kept.
+ *
+ * The season pass's two reward columns need it: a rung pays a pack of a
+ * particular TIER or no pack at all, and `Green,,Yellow,,Rose` says that in
+ * one cell the same way `mana_fractions` says its column in one. A blank entry
+ * is the empty string, never dropped — the index IS the rung, so a column that
+ * closed up its gaps would pay the wrong levels.
+ */
+function names(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return [];
+  return String(raw).split(',').map((part) => part.trim());
+}
+
 function wallet(row, prefix) {
   const out = {};
   for (const c of COST_CURRENCIES) {
@@ -899,6 +983,7 @@ async function importXlsx() {
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
+    pass: {}, missions: {},
     delve: {}, party: {}, heroes: {}, ads: {}, depths: [], garrisons: [], raid: {},
     artifacts: {},
     quests: [], banners: {}, packs: {},
@@ -1464,10 +1549,11 @@ async function importXlsx() {
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
     const value = kind === 'list' ? list(row, 'value')
-      : kind === 'tiers' ? tiers(row, 'value')
-        : kind === 'faces' ? keyed(row, FACE_IDS)
-          : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
-            : num(row, 'value');
+      : kind === 'names' ? names(row, 'value')
+        : kind === 'tiers' ? tiers(row, 'value')
+          : kind === 'faces' ? keyed(row, FACE_IDS)
+            : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
+              : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     // A block whose every key is a Setting — `combat.*` is one — has no loop
@@ -1662,7 +1748,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
-    return [key, kind === 'list' ? listCell(value)
+    return [key, kind === 'list' || kind === 'names' ? listCell(value)
       : kind === 'tiers' ? tiersCell(value)
         : kind === 'faces' || kind === 'chests' ? keyedCell(value)
           : value];

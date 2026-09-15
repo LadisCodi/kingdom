@@ -31,7 +31,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId, type UnitId,
+  type RuinId, type UnitId, type MissionKind, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -575,6 +575,23 @@ export function serialize(state: GameState, now: number): SaveFile {
           RoyalSeason: state.kingdom.daily.royalSeason,
           RoyalClaimed: state.kingdom.daily.royalClaimed,
         },
+        // The season pass (sim/pass.ts). The BOARD travels whole: a mission
+        // is its odometer key plus what that odometer read when it was
+        // issued, so dropping one loses the only record of where it started.
+        Pass: {
+          Season: state.kingdom.pass.season,
+          Xp: state.kingdom.pass.xp,
+          ClaimedFree: state.kingdom.pass.claimedFree,
+          ClaimedPaid: state.kingdom.pass.claimedPaid,
+          PaidSeason: state.kingdom.pass.paidSeason,
+          LastWindow: state.kingdom.pass.lastWindow,
+          Week: state.kingdom.pass.week,
+          IssuedThisWeek: state.kingdom.pass.issuedThisWeek,
+          Live: state.kingdom.pass.live.map((m) => ({
+            UniqueID: m.uniqueId, Kind: m.kind, Meter: m.meter, Base: m.base,
+            Target: m.target, Subject: m.subject, Window: m.window, Slot: m.slot,
+          })),
+        },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -915,6 +932,37 @@ export function deserialize(
       state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
       state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
       state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
+    }
+    // Additive in exactly the chest's way: a save from before the pass has no
+    // Pass block, and `Season: -1` matches no real season — so it reads as an
+    // empty pass rather than as season 0's, and the first live tick fills the
+    // board from the window it lands in.
+    const pass = kingdomDto.Pass as {
+      Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
+      PaidSeason?: number | null; LastWindow?: number; Week?: number;
+      IssuedThisWeek?: Record<string, number>;
+      Live?: Array<Record<string, any>>;
+    };
+    if (pass) {
+      state.kingdom.pass.season = pass.Season ?? -1;
+      state.kingdom.pass.xp = pass.Xp ?? 0;
+      state.kingdom.pass.claimedFree = [...(pass.ClaimedFree ?? [])];
+      state.kingdom.pass.claimedPaid = [...(pass.ClaimedPaid ?? [])];
+      state.kingdom.pass.paidSeason = pass.PaidSeason ?? null;
+      state.kingdom.pass.lastWindow = pass.LastWindow ?? -1;
+      state.kingdom.pass.week = pass.Week ?? -1;
+      state.kingdom.pass.issuedThisWeek = { ...(pass.IssuedThisWeek ?? {}) };
+      state.kingdom.pass.live = (pass.Live ?? []).map((m) => ({
+        uniqueId: String(m.UniqueID),
+        kind: m.Kind as MissionKind,
+        meter: String(m.Meter),
+        base: m.Base ?? 0,
+        target: m.Target ?? 1,
+        subject: (m.Subject ?? null) as CurrencyId | null,
+        window: m.Window ?? -1,
+        slot: m.Slot ?? 0,
+        claimed: false,
+      }));
     }
   }
 
