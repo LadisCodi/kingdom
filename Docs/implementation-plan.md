@@ -450,6 +450,20 @@ evaporating.**
   gift applied during an absence **still leaves the replay assertion true**.
 - **Size:** weeks.
 
+### The eight-album collection — PLANNED 2026-09-15
+
+Three proposals — [`proposals/relic-effects.md`](proposals/relic-effects.md),
+[`proposals/album-cycles.md`](proposals/album-cycles.md) and
+[`proposals/collection-packs.md`](proposals/collection-packs.md) — are
+sequenced in **[`plans/collection-eight.md`](plans/collection-eight.md)**: seven
+steps, the first five safe whatever **OQ-98** decides and the sixth void if the
+Magic tome wins the actives. Nothing started.
+
+The line to carry out of it: **steps 1–7 make the collection exist; the
+repeatable dungeon makes it play.** 165 of a free player's 200 packs a season
+come through it (**OQ-102**), and without it the faucet is 35 a season and a
+free player closes 1.1 albums of eight.
+
 ### The collection rework — BUILT 2026-09-11
 
 | Rework | Design | State |
