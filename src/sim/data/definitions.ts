@@ -1342,7 +1342,7 @@ export interface ArtifactDef {
   pending: string | null;
 }
 
-export type ArtifactActiveId = 'Divination' | 'Reap' | 'Haste' | 'Beckon';
+export type ArtifactActiveId = 'Divination' | 'Reap' | 'Haste' | 'Tithe' | 'Beckon';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1361,12 +1361,17 @@ export interface ArtifactActive {
    *  not that it buys none. */
   tapsPerMana: number;
   tapsPerManaPerLevel: number;
+  /** HOW HARD IT HITS, for the abilities whose growing axis is power: a
+   *  multiplier read inside the zone while the window lasts. 0 = not one. */
+  power: number;
+  powerPerLevel: number;
 }
 
 type ArtifactBalance = {
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
   activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
+  activePower: number; activePowerPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
@@ -1382,7 +1387,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
       manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
       // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
       // so its value grows with depth — exactly where the pain is. This one
       // relic turns the fog from a chore into a real question: Gold, or Mana?
@@ -1410,6 +1415,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('VerdantSeal').activeRadius,
       tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
       tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
+      power: 0, powerPerLevel: 0,
       text: 'Harvests every node nearby, over and over, for free',
     },
     pending: null,
@@ -1424,14 +1430,23 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
+    // A ZONE ON BUILDINGS, not a kingdom-wide hour. It used to double
+    // `workerYield` everywhere for 60 minutes, which is a relic that asks
+    // nothing of the player but the press — there is no wrong place to put a
+    // global. Placing it makes it a question: which crews, for five minutes?
+    //
+    // AND IT IS PLACED ON BUILDINGS, never on workers. A worker walks, so a
+    // zone asking where it stood would flicker as it crossed the edge — and
+    // travel is Euclidean while a zone is Chebyshev.
     active: {
-      id: 'Haste', name: 'Haste', targeted: false,
+      id: 'Haste', name: 'Haste', targeted: true,
       manaCost: ab('ForemansSigil').activeManaCost,
-      durationSeconds: ab('ForemansSigil').activeDurationSeconds, radius: 0,
+      durationSeconds: ab('ForemansSigil').activeDurationSeconds,
+      radius: ab('ForemansSigil').activeRadius,
       tapsPerMana: 0, tapsPerManaPerLevel: 0,
-      // Cast on the way OUT. Divination and Bloom reward being present; a
-      // game played in visits needs a good departure move too.
-      text: 'Workers carry double for an hour \u2014 cast it on your way out',
+      power: ab('ForemansSigil').activePower,
+      powerPerLevel: ab('ForemansSigil').activePowerPerLevel,
+      text: 'The crews of every building nearby work much faster for a while',
     },
     pending: null,
   },
@@ -1442,8 +1457,19 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    // No active at all, and never had one.
-    active: null,
+    // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Seal's
+    // because the ground is: a node empties and stops paying, so the Seal's
+    // run hits a wall, where a house always has rent to pull forward and the
+    // Ledger's run always spends the whole budget (OQ-99).
+    active: {
+      id: 'Tithe', name: 'Tithe', targeted: true,
+      manaCost: ab('GildedLedger').activeManaCost, durationSeconds: 0,
+      radius: ab('GildedLedger').activeRadius,
+      tapsPerMana: ab('GildedLedger').activeTapsPerMana,
+      tapsPerManaPerLevel: ab('GildedLedger').activeTapsPerManaPerLevel,
+      power: 0, powerPerLevel: 0,
+      text: 'Collects from every house nearby, over and over, for free',
+    },
     pending: null,
   },
   DelversLantern: {
@@ -1492,7 +1518,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
       text: 'Calls a depleted resource back onto a cell you choose',
     },
     pending: null,
@@ -2211,4 +2237,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 53;
+export const SAVE_VERSION = 54;

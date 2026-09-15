@@ -101,6 +101,37 @@ does everywhere all the time, it does much harder in one place for a while.
 | **How often** | **ACTIVE → COOLDOWN → READY**, a flat **5-minute** cooldown counted from when the window **closes** |
 | **How it grows** | **exactly one** of power, duration and taps-per-Mana grows every level; **radius steps** at 5, 10 and 20; **cooldown never moves** |
 
+The eight, and which one axis each grows:
+
+| Relic | Its ability | Cast on | Grows |
+|---|---|---|---|
+| **Dowsing Rod** | **Divination** — pays a frontier cell's whole remaining reveal cost | a frontier cell | — |
+| **Verdant Seal** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
+| **Foreman's Sigil** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
+| **Gilded Ledger** | **Tithe** — collects from every house in the zone, over and over, free | a centre | **taps per Mana** |
+| **Wanderer's Compass** | **Beckon** — calls a depleted resource back | a legal cell | — |
+| **The Delver's Lantern** | — *waits on its own step* | a ruin | — |
+| **The Muster Horn** | — *waits on the world map* | a fortification | — |
+| **The Bailiff's Tally** | — *waits on the world map* | a tile you hold | — |
+
+- **The two auto-tap abilities are an EXCHANGE RATE**, and the rate is what
+  the level moves. A tap they land **costs no Mana** — thirty at a Mana each
+  would be impossible — so they are the one exception to *every player tap
+  costs 1 Mana*, and the exception is the design. Holding a finger does 2 a
+  second at a Mana each; a spell does 4 a second for nothing.
+- **The budget is spent round robin, nearest first.** The budget is the
+  decision and the area is only where it is spent, so a zone over five nodes
+  means all five.
+- **It all lands at the cast**, and the window is a thing to watch rather than
+  a clock the sim keeps: the cells, the budget and the rate are all fixed the
+  moment the spell is paid for, so a player who casts and closes the app still
+  gets what they paid for. The window is **derived** — the budget over the
+  rate — and never authored.
+- **The nodes run dry and the houses do not.** Reap's run hits a wall when the
+  ground is empty; Tithe's always spends the whole budget, because a house
+  always has rent to pull forward. That is the asymmetry the cooldown exists to
+  hold, and the number to watch first — **OQ-99**.
+
 - **The cooldown counts from the window's close, never from the cast.** A
   10-minute window on a 5-minute cooldown counted from the cast is 100%
   uptime, which is no cooldown at all.
@@ -640,6 +671,9 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Sends a day | **3, fixed**; gold never | `collection.sends_per_day` |
 | A relic's `base` and `per_level` | per relic | `Artifacts` sheet |
 | What an ability costs, lasts and reaches | per relic | `Artifacts` sheet, `active_mana_cost` · `active_duration_seconds` · `active_radius` |
+| Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `Artifacts` sheet, `active_taps_per_mana` · `…_per_level` |
+| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil | `Artifacts` sheet, `active_power` · `active_power_per_level` |
+| How fast an auto-tap run is watched | **4 taps a second** | `artifacts.auto_tap_per_second` |
 | An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifacts.active_cooldown_seconds` |
 | Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifacts.active_radius_steps` |
 | Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.album_hours` |

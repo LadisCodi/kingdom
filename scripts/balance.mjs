@@ -570,7 +570,8 @@ const SHEETS = {
   // carries one anywhere.
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
-    'active_taps_per_mana', 'active_taps_per_mana_per_level'],
+    'active_taps_per_mana', 'active_taps_per_mana_per_level',
+    'active_power', 'active_power_per_level'],
   // ONE ROW PER PACK TIER (Docs/features/09-relics.md §6). `cards` is how many
   // it holds; `weight_1star`..`weight_5star` are the PUBLISHED odds, as
   // weights rather than percentages so a designer can add a rarity without
@@ -1273,6 +1274,11 @@ async function importXlsx() {
       // none" (Docs/features/09-relics.md §2.1).
       activeTapsPerMana: num(r, 'active_taps_per_mana', { blankAs: 0 }),
       activeTapsPerManaPerLevel: num(r, 'active_taps_per_mana_per_level', { blankAs: 0 }),
+      // HOW HARD the ability hits, for the ones whose growing axis is power
+      // rather than a rate or a duration. A multiplier the call site reads
+      // inside the zone, so it climbs and never arrives anywhere.
+      activePower: num(r, 'active_power', { blankAs: 0 }),
+      activePowerPerLevel: num(r, 'active_power_per_level', { blankAs: 0 }),
     };
   }
 
@@ -1600,7 +1606,8 @@ async function exportXlsx() {
     const a = b.artifacts[id];
     return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
       a.activeDurationSeconds || '', a.activeRadius || '',
-      a.activeTapsPerMana || '', a.activeTapsPerManaPerLevel || ''];
+      a.activeTapsPerMana || '', a.activeTapsPerManaPerLevel || '',
+      a.activePower || '', a.activePowerPerLevel || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {

@@ -32,16 +32,24 @@ export function renderCastPanel(game: Game): HTMLElement {
       iconEl('Gold', { size: 'sm' }),
       el('b', {}, String(info.saving)),
       el('span', {}, 'Gold saved — the same Mana at any distance'));
-  } else if (active.id === 'Reap' && info.reap !== null) {
+  } else if (info.reap !== null) {
     // THE BUDGET IS THE DECISION and the area is only where it is spent, so
     // the preview leads with the taps and names the ground second.
+    const ground = active.id === 'Reap' ? 'node' : 'house';
     verdict = info.reap.nodes === 0
-      ? el('span', { class: 'plc-verdict is-bad' }, 'Nothing to harvest within reach')
+      ? el('span', { class: 'plc-verdict is-bad' }, `No ${ground} within reach`)
       : el('span', { class: 'plc-verdict is-good' },
         iconEl('sparkle', { size: 'sm' }),
         el('b', {}, `×${info.reap.taps}`),
         el('span', {}, `free taps over ${info.reap.nodes} `
-          + `${info.reap.nodes === 1 ? 'node' : 'nodes'}`));
+          + `${info.reap.nodes === 1 ? ground : `${ground}s`}`));
+  } else if (info.zone !== null) {
+    verdict = info.zone === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, 'No crew within reach')
+      : el('span', { class: 'plc-verdict is-good' },
+        iconEl('workers', { size: 'sm' }),
+        el('b', {}, `×${info.zone}`),
+        el('span', {}, info.zone === 1 ? 'building hurried' : 'buildings hurried'));
   } else {
     verdict = el('span', { class: 'plc-verdict' }, active.text);
   }

@@ -21,10 +21,12 @@ import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './f
 import { cellsWithinRadius, type MapData } from './grid';
 import { harvestSourceAt, tapCell } from './harvest';
 import { mana, payMana } from './mana';
-import { addModifier, resolve } from './modifiers';
+import { addModifier, areaCovers, resolve, type ModifierArea } from './modifiers';
 import {
-  coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
+  coordKey, districtAt, newId,
+  type ArtifactId, type Coord, type District, type GameState,
 } from './state';
+import { pullHouseForward, residentsOf } from './population';
 import { artifactLevel, ownsArtifact } from './artifacts';
 import { techValue } from './techEffects';
 
@@ -140,8 +142,12 @@ export function validCastCells(state: GameState, map: MapData, id: ArtifactId): 
       return map.cells.filter((c) => fogState(state, map, c) === 'Discovered'
         && isWithinReach(state, map, c));
     case 'Reap':
+    case 'Haste':
+    case 'Tithe':
       // Anywhere revealed — the radius does the work, so the player is
-      // choosing a CENTRE, not a cell.
+      // choosing a CENTRE, not a cell. A zone over nothing is a wasted cast
+      // and the preview says so before the tap, which is the house rule:
+      // the grid answers the question rather than a dialog afterwards.
       return map.cells.filter((c) => state.fog.revealed[coordKey(c)] === true);
     case 'Beckon':
       // Only where a called-back feature could actually stand.
@@ -251,6 +257,46 @@ export function spendTaps(
   return { spent, touched };
 }
 
+/**
+ * HOW HARD A ZONE HITS at this relic's level — the multiplier the call sites
+ * inside it read. Floored at 1, so a relic with no authored power is a zone
+ * that changes nothing rather than one that divides by zero.
+ */
+export function activePower(state: GameState, id: ArtifactId): number {
+  const active = ARTIFACTS[id].active;
+  if (active === null || active.power <= 0) return 1;
+  const level = Math.max(1, artifactLevel(state, id));
+  return active.power + active.powerPerLevel * (level - 1);
+}
+
+/** The built districts standing in a zone. A building is its ANCHOR cell, so
+ *  a wide building is in or out as a whole. */
+export const buildingsIn = (state: GameState, area: ModifierArea): District[] =>
+  state.city.districts.filter((d) => areaCovers(area, d.location));
+
+/**
+ * `spendTaps` for HOUSES. Same budget, same round robin, same freedom from
+ * Mana — and one difference that is the whole asymmetry the cooldown exists
+ * to hold: a house never runs dry, so this always spends the lot (OQ-99).
+ */
+export function spendHouseTaps(
+  state: GameState, houses: readonly District[], budget: number, now: number,
+): { spent: number; touched: Coord[]; gold: number } {
+  const touched: Coord[] = [];
+  let spent = 0;
+  let gold = 0;
+  if (houses.length === 0) return { spent, touched, gold };
+  while (spent < budget) {
+    for (const d of houses) {
+      if (spent >= budget) break;
+      gold += pullHouseForward(state, d, now);
+      spent += 1;
+      if (!touched.some((c) => coordKey(c) === coordKey(d.location))) touched.push(d.location);
+    }
+  }
+  return { spent, touched, gold };
+}
+
 /** What a cast did, for the floaters and the banner. */
 export interface CastReport {
   result: CastResult;
@@ -308,17 +354,34 @@ export function cast(
       break;
     }
     case 'Haste': {
-      // Cast on the way OUT. Divination and Bloom reward being present; a game
-      // played in visits needs a good departure move too.
-      addModifier(state, {
-        id: newId(state, 'haste'),
-        source: 'artifact',
-        stat: 'workerYield',
-        scope: null,
-        op: 'mul',
-        value: 2,
-        expiresAt: now + active.durationSeconds * 1000,
-      });
+      // TWO NUMBERS, ONE IDEA. "Faster" for a crew is the swing AND the walk:
+      // speeding only the walk would be a fraction of a round trip and would
+      // read as nothing.
+      const area = { centre: target!, radius: activeRadius(state, id) };
+      const power = activePower(state, id);
+      const until = now + activeDurationMs(id);
+      for (const stat of ['workerStrikeSpeed', 'workerSpeed'] as const) {
+        addModifier(state, {
+          id: newId(state, `haste:${stat}`),
+          source: 'artifact',
+          stat,
+          scope: null,
+          op: 'mul',
+          value: power,
+          expiresAt: until,
+          area,
+        });
+      }
+      report.affected.push(...buildingsIn(state, area).map((d) => d.location));
+      break;
+    }
+    case 'Tithe': {
+      const houses = buildingsIn(state, { centre: target!, radius: activeRadius(state, id) })
+        .filter((d) => d.state === 'Built' && residentsOf(state, d) > 0);
+      const run = spendHouseTaps(state, houses, tapBudget(state, id), now);
+      report.affected.push(...run.touched);
+      report.taps = run.spent;
+      report.goldSaved = run.gold;
       break;
     }
     case 'Beckon': {

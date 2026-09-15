@@ -50,8 +50,8 @@ import {
   ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
 import {
-  activeRadius, cast, castBlock, castState, divinationSaving, reapCells,
-  tapBudget, tapRunSeconds, validCastCells, type CastPhase,
+  activeRadius, buildingsIn, cast, castBlock, castState, divinationSaving,
+  reapCells, tapBudget, tapRunSeconds, validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -963,7 +963,6 @@ export class Game {
   }
 
   private doCast(artifactId: ArtifactId, target: Coord | null): void {
-    const def = ARTIFACTS[artifactId];
     const report = cast(this.state, this.map, artifactId, target, this.now());
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
@@ -980,11 +979,24 @@ export class Game {
     if (report.activeId === 'Reap' && target) {
       this.floaters.add(target, `${report.taps} taps, free`);
     }
-    if (report.activeId === 'Haste') {
-      this.toast(`${def.active!.name} — workers carry double for the next hour`);
+    if (report.activeId === 'Haste' && target) {
+      this.floaters.add(target, `${report.affected.length} crews hurried`);
+    }
+    if (report.activeId === 'Tithe' && target) {
+      this.floaters.add(target, `+${Math.round(report.goldSaved)}`, 'Gold');
     }
     if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
+  }
+
+  /** The buildings a zone would cover — every one for Haste, the inhabited
+   *  houses for Tithe, which is what each actually reaches. */
+  private zoneTargets(id: ArtifactId, active: 'Haste' | 'Tithe', centre: Coord): Coord[] {
+    const area = { centre, radius: activeRadius(this.state, id) };
+    return buildingsIn(this.state, area)
+      .filter((d) => d.state === 'Built'
+        && (active === 'Haste' || residentsOf(this.state, d) > 0))
+      .map((d) => d.location);
   }
 
   /** The cast preview the panel and the renderer both read. */
@@ -994,6 +1006,8 @@ export class Game {
     /** An auto-tap ability's preview: how many nodes the zone covers, how many
      *  taps the cast buys and how long the run takes to watch. */
     reap: { nodes: number; taps: number; seconds: number } | null;
+    /** Buildings a non-tapping zone would cover. */
+    zone: number | null;
   } | null {
     if (this.mode.kind !== 'casting') return null;
     const { artifactId, selected } = this.mode;
@@ -1005,13 +1019,20 @@ export class Game {
       affordable: mana(this.state) >= active.manaCost,
       saving: active.id === 'Divination' && selected
         ? divinationSaving(this.state, this.map, selected) : 0,
-      reap: active.id === 'Reap' && selected
+      reap: (active.id === 'Reap' || active.id === 'Tithe') && selected
         ? {
-          nodes: reapCells(this.state, this.map, selected,
-            activeRadius(this.state, artifactId)).length,
+          nodes: active.id === 'Reap'
+            ? reapCells(this.state, this.map, selected,
+              activeRadius(this.state, artifactId)).length
+            : this.zoneTargets(artifactId, 'Tithe', selected).length,
           taps: tapBudget(this.state, artifactId),
           seconds: tapRunSeconds(this.state, artifactId),
         }
+        : null,
+      // A zone that is not an auto-tap still owes the same answer: how much of
+      // the kingdom the cast would actually touch.
+      zone: active.id === 'Haste' && selected
+        ? this.zoneTargets(artifactId, 'Haste', selected).length
         : null,
     };
   }
@@ -3416,6 +3437,13 @@ export class Game {
           layer.influenceCells = reapCells(
             this.state, this.map, this.mode.selected,
             activeRadius(this.state, this.mode.artifactId));
+        }
+        // A ZONE ON BUILDINGS lights the BUILDINGS, not the ground: what the
+        // cast will touch is the answer the preview owes, and a lit square of
+        // empty grass would promise something it cannot pay.
+        if (active.id === 'Haste' || active.id === 'Tithe') {
+          layer.influenceCells = this.zoneTargets(
+            this.mode.artifactId, active.id, this.mode.selected);
         }
         if (active.id === 'Divination') {
           layer.yieldCells = [{

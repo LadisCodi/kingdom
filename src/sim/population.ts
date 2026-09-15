@@ -193,15 +193,30 @@ export function houseTap(
   if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
     return { result: 'TooSoon', gold: 0 };
   }
-  const cityRate = cityGoldPerMinute(state);
-  if (cityRate <= 0) return { result: 'NoResidents', gold: 0 };
-  const seconds = tapWorkSeconds(state);
+  if (cityGoldPerMinute(state) <= 0) return { result: 'NoResidents', gold: 0 };
   // Charged LAST, so a tap that could not have paid out never takes the Mana.
   if (!payMana(state, TAP.manaCost)) return { result: 'NoMana', gold: 0 };
-  const share = houseGoldPerMinute(state, district) / cityRate;
   state.lastCollectTapAt = now;
-  state.city.lastTaxAt -= seconds * 1000 * share;
-  return { result: 'Collected', gold: advanceCityLife(state, now).gold };
+  return { result: 'Collected', gold: pullHouseForward(state, district, now) };
+}
+
+/**
+ * THE RENT PULL ITSELF, with no price on it — `houseTap` above is this plus
+ * the Mana and the hold cooldown, exactly as `collectTap` is `tapCell` plus
+ * the same two.
+ *
+ * Split out for the auto-tap abilities, which buy their taps with the Mana of
+ * the cast and so must not be charged again per tap
+ * (Docs/features/09-relics.md §2.1). Returns the Gold that matured.
+ */
+export function pullHouseForward(
+  state: GameState, district: District, now: number,
+): number {
+  const cityRate = cityGoldPerMinute(state);
+  if (cityRate <= 0 || residentsOf(state, district) === 0) return 0;
+  const share = houseGoldPerMinute(state, district) / cityRate;
+  state.city.lastTaxAt -= tapWorkSeconds(state) * 1000 * share;
+  return advanceCityLife(state, now).gold;
 }
 
 /**

@@ -10,8 +10,8 @@
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import {
-  activeDurationMs, activeRadius, activeRadiusAt, cast, castBlock, castCost,
-  castState, reapCells, tapBudget, tapRunSeconds,
+  activeDurationMs, activePower, activeRadius, activeRadiusAt, cast, castBlock,
+  castCost, castState, reapCells, tapBudget, tapRunSeconds,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
 import {
@@ -194,10 +194,11 @@ describe('a zone is a boundary, and it survives a save', () => {
 // ---------------------------------------------------------------- the cycle
 
 describe('an active walks ACTIVE → COOLDOWN → READY', () => {
-  /** A relic in hand, with a 60-minute window on its ability. */
+  /** A relic in hand, on ground it can be cast over. */
   const armed = (): GameState => {
     const state = freshGame();
     state.lastAdvance = T0;
+    reveal(state, [CENTRE]);
     grantArtifactLevel(state, 'ForemansSigil');
     fund(state, { Mana: 999 });
     return state;
@@ -216,7 +217,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
     const state = armed();
     const window = activeDurationMs('ForemansSigil');
     expect(window).toBeGreaterThan(0);
-    expect(cast(state, map, 'ForemansSigil', null, T0).result).toBe('Cast');
+    expect(cast(state, map, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
 
     expect(castState(state, 'ForemansSigil', T0 + 1).phase).toBe('Active');
     expect(castState(state, 'ForemansSigil', T0 + window - 1).phase).toBe('Active');
@@ -229,20 +230,20 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   it('refuses a second cast while its own window is open, and while it rests', () => {
     const state = armed();
     const window = activeDurationMs('ForemansSigil');
-    cast(state, map, 'ForemansSigil', null, T0);
+    cast(state, map, 'ForemansSigil', CENTRE, T0);
     expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
-    expect(cast(state, map, 'ForemansSigil', null, T0 + 1).result).toBe('Active');
+    expect(cast(state, map, 'ForemansSigil', CENTRE, T0 + 1).result).toBe('Active');
     expect(castBlock(state, 'ForemansSigil', T0 + window + 1)).toBe('OnCooldown');
     const ready = T0 + window + ARTIFACT_COOLDOWN_SECONDS * 1000;
     expect(castBlock(state, 'ForemansSigil', ready)).toBeNull();
-    expect(cast(state, map, 'ForemansSigil', null, ready).result).toBe('Cast');
+    expect(cast(state, map, 'ForemansSigil', CENTRE, ready).result).toBe('Cast');
   });
 
   // The cycle is checked BEFORE the purse: a relic that is still running tells
   // the player to wait, not that they are poor.
   it('says it is running rather than that the player is poor', () => {
     const state = armed();
-    cast(state, map, 'ForemansSigil', null, T0);
+    cast(state, map, 'ForemansSigil', CENTRE, T0);
     addToWallet(state.city.wallet, 'Mana', -getWallet(state.city.wallet, 'Mana'));
     expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
   });
@@ -252,7 +253,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   // lay a second one on top of the first.
   it('carries both instants through a save', () => {
     const state = armed();
-    cast(state, map, 'ForemansSigil', null, T0);
+    cast(state, map, 'ForemansSigil', CENTRE, T0);
     const back = deserialize(serialize(state, T0), map, T0)!;
     expect(back.artifacts.casts.ForemansSigil)
       .toEqual(state.artifacts.casts.ForemansSigil);
@@ -265,7 +266,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   it('needs no boundary: one-call replay equals stepped ticking across it', () => {
     const walk = (steps: number): string => {
       const state = armed();
-      cast(state, map, 'ForemansSigil', null, T0);
+      cast(state, map, 'ForemansSigil', CENTRE, T0);
       const end = T0 + 120 * 60_000;
       for (let i = 1; i <= steps; i++) advance(state, map, T0 + ((end - T0) * i) / steps);
       return castState(state, 'ForemansSigil', end).phase;
@@ -445,5 +446,111 @@ describe('an auto-tap spell buys taps with the Mana of the cast', () => {
     const report = cast(state, map, REAPER, FOREST, T0);
     expect(report.taps).toBeLessThanOrEqual(tapBudget(state, REAPER));
     expect(report.taps).toBeGreaterThan(0);
+  });
+});
+
+// -------------------------------------------- the two zones on the city
+
+describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
+  /** Two Sawmills: one under the zone, one far outside it. */
+  const sigil = (level: number) => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    reveal(state, [CENTRE]);
+    state.artifacts.levels.ForemansSigil = level;
+    fund(state, { Mana: 999 });
+    addBuilt(state, 'Sawmill', { x: 0, y: 0 });
+    addBuilt(state, 'Sawmill', { x: 9, y: 9 });
+    return {
+      state,
+      near: districtAt(state, { x: 0, y: 0 })!,
+      far: districtAt(state, { x: 9, y: 9 })!,
+    };
+  };
+
+  it('speeds the crews it covers and leaves the rest of the kingdom alone', () => {
+    const { state, near, far } = sigil(1);
+    const swing = (d: typeof near) => workerStrikeMs(state, HARVEST.Forest, d);
+    const before = swing(near);
+    expect(cast(state, map, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
+
+    expect(swing(near)).toBeLessThan(before);
+    expect(swing(far)).toBe(before);
+    // The kingdom's own pace — the cell-blind read — never moved.
+    expect(effectiveWorkerSpeed(state)).toBe(effectiveWorkerSpeed(freshGame()));
+  });
+
+  // TWO NUMBERS, ONE IDEA: "faster" for a crew is the swing AND the walk.
+  // Speeding only the walk would be a fraction of a round trip.
+  it('moves the swing and the walk together', () => {
+    const { state, near } = sigil(1);
+    const walkBefore = effectiveWorkerSpeed(state, near.location);
+    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    expect(effectiveWorkerSpeed(state, near.location)).toBeGreaterThan(walkBefore);
+  });
+
+  // POWER is the Sigil's growing axis — a crew either works faster or it does
+  // not, and a longer window is just a longer wait.
+  it('hits harder at every level, and for the same five minutes', () => {
+    let last = 0;
+    for (const level of [1, 2, 5, 10, 20]) {
+      const p = activePower(sigil(level).state, 'ForemansSigil');
+      expect(p, `level ${level}`).toBeGreaterThan(last);
+      last = p;
+    }
+    expect(activeDurationMs('ForemansSigil')).toBe(300_000);
+  });
+
+  it('lets go when its window closes', () => {
+    const { state, near } = sigil(1);
+    const swing = () => workerStrikeMs(state, HARVEST.Forest, near);
+    const before = swing();
+    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    expect(swing()).toBeLessThan(before);
+    advance(state, map, T0 + activeDurationMs('ForemansSigil') + 1000);
+    expect(swing()).toBe(before);
+  });
+});
+
+describe('Tithe is the other exchange rate', () => {
+  const ledger = (level: number): GameState => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    reveal(state, [CENTRE]);
+    state.artifacts.levels.GildedLedger = level;
+    fund(state, { Mana: 999 });
+    addBuilt(state, 'Housing', { x: 1, y: 0 });
+    addBuilt(state, 'Housing', { x: 0, y: 1 });
+    state.city.population = 4;
+    return state;
+  };
+
+  it('collects from the houses it covers, and charges no Mana for the taps', () => {
+    const state = ledger(1);
+    const pool = getWallet(state.city.wallet, 'Mana');
+    const cost = castCost(state, 'GildedLedger');
+    const report = cast(state, map, 'GildedLedger', CENTRE, T0);
+    expect(report.result).toBe('Cast');
+    expect(report.taps).toBeGreaterThan(0);
+    expect(report.affected.length).toBe(2);
+    expect(getWallet(state.city.wallet, 'Mana')).toBe(pool - cost);
+  });
+
+  // THE ASYMMETRY THE COOLDOWN EXISTS TO HOLD (OQ-99). A node empties and the
+  // Seal's run hits a wall; a house always has rent to pull forward, so this
+  // one always spends the whole budget.
+  it('always spends its whole budget, because a house never runs dry', () => {
+    const state = ledger(3);
+    const report = cast(state, map, 'GildedLedger', CENTRE, T0);
+    expect(report.taps).toBe(tapBudget(state, 'GildedLedger'));
+  });
+
+  it('finds nothing to collect where there are no houses', () => {
+    const state = ledger(1);
+    const empty = { x: 8, y: 8 };
+    reveal(state, [empty]);
+    const report = cast(state, map, 'GildedLedger', empty, T0);
+    expect(report.result).toBe('Cast');
+    expect(report.taps).toBe(0);
   });
 });
