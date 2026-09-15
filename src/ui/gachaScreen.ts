@@ -62,9 +62,16 @@ function prizeTile(prize: GachaPrize): HTMLElement {
         : el('span', { class: 'gr-art is-glyph' }, iconEl('pack', { size: 'lg' })),
       el('span', { class: 'gr-name' }, `${prize.tier} pack`));
   }
-  // ONE CARD TURNING OVER (Docs/features/09-relics.md §11.5). A new card says
-  // so; a duplicate shows its count, which is the whole difference the player
-  // is looking for as the pack deals.
+  // ONE CARD TURNING OVER (Docs/features/09-relics.md §11.5).
+  //
+  // BOTH MARKS, AND THEY ARE INDEPENDENT. `New` says the player held none of
+  // this card before the pack; `×2` says the pack handed over two. A pack can
+  // do both at once, and the old tile could show only one of them — it drew
+  // `New` or, failing that, the running total the player now holds, which read
+  // as "the pack gave you four" over a fourth copy it gave one of.
+  //
+  // `×1` is left unsaid: one is what a card normally is, and a mark on every
+  // tile is a mark on none.
   if (prize.kind === 'card') {
     const card = ALBUMS[prize.album].cards[prize.slot];
     const url = spriteUrl(`album_${prize.album.toLowerCase()}`);
@@ -77,9 +84,10 @@ function prizeTile(prize: GachaPrize): HTMLElement {
       url ? spriteImgAt(url, 'gr-art')
         : el('div', { class: 'gr-art is-glyph' }, ALBUMS[prize.album].name.slice(0, 1)),
       el('span', { class: 'gr-name' }, card.name),
-      prize.isNew
-        ? el('span', { class: 'gr-new' }, 'New')
-        : el('span', { class: 'gr-count' }, `×${prize.count}`));
+      ...(prize.isNew ? [el('span', { class: 'gr-new' }, 'New')] : []),
+      ...(prize.copies > 1
+        ? [el('span', { class: 'gr-count' }, `\u00d7${prize.copies}`)]
+        : []));
   }
   const def = HEROES[prize.heroId];
   if (prize.kind === 'hero') {

@@ -424,8 +424,9 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
   always holds what it promises and the published odds count a guaranteed slot
   as its whole face.
 - Opening a pack uses the **gacha reveal** ([`10-heroes.md`](10-heroes.md)
-  §8.3): the cards turn one by one, a new card says so, a duplicate shows its
-  count. Skippable, never interrupted.
+  §8.3): the cards turn one by one, a card the player had none of says **New**,
+  and a tile that came as more than one says how many the PACK gave (§11.5).
+  Skippable, never interrupted.
 - A pack's cards are rolled by **hash on the pack's own id** — the season,
   the source and its ordinal — never on the moment it is opened, so an
   offline replay deals the same hand.
@@ -681,8 +682,12 @@ Top to bottom:
 ### 11.5 Opening a pack
 
 - The reveal screen at z 100, one pack per opening, the cards dealt in
-  rarity order and the best last. **New** on a first copy; the count on a
-  duplicate.
+  rarity order and the best last.
+- **One tile per CARD, not per copy.** A pack that hands over a pair draws one
+  tile.
+- Two independent marks, either or both: **New** when the player held none of
+  that card before the pack, and **×N** for how many copies THIS PACK gave —
+  never how many they now hold. `×1` is left unsaid.
 - **A completed album interrupts nothing.** The cards finish turning, and what
   the album paid follows: the **collection prize** as a second reveal if the
   season just finished (§5), then a **banner per album** naming the relic and

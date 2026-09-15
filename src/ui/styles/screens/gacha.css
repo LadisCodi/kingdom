@@ -164,11 +164,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* NEW is the thing the player is looking for as the pack deals, so it sits
-   where the duplicate count would and reads instead of it. */
+/* NEW is the thing the player is looking for as the pack deals, so it gets the
+   loud corner. IT SITS OPPOSITE THE COUNT, not on top of it: the two say
+   different things — *you had none of these* and *the pack gave you two* — and
+   a pack can hand over both at once. They shared a corner while the tile could
+   only ever draw one of them. */
 .gr-new {
   position: absolute;
-  right: 2px;
+  left: 2px;
   bottom: 18px;
   padding: 0 4px;
   border-radius: 5px;

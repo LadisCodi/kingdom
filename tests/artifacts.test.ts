@@ -29,6 +29,7 @@ import {
   closeGold, payCollectionPrize, PRIZE_BANNER, canClaimAlbum, claimAlbum,
   albumOfRelic, relicOfAlbum,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
+  emptyAlbum,
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
 import {
@@ -49,7 +50,7 @@ import { resolve } from '../src/sim/modifiers';
 import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
 import { newGame } from '../src/sim/newGame';
-import { addBuilt, FOREST, freshGame, map } from './helpers';
+import { addBuilt, FOREST, freshGame, freshPresenter, map } from './helpers';
 
 const T0 = Date.UTC(2026, 1, 2, 9);
 
@@ -1010,6 +1011,85 @@ describe('a card bundle', () => {
   it('refuses a SKU that is not a bundle, without touching the budget', () => {
     expect(buyCardBundle(state, 'GemsPouch', T0)).toBe('NotABundle');
     expect(state.player.payer!.purchases).toEqual([]);
+  });
+});
+
+describe('what a pack reveal says it gave you', () => {
+  /** The cards the next pack in the queue will deal, without spending it. */
+  const nextRefs = (state: GameState) =>
+    packCards(state.seed, state.collection.packs[0]!);
+
+  it('counts the copies THIS PACK gave, never the copies you hold', () => {
+    const state = freshGame();
+    grantPack(state, 'Green', 'dev');
+    const refs = nextRefs(state);
+    // The player already has three of the first card. Under the old tile this
+    // came back as "×4" — which reads as "the pack gave you four".
+    const held = state.collection.cards[refs[0]!.album] ?? emptyAlbum();
+    state.collection.cards[refs[0]!.album] = held;
+    held[refs[0]!.slot] = 3;
+
+    const game = freshPresenter(state);
+    game.doOpenPack();
+    const tiles = game.gachaReveal!.prizes
+      .filter((p): p is Extract<typeof p, { kind: 'card' }> => p.kind === 'card');
+
+    const first = tiles.find(
+      (t) => t.album === refs[0]!.album && t.slot === refs[0]!.slot)!;
+    expect(first.copies).toBe(refs.filter(
+      (r) => r.album === refs[0]!.album && r.slot === refs[0]!.slot).length);
+    expect(first.isNew).toBe(false);
+    // The held total is four and appears nowhere on the tile.
+    expect(cardCount(game.state, refs[0]!)).toBe(3 + first.copies);
+    expect(first.copies).toBeLessThan(cardCount(game.state, refs[0]!));
+  });
+
+  it('draws one tile per CARD, and accounts for every copy exactly once', () => {
+    // A pack that deals a PAIR used to draw the same card twice, each tile
+    // claiming a different running total. About one pack in twelve does, so
+    // this hunts for one rather than trusting a handful of tries to find it.
+    const state = freshGame();
+    let paired = 0;
+    let checked = 0;
+    for (const tier of ['Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden'] as const) {
+      for (let i = 0; i < 12; i++) grantPack(state, tier, 'dev');
+    }
+    const game = freshPresenter(state);
+    while (game.state.collection.packs.length > 0) {
+      const refs = nextRefs(game.state);
+      const keys = refs.map((r) => `${r.album}:${r.slot}`);
+      game.gachaReveal = null;
+      game.doOpenPack();
+      const tiles = game.gachaReveal!.prizes
+        .filter((p): p is Extract<typeof p, { kind: 'card' }> => p.kind === 'card');
+      // One tile per DISTINCT card, and every copy dealt lands on exactly one.
+      expect(tiles.length).toBe(new Set(keys).size);
+      expect(tiles.reduce((n, t) => n + t.copies, 0)).toBe(refs.length);
+      if (new Set(keys).size < keys.length) {
+        paired += 1;
+        expect(tiles.some((t) => t.copies > 1)).toBe(true);
+      }
+      checked += 1;
+    }
+    expect(checked).toBe(72);
+    // The interesting case actually happened — otherwise this test proves
+    // nothing about grouping at all.
+    expect(paired).toBeGreaterThan(0);
+  });
+
+  it('marks a card the player had none of as new, however many copies came', () => {
+    const state = freshGame();
+    grantPack(state, 'Green', 'dev');
+    const refs = nextRefs(state);
+    const game = freshPresenter(state);
+    game.doOpenPack();
+    const tiles = game.gachaReveal!.prizes
+      .filter((p): p is Extract<typeof p, { kind: 'card' }> => p.kind === 'card');
+    // Nothing was held, so every tile is new — including any that came as a
+    // pair, where only the FIRST copy carried the mark in the sim's record.
+    expect(tiles.every((t) => t.isNew)).toBe(true);
+    expect(tiles.length).toBeGreaterThan(0);
+    expect(tiles.reduce((n, t) => n + t.copies, 0)).toBe(refs.length);
   });
 });
 

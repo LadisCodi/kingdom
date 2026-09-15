@@ -204,8 +204,20 @@ export type GachaPrize =
   | { kind: 'fragments'; heroId: HeroId; amount: number }
   // A card pack, which a room pays and a call never does.
   | { kind: 'pack'; tier: PackTier }
-  // One card turning over in a pack's reveal (Docs/features/09-relics.md §11.5).
-  | { kind: 'card'; album: AlbumId; slot: number; isNew: boolean; count: number }
+  /**
+   * One card turning over in a pack's reveal (Docs/features/09-relics.md
+   * §11.5).
+   *
+   * `copies` is HOW MANY THIS PACK GAVE, never how many the player now holds.
+   * The two are different numbers and the tile is a record of an OPENING: a
+   * fourth copy of a card you already had three of is one card, and saying
+   * "×4" over it claims the pack handed over four.
+   *
+   * `isNew` is likewise about the pack: true when the player held NONE of this
+   * card before it was opened. It is independent of `copies` — a pack can hand
+   * over two of something you had never seen, which is New AND ×2.
+   */
+  | { kind: 'card'; album: AlbumId; slot: number; isNew: boolean; copies: number }
   | { kind: 'currency'; currency: CurrencyId; amount: number };
 
 /**
@@ -4372,14 +4384,33 @@ function packName(tier: PackTier): string {
 }
 
 /** The cards a pack dealt, worst first: the reveal's own order. */
+/**
+ * A PACK'S CARDS AS TILES — one tile per CARD, not per copy.
+ *
+ * The opening records every copy in the order it was dealt, which is what the
+ * sim needs; a screen that mapped it one-for-one drew the same card twice
+ * whenever a pack handed over a pair, each tile claiming a different running
+ * total. Grouping is the screen's business and this is where it belongs.
+ *
+ * `isNew` survives the grouping if ANY copy carried it: only the first copy of
+ * a card the player did not have is marked, so the pair that introduced a card
+ * must still read as new.
+ */
 function packPrizes(opening: PackOpening): GachaPrize[] {
-  return opening.cards.map((c): GachaPrize => ({
-    kind: 'card',
-    album: c.ref.album,
-    slot: c.ref.slot,
-    isNew: c.isNew,
-    count: c.count,
-  }));
+  const tiles = new Map<string, Extract<GachaPrize, { kind: 'card' }>>();
+  for (const c of opening.cards) {
+    const key = `${c.ref.album}:${c.ref.slot}`;
+    const seen = tiles.get(key);
+    if (seen === undefined) {
+      tiles.set(key, {
+        kind: 'card', album: c.ref.album, slot: c.ref.slot, isNew: c.isNew, copies: 1,
+      });
+    } else {
+      seen.copies += 1;
+      seen.isNew = seen.isNew || c.isNew;
+    }
+  }
+  return [...tiles.values()];
 }
 
 /**
