@@ -85,15 +85,14 @@ export function renderPassSheet(game: Game): HTMLElement {
   // ---- the board. A row is a goal, a bar and one button.
   const rows = pass.missions.map((m) => {
     const done = Math.min(m.done, m.target);
+    // A BUTTON EXACTLY WHEN THERE IS SOMETHING TO PRESS, the daily ladder's
+    // rule: an unfinished mission has no action, so it has no control. The
+    // only way to a new mission is to finish an old one — there is nothing to
+    // buy here.
     const action = m.complete
       ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim')
-      : el('button', { class: 'pss-gem', type: 'button',
-          'aria-label': `Finish this task for ${m.gemCost} Gems` },
-          currencyIcon('Gems', { size: 'sm' }),
-          el('b', {}, formatCount(m.gemCost)));
-    action.addEventListener('click', () => (m.complete
-      ? game.doClaimMission(m.id)
-      : game.doFinishMissionWithGems(m.id)));
+      : null;
+    action?.addEventListener('click', () => game.doClaimMission(m.id));
     // WHAT IT PAYS, on the row and before the work. Rewards vary — a pack for
     // the errands that wait on a builder or a delve, one of Gems, Mana or a
     // green pack for the rest — and variety nobody can see is not variety: the
@@ -120,8 +119,7 @@ export function renderPassSheet(game: Game): HTMLElement {
           }),
           el('span', { class: 'pss-task-count' }, `${formatCount(done)} / ${formatCount(m.target)}`))),
       reward,
-      ...(m.complete ? [iconEl('tick', { size: 'sm' })] : []),
-      action);
+      ...(m.complete ? [iconEl('tick', { size: 'sm' }), action!] : []));
   });
 
   const board = el('div', { class: 'pss-board' },

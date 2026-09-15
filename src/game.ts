@@ -119,9 +119,8 @@ import {
 } from './sim/daily';
 import {
   anyCellPending, boardIsFull, boardMissions, buyPass, claimCell, claimMission,
-  finishMissionWithGems, freeCell, levelProgress, ladderLength as passLadderLength,
-  missionGemCost, paidCell, passEndsAt, passLevel, passOwned, passXp,
-  rollMissionsIfDue,
+  freeCell, levelProgress, ladderLength as passLadderLength,
+  paidCell, passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
 } from './sim/pass';
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
@@ -1870,7 +1869,7 @@ export class Game {
     boardFull: boolean;
     missions: Array<{
       id: string; kind: MissionKind; icon: IconName; goal: string;
-      done: number; target: number; complete: boolean; gemCost: number;
+      done: number; target: number; complete: boolean;
       /** What finishing it pays, resolved to what the player would receive
        *  RIGHT NOW — Mana is a fraction of the pool, so the number moves with
        *  the Sanctum and cannot be stored. */
@@ -1912,7 +1911,6 @@ export class Game {
         done: missionProgress(this.state, m),
         target: m.target,
         complete: missionComplete(this.state, m),
-        gemCost: missionGemCost(this.state, m),
         reward: m.reward.kind === 'Pack'
           ? { pack: m.reward.tier }
           : m.reward.kind === 'Gems'
@@ -1968,20 +1966,6 @@ export class Game {
   doClaimMission(id: string): void {
     if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
     playSfx('questComplete');
-    this.notify();
-  }
-
-  /** Buy a stuck mission out. A refusal shakes the purse and says nothing —
-   *  the price is on the button the player just pressed. */
-  doFinishMissionWithGems(id: string): void {
-    const result = finishMissionWithGems(this.state, id, this.now());
-    if (result === 'NotEnoughGems') {
-      this.shake(['Gems']);
-      this.notify();
-      return;
-    }
-    if (result !== 'Finished') return;
-    playSfx('gemSpend');
     this.notify();
   }
 

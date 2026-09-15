@@ -283,11 +283,10 @@
   margin-right: 6px;
 }
 
-/* ONE BUTTON, TWO FACES. Green CLAIM when the work is done, a Gem price when
-   it is not — the same object, because it is the same question answered two
-   ways. Two buttons side by side would read as two rewards. */
-.pss-claim,
-.pss-gem {
+/* THE CLAIM, and there is only ever one control on a row. An unfinished
+   mission has no button at all — nothing on this board is for sale, so the
+   only thing a row can offer is taking what the work earned. */
+.pss-claim {
   flex: none;
   display: flex;
   align-items: center;
@@ -310,21 +309,11 @@
   color: var(--ink-inverse);
   text-shadow: 0 1px 0 rgba(30, 60, 20, 0.5);
 }
-.pss-gem {
-  background: var(--gem, #8b4fd0);
-  border: 3px solid rgba(60, 26, 100, 0.85);
-  box-shadow: 0 var(--lip) 0 rgba(60, 26, 100, 0.85);
-  color: var(--parchment);
-  text-shadow: 0 1px 0 rgba(40, 16, 70, 0.7);
-}
-.pss-claim:hover,
-.pss-gem:hover { filter: brightness(1.06); }
-.pss-claim:active,
-.pss-gem:active { transform: translateY(var(--lip)); box-shadow: none; }
-.pss-claim:focus-visible,
-.pss-gem:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-/* Only the claimable one pulses, so there is never a question where the tap
-   goes — the daily cell's rule applied to a row. */
+.pss-claim:hover { filter: brightness(1.06); }
+.pss-claim:active { transform: translateY(var(--lip)); box-shadow: none; }
+.pss-claim:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+/* It pulses, because it is the only thing on the board that can be pressed —
+   the daily cell's rule applied to a row. */
 .pss-claim { animation: pss-ready 1.6s ease-in-out infinite; }
 @keyframes pss-ready {
   50% { box-shadow: 0 var(--lip) 0 var(--leaf-dark), 0 0 14px rgba(120, 200, 90, 0.85); }

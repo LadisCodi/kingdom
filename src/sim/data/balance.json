@@ -3949,8 +3949,6 @@
     "perWindow": 2,
     "windowHours": 8,
     "weeklyQuota": 4,
-    "gemPerRemaining": 8,
-    "gemFloor": 20,
     "collectMinutesMin": 12,
     "collectMinutesMax": 40,
     "collectFloor": 60,

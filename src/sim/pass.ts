@@ -27,7 +27,7 @@ import { PASS, MISSIONS } from './data/definitions';
 import { grantPack, seasonAt, seasonEndsAt } from './collection';
 import { manaCap } from './mana';
 import {
-  chooseKind, issueMission, missionComplete, missionProgress, weekIndex, windowIndex,
+  chooseKind, issueMission, missionComplete, weekIndex, windowIndex,
 } from './missions';
 import { buySku, type BuySkuResult } from './store';
 import { addToWallet, getWallet, type GameState, type Mission, type Wallet } from './state';
@@ -99,7 +99,7 @@ export const boardMissions = (state: GameState, now: number): readonly Mission[]
   state.kingdom.pass.season === seasonAt(now) ? state.kingdom.pass.live : [];
 
 /** The board is full, so nothing new can be issued. THE pressure the whole
- *  design rests on, and the thing the Gem shortcut unclogs. */
+ *  design rests on, and the only thing that relieves it is finishing one. */
 export const boardIsFull = (state: GameState, now: number): boolean =>
   boardMissions(state, now).length >= MISSIONS.boardSize;
 
@@ -254,8 +254,9 @@ export type ClaimMissionResult = 'Claimed' | 'NotFound' | 'NotComplete';
  * three, and nothing re-derives it.
  *
  * The mission LEAVES THE BOARD when it is claimed. That is what makes the cap
- * pressure rather than a wall: the way to a new mission is to finish an old
- * one.
+ * pressure rather than a wall: THE WAY TO A NEW MISSION IS TO FINISH AN OLD
+ * ONE, and it is the only way — there is no price on a stuck mission and no
+ * reroll at any price (Docs/features/20-season-pass.md §7).
  */
 export function claimMission(
   state: GameState, missionId: string, now: number,
@@ -269,55 +270,6 @@ export function claimMission(
   return 'Claimed';
 }
 
-/**
- * WHAT GEMS IT COSTS to finish a mission that is stuck.
- *
- * Priced off the progress still OWED, so a mission nearly done is cheap and
- * one barely started is not — the sunk cost is the player's own, and the price
- * follows it down. Its job is to UNCLOG THE BOARD, which is the only thing the
- * cap makes valuable.
- */
-export function missionGemCost(state: GameState, mission: Mission): number {
-  const left = Math.max(0, mission.target - missionProgress(state, mission));
-  const share = mission.target === 0 ? 0 : left / mission.target;
-  return Math.max(
-    MISSIONS.gemFloor,
-    Math.round(MISSIONS.gemFloor + MISSIONS.gemPerRemaining * share * 10),
-  );
-}
-
-export type FinishMissionResult = 'Finished' | 'NotFound' | 'AlreadyComplete' | 'NotEnoughGems';
-
-/**
- * BUY A STUCK MISSION OUT.
- *
- * This is deliberate and it is the one place the pass contradicts
- * `14-monetization.md` §1 — the doc is amended rather than left to disagree
- * (§6 there). It pays the same reward the mission would have: Gems buy the
- * TIME, never a reward play cannot reach.
- */
-export function finishMissionWithGems(
-  state: GameState, missionId: string, now: number,
-): FinishMissionResult {
-  const pass = normalise(state, now);
-  const mission = pass.live.find((m) => m.uniqueId === missionId);
-  if (mission === undefined) return 'NotFound';
-  if (missionComplete(state, mission)) return 'AlreadyComplete';
-  const cost = missionGemCost(state, mission);
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  payMission(state, mission);
-  pass.live = pass.live.filter((m) => m.uniqueId !== missionId);
-  return 'Finished';
-}
-
-/**
- * PAY ONE MISSION: the thing it said it would pay, and the XP every mission
- * pays.
- *
- * The reward was rolled when the mission was ISSUED and has been readable on
- * the board ever since, so nothing is decided here — this only hands it over.
- */
 function payMission(state: GameState, mission: Mission): void {
   const reward = mission.reward;
   if (reward.kind === 'Gems') {

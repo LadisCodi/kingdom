@@ -321,11 +321,6 @@ const SETTINGS = [
   // How many times one KIND may be issued in a week, so a board cannot fill
   // with eight of the same errand.
   ['missions.weekly_quota', 'missions.weeklyQuota'],
-  // What Gems it costs to finish a stuck mission, per unit of progress still
-  // owed, floored — its job is to unclog the board, which is the only thing
-  // the cap makes valuable (Docs/features/14-monetization.md §1).
-  ['missions.gem_per_remaining', 'missions.gemPerRemaining'],
-  ['missions.gem_floor', 'missions.gemFloor'],
   // A "collect X" target is MINUTES OF THE PLAYER'S OWN PRODUCTION, never an
   // absolute pile — `tap.workSeconds`'s rule, so the ask is worth the same
   // fraction of an afternoon at every stage of the game. Everything else is

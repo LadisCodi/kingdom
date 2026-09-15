@@ -40,12 +40,10 @@
   slot on the board is open from the first fight ([`combat.md`](combat.md) §3);
   the daily chest's free track pays Gems every season, and the Royal chest's
   own gold keys are the same keys an ad already gives away daily.
-- **The one exception, taken deliberately: a stuck season-pass mission can be
-  finished with Gems** ([`20-season-pass.md`](20-season-pass.md) §3.5). What
-  the Gems buy is the TIME, never a reward play cannot reach — the mission
-  pays exactly what finishing it would have paid, and the ladder it feeds is
-  reachable without spending. It is priced off the progress still owed, and
-  its job is to unclog a board whose cap has stopped issuing new work.
+- **There is no exception, and the season pass does not make one.** Its
+  mission board cannot be bought out at any price: the only way to a new
+  mission is to finish an old one
+  ([`20-season-pass.md`](20-season-pass.md) §7).
 
 | Family | Examples | Effect |
 |---|---|---|
@@ -364,9 +362,9 @@ One page, refreshed weekly:
   that is not; the Royal chest and the season pass are the season products
   ([`12-quests.md`](12-quests.md) §3.3,
   [`20-season-pass.md`](20-season-pass.md) §2).
-- **A deadline on a mission, and a reroll sold for anything.** The season
-  pass's board is capped rather than timed, so the only thing a wallet is
-  offered there is finishing work the player already started (§1).
+- **A deadline on a mission, a reroll, and a price on finishing one.** The
+  season pass's board is capped rather than timed, and nothing on it is for
+  sale at any price — the work is the whole of it (§1).
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.

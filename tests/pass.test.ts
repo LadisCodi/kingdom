@@ -10,11 +10,11 @@ import { describe, expect, it } from 'vitest';
 import { MISSIONS, PASS } from '../src/sim/data/definitions';
 import { seasonAt, seasonEndsAt } from '../src/sim/collection';
 import { recordEvent } from '../src/sim/events';
+import * as pass from '../src/sim/pass';
 import {
   anyCellPending, boardMissions, buyPass, cellPending, claimCell, claimMission,
-  finishMissionWithGems, freeCell, ladderLength, levelCost, levelForXp,
-  levelProgress, missionGemCost, paidCell, passEndsAt, passLevel, passOwned,
-  passXp, rollMissionsIfDue,
+  freeCell, ladderLength, levelCost, levelForXp, levelProgress, paidCell,
+  passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
 } from '../src/sim/pass';
 import { missionComplete, windowIndex } from '../src/sim/missions';
 import { manaCap } from '../src/sim/mana';
@@ -271,41 +271,27 @@ describe('a mission pays twice', () => {
   });
 });
 
-describe('the Gem shortcut', () => {
-  it('costs less the closer the mission is to done', () => {
-    const state = kingdom();
-    rollMissionsIfDue(state, T0);
-    const m = boardMissions(state, T0)[0];
-    const cold = missionGemCost(state, m);
-    state.tallies[m.meter] = m.base + Math.floor(m.target * 0.9);
-    expect(missionGemCost(state, m)).toBeLessThanOrEqual(cold);
-    expect(missionGemCost(state, m)).toBeGreaterThanOrEqual(MISSIONS.gemFloor);
+describe('nothing on the board is for sale', () => {
+  it('offers no way to finish a mission with Gems', () => {
+    // It existed, briefly, out of the source spec's sunk-cost lever. It was
+    // never in this game's design and it is the line `14-monetization.md` §1
+    // draws: nothing a wallet buys is out of reach by play, and a wallet is
+    // not offered the work itself. The only way to a new mission is to finish
+    // an old one.
+    const api = Object.keys(pass);
+    expect(api.filter((k) => /Gem/i.test(k))).toEqual([]);
+    expect(api).not.toContain('finishMissionWithGems');
+    expect(api).not.toContain('missionGemCost');
   });
 
-  it('pays what the mission would have, and unclogs the board', () => {
+  it('spends no Gems when a mission is claimed', () => {
     const state = kingdom();
     rollMissionsIfDue(state, T0);
     const m = boardMissions(state, T0)[0];
-    const cost = missionGemCost(state, m);
-    state.player.wallet.Gems = cost + 10;
-    const reward = m.reward.kind === 'Gems' ? m.reward.amount : 0;
-    expect(finishMissionWithGems(state, m.uniqueId, T0)).toBe('Finished');
-    // The Gems buy the TIME: what comes back is the mission's own reward, not
-    // a refund and not something better.
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(10 + reward);
-    expect(passXp(state, T0)).toBe(PASS.missionXp);
-    expect(boardMissions(state, T0).find((x) => x.uniqueId === m.uniqueId)).toBeUndefined();
-  });
-
-  it('refuses a purse that cannot cover it, and one already finished', () => {
-    const state = kingdom();
-    rollMissionsIfDue(state, T0);
-    const m = boardMissions(state, T0)[0];
-    state.player.wallet.Gems = 0;
-    expect(finishMissionWithGems(state, m.uniqueId, T0)).toBe('NotEnoughGems');
     state.tallies[m.meter] = m.base + m.target;
-    state.player.wallet.Gems = 100_000;
-    expect(finishMissionWithGems(state, m.uniqueId, T0)).toBe('AlreadyComplete');
+    state.player.wallet.Gems = 0;
+    // No purse, and it still claims: the work is the whole price.
+    expect(claimMission(state, m.uniqueId, T0)).toBe('Claimed');
   });
 });
 

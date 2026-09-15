@@ -112,9 +112,8 @@ and shown on its row, so a player picks what to do next by what it pays.
   cap.
 - The two pack tiers differ, or telling hard from ordinary would buy the player
   nothing.
-- **A stuck mission can be finished with Gems**, priced off the progress still
-  owed. It pays the mission's own reward — the Gems buy the TIME, never
-  something better ([`14-monetization.md`](14-monetization.md) §1).
+- **There is no way to finish a mission except by doing it.** The work is the
+  whole price ([`14-monetization.md`](14-monetization.md) §1).
 
 ## 4. Where the packs come from
 
@@ -143,7 +142,6 @@ volume, and the repeatable dungeon still owes the bulk.
 | `missions.hard_kinds` | which errands pay a pack. **Not a difficulty rating** — the list of kinds that cannot be finished in one session, and it changes as the game does |
 | `missions.hard_pack`, `missions.normal_pack` | the two tiers |
 | `missions.reward_gems`, `missions.reward_mana_fraction` | the other two rolls |
-| `missions.gem_floor`, `missions.gem_per_remaining` | the price of finishing one |
 
 ## 6. The screen
 
@@ -152,13 +150,11 @@ volume, and the repeatable dungeon still owes the bulk.
 - The ladder is the daily chest's: two columns on the same rows, and the
   paid column's **head is the buy button** while the pass is unbought.
 - A cell is a button exactly when it can be taken. One padlock per cell.
-- A mission row reads left to right: **what to do · how far · what for · the
-  button**.
-- A currency reward carries a leading **`+`**. A row can show two Gem figures
-  meaning opposite things — what finishing pays and what skipping costs — and
-  the sign is what tells them apart.
-- A mission row's right-hand button is **one button with two faces** — green
-  Claim when the work is done, a Gem price when it is not.
+- A mission row reads left to right: **what to do · how far · what for**, and
+  a green **Claim** only once the work is done. An unfinished row carries no
+  control, because there is nothing it could offer.
+- A currency reward carries a leading **`+`** — it is a gain, and the row has
+  no other number on it.
 - The pill glows while a cell is waiting.
 
 ## 7. Deliberately not in this design
@@ -170,6 +166,11 @@ volume, and the repeatable dungeon still owes the bulk.
 - **A mission that asks for Mana.** Mana is the session budget and nothing but
   a tap draws on it (OQ-17).
 - **A reroll**, free, paid or ad-funded.
+- **A price on finishing a mission.** Gem-completion of a stuck one is the
+  source spec's sunk-cost lever and it is not this game's: the board's cap is
+  the pressure, and the only way to a new mission is to finish an old one. It
+  would also be the one thing a wallet buys that play cannot reach
+  ([`14-monetization.md`](14-monetization.md) §1).
 - **An absolute target** — "reach population 40". Every ask is relative to the
   moment it was issued.
 - **Offline progress.** It is the one rule the whole feature is built around.

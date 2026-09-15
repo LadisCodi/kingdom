@@ -2239,7 +2239,6 @@ export const PASS = balance.pass as {
  *  city's own production rather than in units. */
 export const MISSIONS = balance.missions as {
   boardSize: number; perWindow: number; windowHours: number; weeklyQuota: number;
-  gemPerRemaining: number; gemFloor: number;
   collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
   populationBand: number[]; upgradeBand: number[]; revealBand: number[];
   buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
