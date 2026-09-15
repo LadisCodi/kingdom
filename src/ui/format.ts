@@ -12,18 +12,25 @@ import { playSfx } from '../audio/sfx';
 export function formatDuration(seconds: number): string {
   if (seconds <= 0) return 'instant';
   if (seconds < 60) return `${Math.round(seconds)}s`;
+  // THE REMAINDER IS ROUNDED, SO IT CAN ROUND UP INTO A FULL UNIT: 59m 45s is
+  // "60s" left of the minute, and a fortnight's countdown spends its first
+  // half hour at 13d 24h. Carrying it into the bigger unit is the only place
+  // that can be fixed — every caller reads the string.
   if (seconds < 3600) {
     const m = Math.floor(seconds / 60);
     const s = Math.round(seconds % 60);
+    if (s >= 60) return `${m + 1}m`;
     return s > 0 ? `${m}m ${s}s` : `${m}m`;
   }
   if (seconds < 86_400) {
     const h = Math.floor(seconds / 3600);
     const m = Math.round((seconds % 3600) / 60);
+    if (m >= 60) return `${h + 1}h`;
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
   const d = Math.floor(seconds / 86_400);
   const h = Math.round((seconds % 86_400) / 3600);
+  if (h >= 24) return `${d + 1}d`;
   return h > 0 ? `${d}d ${h}h` : `${d}d`;
 }
 

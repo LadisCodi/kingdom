@@ -34,12 +34,16 @@
   thing always exists. The daily free golden call is the worked example — a
   Legendary is a wallet's fastest purchase and roughly thirty free calls a
   month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
-- The first rung of every ladder is earned by play: every ruin room pays a
-  card pack before an offer sells a wildcard, and **a hero slot is the only slot
-  in a party that is ever sold** — every troop slot on the board is open from
-  the first fight ([`combat.md`](combat.md) §3); the daily
-  chest's free track pays Gems every season, and the Royal chest's own gold
-  keys are the same keys an ad already gives away daily.
+- The first rung of every ladder is earned by play: the season pass's free
+  column pays 24 card packs a season before an offer sells a wildcard, and
+  **a hero slot is the only slot in a party that is ever sold** — every troop
+  slot on the board is open from the first fight ([`combat.md`](combat.md) §3);
+  the daily chest's free track pays Gems every season, and the Royal chest's
+  own gold keys are the same keys an ad already gives away daily.
+- **There is no exception, and the season pass does not make one.** Its
+  mission board cannot be bought out at any price: the only way to a new
+  mission is to finish an old one
+  ([`20-season-pass.md`](20-season-pass.md) §7).
 
 | Family | Examples | Effect |
 |---|---|---|
@@ -88,12 +92,12 @@
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Royal chest** | season | **€9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
-| **Event pass, paid track** | season | $4.99 | unlocks the paid column |
+| **Season pass, paid column** | season | **€4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
 | Fog charter | land | $2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
-| **Card packs** | chance | Gems (500 / 1,500) | a Gold or Star pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. Bronze and Silver are not sold: they are the ruins' faucet |
+| **Card packs** | chance | Gems (500 / 1,500) | a Gold or Star pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. The cheap tiers are not sold: they are the season pass's free column |
 | **Card bundles** | chance | **$4.99 / $9.99 / $19.99** | 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards — every pack with a gold edition guaranteed ([`09-relics.md`](09-relics.md) §6.1) — built |
 | **Wildcard** | chance | Gems (100 → 1,500 by rarity) | one card of its rarity or lower, in the slot the player chooses; **never gold** ([`09-relics.md`](09-relics.md) §9) — built, sold as an **aimed offer** on the same shelf |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
@@ -355,8 +359,12 @@ One page, refreshed weekly:
 - A real charge, ever.
 - A second premium currency.
 - **A monthly card.** A subscription measured in calendar days over a ladder
-  that is not; the Royal chest is the season product
-  ([`12-quests.md`](12-quests.md) §3.3).
+  that is not; the Royal chest and the season pass are the season products
+  ([`12-quests.md`](12-quests.md) §3.3,
+  [`20-season-pass.md`](20-season-pass.md) §2).
+- **A deadline on a mission, a reroll, and a price on finishing one.** The
+  season pass's board is capped rather than timed, and nothing on it is for
+  sale at any price — the work is the whole of it (§1).
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.

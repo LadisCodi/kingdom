@@ -363,4 +363,15 @@
   font-weight: var(--weight-small);
   line-height: 1.35;
 }
+/* THE BOON, on the six Legendaries that carry one. Gold ink and a rule above
+   it: it is a different KIND of sentence from the trait — that one moves a
+   party, this one moves the kingdom — and the card has to say so without a
+   label saying it. */
+.hero-passive.is-boon {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 2px solid var(--gold-dark);
+  color: var(--wood-dark);
+  font-weight: var(--weight-strong);
+}
 .hero-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }

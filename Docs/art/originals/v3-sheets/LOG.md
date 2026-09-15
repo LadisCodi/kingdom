@@ -293,3 +293,174 @@ mean 0.14.
 | spr-s | tr | `infirmary_l4.png` | `… tr 0.82 infirmary_l4.png 128` |
 | spr-s | bl | `infirmary_l8.png` | `… bl 0.92 infirmary_l8.png 128` |
 | spr-s | br | — | left empty on purpose; only three tiers were wanted |
+
+## spr-t — the three new relics
+
+("Confirmación de archivo", Codigames workspace, GPT-5.6 Sol Alta,
+2026-09-15). First message carried `anchor-relics.png`, a 5×1 `magick montage`
+of the five relic sprites that already ship — **not** `reference.png` alone.
+
+**Anchoring on an upload is read as "edit this file".** Twice. The first
+prompt came back as *"dime qué modificación o exportación necesitas"*, and the
+second as the same question again; only a message opening with **GENERA UNA
+IMAGEN NUEVA. No edites ni exportes anchor-relics.png: ese archivo es SOLO la
+referencia de estilo** got a generation. Say what the upload is FOR before
+saying what to draw.
+
+One round, 2m19s, and the style landed first try — the camera drift the older
+sheets fought never appeared, which is what an anchor montage of shipped
+sprites buys over a style sheet.
+
+**The download does not fire from the extension.** Neither the message's
+export menu (*Esta imagen*) nor the viewer panel's *Descargar* registers
+anything in Chromium's download list. What works is to have the page do it
+itself: fetch the `<img>`'s own `src` to a blob, hang it off an
+`<a download>` and click it. It lands in `~/Descargas` like any other.
+
+**Two enclosed patches survived the unbake** — the panes of the lantern's
+glass and the bell of the horn — because the flood fill only takes the
+checkerboard **connected to the border**, and those are islands. The script
+grew a second pass for them: a patch is the pattern, rather than a grey
+object, when it holds **both** of the checkerboard's greys. A third pass drops
+stray specks under 40 px, which `norm_sq.fish` would otherwise take for
+content and size the whole sprite against. Corner `srgba(0,0,0,0)`, alpha mean
+0.18.
+
+| Sheet | Quad | File | Command |
+|---|---|---|---|
+| spr-t | tl | `artifact_delvers_lantern.png` | `fish norm_sq.fish spr-t-relics.png tl 0.90 artifact_delvers_lantern.png 256` |
+| spr-t | tr | `artifact_muster_horn.png` | `… tr 0.90 artifact_muster_horn.png 256` |
+| spr-t | bl | `artifact_bailiffs_tally.png` | `… bl 0.90 artifact_bailiffs_tally.png 256` |
+| spr-t | br | — | left empty on purpose; only three relics were missing |
+
+`0.90` rather than the buildings' `0.72`–`0.92` because a relic is a **card
+object**: the five that ship fill 230 of their 256 px.
+
+## spr-u — the three new album medallions
+
+("Confirmación de archivo", same chat as spr-t, 2026-09-15). Anchored on
+`anchor-albums.png`, a 5×1 montage of the medallions already on disk. Two
+rounds, the second one the model's own: it delivered, then said the rings had
+come out larger than asked and were crowding the centre cross, and redrew at
+the right scale without being told. The midline rule earns its place in the
+prompt.
+
+**THE TWO GREYS ARE NOT ALWAYS THE SAME TWO.** This sheet's checkerboard came
+back at **209 and 253** against the building sheets' 130 and 191, and the
+fixed 115–208 band cut **1.1%** of the canvas instead of 66%. The script now
+MEASURES the pair off the canvas border — the one place a sheet is certainly
+background, since a medallion never reaches the edge — and builds the band
+around it, keeping the constants only as the fallback for a border that is not
+a checkerboard at all. spr-t re-cuts identically under the new code.
+
+| Sheet | Quad | File | Command |
+|---|---|---|---|
+| spr-u | tl | `album_marketday.png` | `fish norm_sq.fish spr-u-albums.png tl 0.96 album_marketday.png 256` |
+| spr-u | tr | `album_underthehill.png` | `… tr 0.96 album_underthehill.png 256` |
+| spr-u | bl | `album_thelongmarch.png` | `… bl 0.96 album_thelongmarch.png 256` |
+| spr-u | br | — | left empty on purpose; five of the eight already shipped |
+
+`0.96`, not the relics' `0.90`: a medallion is a disc that fills its frame —
+the five on disk sit at 248–251 of their 256 px.
+
+## spr-v — the nine packs
+
+("Crear hoja de iconos UI", the UI-icon conversation rather than the sprite
+one, 2026-09-15). Three things this sheet settled, all of them corrections to
+what LOG.md said before.
+
+**ASK FOR THE ALPHA CORRECTION.** Every sheet above came back with the
+checkerboard baked because the prompt ended *"do not check or post-process the
+channel in code"*, and the repair moved into `unbake_checkerboard.py`. The UI
+icon sheets never had that problem, and the difference is one sentence. Ending
+a prompt with *"Do not draw grid lines, cell borders, labels, captions,
+shadows or any background. The background must be alpha 0 everywhere, not
+white, not a checkerboard. Then apply the true-alpha transparency correction
+and give me the download link for the corrected PNG."* returns a real `srgba`
+PNG, corner `(0,0,0,0)`, **no unbake at all**. The eleven-minute code loop
+SPR-S warns about did not happen in either conversation that used this wording.
+
+**SAY "NO DROP SHADOWS".** The first attempt drew a soft shadow under each
+pack, which is painted onto the background: it survives the unbake as grey
+smudge and is dead weight even with true alpha, because the game draws its own.
+
+**A 3×3 GRID WORKS AS WELL AS A 2×2**, so nine sprites landed in one sheet
+instead of three. `norm_box.fish` takes the explicit crops, `418x418` a cell.
+
+The concept changed once on the way. Round one drew **letter envelopes with a
+wax seal** — anchored on the four packs already on disk — and they read as
+mail rather than as something you rip open. The four on disk were the
+**retired** tiers, so there was nothing to match: dropping the anchor and
+asking for *"a collectible sticker pack, the kind Monopoly Go uses — a glossy
+foil pouch with a zig-zag tear strip"* is what landed it.
+
+**THE CARD COUNT IS THE ART.** The number of cards fanning out of each pack is
+the number that pack actually deals — 2 · 3 · 3 · 4 · 6 · 1, and 7 · 9 · 3 for
+the vault's chests — so the store shelf's *"6 cards, 1× 5★ guaranteed"* and
+its sprite say the same thing. It is the one detail that makes the row
+readable without the text.
+
+| Sheet | Cell | File | Command |
+|---|---|---|---|
+| spr-v | 1 | `pack_green.png` | `fish norm_box.fish spr-v-packs.png 418x418+0+0 0.92 pack_green.png 256` |
+| spr-v | 2 | `pack_yellow.png` | `… 418x418+418+0 …` |
+| spr-v | 3 | `pack_rose.png` | `… 418x418+836+0 …` |
+| spr-v | 4 | `pack_blue.png` | `… 418x418+0+418 …` |
+| spr-v | 5 | `pack_purple.png` | `… 418x418+418+418 …` |
+| spr-v | 6 | `pack_golden.png` | `… 418x418+836+418 …` |
+| spr-v | 7 | `pack_bronzechest.png` | `… 418x418+0+836 …` |
+| spr-v | 8 | `pack_silverchest.png` | `… 418x418+418+836 …` |
+| spr-v | 9 | `pack_goldchest.png` | `… 418x418+836+836 …` |
+
+## spr-w — the card frames
+
+("Crear hoja de iconos UI", 2026-09-15). Four 9-SLICE frames rather than four
+pictures, which changes what the prompt has to say: the browser keeps the
+corners as drawn and stretches the edges between them, so the brief led with
+the constraint — **a border of constant thickness, ornate corners that are
+self-contained, and plain repeating mouldings along the edges with no feature
+halfway along a side**, because a bolt or a gem in the middle of an edge smears
+when it is stretched. It came back right first time.
+
+| Sheet | Cell | File | Used as |
+|---|---|---|---|
+| spr-w | 1 | `card_frame.png` | `border-image … 45 / 9px stretch` — **no `fill`**, so the rarity wash shows through the middle |
+| spr-w | 2 | `card_frame_gold.png` | the gold edition. The frame IS the badge |
+| spr-w | 3 | `card_slot.png` | `45 fill / 9px` — `fill` only here, because the slot's grey middle IS the empty |
+| spr-w | 4 | `card_ribbon.png` | `40 20 fill / 9px 9px` — the gold ends are its corners |
+
+Cut with a plain `-crop` per quadrant and trimmed on an **alpha threshold**
+rather than `-trim`: the ribbon's faint halo made a bare `-trim` return a
+576px-tall box for a 174px ribbon. Then halved, so a ~110px card draws a
+~214px source. Corner `srgba(0,0,0,0)`, alpha mean 0.45.
+
+## spr-x — the spell decals
+
+("Crear hoja de iconos UI", 2026-09-15). Four MAP DECALS — drawn flat on the
+ground under the buildings and the people, to mark the tiles a spell is
+affecting. The brief led with that, because it decides everything: they had to
+read as lying ON the grass rather than standing on it, and must not look like
+an object the player could tap.
+
+| Sheet | Cell | File | Drawn as |
+|---|---|---|---|
+| spr-x | 1 | `spell_rune.png` | the centre's rune circle, turning one slow revolution a cycle |
+| spr-x | 2 | `spell_sigil.png` | a mark on **one cell in seven**, by a hash so they hold still |
+| spr-x | 3 | `spell_mote.png` | one rising mote a cell, on the cells the sigils skipped |
+| spr-x | 4 | `spell_glow.png` | a haze under every covered cell, 1.2× the cell so neighbours bleed into one area |
+
+Cell 2 came back as an ornate four-point star rather than the arcane sigil the
+prompt asked for. Kept: at 40% of a cell and 40% alpha it is texture, and the
+brief's word for it was always "a mark".
+
+**THE FIRST PASS BURIED THE KINGDOM.** Glow at 1.5× and 0.55 alpha on every
+cell, a sigil on one in three at 60% of the cell, two motes each: the terrain,
+the buildings and the villagers all vanished under violet. A zone has to TINT,
+not cover — the player is looking at their city, and the spell is a thing that
+is happening TO it. Halving the glow, thinning the sigils to one in seven at
+40% size, and dropping to one mote a cell is what made it a place rather than
+a curtain.
+
+Cut with a 26px inset per quadrant rather than a bare quarter: two of the four
+bled a sliver of a neighbour over the midline. Corner `srgba(0,0,0,0)`, alpha
+mean 0.22.

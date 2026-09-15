@@ -243,6 +243,16 @@ function detail(game: Game, id: HeroId): HTMLElement {
   body.append(el('div', { class: 'hero-passive' },
     iconEl('sparkle', { size: 'sm' }), def.traitText));
 
+  // THE BOON, on the six that have one (Docs/proposals/legendary-boons.md).
+  // A second line rather than a second widget: it reads as what it is — one
+  // more sentence about what this hero does — and its own class is what marks
+  // it as the thing no Common or Rare has.
+  const boon = game.heroBoonText(id);
+  if (boon !== null) {
+    body.append(el('div', { class: 'hero-passive is-boon' },
+      iconEl('crest', { size: 'sm' }), boon));
+  }
+
 
   // THE FOOT WIDGET: one reading and one button, whichever pair is true.
   //

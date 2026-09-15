@@ -36,6 +36,7 @@ import {
   type UnitId,
 } from './state';
 import { canAfford, pay } from './wallet';
+import { recordEvent } from './events';
 
 /**
  * THE ARMY CAP IS A HEADCOUNT (Docs/features/combat.md §14).
@@ -477,12 +478,18 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
 function deliver(state: GameState, trainee: TrainableId, at: number, count = 1): void {
   if (trainee === 'Villager') {
     const rateBefore = cityGoldPerMinute(state);
+    // THE ONE RUNTIME WRITER OF `city.population`, which is what makes the
+    // `villagers` odometer honest: a mission asking the player to grow the
+    // city counts arrivals here and nowhere else. A second writer would have
+    // to announce the same event, or the mission would quietly under-count.
     state.city.population += count;
     repriceTaxAnchor(state, at, rateBefore);
+    for (let i = 0; i < count; i++) recordEvent(state, { kind: 'villager' });
     return;
   }
   for (let i = 0; i < count; i++) {
     state.army.push({ uniqueId: newId(state, `unit_${trainee}`), definitionId: trainee });
+    recordEvent(state, { kind: 'unitTrained', unit: trainee });
   }
 }
 

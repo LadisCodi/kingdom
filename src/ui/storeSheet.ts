@@ -116,7 +116,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
       : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
     return card({
       art,
-      name: offer.tier === 'Star' ? 'A star pack' : 'A gold pack',
+      name: offer.name,
       desc: offer.promise,
     },
       // The odds go INSIDE the card, under the line that sells it: a player
@@ -124,9 +124,9 @@ export function renderStoreSheet(game: Game): HTMLElement {
       el('div', { class: 'store-odds' }, offer.odds),
       btn({
         label: 'Buy',
-        // The Star pack is the gold slab, the way the golden call is: it is
-        // the better draw and the shelf should say so before the price does.
-        kind: offer.tier === 'Star' ? 'primary' : 'secondary',
+        // The dearest sobre is the gold slab, the way the golden call is: it
+        // is the better draw and the shelf says so before the price does.
+        kind: offer.best ? 'primary' : 'secondary',
         onClick: () => game.doBuyPack(offer.tier),
         cost: { Gems: offer.cost },
         have: (c) => game.walletValue(c),
@@ -199,7 +199,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         String(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
-    el('div', { class: 'store-note' }, 'Bronze and silver packs come from the ruins.'),
+    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the ruins.'),
     // The bundles keep their own heading under Cards: same shelf, other till.
     // A player scanning for cards finds every way to get one in one place,
     // and the `$` on the button is what says the rail changed.

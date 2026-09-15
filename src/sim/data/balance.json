@@ -3278,11 +3278,19 @@
       "wildcards": 0,
       "wildcardRarity": 0
     },
+    "SeasonPass": {
+      "priceUsd": 4.99,
+      "gems": 0,
+      "packs": 0,
+      "packTier": "",
+      "wildcards": 0,
+      "wildcardRarity": 0
+    },
     "CardsSatchel": {
       "priceUsd": 4.99,
       "gems": 0,
       "packs": 2,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 1,
       "wildcardRarity": 4
     },
@@ -3290,7 +3298,7 @@
       "priceUsd": 9.99,
       "gems": 0,
       "packs": 5,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 1,
       "wildcardRarity": 5
     },
@@ -3298,7 +3306,7 @@
       "priceUsd": 19.99,
       "gems": 0,
       "packs": 10,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 3,
       "wildcardRarity": 5
     }
@@ -3427,13 +3435,16 @@
     ]
   },
   "collection": {
-    "seasonDays": 30,
+    "seasonDays": 28,
     "albumGems": 2000,
     "prizeGems": 25000,
     "albumHours": [
       2,
       2,
       4,
+      4,
+      6,
+      8,
       8,
       8
     ],
@@ -3441,6 +3452,9 @@
       1,
       1,
       1,
+      1,
+      1,
+      0,
       0,
       0
     ],
@@ -3448,20 +3462,28 @@
       0,
       0,
       0,
+      0,
+      0,
+      1,
       1,
       1
     ],
     "chestFloorPerHour": 60,
-    "starsPerRarity": [
-      1,
-      2,
-      5,
-      10,
-      25
-    ],
-    "starGoldMultiplier": 2,
-    "vaultGoldStars": 50,
-    "vaultStarStars": 200,
+    "starsPerFace": {
+      "1star": 2,
+      "2star": 6,
+      "3star": 16,
+      "4star": 40,
+      "5star": 100,
+      "4gold": 80,
+      "5gold": 200
+    },
+    "closeGoldSecondsPerStar": 30,
+    "chestStars": {
+      "BronzeChest": 105,
+      "SilverChest": 250,
+      "GoldChest": 400
+    },
     "wildcardGemCosts": [
       100,
       200,
@@ -3581,6 +3603,403 @@
     ],
     "premiumXpFloor": 20000
   },
+  "pass": {
+    "missionXp": 100,
+    "levelXpBase": 150,
+    "levelXpGrowth": 6,
+    "freePacks": [
+      "Green",
+      "",
+      "Green",
+      "",
+      "Rose",
+      "",
+      "Green",
+      "",
+      "Green",
+      "Yellow",
+      "Green",
+      "",
+      "Green",
+      "",
+      "Rose",
+      "",
+      "Green",
+      "",
+      "Green",
+      "Yellow",
+      "Green",
+      "",
+      "Green",
+      "",
+      "Rose",
+      "",
+      "Green",
+      "",
+      "Green",
+      "Yellow",
+      "Green",
+      "",
+      "Green",
+      "",
+      "Rose",
+      "",
+      "Green",
+      "",
+      "Green",
+      "Rose"
+    ],
+    "freeGems": [
+      0,
+      100,
+      0,
+      100,
+      0,
+      125,
+      0,
+      125,
+      0,
+      0,
+      0,
+      150,
+      0,
+      175,
+      0,
+      175,
+      0,
+      200,
+      0,
+      200,
+      0,
+      225,
+      0,
+      225,
+      0,
+      250,
+      0,
+      250,
+      0,
+      0,
+      0,
+      275,
+      0,
+      300,
+      0,
+      300,
+      0,
+      325,
+      0,
+      325
+    ],
+    "freeGoldKeys": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "freeStardust": [
+      0,
+      0,
+      0,
+      0,
+      50,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      70,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      110,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "paidPacks": [
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Purple",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Golden",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Purple",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Golden",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Purple",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Golden",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Purple",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Blue",
+      "Golden"
+    ],
+    "paidGems": [
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900
+    ],
+    "paidGoldKeys": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      2
+    ],
+    "paidStardust": [
+      0,
+      0,
+      75,
+      0,
+      0,
+      90,
+      0,
+      0,
+      105,
+      0,
+      0,
+      120,
+      0,
+      0,
+      135,
+      0,
+      0,
+      150,
+      0,
+      0,
+      165,
+      0,
+      0,
+      180,
+      0,
+      0,
+      195,
+      0,
+      0,
+      210,
+      0,
+      0,
+      225,
+      0,
+      0,
+      240,
+      0,
+      0,
+      255,
+      0
+    ]
+  },
+  "missions": {
+    "boardSize": 8,
+    "perWindow": 2,
+    "windowHours": 8,
+    "weeklyQuota": 4,
+    "collectMinutesMin": 12,
+    "collectMinutesMax": 40,
+    "collectFloor": 60,
+    "populationBand": [
+      2,
+      6
+    ],
+    "upgradeBand": [
+      2,
+      5
+    ],
+    "revealBand": [
+      4,
+      12
+    ],
+    "buildBand": [
+      1,
+      3
+    ],
+    "troopsBand": [
+      3,
+      10
+    ],
+    "heroLevelBand": [
+      2,
+      6
+    ],
+    "roomsBand": [
+      2,
+      6
+    ],
+    "depthsBand": [
+      1,
+      2
+    ],
+    "packsBand": [
+      2,
+      5
+    ],
+    "hardKinds": [
+      "RaiseTownhall",
+      "BuildDistricts",
+      "LevelHeroes",
+      "ClearRooms",
+      "CompleteDepths"
+    ],
+    "hardPack": "Yellow",
+    "normalPack": "Green",
+    "rewardGems": 15,
+    "rewardManaFraction": 0.5
+  },
   "delve": {
     "firstClearGems": 500,
     "firstClearKnowledge": 15,
@@ -3671,7 +4090,11 @@
       "hpPerLevel": 48,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "worldRevealSpeed",
+        "value": 1.25
+      }
     },
     "Adventurer": {
       "rarity": "Common",
@@ -4039,7 +4462,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "unitHp",
+        "value": 1.1
+      }
     },
     "VampireLord": {
       "rarity": "Legendary",
@@ -4055,7 +4482,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "heroXp",
+        "value": 1.25
+      }
     },
     "Necromancer": {
       "rarity": "Legendary",
@@ -4071,7 +4502,11 @@
       "hpPerLevel": 72,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "researchSpeed",
+        "value": 1.25
+      }
     },
     "Pharao": {
       "rarity": "Legendary",
@@ -4087,7 +4522,11 @@
       "hpPerLevel": 144,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "buildSpeed",
+        "value": 1.2
+      }
     },
     "ElvenPrincess": {
       "rarity": "Legendary",
@@ -4103,7 +4542,11 @@
       "hpPerLevel": 96,
       "troopDmgMult": 1.25,
       "troopHpMult": 1.15,
-      "troopDefBonus": 2
+      "troopDefBonus": 2,
+      "boon": {
+        "stat": "manaRegen",
+        "value": 1.25
+      }
     }
   },
   "ads": {
@@ -4400,39 +4843,116 @@
   },
   "artifacts": {
     "DowsingRod": {
-      "passiveBase": 0.85,
-      "passivePerLevel": -0.05,
-      "activeManaCost": 8,
-      "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "passiveBase": 1.2,
+      "passivePerLevel": 0.2,
+      "activeManaCost": 15,
+      "activeDurationSeconds": 300,
+      "activeRadius": 2,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 5,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 60,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "VerdantSeal": {
-      "passiveBase": 0.85,
-      "passivePerLevel": -0.05,
+      "passiveBase": 1,
+      "passivePerLevel": 1,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
-      "activeRadius": 2
+      "activeRadius": 2,
+      "activeTapsPerMana": 2,
+      "activeTapsPerManaPerLevel": 0.25,
+      "activePower": 0,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "ForemansSigil": {
-      "passiveBase": 1,
-      "passivePerLevel": 0.5,
+      "passiveBase": 1.1,
+      "passivePerLevel": 0.1,
       "activeManaCost": 10,
-      "activeDurationSeconds": 3600,
-      "activeRadius": 0
+      "activeDurationSeconds": 300,
+      "activeRadius": 2,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 2,
+      "activePowerPerLevel": 0.25,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "GildedLedger": {
       "passiveBase": 1.1,
       "passivePerLevel": 0.1,
-      "activeManaCost": 0,
+      "activeManaCost": 10,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 2,
+      "activeTapsPerMana": 2,
+      "activeTapsPerManaPerLevel": 0.25,
+      "activePower": 0,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "WanderersCompass": {
       "passiveBase": 1.25,
       "passivePerLevel": 0.25,
-      "activeManaCost": 5,
+      "activeManaCost": 25,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 2,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 0,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
+    },
+    "DelversLantern": {
+      "passiveBase": 1.15,
+      "passivePerLevel": 0.15,
+      "activeManaCost": 20,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 2,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 3,
+      "activeChargesPerLevel": 1
+    },
+    "MusterHorn": {
+      "passiveBase": 1.1,
+      "passivePerLevel": 0.1,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 0,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
+    },
+    "BailiffsTally": {
+      "passiveBase": 1.15,
+      "passivePerLevel": 0.15,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0,
+      "activeTapsPerMana": 0,
+      "activeTapsPerManaPerLevel": 0,
+      "activePower": 0,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     }
   },
   "quests": [
@@ -5324,57 +5844,150 @@
     }
   },
   "packs": {
-    "Bronze": {
+    "Green": {
+      "cards": 2,
+      "guarantees": {
+        "1star": 1
+      },
+      "weights": [
+        84.92,
+        12.005,
+        2.5,
+        0.4,
+        0.1,
+        0.06,
+        0.015
+      ],
+      "gemCost": 0
+    },
+    "Yellow": {
       "cards": 3,
+      "guarantees": {
+        "2star": 1
+      },
       "weights": [
-        70,
-        30,
-        0,
-        0,
-        0
+        69.85,
+        25,
+        4,
+        0.8,
+        0.2,
+        0.12,
+        0.03
       ],
-      "goldChance": 0,
-      "goldGuaranteed": 0,
       "gemCost": 0
     },
-    "Silver": {
+    "Rose": {
+      "cards": 3,
+      "guarantees": {
+        "3star": 1
+      },
+      "weights": [
+        59.8,
+        29.9,
+        8,
+        1.5,
+        0.5,
+        0.225,
+        0.075
+      ],
+      "gemCost": 0
+    },
+    "Blue": {
       "cards": 4,
+      "guarantees": {
+        "4star": 1
+      },
       "weights": [
-        45,
+        50,
         35,
-        20,
-        0,
-        0
+        9,
+        4,
+        1.2,
+        0.55,
+        0.25
       ],
-      "goldChance": 0,
-      "goldGuaranteed": 0,
+      "gemCost": 400
+    },
+    "Purple": {
+      "cards": 6,
+      "guarantees": {
+        "5star": 1
+      },
+      "weights": [
+        40,
+        34,
+        14.5,
+        7,
+        3,
+        1.05,
+        0.45
+      ],
+      "gemCost": 900
+    },
+    "Golden": {
+      "cards": 1,
+      "guarantees": {},
+      "weights": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        75,
+        25
+      ],
+      "gemCost": 600
+    },
+    "BronzeChest": {
+      "cards": 7,
+      "guarantees": {
+        "3star": 1,
+        "4star": 1
+      },
+      "weights": [
+        84.92,
+        12,
+        2.5,
+        0.4,
+        0.105,
+        0.06,
+        0.015
+      ],
       "gemCost": 0
     },
-    "Gold": {
-      "cards": 5,
+    "SilverChest": {
+      "cards": 9,
+      "guarantees": {
+        "4star": 1,
+        "5star": 1
+      },
       "weights": [
-        0,
-        40,
-        38,
-        22,
-        0
+        59.8,
+        29.9,
+        8,
+        1.5,
+        0.5,
+        0.225,
+        0.075
       ],
-      "goldChance": 0.08,
-      "goldGuaranteed": 0,
-      "gemCost": 500
+      "gemCost": 0
     },
-    "Star": {
-      "cards": 6,
+    "GoldChest": {
+      "cards": 3,
+      "guarantees": {
+        "5star": 1,
+        "4gold": 1
+      },
       "weights": [
         0,
         0,
-        55,
-        33,
-        12
+        0,
+        0,
+        0,
+        75,
+        25
       ],
-      "goldChance": 0.2,
-      "goldGuaranteed": 1,
-      "gemCost": 1500
+      "gemCost": 0
     }
   },
   "fog": {
@@ -5519,6 +6132,8 @@
     ]
   },
   "offlineCapHours": 8,
+  "artifactAutoTapPerSecond": 4,
+  "artifactCooldownSeconds": 300,
   "villains": {
     "BarrowThane": {
       "name": "Barrow Thane",
@@ -5591,6 +6206,11 @@
       "power": 160
     }
   },
+  "artifactRadiusSteps": [
+    5,
+    10,
+    20
+  ],
   "combat": {
     "tickMs": 100,
     "timeoutTicks": 600,

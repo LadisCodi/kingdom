@@ -37,12 +37,17 @@ import { iconEl, type IconName } from './kit';
 // destination reached by opening another screen and finding the right tab is
 // one the design is hiding.
 //
-// ORDER, authored 2026-09-08: the two collection tabs sit together in the
-// middle, and Build takes the right edge — the end of the bar a right thumb
-// reaches without moving, for the tab the player presses most.
+// ORDER, authored 2026-09-08: the collection tab sits in the middle, and
+// Build takes the right edge — the end of the bar a right thumb reaches
+// without moving, for the tab the player presses most.
+//
+// IT IS "RELICS", NOT "COLLECTION" (2026-09-15). The cards were never the
+// destination: a player goes there to look at what their relics DO and to
+// close the page that levels one. Naming the tab after the currency rather
+// than after the thing it buys made the relics a screen behind a screen.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
   { name: 'store', label: 'Store', icon: 'Gems' },
-  { name: 'collection', label: 'Collection', icon: 'cards' },
+  { name: 'collection', label: 'Relics', icon: 'relics' },
   { name: 'heroes', label: 'Heroes', icon: 'army' },
   { name: 'research', label: 'Research', icon: 'research' },
   { name: 'build', label: 'Build', icon: 'build' },

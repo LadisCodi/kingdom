@@ -3,7 +3,7 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
-import { DISTRICTS } from './data/definitions';
+import { DISTRICTS, type PackTier } from './data/definitions';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import type { Modifier } from './modifiers';
@@ -66,7 +66,10 @@ export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
 export type RuinId =
   | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
 export type ArtifactId =
-  | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
+  | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
+  // The three pillars the city relics do not touch: the dungeon, the war and
+  // the world map (Docs/proposals/relic-effects.md §6).
+  | 'DelversLantern' | 'MusterHorn' | 'BailiffsTally';
 export type HeroId =
   'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |
   'Bard' | 'BeastkinHunter' | 'Cleric' | 'Cook' | 'Gardener' | 'Joker' | 'Merchant' |
@@ -84,6 +87,9 @@ export type StoreSkuId =
   /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
    *  chest's Royal track for the season (sim/daily.ts). */
   | 'RoyalChest'
+  /** The season pass's paid column, for one season — the Royal chest's shape
+   *  applied to the other two-track ladder (sim/pass.ts). */
+  | 'SeasonPass'
   /** The collection's three bundles: star packs and wildcards for money
    *  rather than for Gems (Docs/features/09-relics.md §6.1). */
   | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
@@ -210,6 +216,18 @@ export interface CellHarvestState {
    *  draws this down; at zero the cell is exhausted. */
   units: number;
   exhaustedUntil: number | null; // epoch ms; recovery is lazy (derived from time)
+  /**
+   * HOW LONG THAT WAIT WAS, when it was stamped. Null while the cell is not
+   * exhausted.
+   *
+   * The wait is priced ONCE, at the moment of exhaustion
+   * (`effectiveRecoveryMs`), so the BAR that counts it down has to be told
+   * what it is counting. Deriving the span from the authored
+   * `recoverySeconds` instead made the bar start nearly full under anything
+   * that speeds recovery up — a Dowsing Rod at level 16 shortens a Forest's
+   * 90 seconds to 21, and a bar spanning 90 opens at 77%.
+   */
+  recoveryMs: number | null;
 }
 
 export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';
@@ -346,6 +364,63 @@ export interface RuinProgress {
   cleared: number;
 }
 
+/**
+ * WHAT KIND OF ERRAND a mission is. The id is what the roll scores, so it is
+ * stable for the life of a save: adding a fourteenth kind inserts one score
+ * and leaves the other thirteen in the same relative order.
+ */
+export type MissionKind =
+  | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
+  | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
+  | 'ClearRooms' | 'CompleteDepths' | 'OpenPacks';
+
+/**
+ * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
+ *
+ * ONE THING, rolled when the mission is issued and stored on it — so it can be
+ * read off the board before the work is done, which is what lets a player pick
+ * what to do next by what it pays. A reward decided at CLAIM time would be a
+ * surprise, and a surprise cannot be chosen between.
+ *
+ * Mana is a FRACTION OF THE POOL rather than an amount, the daily chest's rule:
+ * a reward priced in the player's own production is worth the same fraction of
+ * an afternoon at every stage of the game.
+ */
+export type MissionReward =
+  | { kind: 'Gems'; amount: number }
+  | { kind: 'Mana'; fraction: number }
+  | { kind: 'Pack'; tier: PackTier };
+
+/**
+ * ONE ERRAND ON THE BOARD (sim/missions.ts).
+ *
+ * RELATIVE, always: `meter` names an odometer on `state.tallies` and `base` is
+ * what it read the moment this was issued, so progress is `tally - base` and
+ * nothing that happened before counts. There is no counter of its own to keep
+ * in step with the sim.
+ */
+export interface Mission {
+  uniqueId: string;
+  kind: MissionKind;
+  /** The odometer key this watches — `levels`, `collect:Wood`, `rooms`. */
+  meter: string;
+  /** That odometer's reading when this was issued. */
+  base: number;
+  /** How much more of it the mission asks for. */
+  target: number;
+  /** What the mission is ABOUT, when its kind is scoped: the currency to
+   *  collect. Carried so the label and the icon need no second lookup. */
+  subject: CurrencyId | null;
+  /** What finishing it pays. Rolled at issue, so the board can show it. */
+  reward: MissionReward;
+  /** The window that issued it, and what it was issued for — the rng key, so
+   *  re-rolling the same window is bit-identical. */
+  window: number;
+  slot: number;
+  /** Set once the reward has been taken. A claimed mission leaves the board. */
+  claimed: boolean;
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -383,6 +458,39 @@ export interface GameState {
        *  rung 9 leaves nine of them waiting — so this cannot be a count.
        *  Belongs to `season`: a stale one reads as empty. */
       royalClaimed: number[];
+    };
+    /**
+     * THE SEASON PASS (sim/pass.ts). Kingdom-scoped for the daily chest's
+     * reason verbatim: a habit is a property of the player, not of the city
+     * they happen to be playing. NOT on `state.collection`, which is wiped
+     * whole at the close.
+     */
+    pass: {
+      /** The `seasonAt` occurrence everything below belongs to. A stale one
+       *  reads as a fresh, empty pass — the same pull rule the chest follows,
+       *  so a season turns over with nothing scheduled. */
+      season: number;
+      /** Pass XP earned this season. Levels are DERIVED from it. */
+      xp: number;
+      /** Which cells of each column have been taken, by level. Claimed cell
+       *  by cell and out of order — buying the pass on level 12 leaves twelve
+       *  paid cells waiting — so neither can be a count. */
+      claimedFree: number[];
+      claimedPaid: number[];
+      /** The occurrence the paid column was bought for, or null. A comparison
+       *  rather than a flag, so nothing has to clear it. */
+      paidSeason: number | null;
+      /** The board. At most `MISSIONS.boardSize`; nothing on it expires. */
+      live: Mission[];
+      /** The last eight-hour window ISSUED FOR — a stamp, not a cursor. A
+       *  window that passed while the board was full is never owed later. */
+      lastWindow: number;
+      /** How many of each kind have been issued in `week`, so a board cannot
+       *  fill with eight of the same errand. */
+      issuedThisWeek: Partial<Record<MissionKind, number>>;
+      /** The Monday-aligned week `issuedThisWeek` belongs to. Stale reads as
+       *  an empty quota, the same pull rule as `season`. */
+      week: number;
     };
   };
   player: {
@@ -538,6 +646,27 @@ export interface GameState {
    */
   artifacts: {
     levels: Partial<Record<ArtifactId, number>>;
+    /**
+     * WHEN EACH RELIC'S ABILITY LAST WENT OFF, for the ACTIVE → COOLDOWN →
+     * READY walk (Docs/features/09-relics.md §2.1). Absent = never cast, which
+     * reads as READY.
+     *
+     * Two timestamps and not one, because the window and the cooldown are
+     * different facts: the window is what the zone is standing for, and the
+     * cooldown starts where it ends. Storing the cast instant and deriving the
+     * rest would reprice a running window every time the relic gained a level.
+     */
+    casts: Partial<Record<ArtifactId, { endsAt: number; readyAt: number }>>;
+    /**
+     * USES LEFT on an ability whose window is counted in EVENTS rather than
+     * in seconds — the Delver's Lantern's rooms.
+     *
+     * It has no clock at all, and deliberately: the only clock a delve has is
+     * the player opening the next door, so a charge cannot expire while
+     * nothing is happening. A lantern lit and not spent stays lit, and the
+     * relic stays ACTIVE until the last room takes it.
+     */
+    charges: Partial<Record<ArtifactId, number>>;
   };
   /**
    * The card collection — the live season only. Wiped whole at the close, so
@@ -564,6 +693,11 @@ export interface GameState {
     packsIssued: number;
     /** The collection prize — a golden call and 25,000 Gems — is paid once. */
     prizePaid: boolean;
+    /** Which lap of the eight albums this is, 0-based. Closing all eight
+     *  resets `completed` and steps this, so the five relic levels stay level
+     *  and the prize and the album Gems can be the first lap's only
+     *  (Docs/proposals/album-cycles.md §4). */
+    cycle: number;
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons
@@ -573,6 +707,37 @@ export interface GameState {
   /** The quest chain: index into QUESTS (length = all done); progress is the
    *  event counter for RELATIVE goals, reset when a quest is claimed. */
   quests: { index: number; progress: number };
+  /**
+   * THE LIFETIME ODOMETERS the season pass's missions read (sim/events.ts).
+   *
+   * One key per thing the sim announces — `levels`, `troops`, `collect:Wood`,
+   * `levels:Townhall` — and every one of them only ever goes UP. A mission is
+   * relative: it stores a BASE reading and asks for `meter - base`, which is
+   * only honest against a counter that cannot fall. `army.length` falls when a
+   * room kills soldiers and `wallet.Wood` falls when it is spent; baselining
+   * either would un-progress a mission, which reads as the game taking
+   * something back.
+   *
+   * TOP LEVEL, outside every season-stamped block, and deliberately: a live
+   * mission's base is a reading of one of these, so a wipe that touched them
+   * would silently move every mission on the board. A key nobody has bumped
+   * reads as 0, so nothing here needs initialising or migrating.
+   */
+  tallies: Record<string, number>;
+  /**
+   * Set ONLY around the load path's catch-up advance (sim/save.ts), and the
+   * one thing that reads it is the odometer above.
+   *
+   * THE MISSIONS ARE ACTIVE-PLAY-ONLY, which is the single place in this
+   * codebase where offline replay and live ticking are meant to DISAGREE.
+   * Invariant 1 still holds inside each mode — a six-hour replay in one call
+   * and in six steps both run with this set and agree exactly, and the live
+   * path agrees with itself — and the exception is confined to `tallies`.
+   * Nothing else may read this flag.
+   *
+   * Transient, like `lastCollectTapAt`: never saved, false on load.
+   */
+  replaying: boolean;
   /** First-time discoveries already announced (keys like 'resource:Wood'). */
   discoveries: Record<string, true>;
   /** Discoveries made since the UI last drained them. Transient — a banner

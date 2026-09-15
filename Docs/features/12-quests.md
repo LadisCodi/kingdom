@@ -320,10 +320,16 @@ and the thing you press are the same object.
 - A daily limit on Royal cells. The free cell is one a day; the paid column is
   not rationed twice.
 - A second quest chain. Branching quests.
-- **Generated orders** — daily fetch-quests on a board of their own. The open-ended
-  Gold sink is [`16-wonders.md`](16-wonders.md) §1; a sink never pays back
-  what it asked for ([`16-wonders.md`](16-wonders.md) §3.1). An order reroll
-  as an ad placement or pass reward ([`14-monetization.md`](14-monetization.md))
-  goes with them.
+- **Generated orders ON THIS BOARD.** A recurring generated ask exists — it is
+  the season pass's mission board ([`20-season-pass.md`](20-season-pass.md)
+  §3) — and it deliberately is not a *fetch-quest*: it never asks the player
+  to hand resources over, because the open-ended Gold sink is
+  [`16-wonders.md`](16-wonders.md) §1 and a sink never pays back what it
+  asked for ([`16-wonders.md`](16-wonders.md) §3.1). It asks the player to
+  PLAY, and it pays.
+- **An order reroll**, as an ad placement or as a pass reward. The pass's
+  board is capped rather than timed, so the thing a wallet is offered is
+  finishing work already started, never a fresh hand of work
+  ([`14-monetization.md`](14-monetization.md) §1).
 
-**Open questions:** OQ-47, OQ-53, OQ-91. Moot with generated orders: OQ-16, OQ-17.
+**Open questions:** OQ-16, OQ-17, OQ-47, OQ-53, OQ-91.

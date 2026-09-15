@@ -23,7 +23,7 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
   const count = el('span', { class: 'sea-pill-count' }, '');
   const left = el('span', { class: 'sea-pill-left' }, '');
   const pill = el('button', {
-    class: 'sea-pill', type: 'button', 'aria-label': 'The card collection',
+    class: 'sea-pill', type: 'button', 'aria-label': 'The season pass',
   },
     iconEl('crest', { size: 'lg' }),
     el('span', { class: 'sea-pill-body' },
@@ -31,7 +31,11 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
       el('span', { class: 'sea-pill-trough' }, fill, count),
       el('span', { class: 'sea-pill-clock' }, iconEl('hourglass', { size: 'sm' }), left)),
   );
-  pill.addEventListener('click', () => game.setOverlay('collection'));
+  // IT OPENS THE PASS, not the collection. The nav's Relics button is the
+  // collection's door and always was; what had no door was the pass, and the
+  // pill is already the season's own object on the map
+  // (Docs/features/20-season-pass.md §6).
+  pill.addEventListener('click', () => game.setOverlay('pass'));
   root.replaceChildren(pill);
 
   const refresh = (): void => {
@@ -49,8 +53,8 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
     left.textContent = info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`;
     pill.classList.toggle('is-quiet', !state!.glowing);
     pill.setAttribute('aria-label', state!.glowing
-      ? 'A card pack is waiting to be opened'
-      : `${info.name} — the card collection`);
+      ? 'A reward is waiting on the season pass'
+      : `${info.name} — the season pass`);
   };
 
   game.onChange(refresh);

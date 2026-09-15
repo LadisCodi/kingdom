@@ -209,7 +209,11 @@ describe('the presenter', () => {
 
     game.confirmIap();
     expect(game.openOverlay).toBe('store');
-    expect(game.state.collection.packs).toHaveLength(offer.packs);
+    // THE FIRST PACK IS ALREADY OPEN. A pack the player watched land opens
+    // itself, so what is left in the queue is the hand minus the one on
+    // screen — and the reveal is holding that one.
+    expect(game.gachaReveal).not.toBeNull();
+    expect(game.state.collection.packs).toHaveLength(offer.packs - 1);
     expect(game.state.collection.wildcards[offer.rarity]).toBe(offer.wildcards);
     // Money bought cards, not currency.
     expect(game.walletValue('Gems')).toBe(gems);
@@ -223,7 +227,9 @@ describe('the presenter', () => {
     game.state.collection.season = seasonAt(game.now());
     for (const offer of game.cardBundleOffers()) {
       expect(offer.lines).toEqual(game.bundleLines(offer.id));
-      expect(offer.lines.join(' ')).toMatch(/gold edition guaranteed/);
+      // What the pack GUARANTEES, generated from its row rather than authored
+      // beside it — a retuned row cannot leave a stale promise behind.
+      expect(offer.lines.join(' ')).toMatch(/guaranteed/);
       expect(offer.lines.join(' ')).toMatch(/wildcard/);
     }
     // A Gem pack has no such list — its grant is one number.

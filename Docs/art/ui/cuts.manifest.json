@@ -1,0 +1,107 @@
+{
+  "note": "Smooth pieces for the building card and the upgrade popup (Docs/art/ui-menus-redesign.md \u00a77.27). Cut by scripts/ui-cut.mjs, which FINDS the pieces rather than slicing a grid \u2014 these sheets are not one. Names are in reading order, left to right then top to bottom; run `node scripts/ui-cut.mjs --list` to see what each index picked up. `size` is the LONG side of a piece, so nothing is letterboxed; `square: true` centres it in a square canvas instead, for a ring that has to sit dead centre of what it is layered over.",
+  "sheets": [
+    {
+      "file": "sheets/ui-k1-frames.png",
+      "size": 512,
+      "note": "Panel frames, used as CSS border-image. The two plank-headed ones carry the rope tie; the rest are plain wells.",
+      "names": [
+        "frame_plank_wide",
+        "frame_plank_tall",
+        "frame_panel",
+        "frame_panel_wide",
+        "frame_chip",
+        "frame_strip"
+      ]
+    },
+    {
+      "file": "sheets/ui-k2-slabs.png",
+      "size": 384,
+      "note": "Button slabs as border-image, plus the popup's close knob. Green is the primary action, wood the secondary, grey the refused one \u2014 the three states the Upgrade button walks through.",
+      "names": [
+        "slab_green",
+        "slab_wood",
+        "slab_grey",
+        "nameplate_wood",
+        "knob_close",
+        "rope_tie"
+      ],
+      "each": {
+        "knob_close": {
+          "size": 192,
+          "square": true
+        }
+      }
+    },
+    {
+      "file": "sheets/ui-k3-queue.png",
+      "size": 192,
+      "square": true,
+      "note": "The training queue's chrome. Three ring states over one well: idle, selected (gold), and in progress (the green arc). `queue_link` is the connector between two slots and `count_pill` the xN badge, so neither is square. The three ring states arrive with a face painted inside them; `punchInner` takes it out so the rim can sit over whichever trainee the slot holds. `ring_locked` keeps its silhouette \u2014 that IS the locked slot.",
+      "names": [
+        "ring_idle",
+        "ring_selected",
+        "ring_progress",
+        "ring_locked",
+        "queue_link",
+        "count_pill"
+      ],
+      "each": {
+        "queue_link": {
+          "size": 256,
+          "square": false
+        },
+        "count_pill": {
+          "size": 160,
+          "square": false
+        },
+        "ring_idle": {
+          "punchInner": 0.78
+        },
+        "ring_selected": {
+          "punchInner": 0.78
+        },
+        "ring_progress": {
+          "punchInner": 0.78
+        }
+      }
+    },
+    {
+      "file": "sheets/ui-k4-townhall.png",
+      "size": 320,
+      "note": "The Townhall at its four levels \u2014 the portrait the card and the popup both draw, so an upgrade shows what the building BECOMES. The scroll is the level ribbon; the glow ring is the map's selection halo.",
+      "names": [
+        "townhall_lv1",
+        "townhall_lv2",
+        "townhall_lv3",
+        "townhall_lv4",
+        "banner_scroll",
+        "glow_ring"
+      ]
+    },
+    {
+      "file": "sheets/ui-k5-units.png",
+      "size": 256,
+      "note": "Busts on the top row, bodies under them \u2014 the two files every trainee ships (Docs/art/portraits/unit-blocks.md \u00a72). These REPLACE the rendered 3D set: the card draws them beside painted chrome now, and the two styles could not share a panel.",
+      "names": [
+        "unit_warrior_avatar",
+        "unit_archer_avatar",
+        "unit_lancer_avatar",
+        "unit_warrior",
+        "unit_archer",
+        "unit_lancer"
+      ],
+      "each": {
+        "unit_warrior": {
+          "size": 512
+        },
+        "unit_archer": {
+          "size": 512
+        },
+        "unit_lancer": {
+          "size": 512
+        }
+      }
+    }
+  ]
+}
