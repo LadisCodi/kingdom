@@ -450,44 +450,27 @@ in the same units.
 | **In use** | the technology's glyph; tapping it opens that technology's sheet, which is where the Gem finish is | the time left |
 | **Locked** | the one gem-toned slab on the row; tapping it buys | the Gems it costs |
 
-## 6. Spells — designed, not built
+## 6. Magic holds no spells
 
-> A relic is what you wear. A spell is what you know.
+**The Magic tome does not cast.** An ability is a **relic's**, cast from the
+relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
+2026-09-15**.
 
-- A **spell node** is a Magic technology whose unlock grants a castable spell.
-- A spell's **power, radius and duration** are rank ladders under its node.
-- A spell is discovered once and never gated again: no slot, no equip, no
-  charges, no cooldown. Mana is the only thing between a known spell and a
-  cast ([`08-magic.md`](08-magic.md) §1).
-- A spell may not require a node in another tome. Its sheet may **name** a
-  related node as a tappable thumbnail without requiring it.
-- Magic also holds `Resonance` (cast cost) and what raises the Mana cap.
-- Relic levels come from the collection's albums, and the delve's reward is
-  the card pack ([`09-relics.md`](09-relics.md) §6). A player who never delves
-  can discover, cast and upgrade spells
-  (**OQ-41**).
-
-| Spell | Effect | Relic active it replaces |
-|---|---|---|
-| **Divination** | pays a Discovered cell's entire remaining reveal cost | Dowsing Rod |
-| **Bloom** | clears exhaustion on every resource cell in radius 2 | Verdant Seal |
-| **Beckon** | a finite feature respawns on a cell the player chooses | Wanderer's Compass |
-| **Haste** | worker yield ×2 for 60 minutes | Foreman's Sigil |
-
-### 6.1 Code contract
-
-| Built | Design |
-|---|---|
-| `CastBlock` = `NotOwned` \| `NoActive` \| `NotAttuned` \| `NotEnoughMana` \| `InvalidTarget` | `NotDiscovered` \| `NotEnoughMana` \| `InvalidTarget` |
-| `castBlock` reads `ownsArtifact` and `isAttuned` | reads whether the discovering technology is complete |
-| scaling reads the relic's level | scaling reads the spell ladder's own `effects` |
-| `ArtifactDef.active: ArtifactActive \| null` | deleted — `ArtifactActive` becomes a spell definition keyed by its technology |
-| — | a `Spells` sheet holds each spell's Mana cost |
-
-- Effect functions stay `(state, map, target, now)`.
-- Two stale docblocks in `ArtifactDef` go in the same pass: "Mana per hour
-  drawn while attuned" and `carried`'s "attuning draws Mana every hour". There
-  is no upkeep.
+- This section used to plan the opposite: four spell nodes taking the relic
+  actives off the relics, on the line *"a relic is what you wear, a spell is
+  what you know"*. The line was good and the split was not. A relic whose
+  ability lived in a tome was **a passive with a picture**, and the collection
+  asks a player for nine cards a page — the thing those cards buy has to be
+  something they press.
+- **The two could not both exist**: the same four abilities cannot be a
+  relic's second half and a tome's unlock.
+- Magic keeps what is not an ability: **`Resonance`** (what a cast costs) and
+  **what raises the Mana cap**. Both make every relic's active better without
+  owning any of them, which is what a tome should do for a pillar it does not
+  contain.
+- **A relic's level is the ability's ladder.** There is nothing to research, so
+  a player who wants a stronger active closes that relic's album — which is the
+  collection's whole promise and the reason the split had to go one way.
 
 ## 7. Ruins and landmarks
 

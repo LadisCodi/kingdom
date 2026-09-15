@@ -14,9 +14,8 @@
 > [`../features/09-relics.md`](../features/09-relics.md); only
 > `relic-effects.md` still has a step outstanding.
 >
-> **One decision gates a third of it** — **OQ-98**, whether the relic actives
-> stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
-> way; step 6 is void if the tome wins.
+> **OQ-98 closed on 2026-09-15: the actives stay on the relics** and are built
+> out. Step 6 is therefore live, not void, and it is the only step left.
 
 ## 0. How the steps are cut
 
@@ -43,13 +42,13 @@
 | ~~**3**~~ | ~~The packs, the chests and the stars~~ **done** | — | **M** |
 | ~~**4**~~ | ~~Eight albums, and the pairing rotates~~ **done** | 2, 3 | **M** |
 | ~~**5**~~ | ~~The album cycle~~ **done** | 4 | **M** |
-| **6** | Zones, cooldowns and the actives | **OQ-98**, 2 | **L** |
+| **6** | Zones, cooldowns and the actives | ~~OQ-98~~ **closed**, 2 | **L** |
 | ~~**7**~~ | ~~The art~~ **done** | — (ran alongside) | **M** |
 
 - **1 and 3 are independent** and can go in either order or at once.
 - **1 grew from S to M** once the proposal was read against the build: four of
   the five relics change which number they move, not just its sign.
-- **6 is the only large one** and the only one that can be cut whole.
+- **6 is the only large one**, and the only one left.
 
 ## 1. The five passives take their final shape
 
@@ -265,7 +264,14 @@ Self-contained, and the step whose numbers are already measured.
 
 ## 6. Zones, cooldowns and the actives
 
-**Gated on OQ-98.** The largest step and the only one that can be cut whole.
+**OQ-98 closed in the relics' favour on 2026-09-15**, so this is live. The
+largest step, and now the only one left.
+
+The deciding argument was what a relic is FOR: the collection asks a player for
+nine cards a page, and a relic whose ability lived in the Magic tome would be
+**a passive with a picture** — nothing those cards buy that the player ever
+presses. Magic keeps `Resonance` and the Mana cap, which make every relic's
+active better without owning any of them.
 
 - **Logic, in this order:**
   1. **Zones** — a placed, timed, positional effect: new state, a save field,

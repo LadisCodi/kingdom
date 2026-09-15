@@ -13,7 +13,8 @@
 > Three things are deliberately left out and named where they belong:
 > **trading** (§8 — it waits on the social layer, OQ-89), the **season hero's
 > rate-up** (§10 — it waits on a banner payload in the timeline) and the relic
-> **actives** (the plan's step 6, gated on **OQ-98**). Everything else runs:
+> **actives** (the plan's step 6 — **OQ-98** closed in their favour on
+> 2026-09-15, and they are being built out). Everything else runs:
 > the season and its melt-down, the packs, the albums, the payouts, the lap,
 > the collection prize, the stars, the vault, the wildcards and their aimed
 > offers, the close, and the four screens of §11.
@@ -51,12 +52,11 @@
   in **laps** (§5.1) — but never ahead of the others: an album cannot close a
   second time until all eight have closed once.
 - The relic itself never drops. Ruins pay **card packs** (§6), not relics.
-- A relic has no active. Abilities are spells, nodes in the Magic tome
-  ([`07-research.md`](07-research.md) §6). **A relic is what the kingdom has;
-  a spell is what the player knows.** The build still carries four actives on
-  the relics as a bridge, and
-  [`../proposals/relic-effects.md`](../proposals/relic-effects.md) proposes
-  keeping them there instead — **OQ-98** is which way it goes.
+- **A relic is one idea at two speeds** (§2.1): the passive is that idea
+  always on, and the **active** is the same idea as a placed zone, for a
+  window, bought with Mana. Every relic has one, and it is cast from the relic
+  that owns it. The Magic tome holds no spells — **OQ-98, closed 2026-09-15**
+  ([`07-research.md`](07-research.md) §6).
 - The **Collection** tab replaces the Relics tab in the nav. It is hidden
   until the player holds a card, and appears the moment they open their first
   pack.
@@ -88,6 +88,40 @@ never a discount, because a discount dies at 100%.
   the Sigil's two are one idea each: half of either saturates or reads as
   nothing — a bigger swing empties a node it cannot exceed, and a crew that
   swung faster and walked at the old pace would be half a relic.
+
+### 2.1 The active
+
+Every relic's ability is **the passive's idea, concentrated**: what the relic
+does everywhere all the time, it does much harder in one place for a while.
+
+| | |
+|---|---|
+| **What it is** | a **placed zone** — select-then-place, the idiom placement already uses, with the grid lighting what the zone would cover before a tap is spent |
+| **What it costs** | **Mana**, per relic, and nothing else. No slot, no equip, no charges, no upkeep |
+| **How often** | **ACTIVE → COOLDOWN → READY**, a flat **5-minute** cooldown counted from when the window **closes** |
+| **How it grows** | **exactly one** of power, duration and taps-per-Mana grows every level; **radius steps** at 5, 10 and 20; **cooldown never moves** |
+
+- **The cooldown counts from the window's close, never from the cast.** A
+  10-minute window on a 5-minute cooldown counted from the cast is 100%
+  uptime, which is no cooldown at all.
+- **A cooldown that shrank with level would be a discount wearing a hat**, and
+  a relic that did more *and* did it more often would grow on two axes at once.
+- **Zones overlap freely.** The cooldown is what stops a player carpeting the
+  map, so an overlap is a real choice: an area taking two effects is an area
+  somewhere else taking none. There is no popup asking whether to overwrite.
+- **Radius is the one number that steps rather than creeps** — 2, then 3 at
+  level 5, 4 at level 10, 5 at level 20. A Chebyshev radius covers `(2r+1)²`
+  cells, so each rung roughly **doubles the ground**: a number that doubles
+  cannot creep, but it makes a superb milestone, and a player two cards from
+  level 5 knows exactly what those two cards buy.
+- **Three of the eight are cast on their own pillar** rather than on the city
+  grid: the Lantern on a ruin before a delve, the Horn on a world-map
+  fortification, the Tally on a tile the player holds.
+- The relic's card shows which of the three states it is in, and the countdown
+  derives from a timestamp rather than a decremented integer, so a throttled
+  tab comes back correct.
+- Full design, level by level:
+  [`../proposals/relic-effects.md`](../proposals/relic-effects.md).
 
 - **Every passive keeps this rule** as of 2026-09-15 (**OQ-97**, closed): a
   speed the call site divides by, a multiplier above 1, or a flat term on a
@@ -590,7 +624,13 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 - **A relic from a ruin.** Ruins pay packs.
 - **A level cap, or a tier.** A relic's level is one number with no top.
 - **A discount as a relic effect.** Speeds and yields only.
-- **An active on a relic**, or a relic carried into a fight.
+- **A relic carried into a fight**, or one that is worn, slotted or equipped.
+- **An active that is instant**, or one that is not placed. The zone is the
+  decision, and an ability that resolved the moment it was bought would be a
+  button rather than a choice.
+- **An ability that lives in a tome** (**OQ-98**, closed). A relic whose active
+  was a Magic node would be a passive with a picture, and nine cards a page has
+  to buy something the player presses.
 - **A card that survives the season**, or an extension for a late arrival.
 - **Two albums for one relic**, or an album that levels no relic. One relic,
   one album — the relic strip, the badge and the signpost all collapse into
@@ -621,5 +661,5 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-98, OQ-100 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-99, OQ-100 in
 [`../open-questions.md`](../open-questions.md).
