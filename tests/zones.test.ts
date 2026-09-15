@@ -44,13 +44,14 @@ const zone = (
 ): void => {
   addModifier(state, {
     id: `zone:${stat}`, source: 'artifact', stat, scope: null, op: 'mul',
-    value, expiresAt: T0 + minutes * 60_000, area: { centre, radius },
+    value, expiresAt: T0 + minutes * 60_000,
+    area: { centre, radius, relic: 'DowsingRod', since: T0 },
   });
 };
 
 describe('a zone is a modifier with a centre', () => {
   it('covers a Chebyshev square, inclusive of the centre', () => {
-    const area = { centre: CENTRE, radius: 2 };
+    const area = { centre: CENTRE, radius: 2, relic: 'DowsingRod' as const, since: T0 };
     expect(areaCovers(area, CENTRE)).toBe(true);
     expect(areaCovers(area, { x: 2, y: 2 })).toBe(true);   // the corner is in
     expect(areaCovers(area, { x: -2, y: 2 })).toBe(true);
@@ -58,8 +59,8 @@ describe('a zone is a modifier with a centre', () => {
     expect(areaCovers(area, { x: 2, y: 3 })).toBe(false);
     // Chebyshev, not Euclidean: the corner of the square is inside, which a
     // circle of the same radius would exclude.
-    expect(areaCovers({ centre: CENTRE, radius: 0 }, CENTRE)).toBe(true);
-    expect(areaCovers({ centre: CENTRE, radius: 0 }, { x: 1, y: 0 })).toBe(false);
+    expect(areaCovers({ centre: CENTRE, radius: 0, relic: 'DowsingRod', since: T0 }, CENTRE)).toBe(true);
+    expect(areaCovers({ centre: CENTRE, radius: 0, relic: 'DowsingRod', since: T0 }, { x: 1, y: 0 })).toBe(false);
   });
 
   // THE ASYMMETRY IS THE SAFETY. Every number in the game that is not about a
@@ -92,7 +93,8 @@ describe('a zone is a modifier with a centre', () => {
     zone(state, 'recoverySpeed', 2, { x: 0, y: 0 });
     addModifier(state, {
       id: 'zone:second', source: 'artifact', stat: 'recoverySpeed', scope: null,
-      op: 'mul', value: 3, expiresAt: T0 + 600_000, area: { centre: { x: 1, y: 0 }, radius: 2 },
+      op: 'mul', value: 3, expiresAt: T0 + 600_000,
+      area: { centre: { x: 1, y: 0 }, radius: 2, relic: 'VerdantSeal', since: T0 },
     });
     expect(resolveAt(state, 'recoverySpeed', 1, { x: 1, y: 0 })).toBe(6); // both
     expect(resolveAt(state, 'recoverySpeed', 1, { x: -2, y: 0 })).toBe(2); // the first only
@@ -169,7 +171,9 @@ describe('a zone is a boundary, and it survives a save', () => {
     zone(state, 'recoverySpeed', 5, { x: 3, y: -4 }, 3);
     const back = deserialize(serialize(state, T0), map, T0)!;
     const z = back.modifiers.find((m) => m.area !== undefined)!;
-    expect(z.area).toEqual({ centre: { x: 3, y: -4 }, radius: 3 });
+    expect(z.area).toEqual({
+      centre: { x: 3, y: -4 }, radius: 3, relic: 'DowsingRod', since: T0,
+    });
     expect(resolveAt(back, 'recoverySpeed', 1, { x: 6, y: -4 })).toBe(5);
     expect(resolve(back, 'recoverySpeed', 1)).toBe(1);
   });

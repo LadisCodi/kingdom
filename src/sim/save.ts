@@ -737,8 +737,10 @@ export function serialize(state: GameState, now: number): SaveFile {
           Op: m.op, Value: m.value, ExpiresAtUtc: isoOrNull(m.expiresAt),
           // A ZONE. Absent on every modifier that is not one, which keeps a
           // save from before relic actives byte-identical through this key.
-          Area: m.area === undefined ? null
-            : { X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius },
+          Area: m.area === undefined ? null : {
+            X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius,
+            Relic: m.area.relic, SinceUtc: iso(m.area.since),
+          },
         })),
       },
       'player.currencies': state.player.wallet,
@@ -1149,7 +1151,15 @@ export function deserialize(
       // by the key being absent, so a null here would make every old modifier
       // a zone of radius NaN.
       ...(m.Area == null ? {} : {
-        area: { centre: { x: m.Area.X, y: m.Area.Y }, radius: m.Area.Radius },
+        area: {
+          centre: { x: m.Area.X, y: m.Area.Y },
+          radius: m.Area.Radius,
+          relic: m.Area.Relic,
+          // A save from before the map could draw a zone has no instant on it.
+          // `expiresAt` still ends the zone correctly; only the wheel's sweep
+          // needs a start, and it reads as full rather than as NaN.
+          since: m.Area.SinceUtc == null ? 0 : ms(m.Area.SinceUtc),
+        },
       }),
     }));
   }

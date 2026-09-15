@@ -48,7 +48,24 @@ export interface MarkerLayer {
   liftedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
+  /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
+   *  cells each one covers, and how much of its window is left. */
+  spellZones: Array<{
+    glyph: string; centre: Coord; cells: Coord[]; left: number;
+  }>;
 }
+
+/**
+ * THE SHARED CLOCK EVERY SPELL ANIMATES ON, one slow turn every six seconds.
+ *
+ * `performance.now()` and not the sim's, deliberately: this drives a shimmer
+ * and nothing else, so it must keep moving between ticks — and it must never
+ * be something the sim can be replayed from. A zone's actual remaining time
+ * comes down the marker layer, where it is computed once against the sim's
+ * own clock.
+ */
+const SPELL_CYCLE_MS = 6000;
+const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
 
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
@@ -459,6 +476,108 @@ export function drawMap(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + fw / 2, y + size * 0.1 + 8);
+  }
+
+  // Pass 3a: SPELLS STANDING ON THE GROUND.
+  //
+  // Drawn before every other marker, because a zone is a fact about the world
+  // rather than a preview of a decision: a placement outline or a cast target
+  // must be able to sit ON TOP of it and still be read.
+  //
+  // THE TINT SAYS "THERE IS MAGIC HERE" AND THE WHEEL SAYS FOR HOW LONG, and
+  // they are drawn on different things on purpose: the tint on EVERY covered
+  // cell, because the question it answers is *which ground* — and the wheel on
+  // the CENTRE alone, because a countdown repeated across twenty-five cells is
+  // twenty-five things to read that all say the same number.
+  for (const zone of markers.spellZones) {
+    const inZone = new Set(zone.cells.map(coordKey));
+    // The pulse is the whole of the "living" read, and it is slow — a zone
+    // stands for minutes, so anything quick would be a distraction rather
+    // than a presence.
+    const pulse = 0.82 + 0.18 * Math.sin(spellPhase() * Math.PI * 2);
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = PALETTE.spellFill;
+    for (const cell of zone.cells) {
+      const { x, y } = cellRect(cell);
+      ctx.fillRect(x, y, size, size);
+    }
+    // The border traces the OUTSIDE of the whole zone, never the grid inside
+    // it: what is enchanted is an area, not a set of squares.
+    ctx.strokeStyle = PALETTE.spellBorder;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = PALETTE.spellGlow;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    for (const cell of zone.cells) {
+      const { x, y } = cellRect(cell);
+      if (!inZone.has(coordKey({ x: cell.x, y: cell.y - 1 }))) {
+        ctx.moveTo(x, y); ctx.lineTo(x + size, y);
+      }
+      if (!inZone.has(coordKey({ x: cell.x, y: cell.y + 1 }))) {
+        ctx.moveTo(x, y + size); ctx.lineTo(x + size, y + size);
+      }
+      if (!inZone.has(coordKey({ x: cell.x - 1, y: cell.y }))) {
+        ctx.moveTo(x, y); ctx.lineTo(x, y + size);
+      }
+      if (!inZone.has(coordKey({ x: cell.x + 1, y: cell.y }))) {
+        ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size);
+      }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // MOTES: two per cell, drifting upward on a loop seeded by the cell, so a
+    // big zone shimmers without any two cells moving alike. They are the
+    // "living" half of the read — a flat tint alone says a rule applies here,
+    // where something MOVING says a spell is working.
+    // NO shadow on these. The border draws four segments and can afford a
+    // blur; the motes are two per cell and a radius-5 zone is 121 of them, so
+    // a blurred mote is 242 blurred circles a frame.
+    ctx.fillStyle = PALETTE.spellGlow;
+    for (const cell of zone.cells) {
+      const { x, y } = cellRect(cell);
+      for (let i = 0; i < 2; i++) {
+        const seed = ((cell.x * 73856093) ^ (cell.y * 19349663) ^ (i * 83492791)) >>> 0;
+        const t = (spellPhase() + (seed % 1000) / 1000) % 1;
+        const mx = x + ((seed >>> 10) % 100) / 100 * size;
+        const my = y + size - t * size;
+        ctx.globalAlpha = pulse * Math.sin(t * Math.PI);
+        ctx.beginPath();
+        ctx.arc(mx, my, Math.max(2, size * 0.07), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // THE WHEEL, on the centre: a dark disc with the window sweeping off it
+    // clockwise from twelve, and the relic's own glyph in the middle so two
+    // zones standing at once are told apart by WHOSE they are.
+    const { x, y } = cellRect(zone.centre);
+    const cx = x + size / 2;
+    const cy = y + size / 2;
+    const r = size * 0.3;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = PALETTE.spellDial;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * zone.left);
+    ctx.closePath();
+    ctx.fillStyle = PALETTE.spellGlow;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = PALETTE.spellBorder;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.font = `${Math.round(r)}px ${labelFace()}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(zone.glyph, cx, cy + r * 0.05);
+    ctx.restore();
   }
 
   // Pass 3: markers.

@@ -669,6 +669,34 @@ Top to bottom:
   the order holds however an album was finished — a pack dealing the ninth card
   or a wildcard laying it.
 
+### 11.6 A spell on the map
+
+A zone is the only thing a relic puts **on the world**, so the map has to say
+two different things about it.
+
+- **THE TINT SAYS *THERE IS MAGIC HERE*, AND THE WHEEL SAYS FOR HOW LONG**, and
+  they are drawn on different things on purpose. The tint covers **every cell**
+  the zone reaches, because the question it answers is *which ground*. The
+  wheel sits on the **centre alone**, because a countdown repeated across
+  twenty-five cells is twenty-five things to read that all say one number.
+- **Violet, and violet is used by nothing else on the map.** The ground is warm
+  greens and browns, so a player never has to ask whether a glow is terrain.
+- **The border traces the outside of the whole zone**, never the grid inside
+  it: what is enchanted is an area, not a set of squares.
+- **Motes drift upward**, two a cell, each on a loop seeded by its own
+  coordinates so no two cells shimmer alike. They are the living half of the
+  read — a flat tint says a rule applies here, where something MOVING says a
+  spell is working.
+- **The wheel carries the relic's own glyph**, so two zones standing at once
+  are told apart by whose they are rather than by where they happen to be.
+- The whole thing is drawn **before every other marker**: a zone is a fact
+  about the world, so a placement outline or a cast preview must be able to sit
+  on top of it and still be read.
+- The shimmer runs on the **wall clock**, never the sim's — it must keep moving
+  between ticks, and it must never be something a replay could depend on. What
+  the wheel counts comes down with the zone, computed once against the sim's
+  own clock.
+
 ## 12. Dials, in the order to reach for them
 
 Every number below is a **proposal until the sheet exists**; the ones marked

@@ -369,7 +369,7 @@ export function cast(
         op: 'mul',
         value: activePower(state, id),
         expiresAt: now + activeDurationMs(state, id),
-        area: { centre: target!, radius: activeRadius(state, id) },
+        area: { centre: target!, radius: activeRadius(state, id), relic: id, since: now },
       });
       break;
     }
@@ -384,7 +384,7 @@ export function cast(
       // TWO NUMBERS, ONE IDEA. "Faster" for a crew is the swing AND the walk:
       // speeding only the walk would be a fraction of a round trip and would
       // read as nothing.
-      const area = { centre: target!, radius: activeRadius(state, id) };
+      const area = { centre: target!, radius: activeRadius(state, id), relic: id, since: now };
       const power = activePower(state, id);
       const until = now + activeDurationMs(state, id);
       for (const stat of ['workerStrikeSpeed', 'workerSpeed'] as const) {
@@ -403,7 +403,8 @@ export function cast(
       break;
     }
     case 'Tithe': {
-      const houses = buildingsIn(state, { centre: target!, radius: activeRadius(state, id) })
+      const zone = { centre: target!, radius: activeRadius(state, id), relic: id, since: now };
+      const houses = buildingsIn(state, zone)
         .filter((d) => d.state === 'Built' && residentsOf(state, d) > 0);
       const run = spendHouseTaps(state, houses, tapBudget(state, id), now);
       report.affected.push(...run.touched);

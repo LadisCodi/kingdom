@@ -15,7 +15,7 @@
 // in exchange for elegance nobody can see.
 
 import type {
-  Coord, CurrencyId, DistrictId, GameState, HarvestSourceId,
+  ArtifactId, Coord, CurrencyId, DistrictId, GameState, HarvestSourceId,
 } from './state';
 
 /** Everything a modifier can reach. Adding one is a line here plus a
@@ -104,6 +104,18 @@ export interface ModifierArea {
   centre: Coord;
   /** Chebyshev. 0 covers the centre cell alone. */
   radius: number;
+  /**
+   * WHOSE ZONE IT IS, and WHEN IT WAS CAST.
+   *
+   * Neither is read by `resolve` — a zone's effect does not care who placed
+   * it. They are here for the map, which has to draw *"there is magic here"*
+   * and a wheel counting the window down, and cannot do either from an
+   * expiry alone: a countdown needs the length it is counting, and one cast
+   * that places two modifiers (the Sigil's swing and walk) must draw ONE
+   * wheel, which is what the pair identifies.
+   */
+  relic: ArtifactId;
+  since: number;
 }
 
 export interface Modifier {

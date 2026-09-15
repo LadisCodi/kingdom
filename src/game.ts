@@ -26,7 +26,10 @@ import {
 import {
   explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
 } from './sim/fog';
-import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
+import {
+  cellsWithinRadius, cellsWithinRadiusOfRect, townhallDistance, type MapData,
+} from './sim/grid';
+import { activeZones, type Modifier } from './sim/modifiers';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
@@ -990,10 +993,46 @@ export class Game {
     this.notify();
   }
 
+  /**
+   * EVERY SPELL STANDING ON THE MAP, for the renderer (§11.6).
+   *
+   * ONE ENTRY PER CAST, not per modifier: the Foreman's Sigil places two —
+   * the swing and the walk — and two wheels counting down the same window on
+   * the same cell would read as two spells. They are grouped by the relic and
+   * the instant it was cast, which is exactly what identifies a cast.
+   */
+  spellZones(): Array<{
+    relic: ArtifactId; glyph: string; centre: Coord; cells: Coord[];
+    /** 1 at the cast, 0 as it closes — the wheel's sweep. */
+    left: number;
+    leftMs: number;
+  }> {
+    const now = this.now();
+    const byCast = new Map<string, Modifier>();
+    for (const m of activeZones(this.state)) {
+      byCast.set(`${m.area!.relic}:${m.area!.since}`, m);
+    }
+    return [...byCast.values()].map((m) => {
+      const { centre, radius, relic, since } = m.area!;
+      const ends = m.expiresAt ?? now;
+      const span = Math.max(1, ends - since);
+      return {
+        relic,
+        glyph: ARTIFACTS[relic].glyph,
+        centre,
+        cells: [centre, ...cellsWithinRadius(this.map, centre, radius)],
+        left: Math.max(0, Math.min(1, (ends - now) / span)),
+        leftMs: Math.max(0, ends - now),
+      };
+    });
+  }
+
   /** The buildings a zone would cover — every one for Haste, the inhabited
    *  houses for Tithe, which is what each actually reaches. */
   private zoneTargets(id: ArtifactId, active: 'Haste' | 'Tithe', centre: Coord): Coord[] {
-    const area = { centre, radius: activeRadius(this.state, id) };
+    // A PREVIEW is not a cast, so the relic and the instant are only there to
+    // satisfy the shape: nothing reads them off an area that never lands.
+    const area = { centre, radius: activeRadius(this.state, id), relic: id, since: 0 };
     return buildingsIn(this.state, area)
       .filter((d) => d.state === 'Built'
         && (active === 'Haste' || residentsOf(this.state, d) > 0))
@@ -3335,6 +3374,7 @@ export class Game {
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       hintCell: this.hintCell(),
+      spellZones: this.spellZones(),
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
