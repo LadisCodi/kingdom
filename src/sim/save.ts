@@ -715,6 +715,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         // zone is a modifier and those are written whole, so a relic that came
         // back READY while its own zone was still standing would let the
         // player lay a second one on top of the first.
+        Charges: state.artifacts.charges,
         Casts: Object.fromEntries(Object.entries(state.artifacts.casts).map(
           ([id, c]) => [id, { EndsAtUtc: iso(c!.endsAt), ReadyAtUtc: iso(c!.readyAt) }],
         )),
@@ -1111,6 +1112,7 @@ export function deserialize(
   if (artifactsDto) {
     state.artifacts = {
       levels: { ...(artifactsDto.Levels ?? {}) },
+      charges: { ...(artifactsDto.Charges ?? {}) },
       casts: Object.fromEntries(Object.entries(artifactsDto.Casts ?? {}).map(
         ([id, c]) => [id, { endsAt: ms((c as any).EndsAtUtc), readyAt: ms((c as any).ReadyAtUtc) }],
       )),

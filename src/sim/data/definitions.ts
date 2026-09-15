@@ -1342,7 +1342,8 @@ export interface ArtifactDef {
   pending: string | null;
 }
 
-export type ArtifactActiveId = 'Divining' | 'Reap' | 'Haste' | 'Tithe' | 'Survey';
+export type ArtifactActiveId =
+  | 'Divining' | 'Reap' | 'Haste' | 'Tithe' | 'Survey' | 'Lamplight';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1369,6 +1370,10 @@ export interface ArtifactActive {
    *  multiplier read inside the zone while the window lasts. 0 = not one. */
   power: number;
   powerPerLevel: number;
+  /** USES, for an ability whose window is counted in EVENTS rather than in
+   *  seconds. 0 = it is not one of those. */
+  charges: number;
+  chargesPerLevel: number;
 }
 
 type ArtifactBalance = {
@@ -1377,6 +1382,7 @@ type ArtifactBalance = {
   activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
   activePower: number; activePowerPerLevel: number;
   activeDurationPerLevel: number;
+  activeCharges: number; activeChargesPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
@@ -1407,6 +1413,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       power: ab('DowsingRod').activePower,
       powerPerLevel: ab('DowsingRod').activePowerPerLevel,
       durationPerLevel: ab('DowsingRod').activeDurationPerLevel,
+      charges: 0, chargesPerLevel: 0,
       text: 'Wakes every tired node nearby at once, and keeps them coming back',
     },
     pending: null,
@@ -1431,7 +1438,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('VerdantSeal').activeRadius,
       tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
       tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0, durationPerLevel: 0,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
       text: 'Harvests every node nearby, over and over, for free',
     },
     pending: null,
@@ -1463,6 +1470,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       power: ab('ForemansSigil').activePower,
       powerPerLevel: ab('ForemansSigil').activePowerPerLevel,
       durationPerLevel: ab('ForemansSigil').activeDurationPerLevel,
+      charges: 0, chargesPerLevel: 0,
       text: 'The crews of every building nearby work much faster for a while',
     },
     pending: null,
@@ -1484,7 +1492,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('GildedLedger').activeRadius,
       tapsPerMana: ab('GildedLedger').activeTapsPerMana,
       tapsPerManaPerLevel: ab('GildedLedger').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0, durationPerLevel: 0,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
       text: 'Collects from every house nearby, over and over, for free',
     },
     pending: null,
@@ -1497,7 +1505,22 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'roomHaul', scope: null, op: 'mul' }],
       base: ab('DelversLantern').passiveBase, perLevel: ab('DelversLantern').passivePerLevel,
     },
-    active: null,
+    // COUNTED IN ROOMS, NOT MINUTES. The only clock a delve has is the player
+    // opening the next door, so a window of minutes would be a timer running
+    // while nothing happens — and a spell bought before a delve would expire
+    // in the party screen. It is UNTARGETED for the same reason: a delve is
+    // the place, and the player is already standing in it.
+    active: {
+      id: 'Lamplight', name: 'Lamplight', targeted: false,
+      manaCost: ab('DelversLantern').activeManaCost, durationSeconds: 0, radius: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      power: ab('DelversLantern').activePower,
+      powerPerLevel: ab('DelversLantern').activePowerPerLevel,
+      durationPerLevel: 0,
+      charges: ab('DelversLantern').activeCharges,
+      chargesPerLevel: ab('DelversLantern').activeChargesPerLevel,
+      text: 'The next rooms you clear pay double \u2014 cast it before you go down',
+    },
     pending: null,
   },
   MusterHorn: {
@@ -1543,7 +1566,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0,
       radius: ab('WanderersCompass').activeRadius,
       tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
-      durationPerLevel: 0,
+      durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
       text: 'Clears the fog around a cell you hold, free of gold',
     },
     pending: null,
@@ -2262,4 +2285,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 56;
+export const SAVE_VERSION = 57;

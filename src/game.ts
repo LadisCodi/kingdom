@@ -53,9 +53,9 @@ import {
   ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
 import {
-  activeRadius, buildingsIn, cast, castBlock, castState, divinationSaving,
-  reapCells, surveyCells, tapBudget, tapRunSeconds, validCastCells,
-  type CastPhase,
+  activeRadius, buildingsIn, cast, castBlock, castState, chargesLeft,
+  divinationSaving, reapCells, surveyCells, tapBudget, tapRunSeconds,
+  validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -1203,7 +1203,7 @@ export class Game {
     pending: string | null;
     /** Where the ability is in its ACTIVE → COOLDOWN → READY walk, and how
      *  long is left of the phase it is in (§2.1). */
-    cast: { phase: CastPhase; leftMs: number };
+    cast: { phase: CastPhase; leftMs: number; charges: number };
   } {
     const def = ARTIFACTS[id];
     const album = albumOfRelic(id, this.state.collection.season);
@@ -1228,10 +1228,16 @@ export class Game {
   /** The three-state walk, as the card reads it. `leftMs` is derived from a
    *  timestamp every frame, so a throttled tab comes back correct rather than
    *  frozen mid-countdown. */
-  castPhase(id: ArtifactId): { phase: CastPhase; leftMs: number } {
+  castPhase(id: ArtifactId): { phase: CastPhase; leftMs: number; charges: number } {
     const now = this.now();
     const { phase, until } = castState(this.state, id, now);
-    return { phase, leftMs: until === null ? 0 : Math.max(0, until - now) };
+    return {
+      phase,
+      leftMs: until === null ? 0 : Math.max(0, until - now),
+      // An ability counted in EVENTS has no clock to show, so the card says
+      // how many uses are left instead of how long is left.
+      charges: chargesLeft(this.state, id),
+    };
   }
 
   /** The sentence a Legendary's card prints under its trait, or null on the
@@ -3026,7 +3032,7 @@ export class Game {
     if (this.expeditionRuin === null || this.partyHeroes.length === 0) return;
     const ruinId = this.expeditionRuin;
     const report = enterRoom(
-      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty,
+      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty, this.now(),
     );
     // The dead are off the roster now, so the squads on the board have to
     // come back down to what is left of them.

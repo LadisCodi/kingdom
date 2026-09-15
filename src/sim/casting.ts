@@ -64,6 +64,10 @@ export interface CastState {
  * them is a boundary.
  */
 export function castState(state: GameState, id: ArtifactId, now: number): CastState {
+  // CHARGES FIRST, and they have no clock. A lantern lit and not spent stays
+  // lit: the only clock a delve has is the player opening the next door, so
+  // the relic is ACTIVE until the last room takes the last charge.
+  if (chargesLeft(state, id) > 0) return { phase: 'Active', until: null };
   const c = state.artifacts.casts[id];
   if (c === undefined) return { phase: 'Ready', until: null };
   if (now < c.endsAt) return { phase: 'Active', until: c.endsAt };
@@ -282,6 +286,40 @@ export function activePowerAt(id: ArtifactId, level: number): number {
 export const activePower = (state: GameState, id: ArtifactId): number =>
   activePowerAt(id, artifactLevel(state, id));
 
+/** How many uses a cast buys, for an ability counted in events. 0 = not one. */
+export function activeChargesAt(id: ArtifactId, level: number): number {
+  const active = ARTIFACTS[id].active;
+  if (active === null || active.charges <= 0) return 0;
+  const n = Math.max(1, level);
+  return Math.round(active.charges + active.chargesPerLevel * (n - 1));
+}
+
+/** Uses this relic's ability still has in hand. */
+export const chargesLeft = (state: GameState, id: ArtifactId): number =>
+  state.artifacts.charges[id] ?? 0;
+
+/**
+ * SPEND ONE USE, and return the multiplier it was worth — 1 when the relic has
+ * none in hand, so a call site can multiply unconditionally.
+ *
+ * THE COOLDOWN STARTS ON THE LAST ONE. A charged ability has no window to
+ * close, so the moment its last use is taken IS the close, and the wait is
+ * counted from there like every other relic's (§2.1).
+ */
+export function spendCharge(state: GameState, id: ArtifactId, now: number): number {
+  const left = chargesLeft(state, id);
+  if (left <= 0) return 1;
+  state.artifacts.charges[id] = left - 1;
+  if (left - 1 === 0) {
+    delete state.artifacts.charges[id];
+    state.artifacts.casts[id] = {
+      endsAt: now,
+      readyAt: now + ARTIFACT_COOLDOWN_SECONDS * 1000,
+    };
+  }
+  return activePower(state, id);
+}
+
 /** The built districts standing in a zone. A building is its ANCHOR cell, so
  *  a wide building is in or out as a whole. */
 export const buildingsIn = (state: GameState, area: ModifierArea): District[] =>
@@ -413,6 +451,12 @@ export function cast(
       report.goldSaved = run.gold;
       break;
     }
+    case 'Lamplight': {
+      // No zone, no window — a handful of uses that wait for the player to go
+      // down and open a door.
+      state.artifacts.charges[id] = activeChargesAt(id, artifactLevel(state, id));
+      break;
+    }
     case 'Survey': {
       // RING BY RING from the cell it was cast on, so the fog grows out of
       // what the player holds rather than appearing as islands. Cells are
@@ -432,11 +476,16 @@ export function cast(
   payMana(state, castCost(state, id));
   // THE CYCLE STARTS HERE, and the wait is measured from where the window
   // ends — which for an ability that leaves nothing standing is `now`.
-  const endsAt = now + activeDurationMs(state, id);
-  state.artifacts.casts[id] = {
-    endsAt,
-    readyAt: endsAt + ARTIFACT_COOLDOWN_SECONDS * 1000,
-  };
+  // A CHARGED ABILITY STARTS NO CLOCK. Its close is the moment its last use
+  // is spent (`spendCharge`), which may be minutes or days away, so stamping a
+  // cooldown here would let the relic come back READY with charges in hand.
+  if (chargesLeft(state, id) === 0) {
+    const endsAt = now + activeDurationMs(state, id);
+    state.artifacts.casts[id] = {
+      endsAt,
+      readyAt: endsAt + ARTIFACT_COOLDOWN_SECONDS * 1000,
+    };
+  }
   return report;
 }
 

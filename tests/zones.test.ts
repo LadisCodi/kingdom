@@ -10,11 +10,13 @@
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel, syncArtifactModifiers } from '../src/sim/artifacts';
 import {
-  activeDurationMs, activeDurationMsAt, activePower, activePowerAt, activeRadius,
-  activeRadiusAt, cast, castBlock, castCost, castState, reapCells, surveyCells,
-  tapBudget, tapRunSeconds,
+  activeChargesAt, activeDurationMs, activeDurationMsAt, activePower,
+  activePowerAt, activeRadius, activeRadiusAt, cast, castBlock, castCost,
+  castState, chargesLeft, reapCells, spendCharge, surveyCells, tapBudget,
+  tapRunSeconds,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
+import { roomReward } from '../src/sim/expeditions';
 import {
   ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS,
   HARVEST,
@@ -752,5 +754,84 @@ describe('a faster recovery fills the bar faster, not fuller', () => {
 
     expect(state.harvest[coordKey(FOREST)]!.recoveryMs).toBe(span);
     expect(recoveryProgress(state, map, FOREST, spec(state), T0 + span / 2)!).toBe(half);
+  });
+});
+
+// ------------------------------------------------ an ability counted in rooms
+
+/**
+ * LAMPLIGHT IS COUNTED IN ROOMS, NOT MINUTES. The only clock a delve has is the
+ * player opening the next door, so a window of minutes would be a timer running
+ * while nothing happens — and a spell bought before a delve would expire in the
+ * party screen.
+ */
+describe('Lamplight waits in the lantern until it is spent', () => {
+  const lit = (level: number): GameState => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    state.artifacts.levels.DelversLantern = level;
+    syncArtifactModifiers(state);
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  it('buys more rooms at every level', () => {
+    let last = 0;
+    for (const level of [1, 2, 5, 10, 20]) {
+      const n = activeChargesAt('DelversLantern', level);
+      expect(n, `level ${level}`).toBeGreaterThan(last);
+      last = n;
+    }
+  });
+
+  it('holds its charges with no clock on them at all', () => {
+    const state = lit(1);
+    expect(cast(state, map, 'DelversLantern', null, T0).result).toBe('Cast');
+    expect(chargesLeft(state, 'DelversLantern')).toBe(activeChargesAt('DelversLantern', 1));
+    // A DAY later, unspent and still lit: a charge cannot expire while
+    // nothing is happening.
+    expect(castState(state, 'DelversLantern', T0 + 24 * 3600_000).phase).toBe('Active');
+    expect(chargesLeft(state, 'DelversLantern')).toBeGreaterThan(0);
+  });
+
+  it('doubles the room it is spent on, and only that one', () => {
+    const state = lit(1);
+    const plain = roomReward(state, 'HollowBarrow', 1, 1).wallet.Gold!;
+    cast(state, map, 'DelversLantern', null, T0);
+    const power = spendCharge(state, 'DelversLantern', T0);
+    expect(power).toBeGreaterThan(1);
+    expect(roomReward(state, 'HollowBarrow', 1, 1, power).wallet.Gold!)
+      .toBe(Math.round(plain * power));
+    // The preview asks the same question and spends nothing.
+    expect(roomReward(state, 'HollowBarrow', 1, 1).wallet.Gold!).toBe(plain);
+  });
+
+  // THE LAST CHARGE IS THE CLOSE. A charged ability has no window, so the
+  // moment its last use is taken is what the cooldown counts from.
+  it('starts its cooldown on the last room, not on the cast', () => {
+    const state = lit(1);
+    const n = activeChargesAt('DelversLantern', 1);
+    cast(state, map, 'DelversLantern', null, T0);
+    // An hour of delving later, the last charge goes.
+    const late = T0 + 3600_000;
+    for (let i = 0; i < n; i++) spendCharge(state, 'DelversLantern', late);
+    expect(chargesLeft(state, 'DelversLantern')).toBe(0);
+    expect(castState(state, 'DelversLantern', late).phase).toBe('Cooldown');
+    expect(castState(state, 'DelversLantern', late + ARTIFACT_COOLDOWN_SECONDS * 1000).phase)
+      .toBe('Ready');
+  });
+
+  it('refuses a second cast while charges are still in hand', () => {
+    const state = lit(1);
+    cast(state, map, 'DelversLantern', null, T0);
+    expect(castBlock(state, 'DelversLantern', T0 + 1)).toBe('Active');
+  });
+
+  // Spending with nothing in hand is a no-op worth 1, so a call site can
+  // multiply by it unconditionally.
+  it('is worth exactly one when the lantern is dark', () => {
+    const state = lit(1);
+    expect(spendCharge(state, 'DelversLantern', T0)).toBe(1);
+    expect(castState(state, 'DelversLantern', T0).phase).toBe('Ready');
   });
 });

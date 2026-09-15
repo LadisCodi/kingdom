@@ -41,6 +41,7 @@ import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
+import { spendCharge } from './casting';
 import { isTechComplete } from './research';
 import { techFlat, techFlatAimed, techValue } from './techEffects';
 import {
@@ -427,6 +428,11 @@ export const isBossRoom = (ruinId: RuinId, depth: number, room: number): boolean
  */
 export function roomReward(
   state: GameState, ruinId: RuinId, depth: number, room: number,
+  /** What a Lamplight use is worth on this room, 1 when none is spent. The
+   *  CALLER spends it, never this — the party screen asks what a room WOULD
+   *  pay, and a preview that burned a charge would cost the player one for
+   *  looking. */
+  lamplight = 1,
 ): { wallet: Wallet; heroXp: number; pack: PackTier } {
   const def = depthDef(ruinId, depth);
   const tier = RUINS[ruinId].tier;
@@ -436,7 +442,7 @@ export function roomReward(
   // carries the Wanderer's Compass and its Hero XP a legendary's boon, so a
   // relic on the whole `scale` would stack three permanent layers on one
   // number and none of them would be readable.
-  const haul = Math.max(1, resolve(state, 'roomHaul', 1));
+  const haul = Math.max(1, resolve(state, 'roomHaul', 1)) * lamplight;
   return {
     wallet: {
       Gold: Math.round(20 * scale * haul),
@@ -537,6 +543,11 @@ export function enterRoom(
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
+  /** Defaults to the sim's own clock. A room resolves here and now, so the
+   *  only thing this instant is for is the Lamplight charge it may spend:
+   *  the last one starts that relic's cooldown, and a cooldown needs a
+   *  moment (invariant 3 — the sim never reads a clock of its own). */
+  now: number = state.lastAdvance,
 ): RoomReport {
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
@@ -569,7 +580,11 @@ export function enterRoom(
 
   // Cleared. The room pays into the wallets it belongs in, immediately: there
   // is no haul to carry home, so nothing can be lost on the way.
-  const reward = roomReward(state, ruinId, at.depth, at.room);
+  // SPENT HERE AND NOWHERE ELSE: a room is cleared once, and this is the line
+  // that says so. The preview on the party screen asks the same function
+  // without a charge, so looking costs nothing.
+  const reward = roomReward(state, ruinId, at.depth, at.room,
+    spendCharge(state, 'DelversLantern', now));
   for (const [c, n] of Object.entries(reward.wallet)) {
     if (n <= 0) continue;
     if (c === 'Stardust') {

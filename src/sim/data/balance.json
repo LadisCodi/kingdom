@@ -4447,7 +4447,9 @@
       "activeTapsPerManaPerLevel": 0,
       "activePower": 5,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 60
+      "activeDurationPerLevel": 60,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "VerdantSeal": {
       "passiveBase": 1,
@@ -4459,7 +4461,9 @@
       "activeTapsPerManaPerLevel": 0.25,
       "activePower": 0,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "ForemansSigil": {
       "passiveBase": 1.1,
@@ -4471,7 +4475,9 @@
       "activeTapsPerManaPerLevel": 0,
       "activePower": 2,
       "activePowerPerLevel": 0.25,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "GildedLedger": {
       "passiveBase": 1.1,
@@ -4483,7 +4489,9 @@
       "activeTapsPerManaPerLevel": 0.25,
       "activePower": 0,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "WanderersCompass": {
       "passiveBase": 1.25,
@@ -4495,19 +4503,23 @@
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "DelversLantern": {
       "passiveBase": 1.15,
       "passivePerLevel": 0.15,
-      "activeManaCost": 0,
+      "activeManaCost": 20,
       "activeDurationSeconds": 0,
       "activeRadius": 0,
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
-      "activePower": 0,
+      "activePower": 2,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 3,
+      "activeChargesPerLevel": 1
     },
     "MusterHorn": {
       "passiveBase": 1.1,
@@ -4519,7 +4531,9 @@
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     },
     "BailiffsTally": {
       "passiveBase": 1.15,
@@ -4531,7 +4545,9 @@
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
       "activePowerPerLevel": 0,
-      "activeDurationPerLevel": 0
+      "activeDurationPerLevel": 0,
+      "activeCharges": 0,
+      "activeChargesPerLevel": 0
     }
   },
   "quests": [

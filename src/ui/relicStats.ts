@@ -16,7 +16,9 @@
 // which. A box apiece says it without a sentence.
 
 import { ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS } from '../sim/data/definitions';
-import { activeDurationMsAt, activePowerAt, activeRadiusAt } from '../sim/casting';
+import {
+  activeChargesAt, activeDurationMsAt, activePowerAt, activeRadiusAt,
+} from '../sim/casting';
 import { passiveValueAtLevel } from '../sim/artifacts';
 import { formatDuration } from './format';
 import type { ModifierStat } from '../sim/modifiers';
@@ -117,6 +119,12 @@ export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
   const window = activeDurationMsAt(id, level) / 1000;
   if (window > 0) {
     out.push({ key: 'window', icon: 'hourglass', label: 'Window', value: formatDuration(window) });
+  }
+  // An ability counted in EVENTS shows its uses where a timed one shows its
+  // window: they are the same fact, measured in what that spell is about.
+  const charges = activeChargesAt(id, level);
+  if (charges > 0) {
+    out.push({ key: 'charges', icon: 'dungeon', label: 'Rooms', value: String(charges) });
   }
   // POWER, when the ability has one — how hard the zone hits while it stands.
   const power = activePowerAt(id, level);

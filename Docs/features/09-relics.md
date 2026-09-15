@@ -110,7 +110,7 @@ The eight, and which one axis each grows:
 | **Foreman's Sigil** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
 | **Gilded Ledger** | **Tithe** — collects from every house in the zone, over and over, free | a centre | **taps per Mana** |
 | **Wanderer's Compass** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
-| **The Delver's Lantern** | — *waits on its own step* | a ruin | — |
+| **The Delver's Lantern** | **Lamplight** — the next rooms you clear pay double | nothing; it is lit and carried | **rooms** |
 | **The Muster Horn** | — *waits on the world map* | a fortification | — |
 | **The Bailiff's Tally** | — *waits on the world map* | a tile you hold | — |
 
@@ -126,6 +126,19 @@ The eight, and which one axis each grows:
 - **`Survey` buys the GOLD, never the ladder.** The Townhall's reach still
   gates every cell, so the fog grows out of what the player holds rather than
   appearing as islands.
+- **AN ABILITY MAY BE COUNTED IN EVENTS RATHER THAN IN SECONDS.** Lamplight is
+  a handful of ROOMS, not a window of minutes: the only clock a delve has is
+  the player opening the next door, so minutes would be a timer running while
+  nothing happens — and a lantern lit before a delve would burn out in the
+  party screen.
+  - It has **no clock at all**. A charge cannot expire, so a lantern lit and
+    not spent stays lit and the relic stays ACTIVE until the last room takes
+    the last use.
+  - **The last charge is the close**, and the cooldown counts from there — a
+    charged ability has no window to end, so the moment it runs out IS the
+    end.
+  - It is **untargeted**: a delve is the place, and the player casting it is
+    already standing in it.
 - **The two auto-tap abilities are an EXCHANGE RATE**, and the rate is what
   the level moves. A tap they land **costs no Mana** — thirty at a Mana each
   would be impossible — so they are the one exception to *every player tap
@@ -714,6 +727,7 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `Artifacts` sheet, `active_taps_per_mana` · `…_per_level` |
 | How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil; **×5.00 flat** on the Rod | `Artifacts` sheet, `active_power` · `active_power_per_level` |
 | Seconds a level adds to a window | **+60** on the Rod, from a five-minute base | `Artifacts` sheet, `active_duration_per_level` |
+| Uses an event-counted ability buys | **3 rooms, +1 a level** on the Lantern | `Artifacts` sheet, `active_charges` · `active_charges_per_level` |
 | How fast an auto-tap run is watched | **4 taps a second** | `artifacts.auto_tap_per_second` |
 | An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifacts.active_cooldown_seconds` |
 | Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifacts.active_radius_steps` |

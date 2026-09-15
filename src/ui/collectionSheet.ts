@@ -368,8 +368,14 @@ function spellSection(game: Game, id: ArtifactId, card: ReturnType<Game['relicCa
     statBand(spellStatChanges(id, Math.max(1, card.level))));
 
   if (!card.owned) return body;
-  const { phase, leftMs } = card.cast;
+  const { phase, leftMs, charges } = card.cast;
   const left = formatDuration(Math.ceil(leftMs / 1000));
+  // AN ABILITY COUNTED IN EVENTS HAS NO CLOCK, so it says what it has left
+  // rather than how long: a lantern lit and not spent stays lit, and a
+  // countdown on it would be a promise it never has to keep.
+  const running = charges > 0
+    ? `${active.name} is lit — ${charges} ${charges === 1 ? 'room' : 'rooms'} left`
+    : `${active.name} is running — ${left} left`;
   body.append(phase === 'Ready'
     ? btn({
       label: `Cast ${active.name}`,
@@ -378,9 +384,7 @@ function spellSection(game: Game, id: ArtifactId, card: ReturnType<Game['relicCa
     })
     : el('div', { class: `col-cast-phase is-${phase.toLowerCase()}` },
       iconEl('hourglass', { size: 'sm' }),
-      el('span', {}, phase === 'Active'
-        ? `${active.name} is running — ${left} left`
-        : `Ready again in ${left}`)));
+      el('span', {}, phase === 'Active' ? running : `Ready again in ${left}`)));
   return body;
 }
 

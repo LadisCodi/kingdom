@@ -564,6 +564,16 @@ export interface GameState {
      * rest would reprice a running window every time the relic gained a level.
      */
     casts: Partial<Record<ArtifactId, { endsAt: number; readyAt: number }>>;
+    /**
+     * USES LEFT on an ability whose window is counted in EVENTS rather than
+     * in seconds — the Delver's Lantern's rooms.
+     *
+     * It has no clock at all, and deliberately: the only clock a delve has is
+     * the player opening the next door, so a charge cannot expire while
+     * nothing is happening. A lantern lit and not spent stays lit, and the
+     * relic stays ACTIVE until the last room takes it.
+     */
+    charges: Partial<Record<ArtifactId, number>>;
   };
   /**
    * The card collection — the live season only. Wiped whole at the close, so
