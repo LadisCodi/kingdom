@@ -21,7 +21,10 @@ import { choosePayerProfile } from '../src/sim/store';
 import { advance } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState } from '../src/sim/state';
-import { addAllTrainers, addBuilt, freshGame, fund, map, T0 } from './helpers';
+import { grantPack } from '../src/sim/collection';
+import {
+  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, T0,
+} from './helpers';
 
 const WINDOW = MISSIONS.windowHours * 3_600_000;
 
@@ -275,6 +278,89 @@ describe('it is not a boundary source', () => {
     advance(state, map, T0 + 30 * 86_400_000);
     expect(state.kingdom.pass.live.length).toBe(issued);
     expect(state.kingdom.pass.lastWindow).toBe(windowIndex(T0));
+  });
+});
+
+describe('a pack opens itself', () => {
+  /**
+   * A presenter on a kingdom standing at `level`.
+   *
+   * The XP is stamped against the PRESENTER's own clock, not `T0`: a presenter
+   * reads `Date.now()`, and a pass stamped with a season that is not the
+   * running one reads as empty — correctly, which is what every other test
+   * here relies on.
+   */
+  const presenterAt = (level: number) => {
+    const game = freshPresenter(kingdom());
+    let xp = 0;
+    for (let l = 1; l <= level; l++) xp += levelCost(l);
+    game.state.kingdom.pass.season = seasonAt(game.now());
+    game.state.kingdom.pass.xp = xp;
+    return game;
+  };
+
+  it('turns over a pack the player watched land', () => {
+    // The first rung that pays a pack, so the claim is the only thing that
+    // could have put one in the queue.
+    const level = PASS.freePacks.findIndex((p) => p !== '') + 1;
+    const game = presenterAt(level);
+    expect(game.state.collection.packs).toEqual([]);
+    expect(game.gachaReveal).toBeNull();
+
+    game.doClaimPassCell(level, 'free');
+
+    // It did NOT go into the queue to be fetched from a screen two taps away.
+    expect(game.gachaReveal).not.toBeNull();
+    expect(game.gachaReveal!.caption).toContain('pack');
+    expect(game.gachaReveal!.prizes.length).toBeGreaterThan(0);
+    expect(game.state.collection.packs).toEqual([]);
+  });
+
+  it('deals them one at a time, and only into a free screen', () => {
+    const level = 10;
+    const game = presenterAt(level);
+    let owed = 0;
+    for (let l = 1; l <= level; l++) {
+      if (freeCell(l).pack !== null) owed += 1;
+      game.doClaimPassCell(l, 'free');
+    }
+    expect(owed).toBeGreaterThan(1);
+    // One on screen; the rest are WAITING, not lost and not all dealt at once.
+    expect(game.gachaReveal).not.toBeNull();
+    let seen = 1;
+    while (game.gachaReveal !== null && seen < owed + 2) {
+      game.dismissGachaReveal();
+      if (game.gachaReveal !== null) seen += 1;
+    }
+    expect(seen).toBe(owed);
+    expect(game.state.collection.packs).toEqual([]);
+  });
+
+  it('does not owe an opening for a pack that arrived while nobody looked', () => {
+    // The presenter is seeded from the state it is GIVEN, which is what draws
+    // the offline line: a pack already in the queue at load is not news.
+    const state = kingdom();
+    grantPack(state, 'Green', 'dev');
+    const game = freshPresenter(state);
+    game.notify();
+    expect(game.gachaReveal).toBeNull();
+    expect(game.state.collection.packs).toHaveLength(1);
+    // And the button in the Collection still turns it over.
+    game.doOpenPack();
+    expect(game.gachaReveal).not.toBeNull();
+    expect(game.state.collection.packs).toEqual([]);
+  });
+
+  it('never opens two into the same screen', () => {
+    const state = kingdom();
+    grantPack(state, 'Green', 'dev');
+    grantPack(state, 'Green', 'dev');
+    const game = freshPresenter(state);
+    game.doOpenPack();
+    const first = game.gachaReveal;
+    game.doOpenPack();
+    expect(game.gachaReveal).toBe(first);
+    expect(game.state.collection.packs).toHaveLength(1);
   });
 });
 

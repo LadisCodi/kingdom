@@ -209,7 +209,11 @@ describe('the presenter', () => {
 
     game.confirmIap();
     expect(game.openOverlay).toBe('store');
-    expect(game.state.collection.packs).toHaveLength(offer.packs);
+    // THE FIRST PACK IS ALREADY OPEN. A pack the player watched land opens
+    // itself, so what is left in the queue is the hand minus the one on
+    // screen — and the reveal is holding that one.
+    expect(game.gachaReveal).not.toBeNull();
+    expect(game.state.collection.packs).toHaveLength(offer.packs - 1);
     expect(game.state.collection.wildcards[offer.rarity]).toBe(offer.wildcards);
     // Money bought cards, not currency.
     expect(game.walletValue('Gems')).toBe(gems);

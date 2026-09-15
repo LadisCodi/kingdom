@@ -410,8 +410,12 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
 - The pace to author against is **how many of the eight a player who buys
   nothing completes in a season**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
-- A pack is **earned where it falls and opened in the Collection**: one
-  earned during an absence waits until the player is looking at it.
+- **A pack the player WATCHED land opens itself**, in the reveal, wherever they
+  were standing — claiming a pass cell, buying a bundle, closing an album. They
+  are dealt one at a time and never into a screen that is already showing one.
+- **A pack that arrived while nobody was looking waits** in the Collection and
+  is opened by the button there. That is the offline line, and it is the same
+  rule as before for the only case it ever really covered.
 - **A guarantee names a FACE, not a rarity**, so it can ask for a gold 4★ as
   easily as for a plain one and can never come up empty. **Gold outranks every
   plain card**, whatever its rarity, which is what puts it on the last beat of

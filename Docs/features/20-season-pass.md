@@ -30,6 +30,9 @@ playing** (its ladder advances on XP).
 - Buying the pass **opens every level already reached** — a column of cells to
   tap, not a payout.
 - Nothing on the ladder expires before the season does.
+- **A pack from a cell opens itself** in the card reveal, where the player is
+  standing ([`09-relics.md`](09-relics.md) §6). Claiming several deals them one
+  at a time.
 - The free column reaches the **grand prize** at level 40.
 
 | Column | Pays |

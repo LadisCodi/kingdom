@@ -370,6 +370,34 @@ export class Game {
   /** The collection prize, waiting for the screen the pack reveal is using
    *  (§5). Transient like the payouts beside it. */
   private pendingPrize: CollectionPrize | null = null;
+  /**
+   * PACKS THAT HAVE ARRIVED AND NOT YET TURNED OVER.
+   *
+   * A pack the player WATCHED land — a pass cell, a bundle, an album — opens
+   * itself. It used to go into the collection's queue and sit there until
+   * somebody walked to the Collection and pressed a button, which made the
+   * reward of a ladder a chore two screens away.
+   *
+   * A COUNT, not a list of packs, because `openPack` takes the head of the
+   * queue and nothing else can: what is owed is an OPENING, and the queue
+   * decides which pouch it turns over.
+   */
+  private pendingPackOpenings = 0;
+  /**
+   * How many packs were in the queue the last time the screen looked.
+   *
+   * WATCHING THE COUNT IS WHAT MAKES THIS GENERAL. Every path that grants a
+   * pack — the pass's two columns, the card bundles, a closed album, the dev
+   * bar, and whatever is added next — goes through `grantPack`, and every
+   * player command ends in `notify()`. So the difference between two notifies
+   * IS the set of packs the player just earned, and no grant site has to
+   * remember to announce itself.
+   *
+   * It also draws the offline line for free: it is seeded from the state the
+   * game LOADS with, so packs that arrived while nobody was looking are not
+   * owed an opening and wait in the Collection as they always did.
+   */
+  private packsSeen = -1;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -387,6 +415,9 @@ export class Game {
     public readonly camera: Camera,
   ) {
     this.registerTapHandlers();
+    // Seeded from what the game LOADED with, so a pack earned while nobody
+    // was looking is not owed an opening.
+    this.packsSeen = state.collection.packs.length;
   }
 
   now(): number {
@@ -416,6 +447,17 @@ export class Game {
     // the LIVE tick and `advance()` never proposes a boundary for it. A stamp
     // rather than a cursor, so a long absence issues one window's worth.
     rollMissionsIfDue(this.state, this.now());
+    // A PACK THE PLAYER JUST EARNED OPENS ITSELF. The difference between two
+    // notifies is exactly what they earned since the last one, whatever
+    // granted it; `dealPayouts` then turns one over as soon as the screen is
+    // free, so three claimed cells are three reveals in a row rather than
+    // three pouches filed away somewhere else.
+    const packs = this.state.collection.packs.length;
+    if (this.packsSeen >= 0 && packs > this.packsSeen) {
+      this.pendingPackOpenings += packs - this.packsSeen;
+    }
+    this.packsSeen = packs;
+    this.dealPayouts();
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
@@ -1276,14 +1318,15 @@ export class Game {
   }
 
   /**
-   * OPEN THE NEXT PACK. The cards turn in the gacha reveal, and an album its
-   * ninth card finished follows the reveal rather than interrupting it (§11.5).
+   * OPEN THE NEXT PACK BY HAND — the button in the Collection.
+   *
+   * It survives the auto-open because a BACKLOG still exists: packs that
+   * landed while the player was away are not owed an opening, and neither is
+   * one granted by the dev bar. This is how those are turned over.
    */
   doOpenPack(): void {
-    const opening = openPack(this.state, this.now());
-    if (opening === null) return;
-    playSfx('chainFinished');
-    this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
+    if (this.gachaReveal !== null) return; // a reveal is already on screen
+    if (!this.turnOverPack()) return;
     this.notify();
   }
 
@@ -1341,6 +1384,17 @@ export class Game {
       };
       return;
     }
+    // Then the packs, one at a time. AFTER the prize, because the prize is the
+    // most exciting screen the game has and the forty-fifth card should lead;
+    // BEFORE the album banners, because a pennant is the quietest thing here
+    // and the run should not end on a pouch.
+    if (this.pendingPackOpenings > 0) {
+      this.pendingPackOpenings -= 1;
+      if (this.turnOverPack()) return;
+      // The queue was empty after all — a wildcard or a season close took the
+      // pack between the grant and the deal. Nothing is owed.
+      this.pendingPackOpenings = 0;
+    }
     for (const payout of this.pendingPayouts.splice(0)) {
       const relic = ARTIFACTS[payout.relic];
       this.queueBanner({
@@ -1354,6 +1408,25 @@ export class Game {
         tone: 'gold',
       });
     }
+  }
+
+  /**
+   * TURN ONE PACK OVER, and put its cards in the reveal.
+   *
+   * The ONE opener: the button in the Collection and a pack that just landed
+   * both come through here, so a pouch can never be spent by a path that
+   * forgets the sound or the screen. False when the queue is empty.
+   */
+  private turnOverPack(): boolean {
+    const opening = openPack(this.state, this.now());
+    if (opening === null) return false;
+    playSfx('chainFinished');
+    this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
+    // The queue just got shorter by one, and this is not a pack the player
+    // earned — without this the next notify would read the drop and then the
+    // NEXT grant would be counted against a stale number.
+    this.packsSeen = this.state.collection.packs.length;
+    return true;
   }
 
   /** What the reveal will deal, asked before it is opened — the album screen
