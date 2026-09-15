@@ -51,7 +51,8 @@ import {
 } from './sim/data/seasons';
 import {
   activeRadius, buildingsIn, cast, castBlock, castState, divinationSaving,
-  reapCells, tapBudget, tapRunSeconds, validCastCells, type CastPhase,
+  reapCells, surveyCells, tapBudget, tapRunSeconds, validCastCells,
+  type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -1017,8 +1018,11 @@ export class Game {
       cell: selected,
       manaCost: active.manaCost,
       affordable: mana(this.state) >= active.manaCost,
-      saving: active.id === 'Divination' && selected
-        ? divinationSaving(this.state, this.map, selected) : 0,
+      // The Gold a Survey would save — the whole zone's fog, not one cell's.
+      saving: active.id === 'Survey' && selected
+        ? surveyCells(this.state, this.map, selected, activeRadius(this.state, artifactId))
+          .reduce((n, c) => n + divinationSaving(this.state, this.map, c), 0)
+        : 0,
       reap: (active.id === 'Reap' || active.id === 'Tithe') && selected
         ? {
           nodes: active.id === 'Reap'
@@ -3445,13 +3449,25 @@ export class Game {
           layer.influenceCells = this.zoneTargets(
             this.mode.artifactId, active.id, this.mode.selected);
         }
-        if (active.id === 'Divination') {
-          layer.yieldCells = [{
-            cell: this.mode.selected,
-            label: String(divinationSaving(this.state, this.map, this.mode.selected)),
-            icon: 'Gold',
-            tone: 'good',
-          }];
+        // A SURVEY LIGHTS THE FOG IT WOULD LIFT, each cell labelled with what
+        // it would have cost — the decision is Gold against Mana, and the
+        // grid is where that question gets answered.
+        if (active.id === 'Survey') {
+          layer.yieldCells = surveyCells(
+            this.state, this.map, this.mode.selected,
+            activeRadius(this.state, this.mode.artifactId),
+          ).map((cell) => ({
+            cell,
+            label: String(divinationSaving(this.state, this.map, cell)),
+            icon: 'Gold' as const,
+            tone: 'good' as const,
+          }));
+        }
+        // The nodes a Divining would wake, which is what it is FOR.
+        if (active.id === 'Divining') {
+          layer.influenceCells = reapCells(
+            this.state, this.map, this.mode.selected,
+            activeRadius(this.state, this.mode.artifactId));
         }
       }
     } else if (this.inspectedDistrictId) {

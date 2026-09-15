@@ -571,7 +571,7 @@ const SHEETS = {
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'active_taps_per_mana', 'active_taps_per_mana_per_level',
-    'active_power', 'active_power_per_level'],
+    'active_power', 'active_power_per_level', 'active_duration_per_level'],
   // ONE ROW PER PACK TIER (Docs/features/09-relics.md §6). `cards` is how many
   // it holds; `weight_1star`..`weight_5star` are the PUBLISHED odds, as
   // weights rather than percentages so a designer can add a rarity without
@@ -1279,6 +1279,11 @@ async function importXlsx() {
       // inside the zone, so it climbs and never arrives anywhere.
       activePower: num(r, 'active_power', { blankAs: 0 }),
       activePowerPerLevel: num(r, 'active_power_per_level', { blankAs: 0 }),
+      // SECONDS a level adds to the window, for the abilities whose growing
+      // axis is how long they last. A window is the worth of a zone whose
+      // effect is a RATE — how much recovers inside it is time — where one
+      // whose effect is a multiplier wants power instead.
+      activeDurationPerLevel: num(r, 'active_duration_per_level', { blankAs: 0 }),
     };
   }
 
@@ -1607,7 +1612,8 @@ async function exportXlsx() {
     return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
       a.activeDurationSeconds || '', a.activeRadius || '',
       a.activeTapsPerMana || '', a.activeTapsPerManaPerLevel || '',
-      a.activePower || '', a.activePowerPerLevel || ''];
+      a.activePower || '', a.activePowerPerLevel || '',
+      a.activeDurationPerLevel || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {

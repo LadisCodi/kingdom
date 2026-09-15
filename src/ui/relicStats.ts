@@ -16,7 +16,7 @@
 // which. A box apiece says it without a sentence.
 
 import { ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS } from '../sim/data/definitions';
-import { activeDurationMs, activeRadiusAt } from '../sim/casting';
+import { activeDurationMsAt, activePowerAt, activeRadiusAt } from '../sim/casting';
 import { passiveValueAtLevel } from '../sim/artifacts';
 import { formatDuration } from './format';
 import type { ModifierStat } from '../sim/modifiers';
@@ -114,9 +114,14 @@ export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
   const out: RelicStat[] = [
     { key: 'mana', icon: 'Mana', label: 'Mana', value: String(active.manaCost) },
   ];
-  const window = activeDurationMs(id) / 1000;
+  const window = activeDurationMsAt(id, level) / 1000;
   if (window > 0) {
     out.push({ key: 'window', icon: 'hourglass', label: 'Window', value: formatDuration(window) });
+  }
+  // POWER, when the ability has one — how hard the zone hits while it stands.
+  const power = activePowerAt(id, level);
+  if (power > 1) {
+    out.push({ key: 'power', icon: 'sparkle', label: 'Power', value: `\u00d7${power.toFixed(2)}` });
   }
   const radius = activeRadiusAt(id, level);
   if (radius > 0) {

@@ -10,8 +10,9 @@
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import {
-  activeDurationMs, activePower, activeRadius, activeRadiusAt, cast, castBlock,
-  castCost, castState, reapCells, tapBudget, tapRunSeconds,
+  activeDurationMs, activeDurationMsAt, activePower, activePowerAt, activeRadius,
+  activeRadiusAt, cast, castBlock, castCost, castState, reapCells, surveyCells,
+  tapBudget, tapRunSeconds,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
 import {
@@ -19,14 +20,15 @@ import {
   HARVEST,
 } from '../src/sim/data/definitions';
 import { spellStatChanges, spellStatsAt } from '../src/ui/relicStats';
-import { effectiveRecoveryMs } from '../src/sim/harvest';
+import { drawFromCell, effectiveRecoveryMs, harvestSourceAt } from '../src/sim/harvest';
+import { isWithinReach } from '../src/sim/fog';
 import {
   activeZones, addModifier, areaCovers, resolve, resolveAt, type Modifier,
 } from '../src/sim/modifiers';
 import { deserialize, serialize } from '../src/sim/save';
 import { workerStrikeMs, effectiveWorkerSpeed } from '../src/sim/upgrades';
 import {
-  addToWallet, districtAt, getWallet, type Coord, type GameState,
+  addToWallet, coordKey, districtAt, getWallet, type Coord, type GameState,
 } from '../src/sim/state';
 import {
   addBuilt, canGather, freshGame, fund, map, reveal, FOREST, T0,
@@ -215,7 +217,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   // cooldown at all — so the relic is busy for the window AND the wait after.
   it('is ACTIVE for its window and only then starts resting', () => {
     const state = armed();
-    const window = activeDurationMs('ForemansSigil');
+    const window = activeDurationMs(state, 'ForemansSigil');
     expect(window).toBeGreaterThan(0);
     expect(cast(state, map, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
 
@@ -229,7 +231,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
 
   it('refuses a second cast while its own window is open, and while it rests', () => {
     const state = armed();
-    const window = activeDurationMs('ForemansSigil');
+    const window = activeDurationMs(state, 'ForemansSigil');
     cast(state, map, 'ForemansSigil', CENTRE, T0);
     expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
     expect(cast(state, map, 'ForemansSigil', CENTRE, T0 + 1).result).toBe('Active');
@@ -313,11 +315,11 @@ describe('an ability reaches further at three named levels', () => {
     expect(activeRadiusAt(RADIUS_RELIC, 500)).toBe(activeRadiusAt(RADIUS_RELIC, top));
   });
 
-  // A STEP LADDER ON A SPELL THAT IS NOT AN AREA would be three rungs of
-  // nothing, so a radius of 0 stays 0 at every level.
-  it('leaves an ability with no area alone', () => {
-    expect(activeRadiusAt('DowsingRod', 1)).toBe(0);
-    expect(activeRadiusAt('DowsingRod', 50)).toBe(0);
+  // A STEP LADDER ON A RELIC WITH NO ABILITY would be three rungs of nothing,
+  // so a radius of 0 stays 0 at every level.
+  it('leaves a relic with no ability alone', () => {
+    expect(activeRadiusAt('DelversLantern', 1)).toBe(0);
+    expect(activeRadiusAt('DelversLantern', 50)).toBe(0);
   });
 
   // THE CARD IS NOT ALLOWED TO LIE. What the tile says the reach is has to be
@@ -498,7 +500,9 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
       expect(p, `level ${level}`).toBeGreaterThan(last);
       last = p;
     }
-    expect(activeDurationMs('ForemansSigil')).toBe(300_000);
+    // …and the window does NOT move with it: exactly one axis per relic.
+    expect(activeDurationMsAt('ForemansSigil', 1))
+      .toBe(activeDurationMsAt('ForemansSigil', 20));
   });
 
   it('lets go when its window closes', () => {
@@ -507,7 +511,7 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
     const before = swing();
     cast(state, map, 'ForemansSigil', CENTRE, T0);
     expect(swing()).toBeLessThan(before);
-    advance(state, map, T0 + activeDurationMs('ForemansSigil') + 1000);
+    advance(state, map, T0 + activeDurationMs(state, 'ForemansSigil') + 1000);
     expect(swing()).toBe(before);
   });
 });
@@ -552,5 +556,106 @@ describe('Tithe is the other exchange rate', () => {
     const report = cast(state, map, 'GildedLedger', empty, T0);
     expect(report.result).toBe('Cast');
     expect(report.taps).toBe(0);
+  });
+});
+
+// ------------------------------------------ the last two on the city grid
+
+/**
+ * A RELIC IS ONE IDEA AT TWO SPEEDS. Both of these changed subject to obey it:
+ * the Rod's ability used to pay a cell's reveal cost while its passive was
+ * about ground coming back, and the Compass called a resource back while its
+ * passive was about Stardust. The fog is the Compass's, and recovery is the
+ * Rod's.
+ */
+describe('Divining wakes the ground and keeps it coming back', () => {
+  const rod = (level: number): GameState => {
+    const state = canGather(freshGame());
+    reveal(state, cellsWithinRadius(map, FOREST, 2));
+    state.lastAdvance = T0;
+    state.artifacts.levels.DowsingRod = level;
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  it('refills the tired nodes in its zone at once', () => {
+    const state = rod(1);
+    // Drain the node dry, then wake it.
+    const spec = HARVEST[harvestSourceAt(state, FOREST)!];
+    drawFromCell(state, map, FOREST, spec, 999, T0);
+    expect(state.harvest[coordKey(FOREST)]!.units).toBe(0);
+
+    expect(cast(state, map, 'DowsingRod', FOREST, T0).result).toBe('Cast');
+    expect(state.harvest[coordKey(FOREST)]!.units).toBeGreaterThan(0);
+    expect(state.harvest[coordKey(FOREST)]!.exhaustedUntil).toBeNull();
+  });
+
+  // THE REFILL HAS TO LAND FIRST. A recovery wait is stamped when the cell
+  // EXHAUSTS, so a zone only ever reaches cells that empty inside it — which
+  // is exactly what emptying the waiting list arranges.
+  it('leaves a zone behind that shortens the next recovery', () => {
+    const state = rod(1);
+    const plain = effectiveRecoveryMs(state, HARVEST.Forest, FOREST);
+    cast(state, map, 'DowsingRod', FOREST, T0);
+    expect(effectiveRecoveryMs(state, HARVEST.Forest, FOREST)).toBeLessThan(plain);
+    // And only there.
+    expect(effectiveRecoveryMs(state, HARVEST.Forest, { x: 9, y: 9 })).toBe(plain);
+  });
+
+  // DURATION is its growing axis — the zone's worth is how many nodes empty
+  // inside it, which is time — so its power does NOT move.
+  it('holds the zone longer at every level, and no harder', () => {
+    let last = 0;
+    for (const level of [1, 2, 5, 10, 20]) {
+      const ms = activeDurationMsAt('DowsingRod', level);
+      expect(ms, `level ${level}`).toBeGreaterThan(last);
+      last = ms;
+    }
+    expect(activePowerAt('DowsingRod', 1)).toBe(activePowerAt('DowsingRod', 20));
+  });
+});
+
+describe('Survey buys the fog with Mana instead of Gold', () => {
+  const compass = (level: number): GameState => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    state.artifacts.levels.WanderersCompass = level;
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  it('clears the fog it covers, and charges no Gold for it', () => {
+    const state = compass(1);
+    const centre = { x: 0, y: 0 };
+    reveal(state, [centre]);
+    const cells = surveyCells(state, map, centre, activeRadius(state, 'WanderersCompass'));
+    expect(cells.length).toBeGreaterThan(0);
+    const gold = getWallet(state.city.wallet, 'Gold');
+
+    const report = cast(state, map, 'WanderersCompass', centre, T0);
+    expect(report.result).toBe('Cast');
+    expect(report.goldSaved).toBeGreaterThan(0);
+    for (const c of cells) expect(state.fog.revealed[coordKey(c)]).toBe(true);
+    // The fog was bought with Mana: not one coin left the purse.
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold);
+  });
+
+  // THE SPELL BUYS THE GOLD, NEVER THE LADDER: the Townhall's reach still
+  // gates every cell, so the fog grows out of what the player holds.
+  it('never reaches past the Townhall', () => {
+    const state = compass(20);
+    const centre = { x: 0, y: 0 };
+    reveal(state, [centre]);
+    const cells = surveyCells(state, map, centre, activeRadius(state, 'WanderersCompass'));
+    for (const c of cells) expect(isWithinReach(state, map, c)).toBe(true);
+  });
+
+  // RADIUS IS ITS WHOLE GROWTH — for a reveal, more ground IS the effect — so
+  // it has no second axis and wants none.
+  it('grows by reach alone', () => {
+    expect(activePowerAt('WanderersCompass', 1)).toBe(activePowerAt('WanderersCompass', 20));
+    expect(activeDurationMsAt('WanderersCompass', 20)).toBe(0);
+    expect(activeRadiusAt('WanderersCompass', ARTIFACT_RADIUS_STEPS[0]!))
+      .toBeGreaterThan(activeRadiusAt('WanderersCompass', 1));
   });
 });

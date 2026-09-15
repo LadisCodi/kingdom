@@ -4440,13 +4440,14 @@
     "DowsingRod": {
       "passiveBase": 1.2,
       "passivePerLevel": 0.2,
-      "activeManaCost": 8,
-      "activeDurationSeconds": 0,
-      "activeRadius": 0,
+      "activeManaCost": 15,
+      "activeDurationSeconds": 300,
+      "activeRadius": 2,
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
-      "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePower": 5,
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 60
     },
     "VerdantSeal": {
       "passiveBase": 1,
@@ -4457,7 +4458,8 @@
       "activeTapsPerMana": 2,
       "activeTapsPerManaPerLevel": 0.25,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     },
     "ForemansSigil": {
       "passiveBase": 1.1,
@@ -4468,7 +4470,8 @@
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
       "activePower": 2,
-      "activePowerPerLevel": 0.25
+      "activePowerPerLevel": 0.25,
+      "activeDurationPerLevel": 0
     },
     "GildedLedger": {
       "passiveBase": 1.1,
@@ -4479,18 +4482,20 @@
       "activeTapsPerMana": 2,
       "activeTapsPerManaPerLevel": 0.25,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     },
     "WanderersCompass": {
       "passiveBase": 1.25,
       "passivePerLevel": 0.25,
-      "activeManaCost": 5,
+      "activeManaCost": 25,
       "activeDurationSeconds": 0,
-      "activeRadius": 0,
+      "activeRadius": 2,
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     },
     "DelversLantern": {
       "passiveBase": 1.15,
@@ -4501,7 +4506,8 @@
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     },
     "MusterHorn": {
       "passiveBase": 1.1,
@@ -4512,7 +4518,8 @@
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     },
     "BailiffsTally": {
       "passiveBase": 1.15,
@@ -4523,7 +4530,8 @@
       "activeTapsPerMana": 0,
       "activeTapsPerManaPerLevel": 0,
       "activePower": 0,
-      "activePowerPerLevel": 0
+      "activePowerPerLevel": 0,
+      "activeDurationPerLevel": 0
     }
   },
   "quests": [

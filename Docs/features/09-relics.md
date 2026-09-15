@@ -105,15 +105,27 @@ The eight, and which one axis each grows:
 
 | Relic | Its ability | Cast on | Grows |
 |---|---|---|---|
-| **Dowsing Rod** | **Divination** — pays a frontier cell's whole remaining reveal cost | a frontier cell | — |
+| **Dowsing Rod** | **Divining** — wakes every tired node in the zone at once, then keeps them coming back faster | a centre | **duration** |
 | **Verdant Seal** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
 | **Foreman's Sigil** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
 | **Gilded Ledger** | **Tithe** — collects from every house in the zone, over and over, free | a centre | **taps per Mana** |
-| **Wanderer's Compass** | **Beckon** — calls a depleted resource back | a legal cell | — |
+| **Wanderer's Compass** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
 | **The Delver's Lantern** | — *waits on its own step* | a ruin | — |
 | **The Muster Horn** | — *waits on the world map* | a fortification | — |
 | **The Bailiff's Tally** | — *waits on the world map* | a tile you hold | — |
 
+- **A relic is one idea at two speeds, and two of the five had to change
+  subject to obey it.** The Rod's ability paid a cell's reveal cost while its
+  passive was about ground coming back; the Compass called a resource back
+  while its passive was about Stardust. The fog is the Compass's — what a
+  compass is FOR is ground you have not seen — and recovery is the Rod's.
+- **A zone's growing axis is a WINDOW when its effect is a rate** (how much
+  recovers inside it is time) **and POWER when its effect is a multiplier**
+  (a crew either works faster or it does not, and a longer window is just a
+  longer wait). Exactly one of the two moves per relic.
+- **`Survey` buys the GOLD, never the ladder.** The Townhall's reach still
+  gates every cell, so the fog grows out of what the player holds rather than
+  appearing as islands.
 - **The two auto-tap abilities are an EXCHANGE RATE**, and the rate is what
   the level moves. A tap they land **costs no Mana** — thirty at a Mana each
   would be impossible — so they are the one exception to *every player tap
@@ -672,7 +684,8 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 | A relic's `base` and `per_level` | per relic | `Artifacts` sheet |
 | What an ability costs, lasts and reaches | per relic | `Artifacts` sheet, `active_mana_cost` · `active_duration_seconds` · `active_radius` |
 | Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `Artifacts` sheet, `active_taps_per_mana` · `…_per_level` |
-| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil | `Artifacts` sheet, `active_power` · `active_power_per_level` |
+| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil; **×5.00 flat** on the Rod | `Artifacts` sheet, `active_power` · `active_power_per_level` |
+| Seconds a level adds to a window | **+60** on the Rod, from a five-minute base | `Artifacts` sheet, `active_duration_per_level` |
 | How fast an auto-tap run is watched | **4 taps a second** | `artifacts.auto_tap_per_second` |
 | An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifacts.active_cooldown_seconds` |
 | Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifacts.active_radius_steps` |

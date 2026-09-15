@@ -15,15 +15,15 @@
 
 import {
   ARTIFACTS, ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS,
-  ARTIFACT_RADIUS_STEPS, FEATURES, type ArtifactActiveId,
+  ARTIFACT_RADIUS_STEPS, type ArtifactActiveId,
 } from './data/definitions';
-import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
+import { isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
-import { harvestSourceAt, tapCell } from './harvest';
+import { effectiveStock, harvestSourceAt, harvestSpecAt, tapCell } from './harvest';
 import { mana, payMana } from './mana';
 import { addModifier, areaCovers, resolve, type ModifierArea } from './modifiers';
 import {
-  coordKey, districtAt, newId,
+  coordKey, newId,
   type ArtifactId, type Coord, type District, type GameState,
 } from './state';
 import { pullHouseForward, residentsOf } from './population';
@@ -71,10 +71,24 @@ export function castState(state: GameState, id: ArtifactId, now: number): CastSt
   return { phase: 'Ready', until: null };
 }
 
-/** How long the window a cast opens lasts. 0 for an ability that resolves at
- *  once and leaves nothing standing. */
-export const activeDurationMs = (id: ArtifactId): number =>
-  (ARTIFACTS[id].active?.durationSeconds ?? 0) * 1000;
+/**
+ * HOW LONG THE WINDOW A CAST OPENS LASTS, at this relic's level. 0 for an
+ * ability that resolves at once and leaves nothing standing.
+ *
+ * A window is the growing axis of a zone whose effect is a RATE — how much
+ * recovers inside it is time — where a zone whose effect is a multiplier
+ * grows its power instead. Exactly one of the two moves per relic.
+ */
+export function activeDurationMsAt(id: ArtifactId, level: number): number {
+  const active = ARTIFACTS[id].active;
+  if (active === null || active.durationSeconds <= 0) return 0;
+  const n = Math.max(1, level);
+  return (active.durationSeconds + active.durationPerLevel * (n - 1)) * 1000;
+}
+
+/** The window this relic's ability opens right now. */
+export const activeDurationMs = (state: GameState, id: ArtifactId): number =>
+  activeDurationMsAt(id, artifactLevel(state, id));
 
 /**
  * HOW FAR AN ABILITY REACHES AT A LEVEL — the sheet's base plus one ring for
@@ -134,13 +148,14 @@ export function validCastCells(state: GameState, map: MapData, id: ArtifactId): 
   const active = ARTIFACTS[id].active;
   if (active === null || !active.targeted) return [];
   switch (active.id) {
-    case 'Divination':
-      // The frontier only: a cell you have already paid off has nothing left
-      // to buy, and one you cannot see is not a decision yet. And inside the
-      // Townhall's reach: a spell is the player exploring, and it obeys the
-      // same border a paid tap does.
-      return map.cells.filter((c) => fogState(state, map, c) === 'Discovered'
+    case 'Survey':
+      // Cast on ground you HOLD, and it clears outward from there. The fog
+      // still grows from what the player has rather than appearing as islands,
+      // and the Townhall's reach still gates it: the spell buys the GOLD,
+      // never the ladder.
+      return map.cells.filter((c) => state.fog.revealed[coordKey(c)] === true
         && isWithinReach(state, map, c));
+    case 'Divining':
     case 'Reap':
     case 'Haste':
     case 'Tithe':
@@ -149,25 +164,19 @@ export function validCastCells(state: GameState, map: MapData, id: ArtifactId): 
       // and the preview says so before the tap, which is the house rule:
       // the grid answers the question rather than a dialog afterwards.
       return map.cells.filter((c) => state.fog.revealed[coordKey(c)] === true);
-    case 'Beckon':
-      // Only where a called-back feature could actually stand.
-      return map.cells.filter((c) => beckonTargetIsLegal(state, map, c));
     default:
       return [];
   }
 }
 
-/** Beckon needs a revealed, empty cell whose terrain suits SOME feature that
- *  is currently waiting to respawn. Without the pending-respawn clause it
- *  would be a "make resources appear" button rather than "hurry one back". */
-function beckonTargetIsLegal(state: GameState, map: MapData, cell: Coord): boolean {
-  const key = coordKey(cell);
-  if (state.fog.revealed[key] !== true) return false;
-  if (state.features[key] !== undefined) return false;
-  if (districtAt(state, cell) !== undefined) return false;
-  const terrain = map.terrain.get(key);
-  return state.featureRespawns.some((r) => FEATURES[r.feature].respawnTerrain === terrain);
-}
+/** The fog Survey would lift: unrevealed ground inside the zone that the
+ *  Townhall can already reach. Nearest-first, so it reads as rings. */
+export const surveyCells = (
+  state: GameState, map: MapData, centre: Coord, radius: number,
+): Coord[] =>
+  cellsWithinRadius(map, centre, radius).filter(
+    (c) => state.fog.revealed[coordKey(c)] !== true && isWithinReach(state, map, c),
+  );
 
 // ------------------------------------------------------- the auto-tap engine
 
@@ -262,12 +271,16 @@ export function spendTaps(
  * inside it read. Floored at 1, so a relic with no authored power is a zone
  * that changes nothing rather than one that divides by zero.
  */
-export function activePower(state: GameState, id: ArtifactId): number {
+export function activePowerAt(id: ArtifactId, level: number): number {
   const active = ARTIFACTS[id].active;
   if (active === null || active.power <= 0) return 1;
-  const level = Math.max(1, artifactLevel(state, id));
-  return active.power + active.powerPerLevel * (level - 1);
+  const n = Math.max(1, level);
+  return active.power + active.powerPerLevel * (n - 1);
 }
+
+/** How hard this relic's zone hits right now. */
+export const activePower = (state: GameState, id: ArtifactId): number =>
+  activePowerAt(id, artifactLevel(state, id));
 
 /** The built districts standing in a zone. A building is its ANCHOR cell, so
  *  a wide building is in or out as a whole. */
@@ -331,19 +344,33 @@ export function cast(
     result: 'Cast', activeId: active.id, affected: [], goldSaved: 0, taps: 0,
   };
   switch (active.id) {
-    case 'Divination': {
-      // Its Mana price is FLAT while the Gold reveal cost DOUBLES every ring,
-      // so its value grows with depth — exactly where the pain is. This is the
-      // relic that turns the fog from a chore into a real question.
-      const key = coordKey(target!);
-      // What is left of the price, not the whole of it: the taps already
-      // spent on this cell were paid, and Divination does not refund them.
-      report.goldSaved = revealCostForCell(state, map, target!)
-        - revealPaidSoFar(state, map, target!);
-      delete state.fog.progress[key];
-      delete state.fog.discovered[key];
-      state.fog.revealed[key] = true;
-      report.affected.push(target!);
+    case 'Divining': {
+      // THE REFILL FIRST. A recovery wait is stamped when the cell exhausts,
+      // not read each tick, so the zone below only ever reaches cells that
+      // empty INSIDE it — which is what emptying the waiting list arranges.
+      for (const c of reapCells(state, map, target!, activeRadius(state, id))) {
+        const spec = harvestSpecAt(state, c);
+        const cell = state.harvest[coordKey(c)];
+        if (spec === null || cell === undefined) continue;
+        // To what the GROUND holds, not the authored stock: a wake on
+        // grassland puts back more than one on sand, which is the rule
+        // recovery already follows (04-harvest.md §2).
+        const full = effectiveStock(state, map, c, spec);
+        if (cell.units >= full && cell.exhaustedUntil === null) continue;
+        cell.units = full;
+        cell.exhaustedUntil = null;
+        report.affected.push(c);
+      }
+      addModifier(state, {
+        id: newId(state, 'divining'),
+        source: 'artifact',
+        stat: 'recoverySpeed',
+        scope: null,
+        op: 'mul',
+        value: activePower(state, id),
+        expiresAt: now + activeDurationMs(state, id),
+        area: { centre: target!, radius: activeRadius(state, id) },
+      });
       break;
     }
     case 'Reap': {
@@ -359,7 +386,7 @@ export function cast(
       // read as nothing.
       const area = { centre: target!, radius: activeRadius(state, id) };
       const power = activePower(state, id);
-      const until = now + activeDurationMs(id);
+      const until = now + activeDurationMs(state, id);
       for (const stat of ['workerStrikeSpeed', 'workerSpeed'] as const) {
         addModifier(state, {
           id: newId(state, `haste:${stat}`),
@@ -384,27 +411,26 @@ export function cast(
       report.goldSaved = run.gold;
       break;
     }
-    case 'Beckon': {
-      // Take the respawn that has been waiting longest and land it here, now.
-      const terrain = map.terrain.get(coordKey(target!));
-      const idx = state.featureRespawns
-        .map((r, i) => ({ r, i }))
-        .filter(({ r }) => FEATURES[r.feature].respawnTerrain === terrain)
-        .sort((a, b) => a.r.readyAt - b.r.readyAt)[0]?.i;
-      if (idx === undefined) return nothing('InvalidTarget');
-      const [pending] = state.featureRespawns.splice(idx, 1);
-      const key = coordKey(target!);
-      state.features[key] = pending.feature;
-      state.featureMeta[key] = { origin: pending.origin, generation: pending.generation };
-      delete state.harvest[key];
-      report.affected.push(target!);
+    case 'Survey': {
+      // RING BY RING from the cell it was cast on, so the fog grows out of
+      // what the player holds rather than appearing as islands. Cells are
+      // already ordered nearest-first, and the Townhall's reach still gates
+      // each one: the spell buys the GOLD, never the ladder.
+      for (const c of surveyCells(state, map, target!, activeRadius(state, id))) {
+        const key = coordKey(c);
+        report.goldSaved += revealCostForCell(state, map, c) - revealPaidSoFar(state, map, c);
+        delete state.fog.progress[key];
+        delete state.fog.discovered[key];
+        state.fog.revealed[key] = true;
+        report.affected.push(c);
+      }
       break;
     }
   }
   payMana(state, castCost(state, id));
   // THE CYCLE STARTS HERE, and the wait is measured from where the window
   // ends — which for an ability that leaves nothing standing is `now`.
-  const endsAt = now + activeDurationMs(id);
+  const endsAt = now + activeDurationMs(state, id);
   state.artifacts.casts[id] = {
     endsAt,
     readyAt: endsAt + ARTIFACT_COOLDOWN_SECONDS * 1000,

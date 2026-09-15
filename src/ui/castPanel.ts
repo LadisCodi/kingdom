@@ -27,11 +27,13 @@ export function renderCastPanel(game: Game): HTMLElement {
   let verdict: HTMLElement;
   if (active.targeted && info.cell === null) {
     verdict = el('span', { class: 'plc-verdict is-bad' }, 'Nowhere to cast it yet');
-  } else if (active.id === 'Divination') {
-    verdict = el('span', { class: 'plc-verdict is-good' },
-      iconEl('Gold', { size: 'sm' }),
-      el('b', {}, String(info.saving)),
-      el('span', {}, 'Gold saved — the same Mana at any distance'));
+  } else if (active.id === 'Survey') {
+    verdict = info.saving === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, 'No fog within reach here')
+      : el('span', { class: 'plc-verdict is-good' },
+        iconEl('Gold', { size: 'sm' }),
+        el('b', {}, String(info.saving)),
+        el('span', {}, 'Gold saved — the same Mana at any distance'));
   } else if (info.reap !== null) {
     // THE BUDGET IS THE DECISION and the area is only where it is spent, so
     // the preview leads with the taps and names the ground second.

@@ -1342,7 +1342,7 @@ export interface ArtifactDef {
   pending: string | null;
 }
 
-export type ArtifactActiveId = 'Divination' | 'Reap' | 'Haste' | 'Tithe' | 'Beckon';
+export type ArtifactActiveId = 'Divining' | 'Reap' | 'Haste' | 'Tithe' | 'Survey';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1351,8 +1351,12 @@ export interface ArtifactActive {
   manaCost: number;
   /** Cast targets a map cell through placement mode. */
   targeted: boolean;
-  /** Timed effects only (Haste); 0 = instant. */
+  /** Timed effects only; 0 = instant. The LADDER's base — the levelled window
+   *  is `activeDurationMs`. */
   durationSeconds: number;
+  /** Seconds a level adds to the window, for the abilities whose growing axis
+   *  is how long they last. */
+  durationPerLevel: number;
   /** Area effects only; 0 = the target cell alone. The LADDER's base — the
    *  levelled reach is `activeRadiusAt` (Docs/features/09-relics.md §2.1). */
   radius: number;
@@ -1372,6 +1376,7 @@ type ArtifactBalance = {
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
   activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
   activePower: number; activePowerPerLevel: number;
+  activeDurationPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
@@ -1384,14 +1389,25 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
+    // A RELIC IS ONE IDEA AT TWO SPEEDS, and this one's idea is RECOVERY. Its
+    // ability used to pay a cell's reveal cost, which is a fine spell about a
+    // different subject — the passive was about ground coming back and the
+    // active was about fog. The fog is the Compass's, and always was.
+    //
+    // THE REFILL MUST LAND BEFORE THE ZONE MATTERS. A recovery wait is stamped
+    // when the cell EXHAUSTS, not read each tick, so a faster-recovery zone
+    // only reaches cells that empty inside it — which is exactly what emptying
+    // the waiting list first arranges.
     active: {
-      id: 'Divination', name: 'Divination', targeted: true,
-      manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
-      // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
-      // so its value grows with depth — exactly where the pain is. This one
-      // relic turns the fog from a chore into a real question: Gold, or Mana?
-      text: 'Pays a frontier cell\u2019s entire remaining reveal cost, at any distance',
+      id: 'Divining', name: 'Divining', targeted: true,
+      manaCost: ab('DowsingRod').activeManaCost,
+      durationSeconds: ab('DowsingRod').activeDurationSeconds,
+      radius: ab('DowsingRod').activeRadius,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      power: ab('DowsingRod').activePower,
+      powerPerLevel: ab('DowsingRod').activePowerPerLevel,
+      durationPerLevel: ab('DowsingRod').activeDurationPerLevel,
+      text: 'Wakes every tired node nearby at once, and keeps them coming back',
     },
     pending: null,
   },
@@ -1415,7 +1431,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('VerdantSeal').activeRadius,
       tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
       tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0,
       text: 'Harvests every node nearby, over and over, for free',
     },
     pending: null,
@@ -1446,6 +1462,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       tapsPerMana: 0, tapsPerManaPerLevel: 0,
       power: ab('ForemansSigil').activePower,
       powerPerLevel: ab('ForemansSigil').activePowerPerLevel,
+      durationPerLevel: ab('ForemansSigil').activeDurationPerLevel,
       text: 'The crews of every building nearby work much faster for a while',
     },
     pending: null,
@@ -1467,7 +1484,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('GildedLedger').activeRadius,
       tapsPerMana: ab('GildedLedger').activeTapsPerMana,
       tapsPerManaPerLevel: ab('GildedLedger').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0,
       text: 'Collects from every house nearby, over and over, for free',
     },
     pending: null,
@@ -1515,11 +1532,19 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'stardustYield', scope: null, op: 'mul' }],
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
+    // THE FOG IS THE COMPASS'S. It called a depleted resource back, which is
+    // the Verdant Seal's subject wearing a compass; what a compass is FOR is
+    // ground you have not seen.
+    //
+    // RADIUS IS ITS WHOLE GROWTH (§2.1) — for a reveal, more ground IS the
+    // effect, so it needs no second axis and has none.
     active: {
-      id: 'Beckon', name: 'Beckon', targeted: true,
-      manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
+      id: 'Survey', name: 'Survey', targeted: true,
+      manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0,
+      radius: ab('WanderersCompass').activeRadius,
       tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
-      text: 'Calls a depleted resource back onto a cell you choose',
+      durationPerLevel: 0,
+      text: 'Clears the fog around a cell you hold, free of gold',
     },
     pending: null,
   },
@@ -2237,4 +2262,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 54;
+export const SAVE_VERSION = 55;
