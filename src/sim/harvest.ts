@@ -63,11 +63,16 @@ export function tapYieldAt(
  * It could not go on the chunk instead: `unitsPerStrike` is 1 on most cells
  * and 1 x 0.75 rounds back to 1, which would make every percentage a no-op.
  */
-export function effectiveStock(map: MapData, cell: Coord, spec: HarvestSpec): number {
+export function effectiveStock(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec,
+): number {
   if (spec.stock <= 0) return 0; // bedrock stays bedrock
   const terrain = map.terrain.get(coordKey(cell));
   const m = terrain === undefined ? 1 : terrainYield(terrain, spec.currencyId);
-  return Math.max(1, Math.round(spec.stock * m));
+  // The relic's term is FLAT and lands AFTER the terrain multiplier, so a
+  // richer ground and a richer relic add rather than compounding — and `+1` is
+  // a real +20% on a five-unit Stone where a percentage would round away.
+  return Math.max(1, Math.round(resolve(state, 'harvestStock', spec.stock * m)));
 }
 
 const cellState = (
@@ -75,7 +80,7 @@ const cellState = (
 ): CellHarvestState => {
   let s = state.harvest[key];
   if (!s) {
-    s = { units: effectiveStock(map, cell, spec), exhaustedUntil: null };
+    s = { units: effectiveStock(state, map, cell, spec), exhaustedUntil: null };
     state.harvest[key] = s;
   }
   return s;
@@ -97,8 +102,10 @@ const cellState = (
  * waiting, and less of it is the good news.
  */
 export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
-  Math.max(1000, Math.round(resolve(state, 'cellRecovery',
-    techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))));
+  Math.max(1000, Math.round(
+    resolve(state, 'cellRecovery',
+      techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))
+    / Math.max(1, resolve(state, 'recoverySpeed', 1))));
 
 /**
  * How long a CONSUMED feature waits before it reappears somewhere else — the
@@ -125,11 +132,12 @@ export const isInexhaustible = (spec: HarvestSpec): boolean => spec.stock <= 0;
  *  for another one, and buying faster recovery is then something you can SEE
  *  (Docs/features/04-harvest.md §2). */
 function recoverIfDue(
-  s: CellHarvestState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
+  state: GameState, s: CellHarvestState, map: MapData, cell: Coord,
+  spec: HarvestSpec, now: number,
 ): void {
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
-    s.units = effectiveStock(map, cell, spec);
+    s.units = effectiveStock(state, map, cell, spec);
   }
 }
 
@@ -139,8 +147,8 @@ export function stockAt(state: GameState, map: MapData, cell: Coord, now: number
   if (spec === null) return 0;
   if (isInexhaustible(spec)) return Number.POSITIVE_INFINITY;
   const s = state.harvest[coordKey(cell)];
-  if (!s) return effectiveStock(map, cell, spec);
-  recoverIfDue(s, map, cell, spec, now);
+  if (!s) return effectiveStock(state, map, cell, spec);
+  recoverIfDue(state, s, map, cell, spec, now);
   return s.units;
 }
 
@@ -168,7 +176,7 @@ export function recoversForSpec(
   if (isInexhaustible(spec)) return null;
   const s = state.harvest[coordKey(cell)];
   if (!s) return null;
-  recoverIfDue(s, map, cell, spec, now);
+  recoverIfDue(state, s, map, cell, spec, now);
   return s.exhaustedUntil;
 }
 
@@ -183,8 +191,8 @@ export function stockFraction(
   if (isInexhaustible(spec)) return 1;
   const s = state.harvest[coordKey(cell)];
   if (!s) return 1;
-  recoverIfDue(s, map, cell, spec, now);
-  return Math.max(0, Math.min(1, s.units / effectiveStock(map, cell, spec)));
+  recoverIfDue(state, s, map, cell, spec, now);
+  return Math.max(0, Math.min(1, s.units / effectiveStock(state, map, cell, spec)));
 }
 
 /** Draw up to `want` units out of the cell. Returns what was ACTUALLY there,
@@ -209,7 +217,7 @@ export function drawFromCell(
   if (isInexhaustible(spec)) return asked;
   const key = coordKey(cell);
   const s = cellState(state, map, key, cell, spec);
-  recoverIfDue(s, map, cell, spec, now);
+  recoverIfDue(state, s, map, cell, spec, now);
   const taken = Math.min(asked, s.units);
   if (taken <= 0) return 0;
   s.units -= taken;

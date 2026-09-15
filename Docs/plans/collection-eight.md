@@ -8,7 +8,7 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: nothing started.** Save version 45.
+> **Status: step 1 done 2026-09-15.** Save version 46.
 >
 > **One decision gates a third of it** — **OQ-98**, whether the relic actives
 > stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
@@ -34,7 +34,7 @@
 
 | Step | Lands | Blocked by | Size |
 |---|---|---|---|
-| **1** | The five passives take their final shape (**OQ-97**) | — | **M** |
+| ~~**1**~~ | ~~The five passives take their final shape~~ **done** (OQ-97 closed) | — | **M** |
 | **2** | Eight relics exist, as passives | 1 | **M** |
 | **3** | The packs, the chests and the stars | — | **M** |
 | **4** | Eight albums, and the pairing rotates | 2, 3 | **M** |
@@ -86,12 +86,16 @@ re-balance them twice.
 - **Test** — a relic at level 50 pays more than at level 49; the Seal's `+1`
   reaches a worker's delivery and a player's tap from the same number.
 
-### 1.1 The one decision this step needs first
+### 1.1 How it landed
 
-**The Ledger and the Compass are being cut**, ×1.10 → ×1.05 and ×1.25 → ×1.05,
-and a player holding either loses what they have. Either those two rows go back
-to what ships, or the nerf is taken knowingly. It is one cell each and it wants
-settling before the step opens, not after somebody has felt it.
+- **The Ledger and the Compass kept their numbers.** The proposed cut to ×1.05
+  was refused as too hard, so only the Rod, the Seal and the Sigil moved.
+- **`ArtifactDef.passive` gained a `stats` list.** The Seal moves two numbers
+  and the Sigil moves two, with one shared `base` and `per_level` — which is
+  the design saying the pair must move together, not a convenience.
+- **`effectiveStock` took a `state`**, as expected, across eight call sites.
+- The relic card now reads a **speed** as *"…recover 300% faster"* rather than
+  *"+300%"*, which was true and said nothing.
 
 ## 2. Eight relics exist, as passives
 

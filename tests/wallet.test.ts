@@ -61,7 +61,7 @@ describe('finite map features', () => {
     // worth exactly what is in it.
     // Its depot is the ceiling — and the depot is the authored stock times the
     // GROUND under it, so a bush on grassland is richer than one on sand.
-    const held = effectiveStock(map, BERRY_BUSH, HARVEST.Berries);
+    const held = effectiveStock(state, map, BERRY_BUSH, HARVEST.Berries);
     expect(drain(state, BERRY_BUSH)).toBe(held);
     expect(getWallet(state.city.wallet, 'Food')).toBe(held); // it PAYS Food
     expect(state.features[coordKey(BERRY_BUSH)]).toBeUndefined(); // gone from the map

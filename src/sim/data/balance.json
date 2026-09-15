@@ -4425,22 +4425,22 @@
   },
   "artifacts": {
     "DowsingRod": {
-      "passiveBase": 0.85,
-      "passivePerLevel": -0.05,
+      "passiveBase": 1.2,
+      "passivePerLevel": 0.2,
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
       "activeRadius": 0
     },
     "VerdantSeal": {
-      "passiveBase": 0.85,
-      "passivePerLevel": -0.05,
+      "passiveBase": 1,
+      "passivePerLevel": 1,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
       "activeRadius": 2
     },
     "ForemansSigil": {
-      "passiveBase": 1,
-      "passivePerLevel": 0.5,
+      "passiveBase": 1.1,
+      "passivePerLevel": 0.1,
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
       "activeRadius": 0
@@ -4448,7 +4448,7 @@
     "GildedLedger": {
       "passiveBase": 1.1,
       "passivePerLevel": 0.1,
-      "activeManaCost": 0,
+      "activeManaCost": 6,
       "activeDurationSeconds": 0,
       "activeRadius": 0
     },

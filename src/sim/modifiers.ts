@@ -63,8 +63,18 @@ export type ModifierStat =
   // half of the same number, and the two multiply.
   | 'buildSpeed'      // how fast the builders work
   | 'researchSpeed'   // how fast a research runs, fixed at start
+  | 'recoverySpeed'   // how fast a cell refills in place
+  | 'workerStrikeSpeed' // how fast a worker swings
   | 'worldRevealSpeed' // how fast a world-map cell is scouted — NOT READ YET
-  | 'unitHp';         // multiplies every unit's HP, on the board and in the estimate
+  | 'unitHp'          // multiplies every unit's HP, on the board and in the estimate
+  // THE GROUND. Both are FLAT on a base the workbook authors and never grows,
+  // so flat cannot go stale here the way it does on a rate. The Verdant Seal
+  // moves the two together — a node gets richer as fast as the swing gets
+  // bigger — because either alone saturates: a bigger swing empties a node it
+  // cannot exceed, and a richer node nobody can drain faster is just a longer
+  // queue (Docs/proposals/relic-effects.md §4.2).
+  | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
+  | 'harvestStock';   // units a cell holds before it is spent
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

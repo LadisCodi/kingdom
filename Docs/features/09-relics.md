@@ -57,18 +57,23 @@ never a discount, because a discount dies at 100%.
 
 | Relic | Effect | Moves |
 |---|---|---|
-| **Dowsing Rod** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySeconds` ([`04-harvest.md`](04-harvest.md) §2) |
-| **Verdant Seal** | respawn **+X% faster** — berries, game and shoals | `respawnSeconds` ([`04-harvest.md`](04-harvest.md) §3) |
-| **Foreman's Sigil** | worker yield **+X** | `workerYield` |
+| **Dowsing Rod** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
+| **Verdant Seal** | a node **holds +X more** and a swing **takes +X more** | `harvestStock` and `harvestUnitsPerStrike` |
+| **Foreman's Sigil** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
 | **Gilded Ledger** | tax rate **+X%** | `taxRate` |
 | **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
 
-- **The Rod and the Seal do not keep this rule today.** Both are authored as
-  time multipliers falling 0.05 a level, so both reach zero at level 18 and
-  every season after pays nothing. The shape has to become a SPEED the call
-  site divides by. **OQ-97.** The Sigil's is flat rather than multiplied, so it
-  goes stale on its own. Both are re-proposed in
-  [`../proposals/relic-effects.md`](../proposals/relic-effects.md).
+- **A relic may move more than one number with one value.** The Seal's two and
+  the Sigil's two are one idea each: half of either saturates or reads as
+  nothing — a bigger swing empties a node it cannot exceed, and a crew that
+  swung faster and walked at the old pace would be half a relic.
+
+- **Every passive keeps this rule** as of 2026-09-15 (**OQ-97**, closed): a
+  speed the call site divides by, a multiplier above 1, or a flat term on a
+  base the workbook authors and never grows. Nothing falls, so no level is the
+  last one worth having.
+- **Nothing moves the respawn clock.** Berries, game and shoals come back on
+  their authored time and the mechanic stays transparent to the player.
 - `X = base + per_level × (level − 1)`, both authored per relic on the
   `Artifacts` sheet. A level is **a season's worth of growth**, so `per_level`
   is sized to be **felt on a headline number** — of the order of +10% a level
@@ -518,5 +523,5 @@ Every number below is a **proposal until the sheet exists**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-97, OQ-98, OQ-100 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-98, OQ-100 in
 [`../open-questions.md`](../open-questions.md).

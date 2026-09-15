@@ -84,8 +84,12 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * `ABUNDANCE_LINES` table said with a list.
  */
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
-  return Math.max(0, techValue(
-    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id }));
+  // The relic's term is FLAT, and flat is right here: `unitsPerStrike` is
+  // authored per source and never grows, so a `+1` stays worth +100% on a
+  // Forest and +20% on an iron vein for ever. One number reaches the thumb
+  // (`tapDraw`) and the crew (`effectiveWorkerStrike`) from this one place.
+  return Math.max(0, resolve(state, 'harvestUnitsPerStrike', techValue(
+    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id })));
 }
 
 /**
@@ -150,8 +154,8 @@ export function effectiveWorkerStrike(
 export const workerStrikeMs = (
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number => {
-  void state;
-  const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1);
+  const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1)
+    * Math.max(1, resolve(state, 'workerStrikeSpeed', 1));
   return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
 

@@ -13,7 +13,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   ARTIFACTS, ARTIFACT_ORDER, BANNERS, CARD_BUNDLE_ORDER, COLLECTION, GEM_PACK_ORDER,
-  HEROES, PACKS, PACK_ORDER, STORE,
+  HARVEST, HEROES, PACKS, PACK_ORDER, STORE,
 } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
@@ -32,13 +32,17 @@ import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
+import { effectiveRecoveryMs, effectiveStock } from '../src/sim/harvest';
+import {
+  effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs,
+} from '../src/sim/upgrades';
 import type { AlbumPayout } from '../src/sim/collection';
 import { bannerRarities, grantHero, ownsHeroId } from '../src/sim/heroes';
 import { resolve } from '../src/sim/modifiers';
 import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
 import { newGame } from '../src/sim/newGame';
-import { addBuilt, freshGame, map } from './helpers';
+import { addBuilt, FOREST, freshGame, map } from './helpers';
 
 const T0 = Date.UTC(2026, 1, 2, 9);
 
@@ -68,7 +72,11 @@ describe('a relic is a permanent passive with no ceiling', () => {
   it('puts every relic it has in the modifier stack at once', () => {
     for (const id of ARTIFACT_ORDER) grantArtifactLevel(state, id);
     const relicMods = state.modifiers.filter((m) => m.source === 'artifact');
-    expect(relicMods).toHaveLength(ARTIFACT_ORDER.length);
+    // One entry PER STAT, not per relic: the Seal moves a node's stock and
+    // what a swing takes, the Sigil moves a crew's swing and its walk.
+    const stats = ARTIFACT_ORDER.reduce((n, id) => n + ARTIFACTS[id].passive.stats.length, 0);
+    expect(relicMods).toHaveLength(stats);
+    expect(new Set(relicMods.map((m) => m.id)).size).toBe(stats);
     expect(relicMods.every((m) => m.expiresAt === null)).toBe(true);
   });
 
@@ -86,11 +94,64 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(resolve(state, 'taxRate', 1)).toBeGreaterThan(before);
   });
 
-  // A speed is a multiplier BELOW one and a yield is above it; neither may
-  // cross zero, or a level would start subtracting what it adds.
-  it('never lets a speed cross into a sign flip', () => {
-    for (let i = 0; i < 200; i++) grantArtifactLevel(state, 'DowsingRod');
-    expect(passiveValueAtLevel('DowsingRod', 200)).toBeGreaterThanOrEqual(0);
+  // OQ-97, and the rule the whole shape exists for. Every passive is a SPEED,
+  // a yield or a capacity — the call site divides by a speed — so no level can
+  // walk one to zero and stop paying. Before this, the Rod and the Seal were
+  // time multipliers falling 0.05 a level and both read 0.00 at level 18.
+  it('never reaches a level where the next one is worth nothing', () => {
+    for (const id of ARTIFACT_ORDER) {
+      for (const level of [1, 18, 50, 200]) {
+        expect(passiveValueAtLevel(id, level + 1),
+          `${id} stopped paying at level ${level}`)
+          .toBeGreaterThan(passiveValueAtLevel(id, level));
+      }
+    }
+  });
+
+  // A FLAT passive is legal only on a base the workbook authors and never
+  // grows; a rate has to be a multiplier or it goes stale on its own.
+  it('is flat only where the base cannot grow', () => {
+    const flatIsFine = new Set(['harvestStock', 'harvestUnitsPerStrike']);
+    for (const id of ARTIFACT_ORDER) {
+      for (const { stat, op } of ARTIFACTS[id].passive.stats) {
+        if (op === 'add') expect(flatIsFine.has(stat), `${id} is flat on ${stat}`).toBe(true);
+        else expect(ARTIFACTS[id].passive.base).toBeGreaterThan(1);
+      }
+    }
+  });
+
+  // The Rod's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
+  // approaches an instant recovery without ever arriving at one.
+  it('shortens a wait without ever reaching zero', () => {
+    let last = effectiveRecoveryMs(state, HARVEST.Forest);
+    for (let i = 0; i < 40; i++) {
+      grantArtifactLevel(state, 'DowsingRod');
+      const now = effectiveRecoveryMs(state, HARVEST.Forest);
+      expect(now).toBeLessThan(last);
+      expect(now).toBeGreaterThan(0);
+      last = now;
+    }
+  });
+
+  // ONE NUMBER, TWO CALL SITES. The Seal's `+1` has to reach the thumb and the
+  // crew, or half the relic is a sentence on a card.
+  it('the Seal pays the thumb and the crew from one number', () => {
+    const tap = effectiveUnitsPerStrike(state, HARVEST.Forest);
+    const crew = effectiveWorkerStrike(state, HARVEST.Forest);
+    const held = effectiveStock(state, map, FOREST, HARVEST.Forest);
+    grantArtifactLevel(state, 'VerdantSeal');
+    expect(effectiveUnitsPerStrike(state, HARVEST.Forest)).toBe(tap + 1);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(crew + 1);
+    expect(effectiveStock(state, map, FOREST, HARVEST.Forest)).toBe(held + 1);
+  });
+
+  // And the Sigil's one number has to reach both halves of a round trip.
+  it('the Sigil hurries a crew\u2019s swing and its walk together', () => {
+    const swing = workerStrikeMs(state, HARVEST.Forest);
+    const walk = effectiveWorkerSpeed(state);
+    grantArtifactLevel(state, 'ForemansSigil');
+    expect(workerStrikeMs(state, HARVEST.Forest)).toBeLessThan(swing);
+    expect(effectiveWorkerSpeed(state)).toBeGreaterThan(walk);
   });
 
   // Idempotent and total, so four callers cannot drift.
@@ -98,7 +159,8 @@ describe('a relic is a permanent passive with no ceiling', () => {
     grantArtifactLevel(state, 'VerdantSeal');
     syncArtifactModifiers(state);
     syncArtifactModifiers(state);
-    expect(state.modifiers.filter((m) => m.source === 'artifact')).toHaveLength(1);
+    expect(state.modifiers.filter((m) => m.source === 'artifact'))
+      .toHaveLength(ARTIFACTS.VerdantSeal.passive.stats.length);
   });
 });
 

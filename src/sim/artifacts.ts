@@ -75,16 +75,22 @@ const MODIFIER_PREFIX = 'artifact:';
 export function syncArtifactModifiers(state: GameState): void {
   state.modifiers = state.modifiers.filter((m) => !m.id.startsWith(MODIFIER_PREFIX));
   for (const id of ownedArtifacts(state)) {
-    const { passive } = ARTIFACTS[id];
-    const modifier: Modifier = {
-      id: `${MODIFIER_PREFIX}${id}`,
-      source: 'artifact',
-      stat: passive.stat,
-      scope: passive.scope,
-      op: passive.op,
-      value: passiveValue(state, id),
-      expiresAt: null,
-    };
-    addModifier(state, modifier);
+    const value = passiveValue(state, id);
+    // A relic may move more than one number with one value — the Seal's stock
+    // and swing, the Sigil's swing and walk. The id carries the stat so two
+    // entries from one relic cannot collide, and the filter above still takes
+    // both away.
+    for (const { stat, scope, op } of ARTIFACTS[id].passive.stats) {
+      const modifier: Modifier = {
+        id: `${MODIFIER_PREFIX}${id}:${stat}`,
+        source: 'artifact',
+        stat,
+        scope,
+        op,
+        value,
+        expiresAt: null,
+      };
+      addModifier(state, modifier);
+    }
   }
 }

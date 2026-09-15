@@ -40,7 +40,7 @@ describe('save round-trip', () => {
     const worked = Object.keys(state.harvest)[0];
     expect(worked, 'no cell was harvested').toBeDefined();
     expect(state.harvest[worked].units)
-      .toBeLessThan(effectiveStock(map, parseCoordKey(worked), HARVEST.Forest));
+      .toBeLessThan(effectiveStock(state, map, parseCoordKey(worked), HARVEST.Forest));
 
     const restored = deserialize(serialize(state, t), map, t)!;
     expect(restored).not.toBeNull();

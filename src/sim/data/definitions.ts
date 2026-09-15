@@ -1247,10 +1247,18 @@ export interface ArtifactDef {
   sprite: string;
   /** One line, player-facing, about what having it does. */
   passiveText: string;
+  /**
+   * ONE IDEA, sometimes spread over more than one number.
+   *
+   * The Verdant Seal moves a node's stock and what a strike takes out of it,
+   * and the Foreman's Sigil moves a crew's swing and its walk: in both cases
+   * half the pair alone saturates or reads as nothing, so they are one passive
+   * with two stats rather than two passives (Docs/proposals/relic-effects.md
+   * §4.2). They share one `base` and one `per_level`, which is not a
+   * convenience — it is the design saying the two must move together.
+   */
   passive: {
-    stat: ModifierStat;
-    scope: ModifierScope;
-    op: 'add' | 'mul';
+    stats: readonly { stat: ModifierStat; scope: ModifierScope; op: 'add' | 'mul' }[];
     /** Value at level 1, and how much each further level moves it. */
     base: number;
     perLevel: number;
@@ -1286,7 +1294,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
     passiveText: 'Forests, crops and stone recover faster',
     passive: {
-      stat: 'cellRecovery', scope: null, op: 'mul',
+      stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     active: {
@@ -1300,9 +1308,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   },
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
-    passiveText: 'Berries, game and shoals come back sooner',
+    passiveText: 'Richer ground, and more out of every swing',
     passive: {
-      stat: 'cellRespawn', scope: null, op: 'mul',
+      stats: [
+        { stat: 'harvestStock', scope: null, op: 'add' },
+        { stat: 'harvestUnitsPerStrike', scope: null, op: 'add' },
+      ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
     active: {
@@ -1314,9 +1325,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
-    passiveText: 'Every worker carries more',
+    passiveText: 'Your crews swing and walk faster',
     passive: {
-      stat: 'workerYield', scope: null, op: 'add',
+      stats: [
+        { stat: 'workerStrikeSpeed', scope: null, op: 'mul' },
+        { stat: 'workerSpeed', scope: null, op: 'mul' },
+      ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
     active: {
@@ -1332,7 +1346,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
     passiveText: 'Your villagers pay more tax',
     passive: {
-      stat: 'taxRate', scope: null, op: 'mul',
+      stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
     // No active at all, and never had one.
@@ -1343,7 +1357,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     sprite: 'artifact_wanderers_compass',
     passiveText: 'Rooms pay more Stardust',
     passive: {
-      stat: 'stardustYield', scope: null, op: 'mul',
+      stats: [{ stat: 'stardustYield', scope: null, op: 'mul' }],
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
     active: {
@@ -2065,4 +2079,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 45;
+export const SAVE_VERSION = 46;

@@ -3231,7 +3231,7 @@ export class Game {
       }
       // A crop plot IS the resource, so what it would hold goes on the ghost.
       if (this.mode.selected) {
-        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        const provided = providedYieldLabel(this.state, this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
@@ -3275,7 +3275,7 @@ export class Game {
         for (const r of adj.received) {
           layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
-        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        const provided = providedYieldLabel(this.state, this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
@@ -3674,12 +3674,12 @@ export class Game {
  *  reason to show it, since dragging a plot from grass to sand takes it from
  *  13 Food to 5 and there is otherwise nothing on screen that says so. */
 function providedYieldLabel(
-  map: MapData, definitionId: DistrictId, cell: Coord,
+  state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
 ): YieldLabel | null {
   const provides = DISTRICTS[definitionId].providesHarvestSource;
   if (provides === null) return null;
   const spec = HARVEST[provides];
-  const held = effectiveStock(map, cell, spec);
+  const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
   return { label: String(held), icon: spec.currencyId, tone };
 }
@@ -3688,7 +3688,7 @@ function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel
   const source = harvestSourceAt(state, cell);
   if (source === null) return { label: '' };
   const spec = HARVEST[source];
-  const held = effectiveStock(map, cell, spec);
+  const held = effectiveStock(state, map, cell, spec);
   // Toned against the authored stock, so richer and poorer ground read at a
   // glance rather than needing the player to remember the baseline.
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
@@ -3884,21 +3884,23 @@ function packPrizes(opening: PackOpening): GachaPrize[] {
  * the card prints the same sentence twice — now, and at the next level.
  */
 function relicEffectText(id: ArtifactId, value: number): string {
-  const { passive } = ARTIFACTS[id];
-  const pct = (n: number): string => `${Math.round(n * 100)}%`;
-  if (passive.op === 'mul') {
-    return passive.perLevel < 0
-      ? `${RELIC_SUBJECT[id]} ${pct(Math.max(0, 1 - value))} faster`
-      : `${RELIC_SUBJECT[id]} +${pct(Math.max(0, value - 1))}`;
-  }
-  return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+  // A relic's stats all share one op — the pair the Seal and the Sigil carry
+  // move together by construction — so the first one says how to read it.
+  const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
+  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+  const pct = `${Math.round(Math.max(0, value - 1) * 100)}%`;
+  // A SPEED is a multiplier the call site DIVIDES by, so it reads as "faster"
+  // rather than as "more": `recover +280%` is true and says nothing.
+  return stat.endsWith('Speed')
+    ? `${RELIC_SUBJECT[id]} ${pct} faster`
+    : `${RELIC_SUBJECT[id]} +${pct}`;
 }
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
   DowsingRod: 'Forests, crops and stone recover',
-  VerdantSeal: 'Berries, game and shoals come back',
-  ForemansSigil: 'Every worker carries',
+  VerdantSeal: 'A node holds, and a swing takes',
+  ForemansSigil: 'Your crews swing and walk',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',
 };

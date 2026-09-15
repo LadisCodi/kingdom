@@ -538,7 +538,7 @@ describe('placement labels read the ground', () => {
       // Every label sits on a tree, and says the tree's whole depot.
       expect(harvestSourceAt(state, y.cell)).toBe('Forest');
       expect(parseInt(y.label, 10))
-        .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
+        .toBe(effectiveStock(state, map, y.cell, HARVEST.Forest));
     }
   });
 });
