@@ -34,7 +34,7 @@
 
 | Step | Lands | Blocked by | Size |
 |---|---|---|---|
-| **1** | The five relics stop dying (**OQ-97**) | — | **S** |
+| **1** | The five passives take their final shape (**OQ-97**) | — | **M** |
 | **2** | Eight relics exist, as passives | 1 | **M** |
 | **3** | The packs, the chests and the stars | — | **M** |
 | **4** | Eight albums, and the pairing rotates | 2, 3 | **M** |
@@ -43,23 +43,55 @@
 | **7** | The art | — (runs alongside) | **M** |
 
 - **1 and 3 are independent** and can go in either order or at once.
+- **1 grew from S to M** once the proposal was read against the build: four of
+  the five relics change which number they move, not just its sign.
 - **6 is the only large one** and the only one that can be cut whole.
 
-## 1. The five relics stop dying
+## 1. The five passives take their final shape
 
-The Dowsing Rod and the Verdant Seal read `0.00` at level 18 and pay nothing
-ever after; the Foreman's Sigil is flat on a base that grows. Fixing the shape
-first is what proves the speed pattern the new relics need.
+Not just the two that die. Four of the five change stat, so doing the shape fix
+now and the re-pointing later would migrate the same `Artifacts` rows twice and
+re-balance them twice.
 
-- **Data** — `Artifacts`: the Rod and the Seal become `base 1.20, per_level
-  0.20`; the Sigil becomes a multiplier.
-- **Logic** — two `ModifierStat`s, `recoverySpeed` and `respawnSpeed`, and
-  `harvest.ts#effectiveRecoveryMs` / `#effectiveRespawnMs` **divide** by them.
-  `cellRecovery` and `cellRespawn` stay for the tree's own ranks.
-- **Also** — the Gilded Ledger's `Beckon` costs 0 Mana and is the Compass's
-  spell as well. Give it a price; §6 gives it an active of its own.
+| Relic | Today | After |
+|---|---|---|
+| **Dowsing Rod** | `cellRecovery` ×0.85, **−0.05** | `recoverySpeed` ×1.20, +0.20 |
+| **Verdant Seal** | `cellRespawn` ×0.85, **−0.05** | units per strike **+1** and stock **+1** a level |
+| **Foreman's Sigil** | `workerYield` **+1 flat**, +0.5 | crew speed ×1.10, +0.10 — swing **and** walk |
+| **Gilded Ledger** | `taxRate` ×1.10, +0.10, global | tax **at a house** ×1.05, +0.05 |
+| **Wanderer's Compass** | `stardustYield` ×1.25, +0.25 | ×1.05, +0.05 |
+
+- **Data** — five rows on `Artifacts`, and a `stat` column, because four of
+  them now name a different number.
+- **Logic — four new `ModifierStat`s**, each with the `resolve()` at the call
+  site that owns it:
+
+| Stat | Call site | Note |
+|---|---|---|
+| `recoverySpeed` | `harvest.ts#effectiveRecoveryMs` | the site **divides** by it |
+| `harvestUnitsPerStrike` | `upgrades.ts#effectiveUnitsPerStrike` | reaches the thumb **and** the crew from one place |
+| `harvestStock` | `harvest.ts#effectiveStock` | **signature change**: it takes no `state` today, and eight call sites pass it |
+| `workerStrikeSpeed` | `upgrades.ts#workerStrikeMs` | the site **voids** `state` today, with a comment saying a stat there would be code and nothing had asked. Something has |
+
+- **`respawnSpeed` is NOT needed.** The Verdant Seal leaves the respawn clock,
+  so nothing moves it and the mechanic stays transparent to the player — which
+  is the call already taken.
+- `workerSpeed` (the walk) and `taxRate` scoped to a district both resolve
+  already; the Ledger's scope is the one `effectiveTaxRate(state, district)`
+  was built for.
+- **Also in this step** — the Gilded Ledger's `Beckon` costs **0 Mana** and is
+  the Compass's spell as well. Give it a price; §6 gives it an active of its
+  own.
 - **Save** — bump, no migrator: a relic's effect is derived from its level.
-- **Test** — a relic at level 50 still pays more than at level 49.
+- **Test** — a relic at level 50 pays more than at level 49; the Seal's `+1`
+  reaches a worker's delivery and a player's tap from the same number.
+
+### 1.1 The one decision this step needs first
+
+**The Ledger and the Compass are being cut**, ×1.10 → ×1.05 and ×1.25 → ×1.05,
+and a player holding either loses what they have. Either those two rows go back
+to what ships, or the nerf is taken knowingly. It is one cell each and it wants
+settling before the step opens, not after somebody has felt it.
 
 ## 2. Eight relics exist, as passives
 
