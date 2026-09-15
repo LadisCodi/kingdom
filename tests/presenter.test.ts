@@ -7,6 +7,10 @@
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
+import { formatDuration } from '../src/ui/format';
+import { grantPack, seasonAt, seasonDef, PRIZE_BANNER } from '../src/sim/collection';
+import { ALBUMS, ALBUM_ORDER } from '../src/sim/data/seasons';
+import type { Game } from '../src/game';
 import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
@@ -15,7 +19,7 @@ import {
   coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
 } from '../src/sim/state';
 import {
-  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map,
+  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map, T0,
   reveal, screenAt,
 } from './helpers';
 import { grantHero } from '../src/sim/heroes';
@@ -534,7 +538,7 @@ describe('placement labels read the ground', () => {
       // Every label sits on a tree, and says the tree's whole depot.
       expect(harvestSourceAt(state, y.cell)).toBe('Forest');
       expect(parseInt(y.label, 10))
-        .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
+        .toBe(effectiveStock(state, map, y.cell, HARVEST.Forest));
     }
   });
 });
@@ -658,5 +662,113 @@ describe('the overlay signatures', () => {
     for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
+  });
+});
+
+// THE PRIZE IS DEALT IN THE GACHA REVEAL (Docs/features/09-relics.md §5), and
+// it waits for the pack that finished the season to finish turning over
+// (§11.5) — a completed album interrupts nothing.
+describe('the collection prize on screen', () => {
+  /** A season one card short of done, and the pack that will finish it. */
+  const onePackShort = (): Game => {
+    const state = freshGame();
+    state.collection.season = seasonAt(T0);
+    state.lastAdvance = T0;
+    state.collection.completed = [...ALBUM_ORDER.slice(0, -1)];
+    const last = ALBUM_ORDER[ALBUM_ORDER.length - 1]!;
+    // Every card of the last album but one, so the next Star pack closes it.
+    const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
+    state.collection.cards[last] = ALBUMS[last].cards.map((_, i) => (i === gap ? 0 : 1));
+    const game = freshPresenter(state);
+    state.collection.wildcards[ALBUMS[last].cards[gap]!.rarity] = 1;
+    return game;
+  };
+
+  it('follows the reveal rather than interrupting it', () => {
+    const state = freshGame();
+    state.collection.season = seasonAt(T0);
+    state.lastAdvance = T0;
+    state.collection.completed = [...ALBUM_ORDER.slice(0, -1)];
+    const last = ALBUM_ORDER[ALBUM_ORDER.length - 1]!;
+    state.collection.cards[last] = ALBUMS[last].cards.map((_, i) => (i === 0 ? 0 : 1));
+    const game = freshPresenter(state);
+    // A pack whose cards will include the one missing slot, eventually.
+    for (let i = 0; i < 200 && !game.state.collection.prizePaid; i++) {
+      grantPack(game.state, 'Purple', 'dev');
+      game.doOpenPack();
+      // The pack's own reveal is up first, every time.
+      expect(game.gachaReveal).not.toBeNull();
+      expect(game.gachaReveal!.caption).toBe('Purple pack');
+      game.dismissGachaReveal();
+      // A pack fills the page and stops; closing it is the player's move, so
+      // the prize can only ever arrive AFTER the reveal is out of the way.
+      game.doClaimAlbum(last);
+    }
+    expect(game.state.collection.prizePaid).toBe(true);
+  });
+
+  it('takes the screen as a golden call, hero last', () => {
+    const game = onePackShort();
+    const last = ALBUM_ORDER[ALBUM_ORDER.length - 1]!;
+    const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
+    game.armWildcard(ALBUMS[last].cards[gap]!.rarity);
+    game.tapCard(last, gap);
+    game.doClaimAlbum(last);
+
+    // No pack was opened, so the prize has the screen at once.
+    const reveal = game.gachaReveal!;
+    expect(reveal).not.toBeNull();
+    expect(reveal.banner).toBe(PRIZE_BANNER);
+    expect(reveal.calls).toBe(1);
+    const kinds = reveal.prizes.map((p) => p.kind);
+    expect(kinds).toContain('currency');
+    // Heroes last: the sequence arrives at the season's hero.
+    expect(kinds[kinds.length - 1]).toBe('hero');
+    const hero = reveal.prizes[reveal.prizes.length - 1]!;
+    expect(hero.kind === 'hero' && hero.heroId).toBe(seasonDef(game.state.collection.season).hero);
+    expect(reveal.prizes.some((p) => p.kind === 'currency' && p.currency === 'Gems')).toBe(true);
+  });
+
+  it('lets the album banners follow it, not precede it', () => {
+    const game = onePackShort();
+    const last = ALBUM_ORDER[ALBUM_ORDER.length - 1]!;
+    const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
+    game.armWildcard(ALBUMS[last].cards[gap]!.rarity);
+    game.tapCard(last, gap);
+    game.doClaimAlbum(last);
+    // While the prize is up, the album that closed has said nothing — the
+    // first Stardust a player ever sees announces itself either way, and that
+    // is the discovery banner's business, not the album's.
+    const drain = (): string[] => {
+      const names: string[] = [];
+      for (let b = game.takeBanner(); b !== null; b = game.takeBanner()) names.push(b.name);
+      return names;
+    };
+    expect(drain()).not.toContain(ALBUMS[last].name);
+    game.dismissGachaReveal();
+    // Now the album that closed says what it paid.
+    expect(drain()).toContain(ALBUMS[last].name);
+    expect(game.gachaReveal).toBeNull();
+  });
+});
+
+// The countdown every pill and sheet prints. The remainder is ROUNDED, so it
+// can round up into a full unit — and a fortnight's season countdown parks on
+// exactly that edge for the first half hour of every season.
+describe('formatDuration', () => {
+  it('carries a rounded-up remainder into the bigger unit', () => {
+    // A fortnight's season, one minute in: 13d 23h 59m, which rounds to
+    // "13d 24h" without the carry.
+    expect(formatDuration(14 * 86_400 - 60)).toBe('14d');
+    expect(formatDuration(86_400 - 10)).toBe('24h');
+    expect(formatDuration(3600 - 0.4)).toBe('60m');
+  });
+
+  it('still prints the two units when the remainder is real', () => {
+    expect(formatDuration(13 * 86_400 + 12 * 3600)).toBe('13d 12h');
+    expect(formatDuration(2 * 3600 + 30 * 60)).toBe('2h 30m');
+    expect(formatDuration(90)).toBe('1m 30s');
+    expect(formatDuration(45)).toBe('45s');
+    expect(formatDuration(0)).toBe('instant');
   });
 });

@@ -117,7 +117,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 - A relic is a **permanent kingdom passive with no ceiling**: one effect, one
   number, rising with the relic's level. Every relic the player has is on.
-- Relics are **levelled by a card collection**: a 30-day season on a shared
+- Relics are **levelled by a card collection**: a 28-day season on a shared
   calendar, **five albums of nine cards, one per relic**. The first season a
   relic's album is completed hands it over; every season after adds a level,
   so a relic rises at most once a season.
@@ -175,7 +175,7 @@ Three arcs run at different speeds.
 |---|---|---|
 | **The city** | the Townhall level — how many of each district, and how high | hours |
 | **The army** — garrisons cleared, and therefore how deep the rooms go | four military buildings the player chooses to build | hours to days |
-| **The collection** — relics and heroes | card albums on a 30-day shared season; Fragments and Hero XP | **weeks and seasons** |
+| **The collection** — relics and heroes | card albums on a 28-day shared season; Fragments and Hero XP | **weeks and seasons** |
 
 ## The three scopes of the map
 

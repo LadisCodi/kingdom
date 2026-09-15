@@ -16,12 +16,12 @@
   align-items: center;
 }
 .mana-head > .icon { grid-area: orb; --icon-size: 72px; filter: drop-shadow(0 3px 0 rgba(60, 36, 18, 0.3)); }
-.mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: 700; font-size: var(--text-title); line-height: 1.1; }
+.mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
 .mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
 /* The gauge is the pool's violet-blue, filled from the orb. */
 .mana-sheet > .k-trough { height: 22px; border-radius: 11px; background: #2c3c66; border-color: #1b2745; }
 .mana-sheet > .k-trough .k-fill { background: #7a5bc7; box-shadow: inset 0 -2px 0 #4c3690; }
-.mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: 700; }
+.mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: var(--weight-strong); }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so
  * it stays a fact rather than a spreadsheet. */
@@ -35,7 +35,7 @@
 .mana-line > span:first-child::after { content: '\00a0\00b7\00a0'; }
 .mana-line b { font-family: var(--font-body); color: var(--ink); }
 .mana-note { text-align: center; }
-.mana-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
+.mana-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.3; }
 
 /* -------------------------------------------------------- the two tills --- */
 
@@ -55,7 +55,7 @@
    amount under it (M9). */
 .mana-prize { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; }
 .mana-prize-copy { flex: 1 1 100%; min-width: 0; font-size: var(--text-body); line-height: 1.3; text-align: center; }
-.mana-prize-copy::first-line { font-weight: 700; }
+.mana-prize-copy::first-line { font-weight: var(--weight-strong); }
 .mana-prize-amount {
   display: flex;
   align-items: center;
@@ -63,7 +63,7 @@
   flex: none;
   padding: 2px 8px;
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: 32px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -85,6 +85,7 @@
    underneath. */
 .mana-till-count {
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -97,6 +98,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   line-height: 1.3;
   color: var(--clay);
 }

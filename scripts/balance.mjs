@@ -85,6 +85,16 @@ const STORE_IDS = [
   // the instrument — the purchase log, the refusal and the monthly allowance
   // all have to see it.
   'RoyalChest',
+  // The season pass's paid column, for one season — the same shape as the
+  // Royal chest: it grants no Gems, it opens a column of cells, and it is a
+  // Store row because the budget, the log and the refusal all have to see it
+  // (Docs/features/20-season-pass.md §2).
+  'SeasonPass',
+  // The collection's three bundles (Docs/features/09-relics.md §6.1): star
+  // packs and wildcards for money rather than for Gems. Like the Royal chest
+  // they grant no Gems, so `gems` is 0 and the four bundle columns carry the
+  // hand instead.
+  'CardsSatchel', 'CardsCase', 'CardsCabinet',
 ];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
@@ -131,9 +141,19 @@ const HERO_TRAITS = [
 ];
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+  'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 /** The four pack tiers, easiest faucet first (Docs/features/09-relics.md §6). */
-const PACK_IDS = ['Bronze', 'Silver', 'Gold', 'Star'];
+const PACK_IDS = [
+  // The six SOBRES, named for the rarity each guarantees — the guarantee is
+  // the pack's whole identity and the ladder reads without a legend.
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+  // The three CHESTS, which are not a faucet: they are what duplicates buy.
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+/** The seven faces a card can wear: five rarities, and the gold editions of
+ *  the top two. Every guarantee and every weight column is one of these. */
+const FACE_IDS = ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'];
 
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
@@ -166,6 +186,27 @@ const SETTINGS = [
   // against the payroll. TapPower buys this duration up, +20% a level.
   ['tap.work_seconds', 'tap.workSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
+  // What a relic waits before its ability can be cast again, counted from the
+  // moment the WINDOW CLOSES rather than from the cast — a 10-minute window on
+  // a 5-minute cooldown counted from the cast is 100% uptime, which is no
+  // cooldown at all. FLAT across all eight and at every level: a cooldown that
+  // shrank with the level would be a discount wearing a hat, and a relic that
+  // did more AND did it more often would grow on two axes at once
+  // (Docs/features/09-relics.md §2.1).
+  ['artifacts.active_cooldown_seconds', 'artifactCooldownSeconds'],
+  // THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the
+  // same three rungs on every relic (Docs/features/09-relics.md §2.1). It is
+  // the one number of an active that does NOT creep: a Chebyshev radius covers
+  // (2r+1)^2 cells, so each rung roughly DOUBLES the ground — and a number
+  // that doubles cannot creep, but it makes a superb milestone. A player two
+  // cards from level 5 knows exactly what those two cards buy.
+  ['artifacts.active_radius_steps', 'artifactRadiusSteps', 'list'],
+  // How fast an auto-tap ability spends its budget. It buys no Mana of its
+  // own — the cast already paid — so this is the only thing that decides how
+  // long the run takes to watch, and holding a finger does 2 a second at 1
+  // Mana each. The spell is twice the speed at a fraction of the price, and
+  // the player can always see which they would rather spend.
+  ['artifacts.auto_tap_per_second', 'artifactAutoTapPerSecond'],
   // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
   // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
   // five, so the fifths come out whole; rings 1 and 2 are pennies inside the
@@ -243,6 +284,79 @@ const SETTINGS = [
   // city that has never delved, which is most of them.
   ['daily.premium_xp_hours', 'daily.premiumXpHours', 'list'],
   ['daily.premium_xp_floor', 'daily.premiumXpFloor'],
+  // ------------------------------------------------- the season pass (§20)
+  //
+  // The ladder's LENGTH is the length of these lists, exactly as the daily
+  // chest's is — so lengthening the season is one longer column, not a
+  // constant somewhere else.
+  //
+  // XP is FLAT per mission. The band a mission's target is rolled in is what
+  // makes one harder than another, so paying more for a harder one would
+  // charge the difficulty twice.
+  ['pass.mission_xp', 'pass.missionXp'],
+  ['pass.level_xp_base', 'pass.levelXpBase'],
+  // Added per level, so level 40 costs `base + 39 x growth`. Linear rather
+  // than exponential: a pass is 28 days long and an exponential tail means
+  // the last rungs are decoration.
+  ['pass.level_xp_growth', 'pass.levelXpGrowth'],
+  // The two reward columns, one list per reward kind, indexed by rung. A
+  // blank entry is no reward of that kind at that rung — the INDEX IS THE
+  // RUNG, so a column may never close up its gaps.
+  ['pass.free_packs', 'pass.freePacks', 'names'],
+  ['pass.free_gems', 'pass.freeGems', 'list'],
+  ['pass.free_gold_keys', 'pass.freeGoldKeys', 'list'],
+  ['pass.free_stardust', 'pass.freeStardust', 'list'],
+  ['pass.paid_packs', 'pass.paidPacks', 'names'],
+  ['pass.paid_gems', 'pass.paidGems', 'list'],
+  ['pass.paid_gold_keys', 'pass.paidGoldKeys', 'list'],
+  ['pass.paid_stardust', 'pass.paidStardust', 'list'],
+  // ------------------------------------------------------------- the missions
+  //
+  // How many can sit on the board at once, and how many each eight-hour
+  // window issues. A FULL BOARD BLOCKS: the cap replaces the deadline, and
+  // nothing a window could not fit is owed later.
+  ['missions.board_size', 'missions.boardSize'],
+  ['missions.per_window', 'missions.perWindow'],
+  ['missions.window_hours', 'missions.windowHours'],
+  // How many times one KIND may be issued in a week, so a board cannot fill
+  // with eight of the same errand.
+  ['missions.weekly_quota', 'missions.weeklyQuota'],
+  // A "collect X" target is MINUTES OF THE PLAYER'S OWN PRODUCTION, never an
+  // absolute pile — `tap.workSeconds`'s rule, so the ask is worth the same
+  // fraction of an afternoon at every stage of the game. Everything else is
+  // a count, because a level and a room are the same size for everyone.
+  ['missions.collect_minutes_min', 'missions.collectMinutesMin'],
+  ['missions.collect_minutes_max', 'missions.collectMinutesMax'],
+  ['missions.collect_floor', 'missions.collectFloor'],
+  // The count bands, `min,max`, one list per kind.
+  ['missions.population_band', 'missions.populationBand', 'list'],
+  ['missions.upgrade_band', 'missions.upgradeBand', 'list'],
+  ['missions.reveal_band', 'missions.revealBand', 'list'],
+  ['missions.build_band', 'missions.buildBand', 'list'],
+  ['missions.troops_band', 'missions.troopsBand', 'list'],
+  ['missions.hero_level_band', 'missions.heroLevelBand', 'list'],
+  ['missions.rooms_band', 'missions.roomsBand', 'list'],
+  ['missions.depths_band', 'missions.depthsBand', 'list'],
+  ['missions.packs_band', 'missions.packsBand', 'list'],
+  // ---------------------------------------------------- what a mission pays
+  //
+  // ONE THING, plus the pass XP — so the reward fits on the row beside the
+  // goal and the player can pick what to do next by what it pays.
+  //
+  // WHICH KINDS ARE HARD. Not a difficulty rating: a list of the kinds that
+  // cannot be finished inside one session, because they wait on a builder, a
+  // delve or a technology. Those pay a PACK; everything else rolls one of the
+  // three below. It is a list rather than a flag per kind because the answer
+  // changes as the game does — a kind stops being hard the week its blocker
+  // is cheaper.
+  ['missions.hard_kinds', 'missions.hardKinds', 'names'],
+  ['missions.hard_pack', 'missions.hardPack', 'name'],
+  ['missions.normal_pack', 'missions.normalPack', 'name'],
+  ['missions.reward_gems', 'missions.rewardGems'],
+  // Mana as a FRACTION OF THE POOL, the daily chest's rule: a reward priced in
+  // the player's own production is worth the same fraction of an afternoon at
+  // every stage of the game, with nothing re-derived per era.
+  ['missions.reward_mana_fraction', 'missions.rewardManaFraction'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -265,8 +379,9 @@ const SETTINGS = [
   // pool, so the price is never per Mana: what rises is the rung, not the
   // pool.
   ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
-  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 30 days
-  // on a shared calendar; the five albums are one per relic and every list
+  // THE CARD COLLECTION (Docs/features/09-relics.md §12). A season is 28 days —
+  // FOUR WEEKS, so it always opens on the epoch's weekday — on a shared
+  // calendar; the five albums are one per relic and every list
   // below is indexed the same way, easy album first.
   ['collection.season_days', 'collection.seasonDays'],
   // 2,000 an album and 25,000 for the five keeps the season's Gem budget at
@@ -285,13 +400,20 @@ const SETTINGS = [
   // in a city with two workers, and a chest of almost nothing would read as a
   // bug rather than as a reward.
   ['collection.chest_floor_per_hour', 'collection.chestFloorPerHour'],
-  // Stars a duplicate is worth, by rarity, and what a gold edition doubles.
-  ['collection.stars_per_rarity', 'collection.starsPerRarity', 'list'],
-  ['collection.star_gold_multiplier', 'collection.starGoldMultiplier'],
-  // The vault's two thresholds — what stars buy when nobody is sending you
-  // cards.
-  ['collection.vault_gold_stars', 'collection.vaultGoldStars'],
-  ['collection.vault_star_stars', 'collection.vaultStarStars'],
+  // Stars a duplicate is worth, PER FACE — the five rarities and the two gold
+  // editions, authored rather than derived, because a gold edition is not
+  // always worth exactly twice its rarity and the sheet should be able to say
+  // so. Same order as the pack weights.
+  ['collection.stars_per_face', 'collection.starsPerFace', 'faces'],
+  // What a card is worth when the season wipes it (§3): SECONDS of the city's
+  // Gold production per star the card is worth, so the consolation is the same
+  // fraction of a day at every stage instead of a number that goes stale. The
+  // same stars ladder prices it, so a gold edition is worth double here too.
+  ['collection.close_gold_seconds_per_star', 'collection.closeGoldSecondsPerStar'],
+  // What each CHEST costs in stars. Every one must cost strictly more than its
+  // own contents return as duplicates, or the vault pays for itself and the
+  // loop is infinite — `tests/artifacts.test.ts` holds that line.
+  ['collection.chest_stars', 'collection.chestStars', 'chests'],
   // A WILDCARD's Gem price, by the rarity it covers (1★ first). It stands in
   // for its rarity OR LOWER, so the top one covers everything a wildcard can
   // and is priced at a gold key — there is no gold wildcard at any price
@@ -302,6 +424,12 @@ const SETTINGS = [
   // (14-monetization.md §6), and an album nine cards short is not a shortage,
   // it is a season.
   ['collection.wildcard_offer_at', 'collection.wildcardOfferAt'],
+  // How close to the close the CARD BUNDLES come off the shelf. A bundle is
+  // packs and wildcards, and both are wiped with the cards at the close
+  // (§3) — so there is a window at the end of every season where money would
+  // buy something that expires before it can be spent, and the store says
+  // nothing rather than sell it (Docs/features/09-relics.md §6.1).
+  ['collection.bundle_withdraw_hours', 'collection.bundleWithdrawHours'],
   // The HERO ladder (Docs/features/10-heroes.md §4): Fragments raise a tier
   // cap and Hero XP buys levels within it. A relic has none of this any more.
   // The completed-depth XP trickle, per tier per depth per hour
@@ -519,7 +647,10 @@ const SHEETS = {
   // (Docs/features/09-relics.md §2). It has no battlefield stats — nothing
   // carries one anywhere.
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
-    'active_duration_seconds', 'active_radius'],
+    'active_duration_seconds', 'active_radius',
+    'active_taps_per_mana', 'active_taps_per_mana_per_level',
+    'active_power', 'active_power_per_level', 'active_duration_per_level',
+    'active_charges', 'active_charges_per_level'],
   // ONE ROW PER PACK TIER (Docs/features/09-relics.md §6). `cards` is how many
   // it holds; `weight_1star`..`weight_5star` are the PUBLISHED odds, as
   // weights rather than percentages so a designer can add a rarity without
@@ -532,16 +663,38 @@ const SHEETS = {
   // **BLANK means the store does not sell it**, which is how Bronze and
   // Silver stay the ruins' faucet — selling what a room already drips would
   // undercut the only free source the collection has.
-  Packs: ['id', 'cards', 'weight_1star', 'weight_2star', 'weight_3star',
-    'weight_4star', 'weight_5star', 'gold_chance', 'gold_guaranteed', 'gem_cost'],
+  // A PACK IS GUARANTEES PLUS FILLER (Docs/proposals/collection-packs.md §1).
+  // `cards` is the total; a `guarantee_*` says how many of that face the pack
+  // always holds; the `weight_*` columns are the distribution the REMAINING
+  // `cards - Σguarantees` slots roll on. Gold is a face in that distribution
+  // rather than a separate coin, so no pack has a rarity it can never reach.
+  //
+  // `gem_cost` blank = the store does not sell it, which is how the three free
+  // sobres stay the faucet and the three chests stay the vault's.
+  Packs: ['id', 'cards',
+    ...FACE_IDS.map((f) => `guarantee_${f}`),
+    ...FACE_IDS.map((f) => `weight_${f}`),
+    'gem_cost'],
   // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
   // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
   // every squad of its own type on that side, applied at battle start and
   // surviving its death.
+  //
+  // The last two columns are the BOON (Docs/proposals/legendary-boons.md): one
+  // KINGDOM passive, on while the hero is owned, in the same modifier stack a
+  // relic uses. Blank on every Common and Rare — the boon is what a Legendary
+  // is FOR, and the moment every rarity has one it is a hero property again.
+  //
+  // A BOON IS ALWAYS A MULTIPLIER, AND ALWAYS ABOVE 1. There is no `op`
+  // column because there is no choice: a flat bonus is worth less every hour
+  // the kingdom grows, and a number that falls has a floor — so a boon is a
+  // speed, a yield or a capacity, multiplied, and it stays proportionally
+  // worth the same for ever.
   Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value',
     'dmg', 'def', 'hp', 'cooldown',
     'dmg_per_level', 'def_per_level', 'hp_per_level',
-    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus',
+    'boon_stat', 'boon_value'],
   // A VILLAIN is an enemy hero: same schema, same slots, same rules — only
   // where the stats come from differs, and a villain's are authored (§9).
   Villains: ['id', 'name', 'glyph', 'sprite', 'unit_type',
@@ -552,7 +705,12 @@ const SHEETS = {
   // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
   // the hero banner are priced in Gems (Settings), so the store shows them
   // without owning them.
-  Store: ['id', 'price_usd', 'gems'],
+  //
+  // The last four columns are the CARD BUNDLE (Docs/features/09-relics.md
+  // §6.1): how many packs of which tier, and how many wildcards of which
+  // rarity, land the moment the budget is spent. All four blank = this SKU is
+  // not a bundle, which is every Gem pack and the Royal chest.
+  Store: ['id', 'price_usd', 'gems', 'packs', 'pack_tier', 'wildcards', 'wildcard_rarity'],
   // One row per banner. Odds and prices are numbers a designer tunes, so they
   // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
   // date and stays out of the workbook (balance/README.md).
@@ -695,6 +853,27 @@ function list(row, col) {
   });
 }
 
+/**
+ * A list of NAMES rather than numbers, comma-separated, blanks kept.
+ *
+ * The season pass's two reward columns need it: a rung pays a pack of a
+ * particular TIER or no pack at all, and `Green,,Yellow,,Rose` says that in
+ * one cell the same way `mana_fractions` says its column in one. A blank entry
+ * is the empty string, never dropped — the index IS the rung, so a column that
+ * closed up its gaps would pay the wrong levels.
+ */
+/** ONE name rather than a list — a single id in a cell, kept as text. */
+function name(row, col) {
+  const raw = row[col];
+  return raw === '' || raw === undefined ? '' : String(raw).trim();
+}
+
+function names(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return [];
+  return String(raw).split(',').map((part) => part.trim());
+}
+
 function wallet(row, prefix) {
   const out = {};
   for (const c of COST_CURRENCIES) {
@@ -730,6 +909,31 @@ function goodsList(row, col) {
     }
     return out;
   });
+}
+
+/**
+ * A KEYED cell — `1star:2,2star:6,3star:16` — for a setting whose value is one
+ * number per named thing rather than a list. Named rather than positional
+ * because a face or a chest added in the middle would otherwise shift every
+ * number after it silently.
+ */
+function keyed(row, ids) {
+  const raw = row?.value;
+  if (raw === '' || raw === undefined) fail(where(row), '"value" is blank');
+  const out = {};
+  for (const part of String(raw).split(',')) {
+    const entry = part.trim();
+    if (entry === '') continue;
+    const [id, n] = entry.split(':').map((x) => String(x).trim());
+    if (!ids.includes(id)) fail(where(row), `unknown key "${id}" — expected one of ${ids.join(', ')}`);
+    const v = Number(n);
+    if (!Number.isFinite(v)) fail(where(row), `"${id}" is not a number ("${entry}")`);
+    out[id] = v;
+  }
+  for (const id of ids) {
+    if (out[id] === undefined) fail(where(row), `is missing "${id}"`);
+  }
+  return out;
 }
 
 /**
@@ -794,12 +998,15 @@ async function importXlsx() {
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
+    pass: {}, missions: {},
     delve: {}, party: {}, heroes: {}, ads: {}, depths: [], garrisons: [], raid: {},
     artifacts: {},
     quests: [], banners: {}, packs: {},
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
+    artifactAutoTapPerSecond: 0,
+    artifactCooldownSeconds: 0,
   };
 
   for (const [id, r] of byId(readSheet(workbook, 'Districts'), DISTRICT_IDS)) {
@@ -1162,8 +1369,52 @@ async function importXlsx() {
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
       activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
       activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+      // THE EXCHANGE RATE an auto-tap ability buys taps at, and what a level
+      // adds to it. Blank on every relic whose ability is not one, where a
+      // rate of zero means "this spell does not buy taps" rather than "it buys
+      // none" (Docs/features/09-relics.md §2.1).
+      activeTapsPerMana: num(r, 'active_taps_per_mana', { blankAs: 0 }),
+      activeTapsPerManaPerLevel: num(r, 'active_taps_per_mana_per_level', { blankAs: 0 }),
+      // HOW HARD the ability hits, for the ones whose growing axis is power
+      // rather than a rate or a duration. A multiplier the call site reads
+      // inside the zone, so it climbs and never arrives anywhere.
+      activePower: num(r, 'active_power', { blankAs: 0 }),
+      activePowerPerLevel: num(r, 'active_power_per_level', { blankAs: 0 }),
+      // SECONDS a level adds to the window, for the abilities whose growing
+      // axis is how long they last. A window is the worth of a zone whose
+      // effect is a RATE — how much recovers inside it is time — where one
+      // whose effect is a multiplier wants power instead.
+      activeDurationPerLevel: num(r, 'active_duration_per_level', { blankAs: 0 }),
+      // USES, for an ability whose window is counted in EVENTS rather than in
+      // seconds. The only clock a delve has is the player opening the next
+      // door, so a spell about rooms measured in minutes would be a timer
+      // running while nothing happens.
+      activeCharges: num(r, 'active_charges', { blankAs: 0 }),
+      activeChargesPerLevel: num(r, 'active_charges_per_level', { blankAs: 0 }),
     };
   }
+
+  /**
+   * A hero's BOON, or nothing. All three columns blank is the common case —
+   * only a Legendary carries one — and any one of them filled in means all
+   * three must be, because a stat with no value is a bonus of zero and an
+   * op with no stat is a number with nowhere to go.
+   */
+  const boonOf = (r) => {
+    const blank = (v) => v === undefined || v === null || v === '';
+    const filled = ['boon_stat', 'boon_value'].filter((k) => !blank(r[k]));
+    if (filled.length === 0) return {};
+    if (filled.length !== 2) {
+      fail(where(r), `a boon needs both boon_stat and boon_value (got ${filled.join(', ')})`);
+    }
+    const value = num(r, 'boon_value');
+    // ALWAYS A MULTIPLIER, ALWAYS ABOVE 1 — a boon below 1 is a discount and
+    // dies at 100%, and a boon of exactly 1 is a row that does nothing.
+    if (value <= 1) {
+      fail(where(r), `a boon must be more than 1 — ${value} is a discount, and a discount dies at 100%`);
+    }
+    return { boon: { stat: r.boon_stat, value } };
+  };
 
   for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
     if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
@@ -1184,6 +1435,7 @@ async function importXlsx() {
       troopDmgMult: num(r, 'troop_dmg_mult'),
       troopHpMult: num(r, 'troop_hp_mult'),
       troopDefBonus: num(r, 'troop_def_bonus'),
+      ...boonOf(r),
     };
   }
 
@@ -1219,7 +1471,30 @@ async function importXlsx() {
     const gems = num(r, 'gems');
     if (priceUsd <= 0) fail(where(r), 'a store SKU needs a positive price');
     if (gems < 0) fail(where(r), 'a store SKU cannot grant negative Gems');
-    out.store[id] = { priceUsd, gems };
+    // The card bundle. Its four columns are a HAND, so a count without the
+    // thing it counts is a typo rather than a SKU.
+    const packs = num(r, 'packs', { blankAs: 0 });
+    const packTier = String(r.pack_tier ?? '').trim();
+    const wildcards = num(r, 'wildcards', { blankAs: 0 });
+    const wildcardRarity = num(r, 'wildcard_rarity', { blankAs: 0 });
+    if ((packs > 0) !== (packTier !== '')) {
+      fail(where(r), 'a pack count and a pack tier go together');
+    }
+    if (packTier !== '' && !PACK_IDS.includes(packTier)) {
+      fail(where(r), `"pack_tier" is not a pack ("${packTier}")`);
+    }
+    if ((wildcards > 0) !== (wildcardRarity > 0)) {
+      fail(where(r), 'a wildcard count and a wildcard rarity go together');
+    }
+    if (wildcardRarity > 5) {
+      fail(where(r), `"wildcard_rarity" is ${wildcardRarity}, and 5★ is the dearest wildcard`);
+    }
+    // Gems OR cards, never both: a row that did each would be two products,
+    // and neither shelf of the store could show it whole.
+    if (gems > 0 && (packs > 0 || wildcards > 0)) {
+      fail(where(r), 'grants both Gems and cards — a SKU is one product');
+    }
+    out.store[id] = { priceUsd, gems, packs, packTier, wildcards, wildcardRarity };
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Banners'), BANNER_IDS)) {
@@ -1262,21 +1537,25 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Packs'), PACK_IDS)) {
-    const weights = [1, 2, 3, 4, 5].map((n) => num(r, `weight_${n}star`, { blankAs: 0 }));
-    if (weights.every((w) => w === 0)) {
-      fail(where(r), 'weights every rarity at 0 — the pack can roll nothing');
+    const guarantees = {};
+    for (const f of FACE_IDS) {
+      const n = num(r, `guarantee_${f}`, { blankAs: 0 });
+      if (n > 0) guarantees[f] = n;
     }
-    const chance = num(r, 'gold_chance', { blankAs: 0 });
-    if (chance > 1) fail(where(r), `"gold_chance" is ${chance}, not a fraction`);
-    const guaranteed = num(r, 'gold_guaranteed', { blankAs: 0 });
-    if (guaranteed === 1 && weights[3] === 0 && weights[4] === 0) {
-      fail(where(r), 'guarantees a gold card but weights 4★ and 5★ at 0 — gold is an edition of those two');
+    const weights = FACE_IDS.map((f) => num(r, `weight_${f}`, { blankAs: 0 }));
+    const cards = num(r, 'cards');
+    const given = Object.values(guarantees).reduce((a, b) => a + b, 0);
+    if (given > cards) {
+      fail(where(r), `guarantees ${given} cards but the pack holds ${cards}`);
+    }
+    // A pack with slots left to roll needs somewhere to roll them.
+    if (given < cards && weights.every((w) => w <= 0)) {
+      fail(where(r), `has ${cards - given} slots to roll and every weight is blank`);
     }
     out.packs[id] = {
-      cards: num(r, 'cards'),
+      cards,
+      guarantees,
       weights,
-      goldChance: chance,
-      goldGuaranteed: guaranteed,
       gemCost: num(r, 'gem_cost', { blankAs: 0 }),
     };
   }
@@ -1285,8 +1564,12 @@ async function importXlsx() {
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
     const value = kind === 'list' ? list(row, 'value')
-      : kind === 'tiers' ? tiers(row, 'value')
-        : num(row, 'value');
+      : kind === 'names' ? names(row, 'value')
+        : kind === 'name' ? name(row, 'value')
+          : kind === 'tiers' ? tiers(row, 'value')
+            : kind === 'faces' ? keyed(row, FACE_IDS)
+              : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
+                : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     // A block whose every key is a Setting — `combat.*` is one — has no loop
@@ -1332,6 +1615,7 @@ const goodsCell = (levels) => levels
   .join('|');
 const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
 const tiersCell = (ts) => ts.map((t) => `${t.at}:${t.bonus}`).join('|');
+const keyedCell = (m) => Object.entries(m).map(([id, n]) => `${id}:${n}`).join(',');
 
 /** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
  *  format so a two-entry list like "3,5" can't collapse into the number 3.5. */
@@ -1426,14 +1710,20 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Packs', PACK_IDS.map((id) => {
     const k = b.packs[id];
-    return [id, k.cards, ...k.weights.map((w) => w || ''),
-      k.goldChance || '', k.goldGuaranteed || '', k.gemCost || ''];
+    return [id, k.cards,
+      ...FACE_IDS.map((f) => k.guarantees[f] || ''),
+      ...k.weights.map((w) => w || ''),
+      k.gemCost || ''];
   }));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];
     return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
-      a.activeDurationSeconds || '', a.activeRadius || ''];
+      a.activeDurationSeconds || '', a.activeRadius || '',
+      a.activeTapsPerMana || '', a.activeTapsPerManaPerLevel || '',
+      a.activePower || '', a.activePowerPerLevel || '',
+      a.activeDurationPerLevel || '',
+      a.activeCharges || '', a.activeChargesPerLevel || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
@@ -1441,7 +1731,8 @@ async function exportXlsx() {
     return [id, h.rarity, h.unitType, h.trait, h.traitValue,
       h.dmg, h.def, h.hp, h.cooldown,
       h.dmgPerLevel, h.defPerLevel, h.hpPerLevel,
-      h.troopDmgMult, h.troopHpMult, h.troopDefBonus];
+      h.troopDmgMult, h.troopHpMult, h.troopDefBonus,
+      h.boon?.stat ?? '', h.boon?.value ?? ''];
   }));
 
   addSheet(workbook, 'Villains', Object.entries(b.villains ?? {}).map(([id, v]) =>
@@ -1459,7 +1750,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Store', STORE_IDS.map((id) => {
     const s = b.store[id];
-    return [id, s.priceUsd, s.gems];
+    return [id, s.priceUsd, s.gems, s.packs || '', s.packTier || '',
+      s.wildcards || '', s.wildcardRarity || ''];
   }));
 
   addSheet(workbook, 'Depths', (b.depths ?? []).map((d) =>
@@ -1472,9 +1764,11 @@ async function exportXlsx() {
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
-    return [key, kind === 'list' ? listCell(value)
+    return [key, kind === 'list' || kind === 'names' ? listCell(value)
+      : kind === 'name' ? value
       : kind === 'tiers' ? tiersCell(value)
-        : value];
+        : kind === 'faces' || kind === 'chests' ? keyedCell(value)
+          : value];
   }), (col, row) => col === 'value' &&
     SETTINGS.some(([key, , kind]) => key === row[0] && kind !== undefined));
 

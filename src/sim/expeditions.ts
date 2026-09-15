@@ -23,13 +23,12 @@
 
 import {
   ARTIFACTS, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
-  depthCount, depthDef, depthsOf, roomPower, type PackTier,
+  depthCount, depthDef, depthsOf, roomPower,
 } from './data/definitions';
-import { grantPack } from './collection';
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  partyPower, partyStats,
+  NO_DRILL, partyPower, partyStats,
   type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import {
@@ -41,6 +40,7 @@ import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
+import { spendCharge } from './casting';
 import { isTechComplete } from './research';
 import { techFlat, techFlatAimed, techValue } from './techEffects';
 import {
@@ -49,6 +49,7 @@ import {
   type UnitId, type Wallet,
 } from './state';
 import { canAfford, pay } from './wallet';
+import { recordEvent } from './events';
 
 // ------------------------------------------------------------------- slots
 
@@ -125,6 +126,9 @@ export function drillOf(state: GameState): Drill {
     disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
       + techFlat(state, 'typeDisadvantage')
       + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
+    // A MULTIPLIER, floored at the identity: nothing in the game may make the
+    // kingdom's own troops frailer than the sheet says.
+    hpMult: Math.max(1, resolve(state, 'unitHp', 1)),
   };
 }
 
@@ -147,7 +151,7 @@ export const partyOf = (
  * Every hero in the party is a fighter with its level's numbers.
  */
 export function partyBoard(party: Party): Board {
-  const drill = party.drill ?? { atk: {}, def: {}, disadvantageOffset: 0 };
+  const drill = party.drill ?? NO_DRILL;
   const fighters: FighterSpec[] = party.heroes.map((h) => {
     const def = HEROES[h.id];
     const step = h.level - 1;
@@ -168,6 +172,7 @@ export function partyBoard(party: Party): Board {
   const bonus = {
     dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags),
     def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags),
+    hpMult: () => drill.hpMult,
   };
   return buildBoard(party.slots.filter((s) => s.count > 0) as SquadSpec[], fighters, bonus);
 }
@@ -423,26 +428,31 @@ export const isBossRoom = (ruinId: RuinId, depth: number, room: number): boolean
  */
 export function roomReward(
   state: GameState, ruinId: RuinId, depth: number, room: number,
-): { wallet: Wallet; heroXp: number; pack: PackTier } {
+  /** What a Lamplight use is worth on this room, 1 when none is spent. The
+   *  CALLER spends it, never this — the party screen asks what a room WOULD
+   *  pay, and a preview that burned a charge would cost the player one for
+   *  looking. */
+  lamplight = 1,
+): { wallet: Wallet; heroXp: number } {
   const def = depthDef(ruinId, depth);
   const tier = RUINS[ruinId].tier;
-  if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Bronze' };
+  if (def === undefined) return { wallet: {}, heroXp: 0 };
   const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
+  // THE MATERIAL HALF ONLY (the Delver's Lantern). A room's Stardust already
+  // carries the Wanderer's Compass and its Hero XP a legendary's boon, so a
+  // relic on the whole `scale` would stack three permanent layers on one
+  // number and none of them would be readable.
+  const haul = Math.max(1, resolve(state, 'roomHaul', 1)) * lamplight;
   return {
     wallet: {
-      Gold: Math.round(20 * scale),
-      Stone: Math.round(3 * scale),
+      Gold: Math.round(20 * scale * haul),
+      Stone: Math.round(3 * scale * haul),
       // Prospecting and any timed boon ride on the Stardust line, the way
       // they always did: it is the collection's own faucet.
       Stardust: Math.round(resolve(state, 'stardustYield',
         techValue(state, 'stardustYield', 2 * scale))),
     },
     heroXp: Math.round(10 * scale),
-    // RUINS ARE THE FREE FAUCET (Docs/features/09-relics.md §6): an ordinary
-    // room pays a Bronze pack beside the line above, a boss a Silver one. It
-    // replaced the relic Fragments this room used to drip, which had nothing
-    // left to buy.
-    pack: isBossRoom(ruinId, depth, room) ? 'Silver' : 'Bronze',
   };
 }
 
@@ -502,11 +512,9 @@ export interface RoomReport {
   /** The share of them that reached the infirmary and can be healed back. */
   wounded: Array<{ unitId: UnitId; count: number }>;
   heroXp: number;
-  /** What tier of card pack the room paid, already in the player's lap. */
-  pack: PackTier;
   /** Set when this room was the last of its depth. */
   depthCompleted: boolean;
-  /** Set when the ruin's last room fell — its once-only lump and Star pack. */
+  /** Set when the ruin's last room fell — its once-only lump. */
   bottomed: boolean;
 }
 
@@ -527,13 +535,18 @@ export function enterRoom(
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
+  /** Defaults to the sim's own clock. A room resolves here and now, so the
+   *  only thing this instant is for is the Lamplight charge it may spend:
+   *  the last one starts that relic's cooldown, and a cooldown needs a
+   *  moment (invariant 3 — the sim never reads a clock of its own). */
+  now: number = state.lastAdvance,
 ): RoomReport {
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
     power: roomPower(ruinId, at.depth, at.room), log: null, supplies: {},
     losses: [], wounded: [],
-    wallet: {}, heroXp: 0, pack: 'Bronze', depthCompleted: false, bottomed: false,
+    wallet: {}, heroXp: 0, depthCompleted: false, bottomed: false,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) return { ...empty, result: block };
@@ -559,7 +572,11 @@ export function enterRoom(
 
   // Cleared. The room pays into the wallets it belongs in, immediately: there
   // is no haul to carry home, so nothing can be lost on the way.
-  const reward = roomReward(state, ruinId, at.depth, at.room);
+  // SPENT HERE AND NOWHERE ELSE: a room is cleared once, and this is the line
+  // that says so. The preview on the party screen asks the same function
+  // without a charge, so looking costs nothing.
+  const reward = roomReward(state, ruinId, at.depth, at.room,
+    spendCharge(state, 'DelversLantern', now));
   for (const [c, n] of Object.entries(reward.wallet)) {
     if (n <= 0) continue;
     if (c === 'Stardust') {
@@ -568,10 +585,16 @@ export function enterRoom(
     } else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
   addHeroXp(state, reward.heroXp);
-  grantPack(state, reward.pack, isBossRoom(ruinId, at.depth, at.room) ? 'boss' : 'room');
+  // NO PACK. The ruins are cleared ONCE — a pack per room is 191 sobres in
+  // the lifetime of an account and then nothing for ever, which is a welcome
+  // rather than a supply. The packs moved onto the season pass's two columns,
+  // which pay every season; what the dungeon feeds the collection now is the
+  // missions it completes (Docs/features/20-season-pass.md §5).
+  recordEvent(state, { kind: 'roomCleared', ruin: ruinId });
 
   const def = depthDef(ruinId, at.depth)!;
   const depthCompleted = at.room >= def.rooms;
+  if (depthCompleted) recordEvent(state, { kind: 'depthCleared', ruin: ruinId });
   state.ruins[ruinId] = depthCompleted
     // The next depth opens the moment this one runs out. The Adventurers'
     // Guild is what gates it in the design (§3) and it is unbuilt, so
@@ -582,12 +605,11 @@ export function enterRoom(
 
   let bottomed = false;
   if (ruinIsFinished(state, ruinId) && state.ruinsCleared[ruinId] !== true) {
-    // THE BOTTOM NO LONGER PAYS A RELIC. Ruins pay packs, and a relic comes
-    // only from its album (Docs/features/09-relics.md §1) — so what is left
-    // here is the once-per-ruin lump, plus a Star pack for the conquest.
+    // THE BOTTOM PAYS NEITHER A RELIC NOR A PACK. A relic comes only from
+    // its album (Docs/features/09-relics.md §1), and the packs are the season
+    // pass's — so what is left here is the once-per-ruin lump.
     state.ruinsCleared[ruinId] = true;
     bottomed = true;
-    grantPack(state, 'Star', 'boss');
     // The recurring Gem faucet the design needs: one per ruin, once. Taking
     // a ruin to its bottom is the conquest, and it pays in the two currencies
     // the long game runs on.
@@ -609,7 +631,6 @@ export function enterRoom(
     wounded,
     wallet: reward.wallet,
     heroXp: reward.heroXp,
-    pack: reward.pack,
     depthCompleted,
     bottomed,
   };
@@ -640,7 +661,7 @@ export interface RoomPreview {
   attack: number;
   stats: { atk: number; def: number; hp: number };
   supplies: Wallet;
-  reward: { wallet: Wallet; heroXp: number; pack: PackTier };
+  reward: { wallet: Wallet; heroXp: number };
   /** True when the party out-powers the room ON PAPER. A shortfall warns and
    *  never blocks — and paper is all it is: the resolver decides the fight,
    *  and it counts things a sum cannot (Docs/features/combat.md §12). */

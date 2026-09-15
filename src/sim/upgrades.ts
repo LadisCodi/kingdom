@@ -26,10 +26,12 @@ import {
   DISTRICTS, HARVEST, TAP, TAXES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import { townhall, type CurrencyId, type District, type DistrictId, type GameState } from './state';
+import {
+  townhall, type Coord, type CurrencyId, type District, type DistrictId, type GameState,
+} from './state';
 import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
-import { resolve } from './modifiers';
+import { resolve, resolveAt } from './modifiers';
 import { harmonySurplusMultiplier } from './harmony';
 
 /**
@@ -84,8 +86,12 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * `ABUNDANCE_LINES` table said with a list.
  */
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
-  return Math.max(0, techValue(
-    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id }));
+  // The relic's term is FLAT, and flat is right here: `unitsPerStrike` is
+  // authored per source and never grows, so a `+1` stays worth +100% on a
+  // Forest and +20% on an iron vein for ever. One number reaches the thumb
+  // (`tapDraw`) and the crew (`effectiveWorkerStrike`) from this one place.
+  return Math.max(0, resolve(state, 'harvestUnitsPerStrike', techValue(
+    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id })));
 }
 
 /**
@@ -144,14 +150,21 @@ export function effectiveWorkerStrike(
 /** Milliseconds between one worker's strikes on this kind of cell. A property
  *  of the CELL and of the BUILDING that sent the worker: a farm plot is fast
  *  and thirsty where an iron mountain is a heavy swing, and a level-10 Sawmill
- *  swings faster at both. No modifier scales it — a worker-speed stat would be
- *  a new `ModifierStat`, which is code, and nothing has asked.
- *  (`workerSpeed` below is how fast they WALK, which is a different thing.) */
+ *  swings faster at both.
+ *  (`workerSpeed` below is how fast they WALK, which is a different thing.)
+ *
+ *  A ZONE IS READ AT THE BUILDING, never at the cell. A worker walks, so a
+ *  zone asking where it was standing would flicker as it crossed the edge —
+ *  and travel is Euclidean while a zone is Chebyshev. *The Sawmill is in the
+ *  area, so the Sawmill's crew works faster* is one sentence and one stable
+ *  answer (Docs/proposals/relic-effects.md §3.1). */
 export const workerStrikeMs = (
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number => {
-  void state;
-  const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1);
+  const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1)
+    * Math.max(1, building === null
+      ? resolve(state, 'workerStrikeSpeed', 1)
+      : resolveAt(state, 'workerStrikeSpeed', 1, building.location));
   return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
 
@@ -179,21 +192,54 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
 /** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
  *  FSM when a leg STARTS, so a rank landing mid-walk shortens the next leg
  *  rather than teleporting the one in progress — which is also what keeps a
- *  one-call replay and stepped ticking on the same StateUntil. */
-export const effectiveWorkerSpeed = (state: GameState): number =>
-  Math.max(0.1, resolve(state, 'workerSpeed',
+ *  one-call replay and stepped ticking on the same StateUntil.
+ *
+ *  `home` is the walker's BUILDING, for the same reason `workerStrikeMs`
+ *  reads one: a crew in a Foreman's Sigil zone walks faster for the whole leg,
+ *  including the half of it outside the zone. Omitted, this is the kingdom's
+ *  walking speed with no zone in it — which is what the UI and a worker with
+ *  no building want. */
+export const effectiveWorkerSpeed = (state: GameState, home: Coord | null = null): number =>
+  Math.max(0.1, (home === null ? resolve : resolveAtHome(home))(state, 'workerSpeed',
     WORKER.moveSpeedTilesPerSecond
       * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
       * techMultiplier(state, 'workerSpeed')));
 
-/** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
-export const effectiveBuildTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)));
+/** `resolveAt` curried on the place, so the line above reads as one choice
+ *  between two resolvers rather than as a duplicated expression. */
+const resolveAtHome = (home: Coord) =>
+  (state: GameState, stat: 'workerSpeed', base: number): number =>
+    resolveAt(state, stat, base, home);
 
-/** Multiplier on research time (Scriveners: −5%/rank), floor 0.25. Applied
- *  ONCE, when a research starts, and persisted on it — see research.ts. */
+/**
+ * Multiplier on build and upgrade time (Carpentry: −5%/rank).
+ *
+ * TWO HALVES, and they point opposite ways on purpose. The TREE authors a
+ * discount (`buildTime`, −5% a rank) because a rank ladder is bounded and
+ * cannot run past its own last rank. The MODIFIER STACK authors a SPEED
+ * (`buildSpeed`, a multiplier at or above 1) because what feeds it — a relic,
+ * a season, a legendary's boon — has no ceiling, and a discount would die at
+ * 100% while a speed only ever approaches zero
+ * (Docs/proposals/legendary-boons.md §2.1).
+ *
+ * Dividing is what makes that true: ×2 is half the wait, ×5 a fifth, and no
+ * number of them reaches a build that takes no time.
+ */
+export const effectiveBuildTimeMultiplier = (state: GameState): number =>
+  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)))
+    / Math.max(1, resolve(state, 'buildSpeed', 1));
+
+/**
+ * Multiplier on research time (Scriveners: −5%/rank). Applied ONCE, when a
+ * research starts, and persisted on it — see research.ts.
+ *
+ * Two halves pointing opposite ways, for the reason build time gives above:
+ * the tree discounts a bounded ladder, the stack multiplies an unbounded
+ * SPEED, and dividing is what stops a permanent passive reaching zero.
+ */
 export const effectiveResearchTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)));
+  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)))
+    / Math.max(1, resolve(state, 'researchSpeed', 1));
 
 /**
  * Tax gold per housed villager per minute.

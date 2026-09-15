@@ -68,14 +68,15 @@ Two more that are design-visible:
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** — the Townhall's levels ask for villagers since 2026-09-10 (OQ-93) |
-| The chrome — kit, sheets, nav, header, icons, fonts | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | **rebuilt for the phone 2026-09-10**: PT Sans, smooth 64px icon atlas, 44/52px chrome, sheets ≤ 70%, screens built once (§6.8); the density is OQ-94 until it has been held |
+| The chrome — kit, sheets, nav, header, icons, fonts | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | **rebuilt for the phone 2026-09-10**: Nunito (one family, four weights — 2026-09-11), smooth 64px icon atlas, 44/52px chrome, sheets ≤ 70%, screens built once (§6.8); the density is OQ-94 until it has been held |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement | [`09`](features/09-relics.md) | **built, and superseded** — the build has relics dropping from ruins, attunement slots, Stardust levels and a Fragments gate; **the design of 2026-09-09 replaces all four with the card collection** (§4, the collection rework). The actives left for the tomes 2026-09-03 |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each one fight resolved on entry ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)), and the fight is the **tick auto-battler** ([`combat.md`](features/combat.md)) with the screen that replays its event stream. Tiers T2–T5 and authored boss formations are what is left |
-| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
+| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — the chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09. Orders were cut 2026-09-03 and a recurring generated ask came back 2026-09-15 as the **season pass's mission board**, deliberately not as fetch-quests ([`12`](features/12-quests.md) §6) |
+| **The season pass, and the missions that feed it** | [`20`](features/20-season-pass.md) | **built 2026-09-15** — 40 levels on the collection's 28-day clock, two reward columns, eight generated missions on one board, two issued every eight hours, **active play only**. It is the first build of [`13`](features/13-events.md) §2.4's two-column track. **The dungeon's card packs moved onto it**, which re-cuts OQ-102 without closing it |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
 | **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **built 2026-09-09** — the counter, the raid, the hoard, the fight and the screens. The fight is scored the way a room is until the resolver lands |
@@ -450,11 +451,28 @@ evaporating.**
   gift applied during an absence **still leaves the replay assertion true**.
 - **Size:** weeks.
 
+### The eight-album collection — PLANNED 2026-09-15
+
+Three proposals — [`proposals/relic-effects.md`](proposals/relic-effects.md),
+[`proposals/album-cycles.md`](proposals/album-cycles.md) and
+[`proposals/collection-packs.md`](proposals/collection-packs.md) — are
+sequenced in **[`plans/collection-eight.md`](plans/collection-eight.md)**: seven
+steps, the first five safe whatever **OQ-98** decides and the sixth void if the
+Magic tome wins the actives. Nothing started.
+
+The line to carry out of it: **steps 1–7 make the collection exist; the
+repeatable dungeon makes it play.** 165 of a free player's 200 packs a season
+come through it (**OQ-102**), and without it the faucet is 35 a season and a
+free player closes 1.1 albums of eight.
+
 ### The collection rework — BUILT 2026-09-11
 
 | Rework | Design | State |
 |---|---|---|
-| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue: a room pays Bronze, a boss Silver, the bottom a Star, and the repeatable dungeon is still what a veteran's season needs |
+| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **built**, less trading (OQ-89) and the season hero's rate-up (a banner payload). **OQ-88** — the free pack faucet — is now a question to instrument rather than to argue. **The repeatable dungeon is no longer "what a veteran's season needs" but what the collection is built on**: [`proposals/collection-packs.md`](proposals/collection-packs.md) §2.1 puts **148 of the free player's 200 packs a season** through it — the daily chest is a clock, the season pass's free column tops out at 24, and **the five authored ruins now pay none at all** ([`20`](features/20-season-pass.md) §4). Its run length and its frequency are now downstream of that number (**OQ-102**) |
+| **The legendary boon** | [`proposals/legendary-boons.md`](proposals/legendary-boons.md), [`10`](features/10-heroes.md) §2.6 | **built 2026-09-14.** One kingdom passive per Legendary — always a multiplier above 1, in the relic's own modifier stack, on while the hero is owned. Four new stats, two of them the SPEED half of a number the tree discounts (`buildSpeed`, `researchSpeed`), one a multiplier that reaches both the estimate and the resolver (`unitHp`), and one declared ahead of its call site (`worldRevealSpeed` — the world map's exploration timer, **OQ-96**). `SAVE_VERSION` 45, no migrator: the boon is derived from `heroes.owned` |
+| **The collection prize** | [`09`](features/09-relics.md) §5 | **built 2026-09-14.** The forty-fifth card pays 25,000 Gems and a golden call guaranteed to be the season's hero — a call, so it pays that banner's Stardust and its duplicate Fragments; guaranteed, so it charges nothing, rolls nothing and moves neither pity counter. It is dealt in the gacha reveal, behind the pack that finished the season, and the album banners follow it. `pendingPayouts` was a dead queue until this landed: an album could complete and say nothing |
+| **A four-week season that cycles, and a close that pays** | [`09`](features/09-relics.md) §3 | **built 2026-09-14.** The season is **28 days** — four weeks exactly, so it always opens on the epoch's weekday, and sized so the free faucet of ~200 packs reads as seven a day ([`proposals/collection-packs.md`](proposals/collection-packs.md) §3.1). The seasons list **cycles** (the last is followed by the first, for ever) and the close **melts the cards into Gold by rarity**, priced in production on the stars ladder. `?dev`'s **🗓 end season** warps to the rollover so the whole flow is one click rather than four weeks |
 
 Two bridges were taken deliberately and both are named in the code that owns
 them. The four relic **actives** still live on their relics, gated on owning

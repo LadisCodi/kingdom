@@ -183,20 +183,37 @@ Pressed state: the slab drops onto its lip (3px down, lip hidden).
 
 ### 3.4 Type & numbers
 
-*Revised 2026-09-10. The pixel faces (BoldPixels for titles, m6x11plus for
+*Revised 2026-09-11. The pixel faces (BoldPixels for titles, m6x11plus for
 everything else) forced 24px body copy and coarse size rungs that no phone
-layout could fit; both are gone.*
+layout could fit; both are gone, and so is the PT Sans + Germania One pair
+that replaced them.*
 
-- **Body copy and every number: PT Sans** 400/700, self-hosted
-  (`src/ui/fonts/`). **Titles: Germania One** 400 (decided on the board,
-  2026-09-11) — headings, sheet planks, proper names, only at `--text-title`;
-  one weight, proportional digits, so never a number. The pair
-  `--font-display` / `--font-display-weight` carries it.
+- **One family: Nunito**, self-hosted (`src/ui/fonts/`) — the face the mockups
+  are drawn in. A title and a caption out of one family read as one voice;
+  what separates them is the **weight**, not the family, so `--font-display`
+  and `--font-body` name the same face.
+- **Four weights are four roles**, and a rule names the role rather than the
+  number:
+
+| Token | Weight | Used for |
+|---|---|---|
+| `--weight-title` | **800** ExtraBold | headings — *Store*, *Heroes*, *Timber!* |
+| `--weight-strong` | **700** Bold | buttons, amounts, names |
+| `--weight-body` | **600** SemiBold | ordinary prose — the default on `<body>` |
+| `--weight-small` | **400** Regular | the small description under it |
+
+- **600 for prose is the point of the change.** On parchment at 16px, Nunito
+  Regular reads thin and SemiBold reads like the mockups; 400 is left to the
+  helper line, where the *contrast* against the 600 above it does the work.
 - **Scale: title 22px, body 16px, helper 13px** (`--text-title`,
   `--text-body`, `--text-helper`) — the brief's minimums (§2), checked by
-  `tests/fonts.test.ts`, which also refuses any literal under 11px.
-- Every number is set in the text face; PT Sans's digits are one width, so
-  counters do not jitter.
+  `tests/fonts.test.ts`, which also refuses any literal under 11px and any
+  bare weight outside the four faces.
+- Nunito is **a third wider than PT Sans** (~9.4px a character at 600 against
+  ~7), so a line that used to fit takes more room. The one place it shows is
+  a description clamped to two lines, which ellipsises — by design.
+- Every number is set in the text face; Nunito's digits are one width at every
+  weight, so counters do not jitter.
 - Counters are always paired with an icon on the left.
 - Big numbers get thousands separators; never show more than one decimal.
 - Durations read as words at small values: `instant`, `8s`, `2m 30s`,
@@ -1670,7 +1687,7 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
 The chrome stopped being pixel art on 2026-09-10 (the world did not). The
 pixel faces forced 24px body copy and coarse size rungs that no phone layout
 could fit, and 32px icons drawn to be shown at 32px cannot be scaled. So the
-UI is redrawn **smooth**: PT Sans for every word and number, and icons that
+UI is redrawn **smooth**: Nunito for every word and number, and icons that
 scale to whatever the layout asks (24px in the nav, 20px on the header
 coins, 28px in a list row). The map underneath keeps its chunky pixels; the
 contrast is deliberate — parchment and wood sitting on a pixel world.
@@ -2084,12 +2101,25 @@ behind `.tech-card-glyph`.
    That pairing shipped and the pixel face was not readable enough. The fault
    was in the brief rather than the choice: making one decorative face carry
    both titles and every number in the game meant it had to work at the 13px
-   floor §6.12 sets, and no pixel face does. Now **Germania One** (400) takes
-   titles alone at 15px and up, and **PT Sans** (400/700) takes body copy and
-   every number — with the useful property that its digits are all one width,
-   so counters stay tabular without a `tnum` feature. Still self-hosted OFL,
-   still vendored as subset woff2 with the licence, still 19 KB total. See
-   §3.4 and `src/ui/fonts/README.md`.
+   floor §6.12 sets, and no pixel face does. **Germania One** (400) then took
+   titles alone at 15px and up, and **PT Sans** (400/700) body copy and every
+   number.
+
+   **Revised again 2026-09-11, and it landed where it started: Nunito.** One
+   family in four weights — 800 titles, 700 buttons and amounts and names, 600
+   prose, 400 the small description — replaces both. Two families were one
+   more than the job needed: a title and a caption out of one face read as one
+   voice, and what makes a title a title is the weight. It is also the face
+   the mockups were drawn in all along, which is the answer to why the built
+   chrome never quite matched them.
+
+   The tabular property survives the change: Nunito has no `tnum`, and needs
+   none — its figures are 600 units wide at every weight. What does not
+   survive is the width. Nunito runs about a third wider than PT Sans (~9.4px
+   a character at 600 against ~7), so a two-line clamp truncates sooner; it
+   ellipsises, which is the behaviour the clamp was for. Still self-hosted
+   OFL, still vendored as subset woff2 with the licence, now **60 KB** for
+   four faces against 32 for three. See §3.4 and `src/ui/fonts/README.md`.
 
 ### 7.23 The store's painted pieces (S1)
 

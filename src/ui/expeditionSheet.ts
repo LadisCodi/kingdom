@@ -95,7 +95,6 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
         .filter(([, n]) => n > 0)
         .map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
       { icon: 'HeroXp' as CurrencyId, label: `+${reward.heroXp}` },
-      { icon: 'pack' as const, label: reward.pack },
     ],
     rewardNote: preview.isBoss
       ? 'A boss pays four times a room, and the depth behind it opens on the way out.'

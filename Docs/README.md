@@ -65,7 +65,7 @@ One file per feature, in the order a player meets them.
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
 | 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
 | 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
-| 9 | [Relics and the collection](features/09-relics.md) | five relics as **permanent passives with no ceiling**, levelled by **card albums in a 30-day shared season** — packs, duplicates, the vault, trading, wildcards, the season hero | **redesigned 2026-09-09**; the build carries the old model |
+| 9 | [Relics and the collection](features/09-relics.md) | five relics as **permanent passives with no ceiling**, levelled by **card albums in a 28-day shared season** — packs, duplicates, the vault, trading, wildcards, the season hero | **redesigned 2026-09-09**; the build carries the old model |
 | 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
 | 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | **rooms built 2026-09-09**; the tick resolver and the Guild are ahead |
 | 11 | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls | designed 2026-09-08 |
@@ -77,6 +77,7 @@ One file per feature, in the order a player meets them.
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [Harmony and the decorations](features/18-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
+| 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
 
 ## Reference
 
@@ -86,6 +87,11 @@ Not features — how content and art are made.
 |---|---|
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
+| [`plans/collection-eight.md`](plans/collection-eight.md) | the step-by-step plan for the three collection proposals below — seven steps, what each one lands, and the two programmes it does not own |
+| [`proposals/collection-packs.md`](proposals/collection-packs.md) | a **proposal**, not a spec: six packs defined by the rarity they guarantee, three vault chests duplicates buy, what a duplicate is worth, and where each falls — with every figure measured by simulation against the authored odds |
+| [`proposals/album-cycles.md`](proposals/album-cycles.md) | a **proposal**, not a spec: how a relic's level advances — running the five albums again inside a season (which needs the nine cards SPENT, or the loop never terminates), and rotating which relic each album levels so the two dearest ones are not unreachable for ever |
+| [`proposals/relic-effects.md`](proposals/relic-effects.md) | a **proposal**, not a spec: what each relic does, level by level — the five that exist and the **three that have to be created** for the eight albums — a passive that never stops being worth having, and an active that is a placed ZONE on a cooldown, with exactly one of its four numbers growing with the relic's level |
+| [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | a **proposal**, not a spec: one kingdom passive per Legendary hero, spread across economy, research, exploration and combat, so a Legendary is a different kind of thing to own rather than a bigger number |
 | [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
 | [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |

@@ -48,6 +48,7 @@
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   background: var(--parchment);
   border-top: var(--outline) solid var(--wood-dark);
   box-shadow: 0 -4px 14px rgba(60, 36, 18, 0.35);
@@ -62,26 +63,35 @@
 .dc-name { font-family: var(--font-display); font-size: var(--text-title); font-weight: var(--font-display-weight); }
 .dc-what { color: var(--ink-muted); line-height: 1.25; }
 
-/* Level as stars: a count you read rather than a fraction you parse. */
-.dc-stars { display: inline-flex; gap: 2px; margin: 1px 0 3px; }
-.dc-stars .icon.is-empty { filter: grayscale(1) brightness(1.35); opacity: 0.45; }
-/* Ten levels: one star and the count, since ten pips is a bar chart. Sizes
-   are inherited from .dc — the card's own helper size is what this is. */
-.dc-stars.is-numeral { align-items: center; gap: 3px; }
-.dc-stars.is-numeral span { opacity: 0.6; }
 
+/* The painted well, with the level on a scroll across its corner (M2). The
+   ribbon is positioned rather than stacked so it can overhang the frame — a
+   label ON the picture, the way a plaque sits on a case. */
 .dc-portrait {
+  position: relative;
   flex: none;
-  width: 104px;
+  width: 118px;
   height: 104px;
   display: grid;
   place-items: center;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  border-radius: var(--radius-sm);
+  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 15px stretch;
 }
-.dc-portrait img { width: 92px; height: 92px; object-fit: contain; image-rendering: pixelated; }
-.dc-name { font-family: var(--font-body); font-weight: 700; }
+.dc-portrait-art { width: 90px; height: 78px; object-fit: contain; }
+.dc-level {
+  position: absolute;
+  left: -8px;
+  top: -6px;
+  min-width: 56px;
+  padding: 7px 10px 9px;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  background: url('../../../render/assets/banner_scroll.png') center / 100% 100% no-repeat;
+  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.5);
+}
+.dc-name { font-family: var(--font-body); font-weight: var(--weight-strong); }
 
 /* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
    bleeds a pixel or two must not make the card draggable sideways. */
@@ -102,48 +112,6 @@
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
 .dc-foot { margin-top: 6px; }
-.dc-up {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 8px;
-  align-items: start;
-  padding: 6px;
-  border-radius: 8px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-}
-.dc-up-mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--gold);
-  border: 2px solid var(--gold-dark);
-}
-.dc-up-heading { min-width: 0; }
-.dc-up-title {
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  font-weight: 400;
-  line-height: 1.2;
-}
-/* One line of why, under the title, in the room the button leaves — the
-   button is as tall as a label over a price, so two short lines of helper
-   fit beside it without adding a pixel to the block. */
-.dc-up-sub {
-  margin-top: 2px;
-  font-size: var(--text-helper);
-  line-height: 1.25;
-  color: var(--ink-muted);
-}
-/* The band runs the FULL width, under the mark too: the mark is a 40px
-   symbol, not a portrait that owns its column, and a band that started at the
-   second column left a well of nothing beneath it — the empty space this
-   block used to be mostly made of. */
-/* `.dc-up >` for specificity: `.tr-figures` below pins itself to column 2 for
-   the training panel's portrait, and a bare class here loses to it. */
-.dc-up > .dc-up-figures { grid-column: 1 / -1; align-self: auto; }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -200,7 +168,7 @@
   display: flex; align-items: baseline; gap: 6px;
   margin: 4px 0;
 }
-.dc-drip .dc-army-note { font-size: var(--text-helper); }
+.dc-drip .dc-army-note { font-size: var(--text-helper); font-weight: var(--weight-small); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
@@ -209,6 +177,7 @@
   display: flex; align-items: center; gap: 6px;
   margin-top: 4px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -229,7 +198,7 @@
   padding: 4px 10px;
   margin: 4px 0;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   border: 2px solid;
 }
 .dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
@@ -277,6 +246,7 @@
 .dc-army {
   display: flex; align-items: baseline; gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -287,6 +257,7 @@
 .dc-harmony {
   display: flex; align-items: baseline; gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 
 /* ------------------------------------------------- the training section ---
@@ -296,73 +267,128 @@
 
 .tr { display: flex; flex-direction: column; gap: 6px; }
 
+/* ---- the training block's heading (M2): what it is, and how long the whole
+ * line takes. The TOTAL rather than the head's countdown — "how long until
+ * this queue is empty" is the question a player with five in the line asks,
+ * and the head's own clock is the ring on its medallion. */
 .tr-head {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
+.tr-head-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  color: var(--ink);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.tr-head-total {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.tr-head-total > .icon { --icon-size: 22px; }
 
-/* The line, as faces rather than a number: what you are waiting for, not just
- * how many. It scrolls rather than wrapping, so a long queue never pushes the
- * Train button off the card. */
-/* RIGHT TO LEFT: the batch being worked on sits at the right end, hard against
-   the bar's own end, and the waiting ones queue away to its left — the shape a
-   line of people has when you are standing at the front of it.
-   `row-reverse` rather than a reversed array, so the DOM keeps the head of the
-   line first: that is the order a screen reader should hear it in, and it is
-   also what puts the ACTIVE batch in view when a long queue overflows, since
-   a reversed flex container starts scrolled to its own start. */
+/* ---- the chain.
+ *
+ * RIGHT TO LEFT: the batch being worked on sits at the right end and the
+ * waiting ones queue away to its left — the shape a line of people has when
+ * you are standing at the front of it. `row-reverse` rather than a reversed
+ * array, so the DOM keeps the head of the line first: that is the order a
+ * screen reader should hear, and it is what puts the ACTIVE batch in view
+ * when a long queue overflows, since a reversed flex container starts
+ * scrolled to its own start. */
 .tr-queue {
   display: flex;
   flex-direction: row-reverse;
-  gap: 5px;
+  align-items: center;
+  gap: 0;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 0;
   scrollbar-width: none;
 }
 .tr-queue::-webkit-scrollbar { display: none; }
-/* The queue is FACES, not a number (see the header of trainingSection.ts): a
-   row of them says what you are waiting for, which is the question when a hall
-   turns out three different units. So the slot carries the bust, and it grew
-   to 48px to be read next to the picker above it rather than merely counted. */
+/* A medallion: the bust in a painted ring, with its count on a pill. The
+ * ring is chrome cut from the sheet (scripts/ui-cut.mjs) and punched hollow,
+ * so it sits over whichever trainee the slot holds. */
 .tr-slot {
+  position: relative;
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #8a6648;
+  box-shadow: inset 0 2px 6px rgba(40, 22, 10, 0.45);
 }
-/* The art is rounded rather than the slot CLIPPED, because the ward's count
-   badge hangs outside this box on purpose and `overflow: hidden` would eat it. */
-.tr-slot-art { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
-/* A ward in the line hands over several at once, so its slot carries the
- * count the way a party's squad face does. */
-.tr-slot { position: relative; }
+.tr-slot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: url('../../../render/assets/ring_idle.png') center / contain no-repeat;
+  pointer-events: none;
+}
+/* The art is clipped to the well rather than the slot being `overflow:
+   hidden` — the count pill hangs outside this box on purpose. */
+.tr-slot-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
 .tr-slot-count {
   position: absolute;
-  right: -2px;
-  bottom: -4px;
-  padding: 0 4px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
+  right: -6px;
+  bottom: -6px;
+  min-width: 26px;
+  padding: 3px 6px 5px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: var(--weight-strong);
   color: var(--parchment);
-  background: var(--wood-dark);
-  border-radius: 999px;
+  background: url('../../../render/assets/count_pill.png') center / 100% 100% no-repeat;
+  z-index: 2;
 }
-/* The one on the bench, which is the one the bar below is counting down. */
-.tr-slot.is-active {
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 2px var(--gold);
+/* The one on the bench wears the PROGRESS ARC, and keeps the plain rim under
+   it. Gold is for the unit you have SELECTED (the roster below), so an active
+   queue slot and a chosen unit stay two different marks.
+   The arc is a conic gradient, not the painted `ring_progress`: that asset
+   carries one angle and a progress ring needs every one — it is what these
+   colours are matched to. It sits OVER the rim (z-index) and is masked to a
+   band wide enough to read at 52px. */
+.tr-slot-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(var(--leaf) var(--progress, 0deg), transparent 0);
+  -webkit-mask: radial-gradient(closest-side, transparent 72%, #000 78%, #000 100%);
+  mask: radial-gradient(closest-side, transparent 72%, #000 78%, #000 100%);
+  filter: drop-shadow(0 1px 0 var(--leaf-dark));
+  pointer-events: none;
+  z-index: 2;
+}
+/* The painted connector between two runs — drawn between, never after the
+   last, so the chain has no loose end. */
+.tr-link {
+  flex: none;
+  width: 22px;
+  height: 16px;
+  margin: 0 -2px;
+  background: url('../../../render/assets/queue_link.png') center / contain no-repeat;
 }
 
-.tr-queue-row { display: flex; align-items: stretch; gap: 10px; }
-.tr-queue-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); }
+.tr-queue-row { display: flex; align-items: center; gap: 10px; }
+.tr-queue-row > .tr-queue { flex: 1; min-width: 0; }
+.tr-queue-row .k-btn { min-height: 44px; padding: 8px 12px; }
 
 /* What this hall can turn out. Only drawn when there is a choice to make. */
 /* The picker buttons carry a PORTRAIT now, not a 16px silhouette, so they are
@@ -437,88 +463,34 @@
 .tr-portrait.is-body .tr-portrait-art { object-position: center bottom; }
 .tr-pick.is-locked .tr-pick-art { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 .tr-body { min-width: 0; }
-.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
+.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: var(--weight-small); }
 .tr-tag {
   display: inline-block;
   margin: 1px 0 3px;
   padding: 1px 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--parchment);
   background: var(--wood-dark);
   border-radius: 999px;
 }
-.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); }
+.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
 .tr-stats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; align-items: center; }
 /* The type chart in one phrase, styled like the stats beside it. */
 .tr-beats {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--leaf);
   color: var(--parchment);
 }
-/* The Train button spans both columns, so it is the full width of the panel
- * and unmistakably the thing that spends. */
-/* The button rides in the panel's top-right corner at a FIXED width, sharing
-   its row with the name. It used to stretch the whole column, which made the
-   loudest thing on the panel its own width rather than its label, and left the
-   band underneath empty. */
-/* `.dc-up-top` is the upgrade block's row of the same shape — the level where
-   the name is, Upgrade where Train is — so every rule here names both. */
-.tr-top,
-.dc-up-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
 .tr-heading { min-width: 0; }
-.tr-top > .k-action,
-.dc-up-top > .k-action {
-  flex: none;
-  /* Wide enough for "Train" over three costs without squeezing them — the
-     button's own natural width, pinned so it stops growing with the panel. */
-  width: 164px;
-}
-/* The width has to reach the BUTTON, not just its wrapper: `k-action` is a
-   wrapper around a `k-btn` whose padding and costs set a min-width of their
-   own, and it was overflowing the panel by those few pixels. */
-.tr-top > .k-action .k-btn,
-.dc-up-top > .k-action .k-btn {
-  width: 100%;
-  min-width: 0;
-}
-/* The upgrade row has no 10px of heading above its button to clear: the mark
-   beside it is 40px and the title is centred on that, so the button sits flush
-   with the top of the row. */
-.dc-up-top > .k-action { margin-top: 0; }
-/* A gate in the button's slot: the same 164px, so the heading keeps its
-   measure whether the hall can train or not. The padlock's colour and the
-   helper size are `.k-reason.is-blocked`'s, without its row layout — inside a
-   box this narrow the sentence wrapped around the dead button it captioned,
-   "Nowhere" above and "Housing" below, and a button that cannot be pressed
-   was not earning the room. */
-.tr-top > .tr-blocked,
-.dc-up-top > .tr-blocked {
-  flex: none;
-  width: 164px;
-  margin-top: 10px;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  line-height: 1.3;
-  color: var(--clay);
-}
 .tr-blocked .icon { flex: none; margin-top: 2px; }
-.dc-up-top > .tr-blocked { margin-top: 4px; }
 
 /* The band the button gave back: four figures, read left to right in the order
    a soldier is judged in — what it hits for, what it takes, what it has, and
@@ -549,6 +521,7 @@
   gap: 4px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-soft);
   white-space: nowrap;
 }
@@ -604,6 +577,7 @@
   align-items: center;
   gap: 4px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -613,6 +587,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .dc-ws-crew .is-warning { color: var(--clay); }
@@ -646,6 +621,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
@@ -698,7 +674,7 @@
   padding: 0 5px;
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   line-height: 14px;
   color: var(--parchment);
   background: var(--ink);
@@ -708,7 +684,7 @@
 .tr-roster-more {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink-muted);
 }
 
@@ -721,52 +697,70 @@
 .tr-villagers .k-btn { min-height: 34px; }
 .tr-villagers > .k-action,
 .tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
-.tr-villagers > .tr-blocked { font-size: var(--text-helper); line-height: 1.3; }
-.dc-up-art {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 4px 0 8px;
-}
-.dc-up-tile {
-  display: grid;
-  place-items: center;
-  width: 94px;
-  height: 94px;
-  padding: 6px;
-  box-sizing: border-box;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
-  background: var(--parchment);
-}
-.dc-up-sprite { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.dc-up-arrow {
-  font-size: 30px;
-  line-height: 1;
-  color: var(--gold);
-  text-shadow: 0 2px 0 var(--gold-dark);
-}
-/* M2's numbers: the block's title at 19px, the tiles one line tall. */
-.dc-up-title { font-size: 19px; font-weight: 700; }
-.dc-up-figures .tr-fig { padding: 4px 8px; gap: 0; }
-.dc-up-figures .tr-fig-head { font-size: 12px; }
-.dc-up-figures .tr-fig-value { font-size: 15px; }
-/* M2's order for the block: the heading, the two portraits, the tiles, and
-   the verb (or the padlock line where the verb would be) centred at the
-   bottom. `display: contents` lets the top row's children take their own
-   places in the grid without a markup change. */
-.dc-up { grid-template-columns: 1fr; }
-.dc-up-mark { display: none; }
-.dc-up-top { display: contents; }
-.dc-up-heading { order: 1; }
-.dc-up-art { order: 2; }
-.dc-up-figures { order: 3; grid-column: 1; }
-.dc-up-top > .k-action,
-.dc-up-top > .tr-blocked { order: 4; width: auto; max-width: 100%; justify-self: center; margin-top: 2px; }
-.dc-up-top > .tr-blocked { justify-content: center; text-align: center; }
-.dc-up-sub { font-size: var(--text-helper); }
+.tr-villagers > .tr-blocked { font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
 /* A gate beside a soldier's name takes only the room it needs, so the name
    keeps its line. */
-.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; }
+.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; font-weight: var(--weight-small); }
+
+/* ---- the Upgrade button (M25)
+ *
+ * All that is left on the card of what used to be its longest block. Buying a
+ * level is a surface of its own now (screens/upgrade.css); this is the door,
+ * and the only thing it says beyond "Upgrade" is the first errand in the way
+ * — because sending a player into a popup to read a cross they could have
+ * been told about here is a wasted tap. */
+.dc-upgrade { display: flex; flex-direction: column; gap: 6px; }
+.dc-upgrade > .k-btn {
+  width: 100%;
+  min-height: 46px;
+  font-size: var(--text-title);
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-image: url('../../../render/assets/slab_green.png') 48 fill / 15px stretch;
+  color: var(--ink-inverse);
+  text-shadow: 0 2px 0 rgba(20, 60, 12, 0.5);
+}
+.dc-upgrade-gate {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+
+/* ---- the head and the stat band (M2)
+ *
+ * The name, the blurb and the ONE thing you buy for this building, beside its
+ * picture — then a band of what it is worth right now. Both halves of
+ * upgradeStats.ts: the band shows this level, the popup shows the pair. */
+.dc-id { display: flex; flex-direction: column; gap: 3px; }
+.dc-id > .dc-upgrade { margin-top: 5px; }
+.dc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border-image: url('../../../render/assets/frame_panel_wide.png') 58 fill / 14px stretch;
+}
+.dc-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dc-stat > .icon { --icon-size: 30px; flex: none; }
+.dc-stat-body { min-width: 0; }
+.dc-stat-label {
+  font-size: 11px;
+  font-weight: var(--weight-small);
+  line-height: 1.15;
+  color: var(--ink-muted);
+}
+.dc-stat-value {
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}

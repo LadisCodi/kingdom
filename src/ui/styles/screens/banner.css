@@ -88,7 +88,7 @@
 .b-text { min-width: 0; }
 .b-title {
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -96,12 +96,12 @@
 }
 .b-name {
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   font-size: 20px;
   line-height: 1.1;
   color: var(--ink);
 }
-.b-desc { font-size: var(--text-helper); color: var(--ink); opacity: 0.8; }
+.b-desc { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink); opacity: 0.8; }
 
 /* ------------------------------------------------------------- the toast ---
  * Failures live at the BOTTOM, out of the celebratory channel's way and
@@ -134,7 +134,7 @@
   padding: 8px 12px 8px 14px;
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
@@ -158,6 +158,6 @@
   border: 2px solid #8e3323;
   color: var(--gold);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
 }

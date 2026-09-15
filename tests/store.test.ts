@@ -10,6 +10,7 @@ import {
   PAYER_PROFILES, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile, formatUsd,
   monthIndex, monthResetsAt, monthlyBudgetCents, priceCents,
 } from '../src/sim/store';
+import { seasonAt } from '../src/sim/collection';
 import { freshPresenter, map, T0 } from './helpers';
 
 const DAY = 86_400_000;
@@ -188,6 +189,51 @@ describe('the presenter', () => {
     expect(game.walletValue('Gems')).toBe(gems + STORE.GemsPouch.gems);
     expect(game.openOverlay).toBe('store'); // back to shopping
     expect(game.pendingSku).toBeNull();
+  });
+
+  // A card bundle grants no Gems, so it takes the Royal chest's route: its own
+  // command, which still spends the budget through `buySku`. The confirmation
+  // is still the only place a purchase completes.
+  it('buys a card bundle through the same confirmation, and grants the hand', () => {
+    const game = freshPresenter();
+    const gems = game.walletValue('Gems');
+    game.state.collection.season = seasonAt(game.now());
+    const shelf = game.cardBundleOffers();
+    expect(shelf.length).toBeGreaterThan(0);
+    const offer = shelf[0]!;
+
+    game.setOverlay('store');
+    game.openIap(offer.id);
+    expect(game.openOverlay).toBe('iapConfirm');
+    expect(game.state.collection.packs).toEqual([]);
+
+    game.confirmIap();
+    expect(game.openOverlay).toBe('store');
+    // THE FIRST PACK IS ALREADY OPEN. A pack the player watched land opens
+    // itself, so what is left in the queue is the hand minus the one on
+    // screen — and the reveal is holding that one.
+    expect(game.gachaReveal).not.toBeNull();
+    expect(game.state.collection.packs).toHaveLength(offer.packs - 1);
+    expect(game.state.collection.wildcards[offer.rarity]).toBe(offer.wildcards);
+    // Money bought cards, not currency.
+    expect(game.walletValue('Gems')).toBe(gems);
+    expect(game.state.player.payer!.purchases.map((p) => p.sku)).toEqual([offer.id]);
+  });
+
+  // The shelf says what lands, and the confirmation says the same words: one
+  // list, read twice, so nothing is promised on one screen and not the other.
+  it('says what a bundle hands over, on the shelf and on the confirmation', () => {
+    const game = freshPresenter();
+    game.state.collection.season = seasonAt(game.now());
+    for (const offer of game.cardBundleOffers()) {
+      expect(offer.lines).toEqual(game.bundleLines(offer.id));
+      // What the pack GUARANTEES, generated from its row rather than authored
+      // beside it — a retuned row cannot leave a stale promise behind.
+      expect(offer.lines.join(' ')).toMatch(/guaranteed/);
+      expect(offer.lines.join(' ')).toMatch(/wildcard/);
+    }
+    // A Gem pack has no such list — its grant is one number.
+    expect(game.bundleLines('GemsPouch')).toEqual([]);
   });
 
   it('reports the budget the confirmation sheet draws', () => {

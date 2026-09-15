@@ -98,7 +98,7 @@ describe('tapping', () => {
       TAP.workSeconds * HARVEST.Forest.unitsPerStrike / HARVEST.Forest.secondsPerStrike)));
     // What the tree actually holds is its authored stock times the GROUND
     // under it — a grassland tree is richer than a desert one.
-    const held = effectiveStock(map, FOREST, HARVEST.Forest);
+    const held = effectiveStock(state, map, FOREST, HARVEST.Forest);
     const taps = Math.ceil(held / perTap);
     for (let i = 1; i < taps; i++) {
       expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
@@ -161,18 +161,20 @@ describe('tapping', () => {
 describe('the ground under a cell', () => {
   const cellOf = (kind: TerrainId): Coord | null =>
     map.cells.find((c) => map.terrain.get(coordKey(c)) === kind) ?? null;
+  // A fresh kingdom holds no relic, so `harvestStock` resolves to the identity
+  // and these assertions read the terrain alone.
+  const state = freshGame();
 
   it('scales what a cell holds, by currency, and never below one unit', () => {
-    const state = freshGame();
     for (const [kind, food, wood] of [
       ['Grassland', 1.25, 1.25], ['Plains', 1, 1],
       ['Desert', 0.5, 0.5], ['Snow', 0.75, 0.75], ['Tundra', 0.75, 1.5],
     ] as const) {
       const cell = cellOf(kind);
       if (cell === null) continue; // the province may not paint every biome
-      expect(effectiveStock(map, cell, HARVEST.Forest), `${kind} wood`)
+      expect(effectiveStock(state, map, cell, HARVEST.Forest), `${kind} wood`)
         .toBe(Math.max(1, Math.round(HARVEST.Forest.stock * wood)));
-      expect(effectiveStock(map, cell, HARVEST.Crops), `${kind} food`)
+      expect(effectiveStock(state, map, cell, HARVEST.Crops), `${kind} food`)
         .toBe(Math.max(1, Math.round(HARVEST.Crops.stock * food)));
     }
     void state;
@@ -181,39 +183,39 @@ describe('the ground under a cell', () => {
   it('is a DESERT that gives up stone: poor in food and wood, rich in rock', () => {
     const sand = cellOf('Desert');
     if (sand === null) return; // no desert painted yet
-    expect(effectiveStock(map, sand, HARVEST.Forest))
+    expect(effectiveStock(state, map, sand, HARVEST.Forest))
       .toBeLessThan(HARVEST.Forest.stock);
-    expect(effectiveStock(map, sand, HARVEST.Stone))
+    expect(effectiveStock(state, map, sand, HARVEST.Stone))
       .toBeGreaterThan(HARVEST.Stone.stock);
   });
 
   it('is a TUNDRA that pays in materials: hungry, and the best timber there is', () => {
     const cold = cellOf('Tundra');
     if (cold === null) return; // no tundra painted yet
-    expect(effectiveStock(map, cold, HARVEST.Crops))
+    expect(effectiveStock(state, map, cold, HARVEST.Crops))
       .toBeLessThan(HARVEST.Crops.stock);
     // Better timber than the grassland that grows the food, which is the whole
     // trade: you go there for materials and you do not eat there.
     const grass = cellOf('Grassland');
     if (grass !== null) {
-      expect(effectiveStock(map, cold, HARVEST.Forest))
-        .toBeGreaterThan(effectiveStock(map, grass, HARVEST.Forest));
+      expect(effectiveStock(state, map, cold, HARVEST.Forest))
+        .toBeGreaterThan(effectiveStock(state, map, grass, HARVEST.Forest));
     }
-    expect(effectiveStock(map, cold, HARVEST.Stone))
+    expect(effectiveStock(state, map, cold, HARVEST.Stone))
       .toBeGreaterThan(HARVEST.Stone.stock);
   });
 
   it('leaves Water alone, because shoals sit on it and pay Food', () => {
     const wet = cellOf('Water');
     expect(wet).not.toBeNull();
-    expect(effectiveStock(map, wet!, HARVEST.Fish)).toBe(HARVEST.Fish.stock);
+    expect(effectiveStock(state, map, wet!, HARVEST.Fish)).toBe(HARVEST.Fish.stock);
   });
 
   it('does not touch bedrock, which has no depot to scale', () => {
     const sand = cellOf('Desert');
     if (sand === null) return;
     const bedrock = { ...HARVEST.Stone, stock: 0 };
-    expect(effectiveStock(map, sand, bedrock)).toBe(0);
+    expect(effectiveStock(state, map, sand, bedrock)).toBe(0);
   });
 });
 

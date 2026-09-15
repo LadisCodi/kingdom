@@ -12,15 +12,17 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
+  GAME_VERSION, MISSIONS, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
 import { advance, type AdvanceResult } from './commands';
+import { withoutTallies } from './events';
 import type { MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
-import type { AlbumId } from './data/seasons';
-import type { PackTier } from './data/definitions';
+import { syncHeroBoons } from './heroes';
+import { ALBUM_ORDER, type AlbumId } from './data/seasons';
+import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
@@ -29,7 +31,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId, type UnitId,
+  type RuinId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -462,6 +464,28 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v50 — A CARD IS SPENT WHEN THE ALBUM CLOSES. `Cards` used to be every
+    // copy ever pulled and `Completed` the pages a season had already paid;
+    // now the eight reset each lap and a closed album keeps only its
+    // DUPLICATES. An old save carries both a full page and its entry in
+    // `Completed`, so the first card added after the load would roll the lap
+    // and re-complete all eight for nothing.
+    //
+    // The nine are spent here, once per completed album, exactly as the close
+    // would have spent them.
+    to: 50,
+    migrate: (modules) => {
+      const dto = modules['kingdom.collection'] as
+        { Cards?: Record<string, number[]>; Completed?: string[] } | undefined;
+      const cards = dto?.Cards;
+      if (cards === undefined) return;
+      for (const album of dto!.Completed ?? []) {
+        const row = cards[album];
+        if (row !== undefined) cards[album] = row.map((n) => Math.max(0, n - 1));
+      }
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -551,6 +575,24 @@ export function serialize(state: GameState, now: number): SaveFile {
           RoyalSeason: state.kingdom.daily.royalSeason,
           RoyalClaimed: state.kingdom.daily.royalClaimed,
         },
+        // The season pass (sim/pass.ts). The BOARD travels whole: a mission
+        // is its odometer key plus what that odometer read when it was
+        // issued, so dropping one loses the only record of where it started.
+        Pass: {
+          Season: state.kingdom.pass.season,
+          Xp: state.kingdom.pass.xp,
+          ClaimedFree: state.kingdom.pass.claimedFree,
+          ClaimedPaid: state.kingdom.pass.claimedPaid,
+          PaidSeason: state.kingdom.pass.paidSeason,
+          LastWindow: state.kingdom.pass.lastWindow,
+          Week: state.kingdom.pass.week,
+          IssuedThisWeek: state.kingdom.pass.issuedThisWeek,
+          Live: state.kingdom.pass.live.map((m) => ({
+            UniqueID: m.uniqueId, Kind: m.kind, Meter: m.meter, Base: m.base,
+            Target: m.target, Subject: m.subject, Window: m.window, Slot: m.slot,
+            Reward: m.reward,
+          })),
+        },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -582,6 +624,7 @@ export function serialize(state: GameState, now: number): SaveFile {
             Coord: parseCoordKey(k),
             Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
+            RecoveryMs: s.recoveryMs,
           })),
       },
       'kingdom.workers': {
@@ -603,6 +646,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         Index: state.quests.index,
         Progress: state.quests.progress,
       },
+      // The lifetime odometers the missions read (sim/events.ts). A plain
+      // key→count map, written whole: every live mission stores a BASE
+      // reading of one of these, so losing them would silently complete or
+      // un-complete the whole board.
+      'kingdom.tallies': { Counts: state.tallies },
       'kingdom.discoveries': {
         Keys: Object.keys(state.discoveries),
       },
@@ -683,10 +731,18 @@ export function serialize(state: GameState, now: number): SaveFile {
           ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
-      // A relic is a level and nothing else. The passives are re-derived on
+      // A relic is a level and a cast clock. The passives are re-derived on
       // load, so nothing about what they DO is written here.
       'kingdom.artifacts': {
         Levels: state.artifacts.levels,
+        // A WINDOW SURVIVES A CLOSED TAB, because the zone it placed does: a
+        // zone is a modifier and those are written whole, so a relic that came
+        // back READY while its own zone was still standing would let the
+        // player lay a second one on top of the first.
+        Charges: state.artifacts.charges,
+        Casts: Object.fromEntries(Object.entries(state.artifacts.casts).map(
+          ([id, c]) => [id, { EndsAtUtc: iso(c!.endsAt), ReadyAtUtc: iso(c!.readyAt) }],
+        )),
       },
       // The live season's cards. Wiped whole at the close, so this module is
       // the one thing in the file that is deliberately short-lived.
@@ -699,11 +755,18 @@ export function serialize(state: GameState, now: number): SaveFile {
         Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
         PacksIssued: state.collection.packsIssued,
         PrizePaid: state.collection.prizePaid,
+        Cycle: state.collection.cycle,
       },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
           ID: m.id, Source: m.source, Stat: m.stat, Scope: m.scope,
           Op: m.op, Value: m.value, ExpiresAtUtc: isoOrNull(m.expiresAt),
+          // A ZONE. Absent on every modifier that is not one, which keeps a
+          // save from before relic actives byte-identical through this key.
+          Area: m.area === undefined ? null : {
+            X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius,
+            Relic: m.area.relic, SinceUtc: iso(m.area.since),
+          },
         })),
       },
       'player.currencies': state.player.wallet,
@@ -871,6 +934,41 @@ export function deserialize(
       state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
       state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
     }
+    // Additive in exactly the chest's way: a save from before the pass has no
+    // Pass block, and `Season: -1` matches no real season — so it reads as an
+    // empty pass rather than as season 0's, and the first live tick fills the
+    // board from the window it lands in.
+    const pass = kingdomDto.Pass as {
+      Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
+      PaidSeason?: number | null; LastWindow?: number; Week?: number;
+      IssuedThisWeek?: Record<string, number>;
+      Live?: Array<Record<string, any>>;
+    };
+    if (pass) {
+      state.kingdom.pass.season = pass.Season ?? -1;
+      state.kingdom.pass.xp = pass.Xp ?? 0;
+      state.kingdom.pass.claimedFree = [...(pass.ClaimedFree ?? [])];
+      state.kingdom.pass.claimedPaid = [...(pass.ClaimedPaid ?? [])];
+      state.kingdom.pass.paidSeason = pass.PaidSeason ?? null;
+      state.kingdom.pass.lastWindow = pass.LastWindow ?? -1;
+      state.kingdom.pass.week = pass.Week ?? -1;
+      state.kingdom.pass.issuedThisWeek = { ...(pass.IssuedThisWeek ?? {}) };
+      state.kingdom.pass.live = (pass.Live ?? []).map((m) => ({
+        uniqueId: String(m.UniqueID),
+        kind: m.Kind as MissionKind,
+        meter: String(m.Meter),
+        base: m.Base ?? 0,
+        target: m.Target ?? 1,
+        subject: (m.Subject ?? null) as CurrencyId | null,
+        // A mission from before the rewards varied read as the Gem one — the
+        // amount is the authored one, so an old board pays exactly what a new
+        // board's Gem missions pay rather than nothing.
+        reward: (m.Reward ?? { kind: 'Gems', amount: MISSIONS.rewardGems }) as MissionReward,
+        window: m.Window ?? -1,
+        slot: m.Slot ?? 0,
+        claimed: false,
+      }));
+    }
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -912,6 +1010,11 @@ export function deserialize(
         // needs, so it is checked rather than defaulted.
         units: typeof c.Units === 'number' ? c.Units : (spec?.stock ?? 0),
         exhaustedUntil: msOrNull(c.ExhaustedUntil),
+        // A save from before the bar knew what it was counting has no length
+        // on it. Null is honest — the renderer falls back to the authored
+        // wait for that one cell, exactly as it did before, and the next
+        // exhaustion stamps a real one.
+        recoveryMs: c.RecoveryMs ?? null,
       };
     }
   }
@@ -971,6 +1074,9 @@ export function deserialize(
       progress: questsDto.Progress ?? 0,
     };
   }
+
+  const talliesDto = modules['kingdom.tallies'];
+  if (talliesDto) state.tallies = { ...(talliesDto.Counts ?? {}) };
 
   const scheduleDto = modules['kingdom.schedule'];
   if (scheduleDto) {
@@ -1066,21 +1172,38 @@ export function deserialize(
 
   const artifactsDto = modules['kingdom.artifacts'];
   if (artifactsDto) {
-    state.artifacts = { levels: { ...(artifactsDto.Levels ?? {}) } };
+    state.artifacts = {
+      levels: { ...(artifactsDto.Levels ?? {}) },
+      charges: { ...(artifactsDto.Charges ?? {}) },
+      casts: Object.fromEntries(Object.entries(artifactsDto.Casts ?? {}).map(
+        ([id, c]) => [id, { endsAt: ms((c as any).EndsAtUtc), readyAt: ms((c as any).ReadyAtUtc) }],
+      )),
+    };
   }
 
   const collectionDto = modules['kingdom.collection'];
   if (collectionDto) {
     state.collection = {
       season: collectionDto.Season ?? 0,
-      cards: { ...(collectionDto.Cards ?? {}) },
-      completed: [...((collectionDto.Completed ?? []) as AlbumId[])],
+      // An album the build no longer has is dropped rather than migrated: the
+      // ladder was rebuilt from five albums to eight, and the close wipes
+      // cards anyway, so a page of a retired album is worth nothing to carry.
+      cards: Object.fromEntries(Object.entries(collectionDto.Cards ?? {})
+        .filter(([album]) => ALBUM_ORDER.includes(album as AlbumId))) as typeof state.collection.cards,
+      completed: ((collectionDto.Completed ?? []) as AlbumId[])
+        .filter((album) => ALBUM_ORDER.includes(album)),
       stars: collectionDto.Stars ?? 0,
       wildcards: { ...(collectionDto.Wildcards ?? {}) },
+      // A pack whose TIER no longer exists is dropped rather than migrated.
+      // The pack ladder was rebuilt whole, and a card is wiped at the close
+      // anyway, so an unopened pack of a retired tier is worth nothing to
+      // carry forward and everything to not crash on.
       packs: ((collectionDto.Packs ?? []) as any[])
+        .filter((k) => PACK_ORDER.includes(k.Tier as PackTier))
         .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
       packsIssued: collectionDto.PacksIssued ?? 0,
       prizePaid: collectionDto.PrizePaid === true,
+      cycle: collectionDto.Cycle ?? 0,
     };
   }
 
@@ -1094,14 +1217,32 @@ export function deserialize(
       op: m.Op,
       value: m.Value,
       expiresAt: msOrNull(m.ExpiresAtUtc),
+      // `undefined`, not null: `resolve()` tells a zone from a global modifier
+      // by the key being absent, so a null here would make every old modifier
+      // a zone of radius NaN.
+      ...(m.Area == null ? {} : {
+        area: {
+          centre: { x: m.Area.X, y: m.Area.Y },
+          radius: m.Area.Radius,
+          relic: m.Area.Relic,
+          // A save from before the map could draw a zone has no instant on it.
+          // `expiresAt` still ends the zone correctly; only the wheel's sweep
+          // needs a start, and it reads as full rather than as NaN.
+          since: m.Area.SinceUtc == null ? 0 : ms(m.Area.SinceUtc),
+        },
+      }),
     }));
   }
 
   // AFTER the modifier stack is restored: the relic passives are re-derived
-  // from the levels, so a save written before the curve was rebalanced loads
-  // correct rather than stale — while everything genuinely stateful (a Haste
-  // still running, a season's cards) comes back from the file untouched.
+  // from the levels and the legendary boons from the roster, so a save written
+  // before either curve was rebalanced loads correct rather than stale — while
+  // everything genuinely stateful (a Haste still running, a season's cards)
+  // comes back from the file untouched. Neither needs a migrator for the same
+  // reason: both are DERIVED, and a save that predates them re-derives to the
+  // right answer on the first load.
   syncArtifactModifiers(state);
+  syncHeroBoons(state);
 
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };
@@ -1145,8 +1286,15 @@ export function deserialize(
   reconcileSchedule(state, lastSaved);
 
   // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
+  //
+  // THE WHOLE CATCH-UP RUNS WITH THE MISSION ODOMETER HELD STILL
+  // (sim/events.ts). The season pass's missions are active-play only, which is
+  // the one thing in this codebase that is meant to read differently in replay
+  // than live; everything else in `advance()` is untouched by the flag, so
+  // invariant 1 still holds — a six-hour absence replayed in one call and in
+  // six steps agree exactly, because both run with it set.
   const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);
-  const report = advance(state, map, capEnd);
+  const report = withoutTallies(state, () => advance(state, map, capEnd));
   if (capEnd < now) {
     const gap = now - capEnd;
     for (const w of state.workers) {
@@ -1168,7 +1316,7 @@ export function deserialize(
     state.lastAdvance = capEnd;
     // Completes remaining queue work; workers resume at now. Its results are
     // merged in so a build that finished past the cap is still announced.
-    const tail = advance(state, map, now);
+    const tail = withoutTallies(state, () => advance(state, map, now));
     report.deposits.push(...tail.deposits);
     report.completedItems.push(...tail.completedItems);
     report.completedResearch.push(...tail.completedResearch);

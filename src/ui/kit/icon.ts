@@ -43,6 +43,13 @@ export type UiIconName =
   // `population` — a shield for attack, a padlock for defence and a crowd for
   // health — which is three wrong pictures in one row.
   | 'atk' | 'def' | 'hp'
+  // The upgrade popup's three (M25). `cross` is the REFUSAL beside a tick in
+  // the requirements list — `close` is a knob that dismisses a sheet, and the
+  // two must not share a picture. `arrowUp` is what a level does, drawn once
+  // and turned on its side by CSS for the `before → after` pairs, so the two
+  // directions cannot drift apart. `compass` is exploration range, which was
+  // borrowing the pointing finger.
+  | 'cross' | 'arrowUp' | 'compass'
   // Four destinations that were borrowing a picture of something else. `relics`
   // is the tab, which wore the Mana orb until the pool got a sheet of its own;
   // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
@@ -99,6 +106,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   pack: '🎴', cards: '🃏', vault: '🔐', crest: '🌾',
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️',
+  // the upgrade popup
+  cross: '✗', arrowUp: '⬆', compass: '🧭',
 };
 
 export interface IconOpts {

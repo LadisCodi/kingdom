@@ -13,24 +13,25 @@ import { clearedGateCount } from './gates';
 import { refund } from './wallet';
 import {
   addToWallet, getWallet,
-  type CurrencyId, type FeatureId, type GameState,
+  type CurrencyId, type GameState,
 } from './state';
+import type { SimEvent } from './events';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
 
-export type QuestEvent =
-  | { kind: 'collect'; currency: CurrencyId; amount: number }
-  | { kind: 'tap' }
-  /** `feature` is whatever was standing on the cell, or null for bare ground.
-   *  Carried on the event rather than looked up afterwards because the reveal
-   *  is the only moment that knows it: a finite feature can be tapped away
-   *  minutes later, and the quest should still have counted. */
-  | { kind: 'reveal'; feature: FeatureId | null };
-
-/** Feed one sim event to the ACTIVE quest (no-op unless it's a matching
- *  relative goal). Cheap enough to call from every tap and deposit. */
-export function recordQuestEvent(state: GameState, event: QuestEvent): void {
+/**
+ * Feed one sim event to the ACTIVE quest (no-op unless it's a matching
+ * relative goal). Cheap enough to call from every tap and deposit.
+ *
+ * IT TAKES THE WHOLE `SimEvent` UNION, not a chain-shaped subset, and the
+ * switch below ends in a `default` — so the kinds the season pass's missions
+ * added (a level, a trainee, a cleared room) cost this nothing and can never
+ * move `state.quests.progress`. Call sites go through
+ * `recordEvent` (sim/events.ts), which calls this first and then the
+ * odometer; nothing outside that file calls this directly.
+ */
+export function recordQuestEvent(state: GameState, event: SimEvent): void {
   const quest = activeQuest(state);
   if (!quest) return;
   switch (quest.goalType) {

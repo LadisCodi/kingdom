@@ -27,18 +27,31 @@ export function renderCastPanel(game: Game): HTMLElement {
   let verdict: HTMLElement;
   if (active.targeted && info.cell === null) {
     verdict = el('span', { class: 'plc-verdict is-bad' }, 'Nowhere to cast it yet');
-  } else if (active.id === 'Divination') {
-    verdict = el('span', { class: 'plc-verdict is-good' },
-      iconEl('Gold', { size: 'sm' }),
-      el('b', {}, String(info.saving)),
-      el('span', {}, 'Gold saved — the same Mana at any distance'));
-  } else if (active.id === 'Bloom') {
-    verdict = info.blooms === 0
-      ? el('span', { class: 'plc-verdict is-bad' }, 'Nothing tired within reach')
+  } else if (active.id === 'Survey') {
+    verdict = info.saving === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, 'No fog within reach here')
+      : el('span', { class: 'plc-verdict is-good' },
+        iconEl('Gold', { size: 'sm' }),
+        el('b', {}, String(info.saving)),
+        el('span', {}, 'Gold saved — the same Mana at any distance'));
+  } else if (info.reap !== null) {
+    // THE BUDGET IS THE DECISION and the area is only where it is spent, so
+    // the preview leads with the taps and names the ground second.
+    const ground = active.id === 'Reap' ? 'node' : 'house';
+    verdict = info.reap.nodes === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, `No ${ground} within reach`)
       : el('span', { class: 'plc-verdict is-good' },
         iconEl('sparkle', { size: 'sm' }),
-        el('b', {}, `×${info.blooms}`),
-        el('span', {}, 'cells renewed'));
+        el('b', {}, `×${info.reap.taps}`),
+        el('span', {}, `free taps over ${info.reap.nodes} `
+          + `${info.reap.nodes === 1 ? ground : `${ground}s`}`));
+  } else if (info.zone !== null) {
+    verdict = info.zone === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, 'No crew within reach')
+      : el('span', { class: 'plc-verdict is-good' },
+        iconEl('workers', { size: 'sm' }),
+        el('b', {}, `×${info.zone}`),
+        el('span', {}, info.zone === 1 ? 'building hurried' : 'buildings hurried'));
   } else {
     verdict = el('span', { class: 'plc-verdict' }, active.text);
   }

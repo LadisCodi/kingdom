@@ -96,6 +96,10 @@ threshold   free reward         paid reward
 - Paid claims are gated on a flag. How the flag is set is
   [`14-monetization.md`](14-monetization.md).
 - A track claimed during an offline replay pays exactly once.
+- **This is built, as the season pass** ([`20-season-pass.md`](20-season-pass.md)):
+  40 levels on the collection's clock, XP from generated missions, and the
+  paid column as one €4.99 purchase. An event's own track is the same shape
+  scoped to the occurrence.
 - **OQ-20.**
 
 ### 2.5 The shop

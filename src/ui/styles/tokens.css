@@ -13,32 +13,40 @@
  * url() for the /kingdom/ base and content-hashes it, while a hand-written
  * <link href="/src/..."> works in dev and 404s on Pages.
  *
- * ONE FACE, TWO WEIGHTS. PT Sans (ParaType, OFL) sets titles, body copy and
- * every number; 700 is a real bold, so emphasis is a weight again. The pixel
- * faces this replaces (2026-09-10) had legal sizes — whole multiples of a
- * grid — and those sizes were what made a phone layout impossible to fit.
- * The map keeps its pixels; the chrome does not. Tabular digits, so counters
- * do not jitter as they tick. */
+ * ONE FACE, FOUR WEIGHTS. Nunito (Vernon Adams / Cyreal, OFL) is the face the
+ * mockups are drawn in, and it replaced the PT Sans + Germania One pair on
+ * 2026-09-11: a title and a caption out of one family read as one voice, and
+ * the rounded terminals are the warmth the parchment chrome was reaching for.
+ *
+ * The four weights ARE the four roles (--weight-* below), so a rule never
+ * picks a number — it names what the text IS. Nunito's digits are monospaced
+ * by design (600 units at every weight), so counters do not jitter as they
+ * tick without asking for a `tnum` the face does not carry. */
 @font-face {
-  font-family: 'PT Sans';
-  src: url('../fonts/pt-sans-400-latin.woff2') format('woff2');
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-400-latin.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PT Sans';
-  src: url('../fonts/pt-sans-700-latin.woff2') format('woff2');
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-600-latin.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-700-latin.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
-/* The title face, one weight. Chosen on the board 2026-09-11 over PT Sans
- * 700: it reads as storybook where the bold sans read as a form. */
 @font-face {
-  font-family: 'Germania One';
-  src: url('../fonts/germania-one-400-latin.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Nunito';
+  src: url('../fonts/nunito-800-latin.woff2') format('woff2');
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
@@ -106,20 +114,37 @@
   --quest-h: 0px;
 
   /* ---- type ----
-   * `--font-display` is TITLES ONLY — headings, sheet planks, proper names,
-   * and only at --text-title; every rule that uses it also sets
-   * `--font-display-weight`: Germania One has one weight, and asking it for
-   * 700 would get a synthesised smear. `--font-body` is body copy AND every
-   * number — Germania One's digits are proportional, so a number never
-   * goes in the title face. */
-  --font-display: 'Germania One', 'PT Sans', system-ui, -apple-system, sans-serif;
-  --font-display-weight: 400;
-  --font-body: 'PT Sans', system-ui, -apple-system, sans-serif;
+   * ONE FAMILY. `--font-display` and `--font-body` name the same face now;
+   * what separates a title from a caption is the WEIGHT, not the family. The
+   * two tokens stay because the split is real — a title is still titles only,
+   * still only at --text-title — and because a second display face can be
+   * dropped back in by changing one line.
+   *
+   * THE FOUR WEIGHTS ARE FOUR ROLES. A rule names the role, never the number,
+   * so retuning the whole game's colour of text is four values here:
+   *
+   *   --weight-title   800  a heading: Store, Heroes, Timber!
+   *   --weight-strong  700  a button, an amount, a name
+   *   --weight-body    600  ordinary prose — the default on <body>
+   *   --weight-small   400  the small description under it
+   *
+   * 600 rather than 400 for prose is the whole reason the face changed: on
+   * parchment, at 16px, Nunito Regular reads thin and Nunito SemiBold reads
+   * like the mockups. 400 is left to the helper line, where it is the
+   * CONTRAST against the 600 above it that does the work. */
+  --weight-title: 800;
+  --weight-strong: 700;
+  --weight-body: 600;
+  --weight-small: 400;
+
+  --font-display: 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-display-weight: var(--weight-title);
+  --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
 
   /* Sized for the phone the game is played on — 402x874 CSS px — and for
    * nothing else: 16px body is the iOS reading size, 13px is the smallest
    * helper line the brief allows (Docs/art/ui-menus-redesign.md §2), 22px is
-   * a title that stands over both without eating a sheet. No grid: PT Sans
+   * a title that stands over both without eating a sheet. No grid: Nunito
    * is an outline face and every whole pixel is legal. */
   --text-title: 22px;
   --text-body: 16px;

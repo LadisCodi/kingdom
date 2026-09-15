@@ -35,6 +35,7 @@
   font-family: var(--font-body);
   text-transform: uppercase;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   letter-spacing: 0.06em;
   color: var(--ink-muted);
 }
@@ -66,11 +67,12 @@
   padding: 2px 8px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
   border-radius: 999px;
 }
-.mkt-have { color: var(--ink-muted); font-size: var(--text-helper); }
+.mkt-have { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
 
 /* The reason anyone is on this screen. */
 .mkt-payout {
@@ -79,7 +81,7 @@
   gap: 3px;
   font-family: var(--font-body);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--gold-dark);
 }
 .mkt-crate.is-empty .mkt-payout { color: var(--ink-muted); }

@@ -1,0 +1,198 @@
+/* The upgrade popup (M25, Docs/art/ui-menus-redesign.md §7.27).
+ *
+ * The FIRST surface dressed in the painted chrome — the frames, slabs and
+ * knob cut from the sheets rather than drawn in CSS. It is scoped to this
+ * sheet on purpose (`#overlay:has(.up)`): the rest of the game keeps the CSS
+ * chrome until the kit migrates, and two looks coexisting is the cost of
+ * moving one screen at a time rather than all twenty at once.
+ *
+ * Everything here is a border-image, never a background: a painted frame has
+ * to stretch to whatever the content is tall without stretching its corners,
+ * and that is the one thing `border-image-slice` does and `background-size`
+ * cannot. */
+
+/* ---- the shell: the painted panel, and the plank on top of it */
+#overlay:has(.up) .k-panel {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  /* 76 of 512 is where the painted bezel ends and the parchment begins,
+     measured off frame_panel.png. `fill` keeps the parchment middle. */
+  border-image: url('../../../render/assets/frame_panel.png') 76 fill / 26px stretch;
+  padding: 0;
+  overflow: visible;
+}
+#overlay:has(.up) .k-grab { display: none; }
+/* The plank is its own painted piece, hung over the panel's top edge the way
+   the mockup hangs it — so it needs to sit ABOVE the frame and overlap it. */
+#overlay:has(.up) .k-plank {
+  position: relative;
+  z-index: 1;
+  margin: -14px 6px 2px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-image: url('../../../render/assets/nameplate_wood.png') 46 fill / 18px stretch;
+  color: var(--ink-inverse);
+  text-shadow: 0 2px 0 rgba(40, 22, 10, 0.55);
+  min-height: 46px;
+  /* NOT `display: grid`: the kit's plank sizes its title column against the
+     close knob, and with the knob pulled out of flow that column collapsed to
+     half the width and ellipsised the title. Flex with the knob absolute is
+     the layout that leaves the words the whole plank. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+}
+#overlay:has(.up) .k-plank > span {
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 0;
+}
+/* The red knob rides the panel's top-right corner, half off it — a lid on the
+   box rather than a control inside it. */
+#overlay:has(.up) .k-plank .k-knob {
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: url('../../../render/assets/knob_close.png') center / contain no-repeat;
+  border: 0;
+  box-shadow: none;
+  font-size: 0; /* the glyph is in the art */
+}
+
+.up { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 2px; }
+
+/* ---- 1. what it is */
+.up-head { display: flex; gap: 12px; align-items: center; }
+/* The portrait sits in a painted well, which is what makes the building read
+   as an exhibit rather than as a list bullet. */
+.up-portrait {
+  flex: none;
+  width: 124px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 16px stretch;
+}
+.up-portrait-art { width: 92px; height: 76px; object-fit: contain; }
+.up-portrait-art.is-fallback { display: grid; place-items: center; }
+.up-id { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.up-name {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  line-height: 1.1;
+}
+.up-what { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
+/* `Level 3 ➜ Level 4` — the level it becomes is the loud half. */
+.up-ladder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+}
+.up-ladder-from { color: var(--ink-muted); }
+.up-ladder-to { color: var(--ink); }
+
+/* ---- the section rules: a word, then a hairline to the edge */
+.up-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+}
+.up-section::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(92, 58, 30, 0.22);
+}
+
+/* ---- 2 and 3: the tables */
+.up-table { display: flex; flex-direction: column; gap: 4px; }
+.up-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto 22px auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(226, 204, 160, 0.55);
+  border: 2px solid rgba(92, 58, 30, 0.16);
+  font-size: var(--text-body);
+}
+.up-row > .icon { --icon-size: 22px; }
+.up-row-label { font-weight: var(--weight-body); min-width: 0; }
+.up-row-from { font-variant-numeric: tabular-nums; }
+.up-row-to { font-variant-numeric: tabular-nums; color: var(--leaf-dark); }
+/* The arrow is ONE asset turned on its side, so the two directions cannot
+   drift apart (kit/icon.ts). */
+.up-arrow { display: grid; place-items: center; }
+.up-arrow > .icon { --icon-size: 20px; transform: rotate(90deg); }
+.up-ladder .up-arrow > .icon { --icon-size: 24px; }
+/* A level that moves nothing still shows its row — greyed, so the player can
+   see it was considered rather than left out. */
+.up-row.is-same { opacity: 0.72; }
+.up-row.is-same .up-row-to { color: var(--ink-muted); }
+.up-row.is-same .up-arrow > .icon { filter: grayscale(1) opacity(0.6); }
+
+/* A requirement is three columns, not five: the mark is the value. */
+.up-row.is-gate { grid-template-columns: 24px 1fr auto; }
+.up-row.is-gate > .icon:last-child { --icon-size: 24px; }
+.up-row.is-gate:not(.is-met) .up-row-label { color: var(--clay); }
+
+/* ---- the price and the button */
+.up-buy {
+  margin-top: 2px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-image: url('../../../render/assets/frame_panel_wide.png') 58 fill / 18px stretch;
+}
+.up-price {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+.up-price-chip, .up-price-time { display: flex; align-items: center; gap: 5px; }
+.up-price-chip > .icon, .up-price-time > .icon { --icon-size: 24px; }
+.up-price-chip.is-short { color: var(--clay); }
+.up-price-time { color: var(--ink-muted); font-weight: var(--weight-body); }
+
+/* The button is the painted slab: green when it can be pressed, grey when a
+   requirement is in the way. Not `--locked`: a refused Upgrade is the one
+   button in the game with its own painted state. */
+.up-buy .k-btn {
+  width: 100%;
+  min-height: 54px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-image: url('../../../render/assets/slab_green.png') 48 fill / 17px stretch;
+  color: var(--ink-inverse);
+  text-shadow: 0 2px 0 rgba(20, 60, 12, 0.5);
+  font-size: var(--text-title);
+}
+.up-buy .k-btn:disabled {
+  border-image-source: url('../../../render/assets/slab_grey.png');
+  text-shadow: 0 2px 0 rgba(40, 40, 44, 0.5);
+  opacity: 1; /* the grey slab IS the disabled state */
+}
+.up-buy .k-btn .k-btn-label > .icon { --icon-size: 26px; }

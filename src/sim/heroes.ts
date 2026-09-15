@@ -27,11 +27,11 @@
 //    odds are the one thing that will eventually HAVE to be server-authoritative,
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
-import { resolve } from './modifiers';
+import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techValue } from './techEffects';
 import {
   BANNERS, COLLECTION, HERO_ORDER, HEROES, PARTY, heroesOfRarity,
-  type BannerId, type HeroRarity,
+  type BannerId, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
@@ -41,6 +41,7 @@ import {
 import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
+import { recordEvent } from './events';
 
 // ------------------------------------------------------------ the collection
 
@@ -67,8 +68,86 @@ export function grantHero(
   state.heroes.levels[id] = fresh.level;
   state.heroes.tiers[id] = fresh.tier;
   state.heroes.fragments[id] = state.heroes.fragments[id] ?? 0;
+  syncHeroBoons(state);
   return 'Granted';
 }
+
+// -------------------------------------------------------------- the boons
+
+const BOON_PREFIX = 'hero:';
+
+/**
+ * THE BOON (Docs/proposals/legendary-boons.md): one kingdom passive per
+ * LEGENDARY hero, on while that hero is owned.
+ *
+ * Not the type passive (which acts on the board, at battle start) and not the
+ * trait (which acts on a party, best-of and never summed). A boon is a
+ * modifier at the base stage, `expiresAt: null`, in the same stack a relic
+ * uses — and boons SUM, because two Legendaries are two heroes rather than two
+ * quartermasters in one party.
+ *
+ * Idempotent and total, for the reason `syncArtifactModifiers` gives: a call
+ * landing, a save loading and a debug grant all move the same input, and one
+ * rebuild that cannot drift beats three paths that each have to remember.
+ */
+export function syncHeroBoons(state: GameState): void {
+  state.modifiers = state.modifiers.filter((m) => !m.id.startsWith(BOON_PREFIX));
+  for (const id of state.heroes.owned) {
+    const { boon } = HEROES[id];
+    if (boon === null) continue;
+    addModifier(state, {
+      id: `${BOON_PREFIX}${id}`,
+      source: 'hero',
+      stat: boon.stat,
+      scope: null,
+      op: 'mul',
+      value: boon.value,
+      expiresAt: null,
+    });
+  }
+}
+
+/**
+ * WHAT A BOON SAYS, generated rather than authored — the technology card's
+ * rule (`techProse.ts`), for the same reason: a sentence on the sheet drifts
+ * from the number beside it the first time the number moves.
+ *
+ * One line per stat a boon may carry. A stat with no line here is a boon the
+ * player cannot read, which `tests/heroBoons.test.ts` refuses to let ship.
+ */
+const BOON_SAYS: Partial<Record<ModifierStat, (pct: string) => string>> = {
+  buildSpeed: (v) => `The builders work ${v} faster`,
+  researchSpeed: (v) => `Research runs ${v} faster`,
+  worldRevealSpeed: (v) => `World-map cells are scouted ${v} faster`,
+  manaRegen: (v) => `Your kingdom makes ${v} more Mana`,
+  knowledgeYield: (v) => `Your kingdom makes ${v} more Knowledge`,
+  heroXp: (v) => `Every room teaches your heroes ${v} more`,
+  unitHp: (v) => `Every unit you field has ${v} more health`,
+  unitAtk: (v) => `Every unit you field hits ${v} harder`,
+  unitDef: (v) => `Every unit you field takes ${v} less`,
+  armyCap: (v) => `Your halls field ${v} more power`,
+  discoverRadius: (v) => `Your buildings see ${v} further`,
+  tapYield: (v) => `Every tap is worth ${v} more`,
+  stardustYield: (v) => `Rooms pay ${v} more Stardust`,
+  workerSpeed: (v) => `Your workers walk ${v} faster`,
+  manaCap: (v) => `Your Mana pool holds ${v} more`,
+  taxRate: (v) => `Your villagers pay ${v} more tax`,
+  workerYield: (v) => `Every worker carries ${v} more`,
+};
+
+/** The sentence a hero's card prints under its trait, or null if it has no
+ *  boon. A boon is always a multiplier, so the number is always a percent. */
+export function boonText(boon: HeroBoon): string | null {
+  const says = BOON_SAYS[boon.stat];
+  if (says === undefined) return null;
+  return says(`${Math.round((boon.value - 1) * 100)}%`);
+}
+
+/** Every boon the player is collecting — the roster's own summary. */
+export const activeBoons = (state: GameState): Array<{ id: HeroId; boon: HeroBoon }> =>
+  state.heroes.owned
+    .map((id) => ({ id, boon: HEROES[id].boon }))
+    .filter((row): row is { id: HeroId; boon: HeroBoon } => row.boon !== null);
 
 export type HeroLevelResult =
   | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughXp';
@@ -91,6 +170,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
   addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
   state.heroes.levels[id] = entry.level + 1;
+  recordEvent(state, { kind: 'heroLevel', hero: id });
   return 'Levelled';
 }
 
@@ -495,6 +575,49 @@ export function pull(
     stardust: b.pullStardust,
     guaranteed: pity >= b.hardPityAt - 1,
     guaranteedLegendary: forced && rarity === 'Legendary',
+  };
+}
+
+// ------------------------------------------------- a call that cannot miss
+
+/** What a guaranteed call paid. The shape a `PullResult` would have if a roll
+ *  had happened — minus every field that describes one, because none did. */
+export interface GuaranteedCall {
+  heroId: HeroId;
+  /** The player already had them, so the call paid Fragments instead. */
+  duplicate: boolean;
+  fragments: number;
+  stardust: number;
+}
+
+/**
+ * A CALL WHOSE HERO IS DECIDED BEFORE IT IS MADE — the collection prize's
+ * golden call (Docs/features/09-relics.md §5, §10), and so far its only
+ * caller.
+ *
+ * It is a CALL, so it pays the banner's Stardust and converts a hero the
+ * player already owns into that banner's duplicate Fragments, exactly as a
+ * rolled one does. It is GUARANTEED, so it does three things a roll does not:
+ *
+ *  - it charges NOTHING. The five albums were the price.
+ *  - it spends NO `rand`. There is nothing to decide, so there is no roll to
+ *    key — which is also why it can never desync a replay (invariant 4).
+ *  - it moves NO counter. `pullCounts` keys future rolls and the two pity
+ *    counters are a promise about them; a call that never rolled must neither
+ *    consume the pity a player has banked nor advance it.
+ */
+export function callGuaranteed(
+  state: GameState, banner: BannerId, heroId: HeroId,
+): GuaranteedCall {
+  const b = BANNERS[banner];
+  addToWallet(state.kingdom.wallet, 'Stardust', b.pullStardust);
+  recordResourceDiscovery(state, 'Stardust');
+  const outcome = grantHero(state, heroId, b.duplicateFragments);
+  return {
+    heroId,
+    duplicate: outcome === 'Duplicate',
+    fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
+    stardust: b.pullStardust,
   };
 }
 

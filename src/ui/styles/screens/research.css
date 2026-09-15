@@ -54,7 +54,7 @@
 .res-desks { display: flex; justify-content: center; padding: 4px 12px 6px; }
 .res-desks .res-slot { width: 60px; }
 .res-desks .res-slot-box { width: 48px; height: 36px; }
-.res-desks .res-slot-note { font-size: 12px; }
+.res-desks .res-slot-note { font-size: 12px; font-weight: var(--weight-small); }
 
 /* THE SLOTS. Left-anchored and horizontal: a row of desks the player can
    point at, in place of the sentence ("2 of 3 at work") and the Hire button
@@ -102,6 +102,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   align-items: center;
   gap: 2px;
   font-size: 12px;
+  font-weight: var(--weight-small);
   line-height: 1.4;
   color: var(--parchment);
   white-space: nowrap;
@@ -183,7 +184,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-card-name {
   font-size: var(--text-helper);
   line-height: 1.15;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -272,8 +273,9 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   color: var(--parchment);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
-.res-era-name { font-weight: 700; }
+.res-era-name { font-weight: var(--weight-strong); }
 .res-era-gate { opacity: 0.85; }
 .res-era.is-open { background: var(--leaf-dark); border-color: var(--leaf-dark); }
 /* Era 4 is one keystone and no content: the book says there is more, and
@@ -312,10 +314,10 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .tech-info-head h3 { flex: 1; min-width: 0; }
 .tech-info-head .k-knob { flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; }
-.tech-info h3 { margin: 0; font-family: var(--font-body); font-size: 20px; font-weight: 700; line-height: 1.15; }
+.tech-info h3 { margin: 0; font-family: var(--font-body); font-size: 20px; font-weight: var(--weight-strong); line-height: 1.15; }
 .tech-info .muted { color: var(--ink-muted); }
 .tech-info .blocked { color: var(--clay); }
-.tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
+.tech-info .delta { color: var(--leaf-dark); font-weight: var(--weight-strong); }
 .tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
@@ -347,7 +349,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
 .tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }
 .tech-info .progress .label { position: absolute; inset: 0; display: grid; place-items: center;
-  font-size: var(--text-helper); font-weight: 700; color: var(--ink); }
+  font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink); }
 .tech-info .pips { display: flex; gap: 4px; margin: 4px 0; }
 .tech-info .pip { width: 16px; height: 7px; border-radius: 3px;
   background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
@@ -399,6 +401,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   color: var(--parchment);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   cursor: pointer;
 }
 /* The open book sits forward and shares the page's colour, so the tab and the
@@ -417,6 +420,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   color: rgba(92, 58, 30, 0.75);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 
 /* ------------------------------------------------------- the clock --- */
@@ -433,6 +437,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   color: var(--parchment);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }
 /* The rate is the whole of this pill now — the balance moved to the plank
    while the screen is open — so it is no longer the dimmed half of a pair. */
@@ -469,4 +474,5 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   color: var(--wood-dark);
   font-family: var(--font-body);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
 }

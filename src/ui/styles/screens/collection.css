@@ -37,7 +37,7 @@
 .col-band-kicker {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--wood-dark);
@@ -52,7 +52,7 @@
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -63,16 +63,34 @@
   align-items: center;
   gap: 8px;
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .col-line .k-trough { flex: 1; }
 .col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-.col-count { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.col-count { font-weight: var(--weight-strong); color: var(--ink); white-space: nowrap; }
+/* A relic mid-cycle: the countdown replaces the cast button rather than
+   greying it, because a relic that is running is doing its job, not blocked. */
+.col-cast-phase {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: var(--gutter); padding: 10px var(--gutter);
+  border-radius: var(--radius); font-weight: var(--weight-strong);
+  background: var(--parchment-shade); color: var(--ink-muted);
+}
+.col-cast-phase.is-active { color: var(--leaf-dark); }
+
+/* The lap chip: a quiet counter, never louder than the cards in hand. */
+.col-lap {
+  font-size: var(--text-helper); font-weight: var(--weight-strong);
+  color: var(--ink-muted); white-space: nowrap;
+  padding: 0 6px; border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+}
 
 /* ------------------------------------------------------------- the medallions */
 
-/* Three and two, centred — the second row is short by design and centring it
-   is what stops the fifth album reading as an orphan. */
+/* Three to a row, centred — eight albums read as three, three and two, and
+   centring the short row is what stops the last one reading as an orphan. */
 .col-grid {
   display: flex;
   flex-wrap: wrap;
@@ -144,7 +162,7 @@
   background: var(--clay);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
 }
 .col-badge.is-locked { background: var(--locked); border-color: var(--wood-dark); }
@@ -163,7 +181,7 @@
 .col-medal-name {
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.04em;
   line-height: 1.1;
   text-align: center;
@@ -178,7 +196,7 @@
   background: rgba(60, 36, 18, 0.72);
   color: var(--ink-inverse);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 /* ----------------------------------------------------------------- the vault */
@@ -212,7 +230,7 @@
   border: 2px solid var(--gold-dark);
   background: var(--parchment);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -254,7 +272,7 @@
   background: var(--wood-dark);
   color: var(--ink-inverse);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
 }
 
 .col-chips { display: flex; gap: 6px; }
@@ -269,11 +287,11 @@
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
   white-space: nowrap;
 }
-.col-chip small { font-weight: 400; font-size: 11px; color: var(--ink-muted); }
+.col-chip small { font-weight: var(--weight-small); font-size: 11px; color: var(--ink-muted); }
 .col-chip.is-relic { color: var(--gold-dark); }
 .col-chip-art { width: 20px; height: 20px; object-fit: contain; }
 .col-chip-art.is-glyph { display: grid; place-items: center; font-size: 14px; }
@@ -292,6 +310,7 @@
   border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
   font-size: var(--text-helper);
+  font-weight: var(--weight-small);
   color: var(--ink);
 }
 .col-arm.is-armed {
@@ -309,21 +328,34 @@
 .col-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
+/* A CARD IS UPRIGHT AND SMALL. It used to be a square box holding a round
+   medallion, which made a row taller than a phone can spare — three of them
+   filled the screen and the slab that closes the album fell off the bottom.
+   The nine and the button they feed belong on one screenful: that is the
+   whole point of putting the album under the relic.
+
+   SQUARE, and it is arithmetic rather than taste. Three columns of a ~340px
+   sheet make a card ~110px wide; three rows of those plus the album's head and
+   the slab that closes it come to about 900 of the ~1075px the sheet has. At
+   3:4 the grid alone was 951 and nothing else could be on screen with it. */
 .col-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 14px 4px 0;
-  border-radius: var(--radius-sm);
-  border: 3px solid var(--wood-dark);
-  background: var(--parchment);
+  align-items: stretch;
+  aspect-ratio: 1;
+  /* A DRAWN FRAME, 9-sliced: the carved corners are kept as drawn and the
+     plain mouldings between them stretch to whatever the card ends up being.
+     NO `fill`, deliberately — the middle stays transparent so the rarity wash
+     below shows through the frame rather than being painted over by it. */
+  border: 9px solid transparent;
+  border-image: url('../../../render/assets/card_frame.png') 45 / 9px stretch;
   cursor: pointer;
   font: inherit;
   color: inherit;
+  background-clip: padding-box;
   overflow: hidden;
 }
 .col-card:active { transform: translateY(2px); }
@@ -334,14 +366,16 @@
 .col-card.r3 { background: linear-gradient(180deg, #e6eef9, #c8d9f2); }
 .col-card.r4 { background: linear-gradient(180deg, #f0e6f8, #ddc9f0); }
 .col-card.r5 { background: linear-gradient(180deg, #fbe9dc, #f4cfae); }
+/* A gold edition wears a gold frame, which is the whole of how it is told
+   apart — it needs no badge, because the frame IS the badge. */
 .col-card.is-gold {
-  border-color: var(--gold-dark);
-  box-shadow: inset 0 0 0 2px var(--gold), 0 2px 0 rgba(60, 36, 18, 0.3);
+  border-image: url('../../../render/assets/card_frame_gold.png') 45 / 9px stretch;
 }
+/* AN EMPTY SLEEVE, not a dashed box. `fill` here and only here: the slot's own
+   grey middle IS the empty, so it paints over the rarity wash. */
 .col-card.is-missing {
-  background: var(--parchment-shade);
-  border-style: dashed;
-  border-color: rgba(92, 58, 30, 0.5);
+  background: none;
+  border-image: url('../../../render/assets/card_slot.png') 45 fill / 9px stretch;
 }
 /* Where an armed wildcard can land. Gold and lit, because the question the
    player is holding is "which of these can I fill?" and the grid answers it
@@ -353,50 +387,69 @@
 }
 .col-card.is-fillable .col-card-art.is-silhouette { opacity: 0.9; }
 
+/* The stars ride ON the face rather than above it, so they cost the card no
+   height of its own. */
 .col-card-stars {
   position: absolute;
   top: 2px;
+  left: 0;
+  right: 0;
   display: flex;
+  justify-content: center;
   gap: 1px;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(60, 36, 18, 0.7));
 }
+.col-card-stars > .icon { --icon-size: 13px; }
 .col-card.is-missing .col-card-stars { filter: grayscale(1) brightness(1.15); opacity: 0.7; }
 
-/* The album's medallion stands in for the card's own face until the 45 are
-   drawn, so it is presented AS a medallion — centred, inset, with the rarity
-   wash showing around it — rather than cropped square and passed off as art
-   it is not. */
-.col-card-art { width: 86%; aspect-ratio: 1; object-fit: contain; margin-top: 2px; }
+/* THE FACE FILLS THE CARD. The album's medallion stands in for the card's own
+   art until the 72 are drawn, and at this size it is CROPPED to the card
+   rather than floated inside it: a small round picture in a rectangle reads as
+   a placeholder, where the same picture filling the frame reads as a card. */
+.col-card-art { flex: 1; width: 100%; min-height: 0; object-fit: cover; }
 .col-card-art.is-silhouette {
   display: grid; place-items: center;
   opacity: 0.4;
 }
-.col-card-art.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.col-card-art.is-glyph { display: grid; place-items: center; font-size: 22px; }
 
 /* The name on a ribbon along the bottom, as M22 draws it: the card's picture
-   runs to the edges and the ribbon sits on top of it. */
+   runs to the edges and the ribbon sits on top of it. One line, clipped —
+   nine names of unequal length must not give nine cards unequal heights. */
 .col-card-name {
-  width: calc(100% + 8px);
-  margin: 0 -4px;
-  padding: 3px 2px;
-  background: var(--leaf-dark);
+  flex: none;
+  margin: 0 -7px -3px;
+  padding: 3px 8px 5px;
+  /* The ribbon is a frame too: its gold ends are the corners and the cloth
+     between them stretches to the name. */
+  border: 0 solid transparent;
+  border-left-width: 9px;
+  border-right-width: 9px;
+  border-image: url('../../../render/assets/card_ribbon.png') 40 20 fill / 9px 9px stretch;
   color: var(--ink-inverse);
+  text-shadow: 0 1px 1px rgba(20, 60, 30, 0.8);
   font-size: 11px;
-  font-weight: 700;
-  line-height: 1.15;
+  font-weight: var(--weight-strong);
+  line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.col-card.is-missing .col-card-name { background: rgba(92, 58, 30, 0.35); color: var(--ink-muted); }
+.col-card.is-missing .col-card-name { filter: grayscale(0.8) brightness(0.85); }
 
 .col-dupe {
   position: absolute;
   left: 2px;
-  bottom: 22px;
-  padding: 0 5px;
+  bottom: 18px;
+  z-index: 1;
+  padding: 0 4px;
   border-radius: 6px;
   border: 2px solid var(--wood-dark);
   background: #fff;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink);
 }
 
@@ -408,80 +461,149 @@
   justify-content: space-between;
   gap: 8px;
 }
-.col-walk-label { font-size: var(--text-helper); color: var(--ink-muted); }
+.col-walk-label { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* -------------------------------------------------- §11.4 the relic's card */
 
+/* ------------------------------------------------ §11.3 one relic's page */
+
+/* ART LEFT, WORDS RIGHT. Stacked, the space beside the relic was empty and
+   the page said nothing until the player scrolled; the sentence that explains
+   the passive lives there now. */
+.col-relic-head {
+  display: grid;
+  grid-template-columns: 34% 1fr;
+  gap: var(--gutter);
+  align-items: center;
+}
 .col-stage {
   position: relative;
   display: grid;
   place-items: center;
-  padding: 12px 0 18px;
+  padding: 10px;
   border-radius: var(--radius);
   border: 2px solid rgba(92, 58, 30, 0.35);
   background: radial-gradient(circle at 50% 42%, #ffeec2, var(--parchment-shade));
 }
-.col-stage .k-knob { position: absolute; top: 6px; right: 6px; }
 /* The relic objects are drawn at a three-quarter angle, so most of them lie
    diagonally in their square: `contain` at 60% left a band of air around
    them. */
-.col-stage-art { width: 76%; height: 176px; object-fit: contain; }
-.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 90px; }
+.col-stage-art { width: 100%; aspect-ratio: 1; max-height: 150px; object-fit: contain; }
+.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 72px; }
 
-/* The plaque rides the stage's bottom edge — the level is a fact about the
-   relic, not a line of body copy under it. */
-.col-plaque {
+/* THE LEVEL RIDES THE ART'S OWN CORNER, as a bare label. It used to be a
+   wooden plaque across the middle of the frame, which covered the thing the
+   player opened the page to look at. The shadow is what keeps it legible over
+   a light sprite without a slab behind it. */
+.col-level {
   position: absolute;
-  bottom: -12px;
-  padding: 3px 18px;
-  border-radius: var(--radius-sm);
-  border: 3px solid var(--gold-dark);
-  background: var(--wood);
-  color: var(--ink-inverse);
-  font-family: var(--font-display); font-weight: var(--font-display-weight);
-  font-size: var(--text-title);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 2px 0 rgba(60, 36, 18, 0.4);
+  top: 6px;
+  left: 8px;
+  font-weight: var(--weight-strong);
+  font-size: var(--text-helper);
+  color: var(--wood-dark);
+  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.9), 0 0 6px rgba(255, 246, 224, 0.9);
+  pointer-events: none;
 }
 
+.col-relic-id { min-width: 0; }
 .col-relic-name {
-  margin-top: 8px;
   font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
-  text-align: center;
   color: var(--ink);
 }
-.col-relic-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: var(--text-helper);
+/* What the passive DOES, in the player's words. The numbers are in the band
+   under it, so this is the only prose on the page and it earns its place. */
+.col-relic-what {
+  margin-top: 4px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
   color: var(--ink-muted);
 }
 
-/* Two ruled rows: what it does now, and what the next level is worth. The
-   second in muted ink, because the card's plainest fact is the difference. */
-.col-effects {
+/* THE PASSIVE'S NUMBERS — the building card's band (`.dc-stats`) with a delta
+   in each tile, because a relic's page is its upgrade screen too. Centred,
+   and with no heading over it: the sentence above already named the passive. */
+.col-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.2);
+  background: rgba(226, 204, 160, 0.55);
+}
+.col-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  border: 2px solid rgba(92, 58, 30, 0.16);
+}
+.col-stat > .icon { --icon-size: 28px; flex: none; }
+.col-stat-body { min-width: 0; }
+.col-stat-label {
+  font-size: 11px;
+  font-weight: var(--weight-small);
+  line-height: 1.15;
+  color: var(--ink-muted);
+}
+.col-stat-nums {
+  display: flex; align-items: center; gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.col-stat-value { font-size: var(--text-body); font-weight: var(--weight-strong); }
+.col-stat-to { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--leaf-dark); }
+.col-stat-nums > .icon { --icon-size: 16px; }
+
+/* THE SPELL — the one section on the page with a name over it, because a
+   button needs to say what it belongs to. */
+.col-section {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: var(--weight-strong);
+  font-size: var(--text-helper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wood-dark);
+}
+.col-section::before,
+.col-section::after {
+  content: ''; flex: 1; height: 2px;
+  background: rgba(92, 58, 30, 0.22);
+}
+.col-spell {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  padding: 10px;
   border-radius: var(--radius-sm);
   border: 2px solid rgba(92, 58, 30, 0.35);
   background: var(--parchment);
-  overflow: hidden;
 }
-.col-effect {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
+.col-spell.is-pending { opacity: 0.72; }
+.col-spell-name {
+  font-weight: var(--weight-strong);
   font-size: var(--text-body);
   color: var(--ink);
 }
-.col-effect + .col-effect { border-top: 2px solid rgba(92, 58, 30, 0.2); }
-.col-effect.is-next { color: var(--ink-muted); font-size: var(--text-helper); }
+.col-spell-what {
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+.col-spell-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The claim slab's chips SHARE the row, so they stretch. A spell's are three
+   facts of different widths and must hug what they say instead. */
+.col-spell-chips > .col-chip { flex: 0 0 auto; }
 
-/* The album, and the way back to it. */
-.col-relic-album {
+/* The album's own head inside the relic's page: its medallion, its name and
+   how far along it is. */
+.col-album { display: flex; flex-direction: column; gap: 8px; }
+.col-album-head {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -489,22 +611,36 @@
   border-radius: var(--radius-sm);
   border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
 }
-.col-relic-album .k-trough { flex: 1; }
-.col-relic-medal {
+.col-album-head .k-trough { flex: 1; }
+.col-album-medal {
   display: grid; place-items: center;
   width: 36px; height: 36px;
   border-radius: 50%;
   border: 3px solid var(--wood-dark);
   background: var(--parchment);
   overflow: hidden;
+  flex: none;
 }
-.col-relic-medal-art { width: 100%; height: 100%; object-fit: cover; }
-.col-relic-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
-.col-relic-album-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
+.col-album-medal-art { width: 100%; height: 100%; object-fit: cover; }
+.col-album-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
+.col-album-name {
+  font-family: var(--font-body); font-weight: var(--weight-strong);
+  font-size: var(--text-body);
+}
+
+/* WHAT THE NINE CARDS BUY, under the nine cards. */
+.col-claim {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment);
+}
+.col-claim.is-ready { border-color: var(--leaf-dark); background: #f6f0d5; }
+.col-claim.is-done { opacity: 0.72; }
 
 /* -------------------------------------------------------- §11.1 the pill */
 
@@ -540,7 +676,7 @@
 .sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
 /* Body, not the title face — the daily pill beside it sets its title the same
    way, and the two have to read as a pair. */
-.sea-pill-name { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.1; }
+.sea-pill-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.1; }
 /* A trough with the count printed ON it, as M20 draws it. */
 .sea-pill-trough {
   position: relative;
@@ -560,7 +696,7 @@
 .sea-pill-count {
   position: relative;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   color: var(--ink-inverse);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.8);
 }
@@ -569,5 +705,83 @@
   align-items: center;
   gap: 3px;
   font-size: 11px;
+  font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
+
+/* --------------------------------------------------------------- the frame */
+
+/* THE SEASON'S COLOUR, NOT ITS LAYOUT (sim/data/seasons.ts). One token per
+   season, and the seam under the count line is where it reads: the prize band
+   stays gold because gold is what a prize is, so the frame has to say
+   "different season" somewhere the eye already goes.
+
+   A season with no rule of its own inherits the default and looks deliberate
+   rather than broken, which is what lets a live-ops season ship before its
+   colour does. */
+.col-season { --season-tint: var(--wood); }
+.col-season.is-sowing { --season-tint: var(--leaf-dark); }
+.col-season.is-lanterns { --season-tint: var(--clay); }
+
+.col-season > .col-line {
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--season-tint);
+}
+.col-season > .col-line .col-count { color: var(--season-tint); }
+
+/* ------------------------------------------------------ an effect in waiting */
+
+/* A relic whose system is not built yet. The effect is still printed — the
+   player is banking a level against it — but muted, with the reason above it,
+   so the card never promises what the build cannot pay. */
+.col-effects.is-pending .col-effect { opacity: 0.55; }
+.col-effect-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+/* ------------------------------------------------------------- the vault */
+
+/* Three chests, and a ten at once. The knob opens this rather than buying,
+   because with a choice to make a one-press knob cannot say what it is about
+   to spend. */
+.col-vault-shelf { display: flex; flex-direction: column; gap: 10px; }
+.col-vault-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+.col-chest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  opacity: 0.6;
+}
+.col-chest.is-ready { opacity: 1; }
+.col-chest-head { display: flex; align-items: center; justify-content: space-between; }
+.col-chest-name {
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  text-transform: capitalize;
+  color: var(--ink);
+}
+.col-chest-cost { display: flex; align-items: center; gap: 4px; font-weight: var(--weight-strong); }
+.col-chest-promise {
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+.col-chest-buttons { display: flex; gap: 8px; }
+.col-chest-buttons > * { flex: 1; }

@@ -6,11 +6,11 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
-import { recordQuestEvent } from './quests';
+import { recordEvent } from './events';
 import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { neighbors, type MapData } from './grid';
-import { resolve } from './modifiers';
+import { resolve, resolveAt } from './modifiers';
 import { techValue } from './techEffects';
 import { pick } from './rng';
 import {
@@ -63,11 +63,16 @@ export function tapYieldAt(
  * It could not go on the chunk instead: `unitsPerStrike` is 1 on most cells
  * and 1 x 0.75 rounds back to 1, which would make every percentage a no-op.
  */
-export function effectiveStock(map: MapData, cell: Coord, spec: HarvestSpec): number {
+export function effectiveStock(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec,
+): number {
   if (spec.stock <= 0) return 0; // bedrock stays bedrock
   const terrain = map.terrain.get(coordKey(cell));
   const m = terrain === undefined ? 1 : terrainYield(terrain, spec.currencyId);
-  return Math.max(1, Math.round(spec.stock * m));
+  // The relic's term is FLAT and lands AFTER the terrain multiplier, so a
+  // richer ground and a richer relic add rather than compounding — and `+1` is
+  // a real +20% on a five-unit Stone where a percentage would round away.
+  return Math.max(1, Math.round(resolve(state, 'harvestStock', spec.stock * m)));
 }
 
 const cellState = (
@@ -75,7 +80,7 @@ const cellState = (
 ): CellHarvestState => {
   let s = state.harvest[key];
   if (!s) {
-    s = { units: effectiveStock(map, cell, spec), exhaustedUntil: null };
+    s = { units: effectiveStock(state, map, cell, spec), exhaustedUntil: null, recoveryMs: null };
     state.harvest[key] = s;
   }
   return s;
@@ -96,9 +101,17 @@ const cellState = (
  * faster regrowth is a NEGATIVE percent: the number here is seconds of
  * waiting, and less of it is the good news.
  */
-export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
-  Math.max(1000, Math.round(resolve(state, 'cellRecovery',
-    techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))));
+export const effectiveRecoveryMs = (
+  state: GameState, spec: HarvestSpec, at: Coord,
+): number =>
+  Math.max(1000, Math.round(
+    resolve(state, 'cellRecovery',
+      techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))
+    // AT THE CELL, because the Dowsing Rod's zone is a place. It is read once,
+    // when the cell exhausts, so a zone only ever reaches the cells that empty
+    // INSIDE it — which is exactly what the active's instant refill arranges,
+    // by emptying the waiting list first (Docs/proposals/relic-effects.md §3.1).
+    / Math.max(1, resolveAt(state, 'recoverySpeed', 1, at))));
 
 /**
  * How long a CONSUMED feature waits before it reappears somewhere else — the
@@ -125,11 +138,13 @@ export const isInexhaustible = (spec: HarvestSpec): boolean => spec.stock <= 0;
  *  for another one, and buying faster recovery is then something you can SEE
  *  (Docs/features/04-harvest.md §2). */
 function recoverIfDue(
-  s: CellHarvestState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
+  state: GameState, s: CellHarvestState, map: MapData, cell: Coord,
+  spec: HarvestSpec, now: number,
 ): void {
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
-    s.units = effectiveStock(map, cell, spec);
+    s.recoveryMs = null;
+    s.units = effectiveStock(state, map, cell, spec);
   }
 }
 
@@ -139,8 +154,8 @@ export function stockAt(state: GameState, map: MapData, cell: Coord, now: number
   if (spec === null) return 0;
   if (isInexhaustible(spec)) return Number.POSITIVE_INFINITY;
   const s = state.harvest[coordKey(cell)];
-  if (!s) return effectiveStock(map, cell, spec);
-  recoverIfDue(s, map, cell, spec, now);
+  if (!s) return effectiveStock(state, map, cell, spec);
+  recoverIfDue(state, s, map, cell, spec, now);
   return s.units;
 }
 
@@ -168,8 +183,32 @@ export function recoversForSpec(
   if (isInexhaustible(spec)) return null;
   const s = state.harvest[coordKey(cell)];
   if (!s) return null;
-  recoverIfDue(s, map, cell, spec, now);
+  recoverIfDue(state, s, map, cell, spec, now);
   return s.exhaustedUntil;
+}
+
+/**
+ * HOW FAR ALONG A CELL'S RECOVERY IS, 0 at the moment it emptied and 1 when
+ * it is back — or null if it is not recovering at all.
+ *
+ * It spans the wait that was STAMPED, which is the only span that is true: a
+ * wait is priced once, at exhaustion, so a bar measured against the authored
+ * `recoverySeconds` opened nearly full under anything that speeds recovery up
+ * — a Dowsing Rod at level 16 shortens a Forest's 90 seconds to 21, and a bar
+ * spanning 90 starts at 77%. It also has to span the stamped wait rather than
+ * a live re-read, or a zone expiring mid-wait would make the bar jump
+ * backwards.
+ */
+export function recoveryProgress(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
+): number | null {
+  const until = recoversForSpec(state, map, cell, spec, now);
+  if (until === null) return null;
+  const span = state.harvest[coordKey(cell)]?.recoveryMs
+    // A save from before the length was kept: the authored wait is the best
+    // guess for the one cell that was already waiting when it loaded.
+    ?? effectiveRecoveryMs(state, spec, cell);
+  return Math.max(0, Math.min(1, 1 - (until - now) / Math.max(1, span)));
 }
 
 /** Remaining depot fraction for UI (1 = full, 0 = empty). */
@@ -183,8 +222,8 @@ export function stockFraction(
   if (isInexhaustible(spec)) return 1;
   const s = state.harvest[coordKey(cell)];
   if (!s) return 1;
-  recoverIfDue(s, map, cell, spec, now);
-  return Math.max(0, Math.min(1, s.units / effectiveStock(map, cell, spec)));
+  recoverIfDue(state, s, map, cell, spec, now);
+  return Math.max(0, Math.min(1, s.units / effectiveStock(state, map, cell, spec)));
 }
 
 /** Draw up to `want` units out of the cell. Returns what was ACTUALLY there,
@@ -209,7 +248,7 @@ export function drawFromCell(
   if (isInexhaustible(spec)) return asked;
   const key = coordKey(cell);
   const s = cellState(state, map, key, cell, spec);
-  recoverIfDue(s, map, cell, spec, now);
+  recoverIfDue(state, s, map, cell, spec, now);
   const taken = Math.min(asked, s.units);
   if (taken <= 0) return 0;
   s.units -= taken;
@@ -233,7 +272,11 @@ export function drawFromCell(
     delete state.harvest[key];
     return taken;
   }
-  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
+  // PRICED ONCE, and its LENGTH kept beside its end: the bar that counts this
+  // down must span the wait that was actually stamped, not the authored one.
+  const wait = effectiveRecoveryMs(state, spec, cell);
+  s.exhaustedUntil = now + wait;
+  s.recoveryMs = wait;
   return taken;
 }
 // -------------------------------------------------------------- respawning
@@ -318,10 +361,10 @@ export function tapCell(
   if (units <= 0) return 'Exhausted';
   addToWallet(state.city.wallet, spec.currencyId, units);
   recordResourceDiscovery(state, spec.currencyId);
-  recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
+  recordEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
   // A WORKER's strike deliberately does NOT record this: the two look alike on
   // screen now, but a quest asking the player to tap is asking for the hand.
-  recordQuestEvent(state, { kind: 'tap' });
+  recordEvent(state, { kind: 'tap' });
   return 'Harvested';
 }
 

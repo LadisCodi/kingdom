@@ -1,16 +1,17 @@
-PT Sans and Germania One are both licensed under the SIL Open Font
-License 1.1. The upstream copyright notices follow, then the licence
-text verbatim.
+Nunito is licensed under the SIL Open Font License 1.1. The upstream
+copyright notice follows, then the licence text verbatim.
 
-=================================== PT Sans ===================================
+==================================== Nunito ===================================
 
-Copyright (c) 2009 ParaType Ltd. All rights reserved.
-Reserved Font Names "PT Sans" and "ParaType".
+Copyright 2014 The Nunito Project Authors
+(https://github.com/googlefonts/nunito)
 
-================================ Germania One =================================
+Designed by Vernon Adams, with Cyreal.
 
-Copyright (c) 2011 by John Vargas Beltran (john.vargasbeltran@gmail.com),
-with Reserved Font Name "Germania One"
+The four files in this directory are latin SUBSETS of the Google Fonts static
+instances (Regular, SemiBold, Bold, ExtraBold), cut with pyftsubset. The OFL
+permits that: a subset is a Modified Version, and it stays under this licence.
+See NOTICE.md for the recipe.
 
 ===============================================================================
 

@@ -15,6 +15,7 @@ import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
+import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
@@ -1148,35 +1149,69 @@ export const MANA = balance.mana;
  * cards a pack holds and which rarities it can hold, at PUBLISHED odds — the
  * whole faucet, in four rows.
  */
-export type PackTier = 'Bronze' | 'Silver' | 'Gold' | 'Star';
+export type PackTier =
+  // The six SOBRES, named for the rarity each guarantees.
+  | 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden'
+  // The three CHESTS. Not a faucet: what duplicates buy, in the vault.
+  | 'BronzeChest' | 'SilverChest' | 'GoldChest';
 
-export const PACK_ORDER: readonly PackTier[] = ['Bronze', 'Silver', 'Gold', 'Star'];
+export const PACK_ORDER: readonly PackTier[] = [
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+
+/** Sobres only, easiest first — the ladder a player reads. */
+export const SOBRE_ORDER: readonly PackTier[] = [
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+];
+
+export const CHEST_ORDER: readonly PackTier[] = [
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+
+/**
+ * THE SEVEN FACES a card can wear: five rarities and the gold editions of the
+ * top two. Gold is a FACE rather than a coin flipped after the rarity, which
+ * is what stops a pack having a rarity it can never reach — the old shape
+ * built hard walls, and an album behind one was impossible rather than dear.
+ *
+ * The order is the order of every `weights` array and of `starsPerFace`.
+ */
+export const FACE_ORDER = [
+  '1star', '2star', '3star', '4star', '5star', '4gold', '5gold',
+] as const;
+export type FaceId = (typeof FACE_ORDER)[number];
+
+/** A face as the collection reads it: a rarity, and whether it is the gold
+ *  edition of that rarity. */
+export const faceOf = (id: FaceId): { rarity: number; gold: boolean } => ({
+  rarity: Number(id[0]),
+  gold: id.endsWith('gold'),
+});
 
 export interface PackDef {
+  /** Total cards the pack holds, guarantees included. */
   cards: number;
-  /** Weights per rarity, 1★ first. Weights rather than percentages so a tier
-   *  can be retuned without rebalancing the row to 100. */
+  /** How many of each face the pack ALWAYS holds. */
+  guarantees: Partial<Record<FaceId, number>>;
+  /** What the remaining `cards − Σguarantees` slots roll on, in `FACE_ORDER`.
+   *  Weights rather than percentages so a row can be retuned without
+   *  rebalancing it to 100. */
   weights: number[];
-  /** The chance a 4★ or 5★ arrives as its gold edition. */
-  goldChance: number;
-  /** The Star pack's promise: its last card is gold, always. */
-  goldGuaranteed: boolean;
-  /** What the store charges for one, or **0 for a tier the store does not
-   *  sell** — which is how Bronze and Silver stay the ruins' faucet. */
+  /** What the store charges, or **0 for one the store does not sell** — which
+   *  is how the three free sobres stay the faucet and the chests the vault's. */
   gemCost: number;
 }
 
 export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
   PACK_ORDER.map((id) => {
     const b = (balance.packs as Record<string, {
-      cards: number; weights: number[]; goldChance: number;
-      goldGuaranteed: number; gemCost: number;
+      cards: number; guarantees: Record<string, number>; weights: number[]; gemCost: number;
     }>)[id];
     return [id, {
       cards: b.cards,
+      guarantees: b.guarantees as Partial<Record<FaceId, number>>,
       weights: b.weights,
-      goldChance: b.goldChance,
-      goldGuaranteed: b.goldGuaranteed === 1,
       gemCost: b.gemCost,
     }];
   }),
@@ -1191,6 +1226,37 @@ export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
  * Fragments and no level cap (Docs/features/09-relics.md §13).
  */
 export const COLLECTION = balance.collection;
+
+/**
+ * What a relic waits before its ability can be cast again — counted from the
+ * moment the WINDOW CLOSES, never from the cast (Docs/features/09-relics.md
+ * §2.1).
+ *
+ * Flat across all eight relics and at every level. A cooldown that shrank with
+ * the level would be a discount wearing a hat, and a relic that did more AND
+ * did it more often would grow on two axes at once.
+ */
+export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
+
+/**
+ * THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the same
+ * three rungs on every relic (Docs/features/09-relics.md §2.1).
+ *
+ * The one number of an active that does NOT creep. A Chebyshev radius covers
+ * `(2r+1)²` cells, so each rung roughly DOUBLES the ground — and a number that
+ * doubles cannot creep, but it makes a superb milestone.
+ */
+export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSteps;
+
+/**
+ * HOW FAST AN AUTO-TAP ABILITY SPENDS ITS BUDGET, taps a second.
+ *
+ * It buys no Mana of its own — the cast already paid — so this decides only
+ * how long the run takes to WATCH. Holding a finger does 2 a second at 1 Mana
+ * each, so the spell is twice the speed at a fraction of the price, and the
+ * player can always see which of the two they would rather spend.
+ */
+export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
 
 /** Knowledge drips from every ruin the player has FOUND, whether or not they
  *  ever delve it — so the fog keeps paying even between expeditions. */
@@ -1246,19 +1312,38 @@ export interface ArtifactDef {
   sprite: string;
   /** One line, player-facing, about what having it does. */
   passiveText: string;
+  /**
+   * ONE IDEA, sometimes spread over more than one number.
+   *
+   * The Verdant Seal moves a node's stock and what a strike takes out of it,
+   * and the Foreman's Sigil moves a crew's swing and its walk: in both cases
+   * half the pair alone saturates or reads as nothing, so they are one passive
+   * with two stats rather than two passives (Docs/proposals/relic-effects.md
+   * §4.2). They share one `base` and one `per_level`, which is not a
+   * convenience — it is the design saying the two must move together.
+   */
   passive: {
-    stat: ModifierStat;
-    scope: ModifierScope;
-    op: 'add' | 'mul';
+    stats: readonly { stat: ModifierStat; scope: ModifierScope; op: 'add' | 'mul' }[];
     /** Value at level 1, and how much each further level moves it. */
     base: number;
     perLevel: number;
   };
   /** A spell in waiting (see the type docblock); null = it never had one. */
   active: ArtifactActive | null;
+  /**
+   * WHY THIS RELIC'S NUMBER DOES NOTHING YET, or null when it works.
+   *
+   * A relic is a whole album — nine cards and a season — so a card that
+   * promised an effect the build cannot deliver would be lying to somebody who
+   * spent one. The card prints this instead, in muted ink, and the level
+   * accrues normally against the day the system lands
+   * (Docs/proposals/relic-effects.md §6.4).
+   */
+  pending: string | null;
 }
 
-export type ArtifactActiveId = 'Divination' | 'Bloom' | 'Haste' | 'Beckon';
+export type ArtifactActiveId =
+  | 'Divining' | 'Reap' | 'Haste' | 'Tithe' | 'Survey' | 'Lamplight';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1267,15 +1352,37 @@ export interface ArtifactActive {
   manaCost: number;
   /** Cast targets a map cell through placement mode. */
   targeted: boolean;
-  /** Timed effects only (Haste); 0 = instant. */
+  /** Timed effects only; 0 = instant. The LADDER's base — the levelled window
+   *  is `activeDurationMs`. */
   durationSeconds: number;
-  /** Area effects only (Bloom); 0 = the target cell alone. */
+  /** Seconds a level adds to the window, for the abilities whose growing axis
+   *  is how long they last. */
+  durationPerLevel: number;
+  /** Area effects only; 0 = the target cell alone. The LADDER's base — the
+   *  levelled reach is `activeRadiusAt` (Docs/features/09-relics.md §2.1). */
   radius: number;
+  /** AUTO-TAP ABILITIES ONLY: taps bought per Mana of the cast, at level 1,
+   *  and what a level adds. 0 means this ability does not buy taps at all —
+   *  not that it buys none. */
+  tapsPerMana: number;
+  tapsPerManaPerLevel: number;
+  /** HOW HARD IT HITS, for the abilities whose growing axis is power: a
+   *  multiplier read inside the zone while the window lasts. 0 = not one. */
+  power: number;
+  powerPerLevel: number;
+  /** USES, for an ability whose window is counted in EVENTS rather than in
+   *  seconds. 0 = it is not one of those. */
+  charges: number;
+  chargesPerLevel: number;
 }
 
 type ArtifactBalance = {
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
+  activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
+  activePower: number; activePowerPerLevel: number;
+  activeDurationPerLevel: number;
+  activeCharges: number; activeChargesPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
@@ -1285,76 +1392,190 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
     passiveText: 'Forests, crops and stone recover faster',
     passive: {
-      stat: 'cellRecovery', scope: null, op: 'mul',
+      stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
+    // A RELIC IS ONE IDEA AT TWO SPEEDS, and this one's idea is RECOVERY. Its
+    // ability used to pay a cell's reveal cost, which is a fine spell about a
+    // different subject — the passive was about ground coming back and the
+    // active was about fog. The fog is the Compass's, and always was.
+    //
+    // THE REFILL MUST LAND BEFORE THE ZONE MATTERS. A recovery wait is stamped
+    // when the cell EXHAUSTS, not read each tick, so a faster-recovery zone
+    // only reaches cells that empty inside it — which is exactly what emptying
+    // the waiting list first arranges.
     active: {
-      id: 'Divination', name: 'Divination', targeted: true,
-      manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
-      // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
-      // so its value grows with depth — exactly where the pain is. This one
-      // relic turns the fog from a chore into a real question: Gold, or Mana?
-      text: 'Pays a frontier cell\u2019s entire remaining reveal cost, at any distance',
+      id: 'Divining', name: 'Divining', targeted: true,
+      manaCost: ab('DowsingRod').activeManaCost,
+      durationSeconds: ab('DowsingRod').activeDurationSeconds,
+      radius: ab('DowsingRod').activeRadius,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      power: ab('DowsingRod').activePower,
+      powerPerLevel: ab('DowsingRod').activePowerPerLevel,
+      durationPerLevel: ab('DowsingRod').activeDurationPerLevel,
+      charges: 0, chargesPerLevel: 0,
+      text: 'Wakes every tired node nearby at once, and keeps them coming back',
     },
+    pending: null,
   },
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
-    passiveText: 'Berries, game and shoals come back sooner',
+    passiveText: 'Richer ground, and more out of every swing',
     passive: {
-      stat: 'cellRespawn', scope: null, op: 'mul',
+      stats: [
+        { stat: 'harvestStock', scope: null, op: 'add' },
+        { stat: 'harvestUnitsPerStrike', scope: null, op: 'add' },
+      ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
+    // THE SPELL IS AN EXCHANGE RATE (Docs/proposals/relic-effects.md §3.2).
+    // It used to clear exhaustion, which was a worse version of the passive
+    // said twice; now it BUYS TAPS with the Mana of the cast, and what the
+    // level moves is how many each Mana is worth.
     active: {
-      id: 'Bloom', name: 'Bloom', targeted: true,
+      id: 'Reap', name: 'Reap', targeted: true,
       manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
       radius: ab('VerdantSeal').activeRadius,
-      text: 'Clears exhaustion from every resource cell nearby',
+      tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
+      tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
+      text: 'Harvests every node nearby, over and over, for free',
     },
+    pending: null,
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
-    passiveText: 'Every worker carries more',
+    passiveText: 'Your crews swing and walk faster',
     passive: {
-      stat: 'workerYield', scope: null, op: 'add',
+      stats: [
+        { stat: 'workerStrikeSpeed', scope: null, op: 'mul' },
+        { stat: 'workerSpeed', scope: null, op: 'mul' },
+      ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
+    // A ZONE ON BUILDINGS, not a kingdom-wide hour. It used to double
+    // `workerYield` everywhere for 60 minutes, which is a relic that asks
+    // nothing of the player but the press — there is no wrong place to put a
+    // global. Placing it makes it a question: which crews, for five minutes?
+    //
+    // AND IT IS PLACED ON BUILDINGS, never on workers. A worker walks, so a
+    // zone asking where it stood would flicker as it crossed the edge — and
+    // travel is Euclidean while a zone is Chebyshev.
     active: {
-      id: 'Haste', name: 'Haste', targeted: false,
+      id: 'Haste', name: 'Haste', targeted: true,
       manaCost: ab('ForemansSigil').activeManaCost,
-      durationSeconds: ab('ForemansSigil').activeDurationSeconds, radius: 0,
-      // Cast on the way OUT. Divination and Bloom reward being present; a
-      // game played in visits needs a good departure move too.
-      text: 'Workers carry double for an hour \u2014 cast it on your way out',
+      durationSeconds: ab('ForemansSigil').activeDurationSeconds,
+      radius: ab('ForemansSigil').activeRadius,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      power: ab('ForemansSigil').activePower,
+      powerPerLevel: ab('ForemansSigil').activePowerPerLevel,
+      durationPerLevel: ab('ForemansSigil').activeDurationPerLevel,
+      charges: 0, chargesPerLevel: 0,
+      text: 'The crews of every building nearby work much faster for a while',
     },
+    pending: null,
   },
   GildedLedger: {
     id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
     passiveText: 'Your villagers pay more tax',
     passive: {
-      stat: 'taxRate', scope: null, op: 'mul',
+      stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    // No active at all, and never had one.
+    // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Seal's
+    // because the ground is: a node empties and stops paying, so the Seal's
+    // run hits a wall, where a house always has rent to pull forward and the
+    // Ledger's run always spends the whole budget (OQ-99).
+    active: {
+      id: 'Tithe', name: 'Tithe', targeted: true,
+      manaCost: ab('GildedLedger').activeManaCost, durationSeconds: 0,
+      radius: ab('GildedLedger').activeRadius,
+      tapsPerMana: ab('GildedLedger').activeTapsPerMana,
+      tapsPerManaPerLevel: ab('GildedLedger').activeTapsPerManaPerLevel,
+      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
+      text: 'Collects from every house nearby, over and over, for free',
+    },
+    pending: null,
+  },
+  DelversLantern: {
+    id: 'DelversLantern', name: 'The Delver\u2019s Lantern', glyph: '\u{1F3EE}',
+    sprite: 'artifact_delvers_lantern',
+    passiveText: 'Every room pays more gold and stone',
+    passive: {
+      stats: [{ stat: 'roomHaul', scope: null, op: 'mul' }],
+      base: ab('DelversLantern').passiveBase, perLevel: ab('DelversLantern').passivePerLevel,
+    },
+    // COUNTED IN ROOMS, NOT MINUTES. The only clock a delve has is the player
+    // opening the next door, so a window of minutes would be a timer running
+    // while nothing happens — and a spell bought before a delve would expire
+    // in the party screen. It is UNTARGETED for the same reason: a delve is
+    // the place, and the player is already standing in it.
+    active: {
+      id: 'Lamplight', name: 'Lamplight', targeted: false,
+      manaCost: ab('DelversLantern').activeManaCost, durationSeconds: 0, radius: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
+      power: ab('DelversLantern').activePower,
+      powerPerLevel: ab('DelversLantern').activePowerPerLevel,
+      durationPerLevel: 0,
+      charges: ab('DelversLantern').activeCharges,
+      chargesPerLevel: ab('DelversLantern').activeChargesPerLevel,
+      text: 'The next rooms you clear pay double \u2014 cast it before you go down',
+    },
+    pending: null,
+  },
+  MusterHorn: {
+    id: 'MusterHorn', name: 'The Muster Horn', glyph: '\u{1F4EF}',
+    sprite: 'artifact_muster_horn',
+    passiveText: 'Your halls field a bigger army',
+    passive: {
+      stats: [{ stat: 'armyCap', scope: null, op: 'mul' }],
+      base: ab('MusterHorn').passiveBase, perLevel: ab('MusterHorn').passivePerLevel,
+    },
     active: null,
+    pending: null,
+  },
+  BailiffsTally: {
+    id: 'BailiffsTally', name: 'The Bailiff\u2019s Tally', glyph: '\u{1F9FE}',
+    sprite: 'artifact_bailiffs_tally',
+    passiveText: 'Every improvement you hold pays more an hour',
+    passive: {
+      stats: [{ stat: 'worldImprovementYield', scope: null, op: 'mul' }],
+      base: ab('BailiffsTally').passiveBase, perLevel: ab('BailiffsTally').passivePerLevel,
+    },
+    active: null,
+    // The Sawmill, the Farm and the Quarry are authored in
+    // Docs/features/19-world-map.md and the map itself is not built.
+    pending: 'when the world map opens',
   },
   WanderersCompass: {
     id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
     sprite: 'artifact_wanderers_compass',
     passiveText: 'Rooms pay more Stardust',
     passive: {
-      stat: 'stardustYield', scope: null, op: 'mul',
+      stats: [{ stat: 'stardustYield', scope: null, op: 'mul' }],
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
+    // THE FOG IS THE COMPASS'S. It called a depleted resource back, which is
+    // the Verdant Seal's subject wearing a compass; what a compass is FOR is
+    // ground you have not seen.
+    //
+    // RADIUS IS ITS WHOLE GROWTH (§2.1) — for a reveal, more ground IS the
+    // effect, so it needs no second axis and has none.
     active: {
-      id: 'Beckon', name: 'Beckon', targeted: true,
-      manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
-      text: 'Calls a depleted resource back onto a cell you choose',
+      id: 'Survey', name: 'Survey', targeted: true,
+      manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0,
+      radius: ab('WanderersCompass').activeRadius,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
+      durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
+      text: 'Clears the fog around a cell you hold, free of gold',
     },
+    pending: null,
   },
 };
 
 export const ARTIFACT_ORDER: ArtifactId[] = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+  'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 
 // ------------------------------------------------------------------- ruins
@@ -1535,6 +1756,16 @@ export type HeroTrait =
    *  worth bringing precisely when a fight is going to be expensive. */
   | 'WoundedRecovery';
 
+/** One number a Legendary moves for the whole kingdom. */
+export interface HeroBoon {
+  stat: ModifierStat;
+  /** ALWAYS A MULTIPLIER, always above 1 — there is no `op`, because there is
+   *  no choice. A flat bonus is worth less every hour the kingdom grows and a
+   *  falling number has a floor; a multiplier stays proportionally worth the
+   *  same for ever and only ever approaches its limit. */
+  value: number;
+}
+
 export interface HeroDef {
   id: HeroId;
   name: string;
@@ -1566,6 +1797,17 @@ export interface HeroDef {
   troopDmgMult: number;
   troopHpMult: number;
   troopDefBonus: number;
+  /**
+   * THE BOON (Docs/proposals/legendary-boons.md) — a LEGENDARY's kingdom
+   * passive, null on every Common and Rare.
+   *
+   * It is not the type passive above (which acts on the board) and not the
+   * trait beside it (which acts on a party). It is a modifier at the base
+   * stage, on while the hero is OWNED, in the same stack a relic uses — and
+   * it points UP, always: a speed, a yield or a capacity, never a discount,
+   * because a discount dies at 100% and a permanent passive must not.
+   */
+  boon: HeroBoon | null;
 }
 
 /**
@@ -1784,6 +2026,9 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       troopDmgMult: b.troopDmgMult,
       troopHpMult: b.troopHpMult,
       troopDefBonus: b.troopDefBonus,
+      // Only a Legendary has one, so the column is absent on 26 of the 32
+      // rows and the JSON's inferred type says so.
+      boon: ('boon' in b ? (b.boon as HeroBoon) : null),
     }];
   }),
 ) as Record<HeroId, HeroDef>;
@@ -1888,9 +2133,30 @@ export interface StoreSkuDef {
   /** Dollars, as displayed and as deducted from the monthly budget. */
   priceUsd: number;
   gems: number;
+  /** The hand of cards this SKU hands over, or **null for a SKU that is not a
+   *  bundle** — every Gem pack and the Royal chest. */
+  bundle: CardBundleDef | null;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
+}
+
+/**
+ * A CARD BUNDLE (Docs/features/09-relics.md §6.1): the collection's packs and
+ * wildcards for money rather than for Gems.
+ *
+ * It is a `Store` row rather than a Gem price because the BUDGET is the
+ * instrument — the purchase log, the refusal and the monthly allowance all
+ * have to see it — and it grants no Gems, on the Royal chest's precedent: a
+ * bundle hands over the things, not the currency that buys them.
+ */
+export interface CardBundleDef {
+  packs: number;
+  tier: PackTier;
+  wildcards: number;
+  /** The rarity the wildcards cover. Never gold: there is no gold wildcard at
+   *  any price, and money does not buy one either (§9). */
+  wildcardRarity: Rarity;
 }
 
 const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
@@ -1901,6 +2167,12 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
+  SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
+  // The three bundles, a satchel to a cabinet: the same containment ladder the
+  // Gem packs walk, in a collector's furniture rather than a treasury's.
+  CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
+  CardsCase: { name: "A collector's case", description: 'Star packs and the wildcard that fills any slot.', sprite: 'bundle_case' },
+  CardsCabinet: { name: "A collector's cabinet", description: 'A season of star packs, and three wildcards to aim.', sprite: 'bundle_cabinet' },
 };
 
 /** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
@@ -1909,13 +2181,33 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
 export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
   .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
 
+interface StoreRow {
+  priceUsd: number; gems: number;
+  packs: number; packTier: string; wildcards: number; wildcardRarity: number;
+}
+
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
-    const b = (balance.store as Record<string, { priceUsd: number; gems: number }>)[id];
+    const b = (balance.store as Record<string, StoreRow>)[id];
     if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems }];
+    // A row is a bundle when it names a hand. The importer already refuses
+    // half a hand, so one column deciding it is enough.
+    const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0
+      ? {
+          packs: b.packs,
+          tier: (b.packTier || 'Star') as PackTier,
+          wildcards: b.wildcards,
+          wildcardRarity: (b.wildcardRarity || 1) as Rarity,
+        }
+      : null;
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle }];
   }),
 ) as Record<StoreSkuId, StoreSkuDef>;
+
+/** The card bundles, cheapest first — the store's own bundle shelf
+ *  (Docs/features/09-relics.md §6.1). Workbook row order, like every shelf. */
+export const CARD_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => STORE[id]?.bundle !== null);
 
 /** Workbook row order — the order the store shows them in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
@@ -1929,6 +2221,34 @@ export const PAYER = balance.payer;
  *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
  *  ones. */
 export const DAILY = balance.daily;
+
+/** The season pass — Docs/features/20-season-pass.md. Two reward columns as
+ *  parallel lists, one per reward kind; their length IS the ladder's, exactly
+ *  as `DAILY`'s is. A pack column holds a `PackTier` or `''` for no pack at
+ *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
+export const PASS = balance.pass as {
+  missionXp: number;
+  levelXpBase: number;
+  levelXpGrowth: number;
+  freePacks: string[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
+  paidPacks: string[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
+};
+
+/** The missions that feed the pass — Docs/features/20-season-pass.md §3. A
+ *  `*Band` is `[min, max]`, inclusive; the collect band is in MINUTES of the
+ *  city's own production rather than in units. */
+export const MISSIONS = balance.missions as {
+  boardSize: number; perWindow: number; windowHours: number; weeklyQuota: number;
+  collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
+  populationBand: number[]; upgradeBand: number[]; revealBand: number[];
+  buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
+  roomsBand: number[]; depthsBand: number[]; packsBand: number[];
+  /** The kinds that cannot be finished inside one session — they wait on a
+   *  builder, a delve or a technology. They pay a pack; everything else rolls. */
+  hardKinds: string[];
+  hardPack: PackTier; normalPack: PackTier;
+  rewardGems: number; rewardManaFraction: number;
+};
 
 // ------------------------------------------------------------ the timeline
 
@@ -1994,4 +2314,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 44;
+export const SAVE_VERSION = 59;

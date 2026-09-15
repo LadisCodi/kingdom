@@ -469,11 +469,10 @@ describe('entering a room', () => {
     const report = enterRoom(state, map, BARROW, ['Warden'],
       [{ unitId: 'Warrior', count: 400 }]);
     expect(report.result).toBe('Cleared');
-    // THE BOTTOM PAYS NO RELIC any more — a relic comes only from its album
-    // (Docs/features/09-relics.md §1). What it pays is the lump and a Star
-    // pack for the conquest.
+    // THE BOTTOM PAYS NEITHER A RELIC NOR A PACK — a relic comes only from its
+    // album (Docs/features/09-relics.md §1) and the packs are the season
+    // pass's. What is left is the once-per-ruin lump.
     expect(report.bottomed).toBe(true);
-    expect(report.pack).toBe('Silver');
     expect(state.ruinsCleared[BARROW]).toBe(true);
     expect(ruinIsFinished(state, BARROW)).toBe(true);
     // The recurring Gem faucet the design needs: one per ruin, once.

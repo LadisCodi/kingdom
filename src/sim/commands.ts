@@ -11,9 +11,10 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, seasonEndsAt } from './collection';
+import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
+import { recordEvent } from './events';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
 } from './timeline';
@@ -285,8 +286,12 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
   if (item.kind === 'build') {
     district.state = 'Built';
     revealAroundDistrict(state, map, district); // the new building pushes back the fog
+    recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
   } else {
     district.level = item.targetLevel ?? district.level + 1;
+    recordEvent(state, {
+      kind: 'districtLevel', district: district.definitionId, level: district.level,
+    });
   }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
 }
@@ -402,9 +407,10 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** The season that closed under the player, if one did — the cards and the
-   *  stars are gone and a new season is open (Docs/features/09-relics.md §3). */
-  seasonClosed: { from: number; to: number } | null;
+  /** The season that closed under the player, if one did — the cards melted
+   *  into Gold, the stars are gone and a new season is open
+   *  (Docs/features/09-relics.md §3). */
+  seasonClosed: SeasonClose | null;
 }
 
 const emptyResult = (): AdvanceResult => ({

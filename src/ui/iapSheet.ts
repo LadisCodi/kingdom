@@ -28,15 +28,23 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
   const row = (label: string, value: string, cls = '') =>
     el('div', { class: `iap-row ${cls}` }, el('span', {}, label), el('b', {}, value));
 
+  // A BUNDLE is the one SKU whose grant is a list. Its whole argument is what
+  // lands, so the sheet spells it out above the price: a player about to spend
+  // twenty dollars is owed the hand, not a sentence about it.
+  const grants = game.bundleLines(id);
+
   const body = el('div', { class: 'iap' },
     el('div', { class: 'iap-head' },
-      iconEl(sku.gems > 0 ? 'Gems' : 'chest', { size: 'lg' }),
+      iconEl(sku.gems > 0 ? 'Gems' : grants.length > 0 ? 'pack' : 'chest', { size: 'lg' }),
       el('div', {},
         el('div', { class: 'iap-name' }, sku.name),
         // A SKU that grants no Gems on purchase says what it DOES instead:
         // "0 Gems" would be a true sentence and a wrong one.
         el('div', { class: 'iap-grant' },
           sku.gems > 0 ? `${sku.gems} Gems` : sku.description))),
+    ...(grants.length === 0 ? [] : [el('div', { class: 'iap-grants' },
+      ...grants.map((line) => el('div', { class: 'iap-grant-line' },
+        iconEl('tick', { size: 'sm' }), el('span', {}, line))))]),
     el('div', { class: 'iap-rows' },
       row('Price', formatUsd(price)),
       row('Left this month', payer === null ? '—' : formatUsd(remaining)),

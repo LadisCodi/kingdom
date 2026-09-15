@@ -16,11 +16,12 @@ export const COLS = 3;
 /** One node card. Three of these plus two gaps and the two channels is the
  *  page's width, and the page's width is the phone's.
  *
- * Sized as a character count at --text-body (16px PT Sans is ~7px a
- * character): 120 wide leaves 106px of content, or about 15 characters, and
- * the longest technology name in the game ("Stonecutting III") is 16 — it
- * wraps or ellipsises, which the card allows. 96 tall is that name on one line
- * and three lines of what it does under it. */
+ * Sized as a character count at --text-body. Nunito runs ~9.4px a character
+ * at 600 (it replaced PT Sans's ~7 on 2026-09-11, and is a third wider), so
+ * 120 wide leaves 106px of content — about 11 characters, where it used to be
+ * 15. The longest technology name in the game ("Stonecutting III") does not
+ * fit on one line and wraps to two, which the card allows and 96 tall has the
+ * room for: two lines of name and two of what it does. */
 export const NODE_W = 120;
 export const NODE_H = 96;
 const COL_GAP = 6;

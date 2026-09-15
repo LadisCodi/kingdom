@@ -64,9 +64,13 @@ export interface Drill {
   def: Partial<Record<UnitTag, number>> & { all?: number };
   /** Added to the type-disadvantage multiplier (0.75 + 0.06 at Manoeuvre III). */
   disadvantageOffset: number;
+  /** Multiplies every unit's HP. Global rather than per-tag, because the only
+   *  thing that fills it is a legendary's boon and a boon aims at nothing
+   *  narrower than "every unit". 1 is the identity. */
+  hpMult: number;
 }
 
-export const NO_DRILL: Drill = { atk: {}, def: {}, disadvantageOffset: 0 };
+export const NO_DRILL: Drill = { atk: {}, def: {}, disadvantageOffset: 0, hpMult: 1 };
 
 /** The flat bonus a unit of these tags gets from a Drill's atk or def table. */
 const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
@@ -116,7 +120,7 @@ export function partyStats(party: Party): PartyStats {
     const u = UNITS[slot.unitId];
     atk += (u.dmg + drillFor(drill.atk, u.tags)) * slot.count;
     def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
-    hp += u.hp * slot.count;
+    hp += u.hp * slot.count * drill.hpMult;
   }
   for (const hero of party.heroes) {
     const h = HEROES[hero.id];
