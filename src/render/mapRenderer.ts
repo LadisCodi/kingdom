@@ -9,7 +9,9 @@ import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import type { MapData } from '../sim/grid';
-import { harvestSourceAt, recoversAt, stockFraction } from '../sim/harvest';
+import {
+  harvestSourceAt, recoversAt, recoveryProgress, stockFraction,
+} from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
@@ -126,11 +128,10 @@ export function drawMap(
   const drawResourceState = (cell: Coord, x: number, y: number) => {
     const source = harvestSourceAt(state, cell);
     if (source === null) return;
-    const recovery = recoversAt(state, map, cell, now);
     const spec = HARVEST[source];
-    if (recovery !== null) {
-      const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
-      drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
+    const growing = recoveryProgress(state, map, cell, spec, now);
+    if (growing !== null) {
+      drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, growing, PALETTE.recoveryFill);
     } else {
       const fraction = stockFraction(state, map, cell, spec, now);
       if (fraction < 1) {

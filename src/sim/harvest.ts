@@ -80,7 +80,7 @@ const cellState = (
 ): CellHarvestState => {
   let s = state.harvest[key];
   if (!s) {
-    s = { units: effectiveStock(state, map, cell, spec), exhaustedUntil: null };
+    s = { units: effectiveStock(state, map, cell, spec), exhaustedUntil: null, recoveryMs: null };
     state.harvest[key] = s;
   }
   return s;
@@ -143,6 +143,7 @@ function recoverIfDue(
 ): void {
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
+    s.recoveryMs = null;
     s.units = effectiveStock(state, map, cell, spec);
   }
 }
@@ -184,6 +185,30 @@ export function recoversForSpec(
   if (!s) return null;
   recoverIfDue(state, s, map, cell, spec, now);
   return s.exhaustedUntil;
+}
+
+/**
+ * HOW FAR ALONG A CELL'S RECOVERY IS, 0 at the moment it emptied and 1 when
+ * it is back — or null if it is not recovering at all.
+ *
+ * It spans the wait that was STAMPED, which is the only span that is true: a
+ * wait is priced once, at exhaustion, so a bar measured against the authored
+ * `recoverySeconds` opened nearly full under anything that speeds recovery up
+ * — a Dowsing Rod at level 16 shortens a Forest's 90 seconds to 21, and a bar
+ * spanning 90 starts at 77%. It also has to span the stamped wait rather than
+ * a live re-read, or a zone expiring mid-wait would make the bar jump
+ * backwards.
+ */
+export function recoveryProgress(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
+): number | null {
+  const until = recoversForSpec(state, map, cell, spec, now);
+  if (until === null) return null;
+  const span = state.harvest[coordKey(cell)]?.recoveryMs
+    // A save from before the length was kept: the authored wait is the best
+    // guess for the one cell that was already waiting when it loaded.
+    ?? effectiveRecoveryMs(state, spec, cell);
+  return Math.max(0, Math.min(1, 1 - (until - now) / Math.max(1, span)));
 }
 
 /** Remaining depot fraction for UI (1 = full, 0 = empty). */
@@ -247,7 +272,11 @@ export function drawFromCell(
     delete state.harvest[key];
     return taken;
   }
-  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec, cell);
+  // PRICED ONCE, and its LENGTH kept beside its end: the bar that counts this
+  // down must span the wait that was actually stamped, not the authored one.
+  const wait = effectiveRecoveryMs(state, spec, cell);
+  s.exhaustedUntil = now + wait;
+  s.recoveryMs = wait;
   return taken;
 }
 // -------------------------------------------------------------- respawning

@@ -213,6 +213,18 @@ export interface CellHarvestState {
    *  draws this down; at zero the cell is exhausted. */
   units: number;
   exhaustedUntil: number | null; // epoch ms; recovery is lazy (derived from time)
+  /**
+   * HOW LONG THAT WAIT WAS, when it was stamped. Null while the cell is not
+   * exhausted.
+   *
+   * The wait is priced ONCE, at the moment of exhaustion
+   * (`effectiveRecoveryMs`), so the BAR that counts it down has to be told
+   * what it is counting. Deriving the span from the authored
+   * `recoverySeconds` instead made the bar start nearly full under anything
+   * that speeds recovery up — a Dowsing Rod at level 16 shortens a Forest's
+   * 90 seconds to 21, and a bar spanning 90 opens at 77%.
+   */
+  recoveryMs: number | null;
 }
 
 export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';

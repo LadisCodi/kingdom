@@ -605,6 +605,7 @@ export function serialize(state: GameState, now: number): SaveFile {
             Coord: parseCoordKey(k),
             Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
+            RecoveryMs: s.recoveryMs,
           })),
       },
       'kingdom.workers': {
@@ -949,6 +950,11 @@ export function deserialize(
         // needs, so it is checked rather than defaulted.
         units: typeof c.Units === 'number' ? c.Units : (spec?.stock ?? 0),
         exhaustedUntil: msOrNull(c.ExhaustedUntil),
+        // A save from before the bar knew what it was counting has no length
+        // on it. Null is honest — the renderer falls back to the authored
+        // wait for that one cell, exactly as it did before, and the next
+        // exhaustion stamps a real one.
+        recoveryMs: c.RecoveryMs ?? null,
       };
     }
   }

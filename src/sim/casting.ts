@@ -359,6 +359,7 @@ export function cast(
         if (cell.units >= full && cell.exhaustedUntil === null) continue;
         cell.units = full;
         cell.exhaustedUntil = null;
+        cell.recoveryMs = null;
         report.affected.push(c);
       }
       addModifier(state, {

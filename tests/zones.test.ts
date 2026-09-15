@@ -8,7 +8,7 @@
 // one bug this file exists to make impossible.
 
 import { describe, expect, it } from 'vitest';
-import { grantArtifactLevel } from '../src/sim/artifacts';
+import { grantArtifactLevel, syncArtifactModifiers } from '../src/sim/artifacts';
 import {
   activeDurationMs, activeDurationMsAt, activePower, activePowerAt, activeRadius,
   activeRadiusAt, cast, castBlock, castCost, castState, reapCells, surveyCells,
@@ -20,7 +20,9 @@ import {
   HARVEST,
 } from '../src/sim/data/definitions';
 import { spellStatChanges, spellStatsAt } from '../src/ui/relicStats';
-import { drawFromCell, effectiveRecoveryMs, harvestSourceAt } from '../src/sim/harvest';
+import {
+  drawFromCell, effectiveRecoveryMs, harvestSourceAt, recoveryProgress,
+} from '../src/sim/harvest';
 import { isWithinReach } from '../src/sim/fog';
 import {
   activeZones, addModifier, areaCovers, resolve, resolveAt, type Modifier,
@@ -661,5 +663,94 @@ describe('Survey buys the fog with Mana instead of Gold', () => {
     expect(activeDurationMsAt('WanderersCompass', 20)).toBe(0);
     expect(activeRadiusAt('WanderersCompass', ARTIFACT_RADIUS_STEPS[0]!))
       .toBeGreaterThan(activeRadiusAt('WanderersCompass', 1));
+  });
+});
+
+// ------------------------------------------------- the bar that counts it
+
+/**
+ * THE RECOVERY BAR SPANS THE WAIT THAT WAS STAMPED.
+ *
+ * A wait is priced ONCE, at exhaustion, so a bar measured against the authored
+ * `recoverySeconds` opens nearly full under anything that speeds recovery up —
+ * which is every level of the Dowsing Rod, and then its zone on top. The bar
+ * should fill FASTER, not start fuller.
+ */
+describe('a faster recovery fills the bar faster, not fuller', () => {
+  /** A kingdom that can harvest, holding the Rod at `level` — passives and
+   *  all, because a level set by hand moves no modifier. */
+  const holder = (level: number): GameState => {
+    const state = canGather(freshGame());
+    reveal(state, cellsWithinRadius(map, FOREST, 2));
+    state.lastAdvance = T0;
+    state.artifacts.levels.DowsingRod = level;
+    syncArtifactModifiers(state);
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  const spec = (state: GameState) => HARVEST[harvestSourceAt(state, FOREST)!];
+
+  /** Empty the forest at T0 and read the bar the instant it went. */
+  const barAtEmpty = (level: number, withZone: boolean): number => {
+    const state = holder(level);
+    if (withZone) cast(state, map, 'DowsingRod', FOREST, T0);
+    drawFromCell(state, map, FOREST, spec(state), 999, T0);
+    return recoveryProgress(state, map, FOREST, spec(state), T0)!;
+  };
+
+  it('starts at zero however fast the ground comes back', () => {
+    expect(barAtEmpty(1, false)).toBeCloseTo(0);
+    expect(barAtEmpty(16, false)).toBeCloseTo(0);
+    expect(barAtEmpty(16, true)).toBeCloseTo(0);
+  });
+
+  // The FIX, stated as the symptom it replaces: a bar spanning the authored
+  // 90 seconds while the real wait is 21 opens at 77%.
+  it('is not the authored wait that the bar spans', () => {
+    const state = holder(16);
+    drawFromCell(state, map, FOREST, spec(state), 999, T0);
+    const stamped = state.harvest[coordKey(FOREST)]!.recoveryMs!;
+    const authored = spec(state).recoverySeconds * 1000;
+    expect(stamped).toBeLessThan(authored / 2);
+    // Against the authored span the bar would already be most of the way up.
+    expect(1 - stamped / authored).toBeGreaterThan(0.5);
+    // Against the stamped one it is at the bottom, where it belongs.
+    expect(recoveryProgress(state, map, FOREST, spec(state), T0)!).toBeCloseTo(0);
+  });
+
+  it('reaches full sooner when the ground is faster', () => {
+    const wait = (level: number): number => {
+      const state = holder(level);
+      drawFromCell(state, map, FOREST, spec(state), 999, T0);
+      return state.harvest[coordKey(FOREST)]!.recoveryMs!;
+    };
+    expect(wait(16)).toBeLessThan(wait(1));
+    // And the bar is halfway at half of whatever that wait is, either way.
+    for (const level of [1, 16]) {
+      const state = holder(level);
+      drawFromCell(state, map, FOREST, spec(state), 999, T0);
+      const span = state.harvest[coordKey(FOREST)]!.recoveryMs!;
+      expect(recoveryProgress(state, map, FOREST, spec(state), T0 + span / 2)!)
+        .toBeCloseTo(0.5, 2);
+    }
+  });
+
+  // A WAIT ALREADY RUNNING IS NOT REPRICED — the zone's own rule, applied to
+  // the bar. A cell that emptied before a spell landed keeps the span it was
+  // stamped with, so its bar cannot jump when a zone opens or closes.
+  it('does not reprice a wait that is already running', () => {
+    const state = holder(1);
+    drawFromCell(state, map, FOREST, spec(state), 999, T0);
+    const span = state.harvest[coordKey(FOREST)]!.recoveryMs!;
+    const half = recoveryProgress(state, map, FOREST, spec(state), T0 + span / 2)!;
+
+    // A zone cast somewhere else entirely, a second later.
+    const far = { x: 9, y: 9 };
+    reveal(state, [far, ...cellsWithinRadius(map, far, 2)]);
+    cast(state, map, 'DowsingRod', far, T0 + 1000);
+
+    expect(state.harvest[coordKey(FOREST)]!.recoveryMs).toBe(span);
+    expect(recoveryProgress(state, map, FOREST, spec(state), T0 + span / 2)!).toBe(half);
   });
 });
