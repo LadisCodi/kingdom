@@ -265,7 +265,7 @@ relics do not touch: **the dungeon, the war and the world map**.
 |---|---|---|---|---|
 | **The Delver's Lantern** 🏮 | the dungeon | every room pays **more Gold and Stone** | **Lamplight** — the next N rooms pay **double** | 20 |
 | **The Muster Horn** 📯 | the war | your halls field a **bigger army** | **The Call** — cast on a **world-map fortification**: its defenders' DEF ×N for 10 min | 20 |
-| **The Bailiff's Tally** 🧾 | the world map | a **held world tile pays more** | **The Levy** — cast on a held tile: it pays **×3** while it lasts | 15 |
+| **The Bailiff's Tally** 🧾 | the world map | every **improvement you hold pays more an hour** | **The Levy** — cast on a held tile: it and its neighbours pay **×3** while it lasts | 15 |
 
 ### 6.1 What each one moves, and where it is collected
 
@@ -273,7 +273,7 @@ relics do not touch: **the dungeon, the war and the world map**.
 |---|---|---|---|
 | **Delver's Lantern** | `roomHaul` | `expeditions.ts#roomReward`, the **wallet line only** | **yes** — new stat, existing call site |
 | **Muster Horn** | `armyCap` (passive) · `fortDefence` (active) | `army.ts#armyCap` · the world map's siege | passive **yes**, active **pending** |
-| **The Bailiff's Tally** | `worldTileYield` | the world map's tile production | **pending** |
+| **The Bailiff's Tally** | `worldImprovementYield` | the Sawmill, Farm and Quarry's hourly grant | **pending** |
 
 - **The Lantern takes the room's Gold and Stone and nothing else.** A room's
   line already pays Stardust through `stardustYield` — the Wanderer's Compass —
@@ -285,6 +285,15 @@ relics do not touch: **the dungeon, the war and the world map**.
   raised at home and spent abroad.
 - **None of the three touches a number a relic or a legendary boon already
   moves**, which is the rule `tests/heroBoons.test.ts` enforces the other way.
+- **The Tally moves every improvement, not one resource and not one tile.** A
+  passive is not cast on anything, so it cannot name a tile; and picking one
+  resource would make the relic situational — useless to a player holding no
+  Forest — where *what you hold pays more* scales with the pillar's own
+  progression, which is how much map you have taken.
+- **The three improvements pay Wood, Food and Stone**, the same coins the
+  Dowsing Rod and the Verdant Seal move at home. Same currency, different
+  number: one is the world map's hourly grant, the other is a harvest cell's
+  clock, and no stat is shared.
 - **The tomes keep no relic.** Research has the Necromancer's boon
   (`researchSpeed`), and `knowledgeYield` stays free — for a ninth relic, or
   for a technology.
@@ -298,7 +307,7 @@ at their own pillar instead:
 |---|---|
 | **Lamplight** | a ruin, before going down |
 | **The Call** | a **fortification** on the world map |
-| **The Levy** | a **tile you hold** on the world map |
+| **The Levy** | a **tile you hold** on the world map — it and its six neighbours |
 
 - Everything else is unchanged: a Mana price, the ACTIVE → COOLDOWN → READY
   walk, a 5-minute cooldown counted from the window's close, and exactly one
@@ -306,9 +315,16 @@ at their own pillar instead:
 - **Lamplight's window is counted in ROOMS, not minutes** — the only clock a
   delve has is the player opening the next door, so minutes would be a timer
   running while nothing happens.
+- **The Call lands on a Fortaleza**, which the world map already authors: it
+  stations troops that defend its tile and the ones beside it, so raising its
+  garrison's DEF is the one thing a horn could mean there.
 - **The Call and The Levy are the first two things in the game cast on the
   world map**, and the map will need the same select-then-place idiom the city
   already has.
+- **The Levy's radius does not step** (§2.3's ladder is suspended for it). A
+  player holds tens of world tiles, not hundreds of city cells, so radius 1 —
+  a tile and its six neighbours — is already a large slice of what they own,
+  and radius 2 would cover everything they have.
 
 ### 6.3 Level by level
 
@@ -327,17 +343,17 @@ at their own pillar instead:
 | *(four halls at level 5 = 3,400 power)* | 3,740 | 4,080 | 4,420 | 5,100 | 6,800 | 10,200 |
 | **Active — the defenders' DEF** | **×1.50** | **×1.65** | **×1.80** | **×2.10** | **×2.85** | **×4.35** |
 
-**The Bailiff's Tally** — mana 15 · cooldown 5 min · the tile pays ×3 (fixed)
+**The Bailiff's Tally** — mana 15 · cooldown 5 min · ×3 and radius 1 (both fixed)
 
 | Bailiff's Tally | **L1** | **L2** | **L3** | **L5** | **L10** | **L20** |
 |---|---|---|---|---|---|---|
-| Passive — what a held tile pays | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
+| Passive — every improvement's hourly grant | ×1.15 | ×1.30 | ×1.45 | ×1.75 | ×2.50 | ×4.00 |
 | **Active — duration** | **20 min** | **22 min** | **24 min** | **28 min** | **38 min** | **58 min** |
 | *(uptime, cooldown after)* | 80% | 81% | 83% | 85% | 88% | 92% |
 
-- **The Tally is a departure move.** A tile's production is production, so a
-  window shorter than the 8-hour offline cap is paid in full during an absence
-  (CLAUDE.md, invariant 2).
+- **The Tally is a departure move.** An improvement's hourly grant is
+  production, so a window shorter than the 8-hour offline cap is paid in full
+  during an absence (CLAUDE.md, invariant 2).
 
 ### 6.4 Two of these wait on the world map, and the card has to say so
 
