@@ -10,7 +10,7 @@ import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { neighbors, type MapData } from './grid';
-import { resolve } from './modifiers';
+import { resolve, resolveAt } from './modifiers';
 import { techValue } from './techEffects';
 import { pick } from './rng';
 import {
@@ -101,11 +101,17 @@ const cellState = (
  * faster regrowth is a NEGATIVE percent: the number here is seconds of
  * waiting, and less of it is the good news.
  */
-export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
+export const effectiveRecoveryMs = (
+  state: GameState, spec: HarvestSpec, at: Coord,
+): number =>
   Math.max(1000, Math.round(
     resolve(state, 'cellRecovery',
       techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))
-    / Math.max(1, resolve(state, 'recoverySpeed', 1))));
+    // AT THE CELL, because the Dowsing Rod's zone is a place. It is read once,
+    // when the cell exhausts, so a zone only ever reaches the cells that empty
+    // INSIDE it — which is exactly what the active's instant refill arranges,
+    // by emptying the waiting list first (Docs/proposals/relic-effects.md §3.1).
+    / Math.max(1, resolveAt(state, 'recoverySpeed', 1, at))));
 
 /**
  * How long a CONSUMED feature waits before it reappears somewhere else — the
@@ -241,7 +247,7 @@ export function drawFromCell(
     delete state.harvest[key];
     return taken;
   }
-  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
+  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec, cell);
   return taken;
 }
 // -------------------------------------------------------------- respawning

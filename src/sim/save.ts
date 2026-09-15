@@ -728,6 +728,10 @@ export function serialize(state: GameState, now: number): SaveFile {
         Modifiers: state.modifiers.map((m) => ({
           ID: m.id, Source: m.source, Stat: m.stat, Scope: m.scope,
           Op: m.op, Value: m.value, ExpiresAtUtc: isoOrNull(m.expiresAt),
+          // A ZONE. Absent on every modifier that is not one, which keeps a
+          // save from before relic actives byte-identical through this key.
+          Area: m.area === undefined ? null
+            : { X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius },
         })),
       },
       'player.currencies': state.player.wallet,
@@ -1129,6 +1133,12 @@ export function deserialize(
       op: m.Op,
       value: m.Value,
       expiresAt: msOrNull(m.ExpiresAtUtc),
+      // `undefined`, not null: `resolve()` tells a zone from a global modifier
+      // by the key being absent, so a null here would make every old modifier
+      // a zone of radius NaN.
+      ...(m.Area == null ? {} : {
+        area: { centre: { x: m.Area.X, y: m.Area.Y }, radius: m.Area.Radius },
+      }),
     }));
   }
 

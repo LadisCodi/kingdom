@@ -26,10 +26,12 @@ import {
   DISTRICTS, HARVEST, TAP, TAXES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import { townhall, type CurrencyId, type District, type DistrictId, type GameState } from './state';
+import {
+  townhall, type Coord, type CurrencyId, type District, type DistrictId, type GameState,
+} from './state';
 import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
-import { resolve } from './modifiers';
+import { resolve, resolveAt } from './modifiers';
 import { harmonySurplusMultiplier } from './harmony';
 
 /**
@@ -148,14 +150,21 @@ export function effectiveWorkerStrike(
 /** Milliseconds between one worker's strikes on this kind of cell. A property
  *  of the CELL and of the BUILDING that sent the worker: a farm plot is fast
  *  and thirsty where an iron mountain is a heavy swing, and a level-10 Sawmill
- *  swings faster at both. No modifier scales it — a worker-speed stat would be
- *  a new `ModifierStat`, which is code, and nothing has asked.
- *  (`workerSpeed` below is how fast they WALK, which is a different thing.) */
+ *  swings faster at both.
+ *  (`workerSpeed` below is how fast they WALK, which is a different thing.)
+ *
+ *  A ZONE IS READ AT THE BUILDING, never at the cell. A worker walks, so a
+ *  zone asking where it was standing would flicker as it crossed the edge —
+ *  and travel is Euclidean while a zone is Chebyshev. *The Sawmill is in the
+ *  area, so the Sawmill's crew works faster* is one sentence and one stable
+ *  answer (Docs/proposals/relic-effects.md §3.1). */
 export const workerStrikeMs = (
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number => {
   const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1)
-    * Math.max(1, resolve(state, 'workerStrikeSpeed', 1));
+    * Math.max(1, building === null
+      ? resolve(state, 'workerStrikeSpeed', 1)
+      : resolveAt(state, 'workerStrikeSpeed', 1, building.location));
   return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
 
@@ -183,12 +192,24 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
 /** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
  *  FSM when a leg STARTS, so a rank landing mid-walk shortens the next leg
  *  rather than teleporting the one in progress — which is also what keeps a
- *  one-call replay and stepped ticking on the same StateUntil. */
-export const effectiveWorkerSpeed = (state: GameState): number =>
-  Math.max(0.1, resolve(state, 'workerSpeed',
+ *  one-call replay and stepped ticking on the same StateUntil.
+ *
+ *  `home` is the walker's BUILDING, for the same reason `workerStrikeMs`
+ *  reads one: a crew in a Foreman's Sigil zone walks faster for the whole leg,
+ *  including the half of it outside the zone. Omitted, this is the kingdom's
+ *  walking speed with no zone in it — which is what the UI and a worker with
+ *  no building want. */
+export const effectiveWorkerSpeed = (state: GameState, home: Coord | null = null): number =>
+  Math.max(0.1, (home === null ? resolve : resolveAtHome(home))(state, 'workerSpeed',
     WORKER.moveSpeedTilesPerSecond
       * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
       * techMultiplier(state, 'workerSpeed')));
+
+/** `resolveAt` curried on the place, so the line above reads as one choice
+ *  between two resolvers rather than as a duplicated expression. */
+const resolveAtHome = (home: Coord) =>
+  (state: GameState, stat: 'workerSpeed', base: number): number =>
+    resolveAt(state, stat, base, home);
 
 /**
  * Multiplier on build and upgrade time (Carpentry: −5%/rank).

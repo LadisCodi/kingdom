@@ -147,10 +147,10 @@ describe('a relic is a permanent passive with no ceiling', () => {
   // The Rod's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
   // approaches an instant recovery without ever arriving at one.
   it('shortens a wait without ever reaching zero', () => {
-    let last = effectiveRecoveryMs(state, HARVEST.Forest);
+    let last = effectiveRecoveryMs(state, HARVEST.Forest, { x: 0, y: 0 });
     for (let i = 0; i < 40; i++) {
       grantArtifactLevel(state, 'DowsingRod');
-      const now = effectiveRecoveryMs(state, HARVEST.Forest);
+      const now = effectiveRecoveryMs(state, HARVEST.Forest, { x: 0, y: 0 });
       expect(now).toBeLessThan(last);
       expect(now).toBeGreaterThan(0);
       last = now;

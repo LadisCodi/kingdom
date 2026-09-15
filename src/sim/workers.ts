@@ -160,9 +160,14 @@ function findClaimableCell(
 
 /** A leg's duration, at the speed the kingdom walks at when the leg STARTS
  *  (Cartage). Fixed for the leg, like every other StateUntil, so replay and
- *  stepped ticking agree on when the worker arrives. */
-const moveMs = (state: GameState, from: Coord, to: Coord): number =>
-  (euclideanTiles(from, to) / effectiveWorkerSpeed(state)) * 1000;
+ *  stepped ticking agree on when the worker arrives.
+ *
+ *  `home` is the crew's BUILDING, which is where a Foreman's Sigil zone is
+ *  read: one of `from` and `to` is always it, and asking the building rather
+ *  than the moving end is what keeps a leg from repricing halfway across the
+ *  zone's edge. */
+const moveMs = (state: GameState, from: Coord, to: Coord, home: Coord): number =>
+  (euclideanTiles(from, to) / effectiveWorkerSpeed(state, home)) * 1000;
 
 /** A stable angle per worker id, so an idle worker keeps its spot by the door
  *  instead of jittering. Integer arithmetic, like every other hash here. */
@@ -195,7 +200,7 @@ function tryDispatch(
   const cell = findClaimableCell(state, map, building, at, index, w);
   if (cell) {
     w.claimedCell = cell;
-    setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell));
+    setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell, building.location));
   } else {
     w.claimedCell = null;
     setState(w, 'Idle', at, null);
@@ -273,7 +278,7 @@ function step(
         // standing over a stump. It costs the trip, which is the honest price
         // of the player having got there first.
         w.claimedCell = null;
-        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
+        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location, building.location));
       } else {
         setState(w, 'Working', t,
           t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!], building));
@@ -285,7 +290,7 @@ function step(
       const source = harvestSourceAt(state, cell);
       if (source === null || !worksHere(sources, state, cell)) {
         w.claimedCell = null;
-        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
+        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location, building.location));
         break;
       }
       const spec = HARVEST[source];
@@ -297,7 +302,7 @@ function step(
         state, map, cell, spec, effectiveWorkerStrike(state, spec, building), t);
       w.carriedSource = w.carrying > 0 ? source : null;
       if (w.carrying > 0) strikes.push({ cell, source });
-      setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
+      setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location, building.location));
       break;
     }
     case 'MovingHome': {
@@ -320,7 +325,7 @@ function step(
       // Keep the claim while the cell still holds something; otherwise migrate.
       if (w.claimedCell !== null && !isExhausted(state, map, w.claimedCell, t)
         && worksHere(sources, state, w.claimedCell)) {
-        setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell));
+        setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell, building.location));
       } else {
         w.claimedCell = null;
         tryDispatch(state, map, w, building, t, index);
@@ -410,7 +415,7 @@ export function relocateCrew(
       : w.activity === 'Working' ? (w.claimedCell ?? from)
         : (workerPosition(state, w, now) ?? from);
     if (w.carrying > 0) {
-      setState(w, 'MovingHome', now, now + moveMs(state, at, district.location));
+      setState(w, 'MovingHome', now, now + moveMs(state, at, district.location, district.location));
     } else {
       w.claimedCell = null;
       setState(w, 'Idle', now, null);

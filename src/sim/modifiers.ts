@@ -15,7 +15,7 @@
 // in exchange for elegance nobody can see.
 
 import type {
-  CurrencyId, DistrictId, GameState, HarvestSourceId,
+  Coord, CurrencyId, DistrictId, GameState, HarvestSourceId,
 } from './state';
 
 /** Everything a modifier can reach. Adding one is a line here plus a
@@ -87,6 +87,25 @@ export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 /** What a modifier narrows to. `null` means every subject of that stat. */
 export type ModifierScope = CurrencyId | HarvestSourceId | DistrictId | null;
 
+/**
+ * WHERE a modifier applies, for the ones that apply somewhere.
+ *
+ * A ZONE IS A MODIFIER WITH A CENTRE. A relic's active is its passive's idea
+ * concentrated in one place for a window (Docs/features/09-relics.md §2.1),
+ * which is a modifier that already expires, already prunes, already saves and
+ * already folds in a defined order — minus a position. Giving it one reuses
+ * all of that instead of standing up a parallel system with its own state, its
+ * own save key and its own boundary.
+ *
+ * CHEBYSHEV, like every other area of influence in the game (CLAUDE.md: fog
+ * and placement are 4-way, areas are Chebyshev, worker travel is Euclidean).
+ */
+export interface ModifierArea {
+  centre: Coord;
+  /** Chebyshev. 0 covers the centre cell alone. */
+  radius: number;
+}
+
 export interface Modifier {
   /** newId() — deterministic and persisted, and the fold order (see below). */
   id: string;
@@ -98,7 +117,17 @@ export interface Modifier {
   /** Half-open: active while `t < expiresAt`. null = permanent (a passive).
    *  Half-open matches `recoverIfDue` on harvest cells; keep them consistent. */
   expiresAt: number | null;
+  /** A ZONE. Absent on the global modifiers, which is every one that existed
+   *  before relic actives. An area modifier is invisible to `resolve()` and
+   *  visible only to `resolveAt()`, so a global read can never pick up a
+   *  local zone by accident — that asymmetry is the whole safety of this. */
+  area?: ModifierArea;
 }
+
+/** Chebyshev, inclusive of the centre — so radius 2 is the 5×5 the preview
+ *  draws. */
+export const areaCovers = (area: ModifierArea, cell: Coord): boolean =>
+  Math.max(Math.abs(cell.x - area.centre.x), Math.abs(cell.y - area.centre.y)) <= area.radius;
 
 /** Half-open, so a modifier expiring at exactly T is already gone at T. */
 export const isActive = (m: Modifier, t: number): boolean =>
@@ -106,6 +135,11 @@ export const isActive = (m: Modifier, t: number): boolean =>
 
 const applies = (m: Modifier, stat: ModifierStat, scope: ModifierScope): boolean =>
   m.stat === stat && (m.scope === null || m.scope === scope);
+
+/** A cell-blind read takes the global modifiers ONLY. A zone that leaked into
+ *  `resolve()` would apply everywhere, which is the one bug this whole shape
+ *  exists to make impossible. */
+const isGlobal = (m: Modifier): boolean => m.area === undefined;
 
 /**
  * base → the modifier stack, at the sim's own clock.
@@ -144,7 +178,7 @@ export function resolve(
   let add = 0;
   let mul = 1;
   const stack = state.modifiers
-    .filter((m) => applies(m, stat, scope) && isActive(m, t))
+    .filter((m) => isGlobal(m) && applies(m, stat, scope) && isActive(m, t))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   for (const m of stack) {
     if (m.op === 'add') add += m.value;
@@ -152,6 +186,45 @@ export function resolve(
   }
   return (base + add) * mul;
 }
+
+/**
+ * `resolve()` AT A PLACE: the global stack plus every zone covering `cell`.
+ *
+ * Call this wherever the number being resolved belongs to a spot on the map —
+ * a harvest cell's recovery, a crew's swing, a house's tax rate. Everything
+ * else keeps calling `resolve()`, and the two agree exactly wherever no zone
+ * is standing, because an empty area set folds to the same identity.
+ *
+ * ZONES OVERLAP FREELY and their values multiply. The cooldown is what stops a
+ * player carpeting the map, so two zones on one cell is a choice the player
+ * made — an area taking two effects is an area somewhere else taking none —
+ * rather than a rule to police (Docs/features/09-relics.md §2.1).
+ */
+export function resolveAt(
+  state: GameState,
+  stat: ModifierStat,
+  base: number,
+  cell: Coord,
+  scope: ModifierScope = null,
+): number {
+  const t = state.lastAdvance;
+  let add = 0;
+  let mul = 1;
+  const stack = state.modifiers
+    .filter((m) => applies(m, stat, scope) && isActive(m, t)
+      && (m.area === undefined || areaCovers(m.area, cell)))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  for (const m of stack) {
+    if (m.op === 'add') add += m.value;
+    else mul *= m.value;
+  }
+  return (base + add) * mul;
+}
+
+/** Every zone standing right now — what the map renderer draws and what the
+ *  relic card counts down. */
+export const activeZones = (state: GameState): Modifier[] =>
+  state.modifiers.filter((m) => m.area !== undefined && isActive(m, state.lastAdvance));
 
 /** Every currently-active modifier, for the reliquary's breakdown. */
 export const activeModifiers = (state: GameState): Modifier[] =>
