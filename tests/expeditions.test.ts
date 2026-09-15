@@ -473,7 +473,7 @@ describe('entering a room', () => {
     // (Docs/features/09-relics.md §1). What it pays is the lump and a Star
     // pack for the conquest.
     expect(report.bottomed).toBe(true);
-    expect(report.pack).toBe('Silver');
+    expect(report.pack).toBe('Rose');
     expect(state.ruinsCleared[BARROW]).toBe(true);
     expect(ruinIsFinished(state, BARROW)).toBe(true);
     // The recurring Gem faucet the design needs: one per ruin, once.

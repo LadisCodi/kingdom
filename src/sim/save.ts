@@ -21,7 +21,7 @@ import type { MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
 import type { AlbumId } from './data/seasons';
-import type { PackTier } from './data/definitions';
+import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
@@ -1078,7 +1078,12 @@ export function deserialize(
       completed: [...((collectionDto.Completed ?? []) as AlbumId[])],
       stars: collectionDto.Stars ?? 0,
       wildcards: { ...(collectionDto.Wildcards ?? {}) },
+      // A pack whose TIER no longer exists is dropped rather than migrated.
+      // The pack ladder was rebuilt whole, and a card is wiped at the close
+      // anyway, so an unopened pack of a retired tier is worth nothing to
+      // carry forward and everything to not crash on.
       packs: ((collectionDto.Packs ?? []) as any[])
+        .filter((k) => PACK_ORDER.includes(k.Tier as PackTier))
         .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
       packsIssued: collectionDto.PacksIssued ?? 0,
       prizePaid: collectionDto.PrizePaid === true,

@@ -3282,7 +3282,7 @@
       "priceUsd": 4.99,
       "gems": 0,
       "packs": 2,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 1,
       "wildcardRarity": 4
     },
@@ -3290,7 +3290,7 @@
       "priceUsd": 9.99,
       "gems": 0,
       "packs": 5,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 1,
       "wildcardRarity": 5
     },
@@ -3298,7 +3298,7 @@
       "priceUsd": 19.99,
       "gems": 0,
       "packs": 10,
-      "packTier": "Star",
+      "packTier": "Purple",
       "wildcards": 3,
       "wildcardRarity": 5
     }
@@ -3452,17 +3452,21 @@
       1
     ],
     "chestFloorPerHour": 60,
-    "starsPerRarity": [
-      1,
-      2,
-      5,
-      10,
-      25
-    ],
-    "starGoldMultiplier": 2,
+    "starsPerFace": {
+      "1star": 2,
+      "2star": 6,
+      "3star": 16,
+      "4star": 40,
+      "5star": 100,
+      "4gold": 80,
+      "5gold": 200
+    },
     "closeGoldSecondsPerStar": 30,
-    "vaultGoldStars": 50,
-    "vaultStarStars": 200,
+    "chestStars": {
+      "BronzeChest": 105,
+      "SilverChest": 250,
+      "GoldChest": 400
+    },
     "wildcardGemCosts": [
       100,
       200,
@@ -5370,57 +5374,150 @@
     }
   },
   "packs": {
-    "Bronze": {
+    "Green": {
+      "cards": 2,
+      "guarantees": {
+        "1star": 1
+      },
+      "weights": [
+        84.92,
+        12.005,
+        2.5,
+        0.4,
+        0.1,
+        0.06,
+        0.015
+      ],
+      "gemCost": 0
+    },
+    "Yellow": {
       "cards": 3,
+      "guarantees": {
+        "2star": 1
+      },
       "weights": [
-        70,
-        30,
-        0,
-        0,
-        0
+        69.85,
+        25,
+        4,
+        0.8,
+        0.2,
+        0.12,
+        0.03
       ],
-      "goldChance": 0,
-      "goldGuaranteed": 0,
       "gemCost": 0
     },
-    "Silver": {
+    "Rose": {
+      "cards": 3,
+      "guarantees": {
+        "3star": 1
+      },
+      "weights": [
+        59.8,
+        29.9,
+        8,
+        1.5,
+        0.5,
+        0.225,
+        0.075
+      ],
+      "gemCost": 0
+    },
+    "Blue": {
       "cards": 4,
+      "guarantees": {
+        "4star": 1
+      },
       "weights": [
-        45,
+        50,
         35,
-        20,
-        0,
-        0
+        9,
+        4,
+        1.2,
+        0.55,
+        0.25
       ],
-      "goldChance": 0,
-      "goldGuaranteed": 0,
+      "gemCost": 400
+    },
+    "Purple": {
+      "cards": 6,
+      "guarantees": {
+        "5star": 1
+      },
+      "weights": [
+        40,
+        34,
+        14.5,
+        7,
+        3,
+        1.05,
+        0.45
+      ],
+      "gemCost": 900
+    },
+    "Golden": {
+      "cards": 1,
+      "guarantees": {},
+      "weights": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        75,
+        25
+      ],
+      "gemCost": 600
+    },
+    "BronzeChest": {
+      "cards": 7,
+      "guarantees": {
+        "3star": 1,
+        "4star": 1
+      },
+      "weights": [
+        84.92,
+        12,
+        2.5,
+        0.4,
+        0.105,
+        0.06,
+        0.015
+      ],
       "gemCost": 0
     },
-    "Gold": {
-      "cards": 5,
+    "SilverChest": {
+      "cards": 9,
+      "guarantees": {
+        "4star": 1,
+        "5star": 1
+      },
       "weights": [
-        0,
-        40,
-        38,
-        22,
-        0
+        59.8,
+        29.9,
+        8,
+        1.5,
+        0.5,
+        0.225,
+        0.075
       ],
-      "goldChance": 0.08,
-      "goldGuaranteed": 0,
-      "gemCost": 500
+      "gemCost": 0
     },
-    "Star": {
-      "cards": 6,
+    "GoldChest": {
+      "cards": 3,
+      "guarantees": {
+        "5star": 1,
+        "4gold": 1
+      },
       "weights": [
         0,
         0,
-        55,
-        33,
-        12
+        0,
+        0,
+        0,
+        75,
+        25
       ],
-      "goldChance": 0.2,
-      "goldGuaranteed": 1,
-      "gemCost": 1500
+      "gemCost": 0
     }
   },
   "fog": {

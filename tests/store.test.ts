@@ -223,7 +223,9 @@ describe('the presenter', () => {
     game.state.collection.season = seasonAt(game.now());
     for (const offer of game.cardBundleOffers()) {
       expect(offer.lines).toEqual(game.bundleLines(offer.id));
-      expect(offer.lines.join(' ')).toMatch(/gold edition guaranteed/);
+      // What the pack GUARANTEES, generated from its row rather than authored
+      // beside it — a retuned row cannot leave a stale promise behind.
+      expect(offer.lines.join(' ')).toMatch(/guaranteed/);
       expect(offer.lines.join(' ')).toMatch(/wildcard/);
     }
     // A Gem pack has no such list — its grant is one number.

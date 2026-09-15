@@ -1149,35 +1149,69 @@ export const MANA = balance.mana;
  * cards a pack holds and which rarities it can hold, at PUBLISHED odds — the
  * whole faucet, in four rows.
  */
-export type PackTier = 'Bronze' | 'Silver' | 'Gold' | 'Star';
+export type PackTier =
+  // The six SOBRES, named for the rarity each guarantees.
+  | 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden'
+  // The three CHESTS. Not a faucet: what duplicates buy, in the vault.
+  | 'BronzeChest' | 'SilverChest' | 'GoldChest';
 
-export const PACK_ORDER: readonly PackTier[] = ['Bronze', 'Silver', 'Gold', 'Star'];
+export const PACK_ORDER: readonly PackTier[] = [
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+
+/** Sobres only, easiest first — the ladder a player reads. */
+export const SOBRE_ORDER: readonly PackTier[] = [
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+];
+
+export const CHEST_ORDER: readonly PackTier[] = [
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+
+/**
+ * THE SEVEN FACES a card can wear: five rarities and the gold editions of the
+ * top two. Gold is a FACE rather than a coin flipped after the rarity, which
+ * is what stops a pack having a rarity it can never reach — the old shape
+ * built hard walls, and an album behind one was impossible rather than dear.
+ *
+ * The order is the order of every `weights` array and of `starsPerFace`.
+ */
+export const FACE_ORDER = [
+  '1star', '2star', '3star', '4star', '5star', '4gold', '5gold',
+] as const;
+export type FaceId = (typeof FACE_ORDER)[number];
+
+/** A face as the collection reads it: a rarity, and whether it is the gold
+ *  edition of that rarity. */
+export const faceOf = (id: FaceId): { rarity: number; gold: boolean } => ({
+  rarity: Number(id[0]),
+  gold: id.endsWith('gold'),
+});
 
 export interface PackDef {
+  /** Total cards the pack holds, guarantees included. */
   cards: number;
-  /** Weights per rarity, 1★ first. Weights rather than percentages so a tier
-   *  can be retuned without rebalancing the row to 100. */
+  /** How many of each face the pack ALWAYS holds. */
+  guarantees: Partial<Record<FaceId, number>>;
+  /** What the remaining `cards − Σguarantees` slots roll on, in `FACE_ORDER`.
+   *  Weights rather than percentages so a row can be retuned without
+   *  rebalancing it to 100. */
   weights: number[];
-  /** The chance a 4★ or 5★ arrives as its gold edition. */
-  goldChance: number;
-  /** The Star pack's promise: its last card is gold, always. */
-  goldGuaranteed: boolean;
-  /** What the store charges for one, or **0 for a tier the store does not
-   *  sell** — which is how Bronze and Silver stay the ruins' faucet. */
+  /** What the store charges, or **0 for one the store does not sell** — which
+   *  is how the three free sobres stay the faucet and the chests the vault's. */
   gemCost: number;
 }
 
 export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
   PACK_ORDER.map((id) => {
     const b = (balance.packs as Record<string, {
-      cards: number; weights: number[]; goldChance: number;
-      goldGuaranteed: number; gemCost: number;
+      cards: number; guarantees: Record<string, number>; weights: number[]; gemCost: number;
     }>)[id];
     return [id, {
       cards: b.cards,
+      guarantees: b.guarantees as Partial<Record<FaceId, number>>,
       weights: b.weights,
-      goldChance: b.goldChance,
-      goldGuaranteed: b.goldGuaranteed === 1,
       gemCost: b.gemCost,
     }];
   }),
@@ -2130,4 +2164,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 47;
+export const SAVE_VERSION = 48;

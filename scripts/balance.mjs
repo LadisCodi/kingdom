@@ -139,7 +139,16 @@ const ARTIFACT_IDS = [
   'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 /** The four pack tiers, easiest faucet first (Docs/features/09-relics.md §6). */
-const PACK_IDS = ['Bronze', 'Silver', 'Gold', 'Star'];
+const PACK_IDS = [
+  // The six SOBRES, named for the rarity each guarantees — the guarantee is
+  // the pack's whole identity and the ladder reads without a legend.
+  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
+  // The three CHESTS, which are not a faucet: they are what duplicates buy.
+  'BronzeChest', 'SilverChest', 'GoldChest',
+];
+/** The seven faces a card can wear: five rarities, and the gold editions of
+ *  the top two. Every guarantee and every weight column is one of these. */
+const FACE_IDS = ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'];
 
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
@@ -292,18 +301,20 @@ const SETTINGS = [
   // in a city with two workers, and a chest of almost nothing would read as a
   // bug rather than as a reward.
   ['collection.chest_floor_per_hour', 'collection.chestFloorPerHour'],
-  // Stars a duplicate is worth, by rarity, and what a gold edition doubles.
-  ['collection.stars_per_rarity', 'collection.starsPerRarity', 'list'],
-  ['collection.star_gold_multiplier', 'collection.starGoldMultiplier'],
+  // Stars a duplicate is worth, PER FACE — the five rarities and the two gold
+  // editions, authored rather than derived, because a gold edition is not
+  // always worth exactly twice its rarity and the sheet should be able to say
+  // so. Same order as the pack weights.
+  ['collection.stars_per_face', 'collection.starsPerFace', 'faces'],
   // What a card is worth when the season wipes it (§3): SECONDS of the city's
   // Gold production per star the card is worth, so the consolation is the same
   // fraction of a day at every stage instead of a number that goes stale. The
   // same stars ladder prices it, so a gold edition is worth double here too.
   ['collection.close_gold_seconds_per_star', 'collection.closeGoldSecondsPerStar'],
-  // The vault's two thresholds — what stars buy when nobody is sending you
-  // cards.
-  ['collection.vault_gold_stars', 'collection.vaultGoldStars'],
-  ['collection.vault_star_stars', 'collection.vaultStarStars'],
+  // What each CHEST costs in stars. Every one must cost strictly more than its
+  // own contents return as duplicates, or the vault pays for itself and the
+  // loop is infinite — `tests/artifacts.test.ts` holds that line.
+  ['collection.chest_stars', 'collection.chestStars', 'chests'],
   // A WILDCARD's Gem price, by the rarity it covers (1★ first). It stands in
   // for its rarity OR LOWER, so the top one covers everything a wildcard can
   // and is priced at a gold key — there is no gold wildcard at any price
@@ -550,8 +561,18 @@ const SHEETS = {
   // **BLANK means the store does not sell it**, which is how Bronze and
   // Silver stay the ruins' faucet — selling what a room already drips would
   // undercut the only free source the collection has.
-  Packs: ['id', 'cards', 'weight_1star', 'weight_2star', 'weight_3star',
-    'weight_4star', 'weight_5star', 'gold_chance', 'gold_guaranteed', 'gem_cost'],
+  // A PACK IS GUARANTEES PLUS FILLER (Docs/proposals/collection-packs.md §1).
+  // `cards` is the total; a `guarantee_*` says how many of that face the pack
+  // always holds; the `weight_*` columns are the distribution the REMAINING
+  // `cards - Σguarantees` slots roll on. Gold is a face in that distribution
+  // rather than a separate coin, so no pack has a rarity it can never reach.
+  //
+  // `gem_cost` blank = the store does not sell it, which is how the three free
+  // sobres stay the faucet and the three chests stay the vault's.
+  Packs: ['id', 'cards',
+    ...FACE_IDS.map((f) => `guarantee_${f}`),
+    ...FACE_IDS.map((f) => `weight_${f}`),
+    'gem_cost'],
   // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
   // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
   // every squad of its own type on that side, applied at battle start and
@@ -765,6 +786,31 @@ function goodsList(row, col) {
     }
     return out;
   });
+}
+
+/**
+ * A KEYED cell — `1star:2,2star:6,3star:16` — for a setting whose value is one
+ * number per named thing rather than a list. Named rather than positional
+ * because a face or a chest added in the middle would otherwise shift every
+ * number after it silently.
+ */
+function keyed(row, ids) {
+  const raw = row?.value;
+  if (raw === '' || raw === undefined) fail(where(row), '"value" is blank');
+  const out = {};
+  for (const part of String(raw).split(',')) {
+    const entry = part.trim();
+    if (entry === '') continue;
+    const [id, n] = entry.split(':').map((x) => String(x).trim());
+    if (!ids.includes(id)) fail(where(row), `unknown key "${id}" — expected one of ${ids.join(', ')}`);
+    const v = Number(n);
+    if (!Number.isFinite(v)) fail(where(row), `"${id}" is not a number ("${entry}")`);
+    out[id] = v;
+  }
+  for (const id of ids) {
+    if (out[id] === undefined) fail(where(row), `is missing "${id}"`);
+  }
+  return out;
 }
 
 /**
@@ -1343,21 +1389,25 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Packs'), PACK_IDS)) {
-    const weights = [1, 2, 3, 4, 5].map((n) => num(r, `weight_${n}star`, { blankAs: 0 }));
-    if (weights.every((w) => w === 0)) {
-      fail(where(r), 'weights every rarity at 0 — the pack can roll nothing');
+    const guarantees = {};
+    for (const f of FACE_IDS) {
+      const n = num(r, `guarantee_${f}`, { blankAs: 0 });
+      if (n > 0) guarantees[f] = n;
     }
-    const chance = num(r, 'gold_chance', { blankAs: 0 });
-    if (chance > 1) fail(where(r), `"gold_chance" is ${chance}, not a fraction`);
-    const guaranteed = num(r, 'gold_guaranteed', { blankAs: 0 });
-    if (guaranteed === 1 && weights[3] === 0 && weights[4] === 0) {
-      fail(where(r), 'guarantees a gold card but weights 4★ and 5★ at 0 — gold is an edition of those two');
+    const weights = FACE_IDS.map((f) => num(r, `weight_${f}`, { blankAs: 0 }));
+    const cards = num(r, 'cards');
+    const given = Object.values(guarantees).reduce((a, b) => a + b, 0);
+    if (given > cards) {
+      fail(where(r), `guarantees ${given} cards but the pack holds ${cards}`);
+    }
+    // A pack with slots left to roll needs somewhere to roll them.
+    if (given < cards && weights.every((w) => w <= 0)) {
+      fail(where(r), `has ${cards - given} slots to roll and every weight is blank`);
     }
     out.packs[id] = {
-      cards: num(r, 'cards'),
+      cards,
+      guarantees,
       weights,
-      goldChance: chance,
-      goldGuaranteed: guaranteed,
       gemCost: num(r, 'gem_cost', { blankAs: 0 }),
     };
   }
@@ -1367,7 +1417,9 @@ async function importXlsx() {
     const row = settings.get(key);
     const value = kind === 'list' ? list(row, 'value')
       : kind === 'tiers' ? tiers(row, 'value')
-        : num(row, 'value');
+        : kind === 'faces' ? keyed(row, FACE_IDS)
+          : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
+            : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     // A block whose every key is a Setting — `combat.*` is one — has no loop
@@ -1413,6 +1465,7 @@ const goodsCell = (levels) => levels
   .join('|');
 const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
 const tiersCell = (ts) => ts.map((t) => `${t.at}:${t.bonus}`).join('|');
+const keyedCell = (m) => Object.entries(m).map(([id, n]) => `${id}:${n}`).join(',');
 
 /** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
  *  format so a two-entry list like "3,5" can't collapse into the number 3.5. */
@@ -1507,8 +1560,10 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Packs', PACK_IDS.map((id) => {
     const k = b.packs[id];
-    return [id, k.cards, ...k.weights.map((w) => w || ''),
-      k.goldChance || '', k.goldGuaranteed || '', k.gemCost || ''];
+    return [id, k.cards,
+      ...FACE_IDS.map((f) => k.guarantees[f] || ''),
+      ...k.weights.map((w) => w || ''),
+      k.gemCost || ''];
   }));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
@@ -1557,7 +1612,8 @@ async function exportXlsx() {
     for (const part of path.split('.')) value = value[part];
     return [key, kind === 'list' ? listCell(value)
       : kind === 'tiers' ? tiersCell(value)
-        : value];
+        : kind === 'faces' || kind === 'chests' ? keyedCell(value)
+          : value];
   }), (col, row) => col === 'value' &&
     SETTINGS.some(([key, , kind]) => key === row[0] && kind !== undefined));
 

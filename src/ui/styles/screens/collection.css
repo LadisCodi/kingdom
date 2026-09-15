@@ -611,3 +611,44 @@
   font-style: italic;
   color: var(--ink-muted);
 }
+
+/* ------------------------------------------------------------- the vault */
+
+/* Three chests, and a ten at once. The knob opens this rather than buying,
+   because with a choice to make a one-press knob cannot say what it is about
+   to spend. */
+.col-vault-shelf { display: flex; flex-direction: column; gap: 10px; }
+.col-vault-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+.col-chest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  opacity: 0.6;
+}
+.col-chest.is-ready { opacity: 1; }
+.col-chest-head { display: flex; align-items: center; justify-content: space-between; }
+.col-chest-name {
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  text-transform: capitalize;
+  color: var(--ink);
+}
+.col-chest-cost { display: flex; align-items: center; gap: 4px; font-weight: var(--weight-strong); }
+.col-chest-promise {
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}
+.col-chest-buttons { display: flex; gap: 8px; }
+.col-chest-buttons > * { flex: 1; }

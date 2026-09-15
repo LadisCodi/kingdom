@@ -8,7 +8,7 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: steps 1 and 2 done 2026-09-15.** Save version 47.
+> **Status: steps 1, 2 and 3 done 2026-09-15.** Save version 48.
 >
 > **One decision gates a third of it** — **OQ-98**, whether the relic actives
 > stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
@@ -36,7 +36,7 @@
 |---|---|---|---|
 | ~~**1**~~ | ~~The five passives take their final shape~~ **done** (OQ-97 closed) | — | **M** |
 | ~~**2**~~ | ~~Eight relics exist, as passives~~ **done** | 1 | **M** |
-| **3** | The packs, the chests and the stars | — | **M** |
+| ~~**3**~~ | ~~The packs, the chests and the stars~~ **done** | — | **M** |
 | **4** | Eight albums, and the pairing rotates | 2, 3 | **M** |
 | **5** | The album cycle | 4 | **M** |
 | **6** | Zones, cooldowns and the actives | **OQ-98**, 2 | **L** |
@@ -154,9 +154,35 @@ Self-contained, and the step whose numbers are already measured.
 - **⚠ The rng changes.** A pack's cards hash on its id *and the order of its
   rolls*, so changing how many rolls a pack makes changes every pack already
   banked. Harmless now; a migration after launch.
-- **Test** — re-run the completion simulation and assert the quoted figures:
-  158 packs for the eight albums, 4.1 albums at 200 free packs, and every chest
-  costing more stars than its own contents return.
+- **Test** — every pack always holds what it guarantees; the published odds
+  sum to 100 over the faces it can deal, with a guarantee counting as its whole
+  slot; and **every chest costs more stars than its own contents return**,
+  which is arithmetic rather than balance.
+
+### 3.1 How it landed
+
+- **Nine ids, in English**: `Green Yellow Rose Blue Purple Golden` and
+  `BronzeChest SilverChest GoldChest`. The Spanish names and the `Gold`
+  collision — a pack, a chest and the gold editions all called the same thing —
+  were settled before they reached the sheet. A tier id is not hashed, so a
+  rename stays free.
+- **Bronce is 105 stars, not 150.** At 150 it was dominated: Silver had the
+  dearer sticker and the cheaper real price (70 net against 78) and paid twice
+  as much per 4★.
+- **The ruins pay the free ladder now** — a room a Green, a boss a Rose, a
+  bottomed ruin a Purple — and the code says what they are: fifteen depths
+  cleared once is a **welcome, not a supply**, and the season's 200 come from
+  the repeatable dungeon (**OQ-102**).
+- **The vault knob opens a shelf** instead of buying. With three chests and a
+  ten-at-once there is a choice, and a one-press knob could not say what it was
+  about to spend.
+- **A pack's name and promise are GENERATED from its row**, so a retuned sheet
+  cannot leave a stale promise on a shelf.
+- **One design consequence to notice**: the card bundles moved from the old
+  Star pack to **Purple**, which guarantees a 5★ rather than a gold edition. So
+  [`09-relics.md`](../features/09-relics.md) §6.1's *"every bundle is star
+  packs, so every pack in one carries the gold guarantee"* **no longer holds**.
+  Either a bundle gains a Golden alongside its Purples, or the line goes.
 
 ## 4. Eight albums, and the pairing rotates
 

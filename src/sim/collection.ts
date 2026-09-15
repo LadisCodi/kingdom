@@ -22,8 +22,9 @@
 //     precedent (CLAUDE.md, "Money and identity are different things").
 
 import {
-  CARD_BUNDLE_ORDER, COLLECTION, CURRENCIES, PACKS, PACK_ORDER, STORE,
-  type BannerId, type CardBundleDef, type PackTier,
+  CARD_BUNDLE_ORDER, CHEST_ORDER, COLLECTION, CURRENCIES, FACE_ORDER, PACKS,
+  SOBRE_ORDER, STORE, faceOf,
+  type BannerId, type CardBundleDef, type FaceId, type PackTier,
 } from './data/definitions';
 import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, SEASON_EPOCH, seasonContent,
@@ -84,12 +85,16 @@ export const seasonHeld = (state: GameState): number =>
 
 export const SEASON_CARDS = ALBUM_ORDER.length * CARDS_PER_ALBUM;
 
-/** Stars a duplicate of this card is worth (§7). */
-export function starsFor(ref: CardRef): number {
+/** The face a card wears — what prices its stars and what a pack rolls for. */
+export const faceOfCard = (ref: CardRef): FaceId => {
   const card = cardAt(ref);
-  const base = COLLECTION.starsPerRarity[card.rarity - 1] ?? 1;
-  return card.gold === true ? base * COLLECTION.starGoldMultiplier : base;
-}
+  return `${card.rarity}${card.gold === true ? 'gold' : 'star'}` as FaceId;
+};
+
+/** Stars a duplicate of this card is worth (§7). AUTHORED per face rather
+ *  than derived, so a gold edition need not be exactly twice its rarity. */
+export const starsFor = (ref: CardRef): number =>
+  COLLECTION.starsPerFace[faceOfCard(ref)] ?? 1;
 
 // ----------------------------------------------------------------- the packs
 
@@ -118,13 +123,13 @@ export function grantPack(state: GameState, tier: PackTier, source: PackSource):
   return pack;
 }
 
-/** Every slot in the season that a rarity (and gold-ness) can land on.
- *  `rarity` null = any, which is what the Star pack's guarantee asks for. */
-function slotsMatching(rarity: Rarity | null, gold: boolean): CardRef[] {
+/** Every slot in the season wearing this face. */
+function slotsWearing(face: FaceId): CardRef[] {
+  const { rarity, gold } = faceOf(face);
   const out: CardRef[] = [];
   for (const album of ALBUM_ORDER) {
     ALBUMS[album].cards.forEach((card, slot) => {
-      if (rarity !== null && card.rarity !== rarity) return;
+      if (card.rarity !== rarity) return;
       if ((card.gold === true) !== gold) return;
       out.push({ album, slot });
     });
@@ -132,70 +137,69 @@ function slotsMatching(rarity: Rarity | null, gold: boolean): CardRef[] {
   return out;
 }
 
-/** Which rarity a roll in `[0,1)` lands on, by the tier's weights. */
-function rarityFromRoll(tier: PackTier, roll: number): Rarity {
-  const weights = PACKS[tier].weights;
-  const total = RARITIES.reduce((n, r) => n + (weights[r - 1] ?? 0), 0);
-  if (total <= 0) return 1;
+/** Which face a roll in `[0,1)` lands on, by the pack's weights. */
+function faceFromRoll(tier: PackTier, roll: number): FaceId {
+  const { weights } = PACKS[tier];
+  const total = weights.reduce((n, w) => n + Math.max(0, w), 0);
+  if (total <= 0) return FACE_ORDER[0];
   let acc = 0;
   const target = roll * total;
-  for (const r of RARITIES) {
-    acc += weights[r - 1] ?? 0;
-    if (target < acc) return r;
+  for (let i = 0; i < FACE_ORDER.length; i++) {
+    acc += Math.max(0, weights[i] ?? 0);
+    if (target < acc) return FACE_ORDER[i]!;
   }
-  return RARITIES[RARITIES.length - 1];
+  return FACE_ORDER[FACE_ORDER.length - 1]!;
+}
+
+/**
+ * A face the season can actually deal. A pack may weight a face this season's
+ * albums hold no slot for — walk DOWN the ladder rather than deal nothing, and
+ * a gold edition falls back to its own plain rarity first.
+ */
+function dealableFace(face: FaceId): FaceId | null {
+  const order = FACE_ORDER.indexOf(face);
+  const tries: FaceId[] = [face];
+  const { rarity, gold } = faceOf(face);
+  if (gold) tries.push(`${rarity}star` as FaceId);
+  for (let i = order - 1; i >= 0; i--) tries.push(FACE_ORDER[i]!);
+  return tries.find((f) => slotsWearing(f).length > 0) ?? null;
 }
 
 /**
  * The cards a pack holds — a PURE function of its id, so it can be asked
  * before, during and after the reveal and always answers the same.
  *
- * `parts` identify THE EVENT (this pack, this card index) and never the moment
+ * GUARANTEES FIRST, then the filler. A pack is `cards` slots of which some are
+ * promised at a named face and the rest roll one seven-way distribution that
+ * already contains the gold editions — so a guarantee needs no special case in
+ * the roll, and no pack has a face it can never reach.
+ *
+ * `parts` identify THE EVENT (this pack, this slot index) and never the moment
  * of the query, which is the whole of invariant 4 in CLAUDE.md.
  */
 export function packCards(seed: number, pack: PendingPack): CardRef[] {
   const def = PACKS[pack.tier];
   const out: CardRef[] = [];
-  for (let i = 0; i < def.cards; i++) {
-    // A Star pack guarantees one gold, and it is the LAST card dealt — the
-    // reveal turns them worst to best, so the guarantee lands on the beat the
-    // screen is built around.
-    const forceGold = def.goldGuaranteed && i === def.cards - 1;
-    const rarity = rarityFromRoll(pack.tier, rand(seed, pack.id, 'rarity', i));
-    const wantsGold = forceGold
-      || (def.goldChance > 0 && rand(seed, pack.id, 'gold', i) < def.goldChance);
-    // A GUARANTEE IGNORES THE RARITY ROLL. Gold is an edition of the late
-    // rarities only, so asking for "gold at 3★" would find nothing and quietly
-    // hand back a plain card — which is how the Star pack's one promise gets
-    // broken. When it is guaranteed, the gold slots ARE the pool.
-    let pool = forceGold
-      ? slotsMatching(null, true)
-      : slotsMatching(rarity, wantsGold);
-    if (pool.length === 0) pool = slotsMatching(rarity, false);
-    if (pool.length === 0) {
-      // A tier whose weights name a rarity the season has no slot for. Walk
-      // down rather than deal nothing.
-      for (let r = rarity - 1; r >= 1 && pool.length === 0; r--) {
-        pool = slotsMatching(r as Rarity, false);
-      }
-    }
-    if (pool.length === 0) continue;
-    const pick = Math.floor(rand(seed, pack.id, 'slot', i) * pool.length) % pool.length;
-    out.push(pool[pick]);
+  const promised: FaceId[] = [];
+  for (const face of FACE_ORDER) {
+    for (let n = 0; n < (def.guarantees[face] ?? 0); n++) promised.push(face);
   }
-  // Worst first, best last.
+  for (let i = 0; i < def.cards; i++) {
+    // The promised slots are dealt first so the roll's `parts` stay stable if
+    // a guarantee is ever added or removed: a filler slot keeps its index.
+    const wanted = i < promised.length
+      ? promised[i]!
+      : faceFromRoll(pack.tier, rand(seed, pack.id, 'face', i));
+    const face = dealableFace(wanted);
+    if (face === null) continue;
+    const pool = slotsWearing(face);
+    const pick = Math.floor(rand(seed, pack.id, 'slot', i) * pool.length) % pool.length;
+    out.push(pool[pick]!);
+  }
+  // Worst first, best last — the reveal turns them in this order.
   return out.sort((a, b) => rankOf(a) - rankOf(b));
 }
 
-/**
- * How good a card is, for the order the reveal deals them in.
- *
- * GOLD OUTRANKS EVERY PLAIN CARD, whatever its rarity: a gold edition falls
- * only from the best packs, cannot be sent and no wildcard covers it (§4), so
- * a gold 4★ is a bigger moment than a plain 5★ — and it is what makes the
- * Star pack's guaranteed gold land on the last beat rather than the
- * second-to-last.
- */
 const rankOf = (ref: CardRef): number => {
   const card = cardAt(ref);
   return (card.gold === true ? 100 : 0) + card.rarity;
@@ -535,26 +539,30 @@ export function wildcardOffers(state: GameState): WildcardOffer[] {
 // ---------------------------------------------------------------- the store
 
 /**
- * THE PUBLISHED ODDS (§6). A tier's weights as percentages, only for the
- * rarities it can actually roll.
+ * THE PUBLISHED ODDS (§6): what one SLOT of this pack lands on, as percentages
+ * over the seven faces, guarantees and filler together.
  *
- * Weights are authored rather than percentages so a tier can be retuned
- * without rebalancing a column to 100 — but a player is owed the percentage,
- * so the conversion lives here, once, and the store prints what it returns.
+ * Weights are authored rather than percentages so a row can be retuned without
+ * rebalancing it to 100 — but a player is owed the percentage, and a pack whose
+ * first card is promised is not honestly described by its filler alone. So a
+ * guarantee counts as its whole slot and the filler shares the rest.
  */
-export function packOdds(tier: PackTier): Array<{ rarity: Rarity; percent: number }> {
-  const { weights } = PACKS[tier];
-  const total = RARITIES.reduce((n, r) => n + (weights[r - 1] ?? 0), 0);
-  if (total <= 0) return [];
-  return RARITIES
-    .filter((r) => (weights[r - 1] ?? 0) > 0)
-    .map((r) => ({ rarity: r, percent: Math.round(((weights[r - 1] ?? 0) / total) * 100) }));
+export function packOdds(tier: PackTier): Array<{ face: FaceId; percent: number }> {
+  const def = PACKS[tier];
+  const given = FACE_ORDER.reduce((n, f) => n + (def.guarantees[f] ?? 0), 0);
+  const rolled = Math.max(0, def.cards - given);
+  const total = def.weights.reduce((n, w) => n + Math.max(0, w), 0);
+  const share = (f: FaceId, i: number): number =>
+    (def.guarantees[f] ?? 0) + (total > 0 ? (rolled * Math.max(0, def.weights[i] ?? 0)) / total : 0);
+  return FACE_ORDER
+    .map((f, i) => ({ face: f, percent: (share(f, i) / def.cards) * 100 }))
+    .filter((row) => row.percent > 0);
 }
 
-/** Tiers the store sells, cheapest first. A tier with no price is not for
- *  sale — which is how Bronze and Silver stay the ruins' faucet. */
+/** Sobres the store sells, cheapest first. One with no price is not for sale —
+ *  which is how the free three stay the faucet and the chests the vault's. */
 export const packsForSale = (): PackTier[] =>
-  PACK_ORDER.filter((tier) => PACKS[tier].gemCost > 0);
+  SOBRE_ORDER.filter((tier) => PACKS[tier].gemCost > 0);
 
 export const packGemCost = (tier: PackTier): number => PACKS[tier].gemCost;
 
@@ -647,26 +655,56 @@ export function buyCardBundle(
 
 // --------------------------------------------------------------- the vault
 
-export type VaultTier = 'Gold' | 'Star';
+/** The three chests, cheapest first. A chest is a `PackTier` like any other —
+ *  what makes it a chest is that only the vault hands one out. */
+export type VaultTier = typeof CHEST_ORDER[number];
 
 export const vaultCost = (tier: VaultTier): number =>
-  tier === 'Gold' ? COLLECTION.vaultGoldStars : COLLECTION.vaultStarStars;
+  (COLLECTION.chestStars as Record<string, number>)[tier] ?? 0;
 
-/** The next threshold the header line points at — Gold until it is affordable
- *  twice over, then Star. */
-export const vaultNext = (state: GameState): VaultTier =>
-  state.collection.stars >= vaultCost('Star') ? 'Star' : 'Gold';
+/** The dearest chest the player can already afford, or the cheapest one if
+ *  they can afford none — which is the one the knob points at. */
+export const vaultNext = (state: GameState): VaultTier => {
+  const afford = CHEST_ORDER.filter((t) => state.collection.stars >= vaultCost(t));
+  return (afford[afford.length - 1] ?? CHEST_ORDER[0]) as VaultTier;
+};
 
 export type VaultResult = 'Opened' | 'NotEnoughStars';
 
-/** Spend stars on a pack. The vault is what makes a duplicate worth something
- *  to a player with nobody to send it to (§7). */
+/**
+ * Spend stars on a chest. The vault is what makes a duplicate worth something
+ * to a player with nobody to send it to (§7).
+ *
+ * A CHEST MUST COST MORE THAN ITS OWN CONTENTS RETURN as duplicates, or the
+ * vault pays for itself and the loop never ends. That is arithmetic rather
+ * than balance, so `tests/artifacts.test.ts` holds the line rather than a
+ * comment here.
+ */
 export function buyFromVault(state: GameState, tier: VaultTier): VaultResult {
   const cost = vaultCost(tier);
-  if (state.collection.stars < cost) return 'NotEnoughStars';
+  if (cost <= 0 || state.collection.stars < cost) return 'NotEnoughStars';
   state.collection.stars -= cost;
-  grantPack(state, tier === 'Gold' ? 'Gold' : 'Star', 'vault');
+  grantPack(state, tier, 'vault');
   return 'Opened';
+}
+
+/**
+ * TEN AT ONCE, and no discount. A completionist cashes the vault scores of
+ * times a season for a card or two each, and the problem is the screens rather
+ * than the chests — the ten-call made this argument first
+ * (Docs/features/10-heroes.md §6.4): buying in bulk buys TIME, not a better
+ * price. All or nothing, so nobody spends nine chests' worth and is told the
+ * tenth is short.
+ */
+export function buyFromVaultMany(
+  state: GameState, tier: VaultTier, count = 10,
+): { result: VaultResult; bought: number } {
+  const cost = vaultCost(tier);
+  if (cost <= 0 || state.collection.stars < cost * count) {
+    return { result: 'NotEnoughStars', bought: 0 };
+  }
+  for (let i = 0; i < count; i++) buyFromVault(state, tier);
+  return { result: 'Opened', bought: count };
 }
 
 // ---------------------------------------------------------------- the close

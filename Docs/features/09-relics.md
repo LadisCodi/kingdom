@@ -275,9 +275,11 @@ sold together for **money** rather than for Gems, on the store's own shelf
 | **A collector's case** | **$9.99** | 5 star packs · one 5★ wildcard | 9,000 |
 | **A collector's cabinet** | **$19.99** | 10 star packs · three 5★ wildcards | 19,500 |
 
-- **Every bundle is star packs**, so every pack in one carries §6's guarantee:
-  a gold edition in each. A bundle of Bronze packs would be the ruins' faucet
-  sold back at a price.
+- **Every bundle is a sobre the STORE sells**, never one the faucet drips — a
+  bundle of free packs would be the faucet sold back at a price. Since the pack
+  ladder was rebuilt they hold **Purple** packs, which guarantee a 5★ rather
+  than a gold edition; whether a bundle also carries a Golden is open
+  ([`../plans/collection-eight.md`](../plans/collection-eight.md) §3.1).
 - **A bundle grants no Gems**, on the Royal chest's precedent: it hands over
   the things, not the currency that buys them. The packs land **unopened**,
   like every pack that falls — ten bought together are ten to open in the

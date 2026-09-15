@@ -694,12 +694,12 @@ describe('the collection prize on screen', () => {
     const game = freshPresenter(state);
     // A pack whose cards will include the one missing slot, eventually.
     for (let i = 0; i < 200 && !game.state.collection.prizePaid; i++) {
-      grantPack(game.state, 'Star', 'dev');
+      grantPack(game.state, 'Purple', 'dev');
       game.doOpenPack();
       // The pack's own reveal is up first, every time.
       expect(game.gachaReveal).not.toBeNull();
       if (game.state.collection.prizePaid) {
-        expect(game.gachaReveal!.caption).toBe('Star pack');
+        expect(game.gachaReveal!.caption).toBe('Purple pack');
       }
       game.dismissGachaReveal();
     }

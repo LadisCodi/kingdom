@@ -93,6 +93,42 @@ function vaultKnob(game: Game): HTMLElement {
   return button;
 }
 
+/**
+ * THE VAULT'S SHELF. Three chests, what each costs in stars, and what it
+ * guarantees — plus a ten at once, because a player finishing a season cashes
+ * the vault scores of times for a card or two each and the problem is the
+ * screens rather than the chests.
+ */
+function vaultShelf(game: Game): HTMLElement {
+  const stars = game.vaultInfo().stars;
+  const rows = game.vaultShelf().map((row) => el('div', {
+    class: `col-chest${row.affordable ? ' is-ready' : ''}`,
+  },
+    el('div', { class: 'col-chest-head' },
+      el('span', { class: 'col-chest-name' }, row.tier.replace('Chest', ' chest')),
+      el('span', { class: 'col-chest-cost' },
+        iconEl('star', { size: 'sm' }), String(row.cost))),
+    el('div', { class: 'col-chest-promise' }, row.promise),
+    el('div', { class: 'col-chest-buttons' },
+      btn({
+        label: 'Open one',
+        kind: row.affordable ? 'primary' : 'secondary',
+        onClick: () => game.doBuyFromVault(row.tier),
+      }),
+      btn({
+        label: `Open ten — ${row.cost * 10}`,
+        kind: 'secondary',
+        onClick: () => game.doBuyFromVaultMany(row.tier),
+      })),
+  ));
+  return el('div', { class: 'col-vault-shelf' },
+    el('div', { class: 'col-vault-line' },
+      iconEl('star', { size: 'lg' }),
+      el('b', {}, String(stars)),
+      el('span', {}, 'from the duplicates you have opened')),
+    ...rows);
+}
+
 function albumGrid(game: Game): HTMLElement {
   const tiles = game.albumRows().map((row) => {
     const tile = el('button', {
@@ -307,6 +343,13 @@ export function renderCollectionSheet(game: Game): HTMLElement {
     return sheet(
       { title: ARTIFACTS[relic].name, onClose: () => game.dismiss(), bare: true, centred: true },
       relicCard(game, relic),
+    );
+  }
+
+  if (game.vaultOpen) {
+    return sheet(
+      { title: 'The vault', onClose: () => game.closeVault() },
+      vaultShelf(game),
     );
   }
 

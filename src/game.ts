@@ -12,7 +12,8 @@ import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  COLLECTION, PACKS, PACK_ORDER, type PackTier,
+  CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
+  type FaceId, type PackTier,
 } from './sim/data/definitions';
 import { formatDuration } from './ui/format';
 import type { IconName } from './ui/kit/icon';
@@ -39,6 +40,7 @@ import {
   bundleGemValue, bundleOf, bundlesForSale, cardCount,
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
+  buyFromVaultMany,
   wildcardCovers, wildcardOffers, wildcardsHeld,
   PRIZE_BANNER, SEASON_CARDS,
   type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
@@ -345,6 +347,8 @@ export class Game {
    * simply does not replay.
    */
   pendingPayouts: AlbumPayout[] = [];
+  /** The vault's shelf is open over the Collection. */
+  vaultOpen = false;
   /** The collection prize, waiting for the screen the pack reveal is using
    *  (§5). Transient like the payouts beside it. */
   private pendingPrize: CollectionPrize | null = null;
@@ -1289,15 +1293,49 @@ export class Game {
     this.notify();
   }
 
-  /** The vault knob. One press buys the tier the stars reach. */
+  /** The vault knob opens the shelf rather than buying: with three chests and
+   *  a ten-batch there is a choice to make, and a one-press knob cannot say
+   *  what it is about to spend. */
   openVault(): void {
-    const vault = this.vaultInfo();
-    if (!vault.affordable) {
-      this.toast(`${vault.cost} stars for a ${vault.next} pack — ${vault.stars} so far`);
-      this.notify();
-      return;
+    this.vaultOpen = true;
+    this.notify();
+  }
+
+  closeVault(): void {
+    this.vaultOpen = false;
+    this.notify();
+  }
+
+  /**
+   * TEN AT ONCE. A player finishing a season cashes the vault scores of times
+   * for a card or two each, and the problem is the screens rather than the
+   * chests — the ten-call made this argument first (§6.4 of `10-heroes.md`):
+   * buying in bulk buys TIME, not a better price.
+   */
+  doBuyFromVaultMany(tier: VaultTier, count = 10): void {
+    const many = buyFromVaultMany(this.state, tier, count);
+    if (many.result === 'Opened') {
+      playSfx('upgradeBought');
+      this.toast(`${many.bought} × ${tier} — open them in the Collection`);
+    } else {
+      this.toast(`${vaultCost(tier) * count} stars for ten — not yet`);
     }
-    this.doBuyFromVault(vault.next);
+    this.notify();
+  }
+
+  /** Every chest, what it costs and whether the purse reaches it — the vault
+   *  sheet's whole data. */
+  vaultShelf(): Array<{ tier: VaultTier; cost: number; cards: number;
+    promise: string; affordable: boolean; tenAffordable: boolean; }> {
+    const stars = this.state.collection.stars;
+    return CHEST_ORDER.map((tier) => ({
+      tier,
+      cost: vaultCost(tier),
+      cards: PACKS[tier].cards,
+      promise: packPromise(tier),
+      affordable: stars >= vaultCost(tier),
+      tenAffordable: stars >= vaultCost(tier) * 10,
+    }));
   }
 
   /**
@@ -1309,20 +1347,23 @@ export class Game {
    * kept where the money is.
    */
   packOffers(): Array<{
-    tier: PackTier; cost: number; cards: number; sprite: string;
-    promise: string; odds: string;
+    tier: PackTier; name: string; best: boolean; cost: number; cards: number;
+    sprite: string; promise: string; odds: string;
   }> {
     return packsForSale().map((tier) => {
       const def = PACKS[tier];
+      const forSale = packsForSale();
       return {
         tier,
+        name: packName(tier),
+        best: tier === forSale[forSale.length - 1],
         cost: packGemCost(tier),
         cards: def.cards,
         sprite: `pack_${tier.toLowerCase()}`,
-        promise: def.goldGuaranteed
-          ? `${def.cards} cards, one gold edition guaranteed`
-          : `${def.cards} cards, and a chance of a gold edition`,
-        odds: packOdds(tier).map((o) => `${o.rarity}★ ${o.percent}%`).join(' · '),
+        promise: packPromise(tier),
+        odds: packOdds(tier)
+          .map((o) => `${faceLabel(o.face)} ${o.percent.toFixed(o.percent < 1 ? 2 : 0)}%`)
+          .join(' · '),
       };
     });
   }
@@ -1366,10 +1407,7 @@ export class Game {
     if (bundle === null) return [];
     const out: string[] = [];
     if (bundle.packs > 0) {
-      const tier = bundle.tier.toLowerCase();
-      out.push(PACKS[bundle.tier].goldGuaranteed
-        ? `${bundle.packs} ${tier} packs — a gold edition guaranteed in each`
-        : `${bundle.packs} ${tier} packs`);
+      out.push(`${bundle.packs} ${bundle.tier.toLowerCase()} packs — ${packPromise(bundle.tier)}`);
     }
     if (bundle.wildcards > 0) {
       out.push(bundle.wildcards === 1
@@ -3108,6 +3146,7 @@ export class Game {
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
+    if (name !== 'collection') this.vaultOpen = false;
     if (name !== 'collection') {
       this.openRelicId = null;
       this.openAlbumId = null;
@@ -3867,6 +3906,44 @@ function prizePrizes(prize: CollectionPrize): GachaPrize[] {
     ? { kind: 'fragments', heroId: prize.hero, amount: prize.fragments }
     : { kind: 'hero', heroId: prize.hero });
   return out;
+}
+
+/** A face as a shelf prints it: `4★` or `4★ gold`. */
+const faceLabel = (face: FaceId): string => {
+  const { rarity, gold } = faceOf(face);
+  return `${rarity}★${gold ? ' gold' : ''}`;
+};
+
+/**
+ * WHAT A PACK PROMISES, in one line, generated from its guarantees.
+ *
+ * A pack's identity IS its guarantee, so the sentence is derived rather than
+ * authored: a row retuned on the sheet cannot leave a promise behind that the
+ * odds no longer keep.
+ */
+function packPromise(tier: PackTier): string {
+  const def = PACKS[tier];
+  const cards = `${def.cards} card${def.cards === 1 ? '' : 's'}`;
+  const given = FACE_ORDER
+    .filter((f) => (def.guarantees[f] ?? 0) > 0)
+    .map((f) => `${def.guarantees[f]}× ${faceLabel(f)}`);
+  if (given.length > 0) return `${cards}, ${given.join(' and ')} guaranteed`;
+  // A pack with no guarantee promises its POOL instead: the Golden one is a
+  // single card and every face it can deal is a gold edition, which is a
+  // stronger promise than any guarantee it could carry.
+  const pool = FACE_ORDER.filter((_, i) => (def.weights[i] ?? 0) > 0);
+  if (pool.length === 0) return cards;
+  return `${cards}, always ${pool.map(faceLabel).join(' or ')}`;
+}
+
+/** What a sobre is CALLED: the dearest face it promises, or the dearest it can
+ *  deal when it promises nothing. A pack's identity is what it is FOR. */
+function packName(tier: PackTier): string {
+  const def = PACKS[tier];
+  const promised = [...FACE_ORDER].reverse().find((f) => (def.guarantees[f] ?? 0) > 0);
+  const best = promised
+    ?? [...FACE_ORDER].reverse().find((f) => (def.weights[FACE_ORDER.indexOf(f)] ?? 0) > 0);
+  return `A ${best === undefined ? '' : faceLabel(best)} pack`;
 }
 
 /** The cards a pack dealt, worst first: the reveal's own order. */

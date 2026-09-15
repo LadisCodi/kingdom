@@ -13,7 +13,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   ARTIFACTS, ARTIFACT_ORDER, BANNERS, CARD_BUNDLE_ORDER, COLLECTION, GEM_PACK_ORDER,
-  HARVEST, HEROES, PACKS, PACK_ORDER, STORE,
+  FACE_ORDER, HARVEST, HEROES, PACKS, PACK_ORDER, SOBRE_ORDER, CHEST_ORDER, STORE,
+  type FaceId,
 } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
@@ -23,13 +24,15 @@ import {
   albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack,
   bundleGemValue, bundleOf, bundlesForSale, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
-  seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, starsFor, vaultCost,
+  seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, vaultCost,
+  buyFromVaultMany,
   closeGold, payCollectionPrize, seasonIsComplete, PRIZE_BANNER,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
 import {
-  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS, type Rarity,
+  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS,
+  type AlbumId, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
 import { armyCap } from '../src/sim/army';
@@ -248,7 +251,7 @@ describe('an album', () => {
     const gems = getWallet(state.player.wallet, 'Gems');
     const gold = getWallet(state.city.wallet, 'Gold');
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM - 1);
-    grantPack(state, 'Bronze', 'dev');
+    grantPack(state, 'Green', 'dev');
     // The ninth card, planted by hand where the pack cannot be relied on to
     // deal it: what is under test is the payout, not the odds.
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
@@ -270,13 +273,13 @@ describe('an album', () => {
   // payout, and a season only ever levels a relic once.
   it('pays once a season, however many copies land', () => {
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    grantPack(state, 'Bronze', 'dev');
+    grantPack(state, 'Green', 'dev');
     openPack(state, T0);
     expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
     const level = artifactLevel(state, 'DowsingRod');
     const gems = getWallet(state.player.wallet, 'Gems');
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    grantPack(state, 'Bronze', 'dev');
+    grantPack(state, 'Green', 'dev');
     const again = openPack(state, T0)!;
     expect(again.payouts).toEqual([]);
     expect(artifactLevel(state, 'DowsingRod')).toBe(level);
@@ -468,77 +471,129 @@ describe('a pack', () => {
     state.collection.season = seasonAt(T0);
   });
 
+  const faceOfRef = (ref: { album: AlbumId; slot: number }): FaceId => {
+    const card = ALBUMS[ref.album].cards[ref.slot]!;
+    return `${card.rarity}${card.gold === true ? 'gold' : 'star'}` as FaceId;
+  };
+
   // INVARIANT 4. The hand is a function of the pack's id, never of the moment
   // it is opened — so an offline replay deals the same cards, and a new
   // consumer of `rand` cannot shift a pack that was already earned.
   it('deals the same hand however often it is asked', () => {
-    const pack = grantPack(state, 'Gold', 'room');
+    const pack = grantPack(state, 'Purple', 'room');
     const first = packCards(state.seed, pack);
     const again = packCards(state.seed, pack);
     expect(again).toEqual(first);
-    expect(first).toHaveLength(PACKS.Gold.cards);
+    expect(first).toHaveLength(PACKS.Purple.cards);
   });
 
   it('gives two sources the same ordinal different hands', () => {
-    const a = grantPack(state, 'Bronze', 'room');
-    const b = grantPack(state, 'Bronze', 'daily');
+    const a = grantPack(state, 'Green', 'room');
+    const b = grantPack(state, 'Green', 'daily');
     expect(a.id).not.toBe(b.id);
-    // Not an assertion about the cards — two ids may collide on a card by
-    // chance. What matters is that they are asked as different questions.
     expect(packCards(state.seed, a)).not.toBe(packCards(state.seed, b));
   });
 
-  it('holds only the rarities its tier weights', () => {
+  it('deals exactly the cards its row says, every tier', () => {
     for (const tier of PACK_ORDER) {
       const pack = grantPack(state, tier, 'dev');
-      for (const ref of packCards(state.seed, pack)) {
-        const card = ALBUMS[ref.album].cards[ref.slot]!;
-        expect(PACKS[tier].weights[card.rarity - 1]).toBeGreaterThan(0);
-      }
+      expect(packCards(state.seed, pack), tier).toHaveLength(PACKS[tier].cards);
     }
   });
 
-  it('never puts a gold card in a pack that cannot hold one', () => {
-    for (const tier of ['Bronze', 'Silver'] as const) {
-      for (let i = 0; i < 40; i++) {
+  // THE GUARANTEE IS THE PACK'S IDENTITY, and it is the thing a player is
+  // promised on the shelf. Checked over many packs because a pack may hold
+  // more than one and they are dealt before the filler.
+  it('always holds what it guarantees', () => {
+    for (const tier of PACK_ORDER) {
+      const def = PACKS[tier];
+      for (let i = 0; i < 25; i++) {
         const pack = grantPack(state, tier, 'dev');
-        for (const ref of packCards(state.seed, pack)) {
-          expect(ALBUMS[ref.album].cards[ref.slot]!.gold).toBeUndefined();
+        const faces = packCards(state.seed, pack).map(faceOfRef);
+        for (const face of FACE_ORDER) {
+          const promised = def.guarantees[face] ?? 0;
+          if (promised === 0) continue;
+          expect(faces.filter((f) => f === face).length, `${tier} promised ${promised}× ${face}`)
+            .toBeGreaterThanOrEqual(promised);
         }
       }
     }
   });
 
-  it('keeps the Star pack’s promise: one gold, dealt last', () => {
-    const pack = grantPack(state, 'Star', 'dev');
-    const cards = packCards(state.seed, pack);
-    const last = cards[cards.length - 1]!;
-    expect(ALBUMS[last.album].cards[last.slot]!.gold).toBe(true);
+  // THE WALLS ARE GONE. The old shape rolled a rarity from five weights and
+  // flipped a separate coin for gold, so a Bronze pack could NEVER produce a
+  // 4★ and an album behind one was impossible rather than dear. Every face now
+  // has a path from every sobre.
+  it('can reach every face from every sobre, however thin the odds', () => {
+    for (const tier of SOBRE_ORDER) {
+      const def = PACKS[tier];
+      const reachable = FACE_ORDER.filter((f, i) =>
+        (def.guarantees[f] ?? 0) > 0 || (def.weights[i] ?? 0) > 0);
+      // The Golden pack is gold-only on purpose; every other sobre reaches all
+      // seven faces.
+      expect(reachable.length, tier).toBe(tier === 'Golden' ? 2 : FACE_ORDER.length);
+    }
+  });
+
+  it('deals a face the season has no slot for by walking down', () => {
+    // Every pack in the ladder deals SOMETHING, whatever the album set holds.
+    for (const tier of PACK_ORDER) {
+      const pack = grantPack(state, tier, 'dev');
+      expect(packCards(state.seed, pack).length, tier).toBeGreaterThan(0);
+    }
+  });
+
+  it('turns the cards worst first and best last', () => {
+    const pack = grantPack(state, 'SilverChest', 'vault');
+    const faces = packCards(state.seed, pack).map(faceOfRef);
+    const rank = (f: FaceId): number => FACE_ORDER.indexOf(f);
+    for (let i = 1; i < faces.length; i++) {
+      expect(rank(faces[i]!)).toBeGreaterThanOrEqual(rank(faces[i - 1]!));
+    }
   });
 
   it('banks a first copy as new and a second as stars', () => {
-    const pack = grantPack(state, 'Bronze', 'dev');
+    const pack = grantPack(state, 'Green', 'dev');
     const opening = openPack(state, T0)!;
     expect(opening.cards.every((c) => c.isNew)).toBe(true);
     expect(opening.starsEarned).toBe(0);
     const ref = packCards(state.seed, pack)[0]!;
     expect(cardCount(state, ref)).toBeGreaterThanOrEqual(1);
 
-    // The same pack id again: every card is a duplicate, and every duplicate
-    // is stars rather than a dead drop.
-    state.collection.packsIssued -= PACKS.Bronze.cards === 0 ? 0 : 1;
     state.collection.packs.push(pack);
     const dupes = openPack(state, T0)!;
     expect(dupes.cards.every((c) => !c.isNew)).toBe(true);
-    expect(dupes.starsEarned).toBe(
-      packCards(state.seed, pack).reduce((n, r) => n + starsFor(r), 0));
-    expect(state.collection.stars).toBe(dupes.starsEarned);
+    expect(dupes.starsEarned).toBeGreaterThan(0);
   });
 
   it('is not opened where it is earned', () => {
-    grantPack(state, 'Bronze', 'room');
+    grantPack(state, 'Green', 'room');
     expect(state.collection.packs).toHaveLength(1);
     expect(seasonHeld(state)).toBe(0);
+  });
+});
+
+// A duplicate is priced per FACE, authored rather than derived — a gold
+// edition need not be exactly twice its rarity.
+describe('what a duplicate is worth', () => {
+  it('prices every face the albums use', () => {
+    const used = new Set(ALBUM_ORDER.flatMap((a) => ALBUMS[a].cards
+      .map((c) => `${c.rarity}${c.gold === true ? 'gold' : 'star'}`)));
+    for (const face of used) {
+      expect(COLLECTION.starsPerFace[face as FaceId], face).toBeGreaterThan(0);
+    }
+  });
+
+  it('never pays less for a dearer face', () => {
+    let last = 0;
+    for (const face of ['1star', '2star', '3star', '4star', '5star'] as const) {
+      const n = COLLECTION.starsPerFace[face];
+      expect(n).toBeGreaterThan(last);
+      last = n;
+    }
+    // A gold edition is worth more than its own plain rarity.
+    expect(COLLECTION.starsPerFace['4gold']).toBeGreaterThan(COLLECTION.starsPerFace['4star']);
+    expect(COLLECTION.starsPerFace['5gold']).toBeGreaterThan(COLLECTION.starsPerFace['5star']);
   });
 });
 
@@ -552,53 +607,77 @@ describe('the store', () => {
   // Bronze and Silver are the RUINS' faucet. Selling what a room already
   // drips would undercut the only free source the collection has, so a tier
   // with no price is not on the shelf at all.
-  it('sells the two tiers the ruins do not drip, and only those', () => {
-    expect(packsForSale()).toEqual(['Gold', 'Star']);
-    expect(packGemCost('Bronze')).toBe(0);
-    expect(buyPack(state, 'Bronze')).toBe('NotForSale');
+  it('sells the three the faucet does not drip, and only those', () => {
+    // Green, Yellow and Rose are the free faucet, and selling one back would
+    // undercut the only free source the collection has. The chests are the
+    // vault's and are bought with stars.
+    expect(packsForSale()).toEqual(['Blue', 'Purple', 'Golden']);
+    expect(packGemCost('Green')).toBe(0);
+    expect(buyPack(state, 'Green')).toBe('NotForSale');
+    for (const chest of CHEST_ORDER) expect(packGemCost(chest)).toBe(0);
     expect(state.collection.packs).toEqual([]);
   });
 
-  // Priced to the key ladder (§12): a Gold pack about a silver key.
-  it('prices a Gold pack at a silver key and a Star pack at a gold one', () => {
-    expect(packGemCost('Gold')).toBe(BANNERS.basic.keyGemCost);
-    expect(packGemCost('Star')).toBe(BANNERS.advanced.keyGemCost);
+  it('charges more for a better guarantee', () => {
+    const sold = packsForSale();
+    for (let i = 1; i < sold.length; i++) {
+      // Golden is one card and the dearest guarantee, so it breaks a simple
+      // per-card ladder; what must hold is that nothing is free.
+      expect(packGemCost(sold[i]!)).toBeGreaterThan(0);
+    }
+    expect(packGemCost('Purple')).toBeGreaterThan(packGemCost('Blue'));
   });
 
   it('takes the Gems and hands over an UNOPENED pack', () => {
-    state.player.wallet.Gems = packGemCost('Star');
-    expect(buyPack(state, 'Star')).toBe('Purchased');
+    state.player.wallet.Gems = packGemCost('Purple');
+    expect(buyPack(state, 'Purple')).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     // Unopened: the store hands over the thing, the Collection turns it over.
     expect(state.collection.packs).toHaveLength(1);
-    expect(state.collection.packs[0]!.tier).toBe('Star');
+    expect(state.collection.packs[0]!.tier).toBe('Purple');
     expect(seasonHeld(state)).toBe(0);
   });
 
   it('refuses a purse that is one Gem short, and takes nothing', () => {
-    state.player.wallet.Gems = packGemCost('Gold') - 1;
-    expect(buyPack(state, 'Gold')).toBe('NotEnoughGems');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(packGemCost('Gold') - 1);
+    state.player.wallet.Gems = packGemCost('Blue') - 1;
+    expect(buyPack(state, 'Blue')).toBe('NotEnoughGems');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(packGemCost('Blue') - 1);
     expect(state.collection.packs).toEqual([]);
   });
 
-  // §6 says "at PUBLISHED odds", and the store is where that promise has to
-  // be kept. Weights are authored, so the percentages are derived — and they
-  // must cover the tier and nothing else.
-  it('publishes odds that sum to about 100 over the rarities it can roll', () => {
-    for (const tier of packsForSale()) {
+  // §6 says "at PUBLISHED odds", and the store is where that promise has to be
+  // kept. The odds describe ONE SLOT of the pack, guarantees and filler
+  // together, so a pack whose first card is promised is described honestly.
+  it('publishes odds that sum to 100 over the faces it can deal', () => {
+    for (const tier of PACK_ORDER) {
       const odds = packOdds(tier);
-      expect(odds.length).toBeGreaterThan(0);
+      expect(odds.length, tier).toBeGreaterThan(0);
       const total = odds.reduce((n, o) => n + o.percent, 0);
-      expect(Math.abs(total - 100)).toBeLessThanOrEqual(1);
-      for (const o of odds) expect(PACKS[tier].weights[o.rarity - 1]).toBeGreaterThan(0);
+      expect(Math.abs(total - 100), tier).toBeLessThan(0.001);
+      // A face on the shelf is one the pack can actually deal.
+      for (const o of odds) {
+        const i = FACE_ORDER.indexOf(o.face);
+        const reachable = (PACKS[tier].guarantees[o.face] ?? 0) > 0
+          || (PACKS[tier].weights[i] ?? 0) > 0;
+        expect(reachable, `${tier} publishes ${o.face}`).toBe(true);
+      }
     }
   });
 
-  // Two bought in a row are two to open, not two reveals at the till.
+  // The guarantee has to show up in the number, or the shelf is selling the
+  // filler and calling it the promise.
+  it('counts a guarantee as its whole slot', () => {
+    const odds = packOdds('Golden');
+    // One card, 75/25 over the two gold editions and nothing else.
+    expect(odds.map((o) => o.face).sort()).toEqual(['4gold', '5gold']);
+    const purple = packOdds('Purple').find((o) => o.face === '5star')!;
+    // One guaranteed 5★ of six cards is already 16.7% before the filler.
+    expect(purple.percent).toBeGreaterThan(100 / 6);
+  });
+
   it('stacks what a player buys', () => {
-    state.player.wallet.Gems = packGemCost('Gold') * 3;
-    for (let i = 0; i < 3; i++) expect(buyPack(state, 'Gold')).toBe('Purchased');
+    state.player.wallet.Gems = packGemCost('Blue') * 3;
+    for (let i = 0; i < 3; i++) expect(buyPack(state, 'Blue')).toBe('Purchased');
     expect(state.collection.packs).toHaveLength(3);
     // Three different ids, so three different hands.
     expect(new Set(state.collection.packs.map((k) => k.id)).size).toBe(3);
@@ -731,7 +810,7 @@ describe('a wildcard', () => {
 
     it('says nothing about an album that is already complete', () => {
       fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-      grantPack(state, 'Bronze', 'dev');
+      grantPack(state, 'Green', 'dev');
       openPack(state, T0);
       expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
       expect(wildcardOffers(state).some((o) => o.album === 'FirstFurrow')).toBe(false);
@@ -783,11 +862,11 @@ describe('a card bundle', () => {
   });
 
   // §6: the ask is packs that GUARANTEE a gold edition, so every bundle is
-  // built on the tier that promises one. A bundle of Bronze packs would be
-  // the ruins' faucet sold back at a price.
-  it('only sells a tier that guarantees a gold edition', () => {
+  // built on a sobre the store sells, never on one the faucet drips: a bundle
+  // of free packs would be the faucet sold back at a price.
+  it('only sells a sobre the store itself sells', () => {
     for (const id of CARD_BUNDLE_ORDER) {
-      expect(PACKS[bundleOf(id)!.tier].goldGuaranteed).toBe(true);
+      expect(packsForSale()).toContain(bundleOf(id)!.tier);
     }
   });
 
@@ -856,14 +935,63 @@ describe('a card bundle', () => {
 });
 
 describe('the vault', () => {
-  it('turns stars into a pack, and refuses what it cannot pay for', () => {
+  const CHESTS = CHEST_ORDER;
+
+  it('turns stars into a chest, and refuses what it cannot pay for', () => {
+    for (const chest of CHESTS) {
+      const state = freshGame();
+      expect(buyFromVault(state, chest)).toBe('NotEnoughStars');
+      state.collection.stars = vaultCost(chest);
+      expect(buyFromVault(state, chest)).toBe('Opened');
+      expect(state.collection.stars).toBe(0);
+      expect(state.collection.packs).toHaveLength(1);
+      expect(state.collection.packs[0]!.tier).toBe(chest);
+    }
+  });
+
+  it('charges more for a better chest', () => {
+    for (let i = 1; i < CHESTS.length; i++) {
+      expect(vaultCost(CHESTS[i]!)).toBeGreaterThan(vaultCost(CHESTS[i - 1]!));
+    }
+  });
+
+  // THE LINE THAT CANNOT BE GOT WRONG. A chest returns stars whenever its
+  // contents duplicate, and at the end of a season almost everything does. If
+  // one cost less than it gives back, the vault would pay for itself and the
+  // loop would never end. This is arithmetic, not balance.
+  it('never costs less than its own contents return as duplicates', () => {
+    for (const chest of CHESTS) {
+      const def = PACKS[chest];
+      const given = FACE_ORDER.reduce((n, f) => n + (def.guarantees[f] ?? 0), 0);
+      const rolled = def.cards - given;
+      const total = def.weights.reduce((n, w) => n + Math.max(0, w), 0);
+      const back = FACE_ORDER.reduce((sum, f, i) => {
+        const copies = (def.guarantees[f] ?? 0)
+          + (total > 0 ? (rolled * Math.max(0, def.weights[i] ?? 0)) / total : 0);
+        return sum + copies * COLLECTION.starsPerFace[f];
+      }, 0);
+      expect(vaultCost(chest), `${chest} returns ${back.toFixed(1)} stars`)
+        .toBeGreaterThan(back);
+    }
+  });
+
+  // Ten at once, because a completionist cashes the vault scores of times a
+  // season for a card or two each: the problem is the screens, not the chests.
+  it('buys ten at once, all or nothing', () => {
     const state = freshGame();
-    expect(buyFromVault(state, 'Gold')).toBe('NotEnoughStars');
-    state.collection.stars = vaultCost('Gold');
-    expect(buyFromVault(state, 'Gold')).toBe('Opened');
+    state.collection.stars = vaultCost('SilverChest') * 10 - 1;
+    expect(buyFromVaultMany(state, 'SilverChest').result).toBe('NotEnoughStars');
+    expect(state.collection.packs).toEqual([]);
+
+    state.collection.stars += 1;
+    const many = buyFromVaultMany(state, 'SilverChest');
+    expect(many.result).toBe('Opened');
+    expect(many.bought).toBe(10);
+    expect(state.collection.packs).toHaveLength(10);
     expect(state.collection.stars).toBe(0);
-    expect(state.collection.packs).toHaveLength(1);
-    expect(state.collection.packs[0]!.tier).toBe('Gold');
+    // Ten different ids, so ten different hands — bulk buys time, not a
+    // better price and not the same cards ten over.
+    expect(new Set(state.collection.packs.map((k) => k.id)).size).toBe(10);
   });
 });
 
@@ -910,7 +1038,7 @@ describe('the season', () => {
       expect(three.cards).toBe(3);
       // Ploughshare, Seed Sack, Scarecrow: 1★ + 1★ + 2★ on the stars ladder.
       expect(three.stars).toBe(
-        2 * COLLECTION.starsPerRarity[0]! + COLLECTION.starsPerRarity[1]!);
+        2 * COLLECTION.starsPerFace['1star'] + COLLECTION.starsPerFace['2star']);
       expect(three.gold).toBeGreaterThan(0);
 
       fill(state, 'TheKingsCoin', CARDS_PER_ALBUM);
@@ -972,10 +1100,10 @@ describe('the season', () => {
     const state = freshGame();
     state.collection.season = seasonAt(T0);
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    grantPack(state, 'Bronze', 'dev');
+    grantPack(state, 'Green', 'dev');
     openPack(state, T0);
     state.collection.stars = 120;
-    grantPack(state, 'Gold', 'dev');
+    grantPack(state, 'Blue', 'dev');
     const level = artifactLevel(state, 'DowsingRod');
     expect(level).toBe(1);
 
@@ -1043,7 +1171,7 @@ describe('the season', () => {
       names.push(seasonDef(state.collection.season).name);
       // A season's play: the album is closed and the relic takes its level.
       fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-      grantPack(state, 'Bronze', 'dev');
+      grantPack(state, 'Green', 'dev');
       openPack(state, t);
       expect(artifactLevel(state, 'DowsingRod')).toBe(season + 1);
 

@@ -430,7 +430,7 @@ export function roomReward(
 ): { wallet: Wallet; heroXp: number; pack: PackTier } {
   const def = depthDef(ruinId, depth);
   const tier = RUINS[ruinId].tier;
-  if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Bronze' };
+  if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Green' };
   const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
   // THE MATERIAL HALF ONLY (the Delver's Lantern). A room's Stardust already
   // carries the Wanderer's Compass and its Hero XP a legendary's boon, so a
@@ -447,11 +447,12 @@ export function roomReward(
         techValue(state, 'stardustYield', 2 * scale))),
     },
     heroXp: Math.round(10 * scale),
-    // RUINS ARE THE FREE FAUCET (Docs/features/09-relics.md §6): an ordinary
-    // room pays a Bronze pack beside the line above, a boss a Silver one. It
-    // replaced the relic Fragments this room used to drip, which had nothing
-    // left to buy.
-    pack: isBossRoom(ruinId, depth, room) ? 'Silver' : 'Bronze',
+    // THE AUTHORED RUINS ARE A ONE-OFF FAUCET (Docs/proposals/collection-packs.md
+    // §2.1): fifteen depths cleared once is fifteen packs in the lifetime of an
+    // account, so they are a welcome rather than a supply. The season's 200
+    // free packs come from the REPEATABLE dungeon, which is unbuilt — OQ-102.
+    // A room pays the cheapest sobre, a boss the best of the free three.
+    pack: isBossRoom(ruinId, depth, room) ? 'Rose' : 'Green',
   };
 }
 
@@ -542,7 +543,7 @@ export function enterRoom(
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
     power: roomPower(ruinId, at.depth, at.room), log: null, supplies: {},
     losses: [], wounded: [],
-    wallet: {}, heroXp: 0, pack: 'Bronze', depthCompleted: false, bottomed: false,
+    wallet: {}, heroXp: 0, pack: 'Green', depthCompleted: false, bottomed: false,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) return { ...empty, result: block };
@@ -596,7 +597,7 @@ export function enterRoom(
     // here is the once-per-ruin lump, plus a Star pack for the conquest.
     state.ruinsCleared[ruinId] = true;
     bottomed = true;
-    grantPack(state, 'Star', 'boss');
+    grantPack(state, 'Purple', 'boss');
     // The recurring Gem faucet the design needs: one per ruin, once. Taking
     // a ruin to its bottom is the conquest, and it pays in the two currencies
     // the long game runs on.
