@@ -28,19 +28,32 @@ import type { PackTier } from '../sim/data/definitions';
 import { el, formatCount } from './format';
 import { currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
+import { spriteUrl } from '../render/sprites';
 
-/** A reward as icon-and-number chips, in wallet order, with the pack last —
- *  it is the thing the player is collecting toward rather than spending, the
- *  order `roomPrizes` already keeps. */
+/**
+ * A reward as icon-and-number chips, in wallet order, with the pack last —
+ * it is the thing the player is collecting toward rather than spending, the
+ * order `roomPrizes` already keeps.
+ *
+ * THE PACK IS ITS OWN SPRITE AND CARRIES NO LABEL. The nine pouches were drawn
+ * to be told apart by colour (`pack_green.png` … `pack_golden.png`, the same
+ * art the reveal deals), so spelling "Blue" beside a generic pack glyph both
+ * says it twice and costs a cell most of its width — on a ~180px cell a third
+ * chip of text is what pushed the row to two lines and clipped it.
+ */
 function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
   const chips = (Object.entries(reward) as Array<[CurrencyId, number]>).map(([c, n]) =>
     el('span', { class: 'pss-prize' },
       currencyIcon(c, { size: 'sm' }),
       el('b', {}, formatCount(n))));
   if (pack !== null) {
-    chips.push(el('span', { class: `pss-prize is-pack is-${pack.toLowerCase()}` },
-      iconEl('pack', { size: 'sm' }),
-      el('b', {}, pack)));
+    const url = spriteUrl(`pack_${pack.toLowerCase()}`);
+    chips.push(el('span', { class: 'pss-prize is-pack', title: `${pack} pack` },
+      // The atlas glyph is the fallback, so a tier whose art has not landed
+      // still draws something rather than a gap (`tests/icons.test.ts`).
+      url === null
+        ? iconEl('pack', { size: 'sm' })
+        : el('img', { class: 'pss-pack', src: url, alt: `${pack} pack` })));
   }
   return chips;
 }
@@ -161,6 +174,12 @@ export function renderPassSheet(game: Game): HTMLElement {
       cell('paid', r.level, r.paid, grand));
   });
 
+  // TWO PANES, EACH SCROLLING INSIDE ITSELF, and the sheet itself does not
+  // scroll at all. The board and the ladder are read AGAINST each other — the
+  // whole point of the screen is that the work on top is what moves the bar
+  // underneath — so a single scroller that hides one to show the other breaks
+  // the only relationship the screen exists to draw. The ladder is ~40 rows
+  // and the board up to eight; neither can be allowed to push the other off.
   const body = el('div', { class: 'pss' },
     el('div', { class: 'pss-clock' },
       iconEl('hourglass', { size: 'sm' }),
@@ -168,8 +187,21 @@ export function renderPassSheet(game: Game): HTMLElement {
       el('span', { class: 'pss-of' }, `Level ${pass.level} of ${pass.length}`)),
     bar,
     board,
-    heads,
-    el('div', { class: 'pss-ladder' }, ...ladder));
+    // The heads are OUTSIDE the ladder's scroller, so a prize is never read
+    // against the wrong column — the daily sheet pins them for the same
+    // reason, with `position: sticky` because there it has no pane to sit in.
+    el('div', { class: 'pss-rungs' },
+      heads,
+      el('div', { class: 'pss-ladder', 'data-keep-scroll': 'pass-ladder' }, ...ladder)));
 
-  return sheet({ title: 'Sowing Season', onClose: close }, body);
+  // TALL, and then PANED.
+  //
+  // `tall` alone is not enough: a tall sheet is still `height: auto` capped at
+  // the frame, so it is sized by its content — and a pane asking for a SHARE
+  // of its parent would resolve that share against nothing and collapse to
+  // zero. `is-panes` gives the sheet a definite height, which is the thing the
+  // two panes below divide.
+  const surface = sheet({ title: 'Sowing Season', onClose: close, tall: true }, body);
+  surface.classList.add('is-panes');
+  return surface;
 }

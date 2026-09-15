@@ -13,7 +13,38 @@
  * cell in the mockup and `frame_plank_wide.png` the head, so the screen is
  * nine-sliced out of what ships rather than out of a sheet drawn for it. */
 
-.pss { display: flex; flex-direction: column; gap: 10px; }
+/* A DEFINITE HEIGHT, and the whole reason this class exists.
+   `.k-sheet.is-tall` is `height: auto` capped at the frame — it takes what its
+   content needs and no more — so a pane asking for a SHARE of it would resolve
+   that share against nothing and collapse to zero. This screen is not a drawer
+   over a map the player is still reading; it is a board and a ladder that have
+   to be read against each other, so it takes the box and divides it.
+
+   IT DROPS `is-tall`'S 96px STRIP OF SKY, and that is the only house rule this
+   screen bends. `#overlay` already pads itself by the header and the nav, so
+   100% lands exactly between them and hides nothing; the strip is an EXTRA
+   band of map, and every pixel of it comes straight out of the two panes. On a
+   phone frame the difference is a whole row in each. */
+.k-sheet.is-tall.is-panes { height: 100%; max-height: 100%; }
+/* The sheet's own scroller is off: nothing here may scroll but the two panes. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body { overflow-y: hidden; }
+
+/* THE SHEET DOES NOT SCROLL. It is tall, so it has a height; this fills it,
+   and the two panes below split what is left after the clock and the bar.
+   `flex: 1 1 0` rather than the `1 0 auto` a tall sheet gives its children by
+   default: this one has to be allowed to SHRINK to the frame, or the panes
+   inside it would size against their content and push the ladder off. */
+.k-sheet.is-tall > .k-panel > .k-sheet-body > .pss { flex: 1 1 0; }
+.pss {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+/* The clock and the level bar are the header: they never scroll and never
+   give up height, because they are what the two panes are measured against. */
+.pss-clock,
+.pss-level { flex: none; }
 .pss-note {
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -23,23 +54,24 @@
 }
 
 /* ---- the clock. One per screen, the daily chest's rule: the season really
-   does end, and it is a fact rather than a threat, so it sits in ink. */
+   does end, and it is a fact rather than a threat, so it sits in ink.
+
+   A THIN LINE, not the framed parchment strip the chest uses. There it is the
+   only thing above the ladder and can afford the chrome; here it sits above
+   two panes that are both short of rows, and a 40px slab of decoration is a
+   row taken off one of them. */
 .pss-clock {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 40px;
-  padding: 4px 12px;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
-  background: var(--parchment);
-  font-size: var(--text-body);
+  gap: 8px;
+  padding: 0 4px;
+  font-size: var(--text-helper);
   font-weight: var(--weight-strong);
-  color: var(--ink);
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
-.pss-clock > .icon { --icon-size: 24px; }
-.pss-of { margin-left: auto; color: var(--ink); }
+.pss-clock > .icon { --icon-size: 16px; }
+.pss-of { margin-left: auto; }
 
 /* ---- the level bar. Where you are, the distance, and where you are going. */
 .pss-level { display: flex; align-items: center; gap: 8px; }
@@ -109,6 +141,16 @@
 
 /* ---- the board */
 
+/* THE TWO PANES. An EQUAL share, and the argument for equal is that the two
+   are read against each other: the work on top is what moves the bar
+   underneath, so neither is the subordinate of the other. The ladder is ~40
+   rows to the board's eight, but the ladder is SCANNED and the board is ACTED
+   ON, which cancels the row count out.
+   The phone frame fits about three rows apiece, and a row cut by each pane's
+   bottom edge is what says both lists run on. */
+.pss-board { flex: 1 1 0; min-height: 0; }
+.pss-rungs { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+
 .pss-board {
   display: flex;
   flex-direction: column;
@@ -126,15 +168,19 @@
   color: var(--ink);
   text-align: center;
 }
-/* Six rows fit a phone; the rest scrolls, and the cut row at the bottom is
-   what says the list is longer — the mockup's own trick. */
+/* The board's own scroller. The cut row at its bottom edge is what says the
+   list is longer than the pane — the mockup's own trick. */
 .pss-tasks {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  max-height: 320px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
+.pss-board-head,
+.pss-board > .pss-note { flex: none; }
 .pss-empty {
   padding: 18px 8px;
   text-align: center;
@@ -147,8 +193,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 52px;
-  padding: 5px 6px;
+  min-height: 46px;
+  padding: 4px 6px;
   border-radius: var(--radius-sm);
   border: 2px solid rgba(92, 58, 30, 0.45);
   background: var(--parchment-shade);
@@ -163,12 +209,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
-  border: 12px solid transparent;
-  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 11px stretch;
+  width: 40px;
+  height: 40px;
+  border: 10px solid transparent;
+  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 10px stretch;
 }
-.pss-task-icon > .icon { --icon-size: 30px; }
+.pss-task-icon > .icon { --icon-size: 26px; }
 .pss-task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .pss-task-goal {
   font-size: var(--text-body);
@@ -270,13 +316,10 @@
   gap: 6px;
   align-items: stretch;
 }
-.pss-heads {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding-bottom: 4px;
-  background: var(--parchment);
-}
+/* Pinned by its PANE rather than by `position: sticky` — the heads sit
+   outside the ladder's scroller, so a prize can never be read against the
+   wrong column however far down the player is. */
+.pss-heads { flex: none; }
 .pss-head {
   display: flex;
   align-items: center;
@@ -314,8 +357,17 @@
 }
 .pss-price { font-variant-numeric: tabular-nums; }
 
-.pss-ladder { display: flex; flex-direction: column; gap: 4px; }
-.pss-row { min-height: 44px; }
+/* The ladder's own scroller, inside its pane. */
+.pss-ladder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pss-row { min-height: 40px; }
 
 .pss-cell {
   position: relative;
@@ -324,8 +376,8 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 8px;
-  min-height: 48px;
-  padding: 5px 30px 5px 8px;
+  min-height: 44px;
+  padding: 4px 28px 4px 8px;
   border-radius: var(--radius-sm);
   border: 2px solid rgba(92, 58, 30, 0.55);
   background: var(--parchment-shade);
@@ -386,7 +438,9 @@ button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
 
 .pss-prize { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .pss-prize > .icon { --icon-size: 20px; }
-.pss-prize.is-pack b { font-size: var(--text-helper); }
+/* The pouch draws bigger than a coin because its COLOUR is the whole label:
+   it is the only chip on the ladder with nothing written beside it. */
+.pss-pack { width: 26px; height: 26px; object-fit: contain; display: block; }
 
 /* The level, between the columns: it belongs to the row, not to either track.
    It lights once the row has been reached, which is what draws the line
