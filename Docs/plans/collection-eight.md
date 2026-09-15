@@ -8,14 +8,20 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: steps 1–5 and 7 done 2026-09-15.** Save version 50. Only **step 6**
-> is left, and it is gated on **OQ-98**. With step 5 the
-> packs and the cycles proposals have fully landed and are folded into
-> [`../features/09-relics.md`](../features/09-relics.md); only
-> `relic-effects.md` still has a step outstanding.
+> **Status: ALL SEVEN STEPS DONE, 2026-09-15.** Save version 57. All three
+> proposals have landed and are folded into
+> [`../features/09-relics.md`](../features/09-relics.md).
 >
-> **OQ-98 closed on 2026-09-15: the actives stay on the relics** and are built
-> out. Step 6 is therefore live, not void, and it is the only step left.
+> **Two of the eight abilities are not built, and that is the plan rather than
+> a shortfall**: The Call and The Levy are cast on the world map, which does
+> not exist ([`../features/19-world-map.md`](../features/19-world-map.md)).
+> They land with it. Their relics say so on their own cards, in muted ink with
+> the reason — §2's rule, which is the one thing about them that could not
+> wait.
+>
+> **What the collection still needs is not on this page.** It is complete and
+> it does not yet play: 165 of the free season's 200 packs come from the
+> repeatable dungeon, which is somebody else's programme — **OQ-102** (§8).
 
 ## 0. How the steps are cut
 
@@ -42,7 +48,7 @@
 | ~~**3**~~ | ~~The packs, the chests and the stars~~ **done** | — | **M** |
 | ~~**4**~~ | ~~Eight albums, and the pairing rotates~~ **done** | 2, 3 | **M** |
 | ~~**5**~~ | ~~The album cycle~~ **done** | 4 | **M** |
-| **6** | Zones, cooldowns and the actives | ~~OQ-98~~ **closed**, 2 | **L** |
+| ~~**6**~~ | ~~Zones, cooldowns and the actives~~ **done** (six of eight abilities; two wait on the world map) | ~~OQ-98~~ **closed**, 2 | **L** |
 | ~~**7**~~ | ~~The art~~ **done** | — (ran alongside) | **M** |
 
 - **1 and 3 are independent** and can go in either order or at once.
@@ -291,6 +297,38 @@ active better without owning any of them.
   cover before the tap is spent) and the three-state chip on the relic card.
 - **Save** — new state and a bump.
 - **Two of the eight actives wait on the world map**, and land with it.
+
+### 6.1 How it landed
+
+- **A zone is a MODIFIER WITH A CENTRE**, not the `sim/zones.ts` this planned.
+  The modifier stack already expired, pruned, saved and folded in a defined
+  order; the only thing it could not say was WHERE. So its expiry is still
+  `expiresAt`, which is already a `consider()` in `nextBoundary` — invariant 1
+  holds without a line of new boundary code.
+- **`resolve()` is blind to zones and `resolveAt()` is not.** That asymmetry is
+  the safety: a Foreman's Sigil leaking into the cell-blind read would speed up
+  every crew in the kingdom.
+- **The cooldown is deliberately NOT a boundary.** It gates a COMMAND; nothing
+  accrues differently across it, unlike a zone's expiry.
+- **The auto-tap run lands whole, at the cast.** Its cells, budget and rate are
+  fixed the moment the spell is paid for, so ticking it would produce the same
+  answer more slowly — and one-call replay would have to be argued rather than
+  being true by construction.
+- **Three abilities changed SUBJECT**, because a relic is one idea at two
+  speeds and three of them were two ideas. Divination paid a cell's fog while
+  the Rod's passive was recovery; Beckon called a resource back while the
+  Compass's passive was Stardust; Bloom cleared exhaustion, which is the Seal's
+  own passive said twice and worse.
+- **An ability may be counted in EVENTS.** Lamplight is rooms, not minutes, and
+  has no clock at all — which meant a cast must not stamp a cooldown, or the
+  relic would come back READY with charges in hand.
+- **A zone had to be visible.** §11.6: a tint on every covered cell, a wheel on
+  the centre alone, and four decals (`spr-x`). The first pass buried the
+  kingdom under violet — a zone TINTS rather than covers.
+- **One bug found by the zone rather than caused by it**: the recovery bar
+  divided by the AUTHORED wait, so it opened nearly full under anything that
+  speeds recovery up — the Dowsing Rod's passive alone did it. A cell now keeps
+  the LENGTH of the wait beside its end.
 
 ## 7. The art
 
