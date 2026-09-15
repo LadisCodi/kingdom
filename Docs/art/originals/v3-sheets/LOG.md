@@ -362,3 +362,52 @@ a checkerboard at all. spr-t re-cuts identically under the new code.
 
 `0.96`, not the relics' `0.90`: a medallion is a disc that fills its frame —
 the five on disk sit at 248–251 of their 256 px.
+
+## spr-v — the nine packs
+
+("Crear hoja de iconos UI", the UI-icon conversation rather than the sprite
+one, 2026-09-15). Three things this sheet settled, all of them corrections to
+what LOG.md said before.
+
+**ASK FOR THE ALPHA CORRECTION.** Every sheet above came back with the
+checkerboard baked because the prompt ended *"do not check or post-process the
+channel in code"*, and the repair moved into `unbake_checkerboard.py`. The UI
+icon sheets never had that problem, and the difference is one sentence. Ending
+a prompt with *"Do not draw grid lines, cell borders, labels, captions,
+shadows or any background. The background must be alpha 0 everywhere, not
+white, not a checkerboard. Then apply the true-alpha transparency correction
+and give me the download link for the corrected PNG."* returns a real `srgba`
+PNG, corner `(0,0,0,0)`, **no unbake at all**. The eleven-minute code loop
+SPR-S warns about did not happen in either conversation that used this wording.
+
+**SAY "NO DROP SHADOWS".** The first attempt drew a soft shadow under each
+pack, which is painted onto the background: it survives the unbake as grey
+smudge and is dead weight even with true alpha, because the game draws its own.
+
+**A 3×3 GRID WORKS AS WELL AS A 2×2**, so nine sprites landed in one sheet
+instead of three. `norm_box.fish` takes the explicit crops, `418x418` a cell.
+
+The concept changed once on the way. Round one drew **letter envelopes with a
+wax seal** — anchored on the four packs already on disk — and they read as
+mail rather than as something you rip open. The four on disk were the
+**retired** tiers, so there was nothing to match: dropping the anchor and
+asking for *"a collectible sticker pack, the kind Monopoly Go uses — a glossy
+foil pouch with a zig-zag tear strip"* is what landed it.
+
+**THE CARD COUNT IS THE ART.** The number of cards fanning out of each pack is
+the number that pack actually deals — 2 · 3 · 3 · 4 · 6 · 1, and 7 · 9 · 3 for
+the vault's chests — so the store shelf's *"6 cards, 1× 5★ guaranteed"* and
+its sprite say the same thing. It is the one detail that makes the row
+readable without the text.
+
+| Sheet | Cell | File | Command |
+|---|---|---|---|
+| spr-v | 1 | `pack_green.png` | `fish norm_box.fish spr-v-packs.png 418x418+0+0 0.92 pack_green.png 256` |
+| spr-v | 2 | `pack_yellow.png` | `… 418x418+418+0 …` |
+| spr-v | 3 | `pack_rose.png` | `… 418x418+836+0 …` |
+| spr-v | 4 | `pack_blue.png` | `… 418x418+0+418 …` |
+| spr-v | 5 | `pack_purple.png` | `… 418x418+418+418 …` |
+| spr-v | 6 | `pack_golden.png` | `… 418x418+836+418 …` |
+| spr-v | 7 | `pack_bronzechest.png` | `… 418x418+0+836 …` |
+| spr-v | 8 | `pack_silverchest.png` | `… 418x418+418+836 …` |
+| spr-v | 9 | `pack_goldchest.png` | `… 418x418+836+836 …` |

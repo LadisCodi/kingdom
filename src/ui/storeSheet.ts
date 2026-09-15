@@ -199,7 +199,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         String(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
-    el('div', { class: 'store-note' }, 'Bronze and silver packs come from the ruins.'),
+    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the ruins.'),
     // The bundles keep their own heading under Cards: same shelf, other till.
     // A player scanning for cards finds every way to get one in one place,
     // and the `$` on the button is what says the rail changed.

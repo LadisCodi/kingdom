@@ -293,7 +293,7 @@ Runs alongside every step. **Around twenty sprites, five sheets.**
 |---|---|---|
 | ~~**A**~~ | ~~3 relics — Lantern 🏮, Horn 📯, Tally 🧾~~ **done** (`spr-t`) | step 2 |
 | ~~**B**~~ | ~~8 album medallions~~ **done** (`spr-u` — only 3 were missing) | step 4 |
-| **D–E** | 6 packs (Verde → Dorado) and 3 chests | step 3 |
+| ~~**C**~~ | ~~6 packs (Green → Golden) and 3 chests~~ **done** (`spr-v`, all nine in one 3×3) | step 3 |
 
 - **The pipeline is the proven one** ([`../art/sprite-prompts.md`](../art/sprite-prompts.md),
   and the two memory notes it descends from): ChatGPT driven through Chrome,
@@ -307,11 +307,17 @@ Runs alongside every step. **Around twenty sprites, five sheets.**
   packs all appear inside a card, which changes the framing.
 - **Nothing may cross the canvas midlines** — ask for a clear 40 px band, or a
   quadrant spills and has to be hand-cut.
-- **End every prompt with *"no hagas comprobaciones ni correcciones del canal
-  en código"***, take the download link from the message body (never the
-  image's own editor, which bakes the checkerboard), then unbake locally with
-  `Docs/art/originals/v3-sheets/unbake_checkerboard.py` and normalise with
-  `norm_sq.fish`. Verify: corner `srgba(0,0,0,0)`, alpha mean below 0.5.
+- **End every prompt asking for the alpha correction** — *"The background must
+  be alpha 0 everywhere, not white, not a checkerboard. Then apply the
+  true-alpha transparency correction and give me the download link for the
+  corrected PNG."* That one sentence is the difference between a real `srgba`
+  PNG and a baked checkerboard; the older advice said the opposite and cost
+  every sheet an unbake. Say **no drop shadows** too. Download by fetching the
+  `<img>`'s own `src` to a blob from the page's own JS — the export menus do
+  not fire through the extension. Then normalise with `norm_sq.fish` (2×2) or
+  `norm_box.fish` (any grid). Verify: corner `srgba(0,0,0,0)`, alpha mean below
+  0.5. `unbake_checkerboard.py` is still there for a sheet that comes back
+  baked anyway.
 - **Budget ~8 minutes a sheet**, and the shell is fish.
 
 ### 7.1 The 72 card faces are not in this plan
