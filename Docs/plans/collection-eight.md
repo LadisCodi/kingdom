@@ -8,7 +8,8 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: steps 1–5 done 2026-09-15.** Save version 50. With step 5 the
+> **Status: steps 1–5 and 7 done 2026-09-15.** Save version 50. Only **step 6**
+> is left, and it is gated on **OQ-98**. With step 5 the
 > packs and the cycles proposals have fully landed and are folded into
 > [`../features/09-relics.md`](../features/09-relics.md); only
 > `relic-effects.md` still has a step outstanding.
@@ -43,7 +44,7 @@
 | ~~**4**~~ | ~~Eight albums, and the pairing rotates~~ **done** | 2, 3 | **M** |
 | ~~**5**~~ | ~~The album cycle~~ **done** | 4 | **M** |
 | **6** | Zones, cooldowns and the actives | **OQ-98**, 2 | **L** |
-| **7** | The art | — (runs alongside) | **M** |
+| ~~**7**~~ | ~~The art~~ **done** | — (ran alongside) | **M** |
 
 - **1 and 3 are independent** and can go in either order or at once.
 - **1 grew from S to M** once the proposal was read against the build: four of
@@ -287,7 +288,8 @@ Self-contained, and the step whose numbers are already measured.
 
 ## 7. The art
 
-Runs alongside every step. **Around twenty sprites, five sheets.**
+Ran alongside every step. **Fifteen sprites, three sheets** — not the twenty in
+five this planned, because a 3×3 grid holds nine.
 
 | Sheet | What | Needed by |
 |---|---|---|
