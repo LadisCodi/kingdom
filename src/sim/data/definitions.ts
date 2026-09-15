@@ -2244,7 +2244,11 @@ export const MISSIONS = balance.missions as {
   populationBand: number[]; upgradeBand: number[]; revealBand: number[];
   buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
   roomsBand: number[]; depthsBand: number[]; packsBand: number[];
-  rewardHours: number; rewardGems: number;
+  /** The kinds that cannot be finished inside one session — they wait on a
+   *  builder, a delve or a technology. They pay a pack; everything else rolls. */
+  hardKinds: string[];
+  hardPack: PackTier; normalPack: PackTier;
+  rewardGems: number; rewardManaFraction: number;
 };
 
 // ------------------------------------------------------------ the timeline
@@ -2311,4 +2315,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 58;
+export const SAVE_VERSION = 59;

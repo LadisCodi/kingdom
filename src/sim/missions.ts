@@ -45,7 +45,7 @@ import { cityGoldPerSecond } from './collection';
 import {
   newId,
   type CurrencyId, type DistrictId, type GameState, type Mission, type MissionKind,
-  type RuinId,
+  type MissionReward, type RuinId,
 } from './state';
 
 const HOUR_MS = 3_600_000;
@@ -268,6 +268,37 @@ export function chooseKind(
     ?? FALLBACK;
 }
 
+/**
+ * IS THIS KIND HARD? Not a difficulty rating — the question is whether it can
+ * be finished inside one session, and the ones that cannot are the ones that
+ * wait on a builder, a delve or a technology. Authored as a list because the
+ * answer changes as the game does: a kind stops being hard the week its
+ * blocker gets cheaper.
+ */
+export const isHardKind = (kind: MissionKind): boolean =>
+  MISSIONS.hardKinds.includes(kind);
+
+/**
+ * WHAT THIS MISSION PAYS.
+ *
+ * A HARD ONE ALWAYS PAYS A PACK, and a better one than the ladder's free
+ * column drips — that is the whole point of telling the two apart. It does not
+ * roll: a mission that waits three days on a builder should say what it is
+ * worth before the player commits to it, and a third of them paying Gems
+ * instead would make the hard board a lottery.
+ *
+ * AN ORDINARY ONE ROLLS ONE OF THREE, so the board is never eight rows of the
+ * same chip. Rolled on the mission's own event, never on a draw counter
+ * (invariant 4).
+ */
+function rewardFor(kind: MissionKind, window: number, slot: number, seed: number): MissionReward {
+  if (isHardKind(kind)) return { kind: 'Pack', tier: MISSIONS.hardPack };
+  const roll = rand(seed, 'missionReward', window, slot, kind);
+  if (roll < 1 / 3) return { kind: 'Gems', amount: MISSIONS.rewardGems };
+  if (roll < 2 / 3) return { kind: 'Mana', fraction: MISSIONS.rewardManaFraction };
+  return { kind: 'Pack', tier: MISSIONS.normalPack };
+}
+
 /** Build one mission of `kind` for `(window, slot)`. */
 export function issueMission(
   state: GameState, kind: MissionKind, window: number, slot: number,
@@ -281,6 +312,7 @@ export function issueMission(
     base: tally(state, meter),
     target: Math.max(1, targetFor(state, kind, subject, roll)),
     subject,
+    reward: rewardFor(kind, window, slot, state.seed),
     window,
     slot,
     claimed: false,

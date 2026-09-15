@@ -41,19 +41,23 @@ import { spriteUrl } from '../render/sprites';
  * says it twice and costs a cell most of its width — on a ~180px cell a third
  * chip of text is what pushed the row to two lines and clipped it.
  */
+/** A pouch, drawn as its own art with no label — the colour IS the label. */
+function packChip(tier: PackTier): HTMLElement {
+  const url = spriteUrl(`pack_${tier.toLowerCase()}`);
+  return url === null
+    ? iconEl('pack', { size: 'sm' })
+    : el('img', { class: 'pss-pack', src: url, alt: `${tier} pack`, title: `${tier} pack` });
+}
+
 function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
   const chips = (Object.entries(reward) as Array<[CurrencyId, number]>).map(([c, n]) =>
     el('span', { class: 'pss-prize' },
       currencyIcon(c, { size: 'sm' }),
       el('b', {}, formatCount(n))));
+  // The atlas glyph is the fallback, so a tier whose art has not landed still
+  // draws something rather than a gap (`tests/icons.test.ts`).
   if (pack !== null) {
-    const url = spriteUrl(`pack_${pack.toLowerCase()}`);
-    chips.push(el('span', { class: 'pss-prize is-pack', title: `${pack} pack` },
-      // The atlas glyph is the fallback, so a tier whose art has not landed
-      // still draws something rather than a gap (`tests/icons.test.ts`).
-      url === null
-        ? iconEl('pack', { size: 'sm' })
-        : el('img', { class: 'pss-pack', src: url, alt: `${pack} pack` })));
+    chips.push(el('span', { class: 'pss-prize is-pack' }, packChip(pack)));
   }
   return chips;
 }
@@ -90,6 +94,21 @@ export function renderPassSheet(game: Game): HTMLElement {
     action.addEventListener('click', () => (m.complete
       ? game.doClaimMission(m.id)
       : game.doFinishMissionWithGems(m.id)));
+    // WHAT IT PAYS, on the row and before the work. Rewards vary — a pack for
+    // the errands that wait on a builder or a delve, one of Gems, Mana or a
+    // green pack for the rest — and variety nobody can see is not variety: the
+    // whole reason to roll it is so the player picks what to do next by what
+    // it is worth.
+    const reward = 'pack' in m.reward
+      ? el('span', { class: `pss-task-pay is-pack${m.hard ? ' is-hard' : ''}` },
+          packChip(m.reward.pack))
+      : el('span', { class: 'pss-task-pay' },
+          currencyIcon(m.reward.currency, { size: 'sm' }),
+          // A LEADING `+`, because the row can carry two Gem figures that mean
+          // opposite things: what finishing pays, and what skipping costs.
+          // The sign is what tells them apart at a glance — the button beside
+          // it never carries one.
+          el('b', {}, `+${formatCount(m.reward.amount)}`));
     return el('div', { class: `pss-task${m.complete ? ' is-done' : ''}` },
       el('span', { class: 'pss-task-icon' }, iconEl(m.icon, { size: 'md' })),
       el('span', { class: 'pss-task-body' },
@@ -100,6 +119,7 @@ export function renderPassSheet(game: Game): HTMLElement {
             style: `width:${Math.round((done / Math.max(1, m.target)) * 100)}%`,
           }),
           el('span', { class: 'pss-task-count' }, `${formatCount(done)} / ${formatCount(m.target)}`))),
+      reward,
       ...(m.complete ? [iconEl('tick', { size: 'sm' })] : []),
       action);
   });

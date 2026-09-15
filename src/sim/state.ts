@@ -3,7 +3,7 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
-import { DISTRICTS } from './data/definitions';
+import { DISTRICTS, type PackTier } from './data/definitions';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import type { Modifier } from './modifiers';
@@ -375,6 +375,23 @@ export type MissionKind =
   | 'ClearRooms' | 'CompleteDepths' | 'OpenPacks';
 
 /**
+ * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
+ *
+ * ONE THING, rolled when the mission is issued and stored on it — so it can be
+ * read off the board before the work is done, which is what lets a player pick
+ * what to do next by what it pays. A reward decided at CLAIM time would be a
+ * surprise, and a surprise cannot be chosen between.
+ *
+ * Mana is a FRACTION OF THE POOL rather than an amount, the daily chest's rule:
+ * a reward priced in the player's own production is worth the same fraction of
+ * an afternoon at every stage of the game.
+ */
+export type MissionReward =
+  | { kind: 'Gems'; amount: number }
+  | { kind: 'Mana'; fraction: number }
+  | { kind: 'Pack'; tier: PackTier };
+
+/**
  * ONE ERRAND ON THE BOARD (sim/missions.ts).
  *
  * RELATIVE, always: `meter` names an odometer on `state.tallies` and `base` is
@@ -394,6 +411,8 @@ export interface Mission {
   /** What the mission is ABOUT, when its kind is scoped: the currency to
    *  collect. Carried so the label and the icon need no second lookup. */
   subject: CurrencyId | null;
+  /** What finishing it pays. Rolled at issue, so the board can show it. */
+  reward: MissionReward;
   /** The window that issued it, and what it was issued for — the rng key, so
    *  re-rolling the same window is bit-identical. */
   window: number;

@@ -24,12 +24,12 @@
 // Docs/features/20-season-pass.md.
 
 import { PASS, MISSIONS } from './data/definitions';
-import { grantPack, seasonAt, seasonEndsAt, productionChest } from './collection';
+import { grantPack, seasonAt, seasonEndsAt } from './collection';
+import { manaCap } from './mana';
 import {
   chooseKind, issueMission, missionComplete, missionProgress, weekIndex, windowIndex,
 } from './missions';
 import { buySku, type BuySkuResult } from './store';
-import { refund } from './wallet';
 import { addToWallet, getWallet, type GameState, type Mission, type Wallet } from './state';
 import type { PackTier } from './data/definitions';
 
@@ -311,11 +311,27 @@ export function finishMissionWithGems(
   return 'Finished';
 }
 
+/**
+ * PAY ONE MISSION: the thing it said it would pay, and the XP every mission
+ * pays.
+ *
+ * The reward was rolled when the mission was ISSUED and has been readable on
+ * the board ever since, so nothing is decided here — this only hands it over.
+ */
 function payMission(state: GameState, mission: Mission): void {
-  refund(state.city.wallet, productionChest(state, MISSIONS.rewardHours));
-  addToWallet(state.player.wallet, 'Gems', MISSIONS.rewardGems);
+  const reward = mission.reward;
+  if (reward.kind === 'Gems') {
+    addToWallet(state.player.wallet, 'Gems', reward.amount);
+  } else if (reward.kind === 'Mana') {
+    // ON TOP OF THE CAP, like the daily chest's rung and the ad reward: a
+    // grant clamped to a ceiling the player is already near would pay nothing
+    // and read as broken.
+    state.city.wallet.Mana = Math.max(
+      0, getWallet(state.city.wallet, 'Mana') + Math.round(manaCap(state) * reward.fraction));
+  } else {
+    grantPack(state, reward.tier, 'pass');
+  }
   state.kingdom.pass.xp += PASS.missionXp;
-  void mission;
 }
 
 // ------------------------------------------------------------------ the guts

@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { DISTRICTS, MISSIONS, RUINS } from '../src/sim/data/definitions';
 import { recordEvent, tally } from '../src/sim/events';
 import {
-  MISSION_KINDS, canIssue, missionComplete, missionProgress, weekIndex, windowIndex,
+  MISSION_KINDS, canIssue, isHardKind, missionComplete, missionProgress, weekIndex,
+  windowIndex,
 } from '../src/sim/missions';
 import { boardIsFull, boardMissions, rollMissionsIfDue } from '../src/sim/pass';
 import { advance } from '../src/sim/commands';
@@ -19,7 +20,7 @@ import { enterRoom } from '../src/sim/expeditions';
 import {
   addAllTrainers, addBuilt, freshGame, fund, map, openRuin, reveal, T0,
 } from './helpers';
-import type { GameState, MissionKind } from '../src/sim/state';
+import type { GameState, Mission, MissionKind } from '../src/sim/state';
 
 const HOUR = 3_600_000;
 const WINDOW = MISSIONS.windowHours * HOUR;
@@ -256,6 +257,76 @@ describe('the board', () => {
     const issued = Object.values(state.kingdom.pass.issuedThisWeek)
       .reduce((a, b) => a + b, 0);
     expect(issued).toBe(MISSIONS.perWindow);
+  });
+});
+
+describe('what a mission is worth', () => {
+  /** Every reward the generator can produce across many windows. */
+  const sample = (state: GameState, windows = 300) => {
+    const out: Array<{ kind: MissionKind; reward: Mission['reward'] }> = [];
+    for (let w = 0; w < windows; w++) {
+      state.kingdom.pass.live = [];
+      state.kingdom.pass.week = -1;
+      rollMissionsIfDue(state, T0 + w * WINDOW);
+      for (const m of state.kingdom.pass.live) out.push({ kind: m.kind, reward: m.reward });
+    }
+    return out;
+  };
+
+  it('pays a pack for every errand that cannot be done in one session', () => {
+    const state = playableKingdom();
+    openRuin(state, 'HollowBarrow');
+    reveal(state, [RUINS.HollowBarrow.location]);
+    const seen = sample(state);
+    const hard = seen.filter((s) => isHardKind(s.kind));
+    expect(hard.length).toBeGreaterThan(0);
+    // A HARD ONE NEVER ROLLS. An errand that waits three days on a builder has
+    // to say what it is worth before the player commits to it.
+    for (const s of hard) {
+      expect(s.reward.kind).toBe('Pack');
+      expect(s.reward.kind === 'Pack' && s.reward.tier).toBe(MISSIONS.hardPack);
+    }
+  });
+
+  it('varies an ordinary errand between Gems, Mana and a green pack', () => {
+    const state = playableKingdom();
+    const easy = sample(state).filter((s) => !isHardKind(s.kind));
+    expect(easy.length).toBeGreaterThan(0);
+    const kinds = new Set(easy.map((s) => s.reward.kind));
+    // All three turn up — a board of eight identical chips is the thing this
+    // replaced.
+    expect(kinds).toEqual(new Set(['Gems', 'Mana', 'Pack']));
+    for (const s of easy) {
+      if (s.reward.kind === 'Pack') expect(s.reward.tier).toBe(MISSIONS.normalPack);
+    }
+    // Roughly even, which is what "varies" has to mean to be worth doing. A
+    // third each, and this only asks that none of them is rare.
+    for (const kind of ['Gems', 'Mana', 'Pack'] as const) {
+      const share = easy.filter((s) => s.reward.kind === kind).length / easy.length;
+      expect(share).toBeGreaterThan(0.2);
+    }
+  });
+
+  it('never pays the free ladder s own tier for a hard errand', () => {
+    // The two pack tiers have to differ, or telling hard from ordinary buys
+    // the player nothing.
+    expect(MISSIONS.hardPack).not.toBe(MISSIONS.normalPack);
+  });
+
+  it('names only real kinds as hard', () => {
+    for (const k of MISSIONS.hardKinds) {
+      expect(MISSION_KINDS).toContain(k as MissionKind);
+    }
+  });
+
+  it('rolls the reward on the mission s own event, so it never moves', () => {
+    const a = playableKingdom();
+    const b = playableKingdom();
+    b.seed = a.seed;
+    rollMissionsIfDue(a, T0);
+    rollMissionsIfDue(b, T0);
+    expect(boardMissions(b, T0).map((m) => JSON.stringify(m.reward)))
+      .toEqual(boardMissions(a, T0).map((m) => JSON.stringify(m.reward)));
   });
 });
 

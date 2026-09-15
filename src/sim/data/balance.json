@@ -3990,8 +3990,17 @@
       2,
       5
     ],
-    "rewardHours": 1.5,
-    "rewardGems": 15
+    "hardKinds": [
+      "RaiseTownhall",
+      "BuildDistricts",
+      "LevelHeroes",
+      "ClearRooms",
+      "CompleteDepths"
+    ],
+    "hardPack": "Yellow",
+    "normalPack": "Green",
+    "rewardGems": 15,
+    "rewardManaFraction": 0.5
   },
   "delve": {
     "firstClearGems": 500,

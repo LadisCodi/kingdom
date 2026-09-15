@@ -123,7 +123,9 @@ import {
   missionGemCost, paidCell, passEndsAt, passLevel, passOwned, passXp,
   rollMissionsIfDue,
 } from './sim/pass';
-import { missionComplete, missionProgress, nextWindowAt } from './sim/missions';
+import {
+  isHardKind, missionComplete, missionProgress, nextWindowAt,
+} from './sim/missions';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -1869,6 +1871,11 @@ export class Game {
     missions: Array<{
       id: string; kind: MissionKind; icon: IconName; goal: string;
       done: number; target: number; complete: boolean; gemCost: number;
+      /** What finishing it pays, resolved to what the player would receive
+       *  RIGHT NOW — Mana is a fraction of the pool, so the number moves with
+       *  the Sanctum and cannot be stored. */
+      reward: { currency: CurrencyId; amount: number } | { pack: PackTier };
+      hard: boolean;
     }>;
     ladder: Array<{
       level: number;
@@ -1906,6 +1913,15 @@ export class Game {
         target: m.target,
         complete: missionComplete(this.state, m),
         gemCost: missionGemCost(this.state, m),
+        reward: m.reward.kind === 'Pack'
+          ? { pack: m.reward.tier }
+          : m.reward.kind === 'Gems'
+            ? { currency: 'Gems' as CurrencyId, amount: m.reward.amount }
+            : {
+              currency: 'Mana' as CurrencyId,
+              amount: Math.round(manaCap(this.state) * m.reward.fraction),
+            },
+        hard: isHardKind(m.kind),
       })),
       ladder: Array.from({ length }, (_, i) => {
         const n = i + 1;

@@ -17,6 +17,7 @@ import {
   passXp, rollMissionsIfDue,
 } from '../src/sim/pass';
 import { missionComplete, windowIndex } from '../src/sim/missions';
+import { manaCap } from '../src/sim/mana';
 import { choosePayerProfile } from '../src/sim/store';
 import { advance } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
@@ -201,16 +202,56 @@ describe('a mission pays twice', () => {
     return m;
   };
 
-  it('a currency into the purse and XP onto the ladder', () => {
+  /** What claiming `m` actually handed over. */
+  const paid = (state: GameState, before: {
+    gems: number; mana: number; packs: number;
+  }) => ({
+    gems: getWallet(state.player.wallet, 'Gems') - before.gems,
+    mana: getWallet(state.city.wallet, 'Mana') - before.mana,
+    packs: state.collection.packs.length - before.packs,
+  });
+  const snapshot = (state: GameState) => ({
+    gems: getWallet(state.player.wallet, 'Gems'),
+    mana: getWallet(state.city.wallet, 'Mana'),
+    packs: state.collection.packs.length,
+  });
+
+  it('exactly what its row said, and XP onto the ladder', () => {
     const state = kingdom();
     const m = complete(state);
     expect(missionComplete(state, m)).toBe(true);
-    const gold = getWallet(state.city.wallet, 'Gold');
-    const gems = getWallet(state.player.wallet, 'Gems');
+    const before = snapshot(state);
     expect(claimMission(state, m.uniqueId, T0)).toBe('Claimed');
-    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + MISSIONS.rewardGems);
+    const got = paid(state, before);
+    // ONE THING, never a hamper: the row shows one chip and this is it.
+    if (m.reward.kind === 'Gems') {
+      expect(got).toEqual({ gems: m.reward.amount, mana: 0, packs: 0 });
+    } else if (m.reward.kind === 'Mana') {
+      expect(got.gems).toBe(0);
+      expect(got.packs).toBe(0);
+      expect(got.mana).toBe(Math.round(manaCap(state) * m.reward.fraction));
+    } else {
+      expect(got.gems).toBe(0);
+      expect(got.mana).toBe(0);
+      expect(got.packs).toBe(1);
+      expect(state.collection.packs.at(-1)!.tier).toBe(m.reward.tier);
+    }
     expect(passXp(state, T0)).toBe(PASS.missionXp);
+  });
+
+  it('pays Mana ON TOP of the cap, so a full pool still gets it', () => {
+    const state = kingdom();
+    const m = complete(state);
+    // The reward is written on the mission, so the branch is set rather than
+    // hunted for: which kind rolls what is `rolls one of three` below, and
+    // this is about what PAYING one does.
+    m.reward = { kind: 'Mana', fraction: MISSIONS.rewardManaFraction };
+    state.city.wallet.Mana = manaCap(state);
+    expect(claimMission(state, m.uniqueId, T0)).toBe('Claimed');
+    // Clamping to a ceiling the player is already at would pay nothing and
+    // read as broken — the daily chest's rung makes the same argument.
+    expect(getWallet(state.city.wallet, 'Mana'))
+      .toBe(manaCap(state) + Math.round(manaCap(state) * MISSIONS.rewardManaFraction));
   });
 
   it('leaves the board when it is claimed, which is what frees a slot', () => {
@@ -247,8 +288,11 @@ describe('the Gem shortcut', () => {
     const m = boardMissions(state, T0)[0];
     const cost = missionGemCost(state, m);
     state.player.wallet.Gems = cost + 10;
+    const reward = m.reward.kind === 'Gems' ? m.reward.amount : 0;
     expect(finishMissionWithGems(state, m.uniqueId, T0)).toBe('Finished');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(10 + MISSIONS.rewardGems);
+    // The Gems buy the TIME: what comes back is the mission's own reward, not
+    // a refund and not something better.
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(10 + reward);
     expect(passXp(state, T0)).toBe(PASS.missionXp);
     expect(boardMissions(state, T0).find((x) => x.uniqueId === m.uniqueId)).toBeUndefined();
   });

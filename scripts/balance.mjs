@@ -343,11 +343,25 @@ const SETTINGS = [
   ['missions.rooms_band', 'missions.roomsBand', 'list'],
   ['missions.depths_band', 'missions.depthsBand', 'list'],
   ['missions.packs_band', 'missions.packsBand', 'list'],
-  // What a mission pays on top of the XP, as a fraction of an hour of the
-  // city's own production — `productionChest`'s rule, and the reason a
-  // mission is still worth doing in era three.
-  ['missions.reward_hours', 'missions.rewardHours'],
+  // ---------------------------------------------------- what a mission pays
+  //
+  // ONE THING, plus the pass XP — so the reward fits on the row beside the
+  // goal and the player can pick what to do next by what it pays.
+  //
+  // WHICH KINDS ARE HARD. Not a difficulty rating: a list of the kinds that
+  // cannot be finished inside one session, because they wait on a builder, a
+  // delve or a technology. Those pay a PACK; everything else rolls one of the
+  // three below. It is a list rather than a flag per kind because the answer
+  // changes as the game does — a kind stops being hard the week its blocker
+  // is cheaper.
+  ['missions.hard_kinds', 'missions.hardKinds', 'names'],
+  ['missions.hard_pack', 'missions.hardPack', 'name'],
+  ['missions.normal_pack', 'missions.normalPack', 'name'],
   ['missions.reward_gems', 'missions.rewardGems'],
+  // Mana as a FRACTION OF THE POOL, the daily chest's rule: a reward priced in
+  // the player's own production is worth the same fraction of an afternoon at
+  // every stage of the game, with nothing re-derived per era.
+  ['missions.reward_mana_fraction', 'missions.rewardManaFraction'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -853,6 +867,12 @@ function list(row, col) {
  * is the empty string, never dropped — the index IS the rung, so a column that
  * closed up its gaps would pay the wrong levels.
  */
+/** ONE name rather than a list — a single id in a cell, kept as text. */
+function name(row, col) {
+  const raw = row[col];
+  return raw === '' || raw === undefined ? '' : String(raw).trim();
+}
+
 function names(row, col) {
   const raw = row[col];
   if (raw === '' || raw === undefined) return [];
@@ -1550,10 +1570,11 @@ async function importXlsx() {
     const row = settings.get(key);
     const value = kind === 'list' ? list(row, 'value')
       : kind === 'names' ? names(row, 'value')
-        : kind === 'tiers' ? tiers(row, 'value')
-          : kind === 'faces' ? keyed(row, FACE_IDS)
-            : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
-              : num(row, 'value');
+        : kind === 'name' ? name(row, 'value')
+          : kind === 'tiers' ? tiers(row, 'value')
+            : kind === 'faces' ? keyed(row, FACE_IDS)
+              : kind === 'chests' ? keyed(row, PACK_IDS.filter((p) => p.endsWith('Chest')))
+                : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     // A block whose every key is a Setting — `combat.*` is one — has no loop
@@ -1749,6 +1770,7 @@ async function exportXlsx() {
     let value = b;
     for (const part of path.split('.')) value = value[part];
     return [key, kind === 'list' || kind === 'names' ? listCell(value)
+      : kind === 'name' ? value
       : kind === 'tiers' ? tiersCell(value)
         : kind === 'faces' || kind === 'chests' ? keyedCell(value)
           : value];

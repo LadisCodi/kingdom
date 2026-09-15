@@ -99,11 +99,22 @@ always eligible**, so the board can always be filled.
 
 ### 3.5 What a mission pays
 
-- **A currency and pass XP**, both on claim. The currency half is priced in
-  hours of the city's own production, plus a flat Gem grant.
+**One thing, plus pass XP.** The reward is rolled when the mission is issued
+and shown on its row, so a player picks what to do next by what it pays.
+
+- **A hard errand always pays a Yellow pack.** Hard means it cannot be finished
+  inside one session — it waits on a builder, a delve or a technology: *raise
+  the Townhall*, *build X buildings*, *level heroes*, *clear rooms*, *complete
+  depths*. It does not roll: an errand that waits three days has to say what it
+  is worth before the player commits to it.
+- **An ordinary errand rolls one of three** — Gems, Mana, or a **Green** pack,
+  about a third each. Mana is a fraction of the pool and lands on top of the
+  cap.
+- The two pack tiers differ, or telling hard from ordinary would buy the player
+  nothing.
 - **A stuck mission can be finished with Gems**, priced off the progress still
-  owed. Its job is to unclog the board
-  ([`14-monetization.md`](14-monetization.md) §1.1).
+  owed. It pays the mission's own reward — the Gems buy the TIME, never
+  something better ([`14-monetization.md`](14-monetization.md) §1).
 
 ## 4. Where the packs come from
 
@@ -129,7 +140,9 @@ volume, and the repeatable dungeon still owes the bulk.
 | `missions.weekly_quota` | how often one kind may repeat |
 | `missions.*_band` | how big each ask is |
 | `missions.collect_minutes_*` | the collect ask, in minutes of production |
-| `missions.reward_hours`, `missions.reward_gems` | what a mission pays |
+| `missions.hard_kinds` | which errands pay a pack. **Not a difficulty rating** — the list of kinds that cannot be finished in one session, and it changes as the game does |
+| `missions.hard_pack`, `missions.normal_pack` | the two tiers |
+| `missions.reward_gems`, `missions.reward_mana_fraction` | the other two rolls |
 | `missions.gem_floor`, `missions.gem_per_remaining` | the price of finishing one |
 
 ## 6. The screen
@@ -139,6 +152,11 @@ volume, and the repeatable dungeon still owes the bulk.
 - The ladder is the daily chest's: two columns on the same rows, and the
   paid column's **head is the buy button** while the pass is unbought.
 - A cell is a button exactly when it can be taken. One padlock per cell.
+- A mission row reads left to right: **what to do · how far · what for · the
+  button**.
+- A currency reward carries a leading **`+`**. A row can show two Gem figures
+  meaning opposite things — what finishing pays and what skipping costs — and
+  the sign is what tells them apart.
 - A mission row's right-hand button is **one button with two faces** — green
   Claim when the work is done, a Gem price when it is not.
 - The pill glows while a cell is waiting.

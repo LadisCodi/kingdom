@@ -246,6 +246,32 @@
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
+/* WHAT THE ROW PAYS, between the goal and the button — read left to right the
+   row is now "what to do · how far · what for · the button", which is the
+   order the player asks in. */
+.pss-task-pay {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 42px;
+  justify-content: flex-end;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.pss-task-pay > .icon { --icon-size: 18px; }
+/* A pack from a HARD errand is the one reward the board singles out, so it
+   gets a ring rather than only a different pouch: the two tiers differ by one
+   step of colour and the difference has to survive a glance.
+   ON THE POUCH, not on the chip — the chip is a flex row with a min-width for
+   the numbers beside it, so a ring there came out an ellipse. */
+.pss-task-pay.is-hard .pss-pack {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--gold), 0 0 6px rgba(242, 178, 51, 0.7);
+}
+
 /* The green tick, pressed on like the daily ladder's wax seal. */
 .pss-task > .icon {
   flex: none;
@@ -441,6 +467,7 @@ button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
 /* The pouch draws bigger than a coin because its COLOUR is the whole label:
    it is the only chip on the ladder with nothing written beside it. */
 .pss-pack { width: 26px; height: 26px; object-fit: contain; display: block; }
+.pss-task-pay .pss-pack { width: 24px; height: 24px; }
 
 /* The level, between the columns: it belongs to the row, not to either track.
    It lights once the row has been reached, which is what draws the line

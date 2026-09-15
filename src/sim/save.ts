@@ -12,7 +12,7 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
+  GAME_VERSION, MISSIONS, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -31,7 +31,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId, type UnitId, type MissionKind, type CurrencyId,
+  type RuinId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -590,6 +590,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Live: state.kingdom.pass.live.map((m) => ({
             UniqueID: m.uniqueId, Kind: m.kind, Meter: m.meter, Base: m.base,
             Target: m.target, Subject: m.subject, Window: m.window, Slot: m.slot,
+            Reward: m.reward,
           })),
         },
       },
@@ -959,6 +960,10 @@ export function deserialize(
         base: m.Base ?? 0,
         target: m.Target ?? 1,
         subject: (m.Subject ?? null) as CurrencyId | null,
+        // A mission from before the rewards varied read as the Gem one — the
+        // amount is the authored one, so an old board pays exactly what a new
+        // board's Gem missions pay rather than nothing.
+        reward: (m.Reward ?? { kind: 'Gems', amount: MISSIONS.rewardGems }) as MissionReward,
         window: m.Window ?? -1,
         slot: m.Slot ?? 0,
         claimed: false,
