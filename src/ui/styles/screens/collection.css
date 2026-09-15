@@ -525,11 +525,6 @@
 .col-stat-value { font-size: var(--text-body); font-weight: var(--weight-strong); }
 .col-stat-to { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--leaf-dark); }
 .col-stat-nums > .icon { --icon-size: 16px; }
-/* A level that moves nothing SAYS so, greyed, rather than dropping the row —
-   a missing number reads as a bug. */
-.col-stat.is-same { opacity: 0.72; }
-.col-stat.is-same .col-stat-to { color: var(--ink-muted); }
-.col-stat.is-same .col-stat-nums > .icon { filter: grayscale(1) opacity(0.6); }
 
 /* THE SPELL — the one section on the page with a name over it, because a
    button needs to say what it belongs to. */

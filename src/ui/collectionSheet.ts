@@ -313,6 +313,14 @@ function albumHalf(game: Game, id: AlbumId): HTMLElement {
  * time AND what its ability does for a minute, so a player should not have to
  * learn two ways of reading the same kind of fact.
  *
+ * A NUMBER THE NEXT LEVEL LEAVES ALONE SHOWS NO DELTA — just the value. The
+ * tile is still there, so nothing goes missing and the stat is not mistaken
+ * for one the relic does not have; what goes is the arrow pointing at the
+ * same number again, which is a promise of a change that is not coming. (The
+ * upgrade popup keeps its greyed `n → n` row, and should: that screen exists
+ * to answer *what does this level buy*, so a stat it does not move is an
+ * answer. Here the band's job is to say what the relic IS.)
+ *
  * NO HEADING OVER THE PASSIVE'S. The prose beside the art already says what
  * the passive IS; a word saying "passive" above the numbers would be the same
  * fact twice, and the section that DOES need naming is the one with a button
@@ -320,14 +328,15 @@ function albumHalf(game: Game, id: AlbumId): HTMLElement {
  */
 function statBand(stats: readonly RelicStatChange[]): HTMLElement {
   return el('div', { class: 'col-stats' },
-    ...stats.map((f) => el('div', { class: `col-stat${f.changed ? '' : ' is-same'}` },
+    ...stats.map((f) => el('div', { class: 'col-stat' },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'col-stat-body' },
         el('div', { class: 'col-stat-label' }, f.label),
         el('div', { class: 'col-stat-nums' },
           el('b', { class: 'col-stat-value' }, f.value),
-          iconEl('arrowUp', { size: 'sm' }),
-          el('b', { class: 'col-stat-to' }, f.to))))));
+          ...(f.changed
+            ? [iconEl('arrowUp', { size: 'sm' }), el('b', { class: 'col-stat-to' }, f.to)]
+            : []))))));
 }
 
 /**
