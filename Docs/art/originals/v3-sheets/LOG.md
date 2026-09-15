@@ -335,3 +335,30 @@ content and size the whole sprite against. Corner `srgba(0,0,0,0)`, alpha mean
 
 `0.90` rather than the buildings' `0.72`–`0.92` because a relic is a **card
 object**: the five that ship fill 230 of their 256 px.
+
+## spr-u — the three new album medallions
+
+("Confirmación de archivo", same chat as spr-t, 2026-09-15). Anchored on
+`anchor-albums.png`, a 5×1 montage of the medallions already on disk. Two
+rounds, the second one the model's own: it delivered, then said the rings had
+come out larger than asked and were crowding the centre cross, and redrew at
+the right scale without being told. The midline rule earns its place in the
+prompt.
+
+**THE TWO GREYS ARE NOT ALWAYS THE SAME TWO.** This sheet's checkerboard came
+back at **209 and 253** against the building sheets' 130 and 191, and the
+fixed 115–208 band cut **1.1%** of the canvas instead of 66%. The script now
+MEASURES the pair off the canvas border — the one place a sheet is certainly
+background, since a medallion never reaches the edge — and builds the band
+around it, keeping the constants only as the fallback for a border that is not
+a checkerboard at all. spr-t re-cuts identically under the new code.
+
+| Sheet | Quad | File | Command |
+|---|---|---|---|
+| spr-u | tl | `album_marketday.png` | `fish norm_sq.fish spr-u-albums.png tl 0.96 album_marketday.png 256` |
+| spr-u | tr | `album_underthehill.png` | `… tr 0.96 album_underthehill.png 256` |
+| spr-u | bl | `album_thelongmarch.png` | `… bl 0.96 album_thelongmarch.png 256` |
+| spr-u | br | — | left empty on purpose; five of the eight already shipped |
+
+`0.96`, not the relics' `0.90`: a medallion is a disc that fills its frame —
+the five on disk sit at 248–251 of their 256 px.

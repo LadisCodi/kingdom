@@ -292,7 +292,7 @@ Runs alongside every step. **Around twenty sprites, five sheets.**
 | Sheet | What | Needed by |
 |---|---|---|
 | ~~**A**~~ | ~~3 relics — Lantern 🏮, Horn 📯, Tally 🧾~~ **done** (`spr-t`) | step 2 |
-| **B–C** | 8 album medallions | step 4 |
+| ~~**B**~~ | ~~8 album medallions~~ **done** (`spr-u` — only 3 were missing) | step 4 |
 | **D–E** | 6 packs (Verde → Dorado) and 3 chests | step 3 |
 
 - **The pipeline is the proven one** ([`../art/sprite-prompts.md`](../art/sprite-prompts.md),
