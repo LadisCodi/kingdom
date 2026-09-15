@@ -698,10 +698,11 @@ describe('the collection prize on screen', () => {
       game.doOpenPack();
       // The pack's own reveal is up first, every time.
       expect(game.gachaReveal).not.toBeNull();
-      if (game.state.collection.prizePaid) {
-        expect(game.gachaReveal!.caption).toBe('Purple pack');
-      }
+      expect(game.gachaReveal!.caption).toBe('Purple pack');
       game.dismissGachaReveal();
+      // A pack fills the page and stops; closing it is the player's move, so
+      // the prize can only ever arrive AFTER the reveal is out of the way.
+      game.doClaimAlbum(last);
     }
     expect(game.state.collection.prizePaid).toBe(true);
   });
@@ -712,6 +713,7 @@ describe('the collection prize on screen', () => {
     const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
     game.armWildcard(ALBUMS[last].cards[gap]!.rarity);
     game.tapCard(last, gap);
+    game.doClaimAlbum(last);
 
     // No pack was opened, so the prize has the screen at once.
     const reveal = game.gachaReveal!;
@@ -733,6 +735,7 @@ describe('the collection prize on screen', () => {
     const gap = ALBUMS[last].cards.findIndex((c) => c.gold !== true);
     game.armWildcard(ALBUMS[last].cards[gap]!.rarity);
     game.tapCard(last, gap);
+    game.doClaimAlbum(last);
     // While the prize is up, the album that closed has said nothing — the
     // first Stardust a player ever sees announces itself either way, and that
     // is the discovery banner's business, not the album's.

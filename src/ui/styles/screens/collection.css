@@ -431,77 +431,150 @@
 
 /* -------------------------------------------------- §11.4 the relic's card */
 
+/* ------------------------------------------------ §11.3 one relic's page */
+
+/* ART LEFT, WORDS RIGHT. Stacked, the space beside the relic was empty and
+   the page said nothing until the player scrolled; the sentence that explains
+   the passive lives there now. */
+.col-relic-head {
+  display: grid;
+  grid-template-columns: 34% 1fr;
+  gap: var(--gutter);
+  align-items: center;
+}
 .col-stage {
   position: relative;
   display: grid;
   place-items: center;
-  padding: 12px 0 18px;
+  padding: 10px;
   border-radius: var(--radius);
   border: 2px solid rgba(92, 58, 30, 0.35);
   background: radial-gradient(circle at 50% 42%, #ffeec2, var(--parchment-shade));
 }
-.col-stage .k-knob { position: absolute; top: 6px; right: 6px; }
 /* The relic objects are drawn at a three-quarter angle, so most of them lie
    diagonally in their square: `contain` at 60% left a band of air around
    them. */
-.col-stage-art { width: 76%; height: 176px; object-fit: contain; }
-.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 90px; }
+.col-stage-art { width: 100%; aspect-ratio: 1; max-height: 150px; object-fit: contain; }
+.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 72px; }
 
-/* The plaque rides the stage's bottom edge — the level is a fact about the
-   relic, not a line of body copy under it. */
-.col-plaque {
+/* THE LEVEL RIDES THE ART'S OWN CORNER, as a bare label. It used to be a
+   wooden plaque across the middle of the frame, which covered the thing the
+   player opened the page to look at. The shadow is what keeps it legible over
+   a light sprite without a slab behind it. */
+.col-level {
   position: absolute;
-  bottom: -12px;
-  padding: 3px 18px;
-  border-radius: var(--radius-sm);
-  border: 3px solid var(--gold-dark);
-  background: var(--wood);
-  color: var(--ink-inverse);
-  font-family: var(--font-display); font-weight: var(--font-display-weight);
-  font-size: var(--text-title);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 2px 0 rgba(60, 36, 18, 0.4);
+  top: 6px;
+  left: 8px;
+  font-weight: var(--weight-strong);
+  font-size: var(--text-helper);
+  color: var(--wood-dark);
+  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.9), 0 0 6px rgba(255, 246, 224, 0.9);
+  pointer-events: none;
 }
 
+.col-relic-id { min-width: 0; }
 .col-relic-name {
-  margin-top: 8px;
   font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
-  text-align: center;
   color: var(--ink);
 }
-.col-relic-note {
+/* What the passive DOES, in the player's words. The numbers are in the band
+   under it, so this is the only prose on the page and it earns its place. */
+.col-relic-what {
+  margin-top: 4px;
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  color: var(--ink-muted);
+}
+
+/* THE PASSIVE'S NUMBERS — the building card's band (`.dc-stats`) with a delta
+   in each tile, because a relic's page is its upgrade screen too. Centred,
+   and with no heading over it: the sentence above already named the passive. */
+.col-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.2);
+  background: rgba(226, 204, 160, 0.55);
+}
+.col-stat {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  border: 2px solid rgba(92, 58, 30, 0.16);
+}
+.col-stat > .icon { --icon-size: 28px; flex: none; }
+.col-stat-body { min-width: 0; }
+.col-stat-label {
+  font-size: 11px;
+  font-weight: var(--weight-small);
+  line-height: 1.15;
+  color: var(--ink-muted);
+}
+.col-stat-nums {
+  display: flex; align-items: center; gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.col-stat-value { font-size: var(--text-body); font-weight: var(--weight-strong); }
+.col-stat-to { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--leaf-dark); }
+.col-stat-nums > .icon { --icon-size: 16px; }
+/* A level that moves nothing SAYS so, greyed, rather than dropping the row —
+   a missing number reads as a bug. */
+.col-stat.is-same { opacity: 0.72; }
+.col-stat.is-same .col-stat-to { color: var(--ink-muted); }
+.col-stat.is-same .col-stat-nums > .icon { filter: grayscale(1) opacity(0.6); }
+
+/* THE SPELL — the one section on the page with a name over it, because a
+   button needs to say what it belongs to. */
+.col-section {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: var(--weight-strong);
+  font-size: var(--text-helper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wood-dark);
+}
+.col-section::before,
+.col-section::after {
+  content: ''; flex: 1; height: 2px;
+  background: rgba(92, 58, 30, 0.22);
+}
+.col-spell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment);
+}
+.col-spell.is-pending { opacity: 0.72; }
+.col-spell-name {
+  font-weight: var(--weight-strong);
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.col-spell-what {
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
+.col-spell-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The claim slab's chips SHARE the row, so they stretch. A spell's are three
+   facts of different widths and must hug what they say instead. */
+.col-spell-chips > .col-chip { flex: 0 0 auto; }
 
-/* Two ruled rows: what it does now, and what the next level is worth. The
-   second in muted ink, because the card's plainest fact is the difference. */
-.col-effects {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.35);
-  background: var(--parchment);
-  overflow: hidden;
-}
-.col-effect {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  font-size: var(--text-body);
-  color: var(--ink);
-}
-.col-effect + .col-effect { border-top: 2px solid rgba(92, 58, 30, 0.2); }
-.col-effect.is-next { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
-
-/* The album, and the way back to it. */
-.col-relic-album {
+/* The album's own head inside the relic's page: its medallion, its name and
+   how far along it is. */
+.col-album { display: flex; flex-direction: column; gap: 8px; }
+.col-album-head {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -509,22 +582,36 @@
   border-radius: var(--radius-sm);
   border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
 }
-.col-relic-album .k-trough { flex: 1; }
-.col-relic-medal {
+.col-album-head .k-trough { flex: 1; }
+.col-album-medal {
   display: grid; place-items: center;
   width: 36px; height: 36px;
   border-radius: 50%;
   border: 3px solid var(--wood-dark);
   background: var(--parchment);
   overflow: hidden;
+  flex: none;
 }
-.col-relic-medal-art { width: 100%; height: 100%; object-fit: cover; }
-.col-relic-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
-.col-relic-album-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); }
+.col-album-medal-art { width: 100%; height: 100%; object-fit: cover; }
+.col-album-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
+.col-album-name {
+  font-family: var(--font-body); font-weight: var(--weight-strong);
+  font-size: var(--text-body);
+}
+
+/* WHAT THE NINE CARDS BUY, under the nine cards. */
+.col-claim {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment);
+}
+.col-claim.is-ready { border-color: var(--leaf-dark); background: #f6f0d5; }
+.col-claim.is-done { opacity: 0.72; }
 
 /* -------------------------------------------------------- §11.1 the pill */
 

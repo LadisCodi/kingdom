@@ -9,7 +9,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
@@ -40,7 +40,7 @@ import {
   bundleGemValue, bundleOf, bundlesForSale, cardCount,
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
-  buyFromVaultMany,
+  buyFromVaultMany, canClaimAlbum, claimAlbum,
   wildcardCovers, wildcardOffers, wildcardsHeld,
   PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
   type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
@@ -1038,33 +1038,50 @@ export class Game {
     return { showing: !this.hasOpenSheet(), glowing: info.packs > 0 };
   }
 
-  /** One row per album, in season order — the medallions of §11.2. */
-  albumRows(): Array<{
-    id: AlbumId; name: string; held: number; total: number; complete: boolean;
-    relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
+  /**
+   * ONE ROW PER RELIC — the medallions of §11.2.
+   *
+   * The list is the RELIC ROSTER, in its own fixed order, not the album
+   * ladder: which album a relic draws rotates a season, so ordering the grid
+   * by difficulty would move every relic under the player once a month. A
+   * player learns where their relic sits once.
+   */
+  relicRows(): Array<{
+    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
+    album: AlbumId; albumName: string; held: number; total: number;
+    complete: boolean; claimable: boolean;
   }> {
-    return ALBUM_ORDER.map((id) => {
-      const def = ALBUMS[id];
-      const relicId = relicOfAlbum(id, this.state.collection.season);
-      const relic = ARTIFACTS[relicId];
+    return ARTIFACT_ORDER.map((id) => {
+      const album = albumOfRelic(id, this.state.collection.season);
       return {
         id,
-        name: def.name,
-        held: albumHeld(this.state, id),
-        total: def.cards.length,
-        complete: albumIsComplete(this.state, id),
-        relic: relicId,
-        relicName: relic.name,
-        relicLevel: artifactLevel(this.state, relicId),
-        sprite: relic.sprite,
-        glyph: relic.glyph,
+        name: ARTIFACTS[id].name,
+        sprite: ARTIFACTS[id].sprite,
+        glyph: ARTIFACTS[id].glyph,
+        level: artifactLevel(this.state, id),
+        album,
+        albumName: ALBUMS[album].name,
+        held: albumHeld(this.state, album),
+        total: ALBUMS[album].cards.length,
+        complete: albumIsComplete(this.state, album),
+        // The one thing on this screen worth a badge: a page ready to close.
+        claimable: canClaimAlbum(this.state, album),
       };
     });
   }
 
   /** The nine slots of one album, for the 3×3 grid (§11.3). */
+  /**
+   * THE ALBUM HALF of a relic's page (§11.3) — the nine slots, what closing
+   * them pays and whether it can be closed right now.
+   *
+   * Keyed by the ALBUM rather than the relic, because a card tap names one and
+   * the wildcard offers aim at one; which relic it raises is the page's other
+   * half.
+   */
   albumPage(id: AlbumId): {
     id: AlbumId; name: string; index: number; of: number; complete: boolean;
+    claimable: boolean; held: number; total: number;
     relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
     rewards: { hours: number; silverKeys: number; goldKeys: number; gems: number };
     cards: Array<{
@@ -1081,6 +1098,9 @@ export class Game {
       index: ALBUM_ORDER.indexOf(id) + 1,
       of: ALBUM_ORDER.length,
       complete: albumIsComplete(this.state, id),
+      claimable: canClaimAlbum(this.state, id),
+      held: albumHeld(this.state, id),
+      total: def.cards.length,
       relic: relicId,
       relicName: relic.name,
       relicLevel: artifactLevel(this.state, relicId),
@@ -1159,15 +1179,34 @@ export class Game {
     const opening = openPack(this.state, this.now());
     if (opening === null) return;
     playSfx('chainFinished');
-    this.takePayouts(opening.payouts);
     this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
     this.notify();
   }
 
   /**
-   * Bank what a completed album owes and deal whatever the screen is free to
-   * deal. Called from both places an album can finish — a pack turning over
-   * and a wildcard being placed.
+   * CLOSE AN ALBUM — the button at the bottom of a relic's page (§11.3).
+   *
+   * The player's move, not the ninth card's: the page fills and waits, so
+   * nobody spends nine cards and rolls the lap in the middle of a reveal they
+   * were watching for something else.
+   */
+  doClaimAlbum(album: AlbumId): void {
+    const payout = claimAlbum(this.state, album);
+    if (payout === null) return;
+    playSfx('chainFinished');
+    this.takePayouts([payout]);
+    this.notify();
+  }
+
+  /** Whether that button is live: the nine are in hand and this lap has not
+   *  closed the album yet. */
+  canClaimAlbum(album: AlbumId): boolean {
+    return canClaimAlbum(this.state, album);
+  }
+
+  /**
+   * Bank what a closed album owes and deal whatever the screen is free to
+   * deal.
    */
   private takePayouts(payouts: readonly AlbumPayout[]): void {
     for (const payout of payouts) {
@@ -1226,42 +1265,40 @@ export class Game {
     return COLLECTION.prizeGems;
   }
 
-  /** Walk down a level (§11.2 → §11.3 → §11.4). Each one is a field rather
-   *  than a route, so the nav tab stays put and the back knob is local. */
-  openAlbum(id: AlbumId): void {
-    this.openAlbumId = id;
-    this.openRelicId = null;
-    this.notify();
-  }
-
-  closeAlbum(): void {
-    this.armedWildcard = null;
-    if (this.openAlbumId === null) {
-      this.dismiss();
-      return;
-    }
-    this.openAlbumId = null;
-    this.notify();
-  }
-
-  /** The arrows in the album page's bottom corners. Five is a short walk, and
-   *  it wraps: a player checking what they are close to should not hit a wall
-   *  at either end. */
-  stepAlbum(by: number): void {
-    if (this.openAlbumId === null) return;
-    const i = ALBUM_ORDER.indexOf(this.openAlbumId);
-    const n = ALBUM_ORDER.length;
-    this.openAlbumId = ALBUM_ORDER[(((i + by) % n) + n) % n]!;
-    this.notify();
-  }
-
+  /**
+   * Open a relic — the ONE level below the list, and the only one
+   * (§11.2 → §11.3). A relic and its album used to be two screens, which made
+   * the thing the nine cards are FOR a screen behind the nine cards; they are
+   * one page now, so `openRelicId` is the whole of the navigation.
+   */
   openRelic(id: ArtifactId): void {
     this.openRelicId = id;
     this.notify();
   }
 
+  /** Reached from an aimed wildcard offer, which names an ALBUM. */
+  openAlbum(id: AlbumId): void {
+    this.openRelic(relicOfAlbum(id, this.state.collection.season));
+  }
+
   closeRelic(): void {
+    this.armedWildcard = null;
+    if (this.openRelicId === null) {
+      this.dismiss();
+      return;
+    }
     this.openRelicId = null;
+    this.notify();
+  }
+
+  /** The arrows in the page's bottom corners. Eight is a short walk, and it
+   *  wraps: a player checking what they are close to should not hit a wall at
+   *  either end. */
+  stepRelic(by: number): void {
+    if (this.openRelicId === null) return;
+    const i = ARTIFACT_ORDER.indexOf(this.openRelicId);
+    const n = ARTIFACT_ORDER.length;
+    this.openRelicId = ARTIFACT_ORDER[(((i + by) % n) + n) % n]!;
     this.notify();
   }
 
@@ -1284,7 +1321,6 @@ export class Game {
       if (result.placed) {
         playSfx('upgradeBought');
         this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
-        if (result.payout !== null) this.takePayouts([result.payout]);
         if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
       } else if (result.reason === 'GoldSlot') {
         this.toast('No wildcard covers a gold card — it is earned or sent');
@@ -1473,7 +1509,7 @@ export class Game {
       // intention, and making the player go and find the album again would
       // be a second errand.
       if (album !== undefined) {
-        this.openAlbumId = album;
+        this.openRelicId = relicOfAlbum(album, this.state.collection.season);
         this.armedWildcard = rarity;
         this.setOverlay('collection');
       } else {
@@ -3173,7 +3209,6 @@ export class Game {
     if (name !== 'collection') this.vaultOpen = false;
     if (name !== 'collection') {
       this.openRelicId = null;
-      this.openAlbumId = null;
       this.armedWildcard = null;
     }
     this.notify();

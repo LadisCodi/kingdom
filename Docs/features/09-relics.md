@@ -511,7 +511,12 @@ gacha already owns. Mockups: M19–M22 in
 - **Hidden behind any sheet**, like every other pill, and absent entirely
   before the first card.
 
-### 11.2 The Collection
+### 11.2 The Relics
+
+**The nav tab is Relics, not Collection.** The cards were never the
+destination: a player goes there to read what their relics DO and to close the
+page that levels one. Naming the tab after the currency rather than after the
+thing it buys put the relics a screen behind a screen.
 
 - A header plate with the **season's name and its frame**, and under it a
   **prize band**: *Complete all eight to win*, the golden call and **25,000
@@ -521,29 +526,56 @@ gacha already owns. Mockups: M19–M22 in
 - One line under the band: the **time left**, the season's total `12/72`, and
   — from the second lap on — a quiet **`Lap 2`** chip. The countdown derives
   from the close timestamp.
-- **The eight albums as round medallions, three to a row** — three, three,
-  then two centred: the album's art in a carved ring, its name under it, an
-  `x/9` pill under that, and **the relic it levels as a small badge on the
-  ring** with its current level, in silhouette while the relic is unfound. A
-  completed medallion is ringed gold with a wax tick, and an album one card
-  short says so.
-- **There is no separate relics strip.** One album per relic means the eight
-  medallions already are the eight relics, and a strip above them would be the
-  same list twice.
+- **The eight RELICS as round medallions, three to a row** — three, three,
+  then two centred: the relic's own art in a carved ring, a **`Lv 3`** tab on
+  the ring (a padlock while it is unfound), its name under it, and an `x/9`
+  pill for its album under that. One line that says both what you have and how
+  close the next level is.
+- **The grid is the roster, in the roster's own order.** Which album a relic
+  draws rotates a season (§3), so a grid ordered by the album ladder would move
+  every relic under the player once a month.
+- **A page ready to close wears a tick**, and it is the only mark on this
+  screen. Nothing closes itself any more (§11.3), so an album standing at nine
+  would otherwise sit there saying nothing.
+- **There is no separate albums strip.** One album per relic means the eight
+  medallions already are the eight albums; the album's own medallion is drawn
+  inside the relic's page and as the provisional face of all 72 cards.
+- The unopened **pack** is the one thing on this screen that asks for a tap, so
+  it sits under the grid as the only slab, naming the tier and how many wait.
 - The **vault** is a round knob at the bottom-right, the way a safe sits in
   the corner of the screen it belongs to: the **stars** count rides it, and
   tapping it opens the shelf of three chests (§7).
 
-### 11.3 An album
+### 11.3 One relic
 
-- A **reward band across the top**: the relic's art in a frame at the left,
-  *Complete the album to win*, and the three rewards as chips — **+1 level**
-  on the relic (or the relic itself, padlocked, if it is unfound), the
-  production chest's hours, and the keys and Gems. The chips are struck
-  through once the album is complete, and the band promises **what THIS lap
-  pays**: on a second lap the Gems chip is gone (§5.1), not struck through.
-- One album per relic means the album screen *is* the relic screen; the
-  relic's frame in the band opens its card (§11.4).
+**One page, not two.** A relic's card and its album's page used to be separate
+screens, which put the thing nine cards are FOR one tap behind the nine cards,
+and the button that spends them on neither.
+
+Top to bottom:
+
+- **The art on the LEFT, the words on the right.** Stacked, the space beside
+  the relic was empty and the page said nothing until the player scrolled.
+- **The level rides the art's own top-left corner**, as a bare label with no
+  plaque behind it — a slab across the frame covered the thing the player
+  opened the page to look at. *Level 3*, with no *of*: there is no cap.
+- Beside it, the relic's **name** and **one sentence** saying what the passive
+  does. A relic whose system does not exist yet says so above it, in muted ink
+  with the reason (§2).
+- **The passive's numbers as a centred band of small tiles**, one per number
+  the relic moves, each carrying *value → value at the next level*. It is the
+  building card's band with a delta in each tile, because a relic's page is its
+  upgrade screen too — there is no separate popup to hold the before and after.
+  A level that moves a number **not at all** greys the tile rather than
+  dropping it: a missing row reads as a bug.
+  - **No heading over it.** The sentence above already named the passive, and
+    the section that does need naming is the one under it.
+- **A section named SPELL**: the ability's name, what it does, chips for its
+  Mana price and its window and radius, and the **cast button**. While the
+  ability is running or resting the countdown replaces the button (§2.1). A
+  relic whose spell is not written yet says so in muted ink rather than
+  showing an empty section.
+- Then the **album**: its medallion, its name and an `x/9` bar.
 - The **3×3 grid**: each slot shows the card or its silhouette, its **rarity
   as stars above the card** — gold slots framed gold — its name on a ribbon
   along the bottom, and a **`+N` corner tag** for the duplicates it holds.
@@ -555,23 +587,18 @@ gacha already owns. Mockups: M19–M22 in
   while one is armed: the difference between *you have one* and *the next tap
   spends it* is a colour, not a word. Every slot the armed wildcard can fill
   is ringed gold; the rest stay as they were.
-- Under the grid, the album's own count — `Album 4 / 8` — and **arrows at the
-  two bottom corners** that walk to the previous and the next album without
-  going back up. Eight albums is still a short walk, and it is how a player
-  checks what they are close to.
-
-### 11.4 A relic's card
-
-- Opened from the album's reward band or from a medallion's badge. The relic's
-  art on a stage, its name, its **level with no *of*** — *Level 3*, because
-  there is no cap — and the season's line: *+1 level when its album closes.*
-- Two rows of the effect: **at this level** and **at the next**, the second in
-  muted ink, so what a level is worth is the card's plainest fact.
-- A line naming **its album and where that album stands**, `7/9`, which is
-  also the way back to it.
-- **The card has no buttons but the way out.** Nothing is attuned, cast,
-  studied or removed (§13) — a relic is what the kingdom has, and reading it
-  is all there is to do.
+- **At the foot, the slab that closes the album** — what the nine cards are
+  for, under the nine cards. Its chips say what this close pays **on this
+  lap**, so a repeat shows no Gems rather than a struck-through one (§5.1): a
+  reward that is not coming should not be on the button at all. Short of nine,
+  the button is padlocked and the count is its reason.
+- **Closing is the PLAYER'S move.** A page used to close itself the instant its
+  last slot filled, which meant a pack could spend nine cards and roll the lap
+  while the player was watching a reveal for something else — they never chose
+  the moment and could not see it coming. Now the page fills and waits.
+- **Arrows at the two bottom corners** walk to the previous and the next relic
+  without going back up. Eight is a short walk, and it is how a player checks
+  what they are close to.
 
 ### 11.5 Opening a pack
 
@@ -631,6 +658,10 @@ Every number below is a **proposal until the sheet exists**; the ones marked
 - **An ability that lives in a tome** (**OQ-98**, closed). A relic whose active
   was a Magic node would be a passive with a picture, and nine cards a page has
   to buy something the player presses.
+- **A separate album screen.** A relic and its nine cards are one page
+  (§11.3), and the button that spends them is on it.
+- **An album that closes itself.** The ninth card makes a page CLOSABLE; the
+  player closes it.
 - **A card that survives the season**, or an extension for a late arrival.
 - **Two albums for one relic**, or an album that levels no relic. One relic,
   one album — the relic strip, the badge and the signpost all collapse into

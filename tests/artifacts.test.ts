@@ -26,7 +26,7 @@ import {
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
   seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, vaultCost,
   buyFromVaultMany,
-  closeGold, payCollectionPrize, PRIZE_BANNER,
+  closeGold, payCollectionPrize, PRIZE_BANNER, canClaimAlbum, claimAlbum,
   albumOfRelic, relicOfAlbum,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
@@ -75,7 +75,9 @@ function close(state: GameState, album: (typeof ALBUM_ORDER)[number]) {
   const rarity = ALBUMS[album].cards[gap]!.rarity;
   state.collection.wildcards[rarity] = (state.collection.wildcards[rarity] ?? 0) + 1;
   const placed = placeWildcard(state, { album, slot: gap }, rarity);
-  return placed.placed ? placed.payout : null;
+  // The page fills; CLOSING it is the player's move, so the helper presses
+  // the button too — that is what "close the album" means now.
+  return placed.placed ? claimAlbum(state, album) : null;
 }
 
 describe('a relic is a permanent passive with no ceiling', () => {
@@ -289,11 +291,13 @@ describe('an album', () => {
     expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
     const level = artifactLevel(state, relic);
     const gems = getWallet(state.player.wallet, 'Gems');
-    // A tenth copy of the ninth card is a duplicate, never a second payout.
+    // A tenth copy of the ninth card is a duplicate, never a second payout —
+    // and the page will not close twice on one lap however it is asked.
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
     grantPack(state, 'Green', 'dev');
-    const again = openPack(state, T0)!;
-    expect(again.payouts).toEqual([]);
+    openPack(state, T0);
+    expect(canClaimAlbum(state, 'FirstFurrow')).toBe(false);
+    expect(claimAlbum(state, 'FirstFurrow')).toBeNull();
     expect(artifactLevel(state, relic)).toBe(level);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
   });
@@ -482,8 +486,13 @@ describe('the collection prize', () => {
     // rolls, so only the prize itself still remembers that they were all in.
     for (let i = 0; i < 600 && !state.collection.prizePaid; i++) {
       grantPack(state, PACK_ORDER[i % PACK_ORDER.length]!, 'dev');
-      const opening = openPack(state, T0);
-      if (opening !== null) payouts.push(...opening.payouts);
+      openPack(state, T0);
+      // The packs fill the pages; the player closes whatever is ready. Which
+      // is the shape of the feature now: a reveal never spends a card.
+      for (const album of ALBUM_ORDER) {
+        const payout = claimAlbum(state, album);
+        if (payout !== null) payouts.push(payout);
+      }
     }
     expect(state.collection.prizePaid).toBe(true);
     // The FIRST lap is the eight pages; a pack that deals several cards at
@@ -507,9 +516,10 @@ describe('the collection prize', () => {
     const rarity = ALBUMS[last].cards[gap]!.rarity;
     state.collection.wildcards[rarity] = 1;
 
-    const result = placeWildcard(state, { album: last, slot: gap }, rarity);
-    expect(result.placed).toBe(true);
-    expect(result.placed && result.payout?.prize?.gems).toBe(COLLECTION.prizeGems);
+    expect(placeWildcard(state, { album: last, slot: gap }, rarity).placed).toBe(true);
+    // The wildcard lays the card; the player closes the page, and THAT is
+    // what the prize rides.
+    expect(claimAlbum(state, last)?.prize?.gems).toBe(COLLECTION.prizeGems);
   });
 
   // The close wipes the albums, so the next season's five pay their own prize.
@@ -823,7 +833,10 @@ describe('a wildcard', () => {
     const result = placeWildcard(
       state, { album: 'TheWildWood', slot: CARDS_PER_ALBUM - 1 }, 3);
     expect(result.placed).toBe(true);
-    expect(result.placed && result.payout?.album).toBe('TheWildWood');
+    // Laying the ninth card does NOT close the page — it makes it closable.
+    expect(albumIsComplete(state, 'TheWildWood')).toBe(false);
+    expect(canClaimAlbum(state, 'TheWildWood')).toBe(true);
+    expect(claimAlbum(state, 'TheWildWood')?.album).toBe('TheWildWood');
     expect(albumIsComplete(state, 'TheWildWood')).toBe(true);
     expect(artifactLevel(state, relicOfAlbum('TheWildWood', state.collection.season))).toBe(1);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.albumGems);
@@ -1093,8 +1106,8 @@ describe('the eight albums run in laps', () => {
       .map((_, i) => (i === gap ? 0 : 3));
     const rarity = ALBUMS.FirstFurrow.cards[gap]!.rarity;
     state.collection.wildcards[rarity] = 1;
-    const placed = placeWildcard(state, { album: 'FirstFurrow', slot: gap }, rarity);
-    expect(placed.placed && placed.payout).not.toBeNull();
+    expect(placeWildcard(state, { album: 'FirstFurrow', slot: gap }, rarity).placed).toBe(true);
+    expect(claimAlbum(state, 'FirstFurrow')).not.toBeNull();
 
     const row = state.collection.cards.FirstFurrow!;
     expect(row).toEqual(ALBUMS.FirstFurrow.cards.map((_, i) => (i === gap ? 0 : 2)));

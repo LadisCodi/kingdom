@@ -247,23 +247,14 @@ export interface RevealedCard {
 export interface PackOpening {
   pack: PendingPack;
   cards: RevealedCard[];
-  /** Albums this pack finished, in the order their ninth card landed — with
-   *  everything each one paid, for the sheet that follows the reveal. */
-  payouts: AlbumPayout[];
   starsEarned: number;
 }
 
-/**
- * Open the pack at the front of the queue, banking its cards.
- *
- * Album completion is checked per card rather than once at the end, so the
- * album that a pack's third card finishes is the one the sheet follows the
- * reveal with (§11.5).
- */
+/** Open the pack at the front of the queue, banking its cards. */
 export function openPack(state: GameState, now: number): PackOpening | null {
   const pack = state.collection.packs.shift();
   if (!pack) return null;
-  const opening: PackOpening = { pack, cards: [], payouts: [], starsEarned: 0 };
+  const opening: PackOpening = { pack, cards: [], starsEarned: 0 };
   void now;
   for (const ref of packCards(state.seed, pack)) {
     opening.cards.push(addCard(state, ref, opening));
@@ -278,15 +269,9 @@ function addCard(
   state.collection.cards[ref.album] = row;
   const before = row[ref.slot] ?? 0;
   row[ref.slot] = before + 1;
-  // Completion is checked on EVERY card, new or not, because it is a question
-  // about the ALBUM and not about the card: a page filled by a wildcard or by
-  // a gift has to pay the same way a page filled by a pack does. The guard
-  // inside `completeIfDue` is what keeps it once a season.
-  const payout = completeIfDue(state, ref.album);
-  if (payout !== null) {
-    opening.payouts.push(payout);
-    rollLapIfDue(state);
-  }
+  // A NINTH CARD PAYS NOTHING BY ITSELF. Closing an album is the player's
+  // move now — `claimAlbum` — so a pack fills the page and stops there
+  // (Docs/features/09-relics.md §11.3).
   if (before >= 1) {
     const stars = starsFor(ref);
     state.collection.stars += stars;
@@ -343,16 +328,28 @@ export function albumRewards(album: AlbumId, lap = 0): {
 }
 
 /**
- * THE NINTH CARD. Marks the album complete and pays all three things at once.
+ * WHETHER THE PLAYER MAY CLOSE THIS ALBUM RIGHT NOW — the nine are in hand and
+ * it has not been closed on this lap.
  *
- * Paid HERE, synchronously, rather than queued: an album can only complete
- * while a pack is being opened, and a pack is only ever opened by a player who
- * is looking at it. Nothing about completion is a timer, so nothing about it
- * needs to survive an absence.
+ * The button on the album reads this, and `claimAlbum` re-asks it, so a stale
+ * screen cannot spend a page twice.
  */
-function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
-  if (albumIsComplete(state, album)) return null;
-  if (albumHeld(state, album) < CARDS_PER_ALBUM) return null;
+export const canClaimAlbum = (state: GameState, album: AlbumId): boolean =>
+  !albumIsComplete(state, album) && albumHeld(state, album) >= CARDS_PER_ALBUM;
+
+/**
+ * CLOSE THE ALBUM. Spends the nine cards and pays all of it at once.
+ *
+ * THE PLAYER'S MOVE, not the ninth card's. A page used to close itself the
+ * instant its last slot filled, which meant a pack could spend nine cards and
+ * roll the lap while the player was watching a reveal — they never chose the
+ * moment and could not see it coming. Now the page fills and waits.
+ *
+ * Paid HERE, synchronously: it is a command, nothing about it is a timer, and
+ * nothing about it needs to survive an absence.
+ */
+export function claimAlbum(state: GameState, album: AlbumId): AlbumPayout | null {
+  if (!canClaimAlbum(state, album)) return null;
 
   // THE NINE CARDS ARE SPENT. Without this the loop does not terminate: a
   // reset that left the cards in hand would re-complete every album on the
@@ -376,17 +373,21 @@ function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
   if (rewards.goldKeys > 0) addToWallet(state.player.wallet, 'GoldKey', rewards.goldKeys);
   if (rewards.gems > 0) addToWallet(state.player.wallet, 'Gems', rewards.gems);
 
-  return {
+  const payout: AlbumPayout = {
     album,
     relic,
     level: state.artifacts.levels[relic] ?? 1,
     found,
     chest,
     ...rewards,
-    // The last card of the LAST album is also the season's 72nd.
+    // The eighth album closed is also the season's prize.
     prize: payCollectionPrize(state),
     lap,
   };
+  // AFTER the prize, which asks whether all eight are in `completed`: rolling
+  // the lap empties that list, so doing it first would lose the season.
+  rollLapIfDue(state);
+  return payout;
 }
 
 /**
@@ -540,7 +541,7 @@ export function buyWildcard(state: GameState, rarity: Rarity): BuyWildcardResult
 }
 
 export type PlaceWildcardResult =
-  | { placed: true; payout: AlbumPayout | null }
+  | { placed: true }
   | { placed: false; reason: 'NoWildcard' | 'AlreadyHeld' | 'GoldSlot' | 'AlbumComplete' };
 
 /**
@@ -564,11 +565,9 @@ export function placeWildcard(
   const row = state.collection.cards[ref.album] ?? emptyAlbum();
   state.collection.cards[ref.album] = row;
   row[ref.slot] = 1;
-  // The same completion path a pack's ninth card takes, which is why
-  // `completeIfDue` is a question about the ALBUM and not about the card.
-  const payout = completeIfDue(state, ref.album);
-  if (payout !== null) rollLapIfDue(state);
-  return { placed: true, payout };
+  // Like a pack's ninth card, it fills the page and stops there: closing the
+  // album is `claimAlbum`, which the player presses.
+  return { placed: true };
 }
 
 /**
