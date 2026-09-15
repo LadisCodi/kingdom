@@ -328,21 +328,34 @@
 .col-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
+/* A CARD IS UPRIGHT AND SMALL. It used to be a square box holding a round
+   medallion, which made a row taller than a phone can spare — three of them
+   filled the screen and the slab that closes the album fell off the bottom.
+   The nine and the button they feed belong on one screenful: that is the
+   whole point of putting the album under the relic.
+
+   SQUARE, and it is arithmetic rather than taste. Three columns of a ~340px
+   sheet make a card ~110px wide; three rows of those plus the album's head and
+   the slab that closes it come to about 900 of the ~1075px the sheet has. At
+   3:4 the grid alone was 951 and nothing else could be on screen with it. */
 .col-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 14px 4px 0;
-  border-radius: var(--radius-sm);
-  border: 3px solid var(--wood-dark);
-  background: var(--parchment);
+  align-items: stretch;
+  aspect-ratio: 1;
+  /* A DRAWN FRAME, 9-sliced: the carved corners are kept as drawn and the
+     plain mouldings between them stretch to whatever the card ends up being.
+     NO `fill`, deliberately — the middle stays transparent so the rarity wash
+     below shows through the frame rather than being painted over by it. */
+  border: 9px solid transparent;
+  border-image: url('../../../render/assets/card_frame.png') 45 / 9px stretch;
   cursor: pointer;
   font: inherit;
   color: inherit;
+  background-clip: padding-box;
   overflow: hidden;
 }
 .col-card:active { transform: translateY(2px); }
@@ -353,14 +366,16 @@
 .col-card.r3 { background: linear-gradient(180deg, #e6eef9, #c8d9f2); }
 .col-card.r4 { background: linear-gradient(180deg, #f0e6f8, #ddc9f0); }
 .col-card.r5 { background: linear-gradient(180deg, #fbe9dc, #f4cfae); }
+/* A gold edition wears a gold frame, which is the whole of how it is told
+   apart — it needs no badge, because the frame IS the badge. */
 .col-card.is-gold {
-  border-color: var(--gold-dark);
-  box-shadow: inset 0 0 0 2px var(--gold), 0 2px 0 rgba(60, 36, 18, 0.3);
+  border-image: url('../../../render/assets/card_frame_gold.png') 45 / 9px stretch;
 }
+/* AN EMPTY SLEEVE, not a dashed box. `fill` here and only here: the slot's own
+   grey middle IS the empty, so it paints over the rarity wash. */
 .col-card.is-missing {
-  background: var(--parchment-shade);
-  border-style: dashed;
-  border-color: rgba(92, 58, 30, 0.5);
+  background: none;
+  border-image: url('../../../render/assets/card_slot.png') 45 fill / 9px stretch;
 }
 /* Where an armed wildcard can land. Gold and lit, because the question the
    player is holding is "which of these can I fill?" and the grid answers it
@@ -372,49 +387,68 @@
 }
 .col-card.is-fillable .col-card-art.is-silhouette { opacity: 0.9; }
 
+/* The stars ride ON the face rather than above it, so they cost the card no
+   height of its own. */
 .col-card-stars {
   position: absolute;
   top: 2px;
+  left: 0;
+  right: 0;
   display: flex;
+  justify-content: center;
   gap: 1px;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(60, 36, 18, 0.7));
 }
+.col-card-stars > .icon { --icon-size: 13px; }
 .col-card.is-missing .col-card-stars { filter: grayscale(1) brightness(1.15); opacity: 0.7; }
 
-/* The album's medallion stands in for the card's own face until the 45 are
-   drawn, so it is presented AS a medallion — centred, inset, with the rarity
-   wash showing around it — rather than cropped square and passed off as art
-   it is not. */
-.col-card-art { width: 86%; aspect-ratio: 1; object-fit: contain; margin-top: 2px; }
+/* THE FACE FILLS THE CARD. The album's medallion stands in for the card's own
+   art until the 72 are drawn, and at this size it is CROPPED to the card
+   rather than floated inside it: a small round picture in a rectangle reads as
+   a placeholder, where the same picture filling the frame reads as a card. */
+.col-card-art { flex: 1; width: 100%; min-height: 0; object-fit: cover; }
 .col-card-art.is-silhouette {
   display: grid; place-items: center;
   opacity: 0.4;
 }
-.col-card-art.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.col-card-art.is-glyph { display: grid; place-items: center; font-size: 22px; }
 
 /* The name on a ribbon along the bottom, as M22 draws it: the card's picture
-   runs to the edges and the ribbon sits on top of it. */
+   runs to the edges and the ribbon sits on top of it. One line, clipped —
+   nine names of unequal length must not give nine cards unequal heights. */
 .col-card-name {
-  width: calc(100% + 8px);
-  margin: 0 -4px;
-  padding: 3px 2px;
-  background: var(--leaf-dark);
+  flex: none;
+  margin: 0 -7px -3px;
+  padding: 3px 8px 5px;
+  /* The ribbon is a frame too: its gold ends are the corners and the cloth
+     between them stretches to the name. */
+  border: 0 solid transparent;
+  border-left-width: 9px;
+  border-right-width: 9px;
+  border-image: url('../../../render/assets/card_ribbon.png') 40 20 fill / 9px 9px stretch;
   color: var(--ink-inverse);
-  font-size: 11px;
+  text-shadow: 0 1px 1px rgba(20, 60, 30, 0.8);
+  font-size: 10px;
   font-weight: var(--weight-strong);
-  line-height: 1.15;
+  line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.col-card.is-missing .col-card-name { background: rgba(92, 58, 30, 0.35); color: var(--ink-muted); }
+.col-card.is-missing .col-card-name { filter: grayscale(0.8) brightness(0.85); }
 
 .col-dupe {
   position: absolute;
   left: 2px;
-  bottom: 22px;
-  padding: 0 5px;
+  bottom: 18px;
+  z-index: 1;
+  padding: 0 4px;
   border-radius: 6px;
   border: 2px solid var(--wood-dark);
   background: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--weight-strong);
   color: var(--ink);
 }

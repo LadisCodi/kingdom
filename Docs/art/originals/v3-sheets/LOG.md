@@ -411,3 +411,25 @@ readable without the text.
 | spr-v | 7 | `pack_bronzechest.png` | `… 418x418+0+836 …` |
 | spr-v | 8 | `pack_silverchest.png` | `… 418x418+418+836 …` |
 | spr-v | 9 | `pack_goldchest.png` | `… 418x418+836+836 …` |
+
+## spr-w — the card frames
+
+("Crear hoja de iconos UI", 2026-09-15). Four 9-SLICE frames rather than four
+pictures, which changes what the prompt has to say: the browser keeps the
+corners as drawn and stretches the edges between them, so the brief led with
+the constraint — **a border of constant thickness, ornate corners that are
+self-contained, and plain repeating mouldings along the edges with no feature
+halfway along a side**, because a bolt or a gem in the middle of an edge smears
+when it is stretched. It came back right first time.
+
+| Sheet | Cell | File | Used as |
+|---|---|---|---|
+| spr-w | 1 | `card_frame.png` | `border-image … 45 / 9px stretch` — **no `fill`**, so the rarity wash shows through the middle |
+| spr-w | 2 | `card_frame_gold.png` | the gold edition. The frame IS the badge |
+| spr-w | 3 | `card_slot.png` | `45 fill / 9px` — `fill` only here, because the slot's grey middle IS the empty |
+| spr-w | 4 | `card_ribbon.png` | `40 20 fill / 9px 9px` — the gold ends are its corners |
+
+Cut with a plain `-crop` per quadrant and trimmed on an **alpha threshold**
+rather than `-trim`: the ribbon's faint halo made a bare `-trim` return a
+576px-tall box for a 174px ribbon. Then halved, so a ~110px card draws a
+~214px source. Corner `srgba(0,0,0,0)`, alpha mean 0.45.
