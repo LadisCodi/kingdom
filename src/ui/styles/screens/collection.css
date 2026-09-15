@@ -72,8 +72,8 @@
 
 /* ------------------------------------------------------------- the medallions */
 
-/* Three and two, centred — the second row is short by design and centring it
-   is what stops the fifth album reading as an orphan. */
+/* Three to a row, centred — eight albums read as three, three and two, and
+   centring the short row is what stops the last one reading as an orphan. */
 .col-grid {
   display: flex;
   flex-wrap: wrap;

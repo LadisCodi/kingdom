@@ -27,6 +27,7 @@ import {
   seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, vaultCost,
   buyFromVaultMany,
   closeGold, payCollectionPrize, seasonIsComplete, PRIZE_BANNER,
+  albumOfRelic, relicOfAlbum,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
@@ -58,6 +59,23 @@ function fill(state: GameState, album: (typeof ALBUM_ORDER)[number], n: number):
   const row = state.collection.cards[album] ?? new Array(CARDS_PER_ALBUM).fill(0);
   for (let i = 0; i < n; i++) row[i] = (row[i] ?? 0) + 1;
   state.collection.cards[album] = row;
+}
+
+/**
+ * Close an album through the REAL path, deterministically: hold eight of its
+ * nine and lay the last with a wildcard.
+ *
+ * A pack cannot be relied on to deal a named card — the season is 72 slots
+ * wide and a two-card pack lands where it lands — and what these tests are
+ * about is the payout rather than the odds.
+ */
+function close(state: GameState, album: (typeof ALBUM_ORDER)[number]) {
+  const gap = ALBUMS[album].cards.findIndex((c) => c.gold !== true);
+  state.collection.cards[album] = ALBUMS[album].cards.map((_, i) => (i === gap ? 0 : 1));
+  const rarity = ALBUMS[album].cards[gap]!.rarity;
+  state.collection.wildcards[rarity] = (state.collection.wildcards[rarity] ?? 0) + 1;
+  const placed = placeWildcard(state, { album, slot: gap }, rarity);
+  return placed.placed ? placed.payout : null;
 }
 
 describe('a relic is a permanent passive with no ceiling', () => {
@@ -250,19 +268,13 @@ describe('an album', () => {
   it('pays its relic, a chest, keys and Gems on the ninth card', () => {
     const gems = getWallet(state.player.wallet, 'Gems');
     const gold = getWallet(state.city.wallet, 'Gold');
-    fill(state, 'FirstFurrow', CARDS_PER_ALBUM - 1);
-    grantPack(state, 'Green', 'dev');
-    // The ninth card, planted by hand where the pack cannot be relied on to
-    // deal it: what is under test is the payout, not the odds.
-    fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    const opening = openPack(state, T0)!;
-    expect(opening.payouts).toHaveLength(1);
-    const payout = opening.payouts[0]!;
+    const payout = close(state, 'FirstFurrow')!;
+    expect(payout).not.toBeNull();
     expect(payout.album).toBe('FirstFurrow');
-    expect(payout.relic).toBe(ALBUMS.FirstFurrow.relic);
+    expect(payout.relic).toBe(relicOfAlbum('FirstFurrow', state.collection.season));
     expect(payout.found).toBe(true);
     expect(payout.level).toBe(1);
-    expect(ownsArtifact(state, 'DowsingRod')).toBe(true);
+    expect(ownsArtifact(state, payout.relic)).toBe(true);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.albumGems);
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
     expect(getWallet(state.player.wallet, 'SilverKey'))
@@ -272,17 +284,17 @@ describe('an album', () => {
   // THE GUARD. A tenth copy of the ninth card is a duplicate, never a second
   // payout, and a season only ever levels a relic once.
   it('pays once a season, however many copies land', () => {
-    fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    grantPack(state, 'Green', 'dev');
-    openPack(state, T0);
+    const relic = relicOfAlbum('FirstFurrow', state.collection.season);
+    expect(close(state, 'FirstFurrow')).not.toBeNull();
     expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
-    const level = artifactLevel(state, 'DowsingRod');
+    const level = artifactLevel(state, relic);
     const gems = getWallet(state.player.wallet, 'Gems');
+    // A tenth copy of the ninth card is a duplicate, never a second payout.
     fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
     grantPack(state, 'Green', 'dev');
     const again = openPack(state, T0)!;
     expect(again.payouts).toEqual([]);
-    expect(artifactLevel(state, 'DowsingRod')).toBe(level);
+    expect(artifactLevel(state, relic)).toBe(level);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
   });
 
@@ -301,22 +313,53 @@ describe('an album', () => {
     expect(bigger.Gold!).toBeGreaterThan(chest.Gold!);
   });
 
-  it('never levels one relic from two albums', () => {
-    const relics = ALBUM_ORDER.map((id) => ALBUMS[id].relic);
-    expect(new Set(relics).size).toBe(ALBUM_ORDER.length);
-    expect(SEASON_CARDS).toBe(ALBUM_ORDER.length * CARDS_PER_ALBUM);
+  // STEP 4 CLOSED THE GAP: eight albums and eight relics, so every relic is
+  // reachable and no relic is orphaned in any season.
+  it('gives every relic an album, in every season', () => {
+    expect(ARTIFACT_ORDER).toHaveLength(8);
+    expect(ALBUM_ORDER).toHaveLength(8);
+    for (let season = 0; season < 20; season++) {
+      const levelled = ALBUM_ORDER.map((id) => relicOfAlbum(id, season));
+      expect(new Set(levelled).size, `season ${season}`).toBe(ARTIFACT_ORDER.length);
+    }
   });
 
-  // THE GAP STEP 4 CLOSES (Docs/plans/collection-eight.md). Eight relics
-  // exist and five albums do, so three relics cannot be earned yet — they are
-  // reachable from `?dev` and from nowhere else. Delete this test when the
-  // eighth album lands and put the equality back.
-  it('has three more relics than albums, until the eighth album lands', () => {
-    expect(ARTIFACT_ORDER).toHaveLength(8);
-    expect(ALBUM_ORDER).toHaveLength(5);
-    const levelled = new Set(ALBUM_ORDER.map((id) => ALBUMS[id].relic));
-    const orphans = ARTIFACT_ORDER.filter((id) => !levelled.has(id));
-    expect(orphans).toEqual(['DelversLantern', 'MusterHorn', 'BailiffsTally']);
+  // THE ROTATION. A fixed pairing on a fixed difficulty ladder means the two
+  // dearest relics never level for anybody who does not buy packs, so the
+  // pairing walks a step a season and every relic takes every rung.
+  it('walks every relic through every rung in eight seasons', () => {
+    for (const relic of ARTIFACT_ORDER) {
+      const rungs = new Set<number>();
+      for (let season = 0; season < ALBUM_ORDER.length; season++) {
+        rungs.add(ALBUM_ORDER.indexOf(albumOfRelic(relic, season)));
+      }
+      expect(rungs.size, relic).toBe(ALBUM_ORDER.length);
+    }
+  });
+
+  it('is the same answer both ways round', () => {
+    for (let season = 0; season < 12; season++) {
+      for (const album of ALBUM_ORDER) {
+        expect(albumOfRelic(relicOfAlbum(album, season), season)).toBe(album);
+      }
+    }
+  });
+
+  // THE LADDER. An album's composition is its difficulty, and the eight rungs
+  // climb — so which album a player closes says what they could open.
+  it('climbs: no album is cheaper than the one before it', () => {
+    const worth = (id: typeof ALBUM_ORDER[number]): number =>
+      ALBUMS[id].cards.reduce((n, c) => n + c.rarity + (c.gold === true ? 0.5 : 0), 0);
+    for (let i = 1; i < ALBUM_ORDER.length; i++) {
+      expect(worth(ALBUM_ORDER[i]!), ALBUM_ORDER[i]).toBeGreaterThan(worth(ALBUM_ORDER[i - 1]!));
+    }
+  });
+
+  it('holds seventy-two cards, nine to a page', () => {
+    expect(SEASON_CARDS).toBe(72);
+    for (const id of ALBUM_ORDER) expect(ALBUMS[id].cards, id).toHaveLength(CARDS_PER_ALBUM);
+    const names = ALBUM_ORDER.flatMap((id) => ALBUMS[id].cards.map((c) => c.name));
+    expect(new Set(names).size, 'two cards share a name').toBe(names.length);
   });
 });
 
@@ -757,7 +800,7 @@ describe('a wildcard', () => {
     expect(result.placed).toBe(true);
     expect(result.placed && result.payout?.album).toBe('TheWildWood');
     expect(albumIsComplete(state, 'TheWildWood')).toBe(true);
-    expect(artifactLevel(state, ALBUMS.TheWildWood.relic)).toBe(1);
+    expect(artifactLevel(state, relicOfAlbum('TheWildWood', state.collection.season))).toBe(1);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.albumGems);
   });
 
@@ -787,15 +830,15 @@ describe('a wildcard', () => {
     // One purchase has to fill any hole the album still has, or the player is
     // doing arithmetic on a price tag.
     it('offers the rarity that covers every missing slot', () => {
-      // Hold everything in Hands at Work but its three 4★ slots.
-      const row = new Array(CARDS_PER_ALBUM).fill(1);
-      ALBUMS.HandsAtWork.cards.forEach((card, slot) => {
-        if (card.rarity === 4) row[slot] = 0;
-      });
-      state.collection.cards.HandsAtWork = row;
-      const offer = wildcardOffers(state).find((o) => o.album === 'HandsAtWork')!;
-      expect(offer.rarity).toBe(4);
-      expect(offer.cost).toBe(wildcardGemCost(4));
+      // Hold everything in Market Day but its dearest plain slots — the offer
+      // names the DEAREST hole, so one purchase fills any of them.
+      const dearest = Math.max(...ALBUMS.MarketDay.cards
+        .filter((c) => c.gold !== true).map((c) => c.rarity));
+      const row = ALBUMS.MarketDay.cards.map((c) => (c.rarity === dearest ? 0 : 1));
+      state.collection.cards.MarketDay = row;
+      const offer = wildcardOffers(state).find((o) => o.album === 'MarketDay')!;
+      expect(offer.rarity).toBe(dearest);
+      expect(offer.cost).toBe(wildcardGemCost(dearest as Rarity));
     });
 
     // Down to gold alone there is nothing to sell, so the offer carries no
@@ -809,9 +852,7 @@ describe('a wildcard', () => {
     });
 
     it('says nothing about an album that is already complete', () => {
-      fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-      grantPack(state, 'Green', 'dev');
-      openPack(state, T0);
+      expect(close(state, 'FirstFurrow')).not.toBeNull();
       expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
       expect(wildcardOffers(state).some((o) => o.album === 'FirstFurrow')).toBe(false);
     });
@@ -1036,9 +1077,8 @@ describe('the season', () => {
       fill(state, 'FirstFurrow', 3);
       const three = closeGold(state);
       expect(three.cards).toBe(3);
-      // Ploughshare, Seed Sack, Scarecrow: 1★ + 1★ + 2★ on the stars ladder.
-      expect(three.stars).toBe(
-        2 * COLLECTION.starsPerFace['1star'] + COLLECTION.starsPerFace['2star']);
+      // First Furrow's first three are all 1★ — it is the bottom rung.
+      expect(three.stars).toBe(3 * COLLECTION.starsPerFace['1star']);
       expect(three.gold).toBeGreaterThan(0);
 
       fill(state, 'TheKingsCoin', CARDS_PER_ALBUM);
@@ -1099,12 +1139,11 @@ describe('the season', () => {
   it('wipes the cards and the stars at the close, and keeps the levels', () => {
     const state = freshGame();
     state.collection.season = seasonAt(T0);
-    fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-    grantPack(state, 'Green', 'dev');
-    openPack(state, T0);
+    const relic = relicOfAlbum('FirstFurrow', state.collection.season);
+    expect(close(state, 'FirstFurrow')).not.toBeNull();
     state.collection.stars = 120;
     grantPack(state, 'Blue', 'dev');
-    const level = artifactLevel(state, 'DowsingRod');
+    const level = artifactLevel(state, relic);
     expect(level).toBe(1);
 
     const at = seasonEndsAt(state.collection.season);
@@ -1116,7 +1155,7 @@ describe('the season', () => {
     // An unopened pack is a hand of THIS season's cards and goes with them.
     expect(state.collection.packs).toEqual([]);
     // The permanent layer — the one the season leaves behind.
-    expect(artifactLevel(state, 'DowsingRod')).toBe(level);
+    expect(artifactLevel(state, relic)).toBe(level);
   });
 
   // INVARIANT 1. The close is a boundary in absolute time, so one call over
@@ -1167,28 +1206,31 @@ describe('the season', () => {
     const names: string[] = [];
     let t = T0;
 
+    const levelled: string[] = [];
     for (let season = 0; season < SEASONS.length + 1; season++) {
       names.push(seasonDef(state.collection.season).name);
-      // A season's play: the album is closed and the relic takes its level.
-      fill(state, 'FirstFurrow', CARDS_PER_ALBUM);
-      grantPack(state, 'Green', 'dev');
-      openPack(state, t);
-      expect(artifactLevel(state, 'DowsingRod')).toBe(season + 1);
+      // A season's play: the bottom album is closed and ITS relic takes a
+      // level — which is a DIFFERENT relic each season, because the pairing
+      // rotates a step.
+      const relic = relicOfAlbum('FirstFurrow', state.collection.season);
+      levelled.push(relic);
+      expect(close(state, 'FirstFurrow')).not.toBeNull();
+      expect(artifactLevel(state, relic)).toBe(1);
 
       const gold = getWallet(state.city.wallet, 'Gold');
       t = seasonEndsAt(state.collection.season) + 1000;
       const closed = advance(state, map, t).seasonClosed;
       expect(closed).not.toBeNull();
-      // The cards melted — the nine of the album, plus whatever the pack
-      // dealt into the other four — the album is empty, and the level
-      // survived.
       expect(closed!.cards).toBeGreaterThanOrEqual(CARDS_PER_ALBUM);
       expect(closed!.gold).toBeGreaterThan(0);
       expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
       expect(seasonHeld(state)).toBe(0);
-      expect(artifactLevel(state, 'DowsingRod')).toBe(season + 1);
+      expect(artifactLevel(state, relic)).toBe(1);
       expect(state.collection.season).toBe(seasonAt(t));
     }
+    // The rotation is what makes a fixed ladder fair: the same rung levelled
+    // a different relic every time.
+    expect(new Set(levelled).size).toBe(levelled.length);
 
     // Consecutive seasons are different, and the list came back round rather
     // than running out: nothing about the calendar depends on more content.

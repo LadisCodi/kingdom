@@ -2164,4 +2164,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 48;
+export const SAVE_VERSION = 49;

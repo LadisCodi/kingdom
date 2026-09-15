@@ -8,7 +8,7 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: steps 1, 2 and 3 done 2026-09-15.** Save version 48.
+> **Status: steps 1–4 done 2026-09-15.** Save version 49.
 >
 > **One decision gates a third of it** — **OQ-98**, whether the relic actives
 > stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
@@ -37,7 +37,7 @@
 | ~~**1**~~ | ~~The five passives take their final shape~~ **done** (OQ-97 closed) | — | **M** |
 | ~~**2**~~ | ~~Eight relics exist, as passives~~ **done** | 1 | **M** |
 | ~~**3**~~ | ~~The packs, the chests and the stars~~ **done** | — | **M** |
-| **4** | Eight albums, and the pairing rotates | 2, 3 | **M** |
+| ~~**4**~~ | ~~Eight albums, and the pairing rotates~~ **done** | 2, 3 | **M** |
 | **5** | The album cycle | 4 | **M** |
 | **6** | Zones, cooldowns and the actives | **OQ-98**, 2 | **L** |
 | **7** | The art | — (runs alongside) | **M** |
@@ -197,8 +197,28 @@ Self-contained, and the step whose numbers are already measured.
 - **Save** — bump **and a migrator**: `collection.cards` is keyed by `AlbumId`
   and the old five ids are gone. Dropping unknown keys is correct — the close
   wipes cards anyway.
-- **Test** — five... **eight** consecutive seasons give every relic every rung
-  exactly once.
+- **Test** — eight consecutive seasons give every relic every rung exactly
+  once; the ladder climbs; and no two cards share a name.
+
+### 4.1 How it landed
+
+- **Eight albums, 72 cards**, on the authored rarity ladder: *First Furrow ·
+  The Wild Wood · Hands at Work · Market Day · The King's Coin · Under the
+  Hill · The Long March · The Star Road*. The theme climbs with the difficulty
+  — soil, wood, craft, market, coin, the deep, the war, the heavens — so which
+  album a player closes says what they were able to open. 45 of the card names
+  were already written and are reused; 27 are new.
+- **`AlbumDef` lost its `relic`.** `relicOfAlbum(album, occurrence)` replaces
+  it, derived as `ARTIFACT_ORDER[(albumIndex + occurrence) mod 8]`.
+- **The rotation lives in `collection.ts`, not `seasons.ts`.** The album set
+  and the relic roster are declared in two files that already point one way,
+  and a pairing importing both would close the loop.
+- **Both step-2 gaps are closed**: every relic has an album in every season,
+  and no relic card falls back to *First Furrow*.
+- **The tests needed a deterministic `close(album)`** — hold eight and lay the
+  ninth with a wildcard. A 72-slot season means a two-card pack cannot be
+  relied on to deal a named card, and what those tests are about is the payout
+  rather than the odds.
 
 ## 5. The album cycle
 

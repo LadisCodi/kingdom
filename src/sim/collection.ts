@@ -22,7 +22,7 @@
 //     precedent (CLAUDE.md, "Money and identity are different things").
 
 import {
-  CARD_BUNDLE_ORDER, CHEST_ORDER, COLLECTION, CURRENCIES, FACE_ORDER, PACKS,
+  ARTIFACT_ORDER, CARD_BUNDLE_ORDER, CHEST_ORDER, COLLECTION, CURRENCIES, FACE_ORDER, PACKS,
   SOBRE_ORDER, STORE, faceOf,
   type BannerId, type CardBundleDef, type FaceId, type PackTier,
 } from './data/definitions';
@@ -62,6 +62,36 @@ export const seasonDef = (occurrence: number): SeasonDef => seasonContent(occurr
 /** Milliseconds left in the live season, floored at 0. */
 export const seasonLeftMs = (state: GameState, now: number): number =>
   Math.max(0, seasonEndsAt(state.collection.season) - now);
+
+// ------------------------------------------------- which relic an album levels
+
+/**
+ * WHICH RELIC AN ALBUM LEVELS, THIS SEASON.
+ *
+ * Rotated a step an occurrence rather than authored, for two reasons. The
+ * difficulty ladder is fixed and the reward is not — every album pays exactly
+ * one relic level — so a FIXED pairing means a player who closes the bottom
+ * four every season has four relics at level N and four at zero, for ever.
+ * And it is DERIVED rather than written into the seasons file because that
+ * list CYCLES: with two seasons authored, a hand-written pairing would only
+ * ever show two of the eight arrangements.
+ *
+ * A full rotation is eight seasons, so a player who never buys a pack has
+ * levelled all eight relics — one at a time — inside eight months.
+ *
+ * It lives here rather than in `seasons.ts` because the album set and the
+ * relic roster are declared in two files that already point one way, and a
+ * pairing that imported both would close the loop.
+ */
+export const relicOfAlbum = (album: AlbumId, occurrence: number): ArtifactId => {
+  const n = ALBUM_ORDER.length;
+  const i = (((ALBUM_ORDER.indexOf(album) + occurrence) % n) + n) % n;
+  return ARTIFACT_ORDER[i] ?? ARTIFACT_ORDER[0]!;
+};
+
+/** The other way round: the album that levels this relic, this season. */
+export const albumOfRelic = (relic: ArtifactId, occurrence: number): AlbumId =>
+  ALBUM_ORDER.find((id) => relicOfAlbum(id, occurrence) === relic) ?? ALBUM_ORDER[0]!;
 
 // ----------------------------------------------------------------- the cards
 
@@ -312,7 +342,7 @@ function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
   if (albumHeld(state, album) < CARDS_PER_ALBUM) return null;
   state.collection.completed.push(album);
 
-  const relic = ALBUMS[album].relic;
+  const relic = relicOfAlbum(album, state.collection.season);
   const found = grantArtifactLevel(state, relic) === 'Granted';
   const rewards = albumRewards(album);
   const chest = productionChest(state, rewards.hours);

@@ -42,11 +42,11 @@ import {
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
   buyFromVaultMany,
   wildcardCovers, wildcardOffers, wildcardsHeld,
-  PRIZE_BANNER, SEASON_CARDS,
+  PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
   type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
 } from './sim/collection';
 import {
-  ALBUMS, ALBUM_ORDER, albumOfRelic, RARITIES, type AlbumId, type Rarity,
+  ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
@@ -1036,16 +1036,17 @@ export class Game {
   }> {
     return ALBUM_ORDER.map((id) => {
       const def = ALBUMS[id];
-      const relic = ARTIFACTS[def.relic];
+      const relicId = relicOfAlbum(id, this.state.collection.season);
+      const relic = ARTIFACTS[relicId];
       return {
         id,
         name: def.name,
         held: albumHeld(this.state, id),
         total: def.cards.length,
         complete: albumIsComplete(this.state, id),
-        relic: def.relic,
+        relic: relicId,
         relicName: relic.name,
-        relicLevel: artifactLevel(this.state, def.relic),
+        relicLevel: artifactLevel(this.state, relicId),
         sprite: relic.sprite,
         glyph: relic.glyph,
       };
@@ -1063,16 +1064,17 @@ export class Game {
     }>;
   } {
     const def = ALBUMS[id];
-    const relic = ARTIFACTS[def.relic];
+    const relicId = relicOfAlbum(id, this.state.collection.season);
+    const relic = ARTIFACTS[relicId];
     return {
       id,
       name: def.name,
       index: ALBUM_ORDER.indexOf(id) + 1,
       of: ALBUM_ORDER.length,
       complete: albumIsComplete(this.state, id),
-      relic: def.relic,
+      relic: relicId,
       relicName: relic.name,
-      relicLevel: artifactLevel(this.state, def.relic),
+      relicLevel: artifactLevel(this.state, relicId),
       sprite: relic.sprite,
       glyph: relic.glyph,
       rewards: albumRewards(id),
@@ -1098,7 +1100,7 @@ export class Game {
     pending: string | null;
   } {
     const def = ARTIFACTS[id];
-    const album = albumOfRelic(id);
+    const album = albumOfRelic(id, this.state.collection.season);
     return {
       id,
       name: def.name,
@@ -1436,7 +1438,7 @@ export class Game {
         rarity: o.rarity,
         cost: o.cost,
         sprite: `album_${o.album.toLowerCase()}`,
-        relic: ALBUMS[o.album].relic,
+        relic: relicOfAlbum(o.album, this.state.collection.season),
       }));
   }
 

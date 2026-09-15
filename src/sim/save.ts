@@ -20,7 +20,7 @@ import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
-import type { AlbumId } from './data/seasons';
+import { ALBUM_ORDER, type AlbumId } from './data/seasons';
 import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
@@ -1074,8 +1074,13 @@ export function deserialize(
   if (collectionDto) {
     state.collection = {
       season: collectionDto.Season ?? 0,
-      cards: { ...(collectionDto.Cards ?? {}) },
-      completed: [...((collectionDto.Completed ?? []) as AlbumId[])],
+      // An album the build no longer has is dropped rather than migrated: the
+      // ladder was rebuilt from five albums to eight, and the close wipes
+      // cards anyway, so a page of a retired album is worth nothing to carry.
+      cards: Object.fromEntries(Object.entries(collectionDto.Cards ?? {})
+        .filter(([album]) => ALBUM_ORDER.includes(album as AlbumId))) as typeof state.collection.cards,
+      completed: ((collectionDto.Completed ?? []) as AlbumId[])
+        .filter((album) => ALBUM_ORDER.includes(album)),
       stars: collectionDto.Stars ?? 0,
       wildcards: { ...(collectionDto.Wildcards ?? {}) },
       // A pack whose TIER no longer exists is dropped rather than migrated.

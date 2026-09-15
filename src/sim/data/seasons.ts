@@ -16,7 +16,7 @@
 // harvest clocks are the cheap levels a first-season player will actually
 // close; the tax rate and the Stardust yield sit behind the gold cards.
 
-import type { ArtifactId, HeroId } from '../state';
+import type { HeroId } from '../state';
 
 /** 1★ to 5★. `gold` is a separate flag on the slot, not a sixth rarity. */
 export type Rarity = 1 | 2 | 3 | 4 | 5;
@@ -24,7 +24,8 @@ export type Rarity = 1 | 2 | 3 | 4 | 5;
 export const RARITIES: readonly Rarity[] = [1, 2, 3, 4, 5];
 
 export type AlbumId =
-  | 'FirstFurrow' | 'TheWildWood' | 'HandsAtWork' | 'TheKingsCoin' | 'TheStarRoad';
+  | 'FirstFurrow' | 'TheWildWood' | 'HandsAtWork' | 'MarketDay'
+  | 'TheKingsCoin' | 'UnderTheHill' | 'TheLongMarch' | 'TheStarRoad';
 
 /** One of the nine slots on an album's page. Its identity is its INDEX in the
  *  album — so renaming a card, or redrawing it, migrates nothing. */
@@ -39,94 +40,154 @@ export interface CardSlot {
 export interface AlbumDef {
   id: AlbumId;
   name: string;
-  /** The relic this album levels. One relic, one album, one level a season. */
-  relic: ArtifactId;
   /** Exactly nine, in the order they sit on the 3×3 grid. */
   cards: readonly CardSlot[];
 }
 
+/**
+ * THE LADDER, easiest first. An album's composition is its difficulty, and the
+ * eight rungs climb from a page of 1★ to a page of gold — so which album a
+ * player can close says what they have been able to open.
+ *
+ * WHICH RELIC AN ALBUM LEVELS IS NOT HERE. It rotates a step a season
+ * (`relicOfAlbum`), because a fixed pairing on a fixed ladder means the two
+ * dearest relics never level for anybody who does not buy packs.
+ */
 export const ALBUM_ORDER: readonly AlbumId[] = [
-  'FirstFurrow', 'TheWildWood', 'HandsAtWork', 'TheKingsCoin', 'TheStarRoad',
+  'FirstFurrow', 'TheWildWood', 'HandsAtWork', 'MarketDay',
+  'TheKingsCoin', 'UnderTheHill', 'TheLongMarch', 'TheStarRoad',
 ];
 
 export const ALBUMS: Record<AlbumId, AlbumDef> = {
+  // 1 — the soil. Eight 1★ and one 2★: the page a player closes in their
+  // first week, from the packs the game hands them for nothing.
   FirstFurrow: {
-    id: 'FirstFurrow', name: 'First Furrow', relic: 'DowsingRod',
+    id: 'FirstFurrow', name: 'First Furrow',
     cards: [
       { name: 'Ploughshare', rarity: 1 },
       { name: 'Seed Sack', rarity: 1 },
-      { name: 'Scarecrow', rarity: 2 },
       { name: 'Watering Can', rarity: 1 },
-      { name: 'Hedgerow', rarity: 2 },
-      { name: 'Threshing Floor', rarity: 2 },
-      { name: 'The Old Oak', rarity: 2 },
-      { name: 'Harvest Moon', rarity: 2 },
       { name: 'Millstone', rarity: 1 },
+      { name: 'Scarecrow', rarity: 1 },
+      { name: 'Hedgerow', rarity: 1 },
+      { name: 'Threshing Floor', rarity: 1 },
+      { name: 'The Old Oak', rarity: 1 },
+      { name: 'Harvest Moon', rarity: 2 },
     ],
   },
+  // 2 — the woods.
   TheWildWood: {
-    id: 'TheWildWood', name: 'The Wild Wood', relic: 'VerdantSeal',
+    id: 'TheWildWood', name: 'The Wild Wood',
     cards: [
       { name: 'Bramble Patch', rarity: 1 },
-      { name: 'Fox Den', rarity: 2 },
       { name: 'Mossy Log', rarity: 1 },
-      { name: 'Beehive', rarity: 2 },
-      { name: 'Stag Trail', rarity: 3 },
-      { name: 'Woodcock', rarity: 2 },
-      { name: 'Salmon Run', rarity: 3 },
-      { name: 'The Wolf Pack', rarity: 3 },
-      { name: 'Heart of the Wood', rarity: 3 },
+      { name: 'Fox Den', rarity: 1 },
+      { name: 'Beehive', rarity: 1 },
+      { name: 'Woodcock', rarity: 1 },
+      { name: 'Stag Trail', rarity: 2 },
+      { name: 'Salmon Run', rarity: 2 },
+      { name: 'The Wolf Pack', rarity: 2 },
+      { name: 'Heart of the Wood', rarity: 2 },
     ],
   },
+  // 3 — the trade. The first album that asks for a 3★, so the first that a
+  // Green pack alone will not finish.
   HandsAtWork: {
-    id: 'HandsAtWork', name: 'Hands at Work', relic: 'ForemansSigil',
+    id: 'HandsAtWork', name: 'Hands at Work',
     cards: [
-      { name: 'Hod and Trowel', rarity: 2 },
-      { name: 'Water Wheel', rarity: 3 },
-      { name: 'Rope Walk', rarity: 2 },
-      { name: 'Sawpit', rarity: 3 },
-      { name: 'Scaffold', rarity: 2 },
-      { name: 'The Kiln', rarity: 3 },
-      { name: 'Crane Yard', rarity: 4 },
-      { name: 'Master Mason', rarity: 4 },
-      { name: 'Guild Charter', rarity: 4 },
+      { name: 'Hod and Trowel', rarity: 1 },
+      { name: 'Rope Walk', rarity: 1 },
+      { name: 'Scaffold', rarity: 1 },
+      { name: 'Sawpit', rarity: 2 },
+      { name: 'The Kiln', rarity: 2 },
+      { name: 'Water Wheel', rarity: 2 },
+      { name: 'Crane Yard', rarity: 2 },
+      { name: 'Master Mason', rarity: 3 },
+      { name: 'Guild Charter', rarity: 3 },
     ],
   },
+  // 4 — the market. The bridge: it wants a 1★ and a 4★, so no single pack
+  // can close it.
+  MarketDay: {
+    id: 'MarketDay', name: 'Market Day',
+    cards: [
+      { name: 'Weigh House', rarity: 1 },
+      { name: 'Salt Barrel', rarity: 1 },
+      { name: 'Pedlar\u2019s Pack', rarity: 2 },
+      { name: 'Toll Bridge', rarity: 2 },
+      { name: 'Tithe Barn', rarity: 2 },
+      { name: 'Market Cross', rarity: 3 },
+      { name: 'The Caravan', rarity: 3 },
+      { name: 'Guild Scales', rarity: 3 },
+      { name: 'Charter of Fairs', rarity: 4 },
+    ],
+  },
+  // 5 — the money, and the first gold edition on the ladder.
   TheKingsCoin: {
-    // The order of these nine is the one M22 draws.
-    id: 'TheKingsCoin', name: 'The King’s Coin', relic: 'GildedLedger',
+    id: 'TheKingsCoin', name: 'The King\u2019s Coin',
     cards: [
-      { name: 'Market Day', rarity: 3 },
-      { name: 'Tax Ledger', rarity: 4 },
-      { name: 'The Mint', rarity: 4 },
-      { name: 'Toll Bridge', rarity: 3 },
-      { name: 'Tithe Barn', rarity: 3 },
-      { name: 'Merchant’s Seal', rarity: 4, gold: true },
-      { name: 'Counting House', rarity: 5 },
-      { name: 'The Royal Purse', rarity: 5, gold: true },
-      { name: 'The Treasury', rarity: 5 },
+      { name: 'Tally Stick', rarity: 2 },
+      { name: 'Coin Press', rarity: 2 },
+      { name: 'Tax Ledger', rarity: 2 },
+      { name: 'Strongbox', rarity: 2 },
+      { name: 'The Mint', rarity: 3 },
+      { name: 'Counting House', rarity: 3 },
+      { name: 'Tithe Chest', rarity: 3 },
+      { name: 'The Treasury', rarity: 4 },
+      { name: 'Merchant\u2019s Seal', rarity: 4, gold: true },
     ],
   },
-  TheStarRoad: {
-    id: 'TheStarRoad', name: 'The Star Road', relic: 'WanderersCompass',
+  // 6 — the deep. Two gold editions and a 5★: a Purple pack’s page.
+  UnderTheHill: {
+    id: 'UnderTheHill', name: 'Under the Hill',
     cards: [
-      { name: 'Milestone', rarity: 3 },
-      { name: 'Star Chart', rarity: 4 },
-      { name: 'Lantern Post', rarity: 3 },
-      { name: 'Ferry Crossing', rarity: 3 },
-      { name: 'Astrolabe', rarity: 4 },
-      { name: 'The North Wind', rarity: 4, gold: true },
+      { name: 'Pit Lantern', rarity: 3 },
+      { name: 'Rope Descent', rarity: 3 },
+      { name: 'Cold Seam', rarity: 3 },
+      { name: 'Bone Ladder', rarity: 3 },
+      { name: 'The Deep Vein', rarity: 4 },
+      { name: 'Warden\u2019s Key', rarity: 4 },
+      { name: 'Crown of Roots', rarity: 4, gold: true },
+      { name: 'The Sealed Door', rarity: 4, gold: true },
+      { name: 'What Sleeps Below', rarity: 5 },
+    ],
+  },
+  // 7 — the war.
+  TheLongMarch: {
+    id: 'TheLongMarch', name: 'The Long March',
+    cards: [
+      { name: 'Muster Roll', rarity: 4 },
+      { name: 'Field Forge', rarity: 4 },
+      { name: 'Siege Ladder', rarity: 4 },
+      { name: 'Winter Camp', rarity: 4 },
+      { name: 'Broken Shield', rarity: 4 },
+      { name: 'The Standard', rarity: 4 },
+      { name: 'The Last Redoubt', rarity: 5 },
+      { name: 'Banner of the Nine', rarity: 5 },
+      { name: 'The Field of Crowns', rarity: 5, gold: true },
+    ],
+  },
+  // 8 — the heavens. Five 5★ and four gold editions: the trophy, and a page
+  // no faucet closes without the store or a very long vault.
+  TheStarRoad: {
+    id: 'TheStarRoad', name: 'The Star Road',
+    cards: [
+      { name: 'Astrolabe', rarity: 5 },
       { name: 'Comet Fall', rarity: 5 },
       { name: 'The Long Road', rarity: 5 },
+      { name: 'The Hollow Moon', rarity: 5 },
+      { name: 'Seafire', rarity: 5 },
+      { name: 'The Pole Star', rarity: 4, gold: true },
+      { name: 'The North Wind', rarity: 4, gold: true },
       { name: 'The Wanderer', rarity: 5, gold: true },
+      { name: 'The Door in the Sky', rarity: 5, gold: true },
     ],
   },
 };
 
-/** Nine, always. A season that authored eight would pay its album for ever. */
 export const CARDS_PER_ALBUM = 9;
 
-/** The 45 cards of a season, as (album, slot) pairs — the identity a pack
+/** The 72 cards of a season, as (album, slot) pairs — the identity a pack
  *  rolls and the state counts. */
 export interface CardRef {
   album: AlbumId;
@@ -134,10 +195,6 @@ export interface CardRef {
 }
 
 export const cardAt = (ref: CardRef): CardSlot => ALBUMS[ref.album].cards[ref.slot];
-
-/** Which album levels a relic. Derived: the pairing is authored once, above. */
-export const albumOfRelic = (relic: ArtifactId): AlbumId =>
-  ALBUM_ORDER.find((id) => ALBUMS[id].relic === relic) ?? 'FirstFurrow';
 
 /** Where an album sits in the season, 1-based — its band for the rewards and
  *  the number the album page prints (§5, §11.3). */
