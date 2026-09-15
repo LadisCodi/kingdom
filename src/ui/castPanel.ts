@@ -32,13 +32,16 @@ export function renderCastPanel(game: Game): HTMLElement {
       iconEl('Gold', { size: 'sm' }),
       el('b', {}, String(info.saving)),
       el('span', {}, 'Gold saved — the same Mana at any distance'));
-  } else if (active.id === 'Bloom') {
-    verdict = info.blooms === 0
-      ? el('span', { class: 'plc-verdict is-bad' }, 'Nothing tired within reach')
+  } else if (active.id === 'Reap' && info.reap !== null) {
+    // THE BUDGET IS THE DECISION and the area is only where it is spent, so
+    // the preview leads with the taps and names the ground second.
+    verdict = info.reap.nodes === 0
+      ? el('span', { class: 'plc-verdict is-bad' }, 'Nothing to harvest within reach')
       : el('span', { class: 'plc-verdict is-good' },
         iconEl('sparkle', { size: 'sm' }),
-        el('b', {}, `×${info.blooms}`),
-        el('span', {}, 'cells renewed'));
+        el('b', {}, `×${info.reap.taps}`),
+        el('span', {}, `free taps over ${info.reap.nodes} `
+          + `${info.reap.nodes === 1 ? 'node' : 'nodes'}`));
   } else {
     verdict = el('span', { class: 'plc-verdict' }, active.text);
   }

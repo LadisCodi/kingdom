@@ -14,12 +14,12 @@
 // the moment an effect can only be replayed by re-running the UI.
 
 import {
-  ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS, FEATURES,
-  type ArtifactActiveId,
+  ARTIFACTS, ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS,
+  ARTIFACT_RADIUS_STEPS, FEATURES, type ArtifactActiveId,
 } from './data/definitions';
 import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
-import { effectiveStock, harvestSourceAt, harvestSpecAt } from './harvest';
+import { harvestSourceAt, tapCell } from './harvest';
 import { mana, payMana } from './mana';
 import { addModifier, resolve } from './modifiers';
 import {
@@ -139,7 +139,7 @@ export function validCastCells(state: GameState, map: MapData, id: ArtifactId): 
       // same border a paid tap does.
       return map.cells.filter((c) => fogState(state, map, c) === 'Discovered'
         && isWithinReach(state, map, c));
-    case 'Bloom':
+    case 'Reap':
       // Anywhere revealed — the radius does the work, so the player is
       // choosing a CENTRE, not a cell.
       return map.cells.filter((c) => state.fog.revealed[coordKey(c)] === true);
@@ -163,6 +163,94 @@ function beckonTargetIsLegal(state: GameState, map: MapData, cell: Coord): boole
   return state.featureRespawns.some((r) => FEATURES[r.feature].respawnTerrain === terrain);
 }
 
+// ------------------------------------------------------- the auto-tap engine
+
+/**
+ * HOW MANY TAPS A CAST BUYS. The spell IS an exchange rate, and the rate is
+ * what the relic's level moves (Docs/proposals/relic-effects.md §3.2).
+ *
+ * Priced off what the cast ACTUALLY cost, not off the sheet's sticker: a
+ * Resonance rank that buys the cast down buys fewer taps with it, which is the
+ * honest reading of "taps per Mana" and stops a discount doubling as a bonus.
+ */
+export function tapBudget(state: GameState, id: ArtifactId): number {
+  const active = ARTIFACTS[id].active;
+  if (active === null || active.tapsPerMana <= 0) return 0;
+  const level = Math.max(1, artifactLevel(state, id));
+  const rate = active.tapsPerMana + active.tapsPerManaPerLevel * (level - 1);
+  return Math.max(0, Math.floor(castCost(state, id) * rate));
+}
+
+/**
+ * HOW LONG THE RUN TAKES TO WATCH — the tap count over the tap rate.
+ *
+ * DERIVED, never authored. A window is what a budget looks like at a speed, so
+ * authoring it beside the budget would be two numbers that can disagree.
+ */
+export const tapRunSeconds = (state: GameState, id: ArtifactId): number =>
+  tapBudget(state, id) / ARTIFACT_AUTO_TAP_PER_SECOND;
+
+/** The cells Reap will work: revealed harvest nodes in the zone, nearest
+ *  first — `cellsWithinRadius` is already ordered that way. */
+export const reapCells = (
+  state: GameState, map: MapData, centre: Coord, radius: number,
+): Coord[] =>
+  [centre, ...cellsWithinRadius(map, centre, radius)].filter(
+    (c) => harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true,
+  );
+
+/**
+ * SPEND A BUDGET OF TAPS over `cells`, nearest-first and round robin.
+ *
+ * ROUND ROBIN, not one cell drained at a time, because the budget is the
+ * decision and the area is only where it is spent: a player who placed a zone
+ * over five nodes meant all five.
+ *
+ * IT ALL LANDS AT THE CAST, and the window is a thing to WATCH rather than a
+ * clock the sim keeps. Spreading thirty taps over seven seconds would put
+ * thirty boundaries in the advance loop for an effect whose inputs cannot
+ * change while it runs — the cells, the budget and the rate are all fixed the
+ * moment the spell is paid for, so ticking it would produce exactly this
+ * answer more slowly, and one-call replay would have to be argued rather than
+ * being true by construction. It also means a player who casts and closes the
+ * app still gets what they paid for.
+ *
+ * A TAP HERE COSTS NO MANA — `tapCell`, not `collectTap`. Thirty taps at 1
+ * Mana each would be impossible, so this is the one exception to *every player
+ * tap costs 1 Mana*, and the exception is the design.
+ */
+export function spendTaps(
+  state: GameState, map: MapData, cells: readonly Coord[], budget: number, now: number,
+): { spent: number; touched: Coord[] } {
+  const touched: Coord[] = [];
+  const seen = new Set<string>();
+  let spent = 0;
+  let live = [...cells];
+  while (spent < budget && live.length > 0) {
+    const next: Coord[] = [];
+    for (const c of live) {
+      if (spent >= budget) {
+        next.push(c);
+        continue;
+      }
+      // A cell that gives nothing is DROPPED for the rest of the run rather
+      // than retried: the nodes exhaust and the houses do not, and a run that
+      // kept asking an empty node would spend its budget on nothing.
+      if (tapCell(state, map, c, now) !== 'Harvested') continue;
+      spent += 1;
+      next.push(c);
+      const key = coordKey(c);
+      if (!seen.has(key)) {
+        seen.add(key);
+        touched.push(c);
+      }
+    }
+    live = next;
+    if (spent === 0 && touched.length === 0) break;
+  }
+  return { spent, touched };
+}
+
 /** What a cast did, for the floaters and the banner. */
 export interface CastReport {
   result: CastResult;
@@ -171,10 +259,12 @@ export interface CastReport {
   affected: Coord[];
   /** Gold the player did NOT have to spend (Divination). */
   goldSaved: number;
+  /** Taps an auto-tap ability actually landed. 0 for every other one. */
+  taps: number;
 }
 
 const nothing = (result: CastResult): CastReport =>
-  ({ result, activeId: null, affected: [], goldSaved: 0 });
+  ({ result, activeId: null, affected: [], goldSaved: 0, taps: 0 });
 
 export function cast(
   state: GameState,
@@ -191,7 +281,9 @@ export function cast(
     return nothing('InvalidTarget');
   }
 
-  const report: CastReport = { result: 'Cast', activeId: active.id, affected: [], goldSaved: 0 };
+  const report: CastReport = {
+    result: 'Cast', activeId: active.id, affected: [], goldSaved: 0, taps: 0,
+  };
   switch (active.id) {
     case 'Divination': {
       // Its Mana price is FLAT while the Gold reveal cost DOUBLES every ring,
@@ -208,24 +300,11 @@ export function cast(
       report.affected.push(target!);
       break;
     }
-    case 'Bloom': {
-      // Clears exhaustion outright rather than shortening it: a "come back
-      // sooner" button would just be a worse version of the passive.
-      const cells = [target!, ...cellsWithinRadius(map, target!, activeRadius(state, id))];
-      for (const c of cells) {
-        if (harvestSourceAt(state, c) === null) continue;
-        if (state.fog.revealed[coordKey(c)] !== true) continue;
-        const spec = harvestSpecAt(state, c)!;
-        // Refill to what the GROUND holds, not to the authored stock: a Bloom
-        // on grassland puts back more than one on sand, which is the same rule
-        // recovery follows (04-harvest.md §2).
-        const full = effectiveStock(state, map, c, spec);
-        const cell = state.harvest[coordKey(c)];
-        if (cell === undefined || (cell.units >= full && cell.exhaustedUntil === null)) continue;
-        cell.units = full;
-        cell.exhaustedUntil = null;
-        report.affected.push(c);
-      }
+    case 'Reap': {
+      const cells = reapCells(state, map, target!, activeRadius(state, id));
+      const run = spendTaps(state, map, cells, tapBudget(state, id), now);
+      report.affected.push(...run.touched);
+      report.taps = run.spent;
       break;
     }
     case 'Haste': {

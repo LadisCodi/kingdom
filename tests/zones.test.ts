@@ -10,11 +10,13 @@
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import {
-  activeDurationMs, activeRadius, activeRadiusAt, cast, castBlock, castState,
+  activeDurationMs, activeRadius, activeRadiusAt, cast, castBlock, castCost,
+  castState, reapCells, tapBudget, tapRunSeconds,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
 import {
-  ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS, HARVEST,
+  ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS,
+  HARVEST,
 } from '../src/sim/data/definitions';
 import { spellStatChanges, spellStatsAt } from '../src/ui/relicStats';
 import { effectiveRecoveryMs } from '../src/sim/harvest';
@@ -26,7 +28,10 @@ import { workerStrikeMs, effectiveWorkerSpeed } from '../src/sim/upgrades';
 import {
   addToWallet, districtAt, getWallet, type Coord, type GameState,
 } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map, T0 } from './helpers';
+import {
+  addBuilt, canGather, freshGame, fund, map, reveal, FOREST, T0,
+} from './helpers';
+import { cellsWithinRadius } from '../src/sim/grid';
 
 const CENTRE: Coord = { x: 0, y: 0 };
 
@@ -337,5 +342,108 @@ describe('an ability reaches further at three named levels', () => {
     expect(cd(1)).toBe(cd(50));
     expect(spellStatChanges(RADIUS_RELIC, 1).find((s) => s.key === 'cooldown')!.changed)
       .toBe(false);
+  });
+});
+
+// ----------------------------------------------------------- the auto-tap
+
+/**
+ * THE SPELL IS AN EXCHANGE RATE (Docs/features/09-relics.md §2.1): a cast buys
+ * TAPS with its Mana, and what the level moves is how many each Mana is worth.
+ *
+ * It is the one exception to *every player tap costs 1 Mana* — thirty taps at
+ * a Mana each would be impossible — and the exception is the design.
+ */
+describe('an auto-tap spell buys taps with the Mana of the cast', () => {
+  const REAPER = 'VerdantSeal';
+
+  /** A kingdom that can harvest, holding the Seal at `level`. */
+  const reaper = (level: number): GameState => {
+    const state = canGather(freshGame());
+    // A zone needs GROUND to spend on: `canGather` clears three cells, and a
+    // run over one node is a run that proves nothing about round robin.
+    reveal(state, cellsWithinRadius(map, FOREST, 2));
+    state.lastAdvance = T0;
+    state.artifacts.levels[REAPER] = level;
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  it('buys more taps per Mana at every level', () => {
+    const one = tapBudget(reaper(1), REAPER);
+    expect(one).toBeGreaterThan(0);
+    let last = one;
+    for (let level = 2; level <= 20; level++) {
+      const now = tapBudget(reaper(level), REAPER);
+      expect(now, `level ${level}`).toBeGreaterThanOrEqual(last);
+      last = now;
+    }
+    expect(last).toBeGreaterThan(one);
+  });
+
+  // THE WINDOW IS DERIVED, never authored: a window is what a budget looks
+  // like at a speed, so authoring it beside the budget would be two numbers
+  // that can disagree.
+  it('derives the window from the budget and the rate', () => {
+    const state = reaper(5);
+    expect(tapRunSeconds(state, REAPER))
+      .toBeCloseTo(tapBudget(state, REAPER) / ARTIFACT_AUTO_TAP_PER_SECOND);
+  });
+
+  // A relic whose ability is not an auto-tap buys NO taps — zero means "this
+  // spell does not buy taps" rather than "it buys none of them".
+  it('buys nothing for a spell that is not one', () => {
+    expect(tapBudget(reaper(9), 'DowsingRod')).toBe(0);
+    expect(tapBudget(reaper(9), 'ForemansSigil')).toBe(0);
+  });
+
+  it('harvests, and charges no Mana for the taps it lands', () => {
+    const state = reaper(1);
+    const before = getWallet(state.city.wallet, 'Wood');
+    const pool = getWallet(state.city.wallet, 'Mana');
+    const cost = castCost(state, REAPER);
+
+    const report = cast(state, map, REAPER, FOREST, T0);
+    expect(report.result).toBe('Cast');
+    expect(report.taps).toBeGreaterThan(0);
+    expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
+    // The CAST was paid for and nothing else: the taps themselves are free.
+    expect(getWallet(state.city.wallet, 'Mana')).toBe(pool - cost);
+  });
+
+  // ROUND ROBIN, not one cell drained at a time: the budget is the decision
+  // and the area is only where it is spent, so a player who put the zone over
+  // three nodes meant all three.
+  it('spreads its taps over every node in the zone', () => {
+    const state = reaper(1);
+    const cells = reapCells(state, map, FOREST, activeRadius(state, REAPER));
+    expect(cells.length).toBeGreaterThan(1);
+    const report = cast(state, map, REAPER, FOREST, T0);
+    expect(report.affected.length).toBeGreaterThan(1);
+  });
+
+  // IT ALL LANDS AT THE CAST, so nothing about it is a boundary and a player
+  // who casts and closes the app still gets what they paid for. This is the
+  // assertion that would break if the run ever grew a clock of its own.
+  it('leaves nothing running behind it', () => {
+    const state = reaper(3);
+    const wood = (): number => getWallet(state.city.wallet, 'Wood');
+    cast(state, map, REAPER, FOREST, T0);
+    const afterCast = wood();
+    // An hour later the city has earned whatever a city earns — and not one
+    // tap more of the run, because the run was over before the tick.
+    advance(state, map, T0 + 60 * 60_000);
+    const idle = reaper(3);
+    advance(idle, map, T0 + 60 * 60_000);
+    expect(wood() - afterCast).toBe(getWallet(idle.city.wallet, 'Wood'));
+  });
+
+  // The ground runs out before the budget does, which is the asymmetry the
+  // cooldown exists to hold (OQ-99): a run cannot spend taps on nothing.
+  it('stops when the ground is empty rather than spending on nothing', () => {
+    const state = reaper(20);
+    const report = cast(state, map, REAPER, FOREST, T0);
+    expect(report.taps).toBeLessThanOrEqual(tapBudget(state, REAPER));
+    expect(report.taps).toBeGreaterThan(0);
   });
 });

@@ -196,6 +196,12 @@ const SETTINGS = [
   // that doubles cannot creep, but it makes a superb milestone. A player two
   // cards from level 5 knows exactly what those two cards buy.
   ['artifacts.active_radius_steps', 'artifactRadiusSteps', 'list'],
+  // How fast an auto-tap ability spends its budget. It buys no Mana of its
+  // own — the cast already paid — so this is the only thing that decides how
+  // long the run takes to watch, and holding a finger does 2 a second at 1
+  // Mana each. The spell is twice the speed at a fraction of the price, and
+  // the player can always see which they would rather spend.
+  ['artifacts.auto_tap_per_second', 'artifactAutoTapPerSecond'],
   // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
   // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
   // five, so the fifths come out whole; rings 1 and 2 are pennies inside the
@@ -563,7 +569,8 @@ const SHEETS = {
   // (Docs/features/09-relics.md §2). It has no battlefield stats — nothing
   // carries one anywhere.
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
-    'active_duration_seconds', 'active_radius'],
+    'active_duration_seconds', 'active_radius',
+    'active_taps_per_mana', 'active_taps_per_mana_per_level'],
   // ONE ROW PER PACK TIER (Docs/features/09-relics.md §6). `cards` is how many
   // it holds; `weight_1star`..`weight_5star` are the PUBLISHED odds, as
   // weights rather than percentages so a designer can add a rarity without
@@ -896,6 +903,7 @@ async function importXlsx() {
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
+    artifactAutoTapPerSecond: 0,
     artifactCooldownSeconds: 0,
   };
 
@@ -1259,6 +1267,12 @@ async function importXlsx() {
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
       activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
       activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+      // THE EXCHANGE RATE an auto-tap ability buys taps at, and what a level
+      // adds to it. Blank on every relic whose ability is not one, where a
+      // rate of zero means "this spell does not buy taps" rather than "it buys
+      // none" (Docs/features/09-relics.md §2.1).
+      activeTapsPerMana: num(r, 'active_taps_per_mana', { blankAs: 0 }),
+      activeTapsPerManaPerLevel: num(r, 'active_taps_per_mana_per_level', { blankAs: 0 }),
     };
   }
 
@@ -1585,7 +1599,8 @@ async function exportXlsx() {
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];
     return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
-      a.activeDurationSeconds || '', a.activeRadius || ''];
+      a.activeDurationSeconds || '', a.activeRadius || '',
+      a.activeTapsPerMana || '', a.activeTapsPerManaPerLevel || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {

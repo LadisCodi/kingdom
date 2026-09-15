@@ -1248,6 +1248,16 @@ export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
  */
 export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSteps;
 
+/**
+ * HOW FAST AN AUTO-TAP ABILITY SPENDS ITS BUDGET, taps a second.
+ *
+ * It buys no Mana of its own — the cast already paid — so this decides only
+ * how long the run takes to WATCH. Holding a finger does 2 a second at 1 Mana
+ * each, so the spell is twice the speed at a fraction of the price, and the
+ * player can always see which of the two they would rather spend.
+ */
+export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
+
 /** Knowledge drips from every ruin the player has FOUND, whether or not they
  *  ever delve it — so the fog keeps paying even between expeditions. */
 export const KNOWLEDGE = balance.knowledge;
@@ -1332,7 +1342,7 @@ export interface ArtifactDef {
   pending: string | null;
 }
 
-export type ArtifactActiveId = 'Divination' | 'Bloom' | 'Haste' | 'Beckon';
+export type ArtifactActiveId = 'Divination' | 'Reap' | 'Haste' | 'Beckon';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1343,13 +1353,20 @@ export interface ArtifactActive {
   targeted: boolean;
   /** Timed effects only (Haste); 0 = instant. */
   durationSeconds: number;
-  /** Area effects only (Bloom); 0 = the target cell alone. */
+  /** Area effects only; 0 = the target cell alone. The LADDER's base — the
+   *  levelled reach is `activeRadiusAt` (Docs/features/09-relics.md §2.1). */
   radius: number;
+  /** AUTO-TAP ABILITIES ONLY: taps bought per Mana of the cast, at level 1,
+   *  and what a level adds. 0 means this ability does not buy taps at all —
+   *  not that it buys none. */
+  tapsPerMana: number;
+  tapsPerManaPerLevel: number;
 }
 
 type ArtifactBalance = {
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
+  activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
@@ -1365,6 +1382,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
       manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
       // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
       // so its value grows with depth — exactly where the pain is. This one
       // relic turns the fog from a chore into a real question: Gold, or Mana?
@@ -1382,11 +1400,17 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
+    // THE SPELL IS AN EXCHANGE RATE (Docs/proposals/relic-effects.md §3.2).
+    // It used to clear exhaustion, which was a worse version of the passive
+    // said twice; now it BUYS TAPS with the Mana of the cast, and what the
+    // level moves is how many each Mana is worth.
     active: {
-      id: 'Bloom', name: 'Bloom', targeted: true,
+      id: 'Reap', name: 'Reap', targeted: true,
       manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
       radius: ab('VerdantSeal').activeRadius,
-      text: 'Clears exhaustion from every resource cell nearby',
+      tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
+      tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
+      text: 'Harvests every node nearby, over and over, for free',
     },
     pending: null,
   },
@@ -1404,6 +1428,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       id: 'Haste', name: 'Haste', targeted: false,
       manaCost: ab('ForemansSigil').activeManaCost,
       durationSeconds: ab('ForemansSigil').activeDurationSeconds, radius: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
       // Cast on the way OUT. Divination and Bloom reward being present; a
       // game played in visits needs a good departure move too.
       text: 'Workers carry double for an hour \u2014 cast it on your way out',
@@ -1467,6 +1492,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
+      tapsPerMana: 0, tapsPerManaPerLevel: 0,
       text: 'Calls a depleted resource back onto a cell you choose',
     },
     pending: null,
@@ -2185,4 +2211,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 52;
+export const SAVE_VERSION = 53;

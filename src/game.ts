@@ -50,8 +50,8 @@ import {
   ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
 import {
-  activeRadius, bloomPreview, cast, castBlock, castState, divinationSaving,
-  validCastCells, type CastPhase,
+  activeRadius, cast, castBlock, castState, divinationSaving, reapCells,
+  tapBudget, tapRunSeconds, validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -977,8 +977,8 @@ export class Game {
     if (report.goldSaved > 0 && target) {
       this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
     }
-    if (report.activeId === 'Bloom' && target) {
-      this.floaters.add(target, `${report.affected.length} cells renewed`);
+    if (report.activeId === 'Reap' && target) {
+      this.floaters.add(target, `${report.taps} taps, free`);
     }
     if (report.activeId === 'Haste') {
       this.toast(`${def.active!.name} — workers carry double for the next hour`);
@@ -990,7 +990,10 @@ export class Game {
   /** The cast preview the panel and the renderer both read. */
   castInfo(): {
     artifactId: ArtifactId; cell: Coord | null; manaCost: number; affordable: boolean;
-    saving: number; blooms: number;
+    saving: number;
+    /** An auto-tap ability's preview: how many nodes the zone covers, how many
+     *  taps the cast buys and how long the run takes to watch. */
+    reap: { nodes: number; taps: number; seconds: number } | null;
   } | null {
     if (this.mode.kind !== 'casting') return null;
     const { artifactId, selected } = this.mode;
@@ -1002,9 +1005,14 @@ export class Game {
       affordable: mana(this.state) >= active.manaCost,
       saving: active.id === 'Divination' && selected
         ? divinationSaving(this.state, this.map, selected) : 0,
-      blooms: active.id === 'Bloom' && selected
-        ? bloomPreview(this.state, this.map, selected,
-          activeRadius(this.state, this.mode.artifactId)).length : 0,
+      reap: active.id === 'Reap' && selected
+        ? {
+          nodes: reapCells(this.state, this.map, selected,
+            activeRadius(this.state, artifactId)).length,
+          taps: tapBudget(this.state, artifactId),
+          seconds: tapRunSeconds(this.state, artifactId),
+        }
+        : null,
     };
   }
 
@@ -3404,8 +3412,8 @@ export class Game {
       layer.selected = this.mode.selected;
       layer.selectedSize = { x: 1, y: 1 };
       if (this.mode.selected) {
-        if (active.id === 'Bloom') {
-          layer.influenceCells = bloomPreview(
+        if (active.id === 'Reap') {
+          layer.influenceCells = reapCells(
             this.state, this.map, this.mode.selected,
             activeRadius(this.state, this.mode.artifactId));
         }
