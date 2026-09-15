@@ -77,18 +77,23 @@ measures exactly how much that matters.
 | Source | Rate | Packs a season |
 |---|---|---|
 | **The daily chest** | one a day, cycling Verde → Amarillo → Rosa | **28** |
-| **The pass's free track** | one on every other rung, 14 rungs | **7** |
-| **The repeatable dungeon** | one per run | **165** |
+| **The pass's free column** | 24 of its 40 levels, built | **24** |
+| **The repeatable dungeon** | one per run | **148** |
 | | | **200** |
 
-- **The dungeon is the engine, and that is deliberate.** The chest and the pass
-  are clocks: they pay the same whether the player plays for two minutes or two
-  hours. The dungeon is the only one of the three that answers *playing more*,
-  so it carries five sixths of the faucet.
-- **The five authored ruins cannot do this.** They hold 15 depths between them
-  and they clear **once** — 15 packs in the lifetime of an account, not 15 a
-  season. Everything in §4 therefore depends on the repeatable dungeon, which
-  is designed and unbuilt
+- **The dungeon is the engine, and that is deliberate.** The chest is a clock:
+  it pays the same whether the player plays for two minutes or two hours. The
+  pass is half a clock — its levels come from missions, so it does answer
+  playing more, but only up to the 40 levels it holds. The dungeon is the only
+  one of the three with no ceiling, so it carries three quarters of the
+  faucet.
+- **The five authored ruins cannot do this.** They hold 15 depths and 191
+  rooms between them and they clear **once** — a pack per room was 191 in the
+  lifetime of an account, not 191 a season. **They pay none now**
+  ([`../features/20-season-pass.md`](../features/20-season-pass.md) §4): what
+  the dungeon feeds the collection is the pass missions a delve completes.
+  Everything in §4 therefore depends on the repeatable dungeon, which is
+  designed and unbuilt
   ([`../implementation-plan.md`](../implementation-plan.md) §4). **OQ-102.**
 
 ### 2.2 What a repeatable run has to look like

@@ -385,24 +385,28 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
 
 - **A pack's name and its promise are GENERATED from its row**, so a retuned
   sheet cannot leave a stale promise on a shelf.
-- **The store sells the tiers the ruins do not drip**, and only those: Blue,
-  Purple and Golden, Gem-priced on the store's own Cards shelf
+- **The store sells the tiers the free column does not pay**, and only those:
+  Blue, Purple and Golden, Gem-priced on the store's own Cards shelf
   ([`14-monetization.md`](14-monetization.md) §3). Selling a Green pack would
   undercut the only free source the collection has, and the shelf says so in
-  one line of fine print — *green, yellow and rose packs come from the ruins.*
+  one line of fine print — *green, yellow and rose packs come from the pass.*
 - **The shelf is where the odds are published.** Each row prints what its
   tier can roll, as percentages: a player reading "a chance of a gold edition"
   is owed the number beside it, and a store is the one place that promise has
   to be kept where the money is.
-- **Ruins are the free faucet.** An ordinary room pays a Green pack beside
-  its formula reward, a boss a Rose one, and a bottomed ruin a Golden
-  ([`11-expeditions.md`](11-expeditions.md) §7). The five authored ruins
-  clear **once**: fifteen depths between them is a **welcome, not a supply**.
-  The faucet that renews every season is the **repeatable dungeon**, which is
+- **The season pass's free column is the free faucet**: 24 packs a season,
+  Green on most levels, Yellow and Rose on the fifths
+  ([`20-season-pass.md`](20-season-pass.md) §2). The paid column pays Blue,
+  Purple and Golden.
+  **The ruins pay no packs.** They clear **once**, and a pack per room was 191
+  in the lifetime of an account and then nothing for ever — a **welcome, not a
+  supply**. What the dungeon feeds the collection now is the pass missions it
+  completes, which is the one source that answers *playing more*.
+  The faucet that would renew at volume is still the **repeatable dungeon**,
   designed to follow ([`../implementation-plan.md`](../implementation-plan.md)
-  §4) and owes **165 of the free season's 200 packs** — **OQ-102**. Until it
-  lands the free player sees 35 a season and closes about **one album of
-  eight**.
+  §4) — **OQ-102**. Until it lands the free player sees about 52 packs a
+  season (24 from the pass, 28 from the daily chest) and closes about **two
+  albums of eight**.
 - The pace to author against is **how many of the eight a player who buys
   nothing completes in a season**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
