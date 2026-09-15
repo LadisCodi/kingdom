@@ -1265,6 +1265,16 @@ export interface ArtifactDef {
   };
   /** A spell in waiting (see the type docblock); null = it never had one. */
   active: ArtifactActive | null;
+  /**
+   * WHY THIS RELIC'S NUMBER DOES NOTHING YET, or null when it works.
+   *
+   * A relic is a whole album — nine cards and a season — so a card that
+   * promised an effect the build cannot deliver would be lying to somebody who
+   * spent one. The card prints this instead, in muted ink, and the level
+   * accrues normally against the day the system lands
+   * (Docs/proposals/relic-effects.md §6.4).
+   */
+  pending: string | null;
 }
 
 export type ArtifactActiveId = 'Divination' | 'Bloom' | 'Haste' | 'Beckon';
@@ -1305,6 +1315,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       // relic turns the fog from a chore into a real question: Gold, or Mana?
       text: 'Pays a frontier cell\u2019s entire remaining reveal cost, at any distance',
     },
+    pending: null,
   },
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
@@ -1322,6 +1333,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       radius: ab('VerdantSeal').activeRadius,
       text: 'Clears exhaustion from every resource cell nearby',
     },
+    pending: null,
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
@@ -1341,6 +1353,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       // game played in visits needs a good departure move too.
       text: 'Workers carry double for an hour \u2014 cast it on your way out',
     },
+    pending: null,
   },
   GildedLedger: {
     id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
@@ -1351,6 +1364,42 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     },
     // No active at all, and never had one.
     active: null,
+    pending: null,
+  },
+  DelversLantern: {
+    id: 'DelversLantern', name: 'The Delver\u2019s Lantern', glyph: '\u{1F3EE}',
+    sprite: 'artifact_delvers_lantern',
+    passiveText: 'Every room pays more gold and stone',
+    passive: {
+      stats: [{ stat: 'roomHaul', scope: null, op: 'mul' }],
+      base: ab('DelversLantern').passiveBase, perLevel: ab('DelversLantern').passivePerLevel,
+    },
+    active: null,
+    pending: null,
+  },
+  MusterHorn: {
+    id: 'MusterHorn', name: 'The Muster Horn', glyph: '\u{1F4EF}',
+    sprite: 'artifact_muster_horn',
+    passiveText: 'Your halls field a bigger army',
+    passive: {
+      stats: [{ stat: 'armyCap', scope: null, op: 'mul' }],
+      base: ab('MusterHorn').passiveBase, perLevel: ab('MusterHorn').passivePerLevel,
+    },
+    active: null,
+    pending: null,
+  },
+  BailiffsTally: {
+    id: 'BailiffsTally', name: 'The Bailiff\u2019s Tally', glyph: '\u{1F9FE}',
+    sprite: 'artifact_bailiffs_tally',
+    passiveText: 'Every improvement you hold pays more an hour',
+    passive: {
+      stats: [{ stat: 'worldImprovementYield', scope: null, op: 'mul' }],
+      base: ab('BailiffsTally').passiveBase, perLevel: ab('BailiffsTally').passivePerLevel,
+    },
+    active: null,
+    // The Sawmill, the Farm and the Quarry are authored in
+    // Docs/features/19-world-map.md and the map itself is not built.
+    pending: 'when the world map opens',
   },
   WanderersCompass: {
     id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
@@ -1365,11 +1414,13 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
       text: 'Calls a depleted resource back onto a cell you choose',
     },
+    pending: null,
   },
 };
 
 export const ARTIFACT_ORDER: ArtifactId[] = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+  'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 
 // ------------------------------------------------------------------- ruins
@@ -2079,4 +2130,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 46;
+export const SAVE_VERSION = 47;

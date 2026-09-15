@@ -1089,6 +1089,9 @@ export class Game {
     id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
     owned: boolean; now: string; next: string; album: AlbumId; albumName: string;
     held: number; total: number;
+    /** Why the number below it does nothing yet, or null. The card prints the
+     *  effect in muted ink rather than promising what the build cannot pay. */
+    pending: string | null;
   } {
     const def = ARTIFACTS[id];
     const album = albumOfRelic(id);
@@ -1105,6 +1108,7 @@ export class Game {
       albumName: ALBUMS[album].name,
       held: albumHeld(this.state, album),
       total: ALBUMS[album].cards.length,
+      pending: def.pending,
     };
   }
 
@@ -3903,6 +3907,9 @@ const RELIC_SUBJECT: Record<ArtifactId, string> = {
   ForemansSigil: 'Your crews swing and walk',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',
+  DelversLantern: 'A room pays gold and stone',
+  MusterHorn: 'Your halls field',
+  BailiffsTally: 'Every improvement you hold pays',
 };
 
 const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) as

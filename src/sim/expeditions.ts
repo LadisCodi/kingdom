@@ -432,10 +432,15 @@ export function roomReward(
   const tier = RUINS[ruinId].tier;
   if (def === undefined) return { wallet: {}, heroXp: 0, pack: 'Bronze' };
   const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
+  // THE MATERIAL HALF ONLY (the Delver's Lantern). A room's Stardust already
+  // carries the Wanderer's Compass and its Hero XP a legendary's boon, so a
+  // relic on the whole `scale` would stack three permanent layers on one
+  // number and none of them would be readable.
+  const haul = Math.max(1, resolve(state, 'roomHaul', 1));
   return {
     wallet: {
-      Gold: Math.round(20 * scale),
-      Stone: Math.round(3 * scale),
+      Gold: Math.round(20 * scale * haul),
+      Stone: Math.round(3 * scale * haul),
       // Prospecting and any timed boon ride on the Stardust line, the way
       // they always did: it is the collection's own faucet.
       Stardust: Math.round(resolve(state, 'stardustYield',

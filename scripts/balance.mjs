@@ -136,6 +136,7 @@ const HERO_TRAITS = [
 ];
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+  'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 /** The four pack tiers, easiest faucet first (Docs/features/09-relics.md §6). */
 const PACK_IDS = ['Bronze', 'Silver', 'Gold', 'Star'];

@@ -595,3 +595,19 @@
   border-bottom: 3px solid var(--season-tint);
 }
 .col-season > .col-line .col-count { color: var(--season-tint); }
+
+/* ------------------------------------------------------ an effect in waiting */
+
+/* A relic whose system is not built yet. The effect is still printed — the
+   player is banking a level against it — but muted, with the reason above it,
+   so the card never promises what the build cannot pay. */
+.col-effects.is-pending .col-effect { opacity: 0.55; }
+.col-effect-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  font-style: italic;
+  color: var(--ink-muted);
+}

@@ -66,7 +66,10 @@ export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
 export type RuinId =
   | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
 export type ArtifactId =
-  | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
+  | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
+  // The three pillars the city relics do not touch: the dungeon, the war and
+  // the world map (Docs/proposals/relic-effects.md §6).
+  | 'DelversLantern' | 'MusterHorn' | 'BailiffsTally';
 export type HeroId =
   'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |
   'Bard' | 'BeastkinHunter' | 'Cleric' | 'Cook' | 'Gardener' | 'Joker' | 'Merchant' |

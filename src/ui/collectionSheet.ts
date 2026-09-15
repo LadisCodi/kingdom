@@ -253,7 +253,14 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
     el('div', { class: 'col-relic-note' },
       iconEl('hourglass', { size: 'sm' }),
       card.owned ? '+1 level when its album closes' : 'Finish its album and it is yours'),
-    el('div', { class: 'col-effects' },
+    el('div', { class: `col-effects${card.pending === null ? '' : ' is-pending'}` },
+      // WHY THE NUMBER BELOW DOES NOTHING YET. A relic is a whole album, so a
+      // card that promised what the build cannot pay would be lying to
+      // somebody who spent one; the effect stays, muted, with its reason.
+      card.pending === null
+        ? ''
+        : el('div', { class: 'col-effect-wait' },
+          iconEl('hourglass', { size: 'sm' }), card.pending),
       el('div', { class: 'col-effect' },
         iconEl('sparkle', { size: 'sm' }),
         el('span', {}, card.owned ? el('b', {}, 'Now — ') : el('b', {}, 'At level 1 — '),

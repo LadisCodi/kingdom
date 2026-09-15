@@ -8,7 +8,7 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: step 1 done 2026-09-15.** Save version 46.
+> **Status: steps 1 and 2 done 2026-09-15.** Save version 47.
 >
 > **One decision gates a third of it** — **OQ-98**, whether the relic actives
 > stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
@@ -35,7 +35,7 @@
 | Step | Lands | Blocked by | Size |
 |---|---|---|---|
 | ~~**1**~~ | ~~The five passives take their final shape~~ **done** (OQ-97 closed) | — | **M** |
-| **2** | Eight relics exist, as passives | 1 | **M** |
+| ~~**2**~~ | ~~Eight relics exist, as passives~~ **done** | 1 | **M** |
 | **3** | The packs, the chests and the stars | — | **M** |
 | **4** | Eight albums, and the pairing rotates | 2, 3 | **M** |
 | **5** | The album cycle | 4 | **M** |
@@ -121,6 +121,16 @@ re-balance them twice.
   id reads 0.
 - **Test** — every relic's stat resolves at a live call site, or is on a named
   pending list of exactly one.
+
+### 2.1 How it landed
+
+- **`ArtifactDef` gained `pending`**, a reason string or null, and the relic
+  card prints it above a muted effect.
+- **Three relics have no album yet.** Eight relics and five albums means the
+  Lantern, the Horn and the Tally are reachable from `?dev` and nowhere else,
+  and a relic card shows *First Furrow* as its album because `albumOfRelic`
+  falls back. **Step 4 closes both**, and a test names the gap so it cannot be
+  mistaken for a bug.
 
 ## 3. The packs, the chests and the stars
 

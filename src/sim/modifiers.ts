@@ -74,7 +74,13 @@ export type ModifierStat =
   // cannot exceed, and a richer node nobody can drain faster is just a longer
   // queue (Docs/proposals/relic-effects.md §4.2).
   | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
-  | 'harvestStock';   // units a cell holds before it is spent
+  | 'harvestStock'    // units a cell holds before it is spent
+  // The three pillars outside the city. `roomHaul` moves the MATERIAL half of
+  // a room's line only: its Stardust is the Wanderer's Compass's and its Hero
+  // XP is a legendary's boon, and one number carrying three permanent layers
+  // would be unreadable.
+  | 'roomHaul'        // a room's Gold and Stone
+  | 'worldImprovementYield'; // what a world-map improvement grants an hour — NOT READ YET
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

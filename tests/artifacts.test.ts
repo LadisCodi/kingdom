@@ -32,12 +32,15 @@ import {
   ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
+import { armyCap } from '../src/sim/army';
+import { roomReward } from '../src/sim/expeditions';
 import { effectiveRecoveryMs, effectiveStock } from '../src/sim/harvest';
 import {
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs,
 } from '../src/sim/upgrades';
 import type { AlbumPayout } from '../src/sim/collection';
 import { bannerRarities, grantHero, ownsHeroId } from '../src/sim/heroes';
+import { HERO_ORDER } from '../src/sim/data/definitions';
 import { resolve } from '../src/sim/modifiers';
 import { budgetRemainingCents, choosePayerProfile, priceCents } from '../src/sim/store';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -164,6 +167,75 @@ describe('a relic is a permanent passive with no ceiling', () => {
   });
 });
 
+// STEP 2 (Docs/plans/collection-eight.md): the collection needs eight relics
+// and the city had five. The three new ones take the dungeon, the war and the
+// world map.
+describe('the three relics outside the city', () => {
+  const NEW = ['DelversLantern', 'MusterHorn', 'BailiffsTally'] as const;
+  let state: GameState;
+  beforeEach(() => { state = freshGame(); });
+
+  it('brings the roster to eight, each moving its own number', () => {
+    expect(ARTIFACT_ORDER).toHaveLength(8);
+    const stats = ARTIFACT_ORDER.flatMap((id) => ARTIFACTS[id].passive.stats.map((p) => p.stat));
+    expect(new Set(stats).size).toBe(stats.length);
+  });
+
+  // The rule the boons enforce in the other direction: the two permanent
+  // layers stay legible by staying disjoint.
+  it('never moves a number a legendary boon moves', () => {
+    const boonStats = new Set(HERO_ORDER
+      .map((id) => HEROES[id].boon?.stat)
+      .filter((s): s is NonNullable<typeof s> => s !== undefined));
+    for (const id of ARTIFACT_ORDER) {
+      for (const { stat } of ARTIFACTS[id].passive.stats) {
+        expect(boonStats.has(stat), `${id} moves ${stat}, which a boon moves`).toBe(false);
+      }
+    }
+  });
+
+  // THE MATERIAL HALF ONLY. A room's Stardust is the Compass's and its Hero XP
+  // is a boon's; the Lantern must not stack a third layer on either.
+  it('the Lantern pays a room\u2019s gold and stone, and leaves the rest alone', () => {
+    const before = roomReward(state, 'HollowBarrow', 1, 1);
+    grantArtifactLevel(state, 'DelversLantern');
+    const after = roomReward(state, 'HollowBarrow', 1, 1);
+    const mult = ARTIFACTS.DelversLantern.passive.base;
+    expect(after.wallet.Gold).toBe(Math.round(before.wallet.Gold! * mult));
+    expect(after.wallet.Stone).toBe(Math.round(before.wallet.Stone! * mult));
+    expect(after.wallet.Stardust).toBe(before.wallet.Stardust);
+    expect(after.heroXp).toBe(before.heroXp);
+  });
+
+  it('the Horn widens what the halls can field', () => {
+    addBuilt(state, 'Barracks', { x: 2, y: 0 });
+    const before = armyCap(state);
+    expect(before).toBeGreaterThan(0);
+    grantArtifactLevel(state, 'MusterHorn');
+    expect(armyCap(state)).toBe(Math.round(before * ARTIFACTS.MusterHorn.passive.base));
+  });
+
+  // THE ONE THAT IS NOT COLLECTED YET, named rather than forgotten. Delete
+  // this when the world map's improvements exist.
+  it('the Tally waits on the world map, and its card says so', () => {
+    expect(ARTIFACTS.BailiffsTally.passive.stats[0]!.stat).toBe('worldImprovementYield');
+    const pending = ARTIFACT_ORDER.filter((id) => ARTIFACTS[id].pending !== null);
+    expect(pending).toEqual(['BailiffsTally']);
+    grantArtifactLevel(state, 'BailiffsTally');
+    // In the stack and ready; nothing resolves it yet.
+    expect(resolve(state, 'worldImprovementYield', 1))
+      .toBeCloseTo(ARTIFACTS.BailiffsTally.passive.base, 6);
+  });
+
+  it('levels like any other relic, from zero', () => {
+    for (const id of NEW) {
+      expect(artifactLevel(state, id)).toBe(0);
+      expect(grantArtifactLevel(state, id)).toBe('Granted');
+      expect(passiveValueAtLevel(id, 2)).toBeGreaterThan(passiveValueAtLevel(id, 1));
+    }
+  });
+});
+
 describe('an album', () => {
   let state: GameState;
   beforeEach(() => {
@@ -226,11 +298,22 @@ describe('an album', () => {
     expect(bigger.Gold!).toBeGreaterThan(chest.Gold!);
   });
 
-  it('is one per relic, in the same order, for ever', () => {
-    expect(ALBUM_ORDER).toHaveLength(ARTIFACT_ORDER.length);
+  it('never levels one relic from two albums', () => {
     const relics = ALBUM_ORDER.map((id) => ALBUMS[id].relic);
-    expect(new Set(relics).size).toBe(ARTIFACT_ORDER.length);
+    expect(new Set(relics).size).toBe(ALBUM_ORDER.length);
     expect(SEASON_CARDS).toBe(ALBUM_ORDER.length * CARDS_PER_ALBUM);
+  });
+
+  // THE GAP STEP 4 CLOSES (Docs/plans/collection-eight.md). Eight relics
+  // exist and five albums do, so three relics cannot be earned yet — they are
+  // reachable from `?dev` and from nowhere else. Delete this test when the
+  // eighth album lands and put the equality back.
+  it('has three more relics than albums, until the eighth album lands', () => {
+    expect(ARTIFACT_ORDER).toHaveLength(8);
+    expect(ALBUM_ORDER).toHaveLength(5);
+    const levelled = new Set(ALBUM_ORDER.map((id) => ALBUMS[id].relic));
+    const orphans = ARTIFACT_ORDER.filter((id) => !levelled.has(id));
+    expect(orphans).toEqual(['DelversLantern', 'MusterHorn', 'BailiffsTally']);
   });
 });
 

@@ -1,6 +1,6 @@
 # 9 · Relics and the collection
 
-> **Scope.** The five relics as permanent kingdom passives with no ceiling,
+> **Scope.** The eight relics as permanent kingdom passives with no ceiling,
 > and the **collection** that levels them: a 28-day season of five card albums,
 > the packs the cards come in, duplicates, the vault, trading, wildcards, and
 > the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
@@ -50,7 +50,7 @@
   until the player holds a card, and appears the moment they open their first
   pack.
 
-## 2. The five relics
+## 2. The eight relics
 
 Every effect is a number that grows without a ceiling — a speed or a yield,
 never a discount, because a discount dies at 100%.
@@ -62,7 +62,17 @@ never a discount, because a discount dies at 100%.
 | **Foreman's Sigil** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
 | **Gilded Ledger** | tax rate **+X%** | `taxRate` |
 | **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
+| **The Delver's Lantern** | a room's **Gold and Stone +X%** | `roomHaul` |
+| **The Muster Horn** | the army the halls field **+X%** | `armyCap` |
+| **The Bailiff's Tally** | every world-map improvement's hourly grant **+X%** | `worldImprovementYield` — **waits on the world map** |
 
+- **Five are the city's and three are the pillars outside it** — the dungeon,
+  the war and the world map.
+- **The Lantern takes a room's MATERIAL half only.** Its Stardust is the
+  Compass's and its Hero XP is a legendary's boon; three permanent layers on
+  one number would be unreadable.
+- **A relic whose system does not exist yet says so on its card**, in muted
+  ink with the reason, and its level accrues normally against the day it lands.
 - **A relic may move more than one number with one value.** The Seal's two and
   the Sigil's two are one idea each: half of either saturates or reads as
   nothing — a bigger swing empties a node it cannot exceed, and a crew that

@@ -4458,6 +4458,27 @@
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
       "activeRadius": 0
+    },
+    "DelversLantern": {
+      "passiveBase": 1.15,
+      "passivePerLevel": 0.15,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
+    },
+    "MusterHorn": {
+      "passiveBase": 1.1,
+      "passivePerLevel": 0.1,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
+    },
+    "BailiffsTally": {
+      "passiveBase": 1.15,
+      "passivePerLevel": 0.15,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
     }
   },
   "quests": [
