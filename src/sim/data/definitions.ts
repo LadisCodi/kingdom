@@ -1227,6 +1227,17 @@ export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
  */
 export const COLLECTION = balance.collection;
 
+/**
+ * What a relic waits before its ability can be cast again — counted from the
+ * moment the WINDOW CLOSES, never from the cast (Docs/features/09-relics.md
+ * §2.1).
+ *
+ * Flat across all eight relics and at every level. A cooldown that shrank with
+ * the level would be a discount wearing a hat, and a relic that did more AND
+ * did it more often would grow on two axes at once.
+ */
+export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
+
 /** Knowledge drips from every ruin the player has FOUND, whether or not they
  *  ever delve it — so the fog keeps paying even between expeditions. */
 export const KNOWLEDGE = balance.knowledge;
@@ -2164,4 +2175,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 51;
+export const SAVE_VERSION = 52;

@@ -322,13 +322,26 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   body.append(albumRow);
 
   if (active !== null && card.owned) {
-    body.append(action({
-      label: `Cast ${active.name}`,
-      onClick: () => game.startCast(id),
-      cost: { Mana: active.manaCost },
-      have: (c) => game.walletValue(c),
-      info: active.text,
-    }));
+    // THE THREE-STATE WALK (§2.1). A relic that is running says so and counts
+    // down; one resting says what it is waiting for. Neither is an error, so
+    // neither wears the padlock a blocked action gets — the countdown IS the
+    // explanation, and it is derived from a timestamp rather than ticked down,
+    // so a tab left in the background comes back to the right number.
+    const { phase, leftMs } = card.cast;
+    const left = formatDuration(Math.ceil(leftMs / 1000));
+    body.append(phase === 'Ready'
+      ? action({
+        label: `Cast ${active.name}`,
+        onClick: () => game.startCast(id),
+        cost: { Mana: active.manaCost },
+        have: (c) => game.walletValue(c),
+        info: active.text,
+      })
+      : el('div', { class: `col-cast-phase is-${phase.toLowerCase()}` },
+        iconEl('hourglass', { size: 'sm' }),
+        el('span', {}, phase === 'Active'
+          ? `${active.name} is running — ${left} left`
+          : `Ready again in ${left}`)));
   }
   return body;
 }

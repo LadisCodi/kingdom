@@ -541,6 +541,17 @@ export interface GameState {
    */
   artifacts: {
     levels: Partial<Record<ArtifactId, number>>;
+    /**
+     * WHEN EACH RELIC'S ABILITY LAST WENT OFF, for the ACTIVE → COOLDOWN →
+     * READY walk (Docs/features/09-relics.md §2.1). Absent = never cast, which
+     * reads as READY.
+     *
+     * Two timestamps and not one, because the window and the cooldown are
+     * different facts: the window is what the zone is standing for, and the
+     * cooldown starts where it ends. Storing the cast instant and deriving the
+     * rest would reprice a running window every time the relic gained a level.
+     */
+    casts: Partial<Record<ArtifactId, { endsAt: number; readyAt: number }>>;
   };
   /**
    * The card collection — the live season only. Wiped whole at the close, so

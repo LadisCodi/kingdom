@@ -706,10 +706,17 @@ export function serialize(state: GameState, now: number): SaveFile {
           ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
-      // A relic is a level and nothing else. The passives are re-derived on
+      // A relic is a level and a cast clock. The passives are re-derived on
       // load, so nothing about what they DO is written here.
       'kingdom.artifacts': {
         Levels: state.artifacts.levels,
+        // A WINDOW SURVIVES A CLOSED TAB, because the zone it placed does: a
+        // zone is a modifier and those are written whole, so a relic that came
+        // back READY while its own zone was still standing would let the
+        // player lay a second one on top of the first.
+        Casts: Object.fromEntries(Object.entries(state.artifacts.casts).map(
+          ([id, c]) => [id, { EndsAtUtc: iso(c!.endsAt), ReadyAtUtc: iso(c!.readyAt) }],
+        )),
       },
       // The live season's cards. Wiped whole at the close, so this module is
       // the one thing in the file that is deliberately short-lived.
@@ -1094,7 +1101,12 @@ export function deserialize(
 
   const artifactsDto = modules['kingdom.artifacts'];
   if (artifactsDto) {
-    state.artifacts = { levels: { ...(artifactsDto.Levels ?? {}) } };
+    state.artifacts = {
+      levels: { ...(artifactsDto.Levels ?? {}) },
+      casts: Object.fromEntries(Object.entries(artifactsDto.Casts ?? {}).map(
+        ([id, c]) => [id, { endsAt: ms((c as any).EndsAtUtc), readyAt: ms((c as any).ReadyAtUtc) }],
+      )),
+    };
   }
 
   const collectionDto = modules['kingdom.collection'];

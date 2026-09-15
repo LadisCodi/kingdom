@@ -48,7 +48,10 @@ import {
 import {
   ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
 } from './sim/data/seasons';
-import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
+import {
+  bloomPreview, cast, castBlock, castState, divinationSaving, validCastCells,
+  type CastPhase,
+} from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
@@ -912,10 +915,12 @@ export class Game {
   startCast(artifactId: ArtifactId): void {
     const active = ARTIFACTS[artifactId].active;
     if (active === null) return;
-    const block = castBlock(this.state, artifactId);
+    const block = castBlock(this.state, artifactId, this.now());
     if (block !== null) {
       if (block === 'NotEnoughMana') this.shake(['Mana']);
       else if (block === 'NotOwned') this.toast('Finish its album first');
+      else if (block === 'Active') this.toast(`${active.name} is still running`);
+      else if (block === 'OnCooldown') this.toast(`${ARTIFACTS[artifactId].name} needs to rest`);
       this.notify();
       return;
     }
@@ -1102,6 +1107,9 @@ export class Game {
     /** Why the number below it does nothing yet, or null. The card prints the
      *  effect in muted ink rather than promising what the build cannot pay. */
     pending: string | null;
+    /** Where the ability is in its ACTIVE → COOLDOWN → READY walk, and how
+     *  long is left of the phase it is in (§2.1). */
+    cast: { phase: CastPhase; leftMs: number };
   } {
     const def = ARTIFACTS[id];
     const album = albumOfRelic(id, this.state.collection.season);
@@ -1119,7 +1127,17 @@ export class Game {
       held: albumHeld(this.state, album),
       total: ALBUMS[album].cards.length,
       pending: def.pending,
+      cast: this.castPhase(id),
     };
+  }
+
+  /** The three-state walk, as the card reads it. `leftMs` is derived from a
+   *  timestamp every frame, so a throttled tab comes back correct rather than
+   *  frozen mid-countdown. */
+  castPhase(id: ArtifactId): { phase: CastPhase; leftMs: number } {
+    const now = this.now();
+    const { phase, until } = castState(this.state, id, now);
+    return { phase, leftMs: until === null ? 0 : Math.max(0, until - now) };
   }
 
   /** The sentence a Legendary's card prints under its trait, or null on the

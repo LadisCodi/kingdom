@@ -69,6 +69,16 @@
 .col-line .k-trough { flex: 1; }
 .col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .col-count { font-weight: var(--weight-strong); color: var(--ink); white-space: nowrap; }
+/* A relic mid-cycle: the countdown replaces the cast button rather than
+   greying it, because a relic that is running is doing its job, not blocked. */
+.col-cast-phase {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: var(--gutter); padding: 10px var(--gutter);
+  border-radius: var(--radius); font-weight: var(--weight-strong);
+  background: var(--parchment-shade); color: var(--ink-muted);
+}
+.col-cast-phase.is-active { color: var(--leaf-dark); }
+
 /* The lap chip: a quiet counter, never louder than the cards in hand. */
 .col-lap {
   font-size: var(--text-helper); font-weight: var(--weight-strong);

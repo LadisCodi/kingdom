@@ -8,16 +8,22 @@
 // one bug this file exists to make impossible.
 
 import { describe, expect, it } from 'vitest';
+import { grantArtifactLevel } from '../src/sim/artifacts';
+import {
+  activeDurationMs, cast, castBlock, castState,
+} from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
-import { HARVEST } from '../src/sim/data/definitions';
+import { ARTIFACT_COOLDOWN_SECONDS, HARVEST } from '../src/sim/data/definitions';
 import { effectiveRecoveryMs } from '../src/sim/harvest';
 import {
   activeZones, addModifier, areaCovers, resolve, resolveAt, type Modifier,
 } from '../src/sim/modifiers';
 import { deserialize, serialize } from '../src/sim/save';
 import { workerStrikeMs, effectiveWorkerSpeed } from '../src/sim/upgrades';
-import { districtAt, type Coord, type GameState } from '../src/sim/state';
-import { addBuilt, freshGame, map, T0 } from './helpers';
+import {
+  addToWallet, districtAt, getWallet, type Coord, type GameState,
+} from '../src/sim/state';
+import { addBuilt, freshGame, fund, map, T0 } from './helpers';
 
 const CENTRE: Coord = { x: 0, y: 0 };
 
@@ -174,5 +180,89 @@ describe('a zone is a boundary, and it survives a save', () => {
     const back = deserialize(save, map, T0)!;
     expect(back.modifiers.find((m) => m.id === 'old')!.area).toBeUndefined();
     expect(resolve(back, 'taxRate', 1)).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------- the cycle
+
+describe('an active walks ACTIVE → COOLDOWN → READY', () => {
+  /** A relic in hand, with a 60-minute window on its ability. */
+  const armed = (): GameState => {
+    const state = freshGame();
+    state.lastAdvance = T0;
+    grantArtifactLevel(state, 'ForemansSigil');
+    fund(state, { Mana: 999 });
+    return state;
+  };
+
+  it('is READY before the first cast and never counts down', () => {
+    const state = armed();
+    expect(castState(state, 'ForemansSigil', T0)).toEqual({ phase: 'Ready', until: null });
+    expect(castBlock(state, 'ForemansSigil', T0)).toBeNull();
+  });
+
+  // THE COOLDOWN IS COUNTED FROM THE WINDOW'S CLOSE. A 60-minute window on a
+  // 5-minute cooldown counted from the CAST would be 100% uptime, which is no
+  // cooldown at all — so the relic is busy for the window AND the wait after.
+  it('is ACTIVE for its window and only then starts resting', () => {
+    const state = armed();
+    const window = activeDurationMs('ForemansSigil');
+    expect(window).toBeGreaterThan(0);
+    expect(cast(state, map, 'ForemansSigil', null, T0).result).toBe('Cast');
+
+    expect(castState(state, 'ForemansSigil', T0 + 1).phase).toBe('Active');
+    expect(castState(state, 'ForemansSigil', T0 + window - 1).phase).toBe('Active');
+    expect(castState(state, 'ForemansSigil', T0 + window).phase).toBe('Cooldown');
+    const rest = ARTIFACT_COOLDOWN_SECONDS * 1000;
+    expect(castState(state, 'ForemansSigil', T0 + window + rest - 1).phase).toBe('Cooldown');
+    expect(castState(state, 'ForemansSigil', T0 + window + rest).phase).toBe('Ready');
+  });
+
+  it('refuses a second cast while its own window is open, and while it rests', () => {
+    const state = armed();
+    const window = activeDurationMs('ForemansSigil');
+    cast(state, map, 'ForemansSigil', null, T0);
+    expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
+    expect(cast(state, map, 'ForemansSigil', null, T0 + 1).result).toBe('Active');
+    expect(castBlock(state, 'ForemansSigil', T0 + window + 1)).toBe('OnCooldown');
+    const ready = T0 + window + ARTIFACT_COOLDOWN_SECONDS * 1000;
+    expect(castBlock(state, 'ForemansSigil', ready)).toBeNull();
+    expect(cast(state, map, 'ForemansSigil', null, ready).result).toBe('Cast');
+  });
+
+  // The cycle is checked BEFORE the purse: a relic that is still running tells
+  // the player to wait, not that they are poor.
+  it('says it is running rather than that the player is poor', () => {
+    const state = armed();
+    cast(state, map, 'ForemansSigil', null, T0);
+    addToWallet(state.city.wallet, 'Mana', -getWallet(state.city.wallet, 'Mana'));
+    expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
+  });
+
+  // A WINDOW SURVIVES A CLOSED TAB, because the zone it placed does. A relic
+  // that came back READY while its own zone still stood would let the player
+  // lay a second one on top of the first.
+  it('carries both instants through a save', () => {
+    const state = armed();
+    cast(state, map, 'ForemansSigil', null, T0);
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(back.artifacts.casts.ForemansSigil)
+      .toEqual(state.artifacts.casts.ForemansSigil);
+    expect(castState(back, 'ForemansSigil', T0 + 1).phase).toBe('Active');
+  });
+
+  // The cooldown gates a COMMAND, not an accrual — nothing in the sim
+  // integrates differently across it — so, unlike a zone's expiry, it is
+  // deliberately NOT a boundary. This asserts the sim does not need it to be.
+  it('needs no boundary: one-call replay equals stepped ticking across it', () => {
+    const walk = (steps: number): string => {
+      const state = armed();
+      cast(state, map, 'ForemansSigil', null, T0);
+      const end = T0 + 120 * 60_000;
+      for (let i = 1; i <= steps; i++) advance(state, map, T0 + ((end - T0) * i) / steps);
+      return castState(state, 'ForemansSigil', end).phase;
+    };
+    expect(walk(1)).toBe('Ready');
+    expect(walk(240)).toBe('Ready');
   });
 });

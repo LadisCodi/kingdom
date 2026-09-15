@@ -181,6 +181,14 @@ const SETTINGS = [
   // against the payroll. TapPower buys this duration up, +20% a level.
   ['tap.work_seconds', 'tap.workSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
+  // What a relic waits before its ability can be cast again, counted from the
+  // moment the WINDOW CLOSES rather than from the cast — a 10-minute window on
+  // a 5-minute cooldown counted from the cast is 100% uptime, which is no
+  // cooldown at all. FLAT across all eight and at every level: a cooldown that
+  // shrank with the level would be a discount wearing a hat, and a relic that
+  // did more AND did it more often would grow on two axes at once
+  // (Docs/features/09-relics.md §2.1).
+  ['artifacts.active_cooldown_seconds', 'artifactCooldownSeconds'],
   // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
   // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
   // five, so the fifths come out whole; rings 1 and 2 are pennies inside the
@@ -881,6 +889,7 @@ async function importXlsx() {
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
+    artifactCooldownSeconds: 0,
   };
 
   for (const [id, r] of byId(readSheet(workbook, 'Districts'), DISTRICT_IDS)) {

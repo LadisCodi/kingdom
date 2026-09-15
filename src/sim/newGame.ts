@@ -78,7 +78,7 @@ export function newGame(map: MapData, now: number): GameState {
     // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
     gates: {},
     raidReports: [],
-    artifacts: { levels: {} },
+    artifacts: { levels: {}, casts: {} },
     collection: freshCollection(seasonAt(now)),
     modifiers: [],
     quests: { index: 0, progress: 0 },

@@ -13,7 +13,9 @@
 // UI, no Date.now(): the determinism argument the whole sim rests on collapses
 // the moment an effect can only be replayed by re-running the UI.
 
-import { ARTIFACTS, FEATURES, type ArtifactActiveId } from './data/definitions';
+import {
+  ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS, FEATURES, type ArtifactActiveId,
+} from './data/definitions';
 import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
 import { effectiveStock, harvestSourceAt, harvestSpecAt } from './harvest';
@@ -26,9 +28,50 @@ import { ownsArtifact } from './artifacts';
 import { techValue } from './techEffects';
 
 export type CastBlock =
-  | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget';
+  | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget'
+  // Its own window is still open, or the wait after it has not run out.
+  | 'Active' | 'OnCooldown';
 
 export type CastResult = 'Cast' | CastBlock;
+
+/**
+ * WHERE A RELIC'S ABILITY IS IN ITS CYCLE (Docs/features/09-relics.md §2.1).
+ *
+ * ACTIVE while its own window is open, COOLDOWN until the wait after it runs
+ * out, READY otherwise. A relic that was never cast is READY.
+ */
+export type CastPhase = 'Active' | 'Cooldown' | 'Ready';
+
+export interface CastState {
+  phase: CastPhase;
+  /** When the current phase ends, or null when READY. A TIMESTAMP, never a
+   *  decremented integer, so a throttled background tab comes back correct. */
+  until: number | null;
+}
+
+/**
+ * THE COOLDOWN IS COUNTED FROM THE WINDOW'S CLOSE, never from the cast. A
+ * 10-minute window on a 5-minute cooldown counted from the cast is 100%
+ * uptime, which is no cooldown at all.
+ *
+ * Read at `now` rather than at `state.lastAdvance`: this answers a question
+ * the player is asking with their thumb, and the sim's clock can be up to a
+ * tick stale. Nothing accrues at these instants — a cooldown ending changes
+ * only whether a cast is ALLOWED — so, unlike the zone's expiry, neither of
+ * them is a boundary.
+ */
+export function castState(state: GameState, id: ArtifactId, now: number): CastState {
+  const c = state.artifacts.casts[id];
+  if (c === undefined) return { phase: 'Ready', until: null };
+  if (now < c.endsAt) return { phase: 'Active', until: c.endsAt };
+  if (now < c.readyAt) return { phase: 'Cooldown', until: c.readyAt };
+  return { phase: 'Ready', until: null };
+}
+
+/** How long the window a cast opens lasts. 0 for an ability that resolves at
+ *  once and leaves nothing standing. */
+export const activeDurationMs = (id: ArtifactId): number =>
+  (ARTIFACTS[id].active?.durationSeconds ?? 0) * 1000;
 
 /**
  * Whether the relic can be cast at all, ignoring the target.
@@ -40,10 +83,17 @@ export type CastResult = 'Cast' | CastBlock;
  * the technology that discovers them; until that exists the relic is the
  * thing that knows the spell.
  */
-export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
+export function castBlock(
+  state: GameState, id: ArtifactId, now: number = state.lastAdvance,
+): CastBlock | null {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const active = ARTIFACTS[id].active;
   if (active === null) return 'NoActive';
+  // The cycle before the purse: a relic that is still running tells the player
+  // to wait, not that they are poor.
+  const phase = castState(state, id, now).phase;
+  if (phase === 'Active') return 'Active';
+  if (phase === 'Cooldown') return 'OnCooldown';
   if (mana(state) < castCost(state, id)) return 'NotEnoughMana';
   return null;
 }
@@ -114,7 +164,7 @@ export function cast(
   target: Coord | null,
   now: number,
 ): CastReport {
-  const block = castBlock(state, id);
+  const block = castBlock(state, id, now);
   if (block !== null) return nothing(block);
   const active = ARTIFACTS[id].active!;
   if (active.targeted && target === null) return nothing('InvalidTarget');
@@ -191,6 +241,13 @@ export function cast(
     }
   }
   payMana(state, castCost(state, id));
+  // THE CYCLE STARTS HERE, and the wait is measured from where the window
+  // ends — which for an ability that leaves nothing standing is `now`.
+  const endsAt = now + activeDurationMs(id);
+  state.artifacts.casts[id] = {
+    endsAt,
+    readyAt: endsAt + ARTIFACT_COOLDOWN_SECONDS * 1000,
+  };
   return report;
 }
 

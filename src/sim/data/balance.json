@@ -5671,6 +5671,7 @@
     ]
   },
   "offlineCapHours": 8,
+  "artifactCooldownSeconds": 300,
   "villains": {
     "BarrowThane": {
       "name": "Barrow Thane",
