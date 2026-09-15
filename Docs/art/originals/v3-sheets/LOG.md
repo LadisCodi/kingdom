@@ -433,3 +433,34 @@ Cut with a plain `-crop` per quadrant and trimmed on an **alpha threshold**
 rather than `-trim`: the ribbon's faint halo made a bare `-trim` return a
 576px-tall box for a 174px ribbon. Then halved, so a ~110px card draws a
 ~214px source. Corner `srgba(0,0,0,0)`, alpha mean 0.45.
+
+## spr-x — the spell decals
+
+("Crear hoja de iconos UI", 2026-09-15). Four MAP DECALS — drawn flat on the
+ground under the buildings and the people, to mark the tiles a spell is
+affecting. The brief led with that, because it decides everything: they had to
+read as lying ON the grass rather than standing on it, and must not look like
+an object the player could tap.
+
+| Sheet | Cell | File | Drawn as |
+|---|---|---|---|
+| spr-x | 1 | `spell_rune.png` | the centre's rune circle, turning one slow revolution a cycle |
+| spr-x | 2 | `spell_sigil.png` | a mark on **one cell in seven**, by a hash so they hold still |
+| spr-x | 3 | `spell_mote.png` | one rising mote a cell, on the cells the sigils skipped |
+| spr-x | 4 | `spell_glow.png` | a haze under every covered cell, 1.2× the cell so neighbours bleed into one area |
+
+Cell 2 came back as an ornate four-point star rather than the arcane sigil the
+prompt asked for. Kept: at 40% of a cell and 40% alpha it is texture, and the
+brief's word for it was always "a mark".
+
+**THE FIRST PASS BURIED THE KINGDOM.** Glow at 1.5× and 0.55 alpha on every
+cell, a sigil on one in three at 60% of the cell, two motes each: the terrain,
+the buildings and the villagers all vanished under violet. A zone has to TINT,
+not cover — the player is looking at their city, and the spell is a thing that
+is happening TO it. Halving the glow, thinning the sigils to one in seven at
+40% size, and dropping to one mote a cell is what made it a place rather than
+a curtain.
+
+Cut with a 26px inset per quadrant rather than a bare quarter: two of the four
+bled a sliver of a neighbour over the midline. Corner `srgba(0,0,0,0)`, alpha
+mean 0.22.

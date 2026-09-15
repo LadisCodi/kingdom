@@ -33,7 +33,7 @@ export const PALETTE = {
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing
      else on the map uses it — the ground is warm greens and browns, so a
      player never has to ask whether the glow is terrain. */
-  spellFill: 'rgba(124, 84, 214, 0.34)',
+  spellFill: 'rgba(124, 84, 214, 0.15)',
   spellBorder: 'rgba(198, 164, 255, 0.95)',
   spellGlow: 'rgba(214, 190, 255, 0.85)',
   spellDial: 'rgba(28, 16, 48, 0.55)',

@@ -497,10 +497,32 @@ export function drawMap(
     const pulse = 0.82 + 0.18 * Math.sin(spellPhase() * Math.PI * 2);
     ctx.save();
     ctx.globalAlpha = pulse;
+    // THE GLOW IS THE GROUND. A drawn haze under every covered cell, larger
+    // than the cell so neighbours bleed into one another and a block of tiles
+    // reads as ONE enchanted area rather than as a chequerboard of lit
+    // squares. The flat fill stays underneath it as the floor of the effect,
+    // so the zone is still legible before the art loads.
     ctx.fillStyle = PALETTE.spellFill;
     for (const cell of zone.cells) {
       const { x, y } = cellRect(cell);
       ctx.fillRect(x, y, size, size);
+    }
+    ctx.globalAlpha = pulse * 0.2;
+    for (const cell of zone.cells) {
+      const { x, y } = cellRect(cell);
+      drawSprite(ctx, 'spell_glow', x - size * 0.1, y - size * 0.1, size * 1.2, size * 1.2);
+    }
+    // A SIGIL ON A FEW CELLS, and FEW is the whole point. A zone is 81 cells
+    // at radius 4 and 121 at radius 5; a mark on each is a rash that buries
+    // the kingdom the player is trying to look at. These are TEXTURE — enough
+    // to say the ground is enchanted, never enough to count. One in seven, by
+    // a hash, so they hold still while the zone is redrawn.
+    ctx.globalAlpha = pulse * 0.4;
+    for (const cell of zone.cells) {
+      const seed = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
+      if (seed % 7 !== 0) continue;
+      const { x, y } = cellRect(cell);
+      drawSprite(ctx, 'spell_sigil', x + size * 0.3, y + size * 0.3, size * 0.4, size * 0.4);
     }
     // The border traces the OUTSIDE of the whole zone, never the grid inside
     // it: what is enchanted is an area, not a set of squares.
@@ -535,17 +557,27 @@ export function drawMap(
     // blur; the motes are two per cell and a radius-5 zone is 121 of them, so
     // a blurred mote is 242 blurred circles a frame.
     ctx.fillStyle = PALETTE.spellGlow;
+    const moteSize = Math.max(5, size * 0.2);
     for (const cell of zone.cells) {
+      // One mote a cell, and only on the cells the sigils skipped: two rising
+      // sparkles on top of a mark is the same tile saying the same thing twice.
+      const pick = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
+      if (pick % 3 !== 1) continue;
       const { x, y } = cellRect(cell);
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 1; i++) {
         const seed = ((cell.x * 73856093) ^ (cell.y * 19349663) ^ (i * 83492791)) >>> 0;
         const t = (spellPhase() + (seed % 1000) / 1000) % 1;
         const mx = x + ((seed >>> 10) % 100) / 100 * size;
         const my = y + size - t * size;
-        ctx.globalAlpha = pulse * Math.sin(t * Math.PI);
-        ctx.beginPath();
-        ctx.arc(mx, my, Math.max(2, size * 0.07), 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = pulse * Math.sin(t * Math.PI) * 0.75;
+        // The drawn mote if the sheet has landed, a plain dot if it has not —
+        // the same fallback every sprite in the game has, so art lands one
+        // file at a time.
+        if (!drawSprite(ctx, 'spell_mote', mx - moteSize / 2, my - moteSize / 2, moteSize, moteSize)) {
+          ctx.beginPath();
+          ctx.arc(mx, my, Math.max(2, size * 0.07), 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
     ctx.restore();
@@ -558,6 +590,19 @@ export function drawMap(
     const cy = y + size / 2;
     const r = size * 0.3;
     ctx.save();
+    // THE RUNE CIRCLE turns under the wheel, one slow revolution a cycle. It
+    // is the only thing in the zone that rotates, which is what makes the
+    // centre read as the source rather than as one more lit tile.
+    //
+    // Its own save/restore: the rotation must come off cleanly, and resetting
+    // the transform outright would take the CAMERA with it.
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.translate(cx, cy);
+    ctx.rotate(spellPhase() * Math.PI * 2);
+    drawSprite(ctx, 'spell_rune', -size * 0.55, -size * 0.55, size * 1.1, size * 1.1);
+    ctx.restore();
+
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fillStyle = PALETTE.spellDial;
