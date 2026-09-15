@@ -283,7 +283,10 @@ function addCard(
   // a gift has to pay the same way a page filled by a pack does. The guard
   // inside `completeIfDue` is what keeps it once a season.
   const payout = completeIfDue(state, ref.album);
-  if (payout !== null) opening.payouts.push(payout);
+  if (payout !== null) {
+    opening.payouts.push(payout);
+    rollLapIfDue(state);
+  }
   if (before >= 1) {
     const stars = starsFor(ref);
     state.collection.stars += stars;
@@ -304,6 +307,8 @@ export interface AlbumPayout {
   level: number;
   /** True the first time ever — the relic ARRIVES rather than rises. */
   found: boolean;
+  /** Which lap of the eight this payout belonged to, 0-based. */
+  lap: number;
   /** Hours of production the chest held, and what that came to. */
   hours: number;
   chest: Wallet;
@@ -316,8 +321,16 @@ export interface AlbumPayout {
   prize: CollectionPrize | null;
 }
 
-/** What an album at this index pays. A TOTAL, banded easy → hard (§5). */
-export function albumRewards(album: AlbumId): {
+/**
+ * What an album at this index pays. A TOTAL, banded easy → hard (§5).
+ *
+ * THE GEMS ARE THE FIRST LAP'S ONLY. Five albums at 2,000 each is most of a
+ * season's Gem budget, and a player running the cycle two or three times would
+ * mint it over again. A repeat pays the production chest, the keys and the
+ * relic level — the chest is safe to repeat by construction, because it is
+ * priced in hours of what the city makes rather than in coins.
+ */
+export function albumRewards(album: AlbumId, lap = 0): {
   hours: number; silverKeys: number; goldKeys: number; gems: number;
 } {
   const i = ALBUM_ORDER.indexOf(album);
@@ -325,7 +338,7 @@ export function albumRewards(album: AlbumId): {
     hours: COLLECTION.albumHours[i] ?? COLLECTION.albumHours[0] ?? 2,
     silverKeys: COLLECTION.albumSilverKeys[i] ?? 0,
     goldKeys: COLLECTION.albumGoldKeys[i] ?? 0,
-    gems: COLLECTION.albumGems,
+    gems: lap === 0 ? COLLECTION.albumGems : 0,
   };
 }
 
@@ -340,11 +353,21 @@ export function albumRewards(album: AlbumId): {
 function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
   if (albumIsComplete(state, album)) return null;
   if (albumHeld(state, album) < CARDS_PER_ALBUM) return null;
+
+  // THE NINE CARDS ARE SPENT. Without this the loop does not terminate: a
+  // reset that left the cards in hand would re-complete every album on the
+  // same tick, for ever. Duplicates survive — a tenth copy fills its slot the
+  // moment the album empties, which is what makes a hoard worth holding.
+  const row = state.collection.cards[album];
+  if (row !== undefined) {
+    state.collection.cards[album] = row.map((n) => Math.max(0, n - 1));
+  }
   state.collection.completed.push(album);
 
+  const lap = state.collection.cycle;
   const relic = relicOfAlbum(album, state.collection.season);
   const found = grantArtifactLevel(state, relic) === 'Granted';
-  const rewards = albumRewards(album);
+  const rewards = albumRewards(album, lap);
   const chest = productionChest(state, rewards.hours);
   for (const [c, n] of Object.entries(chest)) {
     addToWallet(state.city.wallet, c as CurrencyId, n);
@@ -360,9 +383,28 @@ function completeIfDue(state: GameState, album: AlbumId): AlbumPayout | null {
     found,
     chest,
     ...rewards,
-    // The ninth card of the FIFTH album is also the forty-fifth of the season.
+    // The last card of the LAST album is also the season's 72nd.
     prize: payCollectionPrize(state),
+    lap,
   };
+}
+
+/**
+ * THE LAP CLOSES. All eight albums are in `completed`, so they reset and the
+ * eight may be run again on the same season's cards.
+ *
+ * BREADTH BEFORE DEPTH: an album cannot be completed twice until all eight
+ * have been completed once, which is what keeps a player's eight relic levels
+ * reading the same. Only the REPEAT is gated — a player who closes three of
+ * eight still takes those three relic levels, exactly as before.
+ *
+ * Called after the payout so the album that finished the lap is paid at the
+ * lap it belonged to.
+ */
+function rollLapIfDue(state: GameState): void {
+  if (state.collection.completed.length < ALBUM_ORDER.length) return;
+  state.collection.completed = [];
+  state.collection.cycle += 1;
 }
 
 // --------------------------------------------------------------- the prize
@@ -442,8 +484,15 @@ export function productionChest(state: GameState, hours: number): Wallet {
   return out;
 }
 
-/** Every album finished, so the collection prize is owed (§5). */
-export const seasonIsComplete = (state: GameState): boolean =>
+/**
+ * Every album of THIS LAP finished, so the collection prize is owed (§5).
+ *
+ * Not exported, and deliberately: `completed` empties the instant the lap
+ * rolls, so this is true for exactly as long as it takes `completeIfDue` to
+ * ask it. What outlives the lap is `prizePaid` — that is the fact anything
+ * outside this file wants.
+ */
+const seasonIsComplete = (state: GameState): boolean =>
   state.collection.completed.length >= ALBUM_ORDER.length;
 
 // ------------------------------------------------------------- the wildcard
@@ -517,7 +566,9 @@ export function placeWildcard(
   row[ref.slot] = 1;
   // The same completion path a pack's ninth card takes, which is why
   // `completeIfDue` is a question about the ALBUM and not about the card.
-  return { placed: true, payout: completeIfDue(state, ref.album) };
+  const payout = completeIfDue(state, ref.album);
+  if (payout !== null) rollLapIfDue(state);
+  return { placed: true, payout };
 }
 
 /**
@@ -813,4 +864,5 @@ export const freshCollection = (season: number): GameState['collection'] => ({
   packs: [],
   packsIssued: 0,
   prizePaid: false,
+  cycle: 0,
 });

@@ -26,7 +26,7 @@ import {
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
   seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, vaultCost,
   buyFromVaultMany,
-  closeGold, payCollectionPrize, seasonIsComplete, PRIZE_BANNER,
+  closeGold, payCollectionPrize, PRIZE_BANNER,
   albumOfRelic, relicOfAlbum,
   buyWildcard, placeWildcard, wildcardCovers, wildcardGemCost, wildcardOffers,
   wildcardsHeld, SEASON_CARDS,
@@ -302,6 +302,25 @@ describe('an album', () => {
     const hours = ALBUM_ORDER.map((id) => albumRewards(id).hours);
     expect(hours[0]).toBeLessThanOrEqual(hours[hours.length - 1]!);
     expect(Math.max(...hours)).toBeLessThanOrEqual(8);
+    // MONOTONE, and no rung below the one before it: the ladder climbs with
+    // the difficulty or the hardest page pays the least.
+    for (let i = 1; i < hours.length; i++) expect(hours[i]).toBeGreaterThanOrEqual(hours[i - 1]!);
+  });
+
+  // THE LADDER HAS A RUNG PER ALBUM. `albumRewards` falls back to the first
+  // band for an index the sheet does not reach, so a ladder short of the
+  // album list would quietly pay the three hardest pages a beginner's chest
+  // and no key at all — which is exactly what eight albums on a five-rung
+  // ladder did.
+  it('authors a band for every album, keys and all', () => {
+    expect(COLLECTION.albumHours).toHaveLength(ALBUM_ORDER.length);
+    expect(COLLECTION.albumSilverKeys).toHaveLength(ALBUM_ORDER.length);
+    expect(COLLECTION.albumGoldKeys).toHaveLength(ALBUM_ORDER.length);
+    // One key a page, and the gold ones are the hard end of the ladder.
+    const keys = ALBUM_ORDER.map((id) => albumRewards(id));
+    for (const k of keys) expect(k.silverKeys + k.goldKeys).toBe(1);
+    const firstGold = keys.findIndex((k) => k.goldKeys > 0);
+    expect(keys.slice(firstGold).every((k) => k.goldKeys > 0)).toBe(true);
   });
 
   // Priced in production, so it is the same fraction of a day at every stage
@@ -459,17 +478,23 @@ describe('the collection prize', () => {
   // out in packs until the forty-fifth card lands.
   it('rides the payout of the album that finishes the season', () => {
     const payouts: AlbumPayout[] = [];
-    for (let i = 0; i < 600 && !seasonIsComplete(state); i++) {
+    // `prizePaid`, not `seasonIsComplete`: the eight pages empty when the lap
+    // rolls, so only the prize itself still remembers that they were all in.
+    for (let i = 0; i < 600 && !state.collection.prizePaid; i++) {
       grantPack(state, PACK_ORDER[i % PACK_ORDER.length]!, 'dev');
       const opening = openPack(state, T0);
       if (opening !== null) payouts.push(...opening.payouts);
     }
-    expect(seasonIsComplete(state)).toBe(true);
-    expect(payouts).toHaveLength(ALBUM_ORDER.length);
-    // Exactly one payout carries it, and it is the last one paid.
+    expect(state.collection.prizePaid).toBe(true);
+    // The FIRST lap is the eight pages; a pack that deals several cards at
+    // once can close the eighth and start the ninth in the same opening, so
+    // the tail of the list is not what the prize is about.
+    const firstLap = payouts.filter((p) => p.lap === 0);
+    expect(firstLap).toHaveLength(ALBUM_ORDER.length);
+    // Exactly one payout carries it, and it is the last one of that lap.
     const withPrize = payouts.filter((p) => p.prize !== null);
     expect(withPrize).toHaveLength(1);
-    expect(withPrize[0]).toBe(payouts[payouts.length - 1]);
+    expect(withPrize[0]).toBe(firstLap[firstLap.length - 1]);
     expect(withPrize[0]!.prize!.gems).toBe(COLLECTION.prizeGems);
     expect(ownsHeroId(state, seasonDef(state.collection.season).hero)).toBe(true);
   });
@@ -1036,6 +1061,98 @@ describe('the vault', () => {
   });
 });
 
+/**
+ * THE LAP. Eight albums, then the eight again on the same season's cards —
+ * the repeat is what stops a player with a month of packs and a finished
+ * ladder from having nothing to open for.
+ */
+describe('the eight albums run in laps', () => {
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    state.city.population = 2;
+  });
+
+  // THE LOOP TERMINATES. This is the whole reason the nine are spent: a close
+  // that left the page full would re-complete on the very next card and go on
+  // doing it, so the harness here is not a formality.
+  it('spends the nine, so a closed album is empty again', () => {
+    expect(close(state, 'FirstFurrow')).not.toBeNull();
+    expect(albumHeld(state, 'FirstFurrow')).toBe(0);
+    expect(albumIsComplete(state, 'FirstFurrow')).toBe(true);
+  });
+
+  // DUPLICATES SURVIVE, which is what makes a hoard worth holding: a tenth
+  // copy of a card fills its slot the moment the page empties.
+  it('keeps the duplicates a close did not need', () => {
+    // Three of every card but one, and a wildcard for the gap: the close
+    // takes ONE of each and leaves the rest standing.
+    const gap = ALBUMS.FirstFurrow.cards.findIndex((c) => c.gold !== true);
+    state.collection.cards.FirstFurrow = ALBUMS.FirstFurrow.cards
+      .map((_, i) => (i === gap ? 0 : 3));
+    const rarity = ALBUMS.FirstFurrow.cards[gap]!.rarity;
+    state.collection.wildcards[rarity] = 1;
+    const placed = placeWildcard(state, { album: 'FirstFurrow', slot: gap }, rarity);
+    expect(placed.placed && placed.payout).not.toBeNull();
+
+    const row = state.collection.cards.FirstFurrow!;
+    expect(row).toEqual(ALBUMS.FirstFurrow.cards.map((_, i) => (i === gap ? 0 : 2)));
+    // Which is what makes a hoard worth holding: eight of the nine slots are
+    // already filled for the next lap.
+    expect(albumHeld(state, 'FirstFurrow')).toBe(CARDS_PER_ALBUM - 1);
+  });
+
+  it('will not close an album twice until all eight have closed once', () => {
+    expect(close(state, 'FirstFurrow')).not.toBeNull();
+    // A whole second page, on a lap that has not rolled: the album is still
+    // in `completed`, so it pays nothing.
+    expect(close(state, 'FirstFurrow')).toBeNull();
+    expect(artifactLevel(state, relicOfAlbum('FirstFurrow', state.collection.season))).toBe(1);
+  });
+
+  it('rolls the lap when the eighth closes, and the eight open again', () => {
+    for (const album of ALBUM_ORDER) expect(close(state, album)).not.toBeNull();
+    // The eighth close emptied `completed` rather than leaving it full.
+    expect(state.collection.completed).toEqual([]);
+    expect(state.collection.cycle).toBe(1);
+    for (const album of ALBUM_ORDER) expect(albumIsComplete(state, album)).toBe(false);
+
+    // And the second lap levels the same eight relics a second time.
+    for (const album of ALBUM_ORDER) expect(close(state, album)).not.toBeNull();
+    expect(state.collection.cycle).toBe(2);
+    for (const album of ALBUM_ORDER) {
+      expect(artifactLevel(state, relicOfAlbum(album, state.collection.season))).toBe(2);
+    }
+  });
+
+  // THE GEMS ARE THE FIRST LAP'S ONLY — a repeat would mint a season's budget
+  // over again — and everything priced in production is safe to repeat.
+  it('pays Gems on the first lap and the chest on every one', () => {
+    for (const album of ALBUM_ORDER) close(state, album);
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const gold = getWallet(state.city.wallet, 'Gold');
+
+    const second = close(state, 'FirstFurrow');
+    expect(second!.lap).toBe(1);
+    expect(second!.gems).toBe(0);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
+    expect(second!.chest.Gold).toBeGreaterThan(0);
+    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
+  });
+
+  // The prize is a fact about the SEASON, not about the lap: the second lap's
+  // eighth album is the sixteenth page closed and pays no second call.
+  it('pays the collection prize once, however many laps run', () => {
+    for (const album of ALBUM_ORDER) close(state, album);
+    expect(state.collection.prizePaid).toBe(true);
+    const gems = getWallet(state.player.wallet, 'Gems');
+    for (const album of ALBUM_ORDER) expect(close(state, album)!.prize).toBeNull();
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
+  });
+
+});
+
 describe('the season', () => {
   it('runs on a shared calendar, with no state in the answer', () => {
     expect(seasonAt(SEASON_EPOCH)).toBe(0);
@@ -1216,12 +1333,16 @@ describe('the season', () => {
       levelled.push(relic);
       expect(close(state, 'FirstFurrow')).not.toBeNull();
       expect(artifactLevel(state, relic)).toBe(1);
+      // The nine were SPENT by the close, so the page is empty again. One
+      // spare card is what the season's wipe has left to turn into Gold.
+      expect(seasonHeld(state)).toBe(0);
+      fill(state, 'FirstFurrow', 1);
 
       const gold = getWallet(state.city.wallet, 'Gold');
       t = seasonEndsAt(state.collection.season) + 1000;
       const closed = advance(state, map, t).seasonClosed;
       expect(closed).not.toBeNull();
-      expect(closed!.cards).toBeGreaterThanOrEqual(CARDS_PER_ALBUM);
+      expect(closed!.cards).toBe(1);
       expect(closed!.gold).toBeGreaterThan(0);
       expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
       expect(seasonHeld(state)).toBe(0);

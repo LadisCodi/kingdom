@@ -1006,7 +1006,7 @@ export class Game {
   /** What the pill and the Collection header both read (§11.1, §11.2). */
   seasonInfo(): {
     name: string; frame: string; held: number; total: number;
-    leftMs: number; packs: number; stars: number; complete: boolean;
+    leftMs: number; packs: number; stars: number; prizeWon: boolean; lap: number;
   } {
     const { collection } = this.state;
     const def = seasonDef(collection.season);
@@ -1018,7 +1018,11 @@ export class Game {
       leftMs: seasonLeftMs(this.state, this.now()),
       packs: collection.packs.length,
       stars: collection.stars,
-      complete: collection.completed.length >= ALBUM_ORDER.length,
+      // THE PRIZE, not the eight pages: `completed` empties at the end of
+      // every lap, so it can only answer "how far into THIS lap", while the
+      // prize is won once a season and stays won.
+      prizeWon: collection.prizePaid,
+      lap: collection.cycle,
     };
   }
 
@@ -1077,7 +1081,7 @@ export class Game {
       relicLevel: artifactLevel(this.state, relicId),
       sprite: relic.sprite,
       glyph: relic.glyph,
-      rewards: albumRewards(id),
+      rewards: albumRewards(id, this.state.collection.cycle),
       cards: def.cards.map((card, slot) => ({
         slot,
         name: card.name,

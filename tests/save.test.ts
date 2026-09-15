@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
+import { CARDS_PER_ALBUM } from '../src/sim/data/seasons';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
@@ -121,6 +122,26 @@ describe('save versions', () => {
     const save = serialize(freshGame(), T0);
     expect(migrate(save)).toBe(true);
     expect(save.SaveVersion).toBe(SAVE_VERSION);
+  });
+
+  // v50: a card is SPENT when its album closes, so `Cards` means UNSPENT
+  // cards. A pre-lap save carries a full page AND its entry in `Completed`,
+  // and the first card added after the load would roll the lap and
+  // re-complete all eight for nothing. The migrator spends the nine.
+  it('spends the cards of an album a pre-lap save had already completed', () => {
+    const state = freshGame();
+    // Two of every card of one album, one of every card of another.
+    state.collection.cards.FirstFurrow = new Array(CARDS_PER_ALBUM).fill(2);
+    state.collection.cards.TheWildWood = new Array(CARDS_PER_ALBUM).fill(1);
+    state.collection.completed = ['FirstFurrow', 'TheWildWood'];
+    const save = serialize(state, T0);
+    save.SaveVersion = 49;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    // The duplicates survive; the nine the close would have taken are gone.
+    expect(restored.collection.cards.FirstFurrow).toEqual(new Array(CARDS_PER_ALBUM).fill(1));
+    expect(restored.collection.cards.TheWildWood).toEqual(new Array(CARDS_PER_ALBUM).fill(0));
   });
 
   // v21: Berries, Meat, Fish and Iron stopped being wallet rows. A save's

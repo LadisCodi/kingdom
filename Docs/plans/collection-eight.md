@@ -8,7 +8,10 @@
 > packs, the chests, the stars). It owns the **sequence**; the designs stay in
 > `proposals/` until each step closes and moves them into `features/09`.
 >
-> **Status: steps 1–4 done 2026-09-15.** Save version 49.
+> **Status: steps 1–5 done 2026-09-15.** Save version 50. With step 5 the
+> packs and the cycles proposals have fully landed and are folded into
+> [`../features/09-relics.md`](../features/09-relics.md); only
+> `relic-effects.md` still has a step outstanding.
 >
 > **One decision gates a third of it** — **OQ-98**, whether the relic actives
 > stay on the relics or become Magic-tome spells. Steps 1–5 are safe either
@@ -38,7 +41,7 @@
 | ~~**2**~~ | ~~Eight relics exist, as passives~~ **done** | 1 | **M** |
 | ~~**3**~~ | ~~The packs, the chests and the stars~~ **done** | — | **M** |
 | ~~**4**~~ | ~~Eight albums, and the pairing rotates~~ **done** | 2, 3 | **M** |
-| **5** | The album cycle | 4 | **M** |
+| ~~**5**~~ | ~~The album cycle~~ **done** | 4 | **M** |
 | **6** | Zones, cooldowns and the actives | **OQ-98**, 2 | **L** |
 | **7** | The art | — (runs alongside) | **M** |
 
@@ -231,6 +234,33 @@ Self-contained, and the step whose numbers are already measured.
 - **Save** — bump **and a migrator**: `cards` now means *unspent* cards.
 - **Test** — the loop terminates; a reset with cards in hand does not
   re-complete on the same tick.
+
+### 5.1 How it landed
+
+- **The spend is what makes the loop terminate**, and it is the whole step: a
+  close that left the page full would re-close it on the very next tick, for
+  ever. Duplicates survive the spend, so a hoard is worth holding.
+- **`seasonIsComplete` stopped being exported.** `completed` empties the
+  instant the lap rolls, so it is true for exactly as long as it takes
+  `completeIfDue` to ask it. What outlives the lap is `prizePaid`, and that is
+  the fact the UI and the tests want.
+- **The ladder was five rungs long and the album list was eight.**
+  `albumRewards` falls back to the first band, so the three hardest pages were
+  quietly paying a beginner's chest and **no key at all** — a step-4 gap
+  nothing caught. The workbook now authors eight: hours `2 2 4 4 6 8 8 8`,
+  and one key a page, silver ×5 then gold ×3. A test refuses a ladder shorter
+  than the album list.
+- **The Gems stayed at 2,000 an album**, so a first lap of eight pays 16,000
+  rather than the old 10,000 of five. The season asks for 60% more cards, so
+  the rate per card falls slightly — which is the right direction.
+- **Save 50, with a real migrator**: `cards` now means *unspent* cards, and a
+  pre-lap save carries both a full page and its entry in `completed`. The nine
+  are spent on load, once per completed album, exactly as the close would have
+  spent them.
+- **The docs caught up in this commit.** Steps 3 and 4 left
+  `features/09-relics.md` describing five albums, 45 cards and four pack
+  tiers; §3, §4, §5, §6, §7, §11 and §12 are now the build, and §5.1 is the
+  lap.
 
 ## 6. Zones, cooldowns and the actives
 

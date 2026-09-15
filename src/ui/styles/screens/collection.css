@@ -69,6 +69,13 @@
 .col-line .k-trough { flex: 1; }
 .col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .col-count { font-weight: var(--weight-strong); color: var(--ink); white-space: nowrap; }
+/* The lap chip: a quiet counter, never louder than the cards in hand. */
+.col-lap {
+  font-size: var(--text-helper); font-weight: var(--weight-strong);
+  color: var(--ink-muted); white-space: nowrap;
+  padding: 0 6px; border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+}
 
 /* ------------------------------------------------------------- the medallions */
 

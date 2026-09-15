@@ -463,6 +463,28 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v50 — A CARD IS SPENT WHEN THE ALBUM CLOSES. `Cards` used to be every
+    // copy ever pulled and `Completed` the pages a season had already paid;
+    // now the eight reset each lap and a closed album keeps only its
+    // DUPLICATES. An old save carries both a full page and its entry in
+    // `Completed`, so the first card added after the load would roll the lap
+    // and re-complete all eight for nothing.
+    //
+    // The nine are spent here, once per completed album, exactly as the close
+    // would have spent them.
+    to: 50,
+    migrate: (modules) => {
+      const dto = modules['kingdom.collection'] as
+        { Cards?: Record<string, number[]>; Completed?: string[] } | undefined;
+      const cards = dto?.Cards;
+      if (cards === undefined) return;
+      for (const album of dto!.Completed ?? []) {
+        const row = cards[album];
+        if (row !== undefined) cards[album] = row.map((n) => Math.max(0, n - 1));
+      }
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -700,6 +722,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
         PacksIssued: state.collection.packsIssued,
         PrizePaid: state.collection.prizePaid,
+        Cycle: state.collection.cycle,
       },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
@@ -1092,6 +1115,7 @@ export function deserialize(
         .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
       packsIssued: collectionDto.PacksIssued ?? 0,
       prizePaid: collectionDto.PrizePaid === true,
+      cycle: collectionDto.Cycle ?? 0,
     };
   }
 

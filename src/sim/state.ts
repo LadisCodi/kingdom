@@ -567,6 +567,11 @@ export interface GameState {
     packsIssued: number;
     /** The collection prize — a golden call and 25,000 Gems — is paid once. */
     prizePaid: boolean;
+    /** Which lap of the eight albums this is, 0-based. Closing all eight
+     *  resets `completed` and steps this, so the five relic levels stay level
+     *  and the prize and the album Gems can be the first lap's only
+     *  (Docs/proposals/album-cycles.md §4). */
+    cycle: number;
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons
