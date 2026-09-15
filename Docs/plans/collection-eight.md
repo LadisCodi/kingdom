@@ -291,7 +291,7 @@ Runs alongside every step. **Around twenty sprites, five sheets.**
 
 | Sheet | What | Needed by |
 |---|---|---|
-| **A** | 3 relics — Lantern 🏮, Horn 📯, Tally 🧾 | step 2 |
+| ~~**A**~~ | ~~3 relics — Lantern 🏮, Horn 📯, Tally 🧾~~ **done** (`spr-t`) | step 2 |
 | **B–C** | 8 album medallions | step 4 |
 | **D–E** | 6 packs (Verde → Dorado) and 3 chests | step 3 |
 

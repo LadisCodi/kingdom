@@ -293,3 +293,45 @@ mean 0.14.
 | spr-s | tr | `infirmary_l4.png` | `… tr 0.82 infirmary_l4.png 128` |
 | spr-s | bl | `infirmary_l8.png` | `… bl 0.92 infirmary_l8.png 128` |
 | spr-s | br | — | left empty on purpose; only three tiers were wanted |
+
+## spr-t — the three new relics
+
+("Confirmación de archivo", Codigames workspace, GPT-5.6 Sol Alta,
+2026-09-15). First message carried `anchor-relics.png`, a 5×1 `magick montage`
+of the five relic sprites that already ship — **not** `reference.png` alone.
+
+**Anchoring on an upload is read as "edit this file".** Twice. The first
+prompt came back as *"dime qué modificación o exportación necesitas"*, and the
+second as the same question again; only a message opening with **GENERA UNA
+IMAGEN NUEVA. No edites ni exportes anchor-relics.png: ese archivo es SOLO la
+referencia de estilo** got a generation. Say what the upload is FOR before
+saying what to draw.
+
+One round, 2m19s, and the style landed first try — the camera drift the older
+sheets fought never appeared, which is what an anchor montage of shipped
+sprites buys over a style sheet.
+
+**The download does not fire from the extension.** Neither the message's
+export menu (*Esta imagen*) nor the viewer panel's *Descargar* registers
+anything in Chromium's download list. What works is to have the page do it
+itself: fetch the `<img>`'s own `src` to a blob, hang it off an
+`<a download>` and click it. It lands in `~/Descargas` like any other.
+
+**Two enclosed patches survived the unbake** — the panes of the lantern's
+glass and the bell of the horn — because the flood fill only takes the
+checkerboard **connected to the border**, and those are islands. The script
+grew a second pass for them: a patch is the pattern, rather than a grey
+object, when it holds **both** of the checkerboard's greys. A third pass drops
+stray specks under 40 px, which `norm_sq.fish` would otherwise take for
+content and size the whole sprite against. Corner `srgba(0,0,0,0)`, alpha mean
+0.18.
+
+| Sheet | Quad | File | Command |
+|---|---|---|---|
+| spr-t | tl | `artifact_delvers_lantern.png` | `fish norm_sq.fish spr-t-relics.png tl 0.90 artifact_delvers_lantern.png 256` |
+| spr-t | tr | `artifact_muster_horn.png` | `… tr 0.90 artifact_muster_horn.png 256` |
+| spr-t | bl | `artifact_bailiffs_tally.png` | `… bl 0.90 artifact_bailiffs_tally.png 256` |
+| spr-t | br | — | left empty on purpose; only three relics were missing |
+
+`0.90` rather than the buildings' `0.72`–`0.92` because a relic is a **card
+object**: the five that ship fill 230 of their 256 px.
