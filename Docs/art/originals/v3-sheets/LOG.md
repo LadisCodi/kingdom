@@ -464,3 +464,54 @@ a curtain.
 Cut with a 26px inset per quadrant rather than a bare quarter: two of the four
 bled a sliver of a neighbour over the midline. Corner `srgba(0,0,0,0)`, alpha
 mean 0.22.
+
+## spr-y — the 72 card faces, eight sheets
+
+("Generate Card Grid", a fresh conversation, 2026-09-16). One **3×3 sheet per
+album**, nine opaque square paintings a sheet, cut to
+`card_<album>_<slot>.png` at 256×256 — the slot is the card's index in
+`ALBUMS[x].cards`, so a rename migrates nothing. `collectionSheet.ts` draws
+the card's own face when the file exists and the album medallion when it does
+not.
+
+**A CARD FACE IS OPAQUE, so nothing here needed alpha.** The face fills the
+card under `object-fit: cover` and the frame is 9-sliced over it, so the brief
+asked for *full-bleed painted scenes with their own painted background*, and
+the whole transparency dance (SPR-V) did not apply. What it needed instead was
+a **plain flat white gutter** between the cells: `cut.py` finds the three runs
+of non-white columns and rows and crops each cell inset 6 px, which survived
+the generator returning 1254×1254 instead of the 1024 asked for.
+
+**Anchor on the mockup's own cards.** The reference was a strip of the four
+painted faces in `ui/mockups/m22-album-page.png` plus a montage of the eight
+medallions; the first sheet came back in style and scale first time, and
+*"the style, palette, camera, scale and the 3×3 layout are LOCKED"* held for
+the other seven with no drift. Every prompt repeated the rules in one line —
+no text, numbers, stars, frames or badges; no people, faces or hands; every
+subject inside its own cell — and the subjects came from
+`Docs/features/09-relics.md` §4's names. A gold edition was asked for as
+*"GOLD EDITION: warm golden light, glowing golden background, drifting
+sparkles"* and reads as foil beside its neighbours without a badge.
+
+**Say "raw image only".** Sheet 1 spent ninety seconds after the render
+resizing itself to 1024 and saving a "corrected" copy; *"do not resize,
+verify, post-process or save a corrected file — just generate it and stop"*
+cut every later sheet to the render alone (~1m40s each).
+
+**The rendered `<img>` lags "Done" by 20–40 s.** `naturalWidth` is 0 until the
+tile loads, so the download waits on `naturalWidth > 1000` before fetching the
+`src` to a blob, as SPR-V did.
+
+| Sheet | Album | Files |
+|---|---|---|
+| cards-01 | First Furrow | `card_firstfurrow_0..8.png` |
+| cards-02 | The Wild Wood | `card_thewildwood_0..8.png` |
+| cards-03 | Hands at Work | `card_handsatwork_0..8.png` |
+| cards-04 | Market Day | `card_marketday_0..8.png` |
+| cards-05 | The King's Coin | `card_thekingscoin_0..8.png` |
+| cards-06 | Under the Hill | `card_underthehill_0..8.png` |
+| cards-07 | The Long March | `card_thelongmarch_0..8.png` |
+| cards-08 | The Star Road | `card_thestarroad_0..8.png` |
+
+Originals: `Docs/art/originals/v3-sheets/cards-0N-<album>.png`; the cutter is
+`cut.py` beside them (`python3 cut.py sheet.png <album> src/render/assets`).

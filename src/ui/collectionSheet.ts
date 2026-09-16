@@ -15,7 +15,7 @@
 // a season (§3), so a grid ordered by album would move every relic under the
 // player once a month; the roster's own order does not move. The album's own
 // medallion is still drawn — inside the page, beside its name, and as the
-// provisional face of all 72 cards.
+// fallback face of any card whose own painting has not landed.
 //
 // THE SCREEN REBUILDS ON THE TICK: the season's countdown is on it, and so is
 // a relic's cooldown. Eight medallions and nine cards is seventeen images.
@@ -34,7 +34,18 @@ import {
 /** An album's round vignette — its sheet if it has landed, its relic's
  *  otherwise, so the grid is never a row of empty rings. */
 function albumArt(album: AlbumId, relic: ArtifactId, cls: string): HTMLElement {
-  const url = spriteUrl(`album_${album.toLowerCase()}`) ?? spriteUrl(ARTIFACTS[relic].sprite);
+  return artOrGlyph(spriteUrl(`album_${album.toLowerCase()}`) ?? spriteUrl(ARTIFACTS[relic].sprite), relic, cls);
+}
+
+/** A card's own face — `card_<album>_<slot>.png`, a square painting cut from
+ *  its album's 3×3 sheet (Docs/art/originals/v3-sheets/LOG.md, spr-y). The
+ *  album medallion stands in until it lands. */
+function cardArt(album: AlbumId, slot: number, relic: ArtifactId, cls: string): HTMLElement {
+  const own = spriteUrl(`card_${album.toLowerCase()}_${slot}`);
+  return own ? spriteImgAt(own, cls) : albumArt(album, relic, cls);
+}
+
+function artOrGlyph(url: string | null, relic: ArtifactId, cls: string): HTMLElement {
   return url
     ? spriteImgAt(url, cls)
     : el('div', { class: `${cls} is-glyph` }, ARTIFACTS[relic].glyph);
@@ -275,7 +286,7 @@ function cardTile(
   },
     stars(card.rarity, 'col-card-stars'),
     held
-      ? albumArt(page.id, page.relic, 'col-card-art')
+      ? cardArt(page.id, card.slot, page.relic, 'col-card-art')
       : el('span', { class: 'col-card-art is-silhouette' },
         iconEl(fits ? 'plus' : 'unknown', { size: 'lg' })),
     card.count > 1 ? el('span', { class: 'col-dupe' }, `+${card.count - 1}`) : '',
