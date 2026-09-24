@@ -1,6 +1,7 @@
 # Kingdom — working notes for Claude
 
-A cozy square-grid city-builder / idle game. Vite + TypeScript, Canvas 2D, no
+An accessible 4X: a square-grid city-builder on a fog-shrouded province that
+opens onto a shared hex world map. Vite + TypeScript, Canvas 2D, no
 framework. `src/sim/` is a **pure** simulation core — no DOM, no clock,
 injectable randomness — so it can later run server-side.
 
@@ -10,8 +11,8 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`18` | **the live source of truth, one file per feature** |
-| [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
+| `Docs/features/01`–`21` | **the live source of truth, one file per feature** |
+| [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`); the taken ones are in [`Docs/open-questions-closed.md`](Docs/open-questions-closed.md) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 
 `Docs/` is **design**: no implementation detail unless a decision turned on it.
