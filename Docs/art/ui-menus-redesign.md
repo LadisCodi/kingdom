@@ -10,7 +10,7 @@
 >
 > Companion docs: [`../README.md`](../README.md) (the feature index),
 > [`sprite-prompts.md`](sprite-prompts.md) (world art),
-> [`reference.png`](reference.png) (the style anchor).
+> `reference.png` (on `archive/pixel-art-era`) (the style anchor).
 
 ---
 
@@ -1256,7 +1256,7 @@ loads. Same conversation, same style block, different output rules.
 
 Same workflow that produced the v2 sprite set — it is proven here:
 
-1. **One conversation.** Attach [`reference.png`](reference.png) to the
+1. **One conversation.** Attach `reference.png` (on `archive/pixel-art-era`) to the
    first message and say: *"This is the in-game world art. Every UI mockup
    I ask for must look like it belongs on top of this."*
 2. **Generate §7.1 (the style sheet) first** and iterate on it until the

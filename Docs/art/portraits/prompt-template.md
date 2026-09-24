@@ -4,7 +4,7 @@
 > the same for every character. The per-character half is one block
 > (`=== EL PERSONAJE ===`), written fresh each time from the hero's own data.
 >
-> The scene equivalent is [`../art-promts.md`](../art-promts.md), which this
+> The scene equivalent is [`../style-prompt.md`](../style-prompt.md), which this
 > is derived from. Same locked style, three clauses inverted — see
 > [`README.md`](README.md) §2 for which and why.
 

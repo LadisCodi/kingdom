@@ -1,7 +1,7 @@
 # Sprite generation prompts (ChatGPT / GPT-4o images) — v2 "from afar"
 
 Prompts for the second art pass. **The art style is defined by
-[`reference.png`](reference.png)** — bright, cheerful top-down pixel art:
+`reference.png` (on `archive/pixel-art-era`)** — bright, cheerful top-down pixel art:
 saturated spring greens, soft rounded tree canopies built from clustered
 blobs, tiny cream-walled cottages with warm brown/terracotta roofs, mossy
 white-grey rocks, tan dirt paths.
