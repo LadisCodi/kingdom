@@ -6,13 +6,17 @@ Usa de referencia la imagen en `Docs/art/world-map-layout.png`.
 
 ![[../art/world-map-layout.png]]
 
-**Tamaño**. 5 hexágonos de radio desde el centro.
-**Jugadores**. 6 jugadores con casillas equidistantes entre ellos
-**Centro**. Reservado para el Portal Oscuro, no jugable
+- El mapa se construye con regiones que se van añadiendo conforme se añaden jugadores al servidor, hasta un máximo.
+- Cada región es un conjunto de casillas de 5 hexágonos de radio.
+- Cuando se añaden jugadores al mapa, su ciudad debe cumplir siempre estas reglas:
+  - Estar a 3 o más casillas de la ciudad de cualquier otro jugador.
+  - Estar a 2 o más casillas del borde actual del mapa.
+- Si no existen posiciones válidas para ese jugador, se añade una nueva región para buscar sitio para ese jugador.
+- En el centro de cada región hay un **Portal Oscuro** (ver más adelante).
 
 ## Estructura del mapa
 
-El mapa se organiza en anillos concéntricos desde el centro, cada uno con un papel distinto:
+Cada región del mapa se organiza en anillos concéntricos desde el centro, cada uno con un papel distinto:
 
 | Anillo       | Casillas | Papel                                                                   |
 | ------------ | -------- | ----------------------------------------------------------------------- |
@@ -32,7 +36,7 @@ La posición asignada es aleatoria, siempre que esté libre en esa instancia del
 
 ## Niebla y exploración
 
-Las casillas del mapa están ocultas por niebla de guerra; solo la casilla donde está su ciudad y la casilla del Portal Oscuro están reveladas inicialmente.
+Las casillas del mapa están ocultas por niebla de guerra; solo la casilla donde está su ciudad está revelada inicialmente.
 
 El jugador puede revelar más casillas alrededor suya invirtiendo oro y tiempo. El proceso es el siguiente:
 
