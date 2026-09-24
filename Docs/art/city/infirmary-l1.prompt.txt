@@ -9,6 +9,8 @@ A single small INFIRMARY, alone, centred — where wounded soldiers recover.
 
 A calm cottage of cream stone with a BLUE tiled roof and a pale cream awning stretched on poles over the doorway. Through the open door, the end of a neat bed with white linen is visible. Terracotta pots of green herbs line the wall, and a small water basin stands by the step. Quiet and clean.
 
+NO RED CROSS anywhere - not on the awning, not on a banner, not on a sign. The red cross is a protected emblem and must never appear. What says 'healing' here is the herbs, the clean linen and the water basin, nothing more.
+
 === NO GROUND — THIS IS CRITICAL ===
 Draw the BUILDING ONLY. Do NOT draw any ground underneath it.
 There must be NO grass, NO soil, NO turf plate, NO raised earth block, NO rocky base, NO island, NO platform and NO terrain of any kind. The game supplies the ground from its own separate terrain tiles; this asset is only what STANDS on that ground.
@@ -53,6 +55,8 @@ Characters and soldiers must remain small gameplay-scale figures integrated into
 
 === AVOID ===
 No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, or advertising layout.
+
+No real-world protected emblems or trademarks. In particular NO RED CROSS and no red crescent, anywhere, on anything.
 
 No dramatic cinematic framing, close-up heroes, posed characters, camera flare, lens flare, heavy bloom, harsh shadows, fog, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
 

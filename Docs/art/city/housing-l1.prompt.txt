@@ -54,6 +54,8 @@ Characters and soldiers must remain small gameplay-scale figures integrated into
 === AVOID ===
 No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, or advertising layout.
 
+No real-world protected emblems or trademarks. In particular NO RED CROSS and no red crescent, anywhere, on anything.
+
 No dramatic cinematic framing, close-up heroes, posed characters, camera flare, lens flare, heavy bloom, harsh shadows, fog, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
 
 No checkerboard pattern painted into the image. No opaque background of any colour. The PNG's background must be genuinely transparent via its alpha channel.
