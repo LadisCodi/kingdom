@@ -105,20 +105,19 @@ Not features — how content and art are made.
 
 **The style is stylized 3D, not pixel art.** The anchor is
 [`art/style-reference.png`](art/style-reference.png) — a bright isometric
-diorama under a midday sun — and the prompt that produces it is
-[`art/style-prompt.md`](art/style-prompt.md). Everything generated from here on
-is generated against those two.
+diorama under a midday sun — the prompt that produces it is
+[`art/style-prompt.md`](art/style-prompt.md), and what to point that prompt at
+is [`art/art-direction.md`](art/art-direction.md). The chrome is a separate
+discipline and is settled; the world is what the direction covers.
 
 | File | What it covers | State |
 |---|---|---|
+| [`art/art-direction.md`](art/art-direction.md) | **how every asset of the WORLD is made** — the 2:1 isometric projection, canvas sizes and anchors, terrain, buildings, units, the hex board, the map's states, and the pipeline | **current** |
 | [`art/style-prompt.md`](art/style-prompt.md) | **the locked visual style block**, and the prompt every new asset is generated from | **current** |
 | [`art/ui/mockups/`](art/ui/mockups) | 26 full-screen UI mockups in the right style — the authority for the chrome's layout, colour and shapes | **current** |
 | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the UI system the mockups implement, its palette and its shapes | current, but its style anchor is stale |
 | [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass | current |
 | [`art/portraits/prompt-template.md`](art/portraits/prompt-template.md) | the hero-portrait prompt: the generic style block, the per-character block, and how to verify the alpha | current — generated against `style-reference.png` |
-| [`art/sprite-prompts.md`](art/sprite-prompts.md) | how the world sprites were generated | **superseded** — top-down pixel art, anchored to a deleted `reference.png` |
-| [`art/world-map-mockup-prompts.md`](art/world-map-mockup-prompts.md) | two rounds of world-map renders and the three prompts | **superseded** — same dead anchor |
-| [`art/builder-30-days-art.md`](art/builder-30-days-art.md) | per-building art briefs for the builder programme | **superseded** — same dead anchor |
 | [`art/originals/v3-sheets/`](art/originals/v3-sheets) | the generation log and the two normalisation scripts, kept because trimming and padding survive a style change | current |
 
 > The pixel-art era — the bought UI pack, three generations of source sheets and

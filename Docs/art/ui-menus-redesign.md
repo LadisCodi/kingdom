@@ -9,7 +9,7 @@
 > This is the visual and informational contract the menus should honour.
 >
 > Companion docs: [`../README.md`](../README.md) (the feature index),
-> [`sprite-prompts.md`](sprite-prompts.md) (world art),
+> `art-direction.md` (world art),
 > `reference.png` (on `archive/pixel-art-era`) (the style anchor).
 
 ---
@@ -2072,7 +2072,7 @@ behind `.tech-card-glyph`.
    heroes and artifacts add five portraits and five relic icons on top. That is a
    **new class of art** — the world set is deliberately zoomed-out and
    impersonal, and a face is the opposite of that. The style question has to be
-   answered before a set is generated. See `Docs/art/sprite-prompts.md`.
+   answered before a set is generated. See `Docs/art/art-direction.md`.
 3. ~~**How many currencies should ever be visible?**~~ — **answered
    2026-09-02**, not by a UI rule but by cutting the currencies. The wallet
    went from eleven rows to seven: berry bushes, game and shoals pay Food and

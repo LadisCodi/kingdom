@@ -2,7 +2,7 @@
 
 > **Scope.** Provenance for the character illustrations in this folder, and the
 > prompt shape that produced them. The style question these answer is still
-> open in [`../sprite-prompts.md`](../sprite-prompts.md) ("Portraits — a new
+> open in [`../art-direction.md`](../art-direction.md) ("Portraits — a new
 > class of art"): this is **one probe of the pipeline**, not a locked set.
 
 The world set is pixel art anchored on `reference.png` (on `archive/pixel-art-era`).
