@@ -139,7 +139,7 @@ At 2 and 1.2:
   therefore one row per level and nothing else. No goods list packed into a
   text cell, and no separate column for the build.
 - A **decoration** has one level, so its goods price is its level 1 row
-  ([`18-harmony.md`](18-harmony.md) §2).
+  ([`21-harmony.md`](21-harmony.md) §2).
 
 ### 3.3 The wait
 
