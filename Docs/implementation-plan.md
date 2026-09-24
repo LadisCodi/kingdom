@@ -371,7 +371,7 @@ bite on. It is also the one item on this list that is a **30-day retention
 question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
-- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §6.
+- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §1.1.
 - **OQ-1 closed 2026-09-07 — the plot is not bounded.** **OQ-48** (adjacency v2) is worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,

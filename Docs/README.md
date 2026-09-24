@@ -62,7 +62,7 @@ One file per feature, in the order a player meets them.
 | # | Feature | Covers | State |
 |---|---|---|---|
 | 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
-| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the province, temporary provinces as the event format, the world map as a **hex lattice** with two zoom registers and per-player fog, travel time as its pacing dial, and how much PvP the promises allow | designed |
+| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the three scopes, who is authoritative over each, what the save records, and what the promises allow to be contested. It no longer designs the world board | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, **every level's cost authored and multiplied by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
@@ -80,7 +80,7 @@ One file per feature, in the order a player meets them.
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
-| 19 | [The world map](features/19-world-map.md) | **the shared hex lattice** — six players a shard, rings around a Dark Portal, an explorer who marches to reveal, and claimed ground that can be lost | **being merged with 2; in Spanish, and contradicts it** |
+| 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, an army that marches to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, and the weekly Portal dive | designed 2026-09-24 |
 | 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
 | 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 
