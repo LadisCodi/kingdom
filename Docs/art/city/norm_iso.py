@@ -15,7 +15,11 @@ or base traces the plot; pass --half-width to override.
 import argparse, subprocess, sys
 
 TILE_W, TILE_H = 128, 64
-HEADROOM = {(1, 1): 128, (2, 1): 128, (2, 2): 192, (3, 3): 256}
+HEADROOM = {(1, 1): 128, (2, 1): 128, (1, 2): 128, (2, 2): 192, (3, 3): 256}
+
+def ground(fw, fh):
+    """A w x h plot's ground diamond, in px. Always 2:1."""
+    return TILE_W // 2 * (fw + fh), TILE_H // 2 * (fw + fh)
 
 def alpha_extents(path):
     raw = subprocess.run(['magick', path, '-alpha', 'extract', '-depth', '8', 'pgm:-'],
@@ -43,10 +47,10 @@ def main():
     a = ap.parse_args()
 
     e = alpha_extents(a.master)
-    diamond_w = TILE_W * max(a.fw, a.fh)
+    diamond_w, diamond_h = ground(a.fw, a.fh)
     canvas_w = diamond_w
-    canvas_h = TILE_H * max(a.fw, a.fh) + HEADROOM.get((a.fw, a.fh), 128)
-    anchor = (canvas_w / 2, canvas_h - TILE_H * max(a.fw, a.fh) / 2)
+    canvas_h = diamond_h + HEADROOM.get((a.fw, a.fh), 128)
+    anchor = (canvas_w / 2, canvas_h - diamond_h / 2)
 
     src_half = a.half_width if a.half_width else (e['R'] - e['L']) / 2
     scale = (diamond_w / 2) / src_half

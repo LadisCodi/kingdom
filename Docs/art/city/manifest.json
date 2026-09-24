@@ -1,0 +1,182 @@
+{
+  "tileW": 128,
+  "tileH": 64,
+  "buildings": [
+    {
+      "id": "Townhall",
+      "label": "Townhall",
+      "w": 2,
+      "h": 2,
+      "deco": false,
+      "file": "townhall_l1.png"
+    },
+    {
+      "id": "Docks",
+      "label": "Docks",
+      "w": 2,
+      "h": 1,
+      "deco": false,
+      "file": "docks_l1.png"
+    },
+    {
+      "id": "Barracks",
+      "label": "Barracks",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "barracks_l1.png"
+    },
+    {
+      "id": "Carpenter",
+      "label": "Carpenter",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "carpenter_l1.png"
+    },
+    {
+      "id": "Farm",
+      "label": "Farm",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "farm_l1.png"
+    },
+    {
+      "id": "Housing",
+      "label": "Housing",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "housing_l1.png"
+    },
+    {
+      "id": "Infirmary",
+      "label": "Infirmary",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "infirmary_l1.png"
+    },
+    {
+      "id": "MasonsYard",
+      "label": "Mason's Yard",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "masons_yard_l1.png"
+    },
+    {
+      "id": "Quarry",
+      "label": "Quarry",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "quarry_l1.png"
+    },
+    {
+      "id": "RuneCarver",
+      "label": "Rune Carver",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "rune_carver_l1.png"
+    },
+    {
+      "id": "Sanctum",
+      "label": "Sanctum",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "sanctum_l1.png"
+    },
+    {
+      "id": "Sawmill",
+      "label": "Sawmill",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "sawmill_l1.png"
+    },
+    {
+      "id": "ShootingGrounds",
+      "label": "Shooting Grounds",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "shooting_grounds_l1.png"
+    },
+    {
+      "id": "Smelter",
+      "label": "Smelter",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "smelter_l1.png"
+    },
+    {
+      "id": "SpearHall",
+      "label": "Spear Hall",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "spear_hall_l1.png"
+    },
+    {
+      "id": "Stables",
+      "label": "Stables",
+      "w": 1,
+      "h": 1,
+      "deco": false,
+      "file": "stables_l1.png"
+    },
+    {
+      "id": "Plaza",
+      "label": "Plaza",
+      "w": 2,
+      "h": 2,
+      "deco": true,
+      "file": "plaza_l1.png"
+    },
+    {
+      "id": "Shrine",
+      "label": "Shrine",
+      "w": 2,
+      "h": 2,
+      "deco": true,
+      "file": "shrine_l1.png"
+    },
+    {
+      "id": "Orchard",
+      "label": "Orchard",
+      "w": 2,
+      "h": 1,
+      "deco": true,
+      "file": "orchard_l1.png"
+    },
+    {
+      "id": "Garden",
+      "label": "Garden",
+      "w": 1,
+      "h": 1,
+      "deco": true,
+      "file": "garden_l1.png"
+    },
+    {
+      "id": "Statue",
+      "label": "Statue",
+      "w": 1,
+      "h": 1,
+      "deco": true,
+      "file": "statue_l1.png"
+    },
+    {
+      "id": "Well",
+      "label": "Well",
+      "w": 1,
+      "h": 1,
+      "deco": true,
+      "file": "well_l1.png"
+    }
+  ]
+}

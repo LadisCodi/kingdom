@@ -73,10 +73,14 @@ screenY = (cell.x + cell.y) * 32
 
 ### 3.1 Canvas sizes
 
+**A `w × h` plot's ground diamond is `(w+h)·64` wide and `(w+h)·32` tall** — it
+is the span of the cells' screen positions plus half a tile each side, and it is
+always 2:1. Canvas height is that diamond plus the footprint's headroom.
+
 | Footprint | Ground diamond | Canvas | Anchor (from canvas top-left) | Headroom |
 |---|---|---|---|---|
 | **1 × 1** | 128 × 64 | **128 × 192** | (64, 160) | 128 |
-| **2 × 1** | 256 × 64 | 256 × 192 | (128, 160) | 128 |
+| **2 × 1** | **192 × 96** | **192 × 224** | (96, 176) | 128 |
 | **2 × 2** | 256 × 128 | **256 × 320** | (128, 256) | 192 |
 | **3 × 3** | 384 × 192 | 384 × 448 | (192, 384) | 256 |
 
