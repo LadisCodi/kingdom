@@ -25,6 +25,22 @@ it so the diamond is `128 × footprint` wide, and anchors it on the diamond's
 centre. **It prints the projection ratio and warns below 1.85:1** — the error a
 contact sheet hides and the game does not.
 
+## Driving ChatGPT through the Chrome extension
+
+Four things about the composer, each learned the expensive way:
+
+- **Never type the prompt into the composer.** Its first newline sends the
+  message, so only the first line arrives. Attach the `.txt` and say *follow
+  the attached prompt exactly*.
+- **The file input only exists once the page has hydrated.** The first `find`
+  after `navigate` usually fails; wait ~10s and look again, or click the `+`.
+- **Do not press Escape after uploading.** It moves focus to the `+` button and
+  the next `type` goes nowhere. If the `+` menu is open, dismiss it by clicking
+  the composer itself.
+- **Click the composer's own placeholder row before typing**, at its actual
+  y (read it off a screenshot — it moves as the attachment thumbnails load).
+  `form_input` does not work on it: it is a contenteditable `div`, not an input.
+
 ## What the master has to satisfy
 
 - **A real alpha channel.** `magick m.png -format "%[pixel:p{0,0}]" info:` →
