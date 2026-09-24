@@ -341,7 +341,7 @@ five this planned, because a 3×3 grid holds nine.
 | ~~**B**~~ | ~~8 album medallions~~ **done** (`spr-u` — only 3 were missing) | step 4 |
 | ~~**C**~~ | ~~6 packs (Green → Golden) and 3 chests~~ **done** (`spr-v`, all nine in one 3×3) | step 3 |
 
-- **The pipeline is the proven one** ([`../art/sprite-prompts.md`](../art/sprite-prompts.md),
+- **The pipeline is the proven one** ([`../art/art-direction.md`](../art/art-direction.md),
   and the two memory notes it descends from): ChatGPT driven through Chrome,
   **2×2 sheets**, anchored on a `magick montage` of what already ships in
   `src/render/assets/` with *"your output will sit next to these; match them"* —

@@ -2,13 +2,13 @@
 
 > **Scope.** Provenance for the character illustrations in this folder, and the
 > prompt shape that produced them. The style question these answer is still
-> open in [`../sprite-prompts.md`](../sprite-prompts.md) ("Portraits — a new
+> open in [`../art-direction.md`](../art-direction.md) ("Portraits — a new
 > class of art"): this is **one probe of the pipeline**, not a locked set.
 
-The world set is pixel art anchored on [`../reference.png`](../reference.png).
+The world set is pixel art anchored on `reference.png` (on `archive/pixel-art-era`).
 These portraits are anchored on the newer
 [`../style-reference.png`](../style-reference.png) and the prompt template in
-[`../art-promts.md`](../art-promts.md) — bright stylized 3D, chunky rounded
+[`../style-prompt.md`](../style-prompt.md) — bright stylized 3D, chunky rounded
 forms, saturated palette.
 
 ## 1. Files
@@ -30,7 +30,7 @@ to 512×768. The other thirty are still the 42×74 placeholder cards.
 The prompt that carries all of this is [`prompt-template.md`](prompt-template.md);
 this section is the reasoning behind its shape.
 
-The template in [`../art-promts.md`](../art-promts.md) is written for a
+The template in [`../style-prompt.md`](../style-prompt.md) is written for a
 settlement diorama. Three of its clauses have to be overridden by name, or the
 model inherits them:
 

@@ -226,7 +226,7 @@ take = floor( min(base, banked × take_fraction_max) )
 - Workers fighting; a wall or tower district.
 - A creature list beside the threat type; randomness in resolution.
 - A widget that opens itself.
-- Player-versus-player raiding ([`02-map-scopes.md`](02-map-scopes.md) §4).
+- Player-versus-player raiding ([`02-map-scopes.md`](02-map-scopes.md) §5).
 - A technology that gates the gate (`Siegecraft` is retired).
 
 **Open questions:** OQ-72, OQ-74 in

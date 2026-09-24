@@ -95,7 +95,7 @@
 | 10 | 20 | 20 | 14 | 4 |
 
 - **Levels 8, 9 and 10 demand Harmony** — 10, 20, 30 in total
-  ([`18-harmony.md`](18-harmony.md)).
+  ([`21-harmony.md`](21-harmony.md)).
 - **The wait doubles a level from 6**: 6 h · 12 h · 24 h · 48 h · 96 h, twice
   and more a district's, since the Townhall is the clock every other ladder
   hangs from. Currencies grow ×1.7 a level from 6, continuous with the early
@@ -319,7 +319,7 @@ written once. The Townhall's own ladder is §3.
 | the four workshops | crew and queue as §4.10 |
 
 - **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
-  the decorations supply ([`18-harmony.md`](18-harmony.md)).
+  the decorations supply ([`21-harmony.md`](21-harmony.md)).
 
 ### 4.12 The six decorations
 
@@ -327,7 +327,7 @@ One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
 does nothing else, and every piece past the Garden is priced in a refined
 good, paid when the build is queued. The count cap per piece is its Townhall
 gate and its ceiling in one; the piece is discovered by a Civics era-3 card.
-The table is [`18-harmony.md`](18-harmony.md) §2.
+The table is [`21-harmony.md`](21-harmony.md) §2.
 
 ## 5. Wonders — designed, not built
 
@@ -373,7 +373,7 @@ levels a building is bought with a Townhall level and goods (§4.11).
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
 | Per-level gates | `Districts.required_townhall_level_per_level`; a technology that gates a level says so in `?dev=tree` |
 | The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
-| What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`18-harmony.md`](18-harmony.md) |
+| What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`21-harmony.md`](21-harmony.md) |
 | What a build costs in refined goods | the `DistrictCosts` sheet, level 1 row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | Residents, workers, radius, army cap, beds per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level`, `beds_per_level` |
 | Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
@@ -394,6 +394,6 @@ levels a building is bought with a Townhall level and goods (§4.11).
   ([`07-research.md`](07-research.md) §10).
 - Mana production or army cap from the Townhall level.
 - A building with more than one job. A decoration has exactly one — the
-  Harmony it supplies ([`18-harmony.md`](18-harmony.md)) — and no level.
+  Harmony it supplies ([`21-harmony.md`](21-harmony.md)) — and no level.
 
 **Open questions:** OQ-46, OQ-57, OQ-58.

@@ -84,7 +84,7 @@ hang off it.
 | **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
 
 The four decoration cards sit where their pieces' Townhall gates fall
-([`18-harmony.md`](18-harmony.md)): a piece is DISCOVERED here and then waits
+([`21-harmony.md`](21-harmony.md)): a piece is DISCOVERED here and then waits
 on the count cap its row on the `Districts` sheet gives it, so the build sheet
 never shows a decoration the player has not read about.
 

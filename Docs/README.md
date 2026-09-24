@@ -1,9 +1,9 @@
 # Kingdom — the design documentation
 
-**Kingdom** is a cozy square-grid city-builder / idle-management game on a
-fog-shrouded fantasy map, built for the web. **This folder is the design.** It
-describes the game as currently designed — not its history, and not how it is
-coded.
+**Kingdom** is a **4X for people who bounce off 4X** — a city-builder on a
+fog-shrouded province that opens onto a hex world shared with other players,
+built for the web. **This folder is the design.** It describes the game as
+currently designed — not its history, and not how it is coded.
 
 ## Start here
 
@@ -11,6 +11,7 @@ coded.
 |---|---|
 | **[`overview.md`](overview.md)** | **The game in five minutes** — the pitch, the promises, the loops, the scopes. Read this first. |
 | [`open-questions.md`](open-questions.md) | **Every decision still to make**, and every known soft spot, with a stable id (`OQ-n`) that the feature docs point at. |
+| [`open-questions-closed.md`](open-questions-closed.md) | The decisions already taken, and why. The ledger, never the authority. |
 | [`implementation-plan.md`](implementation-plan.md) | **What is built, what is not, and what design has to answer before the next thing can start.** |
 
 ## The design intentions
@@ -19,13 +20,16 @@ Every feature below is shaped by these.
 
 **The three promises**
 
-1. **No other player can ever touch your city.** The only thing that ever
-   takes from you is a garrison you have seen and left standing — three raids
-   per camp at most, a tenth of the purse each, and handed back in full when
-   you clear it. Every other pressure is *opportunity that expires* — a pool
-   that overflows, a window that closes, a haul you chose to risk.
+1. **Your city can never be attacked. Everything outside it can be.** The
+   province is inviolable. The only thing that ever takes from it is a garrison
+   you have seen and left standing — three raids per camp at most, a tenth of
+   the purse each, and handed back in full when you clear it. **What a player
+   can take from a player is territory**: a claimed hex on the world map, never
+   a building and never a purse. Every other pressure is *opportunity that
+   expires* — a pool that overflows, a window that closes, a haul you chose to
+   risk.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
-   test of reflexes. There is no battle screen.
+   test of reflexes. A fight is composed, never played.
 3. **Wallets buy power, comfort and breadth — but never exclusivity.**
    Nothing is purchase-only that cannot also be earned, and every paid ladder
    is earned first.
@@ -58,26 +62,27 @@ One file per feature, in the order a player meets them.
 | # | Feature | Covers | State |
 |---|---|---|---|
 | 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
-| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map as a **hex lattice** with two zoom registers and per-player fog, travel time as its pacing dial, and how much PvP the promises allow | designed |
+| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the three scopes, who is authoritative over each, what the save records, and what the promises allow to be contested. It no longer designs the world board | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, **every level's cost authored and multiplied by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
-| 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
+| 7 | [Research](features/07-research.md) | **spellbooks — three general ones (Civics, Warfare, Magic) plus specific books the player FINDS** — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock; the node list is [`tech-tree.md`](features/tech-tree.md) | the three general books are built; **the found books are designed, not built** |
 | 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
 | 9 | [Relics and the collection](features/09-relics.md) | five relics as **permanent passives with no ceiling**, levelled by **card albums in a 28-day shared season** — packs, duplicates, the vault, trading, wildcards, the season hero | **redesigned 2026-09-09**; the build carries the old model |
 | 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
 | 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | **rooms built 2026-09-09**; the tick resolver and the Guild are ahead |
-| 11 | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls | designed 2026-09-08 |
+| — | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls. **The resolver 11, 18 and the world map all call** | designed 2026-09-08 |
 | 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest — a 20-day season of 14 rungs, free track and Royal track | built |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built, **catalogue empty** |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
-| 18 | [Harmony and the decorations](features/18-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
+| 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, an army that marches to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, and the weekly Portal dive | designed 2026-09-24 |
 | 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
+| 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 
 ## Reference
 
@@ -87,6 +92,7 @@ Not features — how content and art are made.
 |---|---|
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
+| [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the three files that cannot be shared, and why the seam between code and art is a filename |
 | [`plans/collection-eight.md`](plans/collection-eight.md) | the step-by-step plan for the three collection proposals below — seven steps, what each one lands, and the two programmes it does not own |
 | [`proposals/collection-packs.md`](proposals/collection-packs.md) | a **proposal**, not a spec: six packs defined by the rarity they guarantee, three vault chests duplicates buy, what a duplicate is worth, and where each falls — with every figure measured by simulation against the authored odds |
 | [`proposals/album-cycles.md`](proposals/album-cycles.md) | a **proposal**, not a spec: how a relic's level advances — running the five albums again inside a season (which needs the nine cards SPENT, or the loop never terminates), and rotating which relic each album levels so the two dearest ones are not unreachable for ever |
@@ -95,11 +101,30 @@ Not features — how content and art are made.
 | [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
 | [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
-| [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the parchment-and-carved-wood UI system, its palette and its shapes |
-| [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass |
-| [`art/sprite-prompts.md`](art/sprite-prompts.md) | how the world and UI art was generated, and the prompts that did it |
-| [`art/world-map-mockup-prompts.md`](art/world-map-mockup-prompts.md) | the world-map mockups: what two rounds of renders settled, and the three prompts |
-| [`art/portraits/prompt-template.md`](art/portraits/prompt-template.md) | the hero-portrait prompt: the generic style block, the per-character block, and how to verify the alpha |
+
+## Art
+
+**The style is stylized 3D, not pixel art.** The anchor is
+[`art/style-reference.png`](art/style-reference.png) — a bright isometric
+diorama under a midday sun — the prompt that produces it is
+[`art/style-prompt.md`](art/style-prompt.md), and what to point that prompt at
+is [`art/art-direction.md`](art/art-direction.md). The chrome is a separate
+discipline and is settled; the world is what the direction covers.
+
+| File | What it covers | State |
+|---|---|---|
+| [`art/art-direction.md`](art/art-direction.md) | **how every asset of the WORLD is made** — the 2:1 isometric projection, canvas sizes and anchors, terrain, buildings, units, the hex board, the map's states, and the pipeline | **current** |
+| [`art/style-prompt.md`](art/style-prompt.md) | **the locked visual style block**, and the prompt every new asset is generated from | **current** |
+| [`art/ui/mockups/`](art/ui/mockups) | 26 full-screen UI mockups in the right style — the authority for the chrome's layout, colour and shapes | **current** |
+| [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the UI system the mockups implement, its palette and its shapes | current, but its style anchor is stale |
+| [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass | current |
+| [`art/portraits/prompt-template.md`](art/portraits/prompt-template.md) | the hero-portrait prompt: the generic style block, the per-character block, and how to verify the alpha | current — generated against `style-reference.png` |
+| [`art/originals/v3-sheets/`](art/originals/v3-sheets) | the generation log and the two normalisation scripts, kept because trimming and padding survive a style change | current |
+
+> The pixel-art era — the bought UI pack, three generations of source sheets and
+> the two old style references — lives on the **`archive/pixel-art-era`** branch.
+> Recover a file with
+> `git checkout archive/pixel-art-era -- <path>`.
 
 ## House rules for these docs
 

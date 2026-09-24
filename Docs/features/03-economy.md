@@ -131,7 +131,7 @@ here pays or charges, and none refuses.
 | District | Next to | Moves | By |
 |---|---|---|---|
 | **Housing** | Housing | Gold a minute | **−1** each |
-| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`18-harmony.md`](18-harmony.md) §6) |
+| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`21-harmony.md`](21-harmony.md) §6) |
 | **a hall** | another hall | training time | **−10%** each |
 | **Carpenter** | Sawmill | work time | −10% |
 | **Mason's Yard** | Quarry | work time | −10% |
