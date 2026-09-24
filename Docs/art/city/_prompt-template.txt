@@ -20,6 +20,11 @@ CONCRETE TEST: if you traced the outline of the plot, that diamond would measure
 The camera is LOWER and FLATTER than a typical three-quarter view — you see more of the walls and less of the roofs than you would from above.
 It is NOT a perspective camera, NOT a 45° three-quarter view, NOT a top-down view and NOT a 1.5:1 camera. There is no vanishing point and no convergence: the projection is parallel/orthographic throughout, so the far edges of the building are exactly as wide as the near ones.
 
+=== EVERYTHING FITS THE PLOT — THIS IS CRITICAL ===
+The building and every prop that belongs to it — walls, fences, bushes, carts, stacks, racks, paths, troughs — must sit INSIDE the plot's diamond. Nothing stands outside the plot. A roof may overhang its walls slightly, the way a roof does, but no prop and no part of the building crosses the plot's edge.
+The plot's diamond is therefore the FULL WIDTH of the drawing: the leftmost and the rightmost points of everything you draw are the plot's left and right corners. If a prop would push past that, make it smaller or move it in.
+Fill the plot well: the building should occupy most of it, not sit small in the middle of empty space.
+
 === COMPOSITION ===
 The single building, centred, with comfortable empty breathing room on all four sides. Nothing else in the frame. No other buildings, no terrain, no landscape, no horizon, no sky, no ground.
 

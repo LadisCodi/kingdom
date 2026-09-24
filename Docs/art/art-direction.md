@@ -180,11 +180,16 @@ Every one of these is a treatment of the same asset, never a second asset.
      with an anti-aliased edge and no checkerboard painted in. The black/white
      pair in [`portraits/prompt-template.md`](portraits/prompt-template.md) §3 is
      no longer needed for world assets.
-   - **Two things have to be hammered or they come back wrong**, both learned on
-     the first Townhall:
+   - **Three things have to be hammered or they come back wrong:**
      - **No ground plate.** Left to itself it renders the building on a raised
        diorama block of turf and soil, which would fight the terrain tile under
        it. Say *no grass, no soil, no platform, transparency beneath*.
+     - **Everything inside the plot.** Props left to themselves sprawl sideways —
+       the first Farm came back 2.6:1 wide on hay bales and a cart. The
+       normaliser scales the whole drawing to the plot's width, so a sprawling
+       prop shrinks the building it belongs to and the set loses its scale.
+       Say: *the leftmost and rightmost points of the drawing are the plot's
+       corners.*
      - **The 2:1 ratio, stated as a measurement.** "Isometric" alone produces a
        camera around 1.6:1. What works is a concrete test in the prompt: *if you
        traced the plot, that diamond would be 1000 px wide and exactly 500 px

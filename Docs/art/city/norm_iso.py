@@ -58,7 +58,11 @@ def main():
     print(f"  master {e['w']}x{e['h']}  contenido {e['R']-e['L']}x{e['B']-e['T']}")
     print(f"  proyección medida  {ratio:.2f} : 1   (2.00 = isométrica 2:1)")
     if not 1.85 <= ratio <= 2.15:
-        print(f"  AVISO: la proyección no es 2:1. Regenera antes de usar esto.", file=sys.stderr)
+        print("  nota: silueta a %.2f:1. Sólo es una medida FIABLE cuando algo\n"
+              "        traza el solar (un muro, un pavimento, una valla). En un\n"
+              "        edificio suelto los aleros son lo más ancho, no la parcela:\n"
+              "        júzgalo en scene.html, junto a los ya aceptados." % ratio,
+              file=sys.stderr)
     print(f"  escala {scale:.4f}  ->  lienzo {canvas_w}x{canvas_h}, ancla {anchor}")
 
     nw, nh = e['w'] * scale, e['h'] * scale
