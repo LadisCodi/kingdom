@@ -129,7 +129,9 @@ three ways (`tests/techTree.test.ts`).
 
 ## Saves
 
-`SAVE_VERSION` is 44; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 59; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+**Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
+line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),

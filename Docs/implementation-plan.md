@@ -104,6 +104,13 @@ each has an answer, or has one waiting in a doc.
 
 ## 4. What is next, and what blocks it
 
+> **The 4X programme is sequenced elsewhere.** The isometric city, the hex
+> board, the asset set and the found books are cut into parallel lanes in
+> **[`plans/the-4x-build.md`](plans/the-4x-build.md)**, which also carries the
+> rules for running those lanes on several machines at once. This section is
+> the rest of the backlog; where the two meet, the lane plan wins.
+
+
 **Step 0 is done** — it had to come first, because every number the others
 author is priced against production. Each row's "blocked on" column is a hard
 gate: do not start the row until those questions are answered, because the

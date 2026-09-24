@@ -92,6 +92,7 @@ Not features — how content and art are made.
 |---|---|
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
+| [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the three files that cannot be shared, and why the seam between code and art is a filename |
 | [`plans/collection-eight.md`](plans/collection-eight.md) | the step-by-step plan for the three collection proposals below — seven steps, what each one lands, and the two programmes it does not own |
 | [`proposals/collection-packs.md`](proposals/collection-packs.md) | a **proposal**, not a spec: six packs defined by the rarity they guarantee, three vault chests duplicates buy, what a duplicate is worth, and where each falls — with every figure measured by simulation against the authored odds |
 | [`proposals/album-cycles.md`](proposals/album-cycles.md) | a **proposal**, not a spec: how a relic's level advances — running the five albums again inside a season (which needs the nine cards SPENT, or the loop never terminates), and rotating which relic each album levels so the two dearest ones are not unreachable for ever |
