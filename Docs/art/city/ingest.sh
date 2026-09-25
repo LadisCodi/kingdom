@@ -6,8 +6,11 @@ set -euo pipefail
 slug=$1; fw=$2; fh=$3; out=$4
 here="$(cd "$(dirname "$0")" && pwd)"
 src=$(ls -t ~/Downloads/*.png | head -1)
-master="$here/$slug-l1.master.png"
-cp "$src" "$master"
+master="$here/$slug.master.png"
+# Half scale on the way in: the master exists to re-normalise without asking
+# ChatGPT again, and ~900px is four times the widest canvas. Full resolution
+# would put 70MB of renders in the repo for no reach we ever use.
+magick "$src" -resize 50% -strip "$master"
 
 corner=$(magick "$master" -format "%[pixel:p{0,0}]" info:)
 dims=$(magick identify -format "%wx%h" "$master")

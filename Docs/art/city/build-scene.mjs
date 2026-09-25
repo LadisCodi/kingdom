@@ -35,6 +35,11 @@ function place(b, cx, cy) {
 }
 
 const buildings = M.buildings.map(b => ({ ...b, has: existsSync(join(HERE, b.file)) }));
+const TIER_LIST = [1, 4, 8];
+const tierCount = buildings.reduce((n, b) => n + TIER_LIST.filter(lv =>
+  existsSync(join(HERE, b.file.replace('_l1.png', `_l${lv}.png`)))).length, 0);
+const tierTotal = buildings.reduce((n, b) => n + (b.w === 1 && b.h === 1 && b.deco ? 1 : 0), 0);
+const expected = buildings.reduce((n, b) => n + (b.deco ? 1 : 3), 0);
 const done = buildings.filter(b => b.has).length;
 
 // ── two layouts ────────────────────────────────────────────────────────────
@@ -42,26 +47,36 @@ const done = buildings.filter(b => b.has).length;
 // rows so they can be scanned and compared side by side. Laying them on one
 // iso grid spreads them across a 2,000px diamond, which compares nothing.
 function showcase() {
+  const TIERS = [1, 4, 8];
   return buildings.map(b => {
     const [gw, gh] = ground(b.w, b.h);
     const canvasH = gh + headroom(b.w, b.h);
-    // the plot's own cells, drawn around a local origin
     const tiles = [];
     for (let x = 0; x < b.w; x++) for (let y = 0; y < b.h; y++) {
       const px = (x - y) * (TW / 2) + gw / 2 - ((b.w - 1) - (b.h - 1)) * (TW / 4);
       const py = (x + y) * (TH / 2) + canvasH - gh / 2 - ((b.w - 1) + (b.h - 1)) * (TH / 4);
       tiles.push(`<path class="t on" d="M${px} ${py - TH / 2}l${TW / 2} ${TH / 2}l${-TW / 2} ${TH / 2}l${-TW / 2} ${-TH / 2}z"/>`);
     }
-    const art = b.has
-      ? `<img src="${b.file}" alt="${b.label}" width="${gw}" height="${canvasH}">`
-      : `<div class="miss" style="left:${gw / 2 - gw / 2}px;top:${canvasH - gh}px;width:${gw}px;height:${gh}px"><span>soon</span></div>`;
-    return `<figure class="card" style="width:${Math.max(gw, 150)}px">
-      <div class="slot" style="width:${gw}px;height:${canvasH}px">
-        <svg class="grid" width="${gw}" height="${canvasH}">${tiles.join('')}</svg>${art}</div>
-      <figcaption>${b.label}<em>${b.w}×${b.h}${b.deco ? ' · decoration' : ''}</em></figcaption>
-    </figure>`;
+    const plot = `<svg class="grid" width="${gw}" height="${canvasH}">${tiles.join('')}</svg>`;
+    const cells = TIERS.map(lv => {
+      const file = b.file.replace('_l1.png', `_l${lv}.png`);
+      const has = existsSync(join(HERE, file));
+      // a tier the building does not own yet falls back the way the renderer
+      // does: the highest tier at or below it
+      const art = has
+        ? `<img src="${file}" alt="${b.label} ${lv}" width="${gw}" height="${canvasH}">`
+        : `<div class="miss" style="width:${gw}px;height:${gh}px"><span>l${lv}</span></div>`;
+      return `<div class="tier${has ? '' : ' todo'}">
+        <div class="slot" style="width:${gw}px;height:${canvasH}px">${plot}${art}</div>
+        <span class="lv">L${lv}</span></div>`;
+    }).join('');
+    return `<section class="row">
+      <h3>${b.label}<em>${b.w}×${b.h}${b.deco ? ' · decoration' : ''}</em></h3>
+      <div class="tiers">${cells}</div>
+    </section>`;
   }).join('');
 }
+
 // Village: packed the way a player would build, to catch collisions.
 function village() {
   const spots = [
@@ -132,7 +147,14 @@ button{font:inherit;font-size:12.5px;padding:5px 11px;border:1px solid var(--edg
 button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 main{padding:24px 20px 80px;overflow-x:auto}
 .stage{position:relative;margin:0 auto;transform-origin:top left}
-.shelf{display:flex;flex-wrap:wrap;gap:30px 24px;align-items:flex-end;justify-content:center}
+.rows{display:flex;flex-direction:column;gap:36px;max-width:980px;margin:0 auto}
+.row h3{margin:0 0 10px;font-size:15px;font-weight:650;display:flex;gap:10px;align-items:baseline;
+        border-bottom:1px solid var(--edge);padding-bottom:7px}
+.row h3 em{font-style:normal;font-weight:400;font-size:12px;color:var(--dim)}
+.tiers{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap}
+.tier{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tier.todo{opacity:.55}
+.lv{font-size:11px;letter-spacing:.06em;color:var(--dim)}
 .card{position:relative;margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .slot{position:relative}
 .slot img{position:absolute;inset:0}
@@ -157,7 +179,7 @@ code{font-family:ui-monospace,monospace;font-size:.92em}
 </style></head><body class="">
 <header>
   <h1>Kingdom — the isometric city set</h1>
-  <span class="meta">2:1 · tile 128×64 · <strong id="n">${done}/${buildings.length}</strong> sprites</span>
+  <span class="meta">2:1 · tile 128×64 · <strong id="n">${tierCount}/${expected}</strong> sprites · tiers L1·L4·L8</span>
   <span class="ctl">
     <button id="m1" aria-pressed="true">Showcase</button>
     <button id="m2" aria-pressed="false">Village</button>
@@ -167,7 +189,7 @@ code{font-family:ui-monospace,monospace;font-size:.92em}
   </span>
 </header>
 <main>
-  <div id="v1" class="shelf">${showcase()}</div>
+  <div id="v1" class="rows">${showcase()}</div>
   <div id="v2" hidden>${render(village(), false)}</div>
 </main>
 <footer>
@@ -193,5 +215,5 @@ $('m1').onclick=()=>mode(1); $('m2').onclick=()=>mode(2);
 </script></body></html>`;
 
 writeFileSync(join(HERE, 'scene.html'), html);
-console.log(`  scene.html  ${done}/${buildings.length} sprites presentes`);
+console.log(`  scene.html  ${tierCount}/${expected} sprites (tramos L1/L4/L8)`);
 for (const b of buildings.filter(x => !x.has)) console.log(`    falta ${b.file}`);
