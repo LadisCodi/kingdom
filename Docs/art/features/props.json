@@ -11,32 +11,32 @@
   },
   "mountain": {
     "name": "A ROCKY PEAK",
-    "what": "one chunky grey stone peak with a few smaller boulders at its base, its facets broad and simply cut, a little moss or grass catching in the lower cracks. It is a landmark on a tile, not a mountain range",
+    "what": "ONE grey stone peak, cut into a few broad flat facets — six or seven large planes, not a pile of rubble. Its outline is craggy and uneven, leaning slightly, with one shoulder lower than the other. Two small boulders sit apart from it at its foot, and a little grass and moss catches in the lower cracks. It is a landmark on a single tile, not a mountain range",
     "scale": 1.55
   },
   "mountain_exhausted": {
     "name": "A QUARRIED PEAK",
-    "what": "the same grey peak AFTER it has been worked: its side cut away into flat stepped benches, pale freshly-cut stone where the face is open, loose rubble and a few squared blocks at its foot. Same rock, same place, mined into",
+    "what": "the SAME grey peak after it has been worked: its near side cut away into three or four flat stepped benches of pale freshly-cut stone, the rest of the outline still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into",
     "scale": 1.45
   },
   "mountain_iron": {
     "name": "AN IRON PEAK",
-    "what": "one chunky grey stone peak shot through with rusty red-brown ore: warm reddish veins and a few exposed nuggets of dark iron on its faces, a scatter of rust-stained rubble at its base. It must read as iron at a glance without any label",
+    "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, shot through with rusty red-brown ore: two or three bold warm reddish veins running down its faces and one exposed nugget of dark iron, with a little rust-stained rubble at its foot. It must read as iron at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
     "scale": 1.55
   },
   "mountain_iron_exhausted": {
     "name": "A WORKED-OUT IRON PEAK",
-    "what": "the same iron peak AFTER it has been mined: a dark opening cut into its face with a couple of rough timber props framing it, pale cut rock around the mouth, the red veins mostly gone and only a little rust staining left, rubble at its foot",
+    "what": "the SAME iron peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the red veins gone and only a little rust staining left, rubble at its foot",
     "scale": 1.45
   },
   "mountain_gold": {
     "name": "A GOLD PEAK",
-    "what": "one chunky grey stone peak with bright gold veins running through it and a few glinting gold nuggets caught in its faces, a scatter of pale rubble at its base. It must read as gold at a glance without any label",
+    "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, with bright gold veins running through it: two or three bold seams and one glinting nugget caught in a face, a little pale rubble at its foot. It must read as gold at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
     "scale": 1.55
   },
   "mountain_gold_exhausted": {
     "name": "A WORKED-OUT GOLD PEAK",
-    "what": "the same gold peak AFTER it has been mined: a dark opening cut into its face with a couple of rough timber props framing it, pale cut rock around the mouth, the gold veins gone and only the faintest glint left, rubble at its foot",
+    "what": "the SAME gold peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the gold veins gone and only the faintest glint left, rubble at its foot",
     "scale": 1.45
   },
   "berry_bush": {

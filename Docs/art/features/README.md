@@ -60,9 +60,9 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | Asset | Scale | Drawn height | Notes |
 |---|---|---|---|
 | `forest` | 1.45 | 1.37 plots | three trees, not a thicket: trunks read, gaps let the ground through, and the crowns interleave across tile edges |
-| `mountain` | 1.55 | 1.25 | |
-| `mountain_iron` | 1.55 | 1.45 | rust-red veins read at thumbnail size |
-| `mountain_gold` | 1.55 | 1.34 | |
+| `mountain` | 1.55 | 1.51 | six or seven broad facets; craggy on every side |
+| `mountain_iron` | 1.55 | 1.53 | two or three bold rust-red seams — few and large enough to read at thumbnail size |
+| `mountain_gold` | 1.55 | 1.54 | the same, in gold |
 | `berry_bush` | 0.35 | 0.21 | waist-high on a villager |
 | `wild_animals` | 0.27 | 0.23 | boar at knee height — it is a wild pig, not a bear |
 | `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |
