@@ -1,0 +1,78 @@
+{
+  "forest": {
+    "name": "A STAND OF FOREST",
+    "what": "three or four broadleaf trees standing close together, their canopies rounded and slightly overlapping, on short sturdy trunks. Rich green foliage with a little tonal variation between the crowns, a few low ferns at their feet"
+  },
+  "forest_exhausted": {
+    "name": "A FELLED STAND OF FOREST",
+    "what": "the same three or four trees AFTER they have been cut: low pale stumps with clean-cut tops, one or two cut logs lying beside them, a scatter of woodchips and a couple of surviving saplings. It must read as the same place, logged — not as a different patch of ground"
+  },
+  "mountain": {
+    "name": "A ROCKY PEAK",
+    "what": "one chunky grey stone peak with a few smaller boulders at its base, its facets broad and simply cut, a little moss or grass catching in the lower cracks. It is a landmark on a tile, not a mountain range"
+  },
+  "mountain_exhausted": {
+    "name": "A QUARRIED PEAK",
+    "what": "the same grey peak AFTER it has been worked: its side cut away into flat stepped benches, pale freshly-cut stone where the face is open, loose rubble and a few squared blocks at its foot. Same rock, same place, mined into"
+  },
+  "mountain_iron": {
+    "name": "AN IRON PEAK",
+    "what": "one chunky grey stone peak shot through with rusty red-brown ore: warm reddish veins and a few exposed nuggets of dark iron on its faces, a scatter of rust-stained rubble at its base. It must read as iron at a glance without any label"
+  },
+  "mountain_iron_exhausted": {
+    "name": "A WORKED-OUT IRON PEAK",
+    "what": "the same iron peak AFTER it has been mined: a dark opening cut into its face with a couple of rough timber props framing it, pale cut rock around the mouth, the red veins mostly gone and only a little rust staining left, rubble at its foot"
+  },
+  "mountain_gold": {
+    "name": "A GOLD PEAK",
+    "what": "one chunky grey stone peak with bright gold veins running through it and a few glinting gold nuggets caught in its faces, a scatter of pale rubble at its base. It must read as gold at a glance without any label"
+  },
+  "mountain_gold_exhausted": {
+    "name": "A WORKED-OUT GOLD PEAK",
+    "what": "the same gold peak AFTER it has been mined: a dark opening cut into its face with a couple of rough timber props framing it, pale cut rock around the mouth, the gold veins gone and only the faintest glint left, rubble at its foot"
+  },
+  "berry_bush": {
+    "name": "A BERRY BUSH",
+    "what": "two rounded shrubs of dense dark-green leaves, thick with small bright berries — deep blue and red — with a few berries fallen at their feet. Plump and inviting; the bushes are low, well under the height of a person"
+  },
+  "wild_animals": {
+    "name": "WILD GAME",
+    "what": "two or three wild boar standing on the ground, brown and bristly, compact and rounded in the game's style, with small tusks and alert ears. A few tufts of grass around their feet. They are gameplay-scale animals, not a portrait: calm, side-on, going about their business"
+  },
+  "fish_shoal": {
+    "name": "A FISH SHOAL",
+    "what": "a shoal of small silver-blue fish just under the surface of clear water, their shapes softened by the water above them, with a ring of gentle ripples and a few bubbles breaking the surface over them. NO water tile underneath — only the ripples and the fish themselves, as they will be laid over the game's own water"
+  },
+  "landmark_shrine": {
+    "name": "A WAYSIDE SHRINE",
+    "what": "a small open stone shrine: four slim cream pillars carrying a little blue-tiled roof over a carved altar stone, two steps up to it, a blue-and-gold pennant on one pillar and a low ring of flowers around its base. Sacred and cared-for, and small — it seats nobody"
+  },
+  "landmark_stones": {
+    "name": "A RING OF STANDING STONES",
+    "what": "five weathered grey monoliths set in a rough circle, each one tall, narrow and slightly leaning, pale lichen on their shoulders, one fallen flat between two of the others. Short grass inside the ring. Ancient and plain — no carvings, no glow"
+  },
+  "landmark_leyspring": {
+    "name": "A LEYSPRING",
+    "what": "a small pool of impossibly clear water welling up between pale rocks, lit from within with a soft cyan glow, faint motes of light rising off its surface and a delicate rim of frost-white crystal growing around its edge. Magical but quiet — no beam, no explosion"
+  },
+  "ruin_barrow": {
+    "name": "A BURIAL BARROW",
+    "what": "a low grassy mound with a dark stone doorway broken open in its side, two leaning standing stones flanking the entrance and a slab fallen across the threshold. Long grass over the mound, a cold dark opening. Old, quiet and unwelcoming"
+  },
+  "ruin_chapel": {
+    "name": "A SUNKEN CHAPEL",
+    "what": "the broken shell of a small stone chapel half swallowed by the ground: one gable wall still standing with an empty arched window, a stub of tower, the rest collapsed into rubble, ivy over the stones and dark water pooled in the nave"
+  },
+  "ruin_counting_house": {
+    "name": "A RUINED COUNTING HOUSE",
+    "what": "the burnt-out shell of a merchant's stone hall: two storeys of cracked cream wall with empty windows, the roof gone and charred beams fallen inside, a broken strongbox and spilled coins among the rubble at its foot, a torn awning still hanging"
+  },
+  "ruin_ironworks": {
+    "name": "DROWNED IRONWORKS",
+    "what": "the wreck of a small forge: a cracked stone chimney stack still standing, a collapsed timber roof, a rusted waterwheel half off its axle, and dark still water flooding the floor around broken anvils and rusted tools"
+  },
+  "ruin_observatory": {
+    "name": "A STAR OBSERVATORY IN RUINS",
+    "what": "a broken round stone tower with its domed roof split open and half fallen away, a bent brass telescope tilting out through the gap, cracked steps spiralling up the outside, and scattered stone rubble at its base. A faint trace of old blue paint on the dome"
+  }
+}

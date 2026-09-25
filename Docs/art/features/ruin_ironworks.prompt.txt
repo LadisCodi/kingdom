@@ -1,0 +1,57 @@
+Generate one image. Square framing, 1:1 aspect ratio.
+
+Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
+
+This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game — not marketing key art.
+
+=== NEW SCENE ===
+DROWNED IRONWORKS, alone and centred, standing on ONE square tile of a fantasy kingdom's map.
+
+the wreck of a small forge: a cracked stone chimney stack still standing, a collapsed timber roof, a rusted waterwheel half off its axle, and dark still water flooding the floor around broken anvils and rusted tools.
+
+=== NO GROUND — THIS IS CRITICAL ===
+Draw THE THING ONLY. Do NOT draw any ground underneath it.
+There must be NO grass, NO soil, NO turf plate, NO raised earth block, NO rocky base, NO island, NO platform and NO terrain of any kind. The game supplies the ground from its own separate terrain tiles; this asset is only what STANDS on that ground.
+Small things touching its feet — a few tufts, a fallen leaf, loose rubble — are part of it and stay, but they sit directly on nothing, with full transparency beneath and around them.
+Below its footprint there is transparency, not soil. Nothing is cut away and nothing hangs in mid-air: simply do not draw a ground plate at all.
+
+=== CAMERA — THIS IS CRITICAL ===
+It occupies a SQUARE plot of 1 by 1 tiles.
+The camera is a TRUE 2:1 ISOMETRIC game camera: the horizontal axes run at exactly 26.57° above the horizon, so any square on the ground is drawn as a DIAMOND THAT IS EXACTLY TWICE AS WIDE AS IT IS TALL. Vertical lines in the world stay perfectly vertical on screen.
+CONCRETE TEST: if you traced the outline of the 1×1 plot, that diamond would measure 1000 pixels from its left corner to its right corner and exactly 500 pixels from its top corner to its bottom corner. Half as tall as it is wide.
+The camera is LOWER and FLATTER than a typical three-quarter view — you see more of the sides and less of the tops than you would from above.
+It is NOT a perspective camera, NOT a 45° three-quarter view, NOT a top-down view and NOT a 1.5:1 camera. There is no vanishing point and no convergence: the projection is parallel/orthographic throughout.
+
+=== IT FILLS ITS PLOT ===
+The LEFTMOST and RIGHTMOST points of the drawing are the plot's left and right corners — the thing spans its tile fully, side to side.
+It may be as TALL as it needs to be; height is free. But nothing sprawls sideways past the plot, and it is not shrunk into the middle of the frame either.
+
+=== COMPOSITION ===
+The single subject, centred, with comfortable empty breathing room above it. Nothing else in the frame. No other buildings, no terrain, no landscape, no horizon, no sky, no ground.
+
+=== BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
+Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
+The subject must be the ONLY opaque region in the file. Every pixel outside it is fully transparent, alpha = 0.
+The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
+Its own soft cast shadow may stay, faded into full transparency.
+
+=== LOCKED VISUAL STYLE ===
+Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
+
+Highly saturated fantasy palette: vivid spring greens, warm cream stone, golden straw and timber, rich blue accents, clear cyan water, and warm earthy paths. Soft midday sunlight with gentle shadows, subtle ambient occlusion, restrained rim lighting, and a clean bright atmosphere.
+
+Rounded, chunky, immediately readable silhouettes. Compact proportions with slightly oversized important features. Charming and handcrafted while remaining clean and structurally understandable.
+
+Smooth, simplified materials with subtle surface variation — no photographic textures, dirt overlays, grain, or excessive micro-detail. Softly bevelled forms, clean edges, tidy vegetation, clustered rounded tree canopies, and small decorative details used sparingly.
+
+The result should feel like one piece out of a polished mobile strategy-game diorama, and must stay distinct from every other map feature at thumbnail size.
+
+Any characters or animals stay small gameplay-scale figures integrated into the environment. They never pose for the camera.
+
+=== AVOID ===
+No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, or advertising layout.
+No dramatic cinematic framing, close-up heroes, posed characters, lens flare, heavy bloom, harsh shadows, fog, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
+No red crosses or any other real-world emblem.
+No checkerboard pattern painted into the image. No opaque background of any colour.
+Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.
+Above all: NO GROUND PLATE, and the 2:1 camera ratio exactly.
