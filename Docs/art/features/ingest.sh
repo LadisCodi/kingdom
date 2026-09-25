@@ -13,4 +13,5 @@ magick "$src" -resize 50% -strip "$master"
 corner=$(magick "$master" -format "%[pixel:p{0,0}]" info:)
 echo "  master $(magick identify -format '%wx%h' "$master")  corner $corner"
 [ "$corner" = "srgba(0,0,0,0)" ] || { echo "  FAIL: the background is not transparent"; exit 1; }
-"$here/norm_prop.sh" "$master" "$here/$id.png"
+scale=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].scale ?? 1))")
+"$here/norm_prop.sh" "$master" "$here/$id.png" "$scale"

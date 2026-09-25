@@ -12,20 +12,26 @@ against [`../style-reference.png`](../style-reference.png) under
 | `<id>.master.png` | what came back, untouched, with its real alpha |
 | `props.json` | what each one IS, in a sentence — the only file to edit to add one |
 
-## The rule
+## Two rules, and only one of them is the renderer's
 
-A feature STANDS on its plot, so the renderer scales it to the plot's ground
-diamond (128 px across for a 1×1) and puts its **bottom edge on the diamond's
-bottom corner** (`drawStanding`, [`src/render/iso.ts`](../../../src/render/iso.ts)).
+**Where it stands** is the renderer's rule, and it has no exceptions: a
+feature is scaled to its plot's ground diamond and its bottom edge goes on
+the diamond's bottom corner (`drawStanding`,
+[`src/render/iso.ts`](../../../src/render/iso.ts)).
 
-Normalising is therefore just: trim to the ink, scale so the ink is 256 wide —
-twice the diamond, because the renderer scales down and never up. **Height is
-free**: a peak is taller art, not a different anchor, and `spriteInkTop` reads
-back where the top really is so a label hangs clear of it.
+**How big it is** could never be a rule. A boar is knee-high on a farmhand
+and a forest towers over a cottage, and nothing in the renderer can tell
+which is which — drawn to one rule they came out the same size, and the map
+read as a petting zoo of giant pigs under bonsai. So size is AUTHORED, as
+`scale` in `props.json`: the fraction of the plot's diamond the drawing
+spans. `norm_prop.sh` bakes it in, scaling the ink to that fraction and
+centring it on a full-width canvas with its feet on the bottom edge. The
+renderer keeps its single rule; the sprite carries its own size.
 
-`norm_prop.sh` reports the height in plots. Around 0.85–0.95 is a prop that
-stands up; 0.5 is something lying flat, which is right for a shoal and wrong
-for a mountain.
+The yardstick is the cast, not a tape measure: **a villager is about 0.35 of
+a plot tall** and a 1×1 cottage about 1.5, so a boar wants ~0.5 and a stand
+of trees ~1.25. `norm_prop.sh` prints the drawn height in plots for exactly
+that comparison.
 
 ## Making one
 
@@ -44,12 +50,12 @@ random**, and it does not matter, because the normaliser trims to the ink.
 
 ## Landed
 
-| Asset | Height | Notes |
-|---|---|---|
-| `forest` | 0.86 | canopies overlap into continuous woodland when cells adjoin |
-| `mountain` | 0.81 | |
-| `mountain_iron` | 0.94 | rust-red veins read at thumbnail size |
-| `mountain_gold` | 0.86 | |
-| `berry_bush` | 0.59 | low by design — it is a bush |
-| `wild_animals` | 0.87 | boar, gameplay-scale |
-| `fish_shoal` | 0.50 | exactly the diamond's own proportions, which is what a thing lying flat on water wants |
+| Asset | Scale | Drawn height | Notes |
+|---|---|---|---|
+| `forest` | 1.45 | 1.25 plots | towers over a cottage, canopies merge where cells adjoin |
+| `mountain` | 1.55 | 1.25 | |
+| `mountain_iron` | 1.55 | 1.45 | rust-red veins read at thumbnail size |
+| `mountain_gold` | 1.55 | 1.34 | |
+| `berry_bush` | 0.50 | 0.29 | knee-high, as a bush should be |
+| `wild_animals` | 0.55 | 0.48 | boar at about half a villager's height |
+| `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |
