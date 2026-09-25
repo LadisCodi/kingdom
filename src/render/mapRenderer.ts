@@ -8,7 +8,7 @@ import {
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
-import type { MapData } from '../sim/grid';
+import { footprintAt, type MapData } from '../sim/grid';
 import {
   harvestSourceAt, recoversAt, recoveryProgress, stockFraction,
 } from '../sim/harvest';
@@ -492,15 +492,27 @@ export function drawMap(
       if (feature) {
         const def = FEATURES[feature];
         const exhausted = recoversAt(state, map, cell, now) !== null;
-        // A feature picks a drawing the way the ground does: twenty cells of
-        // one tree shape is a wallpaper, not a wood.
-        const stem = exhausted ? `${def.sprite}_exhausted` : def.sprite;
-        later(cell, () => dimmed(dim, () => {
-          punched(key, box, () => {
-            stand(box, [variantKey(stem, cell)],
-              exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
-          });
-        }));
+        // A feature that spans cells is ONE THING: drawn once, on its anchor,
+        // across its whole block (Docs/features/01-map-and-fog.md §3.1). Every
+        // other cell of it draws nothing at all.
+        const { anchor, size } = footprintAt(map, cell);
+        if (anchor.x === cx && anchor.y === cy) {
+          const plot = size === 1 ? box : camera.plotBox(anchor, { x: size, y: size });
+          // A feature picks a drawing the way the ground does: twenty cells of
+          // one tree shape is a wallpaper, not a wood. A bigger block asks for
+          // the drawing made for it — `mountain_2x2` — and falls back to the
+          // 1×1 while that art does not exist.
+          const stem = exhausted ? `${def.sprite}_exhausted` : def.sprite;
+          const keys = size === 1
+            ? [variantKey(stem, cell)]
+            : [`${stem}_${size}x${size}`, variantKey(stem, cell)];
+          later(cell, () => dimmed(dim, () => {
+            punched(key, plot, () => {
+              stand(plot, keys,
+                exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
+            });
+          }), { x: size, y: size });
+        }
       }
 
       // Landmarks and ruins: authored sites, drawn where a feature would be.

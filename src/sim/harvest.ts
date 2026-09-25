@@ -9,7 +9,7 @@ import { payMana } from './mana';
 import { recordEvent } from './events';
 import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
-import { neighbors, type MapData } from './grid';
+import { footprintAt, neighbors, type MapData } from './grid';
 import { resolve, resolveAt } from './modifiers';
 import { techValue } from './techEffects';
 import { pick } from './rng';
@@ -75,12 +75,42 @@ export function effectiveStock(
   return Math.max(1, Math.round(resolve(state, 'harvestStock', spec.stock * m)));
 }
 
+/**
+ * WHAT THE DEPOT A CELL DRAWS FROM HOLDS — `effectiveStock` times the area of
+ * its block, so a 2x2 mountain holds four cells' worth in the one depot its
+ * four cells share.
+ *
+ * Separate from `effectiveStock`, which answers "what would a cell of this
+ * ground hold" for any spec you care to name, block or no block. Only the
+ * depot is the block's.
+ */
+export function depotStock(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec,
+): number {
+  const { size } = footprintAt(map, cell);
+  return effectiveStock(state, map, cell, spec) * size * size;
+}
+
+/**
+ * WHICH DEPOT A CELL DRAWS FROM.
+ *
+ * Its own, unless it belongs to a feature that spans cells — then the whole
+ * block shares the anchor's (Docs/features/01-map-and-fog.md §3.1). One
+ * sprite cannot be drawn three-quarters mined, so a mountain empties as one
+ * thing, out of a depot `depotStock` has already multiplied by its area.
+ *
+ * Nothing moves in the balance: four workers drawing on one quadrupled depot
+ * empty it at the rate four single depots would.
+ */
+const depotKey = (map: MapData, cell: Coord): string =>
+  coordKey(footprintAt(map, cell).anchor);
+
 const cellState = (
   state: GameState, map: MapData, key: string, cell: Coord, spec: HarvestSpec,
 ): CellHarvestState => {
   let s = state.harvest[key];
   if (!s) {
-    s = { units: effectiveStock(state, map, cell, spec), exhaustedUntil: null, recoveryMs: null };
+    s = { units: depotStock(state, map, cell, spec), exhaustedUntil: null, recoveryMs: null };
     state.harvest[key] = s;
   }
   return s;
@@ -144,7 +174,7 @@ function recoverIfDue(
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
     s.recoveryMs = null;
-    s.units = effectiveStock(state, map, cell, spec);
+    s.units = depotStock(state, map, cell, spec);
   }
 }
 
@@ -153,8 +183,8 @@ export function stockAt(state: GameState, map: MapData, cell: Coord, now: number
   const spec = harvestSpecAt(state, cell);
   if (spec === null) return 0;
   if (isInexhaustible(spec)) return Number.POSITIVE_INFINITY;
-  const s = state.harvest[coordKey(cell)];
-  if (!s) return effectiveStock(state, map, cell, spec);
+  const s = state.harvest[depotKey(map, cell)];
+  if (!s) return depotStock(state, map, cell, spec);
   recoverIfDue(state, s, map, cell, spec, now);
   return s.units;
 }
@@ -181,7 +211,7 @@ export function recoversForSpec(
   state: GameState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
 ): number | null {
   if (isInexhaustible(spec)) return null;
-  const s = state.harvest[coordKey(cell)];
+  const s = state.harvest[depotKey(map, cell)];
   if (!s) return null;
   recoverIfDue(state, s, map, cell, spec, now);
   return s.exhaustedUntil;
@@ -204,7 +234,7 @@ export function recoveryProgress(
 ): number | null {
   const until = recoversForSpec(state, map, cell, spec, now);
   if (until === null) return null;
-  const span = state.harvest[coordKey(cell)]?.recoveryMs
+  const span = state.harvest[depotKey(map, cell)]?.recoveryMs
     // A save from before the length was kept: the authored wait is the best
     // guess for the one cell that was already waiting when it loaded.
     ?? effectiveRecoveryMs(state, spec, cell);
@@ -220,10 +250,10 @@ export function stockFraction(
   now: number,
 ): number {
   if (isInexhaustible(spec)) return 1;
-  const s = state.harvest[coordKey(cell)];
+  const s = state.harvest[depotKey(map, cell)];
   if (!s) return 1;
   recoverIfDue(state, s, map, cell, spec, now);
-  return Math.max(0, Math.min(1, s.units / effectiveStock(state, map, cell, spec)));
+  return Math.max(0, Math.min(1, s.units / depotStock(state, map, cell, spec)));
 }
 
 /** Draw up to `want` units out of the cell. Returns what was ACTUALLY there,
@@ -246,7 +276,7 @@ export function drawFromCell(
   // nothing to persist and nothing to grow without bound in the save.
   const asked = Math.max(0, Math.floor(want));
   if (isInexhaustible(spec)) return asked;
-  const key = coordKey(cell);
+  const key = depotKey(map, cell);
   const s = cellState(state, map, key, cell, spec);
   recoverIfDue(state, s, map, cell, spec, now);
   const taken = Math.min(asked, s.units);

@@ -2,8 +2,8 @@
 // for fog discovery, placement adjacency, worked-unit connectivity, and BFS
 // distance (user decision — diagonals do not count as adjacent).
 
-import { DISTRICTS } from './data/definitions';
-import type { RegionMapDoc } from './data/mapRules';
+import { DISTRICTS, FEATURES } from './data/definitions';
+import { groupFootprints, type RegionMapDoc } from './data/mapRules';
 import regionMap from './data/region-map.json';
 import {
   cellsOfRect, coordKey, parseCoordKey,
@@ -26,6 +26,20 @@ export interface MapData {
   /** BFS distance from the Townhall footprint over existing cells; unreachable → 0 (as built). */
   distanceFromTownhall: ReadonlyMap<string, number>;
   cells: ReadonlyArray<Coord>;
+  /**
+   * WHICH BLOCK EACH CELL BELONGS TO, for features that span more than one
+   * cell (Docs/features/01-map-and-fog.md §3.1).
+   *
+   * Every cell inside a block maps to its anchor's key, the anchor included;
+   * a cell in no block is absent. Derived from the painted cells by
+   * `groupFootprints`, so nothing in the authored map declares a size.
+   *
+   * MAP data and not state: a mountain never moves. Only finite features
+   * respawn, and none of those spans.
+   */
+  footprintOf: ReadonlyMap<string, string>;
+  /** Anchor key → how many cells a side. Anchors only. */
+  footprintSize: ReadonlyMap<string, number>;
 }
 
 export const TOWNHALL_ORIGIN: Coord = { x: 0, y: 0 }; // anchor (top-left of its footprint)
@@ -71,12 +85,52 @@ export function buildMapDataFrom(region: RegionMapDoc): MapData {
     }
   }
 
+  // Group each spanning feature's painted cells into blocks. Per feature, so
+  // a mountain never joins an iron one into a block that is neither.
+  const footprintOf = new Map<string, string>();
+  const footprintSize = new Map<string, number>();
+  for (const def of Object.values(FEATURES)) {
+    const max = def.maxFootprint ?? 1;
+    if (max <= 1) continue;
+    const mine: Coord[] = [];
+    for (const [k, id] of initialFeatures) if (id === def.id) mine.push(parseCoordKey(k));
+    for (const { anchor, size } of groupFootprints(mine, max)) {
+      // A block of one is what `footprintAt` answers for a cell it has never
+      // heard of, so recording them would only be bulk.
+      if (size === 1) continue;
+      const anchorKey = coordKey(anchor);
+      footprintSize.set(anchorKey, size);
+      for (const c of cellsOfRect(anchor, { x: size, y: size })) {
+        footprintOf.set(coordKey(c), anchorKey);
+      }
+    }
+  }
+
   return {
     terrain,
     initialFeatures,
     distanceFromTownhall,
     cells: [...terrain.keys()].map(parseCoordKey),
+    footprintOf,
+    footprintSize,
   };
+}
+
+/**
+ * The block a cell belongs to — its anchor and how many cells a side — or a
+ * block of one when it is in none. Every caller that has to treat a mountain
+ * as ONE THING goes through this: fog, exhaustion, and the renderer.
+ */
+export function footprintAt(map: MapData, cell: Coord): { anchor: Coord; size: number } {
+  const anchorKey = map.footprintOf.get(coordKey(cell));
+  if (anchorKey === undefined) return { anchor: cell, size: 1 };
+  return { anchor: parseCoordKey(anchorKey), size: map.footprintSize.get(anchorKey) ?? 1 };
+}
+
+/** Every cell of the block `cell` belongs to, the cell itself included. */
+export function footprintCells(map: MapData, cell: Coord): Coord[] {
+  const { anchor, size } = footprintAt(map, cell);
+  return size === 1 ? [anchor] : [...cellsOfRect(anchor, { x: size, y: size })];
 }
 
 export const cellExists = (map: MapData, cell: Coord): boolean =>

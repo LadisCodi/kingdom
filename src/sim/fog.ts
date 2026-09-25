@@ -2,7 +2,10 @@
 
 import { DISTRICTS, FOG, LANDMARKS, RUINS, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
-import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
+import {
+  cellsWithinRadiusOfRect, footprintAt, footprintCells, neighbors, townhallDistance,
+  type MapData,
+} from './grid';
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import { recordEvent } from './events';
@@ -15,6 +18,21 @@ import {
 export type FogState = 'Revealed' | 'Discovered' | 'Undiscovered';
 
 export function fogState(state: GameState, map: MapData, cell: Coord): FogState {
+  // A feature that spans cells is ONE THING, so its block shares one state:
+  // the best any of its cells has. Discovered when any single cell is —
+  // you can see a mountain from a distance, and a landmark looming out of
+  // the dark is what the fog is for (Docs/features/01-map-and-fog.md §3.1).
+  let best: FogState = 'Undiscovered';
+  for (const c of footprintCells(map, cell)) {
+    const one = cellFogState(state, map, c);
+    if (one === 'Revealed') return 'Revealed';
+    if (one === 'Discovered') best = 'Discovered';
+  }
+  return best;
+}
+
+/** One cell's own state, ignoring any block it belongs to. */
+function cellFogState(state: GameState, map: MapData, cell: Coord): FogState {
   if (state.fog.revealed[coordKey(cell)]) return 'Revealed';
   if (state.fog.discovered[coordKey(cell)]) return 'Discovered';
   for (const n of neighbors(map, cell)) {
@@ -69,6 +87,13 @@ export function countMultiplier(state: GameState): number {
  *  that discounts the fog. Every consumer reads this rather than revealCost(),
  *  so a discount can never apply to the bar but not the charge. */
 export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>
+  // A block costs the SUM of its cells, so a 3x3 is nine cells' Gold and a
+  // tap charges a fifth of that. Nothing says so on screen: the floater on
+  // the tap states what it took, which a nine-cell number says plainly
+  // enough (Docs/features/01-map-and-fog.md §3.1).
+  footprintCells(map, cell).reduce((sum, c) => sum + oneCellCost(state, map, c), 0);
+
+const oneCellCost = (state: GameState, map: MapData, cell: Coord): number =>
   Math.max(
     FOG.minCost,
     Math.round(resolve(
@@ -98,7 +123,11 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
  * about what you can buy.
  */
 export const isReachable = (state: GameState, map: MapData, cell: Coord): boolean =>
-  neighbors(map, cell).some((n) => state.fog.revealed[coordKey(n)] === true);
+  // ANY cell of a block: the frontier only has to touch a corner of the
+  // mountain for the whole of it to be buyable.
+  footprintCells(map, cell).some(
+    (c) => neighbors(map, c).some((n) => state.fog.revealed[coordKey(n)] === true),
+  );
 
 /**
  * How far from the Townhall the player may PAY for a cell, in BFS rings —
@@ -117,12 +146,18 @@ export const explorationReach = (state: GameState): number =>
 
 /** Is this cell inside the reach of the current Townhall level? */
 export const isWithinReach = (state: GameState, map: MapData, cell: Coord): boolean =>
-  townhallDistance(map, cell) <= explorationReach(state);
+  // EVERY cell of a block, where reachability asks for only one. The reach
+  // ring is what stops the player sprawling, and a 3x3 bought from its near
+  // corner would otherwise carry them two rings past it.
+  footprintCells(map, cell).every(
+    (c) => townhallDistance(map, c) <= explorationReach(state),
+  );
 
 /** The first Townhall level whose reach holds this cell — what the refused
  *  tap tells the player to build. `maxLevel + 1` if no level ever does. */
 export function reachLevelFor(map: MapData, cell: Coord): number {
-  const d = townhallDistance(map, cell);
+  // The furthest cell of the block, since all of them must be inside.
+  const d = Math.max(...footprintCells(map, cell).map((c) => townhallDistance(map, c)));
   const ladder = FOG.reachPerTownhallLevel;
   if (ladder.length === 0) return 1;
   const i = ladder.findIndex((r) => r >= d);
@@ -207,20 +242,21 @@ export const revealPaidGold = (total: number, taps: number): number =>
 export const revealTapCost = (total: number, taps: number): number =>
   revealPaidGold(total, taps + 1) - revealPaidGold(total, taps);
 
-/** Taps already spent on a cell, 0 to `fog.tapsToReveal` − 1. */
-export const revealTapsDone = (state: GameState, cell: Coord): number =>
-  state.fog.progress[coordKey(cell)] ?? 0;
+/** Taps already spent on a cell — on its BLOCK's anchor, when it is in one.
+ *  0 to `fog.tapsToReveal` − 1. */
+export const revealTapsDone = (state: GameState, map: MapData, cell: Coord): number =>
+  state.fog.progress[coordKey(footprintAt(map, cell).anchor)] ?? 0;
 
 /** What the NEXT tap on this cell will cost — the floater and the tile card
  *  read it before the tap, so the number the player sees is the number the
  *  purse loses. */
 export const nextRevealTapCost = (state: GameState, map: MapData, cell: Coord): number =>
-  revealTapCost(revealCostForCell(state, map, cell), revealTapsDone(state, cell));
+  revealTapCost(revealCostForCell(state, map, cell), revealTapsDone(state, map, cell));
 
 /** Gold already sunk into a cell — what abandoning it would waste, and what
  *  Divination does NOT have to pay. */
 export const revealPaidSoFar = (state: GameState, map: MapData, cell: Coord): number =>
-  revealPaidGold(revealCostForCell(state, map, cell), revealTapsDone(state, cell));
+  revealPaidGold(revealCostForCell(state, map, cell), revealTapsDone(state, map, cell));
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'OutOfReach' | 'NotEnoughGold'
@@ -240,7 +276,10 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   if (!isWithinReach(state, map, cell)) return 'OutOfReach';
   const gate = explorationGate(map, cell);
   if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
-  const key = coordKey(cell);
+  // A block's taps are counted on its ANCHOR, so a press on any of its cells
+  // advances the same five (Docs/features/01-map-and-fog.md §3.1).
+  const block = footprintCells(map, cell);
+  const key = coordKey(footprintAt(map, cell).anchor);
   // Read fresh every tap. A cell whose price moved mid-clear — Pitons landing
   // between two presses — reprices the taps still to come and leaves the ones
   // already paid alone, which is the same rule a running timer follows.
@@ -251,8 +290,12 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   addToWallet(state.city.wallet, 'Gold', -payment);
   if (done + 1 >= FOG.tapsToReveal) {
     delete state.fog.progress[key];
-    delete state.fog.discovered[key];
-    state.fog.revealed[key] = true;
+    // The whole block clears at once. There is no half a mountain.
+    for (const c of block) {
+      const k = coordKey(c);
+      delete state.fog.discovered[k];
+      state.fog.revealed[k] = true;
+    }
     // Clearing fog pays no currency. What a reveal buys is MAP — resource
     // cells, buildable ground, ruins and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead

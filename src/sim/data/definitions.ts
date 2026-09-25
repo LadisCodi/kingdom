@@ -875,6 +875,20 @@ export interface FeatureDef {
   source: HarvestSourceId;
   /** Terrain a FINITE feature respawns on (adjacent to its origin). */
   respawnTerrain: 'Grassland' | 'Water';
+  /**
+   * HOW BIG A BLOCK OF THIS FEATURE MAY BE, in cells a side. 1 unless stated.
+   *
+   * Some features are ONE OBJECT and some are a mass of small ones. A forest
+   * is a stand of trees on this cell and another stand on the next; a
+   * mountain is a mountain. So painted mountain cells are GROUPED into square
+   * footprints up to this size, drawn once across the whole block, revealed
+   * together and exhausted from one depot
+   * (Docs/features/01-map-and-fog.md §3.1).
+   *
+   * Iron and gold stay at 1: a lone rich outcrop reads, and three sizes of
+   * each is nine more drawings for no gain.
+   */
+  maxFootprint?: number;
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
@@ -890,6 +904,7 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
   Mountain: {
     id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
     sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
+    maxFootprint: 3,
   },
   MountainIron: {
     id: 'MountainIron', name: 'Iron mountain', glyph: '⛰️', exhaustedGlyph: '🕳️',
@@ -2314,4 +2329,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 59;
+export const SAVE_VERSION = 60;

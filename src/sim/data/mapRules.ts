@@ -244,3 +244,57 @@ function reachableFrom(terrain: ReadonlyMap<string, TerrainId>, sources: Coord[]
   }
   return seen;
 }
+
+// ------------------------------------------------- footprints (§3.1 of 01)
+
+/** A block of one feature: its anchor cell and how many cells it is a side. */
+export interface Footprint {
+  anchor: Coord;
+  size: number;
+}
+
+/**
+ * GROUP PAINTED CELLS OF ONE FEATURE INTO SQUARE BLOCKS.
+ *
+ * A mountain is one object, not a mass of small ones, so a designer paints
+ * mountain cells and the blocks are DERIVED — here, by the one function the
+ * editor previews with and the sim loads with, so the two can never disagree
+ * (Docs/features/01-map-and-fog.md §3.1).
+ *
+ * Greedy from the largest size down, scanning row by row and left to right.
+ * The order is arbitrary but FIXED, and that is the whole requirement: the
+ * same painted cells must give the same blocks every time, or the map shifts
+ * under saves that were written against the old grouping.
+ */
+export function groupFootprints(cells: Iterable<Coord>, maxSize: number): Footprint[] {
+  const free = new Set<string>();
+  for (const c of cells) free.add(coordKey(c));
+  // Row by row, left to right. Sorting the keys is not enough: they are
+  // strings, and "10,2" sorts before "2,2".
+  const order = [...free].map(parseCoordKey)
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+
+  const out: Footprint[] = [];
+  for (let size = Math.max(1, Math.floor(maxSize)); size >= 2; size--) {
+    for (const anchor of order) {
+      if (!free.has(coordKey(anchor))) continue;
+      const block: string[] = [];
+      let whole = true;
+      for (let dy = 0; dy < size && whole; dy++) {
+        for (let dx = 0; dx < size && whole; dx++) {
+          const k = coordKey({ x: anchor.x + dx, y: anchor.y + dy });
+          if (free.has(k)) block.push(k);
+          else whole = false;
+        }
+      }
+      if (!whole) continue;
+      for (const k of block) free.delete(k);
+      out.push({ anchor, size });
+    }
+  }
+  // Whatever no block could take is its own cell.
+  for (const anchor of order) {
+    if (free.delete(coordKey(anchor))) out.push({ anchor, size: 1 });
+  }
+  return out;
+}
