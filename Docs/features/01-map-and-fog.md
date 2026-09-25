@@ -101,6 +101,56 @@ Mountains:
   Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)). A test
   walks the chain with zero drip to prove a follower is never short.
 
+### 3.1 A feature that spans more than one cell
+
+Some features are **one object**, not a mass of small ones. A forest is a stand
+of trees on this cell and another stand on the next; a mountain is a mountain.
+So a feature may occupy a square **footprint**.
+
+| | Footprints |
+|---|---|
+| **Mountain** | 1×1, 2×2, 3×3 |
+| Everything else | 1×1 |
+
+- The footprint is **square**, and the feature is **drawn once** across the
+  whole of it. There is no quarter of a mountain, in any sense: not
+  part-revealed, not part-exhausted.
+- **Every cell of the footprint carries the feature.** It blocks placement on
+  each, it is a harvest node on each, and the Quarry counts each one that falls
+  inside its area of influence.
+
+**Fog.**
+
+- **Discovered when any one of its cells is.** You can see a mountain from a
+  distance, and a landmark looming out of the dark is what the fog is for.
+- A tap on any of its cells advances **all** of them. Still five taps
+  (`fog.tapsToReveal`), whatever the size.
+- **The price is the sum of its cells'**, so a tap charges a fifth of that.
+  Nothing is displayed: the floater on the tap says what it cost, and a
+  nine-cell number says "this is a big thing" more plainly than a label would.
+- **Reachability on any one cell, reach on all of them.** The frontier only has
+  to touch a corner, but the whole footprint must lie inside the Townhall's
+  reach — the reach is what stops sprawl, and a 3×3 would otherwise jump it by
+  two rings.
+- It clears **all at once**.
+
+**Exhaustion.**
+
+- The footprint exhausts **as a unit**, from one depot of `stock × cells`.
+- Four workers drawing on one quadrupled depot empty it at the rate four
+  single-cell depots would, so nothing in the balance moves.
+
+**Authoring.**
+
+- Mountain cells are painted **one at a time** in `?dev=map`. Nothing declares
+  a footprint.
+- The grouping is **derived from the painted cells**, by the same function the
+  editor previews and the sim loads with (`src/sim/data/mapRules.ts`): greedy
+  3×3, then 2×2, then 1×1, in a fixed scan order. Same cells in, same grouping
+  out, every time.
+- Iron and gold mountains stay 1×1. A lone rich outcrop reads, and three sizes
+  of each is nine more drawings for no gain.
+
 Respawn:
 
 - A finite feature respawns rather than dying. `respawnTerrain` decides where:
@@ -118,6 +168,8 @@ Respawn:
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
   ground already revealed.
+- A feature with a footprint (§3.1) is discovered when any one of its cells is,
+  and revealed all at once.
 - Every district has a `fogRevealRadius` (1) and a larger `fogDiscoverRadius`
   (2): finishing a build reveals a ring and discovers a wider one.
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
@@ -153,6 +205,8 @@ reaches ring 40.
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
+- A footprint is five taps too, and costs **the sum of its cells** (§3.1). A
+  3×3 therefore charges nine cells' worth a tap, which the floater states.
 - **The map gets dearer as it is revealed.** The ring price is multiplied by
   `fog.count_growth` (**×1.05**) once per `fog.count_step` (**10**) cells
   already revealed. Every revealed cell counts — seeded, built around or
@@ -251,6 +305,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `Harvest` sheet |
+| Which features may span cells, and how far | Mountain, up to 3×3 | §3.1, `definitions.ts` |
 | The world itself | — | `?dev=map` |
 
 ## 9. Deliberately not in this design
@@ -264,6 +319,14 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A `base × growth^distance` curve for landmark costs.
 - A technology that buys reveal taps back. A cell is five presses at every
   ring, so there is no tap ladder left to climb.
+- Non-square or non-contiguous footprints (§3.1).
+- A footprint revealed or exhausted cell by cell. One sprite cannot be drawn
+  part-lit or part-mined; it would read as a rendering fault, not as a state.
+- Footprints on iron and gold mountains, on forests, or on anything else that
+  is a mass of small objects rather than one thing.
+- An authored footprint on a landmark or a ruin. Those are placed singly rather
+  than painted, so they would carry their own size rather than be grouped —
+  possible later, and no part of this.
 
 **Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).
