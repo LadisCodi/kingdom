@@ -24,8 +24,15 @@ src=$1; out=$2; scale=${3:-1}
 # -- the drawing would have to be wider than the file, and `-extent` answered
 # that by slicing the trees flat down both sides.
 CANVAS_PLOTS=${4:-2}
-W=$((2 * 128 * CANVAS_PLOTS))
+# How many CELLS a side the thing occupies. A 2x2 mountain's own plot diamond
+# is twice as wide as a 1x1's, so its canvas has to be twice as wide too or
+# the game would be upscaling it.
+FOOTPRINT=${5:-1}
+W=$((2 * 128 * CANVAS_PLOTS * FOOTPRINT))
 inkw=$(awk -v s="$scale" -v w="$W" -v p="$CANVAS_PLOTS" 'BEGIN{ printf "%d", w*s/p }')
+# `scale` stays relative to the thing's OWN plot, so 1.55 means the same
+# "half again as wide as its ground" at every footprint.
+
 dims=$(magick "$src" -trim +repage -format "%wx%h" info:)
 w=${dims%x*}; h=${dims#*x}
 tall=$(awk -v w="$w" -v h="$h" -v s="$scale" 'BEGIN{ printf "%.2f", (h/w)*s }')

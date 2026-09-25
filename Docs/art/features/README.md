@@ -40,6 +40,24 @@ a plot tall** (`UNIT_PLOTS`, src/render/characters.ts) and a 1×1 cottage about 
 of trees ~1.25. `norm_prop.sh` prints the drawn height in plots for exactly
 that comparison.
 
+## A feature that spans cells
+
+A block has its own drawing: the renderer asks for `mountain_2x2` before
+falling back to the 1×1 (Docs/features/01-map-and-fog.md §3.1). Two things
+follow in `props.json`:
+
+- **`footprint`** — how many cells a side. The canvas grows with it, because a
+  3×3's plot diamond is three times a 1×1's and the game would otherwise be
+  upscaling the art from the moment it appeared. It also stops `ingest.sh`
+  halving the render on the way in: at that size the full 1254 px master is
+  what the screen needs.
+- **`scale` stays relative to the thing's OWN plot**, so 1.3 means the same
+  "a third again as wide as its ground" at every size.
+
+`scale` comes *down* as the block grows — 1.55, 1.35, 1.25. A single peak may
+loom over its one cell; a range that loomed as far over nine would bury a
+quarter of the city behind it.
+
 ## More than one drawing of the same thing
 
 A feature may have `_2` and `_3` beside it — `forest`, `forest_2`,
@@ -100,6 +118,10 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `forest_2` | 1.05 | 0.99 | two trees, one taller |
 | `forest_3` | 1.05 | 1.03 | three in a loose triangle, one set back |
 | `mountain` | 1.55 | 1.51 | six or seven broad facets; craggy on every side |
+| `mountain_2x2` | 1.35 | 1.36 | two peaks and a saddle, on a 2×2 block |
+| `mountain_3x3` | 1.25 | 1.28 | three peaks stepping down, on a 3×3 |
+| `mountain_exhausted_2x2` | 1.30 | 1.26 | its near flank cut into benches |
+| `mountain_exhausted_3x3` | 1.20 | 1.18 | the same, a wider terrace |
 | `mountain_iron` | 1.55 | 1.53 | two or three bold rust-red seams — few and large enough to read at thumbnail size |
 | `mountain_gold` | 1.55 | 1.54 | the same, in gold |
 | `berry_bush` | 0.35 | 0.21 | waist-high on a villager |
