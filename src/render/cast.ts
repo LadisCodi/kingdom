@@ -47,27 +47,6 @@ export const VILLAGERS: readonly string[] = [
   'villager_1', 'villager_2', 'villager_3', 'villager_4',
 ];
 
-/**
- * DISTRICTS THAT ARE GROUND, not buildings.
- *
- * Almost everything a player builds STANDS on its plot: art as wide as the
- * ground diamond, feet on the diamond's bottom corner, rising into the sky.
- * A crop plot does not. It IS the ground — a field of wheat is a surface, and
- * drawn as a standing sprite it comes out as a square billboard tilted up out
- * of the tile it is supposed to be lying in.
- *
- * So these are drawn the way terrain is: a plain square texture mapped corner
- * to corner onto the diamond (`drawGround`). Their art is authored by the
- * TERRAIN pipeline (Docs/art/terrain) and not the feature one, because that
- * is what they are.
- *
- * Cosmetic, like the cast above, and deliberately not a column on the
- * `Districts` sheet: it changes no number the player can feel.
- */
-export const GROUND_DISTRICTS: ReadonlySet<DistrictId> = new Set<DistrictId>([
-  'FarmLands',
-]);
-
 /** A crew member for a building of this kind, or null when the building has
  *  no cast (Docks) — the caller then draws the legacy sprite chain. */
 export function castFor(district: DistrictId, seed: number): string | null {

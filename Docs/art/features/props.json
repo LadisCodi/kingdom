@@ -93,5 +93,19 @@
     "name": "A STAR OBSERVATORY IN RUINS",
     "what": "a broken round stone tower with its domed roof split open and half fallen away, a bent brass telescope tilting out through the gap, cracked steps spiralling up the outside, and scattered stone rubble at its base. A faint trace of old blue paint on the dome",
     "scale": 1.2
+  },
+  "farmlands": {
+    "name": "RIPE WHEAT",
+    "what": "Tall ripe wheat in warm golden straw and honey tones, grown in neat rows that run across the plot, the heads full and heavy and all at about the same height — waist-high on a person. A thin lip of dark tilled earth shows along the two near edges of the diamond, with the bottoms of the stalks visible against it",
+    "scale": 1.0,
+    "canvasPlots": 1,
+    "template": "field"
+  },
+  "farmlands_exhausted": {
+    "name": "A HARVESTED FIELD",
+    "what": "Bare warm-brown tilled earth in soft parallel ridges running across the plot, with short pale stubble left standing in the rows — ankle-high, nothing more — and a little loose straw caught between them. The same thin lip of dark earth along the two near edges of the diamond. It must read as the SAME field as the ripe one, cut",
+    "scale": 1.0,
+    "canvasPlots": 1,
+    "template": "field"
   }
 }

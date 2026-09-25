@@ -1,0 +1,48 @@
+Generate one image. Square framing, 1:1 aspect ratio.
+
+Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette and lighting. Use the reference for STYLE ONLY.
+
+This is a SINGLE FIELD TILE for a mobile management / light-4X strategy game — one square plot of farmland on an isometric map, which the game places next to other plots of the same kind.
+
+=== WHAT TO DRAW ===
+ONE square plot of {{NAME}}, alone, centred, filling the frame's width.
+
+{{WHAT}}.
+
+=== IT HAS HEIGHT — THIS IS CRITICAL ===
+This is NOT a flat texture. The plot is a solid block of ground you are looking at from the side and above, and the crop STANDS UP out of it.
+You can see the crop's height: the near edge of the field shows the stalks from the side, standing clear of the soil, and the tops of the crop sit visibly higher on screen than the soil they grow from. The far edge is hidden behind the crop.
+The soil itself is a low slab — a thin lip of dark earth at the near edges, no more. It is a field, not a raised planter or a pot.
+
+=== THE FOOTPRINT — THIS IS CRITICAL ===
+The plot's GROUND is a DIAMOND (a rhombus standing on its point), EXACTLY TWICE AS WIDE AS IT IS TALL: 1000 pixels from its left corner to its right corner and exactly 500 from its top corner to its bottom corner.
+The camera is a TRUE 2:1 ISOMETRIC game camera, the same one the buildings use: horizontal axes at 26.57°, vertical lines vertical on screen, parallel/orthographic with no perspective and no vanishing point.
+The diamond's four edges are STRAIGHT and CLEAN, corner to corner. This is the one thing in the game that wants a straight edge: the game lays these plots side by side, and a ragged or rounded edge leaves gaps between one field and the next. Neither the soil NOR the crop may reach past the diamond's left and right corners: the widest thing in the picture is the soil diamond itself, and the crop stands inside it.
+
+=== WHERE IT SITS IN THE FRAME — THIS IS CRITICAL ===
+The frame is SQUARE, and the diamond of soil fills only its BOTTOM HALF: the diamond's left and right corners touch the left and right edges of the frame at exactly half its height, and the diamond's bottom corner sits on the bottom edge.
+CHECK THE DEPTH BEFORE YOU FINISH. From the diamond's LEFT corner, its BOTTOM corner is down and to the right; the drop between them is exactly a QUARTER of the diamond's width. If the diamond measures 1000 px across, its left corner is 250 px above its bottom corner and no more. A diamond even slightly deeper than that is the commonest way this goes wrong, and two of these plots laid side by side then meet at the wrong angle and leave a notch where their corners should touch.
+
+The WHOLE UPPER HALF of the frame is the sky the crop grows into. The crop rises out of the soil into it, its tops reaching roughly a third of the way up that empty half, and everything above the crop is transparent.
+Do not fill the frame with the diamond. If the picture is all field and no sky above it, the crop has no height and the drawing is wrong.
+
+=== COMPOSITION ===
+The single plot and nothing else. No fence, no path, no scarecrow, no tools, no buildings, no people, no grass around it, no landscape, no horizon, no sky. Whatever grows here and the soil it grows in, and nothing more.
+
+=== BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
+Deliver the result as a PNG with a GENUINELY TRANSPARENT BACKGROUND.
+The plot is the ONLY opaque region; every pixel outside it is fully transparent, alpha = 0. Above the crop especially — that is open sky and must be empty.
+The transparency must be a REAL ALPHA CHANNEL. Do NOT draw a checkerboard pattern into the pixels. Do NOT fill the background with grey, white, black or any other colour.
+
+=== LOCKED VISUAL STYLE ===
+Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
+
+Highly saturated fantasy palette: golden straw, warm earthy brown soil, vivid greens. Soft midday sunlight, gentle shading, subtle ambient occlusion, a clean bright atmosphere.
+
+Smooth, simplified materials with subtle surface variation — no photographic textures, no grain, no micro-detail. Keep the forms big and generalised: rows of crop are a few soft masses, not thousands of separate stalks. It must stay readable at thumbnail size.
+
+=== AVOID ===
+No text, letters, numbers, labels, signs, grid lines, borders, watermark or interface.
+No photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, or gritty realism.
+No checkerboard pattern painted into the image. No opaque background of any colour.
+Above all: A 2:1 DIAMOND OF SOIL WITH STRAIGHT CLEAN EDGES, AND A CROP THAT VISIBLY STANDS UP OUT OF IT.

@@ -23,7 +23,7 @@ src=$1; out=$2; scale=${3:-1}
 # A canvas only one plot across could express a boar but not a stand of trees
 # -- the drawing would have to be wider than the file, and `-extent` answered
 # that by slicing the trees flat down both sides.
-CANVAS_PLOTS=2
+CANVAS_PLOTS=${4:-2}
 W=$((2 * 128 * CANVAS_PLOTS))
 inkw=$(awk -v s="$scale" -v w="$W" -v p="$CANVAS_PLOTS" 'BEGIN{ printf "%d", w*s/p }')
 dims=$(magick "$src" -trim +repage -format "%wx%h" info:)

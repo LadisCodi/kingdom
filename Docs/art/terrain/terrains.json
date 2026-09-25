@@ -64,21 +64,5 @@
       "a slightly paler patch where the bed rises closer to the surface",
       "a scatter of small bright highlights where the light catches the ripples"
     ]
-  },
-  "crops": {
-    "name": "A FIELD OF RIPE WHEAT",
-    "material": "tall ripe wheat in warm golden straw and honey tones, the heads dense and even, standing in neat parallel rows that run diagonally across the patch",
-    "detail": "nothing but the crop itself — this is the middle of a field",
-    "variants": [
-      "an even, healthy field: rows of full golden heads with the faintest variation in tone along them"
-    ]
-  },
-  "crops_cut": {
-    "name": "A HARVESTED FIELD",
-    "material": "pale cut stubble over bare warm-brown earth, the shorn stalks short and even, with the same diagonal rows still visible as lines in the soil",
-    "detail": "nothing but the stubble and the soil — the crop has been taken",
-    "variants": [
-      "an even field of short pale stubble, the rows reading as soft parallel lines, a little loose straw caught between them"
-    ]
   }
 }

@@ -29,7 +29,7 @@ import {
 } from './iso';
 import { drawTerrainFringes, terrainKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
-import { animFor, castFor, GROUND_DISTRICTS, villagerFor, type UnitPose } from './cast';
+import { animFor, castFor, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
 export interface MarkerLayer {
@@ -338,33 +338,14 @@ export function drawMap(
     keys.push(def.sprite);
     let drewExhaustedPlot = false;
     let tall = 0;
-    // A crop plot is GROUND (src/render/cast.ts): it lies in the diamond
-    // rather than standing on it, so it is laid on like terrain.
-    if (GROUND_DISTRICTS.has(district.definitionId)) {
-      punched(coordKey(district.location), box, () => {
-        for (const k of keys) {
-          if (drawGround(ctx, k, box)) {
-            drewExhaustedPlot = k.endsWith('_exhausted');
-            tall = box.h / 2; // it has no height; labels hang off its centre
-            break;
-          }
-        }
+    punched(coordKey(district.location), box, () => {
+      tall = stand(box, keys, def.glyph, (draw) => {
+        const drew = flip(draw);
+        drewExhaustedPlot = drew > 0 && exhaustedPlot &&
+          spriteAspect(`${def.sprite}_exhausted`) !== null;
+        return drew;
       });
-      if (tall === 0) {
-        ctx.fillStyle = TERRAIN_COLORS.Grassland;
-        fillDiamond(ctx, box);
-        tall = box.h / 2;
-      }
-    } else {
-      punched(coordKey(district.location), box, () => {
-        tall = stand(box, keys, def.glyph, (draw) => {
-          const drew = flip(draw);
-          drewExhaustedPlot = drew > 0 && exhaustedPlot &&
-            spriteAspect(`${def.sprite}_exhausted`) !== null;
-          return drew;
-        });
-      });
-    }
+    });
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.

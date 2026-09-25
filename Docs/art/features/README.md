@@ -40,6 +40,31 @@ a plot tall** (`UNIT_PLOTS`, src/render/characters.ts) and a 1×1 cottage about 
 of trees ~1.25. `norm_prop.sh` prints the drawn height in plots for exactly
 that comparison.
 
+## The one asset that tiles
+
+A **field** breaks both of the rules above, so it has its own template
+(`_field-template.txt`) and its own check.
+
+- Its own GROUND is the asset, where every other feature is forbidden to draw
+  ground at all.
+- Its edges must be STRAIGHT, where every other feature's must not: the game
+  lays crop plots side by side, and a ragged edge leaves gaps.
+- It is authored ONE plot wide, not two, because it goes through the district
+  draw path (`canvasPlots: 1` in `props.json`).
+
+And the crop STANDS UP out of the soil. A field drawn as a flat texture is a
+square billboard tilted out of its own tile; a field drawn with height has a
+lip of earth along its near edges and stalks standing clear of it.
+
+`check_field.mjs` measures whether the soil really is a 2:1 diamond, and it
+earns its keep: the first ripe-wheat render came back at 1.61:1 — 250 px wide
+and 164 tall where it wanted 125 — and two plots of it met at the wrong angle
+and left a notch where four corners should have touched. The check reads the
+ink row by row, takes the widest row as the diamond's left and right corners
+and the lowest as its bottom, and fails anything outside 1.9–2.1. The crop
+above the widest row is ignored, which is the point: it is the SOIL that
+tiles.
+
 ## Making one
 
 ```sh
@@ -66,3 +91,6 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `berry_bush` | 0.35 | 0.21 | waist-high on a villager |
 | `wild_animals` | 0.27 | 0.23 | boar at knee height — it is a wild pig, not a bear |
 | `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |
+| `forest_exhausted` | 1.0 | 0.55 | three stumps, a cut log, one sapling — the same place, logged |
+| `farmlands` | 1.0 | 0.56 | a field: one plot wide, soil 1.92:1, wheat standing clear of it |
+| `farmlands_exhausted` | 1.0 | 0.51 | the same field cut to stubble; soil 1.97:1 |
