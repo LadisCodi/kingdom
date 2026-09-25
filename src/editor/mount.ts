@@ -18,7 +18,7 @@
 // written parses and loads.
 
 import { Camera } from '../render/camera';
-import { TILE_SIZE } from '../render/palette';
+import { FLAT_TILE } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
   ARTIFACT_ORDER, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
@@ -100,7 +100,10 @@ export function mountEditor(): void {
     status);
   document.body.append(root);
 
-  const camera = new Camera(canvas);
+  // The editor paints DATA by coordinate, so it keeps the FLAT square grid.
+  // A diamond is the right way to look at a kingdom and the wrong way to fill
+  // in a table of terrain (src/render/camera.ts).
+  const camera = new Camera(canvas, 'flat');
   if (saved) { camera.x = saved.cam.x; camera.y = saved.cam.y; camera.zoom = saved.cam.zoom; }
   else fitToWorld(camera, canvas, doc);
 
@@ -314,11 +317,7 @@ export function mountEditor(): void {
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-    const before = camera.screenToCellExact(sx, sy);
-    camera.zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
-    const after = camera.screenToCellExact(sx, sy);
-    camera.x += (before.x - after.x) * TILE_SIZE;
-    camera.y += (before.y - after.y) * TILE_SIZE;
+    camera.zoomAbout(sx, sy, e.deltaY < 0 ? 1.12 : 1 / 1.12);
   }, { passive: false });
 
   // ------------------------------------------------------------ keyboard
@@ -808,7 +807,7 @@ function fitToWorld(camera: Camera, canvas: HTMLCanvasElement, doc: MapDoc): voi
   camera.centerOnCell({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
   const w = canvas.clientWidth || 900;
   const h = canvas.clientHeight || 700;
-  const fit = Math.min(w / ((b.x1 - b.x0 + 2) * TILE_SIZE), h / ((b.y1 - b.y0 + 2) * TILE_SIZE));
+  const fit = Math.min(w / ((b.x1 - b.x0 + 2) * FLAT_TILE), h / ((b.y1 - b.y0 + 2) * FLAT_TILE));
   camera.zoom = 1;
   camera.zoomBy(fit); // through zoomBy, so the camera's own clamps still apply
 }
