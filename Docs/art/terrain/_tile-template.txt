@@ -1,0 +1,49 @@
+Generate one image. Square framing, 1:1 aspect ratio.
+
+Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy anything in it literally.
+
+This is a GROUND TILE for a mobile management / light-4X strategy game — one interchangeable piece of a large isometric floor, not an illustration.
+
+=== WHAT TO DRAW ===
+A single DIAMOND of {{NAME}} ground, and nothing else in the frame.
+
+The material is {{MATERIAL}}.
+Across this particular tile: {{VARIANT}}.
+{{DETAIL}}
+
+=== THE SHAPE — THIS IS CRITICAL ===
+The drawing is ONE DIAMOND (a rhombus standing on its point), centred in the frame, EXACTLY TWICE AS WIDE AS IT IS TALL. If you traced it, it would measure 1000 pixels from its left corner to its right corner and exactly 500 pixels from its top corner to its bottom corner. Check this before you finish.
+The four straight edges run corner to corner with no curve, no bulge and no ragged outline. The ground fills the diamond right up to all four edges and is CUT OFF CLEANLY there, like a slice taken out of a much larger field.
+Everything outside the diamond is fully transparent.
+
+=== IT IS FLAT — THIS IS CRITICAL ===
+This is a FLAT piece of ground seen from an isometric camera, NOT a block, NOT a tile with sides, NOT a diorama chunk.
+There is NO thickness, NO depth below it, NO soil layer, NO rock face, NO side walls, NO bevelled rim, NO base, NO platform, NO island and NO shadow under it. You are looking at the SURFACE ONLY.
+Nothing stands up out of it: no trees, no bushes, no buildings, no fences, no paths, no water's edge, no characters, no large rocks. Anything drawn on it lies flat against the ground.
+
+=== THE LIGHT — THIS IS CRITICAL ===
+Even, flat, ambient daylight across the whole diamond, exactly the same brightness at every one of its four corners as in its middle.
+NO directional sunlight, NO cast shadows, NO drop shadow, NO vignette, NO darkening or lightening towards any edge, NO glow, NO rim light, NO gradient across the tile.
+This tile will be placed next to copies of itself, rotated and mirrored, in a grid of hundreds. Any light coming from one direction, and any edge that is darker than the middle, turns that grid into a visible chequerboard. Even light is what makes the field read as one continuous ground.
+
+=== BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
+Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
+The diamond of ground must be the ONLY opaque region in the file. Every pixel outside it is fully transparent, alpha = 0.
+The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
+
+=== LOCKED VISUAL STYLE ===
+Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
+
+Highly saturated fantasy palette: vivid spring greens, warm cream stone, golden straw and timber, rich blue accents, clear cyan water, and warm earthy paths. Soft midday sunlight with gentle shadows, subtle ambient occlusion, restrained rim lighting, and a clean bright atmosphere.
+
+Smooth, simplified materials with subtle surface variation — no photographic textures, dirt overlays, grain, or excessive micro-detail. Softly bevelled forms, clean edges, tidy vegetation, and small decorative details used sparingly.
+
+The environment should feel like a polished mobile strategy-game diorama. Keep every terrain type visually distinct at thumbnail size. Maintain a clear hierarchy, generous spacing, and low visual clutter.
+
+=== AVOID ===
+No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, grid lines, or borders drawn onto the tile.
+No frame, no outline stroke around the diamond, no glow around it, no reflection.
+No photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, or gritty realism.
+No red crosses or any other real-world emblem.
+No checkerboard pattern painted into the image. No opaque background of any colour.
+Above all: A FLAT DIAMOND WITH NO THICKNESS, EVEN LIGHT WITH NO SHADOWS, and the 2:1 ratio exactly.

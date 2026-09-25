@@ -27,6 +27,7 @@ import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
+import { drawTerrainFringes, terrainKey } from './terrain';
 import { drawCharacter, unitScale } from './characters';
 import { animFor, castFor, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
@@ -115,7 +116,12 @@ export function drawMap(
   }
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.imageSmoothingEnabled = false; // crisp pixel-art scaling
+  // SMOOTHING ON. The world is stylized 3D, not pixel art: every piece is
+  // authored at twice the size it is drawn at (a 1×1 tile is a 256×128 PNG
+  // on a 128×64 diamond), so it is always being scaled DOWN, and nearest
+  // neighbour on a downscale is just aliasing.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.fillStyle = PALETTE.fogUndiscovered;
   ctx.fillRect(0, 0, w, h);
 
@@ -413,16 +419,27 @@ export function drawMap(
       if (fog === 'Undiscovered') continue; // opaque background already drawn
       const box = cellRect(cell);
 
-      // Terrain texture (terrain_<id>.png), flat colour while art is missing.
-      // The art is a diamond of its own, so it fills the box; the flat fill
-      // has to be given the shape explicitly.
-      if (!drawGround(ctx, `terrain_${terrain.toLowerCase()}`, box)) {
+      // The ground: one of the terrain's drawings, picked by a hash of the
+      // cell so a field of it does not weave (src/render/terrain.ts), then
+      // the fringe of any neighbour that creeps over it. Flat colour while
+      // the art is missing — that path has to be given the diamond shape
+      // explicitly, where a drawing carries its own.
+      const ground = drawGround(ctx, terrainKey(terrain, cell), box);
+      if (!ground) {
         ctx.fillStyle = TERRAIN_COLORS[terrain];
         fillDiamond(ctx, box);
       }
-      ctx.strokeStyle = PALETTE.gridLine;
-      ctx.lineWidth = 1;
-      strokeDiamond(ctx, box, 0.5);
+      drawTerrainFringes(ctx, map, cell, terrain, box);
+      // THE GRID LINE IS SCAFFOLDING, and only for ground that has no art:
+      // it was what told one flat-coloured cell from the next. Drawn over a
+      // real tile it is a dark seam on ground that is supposed to read as a
+      // continuous field, and the fringes above already say where one
+      // terrain ends.
+      if (!ground) {
+        ctx.strokeStyle = PALETTE.gridLine;
+        ctx.lineWidth = 1;
+        strokeDiamond(ctx, box, 0.5);
+      }
 
       const feature = state.features[key];
       const district = state.city.districts.find((d) => districtOccupies(d, cell));

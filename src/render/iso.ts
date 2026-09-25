@@ -108,7 +108,17 @@ export function drawGround(
   ctx.beginPath();
   diamondPath(ctx, box);
   ctx.clip();
-  const drew = drawSprite(ctx, key, box.x, box.y, box.w, box.h);
+  // Drawn one pixel PROUD of the diamond on every side, then clipped back to
+  // it. Art arrives with a soft anti-aliased rim, and a soft rim landing
+  // exactly on the edge leaves a hairline of background showing between two
+  // tiles that are meant to be one field. Overdrawing puts the rim outside
+  // the clip, so what ends the tile is the clip — and two neighbours share
+  // that edge exactly.
+  const bleed = 1;
+  const drew = drawSprite(
+    ctx, key,
+    box.x - bleed, box.y - bleed / 2, box.w + bleed * 2, box.h + bleed,
+  );
   ctx.restore();
   return drew;
 }
