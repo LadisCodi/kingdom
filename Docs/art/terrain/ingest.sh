@@ -5,16 +5,23 @@
 set -euo pipefail
 id=$1; which=$2
 here="$(cd "$(dirname "$0")" && pwd)"
-src=$(ls -t ~/Downloads/*.png | head -1)
-# The newest download must actually be the one just generated. Without this
-# the script silently normalises whatever was in ~/Downloads last -- which is
-# how a Rune Carver once became a grassland tile.
-age=$(( $(date +%s) - $(stat -f %m "$src") ))
-[ "$age" -lt 300 ] || {
-  echo "  FAIL: newest download is ${age}s old — the download did not land"
+# `prep.sh` touches _marker; the download has to be NEWER than it.
+#
+# Matching "the newest PNG in ~/Downloads" alone is how a Rune Carver once
+# became a grassland tile, and later how a download that never landed let the
+# PREVIOUS tile be ingested twice under two names -- silently, because the
+# stale file was only a few minutes old. A marker catches both: it is the
+# moment this grab began, and nothing older than it can be this grab.
+shopt -s nullglob
+src=$(ls -t ~/Downloads/*.png 2>/dev/null | head -1)
+[ -n "$src" ] || { echo "  FAIL: no PNG in ~/Downloads at all"; exit 1; }
+[ -f "$here/_marker" ] || { echo "  FAIL: run ./prep.sh before the grab"; exit 1; }
+[ "$src" -nt "$here/_marker" ] || {
+  echo "  FAIL: the newest download predates this grab — it did not land"
   echo "         $src"
   exit 1
 }
+
 master="$here/$id-$which.master.png"
 # Half scale on the way in: the master exists to re-normalise without asking
 # ChatGPT again, not to be printed.

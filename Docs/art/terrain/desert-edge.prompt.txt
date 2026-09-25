@@ -1,13 +1,13 @@
 Generate one image. Square framing, 1:1 aspect ratio.
 
-Use the attached images as a STRICT reference. The FIRST attachment is the game's art style. The SECOND is the exact GRASSLAND ground texture this piece has to match — same material, same colours, same light.
+Use the attached images as a STRICT reference. The FIRST attachment is the game's art style. The SECOND is the exact DESERT ground texture this piece has to match — same material, same colours, same light.
 
-This is a TRANSITION PIECE for a mobile management / light-4X strategy game: the ragged edge of a field of GRASSLAND, which the game lays over the neighbouring ground so the border between two terrains looks natural instead of like a cut.
+This is a TRANSITION PIECE for a mobile management / light-4X strategy game: the ragged edge of a field of DESERT, which the game lays over the neighbouring ground so the border between two terrains looks natural instead of like a cut.
 
 === WHAT TO DRAW ===
-GRASSLAND ground along the TOP of the frame only, thinning downward into nothing.
+DESERT ground along the TOP of the frame only, thinning downward into nothing.
 
-The material is short, lush, vivid spring-green grass, evenly cropped, with the faintest variation in tone across the patch, seen from STRAIGHT ABOVE, exactly as in the second attachment.
+The material is warm pale golden sand, smooth and clean, with very soft broad ripples across it, seen from STRAIGHT ABOVE, exactly as in the second attachment.
 
 It is SOLID and fully opaque along the top of the frame, and it breaks up as it comes down, becoming completely transparent by about ONE THIRD of the way down. The lower two thirds of the frame are entirely empty.
 

@@ -5,11 +5,11 @@ Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look 
 This is a GROUND TEXTURE for a mobile management / light-4X strategy game. The game cuts it into the floor tiles of an isometric map, so it is a patch of material and NOT a picture of anything.
 
 === WHAT TO DRAW ===
-A flat square patch of {{NAME}} ground, seen from STRAIGHT ABOVE, filling the entire frame.
+A flat square patch of DESERT ground, seen from STRAIGHT ABOVE, filling the entire frame.
 
-The material is {{MATERIAL}}.
-Across this particular patch: {{VARIANT}}.
-{{DETAIL}}
+The material is warm pale golden sand, smooth and clean, with very soft broad ripples across it.
+Across this particular patch: two small rounded pebbles and a faint scatter of coarser grains.
+Detail on the tile: almost nothing: this ground is meant to read as empty.
 
 === IT FILLS THE WHOLE FRAME — THIS IS CRITICAL ===
 The ground covers EVERY pixel of the image, edge to edge and corner to corner.
@@ -27,7 +27,7 @@ The game lays this patch next to copies of itself hundreds of times, turned four
 
 === ITS COLOUR IS NOT ITS OWN — THIS IS CRITICAL ===
 This is one of FOUR patches of the same ground, and they are laid next to each other at random across the map. Only the small detail may differ between them.
-The overall colour, brightness and saturation must be IDENTICAL to every other patch of {{NAME}}: the same green (or sand, or snow) at the same value. Do not make this one warmer, cooler, darker, lighter, hazier or more saturated than a plain patch of the same ground would be.
+The overall colour, brightness and saturation must be IDENTICAL to every other patch of DESERT: the same green (or sand, or snow) at the same value. Do not make this one warmer, cooler, darker, lighter, hazier or more saturated than a plain patch of the same ground would be.
 Four patches that each drift a little turn the map into a patchwork of differently-coloured tiles, which is worse than the repetition the four are there to break.
 
 === IT HAS TO TILE ===

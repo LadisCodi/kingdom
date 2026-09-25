@@ -25,6 +25,11 @@ Even, flat, ambient daylight across the whole frame, exactly the same brightness
 NO directional sunlight, NO cast shadows, NO drop shadow, NO vignette, NO darkening or lightening towards any edge, NO glow, NO gradient across the patch.
 The game lays this patch next to copies of itself hundreds of times, turned four ways. Light coming from one direction, or an edge darker than the middle, turns that field into a visible chequerboard. Even light is what makes it read as one continuous ground.
 
+=== ITS COLOUR IS NOT ITS OWN — THIS IS CRITICAL ===
+This is one of FOUR patches of the same ground, and they are laid next to each other at random across the map. Only the small detail may differ between them.
+The overall colour, brightness and saturation must be IDENTICAL to every other patch of GRASSLAND: the same green (or sand, or snow) at the same value. Do not make this one warmer, cooler, darker, lighter, hazier or more saturated than a plain patch of the same ground would be.
+Four patches that each drift a little turn the map into a patchwork of differently-coloured tiles, which is worse than the repetition the four are there to break.
+
 === IT HAS TO TILE ===
 Keep the detail small, low-contrast and EVENLY SPREAD over the whole frame. No single feature should be big enough or bright enough to be recognised and counted when the patch appears again a few tiles away.
 Nothing may be centred, and nothing may be arranged into a pattern, a ring, a spiral or a line.
