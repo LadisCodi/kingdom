@@ -525,23 +525,29 @@ export function drawMap(
       // choosing which direction to spend Gold in. The Discovered scrim below
       // still dims them, so "there, and not yet yours" reads at a glance.
       const landmark = landmarkDefAt(cell);
-      if (landmark) {
+      if (landmark && landmark.location.x === cx && landmark.location.y === cy) {
         const art = LANDMARK_ART[landmark.kind];
         const claimed = state.landmarks.claimed[landmark.id] === true;
+        // A site that spans cells is drawn ONCE, over the whole of it, from
+        // its anchor (Docs/features/01-map-and-fog.md §3.1).
+        const plot = landmark.size === 1
+          ? box : camera.plotBox(cell, { x: landmark.size, y: landmark.size });
         later(cell, () => {
           dimmed(dim, () => {
-            punched(key, box, () => stand(box, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
+            punched(key, plot, () => stand(plot, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
           });
           // A star means "claimable". Nothing holds a sanctuary: it is bought.
           // NOT dimmed: a badge is the game talking, not part of the world.
-          if (!claimed) drawSiteBadge(box, '✦');
-        });
+          if (!claimed) drawSiteBadge(plot, '✦');
+        }, { x: landmark.size, y: landmark.size });
       }
       const ruin = ruinDefAt(cell);
-      if (ruin) {
+      if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
+        const plot = ruin.size === 1
+          ? box : camera.plotBox(cell, { x: ruin.size, y: ruin.size });
         later(cell, () => {
           dimmed(dim, () => {
-            punched(key, box, () => stand(box, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
+            punched(key, plot, () => stand(plot, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
           });
           // The tier alone: a bare digit reads at any zoom, and "T1" in a
           // display face is one stroke away from an arrow. While a garrison is
@@ -551,9 +557,9 @@ export function drawMap(
           const gate = state.gates[ruin.id];
           const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
             ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
-          if (raidIn !== null) drawSiteBadge(box, String(raidIn), true);
-          else drawSiteBadge(box, String(ruin.tier));
-        });
+          if (raidIn !== null) drawSiteBadge(plot, String(raidIn), true);
+          else drawSiteBadge(plot, String(ruin.tier));
+        }, { x: ruin.size, y: ruin.size });
 
       }
 

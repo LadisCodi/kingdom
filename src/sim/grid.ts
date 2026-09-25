@@ -106,6 +106,20 @@ export function buildMapDataFrom(region: RegionMapDoc): MapData {
     }
   }
 
+  // Sites carry their own size rather than being grouped: a sanctuary or a
+  // ruin is PLACED, not painted. They land in the same two maps, so the one
+  // set of rules — revealed as a unit, priced as the sum, drawn once — covers
+  // them without knowing what they are.
+  for (const site of [...region.landmarks, ...Object.values(region.ruins)]) {
+    const size = site.size ?? 1;
+    if (size <= 1) continue;
+    const anchorKey = coordKey({ x: site.x, y: site.y });
+    footprintSize.set(anchorKey, size);
+    for (const c of cellsOfRect({ x: site.x, y: site.y }, { x: size, y: size })) {
+      footprintOf.set(coordKey(c), anchorKey);
+    }
+  }
+
   return {
     terrain,
     initialFeatures,

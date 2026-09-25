@@ -107,10 +107,30 @@ Some features are **one object**, not a mass of small ones. A forest is a stand
 of trees on this cell and another stand on the next; a mountain is a mountain.
 So a feature may occupy a square **footprint**.
 
-| | Footprints |
+| | Footprint | How it is decided |
+|---|---|---|
+| **Mountain** | 1×1, 2×2, 3×3 | **grouped** from the painted cells |
+| **Sanctuaries and ruins** | 1×1, 2×2, 3×3 | **authored**, per site |
+| Everything else | 1×1 | — |
+
+A mountain is painted, so its blocks are derived; a sanctuary or a ruin is
+PLACED, so it carries its own size. Everything after this is the same for
+both.
+
+| Site | Cells |
 |---|---|
-| **Mountain** | 1×1, 2×2, 3×3 |
-| Everything else | 1×1 |
+| Wayside shrine | 1×1 |
+| Ring of standing stones | 2×2 |
+| Leyspring | 1×1 |
+| Hollow Barrow (T1) | 1×1 |
+| Sunken Chapel (T2) | 3×3 |
+| Drowned Ironworks (T3) | 2×2 |
+| Counting House (T4) | 2×2 |
+| Star Observatory (T5) | 2×2 |
+
+A landmark's size is per KIND, because its drawing is: three sanctuaries of
+one kind at three sizes would want three drawings. A ruin's is its own, since
+each has its own art already.
 
 - The footprint is **square**, and the feature is **drawn once** across the
   whole of it. There is no quarter of a mountain, in any sense: not
@@ -144,6 +164,11 @@ So a feature may occupy a square **footprint**.
 
 - Mountain cells are painted **one at a time** in `?dev=map`. Nothing declares
   a footprint.
+- A sanctuary or a ruin declares `size` on its own row instead. The editor
+  round-trips it; `validateRegionMap` refuses a size outside 1–3 and checks
+  every cell of the footprint the way it checks a single one, so a 3×3 whose
+  far corner hangs over water is an error rather than a site nobody can
+  finish paying for.
 - The grouping is **derived from the painted cells**, by the same function the
   editor previews and the sim loads with (`src/sim/data/mapRules.ts`): greedy
   3×3, then 2×2, then 1×1, in a fixed scan order. Same cells in, same grouping
@@ -324,9 +349,6 @@ Costs are **authored per sanctuary**, not derived from distance.
   part-lit or part-mined; it would read as a rendering fault, not as a state.
 - Footprints on iron and gold mountains, on forests, or on anything else that
   is a mass of small objects rather than one thing.
-- An authored footprint on a landmark or a ruin. Those are placed singly rather
-  than painted, so they would carry their own size rather than be grouped —
-  possible later, and no part of this.
 
 **Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).

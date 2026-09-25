@@ -24,9 +24,13 @@ export interface RegionMapDoc {
   features: { cells: Array<{ x: number; y: number; id: string }> };
   landmarks: Array<{
     id: string; kind: string; x: number; y: number; claimCost: number;
+    /** Cells a side, anchored at (x, y). 1 when absent. */
+    size?: number;
   }>;
   ruins: Record<string, {
     x: number; y: number; tier: number;
+    /** Cells a side, anchored at (x, y). 1 when absent. */
+    size?: number;
     affinity: string; artifact: string;
     /** The gate that holds the entrance, and its clock
      *  (Docs/features/18-garrisons-and-raids.md §2). */
@@ -144,6 +148,21 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     if (townhall.has(key)) err(`${what} is under the Townhall at (${x},${y})`, cell);
   };
 
+  /**
+   * The same checks over every cell a site stands on. A sanctuary or a ruin
+   * may be more than one cell a side (Docs/features/01-map-and-fog.md §3.1),
+   * and a 3×3 whose far corner hangs off the map would be a site the player
+   * can see and never finish paying for.
+   */
+  const claimSite = (what: string, x: number, y: number, size: number | undefined) => {
+    if (size !== undefined && (!isCount(size) || size < 1 || size > 3)) {
+      err(`${what} has a size of ${String(size)}; it must be 1, 2 or 3`, { x, y });
+      return;
+    }
+    const n = size ?? 1;
+    for (const c of cellsOfRect({ x, y }, { x: n, y: n })) claimCell(what, c.x, c.y);
+  };
+
   const landmarkIds = new Set<string>();
   for (const l of doc.landmarks) {
     const what = `landmark ${l.id}`;
@@ -156,7 +175,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     if (!isCount(l.claimCost) || l.claimCost <= 0) {
       err(`${what} needs a positive whole claim cost (got ${l.claimCost})`, l);
     }
-    claimCell(what, l.x, l.y);
+    claimSite(what, l.x, l.y, l.size);
   }
 
   for (const id of RUIN_ORDER) {
@@ -196,7 +215,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
         err(`${what}'s guard needs a raid period of 1 minute or more`, r);
       }
     }
-    claimCell(what, r.x, r.y);
+    claimSite(what, r.x, r.y, r.size);
   }
 
   // --------------------------------------------------------- reachability

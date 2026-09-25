@@ -1285,6 +1285,10 @@ export interface LandmarkDef {
    *  the tiers are the design — one in sight to save up for, then two rings
    *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
   claimCost: number;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a sanctuary is placed, not painted. */
+  size: number;
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
@@ -1294,12 +1298,13 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; claimCost: number;
+  id: string; kind: string; x: number; y: number; claimCost: number; size?: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
   claimCost: l.claimCost,
+  size: l.size ?? 1,
 }));
 
 /**
@@ -1612,6 +1617,10 @@ export interface RuinDef {
   glyph: string;
   sprite: string;
   location: Coord;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a ruin is placed, not painted. */
+  size: number;
   tier: number;
   /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
    *  rather than a single unit. 'Any' rotates. */
@@ -1714,6 +1723,7 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       id,
       ...ruinContent[id],
       location: { x: b.x, y: b.y },
+      size: (b as { size?: number }).size ?? 1,
       tier: b.tier,
       affinity: b.affinity as RuinDef['affinity'],
       artifact: b.artifact as ArtifactId,
