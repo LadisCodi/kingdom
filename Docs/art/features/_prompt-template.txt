@@ -29,7 +29,8 @@ A silhouette with a flat vertical side reads as a hedge or a wall, not as trees,
 
 === HOW BUSY IT IS — THIS IS CRITICAL ===
 FEW, LARGE, SIMPLE SHAPES. This is one small piece of a map, seen at about the size of a thumbnail, with buildings and people around it that must stay readable through and past it.
-Make the forms big and generalised: a canopy is a few soft leaf masses, not a thousand separate leaves; rock is a few broad facets, not a field of pebbles. Leave real gaps and open space inside the shape, so the ground and whatever is behind can be seen through it.
+Make the forms big and generalised: a canopy is ONE soft rounded mass with a suggestion of leaf clusters on it, not a thousand separate leaves; rock is a few broad facets, not a field of pebbles.
+Keep the SILHOUETTE simple and closed. A shape with a dozen little arms sticking out of it reads as noise at this size, however well each arm is drawn. Leave real gaps and open space inside the shape, so the ground and whatever is behind can be seen through it.
 No fine repeated texture, no dense clutter, no thicket. If the drawing looks busy at thumbnail size, there is too much in it.
 
 === COMPOSITION ===

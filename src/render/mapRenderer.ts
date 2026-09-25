@@ -27,7 +27,7 @@ import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
-import { drawTerrainFringes, terrainKey } from './terrain';
+import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
@@ -492,9 +492,12 @@ export function drawMap(
       if (feature) {
         const def = FEATURES[feature];
         const exhausted = recoversAt(state, map, cell, now) !== null;
+        // A feature picks a drawing the way the ground does: twenty cells of
+        // one tree shape is a wallpaper, not a wood.
+        const stem = exhausted ? `${def.sprite}_exhausted` : def.sprite;
         later(cell, () => dimmed(dim, () => {
           punched(key, box, () => {
-            stand(box, [exhausted ? `${def.sprite}_exhausted` : def.sprite],
+            stand(box, [variantKey(stem, cell)],
               exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
           });
         }));

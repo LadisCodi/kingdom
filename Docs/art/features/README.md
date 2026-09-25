@@ -40,6 +40,18 @@ a plot tall** (`UNIT_PLOTS`, src/render/characters.ts) and a 1×1 cottage about 
 of trees ~1.25. `norm_prop.sh` prints the drawn height in plots for exactly
 that comparison.
 
+## More than one drawing of the same thing
+
+A feature may have `_2` and `_3` beside it — `forest`, `forest_2`,
+`forest_3` — and a cell picks between them by a hash of its coordinates,
+exactly as the ground does (`variantKey`,
+[`src/render/terrain.ts`](../../../src/render/terrain.ts)). A wood needs it
+as much as a meadow does: one tree shape repeated across twenty cells is a
+wallpaper, and the eye finds the repeat before it finds the kingdom.
+
+Nothing declares how many there are. The renderer counts the files, so a
+second drawing of anything starts being used the moment it lands.
+
 ## The one asset that tiles
 
 A **field** breaks both of the rules above, so it has its own template
@@ -84,7 +96,9 @@ random**, and it does not matter, because the normaliser trims to the ink.
 
 | Asset | Scale | Drawn height | Notes |
 |---|---|---|---|
-| `forest` | 1.45 | 1.37 plots | three trees, not a thicket: trunks read, gaps let the ground through, and the crowns interleave across tile edges |
+| `forest` | 1.05 | 1.09 plots | three trees; one trunk, one compact round canopy each |
+| `forest_2` | 1.05 | 0.99 | two trees, one taller |
+| `forest_3` | 1.05 | 1.03 | three in a loose triangle, one set back |
 | `mountain` | 1.55 | 1.51 | six or seven broad facets; craggy on every side |
 | `mountain_iron` | 1.55 | 1.53 | two or three bold rust-red seams — few and large enough to read at thumbnail size |
 | `mountain_gold` | 1.55 | 1.54 | the same, in gold |

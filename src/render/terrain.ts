@@ -63,20 +63,53 @@ const SIDES = [
  * primes the spell motes scatter on — so the ground holds still between
  * frames and between sessions without anything being stored.
  */
-export function terrainVariant(cell: Coord): number {
+function hash(cell: Coord): number {
   const h = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
   // Mixed once more: the raw xor puts neighbours on adjacent values, which
   // a modulo turns straight back into a diagonal stripe.
-  return (Math.imul(h ^ (h >>> 15), 2246822519) >>> 0) % VARIANTS;
+  return Math.imul(h ^ (h >>> 15), 2246822519) >>> 0;
 }
 
-/** The sprite key for a cell's ground, falling back to the base drawing when
- *  the variant it drew has not been authored. */
+export function terrainVariant(cell: Coord): number {
+  return hash(cell) % VARIANTS;
+}
+
+/**
+ * How many drawings `stem` has: the base, plus `_2`, `_3` … while they exist.
+ *
+ * Counted from the art rather than declared anywhere, so a second drawing of
+ * anything starts being used the moment the file lands — which is the whole
+ * point of the filename being the contract. Memoised: the sprite table is
+ * fixed at build time, so the answer cannot change while the game is running.
+ */
+const counts = new Map<string, number>();
+function variantCount(stem: string): number {
+  const seen = counts.get(stem);
+  if (seen !== undefined) return seen;
+  let n = 1;
+  while (n < VARIANTS && spriteUrl(`${stem}_${n + 1}`) !== null) n++;
+  counts.set(stem, n);
+  return n;
+}
+
+/**
+ * WHICH DRAWING OF `stem` THIS CELL USES.
+ *
+ * The same hash the ground uses, against however many drawings exist. A wood
+ * needs this as much as a meadow does: one tree shape repeated across twenty
+ * cells is a wallpaper, and the eye finds the repeat before it finds the
+ * kingdom.
+ */
+export function variantKey(stem: string, cell: Coord): string {
+  const n = variantCount(stem);
+  if (n <= 1) return stem;
+  const v = hash(cell) % n;
+  return v === 0 ? stem : `${stem}_${v + 1}`;
+}
+
+/** The sprite key for a cell's ground. */
 export function terrainKey(terrain: TerrainId, cell: Coord): string {
-  const stem = `terrain_${terrain.toLowerCase()}`;
-  const v = terrainVariant(cell);
-  if (v === 0) return stem;
-  return spriteUrl(`${stem}_${v + 1}`) === null ? stem : `${stem}_${v + 1}`;
+  return variantKey(`terrain_${terrain.toLowerCase()}`, cell);
 }
 
 /**

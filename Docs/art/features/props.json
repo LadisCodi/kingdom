@@ -1,8 +1,8 @@
 {
   "forest": {
     "name": "A STAND OF FOREST",
-    "what": "THREE trees, and only three, standing apart from each other with clear sky between their crowns. Each has a stout bare trunk you can see all the way up to where it branches, and ONE simple rounded canopy of large, soft, generalised leaf masses — not thousands of separate leaves. The crowns are different sizes and sit at different heights, and they touch at most lightly; they never merge into one block. Two or three small ferns at the roots and nothing else",
-    "scale": 1.45
+    "what": "THREE trees of different sizes standing apart, with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. Two or three small ferns at the roots and nothing else",
+    "scale": 1.05
   },
   "forest_exhausted": {
     "name": "A FELLED STAND OF FOREST",
@@ -107,5 +107,15 @@
     "scale": 1.0,
     "canvasPlots": 1,
     "template": "field"
+  },
+  "forest_2": {
+    "name": "A SMALL STAND OF TREES",
+    "what": "TWO trees, one taller than the other, standing a little apart with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. One small fern at the roots and nothing else",
+    "scale": 1.05
+  },
+  "forest_3": {
+    "name": "A SMALL STAND OF TREES",
+    "what": "THREE trees of similar size in a loose triangle, one set back behind the other two, with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. A low bush at the foot of one of them and nothing else",
+    "scale": 1.05
   }
 }

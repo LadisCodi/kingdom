@@ -17,5 +17,9 @@ scale=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].
 plots=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].canvasPlots ?? 2))")
 "$here/norm_prop.sh" "$master" "$here/$id.png" "$scale" "$plots"
 # A field has to tile, so its soil is checked against the camera it claims.
+# An `if`, not `[ ... ] && ...`: as the last line of a `set -e` script that
+# idiom exits 1 for every asset that is NOT a field, which is most of them.
 tpl=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].template ?? ''))")
-[ "$tpl" = field ] && node "$here/check_field.mjs" "$here/$id.png"
+if [ "$tpl" = field ]; then
+  node "$here/check_field.mjs" "$here/$id.png"
+fi
