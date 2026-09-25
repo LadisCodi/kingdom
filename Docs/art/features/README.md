@@ -24,9 +24,16 @@ and a forest towers over a cottage, and nothing in the renderer can tell
 which is which — drawn to one rule they came out the same size, and the map
 read as a petting zoo of giant pigs under bonsai. So size is AUTHORED, as
 `scale` in `props.json`: the fraction of the plot's diamond the drawing
-spans. `norm_prop.sh` bakes it in, scaling the ink to that fraction and
-centring it on a full-width canvas with its feet on the bottom edge. The
-renderer keeps its single rule; the sprite carries its own size.
+spans. `norm_prop.sh` bakes it in.
+
+The canvas it bakes it onto is **two plots wide** (`FEATURE_PLOTS`), which is
+the other half of the same problem. A building is drawn exactly to its plot,
+but a feature is not: a boar covers a fraction of a tile and a stand of trees
+spreads half a tile past its own ground onto its neighbours — and it SHOULD,
+because that overlap is what makes a wood read as a wood instead of a row of
+separate tiles. A one-plot canvas can express the boar but not the trees: the
+drawing would have to be wider than the file, and `-extent` answered that by
+slicing the trees flat down both sides.
 
 The yardstick is the cast, not a tape measure: **a villager is about 0.38 of
 a plot tall** (`UNIT_PLOTS`, src/render/characters.ts) and a 1×1 cottage about 1.5, so a boar wants ~0.5 and a stand
@@ -52,7 +59,7 @@ random**, and it does not matter, because the normaliser trims to the ink.
 
 | Asset | Scale | Drawn height | Notes |
 |---|---|---|---|
-| `forest` | 1.45 | 1.25 plots | towers over a cottage, canopies merge where cells adjoin |
+| `forest` | 1.45 | 1.37 plots | three trees, not a thicket: trunks read, gaps let the ground through, and the crowns interleave across tile edges |
 | `mountain` | 1.55 | 1.25 | |
 | `mountain_iron` | 1.55 | 1.45 | rust-red veins read at thumbnail size |
 | `mountain_gold` | 1.55 | 1.34 | |

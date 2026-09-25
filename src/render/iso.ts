@@ -168,6 +168,15 @@ export function drawGround(
  * Whatever headroom the artist left rises into the sky, and a taller building
  * is taller art rather than a different anchor.
  *
+ * `canvasPlots` says how many plots wide the AUTHORED CANVAS is, which is not
+ * always one. A building is drawn exactly to its plot, so its canvas is the
+ * plot and the default holds. A FEATURE is not: a stand of trees spreads
+ * half a tile past its own ground and a boar covers a fraction of it, and a
+ * canvas that is only one plot wide can express the boar but not the trees —
+ * the drawing would have to be wider than the file. So features are authored
+ * on a canvas TWO plots across, with the thing itself somewhere inside it,
+ * and pass 2.
+ *
  * `baseX`/`baseY` come from `Camera.plotBase`. Returns HOW TALL THE BUILDING
  * IS in screen px — the drawn ink, not the canvas, so a caller can hang a
  * label just clear of the roof — and zero when the art is missing or still
@@ -179,9 +188,11 @@ export function drawStanding(
   baseX: number,
   baseY: number,
   plotW: number,
+  canvasPlots = 1,
 ): number {
   const aspect = spriteAspect(key);
   if (aspect === null) return 0;
+  plotW *= canvasPlots;
   const h = plotW * aspect;
   if (!drawSprite(ctx, key, baseX - plotW / 2, baseY - h, plotW, h)) return 0;
   // The INK's height, not the canvas's: the headroom above a short building

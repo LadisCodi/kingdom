@@ -18,12 +18,19 @@
 set -euo pipefail
 src=$1; out=$2; scale=${3:-1}
 
-W=256                                   # twice the 1x1 diamond; we scale down
-inkw=$(awk -v s="$scale" -v w="$W" 'BEGIN{ printf "%d", w*s }')
+# The canvas is TWO PLOTS wide (src/render/iso.ts, FEATURE_PLOTS), at twice
+# the diamond's 128 px so the renderer only ever scales down: 2 x 2 x 128.
+# A canvas only one plot across could express a boar but not a stand of trees
+# -- the drawing would have to be wider than the file, and `-extent` answered
+# that by slicing the trees flat down both sides.
+CANVAS_PLOTS=2
+W=$((2 * 128 * CANVAS_PLOTS))
+inkw=$(awk -v s="$scale" -v w="$W" -v p="$CANVAS_PLOTS" 'BEGIN{ printf "%d", w*s/p }')
 dims=$(magick "$src" -trim +repage -format "%wx%h" info:)
 w=${dims%x*}; h=${dims#*x}
 tall=$(awk -v w="$w" -v h="$h" -v s="$scale" 'BEGIN{ printf "%.2f", (h/w)*s }')
-echo "  ink ${w}x${h}  scale ${scale}  -> ${tall} plots tall"
+echo "  ink ${w}x${h}  scale ${scale}  -> ${tall} plots tall, ${scale} wide"
+awk -v s="$scale" -v p="$CANVAS_PLOTS" 'BEGIN{ if (s > p) { print "  FAIL: scale " s " does not fit a " p "-plot canvas"; exit 1 } }' 
 
 magick "$src" -trim +repage -filter Lanczos -resize "${inkw}x" \
   -background none -gravity South -extent "${W}x" -strip "$out"

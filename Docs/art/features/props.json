@@ -1,12 +1,12 @@
 {
   "forest": {
     "name": "A STAND OF FOREST",
-    "what": "three or four broadleaf trees standing close together, their canopies rounded and slightly overlapping, on short sturdy trunks. Rich green foliage with a little tonal variation between the crowns, a few low ferns at their feet",
+    "what": "THREE trees, and only three, standing apart from each other with clear sky between their crowns. Each has a stout bare trunk you can see all the way up to where it branches, and ONE simple rounded canopy of large, soft, generalised leaf masses — not thousands of separate leaves. The crowns are different sizes and sit at different heights, and they touch at most lightly; they never merge into one block. Two or three small ferns at the roots and nothing else",
     "scale": 1.45
   },
   "forest_exhausted": {
     "name": "A FELLED STAND OF FOREST",
-    "what": "the same three or four trees AFTER they have been cut: low pale stumps with clean-cut tops, one or two cut logs lying beside them, a scatter of woodchips and a couple of surviving saplings. It must read as the same place, logged — not as a different patch of ground",
+    "what": "the SAME three trees after they have been felled: three low pale stumps with clean-cut tops, standing apart in the same arrangement, one cut log lying beside them, a scatter of woodchips and one small surviving sapling. It must read as the same place, logged — not as a different patch of ground",
     "scale": 1.0
   },
   "mountain": {

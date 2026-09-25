@@ -146,12 +146,14 @@ export function drawMap(
    * the glyph in the same box when none of them has landed.
    */
   const stand = (
-    b: PlotBox, keys: string[], glyph: string, wrap: (draw: () => number) => number = (d) => d(),
+    b: PlotBox, keys: string[], glyph: string,
+    wrap: (draw: () => number) => number = (d) => d(),
+    canvasPlots = 1,
   ): number => {
     const foot = base(b);
     const drew = wrap(() => {
       for (const k of keys) {
-        const tall = drawStanding(ctx, k, foot.x, foot.y, b.w);
+        const tall = drawStanding(ctx, k, foot.x, foot.y, b.w, canvasPlots);
         if (tall > 0) return tall;
       }
       return 0;
@@ -391,6 +393,19 @@ export function drawMap(
     if (lifted) ctx.globalAlpha = 1;
   };
 
+  /**
+   * HOW WIDE A FEATURE'S CANVAS IS, in plots.
+   *
+   * A building is drawn exactly to its plot, so its art is one plot across.
+   * A feature is not: a stand of trees spreads half a tile past its own
+   * ground and overlaps its neighbours, which is what makes a wood read as a
+   * wood rather than as a row of separate tiles — and a boar covers a
+   * fraction of a tile. Both have to fit the same canvas, so the canvas is
+   * TWO plots wide and the thing sits somewhere inside it
+   * (Docs/art/features/props.json says where).
+   */
+  const FEATURE_PLOTS = 2;
+
   // ------------------------------------------------------------ THE FLOOR
   //
   // Pass 1: terrain, the grid, and the fog over it. Every cell of the ground
@@ -452,7 +467,7 @@ export function drawMap(
         later(cell, () => {
           punched(key, box, () => {
             stand(box, [exhausted ? `${def.sprite}_exhausted` : def.sprite],
-              exhausted ? def.exhaustedGlyph : def.glyph);
+              exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
           });
         });
       }
@@ -471,7 +486,7 @@ export function drawMap(
         const art = LANDMARK_ART[landmark.kind];
         const claimed = state.landmarks.claimed[landmark.id] === true;
         later(cell, () => {
-          punched(key, box, () => stand(box, [art.sprite], art.glyph));
+          punched(key, box, () => stand(box, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
           // A star means "claimable". Nothing holds a sanctuary: it is bought.
           if (!claimed) drawSiteBadge(box, '✦');
         });
@@ -479,7 +494,7 @@ export function drawMap(
       const ruin = ruinDefAt(cell);
       if (ruin) {
         later(cell, () => {
-          punched(key, box, () => stand(box, [ruin.sprite], ruin.glyph));
+          punched(key, box, () => stand(box, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
           // The tier alone: a bare digit reads at any zoom, and "T1" in a
           // display face is one stroke away from an arrow. While a garrison is
           // counting down it takes the badge instead — the minutes left, which
