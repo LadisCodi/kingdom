@@ -8,7 +8,11 @@
       "w": 2,
       "h": 2,
       "deco": false,
-      "file": "townhall_l1.png"
+      "file": "townhall_l1.png",
+      "ratio": 1.9,
+      "master": "1774\u00d7887",
+      "canvas": "256\u00d7320",
+      "diamond": "256\u00d7128"
     },
     {
       "id": "Docks",
@@ -16,7 +20,11 @@
       "w": 2,
       "h": 1,
       "deco": false,
-      "file": "docks_l1.png"
+      "file": "docks_l1.png",
+      "ratio": 2.69,
+      "master": "1774\u00d7887",
+      "canvas": "192\u00d7224",
+      "diamond": "192\u00d796"
     },
     {
       "id": "Barracks",
@@ -24,7 +32,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "barracks_l1.png"
+      "file": "barracks_l1.png",
+      "ratio": 2.56,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Carpenter",
@@ -32,7 +44,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "carpenter_l1.png"
+      "file": "carpenter_l1.png",
+      "ratio": 2.18,
+      "master": "1536\u00d71024",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Farm",
@@ -40,7 +56,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "farm_l1.png"
+      "file": "farm_l1.png",
+      "ratio": 2.35,
+      "master": "1254\u00d71254",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Housing",
@@ -48,7 +68,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "housing_l1.png"
+      "file": "housing_l1.png",
+      "ratio": 1.78,
+      "master": "1536\u00d71024",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Infirmary",
@@ -56,7 +80,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "infirmary_l1.png"
+      "file": "infirmary_l1.png",
+      "ratio": 1.63,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "MasonsYard",
@@ -64,7 +92,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "masons_yard_l1.png"
+      "file": "masons_yard_l1.png",
+      "ratio": 2.18,
+      "master": "1536\u00d71024",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Quarry",
@@ -72,7 +104,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "quarry_l1.png"
+      "file": "quarry_l1.png",
+      "ratio": 1.93,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "RuneCarver",
@@ -80,7 +116,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "rune_carver_l1.png"
+      "file": "rune_carver_l1.png",
+      "ratio": 2.23,
+      "master": "1254\u00d71254",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Sanctum",
@@ -88,7 +128,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "sanctum_l1.png"
+      "file": "sanctum_l1.png",
+      "ratio": 1.99,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Sawmill",
@@ -96,7 +140,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "sawmill_l1.png"
+      "file": "sawmill_l1.png",
+      "ratio": 1.72,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "ShootingGrounds",
@@ -104,7 +152,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "shooting_grounds_l1.png"
+      "file": "shooting_grounds_l1.png",
+      "ratio": 2.85,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Smelter",
@@ -112,7 +164,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "smelter_l1.png"
+      "file": "smelter_l1.png",
+      "ratio": 3.21,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "SpearHall",
@@ -120,7 +176,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "spear_hall_l1.png"
+      "file": "spear_hall_l1.png",
+      "ratio": 2.07,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Stables",
@@ -128,7 +188,11 @@
       "w": 1,
       "h": 1,
       "deco": false,
-      "file": "stables_l1.png"
+      "file": "stables_l1.png",
+      "ratio": 2.2,
+      "master": "1254\u00d71254",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Plaza",
@@ -136,7 +200,11 @@
       "w": 2,
       "h": 2,
       "deco": true,
-      "file": "plaza_l1.png"
+      "file": "plaza_l1.png",
+      "ratio": 1.76,
+      "master": "1536\u00d71024",
+      "canvas": "256\u00d7320",
+      "diamond": "256\u00d7128"
     },
     {
       "id": "Shrine",
@@ -144,7 +212,11 @@
       "w": 2,
       "h": 2,
       "deco": true,
-      "file": "shrine_l1.png"
+      "file": "shrine_l1.png",
+      "ratio": 2.12,
+      "master": "1536\u00d71024",
+      "canvas": "256\u00d7320",
+      "diamond": "256\u00d7128"
     },
     {
       "id": "Orchard",
@@ -152,7 +224,11 @@
       "w": 2,
       "h": 1,
       "deco": true,
-      "file": "orchard_l1.png"
+      "file": "orchard_l1.png",
+      "ratio": 1.63,
+      "master": "1254\u00d71254",
+      "canvas": "192\u00d7224",
+      "diamond": "192\u00d796"
     },
     {
       "id": "Garden",
@@ -160,7 +236,11 @@
       "w": 1,
       "h": 1,
       "deco": true,
-      "file": "garden_l1.png"
+      "file": "garden_l1.png",
+      "ratio": 1.33,
+      "master": "1254\u00d71254",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Statue",
@@ -168,7 +248,11 @@
       "w": 1,
       "h": 1,
       "deco": true,
-      "file": "statue_l1.png"
+      "file": "statue_l1.png",
+      "ratio": 1.54,
+      "master": "1774\u00d7887",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     },
     {
       "id": "Well",
@@ -176,7 +260,11 @@
       "w": 1,
       "h": 1,
       "deco": true,
-      "file": "well_l1.png"
+      "file": "well_l1.png",
+      "ratio": 1.82,
+      "master": "1536\u00d71024",
+      "canvas": "128\u00d7192",
+      "diamond": "128\u00d764"
     }
   ]
 }
