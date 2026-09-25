@@ -106,5 +106,8 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `wild_animals` | 0.27 | 0.23 | boar at knee height — it is a wild pig, not a bear |
 | `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |
 | `forest_exhausted` | 1.0 | 0.55 | three stumps, a cut log, one sapling — the same place, logged |
+| `mountain_exhausted` | 1.45 | 1.32 | cut into stepped benches of pale fresh stone |
+| `mountain_iron_exhausted` | 1.45 | 1.41 | a propped mine mouth, the red veins gone |
+| `mountain_gold_exhausted` | 1.45 | 1.31 | the same, the gold gone |
 | `farmlands` | 1.0 | 0.56 | a field: one plot wide, soil 1.92:1, wheat standing clear of it |
 | `farmlands_exhausted` | 1.0 | 0.51 | the same field cut to stubble; soil 1.97:1 |
