@@ -28,7 +28,7 @@ import {
   diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey } from './terrain';
-import { drawCharacter, unitScale } from './characters';
+import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
@@ -801,7 +801,7 @@ export function drawMap(
     // A unit STANDS on the middle of its cell: its feet are the diamond's
     // centre, not the bottom-left of a square that no longer exists.
     const c = mid(cellRect(v));
-    const uw = size * 0.6;
+    const uw = size * 0.6;   // the legacy sprite chain's box, feet at its base
     const sx = c.x - uw / 2;
     const sy = c.y - uw;
     const t = now + v.phase;
@@ -810,7 +810,7 @@ export function drawMap(
     const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
     unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && v.dx < 0,
       v.walking ? WALK_SQUASH : 0, WALK_FRAME_MS * 2, t, () => {
-        if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitScale(size))) return;
+        if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
         if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
           drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
         }
@@ -888,7 +888,7 @@ export function drawMap(
     const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
     const cast = member ? animFor(member, pose) : null;
     unitTransform(ctx, sx + uw / 2, sy + uw, flip, amp, period, t, () => {
-      if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitScale(size))) {
+      if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
         return;
       }
       if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {

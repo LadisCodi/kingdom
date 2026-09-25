@@ -28,8 +28,8 @@ spans. `norm_prop.sh` bakes it in, scaling the ink to that fraction and
 centring it on a full-width canvas with its feet on the bottom edge. The
 renderer keeps its single rule; the sprite carries its own size.
 
-The yardstick is the cast, not a tape measure: **a villager is about 0.35 of
-a plot tall** and a 1×1 cottage about 1.5, so a boar wants ~0.5 and a stand
+The yardstick is the cast, not a tape measure: **a villager is about 0.38 of
+a plot tall** (`UNIT_PLOTS`, src/render/characters.ts) and a 1×1 cottage about 1.5, so a boar wants ~0.5 and a stand
 of trees ~1.25. `norm_prop.sh` prints the drawn height in plots for exactly
 that comparison.
 
@@ -56,6 +56,6 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `mountain` | 1.55 | 1.25 | |
 | `mountain_iron` | 1.55 | 1.45 | rust-red veins read at thumbnail size |
 | `mountain_gold` | 1.55 | 1.34 | |
-| `berry_bush` | 0.50 | 0.29 | knee-high, as a bush should be |
-| `wild_animals` | 0.55 | 0.48 | boar at about half a villager's height |
+| `berry_bush` | 0.35 | 0.21 | waist-high on a villager |
+| `wild_animals` | 0.27 | 0.23 | boar at knee height — it is a wild pig, not a bear |
 | `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |

@@ -35,9 +35,17 @@ export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
   Smelter: ['forge_man_1', 'forge_woman_1'],
 };
 
-/** Unassigned population strolling around the Townhall and Housing. */
+/**
+ * Unassigned population strolling around the Townhall and Housing.
+ *
+ * `villager_*` are the game's own people, rendered in the current style
+ * (Docs/art/villagers). The `npc_*` and `man_01` behind them are the bought
+ * pixel pack, kept only until there are enough of the former for a crowd —
+ * the two do not sit together, and the pixel ones are what a player will
+ * notice first.
+ */
 export const VILLAGERS: readonly string[] = [
-  'npc_1', 'npc_2', 'npc_3', 'npc_4', 'npc_5', 'npc_6', 'man_01',
+  'villager_1',
 ];
 
 /** A crew member for a building of this kind, or null when the building has

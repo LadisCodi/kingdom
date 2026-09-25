@@ -111,6 +111,11 @@ describe('the cast', () => {
     expect(castFor('Farm', 0)).toBe(farm[0]);
     expect(castFor('Farm', farm.length)).toBe(farm[0]);
     expect(castFor('Farm', 1)).toBe(farm[1]);
-    expect(villagerFor(VILLAGERS.length + 2)).toBe(VILLAGERS[2]);
+    // The PROPERTY, not a fixed index: a seed past the end of the list wraps
+    // to the same face it started on. Asserting VILLAGERS[2] assumed a list
+    // three long, and broke the day the pixel pack was cut back to one.
+    for (let k = 0; k < VILLAGERS.length; k++) {
+      expect(villagerFor(VILLAGERS.length + k), `seed ${k}`).toBe(VILLAGERS[k]);
+    }
   });
 });

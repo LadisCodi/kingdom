@@ -1,0 +1,30 @@
+{
+  "villager_1": {
+    "who": "A young village woman in a simple ankle-length dress of faded blue with a cream apron, sleeves rolled to the elbow, brown hair tied back in a short tail, brown shoes. Cheerful and ordinary — she is one of the townsfolk, not an adventurer.",
+    "anims": {
+      "idle": ["standing still, weight on both feet, arms relaxed at her sides", "the same stance a moment later, having shifted her weight slightly and let one hand rest on her hip"],
+      "walk": ["mid-stride with her LEFT leg forward and her right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with her RIGHT leg forward and her left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+    }
+  },
+  "villager_2": {
+    "who": "A stocky village man in a loose russet-brown tunic belted at the waist, dark green trousers, sturdy boots, and a short beard under a flat brown cap. Friendly and weathered — a townsman, not a soldier.",
+    "anims": {
+      "idle": ["standing still, weight on both feet, arms relaxed at his sides", "the same stance a moment later, having shifted his weight slightly and folded his arms loosely"],
+      "walk": ["mid-stride with his LEFT leg forward and his right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with his RIGHT leg forward and his left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+    }
+  },
+  "villager_3": {
+    "who": "An older village woman in a long moss-green skirt and a cream blouse with a rust-red shawl over her shoulders, grey hair in a bun, a simple headscarf. Kindly and unhurried — a townswoman.",
+    "anims": {
+      "idle": ["standing still, weight on both feet, hands clasped in front of her", "the same stance a moment later, having shifted her weight slightly and let her hands fall to her sides"],
+      "walk": ["mid-stride with her LEFT leg forward and her right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with her RIGHT leg forward and her left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+    }
+  },
+  "villager_4": {
+    "who": "A lanky young village man in a cream linen shirt with the sleeves pushed up, a mustard-yellow waistcoat, brown breeches and worn boots, sandy hair falling over his forehead. Eager and a bit gangly — a townsman.",
+    "anims": {
+      "idle": ["standing still, weight on both feet, arms relaxed at his sides", "the same stance a moment later, having shifted his weight slightly and scratched the back of his neck"],
+      "walk": ["mid-stride with his LEFT leg forward and his right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with his RIGHT leg forward and his left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+    }
+  }
+}
