@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 # A terrain master -> the game's tile.
 #
-# A ground tile is a DIAMOND that fills its canvas: 2:1, twice as wide as it
-# is tall, transparent outside it. So normalising is a trim to the opaque
-# region and a resize onto 256x128 -- twice the 128x64 the game draws at,
-# because the renderer scales down and never up.
+# A tile is a plain SQUARE patch of material, fully opaque, with no shape of
+# its own: the renderer maps it corner to corner onto the cell's diamond
+# (src/render/iso.ts, onDiamond), which is exactly what the isometric camera
+# does to a square of ground. So normalising is only a resize onto 256x256 --
+# twice the diamond's 128 across, because the renderer scales down, never up.
 #
-# It reports the master's own ratio BEFORE the resize. A master far from 2:1
-# was drawn in the wrong camera and the squash will show whatever the output
-# size says, so outside 1.80-2.20 this is an error and not a warning.
+# What it CHECKS is the thing that goes wrong: any transparency at all means
+# the model drew a shape instead of a texture, and the corners of that shape
+# are exactly where four tiles meet.
 set -euo pipefail
 src=$1; out=$2
-dims=$(magick "$src" -trim +repage -format "%wx%h" info:)
-w=${dims%x*}; h=${dims#*x}
-ratio=$(echo "scale=2; $w / $h" | bc)
-echo "  ink ${w}x${h}  ratio ${ratio}:1"
-ok=$(echo "$ratio >= 1.80 && $ratio <= 2.20" | bc)
-[ "$ok" = 1 ] || { echo "  FAIL: ${ratio}:1 is not the 2:1 camera — regenerate"; exit 1; }
-magick "$src" -trim +repage -filter Lanczos -resize 256x128! -strip "$out"
-echo "  wrote $out  256x128"
+alpha=$(magick "$src" -alpha extract -format "%[fx:minima]" info:)
+echo "  minimum opacity ${alpha}   (want 1: a texture, not a shape)"
+awk -v a="$alpha" 'BEGIN{ if (a < 0.99) { print "  FAIL: the master has transparent pixels — it drew a tile, not a texture"; exit 1 } }'
+magick "$src" -alpha off -filter Lanczos -resize 256x256! -strip "$out"
+echo "  wrote $out  256x256"

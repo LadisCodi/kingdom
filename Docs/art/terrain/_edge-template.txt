@@ -1,48 +1,47 @@
 Generate one image. Square framing, 1:1 aspect ratio.
 
-Use the attached images as a STRICT reference. The FIRST attachment is the game's art style. The SECOND attachment is the exact {{NAME}} ground tile this piece has to match — same material, same colours, same light.
+Use the attached images as a STRICT reference. The FIRST attachment is the game's art style. The SECOND is the exact {{NAME}} ground texture this piece has to match — same material, same colours, same light.
 
-This is a TRANSITION PIECE for a mobile management / light-4X strategy game: the edge of a field of {{NAME}}, drawn so it can be laid over a neighbouring tile of some other ground and make the seam between them look natural.
+This is a TRANSITION PIECE for a mobile management / light-4X strategy game: the ragged edge of a field of {{NAME}}, which the game lays over the neighbouring ground so the border between two terrains looks natural instead of like a cut.
 
 === WHAT TO DRAW ===
-Imagine the same DIAMOND as the attached tile — a rhombus standing on its point, EXACTLY TWICE AS WIDE AS IT IS TALL, centred in the frame.
+{{NAME}} ground along the TOP of the frame only, thinning downward into nothing.
 
-Draw {{NAME}} ground along its UPPER-RIGHT EDGE ONLY: the straight edge that runs from the diamond's TOP corner down to its RIGHT corner.
-The material is {{MATERIAL}}.
+The material is {{MATERIAL}}, seen from STRAIGHT ABOVE, exactly as in the second attachment.
 
-It is thickest and fully opaque right against that upper-right edge, and it thins and breaks up as it reaches inward, fading completely to transparent about ONE THIRD of the way across the diamond. The inner boundary is soft and organic — a loose, uneven fringe with small tongues and gaps, never a straight line and never a hard cut.
+It is SOLID and fully opaque along the top of the frame, and it breaks up as it comes down, becoming completely transparent by about ONE THIRD of the way down. The lower two thirds of the frame are entirely empty.
 
-The rest of the diamond — its whole lower-left two thirds — is fully transparent, and so is everything outside the diamond.
+The boundary where it runs out is soft and ORGANIC — a loose, uneven fringe with small tongues reaching further down and gaps biting further up, never a straight line, never a smooth curve, never a hard cut.
 
-=== THE EDGE ITSELF — THIS IS CRITICAL ===
-Against the upper-right edge the material is SOLID and reaches the edge exactly, cut off cleanly along that straight line with no gap, no fade and no soft falloff there. That edge will sit flush against the neighbouring field of the same ground, and any lightening or softening along it shows up as a visible seam.
-The top corner and the right corner are both fully covered.
+=== THE TOP EDGE — THIS IS CRITICAL ===
+Along the very top of the frame the material is SOLID and fully opaque, reaching the edge exactly, cut off cleanly by the frame with no gap, no fade and no softening there. It runs the full width, into both top corners.
+That top edge sits flush against the rest of the field, and anything soft or pale along it shows up in the game as a bright seam.
 
 === IT IS FLAT — THIS IS CRITICAL ===
-A FLAT piece of ground seen from an isometric camera. NO thickness, NO depth, NO soil layer, NO rock face, NO side wall, NO bevelled rim, NO cliff, NO raised lip and NO shadow under it or beside it.
-Nothing stands up out of it: no trees, no bushes, no rocks, no fences, no buildings, no characters. It is only the surface, thinning out.
+A SURFACE seen from directly overhead. NO thickness, NO depth, NO soil layer, NO rock face, NO side wall, NO bevelled rim, NO cliff, NO raised lip, and NO shadow under it or beside it.
+Nothing stands up out of it: no trees, no bushes, no rocks, no fences, no buildings, no characters. It is only the surface, running out.
 
 === THE LIGHT — THIS IS CRITICAL ===
 Even, flat, ambient daylight across the whole piece, the same brightness everywhere.
-NO directional sunlight, NO cast shadow, NO drop shadow, NO darkening along the fringe, NO glow, NO rim light, NO gradient.
-This piece is MIRRORED left-to-right and top-to-bottom by the game to make the other three edges. Any light coming from one direction arrives on the wrong side of two of the four, which is exactly what gives a mirrored piece away.
+NO directional sunlight, NO cast shadow, NO drop shadow, NO darkening along the fringe, NO glow, NO gradient.
+The game turns this piece four ways to make the four sides of a tile, so light coming from one direction in the picture arrives from four different directions on screen.
 
 === BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
-Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
-The band of ground along the upper-right edge must be the ONLY opaque region. Everywhere else is fully transparent, alpha = 0, including the whole lower-left of the diamond.
-The fade inward must be REAL ALPHA — the material actually becoming transparent — and not the material being painted in a paler colour against an opaque background.
+Deliver the result as a PNG with a GENUINELY TRANSPARENT BACKGROUND.
+The band of ground across the top must be the ONLY opaque region. Everywhere else is fully transparent, alpha = 0 — in particular the whole lower two thirds.
+The fade downward must be REAL ALPHA — the material actually becoming transparent — and not the material painted in a paler colour against an opaque background.
 Do NOT draw a checkerboard pattern into the pixels. Do NOT fill the background with grey, white, black or any other colour.
 
 === LOCKED VISUAL STYLE ===
-Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
+Bright, cheerful stylized 3D game render.
 
-Highly saturated fantasy palette: vivid spring greens, warm cream stone, golden straw and timber, rich blue accents, clear cyan water, and warm earthy paths. Clean bright atmosphere.
+Highly saturated fantasy palette: vivid spring greens, warm cream stone, golden straw, clear cyan water, warm earthy soil. Clean bright atmosphere.
 
-Smooth, simplified materials with subtle surface variation — no photographic textures, dirt overlays, grain, or excessive micro-detail. Softly bevelled forms, clean edges, tidy vegetation, and small decorative details used sparingly.
+Smooth, simplified materials with subtle surface variation — no photographic textures, dirt overlays, grain, or excessive micro-detail. Softly bevelled forms, clean edges, tidy vegetation, small decorative details used sparingly.
 
 === AVOID ===
-No text, letters, numbers, labels, signs, interface, logo, watermark, grid lines, or borders.
+No text, letters, numbers, labels, signs, interface, logo, watermark, grid lines, tile edges or borders.
 No frame, no outline stroke, no glow, no reflection.
 No photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, or gritty realism.
 No checkerboard pattern painted into the image. No opaque background of any colour.
-Above all: ONLY THE UPPER-RIGHT EDGE, FLAT WITH NO THICKNESS, EVEN LIGHT WITH NO SHADOWS, and a real alpha fade inward.
+Above all: A SOLID TOP EDGE, AN ORGANIC FADE DOWNWARD IN REAL ALPHA, AN EMPTY BOTTOM TWO THIRDS, FLAT WITH NO THICKNESS, AND EVEN LIGHT.

@@ -90,36 +90,71 @@ export function edgePath(
   ctx.lineTo(...b);
 }
 
+/** The four sides of a cell, in the sim's compass, and the corners of the
+ *  diamond each one runs between (clockwise from the top). */
+const EDGE_CORNERS = {
+  N: ['top', 'right', 'left'],
+  E: ['right', 'bottom', 'top'],
+  S: ['bottom', 'left', 'right'],
+  W: ['left', 'top', 'bottom'],
+} as const;
+
 /**
- * DRAW THE GROUND OF ONE PLOT.
+ * DRAW A SQUARE PICTURE ONTO A PLOT'S DIAMOND.
  *
- * The art fills the plot's bounding box and is then CLIPPED to the diamond,
- * so a tile can never bleed into its neighbours whatever shape the artist
- * drew — a square top-down texture lands as a proper isometric tile, and a
- * diamond-shaped one is left exactly as it is. Returns false when the art is
- * missing, so the caller falls back to `fillDiamond` in the terrain colour.
+ * Ground art is authored as a plain SQUARE patch of material seen from
+ * straight above — no silhouette, no transparency, no shape at all. This maps
+ * that square onto the diamond corner to corner, which is simply what the
+ * isometric camera does to a square of ground: the picture's own top-left
+ * corner lands on the diamond's `side` corner, and the whole square covers
+ * the whole diamond with nothing left over.
+ *
+ * Asking an image model to draw the diamond itself was the mistake this
+ * replaces. A flat surface has no silhouette, so its outline is the one thing
+ * the model has no reference for, and what came back was a rounded lozenge
+ * whose chamfered corners are exactly where four tiles meet.
+ *
+ * `side` says which edge of the diamond the source's TOP edge lands on. The
+ * ground uses 'N' and never thinks about it; a FRINGE is drawn with its own
+ * side, which is how one authored piece serves all four without being
+ * mirrored — the basis is rotated, not reflected.
+ *
+ * `bleed` grows the destination a hair so two neighbours overlap instead of
+ * meeting on an anti-aliased edge, where each would contribute half and the
+ * background would show through as a hairline.
+ */
+export function onDiamond(
+  ctx: CanvasRenderingContext2D,
+  box: PlotBox,
+  side: 'N' | 'E' | 'S' | 'W',
+  draw: () => void,
+  bleed = 1.004,
+): void {
+  const c = corners({ ...box, w: box.w * bleed, h: box.h * bleed });
+  const [p, q, r] = EDGE_CORNERS[side].map((k) => c[k]);
+  ctx.save();
+  // The unit square (u, v) goes to p + u·(q − p) + v·(r − p). A rhombus's
+  // fourth corner is q + (r − p), so (1, 1) lands on it and the cover is
+  // exact.
+  ctx.transform(q[0] - p[0], q[1] - p[1], r[0] - p[0], r[1] - p[1], p[0], p[1]);
+  draw();
+  ctx.restore();
+}
+
+/**
+ * DRAW THE GROUND OF ONE PLOT: its square of material, laid on the diamond.
+ * Returns false when the art is missing, so the caller falls back to
+ * `fillDiamond` in the terrain colour.
  */
 export function drawGround(
   ctx: CanvasRenderingContext2D,
   key: string,
   box: PlotBox,
 ): boolean {
-  ctx.save();
-  ctx.beginPath();
-  diamondPath(ctx, box);
-  ctx.clip();
-  // Drawn one pixel PROUD of the diamond on every side, then clipped back to
-  // it. Art arrives with a soft anti-aliased rim, and a soft rim landing
-  // exactly on the edge leaves a hairline of background showing between two
-  // tiles that are meant to be one field. Overdrawing puts the rim outside
-  // the clip, so what ends the tile is the clip — and two neighbours share
-  // that edge exactly.
-  const bleed = 1;
-  const drew = drawSprite(
-    ctx, key,
-    box.x - bleed, box.y - bleed / 2, box.w + bleed * 2, box.h + bleed,
-  );
-  ctx.restore();
+  let drew = false;
+  onDiamond(ctx, box, 'N', () => {
+    drew = drawSprite(ctx, key, 0, 0, 1, 1);
+  });
   return drew;
 }
 

@@ -20,11 +20,13 @@ master="$here/$id-$which.master.png"
 # ChatGPT again, not to be printed.
 magick "$src" -resize 50% -strip "$master"
 
-corner=$(magick "$master" -format "%[pixel:p{0,0}]" info:)
-echo "  master $(magick identify -format '%wx%h' "$master")  corner $corner"
-[ "$corner" = "srgba(0,0,0,0)" ] || { echo "  FAIL: the background is not transparent"; exit 1; }
+echo "  master $(magick identify -format '%wx%h' "$master")"
 
 if [ "$which" = edge ]; then
+  # A fringe is the only piece with transparency, and it must be real alpha.
+  corner=$(magick "$master" -format "%[pixel:p{0,0}]" info:)
+  [ "$corner" = "srgba(0,0,0,0)" ] || {
+    echo "  FAIL: the fringe's background is not transparent (corner $corner)"; exit 1; }
   "$here/norm_edge.sh" "$master" "$here/terrain_${id}_edge.png"
 elif [ "$which" = 1 ]; then
   "$here/norm_tile.sh" "$master" "$here/terrain_${id}.png"
