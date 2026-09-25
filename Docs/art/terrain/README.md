@@ -9,6 +9,7 @@ Two kinds of piece, and the renderer that uses them is
 
 | | |
 |---|---|
+| `terrain_crops.png`, `terrain_crops_cut.png` | the **crop plot**, standing and harvested. A field is a SURFACE, so it is authored here and not with the features, and the renderer lays it on the diamond the way it lays terrain (`GROUND_DISTRICTS`, src/render/cast.ts) |
 | `terrain_<id>.png` … `terrain_<id>_4.png` | the **tiles**: four drawings of the same ground, one of which each cell picks by a hash of its coordinates. Without them a field of 1,470 cells is a visible weave |
 | `terrain_<id>_edge.png` | the **fringe**: that ground creeping over its neighbour, drawn once as a band across the top of a square and rotated in code onto all four sides |
 | `<id>-<n>.prompt.txt` | the exact prompt, verbatim. **Attached as a file** to the ChatGPT message — a long prompt typed into the composer sends itself on the first newline |

@@ -29,7 +29,7 @@ import {
 } from './iso';
 import { drawTerrainFringes, terrainKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
-import { animFor, castFor, villagerFor, type UnitPose } from './cast';
+import { animFor, castFor, GROUND_DISTRICTS, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
 export interface MarkerLayer {
@@ -338,14 +338,33 @@ export function drawMap(
     keys.push(def.sprite);
     let drewExhaustedPlot = false;
     let tall = 0;
-    punched(coordKey(district.location), box, () => {
-      tall = stand(box, keys, def.glyph, (draw) => {
-        const drew = flip(draw);
-        drewExhaustedPlot = drew > 0 && exhaustedPlot &&
-          spriteAspect(`${def.sprite}_exhausted`) !== null;
-        return drew;
+    // A crop plot is GROUND (src/render/cast.ts): it lies in the diamond
+    // rather than standing on it, so it is laid on like terrain.
+    if (GROUND_DISTRICTS.has(district.definitionId)) {
+      punched(coordKey(district.location), box, () => {
+        for (const k of keys) {
+          if (drawGround(ctx, k, box)) {
+            drewExhaustedPlot = k.endsWith('_exhausted');
+            tall = box.h / 2; // it has no height; labels hang off its centre
+            break;
+          }
+        }
       });
-    });
+      if (tall === 0) {
+        ctx.fillStyle = TERRAIN_COLORS.Grassland;
+        fillDiamond(ctx, box);
+        tall = box.h / 2;
+      }
+    } else {
+      punched(coordKey(district.location), box, () => {
+        tall = stand(box, keys, def.glyph, (draw) => {
+          const drew = flip(draw);
+          drewExhaustedPlot = drew > 0 && exhaustedPlot &&
+            spriteAspect(`${def.sprite}_exhausted`) !== null;
+          return drew;
+        });
+      });
+    }
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.
@@ -416,6 +435,28 @@ export function drawMap(
   // cell by cell would be overpainted by the floor of the cell behind it, so
   // features, sites and buildings are collected into one depth-sorted pass
   // below — the painter's algorithm, which is the whole cost of isometry.
+  /**
+   * WHAT THE FOG DOES TO A THING STANDING IN IT.
+   *
+   * The scrim is painted on the floor, and until the painter's-algorithm pass
+   * arrived that was enough: a feature was drawn in the same per-cell loop,
+   * just before its own cell's scrim went down over it. Depth sorting moved
+   * every standing thing to AFTER the whole floor, and the trees came out
+   * lit like noon on ground the player has not paid for.
+   *
+   * So a fogged cell dims its own prop. The number is what the scrim actually
+   * does: `fogDiscovered` is 55% of near-black over the ground, and a cell
+   * the player cannot buy yet takes it twice.
+   */
+  const FOG_DIM = 0.45;
+  const dimmed = (dim: number, draw: () => void): void => {
+    if (dim >= 1) { draw(); return; }
+    ctx.save();
+    ctx.filter = `brightness(${dim.toFixed(3)}) saturate(0.75)`;
+    draw();
+    ctx.restore();
+  };
+
   const standing: Array<{ depth: number; tie: number; draw: () => void }> = [];
   const later = (cell: Coord, draw: () => void, span = { x: 1, y: 1 }): void => {
     // Depth is x + y: cells on the same diagonal are the same distance from
@@ -456,6 +497,12 @@ export function drawMap(
         strokeDiamond(ctx, box, 0.5);
       }
 
+      // How dark anything standing on this cell has to be. Computed here,
+      // beside the scrim it has to match, so the two cannot drift apart.
+      const dim = fog === 'Discovered'
+        ? (isPayable(state, map, cell) ? FOG_DIM : FOG_DIM * FOG_DIM)
+        : 1;
+
       const feature = state.features[key];
       const district = state.city.districts.find((d) => districtOccupies(d, cell));
       if (district) continue; // drawn (with its overlays) in the district pass
@@ -464,12 +511,12 @@ export function drawMap(
       if (feature) {
         const def = FEATURES[feature];
         const exhausted = recoversAt(state, map, cell, now) !== null;
-        later(cell, () => {
+        later(cell, () => dimmed(dim, () => {
           punched(key, box, () => {
             stand(box, [exhausted ? `${def.sprite}_exhausted` : def.sprite],
               exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
           });
-        });
+        }));
       }
 
       // Landmarks and ruins: authored sites, drawn where a feature would be.
@@ -486,15 +533,20 @@ export function drawMap(
         const art = LANDMARK_ART[landmark.kind];
         const claimed = state.landmarks.claimed[landmark.id] === true;
         later(cell, () => {
-          punched(key, box, () => stand(box, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
+          dimmed(dim, () => {
+            punched(key, box, () => stand(box, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
+          });
           // A star means "claimable". Nothing holds a sanctuary: it is bought.
+          // NOT dimmed: a badge is the game talking, not part of the world.
           if (!claimed) drawSiteBadge(box, '✦');
         });
       }
       const ruin = ruinDefAt(cell);
       if (ruin) {
         later(cell, () => {
-          punched(key, box, () => stand(box, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
+          dimmed(dim, () => {
+            punched(key, box, () => stand(box, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
+          });
           // The tier alone: a bare digit reads at any zoom, and "T1" in a
           // display face is one stroke away from an arrow. While a garrison is
           // counting down it takes the badge instead — the minutes left, which
@@ -506,6 +558,7 @@ export function drawMap(
           if (raidIn !== null) drawSiteBadge(box, String(raidIn), true);
           else drawSiteBadge(box, String(ruin.tier));
         });
+
       }
 
       if (fog === 'Revealed') drawResourceState(cell, box);

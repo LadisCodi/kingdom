@@ -7,7 +7,7 @@ This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy g
 === NEW SCENE ===
 A QUARRIED PEAK, alone and centred, standing on ONE square tile of a fantasy kingdom's map.
 
-the same grey peak AFTER it has been worked: its side cut away into flat stepped benches, pale freshly-cut stone where the face is open, loose rubble and a few squared blocks at its foot. Same rock, same place, mined into.
+the SAME grey peak after it has been worked: its near side cut away into three or four flat stepped benches of pale freshly-cut stone, the rest of the outline still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into.
 
 === NO GROUND — THIS IS CRITICAL ===
 Draw THE THING ONLY. Do NOT draw any ground underneath it.
@@ -22,9 +22,15 @@ CONCRETE TEST: if you traced the outline of the 1×1 plot, that diamond would me
 The camera is LOWER and FLATTER than a typical three-quarter view — you see more of the sides and less of the tops than you would from above.
 It is NOT a perspective camera, NOT a 45° three-quarter view, NOT a top-down view and NOT a 1.5:1 camera. There is no vanishing point and no convergence: the projection is parallel/orthographic throughout.
 
-=== IT FILLS ITS PLOT ===
-The LEFTMOST and RIGHTMOST points of the drawing are the plot's left and right corners — the thing spans its tile fully, side to side.
-It may be as TALL as it needs to be; height is free. But nothing sprawls sideways past the plot, and it is not shrunk into the middle of the frame either.
+=== ITS SILHOUETTE IS NOT A BOX — THIS IS CRITICAL ===
+The outline is IRREGULAR and organic on every side. Its left and right edges must be as uneven as its top: branches and leaves poking out here, dips and notches there.
+Do NOT let the drawing run to the left or right edge of the frame. Leave clear empty space down both sides, so the shape ends in leaves and stone rather than in a straight cut. Nothing is cropped by the frame; the whole thing is inside the picture with room to spare.
+A silhouette with a flat vertical side reads as a hedge or a wall, not as trees, and the game places these next to each other — a straight edge shows up instantly as a seam.
+
+=== HOW BUSY IT IS — THIS IS CRITICAL ===
+FEW, LARGE, SIMPLE SHAPES. This is one small piece of a map, seen at about the size of a thumbnail, with buildings and people around it that must stay readable through and past it.
+Make the forms big and generalised: a canopy is a few soft leaf masses, not a thousand separate leaves; rock is a few broad facets, not a field of pebbles. Leave real gaps and open space inside the shape, so the ground and whatever is behind can be seen through it.
+No fine repeated texture, no dense clutter, no thicket. If the drawing looks busy at thumbnail size, there is too much in it.
 
 === COMPOSITION ===
 The single subject, centred, with comfortable empty breathing room above it. Nothing else in the frame. No other buildings, no terrain, no landscape, no horizon, no sky, no ground.
