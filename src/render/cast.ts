@@ -39,13 +39,12 @@ export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
  * Unassigned population strolling around the Townhall and Housing.
  *
  * `villager_*` are the game's own people, rendered in the current style
- * (Docs/art/villagers). The `npc_*` and `man_01` behind them are the bought
- * pixel pack, kept only until there are enough of the former for a crowd —
- * the two do not sit together, and the pixel ones are what a player will
- * notice first.
+ * (Docs/art/villagers). The bought pixel pack's `npc_*` and `man_01` are
+ * gone from here: the two do not sit together, and four faces is enough for
+ * a crowd that nobody counts.
  */
 export const VILLAGERS: readonly string[] = [
-  'villager_1',
+  'villager_1', 'villager_2', 'villager_3', 'villager_4',
 ];
 
 /** A crew member for a building of this kind, or null when the building has

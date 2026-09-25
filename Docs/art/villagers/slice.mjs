@@ -72,7 +72,10 @@ if (wide.length !== Number(want)) {
 // sheet the differences survive — a passing pose really is taller than a
 // stride, and that is the bounce in the walk — but standing and walking now
 // agree, because a walking person is about as tall as a standing one.
-const NOMINAL = 256;
+// 128 and not 256: a villager is drawn about 49 CSS px tall, which is 98
+// device pixels on a 2x screen. Frames four times larger than anything can
+// show them tripled the shipped atlas for nothing.
+const NOMINAL = 128;
 const heights = wide.map(([a, b]) => {
   const pad = Math.round((b - a) * 0.06);
   const x = Math.max(0, a - pad);

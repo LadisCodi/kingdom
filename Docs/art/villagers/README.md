@@ -68,3 +68,14 @@ bought pixel pack and these 256 px renders stand the same height on the grass.
 | | idle | walk |
 |---|---|---|
 | `villager_1` — young woman, blue dress, cream apron | 2 | 4 |
+| `villager_2` — stocky man, russet tunic, flat cap | 2 | 4 |
+| `villager_3` — older woman, green skirt, rust shawl | 2 | 4 |
+| `villager_4` — lanky young man, mustard waistcoat | 2 | 4 |
+
+Frames are **128 px** tall, not 256: a villager is drawn about 49 CSS px, so
+98 device pixels on a 2× screen. Frames four times larger than anything can
+show tripled the shipped atlas for nothing.
+
+Still on the bought pixel pack, and still to do: the **work** loops for the
+crews that have one — Farm, Sawmill, Quarry, Mason's Yard, Smelter — each of
+which needs an `action` sheet as well as idle and walk.
