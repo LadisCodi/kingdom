@@ -73,6 +73,29 @@ Everything in [`../city/README.md`](../city/README.md) applies, plus one:
 
 ## Landed
 
-| Asset | Notes |
+All 30 pieces: six terrains × four tiles, plus a fringe each.
+
+| | |
 |---|---|
-| `terrain_grassland` | the probe, on the second pipeline; even light, corners exact, field continuous |
+| Tiles | `grassland` `plains` `desert` `snow` `tundra` `water`, ×4. Every one fully opaque, no shape, harmonised onto its first variant |
+| Fringes | one per terrain. Top band 0.98–0.99 solid, bottom two thirds below 1e-5 — the two numbers that decide whether a seam shows |
+
+## Driving ChatGPT through the Chrome extension
+
+A hard-won sequence. Everything in [`../city/README.md`](../city/README.md)
+applies, plus:
+
+- **Send with `document.querySelector('button[type=submit]').click()`.**
+  Clicking the send button by coordinate or by element reference fails
+  perhaps one time in three — the composer's layout shifts as attachment
+  thumbnails load, and the click lands on nothing. The JS click never missed.
+- **Get the render the same way**: draw the last square `<img>` onto a canvas
+  and `toBlob` it into an `<a download>`. The page's CSP blocks `fetch` to
+  anything off-origin, localhost included, so a local drop box does not work.
+- **Chrome will block scripted downloads** after a few, silently, and the
+  share dialog's `Descargar` button stops working too. Allow automatic
+  downloads for `chatgpt.com` in the site settings; nothing in the page
+  reveals the block, which is why `prep.sh` and the marker exist.
+- **A render takes 60–110 seconds.** The grab reports `NOT READY` with the
+  sizes it found, and `1024x1536` is the style reference in the composer, not
+  a render in progress.
