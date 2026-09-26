@@ -148,10 +148,13 @@ each has its own art already.
 - **The price is the sum of its cells'**, so a tap charges a fifth of that.
   Nothing is displayed: the floater on the tap says what it cost, and a
   nine-cell number says "this is a big thing" more plainly than a label would.
-- **Reachability on any one cell, reach on all of them.** The frontier only has
-  to touch a corner, but the whole footprint must lie inside the Townhall's
-  reach — the reach is what stops sprawl, and a 3×3 would otherwise jump it by
-  two rings.
+- **Any one cell is enough**, for the frontier and for the reach alike. The
+  frontier only has to touch a corner, and one cell inside the Townhall's
+  reach opens the whole of it. A 3×3 bought from its near corner does carry
+  the player up to two rings past the ring; that is the price of the rule
+  reading honestly, paid once per site and for the full summed cost of every
+  cell. The alternative cut a standing stone in half along the ring and
+  refused a tap on a thing the player could see they had reached.
 - It clears **all at once**.
 
 **Exhaustion.**

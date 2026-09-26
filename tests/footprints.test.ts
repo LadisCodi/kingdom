@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { groupFootprints } from '../src/sim/data/mapRules';
-import { buildMapData, footprintAt, footprintCells } from '../src/sim/grid';
+import { buildMapData, footprintAt, footprintCells, townhallDistance } from '../src/sim/grid';
 import { coordKey, parseCoordKey, type Coord } from '../src/sim/state';
-import { fogState, revealCostForCell, revealTap, revealTapsDone } from '../src/sim/fog';
+import {
+  fogState, isWithinReach, reachLevelFor, revealCostForCell, revealTap, revealTapsDone,
+} from '../src/sim/fog';
 import { depotStock, effectiveStock } from '../src/sim/harvest';
 import { FOG, HARVEST } from '../src/sim/data/definitions';
 import { freshGame, fund } from './helpers';
@@ -170,6 +172,30 @@ describe('a block behaves as one thing', () => {
     for (const c of footprintCells(map, anchor)) {
       expect(state.fog.revealed[coordKey(c)], coordKey(c)).toBe(true);
     }
+  });
+
+  it('opens when ANY one of its cells is in reach', () => {
+    // A block the reach ring CUTS IN HALF — near corner inside, far corner
+    // out. That is the whole case: asking for every cell refused a tap on a
+    // thing the player could plainly see they had reached.
+    const ladder = FOG.reachPerTownhallLevel;
+    let split: { anchor: Coord; level: number; near: number } | null = null;
+    for (const anchorKey of map.footprintSize.keys()) {
+      const a = parseCoordKey(anchorKey);
+      const d = footprintCells(map, a).map((c) => townhallDistance(map, c));
+      const near = Math.min(...d);
+      const far = Math.max(...d);
+      const i = ladder.findIndex((r) => r >= near && r < far);
+      if (i !== -1) { split = { anchor: a, level: i + 1, near }; break; }
+    }
+    expect(split, 'no block on the province is split by any reach').not.toBeNull();
+
+    const state = freshGame();
+    const hall = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    hall.level = split!.level;
+    expect(isWithinReach(state, map, split!.anchor)).toBe(true);
+    // And the refusal names the level that opens it — the NEAREST cell's.
+    expect(reachLevelFor(map, split!.anchor)).toBe(split!.level);
   });
 
   it('draws on one depot, holding its whole area', () => {

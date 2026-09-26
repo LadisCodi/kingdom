@@ -146,18 +146,24 @@ export const explorationReach = (state: GameState): number =>
 
 /** Is this cell inside the reach of the current Townhall level? */
 export const isWithinReach = (state: GameState, map: MapData, cell: Coord): boolean =>
-  // EVERY cell of a block, where reachability asks for only one. The reach
-  // ring is what stops the player sprawling, and a 3x3 bought from its near
-  // corner would otherwise carry them two rings past it.
-  footprintCells(map, cell).every(
+  // ANY cell of a block is enough, the same as reachability.
+  //
+  // Asking for all of them let the reach ring cut a standing stone in half:
+  // the near cells inside it, the far ones out, and a tap refused on a thing
+  // the player can plainly see they have reached. A 3x3 bought from its near
+  // corner does carry them up to two rings past the ring — and that is the
+  // price of the rule reading honestly, paid once per site, for the full
+  // summed cost of every cell.
+  footprintCells(map, cell).some(
     (c) => townhallDistance(map, c) <= explorationReach(state),
   );
 
 /** The first Townhall level whose reach holds this cell — what the refused
  *  tap tells the player to build. `maxLevel + 1` if no level ever does. */
 export function reachLevelFor(map: MapData, cell: Coord): number {
-  // The furthest cell of the block, since all of them must be inside.
-  const d = Math.max(...footprintCells(map, cell).map((c) => townhallDistance(map, c)));
+  // The NEAREST cell of the block: one inside the ring opens the whole of it,
+  // so that is the cell whose level the refusal should name.
+  const d = Math.min(...footprintCells(map, cell).map((c) => townhallDistance(map, c)));
   const ladder = FOG.reachPerTownhallLevel;
   if (ladder.length === 0) return 1;
   const i = ladder.findIndex((r) => r >= d);
