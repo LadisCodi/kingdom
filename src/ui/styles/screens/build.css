@@ -13,16 +13,24 @@
      both. Two of these per line fit six cards in a 65% sheet without a
      scroll, which the stacked card never managed. */
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  /* A SHARE of the card, not 72 fixed pixels. Fixed, the art took 40% of the
+     card at 426 and 47% at 375 — so the narrowest phone, which has the least
+     text room to begin with, gave the most of it away: 60px for a name and a
+     promise, against 85 at 426. As a fraction the proportion M3 draws holds
+     at every width. */
+  grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
   grid-template-areas:
     'art name'
     'art promise'
-    'cost cost'
-    'meta meta';
-  column-gap: 8px;
+    'cost cost';
+  /* Six, not eight, on both. At 426 the card is 179px wide and the art takes
+     72 of them, so every pixel of padding and gap comes straight out of the
+     text column — which had 79px for a name AND a promise, and clipped both.
+     Six gives it 85. */
+  column-gap: 6px;
   row-gap: 2px;
   align-items: center;
-  padding: 8px 8px 8px 8px;
+  padding: 6px;
   text-align: left;
   font-family: var(--font-body);
   font-size: var(--text-helper);
@@ -47,15 +55,19 @@
 
 .bld-art {
   grid-area: art;
-  width: 72px;
-  height: 72px;
+  width: 100%;
   display: grid;
   place-items: center;
   align-self: start;
 }
+/* The SQUARE is the image's, not the box's. On the box it lost to the grid:
+   the cell spans the name's row and the promise's, so the box stretched to
+   105px and drew a 70px picture letterboxed inside it. On the image the box
+   hugs what it holds. */
 .bld-art img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
+  height: auto;
   object-fit: contain;
 }
 
@@ -64,8 +76,17 @@
   align-self: end;
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 18px;
+  /* 16, not 18: M3 sets this title at about 16 and 18 put "Housing #1" onto
+     two lines in an 85px column. The name is the one line that must not
+     wrap — it is what the player is choosing between. */
+  font-size: 16px;
   line-height: 1.1;
+}
+.bld-ordinal {
+  margin-left: 4px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
 }
 .bld-promise {
   grid-area: promise;
@@ -74,7 +95,13 @@
   line-height: 1.2;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* THREE, and it costs nothing. The card's height is set by the art column
+     (72px), not by the text one: a name at 18px and two promise lines come to
+     49, so the third line is slack the card has already paid for. At 85px it
+     buys the promise about 42 characters instead of 28, which is the whole
+     difference between the seven written promises reading and five of them
+     stopping mid-word. */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 /* Currencies, refined goods and Harmony all sit in one wrapping row: they
@@ -97,16 +124,6 @@
   background: var(--parchment);
   font-weight: var(--weight-strong);
 }
-.bld-meta {
-  grid-area: meta;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  font-family: var(--font-body);
-  color: var(--ink-muted);
-}
-
 /* --------------------------------------------------------- harmony ---
  * `supply / demand` above the grid, and what a surplus is paying. It reads
  * as a fact about the city rather than as a warning — until supply falls
@@ -148,8 +165,8 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: calc(100% + 16px);
-  margin: 8px -8px -12px;
+  width: calc(100% + 12px);
+  margin: 8px -6px -10px;
   padding: 5px 6px;
   background: var(--clay);
   color: var(--ink-inverse);
@@ -215,3 +232,30 @@
 .bld-offer-actions { display: flex; gap: 10px; }
 .bld-offer-actions .k-btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 10px; padding-right: 10px; }
 .bld-offer-actions .k-btn:first-child { flex: 0 0 auto; min-width: 104px; }
+
+/* Narrower than the phone the mockups were drawn for, the row gives up.
+ *
+ * At 375 the card is 154px wide, and a row splits that into 58 of art and 73
+ * of text — which holds neither "Housing #1" on one line nor a promise in
+ * three. The same breakpoint the header uses (hud.css), for the same reason
+ * stated there: a layout may cost space, but it may not quietly delete the
+ * thing it was laying out.
+ *
+ * So the card STACKS. The art caps at 84 rather than filling the column — a
+ * 142px thumbnail is a poster, not a card — and the text gets the full width
+ * instead of a third of it. Two cards still fit a line; they are taller, and
+ * the sheet scrolls a little sooner. */
+@container frame (max-width: 380px) {
+  .bld-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'art'
+      'name'
+      'promise'
+      'cost';
+    justify-items: center;
+    text-align: center;
+  }
+  .bld-art { width: 84px; }
+  .bld-cost { justify-content: center; }
+}

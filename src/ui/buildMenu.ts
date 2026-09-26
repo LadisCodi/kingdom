@@ -12,15 +12,15 @@
 
 import { CITY_DEF, DECORATIONS, DISTRICTS, HARMONY } from '../sim/data/definitions';
 import {
-  buildCost, buildDuration, buildGoodsCost, districtCount, isNumbered, maxDistrictCount,
+  buildCost, buildGoodsCost, districtCount, isNumbered, maxDistrictCount,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
 import { isTechComplete } from '../sim/research';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
-import { costChips, iconEl, pips, sheet } from './kit';
+import { el } from './format';
+import { costChips, iconEl, sheet } from './kit';
 import type { GoodId } from '../sim/state';
 
 /** What this building is FOR, in one line — the card's promise. Falls back
@@ -112,9 +112,22 @@ function buildCard(game: Game, id: string): HTMLElement | null {
       : iconEl(def.id, { size: 'lg' })),
     // Named with the ordinal it WOULD be, because the price on this card is
     // that instance's price (Docs/features/05-city-and-districts.md §3.1).
+    // The ordinal is a QUALIFIER, not part of the name: smaller and quieter,
+    // on the same line. Set at the name's own weight it was simply two more
+    // characters to fit, and "Housing #1" is what put the one line the player
+    // scans onto two.
     el('div', { class: 'bld-name' },
-      capped || !isNumbered(game.state, def) ? def.name : `${def.name} #${count + 1}`),
+      def.name,
+      ...(capped || !isNumbered(game.state, def)
+        ? []
+        : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),
     el('div', { class: 'bld-promise' }, PROMISE[def.id] ?? def.description),
+    // WHAT IT IS, WHAT IT DOES, WHAT IT COSTS — and nothing else (M3). The
+    // card used to carry a fourth row: the build time and the owned/cap pips.
+    // Both are said again where they are acted on — the placement bar quotes
+    // the same duration with the same hourglass, and a card at its cap wears
+    // a ribbon saying so in words — and at 179px the row was being paid for
+    // out of the one column that had no room, the text.
     el('div', { class: 'bld-cost' },
       costChips(cost, (c) => game.walletValue(c)),
       ...goods.map(([g, n]) => el('span',
@@ -124,14 +137,6 @@ function buildCard(game: Game, id: string): HTMLElement | null {
         ? [el('span', { class: 'k-chip is-gain' },
             iconEl('harmony', { size: 'sm' }), el('span', {}, `+${def.harmonySupply}`))]
         : [])),
-    el('div', { class: 'bld-meta' },
-      iconEl('hourglass', { size: 'sm' }),
-      el('span', {}, formatDuration(buildDuration(game.state, def.id, count, 0))),
-      // Owned as filled pips: "2 of 4" without making the player parse a
-      // fraction. An unbounded count falls back to the number.
-      Number.isFinite(maxCount)
-        ? pips(count, maxCount)
-        : el('span', {}, `${count} built`)),
   );
   if (blocked !== null) {
     card.disabled = true;
@@ -154,7 +159,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
   const discover = el('button', { class: 'bld-card bld-more', type: 'button' },
     el('div', { class: 'bld-art' }, iconEl('unknown', { size: 'lg' })),
     el('div', { class: 'bld-name' }, 'More to discover'),
-    el('div', { class: 'bld-promise' }, 'New buildings come from research'));
+    el('div', { class: 'bld-promise' }, 'Unlocked by research'));
   discover.addEventListener('click', () => game.setOverlay('research'));
   buildings.push(discover);
 
