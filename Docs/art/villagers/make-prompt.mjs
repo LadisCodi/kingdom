@@ -10,6 +10,9 @@ const frames = c.anims[anim];
 if (!frames) throw new Error(`no anim "${anim}" — have ${Object.keys(c.anims).join(', ')}`);
 const tpl = readFileSync(new URL('./_sheet-template.txt', import.meta.url), 'utf8');
 writeFileSync(new URL(`./${id}-${anim}.prompt.txt`, import.meta.url), tpl
+  .replaceAll('{{SUBJECT}}', c.subject ?? 'PERSON')
+  .replaceAll('{{BASELINE}}', c.baseline
+    ?? "every frame's FEET rest on the same invisible horizontal line across the image.")
   .replaceAll('{{WHO}}', c.who)
   .replaceAll('{{COUNT}}', String(frames.length))
   .replaceAll('{{FRAMES}}', frames.map((f, i) => `  ${i + 1}. ${f}.`).join('\n')));

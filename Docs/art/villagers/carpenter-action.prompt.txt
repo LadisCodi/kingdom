@@ -5,16 +5,18 @@ Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look 
 This is a SPRITE SHEET for a mobile management / light-4X strategy game: one row of animation frames for a single character, which the game will cut apart and play as a loop.
 
 === WHO ===
-{{WHO}}
+A broad carpenter in a cream shirt with the sleeves rolled past the elbow, a tan leather tool apron with a pocket of chisels across the front, brown trousers and flat work shoes, dark hair cut short and a pencil behind one ear. He works with a hand saw and a plane at a low trestle bench of pale timber.
 
 === THE FRAMES — THIS IS CRITICAL ===
-Draw {{COUNT}} frames of THE SAME {{SUBJECT}} in a single horizontal row, left to right, in this order:
-{{FRAMES}}
+Draw 3 frames of THE SAME PERSON in a single horizontal row, left to right, in this order:
+  1. leaning over the low trestle bench, both hands on the saw, the blade set at the near end of a pale plank and his shoulders drawn back to start the cut.
+  2. mid-stroke, the saw driven forward along the plank, his body leaning into it and a few curls of sawdust falling.
+  3. the saw at the far end of its stroke, his arms extended and his head tilted to look along the cut.
 
-They are frames of one animation, not {{COUNT}} different ones. In every frame it is the SAME character: the same face, the same hair, the same clothes in the same colours, the same build, the same height, seen from the same angle. Only the POSE changes between them.
+They are frames of one animation, not 3 different ones. In every frame it is the SAME character: the same face, the same hair, the same clothes in the same colours, the same build, the same height, seen from the same angle. Only the POSE changes between them.
 
 === SAME SIZE, SAME GROUND LINE ===
-Every frame is drawn at exactly the same scale, and {{BASELINE}} Nobody is nearer, bigger or standing higher than anybody else.
+Every frame is drawn at exactly the same scale, and every frame's FEET rest on the same invisible horizontal line across the image. Nobody is nearer, bigger or standing higher than anybody else.
 
 === CLEAR GAPS BETWEEN FRAMES ===
 Leave a WIDE, COMPLETELY EMPTY vertical gap between one frame and the next — at least a third of a frame's width — with nothing in it at all, so the frames can be cut apart automatically. No frame may touch or overlap its neighbour, and no arm, tool or cloak may reach into a gap.

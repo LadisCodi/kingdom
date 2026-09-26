@@ -76,6 +76,9 @@ bought pixel pack and these 256 px renders stand the same height on the grass.
 | `quarryman` — Quarry; stone dust, pickaxe | 2 | 4 | 3 |
 | `stonemason` — Mason's Yard; mallet and chisel | 2 | — | 3 |
 | `smith` — Smelter; leather apron, hammer and anvil | 2 | — | 3 |
+| `carpenter` — Carpenter; tool apron, saw and trestle | 2 | — | 3 |
+| `rune_carver` — Rune Carver; indigo robe, chisel, cyan runes | 2 | — | 3 |
+| `fisher_boat` — Docks; a boat with a fisherman in it | 2 | 4 | 3 |
 
 **The workshop crews have no walk, on purpose.** They are drawn at their
 building's door and never travel, so a walk cycle would be art nothing can
@@ -87,9 +90,28 @@ twitch at 260 ms a frame; four is where the model starts losing the face.
 
 Frames are **128 px** tall. A villager draws at about 49 CSS px, so 98 device
 pixels on a 2× screen — there is no room to go lower without softening them.
-The character atlas is 1.1 MB, and it is the new art that costs it: dropping
+The character atlas is 1.6 MB, and it is the new art that costs it: dropping
 the 127 superseded pixel frames barely moved it, because those were 22 px
-people.
+people. The boat is the widest thing in it — 164 px to a villager's 52.
 
-Still on the bought pack, and still to do: the Carpenter and the Rune Carver,
-which `tests/characters.test.ts` names in `AWAITING_CAST`.
+Every working building is cast. Nothing on the map falls back to the bought
+pixel pack any more, so `worker_*` and `fishing_boat*` are gone from
+`src/render/assets` and the sprite chain behind the cast went with them.
+
+## A subject that is not a person
+
+The Docks' worker is a BOAT — hull and fisherman together, one subject, cast
+and scaled as a single figure, because a boat is what rows out to a shoal and
+comes back.
+
+Two optional keys in `cast.json` say so, and the template reads them:
+
+| | default | the boat |
+|---|---|---|
+| `subject` | `PERSON` | `BOAT` |
+| `baseline` | every frame's FEET rest on one line | every frame's HULL rests on one waterline |
+
+Nothing else changes. It needs **no scale of its own**: the frame is the boat
+plus the man standing in it, so normalising that to a villager's height puts
+the hull inside the cell's diamond and the fisherman's head level with a
+villager's on the shore.

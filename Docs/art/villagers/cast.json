@@ -146,5 +146,55 @@
         "the hammer struck on the bar, a few small sparks at the point of contact, his arm extended"
       ]
     }
+  },
+  "carpenter": {
+    "who": "A broad carpenter in a cream shirt with the sleeves rolled past the elbow, a tan leather tool apron with a pocket of chisels across the front, brown trousers and flat work shoes, dark hair cut short and a pencil behind one ear. He works with a hand saw and a plane at a low trestle bench of pale timber.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the hand saw hanging from one hand at his side",
+        "the same stance a moment later, having shifted his weight slightly and wiped his forehead with the back of his wrist"
+      ],
+      "action": [
+        "leaning over the low trestle bench, both hands on the saw, the blade set at the near end of a pale plank and his shoulders drawn back to start the cut",
+        "mid-stroke, the saw driven forward along the plank, his body leaning into it and a few curls of sawdust falling",
+        "the saw at the far end of its stroke, his arms extended and his head tilted to look along the cut"
+      ]
+    }
+  },
+  "rune_carver": {
+    "who": "A lean rune carver in a deep indigo robe with the sleeves bound back at the forearms, a slate-grey leather apron, dark trousers and soft boots, close-cropped grey hair and a short beard. He works with a fine chisel and a small mallet on a waist-high block of pale cut stone, and the marks he cuts glow a soft cyan.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the mallet held loosely at his side and the chisel in his other hand",
+        "the same stance a moment later, having shifted his weight slightly and raised the chisel to inspect its tip"
+      ],
+      "action": [
+        "leaning over the block of pale stone, the chisel set against a half-cut rune in one hand and the mallet raised in the other, about to strike",
+        "the mallet coming down onto the chisel head, his shoulders dropping into the blow, the cut rune flaring soft cyan at the point of contact",
+        "the mallet resting on the chisel, his head tilted to look along the finished rune, which glows a steady soft cyan in the stone"
+      ]
+    }
+  },
+  "fisher_boat": {
+    "subject": "BOAT",
+    "baseline": "every frame's HULL rests at the same height on the same invisible horizontal waterline across the image.",
+    "who": "A small open fishing boat of warm honey-brown timber with a pale cream stripe along its top plank, a coil of rope at the bow and a folded net of ochre cord heaped at the stern. A fisherman stands in it: a wiry man in a faded blue smock with the sleeves pushed up, ochre trousers rolled to the calf, bare feet, and a soft red cap. Boat and fisherman are ONE subject and are always drawn together.",
+    "anims": {
+      "idle": [
+        "the boat sitting level and still, the fisherman standing upright amidships with an oar held vertically in one hand",
+        "the same, a moment later, the boat having settled slightly and the fisherman shifted his weight, the oar still upright"
+      ],
+      "walk": [
+        "the boat under way, the fisherman leaning forward with both hands on the oar and the blade reaching far out ahead of him, about to bite the water",
+        "the boat level and moving, the fisherman upright and the oar vertical mid-stroke, the hull at the top of its bob",
+        "the fisherman leaning back, both arms drawn in and the oar blade sweeping past behind him at the end of the pull",
+        "the boat level again, the fisherman upright and the oar vertical on the recovery, the hull at the top of its bob"
+      ],
+      "action": [
+        "the boat still, the fisherman leaning far over the near gunwale with both hands gripping the ochre net just at the waterline, about to haul",
+        "mid-haul, the net rising out of the water in both his hands with two or three silver fish caught in it, his back straightening",
+        "the net lifted clear and swung inboard over the stern, the fish spilling into the bottom of the boat, the fisherman upright again"
+      ]
+    }
   }
 }
