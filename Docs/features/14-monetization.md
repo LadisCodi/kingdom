@@ -91,8 +91,8 @@
 | **Gold key** | chance | Gems (1,500) | one golden call — built |
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
-| **Royal chest** | season | **€9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
-| **Season pass, paid column** | season | **€4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
+| **Royal chest** | season | **$9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
+| **Season pass, paid column** | season | **$4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
 | Fog charter | land | $2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
@@ -131,7 +131,7 @@
 
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
   buys 50,000. No tier is a better deal than another.
-- **The Royal chest sits outside the ladder on purpose** — €9.99 for 50,000
+- **The Royal chest sits outside the ladder on purpose** — $9.99 for 50,000
   Gems of value, ten times the rate, paid out over fourteen logins in twenty
   days. A pack is Gems now; the pass is Gems, keys and XP for showing up. Half
   its value is not Gems at all, which is what keeps the packs worth measuring
@@ -346,7 +346,7 @@ One page, refreshed weekly:
 | How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
 | The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
-| The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
+| The Royal chest | **$9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
 | How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundle_withdraw_hours` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |

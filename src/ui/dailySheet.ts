@@ -25,6 +25,7 @@
 
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
+import { formatUsd } from '../sim/store';
 import { el, formatCount } from './format';
 import { currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
@@ -40,7 +41,7 @@ function prize(reward: Wallet): HTMLElement[] {
 export function renderDailySheet(game: Game): HTMLElement {
   const season = game.dailySeason();
   const close = () => game.setOverlay(null);
-  const price = `€${season.royalPriceUsd.toFixed(2)}`;
+  const price = formatUsd(Math.round(season.royalPriceUsd * 100));
 
   // ---- the two column headers. The right one IS the buy button while the
   // season is unbought: the price belongs on the thing it buys, not in a

@@ -98,7 +98,7 @@ threshold   free reward         paid reward
 - A track claimed during an offline replay pays exactly once.
 - **This is built, as the season pass** ([`20-season-pass.md`](20-season-pass.md)):
   40 levels on the collection's clock, XP from generated missions, and the
-  paid column as one €4.99 purchase. An event's own track is the same shape
+  paid column as one $4.99 purchase. An event's own track is the same shape
   scoped to the occurrence.
 - **OQ-20.**
 
