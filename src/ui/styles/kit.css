@@ -620,3 +620,22 @@
 .k-sheet.is-centred { max-width: 340px; max-height: 78%; margin-left: auto; margin-right: auto; }
 /* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
 .k-sheet.is-tall { height: auto; max-height: calc(100% - 96px); margin-top: auto; }
+
+/* The materials page. A specimen sits on a CHECKERBOARD, not on the page's
+ * brown: a frame whose corner is transparent where it should be opaque, or
+ * opaque where it should be cut away, is invisible against a flat ground and
+ * obvious against this one. */
+.gal-slice { margin-bottom: 18px; }
+.gal-box {
+  box-sizing: border-box;
+  background-color: transparent;
+  --sq: #00000022;
+  background-image:
+    linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%),
+    linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+/* …except where the specimen IS the background, which the checkerboard would
+ * then be painted over anyway. Those set their own, so keep the box bare. */
+.gal-box--bare { background-image: none; }

@@ -6,7 +6,7 @@
 // next to a dozen pixel icons, which nobody notices in review.
 //
 // Runs in node — atlas.generated.ts is deliberately DOM-free.
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
@@ -114,5 +114,35 @@ describe('src/render/assets', () => {
     const stems = new Set(files.map((f) => f.replace(/\.png$/, '')));
     const shadowed = [...stems].filter((s) => stems.has(`${s}_l1`));
     expect(shadowed).toEqual([]);
+  });
+});
+
+// The chrome's materials, which no other test can see.
+//
+// `material.css` names its art in `url(...)` and the gallery names it in
+// inline styles; neither is type-checked, so a renamed or deleted file blanks
+// a panel's frame in the build and nothing fails. The frame is the one thing
+// a player never reads as missing — it just looks flat.
+describe('the chrome materials', () => {
+  const read = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
+  const assets = new Set(
+    readdirSync(new URL('../src/ui/assets/', import.meta.url)),
+  );
+
+  it('every material.css url() points at a file that exists', () => {
+    const css = read('../src/ui/styles/material.css');
+    const wanted = [...css.matchAll(/url\('\.\.\/assets\/([^']+)'\)/g)].map((m) => m[1]);
+    expect(wanted.length).toBeGreaterThan(0);
+    expect(wanted.filter((f) => !assets.has(f))).toEqual([]);
+  });
+
+  it('every stem the kit gallery asks for exists', () => {
+    // It resolves them through import.meta.glob, so a missing one is an empty
+    // string rather than a 404 — silent twice over.
+    const src = read('../src/ui/devGallery.ts');
+    const stems = [...src.matchAll(/mat\('([^']+)'\)/g)].map((m) => m[1]);
+    expect(stems.length).toBeGreaterThan(0);
+    const have = new Set([...assets].map((f) => f.replace(/\.[a-z]+$/, '')));
+    expect(stems.filter((s) => !have.has(s))).toEqual([]);
   });
 });
