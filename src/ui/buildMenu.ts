@@ -22,19 +22,10 @@ import type { Game } from '../game';
 import { el } from './format';
 import { costChips, iconEl, sheet } from './kit';
 import type { GoodId } from '../sim/state';
+import { PROMISE } from './buildPromise';
 
 /** What this building is FOR, in one line — the card's promise. Falls back
  *  to the full description, which is fine but wordier than a card wants. */
-const PROMISE: Partial<Record<string, string>> = {
-  Housing: 'Villagers live here and pay taxes',
-  Farm: 'Workers harvest crops nearby',
-  FarmLands: 'A crop plot you can tap for food',
-  Sawmill: 'Workers fell the forest around it',
-  Quarry: 'Workers cut stone from nearby rock',
-  Docks: 'Boats bring in fish',
-  Mine: 'Workers dig iron from nearby veins',
-};
-
 /**
  * `supply / demand` and what the surplus is paying, above the grid.
  *
@@ -121,7 +112,7 @@ function buildCard(game: Game, id: string): HTMLElement | null {
       ...(capped || !isNumbered(game.state, def)
         ? []
         : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),
-    el('div', { class: 'bld-promise' }, PROMISE[def.id] ?? def.description),
+    el('div', { class: 'bld-promise' }, PROMISE[def.id]),
     // WHAT IT IS, WHAT IT DOES, WHAT IT COSTS — and nothing else (M3). The
     // card used to carry a fourth row: the build time and the owned/cap pips.
     // Both are said again where they are acted on — the placement bar quotes
