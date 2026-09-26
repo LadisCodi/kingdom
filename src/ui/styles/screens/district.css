@@ -690,14 +690,24 @@
 
 /* ---- the villagers' row and the level-up's before → after (M2) ---- */
 .tr-info.is-villagers { display: block; }
-.tr-villagers { display: flex; align-items: center; gap: 10px; }
+.tr-villagers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tr-villagers > .tr-roster { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 5px; }
 .tr-villagers .tr-roster-slot { width: 40px; height: 40px; }
 .tr-villagers .tr-roster-art { width: 34px; height: 34px; }
 .tr-villagers .k-btn { min-height: 34px; }
-.tr-villagers > .k-action,
-.tr-villagers > .tr-blocked { flex: none; max-width: 36%; }
-.tr-villagers > .tr-blocked { font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
+.tr-villagers > .k-action { flex: none; max-width: 36%; }
+/* A REASON IS NOT A BUTTON. The 36% beside the roster is sized for "Train"
+   and its price; "Nowhere to put them — build more Housing" is forty
+   characters, and in 132px it came out as four stacked scraps next to the
+   figures it was talking about. So it takes a line of its own, under the
+   roster, where the row's full width reads it in one. */
+.tr-villagers > .tr-blocked {
+  flex: 1 0 100%;
+  max-width: none;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  line-height: 1.3;
+}
 /* A gate beside a soldier's name takes only the room it needs, so the name
    keeps its line. */
 .tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; font-weight: var(--weight-small); }

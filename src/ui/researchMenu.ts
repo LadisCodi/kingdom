@@ -322,7 +322,12 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const place = `left:${colLeft(col)}px;top:${top}px;`
     + `width:${NODE_W}px;height:${NODE_H}px`;
   if (techVisibility(state, id) === 'silhouette') {
-    return el('div', { class: 'tech-card silhouette', style: place }, '?');
+    // A SPAN, not a bare '?'. The card overlays a dashed ring and the mark in
+    // one grid cell, and `.tech-card.silhouette > *` is what puts them there —
+    // a text node gets an anonymous grid item that no selector can reach, so
+    // the ring took row 1 and the '?' fell to row 2, stacked under it.
+    return el('div', { class: 'tech-card silhouette', style: place },
+      el('span', {}, '?'));
   }
   const done = isTechComplete(state, id);
   const active = isTechActive(state, id);
