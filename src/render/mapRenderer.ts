@@ -16,7 +16,7 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState, type HarvestSourceId,
+  type Coord, type GameState,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -472,7 +472,6 @@ export function drawMap(
       const sx = c.x - uw / 2;
       const sy = c.y - uw;
       const t = now + v.phase;
-      const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
       // Cast by phase: it is per agent and stable, so a villager keeps its face.
       const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
       // Takes its context so the same drawing can go into the outline's
@@ -480,7 +479,7 @@ export function drawMap(
       const paint = (g: CanvasRenderingContext2D): void => {
         unitTransform(g, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
           if (drawCharacter(g, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
-          if (!keys.some((k) => drawSprite(g, k, sx, sy, uw, uw))) {
+          {
             drawGlyph(g, '🧍', sx, sy, uw, size * 0.34);
           }
         });
@@ -1092,10 +1091,6 @@ export function drawMap(
     if (!building) continue;
     const sources = DISTRICTS[building.definitionId].harvestSources;
     const boat = sources.includes('Fish');
-    // Read from the cell the worker CLAIMED, not from the building: a Mine
-    // works two mountains and its crew is on one or the other.
-    const source = worker.claimedCell !== null
-      ? harvestSourceAt(state, worker.claimedCell) : sources[0] ?? null;
     const c = mid(cellRect(pos));
     const uw = size * 0.6;
     const sx = c.x - uw / 2;
@@ -1116,25 +1111,12 @@ export function drawMap(
       flip = facesRight(dx - dy);
     }
 
-    // Sprite chain: animation frame → static (carrying) sprite → base.
     const carrying = worker.carrying > 0;
-    const stem = boat ? 'fishing_boat' : 'worker';
-    const keys: string[] = [];
-    if (boat) {
-      if (moving && !carrying) keys.push(workFrameKey('fishing_boat_row', t));
-    } else if (moving) {
-      keys.push(walkFrameKey(carrying ? 'worker_carry' : 'worker_walk', t));
-    } else if (working) {
-      const anim = source ? WORK_ANIM[source] : undefined;
-      if (anim) keys.push(workFrameKey(`worker_${anim}`, t));
-    }
-    if (carrying) keys.push(`${stem}_carrying`);
-    keys.push(stem);
 
-    // The atlas cast first — a farmer for the Farm, a lumberjack for the
-    // Sawmill — then the legacy sprite chain, then the emoji. Boats have no
-    // cast and skip straight to the chain.
-    const member = boat ? null : castFor(building.definitionId, unitPhase(worker.id));
+    // Every working building is cast (src/render/cast.ts), the Docks included
+    // — its member is the boat that rows out. The emoji below is the same last
+    // resort every drawing has, not a tier anything reaches in practice.
+    const member = castFor(building.definitionId, unitPhase(worker.id));
     const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
     const cast = member ? animFor(member, pose) : null;
     const paint = (g: CanvasRenderingContext2D): void => {
@@ -1142,7 +1124,7 @@ export function drawMap(
         if (cast && drawCharacter(g, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
           return;
         }
-        if (!keys.some((k) => drawSprite(g, k, sx, sy, uw, uw))) {
+        {
           drawGlyph(g, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
           if (carrying) {
             drawGlyph(g, boat ? '🐟' : '🎒', c.x, c.y - uw - size * 0.2, size * 0.5, size * 0.2);
@@ -1185,24 +1167,6 @@ export function drawMap(
 }
 
 // ---------------------------------------------------------- unit animation
-
-const WALK_FRAME_MS = 140; // 4-frame walk cycle ≈ 560 ms
-const WORK_FRAME_MS = 320; // 2-frame work loop (strike cadence)
-
-/** Which 2-frame work loop a Working worker plays, by what it harvests. */
-const WORK_ANIM: Partial<Record<HarvestSourceId, string>> = {
-  Crops: 'farm',
-  Forest: 'chop',
-  Stone: 'mine',
-  MountainIron: 'mine',
-  MountainGold: 'mine',
-};
-
-const walkFrameKey = (stem: string, t: number): string =>
-  `${stem}_${(Math.floor(t / WALK_FRAME_MS) % 4) + 1}`;
-
-const workFrameKey = (stem: string, t: number): string =>
-  `${stem}_${(Math.floor(t / WORK_FRAME_MS) % 2) + 1}`;
 
 /** Stable per-unit phase offset (ms) so units don't animate in lockstep. */
 function unitPhase(id: string): number {

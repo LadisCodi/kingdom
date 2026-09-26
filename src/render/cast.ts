@@ -20,19 +20,23 @@ export type UnitPose = 'idle' | 'walk' | 'work';
  * its id, so it keeps its face across frames and reloads. Every member must
  * have an `idle`; `walk` and `work` resolve through `animFor` below.
  *
- * The Docks are absent on purpose: its workers are fishing boats, drawn from
- * `src/render/assets` as before.
+ * The Docks' crew member is a BOAT with a fisherman standing in it — one
+ * subject, drawn and scaled as a single figure, because a boat is what rows
+ * out to a shoal and comes back. Casting it here is what let the bought pixel
+ * pack's `worker_*` and `fishing_boat*` sprites go: every working building on
+ * the map now has art of its own.
  */
 export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
   Farm: ['farmer'],
   Sawmill: ['woodcutter'],
   Quarry: ['quarryman'],
+  Docks: ['fisher_boat'],
   // Workshop crews never leave the building — they are drawn at its door —
   // so they have no walk, and `animFor` falls back to idle for one.
-  // Carpenter and RuneCarver are absent because nobody has a work loop for
-  // either trade yet; tests/characters.test.ts names them.
+  Carpenter: ['carpenter'],
   MasonsYard: ['stonemason'],
   Smelter: ['smith'],
+  RuneCarver: ['rune_carver'],
 };
 
 /**
@@ -66,7 +70,7 @@ export const NEVER_HIDES: ReadonlySet<DistrictId> = new Set<DistrictId>([
 ]);
 
 /** A crew member for a building of this kind, or null when the building has
- *  no cast (Docks) — the caller then draws the legacy sprite chain. */
+ *  no cast at all — a decoration, or a district that does not work. */
 export function castFor(district: DistrictId, seed: number): string | null {
   const crew = CREW[district];
   if (!crew || crew.length === 0) return null;
