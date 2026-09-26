@@ -26,6 +26,7 @@
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId } from '../sim/state';
+import { questLine } from '../sim/questProse';
 import { el } from './format';
 import { iconEl, progress, currencyIcon, type IconName } from './kit';
 
@@ -110,7 +111,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     if (index !== shownIndex) {
       shownIndex = index;
       name.textContent = quest.name;
-      desc.textContent = quest.description;
+      desc.textContent = questLine(quest);
       reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
       slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
     }

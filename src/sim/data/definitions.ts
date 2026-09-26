@@ -461,8 +461,9 @@ export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
 
 export interface QuestDef {
   id: string; // content id — data-side, not a TS union
+  /** Flavour: "Timber!", "Tax day". What the quest ASKS is not written down —
+   *  `questLine()` renders it from the goal below (src/sim/questProse.ts). */
   name: string;
-  description: string;
   goalType: QuestGoalType;
   /** DistrictId / TechId / CurrencyId depending on goalType; null otherwise. */
   goalTarget: string | null;

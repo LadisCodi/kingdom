@@ -4959,7 +4959,6 @@
     {
       "id": "FirstSteps",
       "name": "First steps",
-      "description": "Tap the dark ground to clear it. Find four stands of forest — you will want the timber.",
       "goalType": "DiscoverFeature",
       "goalTarget": "Trees",
       "goalAmount": 4,
@@ -4975,7 +4974,6 @@
     {
       "id": "Woodcraft",
       "name": "Forestry",
-      "description": "Nothing here can be worked by hand yet. Research Forestry — it opens the woods and the berry bushes both.",
       "goalType": "CompleteTech",
       "goalTarget": "Forestry",
       "goalAmount": 1,
@@ -4991,7 +4989,6 @@
     {
       "id": "Timber",
       "name": "Timber!",
-      "description": "Now tap the trees beside your Townhall. Twenty-five Wood buys a roof and a field.",
       "goalType": "CollectResource",
       "goalTarget": "Wood",
       "goalAmount": 25,
@@ -5005,7 +5002,6 @@
     {
       "id": "ARoof",
       "name": "A roof",
-      "description": "Build a House. Somebody has to live here.",
       "goalType": "BuildDistrict",
       "goalTarget": "Housing",
       "goalAmount": 1,
@@ -5021,7 +5017,6 @@
     {
       "id": "Rations",
       "name": "Rations",
-      "description": "Tap the berry bush west of your Townhall for Food. Villagers eat.",
       "goalType": "CollectResource",
       "goalTarget": "Food",
       "goalAmount": 5,
@@ -5035,7 +5030,6 @@
     {
       "id": "FirstVillager",
       "name": "First villager",
-      "description": "Train your first villager — your new House has room for two.",
       "goalType": "ReachPopulation",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5051,7 +5045,6 @@
     {
       "id": "TaxDay",
       "name": "Tax day",
-      "description": "Your villager pays rent. Tap the House to hurry it along — 30 Gold.",
       "goalType": "CollectResource",
       "goalTarget": "Gold",
       "goalAmount": 30,
@@ -5067,7 +5060,6 @@
     {
       "id": "Explorer",
       "name": "Explorer",
-      "description": "Push the fog back further. The land is worth knowing.",
       "goalType": "DiscoverCells",
       "goalTarget": null,
       "goalAmount": 8,
@@ -5083,7 +5075,6 @@
     {
       "id": "Fields",
       "name": "Fields",
-      "description": "Research Agriculture: crop plots you can tap for Food.",
       "goalType": "CompleteTech",
       "goalTarget": "Agriculture",
       "goalAmount": 1,
@@ -5099,7 +5090,6 @@
     {
       "id": "FirstPlot",
       "name": "First plot",
-      "description": "Build two crop plots on open grass.",
       "goalType": "BuildDistrict",
       "goalTarget": "FarmLands",
       "goalAmount": 2,
@@ -5115,7 +5105,6 @@
     {
       "id": "ByHand",
       "name": "By hand",
-      "description": "Tap the plots for Food. Doing this forever is not the plan.",
       "goalType": "CollectResource",
       "goalTarget": "Food",
       "goalAmount": 20,
@@ -5129,7 +5118,6 @@
     {
       "id": "Lumber",
       "name": "Lumber",
-      "description": "Chop enough Wood by hand to raise a Farm.",
       "goalType": "HoldResource",
       "goalTarget": "Wood",
       "goalAmount": 30,
@@ -5145,7 +5133,6 @@
     {
       "id": "Tillage",
       "name": "Tillage",
-      "description": "Research Farming: a Farm that works the plots for you.",
       "goalType": "CompleteTech",
       "goalTarget": "Farming",
       "goalAmount": 1,
@@ -5161,7 +5148,6 @@
     {
       "id": "Farmhand",
       "name": "Farmhand",
-      "description": "Build a Farm beside your plot.",
       "goalType": "BuildDistrict",
       "goalTarget": "Farm",
       "goalAmount": 1,
@@ -5177,7 +5163,6 @@
     {
       "id": "ToWork",
       "name": "Put them to work",
-      "description": "Assign a villager to the Farm. Now it harvests without you.",
       "goalType": "AssignWorkers",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5193,7 +5178,6 @@
     {
       "id": "GrowingTown",
       "name": "Growing town",
-      "description": "Build a second House. The Wood is starting to add up.",
       "goalType": "BuildDistrict",
       "goalTarget": "Housing",
       "goalAmount": 2,
@@ -5209,7 +5193,6 @@
     {
       "id": "Neighbors",
       "name": "Neighbors",
-      "description": "Train another villager — the new House has the room.",
       "goalType": "ReachPopulation",
       "goalTarget": null,
       "goalAmount": 3,
@@ -5225,7 +5208,6 @@
     {
       "id": "SawTeeth",
       "name": "Saw teeth",
-      "description": "Research Saws. Hand-chopping has taken you as far as it goes.",
       "goalType": "CompleteTech",
       "goalTarget": "Saws",
       "goalAmount": 1,
@@ -5241,7 +5223,6 @@
     {
       "id": "TheSawmill",
       "name": "The Sawmill",
-      "description": "Build a Sawmill within reach of the forest.",
       "goalType": "BuildDistrict",
       "goalTarget": "Sawmill",
       "goalAmount": 1,
@@ -5257,7 +5238,6 @@
     {
       "id": "Crewed",
       "name": "Crewed",
-      "description": "Put three villagers to work — two of them on the Sawmill.",
       "goalType": "AssignWorkers",
       "goalTarget": null,
       "goalAmount": 3,
@@ -5273,7 +5253,6 @@
     {
       "id": "ProperCapital",
       "name": "A proper capital",
-      "description": "Your Townhall is full. Upgrade it for room to build.",
       "goalType": "UpgradeDistrict",
       "goalTarget": "Townhall",
       "goalAmount": 1,
@@ -5289,7 +5268,6 @@
     {
       "id": "Levies",
       "name": "Levies",
-      "description": "Research Taxes. A settled town pays its hall a little more.",
       "goalType": "CompleteTech",
       "goalTarget": "Taxes01",
       "goalAmount": 1,
@@ -5305,7 +5283,6 @@
     {
       "id": "Sawpits",
       "name": "Sawpits",
-      "description": "Research Sawpits. Every swing at a tree brings back a little more.",
       "goalType": "CompleteTech",
       "goalTarget": "SawpitsI",
       "goalAmount": 1,
@@ -5321,7 +5298,6 @@
     {
       "id": "Regrowth",
       "name": "Regrowth",
-      "description": "Research Reforesting. The stumps come back sooner.",
       "goalType": "CompleteTech",
       "goalTarget": "Reforesting01",
       "goalAmount": 1,
@@ -5337,7 +5313,6 @@
     {
       "id": "FurtherAfield",
       "name": "Further afield",
-      "description": "The map is bigger than your fields. Keep clearing it.",
       "goalType": "DiscoverCells",
       "goalTarget": null,
       "goalAmount": 15,
@@ -5353,7 +5328,6 @@
     {
       "id": "ArmedMen",
       "name": "Armed men",
-      "description": "There is a barrow west of your fields, and it is not empty. Research Warriors.",
       "goalType": "CompleteTech",
       "goalTarget": "Warrior",
       "goalAmount": 1,
@@ -5369,7 +5343,6 @@
     {
       "id": "Mustered",
       "name": "Mustered",
-      "description": "Build a Barracks. You will need Stone — there is rock to the east.",
       "goalType": "BuildDistrict",
       "goalTarget": "Barracks",
       "goalAmount": 1,
@@ -5385,7 +5358,6 @@
     {
       "id": "FirstSoldier",
       "name": "First soldier",
-      "description": "Train your first soldier.",
       "goalType": "TrainArmy",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5401,7 +5373,6 @@
     {
       "id": "FirstSummon",
       "name": "A hero answers",
-      "description": "Summon at the banner. The first call is free.",
       "goalType": "OwnHeroes",
       "goalTarget": null,
       "goalAmount": 2,
@@ -5417,7 +5388,6 @@
     {
       "id": "MusterCompany",
       "name": "A company",
-      "description": "Train twenty-four soldiers. One is a guard; a company is what takes a gate.",
       "goalType": "TrainArmy",
       "goalTarget": null,
       "goalAmount": 24,
@@ -5433,7 +5403,6 @@
     {
       "id": "DriveThemOut",
       "name": "Drive them out",
-      "description": "Orcs hold the mouth of the Hollow Barrow, and they are counting down. Clear the gate.",
       "goalType": "ClearGarrisons",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5449,7 +5418,6 @@
     {
       "id": "OldStones",
       "name": "Old stones",
-      "description": "Claim the shrine east of the Townhall. It will hold your magic.",
       "goalType": "ClaimLandmarks",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5465,7 +5433,6 @@
     {
       "id": "Attuned",
       "name": "Attunement",
-      "description": "Consecrate a Sanctum. The stones you claimed hum with something the city can hold.",
       "goalType": "CompleteTech",
       "goalTarget": "Consecration",
       "goalAmount": 1,
@@ -5481,7 +5448,6 @@
     {
       "id": "Mapmakers",
       "name": "Mapmakers",
-      "description": "Reveal 20 more cells — a map is drawn by walking it.",
       "goalType": "DiscoverCells",
       "goalTarget": null,
       "goalAmount": 20,
@@ -5497,7 +5463,6 @@
     {
       "id": "Surveyors",
       "name": "Surveyors",
-      "description": "Reveal 25 more — the far rings are dearer, and worth it.",
       "goalType": "DiscoverCells",
       "goalTarget": null,
       "goalAmount": 25,
@@ -5513,7 +5478,6 @@
     {
       "id": "Highlands",
       "name": "Into the highlands",
-      "description": "Research Scaling Tools to climb the mountains.",
       "goalType": "CompleteTech",
       "goalTarget": "ScalingTools",
       "goalAmount": 1,
@@ -5529,7 +5493,6 @@
     {
       "id": "PutToSea",
       "name": "Put to sea",
-      "description": "Research Sailing to cross open water.",
       "goalType": "CompleteTech",
       "goalTarget": "Sailing",
       "goalAmount": 1,
@@ -5545,7 +5508,6 @@
     {
       "id": "IntoTheDark",
       "name": "Into the dark",
-      "description": "Send a party into the Hollow Barrow and survive one depth.",
       "goalType": "ReachDepth",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5561,7 +5523,6 @@
     {
       "id": "Stoneworks",
       "name": "Stoneworks",
-      "description": "Build a Quarry. Tapping rock by hand has served its purpose.",
       "goalType": "BuildDistrict",
       "goalTarget": "Quarry",
       "goalAmount": 1,
@@ -5577,7 +5538,6 @@
     {
       "id": "MoreRoom",
       "name": "More room",
-      "description": "Research Urban Planning to build Houses taller.",
       "goalType": "CompleteTech",
       "goalTarget": "UrbanPlanning",
       "goalAmount": 1,
@@ -5593,7 +5553,6 @@
     {
       "id": "SecondStory",
       "name": "Second story",
-      "description": "Upgrade a House to level 2.",
       "goalType": "UpgradeDistrict",
       "goalTarget": "Housing",
       "goalAmount": 1,
@@ -5610,7 +5569,6 @@
     {
       "id": "FullHouse",
       "name": "Full house",
-      "description": "Grow to eight villagers.",
       "goalType": "ReachPopulation",
       "goalTarget": null,
       "goalAmount": 8,
@@ -5627,7 +5585,6 @@
     {
       "id": "IronRoad",
       "name": "The iron road",
-      "description": "Iron lies in the northern ridge. Bring back ten.",
       "goalType": "CollectResource",
       "goalTarget": "Stone",
       "goalAmount": 30,
@@ -5643,7 +5600,6 @@
     {
       "id": "Architect",
       "name": "The architect",
-      "description": "Set the city's clerks to work. With them the Townhall may stand a level higher.",
       "goalType": "CompleteTech",
       "goalTarget": "Bureaucracy",
       "goalAmount": 1,
@@ -5659,7 +5615,6 @@
     {
       "id": "DeepSeams",
       "name": "Deep seams",
-      "description": "The peaks give up ordinary stone. Research Mining and your quarrymen bring the iron out of them too.",
       "goalType": "CompleteTech",
       "goalTarget": "Mining",
       "goalAmount": 1,
@@ -5675,7 +5630,6 @@
     {
       "id": "GrandCapital",
       "name": "A grand capital",
-      "description": "Raise the Townhall to level 3.",
       "goalType": "UpgradeDistrict",
       "goalTarget": "Townhall",
       "goalAmount": 1,
@@ -5691,7 +5645,6 @@
     {
       "id": "TheSanctum",
       "name": "A place for magic",
-      "description": "Build the Sanctum.",
       "goalType": "BuildDistrict",
       "goalTarget": "Sanctum",
       "goalAmount": 1,
@@ -5708,7 +5661,6 @@
     {
       "id": "AWarband",
       "name": "A warband",
-      "description": "Sixty soldiers under arms. The deeper ruins are fought by companies.",
       "goalType": "TrainArmy",
       "goalTarget": null,
       "goalAmount": 60,
@@ -5725,7 +5677,6 @@
     {
       "id": "TheBarrowsPrize",
       "name": "The Barrow’s Prize",
-      "description": "Clear the Hollow Barrow to its floor.",
       "goalType": "ClearRuins",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5741,7 +5692,6 @@
     {
       "id": "WornWell",
       "name": "Worn well",
-      "description": "Attune an artifact to your kingdom.",
       "goalType": "OwnArtifacts",
       "goalTarget": null,
       "goalAmount": 1,
@@ -5757,7 +5707,6 @@
     {
       "id": "Leylines",
       "name": "Leylines",
-      "description": "Claim four of the old places.",
       "goalType": "ClaimLandmarks",
       "goalTarget": null,
       "goalAmount": 4,
@@ -5774,7 +5723,6 @@
     {
       "id": "DeeperStill",
       "name": "Deeper still",
-      "description": "Reach depth five in any ruin.",
       "goalType": "ReachDepth",
       "goalTarget": null,
       "goalAmount": 5,
@@ -5791,7 +5739,6 @@
     {
       "id": "TheReliquary",
       "name": "The Reliquary",
-      "description": "Hold three artifacts at once.",
       "goalType": "OwnArtifacts",
       "goalTarget": null,
       "goalAmount": 3,
