@@ -65,17 +65,31 @@ bought pixel pack and these 256 px renders stand the same height on the grass.
 
 ## Landed
 
-| | idle | walk |
-|---|---|---|
-| `villager_1` — young woman, blue dress, cream apron | 2 | 4 |
-| `villager_2` — stocky man, russet tunic, flat cap | 2 | 4 |
-| `villager_3` — older woman, green skirt, rust shawl | 2 | 4 |
-| `villager_4` — lanky young man, mustard waistcoat | 2 | 4 |
+| | idle | walk | action |
+|---|---|---|---|
+| `villager_1` — young woman, blue dress, cream apron | 2 | 4 | — |
+| `villager_2` — stocky man, russet tunic, flat cap | 2 | 4 | — |
+| `villager_3` — older woman, green skirt, rust shawl | 2 | 4 | — |
+| `villager_4` — lanky young man, mustard waistcoat | 2 | 4 | — |
+| `farmer` — Farm; straw hat, leather apron, hoe | 2 | 4 | 3 |
+| `woodcutter` — Sawmill; checked shirt, felling axe | 2 | 4 | 3 |
+| `quarryman` — Quarry; stone dust, pickaxe | 2 | 4 | 3 |
+| `stonemason` — Mason's Yard; mallet and chisel | 2 | — | 3 |
+| `smith` — Smelter; leather apron, hammer and anvil | 2 | — | 3 |
 
-Frames are **128 px** tall, not 256: a villager is drawn about 49 CSS px, so
-98 device pixels on a 2× screen. Frames four times larger than anything can
-show tripled the shipped atlas for nothing.
+**The workshop crews have no walk, on purpose.** They are drawn at their
+building's door and never travel, so a walk cycle would be art nothing can
+show. `tests/characters.test.ts` reads that rule off the BUILDING rather than
+a list — a district that harvests is exactly one that sends its crew out.
 
-Still on the bought pixel pack, and still to do: the **work** loops for the
-crews that have one — Farm, Sawmill, Quarry, Mason's Yard, Smelter — each of
-which needs an `action` sheet as well as idle and walk.
+An `action` is three frames: raised, mid-swing, struck. Two reads as a
+twitch at 260 ms a frame; four is where the model starts losing the face.
+
+Frames are **128 px** tall. A villager draws at about 49 CSS px, so 98 device
+pixels on a 2× screen — there is no room to go lower without softening them.
+The character atlas is 1.1 MB, and it is the new art that costs it: dropping
+the 127 superseded pixel frames barely moved it, because those were 22 px
+people.
+
+Still on the bought pack, and still to do: the Carpenter and the Rune Carver,
+which `tests/characters.test.ts` names in `AWAITING_CAST`.

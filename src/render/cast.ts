@@ -24,15 +24,15 @@ export type UnitPose = 'idle' | 'walk' | 'work';
  * `src/render/assets` as before.
  */
 export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
-  Farm: ['farm_1', 'farm_2', 'farm_3'],
-  Sawmill: ['sawmill_man_1', 'sawmill_woman_1'],
-  Quarry: ['quarry_man_1', 'quarry_man_2', 'quarry_woman_1', 'quarry_woman_2'],
+  Farm: ['farmer'],
+  Sawmill: ['woodcutter'],
+  Quarry: ['quarryman'],
   // Workshop crews never leave the building — they are drawn at its door —
-  // but they are villagers like any other, so they are cast the same way.
-  // Carpenter and RuneCarver are absent because the pack has nobody with a
-  // work loop for either trade; tests/characters.test.ts names them.
-  MasonsYard: ['stonemason_man_1', 'stonemason_woman_1'],
-  Smelter: ['forge_man_1', 'forge_woman_1'],
+  // so they have no walk, and `animFor` falls back to idle for one.
+  // Carpenter and RuneCarver are absent because nobody has a work loop for
+  // either trade yet; tests/characters.test.ts names them.
+  MasonsYard: ['stonemason'],
+  Smelter: ['smith'],
 };
 
 /**

@@ -1,0 +1,53 @@
+Generate one image. Wide framing, 16:9 aspect ratio.
+
+Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting and level of detail. Use the reference for STYLE ONLY.
+
+This is a SPRITE SHEET for a mobile management / light-4X strategy game: one row of animation frames for a single character, which the game will cut apart and play as a loop.
+
+=== WHO ===
+A broad-shouldered woodcutter in a red-brown checked shirt with the sleeves cut off, a thick leather belt, dark green trousers and heavy boots, a short dark beard. He carries a felling axe.
+
+=== THE FRAMES — THIS IS CRITICAL ===
+Draw 2 frames of THE SAME PERSON in a single horizontal row, left to right, in this order:
+  1. standing still, weight on both feet, the axe head resting on the ground beside him.
+  2. the same stance a moment later, having shifted his weight slightly.
+
+They are frames of one animation, not 2 different people. In every frame it is the SAME character: the same face, the same hair, the same clothes in the same colours, the same build, the same height, seen from the same angle. Only the POSE changes between them.
+
+=== SAME SIZE, SAME GROUND LINE ===
+Every frame is drawn at exactly the same scale, and every frame's FEET rest on the same invisible horizontal line across the image. Nobody is nearer, bigger or standing higher than anybody else.
+
+=== CLEAR GAPS BETWEEN FRAMES ===
+Leave a WIDE, COMPLETELY EMPTY vertical gap between one frame and the next — at least a third of a frame's width — with nothing in it at all, so the frames can be cut apart automatically. No frame may touch or overlap its neighbour, and no arm, tool or cloak may reach into a gap.
+There is no grid, no box, no border, no numbering and no separator line. Just figures with empty space between them.
+
+=== THE CAMERA ===
+A TRUE 2:1 ISOMETRIC game camera, the same one the buildings use: seen from slightly above and to the side, lower and flatter than a typical three-quarter view. Vertical lines stay vertical. Parallel/orthographic — no perspective, no vanishing point.
+The character faces to the LEFT and slightly towards the viewer, the way it would walk across the map.
+
+=== SCALE AND READABILITY ===
+This is a GAMEPLAY-SCALE FIGURE, about twenty pixels tall in the game. It must read at a glance at that size: a clear silhouette, chunky simple proportions, a slightly large head, strong flat colour blocking, and no fine detail that would turn to mud. No facial features finer than eyes and a mouth. No thin outlines, no thin limbs, no busy patterns on the clothes.
+
+=== NO GROUND ===
+Draw THE FIGURES ONLY. No ground, no grass, no soil, no shadow plate, no platform, no terrain, no scenery, no props except what the character is holding.
+A soft contact shadow directly under the feet is allowed, fading to full transparency; nothing else.
+
+=== BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
+Deliver the result as a PNG with a GENUINELY TRANSPARENT BACKGROUND.
+The figures are the ONLY opaque pixels in the file. Everything else — the gaps between the frames especially — is fully transparent, alpha = 0.
+The transparency must be a REAL ALPHA CHANNEL. Do NOT draw a checkerboard pattern into the pixels. Do NOT fill the background with grey, white, black or any other colour.
+
+=== LOCKED VISUAL STYLE ===
+Bright, cheerful stylized 3D game render.
+
+Highly saturated fantasy palette: warm cream stone, golden straw and timber, rich blue accents, vivid greens, honest earthy cloth colours. Soft even daylight, gentle shading, subtle ambient occlusion, a clean bright atmosphere.
+
+Rounded, chunky, immediately readable silhouettes. Smooth simplified materials with subtle surface variation — no photographic textures, no grain, no micro-detail. Softly bevelled forms and clean edges.
+
+Charming and handcrafted, like one piece out of a polished mobile strategy-game diorama.
+
+=== AVOID ===
+No text, letters, numbers, labels, frame numbers, grid lines, boxes, borders, watermark or interface.
+No dramatic cinematic framing, no posing for the camera, no close-up portrait, no lens flare, no heavy bloom, no harsh shadows, no photorealism, no painterly illustration, no visible brushwork, no pixel art, no flat vector art.
+No ground plate of any kind. No opaque background. No checkerboard painted into the image.
+Above all: THE SAME CHARACTER IN EVERY FRAME, THE SAME SIZE, FEET ON ONE LINE, WITH WIDE EMPTY GAPS BETWEEN THEM.

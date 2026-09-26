@@ -2,29 +2,149 @@
   "villager_1": {
     "who": "A young village woman in a simple ankle-length dress of faded blue with a cream apron, sleeves rolled to the elbow, brown hair tied back in a short tail, brown shoes. Cheerful and ordinary — she is one of the townsfolk, not an adventurer.",
     "anims": {
-      "idle": ["standing still, weight on both feet, arms relaxed at her sides", "the same stance a moment later, having shifted her weight slightly and let one hand rest on her hip"],
-      "walk": ["mid-stride with her LEFT leg forward and her right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with her RIGHT leg forward and her left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+      "idle": [
+        "standing still, weight on both feet, arms relaxed at her sides",
+        "the same stance a moment later, having shifted her weight slightly and let one hand rest on her hip"
+      ],
+      "walk": [
+        "mid-stride with her LEFT leg forward and her right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with her RIGHT leg forward and her left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ]
     }
   },
   "villager_2": {
     "who": "A stocky village man in a loose russet-brown tunic belted at the waist, dark green trousers, sturdy boots, and a short beard under a flat brown cap. Friendly and weathered — a townsman, not a soldier.",
     "anims": {
-      "idle": ["standing still, weight on both feet, arms relaxed at his sides", "the same stance a moment later, having shifted his weight slightly and folded his arms loosely"],
-      "walk": ["mid-stride with his LEFT leg forward and his right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with his RIGHT leg forward and his left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+      "idle": [
+        "standing still, weight on both feet, arms relaxed at his sides",
+        "the same stance a moment later, having shifted his weight slightly and folded his arms loosely"
+      ],
+      "walk": [
+        "mid-stride with his LEFT leg forward and his right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with his RIGHT leg forward and his left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ]
     }
   },
   "villager_3": {
     "who": "An older village woman in a long moss-green skirt and a cream blouse with a rust-red shawl over her shoulders, grey hair in a bun, a simple headscarf. Kindly and unhurried — a townswoman.",
     "anims": {
-      "idle": ["standing still, weight on both feet, hands clasped in front of her", "the same stance a moment later, having shifted her weight slightly and let her hands fall to her sides"],
-      "walk": ["mid-stride with her LEFT leg forward and her right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with her RIGHT leg forward and her left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+      "idle": [
+        "standing still, weight on both feet, hands clasped in front of her",
+        "the same stance a moment later, having shifted her weight slightly and let her hands fall to her sides"
+      ],
+      "walk": [
+        "mid-stride with her LEFT leg forward and her right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with her RIGHT leg forward and her left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ]
     }
   },
   "villager_4": {
     "who": "A lanky young village man in a cream linen shirt with the sleeves pushed up, a mustard-yellow waistcoat, brown breeches and worn boots, sandy hair falling over his forehead. Eager and a bit gangly — a townsman.",
     "anims": {
-      "idle": ["standing still, weight on both feet, arms relaxed at his sides", "the same stance a moment later, having shifted his weight slightly and scratched the back of his neck"],
-      "walk": ["mid-stride with his LEFT leg forward and his right arm forward", "passing pose, both legs nearly together, body at its highest", "mid-stride with his RIGHT leg forward and his left arm forward", "passing pose again, both legs nearly together, body at its highest"]
+      "idle": [
+        "standing still, weight on both feet, arms relaxed at his sides",
+        "the same stance a moment later, having shifted his weight slightly and scratched the back of his neck"
+      ],
+      "walk": [
+        "mid-stride with his LEFT leg forward and his right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with his RIGHT leg forward and his left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ]
+    }
+  },
+  "farmer": {
+    "who": "A sturdy farmhand in a cream linen shirt with the sleeves rolled up, a brown leather apron, olive trousers and muddy boots, a straw hat pushed back off his forehead. He carries a long-handled hoe.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the hoe resting upright in one hand",
+        "the same stance a moment later, having shifted his weight slightly"
+      ],
+      "walk": [
+        "mid-stride with his LEFT leg forward and his right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with his RIGHT leg forward and his left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ],
+      "action": [
+        "standing over the ground with the hoe raised high behind him, both hands on the shaft, about to strike",
+        "mid-swing, the hoe coming down in front of him, his body bending forward into it",
+        "the blade in the soil at his feet, his back bent and his knees slightly flexed at the end of the stroke"
+      ]
+    }
+  },
+  "woodcutter": {
+    "who": "A broad-shouldered woodcutter in a red-brown checked shirt with the sleeves cut off, a thick leather belt, dark green trousers and heavy boots, a short dark beard. He carries a felling axe.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the axe head resting on the ground beside him",
+        "the same stance a moment later, having shifted his weight slightly"
+      ],
+      "walk": [
+        "mid-stride with his LEFT leg forward and his right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with his RIGHT leg forward and his left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ],
+      "action": [
+        "the axe raised high over his shoulder in both hands, his body coiled and turned slightly away, about to swing",
+        "mid-swing, the axe sweeping down and across in front of him",
+        "the axe buried low in front of him, his body bent forward and his arms extended at the end of the stroke"
+      ]
+    }
+  },
+  "quarryman": {
+    "who": "A wiry quarryman in a grey sleeveless tunic white with stone dust, a leather harness over one shoulder, patched brown trousers and scuffed boots, a cloth tied over his hair. He carries a pickaxe.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the pickaxe over one shoulder",
+        "the same stance a moment later, having shifted his weight slightly"
+      ],
+      "walk": [
+        "mid-stride with his LEFT leg forward and his right arm forward",
+        "passing pose, both legs nearly together, body at its highest",
+        "mid-stride with his RIGHT leg forward and his left arm forward",
+        "passing pose again, both legs nearly together, body at its highest"
+      ],
+      "action": [
+        "the pickaxe raised high behind his head in both hands, his body leaning back, about to strike",
+        "mid-swing, the pick arcing down in front of him",
+        "the pick struck into the rock in front of him, his body bent forward and his arms straight at the end of the stroke"
+      ]
+    }
+  },
+  "stonemason": {
+    "who": "A calm stonemason in a pale grey tunic and a long canvas apron dusted white, leather bracers on both forearms, brown trousers and flat shoes, hair tied back. She works with a mallet and a chisel.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the mallet held loosely at her side",
+        "the same stance a moment later, having shifted her weight slightly"
+      ],
+      "action": [
+        "leaning over a low block of stone, the chisel held against it in one hand and the mallet raised in the other, about to strike",
+        "the mallet coming down onto the chisel head, her shoulders dropping into the blow",
+        "the mallet resting on the chisel, her head tilted to look along the cut she has made"
+      ]
+    }
+  },
+  "smith": {
+    "who": "A powerful smith in a soot-dark sleeveless tunic and a heavy brown leather apron, thick gloves, dark trousers and iron-shod boots, sweat-damp hair pushed back. He works with a hammer and tongs.",
+    "anims": {
+      "idle": [
+        "standing still, weight on both feet, the hammer held head-down at his side",
+        "the same stance a moment later, having shifted his weight slightly"
+      ],
+      "action": [
+        "leaning over a low anvil, the tongs gripping a glowing bar on it in one hand and the hammer raised high in the other",
+        "the hammer swinging down towards the bar, his shoulder dropping into it",
+        "the hammer struck on the bar, a few small sparks at the point of contact, his arm extended"
+      ]
     }
   }
 }

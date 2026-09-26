@@ -68,14 +68,20 @@ describe('the cast', () => {
     }
   });
 
-  it('gives every crew member a real walk and a real work loop', () => {
-    // A crew that stands still while it slides to its cell, or idles while it
-    // is "Working", is the pack's gap showing through. The fallback to idle is
-    // for villagers; a working building's cast has to be complete.
-    for (const crew of Object.values(CREW)) {
+  it('gives every crew a work loop, and a walk to those that go out', () => {
+    // A crew that idles while it is "Working" is a gap in the cast showing
+    // through, so the work loop is required of everybody.
+    //
+    // A WALK is required only of the crews that leave the building. A
+    // workshop's people are drawn at its door and never travel, so drawing
+    // them a walk cycle would be asking for art nothing can ever show — and
+    // the rule is read off the building rather than listed here, because a
+    // district that harvests is exactly one that sends its crew out.
+    for (const [id, crew] of Object.entries(CREW)) {
+      const goesOut = DISTRICTS[id as DistrictId].harvestSources.length > 0;
       for (const name of crew) {
-        expect(animFor(name, 'walk')[1], `${name} walk`).toBe('walk');
         expect(animFor(name, 'work')[1], `${name} work`).toBe('action');
+        if (goesOut) expect(animFor(name, 'walk')[1], `${name} walk`).toBe('walk');
       }
     }
   });
@@ -107,10 +113,14 @@ describe('the cast', () => {
   });
 
   it('casts by seed, stably, over the whole crew', () => {
-    const farm = CREW.Farm!;
-    expect(castFor('Farm', 0)).toBe(farm[0]);
-    expect(castFor('Farm', farm.length)).toBe(farm[0]);
-    expect(castFor('Farm', 1)).toBe(farm[1]);
+    // The PROPERTY again, not a fixed index — a crew of one is legal.
+    for (const [id, crew] of Object.entries(CREW)) {
+      for (let k = 0; k < crew.length; k++) {
+        expect(castFor(id as DistrictId, k), `${id} seed ${k}`).toBe(crew[k]);
+        expect(castFor(id as DistrictId, crew.length + k), `${id} wrap ${k}`)
+          .toBe(crew[k]);
+      }
+    }
     // The PROPERTY, not a fixed index: a seed past the end of the list wraps
     // to the same face it started on. Asserting VILLAGERS[2] assumed a list
     // three long, and broke the day the pixel pack was cut back to one.
