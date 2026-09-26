@@ -168,6 +168,8 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
    to be read anyway — so the card is an emblem and the panel does the talking.
    The name gets two lines because the card no longer competes for them. */
 .tech-card-glyph {
+  /* So the "press me" dot can hang on the seal's corner. */
+  position: relative;
   --seal: var(--parchment-shade);
   --seal-dark: #b9a37a;
   display: grid;

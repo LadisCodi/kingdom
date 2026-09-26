@@ -70,7 +70,22 @@
 }
 /* The title grows; the close knob sits at the strip's end, inside it, so the
    plank is the whole of the sheet's chrome above the content. */
-.k-plank > span:first-child { min-width: 0; max-width: calc(100% - 96px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+/* A SHEET'S TITLE MAY NOT BE CUT. It is how the player knows what they just
+ * opened, and `nowrap` + ellipsis turned "Who are you playing as?" into "Who
+ * are you play…" — 96px of that strip is reserved for the close knob on both
+ * sides so the word stays centred, which leaves less room than a plank looks
+ * like it has. So it wraps instead, and the strip grows with it; two lines is
+ * the cap, because a title needing three is a title, not a sentence. */
+.k-plank > span:first-child {
+  min-width: 0;
+  max-width: calc(100% - 96px);
+  text-align: center;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 .k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
 
 /* Rope grab handle on a sheet. */

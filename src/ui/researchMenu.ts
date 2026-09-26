@@ -346,7 +346,13 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   // the player cannot act on yet — done, running, unaffordable, missing a
   // prerequisite, behind a bar — and `available` styling only means the
   // prerequisites are met. The dot is the difference.
-  if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
+  //
+  // It hangs on the SEAL, not on the card. The card is a 120px box around a
+  // 62px seal, so a dot in its corner sat 16px clear of the thing it marks,
+  // reading as a stray mark on the parchment rather than as a badge.
+  if (canStartTech(state, id)) {
+    node.querySelector('.tech-card-glyph')?.append(el('span', { class: 'node-dot' }));
+  }
   if (active) {
     const completesAt = techCompletesAt(state, id)!;
     const total = def.durationSeconds * 1000;
