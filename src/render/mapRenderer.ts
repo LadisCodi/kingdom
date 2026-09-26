@@ -878,8 +878,7 @@ export function drawMap(
     const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
     // Cast by phase: it is per agent and stable, so a villager keeps its face.
     const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
-    unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && v.dx < 0,
-      v.walking ? WALK_SQUASH : 0, WALK_FRAME_MS * 2, t, () => {
+    unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
         if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
         if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
           drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
@@ -925,8 +924,13 @@ export function drawMap(
     // Facing: mirror the sprite while the current leg heads left.
     let flip = false;
     if (moving && worker.claimedCell) {
-      const dx = worker.claimedCell.x - building.location.x;
-      flip = (worker.activity === 'MovingToCell' ? dx : -dx) < 0;
+      // ACROSS THE SCREEN, not across the grid: a step in +y goes left under
+      // the isometric projection, so a cell-space dx alone had half the
+      // workers walking backwards.
+      const out = worker.activity === 'MovingToCell' ? 1 : -1;
+      const dx = (worker.claimedCell.x - building.location.x) * out;
+      const dy = (worker.claimedCell.y - building.location.y) * out;
+      flip = facesRight(dx - dy);
     }
 
     // Sprite chain: animation frame → static (carrying) sprite → base.
@@ -944,20 +948,13 @@ export function drawMap(
     if (carrying) keys.push(`${stem}_carrying`);
     keys.push(stem);
 
-    // Squash & stretch: a bounce per footfall on land; a slow bob afloat.
-    let amp = 0;
-    let period = 1;
-    if (moving || working) {
-      amp = boat ? BOAT_SQUASH : moving ? WALK_SQUASH : WORK_SQUASH;
-      period = boat ? BOAT_BOB_MS : moving ? WALK_FRAME_MS * 2 : WORK_FRAME_MS;
-    }
     // The atlas cast first — a farmer for the Farm, a lumberjack for the
     // Sawmill — then the legacy sprite chain, then the emoji. Boats have no
     // cast and skip straight to the chain.
     const member = boat ? null : castFor(building.definitionId, unitPhase(worker.id));
     const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
     const cast = member ? animFor(member, pose) : null;
-    unitTransform(ctx, sx + uw / 2, sy + uw, flip, amp, period, t, () => {
+    unitTransform(ctx, sx + uw / 2, sy + uw, flip, () => {
       if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
         return;
       }
@@ -1002,10 +999,6 @@ export function drawMap(
 
 const WALK_FRAME_MS = 140; // 4-frame walk cycle ≈ 560 ms
 const WORK_FRAME_MS = 320; // 2-frame work loop (strike cadence)
-const BOAT_BOB_MS = 900;
-const WALK_SQUASH = 0.06;
-const WORK_SQUASH = 0.04;
-const BOAT_SQUASH = 0.03;
 
 /** Which 2-frame work loop a Working worker plays, by what it harvests. */
 const WORK_ANIM: Partial<Record<HarvestSourceId, string>> = {
@@ -1030,28 +1023,37 @@ function unitPhase(id: string): number {
 }
 
 /**
- * Draw a unit mirrored and/or squash-and-stretched about its feet:
- * (cx, cy) is the bottom-center of the sprite rect. Volume-preserving —
- * width narrows as height stretches, so the bounce reads as weight.
+ * WHICH WAY A FIGURE FACES, given how far it is travelling across the screen.
+ *
+ * The cast is drawn facing LEFT, so a mirror is what makes it face right. In
+ * isometric the screen direction is `dx - dy` and not `dx`: a step down the
+ * grid goes left on screen (src/render/camera.ts).
+ */
+const facesRight = (screenDx: number): boolean => screenDx > 0;
+
+/**
+ * Draw a unit mirrored about its feet; (cx, cy) is the bottom-centre of the
+ * sprite rect.
+ *
+ * NO SQUASH AND STRETCH. The bounce was written for 22 px pixel-art people,
+ * where a one-pixel wobble reads as weight. The cast is rendered figures now,
+ * and the same wobble on one of those reads as the sprite being scaled —
+ * which is exactly what it is.
  */
 function unitTransform(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   flip: boolean,
-  amp: number,
-  periodMs: number,
-  t: number,
   draw: () => void,
 ): void {
-  if (!flip && amp === 0) {
+  if (!flip) {
     draw();
     return;
   }
-  const stretch = 1 + amp * Math.sin((t / periodMs) * Math.PI * 2);
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.scale((flip ? -1 : 1) / stretch, stretch);
+  ctx.scale(-1, 1);
   ctx.translate(-cx, -cy);
   draw();
   ctx.restore();
