@@ -40,7 +40,7 @@
   border: 2px solid var(--wood-dark);
   background: var(--parchment-shade);
 }
-.plc-art img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.plc-art img { width: 100%; height: 100%; object-fit: contain; }
 
 .plc-body { flex: 1; min-width: 0; }
 .plc-name { font-family: var(--font-body); font-size: 18px; font-weight: var(--weight-strong); line-height: 1.15; }

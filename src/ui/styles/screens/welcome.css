@@ -69,7 +69,7 @@
   font-size: var(--text-body);
   font-weight: var(--weight-strong);
 }
-.wel-done img { width: 36px; height: 36px; object-fit: contain; image-rendering: pixelated; }
+.wel-done img { width: 36px; height: 36px; object-fit: contain; }
 .wel-done > .icon:first-child { --icon-size: 32px; }
 .wel-done > .icon:last-child {
   --icon-size: 18px;
