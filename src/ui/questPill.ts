@@ -8,7 +8,12 @@
 // was already the biggest target on screen. Tapping it now does the only thing
 // there is to do — point you at the goal, or take the reward when it is done.
 //
-// It also lost its wax seal and its reward row. The seal was decoration on a
+// It has also lost, in the same spirit, its "Quest 7 of 53" eyebrow: how far
+// through the chain you are is not the answer to "what do I do now", and it
+// was spending the line the DESCRIPTION needed — the description being the
+// one that carries the goal, since a name like "First steps" carries none.
+//
+// It earlier lost its wax seal and its reward row. The seal was decoration on a
 // widget that has to read at a glance, and the reward is not a decision the
 // player makes BEFORE finishing a quest — showing it early spends space on
 // something they cannot act on. It appears when it becomes collectable, which
@@ -68,7 +73,6 @@ const rewardNodes = (quest: QuestDef): Node[] => {
 };
 
 export function mountQuestPill(game: Game, root: HTMLElement): void {
-  const chain = el('div', { class: 'q-chain' });
   const name = el('div', { class: 'q-name' });
   const desc = el('div', { class: 'q-desc' });
   const bar = progress('gold');
@@ -80,7 +84,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const cta = el('span', { class: 'q-cta' }, 'Show me');
 
   const scroll = el('button', { class: 'q-scroll', type: 'button' },
-    el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, chain, name, desc)),
+    el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, name, desc)),
     // The trough and the verb share the foot's row (M12).
     el('div', { class: 'q-foot' }, bar.root, reward, cta));
   // Read the state at CLICK time, not at render time: a tap can land in the
@@ -102,10 +106,9 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     root.hidden = game.hasOpenSheet() || info === null;
     if (info === null) return;
 
-    const { quest, value, complete, index, total } = info;
+    const { quest, value, complete, index } = info;
     if (index !== shownIndex) {
       shownIndex = index;
-      chain.textContent = `Quest ${index + 1} of ${total}`;
       name.textContent = quest.name;
       desc.textContent = quest.description;
       reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
