@@ -438,12 +438,94 @@ export function drawMap(
     ctx.restore();
   };
 
-  const standing: Array<{ depth: number; tie: number; draw: () => void }> = [];
-  const later = (cell: Coord, draw: () => void, span = { x: 1, y: 1 }): void => {
-    // Depth is x + y: cells on the same diagonal are the same distance from
-    // the viewer, and a larger x + y is nearer, so it draws later. Footprints
-    // never overlap, so their anchors alone order them.
-    standing.push({ depth: cell.x + cell.y, tie: cell.x + span.x, draw });
+  interface Standing {
+    depth: number;
+    tie: number;
+    draw: () => void;
+    /** What it covers on screen, for the occlusion test below. */
+    rect: PlotBox;
+    /** Set on PEOPLE: draw me again as a silhouette if I ended up behind
+     *  something. Absent on scenery, which may be hidden freely. */
+    ghost?: () => void;
+  }
+  const standing: Standing[] = [];
+  /** Ambient villagers and workers go in the SAME list as the buildings.
+   *  Drawn in a pass of their own they were on top of the world, walking
+   *  over roofs. */
+  function queueVillagers(): void {
+    for (const v of villagers.positions(state, map, now)) {
+      // A unit STANDS on the middle of its cell: its feet are the diamond's
+      // centre, not the bottom-left of a square that no longer exists.
+      const c = mid(cellRect(v));
+      const uw = size * 0.6;   // the legacy sprite chain's box, feet at its base
+      const sx = c.x - uw / 2;
+      const sy = c.y - uw;
+      const t = now + v.phase;
+      const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
+      // Cast by phase: it is per agent and stable, so a villager keeps its face.
+      const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
+      const paint = (): void => {
+        unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
+          if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
+          if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
+            drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
+          }
+        });
+      };
+      later(v, paint, { x: 0, y: 0 },
+        { rect: personRect(c.x, c.y), ghost: () => asGhost(paint) });
+    }
+  }
+
+  /**
+   * Queue a thing to be drawn in depth order.
+   *
+   * DEPTH IS THE CENTRE OF ITS FOOTPRINT, `x + y` through the middle of it,
+   * not through its anchor. Cells on one diagonal are the same distance from
+   * the viewer and a larger sum is nearer, so a larger sum draws later. The
+   * centre and not the corner because a PERSON is a point and a building is
+   * an area: measured at its anchor, a 2×2 hall lost to every villager
+   * standing beside it, including the ones behind its back wall.
+   *
+   * `span` of zero is a person — no area, so its foot IS its depth.
+   */
+  const later = (
+    cell: Coord, draw: () => void, span = { x: 1, y: 1 },
+    extra: { rect?: PlotBox; ghost?: () => void } = {},
+  ): void => {
+    standing.push({
+      depth: (cell.x + span.x / 2) + (cell.y + span.y / 2),
+      tie: cell.x + span.x,
+      draw,
+      rect: extra.rect ?? camera.plotBox(cell, { x: span.x || 1, y: span.y || 1 }),
+      ghost: extra.ghost,
+    });
+  };
+
+  /** Do two screen rects touch at all? */
+  const overlaps = (a: PlotBox, b: PlotBox): boolean =>
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+  /** The screen box a person standing with their feet at (fx, fy) covers. */
+  const personRect = (fx: number, fy: number): PlotBox => {
+    const h = unitHeight(size);
+    return { x: fx - h * 0.4, y: fy - h, w: h * 0.8, h };
+  };
+
+  /**
+   * A person, drawn as a pale silhouette with a dark rim.
+   *
+   * White alone vanishes on a cream wall and black alone vanishes on a dark
+   * roof, so it is both: the fill inverted to white and a drop shadow around
+   * it for the outline. One filter, no offscreen canvas, and it reads on
+   * anything the buildings are made of.
+   */
+  const asGhost = (draw: () => void): void => {
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.filter = 'brightness(0) invert(1) drop-shadow(0 0 1.5px rgba(20,25,35,0.95))';
+    draw();
+    ctx.restore();
   };
 
   for (let cy = view.y0; cy <= view.y1; cy++) {
@@ -628,9 +710,32 @@ export function drawMap(
     later(district.location, () => drawDistrict(district, box), def.size);
   }
 
+  // The people go in the same list, so a villager behind a hall is behind it.
+  queueVillagers();
+  queueWorkers();
+
   // Run every standing thing back to front: the painter's algorithm.
   standing.sort((a, b) => a.depth - b.depth || a.tie - b.tie);
   for (const item of standing) item.draw();
+
+  /**
+   * THE PEOPLE BEHIND THE BUILDINGS.
+   *
+   * Depth order is right, and right is not enough: a villager walking behind
+   * a hall is CORRECTLY invisible, and a player who cannot see their
+   * villagers thinks they have lost them. So anyone a later thing covered is
+   * drawn once more as a silhouette, over everything.
+   *
+   * Only people. Scenery may hide behind scenery all it likes — that is what
+   * makes a wood a wood.
+   */
+  for (const item of standing) {
+    if (!item.ghost) continue;
+    const hidden = standing.some(
+      (o) => o !== item && o.depth > item.depth && overlaps(o.rect, item.rect),
+    );
+    if (hidden) item.ghost();
+  }
 
   // Pass 2: queue progress bars over districts.
   for (const item of state.city.queue) {
@@ -865,26 +970,7 @@ export function drawMap(
     });
   }
 
-  // Pass 3.9: ambient villagers — unassigned population strolling around
-  // the Townhall and Housing. Under the workers, so busy people read on top.
-  for (const v of villagers.positions(state, map, now)) {
-    // A unit STANDS on the middle of its cell: its feet are the diamond's
-    // centre, not the bottom-left of a square that no longer exists.
-    const c = mid(cellRect(v));
-    const uw = size * 0.6;   // the legacy sprite chain's box, feet at its base
-    const sx = c.x - uw / 2;
-    const sy = c.y - uw;
-    const t = now + v.phase;
-    const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
-    // Cast by phase: it is per agent and stable, so a villager keeps its face.
-    const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
-    unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
-        if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
-        if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
-          drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
-        }
-      });
-  }
+
 
   // Pass 3.8: the quest-hint arrow — a bouncing 👇 over the hinted cell.
   if (markers.hintCell) {
@@ -897,7 +983,8 @@ export function drawMap(
     drawGlyph(ctx, '👇', c.x - size / 2, c.y - size * 1.1 + bob, size, size * 0.5);
   }
 
-  // Pass 4: worker units — animated. Walk cycles while moving (carry
+  function queueWorkers(): void {
+  // Worker units — animated. Walk cycles while moving (carry
   // variant on the way home), a per-source work loop while Working, and a
   // footfall squash & stretch about the feet. Every frame key falls back
   // through the static sprite to the emoji, so missing art degrades cleanly.
@@ -954,17 +1041,22 @@ export function drawMap(
     const member = boat ? null : castFor(building.definitionId, unitPhase(worker.id));
     const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
     const cast = member ? animFor(member, pose) : null;
-    unitTransform(ctx, sx + uw / 2, sy + uw, flip, () => {
-      if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
-        return;
-      }
-      if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
-        drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
-        if (carrying) {
-          drawGlyph(ctx, boat ? '🐟' : '🎒', c.x, c.y - uw - size * 0.2, size * 0.5, size * 0.2);
+    const paint = (): void => {
+      unitTransform(ctx, sx + uw / 2, sy + uw, flip, () => {
+        if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
+          return;
         }
-      }
-    });
+        if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
+          drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
+          if (carrying) {
+            drawGlyph(ctx, boat ? '🐟' : '🎒', c.x, c.y - uw - size * 0.2, size * 0.5, size * 0.2);
+          }
+        }
+      });
+    };
+    later(pos, paint, { x: 0, y: 0 },
+      { rect: personRect(c.x, c.y), ghost: () => asGhost(paint) });
+  }
   }
 
   // Pass 5: floaters.
