@@ -11,7 +11,7 @@ import type { CatchUpReport } from '../sim/save';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, iconEl, sheet } from './kit';
 
 /** Gaps shorter than this are not worth interrupting anyone for. */
@@ -37,7 +37,7 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
   }
   // Gains read in full with their thousands ("+1,240"), as M13 prints them:
   // this is the one place the whole night's number is the point.
-  const gain = (n: number): string => `+${n.toLocaleString('en-US')}`;
+  const gain = (n: number): string => `+${formatExact(n)}`;
   const rows = [...earned.entries()]
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1])

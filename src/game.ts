@@ -15,7 +15,7 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatCount, formatDuration } from './ui/format';
+import { formatCount, formatDuration, formatExact } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -572,7 +572,7 @@ export class Game {
         icon: '\u{1F5D3}',
         name: opened.name,
         desc: closed.cards > 0
-          ? `${closed.cards} cards melted down for ${closed.gold.toLocaleString('en-US')} gold. `
+          ? `${closed.cards} cards melted down for ${formatExact(closed.gold)} gold. `
             + 'A fresh album, and your relics keep every level.'
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',

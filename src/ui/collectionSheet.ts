@@ -25,7 +25,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { AlbumId } from '../sim/data/seasons';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { action, btn, iconEl, knob, progress, sheet } from './kit';
 import {
   relicStatChanges, spellStatChanges, type RelicStatChange,
@@ -69,7 +69,7 @@ function prizeBand(game: Game): HTMLElement {
         el('span', {}, 'Hero call')),
       el('div', { class: 'col-prize' },
         iconEl('Gems', { size: 'lg' }),
-        el('span', {}, game.prizeGems().toLocaleString()))),
+        el('span', {}, formatExact(game.prizeGems())))),
   );
 }
 
@@ -195,7 +195,7 @@ function claimSlab(game: Game, page: ReturnType<Game['albumPage']>): HTMLElement
     ...(page.rewards.gems > 0
       ? [el('div', { class: 'col-chip' },
         iconEl('Gems', { size: 'sm' }),
-        el('span', {}, page.rewards.gems.toLocaleString()))]
+        el('span', {}, formatExact(page.rewards.gems)))]
       : []));
 
   // A CLOSED PAGE SAYS SO AND OFFERS NOTHING. It reopens when the lap rolls,

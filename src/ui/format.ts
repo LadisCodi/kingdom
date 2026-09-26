@@ -55,6 +55,21 @@ export function formatCount(n: number): string {
   return `${millions.toFixed(millions < 10 ? 1 : 0).replace(/\.0$/, '')}M`;
 }
 
+/**
+ * The exact figure, grouped: "25,000".
+ *
+ * `formatCount` above abbreviates, which is right for a coin on the plank and
+ * wrong for a PRIZE — "complete all eight to win 25k Gems" reads as an
+ * estimate of a number the game knows exactly.
+ *
+ * THE LOCALE IS PINNED, and that is the whole point. A bare
+ * `n.toLocaleString()` asks the VIEWER'S browser how to group, so the same
+ * 25000 Gems rendered "25,000" in London and "25.000" in Madrid — where an
+ * English-reading player sees twenty-five. A number the game states is not a
+ * number the reader's system settings get a vote on.
+ */
+export const formatExact = (n: number): string => n.toLocaleString('en-US');
+
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},
