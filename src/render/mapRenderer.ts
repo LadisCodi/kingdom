@@ -299,7 +299,7 @@ export function drawMap(
    * `stand` puts that edge on the diamond's bottom corner and everything the
    * artist drew above it rises into the sky.
    */
-  const drawDistrict = (district: GameState['city']['districts'][number], box: PlotBox): void => {
+  const drawDistrict = (district: GameState['city']['districts'][number], box: PlotBox): number => {
     // Lifted: this building is being moved and its ghost is out. Draw the
     // original as a faint outline of itself so the address it is leaving
     // stays legible without competing with the ghost.
@@ -391,6 +391,7 @@ export function drawMap(
       }
     }
     if (lifted) ctx.globalAlpha = 1;
+    return tall;
   };
 
   /**
@@ -441,12 +442,19 @@ export function drawMap(
   interface Standing {
     depth: number;
     tie: number;
-    draw: () => void;
-    /** What it covers on screen, for the occlusion test below. */
+    /** `mark` reports the rect the art ACTUALLY landed on, once it is drawn. */
+    draw: (mark: (r: PlotBox) => void) => void;
+    /**
+     * What it covers on screen. Starts as the ground plot and is replaced by
+     * the drawn art the moment there is any, because the two are nothing
+     * alike: a hall's art rises far above its plot, and a crop plot's barely
+     * leaves it. Testing the plot said a field of wheat hides a standing
+     * villager, which it plainly does not.
+     */
     rect: PlotBox;
-    /** Set on PEOPLE: draw me again as a silhouette if I ended up behind
-     *  something. Absent on scenery, which may be hidden freely. */
-    ghost?: () => void;
+    /** Set on PEOPLE: draw me again as a silhouette, clipped to whatever is
+     *  in front of me. Absent on scenery, which may be hidden freely. */
+    ghost?: (clip: PlotBox[]) => void;
   }
   const standing: Standing[] = [];
   /** Ambient villagers and workers go in the SAME list as the buildings.
@@ -464,16 +472,23 @@ export function drawMap(
       const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
       // Cast by phase: it is per agent and stable, so a villager keeps its face.
       const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
-      const paint = (): void => {
-        unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
-          if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
-          if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
-            drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
+      // Takes its context so the same drawing can go into the outline's
+      // offscreen canvas as well as onto the map.
+      const paint = (g: CanvasRenderingContext2D): void => {
+        unitTransform(g, sx + uw / 2, sy + uw, v.walking && facesRight(v.dx), () => {
+          if (drawCharacter(g, who, anim, t, sx + uw / 2, sy + uw, unitHeight(size))) return;
+          if (!keys.some((k) => drawSprite(g, k, sx, sy, uw, uw))) {
+            drawGlyph(g, '🧍', sx, sy, uw, size * 0.34);
           }
         });
       };
-      later(v, paint, { x: 0, y: 0 },
-        { rect: personRect(c.x, c.y), ghost: () => asGhost(paint) });
+      const rect = personRect(c.x, c.y);
+      // Span of ONE, not zero: a person is drawn at the CENTRE of their cell,
+      // so that is where they must be sorted. Measured at the corner, every
+      // villager sorted a whole cell too far back and wore an outline in
+      // front of the crop plot they were standing on.
+      later(v, () => paint(ctx), { x: 1, y: 1 },
+        { rect, ghost: (clip) => asGhost(clip, rect, paint) });
     }
   }
 
@@ -490,8 +505,8 @@ export function drawMap(
    * `span` of zero is a person — no area, so its foot IS its depth.
    */
   const later = (
-    cell: Coord, draw: () => void, span = { x: 1, y: 1 },
-    extra: { rect?: PlotBox; ghost?: () => void } = {},
+    cell: Coord, draw: (mark: (r: PlotBox) => void) => void, span = { x: 1, y: 1 },
+    extra: { rect?: PlotBox; ghost?: (clip: PlotBox[]) => void } = {},
   ): void => {
     standing.push({
       depth: (cell.x + span.x / 2) + (cell.y + span.y / 2),
@@ -513,6 +528,16 @@ export function drawMap(
   };
 
   /**
+   * Where a standing sprite's INK ended up: as wide as its canvas, as tall as
+   * `stand` says it drew, sitting on the plot's bottom corner. This and not
+   * the plot is what can hide a person.
+   */
+  const artRect = (plot: PlotBox, tall: number, plots: number): PlotBox => {
+    const dw = plot.w * plots;
+    return { x: plot.x + plot.w / 2 - dw / 2, y: plot.y + plot.h - tall, w: dw, h: tall };
+  };
+
+  /**
    * A person, drawn as a pale silhouette with a dark rim.
    *
    * White alone vanishes on a cream wall and black alone vanishes on a dark
@@ -520,11 +545,66 @@ export function drawMap(
    * it for the outline. One filter, no offscreen canvas, and it reads on
    * anything the buildings are made of.
    */
-  const asGhost = (draw: () => void): void => {
+  /**
+   * A PERSON BEHIND SOMETHING, drawn as an OUTLINE — the way Age of Empires
+   * does it: a bright rim tracing their shape with the middle left open, so
+   * the building is still visible through them. A filled silhouette reads as
+   * a ghost standing ON the roof; a rim reads as a person behind it.
+   *
+   * The rim is made by stamping the shape around a small circle and then
+   * punching the shape itself back out of the middle, which needs an
+   * offscreen canvas — there is no filter that leaves a hole. It is one
+   * small canvas, reused, and only hidden people ever reach here.
+   *
+   * CLIPPED to what is actually in front, so a villager whose legs are
+   * behind a wall gets an outline on the legs and stays themselves above it.
+   */
+  const RIM = 1.6;
+  const RING: ReadonlyArray<readonly [number, number]> = [
+    [1, 0], [-1, 0], [0, 1], [0, -1],
+    [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7],
+  ];
+  let rimCanvas: HTMLCanvasElement | null = null;
+  const asGhost = (
+    clip: PlotBox[], rect: PlotBox, draw: (c: CanvasRenderingContext2D) => void,
+  ): void => {
+    const pad = Math.ceil(RIM) + 2;
+    const cw = Math.ceil(rect.w) + pad * 2;
+    const ch = Math.ceil(rect.h) + pad * 2;
+    if (cw <= 0 || ch <= 0) return;
+    rimCanvas ??= document.createElement('canvas');
+    const gc = rimCanvas;
+    if (gc.width < cw * dpr || gc.height < ch * dpr) {
+      gc.width = Math.ceil(cw * dpr);
+      gc.height = Math.ceil(ch * dpr);
+    }
+    const g = gc.getContext('2d')!;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, gc.width, gc.height);
+    g.save();
+    g.translate(pad - rect.x, pad - rect.y);
+    g.filter = 'brightness(0) invert(1)';
+    for (const [ox, oy] of RING) {
+      g.save();
+      g.translate(ox * RIM, oy * RIM);
+      draw(g);
+      g.restore();
+    }
+    g.filter = 'none';
+    g.globalCompositeOperation = 'destination-out';
+    draw(g);
+    g.restore();
+
     ctx.save();
-    ctx.globalAlpha = 0.85;
-    ctx.filter = 'brightness(0) invert(1) drop-shadow(0 0 1.5px rgba(20,25,35,0.95))';
-    draw();
+    ctx.beginPath();
+    for (const r of clip) ctx.rect(r.x, r.y, r.w, r.h);
+    ctx.clip();
+    ctx.globalAlpha = 0.9;
+    // A dark halo under the bright rim, so it reads on a cream wall as well
+    // as on a slate roof.
+    ctx.filter = 'drop-shadow(0 0 1px rgba(10,14,20,0.95))';
+    ctx.drawImage(gc, 0, 0, Math.ceil(cw * dpr), Math.ceil(ch * dpr),
+      rect.x - pad, rect.y - pad, cw, ch);
     ctx.restore();
   };
 
@@ -614,9 +694,12 @@ export function drawMap(
         // its anchor (Docs/features/01-map-and-fog.md §3.1).
         const plot = landmark.size === 1
           ? box : camera.plotBox(cell, { x: landmark.size, y: landmark.size });
-        later(cell, () => {
+        later(cell, (mark) => {
           dimmed(dim, () => {
-            punched(key, plot, () => stand(plot, [art.sprite], art.glyph, undefined, FEATURE_PLOTS));
+            punched(key, plot, () => {
+              mark(artRect(plot,
+                stand(plot, [art.sprite], art.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
+            });
           });
           // A star means "claimable". Nothing holds a sanctuary: it is bought.
           // NOT dimmed: a badge is the game talking, not part of the world.
@@ -627,9 +710,12 @@ export function drawMap(
       if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
         const plot = ruin.size === 1
           ? box : camera.plotBox(cell, { x: ruin.size, y: ruin.size });
-        later(cell, () => {
+        later(cell, (mark) => {
           dimmed(dim, () => {
-            punched(key, plot, () => stand(plot, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS));
+            punched(key, plot, () => {
+              mark(artRect(plot,
+                stand(plot, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
+            });
           });
           // The tier alone: a bare digit reads at any zoom, and "T1" in a
           // display face is one stroke away from an arrow. While a garrison is
@@ -707,7 +793,8 @@ export function drawMap(
     const def = DISTRICTS[district.definitionId];
     const box = camera.plotBox(district.location, def.size);
     if (box.x + box.w < 0 || box.y + box.h < 0 || box.x > w || box.y - box.w > h) continue;
-    later(district.location, () => drawDistrict(district, box), def.size);
+    later(district.location,
+      (mark) => mark(artRect(box, drawDistrict(district, box), 1)), def.size);
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
@@ -716,7 +803,7 @@ export function drawMap(
 
   // Run every standing thing back to front: the painter's algorithm.
   standing.sort((a, b) => a.depth - b.depth || a.tie - b.tie);
-  for (const item of standing) item.draw();
+  for (const item of standing) item.draw((r) => { item.rect = r; });
 
   /**
    * THE PEOPLE BEHIND THE BUILDINGS.
@@ -724,17 +811,18 @@ export function drawMap(
    * Depth order is right, and right is not enough: a villager walking behind
    * a hall is CORRECTLY invisible, and a player who cannot see their
    * villagers thinks they have lost them. So anyone a later thing covered is
-   * drawn once more as a silhouette, over everything.
+   * drawn once more as a silhouette, over everything — and only over the
+   * part of them that is actually covered.
    *
    * Only people. Scenery may hide behind scenery all it likes — that is what
    * makes a wood a wood.
    */
   for (const item of standing) {
     if (!item.ghost) continue;
-    const hidden = standing.some(
+    const over = standing.filter(
       (o) => o !== item && o.depth > item.depth && overlaps(o.rect, item.rect),
     );
-    if (hidden) item.ghost();
+    if (over.length > 0) item.ghost(over.map((o) => o.rect));
   }
 
   // Pass 2: queue progress bars over districts.
@@ -1041,21 +1129,22 @@ export function drawMap(
     const member = boat ? null : castFor(building.definitionId, unitPhase(worker.id));
     const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
     const cast = member ? animFor(member, pose) : null;
-    const paint = (): void => {
-      unitTransform(ctx, sx + uw / 2, sy + uw, flip, () => {
-        if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
+    const paint = (g: CanvasRenderingContext2D): void => {
+      unitTransform(g, sx + uw / 2, sy + uw, flip, () => {
+        if (cast && drawCharacter(g, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitHeight(size))) {
           return;
         }
-        if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
-          drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
+        if (!keys.some((k) => drawSprite(g, k, sx, sy, uw, uw))) {
+          drawGlyph(g, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
           if (carrying) {
-            drawGlyph(ctx, boat ? '🐟' : '🎒', c.x, c.y - uw - size * 0.2, size * 0.5, size * 0.2);
+            drawGlyph(g, boat ? '🐟' : '🎒', c.x, c.y - uw - size * 0.2, size * 0.5, size * 0.2);
           }
         }
       });
     };
-    later(pos, paint, { x: 0, y: 0 },
-      { rect: personRect(c.x, c.y), ghost: () => asGhost(paint) });
+    const rect = personRect(c.x, c.y);
+    later(pos, () => paint(ctx), { x: 1, y: 1 },
+      { rect, ghost: (clip) => asGhost(clip, rect, paint) });
   }
   }
 
