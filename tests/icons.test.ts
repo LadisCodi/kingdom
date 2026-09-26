@@ -6,6 +6,7 @@
 // next to a dozen pixel icons, which nobody notices in review.
 //
 // Runs in node — atlas.generated.ts is deliberately DOM-free.
+import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
@@ -90,3 +91,28 @@ describe('the icon atlas', () => {
 // pixel art: `.icon` renders the atlas smooth, so `--icon-size` is a layout
 // choice per element rather than a ratio of the 32px cell. What is still
 // checked above is coverage — every name has a cell.
+
+// The shipped folder, not the atlas.
+//
+// `sprites.ts` globs `./assets/*.png` and Vite bundles every match, so a file
+// nobody asks for is weight the player downloads. Two ways in, both already
+// taken once: a working MASTER copied next to its normalised sprite (ten of
+// them, 7.6 MB), and a pixel-era stem left behind after its `_l1` landed,
+// which the level chain in `mapRenderer` shadows for ever.
+describe('src/render/assets', () => {
+  const dir = new URL('../src/render/assets/', import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.png'));
+
+  it('ships no working masters', () => {
+    // Masters live in Docs/art/<kind>/ — that is the workshop, not the game.
+    expect(files.filter((f) => f.includes('.master.'))).toEqual([]);
+  });
+
+  it('ships no stem an _l1 already shadows', () => {
+    // mapRenderer tries `<sprite>_l<level>` downwards, then the bare stem, so
+    // a stem with a level-1 sibling can never be reached.
+    const stems = new Set(files.map((f) => f.replace(/\.png$/, '')));
+    const shadowed = [...stems].filter((s) => stems.has(`${s}_l1`));
+    expect(shadowed).toEqual([]);
+  });
+});
