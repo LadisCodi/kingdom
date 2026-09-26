@@ -30,6 +30,15 @@
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
   quest is a row.
+- **A quest's line is rendered from its goal, never written.** The `Quests`
+  sheet carries a `name` — flavour, *Timber!*, *Tax day* — and no description;
+  the sentence the tracker shows is generated from `goal_type`, `goal_target`
+  and `goal_amount`, the way a technology's card is generated from what it
+  unlocks. So a rebalance updates its own prose, and a new goal type owes one
+  phrase rather than 53 rewrites.
+- **The tracker holds 44 characters**, and that is the whole budget: it is the
+  only place a quest's line is ever shown. Written copy ran to 105 and was
+  read cut off mid-word; the generated lines top out at 30.
 - **`DiscoverFeature`** is a `DiscoverCells` that counts only cells carrying a
   given feature.
   - The hint points at a dark cell that has the feature; with none in sight it
