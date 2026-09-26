@@ -54,9 +54,12 @@ follow in `props.json`:
 - **`scale` stays relative to the thing's OWN plot**, so 1.3 means the same
   "a third again as wide as its ground" at every size.
 
-`scale` comes *down* as the block grows — 1.55, 1.35, 1.25. A single peak may
-loom over its one cell; a range that loomed as far over nine would bury a
-quarter of the city behind it.
+**One overhang for the whole family, 1.20 at every size.** A peak spills a
+fifth of its plot past its own ground and no more, so a 1×1 reads as an
+outcrop on one cell rather than as something that has swallowed its
+neighbours. It was 1.55 once, which put a one-cell peak 198 px across when a
+cell is 128 — more than a quarter of a cell over each edge, and it looked it.
+A worked peak takes 1.14: it has been cut into.
 
 ## More than one drawing of the same thing
 
@@ -117,20 +120,20 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `forest` | 1.05 | 1.09 plots | three trees; one trunk, one compact round canopy each |
 | `forest_2` | 1.05 | 0.99 | two trees, one taller |
 | `forest_3` | 1.05 | 1.03 | three in a loose triangle, one set back |
-| `mountain` | 1.55 | 1.51 | six or seven broad facets; craggy on every side |
-| `mountain_2x2` | 1.35 | 1.36 | two peaks and a saddle, on a 2×2 block |
-| `mountain_3x3` | 1.25 | 1.28 | three peaks stepping down, on a 3×3 |
-| `mountain_exhausted_2x2` | 1.30 | 1.26 | its near flank cut into benches |
-| `mountain_exhausted_3x3` | 1.20 | 1.18 | the same, a wider terrace |
-| `mountain_iron` | 1.55 | 1.53 | two or three bold rust-red seams — few and large enough to read at thumbnail size |
-| `mountain_gold` | 1.55 | 1.54 | the same, in gold |
+| `mountain` | 1.20 | 0.70 | six or seven broad facets; craggy on every side |
+| `mountain_2x2` | 1.20 | 0.73 | two peaks and a saddle, on a 2×2 block |
+| `mountain_3x3` | 1.20 | 0.74 | three peaks stepping down, on a 3×3 |
+| `mountain_exhausted_2x2` | 1.14 | 0.66 | its near flank cut into benches |
+| `mountain_exhausted_3x3` | 1.14 | 0.67 | the same, a wider terrace |
+| `mountain_iron` | 1.20 | 0.71 | two or three bold rust-red seams — few and large enough to read at thumbnail size |
+| `mountain_gold` | 1.20 | 0.72 | the same, in gold |
 | `berry_bush` | 0.35 | 0.21 | waist-high on a villager |
 | `wild_animals` | 0.27 | 0.23 | boar at knee height — it is a wild pig, not a bear |
 | `fish_shoal` | 0.95 | 0.48 | lies flat, so it reads as the diamond itself |
 | `forest_exhausted` | 1.0 | 0.55 | three stumps, a cut log, one sapling — the same place, logged |
-| `mountain_exhausted` | 1.45 | 1.32 | cut into stepped benches of pale fresh stone |
-| `mountain_iron_exhausted` | 1.45 | 1.41 | a propped mine mouth, the red veins gone |
-| `mountain_gold_exhausted` | 1.45 | 1.31 | the same, the gold gone |
+| `mountain_exhausted` | 1.14 | 0.59 | cut into stepped benches of pale fresh stone |
+| `mountain_iron_exhausted` | 1.14 | 0.63 | a propped mine mouth, the red veins gone |
+| `mountain_gold_exhausted` | 1.14 | 0.59 | the same, the gold gone |
 | `farmlands` | 1.0 | 0.56 | a field: one plot wide, soil 1.92:1, wheat standing clear of it |
 | `farmlands_exhausted` | 1.0 | 0.51 | the same field cut to stubble; soil 1.97:1 |
 | `landmark_shrine` | 0.95 | 1.11 | 1×1 — a wayside shrine is small |

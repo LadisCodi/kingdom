@@ -12,32 +12,32 @@
   "mountain": {
     "name": "A ROCKY PEAK",
     "what": "ONE grey stone peak, cut into a few broad flat facets — six or seven large planes, not a pile of rubble. Its outline is craggy and uneven, leaning slightly, with one shoulder lower than the other. Two small boulders sit apart from it at its foot, and a little grass and moss catches in the lower cracks. It is a landmark on a single tile, not a mountain range",
-    "scale": 1.55
+    "scale": 1.2
   },
   "mountain_exhausted": {
     "name": "A QUARRIED PEAK",
     "what": "the SAME grey peak after it has been worked: its near side cut away into three or four flat stepped benches of pale freshly-cut stone, the rest of the outline still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into",
-    "scale": 1.45
+    "scale": 1.14
   },
   "mountain_iron": {
     "name": "AN IRON PEAK",
     "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, shot through with rusty red-brown ore: two or three bold warm reddish veins running down its faces and one exposed nugget of dark iron, with a little rust-stained rubble at its foot. It must read as iron at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
-    "scale": 1.55
+    "scale": 1.2
   },
   "mountain_iron_exhausted": {
     "name": "A WORKED-OUT IRON PEAK",
     "what": "the SAME iron peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the red veins gone and only a little rust staining left, rubble at its foot",
-    "scale": 1.45
+    "scale": 1.14
   },
   "mountain_gold": {
     "name": "A GOLD PEAK",
     "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, with bright gold veins running through it: two or three bold seams and one glinting nugget caught in a face, a little pale rubble at its foot. It must read as gold at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
-    "scale": 1.55
+    "scale": 1.2
   },
   "mountain_gold_exhausted": {
     "name": "A WORKED-OUT GOLD PEAK",
     "what": "the SAME gold peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the gold veins gone and only the faintest glint left, rubble at its foot",
-    "scale": 1.45
+    "scale": 1.14
   },
   "berry_bush": {
     "name": "A BERRY BUSH",
@@ -126,25 +126,25 @@
   "mountain_2x2": {
     "name": "A ROCKY MASSIF",
     "what": "ONE stone massif with TWO peaks of different heights sharing a base — the taller one behind and to the left, the lower one forward and right, with a saddle between them. Cut into broad flat facets, eight or ten large planes across the whole thing, not a heap of boulders. Its outline is craggy and uneven on every side, and it leans a little rather than standing square. Three or four small boulders at its foot and a little moss in the lower cracks",
-    "scale": 1.35,
+    "scale": 1.2,
     "footprint": 2
   },
   "mountain_3x3": {
     "name": "A MOUNTAIN RANGE ON ONE PLOT",
     "what": "ONE great stone massif with THREE peaks of clearly different heights sharing a base — the tallest at the back, two lower shoulders stepping down in front of it, saddles between them. Cut into broad flat facets, a dozen or so large planes, not a heap of boulders. Its outline is craggy and uneven on every side, and it leans a little rather than standing square. A scatter of boulders at its foot and moss in the lower cracks",
-    "scale": 1.25,
+    "scale": 1.2,
     "footprint": 3
   },
   "mountain_exhausted_2x2": {
     "name": "A QUARRIED MASSIF",
     "what": "the SAME two-peaked massif after it has been worked: its near flank cut away into four or five flat stepped benches of pale freshly-cut stone, the peaks behind still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into",
-    "scale": 1.3,
+    "scale": 1.14,
     "footprint": 2
   },
   "mountain_exhausted_3x3": {
     "name": "A QUARRIED RANGE",
     "what": "the SAME three-peaked massif after it has been worked: a wide terrace of flat stepped benches cut into its near flank in pale freshly-cut stone, the peaks behind still craggy, rubble and several squared blocks at its foot. Same rock, same place, mined into",
-    "scale": 1.2,
+    "scale": 1.14,
     "footprint": 3
   }
 }
