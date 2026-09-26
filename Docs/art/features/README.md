@@ -133,3 +133,11 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `mountain_gold_exhausted` | 1.45 | 1.31 | the same, the gold gone |
 | `farmlands` | 1.0 | 0.56 | a field: one plot wide, soil 1.92:1, wheat standing clear of it |
 | `farmlands_exhausted` | 1.0 | 0.51 | the same field cut to stubble; soil 1.97:1 |
+| `landmark_shrine` | 0.95 | 1.11 | 1×1 — a wayside shrine is small |
+| `landmark_leyspring` | 0.95 | 0.67 | 1×1 — a pool, so it lies low |
+| `landmark_stones` | 1.10 | 0.55 | **2×2** — nine monoliths in a ring, two fallen |
+| `ruin_barrow` | 1.00 | 0.49 | 1×1 — one low mound |
+| `ruin_observatory` | 1.15 | 1.15 | **2×2** — a tower, so it rises rather than spreads |
+| `ruin_counting_house` | 1.10 | 1.08 | **2×2** |
+| `ruin_ironworks` | 1.15 | 0.57 | **2×2** — wide and low, sprawling over its water |
+| `ruin_chapel` | 1.15 | 1.15 | **3×3** — the only site with room for one |
