@@ -29,7 +29,7 @@ import {
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
-import { animFor, castFor, villagerFor, type UnitPose } from './cast';
+import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
 export interface MarkerLayer {
@@ -455,6 +455,9 @@ export function drawMap(
     /** Set on PEOPLE: draw me again as a silhouette, clipped to whatever is
      *  in front of me. Absent on scenery, which may be hidden freely. */
     ghost?: (clip: PlotBox[]) => void;
+    /** False for things low enough to stand IN (`NEVER_HIDES`). They keep
+     *  their place in the draw order and simply never hide anybody. */
+    occludes?: boolean;
   }
   const standing: Standing[] = [];
   /** Ambient villagers and workers go in the SAME list as the buildings.
@@ -506,7 +509,9 @@ export function drawMap(
    */
   const later = (
     cell: Coord, draw: (mark: (r: PlotBox) => void) => void, span = { x: 1, y: 1 },
-    extra: { rect?: PlotBox; ghost?: (clip: PlotBox[]) => void } = {},
+    extra: {
+      rect?: PlotBox; ghost?: (clip: PlotBox[]) => void; occludes?: boolean;
+    } = {},
   ): void => {
     standing.push({
       depth: (cell.x + span.x / 2) + (cell.y + span.y / 2),
@@ -514,6 +519,7 @@ export function drawMap(
       draw,
       rect: extra.rect ?? camera.plotBox(cell, { x: span.x || 1, y: span.y || 1 }),
       ghost: extra.ghost,
+      occludes: extra.occludes,
     });
   };
 
@@ -794,7 +800,8 @@ export function drawMap(
     const box = camera.plotBox(district.location, def.size);
     if (box.x + box.w < 0 || box.y + box.h < 0 || box.x > w || box.y - box.w > h) continue;
     later(district.location,
-      (mark) => mark(artRect(box, drawDistrict(district, box), 1)), def.size);
+      (mark) => mark(artRect(box, drawDistrict(district, box), 1)), def.size,
+      { occludes: !NEVER_HIDES.has(district.definitionId) });
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
@@ -820,7 +827,8 @@ export function drawMap(
   for (const item of standing) {
     if (!item.ghost) continue;
     const over = standing.filter(
-      (o) => o !== item && o.depth > item.depth && overlaps(o.rect, item.rect),
+      (o) => o !== item && o.occludes !== false
+        && o.depth > item.depth && overlaps(o.rect, item.rect),
     );
     if (over.length > 0) item.ghost(over.map((o) => o.rect));
   }

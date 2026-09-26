@@ -47,6 +47,24 @@ export const VILLAGERS: readonly string[] = [
   'villager_1', 'villager_2', 'villager_3', 'villager_4',
 ];
 
+/**
+ * THINGS A PERSON STANDS IN, not behind.
+ *
+ * A crop plot is a field of wheat. It is tall enough to cover a villager's
+ * legs, and the geometry says so honestly — but a villager among the crop is
+ * IN the field, not behind a wall, and outlining them as though something
+ * were in front of them reads as a fault rather than as depth.
+ *
+ * So these are drawn in their proper depth order, and simply never count as
+ * hiding anybody. The rule is about HEIGHT, not about crops: anything low
+ * enough to wade through belongs here.
+ *
+ * Cosmetic, like the cast below, and no business of the workbook's.
+ */
+export const NEVER_HIDES: ReadonlySet<DistrictId> = new Set<DistrictId>([
+  'FarmLands',
+]);
+
 /** A crew member for a building of this kind, or null when the building has
  *  no cast (Docks) — the caller then draws the legacy sprite chain. */
 export function castFor(district: DistrictId, seed: number): string | null {
