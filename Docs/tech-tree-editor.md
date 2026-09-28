@@ -2,12 +2,14 @@ Tech tree editor
 ---
 
 > **Scope.** How technologies are authored — created, described, priced,
-> classified, placed and connected — and why they live outside the workbook.
-> Covers the `?dev=tree` editor, the shared rule module every consumer
-> validates against, and the dev-only save path.
+> classified, placed and connected — and why they are a board, not a table.
+> Covers the tech tree editor — the Tech tree collection of the data editor
+> (`?dev=data#tree`, [`plans/data-editor.md`](plans/data-editor.md)) — the
+> shared rule module every consumer validates against, and the dev-only save
+> path.
 >
-> **Status: built.** There is no `Technologies` sheet, and no `required_tech`
-> column on `Districts`, `Units` or `Harvest`. The tree this authors is
+> **Status: built.** Buildings, units and harvest sources name no technology:
+> a technology says what it opens. The tree this authors is
 > designed in [`features/07-research.md`](features/07-research.md) and its
 > content is [`features/tech-tree.md`](features/tech-tree.md).
 
@@ -29,8 +31,8 @@ identity in `definitions.ts`. Three of those are the same list.
   every district, unit and harvest row backwards.
 - **Errors arrived late and in a terminal**, half a minute after the mistake.
 
-**The workbook is still the source of truth for every balancing number**
-(invariant 5). A technology is not one: it is identity, a kind, a set of
+Every balancing number lives in the data editor's collections (invariant 5).
+A technology is not one: it is identity, a kind, a set of
 unlocks or effects, a price, a slot and a set of edges — one object, authored
 in one place. What it SAYS is not authored at all (§3.1).
 
@@ -340,17 +342,14 @@ The Save button POSTs to `/__tree/save`, a **dev-only** Vite middleware
 of the rules and no chance of the server accepting what the editor refused —
 and writes `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
 
-`npm run balance` never touches this file, and the editor never writes
-`balance.json`. Neither can overwrite the other.
-
 ## 7. Dials
 
 | Dial | Where |
 |---|---|
 | a technology: everything about it | here |
 | three columns, card and gutter sizes, the side channel | `src/ui/research/layout.ts` |
-| what opens a band | the `Eras` sheet (`unlock_cells`) |
-| what a district, unit or harvest source costs and does | the workbook, as ever |
+| what opens a band | the band bar's cells, saved as the book's `eras` in this file |
+| what a district, unit or harvest source costs and does | its collection in `?dev=data` |
 
 ## 8. What was deliberately not built
 
@@ -360,8 +359,8 @@ and writes `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
 - **A `mul` op.** Three of the hard-coded mechanics multiply an inner term.
   Giving them an op would make the resolver's one shape two shapes, so they
   stay `mechanic`.
-- **Editing anything else's numbers.** A district's cost is the workbook's. The
-  editor shows what a technology unlocks; it does not price it.
+- **Editing anything else's numbers.** A district's cost is its entry in
+  Buildings. The editor shows what a technology unlocks; it does not price it.
 - **A free canvas.** Three columns and whole rows are what make a page fit a
   phone and a requirement mean depth. Pixel positions were what this replaced.
 - **Auto-layout.** The one-off that seeded the current pages laid them out from

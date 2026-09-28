@@ -247,7 +247,7 @@ where a percentage would have rounded away to nothing.
 | **Zones**: a placed, timed, positional effect — new state, a save field, an expiry boundary, and a `resolve()` that knows about cells | new `sim/zones.ts` |
 | **Cooldowns**: one timestamp per relic, and a boundary at each | `casting.ts`, `state.ts` |
 | The auto-tap engine: a tap budget spent 4 a second, nearest-first, charging no Mana | `casting.ts` |
-| `active_*` columns per level on the `Artifacts` sheet | `balance.xlsx`, `scripts/balance.mjs` |
+| `active*` fields per level in `artifacts` | `src/sim/data/game/artifacts.json` and its schema, in `?dev=data` |
 | The zone preview in cast mode, and the cooldown on the relic's card | `ui/collectionSheet.ts`, the map renderer |
 
 - **The one to cost first is zones.** Everything else is a number; a positional
@@ -378,14 +378,14 @@ What it does require is one thing, and it is not negotiable:
 
 | Dial | Value | Key |
 |---|---|---|
-| Passive power, per level | §4 | `Artifacts` sheet |
-| Which axis a level moves | **one per relic** (§2.2) | a column, and a test |
-| Active power / duration / radius, per level | §4 | `Artifacts` sheet |
-| Taps a Mana, and its per-level step | **2.00, +0.25** | `Artifacts` sheet |
+| Passive power, per level | §4 | `artifacts` |
+| Which axis a level moves | **one per relic** (§2.2) | a field, and a test |
+| Active power / duration / radius, per level | §4 | `artifacts` |
+| Taps a Mana, and its per-level step | **2.00, +0.25** | `artifacts` |
 | Auto-tap rate | **4 a second** | a setting |
 | Cooldown | **5 min, flat, from when the window closes** | a setting |
-| Radius | **2 · 3 at L5 · 4 at L10 · 5 at L20**, the same on all five | `active_radius_steps` |
-| The three new relics' passives and actives | §6.3 | `Artifacts` sheet |
+| Radius | **2 · 3 at L5 · 4 at L10 · 5 at L20**, the same on all five | `artifactRadiusSteps` |
+| The three new relics' passives and actives | §6.3 | `artifacts` |
 | The album cycle | see [`album-cycles.md`](album-cycles.md) | — |
 
 ## 8. Deliberately not in this proposal

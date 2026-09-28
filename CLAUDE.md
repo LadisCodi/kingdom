@@ -21,12 +21,10 @@ Code-level contracts are the invariants below.
 ## Commands
 
 ```bash
-npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 55 suites, keep them all green
+npm run dev          # vite
+npm test             # vitest run — 72 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
-npm run balance      # balance.xlsx  → src/sim/data/balance.json
-npm run balance:export   # balance.json → balance.xlsx  (the other direction)
 npm run art          # rebuild the UI atlas
 npm run art:check    # verify it
 npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ (atlas + index)
@@ -34,15 +32,14 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
 reset). `?dev=kit` opens the UI primitive gallery. `?dev=data` opens the
-data editor (`Docs/plans/data-editor.md`) — every collection of game data
-in one tool; the balance numbers are read-only until the workbook is
-retired. The map editor (`Docs/map-editor.md`) lives in it at
-`?dev=data#map` — paint terrain and features, place landmarks and ruins; it
-saves straight into `src/sim/data/region-map.json` through a dev-only Vite
-middleware. The tech tree editor (`Docs/tech-tree-editor.md`) is
-`?dev=data#tree` — drag technologies into the slots of a tome page, which
-sets their requirements; it saves into `src/sim/data/tech-tree.json` the
-same way. `?dev=map` and `?dev=tree` redirect there.
+data editor (`Docs/plans/data-editor.md`) — every piece of game data in one
+tool, saving straight into `src/sim/data/` through dev-only Vite middleware.
+The map editor (`Docs/map-editor.md`) lives in it at `?dev=data#map` — paint
+terrain and features, place landmarks and ruins; it writes
+`src/sim/data/region-map.json`. The tech tree editor
+(`Docs/tech-tree-editor.md`) is `?dev=data#tree` — drag technologies into
+the slots of a tome page, which sets their requirements; it writes
+`src/sim/data/tech-tree.json`. `?dev=map` and `?dev=tree` redirect there.
 
 ## Five invariants. Breaking one is a bug even if the tests pass.
 
@@ -72,23 +69,31 @@ a stream would desync because `advance()` groups work differently in replay
 than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
-**5. The workbook is the source of truth for every NUMBER; the map editor for
-the MAP; `?dev=tree` for the TECHNOLOGIES and the BANDS.** What a building
-COSTS is its own sheet, `DistrictCosts` — one row per building per level,
-level 1 being the build, the four currencies and the four goods on it. There
-is no cost curve: the `Districts` row carries only `instance_linear_growth`
-and `instance_exponential_growth`, which say how much dearer a LATER instance
-is (`Docs/features/05-city-and-districts.md` §3). `balance/balance.xlsx` →
-`npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
-hand is silently overwritten** on the next dev/build. To add a column: edit the
-JSON *and* the importer schema in `scripts/balance.mjs`, then
-`npm run balance:export`, then `npm run balance`.
-Two kinds of content are **not numbers** and live outside the workbook.
-Map content — terrain, features, landmarks and ruins — is authored by
-coordinate, which a spreadsheet expresses badly, so it lives in
-`src/sim/data/region-map.json` and is edited in `?dev=map`
+**5. `?dev=data` is the source of truth for every piece of game data.** Every
+number lives in one JSON file per collection, `src/sim/data/game/<collection>.json`,
+and what each field is — type, range, what it names, how long a ladder is —
+in `src/sim/data/schema/<collection>.json`. `src/sim/data/balance.ts` puts
+the files back into the one object `definitions.ts` reads. What a legal
+document is lives in **one** place, `src/sim/data/dataRules.ts`, checked by
+the tool as you type, by the save endpoint (`scripts/vite-data-editor.mjs`,
+which refuses a document with errors) and by `tests/dataRules.test.ts`,
+which also holds every file to exactly what a save would write. Edit the
+files in the tool, not by hand; a hand edit that breaks a rule fails the
+test. A **building is whole** in `buildings.json`: its name, promise,
+description, glyph, sprite and crew beside every number. What it COSTS is its
+`costPerLevel` — one `{ cost, goods }` per level, level 1 being the build.
+There is no cost curve: `instanceLinearGrowth` and
+`instanceExponentialGrowth` say how much dearer a LATER instance is
+(`Docs/features/05-city-and-districts.md` §3). Art tiers are files: a level
+draws the highest `<sprite>_l<n>.png` at or below it. `DistrictId` is the
+file's keys, and the build menu reads `buildable`, `produces` and
+`harmonySupply`, so a building made in the tool needs no code to exist.
+Two kinds of content are authored on a BOARD rather than in fields, each in
+its own editor inside the tool. Map content — terrain, features, landmarks
+and ruins — is authored by coordinate, so it lives in
+`src/sim/data/region-map.json` and is edited at `?dev=data#map`
 (`Docs/map-editor.md`). A **technology is whole** in
-`src/sim/data/tech-tree.json`, edited in `?dev=tree`
+`src/sim/data/tech-tree.json`, edited at `?dev=data#tree`
 (`Docs/tech-tree-editor.md`): its name and glyph, what KIND it is
 (`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
 seconds, its slot on its tome's three-column page, and what it requires. What
@@ -97,38 +102,37 @@ effects (`src/sim/techProse.ts`), and only a `mechanic`, whose effect is code,
 carries written prose. The
 same file says what BANDS each book has and what each one asks for in revealed
 cells (`eras`), because a band and its gate are one fact and the count has to
-travel with the number. There is **no `Technologies` sheet and no `Eras`
-sheet** — a tree is a graph a designer arranges by
-dragging, and half of it in a spreadsheet was the thing that made creating one
-a four-file job. **A technology says what it opens**, so `Districts`,
-`Units` and `Harvest` have no `required_tech` columns either: every gate
+travel with the number. **A technology says what it opens**, so buildings,
+units and harvest sources name no technology: every gate
 (`DISTRICTS[x].requiredTech`, `requiredTechPerLevel`, `extraCountTech`,
 `UNITS[x].requiredTech`, `HARVEST[x].requiredTech`, `terrainGate`) is derived
-from the technologies in `definitions.ts`. `npm run balance` does not touch
-`tech-tree.json`, and `?dev=tree` does not touch the workbook.
-What a legal map is lives in **one** place, `src/sim/data/mapRules.ts`, checked
-by the editor, by the save endpoint and by `tests/regionMap.test.ts`; what a
-legal tech tree is lives in `src/sim/data/techTreeRules.ts`, checked the same
-three ways (`tests/techTree.test.ts`).
+from the technologies in `definitions.ts`.
+What a legal map is lives in `src/sim/data/mapRules.ts`, checked by the
+editor, by the save endpoint and by `tests/regionMap.test.ts`; what a legal
+tech tree is lives in `src/sim/data/techTreeRules.ts`, checked the same three
+ways (`tests/techTree.test.ts`).
+**A data file changing is an event, not a reload** (`kingdom:data`): the game
+reloads on it; the tool keeps unsaved work and offers the reload.
 
 ## Data or code?
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `DistrictCosts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
-| the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
-| the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
+| every balance number, in `?dev=data` — every collection's entries and settings | new quest **goal types** |
+| the whole map — terrain, features, landmark and ruin placement and properties — at `?dev=data#map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
+| the whole quest chain — **list order is chain order**, reordered by dragging | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
-| a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
-| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| a Gem pack = an entry in `store`; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
+| a seasonal hero = one `heroes` entry + one `banners` entry; **how many bands a book has and what each asks for** — the tree editor creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
+| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — at `?dev=data#tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
+| **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
-| a refined good's recipe and work time (`Goods`); what a building level costs in goods (the `DistrictCosts` row for that level); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
-| **a decoration** = a `Districts` row with `harmony_supply` (one level, no crew), priced in goods on its `DistrictCosts` level 1 row, capped and Townhall-gated by `max_count_per_townhall_level`, discovered by a card in `?dev=tree`; **what a level demands** = `harmony_cost_per_level`, a TOTAL from level 1; the surplus tiers = `harmony.surplus_tiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
-| a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
-| a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
+| a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
+| **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
+| a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
+| a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
 
@@ -215,9 +219,10 @@ Rules for writting design documents:
 
 ## Don't
 
-- Don't hand-edit `src/sim/data/balance.json`. Hand-editing
-  `src/sim/data/region-map.json` is allowed but pointless — use `?dev=map`,
-  which validates as you go.
+- Don't hand-edit the files in `src/sim/data/game/` and `schema/`, or
+  `region-map.json` and `tech-tree.json` — use `?dev=data`, which validates
+  as you go. A hand edit is allowed but has to survive `tests/dataRules.test.ts`
+  (and the map and tree tests).
 - Don't re-express upgrade levels as modifiers, or pass `now` through the
   `effectiveX` helpers — both were cut deliberately.
 - Don't restructure `GameState` into `regions: Record<RegionId, RegionState>`;

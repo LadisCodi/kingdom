@@ -59,7 +59,7 @@
   (`dmg ×1.25`, `hp ×1.15`, `def +2`). **Nothing but the number tells them
   apart.**
 - Two of the six carry a **dead trait**. `KnowledgeBonus` and `FragmentBonus`
-  exist in the `HeroTrait` union and on the sheet, and **no call site reads
+  exist in the `HeroTrait` union and in `heroes`, and **no call site reads
   either** — 14 of the 32 heroes have no off-board effect at all. The
   Necromancer's card also promises *"85% more Stardust"* while its trait is
   `KnowledgeBonus`, which is neither read nor Stardust.
@@ -81,7 +81,7 @@
 
 ### 2.1 Every boon points UP
 
-- **A boon is always a MULTIPLIER, always above 1.** There is no `op` column,
+- **A boon is always a MULTIPLIER, always above 1.** There is no `op` field,
   because there is no choice to author: a flat bonus is worth less every hour
   the kingdom grows, and a multiplier stays proportionally worth the same for
   ever.
@@ -173,7 +173,7 @@ so it takes one boon and the kingdom takes five.
 
 | Step | Where |
 |---|---|
-| Two columns on the `Heroes` sheet — `boon_stat`, `boon_value` — blank on every Common and Rare, and refused below 1 | `balance.xlsx`, `scripts/balance.mjs` |
+| One field in `heroes` — `boon`, a `{ stat, value }` — null on every Common and Rare, and refused below 1 | `src/sim/data/game/heroes.json` and its schema |
 | `HeroDef.boon: HeroBoon \| null`, the shape `ArtifactDef.passive` already had, minus the op | `data/definitions.ts` |
 | `syncHeroBoons(state)` — filter the `hero:` prefix, re-add one per owned Legendary. A mirror of `syncArtifactModifiers`, idempotent and total | `sim/heroes.ts` |
 | Called where a hero lands and on load | `heroes.ts#grantHero`, `save.ts` |
@@ -198,8 +198,8 @@ so it takes one boon and the kingdom takes five.
 
 | Dial | Value | Key |
 |---|---|---|
-| Which rarity has a boon | **Legendary only** | the sheet: blank = none |
-| What each boon moves, and by how much | §3 | `Heroes` sheet, `boon_*` |
+| Which rarity has a boon | **Legendary only** | `heroes` › `boon`: null = none |
+| What each boon moves, and by how much | §3 | `heroes` › `boon` — `stat`, `value` |
 | Which direction a boon may point | **up only** — a speed, a yield or a capacity | §2.1, and a test |
 | When a boon ships | **with the call site that reads it**, never before | the Scout's waits on the world map |
 | Does a boon scale | **no** — a step, fixed for ever | — |

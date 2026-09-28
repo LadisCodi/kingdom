@@ -112,14 +112,14 @@
 
 | Dial | Value | Key |
 |---|---|---|
-| What one item is made of | §2 | `Goods.input_*`, `input_good`, `input_mana` |
-| Work for one villager | 20 min / 30 min / 1 h / 3 h | `Goods.work_seconds` |
-| Which workshop makes which good | §3 | `Districts.produces` |
-| Queue length by level | 3 → 12 | `Districts.queue_length_per_level` |
-| Crew by level | 1 → 6 | `Districts.max_workers_per_level` |
-| How many the city may own | 1 at TH4, 2 at TH8 | `Districts.max_count_per_townhall_level` |
-| What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | the `DistrictCosts` sheet, that level's row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
-| Gem price of the item in progress | 5 s a Gem | `rush.seconds_per_gem` |
+| What one item is made of | §2 | `goods.input`, `inputGood`, `inputGoodAmount`, `inputMana` |
+| Work for one villager | 20 min / 30 min / 1 h / 3 h | `goods.workSeconds` |
+| Which workshop makes which good | §3 | `buildings.produces` |
+| Queue length by level | 3 → 12 | `buildings.queueLengthPerLevel` |
+| Crew by level | 1 → 6 | `buildings.maxWorkersPerLevel` |
+| How many the city may own | 1 at TH4, 2 at TH8 | `buildings.maxCountPerTownhallLevel` |
+| What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | `buildings` › `costPerLevel`, that level's `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
+| Gem price of the item in progress | 5 s a Gem | `rush.secondsPerGem` |
 | Offline cap | 8 h | `offlineCapHours` |
 
 ## 10. Deliberately not in this design

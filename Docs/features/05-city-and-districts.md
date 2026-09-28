@@ -5,8 +5,8 @@
 > construction itself is [`06-construction.md`](06-construction.md); what
 > workers do is [`04-harvest.md`](04-harvest.md).
 >
-> **Status: built 2026-09-09.** Every level is authored on the `DistrictCosts`
-> sheet and priced by the building's own instance ordinal (§3).
+> **Status: built 2026-09-09.** Every level is authored in the building's
+> `costPerLevel` and priced by the building's own instance ordinal (§3).
 
 ## 1. The Townhall level is the era
 
@@ -14,7 +14,7 @@
   **how high each may level**. It is the only gate that moves all of them at
   once.
 - It also **multiplies every house's rent**: ×1 at level 1, +0.25 a level, to
-  ×3.25 at 10 (`taxes.townhall_multiplier_per_level`,
+  ×3.25 at 10 (`taxes.townhallMultiplierPerLevel`,
   [`03-economy.md`](03-economy.md) §3). This is the number its Level Up card
   shows — the count caps are gates, not a stat a player reads.
 
@@ -29,7 +29,7 @@
 | Explores to ring | 3 | 6 | 8 | 10 |
 
 - **A town grows when its people do.** Every level past the first asks for
-  villagers on top of its technology: `Districts.required_population_per_level`
+  villagers on top of its technology: `buildings.requiredPopulationPerLevel`
   on the Townhall row, **3 · 5 · 12 · 20 · 30 · 40 · 50 · 60 · 72**. Total
   population, housed or not; each level asks for fewer than the houses of the
   level before can hold, so the answer is always roofs, Food and the training
@@ -39,7 +39,7 @@
   ([`03-economy.md`](03-economy.md) §5), so a hundred of them is a month of
   Food rather than a lifetime.
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
-- It also sets **how far the fog can be paid for**: `fog.reach_per_townhall_level`,
+- It also sets **how far the fog can be paid for**: `fog.reachPerTownhallLevel`,
   in BFS rings, 3 at level 1 to the whole province at 10
   ([`01-map-and-fog.md`](01-map-and-fog.md) §4). The Level Up card shows the
   ring beside the rent.
@@ -58,11 +58,11 @@ Three arcs run past TH3:
 
 ## 2. The districts
 
-- Fourteen districts; each is a `Districts` row. A fifteenth needs no code
-  beyond an id.
+- Every building is an entry of `buildings`, whole — identity, art, crew and
+  every number. A new one needs no code: it is created in `?dev=data`.
 - Every building, its job, its count cap and its level ladder:
   [`buildings.md`](buildings.md).
-- Per-level tech gates (`required_tech_per_level`): entry 0 is the technology
+- Per-level tech gates (`requiredTechPerLevel`): entry 0 is the technology
   needed to reach level 2.
 - A district card says *Research X required*; a research-complete banner says
   *Housing can now reach level 2*.
@@ -70,24 +70,24 @@ Three arcs run past TH3:
 ## 3. What a building costs
 
 **Every level of every building is authored, one number per resource.** There
-is no cost curve. The prices live on their own sheet, `DistrictCosts`, one row
-per building per level — the four currencies and the four refined goods side
-by side:
+is no cost curve. The prices live in the building's `costPerLevel`, one entry
+per level — the currencies in `cost` and the refined goods in `goods`, side by
+side, edited in Buildings › <building> › Levels:
 
 ```
-district | level | gold | wood | food | stone | planks | cut_stone | iron | runestone
+costPerLevel: [ { cost: { Wood: 20 }, goods: {} }, { cost: { Wood: 60 }, goods: {} }, … ]
 ```
 
 - **Level 1 is the build.** Levels 2 and up are what reaching that level
   costs. A build price and an upgrade price are the same kind of thing, so
-  they are one column of numbers, not two bases with a curve between them.
+  they are one list of numbers, not two bases with a curve between them.
 - The table prices the **first** instance of the building. Every later one
   multiplies it (§3.1).
 - Distance is priced in build **time**, never in cost (§3.3).
 - The ordinal multiplier applies to the currencies only. Goods are authored
   per level like everything else and are never multiplied (§3.2).
-- A building has exactly as many rows as it has levels; the importer refuses a
-  `max_level` that reaches past the last row authored for it.
+- A building has exactly as many entries as it has levels; the schema refuses a
+  `costPerLevel` whose length is not `maxLevel`.
 - What each level buys: [`buildings.md`](buildings.md).
 
 ### 3.1 The instance multiplier
@@ -111,7 +111,7 @@ M(N)           = linear × (N − 1) + growth^(N − 1)
 - Rounded to **three significant figures**, per resource per level per
   ordinal — a pure function of the four, so a card and an offline replay never
   disagree.
-- Two dials a building: `instance_linear_growth`, `instance_exponential_growth`.
+- Two dials a building: `instanceLinearGrowth`, `instanceExponentialGrowth`.
 
 At 2 and 1.2:
 
@@ -124,21 +124,21 @@ At 2 and 1.2:
   ordinal is the count plus one and stays unique without a counter of its own.
 - Because the multiplier is flat next to the level ladder, **what paces the
   city is how high buildings are pushed, not how many stand**. What limits how
-  many stand is `max_count_per_townhall_level` (§1), not the price.
+  many stand is `maxCountPerTownhallLevel` (§1), not the price.
 
 ### 3.2 Refined goods, in the same table and unmultiplied
 
-- The four goods are four more columns on the same row, under the same rule:
-  the level 1 row is what the **build** costs in goods, levels 2 and up what
+- The goods sit in the same entry, under the same rule:
+  the level 1 entry is what the **build** costs in goods, levels 2 and up what
   that level costs.
 - **The ordinal multiplier skips them.** A recipe does not know how many of
   the thing the city owns, and a workshop makes goods one at a time: an
   ordinal multiplier would price a second workshop's worth of days into a
   single upgrade.
 - A building's whole price — raw and refined, build and every level — is
-  therefore one row per level and nothing else. No goods list packed into a
-  text cell, and no separate column for the build.
-- A **decoration** has one level, so its goods price is its level 1 row
+  therefore one entry per level and nothing else, with no separate field for the
+  build.
+- A **decoration** has one level, so its goods price is its level 1 entry
   ([`21-harmony.md`](21-harmony.md) §2).
 
 ### 3.3 The wait
@@ -151,7 +151,7 @@ upgradeDuration(L)   = round(seconds × durationGrowth^(L−2))
 upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ```
 
-- The pivot is `city.late_upgrade_from_level` (6), and the late half restarts
+- The pivot is `city.lateUpgradeFromLevel` (6), and the late half restarts
   at its own base — 2 h for every district — because a minute-long step cannot
   be compounded into a multi-day ladder without deforming the opening.
 - A build's wait grows with the ordinal and with distance from the Townhall;
@@ -248,21 +248,21 @@ What follows the building:
 
 | Dial | Where |
 |---|---|
-| Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| Townhall rent multiplier per level | `taxes.townhall_multiplier_per_level` — ×1 then +0.25 a level ([`03-economy.md`](03-economy.md) §3) |
-| How far the fog can be paid for, per Townhall level | `fog.reach_per_townhall_level` — [`01-map-and-fog.md`](01-map-and-fog.md) §4 |
-| What every level costs, build included — currencies and goods alike | the `DistrictCosts` sheet — §3 |
-| How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — §3.1 |
-| Build time, and how it grows with count and distance | `Districts.build_duration_*` |
-| Per-level Townhall and tech gates | `Districts.required_*_per_level` |
-| Villagers each Townhall level asks for | `Districts.required_population_per_level` on the Townhall row — §1 |
-| Housing capacity per level | `Districts.population_capacity` — OQ-46 |
-| House rent bonus per level | `Districts.tax_bonus_per_level` — +25% a level ([`03-economy.md`](03-economy.md) §3) |
+| Count caps per Townhall level | `buildings.maxCountPerTownhallLevel` |
+| Townhall rent multiplier per level | `taxes.townhallMultiplierPerLevel` — ×1 then +0.25 a level ([`03-economy.md`](03-economy.md) §3) |
+| How far the fog can be paid for, per Townhall level | `fog.reachPerTownhallLevel` — [`01-map-and-fog.md`](01-map-and-fog.md) §4 |
+| What every level costs, build included — currencies and goods alike | `buildings` › `costPerLevel` — §3 |
+| How much dearer a later instance is | `buildings.instanceLinearGrowth`, `instanceExponentialGrowth` — §3.1 |
+| Build time, and how it grows with count and distance | `buildings.buildDuration*` |
+| Per-level Townhall and tech gates | `buildings.requiredTownhallLevelPerLevel`; the tech gates are the technologies' unlocks (`?dev=tree`) |
+| Villagers each Townhall level asks for | `buildings.requiredPopulationPerLevel` on the Townhall — §1 |
+| Housing capacity per level | `buildings` › Housing › `populationCapacityPerLevel` — OQ-46 |
+| House rent bonus per level | `buildings.taxBonusPerLevel` — +25% a level ([`03-economy.md`](03-economy.md) §3) |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
 | Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |
-| The late half of the wait | `Districts.upgrade_duration_late_seconds`, `upgrade_duration_late_level_growth`, `city.late_upgrade_from_level` — §3.3 |
-| Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
+| The late half of the wait | `buildings.upgradeDurationLateSeconds`, `upgradeDurationLateLevelGrowth`, `city.lateUpgradeFromLevel` — §3.3 |
+| Adjacency | `adjacency` — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design
 

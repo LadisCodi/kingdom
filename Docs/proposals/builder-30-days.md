@@ -201,7 +201,7 @@ Recommendation: **one tier of three goods, and one late good**.
 - **Harmony is a city stat, not a currency**: `supply − demand`, computed on
   read, shown in the build menu header. Never spent, never lost.
 - **Decorations supply Harmony**; **advanced buildings demand it**. Every
-  building level 8+ and every §5–§7 building carries a `harmony_cost`.
+  building level 8+ and every §5–§7 building carries a `harmonyCostPerLevel`.
 - A build or upgrade with a Harmony cost may **start** only while
   `supply ≥ demand + cost`. Once built it never loses Harmony — a deficit
   blocks the next thing, it does not punish the last (promise 1).
@@ -323,9 +323,9 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 | Tavern | Housing | Harmony +1 per neighbouring house |
 | Market | a workshop | that good sells +10% |
 
-- **Built 2026-09-07** (OQ-48 closed): the sheet is
-  `(district, neighbour, stat, magnitude)` and either side may name a KIND, so
-  the hall rule is one row. Six of the rows above are in — the ones whose
+- **Built 2026-09-07** (OQ-48 closed): each `adjacency` entry is
+  `(district, neighbor, stat, magnitude)` and either side may name a KIND, so
+  the hall rule is one entry. Six of the rows above are in — the ones whose
   buildings exist. The Sanctum's and the Tavern's wait for decorations and the
   Tavern; the Market's waits for goods to be sellable.
 - **Superseded 2026-09-07 (OQ-1):** the plot is NOT bounded — a building goes
@@ -337,14 +337,14 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 
 | Block | Data | Code | Art | New timer type | Offline class |
 |---|---|---|---|---|---|
-| §1 Levels 6–10 | rows | yield/speed per level as district stats; L6+ costs in goods | 6 more sprites per building | none | timer (as today) |
-| §2 Workshops | 4 districts, recipes sheet | goods queue, crew shared across items, stockpile, goods in prices, rush on the item in progress | 4 buildings + 4 goods icons | **queue item** | production |
+| §1 Levels 6–10 | per-level entries | yield/speed per level as district stats; L6+ costs in goods | 6 more sprites per building | none | timer (as today) |
+| §2 Workshops | 4 districts, a `goods` collection | goods queue, crew shared across items, stockpile, goods in prices, rush on the item in progress | 4 buildings + 4 goods icons | **queue item** | production |
 | §3 Dragon's Nest | 1 district, eggs, 1 unit type | incubation, feeding, party slot | nest, 3 eggs, 1–3 creatures | **incubation** | timer |
-| §4 Harmony | 6 decorations, `harmony_cost` column | supply/demand stat, gate, surplus bonus | 6 pieces + seasonal | none | — |
+| §4 Harmony | 6 decorations, a `harmonyCostPerLevel` field | supply/demand stat, gate, surplus bonus | 6 pieces + seasonal | none | — |
 | §5 Watchtower | 1 district | world-map dials read from a building level | 1 building | none | — |
 | ~~§6 Reliquary~~ | **cut** — relics unlock on the first relic owned | a hidden nav tab | none (3 sprites go unused) | none | — |
 | §7 Tavern | 1 district, `Hospitality` | hero cap, rumours, banner relocation | 1 building | none | — |
-| §8 Adjacency | sheet columns | stat-typed rules in the resolver | none | none | — |
+| §8 Adjacency | `adjacency` fields | stat-typed rules in the resolver | none | none | — |
 
 Dependencies: §1's L6–7 need §2; L8–10 need §4. §5–§7 need only §1's TH
 ladder. §3 needs §2 (Iron). §8 needs nothing.
@@ -373,5 +373,5 @@ Not in this proposal, deliberately:
 - ~~Whether the banner leaves the store for the Tavern (§7)~~ — **it does,
   decided 2026-09-08**; tapping the Tavern is the hero destination
   ([`../features/14-monetization.md`](../features/14-monetization.md) §2.1).
-- ~~The `Adjacency` sheet growing a `stat` column~~ — **done 2026-09-07** (§8, OQ-48 closed).
+- ~~`adjacency` growing a `stat` field~~ — **done 2026-09-07** (§8, OQ-48 closed).
 - ~~Plot expansions as the price of Harmony~~ — **moot** (OQ-71: there is nothing to expand).

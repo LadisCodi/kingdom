@@ -19,26 +19,26 @@
 
 ## 2. Depth config
 
-One row per depth, plus two tables.
+One `depths` entry per depth, plus two tables.
 
 | Field | Value |
 |---|---|
 | `rooms` | 8–18 |
-| `guild_req` | Guild level that opens this depth. Default `= depth_index`. **`0` on every Depth 1** |
-| `power_start`, `power_step` | Enemy power in room 1, per-room increment |
-| `threat_mix` | Type weights per room, biased to the ruin's affinity |
+| `guildReq` | Guild level that opens this depth. Default `= depth_index`. **`0` on every Depth 1** |
+| `powerStart`, `powerStep` | Enemy power in room 1, per-room increment |
+| `threatMix` | Type weights per room, biased to the ruin's affinity |
 | `boss` | Authored formation: squads plus **named villains** in named slots → [`combat.md`](combat.md) §9 |
-| `villain_pool` | Villains the generator may place in standard rooms of this depth |
-| `room_rewards` | `rooms` rows; formula default (§7.1), any row overridable |
-| `boss_reward` | Authored chest (§7.2) |
-| `passive_on_complete` | Stardust/h, XP/h, Gold/h (§7.3) |
+| `villainPool` | Villains the generator may place in standard rooms of this depth |
+| `roomRewards` | one per room; formula default (§7.1), any room overridable |
+| `bossReward` | Authored chest (§7.2) |
+| `passiveOnComplete` | Stardust/h, XP/h, Gold/h (§7.3) |
 | `supplies` | Cost per room attempt in this depth |
 
-### Validation (enforce in the sheet)
+### Validation (enforce in `dataRules.ts`)
 
 ```
-power_start(D+1)  ≥  power_start(D) + power_step(D) × (rooms(D) − 1)
-guild_req(D+1)    ≥  guild_req(D)
+powerStart(D+1)  ≥  powerStart(D) + powerStep(D) × (rooms(D) − 1)
+guildReq(D+1)    ≥  guildReq(D)
 ```
 
 Plus, per Guild level: at least two ruins must have an open, unfinished depth,
@@ -48,7 +48,7 @@ with different affinities.
 
 - **Ruin availability:** discovered on the map, gate cleared. Depth 1 opens
   when the gate falls.
-- **Depth availability:** `guild_req` ≤ current Adventurers' Guild level.
+- **Depth availability:** `guildReq` ≤ current Adventurers' Guild level.
 
 | Guild level | Opens | Also |
 |---|---|---|
@@ -105,7 +105,7 @@ Rules:
 ## 6. Power requirement
 
 ```
-power_req(D, r) = power_start(D) + power_step(D) × (r − 1)
+power_req(D, r) = powerStart(D) + powerStep(D) × (r − 1)
 ```
 
 Displayed against party power as an estimate. Actual outcome is decided by
@@ -118,13 +118,13 @@ Displayed against party power as an estimate. Actual outcome is decided by
 For room `r`, depth `D`, ruin tier `t`:
 
 ```
-gold      = reward_base(D) × 20 × t × 1.06^(r − 1)
-materials = reward_base(D) ×  3 × t × 1.06^(r − 1)
-stardust  = reward_base(D) ×  2 × t × 1.06^(r − 1)
-hero_xp   = reward_base(D) × 10 × t × 1.06^(r − 1)
+gold      = rewardBase(D) × 20 × t × 1.06^(r − 1)
+materials = rewardBase(D) ×  3 × t × 1.06^(r − 1)
+stardust  = rewardBase(D) ×  2 × t × 1.06^(r − 1)
+hero_xp   = rewardBase(D) × 10 × t × 1.06^(r − 1)
 ```
 
-`reward_base(D)` continues the previous depth's curve. Individual rows may be
+`rewardBase(D)` continues the previous depth's curve. Individual rooms may be
 overridden by hand.
 
 **A room pays no card pack.** The ruins clear once, so a pack per room was a
@@ -175,7 +175,7 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 
 - **Map marker** — progress, badge when a room is enterable.
 - **Discovery card** — one-off on fog lift.
-- **Ruin sheet** — depth stack; locked depths shown with `guild_req` and boss
+- **Ruin sheet** — depth stack; locked depths shown with `guildReq` and boss
   reward visible; states: locked / open / in-progress / complete / bottomed out.
 - **Room ladder** — cleared / frontier / locked; next-carrot banner above the
   frontier; auto-scroll to frontier.
@@ -193,17 +193,17 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 
 | Dial | Key |
 |---|---|
-| `power_start`, `power_step` per depth | `Depths` sheet |
-| `rooms`, `guild_req` per depth | `Depths` sheet |
-| Reward base and per-room growth (×1.06) | `Depths` sheet |
-| Boss chest and fragment pool | `Bosses` sheet |
+| `powerStart`, `powerStep` per depth | `depths` |
+| `rooms`, `guildReq` per depth | `depths` |
+| Reward base and per-room growth (×1.06) | `depths` |
+| Boss chest and fragment pool | a `bosses` collection *(designed)* |
 | Supplies per room attempt | `ruins.supply_*` |
 | Permanent generation coefficients | `ruins.trickle_*` |
 | Offline cap (2 h / 8 h) | `offlineCapHours` |
 
 ## 11. Adding content
 
-Append a depth to a ruin (row + two tables + one authored boss), or add a ruin
+Append a depth to a ruin (a `depths` entry + two tables + one authored boss), or add a ruin
 in a new region. Nothing is authored per room.
 
 **Unresolved:** OQ-75 daily attempt cap · OQ-76 outlet when fully walled ·

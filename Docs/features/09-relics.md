@@ -165,7 +165,7 @@ The eight, and which one axis each grows:
 - **Zones overlap freely.** The cooldown is what stops a player carpeting the
   map, so an overlap is a real choice: an area taking two effects is an area
   somewhere else taking none. There is no popup asking whether to overwrite.
-- **Radius is the one number that steps rather than creeps** — the sheet's
+- **Radius is the one number that steps rather than creeps** — the authored
   base, then **one more ring at levels 5, 10 and 20**, the same three rungs on
   every relic. A Chebyshev radius covers `(2r+1)²` cells, so each rung roughly
   **doubles the ground**: a number that doubles cannot creep, but it makes a
@@ -183,12 +183,12 @@ The eight, and which one axis each grows:
 
 - **Every passive keeps this rule** as of 2026-09-15 (**OQ-97**, closed): a
   speed the call site divides by, a multiplier above 1, or a flat term on a
-  base the workbook authors and never grows. Nothing falls, so no level is the
+  base the data authors and never grows. Nothing falls, so no level is the
   last one worth having.
 - **Nothing moves the respawn clock.** Berries, game and shoals come back on
   their authored time and the mechanic stays transparent to the player.
-- `X = base + per_level × (level − 1)`, both authored per relic on the
-  `Artifacts` sheet. A level is **a season's worth of growth**, so `per_level`
+- `X = passiveBase + passivePerLevel × (level − 1)`, both authored per relic in
+  `artifacts`. A level is **a season's worth of growth**, so `passivePerLevel`
   is sized to be **felt on a headline number** — of the order of +10% a level
   on the Ledger — not to be safe.
 - The Rod and the Seal split the two harvest clocks between them: what grows
@@ -209,7 +209,7 @@ The eight, and which one axis each grows:
 - A season is **content**: its name, its frame, its dates and the season
   hero. It lives in a hand-written seasons file beside the events file
   ([`13-events.md`](13-events.md) §1); every number in it — Gems, hours,
-  stars, odds — lives on the `Collection` sheet.
+  stars, odds — lives in the `collection` settings.
 - **The eight albums and their cards are fixed**, and so is the difficulty
   ladder they climb (§4). **What rotates is which relic each album levels**,
   one step a season, because a fixed pairing on a fixed ladder would mean the
@@ -383,8 +383,8 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
 | **Silver chest** | 9 | one 4★ · one 5★ | **the vault** |
 | **Gold chest** | 3 | one 5★ · one gold 4★ | **the vault** |
 
-- **A pack's name and its promise are GENERATED from its row**, so a retuned
-  sheet cannot leave a stale promise on a shelf.
+- **A pack's name and its promise are GENERATED from its `packs` entry**, so a retuned
+  pack cannot leave a stale promise on a shelf.
 - **The store sells the tiers the free column does not pay**, and only those:
   Blue, Purple and Golden, Gem-priced on the store's own Cards shelf
   ([`14-monetization.md`](14-monetization.md) §3). Selling a Green pack would
@@ -473,7 +473,7 @@ sold together for **money** rather than for Gems, on the store's own shelf
 
 - Every duplicate is worth **stars**, **per face** — the five rarities and the
   two gold editions each authored, because a gold edition is not always worth
-  exactly twice its rarity and the sheet should be able to say so. Stars are a
+  exactly twice its rarity and the data should be able to say so. Stars are a
   counter inside the collection, shown nowhere else — the Fragments precedent,
   not a wallet row.
 - The **vault** is a **shelf of three chests**, bought with stars: bronze,
@@ -725,39 +725,39 @@ two different things about it.
 
 ## 12. Dials, in the order to reach for them
 
-Every number below is a **proposal until the sheet exists**; the ones marked
+Every number below is a **proposal until it is authored**; the ones marked
 **fixed** were decided with the design.
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | **28 days**, four weeks exactly, shared calendar | `collection.season_days` |
+| Season length | **28 days**, four weeks exactly, shared calendar | `collection.seasonDays` |
 | Albums a season · cards an album | **8 · 9, fixed** — 72 | seasons file |
 | Which relic each album levels | **one each, rotating one step a season** | derived, not authored |
-| Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.album_gems`, `collection.prize_gems` |
-| Sends a day | **3, fixed**; gold never | `collection.sends_per_day` |
-| A relic's `base` and `per_level` | per relic | `Artifacts` sheet |
-| What an ability costs, lasts and reaches | per relic | `Artifacts` sheet, `active_mana_cost` · `active_duration_seconds` · `active_radius` |
-| Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `Artifacts` sheet, `active_taps_per_mana` · `…_per_level` |
-| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil; **×5.00 flat** on the Rod | `Artifacts` sheet, `active_power` · `active_power_per_level` |
-| Seconds a level adds to a window | **+60** on the Rod, from a five-minute base | `Artifacts` sheet, `active_duration_per_level` |
-| Uses an event-counted ability buys | **3 rooms, +1 a level** on the Lantern | `Artifacts` sheet, `active_charges` · `active_charges_per_level` |
-| How fast an auto-tap run is watched | **4 taps a second** | `artifacts.auto_tap_per_second` |
-| An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifacts.active_cooldown_seconds` |
-| Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifacts.active_radius_steps` |
-| Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.album_hours` |
-| Keys an album pays | **silver ×5, then gold ×3** — one key a page | `collection.album_silver_keys`, `…_gold_keys` |
+| Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.albumGems`, `collection.prizeGems` |
+| Sends a day | **3, fixed**; gold never | `collection.sendsPerDay` |
+| A relic's `passiveBase` and `passivePerLevel` | per relic | `artifacts` |
+| What an ability costs, lasts and reaches | per relic | `artifacts`, `activeManaCost` · `activeDurationSeconds` · `activeRadius` |
+| Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `artifacts`, `activeTapsPerMana` · `…PerLevel` |
+| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil; **×5.00 flat** on the Rod | `artifacts`, `activePower` · `activePowerPerLevel` |
+| Seconds a level adds to a window | **+60** on the Rod, from a five-minute base | `artifacts`, `activeDurationPerLevel` |
+| Uses an event-counted ability buys | **3 rooms, +1 a level** on the Lantern | `artifacts`, `activeCharges` · `activeChargesPerLevel` |
+| How fast an auto-tap run is watched | **4 taps a second** | `artifactAutoTapPerSecond` |
+| An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifactCooldownSeconds` |
+| Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifactRadiusSteps` |
+| Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.albumHours` |
+| Keys an album pays | **silver ×5, then gold ×3** — one key a page | `collection.albumSilverKeys`, `…GoldKeys` |
 | Rarity per slot, per album | authored | seasons file |
-| Pack tiers — slots, guarantees, the seven-way distribution | §6 | `Packs` sheet |
-| What the store charges for a pack | **Blue 400, Purple 900, Golden 600**; blank = not sold | `Packs` sheet, `gem_cost` |
-| A wildcard's price, by the rarity it covers | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
-| How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
-| What a card bundle holds, and what it costs | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 Purple packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ (§6.1) | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
-| How close to the close the bundles come off the shelf | **24 hours** | `collection.bundle_withdraw_hours` |
-| Stars a duplicate is worth, **per face** | 2 · 6 · 16 · 40 · 100, and gold 80 · 200 | `collection.stars_per_face` |
-| What a card melts for at the close | **30 seconds of the city's Gold income per star** it is worth, floored by the chest's floor | `collection.close_gold_seconds_per_star` |
-| What a vault chest costs in stars | **bronze 105 · silver 250 · gold 400** | `collection.chest_stars` |
+| Pack tiers — slots, guarantees, the seven-way distribution | §6 | `packs` |
+| What the store charges for a pack | **Blue 400, Purple 900, Golden 600**; blank = not sold | `packs`, `gemCost` |
+| A wildcard's price, by the rarity it covers | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |
+| How short an album must be for an offer | **3 cards** | `collection.wildcardOfferAt` |
+| What a card bundle holds, and what it costs | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 Purple packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ (§6.1) | `store`, `packs` · `packTier` · `wildcards` · `wildcardRarity` |
+| How close to the close the bundles come off the shelf | **24 hours** | `collection.bundleWithdrawHours` |
+| Stars a duplicate is worth, **per face** | 2 · 6 · 16 · 40 · 100, and gold 80 · 200 | `collection.starsPerFace` |
+| What a card melts for at the close | **30 seconds of the city's Gold income per star** it is worth, floored by the chest's floor | `collection.closeGoldSecondsPerStar` |
+| What a vault chest costs in stars | **bronze 105 · silver 250 · gold 400** | `collection.chestStars` |
 | Free albums a season, target | **the pacing number — OQ-88**; and the faucet it needs is **OQ-102** | derived, not authored |
-| Season hero rate-up weight | — | `Banners.rate_up_weight` |
+| Season hero rate-up weight | — | `banners.rateUpWeight` |
 
 ## 13. Deliberately not in this design
 

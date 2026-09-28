@@ -77,9 +77,9 @@
 
 - Eighteen SKUs in five families.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
-- The six Gem packs are built and live in the workbook's `Store` sheet. The
+- The six Gem packs are built and live in `store`. The
   builders and the two keys are built and priced in Gems — a Gem price is not
-  a `Store` row. **A `Store` row is real money**; most of them grant Gems, and
+  a `store` entry. **A `store` entry is real money**; most of them grant Gems, and
   the ones that do not (the Royal chest, the three card bundles, the banner
   set) grant a lot for a season or once and never a currency drip. Everything
   else is designed, not built.
@@ -334,25 +334,25 @@ One page, refreshed weekly:
 
 | Dial | Value | Key |
 |---|---|---|
-| Gacha pull | **1,000** Gems ($1.99) | `gacha.pull_gem_cost` |
-| Second builder | **2,500**, `×2` per builder ($4.99 / $9.99 / $19.99) | `kingdom.builder_gem_cost_*` |
-| Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gem_refill_costs` |
-| Video refill | a whole pool, **5 a day** | `ads.mana_refills_per_day` |
-| Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
-| Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
-| Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
-| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `Packs` sheet, `gem_cost` |
-| Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcard_gem_costs` |
-| How short an album must be for an offer | **3 cards** | `collection.wildcard_offer_at` |
-| The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
-| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
-| The Royal chest | **$9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
-| Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `Store` sheet, `packs` · `pack_tier` · `wildcards` · `wildcard_rarity` |
-| How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundle_withdraw_hours` |
-| Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
-| Ad eligibility | below half a pool | `ads.eligible_below_fraction` |
-| Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `Store` sheet |
-| Monthly budgets | F2P $0 · Minnow $10 · Dolphin $50 · Whale $250 · Super Whale $2,000 | `payer.*_monthly_usd` |
+| Gacha pull | **1,000** Gems ($1.99) | `gacha.pullGemCost` |
+| Second builder | **2,500**, `×2` per builder ($4.99 / $9.99 / $19.99) | `kingdom.builderGemCost*` |
+| Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gemRefillCosts` |
+| Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
+| Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.secondsPerGem` |
+| Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slotGemCost*` |
+| Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.heroSlotGemCost*` |
+| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `packs`, `gemCost` |
+| Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |
+| How short an album must be for an offer | **3 cards** | `collection.wildcardOfferAt` |
+| The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.albumGems`, `collection.prizeGems` |
+| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `currencies`, `quests`, `delve.firstClearGems`, `daily.gems` |
+| The Royal chest | **$9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `store`, `daily.premium*` |
+| Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `store`, `packs` · `packTier` · `wildcards` · `wildcardRarity` |
+| How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundleWithdrawHours` |
+| Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
+| Ad eligibility | below half a pool | `ads.eligibleBelowFraction` |
+| Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `store` |
+| Monthly budgets | F2P $0 · Minnow $10 · Dolphin $50 · Whale $250 · Super Whale $2,000 | `payer.*MonthlyUsd` |
 
 ## 10. Deliberately not in this design
 

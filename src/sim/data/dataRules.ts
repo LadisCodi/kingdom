@@ -290,6 +290,7 @@ export function validateData(doc: DataDoc, reference: DataDoc = doc, schemas: Re
       issues.push({ collection: c.id, entry, path, level, message });
     if (c.view === 'form') {
       checkValue(doc, spec, pickGroups(doc, c), [], null, push, townhallMax, null);
+      RULES[c.id]?.(doc, push);
       continue;
     }
     for (const [id, value] of entriesOf(doc, c)) {
@@ -297,6 +298,7 @@ export function validateData(doc: DataDoc, reference: DataDoc = doc, schemas: Re
     }
     if (c.id === 'quests') checkQuests(doc, push);
     if (c.id === 'adjacency') checkAdjacency(doc, push);
+    RULES[c.id]?.(doc, push);
     if (!isListCollection(doc, c)) {
       for (const [id] of entriesOf(doc, c)) {
         if (!/^[A-Za-z0-9_]+$/.test(id)) push(id, [], `id "${id}" must be letters, digits or _`);
@@ -412,6 +414,163 @@ function checkAdjacency(doc: DataDoc, push: Push): void {
     }
   });
 }
+
+// ---------------------------------------------------------- rules across fields
+
+/**
+ * What a schema cannot say: rules that tie one field to another, or one entry
+ * to the next. Each is a way the game goes silently wrong rather than loudly —
+ * a workshop with no queue, a ruin that gets easier, a pack that guarantees
+ * more cards than it holds — so each is an error, stated where the data is.
+ */
+type Rule = (doc: DataDoc, push: Push) => void;
+
+const num = (v: unknown): number => (typeof v === 'number' ? v : 0);
+const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const records = (v: unknown): Array<[string, Record<string, unknown>]> =>
+  Array.isArray(v) ? v.map((x, i) => [String(i), x as Record<string, unknown>])
+    : isPlainObject(v) ? Object.entries(v as Record<string, Record<string, unknown>>) : [];
+
+/** A ladder that is a TOTAL at each level can stand still but never fall. */
+function neverFalls(push: Push, id: string, field: string, v: unknown): void {
+  const xs = list(v).map(num);
+  xs.forEach((n, i) => {
+    if (i > 0 && n < xs[i - 1]) push(id, [field, i], `falls at level ${i + 1} (${xs[i - 1]} then ${n}) — it is a total, not an increment`);
+  });
+}
+
+/** How far an adjacency on a clock may move it (the goldPerMinute rent
+ *  bonus is a flat amount and is not clamped). */
+export const ADJACENCY_CLAMP = 0.25;
+
+export const RULES: Readonly<Record<string, Rule>> = {
+  buildings: (doc, push) => {
+    const lateFrom = num((doc.city as Record<string, unknown> | undefined)?.lateUpgradeFromLevel) || Infinity;
+    for (const [id, b] of records(doc.districts)) {
+      const workshop = b.produces !== null && b.produces !== undefined;
+      if (workshop !== (list(b.queueLengthPerLevel).length > 0)) {
+        push(id, ['produces'], 'a workshop needs both produces and queueLengthPerLevel');
+      }
+      // A decoration has no level, no crew, no residents, no queue and makes
+      // nothing: its whole contribution is its Harmony.
+      if (num(b.harmonySupply) > 0) {
+        if (!Number.isInteger(b.harmonySupply)) push(id, ['harmonySupply'], 'is not a whole number');
+        if (b.maxLevel !== 1) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
+        for (const f of ['maxWorkersPerLevel', 'populationCapacityPerLevel', 'armyCapPerLevel', 'bedsPerLevel', 'influenceRadiusPerLevel', 'queueLengthPerLevel']) {
+          if (list(b[f]).length > 0) push(id, [f], 'a decoration has none');
+        }
+        if (workshop) push(id, ['produces'], 'a decoration makes nothing');
+        if (list(b.harmonyCostPerLevel).length > 0) push(id, ['harmonyCostPerLevel'], 'a decoration supplies Harmony; it does not demand it');
+      }
+      neverFalls(push, id, 'harmonyCostPerLevel', b.harmonyCostPerLevel);
+      // The rent bonus is a house's ladder.
+      if (list(b.taxBonusPerLevel).length > 0 && list(b.populationCapacityPerLevel).length === 0) {
+        push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');
+      }
+      neverFalls(push, id, 'taxBonusPerLevel', b.taxBonusPerLevel);
+      // The late ladder only exists past the pivot level.
+      const lateAuthored = num(b.upgradeDurationLateSeconds) > 0 || num(b.upgradeDurationLateLevelGrowth) > 0;
+      if (lateAuthored && num(b.maxLevel) < lateFrom) {
+        push(id, ['upgradeDurationLateSeconds'], `has a late ladder but stops at level ${b.maxLevel}, before city.lateUpgradeFromLevel (${lateFrom})`);
+      }
+    }
+  },
+  goods: (doc, push) => {
+    for (const [id, g] of records(doc.goods)) if (g.inputGood === id) push(id, ['inputGood'], 'a good cannot be made of itself');
+  },
+  currencies: (doc, push) => {
+    for (const [id, c] of records(doc.currencies)) {
+      if (c.goldValue !== null && c.goldValue !== undefined && (num(c.goldValue) <= 0 || id === 'Gold')) {
+        push(id, ['goldValue'], 'must be positive, and not on Gold itself');
+      }
+    }
+  },
+  units: (doc, push) => {
+    for (const [id, u] of records(doc.units)) {
+      if (num(u.frontage) < 1) push(id, ['frontage'], 'must be 1 or more');
+      if (num(u.frontage) > num(u.squadSize)) push(id, ['frontage'], 'cannot exceed squadSize');
+      if (num(u.cooldown) < 1) push(id, ['cooldown'], 'is in TICKS and must be 1 or more');
+    }
+  },
+  heroes: (doc, push) => {
+    for (const [id, h] of records(doc.heroes)) {
+      const boon = h.boon as Record<string, unknown> | undefined;
+      if (boon === undefined) continue;
+      // Always a multiplier above 1: below is a discount, and a discount dies at 100%.
+      if (!(num(boon.value) > 1)) push(id, ['boon', 'value'], `a boon must be more than 1 — ${boon.value} is a discount`);
+      if (typeof boon.stat !== 'string' || boon.stat === '') push(id, ['boon', 'stat'], 'a boon names the stat it moves');
+    }
+  },
+  depths: (doc, push) => {
+    const all = records(doc.depths);
+    for (const ruin of refIds(doc, 'ruin')) {
+      const rows = all.filter(([, d]) => d.ruin === ruin);
+      if (rows.length === 0) push(null, [], `ruin ${ruin} has no depths`);
+      rows.forEach(([i, d], k) => {
+        if (num(d.rooms) < 1) push(i, ['rooms'], 'a depth needs at least one room');
+        if (d.depth !== k + 1) push(i, ['depth'], `${ruin} depth ${d.depth} is out of order`);
+        const prev = rows[k - 1]?.[1];
+        if (!prev) return;
+        // The ladder keeps climbing: a depth never opens easier than the one
+        // above it finished (Docs/features/11-expeditions.md §2).
+        const prevLast = num(prev.powerStart) + num(prev.powerStep) * (num(prev.rooms) - 1);
+        if (num(d.powerStart) < prevLast) push(i, ['powerStart'], `starts at ${d.powerStart}, below where depth ${prev.depth} finished (${prevLast})`);
+        if (num(d.guildReq) < num(prev.guildReq)) push(i, ['guildReq'], `opens before depth ${prev.depth}`);
+      });
+    }
+  },
+  adjacency: (doc, push) => {
+    const seen = new Set<string>();
+    for (const [i, r] of records(doc.adjacency)) {
+      const key = `${r.district}/${r.neighbor}/${r.stat}`;
+      if (seen.has(key)) push(i, [], `duplicate rule ${key}`);
+      seen.add(key);
+      if (num(r.magnitude) === 0) push(i, ['magnitude'], 'a rule with magnitude 0 does nothing — delete it');
+      if (r.stat !== 'goldPerMinute' && Math.abs(num(r.magnitude)) > ADJACENCY_CLAMP) {
+        push(i, ['magnitude'], `is past the ±${ADJACENCY_CLAMP} clamp`);
+      }
+    }
+  },
+  store: (doc, push) => {
+    for (const [id, s] of records(doc.store)) {
+      if (!(num(s.priceUsd) > 0)) push(id, ['priceUsd'], 'a product needs a positive price');
+      if ((num(s.packs) > 0) !== (s.packTier !== '' && s.packTier !== undefined)) push(id, ['packTier'], 'a pack count and a pack tier go together');
+      if ((num(s.wildcards) > 0) !== (num(s.wildcardRarity) > 0)) push(id, ['wildcardRarity'], 'a wildcard count and a wildcard rarity go together');
+      if (num(s.wildcardRarity) > 5) push(id, ['wildcardRarity'], '5★ is the dearest wildcard');
+      if (num(s.gems) > 0 && (num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['gems'], 'grants both Gems and cards — a product is one thing');
+    }
+  },
+  banners: (doc, push) => {
+    for (const [id, b] of records(doc.banners)) {
+      const w = (b.weights ?? {}) as Record<string, unknown>;
+      if (Object.values(w).every((x) => num(x) <= 0)) push(id, ['weights'], 'every rarity at 0 — the banner can roll nothing');
+      if (!(num(b.heroChance) > 0 && num(b.heroChance) <= 1)) push(id, ['heroChance'], 'is a fraction, above 0 and at most 1');
+      if (num(b.softPityAt) >= num(b.hardPityAt)) push(id, ['softPityAt'], `soft pity (${b.softPityAt}) must come before hard pity (${b.hardPityAt})`);
+      if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
+    }
+  },
+  packs: (doc, push) => {
+    for (const [id, p] of records(doc.packs)) {
+      const given = Object.values((p.guarantees ?? {}) as Record<string, unknown>).reduce((a: number, x) => a + num(x), 0);
+      if (given > num(p.cards)) push(id, ['guarantees'], `guarantees ${given} cards but the pack holds ${p.cards}`);
+      if (given < num(p.cards) && list(p.weights).every((x) => num(x) <= 0)) push(id, ['weights'], `has ${num(p.cards) - given} slots to roll and every weight is 0`);
+    }
+  },
+  exploration: (doc, push) => {
+    const rings = list((doc.fog as Record<string, unknown> | undefined)?.rings) as Array<Record<string, unknown>>;
+    rings.forEach((r, i) => {
+      if (i > 0 && num(r.distance) <= num(rings[i - 1].distance)) push(null, ['fog', 'rings', i, 'distance'], 'distances must be ascending');
+    });
+  },
+  economy: (doc, push) => {
+    const tiers = list((doc.harmony as Record<string, unknown> | undefined)?.surplusTiers) as Array<Record<string, unknown>>;
+    tiers.forEach((t, i) => {
+      if (num(t.at) < 1) push(null, ['harmony', 'surplusTiers', i, 'at'], 'is below 1 — it is a RATIO of demand');
+      if (num(t.bonus) === 0) push(null, ['harmony', 'surplusTiers', i, 'bonus'], 'a tier needs a bonus');
+      if (i > 0 && num(t.at) <= num(tiers[i - 1].at)) push(null, ['harmony', 'surplusTiers', i, 'at'], 'tiers must be ascending');
+    });
+  },
+};
 
 // ------------------------------------------------------------------- helpers
 

@@ -8,8 +8,8 @@
 > [`06-construction.md`](06-construction.md); what workers do is
 > [`04-harvest.md`](04-harvest.md).
 >
-> **Status.** Built: every district below is a `Districts` row in the
-> workbook — the twelve of the province economy, the Infirmary (§4.9), the
+> **Status.** Built: every district below is an entry of `buildings`
+> (`src/sim/data/game/buildings.json`) — the twelve of the province economy, the Infirmary (§4.9), the
 > four workshops (§4.10), whose count cap opens at Townhall 5, and the six
 > decorations (§4.12). Designed, not built: Townhall 5, and the three Wonders
 > (§5, [`16-wonders.md`](16-wonders.md)).
@@ -115,7 +115,7 @@
   pulls 10 s of the house's rent forward ([`03-economy.md`](03-economy.md)
   §3).
 - A level buys **room and rent**: +25% on what each resident pays, a total
-  from level 1 (`Districts.tax_bonus_per_level`). A tap on the house is worth
+  from level 1 (`buildings.taxBonusPerLevel`). A tap on the house is worth
   the same more, since it sells the house's own rent.
 - Housing next to Housing: −1 Gold/min per neighbour, flat — a level does not
   scale it.
@@ -229,8 +229,8 @@ regeneration +20, +25, +30, +36, +42 an hour.
 | **Shooting Grounds** | Archer | `Archery` | 80 W + 30 S, 300 s | 240 W + 90 S, 120 s |
 | **Stables** | Cavalry | `Cavalry` | 120 W + 70 S, 90 s | 360 W + 210 S, 180 s |
 
-Upgrades grow ×1.6 in time per level; what each level costs is authored on the
-`DistrictCosts` sheet ([`05-city-and-districts.md`](05-city-and-districts.md)
+Upgrades grow ×1.6 in time per level; what each level costs is authored in its
+`costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)
 §3). The level ladder is the same for all four:
 
 | Level | Army cap | Gate |
@@ -254,8 +254,8 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 - **Beds per level** — 30, 50, 75, 105, 140, 180, 225, 275, 330, 400 — is the
   whole of what a level buys, and the ward's ceiling: what does not fit dies.
 - Mending is **one order and one wait** for a whole ward of one type, on the
-  Infirmary's own bench, at `army.heal_cost_share` of the recruit price and
-  `army.heal_time_share` of the recruit clock. It never competes with a hall's
+  Infirmary's own bench, at `army.healCostShare` of the recruit price and
+  `army.healTimeShare` of the recruit clock. It never competes with a hall's
   recruiting.
 - 1×1, 80 Wood + 40 Stone to build.
 
@@ -276,8 +276,8 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 | **Smelter** | Iron | `Mining` | 400 G + 120 S, 120 s | 600 G + 200 S, 240 s |
 | **Rune Carver** | Runestone | `Attunement II` | 800 G + 200 S, 180 s | 1200 G + 300 S, 360 s |
 
-Upgrades grow ×1.6 in time per level; what each level costs is authored on the
-`DistrictCosts` sheet ([`05-city-and-districts.md`](05-city-and-districts.md)
+Upgrades grow ×1.6 in time per level; what each level costs is authored in its
+`costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)
 §3).
 
 ### 4.11 The late ladder — levels 6 to 10
@@ -302,8 +302,8 @@ written once. The Townhall's own ladder is §3.
 | the four halls · Rune Carver | 2 → 6 **Iron** |
 | Sanctum | 2, 3 **Cut Stone**, then 2, 3, 4 **Runestone** |
 
-- **Currencies grow ×1.7 a level** from level 6, on top of what the row's own
-  curve reached at 5 ([`05-city-and-districts.md`](05-city-and-districts.md)
+- **Currencies grow ×1.7 a level** from level 6, on top of what the building's own
+  ladder reached at 5 ([`05-city-and-districts.md`](05-city-and-districts.md)
   §3).
 - **The wait is 2 h at level 6 and ×1.7 a level after it** — about 17 h at
   level 10. It is a timer, so it resolves in the uncapped tail of an absence.
@@ -369,22 +369,22 @@ levels a building is bought with a Townhall level and goods (§4.11).
 
 | Dial | Where |
 |---|---|
-| A building's max level | `Districts.max_level` |
-| Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| Per-level gates | `Districts.required_townhall_level_per_level`; a technology that gates a level says so in `?dev=tree` |
+| A building's max level | `buildings.maxLevel` |
+| Count caps per Townhall level | `buildings.maxCountPerTownhallLevel` |
+| Per-level gates | `buildings.requiredTownhallLevelPerLevel`; a technology that gates a level says so in `?dev=tree` |
 | The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
-| What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`21-harmony.md`](21-harmony.md) |
-| What a build costs in refined goods | the `DistrictCosts` sheet, level 1 row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
-| Residents, workers, radius, army cap, beds per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level`, `beds_per_level` |
-| Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
-| What a level costs in refined goods | the `DistrictCosts` sheet, that level's row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
-| Sanctum capacity and regen per level | `mana.sanctum_cap_per_level`, `mana.sanctum_per_hour_per_level` |
-| A second Sanctum | `Districts.extra_count_tech` |
-| What every level costs, build included | the `DistrictCosts` sheet — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |
-| How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.1 |
-| Build and upgrade times | `Districts.build_duration_*`, `upgrade_duration_*` |
-| The late half of the wait | `Districts.upgrade_duration_late_seconds`, `upgrade_duration_late_level_growth`, and `city.late_upgrade_from_level` for where it starts |
-| What a late level adds to a haul, and to the swing | `Districts.extra_units_per_delivery_per_level`, `strike_speed_per_level` |
+| What a piece supplies, and what a level demands | `buildings.harmonySupply`, `harmonyCostPerLevel` — [`21-harmony.md`](21-harmony.md) |
+| What a build costs in refined goods | `buildings` › `costPerLevel`, level 1 `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
+| Residents, workers, radius, army cap, beds per level | `buildings.populationCapacityPerLevel`, `maxWorkersPerLevel`, `influenceRadiusPerLevel`, `armyCapPerLevel`, `bedsPerLevel` |
+| Which good a workshop makes, and its queue per level | `buildings.produces`, `queueLengthPerLevel` |
+| What a level costs in refined goods | `buildings` › `costPerLevel`, that level's `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
+| Sanctum capacity and regen per level | `mana.sanctumCapPerLevel`, `mana.sanctumPerHourPerLevel` |
+| A second Sanctum | the card's `unlocks` in `?dev=tree` — derived onto `extraCountTech` |
+| What every level costs, build included | `buildings` › `costPerLevel` — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |
+| How much dearer a later instance is | `buildings.instanceLinearGrowth`, `instanceExponentialGrowth` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.1 |
+| Build and upgrade times | `buildings.buildDuration*`, `upgradeDuration*` |
+| The late half of the wait | `buildings.upgradeDurationLateSeconds`, `upgradeDurationLateLevelGrowth`, and `city.lateUpgradeFromLevel` for where it starts |
+| What a late level adds to a haul, and to the swing | `buildings.extraUnitsPerDeliveryPerLevel`, `strikeSpeedPerLevel` |
 
 ## 8. Deliberately not in this design
 

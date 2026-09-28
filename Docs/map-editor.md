@@ -2,12 +2,12 @@ Map editor
 ---
 
 > **Scope.** How map content — terrain, features, landmarks and ruins — is
-> authored, and why it left the workbook to get here. Covers the `?dev=map`
-> editor, the shared rule module every consumer validates against, and the
-> dev-only save path.
+> authored, and why it is not a table. Covers the map editor — the Region map
+> collection of the data editor (`?dev=data#map`,
+> [`plans/data-editor.md`](plans/data-editor.md)) — the shared rule module
+> every consumer validates against, and the dev-only save path.
 >
-> **Status: built.** Replaces the `Map`, `Landmarks` and `Ruins` sheets, which
-> are gone from `balance.xlsx`. This is a **tool**, not a game feature — the map
+> **Status: built.** This is a **tool**, not a game feature — the map
 > content it authors is designed in
 > [`features/01-map-and-fog.md`](features/01-map-and-fog.md). Open questions
 > live in [`open-questions.md`](open-questions.md) (OQ-49, OQ-50).
@@ -37,8 +37,9 @@ of the things that actually make map authoring hard:
   the mistake, in a different window.
 
 None of that is Excel's fault — a map is not tabular data, and the workbook was
-being asked to be a paint program. **The workbook is still the source of truth
-for every balancing number** (invariant 5). Map content simply is not one.
+being asked to be a paint program. Every balancing number lives in the data
+editor's collections (invariant 5); map content is not one, so it is a board
+of its own there.
 
 ## 2. Where map content lives now
 
@@ -60,14 +61,10 @@ it starts — [`features/18-garrisons-and-raids.md`](features/18-garrisons-and-r
 §2. The validator asks for a unit type or `Any`, a `power` of at least 1, and
 both counters of at least one minute.)*
 
-`definitions.ts` reads `LANDMARKS` and `RUINS` from here rather than from
-`balance.json`; `grid.ts` reads terrain and features as before. The file is
+`definitions.ts` reads `LANDMARKS` and `RUINS` from here rather than from the
+balance collections; `grid.ts` reads terrain and features as before. The file is
 written one cell per line, sorted in reading order, so a map change shows up in
 `git diff` as the cells that moved rather than as a reflowed blob.
-
-**`npm run balance` no longer touches this file.** It used to overwrite it on
-every `predev`, which is precisely why the map had to stop being a sheet before
-an editor could exist.
 
 The one asymmetry worth knowing: **the ruin roster is fixed in code.** `RuinId`
 is a union in `state.ts` and five ruins have hand-written names, descriptions
@@ -182,16 +179,13 @@ In the order to reach for them.
 |---|---|
 | the world itself | the editor |
 | what a legal map is | `validateRegionMap()` in `src/sim/data/mapRules.ts` — then a case in `tests/regionMap.test.ts` |
-| fog price per ring | `FogRings` in the workbook (still a balancing number, still a sheet) |
+| fog price per ring | `fog.rings` in the Exploration settings (`?dev=data#exploration`) |
 | a new terrain or feature | `TerrainId` / `FeatureId` in `state.ts`, `FEATURES` and a sprite in `definitions.ts`, `TERRAIN_IDS` in `mapRules.ts` — the editor's palette is generated from those |
 | a sixth ruin | `RuinId` in `state.ts` + a `ruinContent` entry in `definitions.ts`, then place it in the editor |
 | how wide a void fill may spread | `FILL_MARGIN` / `FILL_LIMIT` in `src/editor/mount.ts` |
 
 ## 7. What was deliberately not built
 
-- **Round-tripping back into the workbook.** Considered, and rejected: two
-  writable homes for one fact is the drift this change exists to remove. The
-  three sheets are gone, not stale.
 - **Multi-region.** The editor edits `oakville` because that is the only
   authored region. A second is a second JSON file and a row in `REGIONS` —
   see [`implementation-plan.md`](implementation-plan.md) §5 before assuming it is only that.

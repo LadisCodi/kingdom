@@ -69,4 +69,44 @@ describe('data rules', () => {
       }
     }
   });
+
+  it('holds the rules that tie one field to another', () => {
+    const b = structuredClone(doc) as Record<string, any>;
+    b.districts.Carpenter.queueLengthPerLevel = [];
+    b.districts.Garden.maxLevel = 2;
+    b.districts.Sawmill.harmonyCostPerLevel = [0, 0, 0, 0, 0, 0, 0, 4, 2, 6];
+    b.districts.Farm.taxBonusPerLevel = [0.1];
+    b.goods.Planks.inputGood = 'Planks';
+    b.currencies.Gold.goldValue = 3;
+    b.units.Archer.frontage = b.units.Archer.squadSize + 1;
+    b.heroes[Object.keys(b.heroes).find((k) => b.heroes[k].boon)!].boon.value = 0.9;
+    b.depths[1].powerStart = 1;
+    b.adjacency.push({ ...b.adjacency[0] });
+    b.adjacency[3].magnitude = -0.5;
+    b.store.GemsPouch.priceUsd = 0;
+    b.banners.basic.softPityAt = b.banners.basic.hardPityAt;
+    b.packs.Green.guarantees = { '1star': 99 };
+    b.fog.rings[2].distance = 1;
+    b.harmony.surplusTiers[1].at = 1;
+    const msgs = validateData(b, doc).filter((i) => i.level === 'error').map((i) => `${i.collection}/${i.entry}/${i.path.join('.')}: ${i.message}`);
+    const want = [
+      'buildings/Carpenter/produces: a workshop needs both produces and queueLengthPerLevel',
+      'buildings/Garden/maxLevel: a decoration has no ladder — maxLevel must be 1',
+      'buildings/Sawmill/harmonyCostPerLevel.8: falls at level 9 (4 then 2) — it is a total, not an increment',
+      'buildings/Farm/taxBonusPerLevel: on a building that houses nobody',
+      'goods/Planks/inputGood: a good cannot be made of itself',
+      'currencies/Gold/goldValue: must be positive, and not on Gold itself',
+      'units/Archer/frontage: cannot exceed squadSize',
+      'depths/1/powerStart: starts at 1, below where depth 1 finished (95)',
+      'adjacency/7/: duplicate rule Housing/Housing/goldPerMinute',
+      'adjacency/3/magnitude: is past the ±0.25 clamp',
+      'store/GemsPouch/priceUsd: a product needs a positive price',
+      'banners/basic/softPityAt: soft pity (60) must come before hard pity (60)',
+      'packs/Green/guarantees: guarantees 99 cards but the pack holds 2',
+      'exploration/null/fog.rings.2.distance: distances must be ascending',
+      'economy/null/harmony.surplusTiers.1.at: tiers must be ascending',
+    ];
+    for (const w of want) expect(msgs, w).toContain(w);
+    expect(msgs.some((m) => m.startsWith('heroes/') && m.includes('boon.value'))).toBe(true);
+  });
 });

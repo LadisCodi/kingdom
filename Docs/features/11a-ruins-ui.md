@@ -41,11 +41,11 @@ City HUD ─────▶ Reservoir meter
 | | |
 |---|---|
 | Data per ruin | Name, tier, affinity, total progress |
-| Data per depth | `depth_index`, name, `rooms`, rooms cleared, `guild_req`, boss name + art + chest contents, `passive_on_complete` |
+| Data per depth | `depth_index`, name, `rooms`, rooms cleared, `guildReq`, boss name + art + chest contents, `passiveOnComplete` |
 | Data for the gate | creature + type, raid countdown, trips left, hoard ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §7) — while it stands |
 | Elements | Vertical stack, deepest at bottom; the gate band above Depth 1 while it stands; one band per depth showing `7/12`; boss card at the end of each band with reward art |
 | States | Gated · locked · open · in progress · complete · bottomed out |
-| Rules | While the gate stands every depth reads gated and only the gate band is tappable. Locked depths display `guild_req` and their boss reward. Bottomed out is a distinct visual from locked. Tapping an in-progress band opens the frontier room |
+| Rules | While the gate stands every depth reads gated and only the gate band is tappable. Locked depths display `guildReq` and their boss reward. Bottomed out is a distinct visual from locked. Tapping an in-progress band opens the frontier room |
 
 ### 2.4 Room ladder
 
@@ -107,7 +107,7 @@ Two rows of slots on the battle screen, filled from card panels.
 |---|---|
 | Data | Troop slots and hero slots — open, filled or **locked**; the roster behind each panel; party attack, live |
 | Flow | Tap a slot → a panel of cards rises over the bottom of the screen → tap a card → **the first free slot fills** → the panel closes when the last slot does |
-| Fill rule | A card sends **as much as it legally can**: a whole squad (`squad_size`), or everything left of that type, or everything the army cap still allows |
+| Fill rule | A card sends **as much as it legally can**: a whole squad (`squadSize`), or everything left of that type, or everything the army cap still allows |
 | Clearing | The **X** on a slot's corner empties it. It never re-opens the panel |
 | Closing | The panel's own knob, a tap outside it, or the way out of the screen — which leaves the screen standing |
 | Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
