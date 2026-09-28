@@ -363,9 +363,9 @@ side on anything wider. A centred modal keeps its own narrower cap.
   *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
-  popup's). Each is a `.k-section` of darker paper, a fixed third of the row
-  wide and 58 px tall; three to a row, centred, a fourth wrapping to a
-  centred row of its own.
+  popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
+  only where three would not fit), 14 px apart; three to a row, centred, a
+  fourth wrapping to a centred row of its own.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 

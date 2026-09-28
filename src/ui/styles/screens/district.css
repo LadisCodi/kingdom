@@ -747,7 +747,7 @@
    of its own, still centred. Each is a big icon, then the name — bold, in
    ink — over the value in a lighter ink. */
 .dc-stats {
-  --stat-gap: 6px;
+  --stat-gap: 14px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -755,7 +755,9 @@
 }
 .dc-stat.k-section {
   flex: none;
-  width: calc((100% - 2 * var(--stat-gap)) / 3);
+  /* 112 px — room for the icon and a six-letter name — and never more than a
+     third of the row, so three still fit on a phone. */
+  width: min(112px, calc((100% - 2 * var(--stat-gap)) / 3));
   height: 58px;
   display: flex;
   align-items: center;
@@ -763,7 +765,7 @@
   min-width: 0;
   /* The frame is drawn at 14 px but insets the contents by less, so a
      58-px tile still holds a name and a value. */
-  border-width: 8px 10px;
+  border-width: 8px;
 }
 .dc-stat > .icon { --icon-size: 40px; flex: none; }
 .dc-stat-body { min-width: 0; }
