@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "fields": {
+    "priceUsd": { "type": "float", "min": 0 },
+    "gems": { "type": "int" },
+    "packs": { "type": "int" },
+    "packTier": { "type": "text", "ref": "pack", "emptyOk": true },
+    "wildcards": { "type": "int" },
+    "wildcardRarity": { "type": "int" }
+  }
+}

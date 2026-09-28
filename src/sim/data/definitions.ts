@@ -1,14 +1,14 @@
 // Game data definitions. Identity/content (names, descriptions, glyphs,
 // sprites, rules wiring) lives here; every balancing NUMBER comes from
-// balance.json, which is generated from the editable balance/*.csv sheets
-// (edit those, then run: npm run balance).
+// `balance.ts` — one file per collection in `data/game/`, authored in the
+// data editor (`?dev=data`, Docs/plans/data-editor.md).
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 //
 // MAP content is the exception: terrain, features, landmarks and ruins are
 // authored by coordinate, so they live in region-map.json and are edited in
 // the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
-import balance from './balance.json';
+import balance from './balance';
 import regionMap from './region-map.json';
 import treeDoc from './tech-tree.json';
 import {
@@ -461,8 +461,9 @@ export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
 
 export interface QuestDef {
   id: string; // content id — data-side, not a TS union
+  /** Flavour: "Timber!", "Tax day". What the quest ASKS is not written down —
+   *  `questLine()` renders it from the goal below (src/sim/questProse.ts). */
   name: string;
-  description: string;
   goalType: QuestGoalType;
   /** DistrictId / TechId / CurrencyId depending on goalType; null otherwise. */
   goalTarget: string | null;
@@ -494,10 +495,15 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
 export interface DistrictDef {
   id: DistrictId;
   name: string;
+  /** The build card's one line (src/ui/buildPromise.ts). */
+  promise: string;
   description: string;
   buildable: boolean;
   glyph: string; // placeholder art (fallback when no sprite image is present)
   sprite: string; // asset filename stem in src/render/assets (e.g. 'townhall' → townhall.png)
+  /** Who works it: character names from the animated atlas, one cast per
+   *  worker by a stable hash (src/render/cast.ts). Empty = no crew drawn. */
+  crew: readonly string[];
   /** Footprint in cells; `location` is the top-left (anchor) cell. */
   size: { x: number; y: number };
   /** Fog fully revealed this far around the footprint (at seed / build completion). */
@@ -610,246 +616,32 @@ export interface DistrictDef {
   harmonyCostPerLevel: readonly number[];
 }
 
-// Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
-// balance.json; only identity, art, and rules wiring is authored here.
-const rules = {
-  buildable: true, harvestSources: [], providesHarvestSource: null,
-  trains: [],
-} as const;
+/**
+ * Every building, whole, as `data/game/buildings.json` holds it — identity,
+ * art, crew and every number — authored in the data editor. The ids its lists
+ * name arrive as plain strings, already checked by its schema
+ * (`schema/buildings.json`). The tech GATES are not here: they are the
+ * technologies' to state, and `districtGates` adds them below.
+ */
+const DISTRICT_CONTENT: Record<string, Record<string, unknown>> = Object.fromEntries(
+  Object.entries(balance.districts).map(([id, b]) => [id, { id, ...b }]),
+);
 
-/** A workshop: identity and art here, everything numeric from the sheet, and
- *  its gate from whichever technology says it unlocks it. */
-const workshop = (
-  id: DistrictId, name: string, description: string, glyph: string, sprite: string,
-) => ({
-  ...rules, id, name, description, glyph, sprite,
-});
+/** Every building the player may place, in the file's order — which is the
+ *  build menu's. A new building authored in `?dev=data` joins it. */
+const DISTRICT_IDS_IN_ORDER = Object.keys(balance.districts) as DistrictId[];
+export const BUILDABLE_DISTRICTS: DistrictId[] =
+  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].buildable);
 
-/** A decoration: it supplies Harmony and does nothing else — no level, no
- *  crew, no residents, no tap, and no fog ring, which would have made a
- *  200-Wood Garden a cheaper frontier than paying for one. Its count cap is
- *  its Townhall gate too, the way a workshop's already is. */
-const decoration = (
-  id: DistrictId, name: string, description: string, glyph: string, sprite: string,
-) => ({
-  ...rules, id, name, description, glyph, sprite,
-});
+/** Every workshop — a building that `produces` a good — in build-menu order. */
+export const WORKSHOPS: DistrictId[] =
+  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].produces !== null);
 
-/** The good a workshop makes arrives from JSON as a plain string — the
- *  importer already validated it against the id list. The tech GATES are not
- *  here: they come from the technologies, through `districtGates`. */
-const districtBalance = <B extends { produces: string | null }>(
-  b: B,
-): Omit<B, 'produces'> & { produces: GoodId | null } =>
-  b as never;
-
-/** Identity, art and the sheet's numbers. The tech gates are added below —
- *  they are the technologies' to state, not a district's. */
-const DISTRICT_CONTENT = {
-  Townhall: {
-    ...rules,
-    id: 'Townhall',
-    name: 'Townhall',
-    description:
-      'Heart of the city. Trains new villagers — tap it to speed training up.',
-    glyph: '🏛️',
-    sprite: 'townhall',
-    // The Townhall is a trainer like any other hall; the Villager is simply
-    // what it turns out.
-    trains: ['Villager'],
-    buildable: false,
-    ...districtBalance(balance.districts.Townhall),
-  },
-  Housing: {
-    ...rules,
-    id: 'Housing',
-    name: 'Housing',
-    description: 'Provides homes. Residents pay taxes in Gold — tap to speed collection up.',
-    glyph: '🏠',
-    sprite: 'housing',
-    ...districtBalance(balance.districts.Housing),
-  },
-  Farm: {
-    ...rules,
-    id: 'Farm',
-    name: 'Farm',
-    description: 'Sends workers to harvest Crops within its area of influence.',
-    glyph: '🌾',
-    sprite: 'farm',
-    harvestSources: ['Crops'],
-    ...districtBalance(balance.districts.Farm),
-  },
-  FarmLands: {
-    ...rules,
-    id: 'FarmLands',
-    // The id is a key; the name is read aloud on a card ("Unlocks the crop
-    // plots"), so it is two words and lower case like the thing it names.
-    name: 'crop plots',
-    description: 'A crop plot: tap it for Food. Build a Farm nearby to have workers harvest it.',
-    glyph: '🟩',
-    sprite: 'farmlands',
-    providesHarvestSource: 'Crops',
-    ...districtBalance(balance.districts.FarmLands),
-  },
-  Sawmill: {
-    ...rules,
-    id: 'Sawmill',
-    name: 'Sawmill',
-    description: 'Sends workers to harvest Forest cells within its area of influence.',
-    glyph: '🪚',
-    sprite: 'sawmill',
-    harvestSources: ['Forest'],
-    ...districtBalance(balance.districts.Sawmill),
-  },
-  Quarry: {
-    ...rules,
-    id: 'Quarry',
-    name: 'Quarry',
-    description: 'Sends workers into every mountain within its area of influence — bare rock and metal alike.',
-    glyph: '⛏️',
-    sprite: 'quarry',
-    harvestSources: ['Stone', 'MountainIron', 'MountainGold'],
-    ...districtBalance(balance.districts.Quarry),
-  },
-  Docks: {
-    ...rules,
-    id: 'Docks',
-    name: 'Docks',
-    description: 'A pier: one half on land, one on water. Its boats net Fish (1 Food each).',
-    glyph: '⚓',
-    sprite: 'docks',
-    harvestSources: ['Fish'],
-    ...districtBalance(balance.districts.Docks),
-  },
-  Sanctum: {
-    ...rules,
-    id: 'Sanctum',
-    name: 'Sanctum',
-    description: 'A vault for raw magic. Each level holds more Mana against the hours you are away.',
-    glyph: '🔯',
-    sprite: 'sanctum',
-    ...districtBalance(balance.districts.Sanctum),
-  },
-  Barracks: {
-    ...rules,
-    id: 'Barracks',
-    name: 'Barracks',
-    description: 'Drills foot soldiers, and every level lets you keep a bigger army.',
-    glyph: '🛖',
-    sprite: 'barracks',
-    // The Barracks turns out every foot soldier; each is still behind its own
-    // technology, so the row fills in as the player researches. The Spear Hall
-    // and Shooting Grounds keep their specialty as well — a second hall is a
-    // second PARALLEL line and more army cap, not a different roster.
-    trains: ['Warrior', 'Lancer', 'Archer'],
-    ...districtBalance(balance.districts.Barracks),
-  },
-  Infirmary: {
-    ...rules,
-    id: 'Infirmary',
-    name: 'Infirmary',
-    description: 'Beds for the soldiers who came back hurt. Mending one costs a '
-      + 'fraction of replacing them.',
-    glyph: '⛑️',
-    sprite: 'infirmary',
-    ...districtBalance(balance.districts.Infirmary),
-  },
-  SpearHall: {
-    ...rules,
-    id: 'SpearHall',
-    name: 'Spear Hall',
-    description: 'Trains Lancers — long reach that stops a charge.',
-    glyph: '🏚️',
-    sprite: 'spear_hall',
-    trains: ['Lancer'],
-    ...districtBalance(balance.districts.SpearHall),
-  },
-  ShootingGrounds: {
-    ...rules,
-    id: 'ShootingGrounds',
-    name: 'Shooting Grounds',
-    description: 'Trains Archers — the most attack per Gold, and the least armour.',
-    glyph: '🎯',
-    sprite: 'shooting_grounds',
-    trains: ['Archer'],
-    ...districtBalance(balance.districts.ShootingGrounds),
-  },
-  Stables: {
-    ...rules,
-    id: 'Stables',
-    name: 'Stables',
-    description: 'Trains Cavalry — fast, hard-hitting, and expensive to keep.',
-    glyph: '🐴',
-    sprite: 'stables',
-    trains: ['Cavalry'],
-    ...districtBalance(balance.districts.Stables),
-  },
-  Carpenter: {
-    ...workshop('Carpenter', 'Carpenter', 'Villagers here work Wood into Planks.',
-      '🔨', 'carpenter'),
-    ...districtBalance(balance.districts.Carpenter),
-  },
-  MasonsYard: {
-    ...workshop('MasonsYard', "Mason's Yard", 'Villagers here dress Stone into blocks.',
-      '🧱', 'masons_yard'),
-    ...districtBalance(balance.districts.MasonsYard),
-  },
-  Smelter: {
-    ...workshop('Smelter', 'Smelter', 'Villagers here smelt ore and gold into Iron.',
-      '🔥', 'smelter'),
-    ...districtBalance(balance.districts.Smelter),
-  },
-  RuneCarver: {
-    ...workshop('RuneCarver', 'Rune Carver', 'Villagers here pour Mana into cut stone.',
-      '🔯', 'rune_carver'),
-    ...districtBalance(balance.districts.RuneCarver),
-  },
-  Garden: {
-    ...decoration('Garden', 'Garden', 'Beds of flowers. The cheapest beauty a city can keep.',
-      '🌷', 'garden'),
-    ...districtBalance(balance.districts.Garden),
-  },
-  Well: {
-    ...decoration('Well', 'Well', 'Cobbled stone and a bucket — where the street meets.',
-      '🪣', 'well'),
-    ...districtBalance(balance.districts.Well),
-  },
-  Orchard: {
-    ...decoration('Orchard', 'Orchard', 'Two rows of fruit trees, kept for the look of them.',
-      '🌳', 'orchard'),
-    ...districtBalance(balance.districts.Orchard),
-  },
-  Statue: {
-    ...decoration('Statue', 'Statue', 'A crowned figure in pale stone. Somebody paid for this.',
-      '🗿', 'statue'),
-    ...districtBalance(balance.districts.Statue),
-  },
-  Plaza: {
-    ...decoration('Plaza', 'Plaza', 'A paved square with room for a market day.',
-      '⛲', 'plaza'),
-    ...districtBalance(balance.districts.Plaza),
-  },
-  Shrine: {
-    ...decoration('Shrine', 'Shrine', 'A round temple of pale stone, cut through with runes.',
-      '⛩️', 'shrine'),
-    ...districtBalance(balance.districts.Shrine),
-  },
-};
-
-export const BUILDABLE_DISTRICTS: DistrictId[] = [
-  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks',
-  'Sanctum',
-  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables', 'Infirmary',
-  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
-  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
-];
-
-/** Every workshop, in build-menu order. */
-export const WORKSHOPS: DistrictId[] = ['Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver'];
-
-/** Every decoration, cheapest first — which is also the order their Townhall
- *  gates open in. The build menu shows them as their own section. */
-export const DECORATIONS: DistrictId[] = ['Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine'];
+/** Every decoration — a building that supplies Harmony — in the file's order,
+ *  which is cheapest first and so the order their Townhall gates open in. The
+ *  build menu shows them as their own section. */
+export const DECORATIONS: DistrictId[] =
+  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].harmonySupply > 0);
 
 /**
  * The districts, with the gates the technologies hand them.
@@ -875,6 +667,20 @@ export interface FeatureDef {
   source: HarvestSourceId;
   /** Terrain a FINITE feature respawns on (adjacent to its origin). */
   respawnTerrain: 'Grassland' | 'Water';
+  /**
+   * HOW BIG A BLOCK OF THIS FEATURE MAY BE, in cells a side. 1 unless stated.
+   *
+   * Some features are ONE OBJECT and some are a mass of small ones. A forest
+   * is a stand of trees on this cell and another stand on the next; a
+   * mountain is a mountain. So painted mountain cells are GROUPED into square
+   * footprints up to this size, drawn once across the whole block, revealed
+   * together and exhausted from one depot
+   * (Docs/features/01-map-and-fog.md §3.1).
+   *
+   * Iron and gold stay at 1: a lone rich outcrop reads, and three sizes of
+   * each is nine more drawings for no gain.
+   */
+  maxFootprint?: number;
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
@@ -890,6 +696,7 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
   Mountain: {
     id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
     sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
+    maxFootprint: 3,
   },
   MountainIron: {
     id: 'MountainIron', name: 'Iron mountain', glyph: '⛰️', exhaustedGlyph: '🕳️',
@@ -1270,6 +1077,10 @@ export interface LandmarkDef {
    *  the tiers are the design — one in sight to save up for, then two rings
    *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
   claimCost: number;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a sanctuary is placed, not painted. */
+  size: number;
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
@@ -1279,12 +1090,13 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; claimCost: number;
+  id: string; kind: string; x: number; y: number; claimCost: number; size?: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
   claimCost: l.claimCost,
+  size: l.size ?? 1,
 }));
 
 /**
@@ -1597,6 +1409,10 @@ export interface RuinDef {
   glyph: string;
   sprite: string;
   location: Coord;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a ruin is placed, not painted. */
+  size: number;
   tier: number;
   /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
    *  rather than a single unit. 'Any' rotates. */
@@ -1699,6 +1515,7 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       id,
       ...ruinContent[id],
       location: { x: b.x, y: b.y },
+      size: (b as { size?: number }).size ?? 1,
       tier: b.tier,
       affinity: b.affinity as RuinDef['affinity'],
       artifact: b.artifact as ArtifactId,
@@ -2083,7 +1900,7 @@ const bannerContent: Record<BannerId, { name: string }> = {
 export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
   (Object.keys(bannerContent) as BannerId[]).map((id) => {
     const b = (balance.banners as Record<string, Omit<BannerDef, 'id' | 'name'>>)[id];
-    if (!b) throw new Error(`balance.json is missing the banner "${id}"`);
+    if (!b) throw new Error(`data/game/banners.json is missing the banner "${id}"`);
     return [id, { id, ...bannerContent[id], ...b }];
   }),
 ) as Record<BannerId, BannerDef>;
@@ -2189,7 +2006,7 @@ interface StoreRow {
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
     const b = (balance.store as Record<string, StoreRow>)[id];
-    if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
+    if (!b) throw new Error(`data/game/store.json is missing the store SKU "${id}"`);
     // A row is a bundle when it names a hand. The importer already refuses
     // half a hand, so one column deciding it is enough.
     const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0
@@ -2314,4 +2131,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 59;
+export const SAVE_VERSION = 60;

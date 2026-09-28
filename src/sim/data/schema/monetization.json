@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "fields": {
+    "ads": {
+      "type": "object",
+      "fields": {
+        "cooldownMinSeconds": { "type": "int" },
+        "cooldownMaxSeconds": { "type": "int" },
+        "eligibleBelowFraction": { "type": "float" },
+        "watchSeconds": { "type": "int" },
+        "manaRefillsPerDay": { "type": "int" }
+      }
+    },
+    "payer": {
+      "type": "object",
+      "fields": {
+        "f2pMonthlyUsd": { "type": "int" },
+        "minnowMonthlyUsd": { "type": "int" },
+        "dolphinMonthlyUsd": { "type": "int" },
+        "whaleMonthlyUsd": { "type": "int" },
+        "superWhaleMonthlyUsd": { "type": "int" }
+      }
+    }
+  }
+}

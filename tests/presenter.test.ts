@@ -433,6 +433,17 @@ describe('the Build call-to-action', () => {
     fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
     expect(game.buildCtaLit()).toBe(true);
   });
+
+  // The tab's badge counts what the lit check only asks about: the two must
+  // never disagree, or the orb would show with no number behind it.
+  it('counts what it lights for', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    expect(game.buildCtaCount()).toBe(0);
+    fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
+    expect(game.buildCtaCount()).toBeGreaterThan(0);
+    expect(game.buildCtaCount() > 0).toBe(game.buildCtaLit());
+  });
 });
 
 describe('villager training', () => {
@@ -770,5 +781,24 @@ describe('formatDuration', () => {
     expect(formatDuration(90)).toBe('1m 30s');
     expect(formatDuration(45)).toBe('45s');
     expect(formatDuration(0)).toBe('instant');
+  });
+});
+
+// How many fragments a reward flies to the header as (ui/rewardFly.ts).
+describe('reward fragments', () => {
+  it('flies a small tap one fragment a unit, and a large one by the production rule', () => {
+    const game = freshPresenter();
+    for (const n of [1, 2, 3, 4]) expect(game.rewardFragments('Wood', n, true)).toBe(n);
+    // From five up a tap is a reward like any other: 3 to 12, or 5 unproduced.
+    const big = game.rewardFragments('Wood', 5, true);
+    expect(big).toBe(game.rewardFragments('Wood', 5));
+    expect(big).toBeGreaterThanOrEqual(3);
+    expect(big).toBeLessThanOrEqual(12);
+  });
+
+  it('keeps the production rule for everything that is not a tap', () => {
+    const game = freshPresenter();
+    expect(game.rewardFragments('Gems', 2)).toBe(5); // nothing makes Gems
+    expect(game.rewardFragments('Wood', 2)).toBeGreaterThanOrEqual(3);
   });
 });

@@ -35,21 +35,16 @@
   cursor: pointer;
   position: relative;
   box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
-  /* A glow, not a bob: the quest scroll already bobs when it is claimable and
-     two things bobbing at once is a busy screen. */
-  animation: dly-glow 2s ease-in-out infinite;
+  /* The ask is the kit's orb on its corner (dailyPill.ts). */
 }
 .dly-pill:hover { filter: brightness(1.04); }
 .dly-pill:active { transform: translateY(2px); box-shadow: none; }
-@keyframes dly-glow {
-  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 14px rgba(242, 178, 51, 0.8); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dly-pill { animation: none; }
-}
 /* Every rung taken, the season still running: the pill stays as the door to a
    purchase, and stops asking for anything. */
-.dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
+.dly-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.85; }
+/* The orb sits out on the corner, clear of the title (the season pill's too). */
+.dly-pill > .k-cta,
+.sea-pill > .k-cta { top: calc(var(--cta-size) * -0.45); right: calc(var(--cta-size) * -0.5); }
 .dly-pill > .icon { --icon-size: 30px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
 .dly-pill-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.15; }
@@ -180,23 +175,16 @@
 .dly-cell.is-locked > .icon:last-child { opacity: 0.8; }
 .dly-cell:not(.is-taken):not(.is-locked) { padding-right: 8px; }
 
-/* Waiting. Lit gold and the only thing on the sheet that moves, so there is
-   never a question about where the tap goes. */
+/* Waiting. Lit gold, with the kit's orb on its corner, so there is never a
+   question about where the tap goes. */
 button.dly-cell {
   cursor: pointer;
   border: 3px solid var(--gold);
   box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
-  animation: dly-ready 1.6s ease-in-out infinite;
 }
 button.dly-cell:hover { filter: brightness(1.05); }
 button.dly-cell:active { transform: translateY(2px); box-shadow: none; }
 button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-@keyframes dly-ready {
-  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark), 0 0 14px rgba(242, 178, 51, 0.9); }
-}
-@media (prefers-reduced-motion: reduce) {
-  button.dly-cell { animation: none; }
-}
 
 /* The rung number, between the columns: it belongs to the row, not to either
    track. It darkens once the row has been climbed, which is what draws the

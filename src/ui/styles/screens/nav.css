@@ -1,126 +1,109 @@
-/* Bottom navigation, the floating Settings knob, and the dismiss affordance
- * that replaces the old swap-the-whole-bar-for-Close (§5.4). */
+/* The bottom navigation (§5.4) — mockup M1's wooden bar, and the dismiss
+ * affordance legacy screens still carry.
+ *
+ * Every size on the bar is in reference pixels (`--rpx`, tokens.css),
+ * measured on M1 at 1125 wide. */
 
-/* #navbar wins on specificity over a bare class, so the overrides are keyed
- * to both until style.css's rule is deleted in Phase 5. */
 #navbar.nav {
-  margin-top: auto;
-  /* No min-height floor: --nav-h is MEASURED from this bar, so a floor read
-     from the same token was circular. The bar is as tall as its tabs. */
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  justify-content: center;
-  padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
-  background: var(--wood);
-  border-top: var(--outline) solid var(--wood-dark);
-  /* Lit along the top, shadowed along the bottom: a beam, not a strip. */
-  box-shadow: inset 0 3px 0 var(--wood-light), inset 0 -4px 0 rgba(60, 36, 18, 0.35);
+  /* THE BAR DIALS — the numbers to reach for when fine-tuning it. */
+  --nav-pad-top: calc(var(--rpx) * 17);   /* beam top to the tabs */
+  --nav-pad-bottom: calc(var(--rpx) * 22);
+  --nav-tab-w: calc(var(--rpx) * 193);    /* one tab plate */
+  --nav-tab-h: calc(var(--rpx) * 148);
+  --nav-gap: calc(var(--rpx) * 22);
+  --nav-icon: calc(var(--rpx) * 92);
+  --nav-label: calc(var(--rpx) * 32);
+  --nav-badge: calc(var(--rpx) * 52);     /* the scrying orb: "something to do here" */
+
   position: relative;
   z-index: 10;
+  margin-top: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--nav-gap);
+  /* The ONE place the bottom inset lives (tests/chrome.test.ts): the bar is
+     the only element that touches the bottom edge, and --nav-h is measured
+     from it, inset included. */
+  padding: var(--nav-pad-top) calc(var(--rpx) * 20) calc(var(--nav-pad-bottom) + env(safe-area-inset-bottom));
+  /* The beam is one painted strip repeated across the frame, its lit lip at
+     the top; under the home indicator it carries on as its own dark wood. */
+  background: url('../../assets/nav-beam.png') left top / auto calc(var(--nav-pad-top) + var(--nav-tab-h) + var(--nav-pad-bottom)) repeat-x, #4a2e17;
+  border: 0;
+  box-shadow: none;
+  /* It leaves while a menu is open, and comes back when the map does — in
+     step with the window's own 0.2 s. */
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
-/* Five tabs, not four (Heroes arrived 2026-09-08). `min-width: 0` is what
-   makes them share the frame instead of overflowing it: a flex item's
-   default `min-width: auto` refuses to shrink below its label, and
-   "Research" alone is wider than a fifth of a phone. */
+/* A MENU IS OPEN — a sheet in the overlay, or the district card's window in
+ * the panel: the bar slides down out of the frame — every menu brings its
+ * own way out — and the space it held goes to the menu. --nav-h is what
+ * every screen stops above, so while the bar is away it is only the inset
+ * the bar would have padded for. Keyed on what is actually mounted, like the
+ * settings knob, so it cannot drift from what is on screen. */
+#ui:has(> #overlay:not(:empty)),
+#ui:has(> #panel .dc) { --nav-h: env(safe-area-inset-bottom, 0px); }
+#ui:has(> #overlay:not(:empty)) > #navbar.nav,
+#ui:has(> #panel .dc) > #navbar.nav {
+  transform: translateY(calc(100% + var(--rpx) * 20));
+  pointer-events: none;
+  transition-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  #navbar.nav { transition: none; }
+}
+
+/* One wooden plate per destination (sheets/ui-nav1-bar-tabs.png), nine-sliced,
+   its pressed twin swapped in on :active — the lip and the press are in the
+   art. A tab is as wide as its share of the bar, never wider than M1's. */
 #navbar.nav .nav-tab {
-  flex: 1 1 0;
+  position: relative;
+  flex: 0 1 var(--nav-tab-w);
   min-width: 0;
-  max-width: 160px;
+  height: var(--nav-tab-h);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0;
-  min-height: 57px; /* the plate in M12, at 402 */
-  padding: 2px 4px 3px;
+  padding: 0 0 calc(var(--rpx) * 10); /* the lip under the face */
   font-family: var(--font-body);
-  /* 14px: a label is a word under a picture, and five of them share a phone
-     (M12). */
-  font-size: 14px;
-  font-weight: var(--weight-strong);
-  /* A WOOD plate on the wood beam (mockup M1): darker than the beam, a lit
-     top edge, the word in cream with a shadow so it reads on the grain. The
-     parchment plate it replaced made the bar a row of cards, not a beam. */
+  font-size: var(--nav-label);
+  font-weight: var(--weight-title);
   color: var(--parchment);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
-  background: #a06a3a;
-  border: 2px solid var(--wood-dark);
-  border-radius: 12px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -3px 0 rgba(60, 36, 18, 0.3), 0 3px 0 var(--wood-dark);
+  text-shadow: 0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.8);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  /* Sliced 30 / 30 / 50 of a 266 x 156 plate: the rounded corners at the top,
+     the corners and the lip at the bottom. */
+  border-image: url('../../assets/nav-tab.png') 30 30 50 fill /
+    calc(var(--rpx) * 26) calc(var(--rpx) * 26) calc(var(--rpx) * 44) stretch;
   cursor: pointer;
-  transition: transform var(--motion-snap) steps(1);
 }
-#navbar.nav .nav-tab:hover { filter: brightness(1.06); }
-#navbar.nav .nav-tab:active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16); }
-
-/* The open destination stands proud of the beam — it rises past the top
-   edge, the way M1's lit tab does. */
-#navbar.nav .nav-tab.is-active {
-  transform: translateY(-5px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), 0 8px 0 var(--wood-dark);
-}
-
-/* The one lit call to action — gold, ink on it, a warm glow, not a pulse. */
-#navbar.nav .nav-tab.is-cta {
-  color: var(--ink);
-  text-shadow: none;
-  background: var(--gold);
-  border-color: var(--gold-dark);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 3px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
-  animation: nav-cta 1.6s ease-in-out infinite;
-}
-#navbar.nav .nav-tab.is-active.is-cta {
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 8px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
-}
-@keyframes nav-cta {
-  50% { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 3px 0 var(--gold-dark), 0 0 20px rgba(242, 178, 51, 0.95); }
+#navbar.nav .nav-tab:hover { filter: brightness(1.05); }
+#navbar.nav .nav-tab:active {
+  border-image-source: url('../../assets/nav-tab-down.png');
+  padding: calc(var(--rpx) * 8) 0 0;
 }
 /* The label never wraps and never truncates: a tab reading "Resear…" is
-   worse than a smaller one. It steps down with the frame instead. */
+   worse than a smaller one. */
 .nav-label { line-height: 1.1; white-space: nowrap; }
-/* 24px icons: the bar is 52px, and a 32px picture over a label does not fit
-   it. The atlas scales smooth, so 24 is a size and not a sampling error. */
-#navbar.nav .nav-tab .icon { --icon-size: 28px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.5)); }
-@container frame (max-width: 460px) {
-  #navbar.nav { gap: 4px; padding-inline: 6px; }
-  #navbar.nav .nav-tab { padding-inline: 2px; }
+#navbar.nav .nav-tab .icon {
+  --icon-size: var(--nav-icon);
+  margin-bottom: calc(var(--rpx) * -4);
+  filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(40, 22, 10, 0.45));
 }
 
-/* ---------------------------------------------------------- settings knob */
-
-/* Outside the header, top-right — the free corner, since the quest scroll
- * owns the left. Below the banner's z-index on purpose: a banner is
- * transient and tap-to-dismiss, so it may cover this for its five seconds. */
-#tools {
-  position: absolute;
-  top: calc(var(--hud-h) + 8px);
-  right: 12px;
-  z-index: 20;
+/* THE CALL TO ACTION is the kit's orb (`.k-cta`, kit/cta.ts), a size up on
+   its tab's corner. */
+#navbar.nav .nav-tab > .k-cta {
+  --cta-size: var(--nav-badge);
+  top: calc(var(--rpx) * -12);
+  right: calc(var(--rpx) * -10);
 }
-/* ...and it goes away while any menu is open. The knob floats above every
-   menu, so it lands on top of that menu's own chrome — it was sitting on the
-   research screen's close button. Every menu brings its own way out, so the
-   knob has nothing to do while one is up: it is the affordance for the MAP.
-   Keyed on the overlay actually having content rather than on a presenter
-   flag, so it cannot drift from what is on screen. */
-#ui:has(> #overlay:not(:empty)) #tools { display: none; }
-.tools-knob {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 3px 0 var(--wood-dark);
-  cursor: pointer;
-}
-.tools-knob .icon { --icon-size: 26px; }
-.tools-knob:hover { filter: brightness(1.08); }
-.tools-knob:active { transform: translateY(3px); box-shadow: none; }
-.tools-knob.is-active { background: var(--gold); border-color: var(--gold-dark); }
 
 /* ------------------------------------------------------ legacy dismiss ---
  * Every unmigrated screen needs its own close now that the nav bar stays
@@ -144,10 +127,8 @@
 }
 .legacy-close:hover { filter: brightness(1.08); }
 .legacy-close:active { transform: translateY(3px); box-shadow: none; }
-/* Sits LEFT of the settings knob rather than under it. #overlay's own
- * z-index makes it a stacking context, so this knob's z-index cannot lift it
- * above #tools no matter how high — they have to not overlap. */
-#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 66px; }
+/* The settings knob is hidden while a menu is open, so the corner is free. */
+#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 12px; }
 #panel .legacy-close { top: 8px; }
 /* Reserve the corner so the knob can't sit on a legacy screen's first action
  * row. Goes away per screen as each grows a sheet with a plank of its own. */

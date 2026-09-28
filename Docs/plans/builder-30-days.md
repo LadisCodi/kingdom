@@ -11,16 +11,16 @@
 > **Status: steps 1–7 done; steps 8–11 are next and independent of each
 > other. The Market left the game on 2026-09-09, so its half of step 2 and
 > its goods tab are void — read the rest as written. Step 8 shrank on 2026-09-08 — the Reliquary is not a building.** Save version 31. The designs live in `features/` —
-> [`18-harmony.md`](../features/18-harmony.md) for step 6,
+> [`21-harmony.md`](../features/21-harmony.md) for step 6,
 > [`buildings.md`](../features/buildings.md) §3.1 for step 7 — and §6–§7 below
 > are the record of how they landed.
 
 ## 0. How the steps are cut
 
 - **Data first, logic second, UI third, test throughout.** Every step opens by
-  adding columns or rows to `balance/balance.xlsx` through
-  `scripts/balance.mjs` (the importer refuses unknown columns, so the schema
-  is the first commit), then the sim, then the sheet or card.
+  adding fields or entries to the collections in `src/sim/data/game/` (the
+  schema refuses unknown fields, so the schema is the first commit), then the
+  sim, then the sheet or card.
 - **One boundary source per timed thing.** Anything new that finishes at a
   time is one `consider()` in `nextBoundary` and one branch in `applyDueAt`
   (`src/sim/commands.ts:416-430`, `:359-399`). Anything that accrues is
@@ -40,7 +40,7 @@
 | Step | Lands | Unblocks | Size |
 |---|---|---|---|
 | 1 | the thirty-day harness | measuring every later step | 1–2 days |
-| 2 | goods: the `Goods` sheet, the stockpile, goods in a price | 3, 4 | 1–2 days |
+| 2 | goods: the `goods` collection, the stockpile, goods in a price | 3, 4 | 1–2 days |
 | 3 | the four workshops: queue, crew, sharing, rush | 4 | 4–6 days |
 | 4 | levels 5–10 of every building, gated by goods | 6, 8, 9 | 2–3 days |
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
@@ -140,8 +140,8 @@ and the harness prints the same table. The 30-day run is now 43 s.
 The stockpile before the producer, so prices can name a good and the dev bar
 can grant one.
 
-- **Data:** a `Goods` sheet — `id, name, tier, input_gold/wood/food/stone,
-  input_mana, input_good, input_good_amount, work_seconds`. Four rows:
+- **Data:** a `goods` collection — `name, tier, input, inputMana, inputGood,
+  inputGoodAmount, workSeconds`. Four entries:
 
   | Good | One item is made of | Work (one villager) |
   |---|---|---|
@@ -150,10 +150,9 @@ can grant one.
   | **Iron** | 20 Stone + 200 Gold | 60 min |
   | **Runestone** | 2 Cut Stone + 20 Mana | 3 h |
 
-  `Districts` gained `upgrade_cost_goods_per_level`, a text column written
-  `|Planks:2|Planks:4,CutStone:2` — levels separated by `|`, goods by `,`,
-  entry 0 the price of reaching level 2, like every other per-level column.
-  **Every row is blank**: goods are charged from step 4.
+  Each `buildings` entry carries goods in its `costPerLevel`, one `goods` map
+  per level beside the currencies.
+  **Every one is empty**: goods are charged from step 4.
 - **Sim:** `GoodId` and `state.city.goods`, a counter map and deliberately not
   a `CurrencyId` — the Fragments precedent, so the plank stays at five.
   `src/sim/goods.ts` holds the stockpile maths and `goodsCostForLevel`;
@@ -178,10 +177,10 @@ can grant one.
 Four districts — Carpenter, Mason's Yard, Smelter, Rune Carver — each making
 one good, and the first producer in the game that is a crew from the start.
 
-- **Data:** four `Districts` rows, 1×1, `max_level` 10, crew
+- **Data:** four `buildings` entries, 1×1, `maxLevel` 10, crew
   `1,2,3,3,4,4,5,5,6,6` and queue `3…12` by level, count caps
-  `0,0,0,1,1,1,1,2,2,2` (one at TH4, two at TH8 — moved up a level in step 7, since Townhall 5 is the first level priced in goods and a good needs a workshop to exist first). Two new columns, `produces`
-  and `queue_length_per_level`, and the importer refuses a row that has one
+  `0,0,0,1,1,1,1,2,2,2` (one at TH4, two at TH8 — moved up a level in step 7, since Townhall 5 is the first level priced in goods and a good needs a workshop to exist first). Two new fields, `produces`
+  and `queueLengthPerLevel`, and the schema refuses an entry that has one
   without the other. Unlock technologies: `Engineering` for the Carpenter and
   the Mason's Yard, `Mining` for the Smelter, `Attunement II` for the Rune
   Carver.
@@ -201,7 +200,7 @@ one good, and the first producer in the game that is a crew from the start.
 - **Cost:** inputs are paid when an item is QUEUED, and refunded in full on
   cancel. Runestone takes Mana, the first non-tap Mana sink.
 - **Gems** finish the item in progress, priced on the time left at the current
-  crew (`rush.seconds_per_gem`, as a build). Only that item: the queue behind
+  crew (`rush.secondsPerGem`, as a build). Only that item: the queue behind
   it is not for sale, and neither is a worker slot.
 - **UI:** `src/ui/workshopSection.ts` on the district card — what it makes and
   out of what, the crew line (which says in words when there is nobody there),
@@ -230,31 +229,31 @@ than a building.
   `3,5,7,9,11` and one more ring of reach on every producer, Housing to 10
   residents. Level 5 asks for TH4, which makes it the first thing the live
   game gained.
-- **Data:** `max_level` → 10 with per-level arrays authored to 10; halls
-  `army_cap_per_level` +8 a level to 68; `mana.sanctum_cap_per_level` and
-  `…_per_hour_per_level` continued to 352 and 42; producers' workers and reach
-  **frozen at their L5 value** from L6. `upgrade_cost_goods_per_level` filled
+- **Data:** `maxLevel` → 10 with per-level arrays authored to 10; halls
+  `armyCapPerLevel` +8 a level to 68; `mana.sanctumCapPerLevel` and
+  `…PerHourPerLevel` continued to 352 and 42; producers' workers and reach
+  **frozen at their L5 value** from L6. `costPerLevel` goods filled
   for 6–10 on every one of the fourteen (§7 in
   [`../features/buildings.md`](../features/buildings.md) §4.11 is the table).
-  `required_townhall_level_per_level` is the level itself from 6 (TH6 → TH10),
-  and `required_tech_per_level` is padded with nothing: **no late level asks
+  `requiredTownhallLevelPerLevel` is the level itself from 6 (TH6 → TH10),
+  and `requiredTechPerLevel` is padded with nothing: **no late level asks
   for a technology.**
 - **A piecewise curve, which the plan did not have.** The old single
-  `upgrade_cost_level_growth` per row cannot say "1.5 to level 5 and 1.7 after
+  `upgrade_cost_level_growth` per building cannot say "1.5 to level 5 and 1.7 after
   it", and continuing a 20-second duration curve to level 10 gives an
-  eight-minute upgrade on day 20. So three new columns —
-  `upgrade_cost_late_level_growth`, `upgrade_duration_late_seconds`,
-  `upgrade_duration_late_level_growth` — pivot at `city.late_upgrade_from_level`
+  eight-minute upgrade on day 20. So three new fields —
+  `upgrade_cost_late_level_growth`, `upgradeDurationLateSeconds`,
+  `upgradeDurationLateLevelGrowth` — pivot at `city.lateUpgradeFromLevel`
   (6). Cost is continuous at the pivot; the wait restarts at its own base, 2 h,
-  and grows ×1.7 to about 17 h at level 10. The importer refuses a row that
+  and grows ×1.7 to about 17 h at level 10. The schema refuses a building that
   reaches the pivot without them. Design:
   [`../features/05-city-and-districts.md`](../features/05-city-and-districts.md)
   §3.1.
-- **The haul is ADDED units, not a multiplier.** `extra_units_per_delivery_per_level`
+- **The haul is ADDED units, not a multiplier.** `extraUnitsPerDeliveryPerLevel`
   (+1 a level from 6) rather than the planned `yield_per_delivery_per_level`:
   a chunk is 1 to 5 units and `Math.round(1 × 1.2)` is 1, so a percentage
   rounds away to nothing. It is the shape `WorkerLoad` already uses.
-  `strike_speed_per_level` stays a multiplier (+10% a level) because it
+  `strikeSpeedPerLevel` stays a multiplier (+10% a level) because it
   divides a cadence measured in whole seconds. Both are read in
   `effectiveWorkerStrike` and `workerStrikeMs` off the crew's own building as
   **base-stage** terms, never as modifiers, and neither reaches the tap.
@@ -272,13 +271,13 @@ than a building.
   pivot is bit-identical to the old curve. `goods.test.ts` — nothing is
   charged below the pivot and every late level charges something.
 - **What the harness says.** The city now buys levels in weeks 4 and 5, where
-  before it bought nothing (a `levels` column was added to measure it: 51 →
+  before it bought nothing (a `levels` column was added to the harness to measure it: 51 →
   58 → 61). It also buys them EARLIER: the scripted player upgrades where it
   used to build, so weeks 1–2 end on 11 and 21 buildings instead of 12 and 23.
   But **the ladder stops at level 4**: level 5 asks for TH4 and this player
   ends on TH3, so the goods wall at level 6 is authored and unreached. Step
   7's Townhall ladder is what opens both — the finding is now an assertion.
-- **The Market joined the ladder too** (proposal §1.1), with one new column,
+- **The Market joined the ladder too** (proposal §1.1), with one new field,
   `sale_price_per_level`: ten levels whose only purchase is the price it pays
   for a unit, +3% a level to +27%. Two Markets do not stack — the better one
   sets the price. **Its goods tab is deliberately NOT in**: a Market that
@@ -298,16 +297,16 @@ is gone too (OQ-1 closed as *no*, and a plot ring was built and reverted).
 **Adjacency is therefore the only thing that guides a layout, and it does it by
 paying or charging, never by refusing.**
 
-- **Data:** the `Adjacency` sheet is `district, neighbour, stat, magnitude`.
+- **Data:** each `adjacency` entry is `district, neighbor, stat, magnitude`.
   `gold_per_minute` is **gone rather than kept beside them** — one mechanism,
-  not two: the Housing row is now `goldPerMinute −1`. Either side may name a
+  not two: the Housing rule is now `goldPerMinute −1`. Either side may name a
   **group** — `AnyHall`, `AnyWorkshop`, `AnyProducer` — whose membership is
   derived from what a district already is, so the four halls sharing a rule is
-  one row instead of twelve, and a fifth hall would need none. Six rows today:
+  one entry instead of twelve, and a fifth hall would need none. Six entries today:
   Housing↔Housing Gold −1, AnyHall↔AnyHall `trainTime −0.10`,
   Carpenter–Sawmill, MasonsYard–Quarry, Smelter–Quarry and RuneCarver–Sanctum
-  `workTime −0.10`. The importer refuses an unknown stat or token, a magnitude
-  of 0, a duplicate `(district, neighbour, stat)`, and a fraction past the
+  `workTime −0.10`. The schema refuses an unknown stat or token, a magnitude
+  of 0, a duplicate `(district, neighbor, stat)`, and a fraction past the
   clamp.
 - **Sim:** `AdjacencyStat` and `AdjacencyGroup` in `definitions.ts`, with
   `ADJACENCY_GROUPS` as derived predicates and `ADJACENCY_CLAMP` at 0.25.
@@ -330,8 +329,8 @@ paying or charging, never by refusing.**
   training card both show the time the player is actually committing to.
 - **Save:** version **30**, additive, no migrator — a pre-30 item has no stamp
   and falls back to the authored duration, which is what it was running on.
-- **Tests:** `adjacency.test.ts` — the sheet's shape, group resolution from
-  either column, the clamp under four neighbours, one stat not leaking into
+- **Tests:** `adjacency.test.ts` — the collection's shape, group resolution from
+  either side, the clamp under four neighbours, one stat not leaking into
   another, a military quarter training faster, a stamped wait surviving a
   neighbour's demolition and a save round trip, and a workshop item priced at
   the moment it is queued. `helpers.ts` now spaces the test halls two cells
@@ -352,13 +351,13 @@ paying or charging, never by refusing.**
 
 ### 6.1 The rule
 
-- **Supply** is the `harmony_supply` of every **Built** decoration. A piece
+- **Supply** is the `harmonySupply` of every **Built** decoration. A piece
   under construction supplies nothing yet.
-- **Demand** is every district's `harmony_cost_per_level` at the level it
+- **Demand** is every district's `harmonyCostPerLevel` at the level it
   holds — or at the level it is **upgrading to**, so two waits in flight
   cannot be spent against the same surplus.
-- The column is the **TOTAL a building demands at that level, not an
-  increment**, indexed from level 1 like `army_cap_per_level`. One column
+- The field is the **TOTAL a building demands at that level, not an
+  increment**, indexed from level 1 like `armyCapPerLevel`. One field
   therefore states both the build gate (entry 0) and every upgrade gate, and
   nothing anywhere sums a prefix.
 - A build or an upgrade may **start** only while
@@ -380,12 +379,12 @@ paying or charging, never by refusing.**
   `commands.ts:165, 387`), and a decoration completing IS a build completion.
 - The harness ends the month on 16.8 M unspent Gold, so this bonus is a
   legibility win rather than a real reward — it pays where a player can SEE
-  it, on the Townhall card. If it turns out to carry nothing, `surplus_tiers`
+  it, on the Townhall card. If it turns out to carry nothing, `harmony.surplusTiers`
   is one setting and the stat it moves is one call site.
 
 ### 6.3 The six pieces
 
-`max_level` 1, no crew, no tap, no upgrade — movable like anything else.
+`maxLevel` 1, no crew, no tap, no upgrade — movable like anything else.
 
 | Piece | Size | Supply | Build cost | Count cap, by Townhall level | Discovered by |
 |---|---|---|---|---|---|
@@ -398,7 +397,7 @@ paying or charging, never by refusing.**
 
 - The cap array is the **Townhall gate and the ceiling** in one, the way a
   workshop's already is (`0,0,0,1,1,1,1,2,2,2`), so no decoration needs a
-  `required_townhall_level_per_level` of its own. **Discovery is a technology
+  `requiredTownhallLevelPerLevel` of its own. **Discovery is a technology
   on top** (2026-09-08): four Civics era-3 cards open the pieces in pairs and
   singles, paired by material — plants under Gardening, cut stone under
   Sculpture, the Plaza under Paving, the Shrine under Sacred Grounds. A
@@ -412,7 +411,7 @@ paying or charging, never by refusing.**
 
 ### 6.4 The demand, on the levels from 8
 
-- `harmony_cost_per_level` = `,,,,,,,2,4,6` on all **fifteen** buildings that
+- `harmonyCostPerLevel` = `[0,0,0,0,0,0,0,2,4,6]` on all **fifteen** buildings that
   reach level 10 — +2 a level from 8, which is a ladder a player can read off
   a card. The Townhall's own is step 7's, along with its ladder.
 - **Where that lands.** On the count caps as they stand today a maxed city is
@@ -434,24 +433,21 @@ paying or charging, never by refusing.**
 
 ### 6.5 Data
 
-Three new `Districts` columns and one new `Settings` row:
+Three new `buildings` fields and one new `economy` setting:
 
-- `harmony_supply` — a scalar. Blank = 0 = not a decoration.
-- `harmony_cost_per_level` — a list, the total at each level, from level 1.
-- `build_cost_goods` — a goods list (`Planks:2,CutStone:2`), the build's
-  price in refined goods, which no building could name before. The
-  `|`-separated per-level form already exists for upgrades; a build has one
-  level, so this is one entry.
-- `harmony.surplus_tiers` — `1.10:0.05|1.25:0.10|1.50:0.15`, a new **`tiers`**
-  setting kind, because a threshold and its bonus are one fact and have to
-  travel together. It is the first setting that is neither a number nor a
-  list, so the export marks it a Text cell the way a list already is. There is deliberately **no `harmony.surplus_stat`**: the
+- `harmonySupply` — a scalar. Absent = 0 = not a decoration.
+- `harmonyCostPerLevel` — a list, the total at each level, from level 1.
+- The build's price in refined goods — the `goods` of the level 1 entry of
+  `costPerLevel`, which no building could name before.
+- `harmony.surplusTiers` — `[{ at: 1.10, bonus: 0.05 }, { at: 1.25, bonus: 0.10 }, { at: 1.50, bonus: 0.15 }]`,
+  a list of `{ at, bonus }`, because a threshold and its bonus are one fact
+  and have to travel together. There is deliberately **no `harmony.surplusStat`**: the
   stat a bonus moves is a call site, so a setting whose only legal value is
   `taxRate` would be a knob that cannot turn.
 
-The importer refuses: a row with `harmony_supply` that also has a level ladder,
+The schema and `dataRules.ts` refuse: a building with `harmonySupply` that also has a level ladder,
 a crew, a queue, residents or something it trains (a decoration is none of
-those); a `harmony_cost_per_level` that falls between levels (it is a total);
+those); a `harmonyCostPerLevel` that falls between levels (it is a total);
 tiers that are not ascending, or a threshold below 1.
 
 ### 6.6 Sim
@@ -464,12 +460,12 @@ tiers that are not ascending, or a threshold below 1.
   `upgradeDistrict`, whose refusals become **three** —
   `NotEnoughResources`, `NotEnoughGoods`, `NeedsHarmony`, each a different
   errand: the map, the workshop, the decorations.
-- **Goods at build time.** `enqueueBuild` pays `build_cost_goods` when the
+- **Goods at build time.** `enqueueBuild` pays the level 1 goods when the
   build is QUEUED and `cancelQueueItem` refunds it in full — the rule a
   workshop item already follows. `EnqueueBuildResult` gains
   `'NotEnoughGoods'` and `'NeedsHarmony'`, which today would both collapse
   into `'InvalidCell'`.
-- One `Adjacency` row, `Housing · AnyDecoration · goldPerMinute · +1` — the
+- One `adjacency` entry, `Housing · AnyDecoration · goldPerMinute · +1` — the
   mirror of `Housing ↔ Housing −1`, and the local reason to put a piece among
   the houses. `AnyDecoration` is a fourth `ADJACENCY_GROUP`, its predicate
   `harmonySupply > 0`. The Sanctum's Mana rule (proposal §8) waits for a
@@ -526,12 +522,12 @@ save needs nothing: it has no decoration in it.
 
 | | Lands |
 |---|---|
-| **6a** — **DONE** | the schema — three `Districts` columns, the `tiers` setting, every refusal, `balance:export` → `balance`. Every cell blank but the tiers, and `tests/harmony.test.ts` guards the shape |
+| **6a** — **DONE** | the schema — three `buildings` fields, the `tiers` setting, every refusal. Every value empty but the tiers, and `tests/harmony.test.ts` guards the shape |
 | **6b** — **DONE** | `harmony.ts`, both gates, goods at build time, the surplus term in `effectiveTaxRate` |
-| **6c** — **DONE** | the six decoration rows, their identity in `definitions.ts`, `buildMenuOrder`, the `AnyDecoration` adjacency row |
-| **6d** — **DONE** | the demand: `,,,,,,,2,4,6` on the fifteen |
+| **6c** — **DONE** | the six decoration entries, their identity in `buildings`, `buildMenuOrder`, the `AnyDecoration` adjacency entry |
+| **6d** — **DONE** | the demand: `[0,0,0,0,0,0,0,2,4,6]` on the fifteen |
 | **6e** — **DONE** | the UI — the header, the section, the ribbon, the ghost, the Townhall card |
-| **6f** — **DONE** | [`../features/18-harmony.md`](../features/18-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
+| **6f** — **DONE** | [`../features/21-harmony.md`](../features/21-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
 
 - **Art: done.** All six world sprites exist (`garden_l1`, `well_l1`,
   `orchard_l1`, `statue_l1`, `plaza_l1`, `shrine_l1`). What is missing is the
@@ -550,8 +546,8 @@ day 20, 9 on day 24, 10 on day 30 — days orientative. The harness asserts it
 with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 ·
 25** on landing.
 
-- **Data:** Townhall `max_level` 10; goods from level 5 (`2/2` Planks and Cut
-  Stone, rising to `20/20/14 Iron/4 Runestone` at 10); Harmony `,,,,,,,10,20,30`;
+- **Data:** Townhall `maxLevel` 10; goods from level 5 (`2/2` Planks and Cut
+  Stone, rising to `20/20/14 Iron/4 Runestone` at 10); Harmony `[0,0,0,0,0,0,0,10,20,30]`;
   the late wait **6 h at 6, doubling a level to 96 h at 10**; cost ×1.7 a
   level from 6. No level past 4 asks for a technology — 3 stays `Bureaucracy`
   and 4 `Magistracy`. Six count-cap arrays extended to ten entries (Housing to
@@ -563,8 +559,8 @@ with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21
   prices the ladder could not run on a calendar: Townhall 4 alone was
   `Magistracy` and its column, 1,410 Knowledge, against a scripted month's
   income of ~1,500 — the whole late city sat behind Civics era 3. Three
-  changes, all data: **a base drip** (`knowledge.base_per_hour`, one line in
-  `knowledgePerHour`), **a starting grant** (`Currencies.Knowledge.start`),
+  changes, all data: **a base drip** (`knowledge.basePerHour`, one line in
+  `knowledgePerHour`), **a starting grant** (`currencies` › Knowledge › `start`),
   and **every Knowledge price on the tree cut**. Territory still adds to the
   clock; it no longer IS the clock. The magnitudes were then divided by ten
   again the same day, rate and prices together, so the rate is a fraction of
@@ -605,7 +601,7 @@ been handed the first piece of should not then ask them to go and build
 something before they may look at it. **What unlocks the mechanic is owning a
 relic**, which is the thing the player already did.
 
-- **Data:** none. No district row, no per-level columns, no settings.
+- **Data:** none. No `buildings` entry, no per-level fields, no settings.
 - **Sim:** none. `attune` and `levelUpArtifact` keep the gates they have —
   slots are Gems and nothing else ([`../features/07-research.md`](../features/07-research.md)
   §1), and a relic's level cap is its TIER, which is Fragments
@@ -632,10 +628,10 @@ relic**, which is the thing the player already did.
 
 ## 9. Step 9 · The Tavern
 
-- **Data:** one row, 2×1, one per city, `max_level` 10, TH gate 4; a new
-  Civics era-2 technology `Hospitality` (`Technologies` row, `node_x`/`node_y`
-  authored on the Civics page). Per-level column `hero_level_cap_per_level`
-  (`2,4,4,6,6,8,8,10,10,10`); `Settings` for XP bonus (L5) and the weekly free
+- **Data:** one `buildings` entry, 2×1, one per city, `maxLevel` 10, TH gate 4; a new
+  Civics era-2 technology `Hospitality` (authored in `?dev=tree`, its slot
+  on the Civics page). Per-level field `heroLevelCapPerLevel`
+  (`[2,4,4,6,6,8,8,10,10,10]`); settings for XP bonus (L5) and the weekly free
   pull (L7).
 - **Sim:** `heroLevelCap(state)` read by `levelUpHero` (`heroes.ts:67`);
   `pull()` refuses without a Tavern — both banners, including the free call,
@@ -667,17 +663,17 @@ relic**, which is the thing the player already did.
 
 ## 10. Step 10 · The Watchtower
 
-- **Data:** one row, 2×2, one per city, `required_tech` `Cartography`, TH gate
-  5, `max_level` 10, goods from 6, Harmony from 8. Per-level columns
-  `marches_per_level`, `vision_radius_per_level`, `march_speed_per_level`,
-  `outposts_per_level` — authored now, read by nobody until the world map.
+- **Data:** one `buildings` entry, 2×2, one per city, unlocked by `Cartography`,
+  TH gate 5, `maxLevel` 10, goods from 6, Harmony from 8. Per-level fields
+  `marchesPerLevel`, `visionRadiusPerLevel`, `marchSpeedPerLevel`,
+  `outpostsPerLevel` — authored now, read by nobody until the world map.
 - **Sim:** `state.kingdom.worldMapUnlocked` is **derived**, not stored: a
   built Watchtower. `hasWatchtower(state)` is the one helper; the world map
   (`02-map-scopes.md`) reads its dials from the building level when it lands.
 - **UI:** the building and its card, which says what each level will govern.
   No world-map screen in this step.
 - **Save:** none.
-- **Tests:** the row imports; the card renders; `hasWatchtower` follows the
+- **Tests:** the entry validates; the card renders; `hasWatchtower` follows the
   built set.
 - **Done when:** the building exists and every world-map dial has a home.
 
@@ -687,14 +683,14 @@ The one new mechanic; last, and in three commits.
 
 **11a — the egg and the incubation.**
 
-- **Data:** one row, 2×2, one per city, TH gate 7, a new Warfare era-3
-  technology `Beastcraft`; `max_level` 10; per-level `nest_slots_per_level`
-  (`1,1,1,1,2,2,2,2,2,2`), `creature_level_cap_per_level` (+2/level). A new
-  `Eggs` sheet: `id, incubation_seconds, creature`. Three rows (3, 5, 7 days).
+- **Data:** one `buildings` entry, 2×2, one per city, TH gate 7, a new Warfare era-3
+  technology `Beastcraft`; `maxLevel` 10; per-level `nestSlotsPerLevel`
+  (`[1,1,1,1,2,2,2,2,2,2]`), `creatureLevelCapPerLevel` (+2/level). A new
+  `eggs` collection: `incubationSeconds, creature`. Three entries (3, 5, 7 days).
 - **Sim:** `state.kingdom.eggs: { id, startedAt, slot }[]`; `incubate` starts
   one; completion is **a timer** — `nextIncubationCompletion` is one
   `consider()`, one branch in `applyDueAt` that hatches. Uncapped tail
-  (invariant 2). Gems shorten it pro rata (`rush.seconds_per_gem`).
+  (invariant 2). Gems shorten it pro rata (`rush.secondsPerGem`).
 - **Sources:** eggs are granted by the deepest depth of a ruin
   (`expeditions.ts:327-355` reward path) and by event tracks; **never** by the
   store.
@@ -703,15 +699,15 @@ The one new mechanic; last, and in three commits.
 
 **11b — the creature as a unit.**
 
-- **Data:** a `Creatures` sheet: `id, power, atk, def, hp, level_growth,
-  feed_food_base, feed_food_growth`. One creature row per egg.
+- **Data:** a `creatures` collection: `power, atk, def, hp, levelGrowth,
+  feedFoodBase, feedFoodGrowth`. One creature entry per egg.
 - **Sim:** `UnitId` (`state.ts:40`) is a union — adding `'Creature'` kinds is
   code. A creature is a roster entry with a level; `armyPower` (`army.ts:36`)
   counts it; the party (`expeditions.ts:80` `unitSlots`) gains **one creature
   slot** outside the Gem-bought ladder (it is not a slot the player buys; it is
   the Nest's), a second at Nest L8. `combat.ts` stays pure: a creature is a
   `PartySlot` with its stats.
-- **Feeding:** `feedCreature` pays Food, `feed_food_base × growth^level`, capped
+- **Feeding:** `feedCreature` pays Food, `feedFoodBase × feedFoodGrowth^level`, capped
   by the Nest's level. Food's late sink.
 - **Tests:** a creature in the party changes the scoring pass; feeding refuses
   above the cap; Food is the only price.
@@ -728,8 +724,8 @@ The one new mechanic; last, and in three commits.
 ## 12. Cross-cutting
 
 - **`CLAUDE.md`'s data-or-code table** grows three rows when the steps close:
-  a good = a `Goods` row; a decoration = a `Districts` row with
-  `harmony_supply`; an egg or creature = a row. Code: a new `GoodId`,
+  a good = a `goods` entry; a decoration = a `buildings` entry with
+  `harmonySupply`; an egg or creature = an entry. Code: a new `GoodId`,
   `AdjacencyStat` or creature kind.
 - **Docs, in the same commit as the code:**
   [`../features/17-workshops-and-goods.md`](../features/17-workshops-and-goods.md)
@@ -737,14 +733,14 @@ The one new mechanic; last, and in three commits.
   [`../features/buildings.md`](../features/buildings.md) §4.11 (the late
   ladder), `05-city-and-districts.md` §3.1 (the piecewise curve) and
   `04-harvest.md` §4 (the haul and the swing); step 5 into
-  `03-economy.md` §3.1; step 6 into a new `features/18-harmony.md`; steps 8–10
+  `03-economy.md` §3.1; step 6 into a new `features/21-harmony.md`; steps 8–10
   into `09-relics.md`, `10-heroes.md`, `02-map-scopes.md` and
   `buildings.md`; step 11 into `11-expeditions.md` and `buildings.md`. The
   proposal file is deleted when the last step closes.
 - **Art pipeline:** every new building needs a sprite before its step merges;
   `tests/icons.test.ts` refuses emoji fallbacks.
-- **Workbook:** every schema change is importer + JSON + `npm run
-  balance:export` + `npm run balance`, in that order, as `CLAUDE.md` says.
+- **Data:** every new field is added in `?dev=data`'s Schema view and saved
+  with the collection's file and schema.
 
 ## 13. Decisions to close before each step starts
 
@@ -753,7 +749,7 @@ The one new mechanic; last, and in three commits.
 | 2 | Goods are city-scoped counters, not wallet rows | proposal §2.1; `03-economy.md` wallet rule |
 | 3 | Runestone takes Mana as an input — the first non-tap Mana sink | OQ-44, `08-magic.md` §3 |
 | 4 | Producers' L6+ buy haul and speed, not crew — as ADDED units, since a chunk is 1-5 units and a percentage of it rounds away | proposal §1.1 |
-| 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
+| 5 | `adjacency` gains `stat` and `magnitude` | **OQ-48** |
 | 6 | ~~Harmony surplus bonus lands on taxes; and what Harmony costs now the plot is unbounded~~ — **closed 2026-09-08**: a city total gated by a count cap per piece, every piece past the Garden priced in a good, and the surplus on taxes (§6) | proposal §4.1 |
 | 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |
 | 8 | ~~Runestone and the Reliquary L9 recipe as the province route past relic L3~~ — **moot 2026-09-08: there is no Reliquary.** Relics unlock on the first relic (§8), and **OQ-7 loses the answer the building carried** | **OQ-7**, **OQ-9** |

@@ -62,9 +62,14 @@ const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true }> = {
   terrain: { ids: TERRAIN_IDS },
 };
 
-export function mountEditor(): void {
+/** What `?dev=data` holds of a hosted tree editor — see the map editor's
+ *  `EditorHandle` (src/editor/mount.ts); `select` opens a technology on its
+ *  page, for links from elsewhere in the data. */
+export interface TreeHandle { root: HTMLElement; isDirty(): boolean; select(id: string): void }
+
+export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   document.getElementById('app')?.setAttribute('hidden', '');
-  document.title = 'Kingdom — tech tree editor';
+  if (host === document.body) document.title = 'Kingdom — tech tree editor';
 
   const doc = new TreeDoc(treeJson as unknown as TechTreeDoc);
 
@@ -96,7 +101,7 @@ export function mountEditor(): void {
   const side = el('aside', { class: 'ed-side', 'data-keep-scroll': '' });
   const status = el('footer', { class: 'ed-status' });
   const root = el('div', { class: 'ed-root tre-root' }, palette, stage, side, status);
-  document.body.append(root);
+  host.append(root);
 
   const toast = (message: string, bad = false): void => {
     const node = el('div', { class: `ed-toast${bad ? ' bad' : ''}` }, message);
@@ -282,6 +287,7 @@ export function mountEditor(): void {
   };
 
   document.addEventListener('keydown', (e) => {
+    if (!root.isConnected) return; // hosted in ?dev=data and not on screen
     if (asking) return; // a dialog is up; it owns the keyboard
     // A form field owns its own keys: Delete in a name box deletes a letter.
     const typing = (e.target as HTMLElement)?.matches?.('input, textarea, select') === true;
@@ -1181,4 +1187,17 @@ export function mountEditor(): void {
   });
 
   refresh();
+  return {
+    root,
+    isDirty: () => doc.dirty,
+    select: (id) => {
+      const node = doc.node(id);
+      if (node === null) return;
+      selected = id;
+      if (isPlaced(node)) tome = node.tome;
+      refresh();
+      // A link lands ON the card, not at the top of its book.
+      root.querySelector('.tre-card.is-selected')?.scrollIntoView({ block: 'center' });
+    },
+  };
 }

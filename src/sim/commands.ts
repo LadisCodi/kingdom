@@ -222,7 +222,16 @@ export type UpgradeResult =
   | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet' | 'NeedsPopulation'
   | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods' | 'NeedsHarmony';
 
-export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
+/**
+ * Why this building cannot be upgraded right now, or null when it can — every
+ * gate, cost and wait `upgradeDistrict` checks, without touching the state.
+ * The one definition of "ready to upgrade", so a screen that says so (the
+ * district card's call to action) and the command that does it cannot
+ * disagree.
+ */
+export function upgradeRefusal(
+  state: GameState, districtUniqueId: string,
+): Exclude<UpgradeResult, 'Started'> | null {
   const district = districtById(state, districtUniqueId);
   if (!district) return 'RequirementsNotMet';
   const def = DISTRICTS[district.definitionId];
@@ -253,6 +262,15 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   // again — the level this buys keeps its demand for good, but nothing ever
   // takes it back (Docs/plans/builder-30-days.md §6.1).
   if (harmonyBlock(state, def, district.level + 1, district) !== null) return 'NeedsHarmony';
+  return null;
+}
+
+export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
+  const refusal = upgradeRefusal(state, districtUniqueId);
+  if (refusal !== null) return refusal;
+  const district = districtById(state, districtUniqueId)!;
+  const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
+  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
   state.city.queue.push({

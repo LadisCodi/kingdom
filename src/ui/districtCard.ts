@@ -17,6 +17,7 @@ import {
   DISTRICTS, HARMONY, HARVEST, TAP, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
+import { upgradeRefusal } from '../sim/commands';
 import { canMoveDistrict, districtLabel } from '../sim/districts';
 import {
   harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
@@ -29,7 +30,7 @@ import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
-import { requirements, statsAt } from './upgradeStats';
+import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { LiveParts, type Screen } from './kit';
 import {
@@ -39,7 +40,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { btn, iconEl, knob, pips, progress, stat } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -71,9 +72,14 @@ function portrait(
   const url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`)
     ?? spriteUrl(`${def.sprite}_l${level}`)
     ?? spriteUrl(def.sprite);
-  return el('div', { class: 'dc-portrait' },
-    url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' }),
-    el('span', { class: 'dc-level' }, `Lv ${level}`));
+  // A tile of darker paper (kit .k-section) with a small ornament pressed
+  // into each corner. The picture is drawn LARGER than the tile and clipped
+  // by the mask, so the building fills its frame without spilling out.
+  return el('div', { class: 'dc-portrait k-section' },
+    el('div', { class: 'dc-portrait-mask' },
+      url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' })),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) =>
+      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
 }
 
 /**
@@ -126,16 +132,19 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // Townhall's villagers and a hall's soldiers are one mechanic now, so
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
-    if (training) body.append(training);
+    if (training) {
+      body.append(sectionHead(def.bedsPerLevel.length > 0 ? 'Ward'
+        : def.trains.every((t) => t === 'Villager') ? 'Villagers' : 'Training'), training);
+    }
 
     // A workshop turns things out too, so it gets the same kind of block.
     const workshop = workshopSection(game, district, live);
-    if (workshop) body.append(workshop);
+    if (workshop) body.append(sectionHead('Workshop'), workshop);
 
     // A decoration is ONE number, and this is it. It has no crew, no queue
     // and no tap, so without this line its card would be empty.
     if (isDecoration(def)) {
-      body.append(el('div', { class: 'dc-harmony' },
+      body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
         iconEl('harmony', { size: 'sm' }),
         el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
         el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
@@ -158,7 +167,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             ? `${Math.round(nextTier.at * 100)}% of demand pays +${
               Math.round(nextTier.bonus * 100)}% taxes`
             : 'nothing demands it yet';
-        body.append(el('div', { class: 'dc-harmony' },
+        body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
           iconEl('harmony', { size: 'sm' }),
           el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
           el('span', { class: 'dc-army-note' }, note)));
@@ -183,7 +192,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             iconEl('showme', { size: 'sm' }),
             `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, t)} Food`));
       };
-      body.append(part(() => {
+      body.append(sectionHead('Crops'), part(() => {
         const t = game.now();
         const readyAt = recoversAt(game.state, game.map, district.location, t);
         return JSON.stringify([
@@ -201,7 +210,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const perMinute = houseGoldPerMinute(game.state, district);
       const adjacency = districtAdjacency(game.state, district);
 
-      body.append(el('div', { class: 'dc-homes' },
+      body.append(sectionHead('Residents'), el('div', { class: 'dc-homes' },
         iconEl('population', { size: 'sm' }),
         pips(residents, capacity),
         el('span', {}, `${residents} of ${capacity} homes filled`)));
@@ -274,7 +283,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
       });
 
-      body.append(el('div', { class: 'dc-area' },
+      body.append(sectionHead('Workers'), el('div', { class: 'dc-area' },
         influenceThumb(game, district),
         el('div', {},
           ...perSource,
@@ -325,8 +334,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
 
     // Every OTHER thing the neighbours are doing to this building. Gold is
     // already said in the house's own words above, so it is not repeated.
-    for (const e of adjacencyInEffect(game.state, district)) {
-      if (e.stat === 'goldPerMinute') continue;
+    const neighbours = adjacencyInEffect(game.state, district)
+      .filter((e) => e.stat !== 'goldPerMinute');
+    if (neighbours.length > 0) body.append(sectionHead('Neighbours'));
+    for (const e of neighbours) {
       const { label, tone } = adjacencyReadout(e.stat, e.total);
       body.append(el('div', { class: `dc-badge is-${tone}` },
         `${ADJACENCY_WORDS[e.stat]} ${label}`));
@@ -375,62 +386,57 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }, scaffold));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
-    // (upgradeSheet.ts, M25). The card is what the building IS; buying a
-    // level is a decision with its own stats table, its own list of gates and
-    // its own price, and none of the three fitted under a panel that was
-    // already the longest in the game.
-    //
-    // The button still refuses what it cannot open: a gate in the way greys
-    // it and names the first errand, because sending a player into a popup to
-    // read a cross they could have been told about here is a wasted tap.
-    const next = district.level + 1;
-    const blocking = requirements(game, district, next).find((r) => !r.met);
-    upgradeAction.push(el('div', { class: 'dc-upgrade' },
-      btn({
-        label: 'Upgrade',
-        kind: 'primary',
-        onClick: () => game.openUpgrade(district.uniqueId),
-      }),
-      ...(blocking === undefined ? [] : [el('div', { class: 'dc-upgrade-gate' },
-        iconEl('padlock', { size: 'sm' }), blocking.label)]),
-    ));
+    // (upgradeSheet.ts, M25): the requirements, whether each is met, and the
+    // price are the popup's to show. The card only says whether it is worth
+    // opening — the call to action rides on the button when every gate and
+    // every cost is met, so the upgrade would start on the popup's first tap.
+    const upgrade = btn({
+      label: 'Upgrade',
+      kind: 'primary',
+      onClick: () => game.openUpgrade(district.uniqueId),
+    });
+    if (upgradeRefusal(game.state, district.uniqueId) === null) {
+      upgrade.append(ctaBadge(1, `upgrade:${district.uniqueId}`));
+    }
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, upgrade));
   }
 
-  // Moving is not an upgrade path, so it does not belong in the footer's
-  // one-primary-action slot (§2.2). It is a quiet secondary on the head, next
-  // to Close: something you do TO the building rather than something you buy
-  // for it — and it is free, so it carries no price to show.
-  const head = el('div', { class: 'dc-tools' });
-  if (canMoveDistrict(district)) {
-    head.append(knob('✥', () => game.startMove(district.uniqueId), { label: 'Move' }));
-  }
-  const close = knob('✕', () => game.dismiss(), { label: 'Close' });
-  close.setAttribute('data-own-close', '');
-  head.append(close);
+  // THE HEADER: the building's name, and its two tools on the right — Move,
+  // then Close, which stays last so it never shifts when a building happens
+  // to be movable. Moving is not an upgrade path, so it does not belong in
+  // the footer's one-primary-action slot (§2.2): it is something you do TO
+  // the building, and it is free, so it carries no price to show.
+  const name = districtLabel(game.state, district);
+  // The level rides on the title, a size down: *Housing #3 Lv 2*.
+  const header = windowHead(name, [
+    ...(canMoveDistrict(district)
+      ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
+      : []),
+    closeKnob(() => game.dismiss(), `Close ${name}`),
+  ], `Lv ${district.level}`);
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
   // reads, at this level alone (upgradeStats.ts). It used to be scattered
   // through the body as label/value rows; a band of tiles under the name is
   // where a player looks for it, and it is the half of the model the popup
-  // does not show.
+  // does not show. Each figure is a tile of darker paper (kit .k-section),
+  // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
-  const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
-    ...figures.map((f) => el('div', { class: 'dc-stat' },
+  const stats = figures.length === 0 ? [] : [sectionHead('Stats'), el('div', { class: 'dc-stats' },
+    ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
-      el('div', { class: 'dc-stat-body' },
-        el('div', { class: 'dc-stat-label' }, f.label),
+      el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
+        el('div', { class: 'dc-stat-label' }, f.short),
         el('b', { class: 'dc-stat-value' }, f.value)))))];
 
   return el('div', { class: 'dc' },
+    header,
+    // ONE ROW: the picture, what the building is, and the one thing you BUY
+    // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
       portrait(def, district.level),
-      el('div', { class: 'dc-id' },
-        el('div', { class: 'dc-name' }, districtLabel(game.state, district)),
-        el('div', { class: 'dc-what' }, def.description),
-        // The one thing you BUY for this building sits with its name and its
-        // picture, not at the bottom of everything it does (M2).
-        ...upgradeAction),
-      head),
+      el('div', { class: 'dc-what' }, def.description),
+      ...upgradeAction),
     ...stats,
     body,
     foot,
@@ -449,6 +455,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
  */
 export function districtCardScreen(game: Game, districtId: string): Screen {
   const root = el('div', { class: 'dc' });
+  // The window's frame, kept across rebuilds: the card's children are swapped
+  // when its signature moves, the frame is not (kit.css, `k-window-*`).
+  const frame = el('div', { class: 'k-frame', 'aria-hidden': 'true' });
   let signature: string | null = null;
   let live = new LiveParts();
   return {
@@ -470,7 +479,7 @@ export function districtCardScreen(game: Game, districtId: string): Screen {
       live = new LiveParts();
       releaseSprites(root);
       const card = renderDistrictCard(game, district, live);
-      root.replaceChildren(...Array.from(card.childNodes));
+      root.replaceChildren(frame, ...Array.from(card.childNodes));
     },
   };
 }

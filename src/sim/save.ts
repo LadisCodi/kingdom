@@ -18,7 +18,7 @@ import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
 import { advance, type AdvanceResult } from './commands';
 import { withoutTallies } from './events';
-import type { MapData } from './grid';
+import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
 import { ALBUM_ORDER, type AlbumId } from './data/seasons';
@@ -484,6 +484,51 @@ const MIGRATIONS: readonly Migration[] = [
         const row = cards[album];
         if (row !== undefined) cards[album] = row.map((n) => Math.max(0, n - 1));
       }
+    },
+  },
+  {
+    // v60 — A FEATURE THAT SPANS CELLS IS REVEALED AS ONE THING
+    // (Docs/features/01-map-and-fog.md §3.1). A mountain's cells are grouped
+    // into blocks now, and a block is all revealed or none of it.
+    //
+    // An old save knows nothing of blocks, so it can hold a mountain with two
+    // cells cleared and two still under the fog — a state the new rules have
+    // no way to draw and no way to finish paying for. Every block with any
+    // cell revealed is completed here, which is the generous reading and
+    // costs the player nothing they had already bought.
+    //
+    // Taps in progress move to the block's anchor, where they are counted
+    // now. A block part-paid on two different cells keeps the further along
+    // of the two rather than their sum: the taps were never additive.
+    to: 60,
+    migrate: (modules) => {
+      const dto = modules['kingdom.fogOfWar'] as {
+        Revealed?: Array<{ x: number; y: number }>;
+        Discovered?: Array<{ x: number; y: number }>;
+        Progress?: Array<{ Coord: { x: number; y: number }; Taps: number }>;
+      } | undefined;
+      if (dto === undefined) return;
+      const map = buildMapData();
+      if (map.footprintOf.size === 0) return;
+
+      const revealed = new Set((dto.Revealed ?? []).map(coordKey));
+      let grew = false;
+      for (const [cellKey, anchorKey] of map.footprintOf) {
+        if (!revealed.has(cellKey)) continue;
+        for (const c of footprintCells(map, parseCoordKey(anchorKey))) {
+          if (!revealed.has(coordKey(c))) { revealed.add(coordKey(c)); grew = true; }
+        }
+      }
+      if (grew) dto.Revealed = [...revealed].map(parseCoordKey);
+      dto.Discovered = (dto.Discovered ?? []).filter((c) => !revealed.has(coordKey(c)));
+
+      const taps = new Map<string, number>();
+      for (const row of dto.Progress ?? []) {
+        const key = coordKey(footprintAt(map, row.Coord).anchor);
+        if (revealed.has(key)) continue; // already cleared by the sweep above
+        taps.set(key, Math.max(taps.get(key) ?? 0, row.Taps));
+      }
+      dto.Progress = [...taps].map(([k, Taps]) => ({ Coord: parseCoordKey(k), Taps }));
     },
   },
 ];

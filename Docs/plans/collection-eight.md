@@ -26,8 +26,8 @@
 ## 0. How the steps are cut
 
 - **Data first, logic second, UI third, test throughout.** Every step opens by
-  moving `scripts/balance.mjs` and the workbook — the importer refuses unknown
-  columns, so the schema is the first commit.
+  moving the collections in `src/sim/data/game/` — the schema refuses unknown
+  fields, so the schema is the first commit.
 - **Every step ships on its own and leaves a playable game.** No step depends
   on the one after it.
 - **Art never blocks a step.** `render/sprites.ts` picks up any PNG dropped in
@@ -59,7 +59,7 @@
 ## 1. The five passives take their final shape
 
 Not just the two that die. Four of the five change stat, so doing the shape fix
-now and the re-pointing later would migrate the same `Artifacts` rows twice and
+now and the re-pointing later would migrate the same `artifacts` entries twice and
 re-balance them twice.
 
 | Relic | Today | After |
@@ -70,7 +70,7 @@ re-balance them twice.
 | **Gilded Ledger** | `taxRate` ×1.10, +0.10, global | tax **at a house** ×1.05, +0.05 |
 | **Wanderer's Compass** | `stardustYield` ×1.25, +0.25 | ×1.05, +0.05 |
 
-- **Data** — five rows on `Artifacts`, and a `stat` column, because four of
+- **Data** — five entries in `artifacts`, and a `stat` field, because four of
   them now name a different number.
 - **Logic — four new `ModifierStat`s**, each with the `resolve()` at the call
   site that owns it:
@@ -100,7 +100,7 @@ re-balance them twice.
 - **The Ledger and the Compass kept their numbers.** The proposed cut to ×1.05
   was refused as too hard, so only the Rod, the Seal and the Sigil moved.
 - **`ArtifactDef.passive` gained a `stats` list.** The Seal moves two numbers
-  and the Sigil moves two, with one shared `base` and `per_level` — which is
+  and the Sigil moves two, with one shared `passiveBase` and `passivePerLevel` — which is
   the design saying the pair must move together, not a convenience.
 - **`effectiveStock` took a `state`**, as expected, across eight call sites.
 - The relic card now reads a **speed** as *"…recover 300% faster"* rather than
@@ -108,7 +108,7 @@ re-balance them twice.
 
 ## 2. Eight relics exist, as passives
 
-- **Data** — three rows on `Artifacts`; `ArtifactId` grows from five to eight
+- **Data** — three entries in `artifacts`; `ArtifactId` grows from five to eight
   (a union in `state.ts`, so this half is code).
 
 | Relic | Stat | Call site | Live? |
@@ -145,11 +145,11 @@ re-balance them twice.
 
 Self-contained, and the step whose numbers are already measured.
 
-- **Data** — the `Packs` sheet is reshaped: `cards`, seven `guarantee_*`
-  columns and seven `weight_*` columns replace five weights plus `gold_chance`
-  and `gold_guaranteed`. Nine rows: Verde, Amarillo, Rosa, Azul, Púrpura,
+- **Data** — `packs` is reshaped: `cards`, `guarantees` and a seven-way
+  `weights` replace five weights plus `gold_chance`
+  and `gold_guaranteed`. Nine entries: Verde, Amarillo, Rosa, Azul, Púrpura,
   Dorado, and the three chests. The star ladder (2 · 6 · 16 · 40 · 100 · 80 ·
-  200) moves onto `Collection`.
+  200) moves into the `collection` settings.
 - **Logic** — `packCards()` deals the guarantees first and rolls the remainder
   on seven ways; `starsFor` reads the ladder instead of deriving it; the vault
   gains a third threshold and a **ten-chest batch** (the ten-call's argument:
@@ -173,7 +173,7 @@ Self-contained, and the step whose numbers are already measured.
 - **Nine ids, in English**: `Green Yellow Rose Blue Purple Golden` and
   `BronzeChest SilverChest GoldChest`. The Spanish names and the `Gold`
   collision — a pack, a chest and the gold editions all called the same thing —
-  were settled before they reached the sheet. A tier id is not hashed, so a
+  were settled before they reached the data. A tier id is not hashed, so a
   rename stays free.
 - **Bronce is 105 stars, not 150.** At 150 it was dominated: Silver had the
   dearer sticker and the cheaper real price (70 net against 78) and paid twice
@@ -185,7 +185,7 @@ Self-contained, and the step whose numbers are already measured.
 - **The vault knob opens a shelf** instead of buying. With three chests and a
   ten-at-once there is a choice, and a one-press knob could not say what it was
   about to spend.
-- **A pack's name and promise are GENERATED from its row**, so a retuned sheet
+- **A pack's name and promise are GENERATED from its `packs` entry**, so a retuned pack
   cannot leave a stale promise on a shelf.
 - **One design consequence to notice**: the card bundles moved from the old
   Star pack to **Purple**, which guarantees a 5★ rather than a gold edition. So
@@ -253,7 +253,7 @@ Self-contained, and the step whose numbers are already measured.
 - **The ladder was five rungs long and the album list was eight.**
   `albumRewards` falls back to the first band, so the three hardest pages were
   quietly paying a beginner's chest and **no key at all** — a step-4 gap
-  nothing caught. The workbook now authors eight: hours `2 2 4 4 6 8 8 8`,
+  nothing caught. The `collection` settings now author eight: hours `2 2 4 4 6 8 8 8`,
   and one key a page, silver ×5 then gold ×3. A test refuses a ladder shorter
   than the album list.
 - **The Gems stayed at 2,000 an album**, so a first lap of eight pays 16,000
@@ -291,7 +291,7 @@ active better without owning any of them.
      and the level moves the exchange rate.
   4. **The eight actives**, five on the city grid and three on their own
      surface.
-- **Data** — `active_*` columns per level on `Artifacts`, and which axis each
+- **Data** — `active*` fields per level in `artifacts`, and which axis each
   relic's level moves.
 - **UI** — the cast-mode preview on the map (the grid lights what a zone would
   cover before the tap is spent) and the three-state chip on the relic card.
@@ -341,7 +341,7 @@ five this planned, because a 3×3 grid holds nine.
 | ~~**B**~~ | ~~8 album medallions~~ **done** (`spr-u` — only 3 were missing) | step 4 |
 | ~~**C**~~ | ~~6 packs (Green → Golden) and 3 chests~~ **done** (`spr-v`, all nine in one 3×3) | step 3 |
 
-- **The pipeline is the proven one** ([`../art/sprite-prompts.md`](../art/sprite-prompts.md),
+- **The pipeline is the proven one** ([`../art/art-direction.md`](../art/art-direction.md),
   and the two memory notes it descends from): ChatGPT driven through Chrome,
   **2×2 sheets**, anchored on a `magick montage` of what already ships in
   `src/render/assets/` with *"your output will sit next to these; match them"* —

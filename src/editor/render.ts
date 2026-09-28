@@ -8,7 +8,7 @@
 // off by default so the base view stays honest.
 
 import { Camera } from '../render/camera';
-import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from '../render/palette';
+import { PALETTE, TERRAIN_COLORS, FLAT_TILE } from '../render/palette';
 import { drawSprite } from '../render/sprites';
 import { DISTRICTS, FEATURES, LANDMARK_ART, RUINS } from '../sim/data/definitions';
 import { TOWNHALL_FOOTPRINT } from '../sim/data/mapRules';
@@ -58,7 +58,7 @@ export function drawEditor(
   ctx.fillStyle = '#0b0e13';
   ctx.fillRect(0, 0, w, h);
 
-  const size = TILE_SIZE * camera.zoom;
+  const size = FLAT_TILE * camera.zoom; // the editor's camera is 'flat'
   const map = doc.map;
   const topLeft = camera.screenToCell(0, 0);
   const bottomRight = camera.screenToCell(w, h);

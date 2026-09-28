@@ -70,7 +70,7 @@ describe('map data', () => {
   });
 });
 
-describe('reveal cost curve (balance.xlsx FogRings)', () => {
+describe('reveal cost curve (fog.rings)', () => {
   it('d 1–10 → 3,5,10,20,40,75,120,250,500,1000', () => {
     const expected = [3, 5, 10, 20, 40, 75, 120, 250, 500, 1000];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
@@ -336,10 +336,10 @@ describe('a cell is five taps at every ring', () => {
     state.city.wallet.Gold = 99_999;
     reveal(state, [{ x: 0, y: 3 }]);
     const cell = { x: 0, y: 4 };
-    expect(revealTapsDone(state, cell)).toBe(0);
+    expect(revealTapsDone(state, map, cell)).toBe(0);
     revealTap(state, map, cell);
     revealTap(state, map, cell);
-    expect(revealTapsDone(state, cell)).toBe(2);
+    expect(revealTapsDone(state, map, cell)).toBe(2);
     expect(fogState(state, map, cell)).toBe('Discovered');
   });
 
@@ -349,7 +349,7 @@ describe('a cell is five taps at every ring', () => {
     const cell = { x: 0, y: 4 };
     state.city.wallet.Gold = nextRevealTapCost(state, map, cell) - 1;
     expect(revealTap(state, map, cell)).toBe('NotEnoughGold');
-    expect(revealTapsDone(state, cell)).toBe(0);
+    expect(revealTapsDone(state, map, cell)).toBe(0);
   });
 });
 
@@ -511,7 +511,7 @@ describe('the Townhall is the reach', () => {
     expect(isPayable(state, map, cell)).toBe(false);
     expect(revealTap(state, map, cell)).toBe('OutOfReach');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(5000);
-    expect(revealTapsDone(state, cell)).toBe(0);
+    expect(revealTapsDone(state, map, cell)).toBe(0);
   });
 
   it('the same cell is payable the moment the Townhall stands a level higher', () => {
@@ -665,7 +665,7 @@ describe('the map gets dearer as it is revealed', () => {
     const after = revealCostForCell(state, map, target);
     expect(after).toBeGreaterThan(before);
     // The two paid taps stay paid; the three to come are slices of the new price.
-    expect(revealTapsDone(state, target)).toBe(2);
+    expect(revealTapsDone(state, map, target)).toBe(2);
     expect(nextRevealTapCost(state, map, target)).toBe(revealTapCost(after, 2));
   });
 

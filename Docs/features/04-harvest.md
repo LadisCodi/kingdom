@@ -323,28 +323,28 @@ Quests:
 
 | Dial | Value | Key |
 |---|---|---|
-| Seconds a tap is worth | **10** | `tap.work_seconds` |
-| `TapPower` | **+20%/level, 10 levels** (→ ×3) | `Upgrades` |
-| Chunk and rhythm, per cell | §2.1 | `Harvest.units_per_strike`, `.seconds_per_strike` |
-| Stock, per cell | §2.1 | `Harvest.stock` |
-| Ground multiplier, per terrain × currency | §2.2 | `Terrain` sheet |
-| Recovery, per cell | §2.1 | `Harvest.recovery_seconds` |
-| Respawn, finite features | 120 s Berries · 180 s Meat · 90 s Fish | `Harvest.respawn_seconds` |
-| Worker move speed | 1 tile/s | `worker.move_speed_tiles_per_second` |
-| Influence radius, plazas per level | §5 | `Districts` |
-| What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `Districts.extra_units_per_delivery_per_level`, `.strike_speed_per_level` |
-| Mana per tap | 1 | `tap.mana_cost` |
-| Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collect_cooldown_seconds` |
+| Seconds a tap is worth | **10** | `tap.workSeconds` |
+| `TapPower` | **+20%/level, 10 levels** (→ ×3) | its ranks in `tech-tree.json`, through `?dev=tree` |
+| Chunk and rhythm, per cell | §2.1 | `harvest.unitsPerStrike`, `.secondsPerStrike` |
+| Stock, per cell | §2.1 | `harvest.stock` |
+| Ground multiplier, per terrain × currency | §2.2 | `terrain` |
+| Recovery, per cell | §2.1 | `harvest.recoverySeconds` |
+| Respawn, finite features | 120 s Berries · 180 s Meat · 90 s Fish | `harvest.respawnSeconds` |
+| Worker move speed | 1 tile/s | `worker.moveSpeedTilesPerSecond` |
+| Influence radius, plazas per level | §5 | `buildings` › `influenceRadiusPerLevel` |
+| What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
+| Mana per tap | 1 | `tap.manaCost` |
+| Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |
 | Strike punch, against the player's 1 | 0.55 | `STRIKE_PUNCH`, code |
 | Strike volume · extra jitter · voices | ×0.5 · ±5% · 3 | `strikeFeedback`, code |
 | Zoom below which a strike is silent | 0.8 | `STRIKE_AUDIBLE_ZOOM`, code |
-| Offline cap | 8 h | `offline_cap_hours` |
+| Offline cap | 8 h | `offlineCapHours` |
 
 Two relations to hold while tuning:
 
-1. `seconds_per_strike ÷ units_per_strike ≈ 1.1 × (recovery_seconds ÷ stock)`,
+1. `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`,
    or the workers-per-cell number drifts (§2.1).
-2. `tap.work_seconds ÷ collect_cooldown` stays ahead of the crew the city can
+2. `tap.workSeconds ÷ tap.collectCooldownSeconds` stays ahead of the crew the city can
    house (§1.1, §3.3).
 
 ## 10. Deliberately not in this design

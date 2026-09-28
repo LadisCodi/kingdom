@@ -1,0 +1,68 @@
+{
+  "grassland": {
+    "name": "GRASSLAND",
+    "material": "short, lush, vivid spring-green grass, evenly cropped, with the faintest variation in tone across the patch",
+    "detail": "a very small number of tiny detail tufts — three or four at most — sitting low against the grass",
+    "variants": [
+      "an even, almost plain patch: the detail tufts are barely there, so this is the tile that does most of the work on a big field",
+      "three or four small clover clumps, slightly darker than the grass, scattered off-centre",
+      "two or three tiny white and pale-yellow wildflowers on short stems, and one small clover clump",
+      "a couple of low, slightly yellowed tufts and one small smooth stone half-buried in the grass"
+    ]
+  },
+  "plains": {
+    "name": "PLAINS",
+    "material": "drier, sparser grass in warm olive and golden straw tones over a hint of pale earth showing between the blades",
+    "detail": "a few dry tufts and thin patches where the soil shows through",
+    "variants": [
+      "an even patch with the soil barely showing: the plain tile a big field is mostly made of",
+      "two or three wispy straw-coloured tufts leaning the same way, as if in a light wind",
+      "a small bare patch of pale dry earth off-centre, with dry grass closing around it",
+      "a scatter of short dry stalks and one tiny dusty pebble"
+    ]
+  },
+  "desert": {
+    "name": "DESERT",
+    "material": "warm pale golden sand, smooth and clean, with very soft broad ripples across it",
+    "detail": "almost nothing: this ground is meant to read as empty",
+    "variants": [
+      "smooth clean sand with only the softest ripple: the plain tile a dune field is mostly made of",
+      "broader wind ripples running diagonally across the patch",
+      "two small rounded pebbles and a faint scatter of coarser grains",
+      "a very low, soft dune crest crossing one side of the patch"
+    ]
+  },
+  "snow": {
+    "name": "SNOW",
+    "material": "clean bright snow, softly mounded, its shadows a pale cool blue and never grey",
+    "detail": "soft drifts and the gentlest sparkle, with no footprints and no ice",
+    "variants": [
+      "an even, softly mounded field of clean snow: the plain tile",
+      "two low soft drifts crossing the patch, with a shallow hollow between them",
+      "a faint crust texture with a few tiny sparkles catching the light",
+      "a small rounded stone poking through the snow, with the snow banked softly against it"
+    ]
+  },
+  "tundra": {
+    "name": "TUNDRA",
+    "material": "cold, low, patchy ground cover — grey-green moss and pale lichen over dark damp soil that shows through in places",
+    "detail": "flat clumps of moss and lichen, never anything that stands up tall",
+    "variants": [
+      "an even carpet of grey-green moss with only a little soil showing: the plain tile",
+      "wider patches of dark soil between islands of moss",
+      "a spread of pale, almost mint-coloured lichen over the moss",
+      "two small frost-grey stones lying flat, with moss growing up against them"
+    ]
+  },
+  "water": {
+    "name": "SHALLOW WATER",
+    "material": "clear, bright cyan-to-turquoise shallow water, its bed just visible as a soft paler shape beneath the surface",
+    "detail": "gentle surface ripples and a few small highlights; calm, never choppy",
+    "variants": [
+      "calm, almost still water with the softest ripple: the plain tile",
+      "a set of gentle parallel ripples crossing the patch",
+      "a slightly paler patch where the bed rises closer to the surface",
+      "a scatter of small bright highlights where the light catches the ripples"
+    ]
+  }
+}

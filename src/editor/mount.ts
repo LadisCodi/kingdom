@@ -1,8 +1,8 @@
 // The map editor: ?dev=map.
 //
-// It replaces the game rather than sitting inside it. The game frames itself
-// to a 9:16 phone, which is exactly the wrong shape for looking at a region,
-// so this hides #app and takes the whole window.
+// It replaces the game rather than sitting inside it: the game's chrome is in
+// the way of looking at a region, so this hides #app and takes the whole
+// window.
 //
 // Everything it can do is a consequence of two choices:
 //   - the document is validated by src/sim/data/mapRules.ts on every edit, so
@@ -18,7 +18,7 @@
 // written parses and loads.
 
 import { Camera } from '../render/camera';
-import { TILE_SIZE } from '../render/palette';
+import { FLAT_TILE } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
   ARTIFACT_ORDER, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
@@ -72,9 +72,21 @@ interface Session {
   overlays: Overlays;
 }
 
-export function mountEditor(): void {
+/**
+ * What `?dev=data` needs to hold an editor it hosts: the root to attach and
+ * detach, and whether it has unsaved work. `host` defaults to the page, which
+ * is how the editor has always run on its own.
+ *
+ * Hosted, the editor is detached rather than destroyed when another
+ * collection is shown, so its undo stack and camera survive; every
+ * window-level listener below therefore does nothing while `root` is not in
+ * the document.
+ */
+export interface EditorHandle { root: HTMLElement; isDirty(): boolean }
+
+export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   document.getElementById('app')?.setAttribute('hidden', '');
-  document.title = 'Kingdom — map editor';
+  if (host === document.body) document.title = 'Kingdom — map editor';
 
   const doc = new MapDoc(regionMap as unknown as RegionMapDoc);
 
@@ -98,9 +110,12 @@ export function mountEditor(): void {
     el('main', { class: 'ed-stage' }, canvas),
     side,
     status);
-  document.body.append(root);
+  host.append(root);
 
-  const camera = new Camera(canvas);
+  // The editor paints DATA by coordinate, so it keeps the FLAT square grid.
+  // A diamond is the right way to look at a kingdom and the wrong way to fill
+  // in a table of terrain (src/render/camera.ts).
+  const camera = new Camera(canvas, 'flat');
   if (saved) { camera.x = saved.cam.x; camera.y = saved.cam.y; camera.zoom = saved.cam.zoom; }
   else fitToWorld(camera, canvas, doc);
 
@@ -314,15 +329,12 @@ export function mountEditor(): void {
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-    const before = camera.screenToCellExact(sx, sy);
-    camera.zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
-    const after = camera.screenToCellExact(sx, sy);
-    camera.x += (before.x - after.x) * TILE_SIZE;
-    camera.y += (before.y - after.y) * TILE_SIZE;
+    camera.zoomAbout(sx, sy, e.deltaY < 0 ? 1.12 : 1 / 1.12);
   }, { passive: false });
 
   // ------------------------------------------------------------ keyboard
   window.addEventListener('keydown', (e) => {
+    if (!root.isConnected) return;
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
     const key = e.key.toLowerCase();
     if (key === ' ') { spaceHeld = true; e.preventDefault(); return; }
@@ -739,7 +751,7 @@ export function mountEditor(): void {
       : hover && tool !== 'sites' && brushSize > 1 ? brushCells(hover)
         : [];
     canvas.dataset.mode = tool === 'sites' ? siteMode : 'paint';
-    drawEditor(canvas, camera, doc, overlays, view);
+    if (root.isConnected) drawEditor(canvas, camera, doc, overlays, view);
     requestAnimationFrame(frame);
   };
 
@@ -748,6 +760,7 @@ export function mountEditor(): void {
   // Camera state is written continuously so a save-triggered HMR reload lands
   // where the designer was looking.
   setInterval(writeSession, 1000);
+  return { root, isDirty: () => doc.dirty };
 }
 
 // --------------------------------------------------------------- helpers
@@ -808,7 +821,7 @@ function fitToWorld(camera: Camera, canvas: HTMLCanvasElement, doc: MapDoc): voi
   camera.centerOnCell({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
   const w = canvas.clientWidth || 900;
   const h = canvas.clientHeight || 700;
-  const fit = Math.min(w / ((b.x1 - b.x0 + 2) * TILE_SIZE), h / ((b.y1 - b.y0 + 2) * TILE_SIZE));
+  const fit = Math.min(w / ((b.x1 - b.x0 + 2) * FLAT_TILE), h / ((b.y1 - b.y0 + 2) * FLAT_TILE));
   camera.zoom = 1;
   camera.zoomBy(fit); // through zoomBy, so the camera's own clamps still apply
 }

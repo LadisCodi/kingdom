@@ -1,26 +1,7 @@
 /* Settings (§5.11). Calm and uncluttered — this is a drawer, not a screen. */
 
 /* A section is a small brown caps word with a rule running off it (M9). */
-.set-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 14px 0 8px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--wood);
-}
-.set-section::after {
-  content: '';
-  flex: 1;
-  height: 2px;
-  border-radius: 1px;
-  background: rgba(92, 58, 30, 0.28);
-}
-.set-section:first-child { margin-top: 2px; }
+.set > .k-section-head:first-child { margin-top: 2px; }
 
 /* Every row is a parchment card in a thin wood border (M9). */
 .set-row {
@@ -38,7 +19,7 @@
 }
 .set-label { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 16px; line-height: 1.15; }
 .set-hint { font-size: 12px; font-weight: var(--weight-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.set-section { margin: 8px 0 6px; }
+.set > .k-section-head { margin: 8px 0 6px; }
 .set-words { flex: 1; min-width: 0; }
 /* The mark in its parchment vignette (M9); the pictures come from
    sheets/ui-i1-settings.png. */

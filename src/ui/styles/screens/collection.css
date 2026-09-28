@@ -168,15 +168,6 @@
 .col-badge.is-locked { background: var(--locked); border-color: var(--wood-dark); }
 .col-badge-lv { white-space: nowrap; }
 
-.col-tick {
-  position: absolute;
-  left: -2px; top: -2px;
-  display: grid; place-items: center;
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--leaf-dark);
-  background: var(--leaf);
-}
 
 .col-medal-name {
   font-family: var(--font-body);
@@ -218,7 +209,7 @@
   cursor: pointer;
 }
 .col-vault:active { transform: translateY(2px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3); }
-.col-vault.is-ready { border-color: var(--gold-dark); box-shadow: 0 0 12px rgba(242, 178, 51, 0.8); }
+.col-vault.is-ready { border-color: var(--gold-dark); }
 .col-vault-stars {
   position: absolute;
   bottom: -6px;
@@ -631,6 +622,7 @@
 
 /* WHAT THE NINE CARDS BUY, under the nine cards. */
 .col-claim {
+  position: relative; /* the call-to-action orb hangs on its corner */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -661,17 +653,11 @@
   text-align: left;
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
-  /* The glow is the ask: a pack is waiting. */
-  animation: sea-glow 2s ease-in-out infinite;
+  /* The ask is the kit's orb on its corner (seasonPill.ts). */
+  position: relative;
 }
 .sea-pill:active { transform: translateY(2px); box-shadow: none; }
-@keyframes sea-glow {
-  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 14px rgba(242, 178, 51, 0.8); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .sea-pill { animation: none; }
-}
-.sea-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.9; }
+.sea-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.9; }
 
 .sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
 /* Body, not the title face — the daily pill beside it sets its title the same
@@ -760,6 +746,7 @@
   color: var(--ink-muted);
 }
 .col-chest {
+  position: relative; /* the call-to-action orb hangs on its corner */
   display: flex;
   flex-direction: column;
   gap: 6px;

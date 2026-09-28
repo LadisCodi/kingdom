@@ -21,12 +21,21 @@ import { el } from '../format';
 import { iconEl, type IconName } from './icon';
 import { costTerms, isShort, type CostTerm } from './stats';
 
-export type ButtonKind = 'primary' | 'secondary' | 'destructive' | 'gem';
+export type ButtonKind = 'primary' | 'secondary' | 'destructive' | 'gem' | 'blue' | 'gold';
+
+/** What a coloured button is MADE of (Docs/art/ui-menus-redesign.md §3.3):
+ *  `paint` for the everyday actions — upgrade, train, build — and `gem` for
+ *  the premium or magical ones worth wanting — buy a pack, cast a spell.
+ *  Wood (`secondary`) has no finish. Every colour is painted by default
+ *  except `gem`, the Gems-spending kind, which is a gemstone. */
+export type ButtonFinish = 'paint' | 'gem';
 
 export interface ActionOpts {
   label: string;
   onClick: () => void;
   kind?: ButtonKind;
+  /** Painted or gemstone; see `ButtonFinish` for the default. */
+  finish?: ButtonFinish;
   icon?: IconName;
   /** What pressing this spends. Rendered INSIDE the button, under the label
    *  (§6.4). Omit for an action that costs nothing. */
@@ -66,12 +75,13 @@ export const isBlocked = (opts: ActionOpts): boolean =>
  *  part of the button rather than a caption beside it (§6.4). */
 export function btn(opts: ActionOpts): HTMLButtonElement {
   const kind = opts.kind ?? 'secondary';
+  const finish = opts.finish ?? (kind === 'gem' ? 'gem' : 'paint');
   const blocked = isBlocked(opts);
   const terms = costTerms(opts.cost, opts.have, opts.costExtra);
   const stacked = terms !== null || opts.note !== undefined;
   const b = el(
     'button',
-    { class: `k-btn k-btn--${kind}${stacked ? ' has-cost' : ''}`, type: 'button' },
+    { class: `k-btn k-btn--${kind} is-${finish}${stacked ? ' has-cost' : ''}`, type: 'button' },
     ...(opts.note !== undefined
       ? [el('span', { class: 'k-btn-note' }, opts.note)]
       : []),
@@ -107,17 +117,47 @@ export function action(opts: ActionOpts & { info?: Node | string }): HTMLElement
   return el('div', { class: 'k-action' }, reason, btn(opts));
 }
 
-/** A round wooden knob — worker steppers, close, zoom. */
+/** A ROUND button — worker steppers, move, zoom, arrows. The same materials
+ *  and finishes as the label buttons (wood by default; a colour `kind`,
+ *  painted unless `finish: 'gem'`), the glyph set into its face as if carved
+ *  (material.css). */
 export function knob(
   glyph: string,
   onClick: () => void,
-  opts: { label?: string; disabled?: boolean } = {},
+  opts: { label?: string; disabled?: boolean; kind?: ButtonKind; finish?: ButtonFinish } = {},
 ): HTMLButtonElement {
-  const b = el('button', { class: 'k-btn k-btn--secondary k-knob', type: 'button' }, glyph);
+  const kind = opts.kind ?? 'secondary';
+  const finish = opts.finish ?? (kind === 'gem' ? 'gem' : 'paint');
+  const b = el('button', {
+    class: `k-btn k-btn--${kind} is-${finish} k-knob`, type: 'button',
+  }, glyph);
   if (opts.label) b.setAttribute('aria-label', opts.label);
   // A stepper at its limit has nothing to explain — the number beside it
   // already says why, so this one may be plainly disabled.
   if (opts.disabled) b.disabled = true;
+  return wire(b, onClick);
+}
+
+/**
+ * THE WINDOW'S CLOSE: a round button of red lacquered wood with the X carved
+ * into it (kit.css `.k-close`), pinned to the window frame's top-right
+ * corner. The X is the art's own groove, not a glyph — the label is what a
+ * screen reader hears. Marked data-own-close, so the host adds no knob of
+ * its own.
+ */
+export function closeKnob(onClick: () => void, label = 'Close'): HTMLButtonElement {
+  const b = el('button', { class: 'k-close', type: 'button', 'aria-label': label });
+  b.setAttribute('data-own-close', '');
+  return wire(b, onClick);
+}
+
+/**
+ * THE MOVE: a round wood button with the four-way arrows carved into it
+ * (kit.css `.k-move`, sheets/ui-window4-move.png) — the close's twin in
+ * wood, drawn to sit beside it in a window's header.
+ */
+export function moveKnob(onClick: () => void, label = 'Move'): HTMLButtonElement {
+  const b = el('button', { class: 'k-move', type: 'button', 'aria-label': label });
   return wire(b, onClick);
 }
 

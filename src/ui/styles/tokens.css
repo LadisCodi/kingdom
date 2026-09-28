@@ -52,6 +52,21 @@
 }
 
 :root {
+  /* ---- the reference pixel ----
+   * The chrome is authored at 1125 × 2436, the iPhone X in portrait, and
+   * scaled to the frame like a Unity CanvasScaler MATCHING HEIGHT: one
+   * reference pixel is 1/2436 of the frame's height, so a piece keeps its
+   * share of the screen's height on a phone, a 3:4 tablet or a desktop, and
+   * a wider screen simply shows more map at the sides.
+   *
+   * The width is a CEILING, not a second dial: on a screen narrower than the
+   * reference (a 9:20 or 9:21 phone) height alone would make the 1125-wide
+   * header wider than the screen, so there the scale follows the width
+   * instead — Unity's "Expand". Write a size as `calc(var(--rpx) * N)`, with
+   * N measured on the 1125-wide mockup. `cqh`/`cqw` resolve against #app
+   * (the `frame` container), so the value is per element and needs no script. */
+  --rpx: min(calc(100cqh / 2436), calc(100cqw / 1125));
+
   /* ---- surfaces ---- */
   --parchment: #f4e4c1;
   --parchment-shade: #e2cca0;
@@ -73,6 +88,10 @@
   --clay: #d4553e; /* can't afford, destructive */
   --sky: #4fa3c7; /* in progress, research, information */
   --locked: #cbba96; /* gated — warm, never grey */
+  /* A SECTION of a menu (kit .k-section): flat, a shade darker than the
+   * window's paper, in a 2-px flat outline — no bevel, no texture. */
+  --section-fill: #f0d9ae;
+  --section-line: #cfa874;
 
   /* ---- rarity ----
    * A hero's rarity is the whole background of its tile, so the roster reads
@@ -90,7 +109,7 @@
 
   /* ---- chrome metrics ----
    * These two were hardcoded in six places (#notice, #panel, #overlay,
-   * .tech-info, #toast, .cast-banner), and the nav's height was only ever
+   * .tech-info, #toast, the dev bar), and the nav's height was only ever
    * IMPLIED by its padding — which is where the magic 58 came from. Naming
    * them is what lets the HUD and nav change height without silently
    * misaligning five other screens.
@@ -146,9 +165,24 @@
    * helper line the brief allows (Docs/art/ui-menus-redesign.md §2), 22px is
    * a title that stands over both without eating a sheet. No grid: Nunito
    * is an outline face and every whole pixel is legal. */
-  --text-title: 22px;
-  --text-body: 16px;
-  --text-helper: 13px;
+  /* THE TEXT ROLES. Every menu names one of these, never a number, so a
+   * window reads the same wherever it is opened:
+   *
+   *   --text-title    a window's title, on its header band (the display face)
+   *   --text-body     what the window is ABOUT: names, values, ordinary copy
+   *   --text-desc     the line that describes it: a description, a rate, a note
+   *   --text-heading  a section's heading (kit sectionHead), small uppercase
+   *   --text-helper   a caption or fine print: a tag, a badge, a timer
+   *   --text-button   a button's label (kit btn), at its slab's fixed height
+   *
+   * Sized for the phone: body a size above the iOS reading size, because a
+   * menu is read at arm's length over a busy map. */
+  --text-title: 28px;
+  --text-body: 17px;
+  --text-desc: 15px;
+  --text-heading: 14px;
+  --text-helper: 14px;
+  --text-button: 16px;
 
   /* ---- form ---- */
   --gutter: 12px; /* the side padding a sheet keeps from the frame */

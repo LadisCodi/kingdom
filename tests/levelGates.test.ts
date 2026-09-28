@@ -2,7 +2,7 @@
 // technology on top of the Townhall level, and Housing capacity is per-level
 // (+1 everywhere once Communities is researched).
 import { describe, expect, it } from 'vitest';
-import { upgradeDistrict } from '../src/sim/commands';
+import { upgradeDistrict, upgradeRefusal } from '../src/sim/commands';
 import {
   LATE_FROM, requiredPopulation, requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost,
 } from '../src/sim/districts';
@@ -50,6 +50,27 @@ describe('tech-gated upgrades', () => {
     tickAt(state, T0 + 31_000);
     tickAt(state, T0 + 152_000); // 120s upgrade
     expect(townhall(state).level).toBe(3);
+  });
+
+  // The district card's call to action reads upgradeRefusal; the command
+  // runs it. They must agree in every state, and the check must leave the
+  // state untouched.
+  it('upgradeRefusal says exactly what upgradeDistrict would, without paying', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
+    const says = () => upgradeRefusal(state, house.uniqueId);
+    expect(says()).toBe('RequirementsNotMet'); // behind Urban Planning
+    completeTech(state, 'UrbanPlanning');
+    state.city.wallet.Wood = 0;
+    state.city.wallet.Stone = 0;
+    expect(says()).toBe('NotEnoughResources');
+    fund(state, { Wood: 1000, Stone: 1000 });
+    const before = JSON.stringify(state);
+    expect(says()).toBe(null);
+    expect(JSON.stringify(state)).toBe(before);
+    expect(upgradeDistrict(state, house.uniqueId)).toBe('Started');
+    expect(says()).toBe('AlreadyUpgrading');
   });
 
   it('the Sawmill: L2 is tech-free, L3 sits behind Engineering', () => {

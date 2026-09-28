@@ -45,7 +45,7 @@ guard { threat, power, warningMinutes, periodMinutes }
 - `threat` is a unit type or `Any`. The creature is derived from it; there is
   no second list:
 
-| `threat` | Reads as | `threat_mix` | Composition answer |
+| `threat` | Reads as | `threatMix` | Composition answer |
 |---|---|---|---|
 | Warrior | **Orcs** | all Warrior | Archers |
 | Lancer | **Goblins** | all Lancer | Warriors |
@@ -61,12 +61,12 @@ guard { threat, power, warningMinutes, periodMinutes }
   time.
 - **The gate's `threat` is the ruin's affinity**, so the first fight teaches
   the matchup the whole ruin is built on.
-- **Recommended `power`: below the ruin's `power_start(D1)`.** The gate is
+- **Recommended `power`: below the ruin's `powerStart` at Depth 1.** The gate is
   easier than the first room, because it is the room the player is pushed
   into on a clock.
 - The two counters are per ruin: a harder ruin gets a longer one, because the
   army it needs takes longer to build.
-- A ruin's **tier** keys the workbook rows that are not per site: take seconds
+- A ruin's **tier** keys the `garrisons` entries that are not per site: take seconds
   and gate supplies (§8).
 
 | Ruin | Gate | `power` | Enemies | Warning · period | Board that beats it |
@@ -78,7 +78,7 @@ guard { threat, power, warningMinutes, periodMinutes }
 | Star Observatory | Drake | 1,000 | 211 | 240 · 240 min | a full board; no type answer |
 
 - **`power` is a budget in troops' worth, and the count is what the player
-  sees**: the generator spends it on `power_per_troop`, so twenty orcs is 20 ×
+  sees**: the generator spends it on each unit's `power`, so twenty orcs is 20 ×
   3 (§2, [`combat.md`](combat.md) §5).
 - Every one of them is under the strength of the ruin's own first depth, and
   `tests/gates.test.ts` holds them there.
@@ -104,17 +104,17 @@ guard { threat, power, warningMinutes, periodMinutes }
   Food, Wood, Stone:
 
 ```
-base = cityRate × take_seconds(tier)                 # seconds of the city's own production
-take = floor( min(base, banked × take_fraction_max) )
+base = cityRate × takeSeconds(tier)                  # seconds of the city's own production
+take = floor( min(base, banked × raid.takeFractionMax) )
 ```
 
 - `cityRate` is the city's current production of that material — the crews'
   gather rate, plus rent for Gold. It is a fact about the city, not an
   accrual, so a raid replays identically. **They take from what you make**: a
   material the city does not produce is not taken.
-- `take_fraction_max` bounds a raid on a small purse; `take_seconds` bounds one
+- `raid.takeFractionMax` bounds a raid on a small purse; `takeSeconds` bounds one
   on a large purse.
-- **Trips.** A raid that takes anything counts one trip. At `max_raids` the
+- **Trips.** A raid that takes anything counts one trip. At `raid.maxRaids` the
   garrison stops raiding and holds its hoard. The worst case of any absence is
   three raids per open gate, each at most a tenth of the purse — and it all
   comes back when the gate is cleared (§5).
@@ -199,10 +199,10 @@ take = floor( min(base, banked × take_fraction_max) )
 | Dial | Recommended | Where |
 |---|---|---|
 | a ruin's gate: threat, power, warning and period in minutes | §2 | `?dev=map` |
-| take seconds per tier | 300 × tier | `Garrisons` sheet, one row per tier |
-| take fraction max | 0.10 | `raid.take_fraction_max` (Settings) |
-| max raids per gate | 3 | `raid.max_raids` (Settings) |
-| gate supplies per tier | half the ruin's own supplies | `Garrisons` sheet |
+| take seconds per tier | 300 × tier | `garrisons` › `takeSeconds`, one entry per tier |
+| take fraction max | 0.10 | `raid.takeFractionMax` (`exploration`) |
+| max raids per gate | 3 | `raid.maxRaids` (`exploration`) |
+| gate supplies per tier | half the ruin's own supplies | `garrisons` › `supplies` |
 
 ## 9. Deliberately not in this design
 
@@ -215,7 +215,7 @@ take = floor( min(base, banked × take_fraction_max) )
 - An authored formation per gate — the generator builds it from `guard`, as
   it builds a room. Named villains belong to bosses.
 - One raid clock for the whole city; counters in hours or days; a counter in
-  the workbook.
+  `?dev=data`.
 - Rousing conditions beyond discovery — a hall, a hero, an army.
 - Raids on Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes or
   units.
@@ -226,7 +226,7 @@ take = floor( min(base, banked × take_fraction_max) )
 - Workers fighting; a wall or tower district.
 - A creature list beside the threat type; randomness in resolution.
 - A widget that opens itself.
-- Player-versus-player raiding ([`02-map-scopes.md`](02-map-scopes.md) §4).
+- Player-versus-player raiding ([`02-map-scopes.md`](02-map-scopes.md) §5).
 - A technology that gates the gate (`Siegecraft` is retired).
 
 **Open questions:** OQ-72, OQ-74 in

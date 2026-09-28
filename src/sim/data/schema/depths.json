@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "fields": {
+    "ruin": { "type": "text", "ref": "ruin" },
+    "depth": { "type": "int", "min": 1 },
+    "rooms": { "type": "int", "min": 1 },
+    "guildReq": { "type": "int" },
+    "powerStart": { "type": "int" },
+    "powerStep": { "type": "int" },
+    "rewardBase": { "type": "int" },
+    "villainPool": { "type": "text", "ref": "villain" },
+    "bossVillain": { "type": "text", "ref": "villain" },
+    "supplies": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" }
+  }
+}

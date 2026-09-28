@@ -25,8 +25,9 @@
 
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
+import { formatUsd } from '../sim/store';
 import { el, formatCount } from './format';
-import { currencyIcon, iconEl } from './kit';
+import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 
 /** The reward as icon-and-number chips, in wallet order. */
@@ -40,7 +41,7 @@ function prize(reward: Wallet): HTMLElement[] {
 export function renderDailySheet(game: Game): HTMLElement {
   const season = game.dailySeason();
   const close = () => game.setOverlay(null);
-  const price = `€${season.royalPriceUsd.toFixed(2)}`;
+  const price = formatUsd(Math.round(season.royalPriceUsd * 100));
 
   // ---- the two column headers. The right one IS the buy button while the
   // season is unbought: the price belongs on the thing it buys, not in a
@@ -83,7 +84,7 @@ export function renderDailySheet(game: Game): HTMLElement {
       ...(st.locked ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!st.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits);
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge(1, `daily:${kind}:${JSON.stringify(reward)}`));
     b.addEventListener('click', onClick);
     return b;
   };

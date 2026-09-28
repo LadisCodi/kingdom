@@ -14,7 +14,7 @@
   the albums close on. There is no clock of its own.
 - Opened by tapping the **Sowing Season** pill on the map. Never auto-opened.
 - Levels come from **XP**, and the only source of XP is finishing a mission.
-- The paid column is one purchase, `SeasonPass`, **€4.99**, once a season
+- The paid column is one purchase, `SeasonPass`, **$4.99**, once a season
   ([`14-monetization.md`](14-monetization.md) §2).
 
 **The split against the daily chest.** Both are 28-day two-track ladders that
@@ -131,17 +131,17 @@ volume, and the repeatable dungeon still owes the bulk.
 
 | Dial | What it moves |
 |---|---|
-| `pass.mission_xp` | how fast the ladder climbs |
-| `pass.level_xp_base`, `pass.level_xp_growth` | the level curve — linear, so the last rungs are not decoration |
-| `pass.free_*`, `pass.paid_*` | the two columns. **Their length is the ladder's length** |
-| `missions.board_size` | how many can sit unfinished. 8 is a big board for a ~30 min/day budget |
-| `missions.per_window`, `missions.window_hours` | how fast they arrive |
-| `missions.weekly_quota` | how often one kind may repeat |
-| `missions.*_band` | how big each ask is |
-| `missions.collect_minutes_*` | the collect ask, in minutes of production |
-| `missions.hard_kinds` | which errands pay a pack. **Not a difficulty rating** — the list of kinds that cannot be finished in one session, and it changes as the game does |
-| `missions.hard_pack`, `missions.normal_pack` | the two tiers |
-| `missions.reward_gems`, `missions.reward_mana_fraction` | the other two rolls |
+| `pass.missionXp` | how fast the ladder climbs |
+| `pass.levelXpBase`, `pass.levelXpGrowth` | the level curve — linear, so the last rungs are not decoration |
+| `pass.free*`, `pass.paid*` | the two columns. **Their length is the ladder's length** |
+| `missions.boardSize` | how many can sit unfinished. 8 is a big board for a ~30 min/day budget |
+| `missions.perWindow`, `missions.windowHours` | how fast they arrive |
+| `missions.weeklyQuota` | how often one kind may repeat |
+| `missions.*Band` | how big each ask is |
+| `missions.collectMinutes*` | the collect ask, in minutes of production |
+| `missions.hardKinds` | which errands pay a pack. **Not a difficulty rating** — the list of kinds that cannot be finished in one session, and it changes as the game does |
+| `missions.hardPack`, `missions.normalPack` | the two tiers |
+| `missions.rewardGems`, `missions.rewardManaFraction` | the other two rolls |
 
 ## 6. The screen
 

@@ -7,30 +7,42 @@
 
 ## The pitch
 
-- Kingdom is a cozy **city-builder / idle-management** game on a fog-shrouded
-  fantasy map, built for the web.
+- Kingdom is a **4X for people who bounce off 4X** — the genre of Rise of
+  Kingdoms and Kingshot on mobile, Civilization and Age of Wonders on PC, with
+  the barrier to entry taken out.
 - The player is a **wizard-monarch** growing a city outward from a single
-  Townhall.
-- The player **buys back the map from the fog**, one tap at a time; builds
-  districts whose workers harvest; grows a population that pays taxes; and
-  recovers the magic buried in ruins.
+  Townhall, then pushing past its borders into a world shared with other
+  players.
+- **The twist is exploration.** The player **buys back the map from the fog**,
+  one tap at a time; builds districts whose workers harvest; grows a population
+  that pays taxes; and recovers the magic buried in ruins.
+- **Magic is how a kingdom becomes yours.** Spellbooks hold the research that
+  opens mechanics, and which books you own is a choice the game does not make
+  for you (§ *Magic and the books*).
 - Costs scale with distance and ambition.
 - The starter city is **Oakville**, in the province of **Region_01**.
 - **Played in visits, not sittings**: roughly half an hour a day across two or
   three check-ins. Every system is sized to that budget.
+- **It looks like a diorama**: a stylized-3D isometric city under a bright
+  midday sun, and a hex world map in the same hand
+  ([`art/style-prompt.md`](art/style-prompt.md)).
 
 ## The three promises
 
-1. **No other player can ever touch your city.** The only thing that ever
-   takes from you is a garrison you have seen and left standing — three raids
+1. **Your city can never be attacked. Everything outside it can be.** The
+   province is inviolable: no player reaches it, and the only thing that ever
+   takes from it is a garrison you have seen and left standing — three raids
    per camp at most, a tenth of the purse each, and handed back in full when
-   you clear it. No decay, no starvation, no failure state. Every other
-   pressure is **opportunity that expires** — a Mana pool that overflows, an
-   event window that closes, a garrison's clock running down.
+   you clear it. No decay, no starvation, no failure state. **What a player can
+   take from a player is territory** — a claimed hex on the world map, never a
+   building, never a purse. Losing ground costs you what it was producing; it
+   never costs you what you built.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. The battle screen is where a fight is **composed**, never
    played: the party is chosen, the numbers are shown, and the outcome is
-   decided the moment the player commits. A well-prepared party never fails.
+   decided the moment the player commits. Against the world's own garrisons a
+   well-prepared party never fails; against another player's, preparation is
+   what you can control and the rest is their preparation.
 3. **Wallets buy power, comfort and breadth — but never exclusivity.**
    Nothing is purchase-only that cannot also be earned. Every paid ladder is
    earned first — research grants a slot before Gems can buy one.
@@ -113,6 +125,27 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 **Full design:** [`features/08-magic.md`](features/08-magic.md).
 
+## Magic and the books
+
+> **A book is a choice about what kind of kingdom this is.**
+
+- Research lives in **spellbooks**. A book is a page of technologies; a
+  technology opens a mechanic, a building, a unit or a number, and **Knowledge
+  is the clock** that paces it.
+- **General books** are open from the start and every kingdom has them. They
+  hold the spine of the game: the city, the army, the basic enchantments.
+- **Specific books are found, not bought** — at the bottom of a ruin, out of an
+  event, on the world map. A specific book is narrow and deep: it does one thing
+  no general book does.
+- **Personalisation comes from which books you own and in what order**, not from
+  a renunciation. Nothing is locked away by choosing; two kingdoms differ
+  because they found different books and studied them in a different order.
+- This is what makes the province's ruins matter past their loot: **a ruin can
+  pay a book**, and a book is the only reward that changes how the game is
+  played rather than how fast.
+
+**Full design:** [`features/07-research.md`](features/07-research.md).
+
 ## Relics and the collection
 
 - A relic is a **permanent kingdom passive with no ceiling**: one effect, one
@@ -176,17 +209,45 @@ Three arcs run at different speeds.
 | **The city** | the Townhall level — how many of each district, and how high | hours |
 | **The army** — garrisons cleared, and therefore how deep the rooms go | four military buildings the player chooses to build | hours to days |
 | **The collection** — relics and heroes | card albums on a 28-day shared season; Fragments and Hero XP | **weeks and seasons** |
+| **The world** — ground claimed and held | the army, and the books the province paid for | days to weeks |
 
-## The three scopes of the map
+## The two scales, and the road between them
 
-| Layer | What it is | Verb |
+The game is played at two scales, and they are deliberately not the same game.
+
+| | **Your province** | **The world** |
 |---|---|---|
-| **Your province** | authored, identical for every player, **bounded** | **tapped** |
-| **Temporary provinces** | event maps inside a window — the event format | tapped |
-| **The world map** | a shared hex lattice, outposts not cities | **sent to** |
+| Shape | authored square grid, identical for every player | shared **hex lattice** |
+| Who else is there | nobody | five other players |
+| Authority | client | **server** for claims, client for fog |
+| The verb | **you tap** | **you send** |
+| Exploring costs | Gold and a thumb, resolved instantly | an explorer who marches, and the time the march takes |
+| Tempo | active, minutes | idle, hours |
+| What it can take from you | nothing you built | ground you claimed |
+| It ends | yes — 1,470 cells and the fog is bought out | no |
 
-> **Your village can never be attacked by another player. Everything outside it
-> can be contested.**
+**Temporary provinces** are a third, disposable scale: event maps that borrow
+the province's verbs inside a window — the event format
+([`features/13-events.md`](features/13-events.md) §2.3).
+
+> **Your city can never be attacked. Everything outside it can be.**
+
+### The road between them
+
+The province is not a tutorial the player leaves behind — it is the engine that
+supplies the world.
+
+1. **The province teaches.** Fog, harvest, building and the first fights are all
+   learned alone, with nothing at stake and nobody watching.
+2. **The province arms.** Its ruins pay the card packs that level relics, and
+   the **spellbooks** that decide what kind of kingdom this is.
+3. **The world tests.** An explorer marches out, ground is claimed, and what the
+   player built at home is what they bring.
+4. **The world feeds the province.** Held hexes produce into the city that holds
+   them, so the two scales are one economy and not two.
+
+**Full design:** [`features/02-map-scopes.md`](features/02-map-scopes.md),
+[`features/19-world-map.md`](features/19-world-map.md).
 
 **Full design:** [`features/02-map-scopes.md`](features/02-map-scopes.md).
 

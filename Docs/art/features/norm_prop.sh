@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# A map-feature master -> the game's sprite.
+#
+# A feature STANDS on its plot, so the renderer scales it to the plot's ground
+# diamond (128px across for a 1x1) and puts its bottom edge on the diamond's
+# bottom corner (src/render/iso.ts, drawStanding). One rule, no exceptions.
+#
+# HOW BIG THE THING IS, though, is not one rule. A boar is knee-high on a
+# farmhand and a forest towers over a cottage, and the renderer has no way to
+# know which is which. So the size is AUTHORED, as `scale` in props.json --
+# the fraction of the plot's diamond the drawing spans -- and BAKED IN here:
+# the ink is scaled to that fraction and centred on a full-width canvas, its
+# feet on the bottom edge. The renderer keeps its single rule and the sprite
+# carries its own size.
+#
+# It reports the drawn height in plots, which is what to compare against a
+# villager (about 0.35 of a plot tall) and a 1x1 cottage (about 1.5).
+set -euo pipefail
+src=$1; out=$2; scale=${3:-1}
+
+# The canvas is TWO PLOTS wide (src/render/iso.ts, FEATURE_PLOTS), at twice
+# the diamond's 128 px so the renderer only ever scales down: 2 x 2 x 128.
+# A canvas only one plot across could express a boar but not a stand of trees
+# -- the drawing would have to be wider than the file, and `-extent` answered
+# that by slicing the trees flat down both sides.
+CANVAS_PLOTS=${4:-2}
+# How many CELLS a side the thing occupies. A 2x2 mountain's own plot diamond
+# is twice as wide as a 1x1's, so its canvas has to be twice as wide too or
+# the game would be upscaling it.
+FOOTPRINT=${5:-1}
+W=$((2 * 128 * CANVAS_PLOTS * FOOTPRINT))
+inkw=$(awk -v s="$scale" -v w="$W" -v p="$CANVAS_PLOTS" 'BEGIN{ printf "%d", w*s/p }')
+# `scale` stays relative to the thing's OWN plot, so 1.55 means the same
+# "half again as wide as its ground" at every footprint.
+
+dims=$(magick "$src" -trim +repage -format "%wx%h" info:)
+w=${dims%x*}; h=${dims#*x}
+tall=$(awk -v w="$w" -v h="$h" -v s="$scale" 'BEGIN{ printf "%.2f", (h/w)*s }')
+echo "  ink ${w}x${h}  scale ${scale}  -> ${tall} plots tall, ${scale} wide"
+awk -v s="$scale" -v p="$CANVAS_PLOTS" 'BEGIN{ if (s > p) { print "  FAIL: scale " s " does not fit a " p "-plot canvas"; exit 1 } }' 
+
+magick "$src" -trim +repage -filter Lanczos -resize "${inkw}x" \
+  -background none -gravity South -extent "${W}x" -strip "$out"
+echo "  wrote $out  $(magick identify -format '%wx%h' "$out")"

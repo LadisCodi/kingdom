@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "fields": {
+    "Food": { "type": "float", "min": 0 },
+    "Wood": { "type": "float", "min": 0 },
+    "Stone": { "type": "float", "min": 0 }
+  }
+}

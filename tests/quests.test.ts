@@ -485,7 +485,7 @@ describe('quests fund the research tree', () => {
 // whole reason the goal type exists.
 describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
-    id: 'test', name: 'test', description: '',
+    id: 'test', name: 'test',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
     reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
   });
@@ -557,7 +557,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   it('the plain DiscoverCells goal still counts every reveal, feature or not', () => {
     const state = freshGame();
     const restore = activate(state, {
-      id: 'test', name: 'test', description: '',
+      id: 'test', name: 'test',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
       reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
     });

@@ -1,0 +1,16 @@
+{
+  "ads": {
+    "cooldownMinSeconds": 30,
+    "cooldownMaxSeconds": 90,
+    "eligibleBelowFraction": 0.5,
+    "watchSeconds": 5,
+    "manaRefillsPerDay": 5
+  },
+  "payer": {
+    "f2pMonthlyUsd": 0,
+    "minnowMonthlyUsd": 10,
+    "dolphinMonthlyUsd": 50,
+    "whaleMonthlyUsd": 250,
+    "superWhaleMonthlyUsd": 2000
+  }
+}

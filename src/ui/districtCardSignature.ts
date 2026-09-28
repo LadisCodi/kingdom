@@ -9,6 +9,7 @@
 // where the card reads several fields of them, and every gate and every
 // `short` the card colours.
 
+import { upgradeRefusal } from '../sim/commands';
 import type { Game } from '../game';
 import { adjacencyInEffect } from '../sim/adjacency';
 import { lineFor, trainCost } from '../sim/army';
@@ -38,6 +39,8 @@ export function districtCardSignature(game: Game, district: District): string {
     queueItem === undefined ? null : queueItem.startedAt === null,
     game.uiHint(),
     canMoveDistrict(district),
+    // Whether Upgrade wears its call to action: every gate and cost met.
+    upgradeRefusal(s, district.uniqueId) === null,
     game.freeWorkers() === 0,
     s.city.population,
     townhall(s).level,

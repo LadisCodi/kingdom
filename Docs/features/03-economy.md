@@ -88,13 +88,13 @@
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
 - **A house's own level raises the rent its residents pay.**
-  `Districts.tax_bonus_per_level` is a fraction of the base rate and a
+  `buildings.taxBonusPerLevel` is a fraction of the base rate and a
   **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
   +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
   minute — and a tap on the house is worth the same more (§5), because a tap
   sells that house's own rent.
 - **The Townhall's level multiplies every house's rent.**
-  `taxes.townhall_multiplier_per_level` is a **total** at each level, indexed
+  `taxes.townhallMultiplierPerLevel` is a **total** at each level, indexed
   from level 1: ×1 at 1, then +0.25 a level to ×3.25 at 10. It rides at the
   base stage of the rate beside the Harmony surplus — a level fact, never a
   modifier — so it reaches the residents' rent and the house tap alike, and
@@ -131,7 +131,7 @@ here pays or charges, and none refuses.
 | District | Next to | Moves | By |
 |---|---|---|---|
 | **Housing** | Housing | Gold a minute | **−1** each |
-| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`18-harmony.md`](18-harmony.md) §6) |
+| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`21-harmony.md`](21-harmony.md) §6) |
 | **a hall** | another hall | training time | **−10%** each |
 | **Carpenter** | Sawmill | work time | −10% |
 | **Mason's Yard** | Quarry | work time | −10% |
@@ -145,7 +145,7 @@ and a workshop item's work are stamped when they are queued, so a neighbour
 that arrives, moves or is replaced later never repriced a wait already
 running. Research already worked this way.
 
-- More rules arrive as rows; a new **stat** is one line in `AdjacencyStat`
+- More rules arrive as `adjacency` entries; a new **stat** is one line in `AdjacencyStat`
   plus one call site.
 
 ## 4. Villager training
@@ -208,16 +208,16 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 
 | Dial | Value | Key |
 |---|---|---|
-| Tax rate | 30 Gold/pop/min | `taxes.gold_per_population_per_minute` |
-| House rent bonus per level | +0% then +25% a level, to +225% | `Districts.tax_bonus_per_level` |
-| Townhall rent multiplier per level | ×1 then +0.25 a level, to ×3.25 | `taxes.townhall_multiplier_per_level` |
-| Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
-| Tap Mana cost | 1 | `tap.mana_cost` |
-| Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |
-| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.population_cost_*` |
-| Collect cooldown | 0.5 s | `tap.collect_cooldown_seconds` |
-| Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
-| Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |
+| Tax rate | 30 Gold/pop/min | `taxes.goldPerPopulationPerMinute` |
+| House rent bonus per level | +0% then +25% a level, to +225% | `buildings.taxBonusPerLevel` |
+| Townhall rent multiplier per level | ×1 then +0.25 a level, to ×3.25 | `taxes.townhallMultiplierPerLevel` |
+| Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
+| Tap Mana cost | 1 | `tap.manaCost` |
+| Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
+| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
+| Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
+| Sale prices | Food 1 · Stone 2 · Wood 3 | `currencies.goldValue` |
+| Adjacency rules | §3.1 | `adjacency` — `district`, `neighbor`, `stat`, `magnitude` |
 
 ## 8. Deliberately not in this design
 

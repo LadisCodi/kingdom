@@ -172,7 +172,7 @@ Submitted as they happen:
 - Chat
 - Avatars and friend requests
 - A leaderboard at prototype population
-- Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §4)
+- Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §5)
 - Writing into another player's save
 - A live-presence requirement
 - The sim on the server

@@ -15,7 +15,7 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatCount, formatDuration } from './ui/format';
+import { formatCount, formatDuration, formatExact } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -70,8 +70,8 @@ import {
   type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
 } from './sim/expeditions';
 import {
-  dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
-  openGates, type GateView,
+  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared, gateSupplies,
+  gateView, nextGateToRaid, openGates, type GateView, type RaidableId,
 } from './sim/gates';
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
@@ -79,7 +79,7 @@ import {
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, knowledgePerHour,
+  mana, manaCap, manaNetRegen, manaProduction, msToNextMana, knowledgePerHour,
 } from './sim/mana';
 import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
@@ -91,7 +91,7 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
+  anyResearchActionable, researchActionableCount, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
   finishTechWithGems, techRushCost,
   buyTechInstantly, instantTechGems,
 } from './sim/research';
@@ -420,6 +420,7 @@ export class Game {
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
+  private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
 
   constructor(
@@ -444,6 +445,15 @@ export class Game {
   }
   onShake(fn: (c: CurrencyId[]) => void): void {
     this.shakeListeners.push(fn);
+  }
+  /** A claimed reward, already in the wallet — the UI flies it to the
+   *  header and counts it in as it lands (ui/rewardFly.ts). `from` is where
+   *  it bursts from, in the frame's own pixels, when the presenter knows (a
+   *  tapped cell); otherwise the UI uses the tap that claimed it. `tap`
+   *  marks what a Mana-paid tap gathered, which counts its fragments
+   *  differently (`rewardFragments`). */
+  onReward(fn: (haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void): void {
+    this.rewardListeners.push(fn);
   }
   onToast(fn: (msg: string) => void): void {
     this.toastListeners.push(fn);
@@ -502,6 +512,28 @@ export class Game {
   }
   toast(msg: string): void {
     for (const fn of this.toastListeners) fn(msg);
+  }
+  private reward(haul: Wallet, from?: { x: number; y: number }, tap = false): void {
+    for (const fn of this.rewardListeners) fn(haul, from, tap);
+  }
+
+  /**
+   * How many fragments a reward flies to the header as: one for each minute
+   * of the city's own production it is worth, so a big payout LOOKS big
+   * against what the player already makes — at least three, at most twelve,
+   * and five for a coin the city does not produce (Gems) or produces nothing
+   * of yet.
+   *
+   * A TAP that gathered fewer than five is counted out one fragment a unit,
+   * so a tap of 2 flies two; from five up it takes the rule above.
+   */
+  rewardFragments(c: CurrencyId, amount: number, tap = false): number {
+    if (tap && amount < 5) return Math.max(1, Math.floor(amount));
+    const perMinute = (RAIDABLE as readonly CurrencyId[]).includes(c)
+      ? cityRatePerSecond(this.state, c as RaidableId) * 60
+      : c === 'Mana' ? manaNetRegen(this.state) / 60 : 0;
+    if (perMinute <= 0) return 5;
+    return Math.min(12, Math.max(3, Math.round(amount / perMinute)));
   }
 
   // ------------------------------------------------------------------- ticking
@@ -572,7 +604,7 @@ export class Game {
         icon: '\u{1F5D3}',
         name: opened.name,
         desc: closed.cards > 0
-          ? `${closed.cards} cards melted down for ${closed.gold.toLocaleString('en-US')} gold. `
+          ? `${closed.cards} cards melted down for ${formatExact(closed.gold)} gold. `
             + 'A fresh album, and your relics keep every level.'
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',
@@ -721,8 +753,10 @@ export class Game {
           const { result, gold } = houseTap(this.state, district, this.now());
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
-            if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
-            else this.floaters.add(cell, '⏩');
+            if (gold > 0) {
+              this.floaters.add(cell, `+${gold}`, 'Gold');
+              this.tapReward(cell, 'Gold', gold);
+            } else this.floaters.add(cell, '⏩');
           } else if (result === 'NoMana') {
             this.outOfMana(cell);
           }
@@ -802,6 +836,22 @@ export class Game {
     });
   }
 
+  /**
+   * What a TAP gathered flies from the tapped cell into the header, the way a
+   * claimed reward does (ui/rewardFly.ts) — the player's own taps only;
+   * crews and rent land as numbers on the map. The burst starts at the
+   * cell's centre on screen, which a held press (its repeats are seconds
+   * after the pointer went down) could not get from the pointer. Sent after
+   * the header has redrawn, so the reward is held back from a total that
+   * already includes it.
+   */
+  private tapReward(cell: Coord, currency: CurrencyId, amount: number): void {
+    if (amount <= 0) return;
+    const box = this.camera.cellToScreen(cell);
+    const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+    queueMicrotask(() => this.reward({ [currency]: amount }, from, true));
+  }
+
   /** Out of energy, said once and in one place: every tap that spends Mana
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
@@ -821,6 +871,7 @@ export class Game {
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
       this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
+      this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
@@ -868,8 +919,10 @@ export class Game {
       }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
-      if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
-            else this.floaters.add(cell, '⏩');
+      if (gold > 0) {
+        this.floaters.add(cell, `+${gold}`, 'Gold');
+        this.tapReward(cell, 'Gold', gold);
+      } else this.floaters.add(cell, '⏩');
       this.notify();
       return true;
     }
@@ -1828,14 +1881,20 @@ export class Game {
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
    *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
-  manaInfo(): { value: number; cap: number; net: number; production: number; over: boolean } {
+  manaInfo(): {
+    value: number; cap: number; net: number; production: number; over: boolean;
+    nextIn: string | null;
+  } {
     const value = mana(this.state);
     const cap = manaCap(this.state);
+    const nextMs = msToNextMana(this.state, this.now());
     return {
       value,
       cap,
       net: manaNetRegen(this.state),
       production: manaProduction(this.state),
+      /** "+1 in 4m 12s" while the pool is filling; null when it is not. */
+      nextIn: nextMs === null ? null : `+1 in ${formatDuration(Math.ceil(nextMs / 1000))}`,
       /** An ad reward can push the pool past its ceiling; the UI shows that
        *  differently from merely being full. */
       over: value > cap,
@@ -2079,6 +2138,7 @@ export class Game {
       .map(([c, n]) => `+${n} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
+    this.reward(haul);
   }
 
   /** The Royal chest goes through the same confirmation every other real-money
@@ -2809,16 +2869,16 @@ export class Game {
   doClaimQuest(): void {
     const quest = activeQuest(this.state);
     const result = claimQuest(this.state);
+    let haul: Wallet | null = null;
     if (result === 'Claimed' && quest) {
       // The LAST claim gets the victory sting instead of the usual chime.
       const finished = activeQuest(this.state) === null;
       playSfx(finished ? 'chainFinished' : 'quest');
-      // One floater per currency rather than one string listing them all:
-      // each carries its own atlas icon, and an emoji in a joined string is
-      // exactly the fallback the art rules refuse.
-      for (const [c, n] of Object.entries(quest.reward)) {
-        this.floaters.add(townhall(this.state).location, `+${n}`, c);
-      }
+      // What it paid flies from the scroll into the header — once the header
+      // has redrawn, so a coin this claim puts on the plank has a slot.
+      haul = { ...quest.reward };
+      if (quest.rewardMana > 0) haul.Mana = (haul.Mana ?? 0) + quest.rewardMana;
+      if (quest.rewardGems > 0) haul.Gems = (haul.Gems ?? 0) + quest.rewardGems;
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
       if (finished) {
@@ -2832,6 +2892,7 @@ export class Game {
       }
     }
     this.notify();
+    if (haul !== null) this.reward(haul);
   }
 
   /** Active-quest snapshot for the pill; null when the chain is finished. */
@@ -3563,15 +3624,20 @@ export class Game {
 
   /** Per-second Build CTA: some uncapped district is affordable AND has a legal cell. */
   buildCtaLit(): boolean {
-    return BUILDABLE_DISTRICTS.some((id) => {
-      const def = DISTRICTS[id];
-      const capped =
-        districtCount(this.state, id) >= maxDistrictCount(this.state, def);
-      if (capped) return false;
-      const cells = validPlacementCells(this.state, this.map, id);
-      if (cells.length === 0) return false;
-      return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
-    });
+    return BUILDABLE_DISTRICTS.some((id) => this.canBuildNow(id));
+  }
+
+  /** How many buildings could be placed right now — the Build tab's count. */
+  buildCtaCount(): number {
+    return BUILDABLE_DISTRICTS.filter((id) => this.canBuildNow(id)).length;
+  }
+
+  /** Under its cap, somewhere legal to put it, and affordable this second. */
+  private canBuildNow(id: DistrictId): boolean {
+    const def = DISTRICTS[id];
+    if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
+    if (validPlacementCells(this.state, this.map, id).length === 0) return false;
+    return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
   }
 
   /** Per-second Research CTA: some technology can be started. The same shape
@@ -3582,6 +3648,11 @@ export class Game {
    *  purchase. Every node is a technology now, so it is one. */
   researchCtaLit(): boolean {
     return anyResearchActionable(this.state);
+  }
+
+  /** How many technologies can be started — the Research tab's count. */
+  researchCtaCount(): number {
+    return researchActionableCount(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */
@@ -3973,24 +4044,6 @@ export class Game {
    * and for the same reason. A coin on the plank is a coin you spend from
    * anywhere; neither of those is one.
    */
-  /**
-   * The small line a coin carries beside its number, or null.
-   *
-   * ONE coin has one today: Knowledge is a CLOCK rather than a pile, and a
-   * drip you cannot see the speed of is a drip you cannot plan against. It
-   * only appears on the screen that spends it, which is also the only screen
-   * the coin appears on at all.
-   *
-   * Rounded here, not in the view: the rate is a sum of fractions and binary
-   * floating point renders some of them with a long tail — one reached a
-   * screenshot as `+2.4000000000000004/h`.
-   */
-  coinRate(c: CurrencyId): string | null {
-    if (c !== 'Knowledge' || this.openOverlay !== 'research') return null;
-    const rate = knowledgePerHour(this.state);
-    return rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : null;
-  }
-
   visibleCurrencies(): CurrencyId[] {
     // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
     //

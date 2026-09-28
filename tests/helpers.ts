@@ -47,8 +47,8 @@ export const freshPresenter = (state: GameState = freshGame()): Game =>
 
 /** Screen coords that land on `cell`, for driving handleTap / handleHold. */
 export const screenAt = (game: Game, cell: Coord): [number, number] => {
-  const { x, y, size } = game.camera.cellToScreen(cell);
-  return [x + size / 2, y + size / 2];
+  const { x, y, w, h } = game.camera.cellToScreen(cell);
+  return [x + w / 2, y + h / 2]; // the centre of the cell's ground diamond
 };
 
 /**

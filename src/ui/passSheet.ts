@@ -17,7 +17,7 @@
 // object because it is the same question — "finish this" — answered with work
 // or with money, and two buttons side by side would read as two rewards.
 //
-// Reached from the Sowing Season pill, never auto-opened.
+// Reached from the season pill, never auto-opened.
 //
 // Docs/features/20-season-pass.md §6, drawn from
 // Docs/art/ui/mockups/m27-season-pass.png.
@@ -25,8 +25,9 @@
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 import type { PackTier } from '../sim/data/definitions';
+import { formatUsd } from '../sim/store';
 import { el, formatCount } from './format';
-import { currencyIcon, iconEl } from './kit';
+import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 import { spriteUrl } from '../render/sprites';
 
@@ -65,7 +66,11 @@ function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
 export function renderPassSheet(game: Game): HTMLElement {
   const pass = game.passScreen();
   const close = () => game.setOverlay(null);
-  const price = `€${pass.priceUsd.toFixed(2)}`;
+  // `formatUsd`, like the store, the payer sheet and the purchase confirm.
+  // This line used to write its own `€${...}` — a euro sign over a field
+  // called `priceUsd`, contradicting both its own data and every other price
+  // in the game.
+  const price = formatUsd(Math.round(pass.priceUsd * 100));
 
   // ---- the level bar. The medallion on the left is where the player IS; the
   // dim one on the right is the next rung, so the bar between them reads as a
@@ -90,7 +95,7 @@ export function renderPassSheet(game: Game): HTMLElement {
     // only way to a new mission is to finish an old one — there is nothing to
     // buy here.
     const action = m.complete
-      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim')
+      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim', ctaBadge(1, `mission:${m.id}`))
       : null;
     action?.addEventListener('click', () => game.doClaimMission(m.id));
     // WHAT IT PAYS, on the row and before the work. Rewards vary — a pack for
@@ -176,7 +181,7 @@ export function renderPassSheet(game: Game): HTMLElement {
       ...(c.locked && !c.claimed ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!c.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits);
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge(1, `pass:${track}:${level}`));
     b.addEventListener('click', () => game.doClaimPassCell(level, track));
     return b;
   };
@@ -219,7 +224,15 @@ export function renderPassSheet(game: Game): HTMLElement {
   // of its parent would resolve that share against nothing and collapse to
   // zero. `is-panes` gives the sheet a definite height, which is the thing the
   // two panes below divide.
-  const surface = sheet({ title: 'Sowing Season', onClose: close, tall: true }, body);
+  // THE SEASON THAT IS RUNNING, not the first one ever written. The pass
+  // "runs on the collection's season" (Docs/features/20-season-pass.md §1) —
+  // same table, same clock — so its name is the collection's, which
+  // `seasonInfo()` already resolves for the pill and the Collection header.
+  // Hard-coded, it announced Sowing Season while the collection two taps away
+  // said Season of Lanterns.
+  const surface = sheet({
+    title: game.seasonInfo().name, onClose: close, tall: true,
+  }, body);
   surface.classList.add('is-panes');
   return surface;
 }

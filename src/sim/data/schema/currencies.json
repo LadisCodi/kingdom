@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "fields": {
+    "cap": { "type": "unknown", "nullable": true, "min": 0 },
+    "start": { "type": "int", "min": 0 },
+    "primary": { "type": "bool" },
+    "goldValue": { "type": "int", "nullable": true, "min": 0 }
+  }
+}

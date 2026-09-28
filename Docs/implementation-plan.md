@@ -43,9 +43,11 @@ because they constrain what a *design* may ask for.
    advance groups work differently in replay than in live ticking — and a new
    consumer would shift every later roll for every existing player. Integer
    arithmetic, so it is bit-identical across engines and portable to a server.
-5. **The workbook is the source of truth for every NUMBER; the map editor is the
-   source of truth for the MAP; `?dev=tree` for the TECH TREE.** Editing the
-   generated balance JSON by hand is silently overwritten.
+5. **`?dev=data` is the source of truth for every piece of game data** — every
+   number, one file per collection in `src/sim/data/game/` with its schema in
+   `schema/`, and the MAP and the TECH TREE as boards inside it. What a legal
+   document is lives in `dataRules.ts`, `mapRules.ts` and `techTreeRules.ts`,
+   each checked by its editor, its save endpoint and a test.
 
 Two more that are design-visible:
 
@@ -103,6 +105,13 @@ each has an answer, or has one waiting in a doc.
 | **H7** | **No new sounds.** Casting, claiming, clearing a room and taking a depth all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
 ## 4. What is next, and what blocks it
+
+> **The 4X programme is sequenced elsewhere.** The isometric city, the hex
+> board, the asset set and the found books are cut into parallel lanes in
+> **[`plans/the-4x-build.md`](plans/the-4x-build.md)**, which also carries the
+> rules for running those lanes on several machines at once. This section is
+> the rest of the backlog; where the two meet, the lane plan wins.
+
 
 **Step 0 is done** — it had to come first, because every number the others
 author is priced against production. Each row's "blocked on" column is a hard
@@ -354,8 +363,8 @@ are gone, and a technology carries `effects` — a `stat` from a registry, an
 now a target rather than a call site; a new NUMBER is still code, one registry
 entry plus the reader that owns it.
 
-What the workbook still owns is every other number, including the `Eras`
-sheet — how many revealed cells each era bar asks for.
+Every other number is a collection in `?dev=data`; how many revealed cells
+each era bar asks for is the book's `eras`, in the same file as the tree.
 
 **What is still undecided and does not block starting:** the band sizes
 (**OQ-62** — the three tomes will not want the same shape), the join thresholds
@@ -371,7 +380,7 @@ bite on. It is also the one item on this list that is a **30-day retention
 question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
-- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §6.
+- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §1.1.
 - **OQ-1 closed 2026-09-07 — the plot is not bounded.** **OQ-48** (adjacency v2) is worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,
@@ -769,8 +778,9 @@ exists to remove.**
 
 | Content | Home | Tool |
 |---|---|---|
-| **Every number** — districts, harvest, technologies, upgrades, quests, currencies, units, relics, heroes, adjacency, settings | `balance/balance.xlsx` → generated JSON | the workbook, then the importer |
-| **The map** — terrain, features, landmarks, ruins, **and the garrison on each site** | `region-map.json` | **`?dev=map`** ([`map-editor.md`](map-editor.md)) |
+| **Every number** — buildings, harvest, quests, currencies, units, relics, heroes, adjacency, settings | `src/sim/data/game/<collection>.json`, schema in `schema/` | **`?dev=data`** ([`plans/data-editor.md`](plans/data-editor.md)) |
+| **The map** — terrain, features, landmarks, ruins, **and the garrison on each site** | `region-map.json` | **`?dev=data#map`** ([`map-editor.md`](map-editor.md)) |
+| **The tech tree** — every technology, its slot and its bands | `tech-tree.json` | **`?dev=data#tree`** ([`tech-tree-editor.md`](tech-tree-editor.md)) |
 | **Event and banner schedules** | a live-ops data file | hand-written — wall-clock dates are not balance numbers |
 
 Data versus code, in one table:
@@ -779,11 +789,11 @@ Data versus code, in one table:
 |---|---|
 | every balance number | a new quest **goal type** |
 | **the whole map**, in the editor | a new terrain or feature id, or a sixth ruin |
-| the whole quest chain — **row order is chain order** | a new modifier stat (one line plus one call site) |
+| the whole quest chain — **list order is chain order** | a new modifier stat (one line plus one call site) |
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
-| a seasonal hero = one hero row + one banner row; **the whole shape of the tech tree**, in `?dev=tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
+| a seasonal hero = one `heroes` entry + one `banners` entry; **the whole shape of the tech tree**, at `?dev=data#tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
-| a gate's threat, power and counters, per ruin in the editor; take seconds and supplies per tier in the workbook | the `ClearGarrisons` goal type |
+| a gate's threat, power and counters, per ruin in the editor; take seconds and supplies per tier in `garrisons` | the `ClearGarrisons` goal type |
 
 ## 7. Testing conventions worth keeping
 

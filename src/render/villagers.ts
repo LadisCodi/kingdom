@@ -32,7 +32,13 @@ interface Agent {
 /** A draw position plus what the renderer needs to animate the stroll. */
 export interface VillagerPose extends Coord {
   walking: boolean;
-  dx: number; // sign of horizontal travel while walking (for mirroring)
+  /**
+   * Which way the walk goes ACROSS THE SCREEN, for mirroring. Not the cell
+   * dx: the grid is square but the projection is isometric, so a step in +y
+   * goes LEFT on screen and a villager walking "down" the grid was being
+   * drawn facing the wrong way (src/render/camera.ts).
+   */
+  dx: number;
   phase: number;
 }
 
@@ -124,7 +130,7 @@ export class Villagers {
         x: a.from.x + (a.to.x - a.from.x) * t,
         y: a.from.y + (a.to.y - a.from.y) * t,
         walking: true,
-        dx: a.to.x - a.from.x,
+        dx: (a.to.x - a.from.x) - (a.to.y - a.from.y),
         phase: a.phase,
       };
     });

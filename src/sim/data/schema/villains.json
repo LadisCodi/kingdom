@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "fields": {
+    "name": { "type": "text" },
+    "glyph": { "type": "text" },
+    "sprite": { "type": "text" },
+    "unitType": { "type": "text", "ref": "unit" },
+    "dmg": { "type": "int" },
+    "def": { "type": "int" },
+    "hp": { "type": "int", "min": 1 },
+    "cooldown": { "type": "int" },
+    "troopDmgMult": { "type": "float" },
+    "troopHpMult": { "type": "float" },
+    "troopDefBonus": { "type": "int" },
+    "power": { "type": "int" }
+  }
+}

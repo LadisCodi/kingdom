@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "fields": {
+    "name": { "type": "text" },
+    "tier": { "type": "int", "min": 1 },
+    "input": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "currency" },
+    "inputMana": { "type": "int" },
+    "inputGood": { "type": "text", "nullable": true, "ref": "good" },
+    "inputGoodAmount": { "type": "int" },
+    "workSeconds": { "type": "int", "min": 1 }
+  }
+}

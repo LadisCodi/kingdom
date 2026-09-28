@@ -7,15 +7,31 @@
 // the geography lives here.
 
 import { LANDMARKS, RUINS, type LandmarkDef, type RuinDef } from './data/definitions';
-import { coordKey, type Coord, type RuinId } from './state';
+import { cellsOfRect, coordKey, type Coord, type RuinId } from './state';
 
-const LANDMARK_BY_CELL: ReadonlyMap<string, LandmarkDef> = new Map(
-  LANDMARKS.map((l) => [coordKey(l.location), l]),
-);
+/**
+ * Every cell a site stands on, not just the one it is anchored at.
+ *
+ * A sanctuary or a ruin may be more than one cell a side
+ * (Docs/features/01-map-and-fog.md §3.1), and every cell of it answers as the
+ * site: you cannot build on any of them, and a tap anywhere on it is a tap on
+ * it. The size is AUTHORED here rather than grouped, because a ruin is
+ * placed, not painted.
+ */
+const spread = <T extends { location: Coord; size: number }>(
+  sites: readonly T[],
+): ReadonlyMap<string, T> => {
+  const out = new Map<string, T>();
+  for (const s of sites) {
+    for (const c of cellsOfRect(s.location, { x: s.size, y: s.size })) {
+      out.set(coordKey(c), s);
+    }
+  }
+  return out;
+};
 
-const RUIN_BY_CELL: ReadonlyMap<string, RuinDef> = new Map(
-  Object.values(RUINS).map((r) => [coordKey(r.location), r]),
-);
+const LANDMARK_BY_CELL = spread(LANDMARKS);
+const RUIN_BY_CELL = spread(Object.values(RUINS));
 
 export const landmarkDefAt = (cell: Coord): LandmarkDef | undefined =>
   LANDMARK_BY_CELL.get(coordKey(cell));

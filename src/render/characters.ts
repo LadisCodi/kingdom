@@ -8,7 +8,7 @@
 // this module only knows how to put a frame on the ground.
 
 import atlasUrl from './characters/atlas.png?url';
-import { CHARACTERS, type CharFrame } from './characters/atlas.generated';
+import { CHARACTERS, CHAR_HEIGHT, type CharFrame } from './characters/atlas.generated';
 import { FRAME_MS } from './cast';
 
 const atlas = { img: new Image(), ready: false };
@@ -25,18 +25,29 @@ export function frameAt(character: string, anim: string, t: number): CharFrame |
 }
 
 /**
- * Nearest-neighbour scale for a character standing on a cell `size` px wide.
+ * HOW TALL A PERSON STANDS, as a fraction of a plot's ground diamond width.
  *
- * The pack's people are ≈22 px tall and the legacy worker stands 0.6 of a
- * cell, so 2× at zoom 1 (72 px cells) keeps the same silhouette on screen.
- * Whole numbers only: a fractional scale doubles some source pixels and not
- * others, which is what makes pixel art shimmer while it walks.
+ * It is the yardstick the whole map is scaled against — a boar is about half
+ * of it, a cottage four times it, a stand of trees three and a half
+ * (Docs/art/features/props.json). 0.38 puts a villager a little under a
+ * cottage's door, which is where the eye expects a person.
  */
-export const unitScale = (size: number): number => Math.max(1, Math.round(size / 36));
+export const UNIT_PLOTS = 0.38;
 
 /**
- * Draw one frame with its feet at (feetX, feetY), `scale` screen px per
- * source px, mirrored about the feet when `flip`.
+ * How many screen pixels tall a person should be drawn, given `size` — one
+ * cell's worth of pixels, which is half the diamond's width (Camera.unit).
+ */
+export const unitHeight = (size: number): number => size * 2 * UNIT_PLOTS;
+
+/**
+ * Draw one frame with its feet at (feetX, feetY), standing `targetH` screen
+ * pixels tall, mirrored about the feet when `flip`.
+ *
+ * A HEIGHT and not a scale, because the pack is not one resolution: the
+ * legacy sprites are 22 px people and the new ones are rendered at ten times
+ * that. The scale comes from the character's own `CHAR_HEIGHT`, so both
+ * stand the same height on the grass.
  *
  * Returns false when the atlas has not loaded or the animation does not
  * exist — same contract as `drawSprite`, so the caller can fall through to
@@ -49,21 +60,28 @@ export function drawCharacter(
   t: number,
   feetX: number,
   feetY: number,
-  scale: number,
+  targetH: number,
   flip = false,
 ): boolean {
   if (!atlas.ready) return false;
   const f = frameAt(character, anim, t);
   if (!f) return false;
   const [sx, sy, w, h, ax] = f;
+  const nominal = CHAR_HEIGHT[character] ?? h;
+  const scale = targetH / nominal;
   const dw = w * scale;
   const dh = h * scale;
   // Snap the feet to whole pixels so the integer scale actually lands on the
   // pixel grid; the anchor then places the body, not the bitmap.
-  const fx = Math.round(feetX);
-  const fy = Math.round(feetY);
+  const fx = scale >= 1 ? Math.round(feetX) : feetX;
+  const fy = scale >= 1 ? Math.round(feetY) : feetY;
+  // Nearest neighbour only when a source pixel is being MAGNIFIED, which is
+  // the legacy pack: a fractional magnification doubles some source pixels
+  // and not others, and that is what makes pixel art shimmer as it walks.
+  // The new art is always being scaled DOWN, where nearest neighbour is
+  // simply aliasing.
   const smoothing = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = scale < 1;
   if (flip) {
     ctx.save();
     ctx.translate(fx, 0);

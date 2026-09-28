@@ -1,6 +1,27 @@
-// Placeholder art: one flat-color table. Real pixel art slots in later.
+// Flat-colour fallbacks under the art, and the one measurement the whole
+// world is drawn from.
 
 import type { TerrainId } from '../sim/state';
+
+// ------------------------------------------------------------- the tile
+//
+// THE PROJECTION IS A 2:1 ISOMETRIC one. A cell's ground diamond is
+// `TILE_W` across and `TILE_H` tall — half as tall as it is wide is
+// not a style, it IS the projection: the horizontal axes run at 26.57° and
+// every square on the ground draws as a diamond twice as wide as it is high.
+// Change the pair and every piece of art in Docs/art/ is the wrong size
+// (Docs/art/art-direction.md §3).
+//
+// The grid underneath is still SQUARE. Isometric is a projection, not a
+// grid: `src/sim/grid.ts` and its three distance metrics never hear about
+// this file.
+export const TILE_W = 128;
+export const TILE_H = 64;
+
+// The MAP EDITOR paints data by coordinate, not a world, so it keeps a flat
+// square grid (`Camera`'s 'flat' projection). A diamond is the right way to
+// look at a kingdom and the wrong way to fill in a spreadsheet of terrain.
+export const FLAT_TILE = 72;
 
 export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Grassland: '#4a7c3f',
@@ -61,4 +82,3 @@ export const PALETTE = {
   label: '#ffffff',
 };
 
-export const TILE_SIZE = 72; // world pixels per cell at zoom 1

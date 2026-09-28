@@ -1,0 +1,72 @@
+Generate one image. Square framing, 1:1 aspect ratio.
+
+Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
+
+This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game—not marketing key art.
+
+=== NEW SCENE ===
+A single small INFIRMARY, alone, centred — where wounded soldiers recover.
+
+A calm cottage of cream stone with a BLUE tiled roof and a pale cream awning stretched on poles over the doorway. Through the open door, the end of a neat bed with white linen is visible. Terracotta pots of green herbs line the wall, and a small water basin stands by the step. Quiet and clean.
+
+NO RED CROSS anywhere - not on the awning, not on a banner, not on a sign. The red cross is a protected emblem and must never appear. What says 'healing' here is the herbs, the clean linen and the water basin, nothing more.
+
+=== THIS IS THE SAME BUILDING, UPGRADED TO LEVEL 8 ===
+The attached sprite is this building at level 1. This image is THAT SAME BUILDING after the player has upgraded it — not a different building, and not a second design.
+KEEP, exactly: its silhouette and proportions, its palette, its roof colour and roof shape, the placement of its door, and every feature that identifies it. A player must recognise it at a glance and never have to re-learn which building this is.
+ADD, and only this: a small hospice: two wings under blue roofs, a covered cloister walk with stone arches, a herb garden in raised stone beds, and a bell hanging over the door.
+The building grows by gaining mass, storeys and props. It is never replaced, never restyled, and never moved on its plot.
+
+=== NO GROUND — THIS IS CRITICAL ===
+Draw the BUILDING ONLY. Do NOT draw any ground underneath it.
+There must be NO grass, NO soil, NO turf plate, NO raised earth block, NO rocky base, NO island, NO platform and NO terrain of any kind. The game supplies the ground from its own separate terrain tiles; this asset is only what STANDS on that ground.
+The low stone wall, the bushes and the short earth path are part of the building and stay — but they sit directly on nothing, with full transparency beneath and around them.
+Below the building's footprint there is transparency, not soil. Nothing is cut away and nothing hangs in mid-air: simply do not draw a ground plate at all.
+
+=== CAMERA — THIS IS CRITICAL ===
+The building occupies a plot of 1 by 1 tiles.
+The camera is a TRUE 2:1 ISOMETRIC game camera: the horizontal axes run at exactly 26.57° above the horizon, so any square on the ground is drawn as a DIAMOND THAT IS EXACTLY TWICE AS WIDE AS IT IS TALL. Vertical lines in the world stay perfectly vertical on screen.
+CONCRETE TEST: if you traced the outline of the plot, that diamond would measure 1000 pixels from its left corner to its right corner and exactly 500 pixels from its top corner to its bottom corner. Half as tall as it is wide. Check this before you finish.
+The camera is LOWER and FLATTER than a typical three-quarter view — you see more of the walls and less of the roofs than you would from above.
+It is NOT a perspective camera, NOT a 45° three-quarter view, NOT a top-down view and NOT a 1.5:1 camera. There is no vanishing point and no convergence: the projection is parallel/orthographic throughout, so the far edges of the building are exactly as wide as the near ones.
+
+=== EVERYTHING FITS THE PLOT — THIS IS CRITICAL ===
+The building and every prop that belongs to it — walls, fences, bushes, carts, stacks, racks, paths, troughs — must sit INSIDE the plot's diamond. Nothing stands outside the plot. A roof may overhang its walls slightly, the way a roof does, but no prop and no part of the building crosses the plot's edge.
+The plot's diamond is therefore the FULL WIDTH of the drawing: the leftmost and the rightmost points of everything you draw are the plot's left and right corners. If a prop would push past that, make it smaller or move it in.
+Fill the plot well: the building should occupy most of it, not sit small in the middle of empty space.
+
+=== COMPOSITION ===
+The single building, centred, with comfortable empty breathing room on all four sides. Nothing else in the frame. No other buildings, no terrain, no landscape, no horizon, no sky, no ground.
+
+=== BACKGROUND — DELIVER A PNG WITH A REAL ALPHA CHANNEL ===
+Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
+The building, its low wall, its bushes and its short path must be the ONLY opaque pixels in the file. Every pixel outside them must be fully transparent, alpha = 0.
+The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
+The building's own cast shadow may stay, softly faded into full transparency.
+
+=== LOCKED VISUAL STYLE ===
+Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
+
+Highly saturated fantasy palette: vivid spring greens, warm cream stone, golden straw and timber, rich blue accents, clear cyan water, and warm earthy paths. Soft midday sunlight with gentle shadows, subtle ambient occlusion, restrained rim lighting, and a clean bright atmosphere.
+
+Rounded, chunky, immediately readable silhouettes. Buildings have compact proportions with slightly oversized roofs, towers, doors, windows, and important gameplay features. Architecture and props should feel charming and handcrafted while remaining clean and structurally understandable.
+
+Smooth, simplified materials with subtle surface variation—no photographic textures, dirt overlays, grain, or excessive micro-detail. Softly bevelled forms, clean edges, tidy vegetation, clustered rounded tree canopies, and small decorative details used sparingly.
+
+The environment should feel like a polished mobile strategy-game diorama. Keep every building, resource, unit, road, and terrain type visually distinct at thumbnail size. Maintain a clear hierarchy, generous spacing, and low visual clutter.
+
+If terrain boundaries are visible, present them as softly rounded, raised diorama edges.
+
+Characters and soldiers must remain small gameplay-scale figures integrated into the environment. They must never pose for the camera or become the main subject. For this image there are no characters at all.
+
+=== AVOID ===
+No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, or advertising layout.
+
+No real-world protected emblems or trademarks. In particular NO RED CROSS and no red crescent, anywhere, on anything.
+
+No dramatic cinematic framing, close-up heroes, posed characters, camera flare, lens flare, heavy bloom, harsh shadows, fog, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
+
+No checkerboard pattern painted into the image. No opaque background of any colour. The PNG's background must be genuinely transparent via its alpha channel.
+
+Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.
+Above all: NO GROUND PLATE, and the 2:1 camera ratio exactly.

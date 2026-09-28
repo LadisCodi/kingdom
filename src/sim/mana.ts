@@ -175,6 +175,20 @@ export const manaFillHours = (state: GameState): number => {
   return rate <= 0 ? Infinity : manaCap(state) / rate;
 };
 
+/**
+ * Milliseconds until the next whole Mana lands, or null when none will: the
+ * rate is zero, or the pool is at (or past) its ceiling and the unit would
+ * spill. Read off the same anchor `accrueMana` advances, so the countdown
+ * reaches zero on the tick that pays it.
+ */
+export function msToNextMana(state: GameState, now: number): number | null {
+  const rate = manaNetRegen(state);
+  if (rate <= 0 || mana(state) >= manaCap(state)) return null;
+  const msPerMana = 3_600_000 / rate;
+  const elapsed = Math.max(0, now - state.city.lastManaAt);
+  return msPerMana - (elapsed % msPerMana);
+}
+
 /** Accrue whole Mana against the anchor, exactly as accrueTaxes does for Gold.
  *  Runs in `runContinuous`, so it is city production and the 8h offline cap
  *  applies to it. */

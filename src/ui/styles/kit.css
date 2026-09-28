@@ -70,8 +70,47 @@
 }
 /* The title grows; the close knob sits at the strip's end, inside it, so the
    plank is the whole of the sheet's chrome above the content. */
-.k-plank > span:first-child { min-width: 0; max-width: calc(100% - 96px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+/* A SHEET'S TITLE MAY NOT BE CUT. It is how the player knows what they just
+ * opened, and `nowrap` + ellipsis turned "Who are you playing as?" into "Who
+ * are you play…" — 96px of that strip is reserved for the close knob on both
+ * sides so the word stays centred, which leaves less room than a plank looks
+ * like it has. So it wraps instead, and the strip grows with it; two lines is
+ * the cap, because a title needing three is a title, not a sentence. */
+.k-plank > span:first-child {
+  min-width: 0;
+  max-width: calc(100% - 96px);
+  text-align: center;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 .k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
+
+/* A section's heading inside a menu (kit sectionHead): a short rule, the
+   label in small uppercase wood, and a rule running on to the edge. */
+.k-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wood);
+}
+.k-section-head::before,
+.k-section-head::after {
+  content: '';
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(92, 58, 30, 0.28);
+}
+.k-section-head::before { flex: none; width: 10px; }
+.k-section-head::after { flex: 1; }
 
 /* Rope grab handle on a sheet. */
 .k-grab {
@@ -109,7 +148,7 @@
   border-radius: 6px;
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
-.k-card .k-desc { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
+.k-card .k-desc { font-size: var(--text-desc); font-weight: var(--weight-small); color: var(--ink-muted); }
 .k-card > .k-slot .icon { --icon-size: 28px; }
 
 .k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -137,7 +176,7 @@
   padding: 8px 14px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-size: var(--text-button);
   font-weight: var(--weight-strong);
   color: var(--ink-inverse);
   background: var(--slab);
@@ -411,24 +450,26 @@
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 
 /* ------------------------------------------------- the ?dev=kit gallery ---
- * Not player-facing. Deliberately plain so the kit is what you look at. */
+ * Not player-facing. Its ground is the menus' own cream parchment — the
+ * colour nearly every piece of the kit is drawn on — so colours and
+ * contrast are judged where they will actually be seen. */
 .gal {
   position: absolute;
   inset: 0;
   z-index: 100;
   overflow-y: auto;
   padding: 20px 16px 60px;
-  background: #2b2119;
-  color: var(--parchment);
+  background: var(--parchment) url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+  color: var(--ink);
   font-size: var(--text-body);
 }
 .gal h2 {
   font-size: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--gold);
+  color: var(--wood-dark);
   margin: 22px 0 10px;
-  border-bottom: 1px solid var(--wood-dark);
+  border-bottom: 1px solid rgba(92, 58, 30, 0.35);
   padding-bottom: 4px;
 }
 .gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
@@ -490,7 +531,6 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: 10px;
 }
 .k-sheet-body {
   min-height: 0;
@@ -605,7 +645,6 @@
   background: var(--parchment-shade); border: 2px solid var(--wood-dark); border-radius: var(--radius-sm);
 }
 .gal-phone-nav .nav-tab .icon { --icon-size: 24px; }
-.gal-phone-nav .nav-tab.is-cta { background: var(--gold); border-color: var(--gold-dark); }
 .gal-ruler { display: flex; flex-direction: column; gap: 4px; }
 .gal-ruler-tick {
   display: grid; place-items: center;
@@ -620,3 +659,180 @@
 .k-sheet.is-centred { max-width: 340px; max-height: 78%; margin-left: auto; margin-right: auto; }
 /* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
 .k-sheet.is-tall { height: auto; max-height: calc(100% - 96px); margin-top: auto; }
+
+/* The materials page. A specimen sits on a CHECKERBOARD, not on the page's
+ * brown: a frame whose corner is transparent where it should be opaque, or
+ * opaque where it should be cut away, is invisible against a flat ground and
+ * obvious against this one. */
+.gal-slice { margin-bottom: 18px; }
+.gal-box {
+  box-sizing: border-box;
+  background-color: transparent;
+  --sq: #00000022;
+  background-image:
+    linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%),
+    linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+/* …except where the specimen IS the background, which the checkerboard would
+ * then be painted over anyway. Those set their own, so keep the box bare. */
+.gal-box--bare { background-image: none; }
+
+/* ------------------------------------------------------ the call to action
+ * THE ONE BADGE for "there is something for you here", everywhere in the
+ * game (kit/cta.ts builds it): a small scrying orb on its host's corner
+ * (sheets/ui-nav4-orb.png). Three layers:
+ *   ::before  a red halo behind it, pulsing very slowly;
+ *   ::after   the orb under a warm glint that jumps between spots in STEPPED
+ *             frames — a flicker, not a glide — in two stirrings, then rests:
+ *             something inside is waking. The count, when there is one, is
+ *             printed on it.
+ * Both loops take their phase from --cta-*-delay, which cta.ts sets from the
+ * page clock plus an offset of the badge's own, so a badge rebuilt every tick
+ * carries on where the last one was and no two orbs stir in step. The host
+ * must be positioned. */
+.k-cta {
+  --cta-size: calc(var(--rpx) * 44);
+  position: absolute;
+  top: calc(var(--cta-size) * -0.3);
+  right: calc(var(--cta-size) * -0.3);
+  z-index: 2;
+  width: var(--cta-size);
+  height: var(--cta-size);
+  pointer-events: none;
+}
+.k-cta::before,
+.k-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.k-cta::before {
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 70, 40, 0.7) 0%, rgba(230, 40, 20, 0.4) 38%, rgba(200, 20, 10, 0.12) 55%, transparent 70%);
+  transform: scale(2.4);
+  animation: k-cta-halo 5.5s ease-in-out var(--cta-halo-delay, 0ms) infinite alternate;
+}
+.k-cta::after {
+  /* The glint is a small warm spot kept inside the glass: its radius is a
+     third of the orb, so no frame below lets it spill past the rim. */
+  background:
+    radial-gradient(circle, rgba(255, 214, 150, 0.55), rgba(255, 140, 60, 0.18) 45%, transparent 70%) 50% 50% / 46% 46% no-repeat,
+    url('../assets/badge-orb.png') center / contain no-repeat;
+  background-blend-mode: screen, normal;
+  filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4));
+  animation: k-cta-wake 6.4s steps(1) var(--cta-wake-delay, 0ms) infinite;
+}
+/* The count, in the chrome's cream with a dark rim so it reads on the red
+   glass at badge size; "9+" a notch smaller so it stays inside it. */
+.k-cta[data-count]::after {
+  content: attr(data-count);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-body);
+  font-size: calc(var(--cta-size) * 0.52);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  color: #fff6e0;
+  text-shadow:
+    0 calc(var(--cta-size) * 0.04) 0 #4a0d06, calc(var(--cta-size) * 0.04) 0 0 #4a0d06,
+    calc(var(--cta-size) * -0.04) 0 0 #4a0d06, 0 calc(var(--cta-size) * -0.04) 0 #4a0d06;
+}
+.k-cta[data-count='9+']::after { font-size: calc(var(--cta-size) * 0.42); }
+/* A badge that has just appeared pops in (set by setCta on a lasting host). */
+.k-cta.is-new { animation: k-cta-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both; }
+@keyframes k-cta-in {
+  from { scale: 0; }
+  to { scale: 1; }
+}
+@keyframes k-cta-halo {
+  from { opacity: 0.55; transform: scale(2.2); }
+  to { opacity: 1; transform: scale(2.75); }
+}
+/* Two stirrings — five frames, then seven — each settling back, with long
+   stills between: the glint moving between spots inside the glass and the
+   brightness nudged by a few percent. */
+@keyframes k-cta-wake {
+  0%    { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  5%    { background-position: 43% 56%, center; filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  9%    { background-position: 56% 47%, center; filter: brightness(1.03) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  13%   { background-position: 47% 60%, center; filter: brightness(1.1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  17%   { background-position: 53% 55%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  21%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  40%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  44%   { background-position: 58% 58%, center; filter: brightness(1.05) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  48%   { background-position: 45% 48%, center; filter: brightness(1.09) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  52%   { background-position: 54% 44%, center; filter: brightness(1.13) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  56%   { background-position: 42% 54%, center; filter: brightness(1.07) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  60%   { background-position: 51% 62%, center; filter: brightness(1.11) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  64%   { background-position: 55% 50%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  68%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  100%  { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-cta,
+  .k-cta::before,
+  .k-cta::after { animation: none; }
+}
+
+/* ------------------------------------------------------------ the window
+ * The entrance and the exit of every window (material.css's .k-frame: a kit
+ * sheet, the district card), in the scheme of the quest scroll and the
+ * banner:
+ *   in   the contents hidden; the frame fades in and grows from its least
+ *        height (its top and bottom slices, nothing between, so it never
+ *        distorts) to its full height; the contents fade in from 80% of the
+ *        way;
+ *   out  the contents fade out, then the frame shrinks back to its least
+ *        height and fades.
+ * IN is keyed to the mount (data-entering, kit/host.ts) and to the elements
+ * built while it lasts (data-fresh): a legacy screen rebuilds every tick,
+ * and --enter-offset — the time since mount, as a negative delay — makes a
+ * rebuilt element carry on where the last one was. OUT is keyed to
+ * data-leaving, which the slot sets on a window closing back to the map and
+ * holds for the length of the exit. */
+[data-entering] .k-sheet[data-fresh] > .k-panel > .k-frame,
+#panel[data-entering] .dc > .k-frame {
+  animation: k-window-in 160ms cubic-bezier(0.2, 0.7, 0.3, 1) var(--enter-offset, 0ms) both;
+}
+[data-entering] .k-sheet[data-fresh] > .k-panel > :not(.k-frame),
+#panel[data-entering] .dc > :not(.k-frame) {
+  animation: k-window-words-in 70ms ease calc(var(--enter-offset, 0ms) + 128ms) both;
+}
+[data-leaving] .k-panel > .k-frame,
+.dc[data-leaving] > .k-frame,
+[data-leaving] .dc > .k-frame {
+  animation: k-window-out 140ms cubic-bezier(0.5, 0, 0.8, 0.5) 60ms both;
+}
+[data-leaving] .k-panel > :not(.k-frame),
+.dc[data-leaving] > :not(.k-frame),
+[data-leaving] .dc > :not(.k-frame) {
+  animation: k-window-words-out 60ms ease both;
+}
+/* A closed window is on its way out: nothing on it takes a tap. */
+[data-leaving] { pointer-events: none; }
+@keyframes k-window-in {
+  from { height: var(--win-min); opacity: 0; }
+  to { height: 100%; opacity: 1; }
+}
+@keyframes k-window-out {
+  0% { height: 100%; opacity: 1; }
+  75% { height: var(--win-min); opacity: 1; }
+  100% { height: var(--win-min); opacity: 0; }
+}
+@keyframes k-window-words-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes k-window-words-out {
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-entering] .k-frame,
+  [data-entering] .k-panel > *,
+  [data-entering] .dc > *,
+  [data-leaving] .k-frame,
+  [data-leaving] .k-panel > *,
+  [data-leaving] .dc > * { animation-duration: 1ms; animation-delay: 0ms; }
+}

@@ -22,7 +22,7 @@
 // back up the page, two technologies claiming one gate. A warning is something
 // a designer probably did not mean.
 
-import balance from './balance.json';
+import balance from './balance';
 import { COLS } from '../../ui/research/layout';
 import { effectProblems, type TechEffect } from './techEffectRules';
 import type { TomeId } from '../state';

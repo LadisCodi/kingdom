@@ -6,10 +6,12 @@
 // a renamed frame file fails a test rather than silently falling back to the
 // old worker sprite.
 //
-// Cosmetic, deliberately NOT in the balance workbook: nothing here changes a
-// number the player can feel.
+// Which characters crew a building is data — each building's `crew`, in
+// `data/game/buildings.json`, authored in ?dev=data. This module reads it;
+// the villagers and the pose rules below are the renderer's own.
 
 import { CHARACTERS } from './characters/atlas.generated';
+import { DISTRICTS } from '../sim/data/definitions';
 import type { DistrictId } from '../sim/state';
 
 /** What the renderer asks a character to do. */
@@ -19,29 +21,49 @@ export type UnitPose = 'idle' | 'walk' | 'work';
  * The crew of each working building — a worker is cast by a stable hash of
  * its id, so it keeps its face across frames and reloads. Every member must
  * have an `idle`; `walk` and `work` resolve through `animFor` below.
+ * Workshop crews never leave the building — they are drawn at its door — so
+ * they have no walk, and `animFor` falls back to idle for one.
  *
- * The Docks are absent on purpose: its workers are fishing boats, drawn from
- * `src/render/assets` as before.
+ * The Docks' crew member is a BOAT with a fisherman standing in it — one
+ * subject, drawn and scaled as a single figure, because a boat is what rows
+ * out to a shoal and comes back.
  */
-export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
-  Farm: ['farm_1', 'farm_2', 'farm_3'],
-  Sawmill: ['sawmill_man_1', 'sawmill_woman_1'],
-  Quarry: ['quarry_man_1', 'quarry_man_2', 'quarry_woman_1', 'quarry_woman_2'],
-  // Workshop crews never leave the building — they are drawn at its door —
-  // but they are villagers like any other, so they are cast the same way.
-  // Carpenter and RuneCarver are absent because the pack has nobody with a
-  // work loop for either trade; tests/characters.test.ts names them.
-  MasonsYard: ['stonemason_man_1', 'stonemason_woman_1'],
-  Smelter: ['forge_man_1', 'forge_woman_1'],
-};
+export const CREW: Partial<Record<DistrictId, readonly string[]>> = Object.fromEntries(
+  Object.entries(DISTRICTS).filter(([, d]) => d.crew.length > 0).map(([id, d]) => [id, d.crew]),
+);
 
-/** Unassigned population strolling around the Townhall and Housing. */
+/**
+ * Unassigned population strolling around the Townhall and Housing.
+ *
+ * `villager_*` are the game's own people, rendered in the current style
+ * (Docs/art/villagers). The bought pixel pack's `npc_*` and `man_01` are
+ * gone from here: the two do not sit together, and four faces is enough for
+ * a crowd that nobody counts.
+ */
 export const VILLAGERS: readonly string[] = [
-  'npc_1', 'npc_2', 'npc_3', 'npc_4', 'npc_5', 'npc_6', 'man_01',
+  'villager_1', 'villager_2', 'villager_3', 'villager_4',
 ];
 
+/**
+ * THINGS A PERSON STANDS IN, not behind.
+ *
+ * A crop plot is a field of wheat. It is tall enough to cover a villager's
+ * legs, and the geometry says so honestly — but a villager among the crop is
+ * IN the field, not behind a wall, and outlining them as though something
+ * were in front of them reads as a fault rather than as depth.
+ *
+ * So these are drawn in their proper depth order, and simply never count as
+ * hiding anybody. The rule is about HEIGHT, not about crops: anything low
+ * enough to wade through belongs here.
+ *
+ * Cosmetic, like the cast below, and no business of the workbook's.
+ */
+export const NEVER_HIDES: ReadonlySet<DistrictId> = new Set<DistrictId>([
+  'FarmLands',
+]);
+
 /** A crew member for a building of this kind, or null when the building has
- *  no cast (Docks) — the caller then draws the legacy sprite chain. */
+ *  no cast at all — a decoration, or a district that does not work. */
 export function castFor(district: DistrictId, seed: number): string | null {
   const crew = CREW[district];
   if (!crew || crew.length === 0) return null;

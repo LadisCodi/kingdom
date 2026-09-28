@@ -132,11 +132,10 @@ describe('chrome metrics', () => {
     expect(offenders).toEqual([]);
   });
 
-  // The frame is pillarboxed to 9:16, so on a desktop the WINDOW is far wider
-  // than the box the game is drawn in. A `@media (max-width: …)` therefore
-  // asks about a width the player never has, which is how the HUD's phone
-  // layout shipped without ever having been seen. Width-keyed rules belong to
-  // the frame's container query instead.
+  // Width-keyed rules ask the FRAME (#app, or the dev gallery's phone), not
+  // the window: a `@media (max-width: …)` reads the browser window, which the
+  // gallery's phone frame is not, and which the frame was not while the game
+  // was pillarboxed — how the HUD's phone layout once shipped unseen.
   it('asks the frame about its width, never the window', () => {
     const offenders: string[] = [];
     for (const [name, css] of sheets) {

@@ -25,7 +25,7 @@
   ranks I and II land in era 1, III and IV in era 2, V in era 3; `—` is no
   rank that era.
 - *(planned)*: on the tree, no effect yet (§7). *(designed, not built)*: not
-  in the workbook.
+  in `tech-tree.json`.
 - A technology never requires a technology in another tome.
 
 ## 2. Tome I — Civics — 66 nodes
@@ -84,8 +84,8 @@ hang off it.
 | **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
 
 The four decoration cards sit where their pieces' Townhall gates fall
-([`18-harmony.md`](18-harmony.md)): a piece is DISCOVERED here and then waits
-on the count cap its row on the `Districts` sheet gives it, so the build sheet
+([`21-harmony.md`](21-harmony.md)): a piece is DISCOVERED here and then waits
+on the count cap its `buildings` entry gives it, so the build sheet
 never shows a decoration the player has not read about.
 
 Civics carries **no `planned` card**. With every requirement one row up (§2.4,
@@ -226,7 +226,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Sanctified Ruins** | a cleared ruin's Knowledge drip doubles |
 | **Ritual Casting** *(planned)* | a relic active can target a **building**, not only a cell |
 | **Ley Storm** *(planned)* | once a day, cast a kingdom-wide +25% production window |
-| **Second Sanctum** | a second Sanctum may be built (`extra_count_tech` on the district) |
+| **Second Sanctum** | a second Sanctum may be built (`extraCountTech` on the district) |
 
 ### 4.4 Magic rank ladders
 
@@ -266,7 +266,7 @@ and every rank is an ordinary card gated by the row above it like any other.
   against no starting grant at all — the quest chain funds the cards it asks
   for ([`12-quests.md`](12-quests.md) §2.1).
 
-- The bands are the design; the exact rows are the workbook's.
+- The bands are the design; the exact numbers are `tech-tree.json`'s.
 - **Era 1 costs Knowledge too** — 1 or 2, out of what the chain has paid.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
@@ -360,7 +360,7 @@ on a tap — `parts` must identify the tap, never the moment).
 
 Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
 
-- **`planned: 1` in the workbook.** The node is drawn dashed and hatched, like
+- **`planned: true` in `tech-tree.json`.** The node is drawn dashed and hatched, like
   the fog's `?`.
 - **The panel says it**, above the Start button: *Not yet in the prototype.*
 - **Nothing a band depends on requires a planned node**, and the editor warns

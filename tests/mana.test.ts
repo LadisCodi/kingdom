@@ -17,7 +17,7 @@ import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
 import {
-  accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
+  accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction, msToNextMana,
 } from '../src/sim/mana';
 import { ARTIFACT_ORDER, LANDMARKS } from '../src/sim/data/definitions';
 import { grantArtifactLevel } from '../src/sim/artifacts';
@@ -403,5 +403,29 @@ describe('claiming a sanctuary lifts the fog around it', () => {
     const before = Object.keys(state.fog.discovered).length;
     expect(claimLandmark(state, map, def.location)).toBe('NotEnoughGold');
     expect(Object.keys(state.fog.discovered)).toHaveLength(before);
+  });
+});
+
+// The header's "+1 in 4m 12s" reads this, so it must hit zero on the very
+// tick accrueMana pays the unit — never a second early or late.
+describe('the next unit', () => {
+  it('counts down to the instant accrueMana pays it', () => {
+    const state = drained(freshGame());
+    const msPer = HOUR / manaNetRegen(state);
+    const t0 = state.city.lastManaAt;
+    expect(msToNextMana(state, t0)).toBe(msPer);
+    expect(msToNextMana(state, t0 + msPer / 4)).toBeCloseTo(msPer * 0.75);
+
+    accrueMana(state, t0 + msPer - 1);
+    expect(mana(state), 'a millisecond early pays nothing').toBe(0);
+    accrueMana(state, t0 + msPer);
+    expect(mana(state)).toBe(1);
+    expect(msToNextMana(state, t0 + msPer)).toBe(msPer);
+  });
+
+  it('says nothing when the unit would spill', () => {
+    const state = freshGame(); // a new kingdom's pool starts full
+    expect(mana(state)).toBe(manaCap(state));
+    expect(msToNextMana(state, state.city.lastManaAt)).toBeNull();
   });
 });

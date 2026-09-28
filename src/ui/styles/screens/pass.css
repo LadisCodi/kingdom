@@ -302,25 +302,24 @@
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
+/* The kit's emerald slab (material.css), drawn here because the Claim is not
+   a kit button: all four states come from the same painted art. */
 .pss-claim {
-  background: var(--leaf);
-  border: 3px solid var(--leaf-dark);
-  box-shadow: 0 var(--lip) 0 var(--leaf-dark);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  border-image: url('../../assets/btn-green.png') 70 90 90 fill / 14px 18px 18px stretch;
+  padding-bottom: 10px;
   color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(30, 60, 20, 0.5);
+  text-shadow: 1px 0 0 #015e10, -1px 0 0 #015e10, 0 1px 0 #015e10, 0 -1px 0 #015e10, 1px 1px 0 #015e10, -1px 1px 0 #015e10, 1px -1px 0 #015e10, -1px -1px 0 #015e10, 0 2px 0 #015e10;
 }
-.pss-claim:hover { filter: brightness(1.06); }
-.pss-claim:active { transform: translateY(var(--lip)); box-shadow: none; }
+.pss-claim:hover { border-image-source: url('../../assets/btn-green-hover.png'); }
+.pss-claim:active { border-image-source: url('../../assets/btn-green-down.png'); padding: 8px 10px 6px; }
 .pss-claim:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-/* It pulses, because it is the only thing on the board that can be pressed —
-   the daily cell's rule applied to a row. */
-.pss-claim { animation: pss-ready 1.6s ease-in-out infinite; }
-@keyframes pss-ready {
-  50% { box-shadow: 0 var(--lip) 0 var(--leaf-dark), 0 0 14px rgba(120, 200, 90, 0.85); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pss-claim { animation: none; }
-}
+/* It wears the kit's orb, because it is the only thing on the board that can
+   be pressed — the daily cell's rule applied to a row. */
+.pss-claim { position: relative; }
 
 /* ---- the ladder. One grid template for the heads and every row, declared
    once so the columns cannot drift apart: free · the level · paid. */
@@ -434,22 +433,15 @@
   box-shadow: inset 0 0 12px rgba(242, 178, 51, 0.55);
 }
 
-/* Waiting. Lit gold, and the only thing on the ladder that moves. */
+/* Waiting. Lit gold, with the kit's orb on its corner. */
 button.pss-cell {
   cursor: pointer;
   border: 3px solid var(--gold);
   box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
-  animation: pss-cell-ready 1.6s ease-in-out infinite;
 }
 button.pss-cell:hover { filter: brightness(1.05); }
 button.pss-cell:active { transform: translateY(2px); box-shadow: none; }
 button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-@keyframes pss-cell-ready {
-  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark), 0 0 14px rgba(242, 178, 51, 0.9); }
-}
-@media (prefers-reduced-motion: reduce) {
-  button.pss-cell { animation: none; }
-}
 
 .pss-prize { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .pss-prize > .icon { --icon-size: 20px; }

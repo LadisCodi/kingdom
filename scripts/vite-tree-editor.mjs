@@ -17,6 +17,8 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Who wrote a data file, so ?dev=data can tell its own saves from a checkout.
+import { noteWrite } from './vite-data-editor.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TREE_PATH = join(ROOT, 'src/sim/data/tech-tree.json');
@@ -138,6 +140,7 @@ export function treeEditorPlugin() {
           // (`tests/techTree.test.ts`), which is the right place for it —
           // there a broken tree fails a build, here it is a Tuesday.
           const { errors, warnings, offPage } = rules.validateTechTree(doc);
+          noteWrite(TREE_PATH, 'tree');
           writeFileSync(TREE_PATH, serialiseTechTree(doc, rules.TOME_IDS));
           const count = Object.keys(doc.technologies).length;
           // Off the page is a holding pen, and it ships: a book half

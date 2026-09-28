@@ -1,23 +1,18 @@
-// Bottom navigation, and the Settings knob that is deliberately not part of
-// it (§5.4).
+// Bottom navigation (§5.4): mockup M1's wooden bar of five tabs.
 //
-// Two changes from what this was.
-//
-// The bar no longer turns into a single Close button. That pattern was
-// tidy — one cancel affordance for everything — but it meant the player
-// could not go Build → Research without a detour through the map, and the
-// nav vanishing under you is disorienting the first few times. Each sheet
-// now carries its own dismiss instead, so the tabs can stay put.
+// It is the way into the menus from the MAP, so it leaves while one is open:
+// it slides down out of the frame and back up when the map returns (nav.css,
+// keyed on #overlay having content). Every sheet carries its own dismiss.
 //
 // And Settings has left the bar. It is a drawer you open twice a month
 // sitting beside the thing you tap every session; giving it an equal tab
-// flattened the hierarchy. It becomes a floating knob under the header.
+// flattened the hierarchy. It hangs from the header instead (header.ts).
 // Three tabs also makes each one wider, which is the right direction for
 // thumb reach.
 
 import type { Game, OverlayName } from '../game';
 import { el } from './format';
-import { iconEl, type IconName } from './kit';
+import { iconEl, setCta, type IconName } from './kit';
 
 // Army lost its tab. An army only matters at the moment it is SENT somewhere,
 // so composition is set inside the expedition sheet and units are trained at
@@ -27,9 +22,8 @@ import { iconEl, type IconName } from './kit';
 //
 // The store sits leftmost (Docs/features/14-monetization.md §2.1): the genre
 // puts its shop at one end of the bar, and the Gems plaque in the header stays
-// as the second door. It borrows the Gems icon rather than waiting on a
-// storefront sprite — the atlas has no shop cell yet, and tests/icons.test.ts
-// refuses an emoji stand-in. Heroes borrow the shield the same way.
+// as the second door. Its mark is a market stall, and the Heroes' a knight's
+// helmet — both drawn for the bar (sheets/ui-m2-nav.png).
 //
 // Heroes got a tab of their own on 2026-09-08, out of the Reliquary's second
 // tab (Docs/features/10-heroes.md §8). A roster of thirty-two is a
@@ -46,9 +40,9 @@ import { iconEl, type IconName } from './kit';
 // close the page that levels one. Naming the tab after the currency rather
 // than after the thing it buys made the relics a screen behind a screen.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
-  { name: 'store', label: 'Store', icon: 'Gems' },
+  { name: 'store', label: 'Store', icon: 'shop' },
   { name: 'collection', label: 'Relics', icon: 'relics' },
-  { name: 'heroes', label: 'Heroes', icon: 'army' },
+  { name: 'heroes', label: 'Heroes', icon: 'helmet' },
   { name: 'research', label: 'Research', icon: 'research' },
   { name: 'build', label: 'Build', icon: 'build' },
 ];
@@ -62,8 +56,7 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       iconEl(t.icon, { size: 'md' }),
       el('span', { class: 'nav-label' }, t.label),
     );
-    // Tapping the open tab closes it; tapping another switches straight to
-    // it, which is the whole point of keeping the bar on screen.
+    // The bar is only on screen over the map, so a tap opens its menu.
     button.addEventListener('click', () => {
       game.setOverlay(game.openOverlay === t.name ? null : t.name);
     });
@@ -74,30 +67,17 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const refresh = () => {
     for (const { def, button } of tabs) {
       button.classList.toggle('is-active', game.openOverlay === def.name);
-      // The CTA lights when the screen behind the tab has something the
-      // player can press right now: a district that is both affordable and
-      // placeable, or a tech/upgrade that can be started this second.
-      const cta = def.name === 'build' ? game.buildCtaLit()
-        : def.name === 'research' ? game.researchCtaLit()
-          : false;
-      button.classList.toggle('is-cta', cta);
+      // The orb shows when the screen behind the tab has
+      // something the player can press right now: a district that is both
+      // affordable and placeable, or a tech/upgrade that can be started
+      // this second.
+      const count = def.name === 'build' ? game.buildCtaCount()
+        : def.name === 'research' ? game.researchCtaCount()
+          : 0;
+      // The kit's orb, with the count on it past one (kit/cta.ts).
+      setCta(button, count);
     }
   };
-  game.onChange(refresh);
-  refresh();
-}
-
-/** The floating Settings knob, mounted outside the header (#tools). */
-export function mountTools(game: Game, root: HTMLElement): void {
-  const button = el('button', {
-    class: 'tools-knob', type: 'button', 'aria-label': 'Settings',
-  }, iconEl('settings', { size: 'md' }));
-  button.addEventListener('click', () => {
-    game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
-  });
-  root.replaceChildren(button);
-
-  const refresh = () => button.classList.toggle('is-active', game.openOverlay === 'settings');
   game.onChange(refresh);
   refresh();
 }
