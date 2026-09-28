@@ -70,8 +70,8 @@ import {
   type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
 } from './sim/expeditions';
 import {
-  dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
-  openGates, type GateView,
+  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared, gateSupplies,
+  gateView, nextGateToRaid, openGates, type GateView, type RaidableId,
 } from './sim/gates';
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
@@ -3980,21 +3980,30 @@ export class Game {
    * anywhere; neither of those is one.
    */
   /**
-   * The small line a coin carries beside its number, or null.
+   * The small line a coin carries under its slot, or null: how fast it is
+   * coming in, because a pile you cannot see the speed of is a pile you
+   * cannot plan against.
    *
-   * ONE coin has one today: Knowledge is a CLOCK rather than a pile, and a
-   * drip you cannot see the speed of is a drip you cannot plan against. It
-   * only appears on the screen that spends it, which is also the only screen
-   * the coin appears on at all.
+   * The city's four coins read PER MINUTE — the crews' gather rate, plus rent
+   * for Gold, exactly what a raid measures (`cityRatePerSecond`). Knowledge
+   * reads per HOUR, because it drips a few an hour and "+0.1" says nothing;
+   * it only appears on the screen that spends it. Anything else has no line.
    *
-   * Rounded here, not in the view: the rate is a sum of fractions and binary
+   * Rounded here, not in the view: a rate is a sum of fractions and binary
    * floating point renders some of them with a long tail — one reached a
    * screenshot as `+2.4000000000000004/h`.
    */
   coinRate(c: CurrencyId): string | null {
-    if (c !== 'Knowledge' || this.openOverlay !== 'research') return null;
-    const rate = knowledgePerHour(this.state);
-    return rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : null;
+    if (c === 'Knowledge') {
+      if (this.openOverlay !== 'research') return null;
+      const rate = knowledgePerHour(this.state);
+      return rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : null;
+    }
+    if (!(RAIDABLE as readonly CurrencyId[]).includes(c)) return null;
+    const perMinute = cityRatePerSecond(this.state, c as RaidableId) * 60;
+    if (perMinute <= 0) return null;
+    // One decimal under ten, whole numbers above, rolled up like the balance.
+    return `+${perMinute < 10 ? Math.max(0.1, Math.round(perMinute * 10) / 10) : formatCount(Math.round(perMinute))}`;
   }
 
   visibleCurrencies(): CurrencyId[] {

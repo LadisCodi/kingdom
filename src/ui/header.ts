@@ -83,10 +83,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // are mutated in place. That keeps the shake animation and the counter
   // node stable across the per-second tick.
   const values = new Map<CurrencyId, HTMLElement>();
+  const rates = new Map<CurrencyId, HTMLElement>();
   let shown: string = '';
 
   const buildCoins = (list: CurrencyId[]) => {
     values.clear();
+    rates.clear();
     coins.replaceChildren(...list.map((c) => {
       const value = el('b', {}, '0');
       values.set(c, value);
@@ -97,11 +99,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       const coin = el('button', {
         class: 'hud-slot hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
       }, currencyIcon(c, { size: 'sm' }), value);
-      // A coin that is a CLOCK carries its speed beside its number — a drip
-      // you cannot see the speed of is a drip you cannot plan against, and
-      // the presenter decides which coin that is and when.
-      const rate = game.coinRate(c);
-      if (rate !== null) coin.append(el('span', { class: 'hud-coin-rate' }, rate));
+      // How fast it is coming in, hanging off the slot's bottom edge like
+      // Mana's countdown. The presenter decides the unit and when there is
+      // none (a coin nothing produces carries no line).
+      const rate = el('span', { class: 'hud-coin-rate', 'aria-hidden': 'true' });
+      rates.set(c, rate);
+      coin.append(rate);
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
@@ -136,10 +139,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
 
   const refresh = () => {
     const list = game.visibleCurrencies();
-    // The rate is baked into the coin ELEMENT, so it belongs in the key that
-    // decides whether the coins are rebuilt — otherwise it would be drawn
-    // once and then never move.
-    const key = list.map((c) => `${c}${game.coinRate(c) ?? ''}`).join(',');
+    const key = list.join(',');
     if (key !== shown) {
       shown = key;
       buildCoins(list);
@@ -147,6 +147,11 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // Rolled up past ten thousand, so a balance never outgrows its slot. The
     // purse (one tap away, on any coin) is where the exact figure lives.
     for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
+    for (const [c, node] of rates) {
+      const rate = game.coinRate(c);
+      node.hidden = rate === null;
+      node.textContent = rate ?? '';
+    }
     gemValue.textContent = formatCount(game.walletValue('Gems'));
 
     const slot = game.hudSlot();

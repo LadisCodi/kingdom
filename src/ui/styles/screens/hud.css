@@ -91,8 +91,6 @@
    The whole row is budgeted at four characters a coin — widen a slot and
    something else on the plank has to give. */
 .hud-coin { width: calc(var(--rpx) * 152); }
-/* Only the research tree shows a rate, and it shows two coins, so there is room. */
-.hud-coin:has(.hud-coin-rate) { width: auto; }
 .hud-coin > b,
 .hud-gems > b {
   flex: 1;
@@ -100,14 +98,25 @@
   font-weight: inherit;
 }
 
-/* A coin that is a clock: its speed sits beside its number, quieter than the
-   balance because the balance is what a price is checked against. */
-.hud-coin-rate {
-  margin-left: calc(var(--rpx) * 8);
-  font-size: calc(var(--rpx) * 24);
-  font-weight: var(--weight-small);
-  opacity: 0.75;
+/* The small line under a slot — a coin's rate, Mana's next unit — straddling
+   its bottom edge between the hole and the beam's lip. */
+.hud-coin-rate,
+.hud-mana-next {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--rpx) * 10);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: calc(var(--rpx) * 21);
+  font-weight: var(--weight-title);
+  color: var(--parchment);
+  text-shadow:
+    calc(var(--rpx) * 2) 0 0 #2a170a, calc(var(--rpx) * -2) 0 0 #2a170a,
+    0 calc(var(--rpx) * 2) 0 #2a170a, 0 calc(var(--rpx) * -2) 0 #2a170a;
+  pointer-events: none;
 }
+.hud-coin-rate[hidden],
+.hud-mana-next[hidden] { display: none; }
 
 /* THE SLOT IS THE GAUGE. The fill runs under the whole hole — orb and
    number sit on it — so "how close to spilling" reads from across the room.
@@ -138,22 +147,6 @@
 /* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
    because full means "you are spilling" and this means "you are ahead". */
 .hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #8fd48f, #4e8f5a); }
-/* The next unit's countdown, straddling the slot's bottom edge. */
-.hud-mana-next {
-  position: absolute;
-  left: 50%;
-  top: calc(100% - var(--rpx) * 10);
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: calc(var(--rpx) * 21);
-  font-weight: var(--weight-title);
-  color: var(--parchment);
-  text-shadow:
-    calc(var(--rpx) * 2) 0 0 #2a170a, calc(var(--rpx) * -2) 0 0 #2a170a,
-    0 calc(var(--rpx) * 2) 0 #2a170a, 0 calc(var(--rpx) * -2) 0 #2a170a;
-  pointer-events: none;
-}
-.hud-mana-next[hidden] { display: none; }
 
 /* Gems end in the store's door: the green knob, which presses with the slot. */
 .hud-gems { min-width: calc(var(--rpx) * 172); }
