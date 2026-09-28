@@ -98,16 +98,21 @@
 .k-close:active { background-image: url('../assets/btn-close-down.png'); }
 .k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
 /* THE HEADER (.k-head, every titled window): the wooden band across the
-   top of the frame, at the window's full width and a fixed height, its
-   rounded ends over the frame's top corners (window-header.png: the 60-px
-   ends kept, the plain middle stretched). The title is centred on it; the
+   top of the frame, a fixed height, standing a little proud of the frame's
+   top and a little narrower than it, so it reads as seated on the wood
+   (window-header.png: the 60-px ends kept, the plain middle stretched). The title is centred on it; the
    buttons are anchored to its right, the window's close always last. */
 .k-sheet.has-head > .k-panel > .k-head,
 .dc > .k-head {
   --head-h: calc(var(--rpx) * 120);
   --head-cap: calc(var(--head-h) * 60 / 133); /* the art's 60-px ends, at this height */
   --head-inset: calc(var(--rpx) * 22);        /* the buttons' distance from the band's end */
+  --head-rise: calc(var(--rpx) * 26);         /* how far it stands proud of the frame's top */
+  --head-tuck: calc(var(--rpx) * 22);         /* how far in from the frame's sides, each side */
   position: relative;
+  /* Raised by an offset rather than a margin, so it stands proud of the
+     frame without moving the contents under it. */
+  top: calc(var(--head-rise) * -1);
   z-index: 2;
   flex: none;
   display: grid;
@@ -115,7 +120,10 @@
   align-items: center;
   column-gap: calc(var(--rpx) * 16);
   height: var(--head-h);
-  margin: calc(var(--win-pad) * -1) calc(var(--win-pad) * -1) calc(var(--rpx) * 32);
+  margin:
+    calc(var(--win-pad) * -1)
+    calc(var(--win-pad) * -1 + var(--head-tuck))
+    calc(var(--rpx) * 32 - var(--head-rise));
   padding: 0 var(--head-inset) calc(var(--head-h) * 0.06);
   border-image: url('../assets/window-header.png') 0 60 fill / 0 var(--head-cap) stretch;
   filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.3));

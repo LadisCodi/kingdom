@@ -348,8 +348,10 @@ side on anything wider. A centred modal keeps its own narrower cap.
   frame shrinks back to its least height and fades (140 ms); the window stays
   in the DOM, untappable, until it has. Switching straight to another menu
   is immediate.
-- **The header**: every titled window has one — a wooden band across the
-  top of the frame, fixed height (120 rpx), three-sliced in width (its
+- **The header**: every titled window has one — a wooden band seated on
+  the top of the frame: standing 26 rpx proud of it and 22 rpx in from each
+  side, so the frame's wood shows round it; fixed height (120 rpx),
+  three-sliced in width (its
   rounded ends kept, the plain middle stretched). The title is centred on
   it, in light ink with a dark-wood outline; the buttons are anchored to its
   right, the close always last and any `actions` before it
