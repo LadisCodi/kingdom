@@ -115,10 +115,12 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   // reflow: it is nine-sliced, so its rollers stay whole at any width.
   const base = el('span', { class: 'q-base', 'aria-hidden': 'true' });
   const content = el('div', { class: 'q-content' },
+    // The words with the magnifier beside them; under them, the goal's mark
+    // resting on the start of its own progress trough.
     el('div', { class: 'q-run' },
-      el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, name, desc)),
-      // The trough and the magnifier share the foot's row.
-      el('div', { class: 'q-foot' }, bar.root, find)),
+      el('div', { class: 'q-text' }, name, desc),
+      find,
+      el('div', { class: 'q-foot' }, slot, bar.root)),
     el('div', { class: 'q-done' }, reward, claim));
   const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);
 

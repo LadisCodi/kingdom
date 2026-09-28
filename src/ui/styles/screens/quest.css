@@ -19,12 +19,12 @@
   z-index: 3;
 
   /* THE SCROLL DIALS — the numbers to reach for when fine-tuning it. */
-  --q-w: calc(var(--rpx) * 660);        /* the scroll's width while a quest runs */
-  --q-h: calc(var(--rpx) * 220);        /* its least height; it grows with the words */
-  --q-icon: calc(var(--rpx) * 96);      /* the goal's mark */
+  --q-w: calc(var(--rpx) * 620);        /* the scroll's width while a quest runs */
+  --q-h: calc(var(--rpx) * 200);        /* its least height; it grows with the words */
+  --q-icon: calc(var(--rpx) * 88);      /* the goal's mark, resting on the trough */
   --q-title: calc(var(--rpx) * 37);
   --q-desc: calc(var(--rpx) * 28);
-  --q-bar-h: calc(var(--rpx) * 49);     /* the progress trough */
+  --q-bar-h: calc(var(--rpx) * 44);     /* the progress trough */
   --q-find: calc(var(--rpx) * 84);      /* the magnifier knob */
   --q-cta-w: calc(var(--rpx) * 201);    /* the Claim slab */
   --q-cta-h: calc(var(--rpx) * 69);
@@ -72,9 +72,22 @@
 }
 .q-content { position: relative; }
 
-.q-head { display: flex; align-items: center; gap: calc(var(--rpx) * 22); }
+/* Running: the words with the magnifier beside them, and under the words the
+   goal's mark resting on the start of its trough, which ends where the
+   magnifier begins. */
+.q-run {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: calc(var(--rpx) * 20);
+  row-gap: calc(var(--rpx) * 6);
+}
 .q-slot {
+  position: relative;
+  z-index: 1; /* over the trough it rests on */
   flex: none;
+  /* Half of it sits over the trough's rounded start. */
+  margin-right: calc(var(--q-icon) * -0.45);
   width: var(--q-icon);
   height: var(--q-icon);
   display: grid;
@@ -99,12 +112,10 @@
   -webkit-box-orient: vertical;
 }
 
-/* The trough and the verb share the foot's row, under the words. */
 .q-foot {
+  grid-column: 1;
   display: flex;
   align-items: center;
-  gap: calc(var(--rpx) * 36);
-  margin: calc(var(--rpx) * 10) 0 0 calc(var(--q-icon) + var(--rpx) * 12);
 }
 
 /* THE MAGNIFIER: the round wood knob with the lens on it, pressing with the
@@ -163,6 +174,8 @@
 }
 .q-scroll .k-trough .k-fill[style*='width: 0%'] { visibility: hidden; }
 .q-scroll .k-trough .k-trough-label {
+  /* Centred on the part of the trough the mark does not cover. */
+  left: calc(var(--q-icon) * 0.45);
   font-size: calc(var(--rpx) * 30);
   font-weight: var(--weight-title);
   color: var(--ink);
