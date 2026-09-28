@@ -26,7 +26,6 @@ import { ARTIFACTS, CURRENCIES, DISTRICTS, HEROES, UNITS } from '../../sim/data/
 import type { QuestGoalType } from '../../sim/data/definitions';
 import { questLine } from '../../sim/questProse';
 import { spriteUrl } from '../../render/sprites';
-import { CREW } from '../../render/cast';
 import { DataModel, type Change, type Path } from './doc';
 import type { EditorHandle } from '../mount';
 import type { TreeHandle } from '../tree/mount';
@@ -1008,7 +1007,7 @@ export function mountEditor(): void {
     if (id === null) return h('div', { class: 'dx-entity' }, list, h('div', { class: 'dx-empty' }, 'No entries.'));
     const tab = (route.t ?? 'levels') as typeof ENTITY_TABS[number];
     const body = tab === 'levels' ? levelsTab(c, id) : tab === 'identity' ? identityTab(c, id)
-      : tab === 'visuals' ? visualsTab(id) : tab === 'adjacency' ? adjacencyTab(id) : gatesTab(id);
+      : tab === 'visuals' ? visualsTab(c, id) : tab === 'adjacency' ? adjacencyTab(id) : gatesTab(id);
     return h('div', { class: 'dx-entity' }, list,
       h('div', { style: 'display:flex;flex-direction:column;gap:12px;min-width:0' },
         h('div', { class: 'dx-row', style: 'justify-content:space-between' },
@@ -1156,8 +1155,7 @@ export function mountEditor(): void {
 
   function identityTab(c: CollectionDef, id: string): HTMLElement {
     const spec = specOf(c);
-    const b = model.get([c.source!, id]) as Record<string, unknown>;
-    const fields = Object.entries(spec.fields ?? {}).filter(([k, f]) => !(f.type === 'list' && f.length?.sibling) && k !== 'maxCountPerTownhallLevel');
+    const fields = Object.entries(spec.fields ?? {}).filter(([k, f]) => !(f.type === 'list' && f.length?.sibling) && k !== 'maxCountPerTownhallLevel' && !VISUAL_FIELDS.includes(k));
     const renameRow = renameField(c, id);
     return h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
       renameRow,
@@ -1166,13 +1164,19 @@ export function mountEditor(): void {
           ...fields.map(([k, f]) => field(c.id, id, f, [c.source!, id, k], [k], k)))),
       spec.fields?.maxCountPerTownhallLevel ? h('div', { class: 'dx-card dx-pad' },
         field(c.id, id, spec.fields.maxCountPerTownhallLevel, [c.source!, id, 'maxCountPerTownhallLevel'], ['maxCountPerTownhallLevel'], 'maxCountPerTownhallLevel · one per Townhall level; a short list repeats its last')) : null,
-      b.name === undefined ? h('p', { class: 'dx-note' }, `Name, description and glyph still live in definitions.ts ("${nameOf(c, id)}"); they become fields here in phase 3.`) : null);
+      null);
   }
 
-  function visualsTab(id: string): HTMLElement {
-    const def = (DISTRICTS as unknown as Record<string, { sprite?: string; maxLevel?: number }>)[id];
-    const sprite = def?.sprite;
-    const maxLevel = Number(model.get(['districts', id, 'maxLevel'])) || 1;
+  /** The fields the Visuals tab owns rather than Identity. */
+  const VISUAL_FIELDS = ['sprite', 'glyph', 'crew'];
+
+  function visualsTab(c: CollectionDef, id: string): HTMLElement {
+    const spec = specOf(c);
+    const base = [c.source!, id];
+    const sprite = String(model.get([...base, 'sprite']) ?? '');
+    const maxLevel = Number(model.get([...base, 'maxLevel'])) || 1;
+    // Tiers are FILES, not data: a level draws the highest `<sprite>_l<n>` at
+    // or below it (render/mapRenderer.ts), so what is on disk is the truth.
     const tiers: Array<{ key: string; from: number; url: string }> = [];
     if (sprite) {
       for (let l = 1; l <= Math.max(maxLevel, 10); l++) {
@@ -1181,16 +1185,17 @@ export function mountEditor(): void {
       }
       if (tiers.length === 0) { const url = spriteUrl(sprite); if (url) tiers.push({ key: sprite, from: 1, url }); }
     }
-    const crew = (CREW as Record<string, readonly string[] | undefined>)[id] ?? [];
     return h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+      h('div', { class: 'dx-card dx-pad', style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px' },
+        ...VISUAL_FIELDS.filter((k) => spec.fields?.[k]).map((k) => field(c.id, id, spec.fields![k], [...base, k], [k], k))),
       h('div', { class: 'dx-card dx-pad', style: 'display:flex;flex-direction:column;gap:10px' },
-        h('span', { class: 'sec' }, 'Art tiers'),
+        h('span', { class: 'sec' }, 'Art tiers · found by file name'),
         tiers.length ? h('div', { class: 'dx-sprites' }, ...tiers.map((t, i) => h('div', { class: 'dx-sprite' },
           h('img', { src: t.url, alt: t.key }),
           h('span', { class: 'mono' }, t.key),
-          h('span', { class: 'dim' }, `from level ${t.from}${tiers[i + 1] ? ` to ${tiers[i + 1].from - 1}` : ''}`)))) : h('p', { class: 'dx-note' }, 'No art yet.'),
-        h('div', { class: 'dx-row' }, h('span', { class: 'sec' }, 'Crew'), ...(crew.length ? crew.map((x) => h('span', { class: 'dx-chip mono' }, x)) : [h('span', { class: 'dim' }, 'none')]))),
-      h('p', { class: 'dx-note' }, 'Read-only for now: tiers come from the file names (_l1, _l4, _l8) and the crew from render/cast.ts. They become fields of the building in phase 3, with a live preview on the game\'s own renderer.'));
+          h('span', { class: 'dim' }, `from level ${t.from}${tiers[i + 1] ? ` to ${tiers[i + 1].from - 1}` : ''}`))))
+          : h('p', { class: 'dx-note' }, sprite ? `No ${sprite}.png or ${sprite}_l<n>.png in src/render/assets yet — the map draws the glyph.` : 'No sprite named.')),
+      h('p', { class: 'dx-note' }, 'A tier is a file: drop <sprite>_l<n>.png into src/render/assets and every level from n up draws it. The crew are characters from the atlas (npm run art:characters).'));
   }
 
   function adjacencyTab(id: string): HTMLElement {

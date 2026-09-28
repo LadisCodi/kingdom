@@ -6,10 +6,12 @@
 // a renamed frame file fails a test rather than silently falling back to the
 // old worker sprite.
 //
-// Cosmetic, deliberately NOT in the balance workbook: nothing here changes a
-// number the player can feel.
+// Which characters crew a building is data — each building's `crew`, in
+// `data/game/buildings.json`, authored in ?dev=data. This module reads it;
+// the villagers and the pose rules below are the renderer's own.
 
 import { CHARACTERS } from './characters/atlas.generated';
+import { DISTRICTS } from '../sim/data/definitions';
 import type { DistrictId } from '../sim/state';
 
 /** What the renderer asks a character to do. */
@@ -19,25 +21,16 @@ export type UnitPose = 'idle' | 'walk' | 'work';
  * The crew of each working building — a worker is cast by a stable hash of
  * its id, so it keeps its face across frames and reloads. Every member must
  * have an `idle`; `walk` and `work` resolve through `animFor` below.
+ * Workshop crews never leave the building — they are drawn at its door — so
+ * they have no walk, and `animFor` falls back to idle for one.
  *
  * The Docks' crew member is a BOAT with a fisherman standing in it — one
  * subject, drawn and scaled as a single figure, because a boat is what rows
- * out to a shoal and comes back. Casting it here is what let the bought pixel
- * pack's `worker_*` and `fishing_boat*` sprites go: every working building on
- * the map now has art of its own.
+ * out to a shoal and comes back.
  */
-export const CREW: Partial<Record<DistrictId, readonly string[]>> = {
-  Farm: ['farmer'],
-  Sawmill: ['woodcutter'],
-  Quarry: ['quarryman'],
-  Docks: ['fisher_boat'],
-  // Workshop crews never leave the building — they are drawn at its door —
-  // so they have no walk, and `animFor` falls back to idle for one.
-  Carpenter: ['carpenter'],
-  MasonsYard: ['stonemason'],
-  Smelter: ['smith'],
-  RuneCarver: ['rune_carver'],
-};
+export const CREW: Partial<Record<DistrictId, readonly string[]>> = Object.fromEntries(
+  Object.entries(DISTRICTS).filter(([, d]) => d.crew.length > 0).map(([id, d]) => [id, d.crew]),
+);
 
 /**
  * Unassigned population strolling around the Townhall and Housing.

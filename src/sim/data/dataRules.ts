@@ -15,6 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
+import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
 
@@ -91,7 +92,11 @@ export type FieldType = 'int' | 'float' | 'text' | 'bool' | 'list' | 'map' | 'ob
 /** What an id-valued field may name. */
 export type RefKind =
   | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact'
-  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'ruin' | 'face';
+  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'ruin' | 'face'
+  /** What a building turns out: a unit, or the Villager. */
+  | 'trainable'
+  /** A character in the animated atlas (Docs/art/characters). */
+  | 'character';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -132,6 +137,8 @@ export interface FieldSpec {
   emptyOk?: boolean;
   min?: number;
   max?: number;
+  /** text: at most this many characters (a card's line). */
+  maxLength?: number;
   length?: LengthRule;
   /** What it means, for the player-facing designer. */
   doc?: string;
@@ -144,6 +151,7 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   ruin: ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory'],
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
+  character: Object.keys(CHARACTERS),
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -171,6 +179,7 @@ export type DataDoc = Record<string, unknown>;
 /** Every id a ref of this kind may name, read live from the document so a new
  *  entry is referenceable the moment it exists. */
 export function refIds(doc: DataDoc, kind: RefKind): readonly string[] {
+  if (kind === 'trainable') return [...refIds(doc, 'unit'), 'Villager'];
   const src = REF_SOURCE[kind];
   if (src !== undefined) {
     const v = doc[src];
@@ -325,6 +334,7 @@ function checkValue(
     case 'text':
       if (typeof value !== 'string') return push(entry, path, 'must be text');
       if (value === '' && spec.emptyOk) return;
+      if (spec.maxLength !== undefined && value.length > spec.maxLength) push(entry, path, `is ${value.length} characters, at most ${spec.maxLength}`);
       if (spec.options && !spec.options.includes(value)) push(entry, path, `"${value}" is not one of ${spec.options.join(', ')}`);
       if (spec.ref && !refIds(doc, spec.ref).includes(value)) push(entry, path, `"${value}" is not a ${spec.ref}`);
       return;

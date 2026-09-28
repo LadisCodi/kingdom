@@ -6,6 +6,7 @@
 import { DISTRICTS, type PackTier } from './data/definitions';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
+import buildings from './data/game/buildings.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 import type { AlbumId } from './data/seasons';
@@ -34,12 +35,10 @@ export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
 /** What the city holds of each. Absent = none, exactly like a Wallet. */
 export type GoodsStock = Partial<Record<GoodId, number>>;
 
-export type DistrictId =
-  | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill'
-  | 'Quarry' | 'Docks' | 'Sanctum'
-  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' | 'Infirmary' // military
-  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver' // workshops
-  | 'Garden' | 'Well' | 'Orchard' | 'Statue' | 'Plaza' | 'Shrine'; // decorations
+/** Every building's id. The union IS `data/game/buildings.json`'s keys, the
+ *  way `TechId` is the tree's: a building added in `?dev=data` is a type the
+ *  moment it is saved, and a typo anywhere still fails to compile. */
+export type DistrictId = keyof typeof buildings;
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous

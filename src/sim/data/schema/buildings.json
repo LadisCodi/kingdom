@@ -1,6 +1,43 @@
 {
   "type": "object",
   "fields": {
+    "name": {
+      "type": "text",
+      "doc": "What a card calls it; read aloud, so the crop plots are two words in lower case."
+    },
+    "promise": {
+      "type": "text",
+      "maxLength": 42,
+      "doc": "The build card's one line: what it does for you, present tense, no full stop. The card holds 42 characters."
+    },
+    "description": { "type": "text", "doc": "The long form, on the district card and the upgrade sheet." },
+    "glyph": { "type": "text", "doc": "Placeholder while the art is missing." },
+    "sprite": {
+      "type": "text",
+      "doc": "Art file stem in src/render/assets. Tiers are its _l<n> files: a level draws the highest one at or below it."
+    },
+    "buildable": { "type": "bool", "doc": "Off for the Townhall, which the city starts with." },
+    "harvestSources": {
+      "type": "list",
+      "of": { "type": "text", "ref": "harvest" },
+      "doc": "What its workers go out and harvest in its reach."
+    },
+    "providesHarvestSource": {
+      "type": "text",
+      "ref": "harvest",
+      "nullable": true,
+      "doc": "The building IS a source of this (the crop plots are Crops)."
+    },
+    "trains": {
+      "type": "list",
+      "of": { "type": "text", "ref": "trainable" },
+      "doc": "What it turns out: units, or the Villager."
+    },
+    "crew": {
+      "type": "list",
+      "of": { "type": "text", "ref": "character" },
+      "doc": "Who works it, from the character atlas; cast by a stable hash of each worker."
+    },
     "size": { "type": "object", "fields": { "x": { "type": "int" }, "y": { "type": "int" } } },
     "maxLevel": { "type": "int", "min": 1, "max": 20, "doc": "How many levels it has. Level 1 is the build." },
     "populationCapacityPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
