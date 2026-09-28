@@ -420,7 +420,7 @@ export class Game {
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
-  private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }) => void> = [];
+  private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
 
   constructor(
@@ -449,8 +449,10 @@ export class Game {
   /** A claimed reward, already in the wallet — the UI flies it to the
    *  header and counts it in as it lands (ui/rewardFly.ts). `from` is where
    *  it bursts from, in the frame's own pixels, when the presenter knows (a
-   *  tapped cell); otherwise the UI uses the tap that claimed it. */
-  onReward(fn: (haul: Wallet, from?: { x: number; y: number }) => void): void {
+   *  tapped cell); otherwise the UI uses the tap that claimed it. `tap`
+   *  marks what a Mana-paid tap gathered, which counts its fragments
+   *  differently (`rewardFragments`). */
+  onReward(fn: (haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void): void {
     this.rewardListeners.push(fn);
   }
   onToast(fn: (msg: string) => void): void {
@@ -511,8 +513,8 @@ export class Game {
   toast(msg: string): void {
     for (const fn of this.toastListeners) fn(msg);
   }
-  private reward(haul: Wallet, from?: { x: number; y: number }): void {
-    for (const fn of this.rewardListeners) fn(haul, from);
+  private reward(haul: Wallet, from?: { x: number; y: number }, tap = false): void {
+    for (const fn of this.rewardListeners) fn(haul, from, tap);
   }
 
   /**
@@ -521,8 +523,12 @@ export class Game {
    * against what the player already makes — at least three, at most twelve,
    * and five for a coin the city does not produce (Gems) or produces nothing
    * of yet.
+   *
+   * A TAP that gathered fewer than five is counted out one fragment a unit,
+   * so a tap of 2 flies two; from five up it takes the rule above.
    */
-  rewardFragments(c: CurrencyId, amount: number): number {
+  rewardFragments(c: CurrencyId, amount: number, tap = false): number {
+    if (tap && amount < 5) return Math.max(1, Math.floor(amount));
     const perMinute = (RAIDABLE as readonly CurrencyId[]).includes(c)
       ? cityRatePerSecond(this.state, c as RaidableId) * 60
       : c === 'Mana' ? manaNetRegen(this.state) / 60 : 0;
@@ -843,7 +849,7 @@ export class Game {
     if (amount <= 0) return;
     const box = this.camera.cellToScreen(cell);
     const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
-    queueMicrotask(() => this.reward({ [currency]: amount }, from));
+    queueMicrotask(() => this.reward({ [currency]: amount }, from, true));
   }
 
   /** Out of energy, said once and in one place: every tap that spends Mana

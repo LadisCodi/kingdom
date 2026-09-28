@@ -783,3 +783,22 @@ describe('formatDuration', () => {
     expect(formatDuration(0)).toBe('instant');
   });
 });
+
+// How many fragments a reward flies to the header as (ui/rewardFly.ts).
+describe('reward fragments', () => {
+  it('flies a small tap one fragment a unit, and a large one by the production rule', () => {
+    const game = freshPresenter();
+    for (const n of [1, 2, 3, 4]) expect(game.rewardFragments('Wood', n, true)).toBe(n);
+    // From five up a tap is a reward like any other: 3 to 12, or 5 unproduced.
+    const big = game.rewardFragments('Wood', 5, true);
+    expect(big).toBe(game.rewardFragments('Wood', 5));
+    expect(big).toBeGreaterThanOrEqual(3);
+    expect(big).toBeLessThanOrEqual(12);
+  });
+
+  it('keeps the production rule for everything that is not a tap', () => {
+    const game = freshPresenter();
+    expect(game.rewardFragments('Gems', 2)).toBe(5); // nothing makes Gems
+    expect(game.rewardFragments('Wood', 2)).toBeGreaterThanOrEqual(3);
+  });
+});

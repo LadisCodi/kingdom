@@ -321,7 +321,8 @@ and the rent tick land as numbers on the map only):
   centre of the screen — with a flash and a powerup chime.
 - Each resource in it leaves as N fragments of its icon: one per minute of
   the city's own production the reward is worth, at least 3, at most 12, and
-  5 for a coin the city does not produce (Gems) or produces none of yet.
+  5 for a coin the city does not produce (Gems) or produces none of yet. A
+  tap that gathered fewer than 5 flies one fragment a unit instead.
 - Each fragment bursts out to a spot of its own, hangs, then flies in an arc
   into that resource's slot, 70 ms after the one before; a second resource
   leaves 180 ms after the first. Burst 260 ms, flight 620 ms, speeding up.
