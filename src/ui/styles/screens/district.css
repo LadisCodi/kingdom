@@ -727,12 +727,12 @@
 /* ---- the Upgrade button (M25)
  *
  * All that is left on the card of what used to be its longest block. Buying a
- * level is a surface of its own now (screens/upgrade.css); this is the door,
- * and the only thing it says beyond "Upgrade" is the first errand in the way
- * — because sending a player into a popup to read a cross they could have
- * been told about here is a wasted tap. */
-/* The third column of the head: the kit's own button, at its fixed size, and
-   the errand in the way under it, wrapped to the button's width. */
+ * level is a surface of its own now (screens/upgrade.css), with every
+ * requirement and whether it is met; this is the door, and all it says
+ * beyond "Upgrade" is whether the upgrade is ready. */
+/* The third column of the head: the kit's own button, at its fixed size,
+   wearing the call to action when the upgrade is ready to start. */
+.dc-upgrade .k-btn { position: relative; } /* the badge sits on its corner */
 .dc-upgrade {
   flex: none;
   width: 112px;
@@ -741,18 +741,6 @@
   align-items: center;
   gap: 6px;
 }
-.dc-upgrade-gate {
-  display: flex;
-  gap: 4px;
-  align-items: flex-start;
-  justify-content: center;
-  text-align: center;
-  line-height: 1.2;
-  font-size: var(--text-desc);
-  font-weight: var(--weight-small);
-  color: var(--ink-muted);
-}
-
 /* ---- the head and the stat band (M2)
  *
  * The picture, the blurb and the ONE thing you buy for this building, in one

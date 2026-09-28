@@ -387,9 +387,12 @@ side on anything wider. A centred modal keeps its own narrower cap.
   Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
   *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
 - **The district card's head**: one row — the portrait, the description
-  (bold, lighter ink), and Upgrade (the kit's default button, its fixed size,
-  with the first errand in the way under it) — each anchored to the top and
-  growing down. The portrait is a section with a small leafy ornament pressed
+  (bold, lighter ink), and Upgrade (the kit's default button, its fixed size)
+  — each anchored to the top and growing down. The card lists no
+  requirements: the upgrade popup shows each one and whether it is met.
+  Upgrade wears the call to action when every requirement and every cost is
+  met and a builder is free — the sim's `upgradeRefusal`, the same check the
+  command runs. The portrait is a section with a small leafy ornament pressed
   into each corner, and the building drawn larger than the tile, clipped to
   it by a mask.
 - **Stat tiles** (the district card's figures): one tile per figure — a big

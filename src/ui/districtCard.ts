@@ -17,6 +17,7 @@ import {
   DISTRICTS, HARMONY, HARVEST, TAP, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
+import { upgradeRefusal } from '../sim/commands';
 import { canMoveDistrict, districtLabel } from '../sim/districts';
 import {
   harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
@@ -29,7 +30,7 @@ import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
-import { requirements, statsAt } from './upgradeStats';
+import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { LiveParts, type Screen } from './kit';
 import {
@@ -39,7 +40,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { btn, closeKnob, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -385,25 +386,19 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }, scaffold));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
-    // (upgradeSheet.ts, M25). The card is what the building IS; buying a
-    // level is a decision with its own stats table, its own list of gates and
-    // its own price, and none of the three fitted under a panel that was
-    // already the longest in the game.
-    //
-    // The button still refuses what it cannot open: a gate in the way greys
-    // it and names the first errand, because sending a player into a popup to
-    // read a cross they could have been told about here is a wasted tap.
-    const next = district.level + 1;
-    const blocking = requirements(game, district, next).find((r) => !r.met);
-    upgradeAction.push(el('div', { class: 'dc-upgrade' },
-      btn({
-        label: 'Upgrade',
-        kind: 'primary',
-        onClick: () => game.openUpgrade(district.uniqueId),
-      }),
-      ...(blocking === undefined ? [] : [el('div', { class: 'dc-upgrade-gate' },
-        iconEl('padlock', { size: 'sm' }), blocking.label)]),
-    ));
+    // (upgradeSheet.ts, M25): the requirements, whether each is met, and the
+    // price are the popup's to show. The card only says whether it is worth
+    // opening — the call to action rides on the button when every gate and
+    // every cost is met, so the upgrade would start on the popup's first tap.
+    const upgrade = btn({
+      label: 'Upgrade',
+      kind: 'primary',
+      onClick: () => game.openUpgrade(district.uniqueId),
+    });
+    if (upgradeRefusal(game.state, district.uniqueId) === null) {
+      upgrade.append(ctaBadge(1, `upgrade:${district.uniqueId}`));
+    }
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, upgrade));
   }
 
   // THE HEADER: the building's name, and its two tools on the right — Move,
