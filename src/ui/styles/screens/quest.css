@@ -19,13 +19,14 @@
   z-index: 3;
 
   /* THE SCROLL DIALS — the numbers to reach for when fine-tuning it. */
-  --q-w: calc(var(--rpx) * 804);        /* the scroll's width */
-  --q-h: calc(var(--rpx) * 235);        /* its least height; it grows with the words */
+  --q-w: calc(var(--rpx) * 660);        /* the scroll's width while a quest runs */
+  --q-h: calc(var(--rpx) * 220);        /* its least height; it grows with the words */
   --q-icon: calc(var(--rpx) * 96);      /* the goal's mark */
   --q-title: calc(var(--rpx) * 37);
   --q-desc: calc(var(--rpx) * 28);
   --q-bar-h: calc(var(--rpx) * 49);     /* the progress trough */
-  --q-cta-w: calc(var(--rpx) * 201);    /* the "Show me" slab */
+  --q-find: calc(var(--rpx) * 84);      /* the magnifier knob */
+  --q-cta-w: calc(var(--rpx) * 201);    /* the Claim slab */
   --q-cta-h: calc(var(--rpx) * 69);
   --q-cta-text: calc(var(--rpx) * 32);
 }
@@ -105,7 +106,39 @@
   gap: calc(var(--rpx) * 36);
   margin: calc(var(--rpx) * 10) 0 0 calc(var(--q-icon) + var(--rpx) * 12);
 }
-.q-foot .q-reward { flex: 1; }
+
+/* THE MAGNIFIER: the round wood knob with the lens on it, pressing with the
+   scroll. Drawn, not a control — the whole scroll is the button. */
+.q-find {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--q-find);
+  height: var(--q-find);
+  background: url('../../assets/hud-knob.png') center / contain no-repeat;
+  pointer-events: none;
+}
+.q-find::before {
+  content: '';
+  width: 58%;
+  height: 58%;
+  background: url('../../assets/icon-search.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(60, 36, 18, 0.45));
+}
+.q-scroll:active .q-find { background-image: url('../../assets/hud-knob-down.png'); }
+.q-scroll:active .q-find::before { transform: translateY(calc(var(--rpx) * 3)); }
+
+/* ONE FACE AT A TIME. Running, the scroll is the quest: mark, words, trough,
+   magnifier. Done, it is only the payout and the verb that takes it. */
+.q-done { display: none; }
+.q-scroll.is-complete { width: auto; min-width: calc(var(--rpx) * 420); }
+.q-scroll.is-complete .q-run { display: none; }
+.q-scroll.is-complete .q-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--rpx) * 16);
+}
 
 /* The trough is painted (sheets/ui-quest2-progress.png): a recess and a gold
    fill, each sliced at its rounded ends only, since the height is fixed. */
@@ -165,15 +198,14 @@
 }
 
 /* Only ever on screen once the quest is done — it is the payout, so it
- * arrives with the payout. */
+ * arrives with the payout, and it is the whole face of the scroll. */
 .q-reward {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: calc(var(--rpx) * 14);
   flex-wrap: wrap;
 }
-.q-reward[hidden] { display: none; }
-.q-foot > .k-trough:has(~ .q-reward:not([hidden])) { display: none; }
 .q-reward-label {
   font-size: var(--q-desc);
   font-weight: var(--weight-small);
@@ -186,14 +218,14 @@
   display: inline-flex;
   align-items: center;
   gap: calc(var(--rpx) * 6);
-  padding: calc(var(--rpx) * 4) calc(var(--rpx) * 16);
-  font-size: var(--q-desc);
+  padding: calc(var(--rpx) * 4) calc(var(--rpx) * 18);
+  font-size: calc(var(--rpx) * 34);
   font-weight: var(--weight-strong);
   background: var(--gold);
   border: calc(var(--rpx) * 4) solid var(--gold-dark);
   border-radius: 999px;
 }
-.q-reward-item .icon { --icon-size: calc(var(--rpx) * 40); }
+.q-reward-item .icon { --icon-size: calc(var(--rpx) * 52); }
 
 /* Done: the whole card becomes the Claim button — a gold glow round the
  * parchment, a green slab and a gentle bob, so it is the only lively thing on
@@ -205,7 +237,8 @@
     drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 8) rgba(40, 22, 10, 0.35));
 }
 .q-scroll.is-complete .q-cta { filter: hue-rotate(62deg) saturate(1.5) brightness(1.08); }
-.q-scroll.is-complete:active { animation: none; }
+.q-scroll.is-complete:active,
+.q-scroll.is-leaving { animation: none; }
 @keyframes q-bob {
   from { transform: translateY(0); }
   to { transform: translateY(calc(var(--rpx) * -8)); }

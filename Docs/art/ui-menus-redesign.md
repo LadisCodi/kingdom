@@ -455,12 +455,17 @@ bottom, and the widget is now a button that wants to be reachable.
 
 #### The scroll (M1)
 
-- Sized in reference pixels (§3.6): 804 × 235 rpx (it grows with the words),
+- Sized in reference pixels (§3.6): 660 × 220 rpx while a quest runs (it
+  grows with the words),
   25 rpx from the left edge, 20 rpx above the nav. The dials sit on `#quest`
   in `quest.css`.
 - The parchment between two rollers is one nine-sliced piece, so both width
   and height stretch; the trough and its gold fill are painted and sliced at
-  their rounded ends; "Show me" is the game's wood button.
+  their rounded ends.
+- **Running**: the goal's mark, title, description, the trough, and a small
+  round wood knob with a magnifier — "find it".
+- **Done**: the scroll shows only the reward and a green **Claim** slab under
+  it, shrunk to fit; no title, mark, description, trough or magnifier.
 - **The wood button** is one painted slab and its pressed twin, worn by every
   wood-coloured button in the game. A slab recoloured to another tone, and a
   locked one, keep the kit's flat fill.
@@ -473,8 +478,7 @@ bottom, and the widget is now a button that wants to be reachable.
   **0.5 s** apart. Nothing on the scroll can be tapped while it moves.
 - A quest that arrives while a sheet covers the map unrolls when the map
   comes back.
-- Done: a gold glow round the parchment, a gentle bob, and the slab turns
-  green and reads **Claim**.
+- Done also glows gold round the parchment and bobs gently.
 
 ---
 

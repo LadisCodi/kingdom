@@ -73,6 +73,10 @@ const rewardNodes = (quest: QuestDef): Node[] => {
     parts.push(el('span', { class: 'q-reward-item' },
       iconEl('Stardust', { size: 'sm' }), String(quest.rewardStardust)));
   }
+  if (quest.rewardMana > 0) {
+    parts.push(el('span', { class: 'q-reward-item' },
+      currencyIcon('Mana', { size: 'sm' }), String(quest.rewardMana)));
+  }
   if (quest.rewardGems > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
       iconEl('Gems', { size: 'sm' }), String(quest.rewardGems)));
@@ -99,19 +103,23 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const desc = el('div', { class: 'q-desc' });
   const bar = progress('gold');
   const reward = el('div', { class: 'q-reward' });
-  // The slot and the slab are the M1 card: a mark for what the quest is
-  // about at the left, and the one verb the tap performs at the right. The
-  // slab is drawn, not a control — the whole scroll is still the button.
+  // A mark for what the quest is about at the left and, while it runs, a
+  // magnifier knob at the right for "find it". Both are drawn, not controls —
+  // the whole scroll is still the button.
   const slot = el('div', { class: 'q-slot' });
-  const cta = el('span', { class: 'q-cta' }, 'Show me');
+  const find = el('span', { class: 'q-find', 'aria-hidden': 'true' });
+  // Done, the scroll says only what it pays and the verb that takes it.
+  const claim = el('span', { class: 'q-cta' }, 'Claim');
 
   // The parchment is its own layer so it can unroll under words that do not
   // reflow: it is nine-sliced, so its rollers stay whole at any width.
   const base = el('span', { class: 'q-base', 'aria-hidden': 'true' });
   const content = el('div', { class: 'q-content' },
-    el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, name, desc)),
-    // The trough and the verb share the foot's row (M12).
-    el('div', { class: 'q-foot' }, bar.root, reward, cta));
+    el('div', { class: 'q-run' },
+      el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, name, desc)),
+      // The trough and the magnifier share the foot's row.
+      el('div', { class: 'q-foot' }, bar.root, find)),
+    el('div', { class: 'q-done' }, reward, claim));
   const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);
 
   // Nothing to tap while the scroll is rolling or unrolling.
@@ -174,7 +182,6 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
 
   const live = (info: NonNullable<ReturnType<Game['questInfo']>>) => {
     const { quest, value, complete } = info;
-    cta.textContent = complete ? 'Claim' : 'Show me';
     // One read-out for every goal, large or small: a filled bar with the count
     // written inside it. Small goals used to get a row of stamps instead,
     // which meant the widget changed SHAPE from quest to quest — and the
@@ -182,9 +189,9 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // whole job is to be scannable at a glance.
     bar.set(value / quest.goalAmount, `${value}/${quest.goalAmount}`);
 
+    // The reward is the payout, so it arrives with the payout — and then it
+    // is all the scroll shows (quest.css swaps .q-run for .q-done).
     scroll.classList.toggle('is-complete', complete);
-    // The reward is the payout, so it arrives with the payout.
-    reward.hidden = !complete;
     // The card is one control that does two things; a screen reader has to be
     // told which, because the styling is all a sighted player gets.
     scroll.setAttribute(
@@ -196,8 +203,8 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   /** Roll the shown quest up and, if there is a next one, unroll it. */
   const handOver = async () => {
     busy = true;
-    // The claimed card is no longer claimable: stop its bob before it rolls.
-    scroll.classList.remove('is-complete');
+    // The claimed card keeps its face while it rolls up, but stops bobbing.
+    scroll.classList.add('is-leaving');
     await rollUp();
     let next = game.questInfo();
     if (next !== null) {
@@ -205,6 +212,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       next = game.questInfo();
     }
     settle();
+    scroll.classList.remove('is-leaving');
     if (next === null) {
       // The chain is done: the scroll stays rolled up, and goes.
       shownIndex = -1;
