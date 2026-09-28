@@ -12,6 +12,13 @@ export const panel = (...children: Array<Node | string>): HTMLElement =>
 export const plank = (title: string, ...trailing: Array<Node | string>): HTMLElement =>
   el('div', { class: 'k-plank' }, el('span', {}, title), ...trailing);
 
+/** A window's header bar: the title on the left, the buttons on the right
+ *  (sheets/ui-window3-header.png, three-sliced so it takes any width). */
+const head = (title: string, buttons: readonly Node[]): HTMLElement =>
+  el('div', { class: 'k-head' },
+    el('h2', { class: 'k-head-title' }, title),
+    el('div', { class: 'k-head-actions' }, ...buttons));
+
 /**
  * A bottom sheet: a panel with a grab handle, a titled plank and a close
  * knob of its own.
@@ -53,6 +60,13 @@ export function sheet(
      * with no door.
      */
     bare?: boolean;
+    /**
+     * A HEADER instead of the plank: a wooden bar across the top of the
+     * window with the title on its left and a row of buttons anchored to its
+     * right, the window's close always last. `actions` are the buttons before
+     * it, in order — a knob, an info button — and may be empty.
+     */
+    header?: { actions?: readonly Node[] };
   },
   ...children: Array<Node | string>
 ): HTMLElement {
@@ -63,7 +77,8 @@ export function sheet(
     'div',
     {
       class: `k-sheet${opts.centred ? ' is-centred' : ''}`
-        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`,
+        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`
+        + `${opts.header && !opts.bare ? ' has-head' : ''}`,
     },
     el(
       'div',
@@ -72,7 +87,9 @@ export function sheet(
       // it can grow and shrink on the way in and out without distorting or
       // reflowing the contents (kit.css, `k-window-*`).
       el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
-      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title), close]),
+      ...(opts.bare ? []
+        : opts.header ? [head(opts.title, [...(opts.header.actions ?? []), close])]
+          : [el('div', { class: 'k-grab' }), plank(opts.title), close]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.

@@ -347,6 +347,13 @@ side on anything wider. A centred modal keeps its own narrower cap.
 - **The close** is part of the window: a round button of red lacquered wood
   with the X carved into it, pinned over the frame's top-right knob (kit
   `closeKnob`). Its pressed twin is the same wood pushed in.
+- **The header** (optional, `sheet({ header: { actions } })`): a carved bar
+  of the frame's wood with a knob at each end, laid over the window's top
+  rail, its end knobs covering the frame's corner knobs. Fixed height
+  (130 rpx); three-sliced in width (the ends kept, the plain middle
+  stretched). The title on the left, in light ink with a dark-wood outline;
+  a row of buttons anchored right, the close always last and any `actions`
+  before it. A headed window has no plank, no rope and no corner close.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 

@@ -86,6 +86,79 @@
 .k-close:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
 .k-close:active { background-image: url('../assets/btn-close-down.png'); }
 .k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+/* THE HEADER (kit sheet `header`): a carved bar of the frame's own wood,
+   with a knob at each end, laid over the window's top rail at the window's
+   full width, so its knobs sit where the frame's corner knobs are and it
+   reads as part of the frame (sheets/ui-window3-header.png). The height is
+   fixed; the width is three-sliced — both ends kept, the plain middle
+   stretched. The title sits on its left; its buttons on its right, the
+   window's close always last. */
+.k-sheet.has-head > .k-panel > .k-head {
+  --head-h: calc(var(--rpx) * 130);
+  --head-cap: calc(var(--head-h) * 170 / 207); /* the art's 170-px ends, at this height */
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 16);
+  height: var(--head-h);
+  /* Out past the window by just enough that each end knob lands centred on
+     the frame's corner knob and covers it: the frame's knobs sit 22 rpx in
+     from the corner, the bar's 38 rpx in from its end and halfway down. */
+  --head-over-x: calc(var(--rpx) * 16);
+  --head-over-y: calc(var(--head-h) / 2 - var(--rpx) * 22);
+  margin:
+    calc(var(--win-edge) * -0.72 - var(--head-over-y))
+    calc(var(--win-edge) * -0.72 - var(--head-over-x))
+    calc(var(--rpx) * 18);
+  /* Clear of the end knobs: the title starts, and the buttons stop, just
+     inside them. The lower edge of the board is its lip. */
+  padding: 0 0 calc(var(--head-h) * 0.05);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--head-cap);
+  border-image: url('../assets/window-header.png') 0 170 fill / 0 var(--head-cap) stretch;
+  filter: drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 6) rgba(40, 22, 10, 0.35));
+}
+.k-head > .k-head-title {
+  flex: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 0;
+  margin: 0 0 0 calc(var(--head-cap) * -0.18);
+  font-family: var(--font-display);
+  font-size: calc(var(--rpx) * 58);
+  font-weight: var(--weight-title);
+  line-height: 1.1;
+  color: var(--ink-inverse);
+  /* The label buttons' outline, in the board's own darker wood. */
+  text-shadow:
+    1px 0 0 #4a260f, -1px 0 0 #4a260f, 0 1px 0 #4a260f, 0 -1px 0 #4a260f,
+    1px 1px 0 #4a260f, -1px 1px 0 #4a260f, 1px -1px 0 #4a260f, -1px -1px 0 #4a260f,
+    0 2px 0 #4a260f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-head-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 14);
+  margin-right: calc(var(--head-cap) * -0.18);
+}
+/* In the header the close is one of the row, not pinned to the corner. */
+.k-head .k-close {
+  position: relative;
+  top: auto;
+  right: auto;
+  --close-size: calc(var(--head-h) * 0.8);
+  flex: none;
+}
+/* A knob in the row is drawn larger than a stepper, to sit with the close. */
+.k-head .k-btn.k-knob { --knob-size: calc(var(--head-h) * 0.62); }
+
 /* A centred window grows from its middle; a bottom sheet from its foot. */
 .k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {

@@ -201,6 +201,18 @@ export function mountGallery(root: HTMLElement): void {
       { title: 'Finish now?', onClose: noop, centred: true },
       el('p', {}, 'For a short, one-decision sheet: an offer, a confirmation.'),
     )),
+    specimen('sheet — with a header', sheet(
+      {
+        title: 'Warehouse',
+        onClose: noop,
+        header: { actions: [knob('?', noop, { label: 'About the warehouse', kind: 'blue' })] },
+      },
+      el('p', {}, 'A header bar: the title on the left, a row of buttons on the right, the close last.'),
+    )),
+    specimen('sheet — header, close only', sheet(
+      { title: 'Settings', onClose: noop, header: {} },
+      el('p', {}, 'The row may hold only the close.'),
+    )),
     specimen('sheet — plankless', sheet(
       { title: 'Hero', onClose: noop, bare: true },
       el('p', {}, 'The content already names it, so the plank would say it twice.'),
