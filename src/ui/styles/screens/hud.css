@@ -91,42 +91,13 @@
    The whole row is budgeted at four characters a coin — widen a slot and
    something else on the plank has to give. */
 .hud-coin { width: calc(var(--rpx) * 152); }
-.hud-gems > b,
-.hud-value > b {
+.hud-coin > b,
+.hud-gems > b {
   flex: 1;
   text-align: center;
   font-weight: inherit;
 }
-/* A number and the small line under it, in one column the slot's height: the
-   line centres under the number, not under the whole slot. */
-.hud-value {
-  position: relative;
-  flex: 1;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-/* The small line under a slot — a coin's rate, Mana's next unit — straddling
-   its bottom edge between the hole and the beam's lip. */
-.hud-coin-rate,
-.hud-mana-next {
-  position: absolute;
-  left: 50%;
-  top: calc(100% - var(--rpx) * 10);
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: calc(var(--rpx) * 21);
-  font-weight: var(--weight-title);
-  color: var(--parchment);
-  text-shadow:
-    calc(var(--rpx) * 2) 0 0 #2a170a, calc(var(--rpx) * -2) 0 0 #2a170a,
-    0 calc(var(--rpx) * 2) 0 #2a170a, 0 calc(var(--rpx) * -2) 0 #2a170a;
-  pointer-events: none;
-}
-.hud-coin-rate[hidden],
-.hud-mana-next[hidden] { display: none; }
 
 /* THE SLOT IS THE GAUGE. The fill runs under the whole hole — orb and
    number sit on it — so "how close to spilling" reads from across the room.
@@ -149,6 +120,25 @@
   transition: width var(--motion-quick, 160ms) linear;
 }
 .hud-mana > .icon { position: relative; }
+/* The pool and the next unit's countdown share one place and take turns
+   (header.ts): `is-next` fades to the countdown, `is-snap` drops the fade
+   for the jump back when the pool changes. */
+.hud-mana-readout {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+.hud-mana-readout > * {
+  grid-area: 1 / 1;
+  font-weight: inherit;
+  white-space: nowrap;
+  transition: opacity 300ms ease;
+}
+.hud-mana-next { opacity: 0; font-size: calc(var(--rpx) * 22); }
+.hud-mana-readout.is-next > b { opacity: 0; }
+.hud-mana-readout.is-next > .hud-mana-next { opacity: 1; }
+.hud-mana-readout.is-snap > * { transition: none; }
 /* Full means spilling, and spilling is the one thing the design wants the
  * player to notice from across the room. */
 .hud-mana-bar.is-full { box-shadow: inset 0 0 0 calc(var(--rpx) * 3) var(--gold); }
