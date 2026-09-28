@@ -174,7 +174,7 @@
    *
    * Sized for the phone: body a size above the iOS reading size, because a
    * menu is read at arm's length over a busy map. */
-  --text-title: 24px;
+  --text-title: 28px;
   --text-body: 17px;
   --text-desc: 15px;
   --text-heading: 14px;

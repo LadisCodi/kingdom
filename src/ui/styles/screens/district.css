@@ -56,7 +56,7 @@
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
 .dc-id { flex: 1; min-width: 0; }
-.dc-what { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.25; }
+.dc-what { color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-strong); line-height: 1.25; }
 
 
 /* The painted well, with the level on a scroll across its corner (M2). The

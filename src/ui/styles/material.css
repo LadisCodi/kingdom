@@ -138,13 +138,20 @@
   font-family: var(--font-display);
   font-size: var(--text-title);
   font-weight: var(--font-display-weight);
-  line-height: 1.1;
+  line-height: 1.15;
+  /* A soft vertical gradient in the letters — pale cream at the top, warmer
+     at the foot — as if lit from above. The fill is the background clipped
+     to the glyphs, so the dark-wood outline is a stack of drop-shadows on
+     the element (a text-shadow would show through a transparent fill). */
   color: var(--ink-inverse);
-  /* The label buttons' outline, in the band's own darker wood. */
-  text-shadow:
-    1px 0 0 #4a260f, -1px 0 0 #4a260f, 0 1px 0 #4a260f, 0 -1px 0 #4a260f,
-    1px 1px 0 #4a260f, -1px 1px 0 #4a260f, 1px -1px 0 #4a260f, -1px -1px 0 #4a260f,
-    0 2px 0 #4a260f;
+  background: linear-gradient(180deg, #fffaf0 0%, #fbe9c8 55%, #edcc92 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(1px 0 0 #4a260f) drop-shadow(-1px 0 0 #4a260f)
+    drop-shadow(0 1px 0 #4a260f) drop-shadow(0 -1px 0 #4a260f)
+    drop-shadow(0 2px 0 #4a260f);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

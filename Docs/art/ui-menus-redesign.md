@@ -269,7 +269,7 @@ that replaced them.*
 
 | Token | Size | Used for |
 |---|---|---|
-| `--text-title` | 24px | a window's title, on its header band |
+| `--text-title` | 28px | a window's title, on its header band |
 | `--text-body` | 17px | what the window is about: names, values, copy |
 | `--text-desc` | 15px | the line that describes it: a description, a rate, a note |
 | `--text-heading` | 14px | a section heading (small uppercase) |
@@ -366,7 +366,8 @@ side on anything wider. A centred modal keeps its own narrower cap.
   side, so the frame's wood shows round it; fixed height (120 rpx),
   three-sliced in width (its
   rounded ends kept, the plain middle stretched). The title is centred on
-  it, in light ink with a dark-wood outline; the buttons are anchored to its
+  it, in a soft vertical gradient (pale cream to warm cream, lit from above)
+  with a dark-wood outline; the buttons are anchored to its
   right, the close always last and any `actions` before it
   (`sheet({ actions })`). A window without a title (`bare`) has the frame
   and no band, and carries its own way out.
