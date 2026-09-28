@@ -12,7 +12,7 @@ import { setSfxMuted, sfxMuted } from '../audio/sfx';
 import type { Game } from '../game';
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from '../sim/data/definitions';
 import { el } from './format';
-import { action, sheet, switchCtl } from './kit';
+import { action, sectionHead, sheet, switchCtl } from './kit';
 
 // Armed state for the two-step reset. Module-level so it survives the
 // per-tick re-render; the timeout disarms it visually.
@@ -71,24 +71,24 @@ export function renderSettingsMenu(
   });
 
   const body = el('div', { class: 'set' },
-    el('div', { class: 'set-section' }, 'Sound'),
+    sectionHead('Sound'),
     toggle('music', 'Music', 'The harp loop', !musicMuted(), (on) => setMusicMuted(on)),
     toggle('sfx', 'Sound effects', 'Taps, coins, construction', !sfxMuted(), (on) => setSfxMuted(on)),
     toggle('ambience', 'Ambience', 'Wind, waves, birdsong', !ambienceMuted(), (on) => setAmbienceMuted(on)),
 
-    el('div', { class: 'set-section' }, 'Your kingdom'),
+    sectionHead('Your kingdom'),
     el('div', { class: 'set-row' },
       mark('save'),
       words(opts.saveModeLabel.includes('cloud') ? 'Saved to the cloud' : 'Saved to this device',
         `Your kingdom keeps working for up to ${OFFLINE_CAP_HOURS} hours while you are away.`)),
 
-    el('div', { class: 'set-section' }, 'Playing as'),
+    sectionHead('Playing as'),
     el('div', { class: 'set-row' },
       mark('payer'),
       words(game.payerInfo()?.label ?? 'No profile yet',
         'Fixed for this kingdom. Starting over lets you pick another.')),
 
-    el('div', { class: 'set-section' }, 'Start over'),
+    sectionHead('Start over'),
     reset,
 
     el('div', { class: 'set-print' }, `${GAME_VERSION} · save format v${SAVE_VERSION}`),

@@ -104,6 +104,11 @@ export function sheet(
   );
 }
 
+/** A SECTION'S HEADING inside a menu: a short rule, the label in small
+ *  uppercase wood, then a rule to the edge (kit.css `.k-section-head`). */
+export const sectionHead = (label: string): HTMLElement =>
+  el('div', { class: 'k-section-head' }, label);
+
 /** The warm dim behind an open sheet. It MUST cover the map: #ui is
  *  pointer-events:none with children auto, so anything the scrim doesn't
  *  cover passes taps straight through to the canvas and fires a harvest. */

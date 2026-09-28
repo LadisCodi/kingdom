@@ -358,6 +358,12 @@ side on anything wider. A centred modal keeps its own narrower cap.
   (when the building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
+- **Section headings** (kit `sectionHead`): a short rule, the label in small
+  uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
+  district card heads each of its sections with one, shown only when the
+  section is: *Stats*, then what the building does — *Villagers* (the
+  Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
+  *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
   *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's

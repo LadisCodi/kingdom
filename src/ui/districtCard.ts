@@ -39,7 +39,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { btn, closeKnob, iconEl, knob, moveKnob, pips, progress, stat, windowHead } from './kit';
+import { btn, closeKnob, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -126,16 +126,19 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // Townhall's villagers and a hall's soldiers are one mechanic now, so
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
-    if (training) body.append(training);
+    if (training) {
+      body.append(sectionHead(def.bedsPerLevel.length > 0 ? 'Ward'
+        : def.trains.every((t) => t === 'Villager') ? 'Villagers' : 'Training'), training);
+    }
 
     // A workshop turns things out too, so it gets the same kind of block.
     const workshop = workshopSection(game, district, live);
-    if (workshop) body.append(workshop);
+    if (workshop) body.append(sectionHead('Workshop'), workshop);
 
     // A decoration is ONE number, and this is it. It has no crew, no queue
     // and no tap, so without this line its card would be empty.
     if (isDecoration(def)) {
-      body.append(el('div', { class: 'dc-harmony' },
+      body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
         iconEl('harmony', { size: 'sm' }),
         el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
         el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
@@ -158,7 +161,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             ? `${Math.round(nextTier.at * 100)}% of demand pays +${
               Math.round(nextTier.bonus * 100)}% taxes`
             : 'nothing demands it yet';
-        body.append(el('div', { class: 'dc-harmony' },
+        body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
           iconEl('harmony', { size: 'sm' }),
           el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
           el('span', { class: 'dc-army-note' }, note)));
@@ -183,7 +186,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             iconEl('showme', { size: 'sm' }),
             `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, t)} Food`));
       };
-      body.append(part(() => {
+      body.append(sectionHead('Crops'), part(() => {
         const t = game.now();
         const readyAt = recoversAt(game.state, game.map, district.location, t);
         return JSON.stringify([
@@ -201,7 +204,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const perMinute = houseGoldPerMinute(game.state, district);
       const adjacency = districtAdjacency(game.state, district);
 
-      body.append(el('div', { class: 'dc-homes' },
+      body.append(sectionHead('Residents'), el('div', { class: 'dc-homes' },
         iconEl('population', { size: 'sm' }),
         pips(residents, capacity),
         el('span', {}, `${residents} of ${capacity} homes filled`)));
@@ -274,7 +277,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
       });
 
-      body.append(el('div', { class: 'dc-area' },
+      body.append(sectionHead('Workers'), el('div', { class: 'dc-area' },
         influenceThumb(game, district),
         el('div', {},
           ...perSource,
@@ -325,8 +328,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
 
     // Every OTHER thing the neighbours are doing to this building. Gold is
     // already said in the house's own words above, so it is not repeated.
-    for (const e of adjacencyInEffect(game.state, district)) {
-      if (e.stat === 'goldPerMinute') continue;
+    const neighbours = adjacencyInEffect(game.state, district)
+      .filter((e) => e.stat !== 'goldPerMinute');
+    if (neighbours.length > 0) body.append(sectionHead('Neighbours'));
+    for (const e of neighbours) {
       const { label, tone } = adjacencyReadout(e.stat, e.total);
       body.append(el('div', { class: `dc-badge is-${tone}` },
         `${ADJACENCY_WORDS[e.stat]} ${label}`));
@@ -416,7 +421,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
-  const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
+  const stats = figures.length === 0 ? [] : [sectionHead('Stats'), el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },

@@ -88,6 +88,30 @@
 }
 .k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
 
+/* A section's heading inside a menu (kit sectionHead): a short rule, the
+   label in small uppercase wood, and a rule running on to the edge. */
+.k-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wood);
+}
+.k-section-head::before,
+.k-section-head::after {
+  content: '';
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(92, 58, 30, 0.28);
+}
+.k-section-head::before { flex: none; width: 10px; }
+.k-section-head::after { flex: 1; }
+
 /* Rope grab handle on a sheet. */
 .k-grab {
   width: 40px;
