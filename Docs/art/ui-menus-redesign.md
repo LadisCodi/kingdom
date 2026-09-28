@@ -259,13 +259,26 @@ that replaced them.*
 | `--weight-body` | **600** SemiBold | ordinary prose — the default on `<body>` |
 | `--weight-small` | **400** Regular | the small description under it |
 
-- **600 for prose is the point of the change.** On parchment at 16px, Nunito
+- **600 for prose is the point of the change.** On parchment at body size, Nunito
   Regular reads thin and SemiBold reads like the mockups; 400 is left to the
   helper line, where the *contrast* against the 600 above it does the work.
-- **Scale: title 22px, body 16px, helper 13px** (`--text-title`,
-  `--text-body`, `--text-helper`) — the brief's minimums (§2), checked by
-  `tests/fonts.test.ts`, which also refuses any literal under 11px and any
-  bare weight outside the four faces.
+- **Text roles** — a menu names the role, never a size, so every window
+  reads the same (`tokens.css`, held in order by `tests/fonts.test.ts`,
+  which also refuses any literal under 11px and any bare weight outside the
+  four faces):
+
+| Token | Size | Used for |
+|---|---|---|
+| `--text-title` | 24px | a window's title, on its header band |
+| `--text-body` | 17px | what the window is about: names, values, copy |
+| `--text-desc` | 15px | the line that describes it: a description, a rate, a note |
+| `--text-heading` | 14px | a section heading (small uppercase) |
+| `--text-helper` | 14px | a caption or fine print: a tag, a badge, a timer |
+| `--text-button` | 16px | a button's label |
+| `--text-cta` | 22px | the one big call to action a screen leads with |
+
+- Tiny tags (a count on a slot, a timer on a portrait) may go to 11–12px;
+  a sentence never does.
 - Nunito is **a third wider than PT Sans** (~9.4px a character at 600 against
   ~7), so a line that used to fit takes more room. The one place it shows is
   a description clamped to two lines, which ellipsises — by design.

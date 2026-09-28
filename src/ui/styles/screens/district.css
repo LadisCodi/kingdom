@@ -47,8 +47,8 @@
   padding: 8px 10px;
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
   background: var(--parchment);
   border-top: var(--outline) solid var(--wood-dark);
   box-shadow: 0 -4px 14px rgba(60, 36, 18, 0.35);
@@ -56,7 +56,7 @@
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
 .dc-id { flex: 1; min-width: 0; }
-.dc-what { color: var(--ink-muted); line-height: 1.25; }
+.dc-what { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.25; }
 
 
 /* The painted well, with the level on a scroll across its corner (M2). The
@@ -96,7 +96,7 @@
   overflow-clip-margin: 6px;
   margin-top: 6px;
 }
-.dc-note { color: var(--ink-muted); line-height: 1.3; margin: 3px 0; }
+.dc-note { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; margin: 3px 0; }
 
 /* The upgrade block: the training panel's shape in miniature. The mark and
  * the level on the first row with the button that spends (or the gate that
@@ -162,7 +162,7 @@
   display: flex; align-items: baseline; gap: 6px;
   margin: 4px 0;
 }
-.dc-drip .dc-army-note { font-size: var(--text-helper); font-weight: var(--weight-small); }
+.dc-drip .dc-army-note { font-size: var(--text-desc); font-weight: var(--weight-small); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
@@ -170,7 +170,7 @@
 .dc-tapcost {
   display: flex; align-items: center; gap: 6px;
   margin-top: 4px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
@@ -178,6 +178,7 @@
 .dc-tapcost.is-bad { color: var(--clay); }
 
 .dc-tapline {
+  font-size: var(--text-desc);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -218,7 +219,7 @@
   gap: 5px;
   font-family: var(--font-body);
 }
-.dc-area-rate { color: var(--ink-muted); line-height: 1.3; }
+.dc-area-rate { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; }
 
 /* Crew slots: filled ones are people, empty ones are room for more. */
 .dc-crew { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
@@ -239,7 +240,7 @@
  * because it is the same beat. */
 .dc-army {
   display: flex; align-items: baseline; gap: 6px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
 }
 .dc-army-note { color: var(--ink-muted); }
@@ -250,7 +251,7 @@
  * about the CITY that happen to be read on one building's card. */
 .dc-harmony {
   display: flex; align-items: baseline; gap: 6px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
 }
 
@@ -471,7 +472,7 @@
   background: var(--wood-dark);
   border-radius: 999px;
 }
-.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
+.tr-desc { color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-small); }
 .tr-stats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; align-items: center; }
 /* The type chart in one phrase, styled like the stats beside it. */
 .tr-beats {
@@ -570,7 +571,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
@@ -580,7 +581,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
@@ -614,7 +615,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
@@ -685,20 +686,23 @@
 /* ---- the villagers' row and the level-up's before → after (M2) ---- */
 .tr-info.is-villagers { display: block; }
 .tr-villagers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.tr-villagers > .tr-roster { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 5px; }
+.tr-villagers > .tr-roster { flex: 1 1 auto; min-width: min-content; flex-wrap: nowrap; gap: 5px; }
 .tr-villagers .tr-roster-slot { width: 40px; height: 40px; }
 .tr-villagers .tr-roster-art { width: 34px; height: 34px; }
 .tr-villagers .k-btn { min-height: 34px; }
-.tr-villagers > .k-action { flex: none; max-width: 36%; }
-/* A REASON IS NOT A BUTTON. The 36% beside the roster is sized for "Train"
-   and its price; "Nowhere to put them — build more Housing" is forty
+/* Train keeps its own width, price and all; where the roster leaves it no
+   room — a phone — it takes a line of its own, under the roster, at the
+   right, rather than being squeezed past the window's edge. */
+.tr-villagers > .k-action { flex: none; margin-left: auto; }
+/* A REASON IS NOT A BUTTON. The space beside the roster is sized for
+   "Train" and its price; "Nowhere to put them — build more Housing" is forty
    characters, and in 132px it came out as four stacked scraps next to the
    figures it was talking about. So it takes a line of its own, under the
    roster, where the row's full width reads it in one. */
 .tr-villagers > .tr-blocked {
   flex: 1 0 100%;
   max-width: none;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   line-height: 1.3;
 }
@@ -717,7 +721,7 @@
 .dc-upgrade > .k-btn {
   width: 100%;
   min-height: 46px;
-  font-size: var(--text-title);
+  font-size: var(--text-cta);
   background: none;
   border: 0;
   box-shadow: none;
@@ -730,7 +734,7 @@
   gap: 6px;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-helper);
+  font-size: var(--text-desc);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
@@ -747,7 +751,7 @@
    of its own, still centred. Each is a big icon, then the name — bold, in
    ink — over the value in a lighter ink. */
 .dc-stats {
-  --stat-gap: 14px;
+  --stat-gap: 10px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -765,9 +769,9 @@
   min-width: 0;
   /* The frame is drawn at 14 px but insets the contents by less, so a
      58-px tile still holds a name and a value. */
-  border-width: 8px;
+  border-width: 8px 6px;
 }
-.dc-stat > .icon { --icon-size: 40px; flex: none; }
+.dc-stat > .icon { --icon-size: 38px; flex: none; }
 .dc-stat-body { min-width: 0; }
 .dc-stat-label {
   font-size: 13px;
