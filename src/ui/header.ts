@@ -31,6 +31,7 @@
 import type { Game } from '../game';
 import type { CurrencyId } from '../sim/state';
 import { el, formatCount } from './format';
+import { heldOf, onHoldChange } from './hudHold';
 import { currencyIcon, iconEl } from './kit';
 
 /** What the plaque shows, per kind. */
@@ -159,8 +160,10 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     }
     // Rolled up past ten thousand, so a balance never outgrows its slot. The
     // purse (one tap away, on any coin) is where the exact figure lives.
-    for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
-    gemValue.textContent = formatCount(game.walletValue('Gems'));
+    // Less whatever a reward in flight has not landed yet (hudHold.ts).
+    const landed = (c: CurrencyId) => Math.max(0, game.walletValue(c) - heldOf(c));
+    for (const [c, node] of values) node.textContent = formatCount(landed(c));
+    gemValue.textContent = formatCount(landed('Gems'));
 
     const slot = game.hudSlot();
     // Population is drawn on the world now, over the Townhall, so the plaque
@@ -178,7 +181,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // Mana is ALWAYS on the plank. It used to appear only once the player had
     // met magic, which was right when it only paid for relics; it now pays
     // for every tap, so hiding it would hide the reason a tap refused.
-    const m = game.manaInfo();
+    const info = game.manaInfo();
+    const m = { ...info, value: Math.max(0, info.value - heldOf('Mana')) };
     // The POOL, not "pool/cap". The gauge already draws the ratio as a fill
     // and turns its rim gold when it is spilling, so "/100" was the same fact
     // twice. The full reading stays in the aria-label and in the
@@ -204,6 +208,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     knob.classList.toggle('is-active', game.openOverlay === 'settings');
   };
   game.onChange(refresh);
+  onHoldChange(refresh);
   refresh();
   window.setInterval(cycle, 200);
 }

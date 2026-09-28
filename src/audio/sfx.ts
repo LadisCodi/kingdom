@@ -20,6 +20,14 @@ import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
 import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
+import rewardBurstUrl from './sounds/reward_burst.ogg?url';
+import rewardCoin1 from './sounds/reward_coin_01.mp3?url';
+import rewardCoin2 from './sounds/reward_coin_02.mp3?url';
+import rewardCoin3 from './sounds/reward_coin_03.mp3?url';
+import rewardCoin4 from './sounds/reward_coin_04.mp3?url';
+import rewardPop1 from './sounds/reward_pop_01.wav?url';
+import rewardPop2 from './sounds/reward_pop_02.wav?url';
+import rewardPop3 from './sounds/reward_pop_03.wav?url';
 import scrollCloseUrl from './sounds/scroll_close.ogg?url';
 import scrollOpenUrl from './sounds/scroll_open.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
@@ -48,6 +56,10 @@ export type SfxName =
   | 'boatSplash' | 'chainFinished'
   // The quest scroll unrolling and rolling back up (questPill.ts).
   | 'scrollOpen' | 'scrollClose'
+  // A reward flying into the header (rewardFly.ts): the burst it leaves the
+  // claim with, and one tick per fragment landing — a coin for money, a pop
+  // for goods.
+  | 'rewardBurst' | 'rewardCoin' | 'rewardPop'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
   | 'tapIron' | 'tapFish'
   // The two the battle screen needs. Re-pitched takes rather than new files,
@@ -104,6 +116,9 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   tapIron: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.5, jitter: 0.05, rate: 0.85 },
   scrollOpen: { urls: one(scrollOpenUrl), volume: 0.4, jitter: 0.04 },
   scrollClose: { urls: one(scrollCloseUrl), volume: 0.4, jitter: 0.04 },
+  rewardBurst: { urls: one(rewardBurstUrl), volume: 0.4, jitter: 0.03 },
+  rewardCoin: { urls: [rewardCoin1, rewardCoin2, rewardCoin3, rewardCoin4], volume: 0.3, jitter: 0.04 },
+  rewardPop: { urls: [rewardPop1, rewardPop2, rewardPop3], volume: 0.35, jitter: 0.04 },
   hit: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.32, jitter: 0.12, rate: 1.35 },
   death: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.45, jitter: 0.08, rate: 0.6 },
   // Fish taps reuse the boat splash, pitched up — a lighter plip.
@@ -171,6 +186,8 @@ export interface PlayOptions {
    *  second before upgrades, and a machine gun after them. */
   group?: string;
   limit?: number;
+  /** Multiplier on the playback rate — a rising run of ticks climbs in pitch. */
+  rate?: number;
 }
 
 /** Sounds currently in flight, per voice-limit group. */
@@ -194,7 +211,7 @@ export function playSfx(name: SfxName, opts: PlayOptions = {}): void {
     source.buffer = buffer;
     const jitter = spec.jitter + (opts.jitter ?? 0);
     source.playbackRate.value =
-      (spec.rate ?? 1) * (1 - jitter + Math.random() * jitter * 2);
+      (spec.rate ?? 1) * (opts.rate ?? 1) * (1 - jitter + Math.random() * jitter * 2);
     const gain = ctx.createGain();
     gain.gain.value = spec.volume * (opts.gain ?? 1);
     source.connect(gain).connect(ctx.destination);

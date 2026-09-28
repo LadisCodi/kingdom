@@ -1,0 +1,40 @@
+/* A claimed reward flying into the header (rewardFly.ts).
+ *
+ * The layer sits OVER the header (8), because the fragments land in it, and
+ * under the nav bar (10). It never takes a tap: pointer-events is off, which
+ * also keeps an empty inset:0 element from swallowing taps on the map. */
+#flyers {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* One fragment of the resource: its icon, a little larger than the slot's. */
+.rf-frag {
+  position: absolute;
+  will-change: transform, opacity;
+}
+.rf-frag > .icon {
+  --icon-size: calc(var(--rpx) * 66);
+  filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+}
+
+/* The flash at the claim. */
+.rf-ring {
+  position: absolute;
+  width: calc(var(--rpx) * 180);
+  height: calc(var(--rpx) * 180);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 200, 0.9), rgba(242, 178, 51, 0.45) 45%, transparent 70%);
+}
+
+/* A spark where a fragment lands. */
+.rf-spark {
+  position: absolute;
+  width: calc(var(--rpx) * 14);
+  height: calc(var(--rpx) * 14);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe6 30%, var(--gold) 70%, transparent 72%);
+}

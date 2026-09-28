@@ -70,8 +70,8 @@ import {
   type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
 } from './sim/expeditions';
 import {
-  dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
-  openGates, type GateView,
+  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared, gateSupplies,
+  gateView, nextGateToRaid, openGates, type GateView, type RaidableId,
 } from './sim/gates';
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
@@ -420,6 +420,7 @@ export class Game {
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
+  private rewardListeners: Array<(haul: Wallet) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
 
   constructor(
@@ -444,6 +445,11 @@ export class Game {
   }
   onShake(fn: (c: CurrencyId[]) => void): void {
     this.shakeListeners.push(fn);
+  }
+  /** A claimed reward, already in the wallet — the UI flies it to the
+   *  header and counts it in as it lands (ui/rewardFly.ts). */
+  onReward(fn: (haul: Wallet) => void): void {
+    this.rewardListeners.push(fn);
   }
   onToast(fn: (msg: string) => void): void {
     this.toastListeners.push(fn);
@@ -502,6 +508,24 @@ export class Game {
   }
   toast(msg: string): void {
     for (const fn of this.toastListeners) fn(msg);
+  }
+  private reward(haul: Wallet): void {
+    for (const fn of this.rewardListeners) fn(haul);
+  }
+
+  /**
+   * How many fragments a reward flies to the header as: one for each minute
+   * of the city's own production it is worth, so a big payout LOOKS big
+   * against what the player already makes — at least three, at most twelve,
+   * and five for a coin the city does not produce (Gems) or produces nothing
+   * of yet.
+   */
+  rewardFragments(c: CurrencyId, amount: number): number {
+    const perMinute = (RAIDABLE as readonly CurrencyId[]).includes(c)
+      ? cityRatePerSecond(this.state, c as RaidableId) * 60
+      : c === 'Mana' ? manaNetRegen(this.state) / 60 : 0;
+    if (perMinute <= 0) return 5;
+    return Math.min(12, Math.max(3, Math.round(amount / perMinute)));
   }
 
   // ------------------------------------------------------------------- ticking
@@ -2085,6 +2109,7 @@ export class Game {
       .map(([c, n]) => `+${n} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
+    this.reward(haul);
   }
 
   /** The Royal chest goes through the same confirmation every other real-money
@@ -2815,16 +2840,16 @@ export class Game {
   doClaimQuest(): void {
     const quest = activeQuest(this.state);
     const result = claimQuest(this.state);
+    let haul: Wallet | null = null;
     if (result === 'Claimed' && quest) {
       // The LAST claim gets the victory sting instead of the usual chime.
       const finished = activeQuest(this.state) === null;
       playSfx(finished ? 'chainFinished' : 'quest');
-      // One floater per currency rather than one string listing them all:
-      // each carries its own atlas icon, and an emoji in a joined string is
-      // exactly the fallback the art rules refuse.
-      for (const [c, n] of Object.entries(quest.reward)) {
-        this.floaters.add(townhall(this.state).location, `+${n}`, c);
-      }
+      // What it paid flies from the scroll into the header — once the header
+      // has redrawn, so a coin this claim puts on the plank has a slot.
+      haul = { ...quest.reward };
+      if (quest.rewardMana > 0) haul.Mana = (haul.Mana ?? 0) + quest.rewardMana;
+      if (quest.rewardGems > 0) haul.Gems = (haul.Gems ?? 0) + quest.rewardGems;
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
       if (finished) {
@@ -2838,6 +2863,7 @@ export class Game {
       }
     }
     this.notify();
+    if (haul !== null) this.reward(haul);
   }
 
   /** Active-quest snapshot for the pill; null when the chain is finished. */

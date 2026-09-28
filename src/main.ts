@@ -25,6 +25,7 @@ import { newGame } from './sim/newGame';
 import { deserialize, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
+import { mountRewardFly } from './ui/rewardFly';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
@@ -144,6 +145,8 @@ async function boot(): Promise<void> {
   mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
+  // Rewards flying into the header, over it and under the nav bar.
+  mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);

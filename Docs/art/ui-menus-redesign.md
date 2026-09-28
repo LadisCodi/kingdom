@@ -272,8 +272,25 @@ still derived by the script, never drawn. No emoji anywhere —
 
 ### 3.7 Motion (spec only, no mockup needed)
 
-Sheets slide up 180ms ease-out. Coins/resources fly from the source cell
-to the matching HUD counter on gain. Counters roll rather than snap.
+Sheets slide up 180ms ease-out. Counters roll rather than snap.
+
+**A claimed reward flies into the header** (`ui/rewardFly.ts`; today the
+quest claim and the daily / season chests):
+
+- It bursts from where it was claimed — the tap that claimed it, or the
+  centre of the screen — with a flash and a coin jingle.
+- Each resource in it leaves as N fragments of its icon: one per minute of
+  the city's own production the reward is worth, at least 3, at most 12, and
+  5 for a coin the city does not produce (Gems) or produces none of yet.
+- Each fragment bursts out to a spot of its own, hangs, then flies in an arc
+  into that resource's slot, 70 ms after the one before; a second resource
+  leaves 180 ms after the first. Burst 260 ms, flight 620 ms, speeding up.
+- The header counts the reward in as fragments land: each adds its share,
+  the icon swells, sparks fly off it, and a tick plays — a coin for Gold and
+  Gems, a pop for goods — each a shade higher than the last.
+- Only what the plank shows flies; the wallet holds the reward from the
+  instant of the claim either way. Reduced motion: no flight, the new totals
+  just show.
 Insufficient funds shakes **the counter**, not the button (already true).
 Claim/complete pops a small burst of gold sparks. Nothing pulses forever
 except the single lit CTA.
