@@ -23,10 +23,17 @@
 // replaceChildren() on every tick, which is why the completed state could
 // never have a transition.
 
+// THE SCROLL UNROLLS. A new quest arrives as the parchment unrolling — the
+// base fades in and widens from its two rollers — and its words fade in
+// just before it reaches full size. A claimed quest plays it backwards, and
+// a claim that hands over the next quest plays both, half a second apart.
+// Built on the Web Animations API so each phase can be awaited in order.
+
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId } from '../sim/state';
 import { questLine } from '../sim/questProse';
+import { playSfx } from '../audio/sfx';
 import { el } from './format';
 import { iconEl, progress, currencyIcon, type IconName } from './kit';
 
@@ -73,6 +80,20 @@ const rewardNodes = (quest: QuestDef): Node[] => {
   return parts;
 };
 
+/** The unroll, in ms. The words start before the parchment is fully open. */
+const OPEN_MS = 520;
+const WORDS_IN_AT = 360;
+const WORDS_MS = 200;
+const CLOSE_WORDS_MS = 160;
+const CLOSE_MS = 420;
+/** The pause between rolling one quest up and unrolling the next. */
+const BETWEEN_MS = 500;
+/** How narrow the rolled-up scroll is: its two rollers side by side. */
+const ROLLED = 0.16;
+
+const sleep = (ms: number) => new Promise<void>((r) => { window.setTimeout(r, ms); });
+const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
 export function mountQuestPill(game: Game, root: HTMLElement): void {
   const name = el('div', { class: 'q-name' });
   const desc = el('div', { class: 'q-desc' });
@@ -84,37 +105,75 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const slot = el('div', { class: 'q-slot' });
   const cta = el('span', { class: 'q-cta' }, 'Show me');
 
-  const scroll = el('button', { class: 'q-scroll', type: 'button' },
+  // The parchment is its own layer so it can unroll under words that do not
+  // reflow: it is nine-sliced, so its rollers stay whole at any width.
+  const base = el('span', { class: 'q-base', 'aria-hidden': 'true' });
+  const content = el('div', { class: 'q-content' },
     el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, name, desc)),
     // The trough and the verb share the foot's row (M12).
     el('div', { class: 'q-foot' }, bar.root, reward, cta));
+  const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);
+
+  // Nothing to tap while the scroll is rolling or unrolling.
+  let busy = false;
   // Read the state at CLICK time, not at render time: a tap can land in the
   // same frame the goal completes, and claiming a quest that is not finished
   // is refused by the sim anyway — but pointing at a goal you just met would
   // be a small lie.
   scroll.addEventListener('click', () => {
+    if (busy) return;
     if (game.questInfo()?.complete === true) game.doClaimQuest();
     else game.focusQuest();
   });
   root.replaceChildren(scroll);
 
+  const unroll = async () => {
+    const fast = calm();
+    base.animate([
+      { width: `${ROLLED * 100}%`, opacity: 0 },
+      { width: '100%', opacity: 1 },
+    ], { duration: fast ? 0 : OPEN_MS, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'backwards' });
+    const words = content.animate([{ opacity: 0 }, { opacity: 1 }], {
+      duration: fast ? 0 : WORDS_MS, delay: fast ? 0 : WORDS_IN_AT, fill: 'backwards',
+    });
+    if (!fast) playSfx('scrollOpen');
+    await words.finished;
+  };
+
+  const rollUp = async () => {
+    const fast = calm();
+    if (!fast) playSfx('scrollClose');
+    await content.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: fast ? 0 : CLOSE_WORDS_MS, fill: 'forwards',
+    }).finished;
+    await base.animate([
+      { width: '100%', opacity: 1 },
+      { width: `${ROLLED * 100}%`, opacity: 0 },
+    ], { duration: fast ? 0 : CLOSE_MS, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)', fill: 'forwards' }).finished;
+  };
+
+  /** Drop the held end states of a roll-up, so the next unroll starts clean. */
+  const settle = () => {
+    for (const a of [...base.getAnimations(), ...content.getAnimations()]) a.cancel();
+  };
+
   // Rebuild only what changes with the quest itself; the rest is mutated.
   let shownIndex = -1;
+  // A quest that arrived while a sheet covered the map unrolls when the map
+  // comes back, not while nobody can see it.
+  let owedUnroll = true;
 
-  const refresh = () => {
-    const info = game.questInfo();
-    // Hidden while anything covers the map, and retired when the chain ends.
-    root.hidden = game.hasOpenSheet() || info === null;
-    if (info === null) return;
+  const fill = (info: NonNullable<ReturnType<Game['questInfo']>>) => {
+    const { quest } = info;
+    shownIndex = info.index;
+    name.textContent = quest.name;
+    desc.textContent = questLine(quest);
+    reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
+    slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
+  };
 
-    const { quest, value, complete, index } = info;
-    if (index !== shownIndex) {
-      shownIndex = index;
-      name.textContent = quest.name;
-      desc.textContent = questLine(quest);
-      reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
-      slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
-    }
+  const live = (info: NonNullable<ReturnType<Game['questInfo']>>) => {
+    const { quest, value, complete } = info;
     cta.textContent = complete ? 'Claim' : 'Show me';
     // One read-out for every goal, large or small: a filled bar with the count
     // written inside it. Small goals used to get a row of stamps instead,
@@ -132,6 +191,58 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       'aria-label',
       complete ? `Claim the reward for ${quest.name}` : `Show me where: ${quest.name}`,
     );
+  };
+
+  /** Roll the shown quest up and, if there is a next one, unroll it. */
+  const handOver = async () => {
+    busy = true;
+    // The claimed card is no longer claimable: stop its bob before it rolls.
+    scroll.classList.remove('is-complete');
+    await rollUp();
+    let next = game.questInfo();
+    if (next !== null) {
+      await sleep(BETWEEN_MS);
+      next = game.questInfo();
+    }
+    settle();
+    if (next === null) {
+      // The chain is done: the scroll stays rolled up, and goes.
+      shownIndex = -1;
+      root.hidden = true;
+      busy = false;
+      return;
+    }
+    fill(next);
+    live(next);
+    root.hidden = game.hasOpenSheet();
+    busy = false;
+    await unroll();
+  };
+
+  const refresh = () => {
+    if (busy) return;
+    const info = game.questInfo();
+    if (info === null) {
+      // Retired when the chain ends — rolled up first if it was on screen.
+      if (shownIndex >= 0 && !root.hidden) void handOver();
+      else root.hidden = true;
+      return;
+    }
+    if (shownIndex >= 0 && info.index !== shownIndex && !root.hidden) {
+      void handOver();
+      return;
+    }
+    // Hidden while anything covers the map.
+    root.hidden = game.hasOpenSheet();
+    if (info.index !== shownIndex) {
+      fill(info);
+      owedUnroll = true;
+    }
+    live(info);
+    if (owedUnroll && !root.hidden) {
+      owedUnroll = false;
+      void unroll();
+    }
   };
   game.onChange(refresh);
   refresh();

@@ -20,6 +20,8 @@ import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
 import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
+import scrollCloseUrl from './sounds/scroll_close.ogg?url';
+import scrollOpenUrl from './sounds/scroll_open.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
 import unitUrl from './sounds/unit_trained.mp3?url';
 import upgradeUrl from './sounds/upgrade_bought.wav?url';
@@ -44,6 +46,8 @@ export type SfxName =
   | 'questComplete' | 'villagerTrained' | 'coinSale' | 'researchComplete'
   | 'constructionComplete' | 'upgradeBought' | 'gemSpend' | 'unitTrained'
   | 'boatSplash' | 'chainFinished'
+  // The quest scroll unrolling and rolling back up (questPill.ts).
+  | 'scrollOpen' | 'scrollClose'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
   | 'tapIron' | 'tapFish'
   // The two the battle screen needs. Re-pitched takes rather than new files,
@@ -94,6 +98,8 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   tapStone: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.5, jitter: 0.05 },
   // Iron shares the pick-axe takes, pitched down — heavier metal.
   tapIron: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.5, jitter: 0.05, rate: 0.85 },
+  scrollOpen: { urls: one(scrollOpenUrl), volume: 0.4, jitter: 0.04 },
+  scrollClose: { urls: one(scrollCloseUrl), volume: 0.4, jitter: 0.04 },
   hit: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.32, jitter: 0.12, rate: 1.35 },
   death: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.45, jitter: 0.08, rate: 0.6 },
   // Fish taps reuse the boat splash, pitched up — a lighter plip.

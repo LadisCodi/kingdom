@@ -1,5 +1,9 @@
 /* The quest tracker (§5.2) — an unrolled scroll, bottom left, that IS its own
- * button. See questPill.ts for why it has no controls of its own. */
+ * button. See questPill.ts for why it has no controls of its own, and for the
+ * unroll / roll-up animation.
+ *
+ * Every size is in reference pixels (`--rpx`, tokens.css), measured on mockup
+ * M1 at 1125 wide, so the scroll keeps its share of the screen everywhere. */
 
 /* Bottom left, out of the flex flow: the top of the screen belongs to the
  * resource bar and the fog the player is tapping, and the thumb lives down
@@ -7,67 +11,171 @@
  * of which hide it outright via hasOpenSheet(). */
 #quest {
   position: absolute;
-  left: 12px;
+  left: calc(var(--rpx) * 25);
   /* --nav-h is measured and already contains the nav's safe-area padding;
      adding env() again pushed the scroll a notch's worth up the screen. */
-  bottom: calc(var(--nav-h) + 10px);
-  max-width: calc(100% - 24px);
+  bottom: calc(var(--nav-h) + var(--rpx) * 20);
+  max-width: calc(100% - var(--rpx) * 50);
   z-index: 3;
+
+  /* THE SCROLL DIALS — the numbers to reach for when fine-tuning it. */
+  --q-w: calc(var(--rpx) * 804);        /* the scroll's width */
+  --q-h: calc(var(--rpx) * 235);        /* its least height; it grows with the words */
+  --q-icon: calc(var(--rpx) * 96);      /* the goal's mark */
+  --q-title: calc(var(--rpx) * 37);
+  --q-desc: calc(var(--rpx) * 28);
+  --q-bar-h: calc(var(--rpx) * 49);     /* the progress trough */
+  --q-cta-w: calc(var(--rpx) * 201);    /* the "Show me" slab */
+  --q-cta-h: calc(var(--rpx) * 69);
+  --q-cta-text: calc(var(--rpx) * 32);
 }
 #quest[hidden] { display: none; }
 
 .q-scroll {
   /* It is a <button>, so the inherited control styling has to go first. */
   appearance: none;
-  display: block;
-  width: 226px;
-  max-width: 100%;
-  text-align: left;
-  cursor: pointer;
-
   position: relative;
-  padding: 6px 10px 8px;
+  display: block;
+  width: var(--q-w);
+  max-width: 100%;
+  min-height: var(--q-h);
+  /* Clear of the two rollers, and of the parchment's top and bottom edges. */
+  padding: calc(var(--rpx) * 42) calc(var(--rpx) * 66) calc(var(--rpx) * 40) calc(var(--rpx) * 58);
+  text-align: left;
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  /* Curled edges: a darker band top and bottom, as if the sheet is rolled. */
-  background:
-    linear-gradient(var(--parchment-shade), var(--parchment-shade)) top / 100% 6px no-repeat,
-    linear-gradient(var(--parchment-shade), var(--parchment-shade)) bottom / 100% 6px no-repeat,
-    var(--parchment);
-  border: 3px solid var(--wood-dark);
-  border-radius: 8px;
-  box-shadow: 0 4px 0 rgba(60, 36, 18, 0.3), 0 10px 20px rgba(60, 36, 18, 0.3);
-  transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
-/* Presses like every other button in the kit, because it is one now. */
-.q-scroll:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.3), 0 4px 10px rgba(60, 36, 18, 0.3);
+/* Presses like every other button in the kit, because it is one. */
+.q-scroll:active { transform: translateY(calc(var(--rpx) * 4)); }
+
+/* The parchment between its rollers (sheets/ui-quest1-scroll-button.png),
+   nine-sliced so the rollers keep their shape at any width — which is what
+   lets the unroll animate the width alone. Centred, so it opens both ways. */
+.q-base {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100%;
+  transform: translateX(-50%);
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--rpx) * 55) calc(var(--rpx) * 50) calc(var(--rpx) * 50);
+  border-image: url('../../assets/scroll-parchment.png') 110 100 100 fill /
+    calc(var(--rpx) * 55) calc(var(--rpx) * 50) calc(var(--rpx) * 50) stretch;
+  filter: drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 8) rgba(40, 22, 10, 0.35));
+  pointer-events: none;
+}
+.q-content { position: relative; }
+
+.q-head { display: flex; align-items: center; gap: calc(var(--rpx) * 22); }
+.q-slot {
+  flex: none;
+  width: var(--q-icon);
+  height: var(--q-icon);
+  display: grid;
+  place-items: center;
+}
+.q-slot .icon { --icon-size: var(--q-icon); filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(60, 36, 18, 0.3)); }
+.q-text { min-width: 0; flex: 1; }
+.q-name {
+  font-size: var(--q-title);
+  font-weight: var(--weight-title);
+  line-height: 1.15;
+}
+.q-desc {
+  margin-top: calc(var(--rpx) * 4);
+  font-size: var(--q-desc);
+  font-weight: var(--weight-body);
+  line-height: 1.25;
+  color: var(--ink-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.q-name {
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: 18px;
-  line-height: 1.15;
-  margin: 1px 0 2px;
+/* The trough and the verb share the foot's row, under the words. */
+.q-foot {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 36);
+  margin: calc(var(--rpx) * 10) 0 0 calc(var(--q-icon) + var(--rpx) * 12);
 }
-.q-desc { color: var(--ink-muted); margin-bottom: 5px; }
+.q-foot .q-reward { flex: 1; }
+
+/* The trough is painted (sheets/ui-quest2-progress.png): a recess and a gold
+   fill, each sliced at its rounded ends only, since the height is fixed. */
+.q-scroll .k-trough {
+  flex: 1;
+  height: var(--q-bar-h);
+  padding: calc(var(--rpx) * 4);
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+  border-image: url('../../assets/bar-trough.png') 0 46 fill / 0 calc(var(--rpx) * 25) stretch;
+}
+/* At least its two rounded ends, so a sliver of progress is still a pill. */
+.q-scroll .k-trough .k-fill {
+  min-width: calc(var(--rpx) * 42);
+  background: none;
+  box-shadow: none;
+  border: 0;
+  border-image: url('../../assets/bar-fill-gold.png') 0 38 fill / 0 calc(var(--rpx) * 21) stretch;
+}
+.q-scroll .k-trough .k-fill[style*='width: 0%'] { visibility: hidden; }
+.q-scroll .k-trough .k-trough-label {
+  font-size: calc(var(--rpx) * 30);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(255, 246, 224, 0.55);
+}
+
+/* Drawn as the wood slab (material.css's painted button), but the scroll is
+   the control: no pointer-events of its own, and it presses with the scroll. */
+.q-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--q-cta-w);
+  height: var(--q-cta-h);
+  padding-bottom: calc(var(--rpx) * 6); /* the lip under the face */
+  font-size: var(--q-cta-text);
+  font-weight: var(--weight-title);
+  color: var(--ink-inverse);
+  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(60, 36, 18, 0.7);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  border-image: url('../../assets/btn-wood.png') 70 90 90 fill /
+    calc(var(--rpx) * 26) calc(var(--rpx) * 33) calc(var(--rpx) * 33) stretch;
+  pointer-events: none;
+}
+/* Pressed: the lip-less slab, and the words drop with its face. */
+.q-scroll:active .q-cta {
+  border-image-source: url('../../assets/btn-wood-down.png');
+  padding: calc(var(--rpx) * 6) 0 0;
+}
 
 /* Only ever on screen once the quest is done — it is the payout, so it
  * arrives with the payout. */
 .q-reward {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--rpx) * 14);
   flex-wrap: wrap;
-  margin-top: 8px;
 }
 .q-reward[hidden] { display: none; }
+.q-foot > .k-trough:has(~ .q-reward:not([hidden])) { display: none; }
 .q-reward-label {
-  font-size: var(--text-helper);
+  font-size: var(--q-desc);
   font-weight: var(--weight-small);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -77,93 +185,31 @@
 .q-reward-item {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  font-family: var(--font-body);
+  gap: calc(var(--rpx) * 6);
+  padding: calc(var(--rpx) * 4) calc(var(--rpx) * 16);
+  font-size: var(--q-desc);
   font-weight: var(--weight-strong);
   background: var(--gold);
-  border: 2px solid var(--gold-dark);
+  border: calc(var(--rpx) * 4) solid var(--gold-dark);
   border-radius: 999px;
 }
+.q-reward-item .icon { --icon-size: calc(var(--rpx) * 40); }
 
-/* Done: the whole card becomes the Claim button — a gold rim, a warmer
- * ground and a gentle bob, so it is the only lively thing on screen and the
- * tap target is the entire widget rather than a control inside it. */
-.q-scroll.is-complete {
-  background:
-    linear-gradient(var(--gold), var(--gold)) top / 100% 6px no-repeat,
-    linear-gradient(var(--gold), var(--gold)) bottom / 100% 6px no-repeat,
-    var(--parchment);
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 3px var(--gold), 0 4px 0 rgba(60, 36, 18, 0.3),
-    0 10px 22px rgba(60, 36, 18, 0.35);
-  animation: q-bob 1.4s ease-in-out infinite alternate;
+/* Done: the whole card becomes the Claim button — a gold glow round the
+ * parchment, a green slab and a gentle bob, so it is the only lively thing on
+ * screen and the tap target is the entire widget. */
+.q-scroll.is-complete { animation: q-bob 1.4s ease-in-out infinite alternate; }
+.q-scroll.is-complete .q-base {
+  filter:
+    drop-shadow(0 0 calc(var(--rpx) * 6) var(--gold))
+    drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 8) rgba(40, 22, 10, 0.35));
 }
-.q-scroll.is-complete:active {
-  animation: none;
-  transform: translateY(3px);
-  box-shadow: 0 0 0 3px var(--gold), 0 1px 0 rgba(60, 36, 18, 0.3);
-}
+.q-scroll.is-complete .q-cta { filter: hue-rotate(62deg) saturate(1.5) brightness(1.08); }
+.q-scroll.is-complete:active { animation: none; }
 @keyframes q-bob {
   from { transform: translateY(0); }
-  to { transform: translateY(-3px); }
+  to { transform: translateY(calc(var(--rpx) * -8)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .q-scroll.is-complete { animation: none; }
 }
-
-/* ---- the M1 card: a mark at the left, the verb at the right ---- */
-.q-head { display: flex; align-items: flex-start; gap: 8px; }
-.q-slot {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  margin-top: 2px;
-  /* The picture floats on the parchment, as M12 draws the log. */
-  background: none;
-  border: 0;
-}
-.q-slot .icon { --icon-size: 40px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
-.q-desc {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.q-text { min-width: 0; flex: 1; }
-.q-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-.q-foot > .k-trough[hidden] { display: none; }
-.q-foot .q-reward { flex: 1; margin-top: 0; }
-/* Drawn as a slab, but the scroll is the control: no pointer-events of its own. */
-.q-cta {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 26px;
-  padding: 2px 10px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  color: var(--ink-inverse);
-  background: var(--wood);
-  border: 2px solid var(--wood-dark);
-  border-radius: 8px;
-  box-shadow: 0 2px 0 var(--wood-dark);
-  pointer-events: none;
-}
-.q-scroll.is-complete .q-cta { background: var(--leaf); border-color: var(--leaf-dark); box-shadow: 0 2px 0 var(--leaf-dark); }
-
-/* The trough on the scroll is the dark one with the gold fill and cream
-   figures (M12): taller than the kit's, so the figures fit. */
-.q-scroll .k-trough {
-  flex: 1;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--wood-dark);
-  border-color: #3a2412;
-  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.25);
-}
-.q-scroll .k-trough .k-trough-label { color: var(--parchment); text-shadow: 0 1px 0 rgba(60, 36, 18, 0.7); }
