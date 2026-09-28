@@ -13,7 +13,7 @@
   --nav-gap: calc(var(--rpx) * 22);
   --nav-icon: calc(var(--rpx) * 92);
   --nav-label: calc(var(--rpx) * 32);
-  --nav-badge: calc(var(--rpx) * 40);     /* the red "something to do" dot */
+  --nav-badge: calc(var(--rpx) * 52);     /* the scrying orb: "something to do here" */
 
   position: relative;
   z-index: 10;
@@ -93,24 +93,61 @@
   filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(40, 22, 10, 0.45));
 }
 
-/* THE CALL TO ACTION is a red dot on the tab's corner, not a lit tab: the
-   screen behind it has something the player can press right now. It pops in
-   rather than pulsing for ever. */
+/* THE CALL TO ACTION is a small scrying orb on the tab's corner: the screen
+   behind it has something the player can press right now. Three layers:
+     ::before  a red halo behind it, breathing slowly;
+     ::after   the orb (sheets/ui-nav3-orb.png) under a warm glint that
+               jumps between a few spots in STEPPED frames — a flicker, not
+               a glide — then rests, as if something inside is waking.
+   It pops in when it appears. */
+#navbar.nav .nav-tab.is-cta::before,
 #navbar.nav .nav-tab.is-cta::after {
   content: '';
   position: absolute;
-  top: calc(var(--rpx) * -8);
-  right: calc(var(--rpx) * -6);
+  top: calc(var(--rpx) * -12);
+  right: calc(var(--rpx) * -10);
   width: var(--nav-badge);
   height: var(--nav-badge);
-  background: url('../../assets/badge-red.png') center / contain no-repeat;
-  filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4));
-  animation: nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
   pointer-events: none;
 }
+#navbar.nav .nav-tab.is-cta::before {
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 70, 40, 0.7) 0%, rgba(230, 40, 20, 0.4) 38%, rgba(200, 20, 10, 0.12) 55%, transparent 70%);
+  transform: scale(2.4);
+  animation: nav-orb-halo 2.6s ease-in-out infinite alternate, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
+}
+#navbar.nav .nav-tab.is-cta::after {
+  /* The glint is a small warm spot kept inside the glass: its radius is a
+     third of the orb, so no position below lets it spill past the rim. */
+  background:
+    radial-gradient(circle, rgba(255, 214, 150, 0.55), rgba(255, 140, 60, 0.18) 45%, transparent 70%) 50% 50% / 46% 46% no-repeat,
+    url('../../assets/badge-orb.png') center / contain no-repeat;
+  background-blend-mode: screen, normal;
+  filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4));
+  animation: nav-orb-wake 3.2s steps(1) infinite, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
+}
 @keyframes nav-badge-in {
-  from { transform: scale(0); }
-  to { transform: scale(1); }
+  from { scale: 0; }
+  to { scale: 1; }
+}
+@keyframes nav-orb-halo {
+  from { opacity: 0.6; transform: scale(2.2); }
+  to { opacity: 1; transform: scale(2.7); }
+}
+/* A few frames of stirring, then a long still: brightness nudged by a few
+   percent and the glint moving between spots inside the glass. */
+@keyframes nav-orb-wake {
+  0%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  8%   { background-position: 42% 56%, center; filter: brightness(1.08) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  14%  { background-position: 57% 47%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  20%  { background-position: 48% 60%, center; filter: brightness(1.12) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  26%  { background-position: 54% 54%, center; filter: brightness(1.05) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  32%  { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  100% { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #navbar.nav .nav-tab.is-cta::before,
+  #navbar.nav .nav-tab.is-cta::after { animation: none; }
 }
 
 /* ------------------------------------------------------ legacy dismiss ---
