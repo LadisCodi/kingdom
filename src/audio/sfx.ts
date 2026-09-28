@@ -20,7 +20,7 @@ import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
 import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
-import rewardBurstUrl from './sounds/reward_burst.ogg?url';
+import rewardBurstUrl from './sounds/reward_burst.wav?url';
 import rewardCoin1 from './sounds/reward_coin_01.mp3?url';
 import rewardCoin2 from './sounds/reward_coin_02.mp3?url';
 import rewardCoin3 from './sounds/reward_coin_03.mp3?url';
@@ -57,7 +57,7 @@ export type SfxName =
   // The quest scroll unrolling and rolling back up (questPill.ts).
   | 'scrollOpen' | 'scrollClose'
   // A reward flying into the header (rewardFly.ts): the burst it leaves the
-  // claim with, and one tick per fragment landing — a coin for money, a pop
+  // claim with (Special Powerup 12), and one tick per fragment landing — a coin for money, a pop
   // for goods.
   | 'rewardBurst' | 'rewardCoin' | 'rewardPop'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
