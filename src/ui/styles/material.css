@@ -63,14 +63,37 @@
 }
 
 /* ---- slabs and knobs ---- */
-.k-btn--secondary {
-  background: url('../assets/tex-wood.jpg');
-  background-size: 200px 200px;
+/* THE WOOD BUTTON is one painted slab (sheets/ui-quest1-scroll-button.png),
+   nine-sliced, with its pressed twin swapped in on :active — the lip and the
+   press are in the art, so the kit's border, drop-lip and nudge come off.
+   Every button that is wood wears it; a slab recoloured to another tone
+   (the video till's blue, the gold call) and a locked one keep the kit's
+   flat fill. The sizes are px because the kit's slabs still are. */
+.k-btn--secondary:not(.k-knob):not(:disabled):not(.is-locked)
+  :not(.mana-tills > .mana-till:first-child > .k-btn)
+  :not(.store-banner-calls > .k-btn:first-child)
+  :not(.store-banner.is-advanced .k-btn),
+.store .k-card > .k-btn:not(:disabled),
+.store-banner-calls > .k-btn:last-child:not(:disabled):not(.store-banner.is-advanced .k-btn),
+.bs-exit .k-btn {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  border-image: url('../assets/btn-wood.png') 70 90 90 fill / 14px 18px 18px stretch;
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.7);
+}
+.k-btn--secondary:not(.k-knob):not(:disabled):not(.is-locked):active,
+.store .k-card > .k-btn:not(:disabled):active,
+.store-banner-calls > .k-btn:last-child:not(:disabled):active,
+.bs-exit .k-btn:active {
+  border-image-source: url('../assets/btn-wood-down.png');
+  box-shadow: none;
+  transform: none;
 }
 /* The round wooden knob is a picture now: rim, face and lip are in the art,
    so the kit's border and drop-lip come off and the press moves the picture. */
 .k-btn.k-knob,
-.tools-knob,
 .legacy-close {
   border: 0;
   box-shadow: none;
@@ -79,64 +102,11 @@
   background: url('../assets/deco-knob.png') center / 100% 100% no-repeat;
 }
 .k-btn.k-knob:active,
-.tools-knob:active,
 .legacy-close:active { box-shadow: none; transform: translateY(2px); }
-.tools-knob.is-active { filter: brightness(1.15) saturate(1.2); }
 
-/* ---- the header plank and the nav beam ---- */
-/* One 512 tile spans the whole frame, so the tile's seam is never on screen. */
-/* The header's beam and its two plates are the painted pieces of
-   sheets/ui-p1-plates.png (P1), nine-sliced: the bevel, the rim and the grain
-   are in the art, so the CSS lip and highlight come off. */
-.hud-plank {
-  /* The beam is one piece stretched across the frame (no seams), darkened so
-     the plates read lighter than the wood they sit on (M12). */
-  background:
-    linear-gradient(rgba(40, 22, 10, 0.45), rgba(40, 22, 10, 0.45)),
-    url('../assets/tex-wood-dark.jpg') center / 512px 512px;
-  border-bottom: 0;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 0 rgba(0, 0, 0, 0.45);
-}
-/* The plates are the lit nav plate (P1), not the darker plank piece: M12
-   draws them a shade lighter than the beam, with a strong dark rim. */
-.hud-coins,
-.hud-right {
-  border: 7px solid transparent;
-  border-image: url('../assets/plate-wood.png') 44 fill / 7px stretch;
-  border-radius: 0;
-  padding: 0 4px;
-  min-height: 0;
-  background: none;
-  /* The dark rim M12 draws around each plate, and the drop onto the beam. */
-  box-shadow: 0 0 0 2px rgba(40, 22, 10, 0.85), 0 3px 0 rgba(20, 10, 4, 0.6);
-}
-.hud-divider {
-  width: 12px;
-  height: 30px;
-  border-radius: 0;
-  opacity: 1;
-  background: url('../assets/deco-rope-v.png') center / contain no-repeat;
-}
-#navbar.nav { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
-/* Wood plates on the wood beam (M1): the same grain, darkened, so the plate
-   reads as a block nailed on rather than a card laid down. The lit CTA keeps
-   its gold (nav.css). */
-#navbar.nav {
-  background: url('../assets/beam-wood.png') center / auto 100% repeat-x;
-  border-top: 0;
-  box-shadow: none;
-}
-/* The tabs are the painted plate (P1), nine-sliced with its face filled. */
-#navbar.nav .nav-tab:not(.is-cta) {
-  border: 10px solid transparent;
-  border-image: url('../assets/plate-wood.png') 44 fill / 10px stretch;
-  border-radius: 0;
-  padding: 0;
-  background: none;
-  box-shadow: 0 3px 0 rgba(30, 16, 6, 0.6);
-}
-#navbar.nav .nav-tab.is-active:not(.is-cta) { filter: brightness(1.1); box-shadow: 0 8px 0 rgba(30, 16, 6, 0.6); }
-#navbar.nav .nav-tab:not(.is-cta):active { box-shadow: 0 0 0 rgba(30, 16, 6, 0.6); }
+/* ---- the header plank and the nav beam ----
+   Both are painted in their own screens (hud.css, nav.css): the M1 pieces,
+   sized in reference pixels. */
 
 /* ---- the district card and the quest scroll ---- */
 /* The district card wears the same frame as a sheet, open at the bottom where
@@ -148,32 +118,6 @@
   border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
   background: url('../assets/tex-parchment.jpg') padding-box;
   background-size: 384px 384px;
-}
-.q-scroll {
-  background:
-    linear-gradient(rgba(60, 36, 18, 0.12), rgba(60, 36, 18, 0.12)) top / 100% 6px no-repeat,
-    linear-gradient(rgba(60, 36, 18, 0.12), rgba(60, 36, 18, 0.12)) bottom / 100% 6px no-repeat,
-    url('../assets/tex-parchment.jpg') / 384px 384px;
-}
-
-/* ---- the quest scroll is pinned with a seal (§5.2) ---- */
-.q-scroll::after {
-  content: '';
-  position: absolute;
-  top: -9px;
-  right: -9px; /* the top-left is where the chain line starts */
-  width: 30px;
-  height: 30px;
-  background: url('../assets/deco-seal.png') center / contain no-repeat;
-  filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5));
-  pointer-events: none;
-}
-
-/* ---- the banner is cloth; its tone dyes the weave ---- */
-.b-body,
-.b-tail {
-  background: var(--tone) url('../assets/tex-cloth.jpg') center / 256px 256px;
-  background-blend-mode: multiply;
 }
 
 /* ---- the research page and the build grid ---- */
@@ -251,21 +195,13 @@
   background: none;
 }
 .res-tome.active { background: var(--gold); }
-.q-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.q-cta { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
-.q-scroll.is-complete .q-cta { background: var(--leaf); }
 
 /* ---- the villagers' row ---- */
 .tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
 
 /* ---- nails, where a plank is nailed to something ----
- * Not on the planks that carry a title (they read as dirt next to the words):
- * on the beam the nav hangs from and on the plaque that hangs under the
- * header — the two planks whose corners are bare. */
-#navbar.nav { position: relative; }
-#navbar.nav::before,
-#navbar.nav::after,
+ * Not on the planks that carry a title (they read as dirt next to the words). */
 .hud-plaque-never::before,
 .hud-plaque-never::after {
   content: '';
@@ -275,49 +211,19 @@
   background: url('../assets/deco-nail.png') center / contain no-repeat;
   pointer-events: none;
 }
-#navbar.nav::before { top: 2px; left: 3px; }
-#navbar.nav::after { top: 2px; right: 3px; }
 
 
-/* ---- the pennant flies when a quest is done ----
- * The seal says "sealed, in progress"; the pennant says "claim it". Same
- * corner, so the eye finds the state where it found the seal. */
-.q-scroll.is-complete::after {
-  top: -14px;
-  right: -6px;
-  width: 30px;
-  height: 40px;
-  background: url('../assets/deco-pennant.png') center / contain no-repeat;
-  animation: q-fly 1.4s ease-in-out infinite alternate;
-  transform-origin: top center;
-}
-@keyframes q-fly {
-  from { transform: rotate(-4deg); }
-  to { transform: rotate(4deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .q-scroll.is-complete::after { animation: none; }
-}
 
-/* ---- the cards on the map — the daily pill, the plaque, the quest scroll —
-   are the nailed parchment card of P1, nine-sliced so the nails land in the
-   corners. */
-.hud-plaque,
-.dly-pill,
-.q-scroll {
+/* ---- the daily pill is the nailed parchment card of P1, nine-sliced so the
+   nails land in the corners. (The quest scroll is its own art: quest.css.) */
+.dly-pill {
   border: 16px solid transparent;
   border-image: url('../assets/plate-parchment.png') 64 fill / 16px round;
   border-radius: 0;
   background: none;
 }
-.hud-plaque,
-.dly-pill,
-.q-scroll { border-width: 10px; border-image-width: 10px; }
-.hud-plaque { padding: 0 4px; min-height: 30px; }
+.dly-pill { border-width: 10px; border-image-width: 10px; }
 .dly-pill { padding: 0 6px 0 2px; min-height: 47px; gap: 6px; }
-.q-scroll { padding: 2px 4px 4px; }
-.q-scroll.is-complete { background: none; }
-.q-scroll::after { top: -12px; right: -12px; }
 
 /* ---- the store (M5): cards are parchment in wood, the vignettes lighter ---- */
 .store-banner,
@@ -328,10 +234,6 @@
 }
 .store-banner-art,
 .store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.store .k-card > .k-btn:not(:disabled),
-.store-banner-calls > .k-btn:last-child:not(:disabled) {
-  background: url('../assets/tex-wood.jpg') center / 200px 200px;
-}
 .store-banner.is-advanced .store-banner-calls > .k-btn:not(:disabled) { background: var(--gold); }
 
 /* ---- the heroes' roster (M6): parchment tiles ---- */
@@ -529,7 +431,6 @@
     linear-gradient(rgba(18, 11, 6, 0.86), rgba(18, 11, 6, 0.86)),
     url('../assets/tex-cloth.jpg') center / 256px 256px;
 }
-.bs-exit .k-btn { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
 
 /* ---- the Townhall card's blocks (M2) ---- */
 .dc-up-tile,

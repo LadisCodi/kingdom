@@ -159,20 +159,10 @@
 .hero-tile-foot.is-frag { justify-content: center; gap: 4px; }
 .hero-tile-level { font-family: var(--font-body); white-space: nowrap; }
 
-/* The green mark: this card has something to press right now. It is the
-   roster's whole job — pointing at the one tile worth opening. */
-.hero-tile-ready {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--leaf);
-  border: 2px solid var(--leaf-dark);
-}
+/* The call-to-action orb: this card has something to press right now — the
+   roster's whole job is pointing at the one tile worth opening. The tile
+   clips its art, so the orb sits just inside its corner. */
+.hero-tile > .k-cta { top: 4px; right: 4px; }
 
 /* ------------------------------------------------------------- the stars -- */
 

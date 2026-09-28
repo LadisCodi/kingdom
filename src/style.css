@@ -24,25 +24,18 @@ body {
   justify-content: center;
 }
 
-/* Portrait phone frame: never wider than 9:16 of the viewport height, so
-   desktop gets pillarboxed like the mobile target; on a real phone the cap
-   exceeds the screen width and the frame is full-bleed. Everything inside
-   positions against this frame, not the browser viewport. */
+/* The frame is the whole window, at any aspect ratio — a phone, a 3:4
+   tablet, a desktop. The UI keeps its proportions by scaling with the
+   frame's HEIGHT (--rpx, tokens.css), and everything inside positions
+   against this frame, not the browser viewport. */
 #app {
   position: relative; width: 100%; height: 100%; overflow: hidden;
-  /* dvh, so iOS Safari's toolbar is not counted as screen; the vh line is
-     the fallback for browsers that lack it. */
-  max-width: calc(100vh * 9 / 16);
-  max-width: calc(100dvh * 9 / 16);
-  background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
-  /* THE FRAME IS THE VIEWPORT, as far as any screen inside it is concerned.
-     A `@media (max-width: …)` reads the BROWSER window, which on desktop is
-     wider than this 9:16 frame by however much is pillarboxed — so the phone
-     layout the game actually ships never fired while anyone was looking at
-     it. Naming #app a query container lets the HUD ask how wide the FRAME is
-     (`@container frame (…)`), which is the only width that exists on the
-     device. */
-  container-type: inline-size;
+  background: #10151c;
+  /* A SIZE container, so --rpx can read the frame's height (cqh) as well as
+     its width, and `@container frame (…)` rules can ask how wide it is.
+     Screens ask the frame rather than `@media`, which reads the browser
+     window — the same box now, but not in the dev gallery's phone. */
+  container-type: size;
   container-name: frame;
 }
 
@@ -59,10 +52,10 @@ body {
    bars are the bottom-most thing the player is meant to act on. */
 #panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); z-index: 6; }
 
-/* The ad surface. Above the nav (10), the settings knob (20) and the legacy
+/* The ad surface. Above the header (8), the nav (10) and the legacy
    close knob (30): a rewarded video the player can tap around is not one. It
    is a sibling of #overlay rather than a child BECAUSE #overlay's z-index
-   makes it a stacking context, so no descendant could ever climb past #tools.
+   makes it a stacking context, so no descendant could ever climb past the header.
    `:empty` is load-bearing — #ui children are pointer-events:auto, so an
    inset:0 element with nothing in it would swallow every tap on the map. */
 #ad:empty { display: none; }
@@ -83,7 +76,7 @@ body {
 
 /* THE RIGHT-EDGE COLUMN: every slab that slides in from the right lives here,
    in one vertical stack, flush to the right edge of the FRAME (#app) rather
-   than the viewport — everything inside positions against the 9:16 frame.
+   than the viewport — everything inside positions against the frame.
 
    A column rather than two absolutely-positioned widgets, because each one
    has to know whether the others are there: two slabs pinned to `top: 50%`
@@ -118,10 +111,10 @@ body {
 #picker[hidden] { display: none; }
 #picker { position: absolute; inset: 0; z-index: 7; }
 
-/* The header and the nav bar outrank EVERY menu — full-screen ones included.
-   A menu is something you opened over the game, never a replacement for it:
-   your purse has to stay readable while you decide what to spend, and the
-   way out has to stay where it always is.
+/* The header outranks EVERY menu — full-screen ones included. A menu is
+   something you opened over the game, never a replacement for it: your purse
+   has to stay readable while you decide what to spend. (The nav bar steps
+   aside instead: it slides out while a menu is open — nav.css.)
 
    This used to make an exception for full-screen menus, on the reasoning that
    they "own the view" and bring their own top bar. In practice that hid the
@@ -132,7 +125,7 @@ body {
 
    The stack, bottom to top: map · the right-edge column (4) · district card (6) ·
    menus and sheets, then the battle picker over them (7) · header (8) ·
-   nav bar (10) · settings knob (20) ·
+   nav bar (10) ·
    the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }
 
@@ -179,16 +172,39 @@ body {
 
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ---------- the ?dev bar ---------- */
-.cast-banner {
-  position: absolute; bottom: calc(var(--nav-h) + 60px); left: 50%; transform: translateX(-50%);
-  background: rgba(40, 40, 80, 0.95); border: 1px solid #5a5aa0;
-  /* Below the overlay (z 5) is not enough — this bar is dev-only and must
-   * never sit on top of a sheet it is meant to help test. */
-  padding: 10px 16px; border-radius: 10px; z-index: 4; color: #e8e2d0;
-  display: flex; gap: 12px; align-items: center; font-size: var(--text-body);
+/* ---------- the ?dev bar ----------
+ * Anchored to both sides of the frame, above the nav bar: a tab that opens
+ * and closes it, and the tools in a grid that wraps to the frame's width and
+ * scrolls if it has to. Below the overlay (z 7) on purpose: it is dev-only
+ * and must never sit on top of a sheet it is meant to help test. */
+.dev-bar {
+  position: absolute; left: 8px; right: 8px; bottom: calc(var(--nav-h) + 8px);
+  z-index: 4;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  pointer-events: none; /* the gap around the tab is still map */
+  color: #e8e2d0; font-size: var(--text-helper);
 }
-.cast-banner button {
+.dev-bar > * { pointer-events: auto; }
+.dev-toggle {
+  order: 2; /* under the grid, so it stays put when the grid opens */
+  font: inherit; font-weight: var(--weight-strong); color: inherit;
+  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0;
+  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.dev-grid {
+  display: none;
+  align-self: stretch;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0; border-radius: 10px;
+}
+.dev-bar.is-open .dev-grid { display: grid; }
+.dev-grid button {
   font: inherit; color: inherit; background: #26303e;
-  border: 1px solid #3a4757; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+  border: 1px solid #3a4757; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  line-height: 1.2;
 }
+.dev-grid button:hover { background: #313d4f; }

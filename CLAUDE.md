@@ -174,9 +174,10 @@ than the build is rejected rather than downgraded.
   column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
   video (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
-  inside it can rise above the header or the nav — **which is the design, not
-  a limitation**: a menu is opened over the game, so the purse stays readable
-  and the way out stays put.
+  inside it can rise above the header — **which is the design, not a
+  limitation**: a menu is opened over the game, so the purse stays readable.
+  The nav bar is the exception that steps aside: it slides out of the frame
+  while `#overlay` has content, and every menu carries its own way out.
   The ad screen lives at z 200 in its own mount for that reason, and the gacha
   reveal at z 100 in its own for the same one; both carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every

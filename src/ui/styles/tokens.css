@@ -52,6 +52,21 @@
 }
 
 :root {
+  /* ---- the reference pixel ----
+   * The chrome is authored at 1125 × 2436, the iPhone X in portrait, and
+   * scaled to the frame like a Unity CanvasScaler MATCHING HEIGHT: one
+   * reference pixel is 1/2436 of the frame's height, so a piece keeps its
+   * share of the screen's height on a phone, a 3:4 tablet or a desktop, and
+   * a wider screen simply shows more map at the sides.
+   *
+   * The width is a CEILING, not a second dial: on a screen narrower than the
+   * reference (a 9:20 or 9:21 phone) height alone would make the 1125-wide
+   * header wider than the screen, so there the scale follows the width
+   * instead — Unity's "Expand". Write a size as `calc(var(--rpx) * N)`, with
+   * N measured on the 1125-wide mockup. `cqh`/`cqw` resolve against #app
+   * (the `frame` container), so the value is per element and needs no script. */
+  --rpx: min(calc(100cqh / 2436), calc(100cqw / 1125));
+
   /* ---- surfaces ---- */
   --parchment: #f4e4c1;
   --parchment-shade: #e2cca0;
@@ -90,7 +105,7 @@
 
   /* ---- chrome metrics ----
    * These two were hardcoded in six places (#notice, #panel, #overlay,
-   * .tech-info, #toast, .cast-banner), and the nav's height was only ever
+   * .tech-info, #toast, the dev bar), and the nav's height was only ever
    * IMPLIED by its padding — which is where the magic 58 came from. Naming
    * them is what lets the HUD and nav change height without silently
    * misaligning five other screens.

@@ -157,10 +157,16 @@ sockets, "+N" past eight — with the clock on the Train button; the header's
 Mana as an orb resting on a slim gauge; nails at the corners of the nav beam
 and the plaque (the two planks with bare corners — on a titled plank they read
 as dirt); and the pennant flying from the quest scroll's corner in place of the
-seal once the quest is done. The header's counters are M1's plaques — rounded
-slots cut into the plank, 18px mark and a 12px bold number, the Gems slot
-parchment like the rest with its green knob — sized so four coins, the gauge,
-the rope and Gems share one 402px line (~395px at 12; 430 at 13). The nav's
+seal once the quest is done. The header is M1's: a wooden beam, one recessed
+slot per resource (four coins at the left; Mana and Gems at the right, past a
+hanging rope), the green `+` knob inside the Gems slot, the Mana slot filled as its own gauge with the pool
+over it — while it fills, the pool and the next unit's countdown ("+1 in
+4m 12s") take turns in the same place, 3 s each with a fade, and any change
+to the pool shows the pool at once — and
+the round Settings
+knob hanging on a rope under the beam's right end. Every size on it is in
+reference pixels (§3.6), budgeted so four four-character coins, the gauge, the
+rope and Gems share one line at every width. The nav's
 tabs are M1's wood plates on the wood beam — the same grain darkened, a lit
 top edge, the word in cream with a shadow, a 26px mark — and the lit tab is a
 gold plate that stands proud of the beam's top edge. `border-image` forfeits `border-radius`,
@@ -233,11 +239,18 @@ still derived by the script, never drawn. No emoji anywhere —
 
 ### 3.6 Layout
 
-- Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
-  9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`). Mockups:
-  **1080×2340** (§7.19). Measured against the iPhone 17, 402×874 CSS px.
-- Safe zones: the header is a ~34px plank (two 30px painted plates, 14px
-  figures, 18px icons — M12 measured at 402) plus the top inset
+- Full-bleed at any aspect ratio (`viewport-fit=cover`): a phone, a 3:4
+  tablet, a desktop window. No pillarbox — a wider screen shows more map.
+- **Reference resolution: 1125×2436** (the iPhone X, portrait). The UI scales
+  like a Unity CanvasScaler **matching height**: one reference pixel
+  (`--rpx`) is 1/2436 of the frame's height, so every piece keeps its share
+  of the screen's height. The width is a ceiling: on a screen narrower than
+  the reference (9:20, 9:21) the scale follows the width instead, so the
+  1125-wide header always fits (Unity's "Expand"). Sizes are measured on the
+  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll,
+  the reward flight and the nav bar.
+- Safe zones: the header is a 107-rpx beam (62-rpx slots, 30-rpx figures,
+  76-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
   beam of 57px painted plates (28px icons, 14px labels) with 4px above and
   below, plus the bottom inset (reserved once, in `nav.css`). Both are
@@ -262,8 +275,40 @@ still derived by the script, never drawn. No emoji anywhere —
 
 ### 3.7 Motion (spec only, no mockup needed)
 
-Sheets slide up 180ms ease-out. Coins/resources fly from the source cell
-to the matching HUD counter on gain. Counters roll rather than snap.
+Sheets slide up 180ms ease-out. Counters roll rather than snap.
+
+**One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
+for you here" in the game wears the same badge — a small scrying orb on its
+host's corner, a red halo pulsing slowly behind it, a glint stirring inside
+in stepped frames, and the count on it past one ("2" … "9", then "9+").
+
+- Where: the nav tabs (Build, Research), a startable technology's seal, the
+  daily and season pills, a hero tile with something to do, a claimable
+  daily or season-pass cell and the pass's Claim, the vault, an affordable
+  chest, a relic page ready to close, and the quest scroll when done. It
+  replaces the glows, pulses, dots, ticks and "+" each used to have.
+- No two orbs stir in step: each takes its phase from the page clock plus an
+  offset of its own, keyed on what it marks, so a screen that rebuilds each
+  tick does not restart it either. It pops in only when
+  it appears on a host that persists (the nav, the pills, the quest scroll).
+
+**A claimed reward flies into the header** (`ui/rewardFly.ts`; today the
+quest claim and the daily / season chests):
+
+- It bursts from where it was claimed — the tap that claimed it, or the
+  centre of the screen — with a flash and a powerup chime.
+- Each resource in it leaves as N fragments of its icon: one per minute of
+  the city's own production the reward is worth, at least 3, at most 12, and
+  5 for a coin the city does not produce (Gems) or produces none of yet.
+- Each fragment bursts out to a spot of its own, hangs, then flies in an arc
+  into that resource's slot, 70 ms after the one before; a second resource
+  leaves 180 ms after the first. Burst 260 ms, flight 620 ms, speeding up.
+- The header counts the reward in as fragments land: each adds its share,
+  the icon swells, sparks fly off it, and a tick plays — a coin for Gold and
+  Gems, a pop for goods — each a shade higher than the last.
+- Only what the plank shows flies; the wallet holds the reward from the
+  instant of the claim either way. Reduced motion: no flight, the new totals
+  just show.
 Insufficient funds shakes **the counter**, not the button (already true).
 Claim/complete pops a small burst of gold sparks. Nothing pulses forever
 except the single lit CTA.
@@ -443,6 +488,34 @@ It also **moved to the bottom left**. The top of the screen belongs to the
 resource bar and to the fog the player is tapping; the thumb lives at the
 bottom, and the widget is now a button that wants to be reachable.
 
+#### The scroll (M1)
+
+- Sized in reference pixels (§3.6): 520 × 200 rpx while a quest runs (it
+  grows with the words),
+  25 rpx from the left edge, 20 rpx above the nav. The dials sit on `#quest`
+  in `quest.css`.
+- The parchment between two rollers is one nine-sliced piece, so both width
+  and height stretch; the trough and its gold fill are painted and sliced at
+  their rounded ends.
+- **Running**: the title and description; under them, the goal's mark resting
+  on the start of the trough, which runs to the right roller. There is no
+  control on it: a tap anywhere on the scroll points at the goal.
+- **Done**: the scroll shows only the reward — each prize an icon and its
+  count, no label, no chip — and a green **Claim** slab under it, shrunk to fit; no title, mark, description, trough or magnifier.
+- **The wood button** is one painted slab and its pressed twin, worn by every
+  wood-coloured button in the game. A slab recoloured to another tone, and a
+  locked one, keep the kit's flat fill.
+- **A new quest unrolls**: the parchment fades in and widens rightwards from
+  its left roller (520 ms), and the words fade in from 360 ms, just before it is
+  fully open — with the scroll-open sound.
+- **A claimed quest rolls up**: the words fade out (160 ms), then the
+  parchment narrows back to its left roller and fades (420 ms) — with the
+  scroll-close sound. A claim that hands over the next quest plays both,
+  **0.5 s** apart. Nothing on the scroll can be tapped while it moves.
+- A quest that arrives while a sheet covers the map unrolls when the map
+  comes back.
+- Done also glows gold round the parchment and bobs gently.
+
 ---
 
 ### 5.3 Banner & toast
@@ -475,6 +548,21 @@ also lives.
 - Both keep the existing queueing and tap-to-dismiss.
 
 ---
+
+#### The banner (M1)
+
+- A painted cloth hanging from a wooden rod under the header, ending in a
+  point; gold for something new, green for something built, blue for
+  something learned. Fixed width (420 rpx: the point cannot stretch
+  sideways), nine-sliced vertically, so it is as tall as its words. The dials
+  sit on `.b-pennant` in `banner.css`.
+- Top to bottom: the subject's art, what happened, its name, a line about it.
+- **In**: the words hidden, the cloth fades in and grows from its rolled
+  height (the rod and the point, nothing between) to its full height in
+  520 ms; the words fade in from 80% of the way.
+- **Out** (after 5 s, or a tap): the words fade out (160 ms), then the cloth
+  shrinks back to its rolled height and fades (420 ms). Banners queue, one at
+  a time.
 
 ### 5.4 Bottom nav
 
@@ -1109,7 +1197,7 @@ Small, high-leverage, mostly independent of the visual redesign.
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
 13. **A price lives inside the button that spends it** (§6.4 below).
-14. **The header and nav bar outrank every menu** (§6.5 below).
+14. **The header outranks every menu; the nav bar steps aside** (§6.5 below).
 15. **A lit tab never lies** (§6.7 below).
 
 ### 6.4 A price lives inside the button that spends it
@@ -1149,38 +1237,27 @@ duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
 than a currency, and they go in the button like everything else, reading
 `have / needed` so the gap is the thing you see.
 
-### 6.5 The chrome outranks every menu
+### 6.5 The header outranks every menu; the nav bar steps aside
 
-*Added 2026-09-02. Revised the same day — see below.*
-
-A menu is something the player opened **over** the game, never a replacement
-for it. The resource header and the nav bar both stay above it, undimmed by
-the scrim and still tappable. Your purse has to be readable while you browse
-the build menu, because what you can afford is the whole reason you opened it,
-and the way out has to stay where it always is.
-
-This first shipped with an exception for **full-screen** menus, on the
-reasoning that they own the view and bring their own top bar. That was wrong
-in exactly the place it mattered: the Research screen hid the resource bar
-while the player was reading prices off it. The exception is gone.
-
-The stack, bottom to top: map · ad-offer tab (4) · district card (6) · **menus
-and sheets (7)** · header (8) · nav bar (10) · settings knob (20) · the
-rewarded video (200). One z-index for every menu, so a new screen gets the
-right behaviour without being enumerated.
-
-Two consequences worth knowing:
-
-- **A full-screen menu must reserve the two bars itself.** An absolutely
-  positioned child resolves `inset` against its containing block's *padding
-  box*, which INCLUDES the padding — so `#overlay`'s reserved strips do
-  nothing for a child using `inset: 0`. `.research-screen` sets its own `top`
-  and `bottom` instead.
-- **The settings knob hides while any menu is open.** It floats above
-  everything (z 20), so it landed on the research screen's own close button.
-  Every menu brings its own way out; the knob is the affordance for the map.
-  Keyed on `#ui:has(> #overlay:not(:empty))`, so it cannot drift from what is
-  actually on screen.
+- A menu is opened **over** the game. The resource header stays above it,
+  undimmed and tappable, full-screen menus included: what you can afford is
+  the reason you opened the menu.
+- **The nav bar leaves while a menu is open**: it slides down out of the
+  frame (260 ms) and slides back up when the map returns. Every menu brings
+  its own way out, and the space the bar held goes to the menu — `--nav-h`
+  is only the bottom inset while it is away.
+- The stack, bottom to top: map · the right-edge column (4) · district card
+  (6) · **menus and sheets (7)** · header (8) · nav bar (10) · the battle
+  playback (90) · the gacha reveal (100) · the rewarded video (200). One
+  z-index for every menu, so a new screen gets the right behaviour without
+  being enumerated.
+- **A full-screen menu reserves the header itself.** An absolutely positioned
+  child resolves `inset` against `#overlay`'s padding box, which includes the
+  padding, so `.research-screen` sets its own `top` and `bottom`.
+- **The settings knob hides while any menu is open**, like the nav bar: it is
+  the affordance for the map. Both are keyed on
+  `#ui:has(> #overlay:not(:empty))`, so they cannot drift from what is on
+  screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
 `#overlay` at all — see `Docs/features/08-magic.md` §6.

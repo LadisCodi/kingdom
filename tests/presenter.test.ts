@@ -433,6 +433,17 @@ describe('the Build call-to-action', () => {
     fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
     expect(game.buildCtaLit()).toBe(true);
   });
+
+  // The tab's badge counts what the lit check only asks about: the two must
+  // never disagree, or the orb would show with no number behind it.
+  it('counts what it lights for', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    expect(game.buildCtaCount()).toBe(0);
+    fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
+    expect(game.buildCtaCount()).toBeGreaterThan(0);
+    expect(game.buildCtaCount() > 0).toBe(game.buildCtaLit());
+  });
 });
 
 describe('villager training', () => {

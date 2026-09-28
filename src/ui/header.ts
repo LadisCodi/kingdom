@@ -31,6 +31,7 @@
 import type { Game } from '../game';
 import type { CurrencyId } from '../sim/state';
 import { el, formatCount } from './format';
+import { heldOf, onHoldChange } from './hudHold';
 import { currencyIcon, iconEl } from './kit';
 
 /** What the plaque shows, per kind. */
@@ -46,26 +47,38 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   root.classList.add('hud');
   const plank = el('div', { class: 'hud-plank' });
   const coins = el('div', { class: 'hud-coins' });
-  const gems = el('button', { class: 'hud-gems', type: 'button', 'aria-label': 'Gems' });
+  const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
   const plaque = el('button', { class: 'hud-plaque', type: 'button' });
 
 
-  // ONE gauge and ONE net rate. Never "+6/h base −4/h upkeep = +2/h" — that
+  // ONE gauge. Never "+6/h base −4/h upkeep = +2/h" — that
   // breakdown is the reliquary's job, on tap, where the player asked for it.
   const manaGauge = el('button', {
-    class: 'hud-mana', type: 'button', 'aria-label': 'Mana',
+    class: 'hud-slot hud-mana', type: 'button', 'aria-label': 'Mana',
   });
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
-  const manaRate = el('span', { class: 'hud-mana-rate' }, '');
-  // An orb and a slim gauge (mockup M1): the orb sits proud of the bar, the
-  // bar holds the fill and the number. The button is the whole pair.
-  const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill, manaValue, manaRate);
-  manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar);
+  // The slot IS the gauge: the fill runs under the orb and the pool. While
+  // the pool is filling, the pool and the next unit's countdown take turns
+  // in the same place (see `cycle` below). The button is the whole slot.
+  const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill);
+  const manaNext = el('span', { class: 'hud-mana-next', 'aria-hidden': 'true' });
+  const manaReadout = el('span', { class: 'hud-mana-readout' }, manaValue, manaNext);
+  manaGauge.append(manaBar, currencyIcon('Mana', { size: 'sm' }), manaReadout);
   manaGauge.addEventListener('click', () => game.openMana());
-  // Two plates on the plank (M12): the coins on the left, the pool and the
-  // Gems on their own plate at the right.
-  plank.append(coins, el('div', { class: 'hud-right' }, manaGauge, el('span', { class: 'hud-divider' }), gems));
+
+  // The Settings knob hangs from the plank's right end (M1). It is a drawer
+  // opened twice a month, so it is not on the nav bar; it is chrome, so it
+  // hangs from the chrome rather than floating over the map on its own.
+  const knob = el('button', {
+    class: 'hud-knob', type: 'button', 'aria-label': 'Settings',
+  }, iconEl('settings', { size: 'md' }));
+  knob.addEventListener('click', () => {
+    game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
+  });
+
+  // The coins anchored left; the rope, Mana and Gems anchored right.
+  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values
@@ -79,22 +92,13 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     coins.replaceChildren(...list.map((c) => {
       const value = el('b', {}, '0');
       values.set(c, value);
-      // 'sm' (16px), not the 32px default. The plank is the tightest row in
-      // the game — four coins, Mana and Gems inside 402px — and at 32 they
-      // did not fit, so two of the four coins were being clipped away
-      // entirely. 16 is the atlas's half-cell and the -sm art is authored at
-      // it, so this is 1:1 rather than the downscale 24 would be.
+      // The icon's size is the slot's (hud.css), in reference pixels.
       //
       // Tapping any coin opens the purse — the only place the game explains
       // that berries, meat and fish all count as Food.
       const coin = el('button', {
-        class: 'hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
+        class: 'hud-slot hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
       }, currencyIcon(c, { size: 'sm' }), value);
-      // A coin that is a CLOCK carries its speed beside its number — a drip
-      // you cannot see the speed of is a drip you cannot plan against, and
-      // the presenter decides which coin that is and when.
-      const rate = game.coinRate(c);
-      if (rate !== null) coin.append(el('span', { class: 'hud-coin-rate' }, rate));
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
@@ -103,7 +107,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   gems.append(
     currencyIcon('Gems', { size: 'sm' }),
     el('b', {}, '0'),
-    el('span', { class: 'hud-plus' }, '+'),
+    el('span', { class: 'hud-plus', 'aria-hidden': 'true' }),
   );
   const gemValue = gems.querySelector('b')!;
   // The Gems plaque IS the store's door: its `+` was a no-op for the whole
@@ -127,21 +131,39 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     }
   });
 
+  // THE MANA READOUT TAKES TURNS. The pool shows; after POOL_MS without a
+  // change it fades to the next unit's countdown for NEXT_MS, then back, and
+  // round again. Any change to the pool snaps straight back to the pool.
+  // Wall-clock time is fine here: this is presentation, not the sim.
+  const POOL_MS = 3000;
+  const NEXT_MS = 3000;
+  let lastMana = Number.NaN;
+  let lastManaChange = performance.now();
+  let filling = false;
+  const snapToPool = () => {
+    manaReadout.classList.add('is-snap');
+    manaReadout.classList.remove('is-next');
+    void manaReadout.offsetWidth; // commit the jump before fades come back
+    manaReadout.classList.remove('is-snap');
+  };
+  const cycle = () => {
+    const t = (performance.now() - lastManaChange) % (POOL_MS + NEXT_MS);
+    manaReadout.classList.toggle('is-next', filling && t >= POOL_MS);
+  };
+
   const refresh = () => {
     const list = game.visibleCurrencies();
-    // The rate is baked into the coin ELEMENT, so it belongs in the key that
-    // decides whether the coins are rebuilt — otherwise it would be drawn
-    // once and then never move.
-    const key = list.map((c) => `${c}${game.coinRate(c) ?? ''}`).join(',');
+    const key = list.join(',');
     if (key !== shown) {
       shown = key;
       buildCoins(list);
     }
-    // Rolled up past ten thousand: the plank is 402px wide and a six-digit
-    // Gold used to push the coins after it off the end of it. The purse (one
-    // tap away, on any coin) is where the exact figure lives.
-    for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
-    gemValue.textContent = formatCount(game.walletValue('Gems'));
+    // Rolled up past ten thousand, so a balance never outgrows its slot. The
+    // purse (one tap away, on any coin) is where the exact figure lives.
+    // Less whatever a reward in flight has not landed yet (hudHold.ts).
+    const landed = (c: CurrencyId) => Math.max(0, game.walletValue(c) - heldOf(c));
+    for (const [c, node] of values) node.textContent = formatCount(landed(c));
+    gemValue.textContent = formatCount(landed('Gems'));
 
     const slot = game.hudSlot();
     // Population is drawn on the world now, over the Townhall, so the plaque
@@ -159,25 +181,34 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // Mana is ALWAYS on the plank. It used to appear only once the player had
     // met magic, which was right when it only paid for relics; it now pays
     // for every tap, so hiding it would hide the reason a tap refused.
-    const m = game.manaInfo();
+    const info = game.manaInfo();
+    const m = { ...info, value: Math.max(0, info.value - heldOf('Mana')) };
     // The POOL, not "pool/cap". The gauge already draws the ratio as a fill
     // and turns its rim gold when it is spilling, so "/100" was the same fact
-    // twice — and it was the four characters that pushed Stone off the end of
-    // the plank. The full reading stays in the aria-label and in the
+    // twice. The full reading stays in the aria-label and in the
     // Reliquary, which is what this gauge opens.
+    if (m.value !== lastMana) {
+      lastMana = m.value;
+      lastManaChange = performance.now();
+      // A pool that moved shows the pool AT ONCE — the tap that just spent
+      // it must read immediately, not after a fade.
+      snapToPool();
+    }
     manaValue.textContent = formatCount(m.value);
-    manaRate.textContent = `+${m.net}/h`;
+    manaNext.textContent = m.nextIn ?? '';
+    filling = m.nextIn !== null;
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
     // Full and OVERCHARGED are different states: full means the next hour is
     // spilling, overcharged means an ad bought a pool the ceiling cannot hold.
-    manaGauge.classList.toggle('is-full', m.value >= m.cap && !m.over);
-    manaGauge.classList.toggle('is-over', m.over);
     manaBar.classList.toggle('is-full', m.value >= m.cap && !m.over);
     manaBar.classList.toggle('is-over', m.over);
     manaGauge.setAttribute('aria-label', m.over
       ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
       : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
+    knob.classList.toggle('is-active', game.openOverlay === 'settings');
   };
   game.onChange(refresh);
+  onHoldChange(refresh);
   refresh();
+  window.setInterval(cycle, 200);
 }

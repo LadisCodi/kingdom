@@ -64,7 +64,13 @@ export type UiIconName =
   // the Reliquary's `relics` chest; `vault` is the safe in the corner of the
   // Collection, where duplicates go; `crest` is the season's wax seal, which
   // the pill wears and the header plank repeats.
-  | 'pack' | 'cards' | 'vault' | 'crest';
+  | 'pack' | 'cards' | 'vault' | 'crest'
+  // One undiscovered map cell, its borders running past its corners so it
+  // reads as a cell of the grid: the mark of a quest that reveals the map.
+  | 'tile'
+  // The nav bar's two that were borrowing a picture: the Store's market stall
+  // (it wore the Gems) and the Heroes' knight's helmet (it wore the shield).
+  | 'shop' | 'helmet';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -108,6 +114,10 @@ export const ICON_EMOJI: Record<IconName, string> = {
   atk: '🗡️', def: '🛡️', hp: '❤️',
   // the upgrade popup
   cross: '✗', arrowUp: '⬆', compass: '🧭',
+  // the fog
+  tile: '⬛',
+  // the nav bar
+  shop: '🏪', helmet: '⛑️',
 };
 
 export interface IconOpts {

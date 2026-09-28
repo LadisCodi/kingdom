@@ -553,6 +553,17 @@ describe('what the player can actually act on', () => {
     expect(game.researchCtaLit()).toBe(false);
     fund(game.state, TECHNOLOGIES.Forestry.cost);
     expect(game.researchCtaLit()).toBe(true);
+    expect(game.researchCtaCount()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('counts every technology the player could start this second', () => {
+    const game = freshPresenter(freshGame());
+    fund(game.state, { Gold: 0 });
+    expect(game.researchCtaCount()).toBe(0);
+    fund(game.state, { Gold: 1e9, Knowledge: 1e9 });
+    const startable = TECH_ORDER.filter((id) => canStartTech(game.state, id)).length;
+    expect(game.researchCtaCount()).toBe(startable);
+    expect(startable).toBeGreaterThan(1);
   });
 });
 

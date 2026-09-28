@@ -9,7 +9,7 @@
 
 import { el } from './format';
 import {
-  action, btn, card, chip, costChips, grid, iconEl, knob, meter, panel, pips,
+  action, btn, card, chip, costChips, ctaBadge, grid, iconEl, knob, meter, panel, pips,
   plank, progress, sheet, stat, switchCtl, toggleGroup, ICON_EMOJI,
   type IconName,
 } from './kit';
@@ -290,9 +290,10 @@ export function mountGallery(root: HTMLElement): void {
     el('span', { class: 'hud-coin' }, iconEl('Stone', { size: 'sm' }), '40'),
     el('span', { class: 'hud-coin hud-gems' }, iconEl('Gems', { size: 'sm' }), '10'));
   const fakeNav = () => el('div', { class: 'gal-phone-nav' },
-    ...(['Gems', 'relics', 'Warrior', 'research', 'build'] as IconName[]).map((n, i) =>
-      el('span', { class: `nav-tab${i === 4 ? ' is-cta' : ''}` }, iconEl(n),
-        el('span', { class: 'nav-label' }, ['Store', 'Relics', 'Heroes', 'Research', 'Build'][i]))));
+    ...(['shop', 'relics', 'helmet', 'research', 'build'] as IconName[]).map((n, i) =>
+      el('span', { class: 'nav-tab', style: 'position: relative' }, iconEl(n),
+        el('span', { class: 'nav-label' }, ['Store', 'Relics', 'Heroes', 'Research', 'Build'][i]),
+        i === 3 ? ctaBadge(1, 'gal:research') : i === 4 ? ctaBadge(3, 'gal:build') : '')));
   const fakeSheet = () => el('div', { class: 'gal-phone-sheet' }, sheet(
     { title: 'Build', onClose: noop },
     grid(

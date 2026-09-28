@@ -1,8 +1,8 @@
 // The chrome measures ITSELF.
 //
 // `--hud-h` and `--nav-h` name the two bars every other screen positions
-// against: `#panel` stops at `bottom: var(--nav-h)`, the research screen and
-// the tools knob start at `top: var(--hud-h)`, the overlay pads by both. They
+// against: `#panel` stops at `bottom: var(--nav-h)`, the research screen
+// starts at `top: var(--hud-h)`, the overlay pads by both. They
 // were hand-written constants, and both were wrong — the header renders 59px
 // against a declared 78, and the nav bar renders 84 against a declared 68,
 // because a `min-height` is a floor and its content had grown past it.
