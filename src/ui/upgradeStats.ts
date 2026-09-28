@@ -33,6 +33,9 @@ export interface BuildingStat {
   key: string;
   icon: IconName;
   label: string;
+  /** The label cut to a word that fits a stat tile on a phone (the district
+   *  card's three-up band): six letters at most. */
+  short: string;
   value: string;
 }
 
@@ -55,48 +58,48 @@ export interface StatChange extends BuildingStat {
 export function statsAt(game: Game, district: District, level: number): BuildingStat[] {
   const def = DISTRICTS[district.definitionId];
   const out: BuildingStat[] = [];
-  const add = (key: string, icon: IconName, label: string, value: string | number) =>
-    out.push({ key, icon, label, value: String(value) });
+  const add = (key: string, icon: IconName, label: string, short: string, value: string | number) =>
+    out.push({ key, icon, label, short, value: String(value) });
   /** A per-level list that a building may not carry at all. */
   const term = (list: readonly number[], blank: number) =>
     (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
 
   if (def.populationCapacityPerLevel.length > 0) {
-    add('homes', 'Housing', 'Villager cap', levelIndexed(def.populationCapacityPerLevel, level));
+    add('homes', 'bed', 'Beds', 'Beds', levelIndexed(def.populationCapacityPerLevel, level));
   }
   if (def.influenceRadiusPerLevel.length > 0) {
-    add('reach', 'showme', 'Exploration range', levelIndexed(def.influenceRadiusPerLevel, level));
-    add('crew', 'workers', 'Workers', levelIndexed(def.maxWorkersPerLevel, level));
+    add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
+    add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
   }
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
-    add('delivery', 'plus', 'Per delivery', `+${term(def.extraUnitsPerDeliveryPerLevel, 0)}`);
+    add('delivery', 'plus', 'Per delivery', 'Haul', `+${term(def.extraUnitsPerDeliveryPerLevel, 0)}`);
   }
   if (def.strikeSpeedPerLevel.length > 0) {
-    add('swing', 'clock', 'Swing', `×${term(def.strikeSpeedPerLevel, 1)}`);
+    add('swing', 'clock', 'Swing', 'Swing', `×${term(def.strikeSpeedPerLevel, 1)}`);
   }
   if (def.armyCapPerLevel.length > 0) {
-    add('army', 'army', 'Army cap', levelIndexed(def.armyCapPerLevel, level));
+    add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));
   }
   if (def.bedsPerLevel.length > 0) {
-    add('beds', 'hp', 'Beds', levelIndexed(def.bedsPerLevel, level));
+    add('beds', 'hp', 'Beds', 'Beds', levelIndexed(def.bedsPerLevel, level));
   }
   // A level buys a house MORE ROOM and BETTER RENT, and the second half is
   // the reason to keep upgrading a house that is already full.
   if (def.taxBonusPerLevel.length > 0) {
-    add('rent', 'Gold', 'Rent each',
+    add('rent', 'Gold', 'Rent each', 'Rent',
       `+${Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100)}%`);
   }
   // The Sanctum owns BOTH Mana numbers — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).
   if (district.definitionId === 'Sanctum') {
-    add('mana-cap', 'Mana', 'Mana held', levelIndexed(MANA.sanctumCapPerLevel, level));
-    add('mana-rate', 'Mana', 'Mana /h', levelIndexed(MANA.sanctumPerHourPerLevel, level));
+    add('mana-cap', 'Mana', 'Mana held', 'Stored', levelIndexed(MANA.sanctumCapPerLevel, level));
+    add('mana-rate', 'Mana', 'Mana /h', 'Rate', levelIndexed(MANA.sanctumPerHourPerLevel, level));
   }
   if (district.definitionId === 'Townhall') {
     const ladder = TAXES.townhallMultiplierPerLevel;
-    if (ladder.length > 0) add('taxes', 'Gold', 'Gold income', `×${levelIndexed(ladder, level)}`);
+    if (ladder.length > 0) add('taxes', 'Gold', 'Gold income', 'Income', `×${levelIndexed(ladder, level)}`);
     const reach = FOG.reachPerTownhallLevel;
-    if (reach.length > 0) add('fog', 'Townhall', 'Fog reach', `ring ${levelIndexed(reach, level)}`);
+    if (reach.length > 0) add('fog', 'Townhall', 'Fog reach', 'Fog', `ring ${levelIndexed(reach, level)}`);
   }
   void game;
   return out;

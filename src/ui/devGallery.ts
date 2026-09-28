@@ -41,12 +41,27 @@ export function mountGallery(root: HTMLElement): void {
   const noop = () => {};
   page.append(section(
     'Buttons',
+    // THE COLLECTION: every colour painted (everyday) and as a gemstone
+    // (premium, magical), live and disabled. Hover and press any of them for
+    // the other two states.
     el('div', { class: 'gal-row' },
-      specimen('primary', btn({ label: 'Build', onClick: noop, kind: 'primary' })),
-      specimen('secondary', btn({ label: 'Select', onClick: noop })),
-      specimen('destructive', btn({ label: 'Reset', onClick: noop, kind: 'destructive' })),
-      specimen('gem', btn({ label: 'Finish', onClick: noop, kind: 'gem', icon: 'Gems' })),
+      specimen('wood · secondary', btn({ label: 'Select', onClick: noop })),
+      specimen('disabled', btn({ label: 'Select', onClick: noop, disabledReason: 'Not yet' })),
+    ),
+    ...([
+      ['green · primary', 'emerald', 'primary', 'Upgrade'],
+      ['blue', 'sapphire', 'blue', 'Watch'],
+      ['gold', 'topaz', 'gold', 'Claim'],
+      ['red · destructive', 'ruby', 'destructive', 'Reset'],
+      ['purple · gem', 'amethyst', 'gem', 'Finish'],
+    ] as const).map(([name, stone, kind, label]) => el('div', { class: 'gal-row' },
+      specimen(`${name} · paint`, btn({ label, onClick: noop, kind, finish: 'paint' })),
+      specimen(`${stone} · gem`, btn({ label, onClick: noop, kind, finish: 'gem' })),
+      specimen('disabled', btn({ label, onClick: noop, kind, finish: 'paint', disabledReason: 'Not yet' })),
+    )),
+    el('div', { class: 'gal-row' },
       specimen('with icon', btn({ label: 'Show me', onClick: noop, icon: 'showme' })),
+      specimen('gem, with icon', btn({ label: 'Finish', onClick: noop, kind: 'gem', icon: 'Gems' })),
     ),
     // §6.4: a price lives INSIDE the button that spends it, and a term the
     // player cannot pay turns clay — which is itself the reason the button is
@@ -68,10 +83,27 @@ export function mountGallery(root: HTMLElement): void {
         label: 'Raise its tier', onClick: noop,
         costExtra: [{ icon: 'sparkle', amount: '3 / 20', short: true }],
       })),
-      specimen('knob −', knob('−', noop, { label: 'Remove worker' })),
-      specimen('knob +', knob('+', noop, { label: 'Add worker' })),
-      specimen('knob at limit', knob('+', noop, { label: 'Add worker', disabled: true })),
     ),
+    // THE ROUND SET: the same materials as knobs, at the header's Gems "+"
+    // size — worker steppers, and any one-glyph action.
+    el('div', { class: 'gal-label' }, 'round — the same materials, one glyph'),
+    el('div', { class: 'gal-row' },
+      specimen('wood −', knob('−', noop, { label: 'Remove worker' })),
+      specimen('wood +', knob('+', noop, { label: 'Add worker' })),
+      specimen('disabled', knob('+', noop, { label: 'Add worker', disabled: true })),
+    ),
+    ...([
+      ['green', 'emerald', 'primary'],
+      ['blue', 'sapphire', 'blue'],
+      ['gold', 'topaz', 'gold'],
+      ['red', 'ruby', 'destructive'],
+      ['purple', 'amethyst', 'gem'],
+    ] as const).map(([name, stone, kind]) => el('div', { class: 'gal-row' },
+      specimen(`${name} −`, knob('−', noop, { label: 'Remove worker', kind, finish: 'paint' })),
+      specimen(`${name} +`, knob('+', noop, { label: 'Add worker', kind, finish: 'paint' })),
+      specimen(`${stone} +`, knob('+', noop, { label: 'Add worker', kind, finish: 'gem' })),
+      specimen('disabled', knob('+', noop, { label: 'Add worker', kind, finish: 'paint', disabled: true })),
+    )),
     // The rule §6.3 makes universal: never greyed out without a reason.
     specimen('priced, with a consequence beside it', action({
       label: 'Upgrade', kind: 'primary', onClick: noop,
@@ -162,16 +194,24 @@ export function mountGallery(root: HTMLElement): void {
         el('div', {}, iconEl('padlock', { size: 'sm' }))),
     )),
     specimen('sheet', sheet({ title: 'Sanctum', onClose: noop },
-      el('p', {}, 'A bottom sheet: grab handle, titled plank, its own close knob.'))),
+      el('p', {}, 'A bottom sheet: the wooden header with its title and close, cream paper inside.'))),
     // The three it can also be. These are the REAL sheet() with its flags set,
     // not a drawing of one, so a change to the primitive shows here by itself.
     specimen('sheet — centred (the modal one)', sheet(
       { title: 'Finish now?', onClose: noop, centred: true },
       el('p', {}, 'For a short, one-decision sheet: an offer, a confirmation.'),
     )),
-    specimen('sheet — plankless', sheet(
+    specimen('sheet — more buttons on the header', sheet(
+      {
+        title: 'Warehouse',
+        onClose: noop,
+        actions: [knob('?', noop, { label: 'About the warehouse', kind: 'blue' })],
+      },
+      el('p', {}, 'The buttons are anchored to the right of the header, the close last.'),
+    )),
+    specimen('sheet — headerless', sheet(
       { title: 'Hero', onClose: noop, bare: true },
-      el('p', {}, 'The content already names it, so the plank would say it twice.'),
+      el('p', {}, 'The content already names it, so a header would say it twice.'),
     )),
   ));
 
@@ -256,7 +296,6 @@ export function mountGallery(root: HTMLElement): void {
       specimen('rope (grab)', deco('deco-rope', 96, 28)),
       specimen('rope, vertical', deco('deco-rope-v', 24, 96)),
       specimen('nail', deco('deco-nail', 20, 20)),
-      specimen('knob', deco('deco-knob', 44, 44)),
       specimen('pennant', deco('deco-pennant', 40, 48)),
       specimen('seal', deco('deco-seal', 48, 48)),
     ),

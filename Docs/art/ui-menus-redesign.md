@@ -67,12 +67,22 @@ what to do next. The menus should stop hiding that.
 4. **Nothing is greyed out without a reason attached.** A disabled button
    always sits next to one short sentence saying what unlocks it, in
    plain words: "Needs a bigger Townhall", not "Townhall lvl 3 required".
-5. **Warm materials, chunky shapes.** Parchment, carved wood, rope, wax
-   seals, cloth banners. No hairlines, no glass, no neon, no grey.
+5. **Everything is a material you could touch.** The UI is made of warm,
+   natural things — carved and painted wood, yellowed parchment and paper,
+   rope, cloth, wax, brass, glass with something inside it — each drawn with
+   its texture and lit from above, never a flat fill.
+   - A symbol ON a piece is worked INTO the material: carved, engraved,
+     embossed or stamped, never a flat glyph pasted on top (the close
+     button's X is a groove in its red wood).
+   - A pressed control is the same material pushed in, not a darker copy.
+   - Colour comes from the material (red lacquer, green paint, gold cloth),
+     not from a coloured shape.
+   - No hairlines, no glass-morphism, no neon, no cold grey, no plastic
+     gloss. When in doubt, ask "what is this made of?" — and draw that.
 6. **Big, few, forgiving targets.** Minimum 44×44 px touch targets, ≥16px
-   body text, ≥13px for the smallest helper line. Portrait-first (the app
-   is capped to 9:16), one-thumb reachable: primary actions in the bottom
-   third.
+   body text, ≥13px for the smallest helper line. Portrait-first (authored
+   at 1125×2436 and scaled with the height, §3.6), one-thumb reachable:
+   primary actions in the bottom third.
 7. **The world is the menu where possible.** Tapping a building already
    opens its card; keep pushing interactions onto the map instead of into
    lists.
@@ -175,17 +185,60 @@ the flat kit.
 
 ### 3.3 Buttons
 
-| Kind | Look | Used for |
-|---|---|---|
-| Primary | `leaf` slab, `leaf-dark` 3px bottom lip, ink-cream label, min 56px tall | Build, Claim, Train, Sell, Start, Upgrade |
-| Secondary | `wood` slab, `wood-dark` lip | Select, filters, amount picker |
-| Icon/stepper | 48×48 round wooden knob | Worker `−`/`+`, close, zoom |
-| Destructive | `clay` slab, dark-clay lip | Reset, Cancel construction |
-| Gem action | `sky`-to-violet slab with a gem icon | Finish now, buy research slot |
-| Disabled | `locked` fill, ink-muted label, small padlock, **reason line beside it** | any gated action |
-| **Priced** | label on top, **the cost inside the button** underneath — icon + amount per term, any term the player cannot pay in `clay` | anything that spends: Build, Upgrade, Train, Recruit, Start, Claim, Cast, Call, Set off, Refill |
+Three materials, one silhouette — a rounded slab with a lip under its face —
+nine-sliced so a label of any length fits.
 
-Pressed state: the slab drops onto its lip (3px down, lip hidden).
+- **Wood** for plain actions: the ones a player does, not the ones they want.
+- **Paint** for everyday coloured actions — upgrade, train, build: one matte
+  colour, a soft lighter band along the top, a darker lip, little texture.
+- **Gemstone** for the premium and magical actions — buy a pack, cast a
+  spell, open a pack, gacha calls, claiming a reward: polished stone in a
+  thin gold bezel, a clean gradient, one soft highlight band.
+
+Every colour comes in both finishes (`finish: 'paint' | 'gem'`). A colour is
+painted by default; the `gem` kind (spends Gems) is a gemstone by default.
+
+| Kit kind | Colour | Used for |
+|---|---|---|
+| `secondary` (default) | wood | Select, filters, amount picker, Buy with coins |
+| `primary` | green · emerald | Build, Train, Upgrade, Start — the one green action |
+| `blue` | blue · sapphire | watch a video, a free call |
+| `gold` | gold · topaz | an advanced call |
+| `destructive` | red · ruby | Reset, Cancel |
+| `gem` | purple · amethyst | anything that spends Gems: Finish now, buy a slot |
+
+Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
+`btn-paint-<colour>[-state].png` for paint):
+
+- **Normal** and **pressed** — drawn (the pressed one is the same slab pushed
+  in: no lip, face lower).
+- **Highlight** (pointer over it) and **disabled** — derived from the normal
+  art by `npm run art:buttons`: brighter and a touch warmer; drained toward
+  a muted blue-grey. Derived, so all four share one outline.
+- **Size**: one height (46 px), a floor on width (112 px) and a ceiling
+  (144 px; 160 px for a priced button, frame included), so the slab is
+  always drawn at its own proportions. A screen that stretches a button gets
+  it at the ceiling, centred; a label longer than the ceiling widens its
+  button just enough to fit, never cut. Anything taller than a label goes
+  outside the slab.
+- **Label**: light ink with a 1 px outline and a 2 px drop below, in a
+  darker tone of the slab's own colour (dark green on green, dark brown on
+  wood, slate on disabled).
+- A disabled button keeps its **reason line beside it**.
+- **Round** (`knob(glyph, …, { kind, finish })`, `knob-<material>[-state].png`
+  and `knob-paint-<colour>[-state].png`): wood and every colour in both
+  finishes, with the same four states, as a disc, for a one-glyph action —
+  worker `−` / `+`, zoom. Drawn at the header's Gems `+` size (50 rpx) inside
+  a hit area of at least 44 px. The glyph is carved into the face in a darker
+  tone of the material, never a flat white sign. (The window's close is its
+  own red button.)
+- **Priced**: the cost sits **above** the slab, outside it — icon + amount
+  per term, any term the player cannot pay in `clay` — and the two are
+  grouped on a small **section**; the whole is one press.
+- **Sections** (`.k-section`): a flat panel a shade darker than the paper
+  (`--section-fill`) in a flat 2-px outline (`--section-line`), rounded 10
+  px — no bevel, no texture. It marks off a group of things inside a menu:
+  a priced button, a stat tile, the district card's portrait.
 
 ### 3.4 Type & numbers
 
@@ -208,13 +261,25 @@ that replaced them.*
 | `--weight-body` | **600** SemiBold | ordinary prose — the default on `<body>` |
 | `--weight-small` | **400** Regular | the small description under it |
 
-- **600 for prose is the point of the change.** On parchment at 16px, Nunito
+- **600 for prose is the point of the change.** On parchment at body size, Nunito
   Regular reads thin and SemiBold reads like the mockups; 400 is left to the
   helper line, where the *contrast* against the 600 above it does the work.
-- **Scale: title 22px, body 16px, helper 13px** (`--text-title`,
-  `--text-body`, `--text-helper`) — the brief's minimums (§2), checked by
-  `tests/fonts.test.ts`, which also refuses any literal under 11px and any
-  bare weight outside the four faces.
+- **Text roles** — a menu names the role, never a size, so every window
+  reads the same (`tokens.css`, held in order by `tests/fonts.test.ts`,
+  which also refuses any literal under 11px and any bare weight outside the
+  four faces):
+
+| Token | Size | Used for |
+|---|---|---|
+| `--text-title` | 28px | a window's title, on its header band |
+| `--text-body` | 17px | what the window is about: names, values, copy |
+| `--text-desc` | 15px | the line that describes it: a description, a rate, a note |
+| `--text-heading` | 14px | a section heading (small uppercase) |
+| `--text-helper` | 14px | a caption or fine print: a tag, a badge, a timer |
+| `--text-button` | 16px | a button's label |
+
+- Tiny tags (a count on a slot, a timer on a portrait) may go to 11–12px;
+  a sentence never does.
 - Nunito is **a third wider than PT Sans** (~9.4px a character at 600 against
   ~7), so a line that used to fit takes more room. The one place it shows is
   a description clamped to two lines, which ellipsises — by design.
@@ -277,6 +342,70 @@ still derived by the script, never drawn. No emoji anywhere —
 
 Sheets slide up 180ms ease-out. Counters roll rather than snap.
 
+**The window** (`.k-frame`, material.css; `k-window-*`, kit.css): every menu
+that leaves the map in sight — each kit sheet, the district card — is one
+simple panel of warm wood with rounded corners, a drop shadow all round to
+lift it off the map, and warm cream paper with a very soft texture inside,
+with a generous margin (80 rpx from the frame's outer edge) before the
+contents start. Three pieces, each cut to slice
+(`sheets/ui-window5-pieces.png`): the wood ring (nine-sliced, centre empty),
+the paper (under the ring), and the header band. It is as wide as it is on
+the iPhone X (1053 rpx: the reference width less the overlay's gutter),
+centred — edge to edge on the reference phone, with the map showing either
+side on anything wider. A centred modal keeps its own narrower cap.
+
+- **In**: the contents hidden; the frame fades in and grows from its least
+  height (its top and bottom slices, nothing between) to its full height in
+  160 ms — from the foot for a bottom sheet, from the middle for a centred
+  one; the contents fade in from 80% of the way (about 0.2 s in all).
+- **Out** (closing back to the map): the contents fade out (60 ms), then the
+  frame shrinks back to its least height and fades (140 ms); the window stays
+  in the DOM, untappable, until it has. Switching straight to another menu
+  is immediate.
+- **The header**: every titled window has one — a wooden band seated on
+  the top of the frame: standing 26 rpx proud of it and 22 rpx in from each
+  side, so the frame's wood shows round it; fixed height (120 rpx),
+  three-sliced in width (its
+  rounded ends kept, the plain middle stretched). The title is centred on
+  it, in a soft vertical gradient (pale cream to warm cream, lit from above)
+  with a dark-wood outline; the buttons are anchored to its
+  right, the close always last and any `actions` before it
+  (`sheet({ actions })`). A window without a title (`bare`) has the frame
+  and no band, and carries its own way out.
+- **The close**: a round button of red lacquered wood with the X carved
+  into it (kit `closeKnob`), the last button on the header. Its pressed twin
+  is the same wood pushed in.
+- **The district card's header**: the building's name and its level a size
+  down (*Housing #3* *Lv 2*, `windowHead`'s `sub`), then Move (when the
+  building can move) and Close. **Move** is the close's twin in
+  wood — a round wood button with four-way arrows carved into it (kit
+  `moveKnob`).
+- **Section headings** (kit `sectionHead`): a short rule, the label in small
+  uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
+  district card heads each of its sections with one, shown only when the
+  section is: *Stats*, then what the building does — *Villagers* (the
+  Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
+  *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
+- **The district card's head**: one row — the portrait, the description
+  (bold, lighter ink), and Upgrade (the kit's default button, its fixed size)
+  — each anchored to the top and growing down. The card lists no
+  requirements: the upgrade popup shows each one and whether it is met.
+  Upgrade wears the call to action when every requirement and every cost is
+  met and a builder is free — the sim's `upgradeRefusal`, the same check the
+  command runs. The portrait is a section with a small leafy ornament pressed
+  into each corner, and the building drawn larger than the tile, clipped to
+  it by a mask.
+- **Stat tiles** (the district card's figures): one tile per figure — a big
+  icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
+  *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's
+  tooltip and the upgrade popup's) over the value (lighter ink), at the
+  building's CURRENT level only (the next level's value is the upgrade
+  popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
+  only where three would not fit), 14 px apart; three to a row, centred, a
+  fourth wrapping to a centred row of its own.
+- The nav bar steps aside while any window is open, the district card's
+  included (§6.5).
+
 **One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
 for you here" in the game wears the same badge — a small scrying orb on its
 host's corner, a red halo pulsing slowly behind it, a glint stirring inside
@@ -292,14 +421,18 @@ in stepped frames, and the count on it past one ("2" … "9", then "9+").
   tick does not restart it either. It pops in only when
   it appears on a host that persists (the nav, the pills, the quest scroll).
 
-**A claimed reward flies into the header** (`ui/rewardFly.ts`; today the
-quest claim and the daily / season chests):
+**A claimed reward flies into the header** (`ui/rewardFly.ts`): the quest
+claim, the daily / season chests, and what the player's own TAP gathers — a
+resource cell, a building's worked cells, a house's rent (crews' deliveries
+and the rent tick land as numbers on the map only):
 
-- It bursts from where it was claimed — the tap that claimed it, or the
-  centre of the screen — with a flash and a powerup chime.
+- It bursts from where it was claimed — the tapped cell, the tap that
+  claimed it, or the centre of the screen — with a flash and, for a claimed
+  reward (not a tap, which has its own sound), a powerup chime.
 - Each resource in it leaves as N fragments of its icon: one per minute of
   the city's own production the reward is worth, at least 3, at most 12, and
-  5 for a coin the city does not produce (Gems) or produces none of yet.
+  5 for a coin the city does not produce (Gems) or produces none of yet. A
+  tap that gathered fewer than 5 flies one fragment a unit instead.
 - Each fragment bursts out to a spot of its own, hangs, then flies in an arc
   into that resource's slot, 70 ms after the one before; a second resource
   leaves 180 ms after the first. Burst 260 ms, flight 620 ms, speeding up.
@@ -1242,8 +1375,9 @@ than a currency, and they go in the button like everything else, reading
 - A menu is opened **over** the game. The resource header stays above it,
   undimmed and tappable, full-screen menus included: what you can afford is
   the reason you opened the menu.
-- **The nav bar leaves while a menu is open**: it slides down out of the
-  frame (260 ms) and slides back up when the map returns. Every menu brings
+- **The nav bar leaves while a menu is open** — a sheet, or the district
+  card: it slides down out of the frame (200 ms) and slides back up when the
+  map returns. Every menu brings
   its own way out, and the space the bar held goes to the menu — `--nav-h`
   is only the bottom inset while it is away.
 - The stack, bottom to top: map · the right-edge column (4) · district card

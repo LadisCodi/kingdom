@@ -17,18 +17,184 @@
  * frame's rounded corners are in the art instead. */
 
 /* ---- panels and sheets ---- */
-.k-panel {
-  /* The mockups' frame is ~9px at 402 (M5), the content 15px from the edge. */
-  border: 9px solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / 12px / 2px round;
+/* THE WINDOW: every menu that leaves the map in sight — a kit sheet, the
+   district card — is one simple panel of warm wood with rounded corners,
+   warm cream paper inside, a drop shadow all round to lift it off the map,
+   and (when it has a title) a wooden header band across its top. Three
+   pieces, each cut to slice (sheets/ui-window5-pieces.png):
+     window-frame.png   the wood ring, nine-sliced — corners kept, sides
+                        stretched, centre empty;
+     window-paper.jpg   the paper, the frame's background under the ring;
+     window-header.png  the band (.k-head), three-sliced in width.
+   The frame is its OWN layer (.k-frame) behind the contents: the entrance
+   and exit animate its height without distorting it or reflowing what is
+   inside. */
+.k-panel,
+.dc {
+  --win-edge: calc(var(--rpx) * 46);       /* the ring's slice: the rounded corner and the wood */
+  --win-rail: calc(var(--rpx) * 28);       /* where the paper starts, under the ring's inner edge */
+  --win-pad: calc(var(--rpx) * 64);        /* the frame's outer edge to the contents: a generous margin */
+  --win-min: calc(var(--win-edge) * 2);    /* the frame at its least: top and bottom, nothing between */
+  position: relative;
+  isolation: isolate; /* so the frame's z-index: -1 stays inside the window */
+  border: 0;
   border-radius: 0;
-  padding: 8px;
-  background: url('../assets/tex-parchment.jpg') padding-box;
-  background-size: 384px 384px;
-  box-shadow:
-    0 6px 0 rgba(60, 36, 18, 0.3),
-    0 12px 26px rgba(60, 36, 18, 0.26);
+  background: none;
+  box-shadow: none;
+  padding: var(--win-pad);
 }
+.k-frame {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  z-index: -1;
+  border-style: solid;
+  border-color: transparent;
+  /* The border is narrower than the ring is drawn, so the paper — clipped to
+     the padding box — runs in under the wood with no seam. */
+  border-width: var(--win-rail);
+  border-image: url('../assets/window-frame.png') 64 / var(--win-edge) stretch;
+  background: url('../assets/window-paper.jpg') center / 100% 100% no-repeat padding-box;
+  filter: drop-shadow(0 calc(var(--rpx) * 8) calc(var(--rpx) * 22) rgba(24, 12, 4, 0.55));
+  pointer-events: none;
+}
+/* AS WIDE AS IT IS ON THE iPHONE X, centred. The width is the reference
+   frame's 1125 less the 12-px gutter the overlay keeps each side there
+   (36 rpx), so on the reference phone the window runs edge to edge as the
+   mockup draws it, and on anything wider — a tablet, a desktop — it keeps
+   that width and the map shows on either side instead of the window
+   stretching. The district card takes the same width, so every window
+   matches. (A centred modal keeps its own, narrower cap — kit.css.) */
+.k-sheet:not(.is-centred),
+.dc {
+  --win-w: calc(var(--rpx) * 1053);
+  width: min(100%, var(--win-w));
+  margin-left: auto;
+  margin-right: auto;
+}
+/* The nav steps aside for the card as for a sheet, so the card keeps the
+   sheets' 8 px off the bottom edge rather than sitting on it. */
+.dc { margin-bottom: 8px; }
+/* THE CLOSE: a round button of red lacquered wood with the X carved into it
+   (sheets/ui-window2-close.png, kit closeKnob), pinned over the window
+   frame's top-right knob. The pressed twin is the same wood pushed in. */
+.k-close {
+  --close-size: calc(var(--rpx) * 100);
+  position: absolute;
+  top: calc(var(--close-size) * -0.28);
+  right: calc(var(--close-size) * -0.28);
+  z-index: 3;
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 0;
+  background: url('../assets/btn-close.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+  cursor: pointer;
+}
+.k-close:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
+.k-close:active { background-image: url('../assets/btn-close-down.png'); }
+.k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+/* THE HEADER (.k-head, every titled window): the wooden band across the
+   top of the frame, a fixed height, standing a little proud of the frame's
+   top and a little narrower than it, so it reads as seated on the wood
+   (window-header.png: the 60-px ends kept, the plain middle stretched). The title is centred on it; the
+   buttons are anchored to its right, the window's close always last. */
+.k-sheet.has-head > .k-panel > .k-head,
+.dc > .k-head {
+  --head-h: calc(var(--rpx) * 120);
+  --head-cap: calc(var(--head-h) * 60 / 133); /* the art's 60-px ends, at this height */
+  --head-inset: calc(var(--rpx) * 22);        /* the buttons' distance from the band's end */
+  --head-rise: calc(var(--rpx) * 26);         /* how far it stands proud of the frame's top */
+  --head-tuck: calc(var(--rpx) * 22);         /* how far in from the frame's sides, each side */
+  position: relative;
+  /* Raised by an offset rather than a margin, so it stands proud of the
+     frame without moving the contents under it. */
+  top: calc(var(--head-rise) * -1);
+  z-index: 2;
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  align-items: center;
+  column-gap: calc(var(--rpx) * 16);
+  height: var(--head-h);
+  margin:
+    calc(var(--win-pad) * -1)
+    calc(var(--win-pad) * -1 + var(--head-tuck))
+    calc(var(--rpx) * 32 - var(--head-rise));
+  padding: 0 var(--head-inset) calc(var(--head-h) * 0.06);
+  border-image: url('../assets/window-header.png') 0 60 fill / 0 var(--head-cap) stretch;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.3));
+}
+.k-head > .k-head-title {
+  grid-column: 2;
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--font-display-weight);
+  line-height: 1.15;
+  /* A soft vertical gradient in the letters — pale cream at the top, warmer
+     at the foot — as if lit from above. The fill is the background clipped
+     to the glyphs, so the dark-wood outline is a stack of drop-shadows on
+     the element (a text-shadow would show through a transparent fill). */
+  color: var(--ink-inverse);
+  background: linear-gradient(180deg, #fffaf0 0%, #fbe9c8 55%, #edcc92 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(1px 0 0 #4a260f) drop-shadow(-1px 0 0 #4a260f)
+    drop-shadow(0 1px 0 #4a260f) drop-shadow(0 -1px 0 #4a260f)
+    drop-shadow(0 2px 0 #4a260f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* A small word after the title — the district card's level — in the same
+   gradient letters, a size down. */
+.k-head-sub { font-size: 0.72em; }
+.k-head-actions {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 14);
+}
+/* THE MOVE (kit moveKnob): the close's twin in wood, the arrows carved in. */
+.k-move {
+  --close-size: calc(var(--rpx) * 100);
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 0;
+  background: url('../assets/btn-move.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+  cursor: pointer;
+}
+.k-move:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
+.k-move:active { background-image: url('../assets/btn-move-down.png'); }
+.k-move:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+/* In the header the close is one of the row, not pinned to the corner, and
+   the move is its size. */
+.k-head .k-move,
+.k-head .k-close {
+  position: relative;
+  top: auto;
+  right: auto;
+  --close-size: calc(var(--head-h) * 0.8);
+  flex: none;
+}
+/* A knob in the row is drawn larger than a stepper, to sit with the close. */
+.k-head .k-btn.k-knob { --knob-size: calc(var(--head-h) * 0.62); }
+
+/* A centred window grows from its middle; a bottom sheet from its foot. */
+.k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {
   margin: -8px -8px 8px;
   background: url('../assets/tex-wood.jpg') center / 512px 512px;
@@ -63,62 +229,261 @@
 }
 
 /* ---- slabs and knobs ---- */
-/* THE WOOD BUTTON is one painted slab (sheets/ui-quest1-scroll-button.png),
-   nine-sliced, with its pressed twin swapped in on :active — the lip and the
-   press are in the art, so the kit's border, drop-lip and nudge come off.
-   Every button that is wood wears it; a slab recoloured to another tone
-   (the video till's blue, the gold call) and a locked one keep the kit's
-   flat fill. The sizes are px because the kit's slabs still are. */
-.k-btn--secondary:not(.k-knob):not(:disabled):not(.is-locked)
-  :not(.mana-tills > .mana-till:first-child > .k-btn)
-  :not(.store-banner-calls > .k-btn:first-child)
-  :not(.store-banner.is-advanced .k-btn),
-.store .k-card > .k-btn:not(:disabled),
-.store-banner-calls > .k-btn:last-child:not(:disabled):not(.store-banner.is-advanced .k-btn),
-.bs-exit .k-btn {
+/* THE LABEL BUTTONS: one painted slab per MATERIAL, nine-sliced, with all
+   four states in the art (Docs/art/ui-menus-redesign.md §3.3):
+     WOOD                       plain actions — the default, `secondary`;
+     PAINT — green, blue,       everyday coloured actions: green `primary`,
+     gold, red, purple          red `destructive`, `blue`, `gold`;
+     GEMS — the same five       the premium and magical ones (`.is-gem`),
+     colours as stones          and purple `gem`, which spends Gems.
+   Normal and pressed are drawn; highlight and disabled are derived from the
+   normal art (scripts/ui-buttons.mjs), so the four share one outline and a
+   button never shifts as its state changes. Every material is cut to the
+   same 557 x 188 canvas, so one set of slices serves them all. A knob is
+   round and keeps its own art. */
+.k-btn:not(.k-knob) {
+  --btn: url('../assets/btn-wood.png');
+  --btn-down: url('../assets/btn-wood-down.png');
+  --btn-hover: url('../assets/btn-wood-hover.png');
+  --btn-off: url('../assets/btn-wood-off.png');
   border: 0;
   border-radius: 0;
   box-shadow: none;
   background: none;
-  border-image: url('../assets/btn-wood.png') 70 90 90 fill / 14px 18px 18px stretch;
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.7);
+  border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
+  /* Clear of the rim above and of the lip below, which are in the art. */
+  padding-top: 10px;
+  padding-bottom: 12px;
+  color: var(--ink-inverse);
+  /* THE LABEL'S OUTLINE: 1 px all round and a 2 px drop below, in a darker
+     tone of the slab it sits on (--btn-ink, set per material below), so the
+     words hold on every colour without a black stroke. */
+  --btn-ink: #5d3014;
+  text-shadow:
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
+  transform: none;
+  transition: none;
 }
-.k-btn--secondary:not(.k-knob):not(:disabled):not(.is-locked):active,
-.store .k-card > .k-btn:not(:disabled):active,
-.store-banner-calls > .k-btn:last-child:not(:disabled):active,
-.bs-exit .k-btn:active {
-  border-image-source: url('../assets/btn-wood-down.png');
+.k-btn:not(.k-knob):hover { border-image-source: var(--btn-hover); filter: none; }
+.k-btn:not(.k-knob):active {
+  border-image-source: var(--btn-down);
+  padding-top: 13px; /* the words drop with the face */
+  padding-bottom: 9px;
+  transform: none;
+  box-shadow: none;
+}
+/* Disabled: the same slab, drained toward a muted slate — "not now", never a
+   flat grey box — and its words dimmed with it. */
+.k-btn:not(.k-knob):disabled,
+.k-btn:not(.k-knob).is-locked,
+.k-btn:not(.k-knob):disabled:hover,
+.k-btn:not(.k-knob):disabled:active {
+  border-image-source: var(--btn-off);
+  padding-top: 10px;
+  padding-bottom: 12px;
+  --btn-ink: #3c3f48;
+  color: #e3e6ec;
+  cursor: default;
+}
+/* Every colour comes in two FINISHES (controls.ts `ButtonFinish`): PAINT,
+   plain matte colour for the everyday actions, and GEM, the polished stone
+   for the premium and magical ones. Painted unless `.is-gem`; the Gems kind
+   is a stone unless `.is-paint`. */
+.k-btn.k-btn--primary { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
+.k-btn.k-btn--blue { --btn: url('../assets/btn-paint-blue.png'); --btn-down: url('../assets/btn-paint-blue-down.png'); --btn-hover: url('../assets/btn-paint-blue-hover.png'); --btn-off: url('../assets/btn-paint-blue-off.png'); --btn-ink: #154576; }
+.k-btn.k-btn--gold { --btn: url('../assets/btn-paint-gold.png'); --btn-down: url('../assets/btn-paint-gold-down.png'); --btn-hover: url('../assets/btn-paint-gold-hover.png'); --btn-off: url('../assets/btn-paint-gold-off.png'); --btn-ink: #866005; }
+.k-btn.k-btn--destructive { --btn: url('../assets/btn-paint-red.png'); --btn-down: url('../assets/btn-paint-red-down.png'); --btn-hover: url('../assets/btn-paint-red-hover.png'); --btn-off: url('../assets/btn-paint-red-off.png'); --btn-ink: #771813; }
+.k-btn.k-btn--primary.is-gem { --btn: url('../assets/btn-green.png'); --btn-down: url('../assets/btn-green-down.png'); --btn-hover: url('../assets/btn-green-hover.png'); --btn-off: url('../assets/btn-green-off.png'); --btn-ink: #015e10; }
+.k-btn.k-btn--blue.is-gem { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
+.k-btn.k-btn--gold.is-gem { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
+.k-btn.k-btn--destructive.is-gem { --btn: url('../assets/btn-red.png'); --btn-down: url('../assets/btn-red-down.png'); --btn-hover: url('../assets/btn-red-hover.png'); --btn-off: url('../assets/btn-red-off.png'); --btn-ink: #7f0008; }
+.k-btn.k-btn--gem { --btn: url('../assets/btn-purple.png'); --btn-down: url('../assets/btn-purple-down.png'); --btn-hover: url('../assets/btn-purple-hover.png'); --btn-off: url('../assets/btn-purple-off.png'); --btn-ink: #4e0482; }
+.k-btn.k-btn--gem.is-paint { --btn: url('../assets/btn-paint-purple.png'); --btn-down: url('../assets/btn-paint-purple-down.png'); --btn-hover: url('../assets/btn-paint-purple-hover.png'); --btn-off: url('../assets/btn-paint-purple-off.png'); --btn-ink: #461c68; }
+/* ONE HEIGHT, AND A FLOOR ON WIDTH: the slab is drawn at about 3:1 with its
+   rounded ends and lip in the slices, so a button is always the slab's own
+   height and never narrower than its two ends plus a word. Anything that
+   needs more height than a label goes OUTSIDE the slab (a price: above).
+   AND A CEILING: a screen that stretches its buttons (width: 100%, flex: 1)
+   gets them at most 144 px wide, centred in the space. The floor sits on the
+   label instead of the button, so min-content can outrank the ceiling: a
+   label longer than the cap widens its button to fit its words and no more,
+   and is never cut. */
+.k-btn:not(.k-knob):not(.has-cost) {
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
+  min-width: min-content;
+  max-width: 144px;
+  margin-inline: auto;
+  white-space: nowrap;
+}
+.k-btn:not(.k-knob):not(.has-cost) > .k-btn-label {
+  min-width: calc(112px - 28px); /* 112 less the slab's 14 px sides */
+  justify-content: center;
+}
+
+/* A PRICED BUTTON: its cost sits ABOVE the slab, outside it, and the two are
+   grouped on a small section (.k-section, below)
+   — the whole thing is still one button, one press. The slab moves to the
+   label, which takes the four states; the frame stays put. */
+.k-btn.k-btn.has-cost:not(.k-knob),
+.k-btn.k-btn.has-cost:not(.k-knob):hover,
+.k-btn.k-btn.has-cost:not(.k-knob):active,
+.k-btn.k-btn.has-cost:not(.k-knob):disabled,
+.k-btn.k-btn.has-cost:not(.k-knob).is-locked {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  /* The same floor and ceiling, measured round the paper: the slab plus the
+     frame's 8 px sides. */
+  min-width: min-content;
+  max-width: 160px;
+  margin-inline: auto;
+  white-space: nowrap;
+  padding: 5px 6px 4px;
+  border: 2px solid var(--section-line);
+  border-radius: 10px;
+  border-image: none;
+  background: var(--section-fill);
+  color: var(--ink);
+  text-shadow: none;
+}
+.k-btn.has-cost > .k-btn-note { order: 0; color: var(--ink-muted); opacity: 1; text-align: center; }
+.k-btn.has-cost > .k-btn-cost {
+  order: 1;
+  justify-content: center;
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+}
+.k-btn.has-cost > .k-btn-label {
+  order: 2;
+  min-width: calc(124px - 16px);
+  justify-content: center;
+  height: 46px;
+  padding: 0 16px 4px;
+  border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
+  color: var(--ink-inverse);
+  text-shadow:
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
+}
+.k-btn.has-cost:not(:disabled):not(.is-locked):hover > .k-btn-label { border-image-source: var(--btn-hover); }
+.k-btn.has-cost:not(:disabled):not(.is-locked):active > .k-btn-label { border-image-source: var(--btn-down); padding: 4px 16px 0; }
+.k-btn.has-cost:disabled > .k-btn-label,
+.k-btn.has-cost.is-locked > .k-btn-label {
+  border-image-source: var(--btn-off);
+  color: #e3e6ec;
+  text-shadow:
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
+}
+
+/* A SECTION: a flat panel a shade darker than the paper, in a flat 2-px
+   outline, marking off a group inside a menu — what a priced button sits
+   on, a stat tile, a portrait — at any size. */
+.k-section {
+  border: 2px solid var(--section-line);
+  border-radius: 10px;
+  background: var(--section-fill);
+  padding: 0;
+}
+
+/* A segmented choice: the selected segment is the emerald slab. */
+/* The toggles' sides are 10 px, not 14: the same 112 px floor. */
+.k-toggles .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: calc(112px - 20px); }
+.k-toggles .k-btn.is-selected { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
+/* Screens that recoloured a slab by hand now pick a material: the video
+   till and the ad call are sapphire, the advanced banner's call topaz. */
+.mana-tills > .mana-till:first-child > .k-btn,
+.store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
+.store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
+/* THE ROUND BUTTONS: the label buttons' materials in the round
+   (sheets/ui-buttons2-round.png, ui-buttons4-round-paint.png) — wood by
+   default, a colour `kind` painted or, with `.is-gem`, a stone —
+   drawn at the size of the header's Gems "+" (50 rpx), with a hit area that
+   never drops below the 44 px a thumb needs. The glyph is set INTO the face,
+   carved: a darker tone of the material with a light catch along its lower
+   edge (§2.5), never a flat white sign. Normal and pressed are drawn;
+   highlight and disabled derived (npm run art:buttons). */
+.k-btn.k-knob,
+.legacy-close {
+  --knob: url('../assets/knob-wood.png');
+  --knob-down: url('../assets/knob-wood-down.png');
+  --knob-hover: url('../assets/knob-wood-hover.png');
+  --knob-off: url('../assets/knob-wood-off.png');
+  --knob-size: calc(var(--rpx) * 50);
+  --knob-hit: max(44px, var(--knob-size));
+  width: var(--knob-hit);
+  height: var(--knob-hit);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0 calc(var(--knob-size) * 0.08);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
+  background: var(--knob) center / var(--knob-size) var(--knob-size) no-repeat;
+  font-size: calc(var(--knob-size) * 0.62);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  color: rgba(40, 20, 8, 0.62);
+  text-shadow: 0 calc(var(--knob-size) * 0.03) 0 rgba(255, 244, 220, 0.45), 0 calc(var(--knob-size) * -0.02) 0 rgba(20, 8, 2, 0.35);
+  transform: none;
+  filter: none;
+}
+.k-btn.k-knob:hover { background-image: var(--knob-hover); filter: none; }
+.k-btn.k-knob:active,
+.legacy-close:active {
+  background-image: var(--knob-down);
+  padding: calc(var(--knob-size) * 0.08) 0 0;
   box-shadow: none;
   transform: none;
 }
-/* The round wooden knob is a picture now: rim, face and lip are in the art,
-   so the kit's border and drop-lip come off and the press moves the picture. */
-.k-btn.k-knob,
-.legacy-close {
-  border: 0;
-  box-shadow: none;
-  color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  background: url('../assets/deco-knob.png') center / 100% 100% no-repeat;
+.k-btn.k-knob:disabled,
+.k-btn.k-knob:disabled:hover,
+.k-btn.k-knob:disabled:active {
+  background-image: var(--knob-off);
+  padding: 0 0 calc(var(--knob-size) * 0.08);
+  color: rgba(40, 46, 60, 0.55);
+  cursor: default;
 }
-.k-btn.k-knob:active,
-.legacy-close:active { box-shadow: none; transform: translateY(2px); }
+/* The hit area IS the box now; the kit's -2 px ring is not needed. */
+.k-btn.k-knob::before { content: none; }
+/* Painted unless `.is-gem`; the Gems kind is a stone unless `.is-paint`. */
+.k-knob.k-btn--primary { --knob: url('../assets/knob-paint-green.png'); --knob-down: url('../assets/knob-paint-green-down.png'); --knob-hover: url('../assets/knob-paint-green-hover.png'); --knob-off: url('../assets/knob-paint-green-off.png'); }
+.k-knob.k-btn--blue { --knob: url('../assets/knob-paint-blue.png'); --knob-down: url('../assets/knob-paint-blue-down.png'); --knob-hover: url('../assets/knob-paint-blue-hover.png'); --knob-off: url('../assets/knob-paint-blue-off.png'); }
+.k-knob.k-btn--gold { --knob: url('../assets/knob-paint-gold.png'); --knob-down: url('../assets/knob-paint-gold-down.png'); --knob-hover: url('../assets/knob-paint-gold-hover.png'); --knob-off: url('../assets/knob-paint-gold-off.png'); }
+.k-knob.k-btn--destructive { --knob: url('../assets/knob-paint-red.png'); --knob-down: url('../assets/knob-paint-red-down.png'); --knob-hover: url('../assets/knob-paint-red-hover.png'); --knob-off: url('../assets/knob-paint-red-off.png'); }
+.k-knob.k-btn--primary.is-gem { --knob: url('../assets/knob-green.png'); --knob-down: url('../assets/knob-green-down.png'); --knob-hover: url('../assets/knob-green-hover.png'); --knob-off: url('../assets/knob-green-off.png'); }
+.k-knob.k-btn--blue.is-gem { --knob: url('../assets/knob-blue.png'); --knob-down: url('../assets/knob-blue-down.png'); --knob-hover: url('../assets/knob-blue-hover.png'); --knob-off: url('../assets/knob-blue-off.png'); }
+.k-knob.k-btn--gold.is-gem { --knob: url('../assets/knob-gold.png'); --knob-down: url('../assets/knob-gold-down.png'); --knob-hover: url('../assets/knob-gold-hover.png'); --knob-off: url('../assets/knob-gold-off.png'); }
+.k-knob.k-btn--destructive.is-gem { --knob: url('../assets/knob-red.png'); --knob-down: url('../assets/knob-red-down.png'); --knob-hover: url('../assets/knob-red-hover.png'); --knob-off: url('../assets/knob-red-off.png'); }
+.k-knob.k-btn--gem { --knob: url('../assets/knob-purple.png'); --knob-down: url('../assets/knob-purple-down.png'); --knob-hover: url('../assets/knob-purple-hover.png'); --knob-off: url('../assets/knob-purple-off.png'); }
+.k-knob.k-btn--gem.is-paint { --knob: url('../assets/knob-paint-purple.png'); --knob-down: url('../assets/knob-paint-purple-down.png'); --knob-hover: url('../assets/knob-paint-purple-hover.png'); --knob-off: url('../assets/knob-paint-purple-off.png'); }
+/* On a gem the carved glyph is the stone's own deep tone. */
+.k-knob:is(.k-btn--primary, .k-btn--blue, .k-btn--gold, .k-btn--destructive, .k-btn--gem) { color: rgba(10, 6, 30, 0.5); }
 
 /* ---- the header plank and the nav beam ----
    Both are painted in their own screens (hud.css, nav.css): the M1 pieces,
    sized in reference pixels. */
 
-/* ---- the district card and the quest scroll ---- */
-/* The district card wears the same frame as a sheet, open at the bottom where
-   it meets the nav: three sides of the nine-slice, the fourth width 0. */
-.dc {
-  border: 12px solid transparent;
-  border-bottom: 0;
-  border-top-width: 12px;
-  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
-  background: url('../assets/tex-parchment.jpg') padding-box;
-  background-size: 384px 384px;
-}
+/* ---- the district card ----
+   It wears the window (above), like every sheet. */
 
 /* ---- the research page and the build grid ---- */
 .research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
@@ -145,11 +510,6 @@
   background:
     linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
-}
-.dc-portrait {
-  background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 8px;
 }
 
 /* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
@@ -234,7 +594,6 @@
 }
 .store-banner-art,
 .store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.store-banner.is-advanced .store-banner-calls > .k-btn:not(:disabled) { background: var(--gold); }
 
 /* ---- the heroes' roster (M6): parchment tiles ---- */
 .hero-tile {

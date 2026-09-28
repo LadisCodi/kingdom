@@ -15,7 +15,7 @@ import type { Game } from '../game';
 import { PAYER_PROFILES, PROFILE_LABEL, formatUsd, monthlyBudgetCents } from '../sim/store';
 import type { PayerProfile } from '../sim/state';
 import { el } from './format';
-import { btn, currencyIcon, iconEl, panel, plank } from './kit';
+import { btn, currencyIcon, iconEl, panel, windowHead } from './kit';
 
 const BLURB: Record<PayerProfile, string> = {
   F2P: 'Never spends. The store is open to look at, and every price is refused.',
@@ -53,8 +53,10 @@ export function renderPayerSheet(game: Game): HTMLElement {
       'The choice is final for this kingdom. To play as someone else, start over from Settings.'),
   );
 
-  // A plank with no close knob, on purpose: there is nothing to go back to.
-  return el('div', { class: 'k-sheet is-centred payer-sheet' },
-    panel(el('div', { class: 'k-grab' }), plank('Who are you playing as?'),
+  // The window's header with no close, on purpose: there is nothing to go
+  // back to.
+  return el('div', { class: 'k-sheet is-centred has-head payer-sheet' },
+    panel(el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+      windowHead('Who are you playing as?', []),
       el('div', { class: 'k-sheet-body', 'data-keep-scroll': 'payer-body' }, body)));
 }

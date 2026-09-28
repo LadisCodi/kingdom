@@ -62,6 +62,16 @@ describe('the type scale', () => {
     expect(tokenPx('body')).toBeLessThan(tokenPx('title'));
   });
 
+  // The roles a menu names (tokens.css): a description sits under the body it
+  // describes and over the fine print; a section heading is small caps, never
+  // larger than the description it heads.
+  it('places the description and the heading between the fine print and the body', () => {
+    expect(tokenPx('desc')).toBeGreaterThanOrEqual(tokenPx('helper'));
+    expect(tokenPx('desc')).toBeLessThan(tokenPx('body'));
+    expect(tokenPx('heading')).toBeGreaterThanOrEqual(MIN_HELPER_PX);
+    expect(tokenPx('heading')).toBeLessThanOrEqual(tokenPx('desc'));
+  });
+
   // §2 of the brief: ≥16px body text, ≥13px for the smallest helper line.
   it('meets the brief\'s minimums on the phone', () => {
     expect(tokenPx('body')).toBeGreaterThanOrEqual(MIN_BODY_PX);

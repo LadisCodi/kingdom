@@ -177,7 +177,8 @@ than the build is rejected rather than downgraded.
   inside it can rise above the header — **which is the design, not a
   limitation**: a menu is opened over the game, so the purse stays readable.
   The nav bar is the exception that steps aside: it slides out of the frame
-  while `#overlay` has content, and every menu carries its own way out.
+  while `#overlay` has content or the district card is open, and every menu
+  carries its own way out.
   The ad screen lives at z 200 in its own mount for that reason, and the gacha
   reveal at z 100 in its own for the same one; both carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every
@@ -196,6 +197,12 @@ than the build is rejected rather than downgraded.
   already did it): a neighbour that moves must never reprice a wait already
   running. An adjacency on a RATE is computed on read. Neither is a modifier —
   positional facts belong at the base stage.
+- **The UI is made of materials** (`Docs/art/ui-menus-redesign.md` §2.5):
+  warm, natural, textured — wood, yellowed parchment, rope, cloth, wax,
+  brass — lit from above, never flat fills or plastic gloss. A symbol on a
+  piece is carved or embossed INTO it (the close X is a groove in red wood),
+  and a pressed state is the same material pushed in. Ask "what is this made
+  of?" before drawing or requesting any new UI art.
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

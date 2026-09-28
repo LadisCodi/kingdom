@@ -63,6 +63,7 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
       btn({
         label: `Buy for ${formatUsd(price)}`,
         kind: 'primary',
+        finish: 'gem',
         onClick: () => game.confirmIap(),
         disabledReason: affordable ? undefined : 'Not enough budget this month',
       })),

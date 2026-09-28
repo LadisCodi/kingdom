@@ -31,17 +31,21 @@
   background: url('../../assets/nav-beam.png') left top / auto calc(var(--nav-pad-top) + var(--nav-tab-h) + var(--nav-pad-bottom)) repeat-x, #4a2e17;
   border: 0;
   box-shadow: none;
-  /* It leaves while a menu is open, and comes back when the map does. */
-  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  /* It leaves while a menu is open, and comes back when the map does — in
+     step with the window's own 0.2 s. */
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
-/* A MENU IS OPEN: the bar slides down out of the frame — every menu brings its
+/* A MENU IS OPEN — a sheet in the overlay, or the district card's window in
+ * the panel: the bar slides down out of the frame — every menu brings its
  * own way out — and the space it held goes to the menu. --nav-h is what
  * every screen stops above, so while the bar is away it is only the inset
- * the bar would have padded for. Keyed on the overlay having content, like
- * the settings knob, so it cannot drift from what is on screen. */
-#ui:has(> #overlay:not(:empty)) { --nav-h: env(safe-area-inset-bottom, 0px); }
-#ui:has(> #overlay:not(:empty)) > #navbar.nav {
+ * the bar would have padded for. Keyed on what is actually mounted, like the
+ * settings knob, so it cannot drift from what is on screen. */
+#ui:has(> #overlay:not(:empty)),
+#ui:has(> #panel .dc) { --nav-h: env(safe-area-inset-bottom, 0px); }
+#ui:has(> #overlay:not(:empty)) > #navbar.nav,
+#ui:has(> #panel .dc) > #navbar.nav {
   transform: translateY(calc(100% + var(--rpx) * 20));
   pointer-events: none;
   transition-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);

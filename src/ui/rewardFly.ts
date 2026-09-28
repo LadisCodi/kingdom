@@ -1,14 +1,16 @@
 // A claimed reward flies into the header.
 //
 // The genre's payout: the reward bursts out of the place it was claimed —
-// the tap that claimed it, or the middle of the screen — as a handful of
+// the tapped cell or the tap that claimed it, else the middle of the
+// screen — as a handful of
 // fragments of each resource, which hang for a beat and then fly in an arc,
 // one after another, into that resource's slot in the header. The header
 // counts each one in as it lands (hudHold.ts), with a tick and a spark.
 //
 // How many fragments is the presenter's call (`Game.rewardFragments`): one
 // per minute of the city's own production the reward is worth, so a big
-// payout looks big against what the player already makes.
+// payout looks big against what the player already makes — except a tap of
+// fewer than five, which flies one fragment a unit.
 //
 // Presentation only. The wallet already holds the reward when this starts —
 // the sim never waits for an animation — so a flight that is cut short
@@ -158,8 +160,8 @@ export function mountRewardFly(game: Game, layer: HTMLElement): void {
     return frames;
   };
 
-  const fly = (c: CurrencyId, amount: number, from: Point, icon: HTMLElement, delay: number) => {
-    const n = game.rewardFragments(c, amount);
+  const fly = (c: CurrencyId, amount: number, from: Point, icon: HTMLElement, delay: number, tap: boolean) => {
+    const n = game.rewardFragments(c, amount, tap);
     const parts = shares(amount, n);
     hold(c, amount);
     let owed = amount;
@@ -194,16 +196,20 @@ export function mountRewardFly(game: Game, layer: HTMLElement): void {
     });
   };
 
-  game.onReward((haul: Wallet) => {
+  game.onReward((haul: Wallet, at?: Point, tap = false) => {
     if (calm()) return; // the header simply shows the new totals
-    const from = origin();
+    // A tapped cell's own centre when the presenter knows it (the frame's
+    // pixels, which the layer shares — both fill #app), else the tap.
+    const from = at ?? origin();
     const flights = (Object.entries(haul) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => [c, n, slotIcon(c)] as const)
       .filter((f): f is readonly [CurrencyId, number, HTMLElement] => f[2] !== null);
     if (flights.length === 0) return;
-    playSfx('rewardBurst');
+    // A tap already made its own sound (the axe, the coins); the burst's
+    // powerup chime is for a reward claimed, not for every swing.
+    if (!tap) playSfx('rewardBurst');
     flash(from);
-    flights.forEach(([c, n, icon], k) => fly(c, n, from, icon, k * BETWEEN_KINDS_MS));
+    flights.forEach(([c, n, icon], k) => fly(c, n, from, icon, k * BETWEEN_KINDS_MS, tap));
   });
 }

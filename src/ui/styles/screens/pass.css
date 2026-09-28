@@ -302,15 +302,20 @@
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
+/* The kit's emerald slab (material.css), drawn here because the Claim is not
+   a kit button: all four states come from the same painted art. */
 .pss-claim {
-  background: var(--leaf);
-  border: 3px solid var(--leaf-dark);
-  box-shadow: 0 var(--lip) 0 var(--leaf-dark);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  border-image: url('../../assets/btn-green.png') 70 90 90 fill / 14px 18px 18px stretch;
+  padding-bottom: 10px;
   color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(30, 60, 20, 0.5);
+  text-shadow: 1px 0 0 #015e10, -1px 0 0 #015e10, 0 1px 0 #015e10, 0 -1px 0 #015e10, 1px 1px 0 #015e10, -1px 1px 0 #015e10, 1px -1px 0 #015e10, -1px -1px 0 #015e10, 0 2px 0 #015e10;
 }
-.pss-claim:hover { filter: brightness(1.06); }
-.pss-claim:active { transform: translateY(var(--lip)); box-shadow: none; }
+.pss-claim:hover { border-image-source: url('../../assets/btn-green-hover.png'); }
+.pss-claim:active { border-image-source: url('../../assets/btn-green-down.png'); padding: 8px 10px 6px; }
 .pss-claim:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 /* It wears the kit's orb, because it is the only thing on the board that can
    be pressed — the daily cell's rule applied to a row. */

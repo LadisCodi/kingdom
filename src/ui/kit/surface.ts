@@ -1,7 +1,7 @@
 // Things other things sit on: panels, sheets, planks, cards, grids.
 
 import { el } from '../format';
-import { knob } from './controls';
+import { closeKnob } from './controls';
 import { iconEl, type IconName } from './icon';
 
 /** A parchment panel in a carved wooden frame. */
@@ -12,8 +12,22 @@ export const panel = (...children: Array<Node | string>): HTMLElement =>
 export const plank = (title: string, ...trailing: Array<Node | string>): HTMLElement =>
   el('div', { class: 'k-plank' }, el('span', {}, title), ...trailing);
 
+/** A window's header bar: the title on the left, the buttons on the right,
+ *  the close last (sheets/ui-window3-header.png, three-sliced so it takes
+ *  any width). `sheet({ header })` builds one; a window that is not a kit
+ *  sheet — the district card — places it as the first thing in its frame. */
+export const windowHead = (
+  title: string, buttons: readonly Node[], sub?: string,
+): HTMLElement =>
+  el('div', { class: 'k-head' },
+    // `sub` is a small word after the title, in the same letters a size
+    // down — the district card's level, *Housing #3 Lv 2*.
+    el('h2', { class: 'k-head-title' }, title,
+      ...(sub === undefined ? [] : [' ', el('span', { class: 'k-head-sub' }, sub)])),
+    el('div', { class: 'k-head-actions' }, ...buttons));
+
 /**
- * A bottom sheet: a panel with a grab handle, a titled plank and a close
+ * A bottom sheet: a panel with a header — its title and a close
  * knob of its own.
  *
  * The close knob is why this exists. Today the whole nav bar turns into one
@@ -41,10 +55,10 @@ export function sheet(
      */
     tall?: boolean;
     /**
-     * Drop the grab handle and the plank.
+     * Drop the header.
      *
      * For a sheet whose CONTENT already names it — a hero's card carries the
-     * portrait and the name, so a plank repeating the name above them spends
+     * portrait and the name, so a header repeating the name above them spends
      * a band of the screen saying it twice. `title` is still required and
      * still labels the sheet for a screen reader.
      *
@@ -53,22 +67,34 @@ export function sheet(
      * with no door.
      */
     bare?: boolean;
+    /**
+     * Buttons for the header's row, before the window's close (which is
+     * always there and always last), in order — a move, an info button.
+     */
+    actions?: readonly Node[];
   },
   ...children: Array<Node | string>
 ): HTMLElement {
-  const close = knob('✕', opts.onClose, { label: `Close ${opts.title}` });
-  close.setAttribute('data-own-close', '');
+  // The close is the last button on the header's band.
+  const close = closeKnob(opts.onClose, `Close ${opts.title}`);
   return el(
     'div',
     {
       class: `k-sheet${opts.centred ? ' is-centred' : ''}`
-        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`,
+        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`
+        + `${opts.bare ? '' : ' has-head'}`,
     },
     el(
       'div',
       { class: 'k-panel' },
-      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title, close)]),
-      // The body scrolls; the plank and its close knob do not go with it.
+      // The window's painted frame, its own layer behind everything else, so
+      // it can grow and shrink on the way in and out without distorting or
+      // reflowing the contents (kit.css, `k-window-*`).
+      el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+      // THE HEADER: the title centred on the wooden band across the top of
+      // the frame, the buttons anchored to its right, the close last.
+      ...(opts.bare ? [] : [windowHead(opts.title, [...(opts.actions ?? []), close])]),
+      // The body scrolls; the header and its close do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.
       el(
@@ -79,6 +105,11 @@ export function sheet(
     ),
   );
 }
+
+/** A SECTION'S HEADING inside a menu: a short rule, the label in small
+ *  uppercase wood, then a rule to the edge (kit.css `.k-section-head`). */
+export const sectionHead = (label: string): HTMLElement =>
+  el('div', { class: 'k-section-head' }, label);
 
 /** The warm dim behind an open sheet. It MUST cover the map: #ui is
  *  pointer-events:none with children auto, so anything the scrim doesn't

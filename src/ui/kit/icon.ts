@@ -50,6 +50,9 @@ export type UiIconName =
   // directions cannot drift apart. `compass` is exploration range, which was
   // borrowing the pointing finger.
   | 'cross' | 'arrowUp' | 'compass'
+  // A house's capacity, the villagers who can sleep in it — it was borrowing
+  // the house itself, which is the building, not the number.
+  | 'bed'
   // Four destinations that were borrowing a picture of something else. `relics`
   // is the tab, which wore the Mana orb until the pool got a sheet of its own;
   // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
@@ -113,7 +116,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️',
   // the upgrade popup
-  cross: '✗', arrowUp: '⬆', compass: '🧭',
+  cross: '✗', arrowUp: '⬆', compass: '🧭', bed: '🛏️',
   // the fog
   tile: '⬛',
   // the nav bar

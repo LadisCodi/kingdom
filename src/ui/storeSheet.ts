@@ -157,6 +157,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
       btn({
         label: formatUsd(bundle.priceCents),
         kind: 'primary',
+        finish: 'gem',
         onClick: () => game.openIap(bundle.id),
       }));
   });
@@ -180,6 +181,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
       btn({
         label: formatUsd(Math.round(sku.priceUsd * 100)),
         kind: 'primary',
+        finish: 'gem',
         onClick: () => game.openIap(id),
       }));
     // The whole card is the target; the button is where the eye lands.
