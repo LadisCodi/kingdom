@@ -103,11 +103,10 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const desc = el('div', { class: 'q-desc' });
   const bar = progress('gold');
   const reward = el('div', { class: 'q-reward' });
-  // A mark for what the quest is about at the left and, while it runs, a
-  // magnifier knob at the right for "find it". Both are drawn, not controls —
-  // the whole scroll is still the button.
+  // A mark for what the quest is about. The whole scroll is the button: a
+  // tap while the quest runs points you at the goal, a tap once it is done
+  // takes the reward.
   const slot = el('div', { class: 'q-slot' });
-  const find = el('span', { class: 'q-find', 'aria-hidden': 'true' });
   // Done, the scroll says only what it pays and the verb that takes it.
   const claim = el('span', { class: 'q-cta' }, 'Claim');
 
@@ -115,11 +114,10 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   // reflow: it is nine-sliced, so its rollers stay whole at any width.
   const base = el('span', { class: 'q-base', 'aria-hidden': 'true' });
   const content = el('div', { class: 'q-content' },
-    // The words with the magnifier beside them; under them, the goal's mark
-    // resting on the start of its own progress trough.
+    // The words; under them, the goal's mark resting on the start of its own
+    // progress trough.
     el('div', { class: 'q-run' },
       el('div', { class: 'q-text' }, name, desc),
-      find,
       el('div', { class: 'q-foot' }, slot, bar.root)),
     el('div', { class: 'q-done' }, reward, claim));
   const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);

@@ -455,16 +455,16 @@ bottom, and the widget is now a button that wants to be reachable.
 
 #### The scroll (M1)
 
-- Sized in reference pixels (§3.6): 620 × 200 rpx while a quest runs (it
+- Sized in reference pixels (§3.6): 520 × 200 rpx while a quest runs (it
   grows with the words),
   25 rpx from the left edge, 20 rpx above the nav. The dials sit on `#quest`
   in `quest.css`.
 - The parchment between two rollers is one nine-sliced piece, so both width
   and height stretch; the trough and its gold fill are painted and sliced at
   their rounded ends.
-- **Running**: the title and description, with a small round wood knob and a
-  magnifier ("find it") beside them; under the words, the goal's mark resting
-  on the start of the trough, which ends where the knob begins.
+- **Running**: the title and description; under them, the goal's mark resting
+  on the start of the trough, which runs to the right roller. There is no
+  control on it: a tap anywhere on the scroll points at the goal.
 - **Done**: the scroll shows only the reward and a green **Claim** slab under
   it, shrunk to fit; no title, mark, description, trough or magnifier.
 - **The wood button** is one painted slab and its pressed twin, worn by every

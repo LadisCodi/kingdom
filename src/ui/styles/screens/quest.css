@@ -19,13 +19,12 @@
   z-index: 3;
 
   /* THE SCROLL DIALS — the numbers to reach for when fine-tuning it. */
-  --q-w: calc(var(--rpx) * 620);        /* the scroll's width while a quest runs */
+  --q-w: calc(var(--rpx) * 520);        /* the scroll's width while a quest runs */
   --q-h: calc(var(--rpx) * 200);        /* its least height; it grows with the words */
   --q-icon: calc(var(--rpx) * 88);      /* the goal's mark, resting on the trough */
   --q-title: calc(var(--rpx) * 37);
   --q-desc: calc(var(--rpx) * 28);
   --q-bar-h: calc(var(--rpx) * 44);     /* the progress trough */
-  --q-find: calc(var(--rpx) * 84);      /* the magnifier knob */
   --q-cta-w: calc(var(--rpx) * 201);    /* the Claim slab */
   --q-cta-h: calc(var(--rpx) * 69);
   --q-cta-text: calc(var(--rpx) * 32);
@@ -72,15 +71,12 @@
 }
 .q-content { position: relative; }
 
-/* Running: the words with the magnifier beside them, and under the words the
-   goal's mark resting on the start of its trough, which ends where the
-   magnifier begins. */
+/* Running: the words, and under them the goal's mark resting on the start of
+   its trough, which runs to the scroll's right roller. */
 .q-run {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  column-gap: calc(var(--rpx) * 20);
-  row-gap: calc(var(--rpx) * 6);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--rpx) * 6);
 }
 .q-slot {
   position: relative;
@@ -113,34 +109,12 @@
 }
 
 .q-foot {
-  grid-column: 1;
   display: flex;
   align-items: center;
 }
 
-/* THE MAGNIFIER: the round wood knob with the lens on it, pressing with the
-   scroll. Drawn, not a control — the whole scroll is the button. */
-.q-find {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: var(--q-find);
-  height: var(--q-find);
-  background: url('../../assets/hud-knob.png') center / contain no-repeat;
-  pointer-events: none;
-}
-.q-find::before {
-  content: '';
-  width: 58%;
-  height: 58%;
-  background: url('../../assets/icon-search.png') center / contain no-repeat;
-  filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(60, 36, 18, 0.45));
-}
-.q-scroll:active .q-find { background-image: url('../../assets/hud-knob-down.png'); }
-.q-scroll:active .q-find::before { transform: translateY(calc(var(--rpx) * 3)); }
-
-/* ONE FACE AT A TIME. Running, the scroll is the quest: mark, words, trough,
-   magnifier. Done, it is only the payout and the verb that takes it. */
+/* ONE FACE AT A TIME. Running, the scroll is the quest: words, mark, trough.
+   Done, it is only the payout and the verb that takes it. */
 .q-done { display: none; }
 .q-scroll.is-complete { width: auto; min-width: calc(var(--rpx) * 420); }
 .q-scroll.is-complete .q-run { display: none; }
