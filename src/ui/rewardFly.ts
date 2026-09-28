@@ -1,7 +1,8 @@
 // A claimed reward flies into the header.
 //
 // The genre's payout: the reward bursts out of the place it was claimed —
-// the tap that claimed it, or the middle of the screen — as a handful of
+// the tapped cell or the tap that claimed it, else the middle of the
+// screen — as a handful of
 // fragments of each resource, which hang for a beat and then fly in an arc,
 // one after another, into that resource's slot in the header. The header
 // counts each one in as it lands (hudHold.ts), with a tick and a spark.
@@ -194,9 +195,11 @@ export function mountRewardFly(game: Game, layer: HTMLElement): void {
     });
   };
 
-  game.onReward((haul: Wallet) => {
+  game.onReward((haul: Wallet, at?: Point) => {
     if (calm()) return; // the header simply shows the new totals
-    const from = origin();
+    // A tapped cell's own centre when the presenter knows it (the frame's
+    // pixels, which the layer shares — both fill #app), else the tap.
+    const from = at ?? origin();
     const flights = (Object.entries(haul) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => [c, n, slotIcon(c)] as const)

@@ -311,10 +311,13 @@ in stepped frames, and the count on it past one ("2" … "9", then "9+").
   tick does not restart it either. It pops in only when
   it appears on a host that persists (the nav, the pills, the quest scroll).
 
-**A claimed reward flies into the header** (`ui/rewardFly.ts`; today the
-quest claim and the daily / season chests):
+**A claimed reward flies into the header** (`ui/rewardFly.ts`): the quest
+claim, the daily / season chests, and what the player's own TAP gathers — a
+resource cell, a building's worked cells, a house's rent (crews' deliveries
+and the rent tick land as numbers on the map only):
 
-- It bursts from where it was claimed — the tap that claimed it, or the
+- It bursts from where it was claimed — the tapped cell, the tap that
+  claimed it, or the
   centre of the screen — with a flash and a powerup chime.
 - Each resource in it leaves as N fragments of its icon: one per minute of
   the city's own production the reward is worth, at least 3, at most 12, and

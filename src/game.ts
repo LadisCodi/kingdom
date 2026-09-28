@@ -420,7 +420,7 @@ export class Game {
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
-  private rewardListeners: Array<(haul: Wallet) => void> = [];
+  private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
 
   constructor(
@@ -447,8 +447,10 @@ export class Game {
     this.shakeListeners.push(fn);
   }
   /** A claimed reward, already in the wallet — the UI flies it to the
-   *  header and counts it in as it lands (ui/rewardFly.ts). */
-  onReward(fn: (haul: Wallet) => void): void {
+   *  header and counts it in as it lands (ui/rewardFly.ts). `from` is where
+   *  it bursts from, in the frame's own pixels, when the presenter knows (a
+   *  tapped cell); otherwise the UI uses the tap that claimed it. */
+  onReward(fn: (haul: Wallet, from?: { x: number; y: number }) => void): void {
     this.rewardListeners.push(fn);
   }
   onToast(fn: (msg: string) => void): void {
@@ -509,8 +511,8 @@ export class Game {
   toast(msg: string): void {
     for (const fn of this.toastListeners) fn(msg);
   }
-  private reward(haul: Wallet): void {
-    for (const fn of this.rewardListeners) fn(haul);
+  private reward(haul: Wallet, from?: { x: number; y: number }): void {
+    for (const fn of this.rewardListeners) fn(haul, from);
   }
 
   /**
@@ -745,8 +747,10 @@ export class Game {
           const { result, gold } = houseTap(this.state, district, this.now());
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
-            if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
-            else this.floaters.add(cell, '⏩');
+            if (gold > 0) {
+              this.floaters.add(cell, `+${gold}`, 'Gold');
+              this.tapReward(cell, 'Gold', gold);
+            } else this.floaters.add(cell, '⏩');
           } else if (result === 'NoMana') {
             this.outOfMana(cell);
           }
@@ -826,6 +830,22 @@ export class Game {
     });
   }
 
+  /**
+   * What a TAP gathered flies from the tapped cell into the header, the way a
+   * claimed reward does (ui/rewardFly.ts) — the player's own taps only;
+   * crews and rent land as numbers on the map. The burst starts at the
+   * cell's centre on screen, which a held press (its repeats are seconds
+   * after the pointer went down) could not get from the pointer. Sent after
+   * the header has redrawn, so the reward is held back from a total that
+   * already includes it.
+   */
+  private tapReward(cell: Coord, currency: CurrencyId, amount: number): void {
+    if (amount <= 0) return;
+    const box = this.camera.cellToScreen(cell);
+    const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+    queueMicrotask(() => this.reward({ [currency]: amount }, from));
+  }
+
   /** Out of energy, said once and in one place: every tap that spends Mana
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
@@ -845,6 +865,7 @@ export class Game {
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
       this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
+      this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
@@ -892,8 +913,10 @@ export class Game {
       }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
-      if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
-            else this.floaters.add(cell, '⏩');
+      if (gold > 0) {
+        this.floaters.add(cell, `+${gold}`, 'Gold');
+        this.tapReward(cell, 'Gold', gold);
+      } else this.floaters.add(cell, '⏩');
       this.notify();
       return true;
     }
