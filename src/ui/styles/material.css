@@ -147,7 +147,12 @@
   padding-top: 10px;
   padding-bottom: 12px;
   color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(40, 22, 10, 0.75), 0 0 2px rgba(40, 22, 10, 0.5);
+  /* A dark rim all round the words, so a label and its price hold on any
+     stone: a drop below and a soft halo, not a hard stroke. */
+  text-shadow:
+    0 1px 0 rgba(30, 16, 6, 0.85),
+    0 0 2px rgba(30, 16, 6, 0.7),
+    0 0 4px rgba(30, 16, 6, 0.35);
   transform: none;
   transition: none;
 }

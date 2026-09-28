@@ -189,9 +189,10 @@ Two materials, one silhouette — a rounded slab with a lip under its face —
 nine-sliced so a label of any length fits.
 
 - **Wood** for plain actions: the ones a player does, not the ones they want.
-- **Gemstone** for the actions worth wanting: a slab of crystal in a thin gold
-  bezel, glowing a little from inside, with reflections and facets. Five
-  stones, one per meaning.
+- **Gemstone** for the actions worth wanting: a slab of polished stone in a
+  thin gold bezel, a clean gradient glowing a little from inside, one soft
+  highlight band — calm enough that a label and a price read on it (no
+  sparkle or busy facets). Five stones, one per meaning.
 
 | Kit kind | Material | Used for |
 |---|---|---|
