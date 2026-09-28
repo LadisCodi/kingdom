@@ -16,10 +16,10 @@
      fine-tuning the resource widgets. The icon is deliberately taller than
      the slot, so it stands proud of the hole above and below. (The atlas
      cell carries its own margin: a 62 cell draws a ~53 coin.) */
-  --slot-h: calc(var(--rpx) * 46);    /* the dark hole's height */
-  --slot-mid: calc(var(--rpx) * 49);  /* the hole's centre, down from the beam's top */
-  --slot-icon: calc(var(--rpx) * 62); /* the resource icon's cell */
-  --slot-text: calc(var(--rpx) * 26); /* the number */
+  --slot-h: calc(var(--rpx) * 62);    /* the dark hole's height */
+  --slot-mid: calc(var(--rpx) * 48);  /* the hole's centre, down from the beam's top */
+  --slot-icon: calc(var(--rpx) * 76); /* the resource icon's cell */
+  --slot-text: calc(var(--rpx) * 30); /* the number */
 }
 
 /* The plank: four coins anchored left, a rope, then Mana and Gems anchored
@@ -83,7 +83,7 @@
 .hud-slot > .icon {
   --icon-size: var(--slot-icon);
   flex: none;
-  margin: calc((var(--slot-h) - var(--slot-icon)) / 2) 0 calc((var(--slot-h) - var(--slot-icon)) / 2) calc(var(--rpx) * -16);
+  margin: calc((var(--slot-h) - var(--slot-icon)) / 2) 0 calc((var(--slot-h) - var(--slot-icon)) / 2) calc(var(--rpx) * -30);
   filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.55));
 }
 /* Four equal slots, so the coins line up whatever they hold: formatCount
