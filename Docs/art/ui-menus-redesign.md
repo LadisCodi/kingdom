@@ -211,9 +211,15 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
 - **Highlight** (pointer over it) and **disabled** — derived from the normal
   art by `npm run art:buttons`: brighter and a touch warmer; drained toward
   a muted blue-grey. Derived, so all four share one outline.
+- **Size**: one height (46 px) and a floor on width (112 px), so the slab is
+  always drawn at its own proportions. Anything taller than a label goes
+  outside the slab.
 - A disabled button keeps its **reason line beside it**.
-- **Priced**: label on top, **the cost inside the button** underneath — icon
-  + amount per term, any term the player cannot pay in `clay`.
+- **Priced**: the cost sits **above** the slab, outside it — icon + amount
+  per term, any term the player cannot pay in `clay` — and the two are
+  grouped on a small **section** of darker paper; the whole is one press.
+- **Sections** (`.k-section`, `section-frame.png`): that darker paper,
+  nine-sliced, is also what marks off a group of things inside a menu.
 
 ### 3.4 Type & numbers
 

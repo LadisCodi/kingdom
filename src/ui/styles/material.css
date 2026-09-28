@@ -182,6 +182,78 @@
 .k-btn.k-btn--gold { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); }
 .k-btn.k-btn--destructive { --btn: url('../assets/btn-red.png'); --btn-down: url('../assets/btn-red-down.png'); --btn-hover: url('../assets/btn-red-hover.png'); --btn-off: url('../assets/btn-red-off.png'); }
 .k-btn.k-btn--gem { --btn: url('../assets/btn-purple.png'); --btn-down: url('../assets/btn-purple-down.png'); --btn-hover: url('../assets/btn-purple-hover.png'); --btn-off: url('../assets/btn-purple-off.png'); }
+/* ONE HEIGHT, AND A FLOOR ON WIDTH: the slab is drawn at about 3:1 with its
+   rounded ends and lip in the slices, so a button is always the slab's own
+   height and never narrower than its two ends plus a word. Anything that
+   needs more height than a label goes OUTSIDE the slab (a price: below). */
+.k-btn:not(.k-knob):not(.has-cost) {
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
+  min-width: 112px;
+}
+
+/* A PRICED BUTTON: its cost sits ABOVE the slab, outside it, and the two are
+   grouped on a small section of darker paper (sheets/ui-section1-frame.png)
+   — the whole thing is still one button, one press. The slab moves to the
+   label, which takes the four states; the frame stays put. */
+.k-btn.k-btn.has-cost:not(.k-knob),
+.k-btn.k-btn.has-cost:not(.k-knob):hover,
+.k-btn.k-btn.has-cost:not(.k-knob):active,
+.k-btn.k-btn.has-cost:not(.k-knob):disabled,
+.k-btn.k-btn.has-cost:not(.k-knob).is-locked {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  min-width: 124px;
+  padding: 7px 8px 6px;
+  border-image: url('../assets/section-frame.png') 60 fill / 14px stretch;
+  color: var(--ink);
+  text-shadow: none;
+}
+.k-btn.has-cost > .k-btn-note { order: 0; color: var(--ink-muted); opacity: 1; text-align: center; }
+.k-btn.has-cost > .k-btn-cost {
+  order: 1;
+  justify-content: center;
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+}
+.k-btn.has-cost > .k-btn-label {
+  order: 2;
+  justify-content: center;
+  height: 46px;
+  padding: 0 16px 4px;
+  border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
+  color: var(--ink-inverse);
+  text-shadow:
+    0 1px 0 rgba(30, 16, 6, 0.85),
+    0 0 2px rgba(30, 16, 6, 0.7),
+    0 0 4px rgba(30, 16, 6, 0.35);
+}
+.k-btn.has-cost:not(:disabled):not(.is-locked):hover > .k-btn-label { border-image-source: var(--btn-hover); }
+.k-btn.has-cost:not(:disabled):not(.is-locked):active > .k-btn-label { border-image-source: var(--btn-down); padding: 4px 16px 0; }
+.k-btn.has-cost:disabled > .k-btn-label,
+.k-btn.has-cost.is-locked > .k-btn-label {
+  border-image-source: var(--btn-off);
+  color: #e3e6ec;
+  text-shadow: 0 1px 0 rgba(40, 46, 60, 0.7);
+}
+
+/* A SECTION: the same darker paper, marking off a group inside a menu —
+   what a priced button sits on, at any size. */
+.k-section {
+  border-style: solid;
+  border-color: transparent;
+  border-width: 14px;
+  border-image: url('../assets/section-frame.png') 60 fill / 14px stretch;
+  padding: 0;
+}
+
 /* A segmented choice: the selected segment is the emerald slab. */
 .k-toggles .k-btn.is-selected { --btn: url('../assets/btn-green.png'); --btn-down: url('../assets/btn-green-down.png'); --btn-hover: url('../assets/btn-green-hover.png'); --btn-off: url('../assets/btn-green-off.png'); }
 /* Screens that recoloured a slab by hand now pick a material: the video

@@ -426,24 +426,26 @@
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 
 /* ------------------------------------------------- the ?dev=kit gallery ---
- * Not player-facing. Deliberately plain so the kit is what you look at. */
+ * Not player-facing. Its ground is the menus' own cream parchment — the
+ * colour nearly every piece of the kit is drawn on — so colours and
+ * contrast are judged where they will actually be seen. */
 .gal {
   position: absolute;
   inset: 0;
   z-index: 100;
   overflow-y: auto;
   padding: 20px 16px 60px;
-  background: #2b2119;
-  color: var(--parchment);
+  background: var(--parchment) url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+  color: var(--ink);
   font-size: var(--text-body);
 }
 .gal h2 {
   font-size: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--gold);
+  color: var(--wood-dark);
   margin: 22px 0 10px;
-  border-bottom: 1px solid var(--wood-dark);
+  border-bottom: 1px solid rgba(92, 58, 30, 0.35);
   padding-bottom: 4px;
 }
 .gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
