@@ -17,15 +17,23 @@
  * frame's rounded corners are in the art instead. */
 
 /* ---- panels and sheets ---- */
-/* THE WINDOW (M1): every menu that leaves the map in sight — a kit sheet, the
-   district card — sits in one painted frame of wood with a knob at each
-   corner, parchment inside (sheets/ui-window1-frame.png). It is nine-sliced
-   in both directions, so it fits any width and height, and it is its OWN
-   layer (.k-frame) behind the contents: the entrance and exit animate the
-   frame's height without distorting it or reflowing what is inside. */
+/* THE WINDOW: every menu that leaves the map in sight — a kit sheet, the
+   district card — is one simple panel of warm wood with rounded corners,
+   warm cream paper inside, a drop shadow all round to lift it off the map,
+   and (when it has a title) a wooden header band across its top. Three
+   pieces, each cut to slice (sheets/ui-window5-pieces.png):
+     window-frame.png   the wood ring, nine-sliced — corners kept, sides
+                        stretched, centre empty;
+     window-paper.jpg   the paper, the frame's background under the ring;
+     window-header.png  the band (.k-head), three-sliced in width.
+   The frame is its OWN layer (.k-frame) behind the contents: the entrance
+   and exit animate its height without distorting it or reflowing what is
+   inside. */
 .k-panel,
 .dc {
-  --win-edge: calc(var(--rpx) * 50);       /* the frame's slice: wood and corner knob */
+  --win-edge: calc(var(--rpx) * 46);       /* the ring's slice: the rounded corner and the wood */
+  --win-rail: calc(var(--rpx) * 28);       /* where the paper starts, under the ring's inner edge */
+  --win-pad: calc(var(--rpx) * 80);        /* the frame's outer edge to the contents: a generous margin */
   --win-min: calc(var(--win-edge) * 2);    /* the frame at its least: top and bottom, nothing between */
   position: relative;
   isolation: isolate; /* so the frame's z-index: -1 stays inside the window */
@@ -33,7 +41,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  padding: calc(var(--win-edge) * 0.72);
+  padding: var(--win-pad);
 }
 .k-frame {
   position: absolute;
@@ -44,9 +52,12 @@
   z-index: -1;
   border-style: solid;
   border-color: transparent;
-  border-width: var(--win-edge);
-  border-image: url('../assets/window-frame.png') 55 fill / var(--win-edge) stretch;
-  filter: drop-shadow(0 calc(var(--rpx) * 12) calc(var(--rpx) * 20) rgba(40, 22, 10, 0.4));
+  /* The border is narrower than the ring is drawn, so the paper — clipped to
+     the padding box — runs in under the wood with no seam. */
+  border-width: var(--win-rail);
+  border-image: url('../assets/window-frame.png') 64 / var(--win-edge) stretch;
+  background: url('../assets/window-paper.jpg') center / 100% 100% no-repeat padding-box;
+  filter: drop-shadow(0 calc(var(--rpx) * 8) calc(var(--rpx) * 22) rgba(24, 12, 4, 0.55));
   pointer-events: none;
 }
 /* AS WIDE AS IT IS ON THE iPHONE X, centred. The width is the reference
@@ -86,54 +97,42 @@
 .k-close:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
 .k-close:active { background-image: url('../assets/btn-close-down.png'); }
 .k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
-/* THE HEADER (kit sheet `header`): a carved bar of the frame's own wood,
-   with a knob at each end, laid over the window's top rail at the window's
-   full width, so its knobs sit where the frame's corner knobs are and it
-   reads as part of the frame (sheets/ui-window3-header.png). The height is
-   fixed; the width is three-sliced — both ends kept, the plain middle
-   stretched. The title sits on its left; its buttons on its right, the
-   window's close always last. */
+/* THE HEADER (.k-head, every titled window): the wooden band across the
+   top of the frame, at the window's full width and a fixed height, its
+   rounded ends over the frame's top corners (window-header.png: the 60-px
+   ends kept, the plain middle stretched). The title is centred on it; the
+   buttons are anchored to its right, the window's close always last. */
 .k-sheet.has-head > .k-panel > .k-head,
 .dc > .k-head {
-  --head-h: calc(var(--rpx) * 130);
-  --head-cap: calc(var(--head-h) * 170 / 207); /* the art's 170-px ends, at this height */
+  --head-h: calc(var(--rpx) * 120);
+  --head-cap: calc(var(--head-h) * 60 / 133); /* the art's 60-px ends, at this height */
+  --head-inset: calc(var(--rpx) * 22);        /* the buttons' distance from the band's end */
   position: relative;
   z-index: 2;
   flex: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
   align-items: center;
-  gap: calc(var(--rpx) * 16);
+  column-gap: calc(var(--rpx) * 16);
   height: var(--head-h);
-  /* Out past the window by just enough that each end knob lands centred on
-     the frame's corner knob and covers it: the frame's knobs sit 22 rpx in
-     from the corner, the bar's 38 rpx in from its end and halfway down. */
-  --head-over-x: calc(var(--rpx) * 16);
-  --head-over-y: calc(var(--head-h) / 2 - var(--rpx) * 22);
-  margin:
-    calc(var(--win-edge) * -0.72 - var(--head-over-y))
-    calc(var(--win-edge) * -0.72 - var(--head-over-x))
-    calc(var(--rpx) * 18);
-  /* Clear of the end knobs: the title starts, and the buttons stop, just
-     inside them. The lower edge of the board is its lip. */
-  padding: 0 0 calc(var(--head-h) * 0.05);
-  border-style: solid;
-  border-color: transparent;
-  border-width: 0 var(--head-cap);
-  border-image: url('../assets/window-header.png') 0 170 fill / 0 var(--head-cap) stretch;
-  filter: drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 6) rgba(40, 22, 10, 0.35));
+  margin: calc(var(--win-pad) * -1) calc(var(--win-pad) * -1) calc(var(--rpx) * 32);
+  padding: 0 var(--head-inset) calc(var(--head-h) * 0.06);
+  border-image: url('../assets/window-header.png') 0 60 fill / 0 var(--head-cap) stretch;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.3));
 }
 .k-head > .k-head-title {
-  flex: 1;
+  grid-column: 2;
   text-transform: none;
   letter-spacing: normal;
   min-width: 0;
-  margin: 0 0 0 calc(var(--head-cap) * -0.18);
+  margin: 0;
+  text-align: center;
   font-family: var(--font-display);
   font-size: var(--text-title);
   font-weight: var(--font-display-weight);
   line-height: 1.1;
   color: var(--ink-inverse);
-  /* The label buttons' outline, in the board's own darker wood. */
+  /* The label buttons' outline, in the band's own darker wood. */
   text-shadow:
     1px 0 0 #4a260f, -1px 0 0 #4a260f, 0 1px 0 #4a260f, 0 -1px 0 #4a260f,
     1px 1px 0 #4a260f, -1px 1px 0 #4a260f, 1px -1px 0 #4a260f, -1px -1px 0 #4a260f,
@@ -143,11 +142,11 @@
   text-overflow: ellipsis;
 }
 .k-head-actions {
-  flex: none;
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: calc(var(--rpx) * 14);
-  margin-right: calc(var(--head-cap) * -0.18);
 }
 /* THE MOVE (kit moveKnob): the close's twin in wood, the arrows carved in. */
 .k-move {

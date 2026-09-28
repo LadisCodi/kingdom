@@ -329,10 +329,14 @@ still derived by the script, never drawn. No emoji anywhere —
 Sheets slide up 180ms ease-out. Counters roll rather than snap.
 
 **The window** (`.k-frame`, material.css; `k-window-*`, kit.css): every menu
-that leaves the map in sight — each kit sheet, the district card — sits in
-one painted frame of wood with a knob at each corner and parchment inside,
-nine-sliced both ways so it fits any width and height. It is as wide as it
-is on the iPhone X (1053 rpx: the reference width less the overlay's gutter),
+that leaves the map in sight — each kit sheet, the district card — is one
+simple panel of warm wood with rounded corners, a drop shadow all round to
+lift it off the map, and warm cream paper with a very soft texture inside,
+with a generous margin (80 rpx from the frame's outer edge) before the
+contents start. Three pieces, each cut to slice
+(`sheets/ui-window5-pieces.png`): the wood ring (nine-sliced, centre empty),
+the paper (under the ring), and the header band. It is as wide as it is on
+the iPhone X (1053 rpx: the reference width less the overlay's gutter),
 centred — edge to edge on the reference phone, with the map showing either
 side on anything wider. A centred modal keeps its own narrower cap.
 
@@ -344,18 +348,18 @@ side on anything wider. A centred modal keeps its own narrower cap.
   frame shrinks back to its least height and fades (140 ms); the window stays
   in the DOM, untappable, until it has. Switching straight to another menu
   is immediate.
-- **The close** is part of the window: a round button of red lacquered wood
-  with the X carved into it, pinned over the frame's top-right knob (kit
-  `closeKnob`). Its pressed twin is the same wood pushed in.
-- **The header** (optional, `sheet({ header: { actions } })`): a carved bar
-  of the frame's wood with a knob at each end, laid over the window's top
-  rail, its end knobs covering the frame's corner knobs. Fixed height
-  (130 rpx); three-sliced in width (the ends kept, the plain middle
-  stretched). The title on the left, in light ink with a dark-wood outline;
-  a row of buttons anchored right, the close always last and any `actions`
-  before it. A headed window has no plank, no rope and no corner close.
-  The district card has one: the building's name (*Housing #3*), then Move
-  (when the building can move) and Close. **Move** is the close's twin in
+- **The header**: every titled window has one — a wooden band across the
+  top of the frame, fixed height (120 rpx), three-sliced in width (its
+  rounded ends kept, the plain middle stretched). The title is centred on
+  it, in light ink with a dark-wood outline; the buttons are anchored to its
+  right, the close always last and any `actions` before it
+  (`sheet({ actions })`). A window without a title (`bare`) has the frame
+  and no band, and carries its own way out.
+- **The close**: a round button of red lacquered wood with the X carved
+  into it (kit `closeKnob`), the last button on the header. Its pressed twin
+  is the same wood pushed in.
+- **The district card's header**: the building's name (*Housing #3*), then
+  Move (when the building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
 - **Section headings** (kit `sectionHead`): a short rule, the label in small

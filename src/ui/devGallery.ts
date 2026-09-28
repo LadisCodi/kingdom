@@ -194,28 +194,24 @@ export function mountGallery(root: HTMLElement): void {
         el('div', {}, iconEl('padlock', { size: 'sm' }))),
     )),
     specimen('sheet', sheet({ title: 'Sanctum', onClose: noop },
-      el('p', {}, 'A bottom sheet: grab handle, titled plank, its own close knob.'))),
+      el('p', {}, 'A bottom sheet: the wooden header with its title and close, cream paper inside.'))),
     // The three it can also be. These are the REAL sheet() with its flags set,
     // not a drawing of one, so a change to the primitive shows here by itself.
     specimen('sheet — centred (the modal one)', sheet(
       { title: 'Finish now?', onClose: noop, centred: true },
       el('p', {}, 'For a short, one-decision sheet: an offer, a confirmation.'),
     )),
-    specimen('sheet — with a header', sheet(
+    specimen('sheet — more buttons on the header', sheet(
       {
         title: 'Warehouse',
         onClose: noop,
-        header: { actions: [knob('?', noop, { label: 'About the warehouse', kind: 'blue' })] },
+        actions: [knob('?', noop, { label: 'About the warehouse', kind: 'blue' })],
       },
-      el('p', {}, 'A header bar: the title on the left, a row of buttons on the right, the close last.'),
+      el('p', {}, 'The buttons are anchored to the right of the header, the close last.'),
     )),
-    specimen('sheet — header, close only', sheet(
-      { title: 'Settings', onClose: noop, header: {} },
-      el('p', {}, 'The row may hold only the close.'),
-    )),
-    specimen('sheet — plankless', sheet(
+    specimen('sheet — headerless', sheet(
       { title: 'Hero', onClose: noop, bare: true },
-      el('p', {}, 'The content already names it, so the plank would say it twice.'),
+      el('p', {}, 'The content already names it, so a header would say it twice.'),
     )),
   ));
 

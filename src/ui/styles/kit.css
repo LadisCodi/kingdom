@@ -531,7 +531,6 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: 10px;
 }
 .k-sheet-body {
   min-height: 0;
