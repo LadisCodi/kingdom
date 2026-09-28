@@ -52,6 +52,16 @@
 }
 
 :root {
+  /* ---- the reference pixel ----
+   * The chrome is authored at 1125 × 2436, the iPhone X in portrait, and
+   * scaled to the frame like a Unity CanvasScaler matching width: one
+   * reference pixel is 1/1125 of the frame's width, so a piece keeps its
+   * share of the screen on every device. Write a size as
+   * `calc(var(--rpx) * N)`, with N measured on the 1125-wide mockup.
+   * `cqw` resolves against #app (the `frame` container), so the value is
+   * per element and needs no script. */
+  --rpx: calc(100cqw / 1125);
+
   /* ---- surfaces ---- */
   --parchment: #f4e4c1;
   --parchment-shade: #e2cca0;

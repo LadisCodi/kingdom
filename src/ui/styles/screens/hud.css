@@ -1,220 +1,200 @@
-/* The resource HUD (§5.1) and the purse it expands into. */
+/* The resource HUD (§5.1) and the purse it expands into.
+ *
+ * Every size on the plank is in reference pixels (`--rpx`, tokens.css),
+ * measured on mockup M1 at 1125 wide, so the bar keeps its share of the
+ * screen on every phone instead of wrapping or clipping on a narrow one. */
 
 #header.hud {
   display: block;
-  /* The ONE place the top inset lives (tests/chrome.test.ts): the header is
-     the only element that touches the top edge of the screen, and with
-     viewport-fit=cover that edge is under the notch. */
-  padding: env(safe-area-inset-top) 0 0;
   background: none;
   border: none;
+  /* The plank's height in reference pixels, without the notch: the knob
+     hangs from it and nothing else needs to measure it. */
+  --plank-h: calc(var(--rpx) * 107);
 }
 
-/* The plank: three coins, a rope divider, then gems set apart. */
+/* The plank: four coins anchored left, a rope, then Mana and Gems anchored
+   right. The beam is one painted strip repeated across the frame. */
 .hud-plank {
+  position: relative;
   display: flex;
-  align-items: stretch; /* both plates the same height (M12) */
-  /* WRAPS WHEN IT MUST, AND ONLY THEN. The row fits one line at every
-     realistic wallet, but "realistic" is doing work in that sentence: four
-     coins at four digits each is 276px of pills before Mana and Gems are
-     counted, and that is 27px past the frame. Sized for the common case and
-     clipped in the worst one is exactly the failure this row already had
-     once — a resource sliced in half with nothing to say it was.
-     `flex-wrap` costs nothing while everything fits and degrades to a second
-     line instead of to a hidden coin when it does not. */
-  flex-wrap: wrap;
-  /* Every px here decides whether an ORDINARY wallet gets one row or two.
-     Measured: at 1240/380/95/60 the row was 6px over and wrapped, which would
-     have cost 44px of map to most players most of the time. These three
-     values buy 15px back, which puts the common case on one line and leaves
-     the genuinely-too-wide case (four four-digit coins) wrapping, as it
-     should. */
-  gap: 8px;
-  row-gap: 4px;
-  padding: 3px 6px 4px;
-  /* A dark beam runs the width of the frame; the two PLATES on it carry the
-     lit wood (M12). */
-  background: var(--wood-dark);
-  border-bottom: 2px solid #3a2412;
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  align-items: flex-start;
+  /* The ONE place the top inset lives (tests/chrome.test.ts): the plank is
+     the only element that touches the top edge of the screen, and with
+     viewport-fit=cover that edge is under the notch. The beam runs up under
+     it, so the notch reads as wood rather than map. */
+  height: calc(env(safe-area-inset-top) + var(--plank-h));
+  padding: calc(env(safe-area-inset-top) + var(--rpx) * 22) calc(var(--rpx) * 20) 0;
+  background: url('../../assets/hud-beam.png') left bottom / auto var(--plank-h) repeat-x, #6b4424;
 }
-/* A wood plate: lit along the top, shadowed along the bottom, a dark rim. */
 .hud-coins,
 .hud-right {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 4px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 10px;
-  background: var(--wood);
-  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -3px 0 rgba(60, 36, 18, 0.35), 0 2px 0 rgba(60, 36, 18, 0.3);
+  gap: calc(var(--rpx) * 10);
 }
-.hud-right { flex: none; gap: 5px; }
-/* ONE line at any width, and EVERY WIDGET IN IT VISIBLE.
- *
- * §5.1 cut this row to three coins because nine widgets wrapped onto two
- * lines and none of them read. Population and Mana have earned their way
- * back, which puts six widgets in a 402px row — so the coins were given
- * their own scroller and everything from Mana rightwards was pinned.
- *
- * THAT DID NOT WORK, and the failure was worse than wrapping. Four coins do
- * not fit the share left to them, so on the device the row rendered Gold,
- * then Food SLICED IN HALF THROUGH THE NUMBER, and Wood and Stone simply
- * absent — a scroller with no scrollbar, no fade, and nothing to say it was
- * one. The player is not told that Stone exists; they are shown a broken
- * chip. Hiding a resource is a worse outcome than any layout compromise, and
- * "you could have swiped it" is not a defence for a bar nobody knows scrolls.
- *
- * So the row is made to FIT instead, by spending pixels the widgets do not
- * need: the coin icons drop from 32 to the atlas's 16px cell (a clean 1:1
- * half — see the note in kit.css), the pills tighten, and the mana rate is
- * dropped at frame widths where it cannot be afforded. That is ~120px back,
- * which is exactly the overflow. The scroller stays as a SAFETY NET for a
- * fifth currency nobody has designed yet — it should never be reachable with
- * the four that exist. */
-.hud-coins {
-  justify-content: space-around;
-  /* `1 0 auto`: grow into spare room, size from content, and NEVER SHRINK.
-     Shrinking is what turned this into a scroller that hid two of four coins
-     — with `flex-shrink: 1` the row gives up width silently rather than
-     letting the plank wrap. Refusing to shrink pushes Mana and Gems onto a
-     second line instead, which is a layout rather than a disappearance. */
-  flex: 1 0 auto;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.hud-coins::-webkit-scrollbar { display: none; }
-.hud-coins > * { flex: none; }
-.hud-right > .hud-mana,
-.hud-right > .hud-gems { flex: none; }
-/* No rope between the pool and the Gems: the gap between the two plates is
-   the separation (M12). */
-.hud-divider { display: none; }
-
-/* On a phone the net rate is the first thing to go: "how full is my pool" is
- * the number a refused tap sends you to read, and "+4/h" is not it.
- *
- * @container, not @media: the game is pillarboxed to a 9:16 frame, so on a
- * desktop the WINDOW is wide while the frame the header actually lives in is
- * phone-width. Keyed to the window, this rule never fired anywhere it was
- * being looked at — which is how the row shipped broken. */
-@container frame (max-width: 560px) {
-  .hud-mana-rate { display: none; }
+/* The rope belongs to the right-hand group: it hangs just left of Mana, so
+   the coins can come and go without moving it. It runs from the top of the
+   beam to its lower lip. */
+.hud-divider {
+  flex: none;
+  width: calc(var(--rpx) * 16);
+  height: calc(var(--rpx) * 92);
+  margin: calc(var(--rpx) * -22) calc(var(--rpx) * 14) 0 auto;
+  background: url('../../assets/hud-rope.png') center top / 100% auto repeat-y;
 }
 
-/* Narrower than the iPhone 17 the game is built for — an SE, a fold's cover
- * screen — the six widgets stop fitting one line however hard they are
- * squeezed, and the scroller starts hiding coins again.
- *
- * So below that width the plank takes a second line: the coins get a row of
- * their own and Mana and Gems keep the one under it. Two rows costs ~40px of
- * map, which is a real price, and it is still the right trade — §5.1's
- * objection to wrapping was that NINE widgets over two rows read as noise,
- * not that a second row is forbidden. Four coins on one line and two gauges
- * on the next is a layout; a resource silently clipped out of existence is
- * not. */
-@container frame (max-width: 380px) {
-  /* `1 0 100%` — a whole line of its own, and no longer a scroller, because
-     on its own line it fits. Below this width it always needs one, so it is
-     claimed outright rather than left to wrap. */
-  .hud-coins { flex: 1 0 100%; overflow-x: visible; }
-  /* Gems stays at the right edge, where it is on every other width — which
-     also means the rope has nothing left to do: with the two gauges at
-     opposite ends of their own row, the gap IS the separation. */
-  .hud-right { flex: 1 0 100%; justify-content: space-between; }
-}
-
-.hud-coin,
-.hud-gems {
+/* One recessed slot per resource, nine-sliced from the painted hole. */
+.hud-slot {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 20px;
-  padding: 0 1px;
-  font-family: var(--font-body);
-  /* The numbers are printed on the wood in cream (M12), not set in parchment
-     slots: 13px bold, a dark shadow under each figure so it reads on the
-     grain. */
-  font-size: 14px;
-  font-weight: var(--weight-strong);
-  font-variant-numeric: tabular-nums;
-  color: var(--parchment);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
+  flex: none;
+  height: calc(var(--rpx) * 54);
+  padding: 0;
+  /* Sliced left and right only: the slot is always the art's height, so the
+     rounded ends keep their shape and only the middle stretches. */
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--rpx) * 21);
+  border-image: url('../../assets/hud-slot.png') 0 50 fill / 0 calc(var(--rpx) * 21) stretch;
   background: none;
-  border: 0;
-  border-radius: 8px;
   box-shadow: none;
+  font-family: var(--font-body);
+  font-size: calc(var(--rpx) * 30);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--parchment);
+  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.8);
   cursor: pointer;
 }
-.hud-coin:hover, .hud-gems:hover { filter: brightness(1.05); }
-
-/* Premium is a different kind of thing, so it sits past a rope.
- *
- * The `auto` margin lives on the ROPE rather than on Gems so the pair travels
- * together: on one line that is coins … rope · Gems at the right edge, and on
- * a wrapped line it is Mana at the left with rope · Gems still paired at the
- * right. Put it on Gems instead and the rope is stranded beside Mana, which
- * reads as a divider between nothing and nothing. */
-.hud-divider {
-  margin: 0 2px 0 auto;
+.hud-slot:hover { filter: brightness(1.06); }
+/* The icon sits proud of the hole's left end, a coin resting in it. */
+.hud-slot > .icon {
+  /* 62, not the mockup's 50: the atlas cells carry their own margin, so this
+     is what draws a 50-px coin. */
+  --icon-size: calc(var(--rpx) * 62);
   flex: none;
-  width: 3px;
-  height: 22px;
-  min-width: 3px;
-  border-radius: 2px;
-  background: var(--wood-dark);
-  opacity: 0.6;
+  margin: calc(var(--rpx) * -4) 0 calc(var(--rpx) * -4) calc(var(--rpx) * -16);
+  filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.55));
 }
-/* Parchment like the coins (M1): what sets Gems apart is the rope and the
-   green knob, not a colour of its own. */
-.hud-gems { padding-right: 0; }
+/* Four equal slots, so the coins line up whatever they hold: formatCount
+   rolls a balance up past four characters, which this width is sized for.
+   The whole row is budgeted at four characters a coin — widen a slot and
+   something else on the plank has to give. */
+.hud-coin { width: calc(var(--rpx) * 152); }
+/* Only the research tree shows a rate, and it shows two coins, so there is room. */
+.hud-coin:has(.hud-coin-rate) { width: auto; }
+.hud-coin > b,
+.hud-gems > b {
+  flex: 1;
+  text-align: center;
+  font-weight: inherit;
+}
+
+/* A coin that is a clock: its speed sits beside its number, quieter than the
+   balance because the balance is what a price is checked against. */
+.hud-coin-rate {
+  margin-left: calc(var(--rpx) * 8);
+  font-size: calc(var(--rpx) * 24);
+  font-weight: var(--weight-small);
+  opacity: 0.75;
+}
+
+/* ONE gauge: the orb, a slim bar, the pool. The rate and the ceiling live in
+   the aria-label and in the Reliquary this opens. */
+.hud-mana { gap: calc(var(--rpx) * 6); }
+.hud-mana-bar {
+  position: relative;
+  flex: 1;
+  min-width: calc(var(--rpx) * 50);
+  height: calc(var(--rpx) * 22);
+  overflow: hidden;
+  border-radius: calc(var(--rpx) * 11);
+  background: #1e1309;
+  box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(0, 0, 0, 0.45);
+}
+.hud-mana-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #b79bf2, #7b55cc);
+  transition: width var(--motion-quick, 160ms) linear;
+}
+.hud-mana > b { min-width: 2ch; text-align: right; font-weight: inherit; }
+/* Full means spilling, and spilling is the one thing the design wants the
+ * player to notice from across the room. */
+.hud-mana-bar.is-full { box-shadow: inset 0 0 0 calc(var(--rpx) * 3) var(--gold); }
+/* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
+   because full means "you are spilling" and this means "you are ahead". */
+.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
+
+/* Gems end in the store's door: the green knob, which presses with the slot. */
+.hud-gems { min-width: calc(var(--rpx) * 172); }
 .hud-plus {
+  flex: none;
+  width: calc(var(--rpx) * 50);
+  height: calc(var(--rpx) * 50);
+  margin-right: calc(var(--rpx) * -18);
+  background: url('../../assets/hud-plus.png') center / contain no-repeat;
+}
+.hud-gems:active .hud-plus { background-image: url('../../assets/hud-plus-down.png'); }
+
+/* THE SETTINGS KNOB hangs from the plank's right end on a short rope. It is
+   the affordance for the MAP, so it goes away while any menu is open — every
+   menu brings its own way out, and the knob would land on that menu's chrome. */
+.hud-knob {
+  position: absolute;
+  top: calc(100% + var(--rpx) * 26);
+  right: calc(var(--rpx) * 20);
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-left: 2px;
-  border-radius: 50%;
-  background: var(--leaf);
-  border: 2px solid var(--leaf-dark);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  color: var(--ink-inverse);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  line-height: 1;
+  width: calc(var(--rpx) * 108);
+  height: calc(var(--rpx) * 108);
+  padding: 0;
+  border: 0;
+  background: url('../../assets/hud-knob.png') center / contain no-repeat;
+  cursor: pointer;
 }
-
-/* 20px icons in the plank pills — the atlas scales smooth now, so a size is
-   a layout choice rather than a ratio of the cell. */
-.hud-coin .icon, .hud-gems .icon { --icon-size: 20px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
+.hud-knob::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% - var(--rpx) * 6);
+  left: 50%;
+  width: calc(var(--rpx) * 14);
+  height: calc(var(--rpx) * 40);
+  transform: translateX(-50%);
+  background: url('../../assets/hud-rope.png') center top / 100% auto repeat-y;
+  z-index: -1;
+}
+.hud-knob .icon { --icon-size: calc(var(--rpx) * 60); }
+.hud-knob:active { background-image: url('../../assets/hud-knob-down.png'); }
+.hud-knob:active .icon { transform: translateY(calc(var(--rpx) * 3)); }
+.hud-knob.is-active { filter: brightness(1.12) saturate(1.2); }
+#ui:has(> #overlay:not(:empty)) .hud-knob { display: none; }
 
 /* The one contextual plaque, hanging under the plank. */
+.hud-under { display: flex; align-items: flex-start; gap: calc(var(--rpx) * 22); }
+.hud-plaque[hidden] { display: none; }
 .hud-plaque {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  /* A small parchment card under the plank, like the daily pill's (M12). */
-  margin: 6px 0 0 12px;
-  padding: 2px 10px;
-  min-height: 30px;
+  gap: calc(var(--rpx) * 16);
+  margin: calc(var(--rpx) * 16) 0 0 calc(var(--rpx) * 34);
+  padding: 0 calc(var(--rpx) * 12);
+  min-height: calc(var(--rpx) * 84);
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-size: calc(var(--rpx) * 42);
   font-weight: var(--weight-strong);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
-  background: var(--parchment);
-  border: 3px solid var(--wood-dark);
-  border-radius: 10px;
-  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  border: calc(var(--rpx) * 28) solid transparent;
+  border-image: url('../../assets/plate-parchment.png') 64 fill / calc(var(--rpx) * 28) round;
+  background: none;
   cursor: default;
 }
-.hud-plaque .icon { --icon-size: 20px; }
-.hud-plaque.is-population { cursor: pointer; } /* the only one that leads somewhere */
-.hud-plaque.is-population:hover { filter: brightness(1.15); }
+.hud-plaque .icon { --icon-size: calc(var(--rpx) * 56); }
 .hud-plaque:disabled { opacity: 1; } /* a read-out, not a dead button */
 .hud-plaque-icon { display: inline-flex; }
 
@@ -294,72 +274,3 @@
   font-weight: var(--weight-strong);
 }
 
-/* The row under the plank: the contextual plaque alone now. Population moved
- * up to the plank and Mana with it, so this row is empty — and therefore
- * invisible — unless the player is staffing or building something. */
-.hud-under { display: flex; align-items: flex-start; gap: 8px; }
-.hud-plaque[hidden] { display: none; }
-
-/* One pool, one net rate — the breakdown lives in the reliquary. The fill is
- * a real bar rather than a number to interpret, because the thing that
- * matters is "how close to spilling", not the integer. */
-.hud-mana {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  padding: 0;
-  min-height: 32px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-/* The orb overlaps the gauge's left end, a coin resting on a bar. */
-.hud-mana .icon { --icon-size: 22px; position: relative; z-index: 1; margin-right: -8px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
-.hud-plank > .hud-mana { margin-left: 0; }
-/* The gauge: slim, dark, with the fill under a small number. Tabular numerals
- * keep the number from jittering as the pool fills. */
-.hud-mana-bar {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  min-width: 50px;
-  height: 16px;
-  padding: 0 6px 0 11px;
-  overflow: hidden;
-  border-radius: 9px;
-  background: #2a2140;
-  border: 2px solid #1b1530;
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--parchment);
-}
-.hud-mana-bar > * { position: relative; }
-.hud-mana-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(180deg, #9a6fe0, #6b46b8);
-  transition: width var(--motion-quick, 160ms) linear;
-}
-.hud-mana-rate { opacity: 0.8; }
-/* Full means spilling, and spilling is the one thing the design wants the
- * player to notice from across the room. */
-.hud-mana-bar.is-full { border-color: var(--gold, #d9a441); }
-.hud-mana.is-full .hud-mana-rate { color: var(--gold, #f2c46b); }
-/* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
-   because full means "you are spilling" and this means "you are ahead". */
-.hud-mana-bar.is-over { border-color: var(--leaf); background: #2f4a3a; }
-.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
-
-/* A coin that is a clock: its speed sits beside its number, quieter than the
-   balance because the balance is what a price is checked against. */
-.hud-coin-rate {
-  margin-left: 3px;
-  font-size: 12px;
-  font-weight: var(--weight-small);
-  opacity: 0.75;
-}

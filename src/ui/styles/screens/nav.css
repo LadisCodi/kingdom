@@ -88,40 +88,6 @@
   #navbar.nav .nav-tab { padding-inline: 2px; }
 }
 
-/* ---------------------------------------------------------- settings knob */
-
-/* Outside the header, top-right — the free corner, since the quest scroll
- * owns the left. Below the banner's z-index on purpose: a banner is
- * transient and tap-to-dismiss, so it may cover this for its five seconds. */
-#tools {
-  position: absolute;
-  top: calc(var(--hud-h) + 8px);
-  right: 12px;
-  z-index: 20;
-}
-/* ...and it goes away while any menu is open. The knob floats above every
-   menu, so it lands on top of that menu's own chrome — it was sitting on the
-   research screen's close button. Every menu brings its own way out, so the
-   knob has nothing to do while one is up: it is the affordance for the MAP.
-   Keyed on the overlay actually having content rather than on a presenter
-   flag, so it cannot drift from what is on screen. */
-#ui:has(> #overlay:not(:empty)) #tools { display: none; }
-.tools-knob {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 3px 0 var(--wood-dark);
-  cursor: pointer;
-}
-.tools-knob .icon { --icon-size: 26px; }
-.tools-knob:hover { filter: brightness(1.08); }
-.tools-knob:active { transform: translateY(3px); box-shadow: none; }
-.tools-knob.is-active { background: var(--gold); border-color: var(--gold-dark); }
-
 /* ------------------------------------------------------ legacy dismiss ---
  * Every unmigrated screen needs its own close now that the nav bar stays
  * put. Removed per screen as each grows a kit sheet with a knob of its own. */
@@ -144,10 +110,8 @@
 }
 .legacy-close:hover { filter: brightness(1.08); }
 .legacy-close:active { transform: translateY(3px); box-shadow: none; }
-/* Sits LEFT of the settings knob rather than under it. #overlay's own
- * z-index makes it a stacking context, so this knob's z-index cannot lift it
- * above #tools no matter how high — they have to not overlap. */
-#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 66px; }
+/* The settings knob is hidden while a menu is open, so the corner is free. */
+#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 12px; }
 #panel .legacy-close { top: 8px; }
 /* Reserve the corner so the knob can't sit on a legacy screen's first action
  * row. Goes away per screen as each grows a sheet with a plank of its own. */

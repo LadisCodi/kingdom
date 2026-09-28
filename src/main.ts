@@ -24,7 +24,7 @@ import { coordKey, districtById, districtSize, type Coord } from './sim/state';
 import { newGame } from './sim/newGame';
 import { deserialize, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
-import { mountNavbar, mountTools } from './ui/navbar';
+import { mountNavbar } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
@@ -144,7 +144,6 @@ async function boot(): Promise<void> {
   mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
-  mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);

@@ -1,5 +1,4 @@
-// Bottom navigation, and the Settings knob that is deliberately not part of
-// it (§5.4).
+// Bottom navigation (§5.4).
 //
 // Two changes from what this was.
 //
@@ -11,7 +10,7 @@
 //
 // And Settings has left the bar. It is a drawer you open twice a month
 // sitting beside the thing you tap every session; giving it an equal tab
-// flattened the hierarchy. It becomes a floating knob under the header.
+// flattened the hierarchy. It hangs from the header instead (header.ts).
 // Three tabs also makes each one wider, which is the right direction for
 // thumb reach.
 
@@ -83,21 +82,6 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       button.classList.toggle('is-cta', cta);
     }
   };
-  game.onChange(refresh);
-  refresh();
-}
-
-/** The floating Settings knob, mounted outside the header (#tools). */
-export function mountTools(game: Game, root: HTMLElement): void {
-  const button = el('button', {
-    class: 'tools-knob', type: 'button', 'aria-label': 'Settings',
-  }, iconEl('settings', { size: 'md' }));
-  button.addEventListener('click', () => {
-    game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
-  });
-  root.replaceChildren(button);
-
-  const refresh = () => button.classList.toggle('is-active', game.openOverlay === 'settings');
   game.onChange(refresh);
   refresh();
 }

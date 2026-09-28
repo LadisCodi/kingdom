@@ -46,26 +46,35 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   root.classList.add('hud');
   const plank = el('div', { class: 'hud-plank' });
   const coins = el('div', { class: 'hud-coins' });
-  const gems = el('button', { class: 'hud-gems', type: 'button', 'aria-label': 'Gems' });
+  const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
   const plaque = el('button', { class: 'hud-plaque', type: 'button' });
 
 
-  // ONE gauge and ONE net rate. Never "+6/h base −4/h upkeep = +2/h" — that
+  // ONE gauge. Never "+6/h base −4/h upkeep = +2/h" — that
   // breakdown is the reliquary's job, on tap, where the player asked for it.
   const manaGauge = el('button', {
-    class: 'hud-mana', type: 'button', 'aria-label': 'Mana',
+    class: 'hud-slot hud-mana', type: 'button', 'aria-label': 'Mana',
   });
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
-  const manaRate = el('span', { class: 'hud-mana-rate' }, '');
-  // An orb and a slim gauge (mockup M1): the orb sits proud of the bar, the
-  // bar holds the fill and the number. The button is the whole pair.
-  const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill, manaValue, manaRate);
-  manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar);
+  // An orb, a slim gauge and the pool, in one slot (mockup M1). The button is
+  // the whole slot.
+  const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill);
+  manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar, manaValue);
   manaGauge.addEventListener('click', () => game.openMana());
-  // Two plates on the plank (M12): the coins on the left, the pool and the
-  // Gems on their own plate at the right.
-  plank.append(coins, el('div', { class: 'hud-right' }, manaGauge, el('span', { class: 'hud-divider' }), gems));
+
+  // The Settings knob hangs from the plank's right end (M1). It is a drawer
+  // opened twice a month, so it is not on the nav bar; it is chrome, so it
+  // hangs from the chrome rather than floating over the map on its own.
+  const knob = el('button', {
+    class: 'hud-knob', type: 'button', 'aria-label': 'Settings',
+  }, iconEl('settings', { size: 'md' }));
+  knob.addEventListener('click', () => {
+    game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
+  });
+
+  // The coins anchored left; the rope, Mana and Gems anchored right.
+  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values
@@ -79,16 +88,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     coins.replaceChildren(...list.map((c) => {
       const value = el('b', {}, '0');
       values.set(c, value);
-      // 'sm' (16px), not the 32px default. The plank is the tightest row in
-      // the game — four coins, Mana and Gems inside 402px — and at 32 they
-      // did not fit, so two of the four coins were being clipped away
-      // entirely. 16 is the atlas's half-cell and the -sm art is authored at
-      // it, so this is 1:1 rather than the downscale 24 would be.
+      // The icon's size is the slot's (hud.css), in reference pixels.
       //
       // Tapping any coin opens the purse — the only place the game explains
       // that berries, meat and fish all count as Food.
       const coin = el('button', {
-        class: 'hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
+        class: 'hud-slot hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
       }, currencyIcon(c, { size: 'sm' }), value);
       // A coin that is a CLOCK carries its speed beside its number — a drip
       // you cannot see the speed of is a drip you cannot plan against, and
@@ -103,7 +108,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   gems.append(
     currencyIcon('Gems', { size: 'sm' }),
     el('b', {}, '0'),
-    el('span', { class: 'hud-plus' }, '+'),
+    el('span', { class: 'hud-plus', 'aria-hidden': 'true' }),
   );
   const gemValue = gems.querySelector('b')!;
   // The Gems plaque IS the store's door: its `+` was a no-op for the whole
@@ -137,9 +142,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       shown = key;
       buildCoins(list);
     }
-    // Rolled up past ten thousand: the plank is 402px wide and a six-digit
-    // Gold used to push the coins after it off the end of it. The purse (one
-    // tap away, on any coin) is where the exact figure lives.
+    // Rolled up past ten thousand, so a balance never outgrows its slot. The
+    // purse (one tap away, on any coin) is where the exact figure lives.
     for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
     gemValue.textContent = formatCount(game.walletValue('Gems'));
 
@@ -162,21 +166,18 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     const m = game.manaInfo();
     // The POOL, not "pool/cap". The gauge already draws the ratio as a fill
     // and turns its rim gold when it is spilling, so "/100" was the same fact
-    // twice — and it was the four characters that pushed Stone off the end of
-    // the plank. The full reading stays in the aria-label and in the
+    // twice. The full reading stays in the aria-label and in the
     // Reliquary, which is what this gauge opens.
     manaValue.textContent = formatCount(m.value);
-    manaRate.textContent = `+${m.net}/h`;
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
     // Full and OVERCHARGED are different states: full means the next hour is
     // spilling, overcharged means an ad bought a pool the ceiling cannot hold.
-    manaGauge.classList.toggle('is-full', m.value >= m.cap && !m.over);
-    manaGauge.classList.toggle('is-over', m.over);
     manaBar.classList.toggle('is-full', m.value >= m.cap && !m.over);
     manaBar.classList.toggle('is-over', m.over);
     manaGauge.setAttribute('aria-label', m.over
       ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
       : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
+    knob.classList.toggle('is-active', game.openOverlay === 'settings');
   };
   game.onChange(refresh);
   refresh();

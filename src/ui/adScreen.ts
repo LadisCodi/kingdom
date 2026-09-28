@@ -1,8 +1,8 @@
 // The fake rewarded video (Docs/features/08-magic.md §6).
 //
 // NOT an overlay, deliberately. `#overlay` sits at z-index 5 and that makes it
-// a stacking context, so nothing inside it can rise above the nav bar (10) or
-// the settings knob (20) — and a rewarded video the player can tap around is
+// a stacking context, so nothing inside it can rise above the header (8) or
+// the nav bar (10) — and a rewarded video the player can tap around is
 // not a rewarded video. This is its own mount point at the end of `#ui`, which
 // is also what makes "no escape" structural rather than a rule: `dismiss()`
 // and the tap-beside-a-sheet handler cannot reach a surface they do not own.

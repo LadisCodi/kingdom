@@ -59,10 +59,10 @@ body {
    bars are the bottom-most thing the player is meant to act on. */
 #panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); z-index: 6; }
 
-/* The ad surface. Above the nav (10), the settings knob (20) and the legacy
+/* The ad surface. Above the header (8), the nav (10) and the legacy
    close knob (30): a rewarded video the player can tap around is not one. It
    is a sibling of #overlay rather than a child BECAUSE #overlay's z-index
-   makes it a stacking context, so no descendant could ever climb past #tools.
+   makes it a stacking context, so no descendant could ever climb past the header.
    `:empty` is load-bearing — #ui children are pointer-events:auto, so an
    inset:0 element with nothing in it would swallow every tap on the map. */
 #ad:empty { display: none; }
@@ -132,7 +132,7 @@ body {
 
    The stack, bottom to top: map · the right-edge column (4) · district card (6) ·
    menus and sheets, then the battle picker over them (7) · header (8) ·
-   nav bar (10) · settings knob (20) ·
+   nav bar (10) ·
    the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }
 

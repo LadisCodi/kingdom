@@ -157,10 +157,12 @@ sockets, "+N" past eight — with the clock on the Train button; the header's
 Mana as an orb resting on a slim gauge; nails at the corners of the nav beam
 and the plaque (the two planks with bare corners — on a titled plank they read
 as dirt); and the pennant flying from the quest scroll's corner in place of the
-seal once the quest is done. The header's counters are M1's plaques — rounded
-slots cut into the plank, 18px mark and a 12px bold number, the Gems slot
-parchment like the rest with its green knob — sized so four coins, the gauge,
-the rope and Gems share one 402px line (~395px at 12; 430 at 13). The nav's
+seal once the quest is done. The header is M1's: a wooden beam, one recessed
+slot per resource (four coins at the left; Mana and Gems at the right, past a
+hanging rope), the green `+` knob inside the Gems slot, and the round Settings
+knob hanging on a rope under the beam's right end. Every size on it is in
+reference pixels (§3.6), budgeted so four four-character coins, the gauge, the
+rope and Gems share one line at every width. The nav's
 tabs are M1's wood plates on the wood beam — the same grain darkened, a lit
 top edge, the word in cream with a shadow, a 26px mark — and the lit tab is a
 gold plate that stands proud of the beam's top edge. `border-image` forfeits `border-radius`,
@@ -234,10 +236,14 @@ still derived by the script, never drawn. No emoji anywhere —
 ### 3.6 Layout
 
 - Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
-  9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`). Mockups:
-  **1080×2340** (§7.19). Measured against the iPhone 17, 402×874 CSS px.
-- Safe zones: the header is a ~34px plank (two 30px painted plates, 14px
-  figures, 18px icons — M12 measured at 402) plus the top inset
+  9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`).
+- **Reference resolution: 1125×2436** (the iPhone X, portrait). The UI scales
+  like a Unity CanvasScaler matching width: one reference pixel (`--rpx`) is
+  1/1125 of the frame's width, so every piece keeps its share of the screen
+  on every device. Sizes are measured on the mockup scaled to 1125 wide.
+  Migrated so far: the header.
+- Safe zones: the header is a 107-rpx beam (54-rpx slots, 30-rpx figures,
+  62-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
   beam of 57px painted plates (28px icons, 14px labels) with 4px above and
   below, plus the bottom inset (reserved once, in `nav.css`). Both are
