@@ -247,8 +247,8 @@ still derived by the script, never drawn. No emoji anywhere —
   of the screen's height. The width is a ceiling: on a screen narrower than
   the reference (9:20, 9:21) the scale follows the width instead, so the
   1125-wide header always fits (Unity's "Expand"). Sizes are measured on the
-  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll
-  and the reward flight.
+  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll,
+  the reward flight and the nav bar.
 - Safe zones: the header is a 107-rpx beam (62-rpx slots, 30-rpx figures,
   76-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
@@ -1167,7 +1167,7 @@ Small, high-leverage, mostly independent of the visual redesign.
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
 13. **A price lives inside the button that spends it** (§6.4 below).
-14. **The header and nav bar outrank every menu** (§6.5 below).
+14. **The header outranks every menu; the nav bar steps aside** (§6.5 below).
 15. **A lit tab never lies** (§6.7 below).
 
 ### 6.4 A price lives inside the button that spends it
@@ -1207,38 +1207,27 @@ duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
 than a currency, and they go in the button like everything else, reading
 `have / needed` so the gap is the thing you see.
 
-### 6.5 The chrome outranks every menu
+### 6.5 The header outranks every menu; the nav bar steps aside
 
-*Added 2026-09-02. Revised the same day — see below.*
-
-A menu is something the player opened **over** the game, never a replacement
-for it. The resource header and the nav bar both stay above it, undimmed by
-the scrim and still tappable. Your purse has to be readable while you browse
-the build menu, because what you can afford is the whole reason you opened it,
-and the way out has to stay where it always is.
-
-This first shipped with an exception for **full-screen** menus, on the
-reasoning that they own the view and bring their own top bar. That was wrong
-in exactly the place it mattered: the Research screen hid the resource bar
-while the player was reading prices off it. The exception is gone.
-
-The stack, bottom to top: map · ad-offer tab (4) · district card (6) · **menus
-and sheets (7)** · header (8) · nav bar (10) · settings knob (20) · the
-rewarded video (200). One z-index for every menu, so a new screen gets the
-right behaviour without being enumerated.
-
-Two consequences worth knowing:
-
-- **A full-screen menu must reserve the two bars itself.** An absolutely
-  positioned child resolves `inset` against its containing block's *padding
-  box*, which INCLUDES the padding — so `#overlay`'s reserved strips do
-  nothing for a child using `inset: 0`. `.research-screen` sets its own `top`
-  and `bottom` instead.
-- **The settings knob hides while any menu is open.** It floats above
-  everything (z 20), so it landed on the research screen's own close button.
-  Every menu brings its own way out; the knob is the affordance for the map.
-  Keyed on `#ui:has(> #overlay:not(:empty))`, so it cannot drift from what is
-  actually on screen.
+- A menu is opened **over** the game. The resource header stays above it,
+  undimmed and tappable, full-screen menus included: what you can afford is
+  the reason you opened the menu.
+- **The nav bar leaves while a menu is open**: it slides down out of the
+  frame (260 ms) and slides back up when the map returns. Every menu brings
+  its own way out, and the space the bar held goes to the menu — `--nav-h`
+  is only the bottom inset while it is away.
+- The stack, bottom to top: map · the right-edge column (4) · district card
+  (6) · **menus and sheets (7)** · header (8) · nav bar (10) · the battle
+  playback (90) · the gacha reveal (100) · the rewarded video (200). One
+  z-index for every menu, so a new screen gets the right behaviour without
+  being enumerated.
+- **A full-screen menu reserves the header itself.** An absolutely positioned
+  child resolves `inset` against `#overlay`'s padding box, which includes the
+  padding, so `.research-screen` sets its own `top` and `bottom`.
+- **The settings knob hides while any menu is open**, like the nav bar: it is
+  the affordance for the map. Both are keyed on
+  `#ui:has(> #overlay:not(:empty))`, so they cannot drift from what is on
+  screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
 `#overlay` at all — see `Docs/features/08-magic.md` §6.

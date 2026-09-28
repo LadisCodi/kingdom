@@ -67,7 +67,10 @@ export type UiIconName =
   | 'pack' | 'cards' | 'vault' | 'crest'
   // One undiscovered map cell, its borders running past its corners so it
   // reads as a cell of the grid: the mark of a quest that reveals the map.
-  | 'tile';
+  | 'tile'
+  // The nav bar's two that were borrowing a picture: the Store's market stall
+  // (it wore the Gems) and the Heroes' knight's helmet (it wore the shield).
+  | 'shop' | 'helmet';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -113,6 +116,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   cross: '✗', arrowUp: '⬆', compass: '🧭',
   // the fog
   tile: '⬛',
+  // the nav bar
+  shop: '🏪', helmet: '⛑️',
 };
 
 export interface IconOpts {

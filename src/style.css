@@ -111,10 +111,10 @@ body {
 #picker[hidden] { display: none; }
 #picker { position: absolute; inset: 0; z-index: 7; }
 
-/* The header and the nav bar outrank EVERY menu — full-screen ones included.
-   A menu is something you opened over the game, never a replacement for it:
-   your purse has to stay readable while you decide what to spend, and the
-   way out has to stay where it always is.
+/* The header outranks EVERY menu — full-screen ones included. A menu is
+   something you opened over the game, never a replacement for it: your purse
+   has to stay readable while you decide what to spend. (The nav bar steps
+   aside instead: it slides out while a menu is open — nav.css.)
 
    This used to make an exception for full-screen menus, on the reasoning that
    they "own the view" and bring their own top bar. In practice that hid the
