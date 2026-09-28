@@ -317,8 +317,8 @@ resource cell, a building's worked cells, a house's rent (crews' deliveries
 and the rent tick land as numbers on the map only):
 
 - It bursts from where it was claimed — the tapped cell, the tap that
-  claimed it, or the
-  centre of the screen — with a flash and a powerup chime.
+  claimed it, or the centre of the screen — with a flash and, for a claimed
+  reward (not a tap, which has its own sound), a powerup chime.
 - Each resource in it leaves as N fragments of its icon: one per minute of
   the city's own production the reward is worth, at least 3, at most 12, and
   5 for a coin the city does not produce (Gems) or produces none of yet. A

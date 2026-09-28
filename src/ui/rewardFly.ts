@@ -206,7 +206,9 @@ export function mountRewardFly(game: Game, layer: HTMLElement): void {
       .map(([c, n]) => [c, n, slotIcon(c)] as const)
       .filter((f): f is readonly [CurrencyId, number, HTMLElement] => f[2] !== null);
     if (flights.length === 0) return;
-    playSfx('rewardBurst');
+    // A tap already made its own sound (the axe, the coins); the burst's
+    // powerup chime is for a reward claimed, not for every swing.
+    if (!tap) playSfx('rewardBurst');
     flash(from);
     flights.forEach(([c, n, icon], k) => fly(c, n, from, icon, k * BETWEEN_KINDS_MS, tap));
   });
