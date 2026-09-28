@@ -11,7 +11,7 @@
 > **Status: steps 1–7 done; steps 8–11 are next and independent of each
 > other. The Market left the game on 2026-09-09, so its half of step 2 and
 > its goods tab are void — read the rest as written. Step 8 shrank on 2026-09-08 — the Reliquary is not a building.** Save version 31. The designs live in `features/` —
-> [`18-harmony.md`](../features/18-harmony.md) for step 6,
+> [`21-harmony.md`](../features/21-harmony.md) for step 6,
 > [`buildings.md`](../features/buildings.md) §3.1 for step 7 — and §6–§7 below
 > are the record of how they landed.
 
@@ -531,7 +531,7 @@ save needs nothing: it has no decoration in it.
 | **6c** — **DONE** | the six decoration rows, their identity in `definitions.ts`, `buildMenuOrder`, the `AnyDecoration` adjacency row |
 | **6d** — **DONE** | the demand: `,,,,,,,2,4,6` on the fifteen |
 | **6e** — **DONE** | the UI — the header, the section, the ribbon, the ghost, the Townhall card |
-| **6f** — **DONE** | [`../features/18-harmony.md`](../features/18-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
+| **6f** — **DONE** | [`../features/21-harmony.md`](../features/21-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
 
 - **Art: done.** All six world sprites exist (`garden_l1`, `well_l1`,
   `orchard_l1`, `statue_l1`, `plaza_l1`, `shrine_l1`). What is missing is the
@@ -737,7 +737,7 @@ The one new mechanic; last, and in three commits.
   [`../features/buildings.md`](../features/buildings.md) §4.11 (the late
   ladder), `05-city-and-districts.md` §3.1 (the piecewise curve) and
   `04-harvest.md` §4 (the haul and the swing); step 5 into
-  `03-economy.md` §3.1; step 6 into a new `features/18-harmony.md`; steps 8–10
+  `03-economy.md` §3.1; step 6 into a new `features/21-harmony.md`; steps 8–10
   into `09-relics.md`, `10-heroes.md`, `02-map-scopes.md` and
   `buildings.md`; step 11 into `11-expeditions.md` and `buildings.md`. The
   proposal file is deleted when the last step closes.

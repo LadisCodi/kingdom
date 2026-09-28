@@ -1,16 +1,17 @@
 # Sprite assets
 
-Drop PNGs here (transparent background, ~128×128, nearest-neighbor
-downscaled). They're picked up automatically by filename — no code changes.
-Any sprite that's missing simply keeps its emoji placeholder.
+Drop PNGs here. They're picked up automatically by filename — no code
+changes. Any sprite that's missing simply keeps its emoji placeholder.
+Districts have per-level art: the renderer tries **`<sprite>_l<level>.png`**
+first, then the un-leveled `<sprite>.png`, then the emoji glyph. The
+placement preview uses `<sprite>_l1`.
 
-**v2 art set (2026-09):** all sprites follow the zoomed-out "manage from
-afar" style locked by `Docs/art/reference.png`. Districts have per-level
-art: the renderer tries **`<sprite>_l<level>.png`** first, then the
-un-leveled `<sprite>.png`, then the emoji glyph. The placement preview
-uses `<sprite>_l1`. Source sheets + processing scripts live in
-`Docs/art/originals/v2-sheets/`; see `Docs/art/sprite-prompts.md` for the
-prompts and the normalization pipeline.
+> **Everything in this folder is the OLD art set** — top-down pixel tiles at
+> ~128×128, downscaled nearest-neighbour. The world moved to a **2:1 isometric,
+> stylized-3D** direction: diamond ground of 128×64, fixed canvas and anchor per
+> footprint, smooth scaling. **`Docs/art/art-direction.md` is the spec**, and
+> every file below is to be regenerated against it. The table stays because the
+> filename contract does not change.
 
 | File | Replaces | Notes |
 |---|---|---|
@@ -38,7 +39,7 @@ prompts and the normalization pipeline.
 ### Planned by the 2026-09-02 design pass (not yet wired)
 
 Stems reserved so the naming stays consistent when the art arrives; all keep
-their emoji fallback until then. Prompts in `Docs/art/sprite-prompts.md`.
+their emoji fallback until then. Prompts in `Docs/art/art-direction.md`.
 
 | File | Replaces | Notes |
 |---|---|---|

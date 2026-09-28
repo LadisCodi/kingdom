@@ -1,6 +1,7 @@
 # Kingdom — working notes for Claude
 
-A cozy square-grid city-builder / idle game. Vite + TypeScript, Canvas 2D, no
+An accessible 4X: a square-grid city-builder on a fog-shrouded province that
+opens onto a shared hex world map. Vite + TypeScript, Canvas 2D, no
 framework. `src/sim/` is a **pure** simulation core — no DOM, no clock,
 injectable randomness — so it can later run server-side.
 
@@ -10,8 +11,8 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`18` | **the live source of truth, one file per feature** |
-| [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
+| `Docs/features/01`–`21` | **the live source of truth, one file per feature** |
+| [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`); the taken ones are in [`Docs/open-questions-closed.md`](Docs/open-questions-closed.md) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 
 `Docs/` is **design**: no implementation detail unless a decision turned on it.
@@ -116,7 +117,7 @@ three ways (`tests/techTree.test.ts`).
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book | a new tome (`TomeId` is a union) |
+| a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
 | **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
@@ -128,7 +129,9 @@ three ways (`tests/techTree.test.ts`).
 
 ## Saves
 
-`SAVE_VERSION` is 44; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 59; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+**Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
+line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),

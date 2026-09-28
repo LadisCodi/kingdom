@@ -256,7 +256,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 ## 9. Deliberately not in this design
 
 - Server-authoritative fog on the shared world map
-  ([`02-map-scopes.md`](02-map-scopes.md) §2).
+  ([`02-map-scopes.md`](02-map-scopes.md) §3).
 - Pathfinding.
 - A procedural region generator ([`02-map-scopes.md`](02-map-scopes.md) §1.1).
 - A `Mountain` terrain or a `Rocks` feature.

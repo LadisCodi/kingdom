@@ -1,7 +1,7 @@
 # v3 sheets — generation log
 
 Provenance for the builder-programme art
-([`../../builder-30-days-art.md`](../../builder-30-days-art.md)). One row a
+(`art-direction.md`). One row a
 file: the sheet it came out of, the quadrant, and the exact `norm_sq.fish`
 call, so any single asset can be regenerated without guessing.
 
@@ -23,7 +23,7 @@ call, so any single asset can be regenerated without guessing.
   quarry/market on flat green) for chunk and trim — is what the later sheets
   are told to match.
 - **Round one came back in 3/4 isometric prop style**, exactly the v1 mistake
-  `sprite-prompts.md` warns about: 45° camera, wood grain, individual stones,
+  `art-direction.md` warns about: 45° camera, wood grain, individual stones,
   muted browns and greys. The style block alone does not carry it. What the
   correction had to say, explicitly, was: *80° camera so the TOP face of
   everything is what you see*, *two or three flat tones and one outline, no
@@ -269,7 +269,7 @@ second dome and a full rune ring.
 carpenter_l4, housing_l3).
 
 Two rounds. Round 1 came back **3/4 isometric with fine detail** — the same
-drift `sprite-prompts.md` warns about, and it arrives even with the camera
+drift `art-direction.md` warns about, and it arrives even with the camera
 line already in the first message. Round 2 fixed it in 2m17s with the four
 corrections spelled out again on their own: *80° camera, the TOP face of the
 roof is what you see*, *two or three flat tones and one outline*, *nothing
