@@ -66,6 +66,26 @@
 /* The nav steps aside for the card as for a sheet, so the card keeps the
    sheets' 8 px off the bottom edge rather than sitting on it. */
 .dc { margin-bottom: 8px; }
+/* THE CLOSE: a round button of red lacquered wood with the X carved into it
+   (sheets/ui-window2-close.png, kit closeKnob), pinned over the window
+   frame's top-right knob. The pressed twin is the same wood pushed in. */
+.k-close {
+  --close-size: calc(var(--rpx) * 100);
+  position: absolute;
+  top: calc(var(--close-size) * -0.28);
+  right: calc(var(--close-size) * -0.28);
+  z-index: 3;
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 0;
+  background: url('../assets/btn-close.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+  cursor: pointer;
+}
+.k-close:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
+.k-close:active { background-image: url('../assets/btn-close-down.png'); }
+.k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
 /* A centred window grows from its middle; a bottom sheet from its foot. */
 .k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {

@@ -1,7 +1,7 @@
 // Things other things sit on: panels, sheets, planks, cards, grids.
 
 import { el } from '../format';
-import { knob } from './controls';
+import { closeKnob } from './controls';
 import { iconEl, type IconName } from './icon';
 
 /** A parchment panel in a carved wooden frame. */
@@ -56,8 +56,9 @@ export function sheet(
   },
   ...children: Array<Node | string>
 ): HTMLElement {
-  const close = knob('✕', opts.onClose, { label: `Close ${opts.title}` });
-  close.setAttribute('data-own-close', '');
+  // The close sits on the window's frame, at its top-right corner — part of
+  // the window, not of the title plank.
+  const close = closeKnob(opts.onClose, `Close ${opts.title}`);
   return el(
     'div',
     {
@@ -71,7 +72,7 @@ export function sheet(
       // it can grow and shrink on the way in and out without distorting or
       // reflowing the contents (kit.css, `k-window-*`).
       el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
-      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title, close)]),
+      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title), close]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.

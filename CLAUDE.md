@@ -197,6 +197,12 @@ than the build is rejected rather than downgraded.
   already did it): a neighbour that moves must never reprice a wait already
   running. An adjacency on a RATE is computed on read. Neither is a modifier —
   positional facts belong at the base stage.
+- **The UI is made of materials** (`Docs/art/ui-menus-redesign.md` §2.5):
+  warm, natural, textured — wood, yellowed parchment, rope, cloth, wax,
+  brass — lit from above, never flat fills or plastic gloss. A symbol on a
+  piece is carved or embossed INTO it (the close X is a groove in red wood),
+  and a pressed state is the same material pushed in. Ask "what is this made
+  of?" before drawing or requesting any new UI art.
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

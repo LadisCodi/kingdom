@@ -67,12 +67,22 @@ what to do next. The menus should stop hiding that.
 4. **Nothing is greyed out without a reason attached.** A disabled button
    always sits next to one short sentence saying what unlocks it, in
    plain words: "Needs a bigger Townhall", not "Townhall lvl 3 required".
-5. **Warm materials, chunky shapes.** Parchment, carved wood, rope, wax
-   seals, cloth banners. No hairlines, no glass, no neon, no grey.
+5. **Everything is a material you could touch.** The UI is made of warm,
+   natural things — carved and painted wood, yellowed parchment and paper,
+   rope, cloth, wax, brass, glass with something inside it — each drawn with
+   its texture and lit from above, never a flat fill.
+   - A symbol ON a piece is worked INTO the material: carved, engraved,
+     embossed or stamped, never a flat glyph pasted on top (the close
+     button's X is a groove in its red wood).
+   - A pressed control is the same material pushed in, not a darker copy.
+   - Colour comes from the material (red lacquer, green paint, gold cloth),
+     not from a coloured shape.
+   - No hairlines, no glass-morphism, no neon, no cold grey, no plastic
+     gloss. When in doubt, ask "what is this made of?" — and draw that.
 6. **Big, few, forgiving targets.** Minimum 44×44 px touch targets, ≥16px
-   body text, ≥13px for the smallest helper line. Portrait-first (the app
-   is capped to 9:16), one-thumb reachable: primary actions in the bottom
-   third.
+   body text, ≥13px for the smallest helper line. Portrait-first (authored
+   at 1125×2436 and scaled with the height, §3.6), one-thumb reachable:
+   primary actions in the bottom third.
 7. **The world is the menu where possible.** Tapping a building already
    opens its card; keep pushing interactions onto the map instead of into
    lists.
@@ -293,6 +303,9 @@ side on anything wider. A centred modal keeps its own narrower cap.
   frame shrinks back to its least height and fades (140 ms); the window stays
   in the DOM, untappable, until it has. Switching straight to another menu
   is immediate.
+- **The close** is part of the window: a round button of red lacquered wood
+  with the X carved into it, pinned over the frame's top-right knob (kit
+  `closeKnob`). Its pressed twin is the same wood pushed in.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 

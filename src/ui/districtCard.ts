@@ -39,7 +39,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { btn, iconEl, knob, pips, progress, stat } from './kit';
+import { btn, closeKnob, iconEl, knob, pips, progress, stat } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -404,9 +404,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   if (canMoveDistrict(district)) {
     head.append(knob('✥', () => game.startMove(district.uniqueId), { label: 'Move' }));
   }
-  const close = knob('✕', () => game.dismiss(), { label: 'Close' });
-  close.setAttribute('data-own-close', '');
-  head.append(close);
+  // The window's close sits on the frame's top-right corner (kit closeKnob),
+  // not in this column: it closes the window, it does nothing TO the building.
+  const close = closeKnob(() => game.dismiss());
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
   // reads, at this level alone (upgradeStats.ts). It used to be scattered
@@ -434,6 +434,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...stats,
     body,
     foot,
+    close,
   );
 }
 

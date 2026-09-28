@@ -32,7 +32,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, btn, ctaBadge, iconEl, knob, sheet, stat } from './kit';
+import { action, btn, closeKnob, ctaBadge, iconEl, knob, sheet, stat } from './kit';
 
 /** Blue → violet → gold. The rarity is the tile's whole background, so the
  *  roster reads as a ladder before a single label is read. */
@@ -171,9 +171,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
   // the roster now, and what closes a modal is a cross in the corner every
   // other sheet in the game puts one in — an arrow pointing left beside two
   // arrows that step the roster was one glyph too many on that edge.
-  const close = knob('✕', () => { game.openHeroId = null; game.notify(); }, {
-    label: 'Close',
-  });
+  const close = closeKnob(() => { game.openHeroId = null; game.notify(); });
   close.classList.add('hero-close');
 
   const arrow = (by: 1 | -1) => knob(by === 1 ? '›' : '‹', () => {

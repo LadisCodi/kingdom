@@ -253,8 +253,9 @@
 /* On the portrait, not above it — a row of its own cost a band of the screen
    to say one word. The cross sits right, where every sheet in the game puts
    one; the type pill takes the corner it left. */
-.hero-close {
-  position: absolute;
+/* The window's carved close (kit closeKnob), on the stage's corner rather than
+   the frame's: the card's own way back to the roster. */
+.k-close.hero-close {
   top: 8px;
   right: 8px;
   z-index: 2;

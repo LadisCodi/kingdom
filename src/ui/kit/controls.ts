@@ -121,6 +121,19 @@ export function knob(
   return wire(b, onClick);
 }
 
+/**
+ * THE WINDOW'S CLOSE: a round button of red lacquered wood with the X carved
+ * into it (kit.css `.k-close`), pinned to the window frame's top-right
+ * corner. The X is the art's own groove, not a glyph — the label is what a
+ * screen reader hears. Marked data-own-close, so the host adds no knob of
+ * its own.
+ */
+export function closeKnob(onClick: () => void, label = 'Close'): HTMLButtonElement {
+  const b = el('button', { class: 'k-close', type: 'button', 'aria-label': label });
+  b.setAttribute('data-own-close', '');
+  return wire(b, onClick);
+}
+
 /** An on/off switch (music, sound effects, ambience). */
 export function switchCtl(on: boolean, onToggle: () => void, label: string): HTMLButtonElement {
   const b = el('button', {
