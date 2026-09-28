@@ -14,8 +14,8 @@ import discoveryUrl from './sounds/discovery.wav?url';
 import errorUrl from './sounds/error_denied.ogg?url';
 import gemUrl from './sounds/gem_spend.wav?url';
 import popUrl from './sounds/pop-06.wav?url';
-import questUrl from './sounds/quest_claimed.ogg?url';
-import questCompleteUrl from './sounds/quest_complete.ogg?url';
+import questUrl from './sounds/quest_claimed.mp3?url';
+import questCompleteUrl from './sounds/quest_complete.mp3?url';
 import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
 import revealDoneUrl from './sounds/reveal_done.ogg?url';
@@ -70,9 +70,11 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   pop: { urls: one(popUrl), volume: 0.5, jitter: 0.08 },
   click: { urls: one(clickUrl), volume: 0.35, jitter: 0.03 },
   discovery: { urls: one(discoveryUrl), volume: 0.55, jitter: 0 },
-  // A claimed quest: a bright casual jingle, loud enough to read over the
-  // scroll rolling up at the same instant (questPill.ts).
-  quest: { urls: one(questUrl), volume: 0.5, jitter: 0 },
+  // A quest's goal met (Fantasy Event 09) and its reward claimed (Fantasy
+  // Event 17): two different stingers, so the two moments never sound alike.
+  // Louder than the rest: the stinger is mastered quiet (-14 dB peak) and
+  // starts on the same instant as the scroll-close rustle.
+  quest: { urls: one(questUrl), volume: 0.9, jitter: 0 },
   research: { urls: one(researchUrl), volume: 0.5, jitter: 0 },
   error: { urls: one(errorUrl), volume: 0.45, jitter: 0 },
   tapEmpty: { urls: one(tapEmptyUrl), volume: 0.4, jitter: 0.05 },
