@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "fields": {
+    "power": { "type": "int" },
+    "dmg": { "type": "int" },
+    "def": { "type": "int" },
+    "hp": { "type": "int", "min": 1 },
+    "squadSize": { "type": "int", "min": 1 },
+    "frontage": { "type": "int" },
+    "cooldown": { "type": "int" },
+    "recruitCost": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "currency" },
+    "trainDurationSeconds": { "type": "int" }
+  }
+}

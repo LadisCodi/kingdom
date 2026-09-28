@@ -1,0 +1,30 @@
+{
+  "basic": {
+    "key": "SilverKey",
+    "keyGemCost": 500,
+    "heroChance": 0.06,
+    "softPityAt": 40,
+    "hardPityAt": 60,
+    "legendaryPityAt": 0,
+    "weights": { "Common": 80, "Rare": 20, "Legendary": 0 },
+    "duplicateFragments": 20,
+    "fragmentsPerMiss": 3,
+    "pullStardust": 50,
+    "freePerDay": 5,
+    "freeCooldownSeconds": 300
+  },
+  "advanced": {
+    "key": "GoldKey",
+    "keyGemCost": 1500,
+    "heroChance": 0.12,
+    "softPityAt": 30,
+    "hardPityAt": 50,
+    "legendaryPityAt": 40,
+    "weights": { "Common": 0, "Rare": 75, "Legendary": 25 },
+    "duplicateFragments": 40,
+    "fragmentsPerMiss": 6,
+    "pullStardust": 150,
+    "freePerDay": 1,
+    "freeCooldownSeconds": 0
+  }
+}

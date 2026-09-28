@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "fields": {
+    "pass": {
+      "type": "object",
+      "fields": {
+        "missionXp": { "type": "int" },
+        "levelXpBase": { "type": "int" },
+        "levelXpGrowth": { "type": "int" },
+        "freePacks": { "type": "list", "of": { "type": "text" } },
+        "freeGems": { "type": "list", "of": { "type": "int" } },
+        "freeGoldKeys": { "type": "list", "of": { "type": "int" } },
+        "freeStardust": { "type": "list", "of": { "type": "int" } },
+        "paidPacks": { "type": "list", "of": { "type": "text" } },
+        "paidGems": { "type": "list", "of": { "type": "int" } },
+        "paidGoldKeys": { "type": "list", "of": { "type": "int" } },
+        "paidStardust": { "type": "list", "of": { "type": "int" } }
+      }
+    }
+  }
+}

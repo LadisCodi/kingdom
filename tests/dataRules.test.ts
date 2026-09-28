@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import balance from '../src/sim/data/balance.json';
+import balance from '../src/sim/data/balance';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import {
-  COLLECTIONS, IGNORED_KEYS, collectionById, inferSpec, schemaOf, validateData, type DataDoc,
+  COLLECTIONS, IGNORED_KEYS, SCHEMAS, collectionById, formatData, inferSpec, schemaOf, validateData,
+  type DataDoc,
 } from '../src/sim/data/dataRules';
+
+const DATA = join(__dirname, '../src/sim/data');
 
 const doc = balance as unknown as DataDoc;
 
@@ -47,5 +52,21 @@ describe('data rules', () => {
     expect(spec.type).toBe('object');
     expect(spec.fields!.costPerLevel.length).toEqual({ sibling: 'maxLevel' });
     expect(spec.fields!.costPerLevel.of!.fields!.cost.keysRef).toBe('currency');
+  });
+
+  it('keeps one data file and one schema file per collection, and nothing else', () => {
+    const want = COLLECTIONS.filter((c) => c.view !== 'canvas').map((c) => `${c.id}.json`).sort();
+    expect(readdirSync(join(DATA, 'game')).sort()).toEqual(want);
+    expect(readdirSync(join(DATA, 'schema')).sort()).toEqual(want);
+    expect(Object.keys(SCHEMAS).sort()).toEqual(want.map((f) => f.replace('.json', '')));
+  });
+
+  it('keeps every file exactly as a save would write it', () => {
+    for (const dir of ['game', 'schema']) {
+      for (const f of readdirSync(join(DATA, dir))) {
+        const text = readFileSync(join(DATA, dir, f), 'utf8');
+        expect(formatData(JSON.parse(text)), `${dir}/${f}`).toBe(text);
+      }
+    }
   });
 });

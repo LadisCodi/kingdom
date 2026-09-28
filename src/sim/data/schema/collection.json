@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "fields": {
+    "collection": {
+      "type": "object",
+      "fields": {
+        "seasonDays": { "type": "int" },
+        "albumGems": { "type": "int" },
+        "prizeGems": { "type": "int" },
+        "albumHours": { "type": "list", "of": { "type": "int" } },
+        "albumSilverKeys": { "type": "list", "of": { "type": "int" } },
+        "albumGoldKeys": { "type": "list", "of": { "type": "int" } },
+        "chestFloorPerHour": { "type": "int" },
+        "starsPerFace": {
+          "type": "object",
+          "fields": {
+            "1star": { "type": "int" },
+            "2star": { "type": "int" },
+            "3star": { "type": "int" },
+            "4star": { "type": "int" },
+            "5star": { "type": "int" },
+            "4gold": { "type": "int" },
+            "5gold": { "type": "int" }
+          }
+        },
+        "closeGoldSecondsPerStar": { "type": "int" },
+        "chestStars": {
+          "type": "object",
+          "fields": { "BronzeChest": { "type": "int" }, "SilverChest": { "type": "int" }, "GoldChest": { "type": "int" } }
+        },
+        "wildcardGemCosts": { "type": "list", "of": { "type": "int" } },
+        "wildcardOfferAt": { "type": "int" },
+        "bundleWithdrawHours": { "type": "int" },
+        "xpTricklePerTierDepth": { "type": "int" },
+        "maxTier": { "type": "int" },
+        "fragmentsPerTierBase": { "type": "int" },
+        "fragmentsPerTierGrowth": { "type": "int" },
+        "ascensionStardustBase": { "type": "int" },
+        "ascensionStardustGrowth": { "type": "int" },
+        "xpLevelCostBase": { "type": "int" },
+        "xpLevelCostGrowth": { "type": "float" },
+        "heroLevelsPerTier": { "type": "int" },
+        "heroMaxLevel": { "type": "int" }
+      }
+    }
+  }
+}

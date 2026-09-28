@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "fields": {
+    "size": { "type": "object", "fields": { "x": { "type": "int" }, "y": { "type": "int" } } },
+    "maxLevel": { "type": "int", "min": 1, "max": 20, "doc": "How many levels it has. Level 1 is the build." },
+    "populationCapacityPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "taxBonusPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "fogRevealRadius": { "type": "int", "min": 0 },
+    "fogDiscoverRadius": { "type": "int", "min": 0 },
+    "maxWorkersPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "maxCountPerTownhallLevel": {
+      "type": "list",
+      "of": { "type": "int" },
+      "length": { "townhall": true, "upTo": true },
+      "doc": "How many the city may own at each Townhall level."
+    },
+    "influenceRadiusPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "requiredTownhallLevelPerLevel": {
+      "type": "list",
+      "of": { "type": "int" },
+      "length": { "sibling": "maxLevel", "offset": -1, "upTo": true },
+      "doc": "Entry 0 gates level 2."
+    },
+    "requiredPopulationPerLevel": {
+      "type": "list",
+      "of": { "type": "int" },
+      "length": { "sibling": "maxLevel", "offset": -1, "upTo": true },
+      "doc": "Villagers each level asks for; entry 0 gates level 2."
+    },
+    "armyCapPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "bedsPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "costPerLevel": {
+      "type": "list",
+      "of": {
+        "type": "object",
+        "fields": {
+          "cost": {
+            "type": "map",
+            "of": { "type": "int", "min": 0 },
+            "keysRef": "currency",
+            "doc": "Currencies, multiplied by the instance ordinal."
+          },
+          "goods": {
+            "type": "map",
+            "of": { "type": "int", "min": 0 },
+            "keysRef": "good",
+            "doc": "Refined goods; never multiplied."
+          }
+        }
+      },
+      "length": { "sibling": "maxLevel" },
+      "doc": "What each level costs, level 1 being the build."
+    },
+    "instanceLinearGrowth": { "type": "float", "min": 0, "doc": "M(N) = linear × (N − 1) + exponential^(N − 1)." },
+    "instanceExponentialGrowth": { "type": "float", "min": 1 },
+    "buildDurationSeconds": { "type": "int", "min": 0 },
+    "buildDurationDistrictGrowth": { "type": "float" },
+    "buildDurationDistanceGrowth": { "type": "float" },
+    "upgradeDurationSeconds": { "type": "int", "min": 0 },
+    "upgradeDurationLevelGrowth": { "type": "float" },
+    "upgradeDurationLateSeconds": { "type": "int" },
+    "upgradeDurationLateLevelGrowth": { "type": "float" },
+    "extraUnitsPerDeliveryPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "strikeSpeedPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "produces": { "type": "text", "nullable": true, "ref": "good" },
+    "queueLengthPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "harmonySupply": { "type": "int", "min": 0, "doc": "Non-zero makes it a decoration." },
+    "harmonyCostPerLevel": {
+      "type": "list",
+      "of": { "type": "int" },
+      "length": { "sibling": "maxLevel", "upTo": true },
+      "doc": "Harmony demanded: a TOTAL at each level, entry 0 gating the build."
+    }
+  }
+}

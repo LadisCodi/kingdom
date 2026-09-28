@@ -1,14 +1,14 @@
 // Game data definitions. Identity/content (names, descriptions, glyphs,
 // sprites, rules wiring) lives here; every balancing NUMBER comes from
-// balance.json, which is generated from the editable balance/*.csv sheets
-// (edit those, then run: npm run balance).
+// `balance.ts` — one file per collection in `data/game/`, authored in the
+// data editor (`?dev=data`, Docs/plans/data-editor.md).
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 //
 // MAP content is the exception: terrain, features, landmarks and ruins are
 // authored by coordinate, so they live in region-map.json and are edited in
 // the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
-import balance from './balance.json';
+import balance from './balance';
 import regionMap from './region-map.json';
 import treeDoc from './tech-tree.json';
 import {
@@ -611,8 +611,8 @@ export interface DistrictDef {
   harmonyCostPerLevel: readonly number[];
 }
 
-// Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
-// balance.json; only identity, art, and rules wiring is authored here.
+// Numbers (costs, times, caps, sizes, radii) come from `data/game/` through
+// `balance.ts`; only identity, art, and rules wiring is authored here.
 const rules = {
   buildable: true, harvestSources: [], providesHarvestSource: null,
   trains: [],
@@ -2109,7 +2109,7 @@ const bannerContent: Record<BannerId, { name: string }> = {
 export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
   (Object.keys(bannerContent) as BannerId[]).map((id) => {
     const b = (balance.banners as Record<string, Omit<BannerDef, 'id' | 'name'>>)[id];
-    if (!b) throw new Error(`balance.json is missing the banner "${id}"`);
+    if (!b) throw new Error(`data/game/banners.json is missing the banner "${id}"`);
     return [id, { id, ...bannerContent[id], ...b }];
   }),
 ) as Record<BannerId, BannerDef>;
@@ -2215,7 +2215,7 @@ interface StoreRow {
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
     const b = (balance.store as Record<string, StoreRow>)[id];
-    if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
+    if (!b) throw new Error(`data/game/store.json is missing the store SKU "${id}"`);
     // A row is a bundle when it names a hand. The importer already refuses
     // half a hand, so one column deciding it is enough.
     const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0

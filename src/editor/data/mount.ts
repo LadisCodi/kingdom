@@ -15,7 +15,7 @@
 
 import '../editor.css';
 import './data.css';
-import balance from '../../sim/data/balance.json';
+import balance from '../../sim/data/balance';
 import techTree from '../../sim/data/tech-tree.json';
 import {
   COLLECTIONS, DOMAINS, QUEST_GOALS, REF_COLLECTION, collectionById, entriesOf, getAt, isListCollection,

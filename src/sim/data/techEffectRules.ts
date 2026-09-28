@@ -15,10 +15,10 @@
 // The registry is its own leaf module rather than part of `techTreeRules.ts`:
 // that file imports `ui/research/layout` for the page geometry, and the
 // resolver that reads this is on the hot path (`effectiveWorkerStrike` runs
-// per strike). Here there is nothing but `balance.json` for the id lists and
+// per strike). Here there is nothing but the balance data for the id lists and
 // types that erase.
 
-import balance from './balance.json';
+import balance from './balance';
 import type { UnitTag } from './definitions';
 import type { DistrictId, HarvestSourceId, TomeId, UnitId } from '../state';
 

@@ -5,14 +5,14 @@
 // `?dev=data` (src/editor/data/) is the tool that will replace the balance
 // workbook. This module is its DOM-free half: the registry of COLLECTIONS
 // (every top-level key of the data, grouped the way a designer looks for it),
-// the SCHEMA of each (inferred from the data itself, then sharpened by the
-// overrides below — refs, enums, ranges, per-level lengths), and the
-// VALIDATOR. The editor, and `tests/dataRules.test.ts`, read the same
-// functions; a save endpoint will too once the tool writes files.
+// the SCHEMA of each (`schema/<collection>.json` — types, refs, enums,
+// ranges, per-level lengths), the VALIDATOR, and how a collection file is
+// FORMATTED. The editor, the save endpoint (scripts/vite-data-editor.mjs) and
+// `tests/dataRules.test.ts` read the same functions.
 //
-// Phase 1 of the migration (Docs/plans/data-editor.md): the source of truth is
-// still `balance.xlsx` → `balance.json`, so everything here reads the
-// document as `balance.json` shapes it today. Nothing in the sim imports this.
+// The data itself is one file per collection in `game/`, put back together
+// in the shape the sim reads by `balance.ts`. Nothing in the sim imports this
+// module.
 
 import techTree from './tech-tree.json';
 
@@ -137,8 +137,8 @@ export interface FieldSpec {
   doc?: string;
 }
 
-/** Static id lists the data itself cannot supply. Mirrors the importer
- *  (`scripts/balance.mjs`) until the migration makes these collections. */
+/** Id lists the data itself cannot supply: they are unions in the sim
+ *  (`FeatureId`, `RuinId`) or live in another file (the technologies). */
 export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   feature: ['Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal'],
   ruin: ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory'],
@@ -146,8 +146,6 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
 };
 
-const HERO_RARITIES = ['Common', 'Rare', 'Legendary'] as const;
-const HERO_TRAITS = ['PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'WoundedRecovery'] as const;
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
 export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'] as const;
 
@@ -180,88 +178,6 @@ export function refIds(doc: DataDoc, kind: RefKind): readonly string[] {
   }
   return STATIC_IDS[kind] ?? [];
 }
-
-/** A path from a collection's entry down to a field: '*' stands for any list
- *  index or map key. */
-type Overrides = Record<string, Partial<FieldSpec>>;
-
-const perLevel: Partial<FieldSpec> = { length: { sibling: 'maxLevel', upTo: true } };
-
-/**
- * What inference cannot see: which strings are ids, which numbers have a
- * floor, which lists are ladders. Keyed by collection, then by field path
- * relative to ONE entry (or, for a form, relative to the document root).
- */
-export const OVERRIDES: Record<string, Overrides> = {
-  buildings: {
-    maxLevel: { min: 1, max: 20, doc: 'How many levels it has. Level 1 is the build.' },
-    costPerLevel: { length: { sibling: 'maxLevel' }, doc: 'What each level costs, level 1 being the build.' },
-    'costPerLevel.*.cost': { keysRef: 'currency', doc: 'Currencies, multiplied by the instance ordinal.' },
-    'costPerLevel.*.cost.*': { min: 0 },
-    'costPerLevel.*.goods': { keysRef: 'good', doc: 'Refined goods; never multiplied.' },
-    'costPerLevel.*.goods.*': { min: 0 },
-    populationCapacityPerLevel: perLevel,
-    taxBonusPerLevel: perLevel,
-    maxWorkersPerLevel: perLevel,
-    influenceRadiusPerLevel: perLevel,
-    armyCapPerLevel: perLevel,
-    bedsPerLevel: perLevel,
-    extraUnitsPerDeliveryPerLevel: perLevel,
-    strikeSpeedPerLevel: perLevel,
-    queueLengthPerLevel: perLevel,
-    harmonyCostPerLevel: { ...perLevel, doc: 'Harmony demanded: a TOTAL at each level, entry 0 gating the build.' },
-    requiredTownhallLevelPerLevel: { length: { sibling: 'maxLevel', offset: -1, upTo: true }, doc: 'Entry 0 gates level 2.' },
-    requiredPopulationPerLevel: { length: { sibling: 'maxLevel', offset: -1, upTo: true }, doc: 'Villagers each level asks for; entry 0 gates level 2.' },
-    maxCountPerTownhallLevel: { length: { townhall: true, upTo: true }, doc: 'How many the city may own at each Townhall level.' },
-    produces: { ref: 'good', nullable: true },
-    instanceLinearGrowth: { min: 0, doc: 'M(N) = linear × (N − 1) + exponential^(N − 1).' },
-    instanceExponentialGrowth: { min: 1 },
-    buildDurationSeconds: { min: 0 },
-    upgradeDurationSeconds: { min: 0 },
-    fogRevealRadius: { min: 0 },
-    fogDiscoverRadius: { min: 0 },
-    harmonySupply: { min: 0, doc: 'Non-zero makes it a decoration.' },
-  },
-  goods: {
-    input: { keysRef: 'currency' },
-    'input.*': { min: 0 },
-    inputGood: { ref: 'good', nullable: true },
-    workSeconds: { min: 1 },
-    tier: { min: 1 },
-  },
-  terrain: { '*': { min: 0 } },
-  harvest: { unitsPerStrike: { min: 0 }, secondsPerStrike: { min: 0 }, stock: { min: 0 } },
-  currencies: { cap: { nullable: true, min: 0 }, goldValue: { nullable: true, min: 0 }, start: { min: 0 } },
-  units: { recruitCost: { keysRef: 'currency' }, 'recruitCost.*': { min: 0 }, hp: { min: 1 }, squadSize: { min: 1 } },
-  heroes: { rarity: { options: HERO_RARITIES }, unitType: { ref: 'unit' }, trait: { options: HERO_TRAITS }, hp: { min: 1 } },
-  villains: { unitType: { ref: 'unit' }, hp: { min: 1 } },
-  depths: {
-    ruin: { ref: 'ruin' }, villainPool: { ref: 'villain' }, bossVillain: { ref: 'villain' },
-    supplies: { keysRef: 'currency' }, depth: { min: 1 }, rooms: { min: 1 },
-  },
-  garrisons: { supplies: { keysRef: 'currency' }, tier: { min: 1 } },
-  adjacency: { stat: { options: ADJACENCY_STATS } },
-  quests: {
-    goalType: { options: Object.keys(QUEST_GOALS) },
-    goalTarget: { nullable: true },
-    goalLevel: { nullable: true },
-    goalAmount: { min: 1 },
-    reward: { keysRef: 'currency' },
-  },
-  store: { packTier: { ref: 'pack', emptyOk: true }, priceUsd: { min: 0 } },
-  packs: { guarantees: { keysRef: 'face' }, weights: { length: { exact: 7 } } },
-  banners: { key: { ref: 'currency' } },
-  economy: {
-    'taxes.townhallMultiplierPerLevel': { length: { townhall: true } },
-    'mana.sanctumCapPerLevel': { length: { exact: 10 } },
-    'mana.sanctumPerHourPerLevel': { length: { exact: 10 } },
-    'city.initialCurrencies': { keysRef: 'currency' },
-    'tap.manaCost': { min: 0, doc: 'What every player tap costs.' },
-    'tap.workSeconds': { min: 1, doc: 'A tap pays this many seconds of what it touches produces.' },
-    offlineCapHours: { min: 0, doc: 'Production stops after this long away; timers do not.' },
-  },
-  exploration: { 'fog.reachPerTownhallLevel': { length: { townhall: true } } },
-};
 
 // ----------------------------------------------------------------- inference
 
@@ -303,37 +219,6 @@ export function inferSpec(samples: readonly unknown[], asRecord = false): FieldS
   return { type: 'unknown', nullable };
 }
 
-/** Apply `overrides` onto a spec tree. Paths are relative to `spec`. */
-function applyOverrides(spec: FieldSpec, overrides: Overrides): FieldSpec {
-  const out = structuredClone(spec);
-  for (const [path, patch] of Object.entries(overrides)) {
-    for (const node of nodesAt(out, path.split('.'))) {
-      // Named keys that are really ids (a starting purse of Gold and Food)
-      // were inferred as a record; naming what the keys are makes it a map.
-      if (patch.keysRef && node.type === 'object') {
-        const first = Object.values(node.fields ?? {})[0];
-        node.type = 'map';
-        node.of = first ? { type: first.type } : { type: 'unknown' };
-        delete node.fields;
-      }
-      Object.assign(node, patch);
-    }
-  }
-  return out;
-}
-
-function nodesAt(spec: FieldSpec, parts: string[]): FieldSpec[] {
-  if (parts.length === 0) return [spec];
-  const [head, ...rest] = parts;
-  if (head === '*') {
-    if ((spec.type === 'list' || spec.type === 'map') && spec.of) return nodesAt(spec.of, rest);
-    if (spec.type === 'object' && spec.fields) return Object.values(spec.fields).flatMap((f) => nodesAt(f, rest));
-    return [];
-  }
-  if (spec.type === 'object' && spec.fields?.[head]) return nodesAt(spec.fields[head], rest);
-  return [];
-}
-
 /** The entries of an entity / table / ordered collection, as [id, value]. A
  *  list's ids are its indices (its ORDER is the data). */
 export function entriesOf(doc: DataDoc, c: CollectionDef): Array<[string, unknown]> {
@@ -348,22 +233,30 @@ export function entriesOf(doc: DataDoc, c: CollectionDef): Array<[string, unknow
 export const isListCollection = (doc: DataDoc, c: CollectionDef): boolean =>
   c.source !== undefined && Array.isArray(doc[c.source]);
 
+/** Every collection's schema, as authored in `schema/<collection>.json`. */
+export const SCHEMAS: Readonly<Record<string, FieldSpec>> = Object.fromEntries(
+  Object.entries(import.meta.glob('./schema/*.json', { eager: true, import: 'default' }))
+    .map(([file, spec]) => [file.replace(/^.*\/|\.json$/g, ''), spec as FieldSpec]),
+);
+
 /**
  * The schema of a collection: for entity/table/ordered, the spec of ONE entry;
  * for a form, an object spec whose fields are its groups.
  *
- * Inferred from `reference` — the document as it was loaded — so an edit
- * cannot quietly change what a field is.
+ * Authored in `schema/<collection>.json` and edited in the tool's Schema view.
+ * A collection with no schema file yet falls back to one inferred from
+ * `reference`, which is what a new collection's first schema is written from.
  */
-export function schemaOf(reference: DataDoc, c: CollectionDef): FieldSpec {
+export function schemaOf(reference: DataDoc, c: CollectionDef, schemas: Readonly<Record<string, FieldSpec>> = SCHEMAS): FieldSpec {
+  const authored = schemas[c.id];
+  if (authored) return authored;
   if (c.view === 'canvas') return { type: 'object', fields: {} };
   if (c.view === 'form') {
     const fields: Record<string, FieldSpec> = {};
     for (const g of c.groups ?? []) fields[g] = inferSpec([reference[g]]);
-    return applyOverrides({ type: 'object', fields }, OVERRIDES[c.id] ?? {});
+    return { type: 'object', fields };
   }
-  const spec = inferSpec(entriesOf(reference, c).map(([, v]) => v), true);
-  return applyOverrides(spec, OVERRIDES[c.id] ?? {});
+  return inferSpec(entriesOf(reference, c).map(([, v]) => v), true);
 }
 
 // ---------------------------------------------------------------- validation
@@ -378,12 +271,12 @@ export interface DataIssue {
   message: string;
 }
 
-export function validateData(doc: DataDoc, reference: DataDoc = doc): DataIssue[] {
+export function validateData(doc: DataDoc, reference: DataDoc = doc, schemas: Readonly<Record<string, FieldSpec>> = SCHEMAS): DataIssue[] {
   const issues: DataIssue[] = [];
   const townhallMax = (doc.districts as Record<string, { maxLevel: number }> | undefined)?.Townhall?.maxLevel ?? 10;
   for (const c of COLLECTIONS) {
     if (c.view === 'canvas') continue;
-    const spec = schemaOf(reference, c);
+    const spec = schemaOf(reference, c, schemas);
     const push = (entry: string | null, path: Array<string | number>, message: string, level: DataIssue['level'] = 'error') =>
       issues.push({ collection: c.id, entry, path, level, message });
     if (c.view === 'form') {
@@ -538,4 +431,44 @@ export function refsIn(spec: FieldSpec, value: unknown, path: Array<string | num
     for (const [k, f] of Object.entries(spec.fields ?? {})) out.push(...refsIn(f, value[k], [...path, k]));
   }
   return out;
+}
+
+// ---------------------------------------------------------------- the files
+
+/**
+ * How a collection file is written — by the migration, and by every save
+ * after it, so a save never reformats what it did not change.
+ *
+ * The root and each entry are always broken one key per line, so a diff
+ * names the entry and the field that moved. Anything deeper that fits on a
+ * line of ~100 characters stays on one — a cost, a ladder, a reward — so a
+ * rebalanced level reads as one changed line, not as a reflowed block.
+ */
+export function formatData(value: unknown): string {
+  return fmtNode(value, 0, '') + '\n';
+}
+
+const INLINE_WIDTH = 100;
+
+function fmtNode(v: unknown, depth: number, indent: string): string {
+  const flat = JSON.stringify(v);
+  if (v === null || typeof v !== 'object') return flat;
+  const empty = Array.isArray(v) ? v.length === 0 : Object.keys(v).length === 0;
+  if (empty) return flat;
+  if (depth >= 2 && indent.length + flat.length <= INLINE_WIDTH) return inline(v);
+  const inner = indent + '  ';
+  if (Array.isArray(v)) {
+    return `[\n${v.map((x) => inner + fmtNode(x, depth + 1, inner)).join(',\n')}\n${indent}]`;
+  }
+  const lines = Object.entries(v as Record<string, unknown>)
+    .map(([k, x]) => `${inner}${JSON.stringify(k)}: ${fmtNode(x, depth + 1, inner)}`);
+  return `{\n${lines.join(',\n')}\n${indent}}`;
+}
+
+/** One line, with a space after each comma and colon so it reads. */
+function inline(v: unknown): string {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v);
+  if (Array.isArray(v)) return `[${v.map(inline).join(', ')}]`;
+  const e = Object.entries(v as Record<string, unknown>);
+  return e.length === 0 ? '{}' : `{ ${e.map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(', ')} }`;
 }
