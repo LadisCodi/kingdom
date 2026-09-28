@@ -1,8 +1,8 @@
 // The map editor: ?dev=map.
 //
-// It replaces the game rather than sitting inside it. The game frames itself
-// to a 9:16 phone, which is exactly the wrong shape for looking at a region,
-// so this hides #app and takes the whole window.
+// It replaces the game rather than sitting inside it: the game's chrome is in
+// the way of looking at a region, so this hides #app and takes the whole
+// window.
 //
 // Everything it can do is a consequence of two choices:
 //   - the document is validated by src/sim/data/mapRules.ts on every edit, so

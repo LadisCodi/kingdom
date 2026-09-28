@@ -239,13 +239,16 @@ still derived by the script, never drawn. No emoji anywhere —
 
 ### 3.6 Layout
 
-- Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
-  9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`).
+- Full-bleed at any aspect ratio (`viewport-fit=cover`): a phone, a 3:4
+  tablet, a desktop window. No pillarbox — a wider screen shows more map.
 - **Reference resolution: 1125×2436** (the iPhone X, portrait). The UI scales
-  like a Unity CanvasScaler matching width: one reference pixel (`--rpx`) is
-  1/1125 of the frame's width, so every piece keeps its share of the screen
-  on every device. Sizes are measured on the mockup scaled to 1125 wide.
-  Migrated so far: the header.
+  like a Unity CanvasScaler **matching height**: one reference pixel
+  (`--rpx`) is 1/2436 of the frame's height, so every piece keeps its share
+  of the screen's height. The width is a ceiling: on a screen narrower than
+  the reference (9:20, 9:21) the scale follows the width instead, so the
+  1125-wide header always fits (Unity's "Expand"). Sizes are measured on the
+  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll
+  and the reward flight.
 - Safe zones: the header is a 107-rpx beam (54-rpx slots, 30-rpx figures,
   62-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a

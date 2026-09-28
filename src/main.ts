@@ -66,7 +66,7 @@ const AUTOSAVE_TICKS = 30;
 async function boot(): Promise<void> {
   // ?dev=map — the map editor, INSTEAD of the game. Checked before anything
   // else boots: it needs no save, no tick and no supabase, and the game's
-  // 9:16 phone frame is the wrong shape for looking at a region. `?dev=tree`
+  // chrome is in the way of looking at a region. `?dev=tree`
   // below is the same deal for the tech tree.
   if (new URLSearchParams(location.search).get('dev') === 'map') {
     const { mountEditor } = await import('./editor/mount');
