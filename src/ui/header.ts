@@ -62,7 +62,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // bottom edge. The button is the whole slot.
   const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill);
   const manaNext = el('span', { class: 'hud-mana-next', 'aria-hidden': 'true' });
-  manaGauge.append(manaBar, currencyIcon('Mana', { size: 'sm' }), manaValue, manaNext);
+  manaGauge.append(manaBar, currencyIcon('Mana', { size: 'sm' }),
+    el('span', { class: 'hud-value' }, manaValue, manaNext));
   manaGauge.addEventListener('click', () => game.openMana());
 
   // The Settings knob hangs from the plank's right end (M1). It is a drawer
@@ -98,13 +99,15 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       // that berries, meat and fish all count as Food.
       const coin = el('button', {
         class: 'hud-slot hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
-      }, currencyIcon(c, { size: 'sm' }), value);
+      }, currencyIcon(c, { size: 'sm' }));
       // How fast it is coming in, hanging off the slot's bottom edge like
       // Mana's countdown. The presenter decides the unit and when there is
       // none (a coin nothing produces carries no line).
       const rate = el('span', { class: 'hud-coin-rate', 'aria-hidden': 'true' });
       rates.set(c, rate);
-      coin.append(rate);
+      // The number and its line share a column, so the line centres under
+      // the number rather than under the whole slot.
+      coin.append(el('span', { class: 'hud-value' }, value, rate));
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
