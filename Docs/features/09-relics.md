@@ -32,10 +32,10 @@
 >
 > The store's three **card bundles** (§6.1) are built with them.
 >
-> Two bridges, both temporary and both in the code that owns them: the four
-> relic ACTIVES still live on their relics, gated on owning one, until the
-> Magic tome's spells land ([`07-research.md`](07-research.md) §6); and a
-> card's face is drawn as its album's medallion until the 72 are painted.
+> One bridge, temporary and in the code that owns it: the four relic ACTIVES
+> still live on their relics, gated on owning one, until the Magic tome's
+> spells land ([`07-research.md`](07-research.md) §6). The 72 card faces are
+> painted (2026-09-16, one 3×3 sheet per album).
 
 ## 1. The model
 
@@ -655,7 +655,7 @@ Top to bottom:
     (§2.1). A relic whose spell is not written yet says so in muted ink rather
     than showing an empty section.
 - Then the **album**: its medallion, its name and an `x/9` bar.
-- The **3×3 grid**: each slot shows the card or its silhouette, its **rarity
+- The **3×3 grid**: each slot shows the card's own painting or its silhouette, its **rarity
   as stars above the card** — gold slots framed gold — its name on a ribbon
   along the bottom, and a **`+N` corner tag** for the duplicates it holds.
 - A **duplicate can be tapped**: *Send* (three left today) or *To the vault*
