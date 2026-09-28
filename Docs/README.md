@@ -92,14 +92,15 @@ Not features — how content and art are made.
 |---|---|
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
-| [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the three files that cannot be shared, and why the seam between code and art is a filename |
+| [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the two files that cannot be shared, and why the seam between code and art is a filename |
 | [`plans/collection-eight.md`](plans/collection-eight.md) | the step-by-step plan for the three collection proposals below — seven steps, what each one lands, and the two programmes it does not own |
 | [`proposals/collection-packs.md`](proposals/collection-packs.md) | a **proposal**, not a spec: six packs defined by the rarity they guarantee, three vault chests duplicates buy, what a duplicate is worth, and where each falls — with every figure measured by simulation against the authored odds |
 | [`proposals/album-cycles.md`](proposals/album-cycles.md) | a **proposal**, not a spec: how a relic's level advances — running the five albums again inside a season (which needs the nine cards SPENT, or the loop never terminates), and rotating which relic each album levels so the two dearest ones are not unreachable for ever |
 | [`proposals/relic-effects.md`](proposals/relic-effects.md) | a **proposal**, not a spec: what each relic does, level by level — the five that exist and the **three that have to be created** for the eight albums — a passive that never stops being worth having, and an active that is a placed ZONE on a cooldown, with exactly one of its four numbers growing with the relic's level |
 | [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | a **proposal**, not a spec: one kingdom passive per Legendary hero, spread across economy, research, exploration and combat, so a Legendary is a different kind of thing to own rather than a bigger number |
-| [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
-| [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |
+| [`plans/data-editor.md`](plans/data-editor.md) | `?dev=data`, the tool every piece of game data is authored in: its collections, views and navigation, the files it saves, and the module that says what legal data is |
+| [`map-editor.md`](map-editor.md) | the map editor (`?dev=data#map`) the world is painted in, and the one module that says what a legal map is |
+| [`tech-tree-editor.md`](tech-tree-editor.md) | the tech tree editor (`?dev=data#tree`) technologies are created and arranged in, and the one module that says what a legal tree is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
 
 ## Art
@@ -147,6 +148,7 @@ discipline and is settled; the world is what the direction covers.
 - **When a doc and the code disagree, the code is usually right and the doc is
   stale.** Fix the doc in the same commit, and prefer a test over a paragraph
   for any number that has now been argued twice.
-- **The workbook is the source of truth for every number**, the map editor for
-  the map. A doc quoting a number is a convenience, never the authority.
+- **`?dev=data` is the source of truth for every number**, the map and the
+  tech tree included. A doc quoting a number is a convenience, never the
+  authority.
 - **Docs are written in English.** Keep it that way.

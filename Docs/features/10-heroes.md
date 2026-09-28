@@ -80,7 +80,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Its type sits in the matchup chart on both sides, as attacker and as target.
 - **Balanced to ~70% of a full squad's output at equivalent investment.** The
   hero is a second body and a buff, not the army.
-- `dmg` and `hp` grow per level (`dmg_per_level`, `hp_per_level`); `def` and
+- `dmg` and `hp` grow per level (`dmgPerLevel`, `hpPerLevel`); `def` and
   `cooldown` do not move.
 - It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
   again when the fight ends.
@@ -89,13 +89,13 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **A hero buffs the troops of its own type**, every squad of that type on its
   side of the board, regardless of slot or row. Nothing else.
-- Three numbers, authored per hero: `troop_dmg_mult`, `troop_hp_mult`,
-  `troop_def_bonus` (flat, because `def` is a flat subtraction). A hero leans
+- Three numbers, authored per hero: `troopDmgMult`, `troopHpMult`,
+  `troopDefBonus` (flat, because `def` is a flat subtraction). A hero leans
   one way — a Warden's Warriors hold, a Sellsword's Warriors hit — which is
   what tells two heroes of one type apart.
 - Several heroes of one type add on the excess: `1 + Σ(mult − 1)`.
 - Computed at battle start; it **stands if the hero dies**.
-- **The passive grows with ascension, not level**: `passive_per_tier` steps
+- **The passive grows with ascension, not level**: `passivePerTier` steps
   each of the three numbers at every tier. Level moves the body, ascension
   moves the buff, so both ladders are felt.
 - A hero on a board with no troops of its type fights and buffs nobody.
@@ -104,7 +104,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **A hero also carries one TRAIT, and a trait acts off the board.** The stat
   block and the passive win the fight; the trait changes what the trip costs
-  or what comes home from it. One per hero, authored on the `Heroes` sheet as
+  or what comes home from it. One per hero, authored in `heroes` as
   a name and a value, and printed on the card as a sentence.
 - The three the game reads:
 
@@ -171,7 +171,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
-- Price: `party.hero_slot_gem_cost_base × party.hero_slot_gem_cost_growth^n`,
+- Price: `party.heroSlotGemCostBase × party.heroSlotGemCostGrowth^n`,
   the escalating-slot curve builders and research slots use, with a higher
   base because a hero slot carries a type buff as well as a body. They sit under `party.*` rather than `heroes.*`
   because that key is the Heroes SHEET.
@@ -270,7 +270,7 @@ Every faucet is a fight or a banner. Amounts are
 | Free calls a day | **5**, one every 5 minutes | **1** |
 
 - **A banner's rarity weights are its pool.** A weight of zero excludes a
-  rarity, so no banner needs a pool column: Common is common-call only,
+  rarity, so no banner needs a pool field: Common is common-call only,
   Legendary is golden-call only, and Rare is in both.
 - **The golden call is the only door to a Legendary**, and its ordinary pull is
   already stronger — a Rare floor against a Common one.
@@ -325,11 +325,11 @@ Each of these is data, not code:
 
 | Want to ship | Costs |
 |---|---|
-| A seasonal hero | one `Heroes` row (rarity, type, stat block, passive) plus its portrait |
-| A third banner | one `Banners` row — its weights are its pool |
-| Rebalancing a banner | its row: odds, both pities, weights, key price, free calls |
-| Rebalancing the hero's share of a fight | the rarity multipliers and the 70% target, on the `Heroes` sheet |
-| A new relic | one relic row + **its** album in the seasons file ([`09-relics.md`](09-relics.md) §3) |
+| A seasonal hero | one `heroes` entry (rarity, type, stat block, passive) plus its portrait |
+| A third banner | one `banners` entry — its weights are its pool |
+| Rebalancing a banner | its entry: odds, both pities, weights, key price, free calls |
+| Rebalancing the hero's share of a fight | the rarity multipliers and the 70% target, in `heroes` |
+| A new relic | one `artifacts` entry + **its** album in the seasons file ([`09-relics.md`](09-relics.md) §3) |
 
 ## 8. The screens
 
@@ -453,20 +453,20 @@ the rewarded video.
 
 | Dial | Value | Key |
 |---|---|---|
-| A hero's stat block and growth | §2.3 | `Heroes.dmg`, `hp`, `def`, `cooldown`, `dmg_per_level`, `hp_per_level` |
-| A hero's passive | §2.4 | `Heroes.troop_dmg_mult`, `troop_hp_mult`, `troop_def_bonus`, `passive_per_tier` |
-| The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarity_stat_mult_*`, `heroes.rarity_passive_mult_*` |
-| What a level costs in XP | §4 | `collection.xp_level_cost_base`, `collection.xp_level_cost_growth` |
-| How long a hero's ladder is | 10 a tier, 50 in all | `collection.hero_levels_per_tier`, `collection.hero_max_level` |
-| What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragments_per_tier_base` |
-| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `collection.ascension_stardust_base`, `collection.ascension_stardust_growth` |
-| What a hero slot costs | §3 | `heroes.slot_gem_cost_base`, `slot_gem_cost_growth`, `heroes.max_slots` |
-| What a key costs in Gems | 500 / 1,500 | `Banners.key_gem_cost` |
-| The odds and both pities | §6.1 | `Banners.hero_chance`, `soft_pity_at`, `hard_pity_at`, `legendary_pity_at` |
-| What a banner's pool is | §6.1 | `Banners.weight_common` / `weight_rare` / `weight_legendary` |
-| What a miss and a duplicate pay | §6.1 | `Banners.fragments_per_miss`, `duplicate_fragments` |
-| What a call pays in Stardust | §6.1 | `Banners.pull_stardust` |
-| The free calls and their spacing | §6.2 | `Banners.free_per_day`, `free_cooldown_seconds` |
+| A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `hpPerLevel` |
+| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`, `passivePerTier` |
+| The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` |
+| What a level costs in XP | §4 | `collection.xpLevelCostBase`, `collection.xpLevelCostGrowth` |
+| How long a hero's ladder is | 10 a tier, 50 in all | `collection.heroLevelsPerTier`, `collection.heroMaxLevel` |
+| What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragmentsPerTierBase` |
+| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragmentsPerTier*`, `collection.ascensionStardustBase`, `collection.ascensionStardustGrowth` |
+| What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
+| What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
+| The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
+| What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
+| What a miss and a duplicate pay | §6.1 | `banners.fragmentsPerMiss`, `duplicateFragments` |
+| What a call pays in Stardust | §6.1 | `banners.pullStardust` |
+| The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design
 
@@ -510,7 +510,7 @@ the rewarded video.
   and unbuilt ([`19-world-map.md`](19-world-map.md)). Accepted for the
   prototype, and named in `tests/heroBoons.test.ts`. **OQ-96.**
 - **Rate-up is untested.** The timeline still carries a banner payload and the
-  activation query exists, but the two banners are permanent rows, so nothing
+  activation query exists, but the two banners are permanent entries, so nothing
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 

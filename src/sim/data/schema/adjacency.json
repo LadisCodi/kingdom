@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "fields": {
+    "district": { "type": "text" },
+    "neighbor": { "type": "text" },
+    "stat": { "type": "text", "options": ["goldPerMinute", "workTime", "trainTime"] },
+    "magnitude": { "type": "float" }
+  }
+}

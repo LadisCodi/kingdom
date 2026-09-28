@@ -1,0 +1,73 @@
+{
+  "type": "object",
+  "fields": {
+    "tap": {
+      "type": "object",
+      "fields": {
+        "collectCooldownSeconds": { "type": "float" },
+        "manaCost": { "type": "int", "min": 0, "doc": "What every player tap costs." },
+        "workSeconds": { "type": "int", "min": 1, "doc": "A tap pays this many seconds of what it touches produces." }
+      }
+    },
+    "taxes": {
+      "type": "object",
+      "fields": {
+        "goldPerPopulationPerMinute": { "type": "int" },
+        "townhallMultiplierPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "townhall": true } }
+      }
+    },
+    "mana": {
+      "type": "object",
+      "fields": {
+        "baseCap": { "type": "int" },
+        "basePerHour": { "type": "int" },
+        "sanctumCapPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "exact": 10 } },
+        "sanctumPerHourPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "exact": 10 } },
+        "landmarkCap": { "type": "int" },
+        "meditationCap": { "type": "int" },
+        "gemRefillCosts": { "type": "list", "of": { "type": "int" } }
+      }
+    },
+    "city": {
+      "type": "object",
+      "fields": {
+        "initialCurrencies": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" },
+        "initialPopulation": { "type": "int" },
+        "populationCostFirst": { "type": "list", "of": { "type": "int" } },
+        "populationCostGrowth": { "type": "float" },
+        "lateUpgradeFromLevel": { "type": "int" }
+      }
+    },
+    "kingdom": {
+      "type": "object",
+      "fields": {
+        "startBuilders": { "type": "int" },
+        "maxBuilders": { "type": "int" },
+        "builderGemCostBase": { "type": "int" },
+        "builderGemCostGrowth": { "type": "int" }
+      }
+    },
+    "harmony": {
+      "type": "object",
+      "fields": {
+        "surplusTiers": {
+          "type": "list",
+          "of": { "type": "object", "fields": { "at": { "type": "float" }, "bonus": { "type": "float" } } }
+        }
+      }
+    },
+    "worker": { "type": "object", "fields": { "moveSpeedTilesPerSecond": { "type": "int" } } },
+    "training": { "type": "object", "fields": { "seconds": { "type": "int" } } },
+    "rush": { "type": "object", "fields": { "secondsPerGem": { "type": "int" } } },
+    "research": {
+      "type": "object",
+      "fields": {
+        "techSlots": { "type": "int" },
+        "maxSlots": { "type": "int" },
+        "slotGemCostBase": { "type": "int" },
+        "slotGemCostGrowth": { "type": "int" }
+      }
+    },
+    "offlineCapHours": { "type": "int", "min": 0, "doc": "Production stops after this long away; timers do not." }
+  }
+}

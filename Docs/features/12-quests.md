@@ -8,8 +8,8 @@
 
 ## 1. The quest chain
 
-- **One chain, one active quest at a time.** Row order in the `Quests` sheet
-  is chain order.
+- **One chain, one active quest at a time.** List order in `quests`
+  is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
 - **53 quests**, paying 12,175 Gold, 100 Mana, 750 Gems, 158 Stardust and
@@ -29,11 +29,11 @@
 | BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · **ClearGarrisons** *(designed)* · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature |
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
-  quest is a row.
-- **A quest's line is rendered from its goal, never written.** The `Quests`
-  sheet carries a `name` — flavour, *Timber!*, *Tax day* — and no description;
-  the sentence the tracker shows is generated from `goal_type`, `goal_target`
-  and `goal_amount`, the way a technology's card is generated from what it
+  quest is an entry.
+- **A quest's line is rendered from its goal, never written.** Each `quests`
+  entry carries a `name` — flavour, *Timber!*, *Tax day* — and no description;
+  the sentence the tracker shows is generated from `goalType`, `goalTarget`
+  and `goalAmount`, the way a technology's card is generated from what it
   unlocks. So a rebalance updates its own prose, and a new goal type owes one
   phrase rather than 53 rewrites.
 - **The tracker holds 44 characters**, and that is the whole budget: it is the
@@ -280,24 +280,24 @@ and the thing you press are the same object.
   what keeps a non-pack SKU off the shelf.
 - **Not** a boundary source in `advance()` (§3.5).
 - `SAVE_VERSION` 35, with a migrator that drops the old `LadderStep`.
-- Workbook: `daily.season_days`, `daily.gems`, `daily.premium_gems`,
-  `daily.premium_gold_keys`, `daily.premium_xp_hours`,
-  `daily.premium_xp_floor`, and `collection.xp_trickle_per_tier_depth` for the
-  XP rate. `daily.gold_seconds` and `daily.gold_floor` are gone.
+- Settings: `daily.seasonDays`, `daily.gems`, `daily.premiumGems`,
+  `daily.premiumGoldKeys`, `daily.premiumXpHours`,
+  `daily.premiumXpFloor`, and `collection.xpTricklePerTierDepth` for the
+  XP rate.
 
 ## 4. Dials, in the order to reach for them
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | a 20-day window | `daily.season_days` |
-| Ladder length | 14 rungs — **the length of the reward lists**, not its own dial | `daily.mana_fractions` |
-| Mana ladder | fractions of the cap, a full pool at 7 and 14 | `daily.mana_fractions` |
+| Season length | a 20-day window | `daily.seasonDays` |
+| Ladder length | 14 rungs — **the length of the reward lists**, not its own dial | `daily.manaFractions` |
+| Mana ladder | fractions of the cap, a full pool at 7 and 14 | `daily.manaFractions` |
 | Free Gems (the recurring F2P faucet) | 200 / 400 / 600 / 800 / 1,000 — **3,000 a season** | `daily.gems` |
-| Royal Gems | **25,000** a season | `daily.premium_gems` |
-| Royal Hero XP | 12 hours of the XP trickle, floored at **20,000** a grant — five grants | `daily.premium_xp_hours`, `daily.premium_xp_floor`, `collection.xp_trickle_per_tier_depth` |
-| Royal gold keys | **ten** a season | `daily.premium_gold_keys` |
-| The Royal chest's price | **$9.99** for 50,000 Gems of value | `Store` sheet |
-| The chain | row order is chain order | `Quests` sheet |
+| Royal Gems | **25,000** a season | `daily.premiumGems` |
+| Royal Hero XP | 12 hours of the XP trickle, floored at **20,000** a grant — five grants | `daily.premiumXpHours`, `daily.premiumXpFloor`, `collection.xpTricklePerTierDepth` |
+| Royal gold keys | **ten** a season | `daily.premiumGoldKeys` |
+| The Royal chest's price | **$9.99** for 50,000 Gems of value | `store` |
+| The chain | list order is chain order | `quests` |
 
 ## 5. Acceptance
 

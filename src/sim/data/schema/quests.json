@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "fields": {
+    "id": { "type": "text" },
+    "name": { "type": "text" },
+    "goalType": {
+      "type": "text",
+      "options": [
+        "BuildDistrict",
+        "UpgradeDistrict",
+        "HoldResource",
+        "ReachPopulation",
+        "CompleteTech",
+        "CompleteTechs",
+        "AssignWorkers",
+        "TrainArmy",
+        "ClaimLandmarks",
+        "ReachDepth",
+        "ClearRuins",
+        "OwnArtifacts",
+        "OwnHeroes",
+        "ClearGarrisons",
+        "CollectResource",
+        "CollectTaps",
+        "DiscoverCells",
+        "SellGoods",
+        "DiscoverFeature"
+      ]
+    },
+    "goalTarget": { "type": "text", "nullable": true },
+    "goalAmount": { "type": "int", "min": 1 },
+    "goalLevel": { "type": "int", "nullable": true },
+    "reward": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" },
+    "rewardGems": { "type": "int" },
+    "rewardStardust": { "type": "int" },
+    "rewardKnowledge": { "type": "int" },
+    "rewardMana": { "type": "int" }
+  }
+}

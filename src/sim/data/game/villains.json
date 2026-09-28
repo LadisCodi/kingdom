@@ -1,0 +1,72 @@
+{
+  "BarrowThane": {
+    "name": "Barrow Thane",
+    "glyph": "💀",
+    "sprite": "villain_barrow_thane",
+    "unitType": "Warrior",
+    "dmg": 120,
+    "def": 3,
+    "hp": 520,
+    "cooldown": 12,
+    "troopDmgMult": 1.1,
+    "troopHpMult": 1.05,
+    "troopDefBonus": 1,
+    "power": 60
+  },
+  "DrownedChoir": {
+    "name": "Drowned Choir",
+    "glyph": "🎶",
+    "sprite": "villain_drowned_choir",
+    "unitType": "Archer",
+    "dmg": 150,
+    "def": 1,
+    "hp": 320,
+    "cooldown": 12,
+    "troopDmgMult": 1.15,
+    "troopHpMult": 1,
+    "troopDefBonus": 0,
+    "power": 75
+  },
+  "SlagWarden": {
+    "name": "Slag Warden",
+    "glyph": "🔥",
+    "sprite": "villain_slag_warden",
+    "unitType": "Lancer",
+    "dmg": 180,
+    "def": 2,
+    "hp": 600,
+    "cooldown": 13,
+    "troopDmgMult": 1.1,
+    "troopHpMult": 1.1,
+    "troopDefBonus": 1,
+    "power": 90
+  },
+  "LedgerKeeper": {
+    "name": "The Ledger Keeper",
+    "glyph": "📕",
+    "sprite": "villain_ledger_keeper",
+    "unitType": "Cavalry",
+    "dmg": 260,
+    "def": 2,
+    "hp": 700,
+    "cooldown": 14,
+    "troopDmgMult": 1.2,
+    "troopHpMult": 1.05,
+    "troopDefBonus": 1,
+    "power": 130
+  },
+  "StarSeer": {
+    "name": "The Star Seer",
+    "glyph": "🌠",
+    "sprite": "villain_star_seer",
+    "unitType": "Archer",
+    "dmg": 320,
+    "def": 2,
+    "hp": 820,
+    "cooldown": 12,
+    "troopDmgMult": 1.25,
+    "troopHpMult": 1.15,
+    "troopDefBonus": 2,
+    "power": 160
+  }
+}

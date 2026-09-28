@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "fields": {
+    "army": {
+      "type": "object",
+      "fields": {
+        "typeAdvantage": { "type": "float" },
+        "typeDisadvantage": { "type": "float" },
+        "threatFloorFraction": { "type": "float" },
+        "woundedShare": { "type": "float" },
+        "healCostShare": { "type": "float" },
+        "healTimeShare": { "type": "float" }
+      }
+    },
+    "combat": {
+      "type": "object",
+      "fields": {
+        "tickMs": { "type": "int" },
+        "timeoutTicks": { "type": "int" },
+        "typeAdvantageNum": { "type": "int" },
+        "typeAdvantageDen": { "type": "int" },
+        "typeDisadvantageNum": { "type": "int" },
+        "typeDisadvantageDen": { "type": "int" },
+        "genSlotsMin": { "type": "int" },
+        "genSlotsMax": { "type": "int" },
+        "genVillainThreshold": { "type": "int" },
+        "genVillainShare": { "type": "float" },
+        "genVillainSlots": { "type": "int" },
+        "heroPowerPerDmg": { "type": "float" }
+      }
+    },
+    "party": {
+      "type": "object",
+      "fields": {
+        "troopSlots": { "type": "int" },
+        "heroSlots": { "type": "int" },
+        "heroSlotGemCostBase": { "type": "int" },
+        "heroSlotGemCostGrowth": { "type": "int" }
+      }
+    }
+  }
+}

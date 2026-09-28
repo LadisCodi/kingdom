@@ -1,0 +1,68 @@
+{
+  "Gold": {
+    "cap": null,
+    "start": 0,
+    "primary": true,
+    "goldValue": null
+  },
+  "Food": {
+    "cap": null,
+    "start": 0,
+    "primary": true,
+    "goldValue": 1
+  },
+  "Wood": {
+    "cap": null,
+    "start": 0,
+    "primary": true,
+    "goldValue": 3
+  },
+  "Stone": {
+    "cap": null,
+    "start": 0,
+    "primary": true,
+    "goldValue": 2
+  },
+  "Mana": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  },
+  "Knowledge": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  },
+  "Stardust": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  },
+  "HeroXp": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  },
+  "Gems": {
+    "cap": null,
+    "start": 500,
+    "primary": true,
+    "goldValue": null
+  },
+  "SilverKey": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  },
+  "GoldKey": {
+    "cap": null,
+    "start": 0,
+    "primary": false,
+    "goldValue": null
+  }
+}

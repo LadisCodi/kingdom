@@ -52,7 +52,7 @@
   10**, and nothing below 8. The Townhall demands **10, 20, 30** at the same
   levels ([`buildings.md`](buildings.md) §3.1).
 - The number is the **total at that level, not an increment** — indexed from
-  level 1 like an army cap — so one column states the gate on building a thing
+  level 1 like an army cap — so one list states the gate on building a thing
   and every gate on its levels, and a level replaces the one under it rather
   than stacking on it: 8 → 9 asks for 4 in total, not 2 + 4.
 
@@ -81,7 +81,7 @@
 - Position is paid for by adjacency, never by the gate: a **house beside a
   decoration collects +1 Gold a minute** for each one, the mirror of the
   crowding penalty ([`03-economy.md`](03-economy.md) §3.1). `AnyDecoration` is
-  a kind, so the rule is one row.
+  a kind, so the rule is one `adjacency` entry.
 - A decoration reveals no fog, so a cheap piece is never a cheaper frontier
   than paying for one.
 
@@ -108,13 +108,13 @@
 
 | Dial | Value | Key |
 |---|---|---|
-| What a piece supplies | §2 | `Districts.harmony_supply` |
-| What a level demands, as a total from level 1 | `,,,,,,,2,4,6` | `Districts.harmony_cost_per_level` |
-| When a piece may stand, and how many | §2 | `Districts.max_count_per_townhall_level` |
-| What a piece costs in goods | §2 | the `DistrictCosts` sheet, its level 1 row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
-| The surplus tiers and what each pays | `1.10:0.05\|1.25:0.10\|1.50:0.15` | `harmony.surplus_tiers` |
+| What a piece supplies | §2 | `buildings.harmonySupply` |
+| What a level demands, as a total from level 1 | `[0,0,0,0,0,0,0,2,4,6]` | `buildings.harmonyCostPerLevel` |
+| When a piece may stand, and how many | §2 | `buildings.maxCountPerTownhallLevel` |
+| What a piece costs in goods | §2 | `buildings` › `costPerLevel`, its level 1 `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
+| The surplus tiers and what each pays | 1.10 → +0.05 · 1.25 → +0.10 · 1.50 → +0.15 | `harmony.surplusTiers` |
 | Which technology discovers a piece | §2 | the card's `unlocks` in `?dev=tree` |
-| A house's rent beside a piece | +1 a minute | the `Adjacency` sheet |
+| A house's rent beside a piece | +1 a minute | `adjacency` |
 
 ## 10. Deliberately not in this design
 

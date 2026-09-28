@@ -161,34 +161,34 @@ tap 50      →   50        offer returns
 
 ## 7. Dials, in the order to reach for them
 
-1. **`tap.work_seconds`** — 10. What a tap is worth, and therefore what an ad
+1. **`tap.workSeconds`** — 10. What a tap is worth, and therefore what an ad
    is worth: **a pool buys ~5.5 minutes of the city's own production, at both
    ends of the game** ([`04-harvest.md`](04-harvest.md) §3.3). The relation
-   to hold is `work_seconds ÷ collect_cooldown` against the crew the city can
+   to hold is `tap.workSeconds ÷ tap.collectCooldownSeconds` against the crew the city can
    house. At 10 a bare thumb is worth 20 workers and Townhall 3 houses 30, so
    hand-play pays once `QuickHands` and `TapPower` are bought. **Doubling it
    doubles the ad with it.** Whether the ad economy balances on ~5.5 minutes
    is OQ-51.
-2. **`mana.gem_refill_costs`** — the Gem ladder, **400 / 600 / 800 / 1,000 /
+2. **`mana.gemRefillCosts`** — the Gem ladder, **400 / 600 / 800 / 1,000 /
    2,000**, indexed by refills bought today. Its LENGTH is the daily cap, so
    adding a rung both extends the day and sets its price
    ([`14-monetization.md`](14-monetization.md) §2.2).
-3. **`mana.base_cap`** — 100, flat. Session length per pool.
-4. **`ads.mana_refills_per_day`** — 5. The video's allowance, its own counter.
-5. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
-6. **`mana.base_per_hour`** — 12, flat. The free allowance. Moves with `base_cap`: the two are tuned to keep the fill just past the offline cap (§2).
-7. **`ads.eligible_below_fraction`** — 0.5. How early the offer shows up.
+3. **`mana.baseCap`** — 100, flat. Session length per pool.
+4. **`ads.manaRefillsPerDay`** — 5. The video's allowance, its own counter.
+5. **`ads.cooldownMaxSeconds`** — 90. The rhythm between offers.
+6. **`mana.basePerHour`** — 12, flat. The free allowance. Moves with `mana.baseCap`: the two are tuned to keep the fill just past the offline cap (§2).
+7. **`ads.eligibleBelowFraction`** — 0.5. How early the offer shows up.
 
 | Also | Value | Key |
 |---|---|---|
-| Sanctum capacity | +24 / 48 / 72 / 100 / 132 | `mana.sanctum_cap_per_level` |
-| Sanctum production | +3 / 6 / 9 / 12 / 16 per hour | `mana.sanctum_per_hour_per_level` |
-| Landmark capacity | **+10 each** | `mana.landmark_cap` |
-| `Meditation` | +30 capacity | `mana.meditation_cap` |
+| Sanctum capacity | +24 / 48 / 72 / 100 / 132 | `mana.sanctumCapPerLevel` |
+| Sanctum production | +3 / 6 / 9 / 12 / 16 per hour | `mana.sanctumPerHourPerLevel` |
+| Landmark capacity | **+10 each** | `mana.landmarkCap` |
+| `Meditation` | +30 capacity | `mana.meditationCap` |
 | `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.4) |
-| Gem refill | a whole pool, **400 → 2,000 Gems** by rung, 5 a day | `mana.gem_refill_costs` |
-| Video refill | a whole pool, **5 a day** | `ads.mana_refills_per_day` |
-| Tap Mana cost | 1 | `tap.mana_cost` |
+| Gem refill | a whole pool, **400 → 2,000 Gems** by rung, 5 a day | `mana.gemRefillCosts` |
+| Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
+| Tap Mana cost | 1 | `tap.manaCost` |
 | Ad reward | the whole cap | — |
 
 ## 8. What the player sees

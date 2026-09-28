@@ -204,7 +204,7 @@ Respawn:
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
 - **The Townhall is the reach.** A cell can be paid for only within
-  `fog.reach_per_townhall_level` BFS rings of the Townhall, indexed by its
+  `fog.reachPerTownhallLevel` BFS rings of the Townhall, indexed by its
   level: **3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40**. Level 10 reaches the
   province's last ring.
 - A building's fog radii and a claim's discover ring ignore the reach, the way
@@ -236,7 +236,7 @@ reaches ring 40.
 - A footprint is five taps too, and costs **the sum of its cells** (§3.1). A
   3×3 therefore charges nine cells' worth a tap, which the floater states.
 - **The map gets dearer as it is revealed.** The ring price is multiplied by
-  `fog.count_growth` (**×1.05**) once per `fog.count_step` (**10**) cells
+  `fog.countGrowth` (**×1.05**) once per `fog.countStep` (**10**) cells
   already revealed. Every revealed cell counts — seeded, built around or
   divined — the same count the era bars read
   ([`07-research.md`](07-research.md) §2.1). A fresh kingdom's 16 seeded cells
@@ -303,14 +303,14 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 ## 7. Where the map is authored
 
-- **The workbook is the source of truth for every number; the map editor is the
+- **`?dev=data` is the source of truth for every number; the map editor is the
   source of truth for the map.**
 - Terrain, features, landmarks and ruins live in
   `src/sim/data/region-map.json`, painted in `?dev=map`
   ([`../map-editor.md`](../map-editor.md)).
 - What a legal map is lives in one module, `mapRules.ts`, checked by the
   editor, the save endpoint and a test.
-- Fog ring prices stay in the workbook.
+- Fog ring prices are numbers: `fog.rings` in the `exploration` settings.
 - **The ruin roster is fixed in code** (`RuinId` is a union): a ruin can be
   moved and retuned but not added.
 - Landmarks have no code-side identity beyond their `kind`; they are fully
@@ -323,16 +323,16 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 3 → 1,024,000, ×1.25 past ring 20 | `FogRings` sheet |
-| How far each Townhall level lets the fog be paid for | 3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40 rings | `fog.reach_per_townhall_level` |
-| How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.count_step`, `fog.count_growth` |
-| Taps to clear a cell | 5 | `fog.taps_to_reveal` |
-| The floor under a cell's price | 1 | `fog.min_cost` |
-| Claim discover radius | 5 | `fog.claim_discover_radius` |
-| A building's reveal / discover radius | 1 / 2 | `Districts` sheet |
+| Fog price per ring | 3 → 1,024,000, ×1.25 past ring 20 | `fog.rings` |
+| How far each Townhall level lets the fog be paid for | 3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40 rings | `fog.reachPerTownhallLevel` |
+| How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.countStep`, `fog.countGrowth` |
+| Taps to clear a cell | 5 | `fog.tapsToReveal` |
+| The floor under a cell's price | 1 | `fog.minCost` |
+| Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| A building's reveal / discover radius | 1 / 2 | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
-| Feature yields, taps, recovery | §3 | `Harvest` sheet |
+| Feature yields, taps, recovery | §3 | `harvest` |
 | Which features may span cells, and how far | Mountain, up to 3×3 | §3.1, `definitions.ts` |
 | The world itself | — | `?dev=map` |
 

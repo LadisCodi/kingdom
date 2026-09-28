@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "fields": {
+    "passiveBase": { "type": "float" },
+    "passivePerLevel": { "type": "float" },
+    "activeManaCost": { "type": "int" },
+    "activeDurationSeconds": { "type": "int" },
+    "activeRadius": { "type": "int" },
+    "activeTapsPerMana": { "type": "int" },
+    "activeTapsPerManaPerLevel": { "type": "float" },
+    "activePower": { "type": "int" },
+    "activePowerPerLevel": { "type": "float" },
+    "activeDurationPerLevel": { "type": "int" },
+    "activeCharges": { "type": "int" },
+    "activeChargesPerLevel": { "type": "int" }
+  }
+}

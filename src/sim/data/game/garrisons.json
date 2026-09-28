@@ -1,0 +1,27 @@
+[
+  {
+    "tier": 1,
+    "takeSeconds": 300,
+    "supplies": { "Gold": 25, "Food": 10 }
+  },
+  {
+    "tier": 2,
+    "takeSeconds": 600,
+    "supplies": { "Gold": 75, "Food": 20 }
+  },
+  {
+    "tier": 3,
+    "takeSeconds": 900,
+    "supplies": { "Gold": 200, "Food": 30, "Stone": 15 }
+  },
+  {
+    "tier": 4,
+    "takeSeconds": 1200,
+    "supplies": { "Gold": 450, "Food": 50, "Stone": 30 }
+  },
+  {
+    "tier": 5,
+    "takeSeconds": 1500,
+    "supplies": { "Gold": 1000, "Food": 75, "Stone": 60 }
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "artifactCooldownSeconds": 300,
+  "artifactAutoTapPerSecond": 4,
+  "artifactRadiusSteps": [
+    5,
+    10,
+    20
+  ]
+}

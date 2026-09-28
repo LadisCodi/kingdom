@@ -54,14 +54,14 @@
 
 | Dial | Value | Key |
 |---|---|---|
-| Builders at the start | 1 | `kingdom.start_builders` |
-| Ceiling | 4 | `kingdom.max_builders` |
-| Price of the next builder | `round(2500 × 2^purchased)` | `kingdom.builder_gem_cost_base`, `…_growth` |
+| Builders at the start | 1 | `kingdom.startBuilders` |
+| Ceiling | 4 | `kingdom.maxBuilders` |
+| Price of the next builder | `round(2500 × 2^purchased)` | `kingdom.builderGemCostBase`, `…Growth` |
 
 ## 5. Deliberately not in this design
 
 - A waiting line, and any promotion or reordering logic (§1).
-- A `build_queue_capacity` dial alongside the builder count.
+- A `buildQueueCapacity` dial alongside the builder count.
 - A free trial of a builder.
 - Rushing offered inline in the offer sheet.
 - A store card for builders ([`14-monetization.md`](14-monetization.md) §2).

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "fields": {
+    "key": { "type": "text", "ref": "currency" },
+    "keyGemCost": { "type": "int" },
+    "heroChance": { "type": "float" },
+    "softPityAt": { "type": "int" },
+    "hardPityAt": { "type": "int" },
+    "legendaryPityAt": { "type": "int" },
+    "weights": {
+      "type": "object",
+      "fields": { "Common": { "type": "int" }, "Rare": { "type": "int" }, "Legendary": { "type": "int" } }
+    },
+    "duplicateFragments": { "type": "int" },
+    "fragmentsPerMiss": { "type": "int" },
+    "pullStardust": { "type": "int" },
+    "freePerDay": { "type": "int" },
+    "freeCooldownSeconds": { "type": "int" }
+  }
+}
