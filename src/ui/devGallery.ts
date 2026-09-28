@@ -41,18 +41,23 @@ export function mountGallery(root: HTMLElement): void {
   const noop = () => {};
   page.append(section(
     'Buttons',
-    // THE COLLECTION: every material, live and disabled. Hover and press any
-    // of them for the other two states.
+    // THE COLLECTION: every colour painted (everyday) and as a gemstone
+    // (premium, magical), live and disabled. Hover and press any of them for
+    // the other two states.
+    el('div', { class: 'gal-row' },
+      specimen('wood · secondary', btn({ label: 'Select', onClick: noop })),
+      specimen('disabled', btn({ label: 'Select', onClick: noop, disabledReason: 'Not yet' })),
+    ),
     ...([
-      ['wood · secondary', 'secondary', 'Select'],
-      ['emerald · primary', 'primary', 'Build'],
-      ['sapphire · blue', 'blue', 'Watch'],
-      ['topaz · gold', 'gold', 'Claim'],
-      ['ruby · destructive', 'destructive', 'Reset'],
-      ['amethyst · gem', 'gem', 'Finish'],
-    ] as const).map(([name, kind, label]) => el('div', { class: 'gal-row' },
-      specimen(name, btn({ label, onClick: noop, kind })),
-      specimen('disabled', btn({ label, onClick: noop, kind, disabledReason: 'Not yet' }))
+      ['green · primary', 'emerald', 'primary', 'Upgrade'],
+      ['blue', 'sapphire', 'blue', 'Watch'],
+      ['gold', 'topaz', 'gold', 'Claim'],
+      ['red · destructive', 'ruby', 'destructive', 'Reset'],
+      ['purple · gem', 'amethyst', 'gem', 'Finish'],
+    ] as const).map(([name, stone, kind, label]) => el('div', { class: 'gal-row' },
+      specimen(`${name} · paint`, btn({ label, onClick: noop, kind, finish: 'paint' })),
+      specimen(`${stone} · gem`, btn({ label, onClick: noop, kind, finish: 'gem' })),
+      specimen('disabled', btn({ label, onClick: noop, kind, finish: 'paint', disabledReason: 'Not yet' })),
     )),
     el('div', { class: 'gal-row' },
       specimen('with icon', btn({ label: 'Show me', onClick: noop, icon: 'showme' })),

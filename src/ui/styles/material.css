@@ -125,9 +125,10 @@
 /* THE LABEL BUTTONS: one painted slab per MATERIAL, nine-sliced, with all
    four states in the art (Docs/art/ui-menus-redesign.md §3.3):
      WOOD                       plain actions — the default, `secondary`;
-     GEMS — emerald, sapphire,  the actions worth wanting: green `primary`,
-     topaz, ruby, amethyst      red `destructive`, purple `gem` (spends
-                                Gems), and `blue`, `gold`.
+     PAINT — green, blue,       everyday coloured actions: green `primary`,
+     gold, red, purple          red `destructive`, `blue`, `gold`;
+     GEMS — the same five       the premium and magical ones (`.is-gem`),
+     colours as stones          and purple `gem`, which spends Gems.
    Normal and pressed are drawn; highlight and disabled are derived from the
    normal art (scripts/ui-buttons.mjs), so the four share one outline and a
    button never shifts as its state changes. Every material is cut to the
@@ -147,12 +148,16 @@
   padding-top: 10px;
   padding-bottom: 12px;
   color: var(--ink-inverse);
-  /* A dark rim all round the words, so a label and its price hold on any
-     stone: a drop below and a soft halo, not a hard stroke. */
+  /* THE LABEL'S OUTLINE: 1 px all round and a 2 px drop below, in a darker
+     tone of the slab it sits on (--btn-ink, set per material below), so the
+     words hold on every colour without a black stroke. */
+  --btn-ink: #5d3014;
   text-shadow:
-    0 1px 0 rgba(30, 16, 6, 0.85),
-    0 0 2px rgba(30, 16, 6, 0.7),
-    0 0 4px rgba(30, 16, 6, 0.35);
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
   transform: none;
   transition: none;
 }
@@ -173,15 +178,24 @@
   border-image-source: var(--btn-off);
   padding-top: 10px;
   padding-bottom: 12px;
+  --btn-ink: #3c3f48;
   color: #e3e6ec;
-  text-shadow: 0 1px 0 rgba(40, 46, 60, 0.7);
   cursor: default;
 }
-.k-btn.k-btn--primary { --btn: url('../assets/btn-green.png'); --btn-down: url('../assets/btn-green-down.png'); --btn-hover: url('../assets/btn-green-hover.png'); --btn-off: url('../assets/btn-green-off.png'); }
-.k-btn.k-btn--blue { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); }
-.k-btn.k-btn--gold { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); }
-.k-btn.k-btn--destructive { --btn: url('../assets/btn-red.png'); --btn-down: url('../assets/btn-red-down.png'); --btn-hover: url('../assets/btn-red-hover.png'); --btn-off: url('../assets/btn-red-off.png'); }
-.k-btn.k-btn--gem { --btn: url('../assets/btn-purple.png'); --btn-down: url('../assets/btn-purple-down.png'); --btn-hover: url('../assets/btn-purple-hover.png'); --btn-off: url('../assets/btn-purple-off.png'); }
+/* Every colour comes in two FINISHES (controls.ts `ButtonFinish`): PAINT,
+   plain matte colour for the everyday actions, and GEM, the polished stone
+   for the premium and magical ones. Painted unless `.is-gem`; the Gems kind
+   is a stone unless `.is-paint`. */
+.k-btn.k-btn--primary { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
+.k-btn.k-btn--blue { --btn: url('../assets/btn-paint-blue.png'); --btn-down: url('../assets/btn-paint-blue-down.png'); --btn-hover: url('../assets/btn-paint-blue-hover.png'); --btn-off: url('../assets/btn-paint-blue-off.png'); --btn-ink: #154576; }
+.k-btn.k-btn--gold { --btn: url('../assets/btn-paint-gold.png'); --btn-down: url('../assets/btn-paint-gold-down.png'); --btn-hover: url('../assets/btn-paint-gold-hover.png'); --btn-off: url('../assets/btn-paint-gold-off.png'); --btn-ink: #866005; }
+.k-btn.k-btn--destructive { --btn: url('../assets/btn-paint-red.png'); --btn-down: url('../assets/btn-paint-red-down.png'); --btn-hover: url('../assets/btn-paint-red-hover.png'); --btn-off: url('../assets/btn-paint-red-off.png'); --btn-ink: #771813; }
+.k-btn.k-btn--primary.is-gem { --btn: url('../assets/btn-green.png'); --btn-down: url('../assets/btn-green-down.png'); --btn-hover: url('../assets/btn-green-hover.png'); --btn-off: url('../assets/btn-green-off.png'); --btn-ink: #015e10; }
+.k-btn.k-btn--blue.is-gem { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
+.k-btn.k-btn--gold.is-gem { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
+.k-btn.k-btn--destructive.is-gem { --btn: url('../assets/btn-red.png'); --btn-down: url('../assets/btn-red-down.png'); --btn-hover: url('../assets/btn-red-hover.png'); --btn-off: url('../assets/btn-red-off.png'); --btn-ink: #7f0008; }
+.k-btn.k-btn--gem { --btn: url('../assets/btn-purple.png'); --btn-down: url('../assets/btn-purple-down.png'); --btn-hover: url('../assets/btn-purple-hover.png'); --btn-off: url('../assets/btn-purple-off.png'); --btn-ink: #4e0482; }
+.k-btn.k-btn--gem.is-paint { --btn: url('../assets/btn-paint-purple.png'); --btn-down: url('../assets/btn-paint-purple-down.png'); --btn-hover: url('../assets/btn-paint-purple-hover.png'); --btn-off: url('../assets/btn-paint-purple-off.png'); --btn-ink: #461c68; }
 /* ONE HEIGHT, AND A FLOOR ON WIDTH: the slab is drawn at about 3:1 with its
    rounded ends and lip in the slices, so a button is always the slab's own
    height and never narrower than its two ends plus a word. Anything that
@@ -231,9 +245,11 @@
   border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
   color: var(--ink-inverse);
   text-shadow:
-    0 1px 0 rgba(30, 16, 6, 0.85),
-    0 0 2px rgba(30, 16, 6, 0.7),
-    0 0 4px rgba(30, 16, 6, 0.35);
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
 }
 .k-btn.has-cost:not(:disabled):not(.is-locked):hover > .k-btn-label { border-image-source: var(--btn-hover); }
 .k-btn.has-cost:not(:disabled):not(.is-locked):active > .k-btn-label { border-image-source: var(--btn-down); padding: 4px 16px 0; }
@@ -241,7 +257,12 @@
 .k-btn.has-cost.is-locked > .k-btn-label {
   border-image-source: var(--btn-off);
   color: #e3e6ec;
-  text-shadow: 0 1px 0 rgba(40, 46, 60, 0.7);
+  text-shadow:
+    1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
+    0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
+    1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
+    1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
+    0 2px 0 var(--btn-ink);
 }
 
 /* A SECTION: the same darker paper, marking off a group inside a menu —
@@ -255,12 +276,12 @@
 }
 
 /* A segmented choice: the selected segment is the emerald slab. */
-.k-toggles .k-btn.is-selected { --btn: url('../assets/btn-green.png'); --btn-down: url('../assets/btn-green-down.png'); --btn-hover: url('../assets/btn-green-hover.png'); --btn-off: url('../assets/btn-green-off.png'); }
+.k-toggles .k-btn.is-selected { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
 /* Screens that recoloured a slab by hand now pick a material: the video
    till and the ad call are sapphire, the advanced banner's call topaz. */
 .mana-tills > .mana-till:first-child > .k-btn,
-.store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); }
-.store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); }
+.store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
+.store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
 /* THE ROUND BUTTONS: the label buttons' materials in the round
    (sheets/ui-buttons2-round.png) — wood by default, a gem `kind` otherwise —
    drawn at the size of the header's Gems "+" (50 rpx), with a hit area that

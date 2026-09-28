@@ -383,6 +383,7 @@ function spellSection(game: Game, id: ArtifactId, card: ReturnType<Game['relicCa
     ? btn({
       label: `Cast ${active.name}`,
       kind: 'primary',
+      finish: 'gem',
       onClick: () => game.startCast(id),
     })
     : el('div', { class: `col-cast-phase is-${phase.toLowerCase()}` },
@@ -472,6 +473,7 @@ export function renderCollectionSheet(game: Game): HTMLElement {
       label: `Open the ${pack.tier} pack`,
       onClick: () => game.doOpenPack(),
       kind: 'primary',
+      finish: 'gem',
       note: `${pack.cards} cards${info.packs > 1 ? ` · ${info.packs} waiting` : ''}`,
     }));
   }

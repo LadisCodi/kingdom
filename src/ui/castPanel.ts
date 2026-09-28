@@ -65,6 +65,7 @@ export function renderCastPanel(game: Game): HTMLElement {
   const confirm = btn({
     label: 'Cast',
     kind: 'primary',
+    finish: 'gem',
     onClick: () => game.confirmCast(),
     costExtra: [{ icon: 'Mana', amount: String(info.manaCost), short: !info.affordable }],
     disabledReason: blockedBy,

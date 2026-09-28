@@ -23,10 +23,19 @@ import { costTerms, isShort, type CostTerm } from './stats';
 
 export type ButtonKind = 'primary' | 'secondary' | 'destructive' | 'gem' | 'blue' | 'gold';
 
+/** What a coloured button is MADE of (Docs/art/ui-menus-redesign.md §3.3):
+ *  `paint` for the everyday actions — upgrade, train, build — and `gem` for
+ *  the premium or magical ones worth wanting — buy a pack, cast a spell.
+ *  Wood (`secondary`) has no finish. Every colour is painted by default
+ *  except `gem`, the Gems-spending kind, which is a gemstone. */
+export type ButtonFinish = 'paint' | 'gem';
+
 export interface ActionOpts {
   label: string;
   onClick: () => void;
   kind?: ButtonKind;
+  /** Painted or gemstone; see `ButtonFinish` for the default. */
+  finish?: ButtonFinish;
   icon?: IconName;
   /** What pressing this spends. Rendered INSIDE the button, under the label
    *  (§6.4). Omit for an action that costs nothing. */
@@ -66,12 +75,13 @@ export const isBlocked = (opts: ActionOpts): boolean =>
  *  part of the button rather than a caption beside it (§6.4). */
 export function btn(opts: ActionOpts): HTMLButtonElement {
   const kind = opts.kind ?? 'secondary';
+  const finish = opts.finish ?? (kind === 'gem' ? 'gem' : 'paint');
   const blocked = isBlocked(opts);
   const terms = costTerms(opts.cost, opts.have, opts.costExtra);
   const stacked = terms !== null || opts.note !== undefined;
   const b = el(
     'button',
-    { class: `k-btn k-btn--${kind}${stacked ? ' has-cost' : ''}`, type: 'button' },
+    { class: `k-btn k-btn--${kind} is-${finish}${stacked ? ' has-cost' : ''}`, type: 'button' },
     ...(opts.note !== undefined
       ? [el('span', { class: 'k-btn-note' }, opts.note)]
       : []),

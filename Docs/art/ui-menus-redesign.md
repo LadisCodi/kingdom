@@ -185,25 +185,30 @@ the flat kit.
 
 ### 3.3 Buttons
 
-Two materials, one silhouette — a rounded slab with a lip under its face —
+Three materials, one silhouette — a rounded slab with a lip under its face —
 nine-sliced so a label of any length fits.
 
 - **Wood** for plain actions: the ones a player does, not the ones they want.
-- **Gemstone** for the actions worth wanting: a slab of polished stone in a
-  thin gold bezel, a clean gradient glowing a little from inside, one soft
-  highlight band — calm enough that a label and a price read on it (no
-  sparkle or busy facets). Five stones, one per meaning.
+- **Paint** for everyday coloured actions — upgrade, train, build: one matte
+  colour, a soft lighter band along the top, a darker lip, little texture.
+- **Gemstone** for the premium and magical actions — buy a pack, cast a
+  spell, open a pack, gacha calls, claiming a reward: polished stone in a
+  thin gold bezel, a clean gradient, one soft highlight band.
 
-| Kit kind | Material | Used for |
+Every colour comes in both finishes (`finish: 'paint' | 'gem'`). A colour is
+painted by default; the `gem` kind (spends Gems) is a gemstone by default.
+
+| Kit kind | Colour | Used for |
 |---|---|---|
 | `secondary` (default) | wood | Select, filters, amount picker, Buy with coins |
-| `primary` | emerald | Build, Claim, Train, Upgrade, Start — the one green action |
-| `blue` | sapphire | watch a video, a free call |
-| `gold` | topaz | a premium or advanced call |
-| `destructive` | ruby | Reset, Cancel |
-| `gem` | amethyst | anything that spends Gems: Finish now, buy a slot |
+| `primary` | green · emerald | Build, Train, Upgrade, Start — the one green action |
+| `blue` | blue · sapphire | watch a video, a free call |
+| `gold` | gold · topaz | an advanced call |
+| `destructive` | red · ruby | Reset, Cancel |
+| `gem` | purple · amethyst | anything that spends Gems: Finish now, buy a slot |
 
-Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
+Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
+`btn-paint-<colour>[-state].png` for paint):
 
 - **Normal** and **pressed** — drawn (the pressed one is the same slab pushed
   in: no lip, face lower).
@@ -213,6 +218,9 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
 - **Size**: one height (46 px) and a floor on width (112 px), so the slab is
   always drawn at its own proportions. Anything taller than a label goes
   outside the slab.
+- **Label**: light ink with a 1 px outline and a 2 px drop below, in a
+  darker tone of the slab's own colour (dark green on green, dark brown on
+  wood, slate on disabled).
 - A disabled button keeps its **reason line beside it**.
 - **Round** (`knob(glyph, …, { kind })`, `knob-<material>[-state].png`):
   the same six materials and four states as a disc, for a one-glyph action —

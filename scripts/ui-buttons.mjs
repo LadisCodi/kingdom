@@ -8,7 +8,8 @@
 // four are pixel-identical in outline and a button never shifts as it
 // changes state (the atlas derives its -locked icons the same way):
 //
-//   btn-<m>.png          normal       drawn (sheets/ui-buttons1-gems.png, ui-quest1-…)
+//   btn-<m>.png          normal       drawn (sheets/ui-buttons1-gems.png, ui-quest1-…,
+//                                     and ui-buttons3-paint.png for btn-paint-<colour>)
 //   btn-<m>-down.png     pressed      drawn
 //   btn-<m>-hover.png    highlight    derived: brighter, a touch warmer
 //   btn-<m>-off.png      disabled     derived: desaturated toward a muted blue-grey
@@ -25,11 +26,13 @@ import { fileURLToPath } from 'node:url';
 
 const ASSETS = join(dirname(fileURLToPath(import.meta.url)), '..', 'src/ui/assets');
 const MATERIALS = ['wood', 'green', 'blue', 'gold', 'red', 'purple'];
+/** The painted colours — the label buttons only; the round set is wood and gems. */
+const PAINTS = ['paint-green', 'paint-blue', 'paint-gold', 'paint-red', 'paint-purple'];
 
 const magick = (...args) => execFileSync('magick', args.map(String), { stdio: 'inherit' });
 
 for (const shape of ['btn', 'knob']) {
-  for (const m of MATERIALS) {
+  for (const m of shape === 'btn' ? [...MATERIALS, ...PAINTS] : MATERIALS) {
     const src = join(ASSETS, `${shape}-${m}.png`);
     if (!existsSync(src)) {
       console.error(`ui-buttons: missing ${src}`);
