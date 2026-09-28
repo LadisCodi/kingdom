@@ -307,7 +307,17 @@ export function inferSpec(samples: readonly unknown[], asRecord = false): FieldS
 function applyOverrides(spec: FieldSpec, overrides: Overrides): FieldSpec {
   const out = structuredClone(spec);
   for (const [path, patch] of Object.entries(overrides)) {
-    for (const node of nodesAt(out, path.split('.'))) Object.assign(node, patch);
+    for (const node of nodesAt(out, path.split('.'))) {
+      // Named keys that are really ids (a starting purse of Gold and Food)
+      // were inferred as a record; naming what the keys are makes it a map.
+      if (patch.keysRef && node.type === 'object') {
+        const first = Object.values(node.fields ?? {})[0];
+        node.type = 'map';
+        node.of = first ? { type: first.type } : { type: 'unknown' };
+        delete node.fields;
+      }
+      Object.assign(node, patch);
+    }
   }
   return out;
 }

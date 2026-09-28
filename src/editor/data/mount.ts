@@ -17,7 +17,7 @@ import './data.css';
 import balance from '../../sim/data/balance.json';
 import techTree from '../../sim/data/tech-tree.json';
 import {
-  COLLECTIONS, DOMAINS, REF_COLLECTION, collectionById, entriesOf, getAt, isListCollection,
+  COLLECTIONS, DOMAINS, QUEST_GOALS, REF_COLLECTION, collectionById, entriesOf, getAt, isListCollection,
   refIds, refsIn, schemaOf, validateData,
   type CollectionDef, type DataDoc, type DataIssue, type FieldSpec, type RefKind,
 } from '../../sim/data/dataRules';
@@ -160,7 +160,9 @@ export function mountEditor(): void {
     ui.menu = null;
     render();
   };
+  // popstate covers back/forward; hashchange covers a hash typed or pasted in.
   window.addEventListener('popstate', () => { route = parseRoute(); render(); });
+  window.addEventListener('hashchange', () => { route = parseRoute(); render(); });
 
   const root = h('div', { class: 'dx' });
   const top = h('header', { class: 'dx-top' });
@@ -475,7 +477,7 @@ export function mountEditor(): void {
   function numInput(p: Path, value: unknown, cls: string, spec: FieldSpec): HTMLInputElement {
     return h('input', {
       class: cls, type: 'text', inputMode: 'decimal', value: value === null || value === undefined ? '' : String(value),
-      placeholder: spec.nullable ? 'none' : '', 'data-k': pathKey(p),
+      placeholder: spec.nullable ? (cls.includes('dx-cell') ? '·' : 'none') : '', 'data-k': pathKey(p),
       onchange: (e: Event) => {
         const raw = (e.target as HTMLInputElement).value.trim();
         if (raw === '') { model.set(p, spec.nullable ? null : 0); return; }
@@ -587,6 +589,16 @@ export function mountEditor(): void {
     go({ e: null });
   }
 
+  /** A field whose meaning depends on its entry: a quest's target is a
+   *  building, a technology, a currency or nothing, by its goal type. */
+  function entrySpec(c: CollectionDef, value: unknown, key: string, spec: FieldSpec): FieldSpec {
+    if (c.id === 'quests' && key === 'goalTarget' && isObj(value)) {
+      const kind = QUEST_GOALS[String(value.goalType)];
+      return kind ? { ...spec, ref: kind, nullable: false } : { ...spec, options: [], nullable: true };
+    }
+    return spec;
+  }
+
   function renderTable(c: CollectionDef): HTMLElement {
     const spec = specOf(c);
     const fields = Object.entries(spec.fields ?? {});
@@ -599,9 +611,10 @@ export function mountEditor(): void {
       h('thead', {}, h('tr', {},
         ordered ? h('th', {}, '#') : null,
         isList ? null : h('th', {}, 'Id'),
+        c.id === 'quests' ? h('th', {}, 'Reads as') : null,
         ...scalar.map(([k, f]) => h('th', { class: f.type === 'int' || f.type === 'float' ? 'num' : '' }, k)),
         ...complex.map(([k]) => h('th', {}, k)),
-        c.id === 'quests' ? h('th', {}, 'Reads as') : null)),
+        null)),
       h('tbody', {}, ...rows.map(([id, v], idx) => {
         const base = entryPath(c, id);
         const rowIssues = issuesOf(c.id, id);
@@ -611,6 +624,7 @@ export function mountEditor(): void {
         },
         ordered ? h('td', { class: 'handle mono', title: 'Drag to reorder' }, `⋮⋮ ${idx + 1}`) : null,
         isList ? null : h('td', { class: 'id' }, id, rowIssues.length ? h('span', { class: `dx-dot ${rowIssues.some((i) => i.level === 'error') ? 'err' : 'wrn'}`, style: 'display:inline-block;margin-left:6px' }) : null),
+        c.id === 'quests' ? h('td', { class: 'prose' }, questProse(v)) : null,
         ...scalar.map(([k, f]) => {
           const p = [...base, k];
           const bad = issueAt(c.id, id, [k]);
@@ -618,10 +632,9 @@ export function mountEditor(): void {
           const val = isObj(v) ? v[k] : undefined;
           if (f.type === 'bool') return h('td', {}, h('input', { type: 'checkbox', checked: val === true, 'data-k': pathKey(p), onchange: (e: Event) => model.set(p, (e.target as HTMLInputElement).checked) }));
           return h('td', { class: f.type === 'text' ? '' : 'num', title: bad?.message },
-            f.type === 'text' ? textInput(p, val, f, cls) : numInput(p, val, cls, f));
+            f.type === 'text' ? textInput(p, val, entrySpec(c, v, k, f), cls) : numInput(p, val, cls, f));
         }),
-        ...complex.map(([k]) => h('td', { class: 'summary' }, summary(isObj(v) ? v[k] : undefined))),
-        c.id === 'quests' ? h('td', { class: 'summary' }, questProse(v)) : null);
+        ...complex.map(([k]) => h('td', { class: 'summary' }, summary(isObj(v) ? v[k] : undefined))));
         if (ordered) {
           tr.draggable = true;
           tr.addEventListener('dragstart', () => { ui.dragFrom = idx; });
@@ -701,7 +714,7 @@ export function mountEditor(): void {
           h('td', { class: 'mono dim' }, s.min !== undefined || s.max !== undefined ? `${s.min ?? ''} … ${s.max ?? ''}` : ''),
           h('td', { class: 'mono dim' }, len(s)),
           h('td', { class: 'dim' }, s.nullable ? 'yes' : ''),
-          h('td', { class: 'dim', style: 'white-space:normal' }, s.doc ?? '')))))));
+          h('td', { class: 'dim', style: 'white-space:normal;min-width:280px' }, s.doc ?? '')))))));
   }
 
   // ---- entity (buildings)
@@ -990,7 +1003,7 @@ export function mountEditor(): void {
     const table = h('table', { class: 'dx-table dx-heat mono' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Building'), ...Array.from({ length: maxL }, (_, i) => h('th', { class: 'num' }, `L${i + 1}`)))),
       h('tbody', {}, ...lines.map(({ eid, v, col }, r) => h('tr', {},
-        h('td', { style: 'font-family:inherit' }, h('button', { class: 'dx-crumb', style: 'color:var(--ink)', onclick: () => go({ e: eid, v: null }) }, nameOf(c, eid, v))),
+        h('td', { class: 'name' }, h('button', { class: 'dx-crumb', style: 'color:var(--ink)', onclick: () => go({ e: eid, v: null }) }, nameOf(c, eid, v))),
         ...Array.from({ length: maxL }, (_, i) => {
           const lvl = i + 1;
           if (lvl > (Number((v as Record<string, unknown>).maxLevel) || 1)) return h('td', {});
@@ -1031,7 +1044,10 @@ export function mountEditor(): void {
       h('button', { class: 'dx-btn sm', onclick: () => Number.isFinite(arg()) && apply(() => arg()) }, '= set'),
       h('button', { class: 'dx-btn sm', onclick: () => apply(sig3) }, 'Round 3 s.f.'),
       h('button', { class: 'dx-btn sm', onclick: () => copyCells(selected.map(({ line, l }) => line.col!.get(l).value)) }, 'Copy'),
-      h('button', { class: 'dx-btn sm', onclick: () => { ui.gridSel.clear(); render(); } }, 'Clear')) : null;
+      h('button', { class: 'dx-btn sm', onclick: () => { ui.gridSel.clear(); render(); } }, 'Clear'))
+      // The bar's row is always there, so a first click never moves the
+      // table out from under the second.
+      : h('div', { class: 'dx-bulk idle' }, h('span', { class: 'dim' }, 'Click a cell, Shift-click for a block, Ctrl-click to add — then change them together.'));
 
     return [
       h('div', { class: 'dx-row', style: 'flex-wrap:wrap;gap:10px' },
@@ -1040,8 +1056,8 @@ export function mountEditor(): void {
         h('div', { class: 'dx-seg' },
           h('button', { class: ui.gridMode === 'value' ? 'on' : '', onclick: () => { ui.gridMode = 'value'; render(); } }, 'Value'),
           h('button', { class: ui.gridMode === 'step' ? 'on' : '', onclick: () => { ui.gridMode = 'step'; render(); } }, 'Step ×')),
-        h('span', { class: 'dim', style: 'font-size:12px' }, 'Click a cell, Shift-click for a block, Ctrl-click to add.'),
-        h('div', { class: 'dx-spacer' }), bulk),
+      ),
+      bulk,
       h('div', { class: 'dx-card', style: 'overflow:auto' }, table),
     ];
   }
@@ -1080,7 +1096,7 @@ export function mountEditor(): void {
     if (c.view !== 'entity') {
       out.push(h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
         ...Object.entries(spec.fields ?? {}).map(([k, f]) => (isObj(value) && k in value) || !f.nullable
-          ? field(c.id, id, f, [...entryPath(c, id), k], [k], k)
+          ? field(c.id, id, entrySpec(c, value, k, f), [...entryPath(c, id), k], [k], k)
           : h('div', { class: 'dx-field' }, h('div', { class: 'lbl' }, h('span', { class: 'mono' }, k), h('span', { class: 'faint' }, 'optional')),
             h('button', { class: 'dx-btn sm dash', onclick: () => model.set([...entryPath(c, id), k], blank(f)) }, '+ Add')))));
     }
