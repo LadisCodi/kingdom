@@ -1,0 +1,51 @@
+import { describe, expect, it } from 'vitest';
+import balance from '../src/sim/data/balance.json';
+import {
+  COLLECTIONS, IGNORED_KEYS, collectionById, inferSpec, schemaOf, validateData, type DataDoc,
+} from '../src/sim/data/dataRules';
+
+const doc = balance as unknown as DataDoc;
+
+describe('data rules', () => {
+  it('reaches every top-level key of the data exactly once', () => {
+    const owned = COLLECTIONS.flatMap((c) => [...(c.source ? [c.source] : []), ...(c.groups ?? [])]);
+    expect(new Set(owned).size).toBe(owned.length);
+    const keys = Object.keys(doc).filter((k) => !IGNORED_KEYS.includes(k));
+    expect([...keys].sort()).toEqual([...owned].sort());
+  });
+
+  it('accepts the data as it ships', () => {
+    const errors = validateData(doc).filter((i) => i.level === 'error');
+    expect(errors).toEqual([]);
+  });
+
+  it('infers maps from records whose keys are data', () => {
+    expect(inferSpec([{ Wood: 20 }, {}, { Wood: 60, Stone: 5 }]).type).toBe('map');
+    expect(inferSpec([{ a: 1, b: 2.5 }, { a: 3, b: 4 }])).toEqual({
+      type: 'object', fields: { a: { type: 'int' }, b: { type: 'float' } },
+    });
+    expect(inferSpec([1, null]).nullable).toBe(true);
+  });
+
+  it('catches a broken reference, a short ladder and a bad target', () => {
+    const broken = structuredClone(doc) as Record<string, any>;
+    broken.heroes.Warden.unitType = 'Dragon';
+    broken.districts.Sawmill.costPerLevel.pop();
+    broken.quests[1].goalTarget = 'NoSuchTech';
+    broken.districts.Sawmill.maxWorkersPerLevel = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const msgs = validateData(broken, doc).map((i) => `${i.collection}/${i.entry}/${i.path.join('.')}: ${i.message}`);
+    expect(msgs).toEqual(expect.arrayContaining([
+      'heroes/Warden/unitType: "Dragon" is not a unit',
+      'buildings/Sawmill/costPerLevel: has 9 entries, needs 10',
+      'quests/1/goalTarget: "NoSuchTech" is not a tech',
+      'buildings/Sawmill/maxWorkersPerLevel: has 11 entries, at most 10',
+    ]));
+  });
+
+  it('schemas a building as a record with per-level ladders', () => {
+    const spec = schemaOf(doc, collectionById('buildings')!);
+    expect(spec.type).toBe('object');
+    expect(spec.fields!.costPerLevel.length).toEqual({ sibling: 'maxLevel' });
+    expect(spec.fields!.costPerLevel.of!.fields!.cost.keysRef).toBe('currency');
+  });
+});
