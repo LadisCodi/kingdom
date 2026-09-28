@@ -226,6 +226,8 @@
   translate: -50% 0;
   width: 60%;
   flex: none;
+  display: flex;
+  flex-direction: column;
 }
 .bs-exit .k-btn { width: 100%; }
 .bs .is-hidden { visibility: hidden; }

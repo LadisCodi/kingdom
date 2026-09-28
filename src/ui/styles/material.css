@@ -199,12 +199,24 @@
 /* ONE HEIGHT, AND A FLOOR ON WIDTH: the slab is drawn at about 3:1 with its
    rounded ends and lip in the slices, so a button is always the slab's own
    height and never narrower than its two ends plus a word. Anything that
-   needs more height than a label goes OUTSIDE the slab (a price: below). */
+   needs more height than a label goes OUTSIDE the slab (a price: above).
+   AND A CEILING: a screen that stretches its buttons (width: 100%, flex: 1)
+   gets them at most 144 px wide, centred in the space. The floor sits on the
+   label instead of the button, so min-content can outrank the ceiling: a
+   label longer than the cap widens its button to fit its words and no more,
+   and is never cut. */
 .k-btn:not(.k-knob):not(.has-cost) {
   height: 46px;
   min-height: 46px;
   max-height: 46px;
-  min-width: 112px;
+  min-width: min-content;
+  max-width: 144px;
+  margin-inline: auto;
+  white-space: nowrap;
+}
+.k-btn:not(.k-knob):not(.has-cost) > .k-btn-label {
+  min-width: calc(112px - 28px); /* 112 less the slab's 14 px sides */
+  justify-content: center;
 }
 
 /* A PRICED BUTTON: its cost sits ABOVE the slab, outside it, and the two are
@@ -223,7 +235,12 @@
   height: auto;
   min-height: 0;
   max-height: none;
-  min-width: 124px;
+  /* The same floor and ceiling, measured round the paper: the slab plus the
+     frame's 8 px sides. */
+  min-width: min-content;
+  max-width: 160px;
+  margin-inline: auto;
+  white-space: nowrap;
   padding: 7px 8px 6px;
   border-image: url('../assets/section-frame.png') 60 fill / 14px stretch;
   color: var(--ink);
@@ -239,6 +256,7 @@
 }
 .k-btn.has-cost > .k-btn-label {
   order: 2;
+  min-width: calc(124px - 16px);
   justify-content: center;
   height: 46px;
   padding: 0 16px 4px;
@@ -276,6 +294,8 @@
 }
 
 /* A segmented choice: the selected segment is the emerald slab. */
+/* The toggles' sides are 10 px, not 14: the same 112 px floor. */
+.k-toggles .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: calc(112px - 20px); }
 .k-toggles .k-btn.is-selected { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
 /* Screens that recoloured a slab by hand now pick a material: the video
    till and the ad call are sapphire, the advanced banner's call topaz. */

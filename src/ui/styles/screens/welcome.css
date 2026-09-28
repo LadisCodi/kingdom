@@ -83,5 +83,5 @@
 .wel-done > span,
 .wel-done > .wel-done-text { flex: 1; }
 
-.wel-collect { margin-top: 14px; }
+.wel-collect { margin-top: 14px; display: flex; flex-direction: column; }
 .wel-collect .k-btn { width: 100%; }

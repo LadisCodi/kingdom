@@ -215,8 +215,11 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
 - **Highlight** (pointer over it) and **disabled** — derived from the normal
   art by `npm run art:buttons`: brighter and a touch warmer; drained toward
   a muted blue-grey. Derived, so all four share one outline.
-- **Size**: one height (46 px) and a floor on width (112 px), so the slab is
-  always drawn at its own proportions. Anything taller than a label goes
+- **Size**: one height (46 px), a floor on width (112 px) and a ceiling
+  (144 px; 160 px for a priced button, frame included), so the slab is
+  always drawn at its own proportions. A screen that stretches a button gets
+  it at the ceiling, centred; a label longer than the ceiling widens its
+  button just enough to fit, never cut. Anything taller than a label goes
   outside the slab.
 - **Label**: light ink with a 1 px outline and a 2 px drop below, in a
   darker tone of the slab's own colour (dark green on green, dark brown on
