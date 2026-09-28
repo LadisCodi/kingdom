@@ -51,7 +51,8 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'AssignWorkers': return 'workers';
     case 'TrainArmy': case 'ClearGarrisons': return 'army';
     case 'CollectTaps': return 'showme';
-    case 'DiscoverCells': case 'DiscoverFeature': return 'showme';
+    case 'DiscoverCells': return 'tile';
+    case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
     case 'ReachDepth': case 'ClearRuins': return 'dungeon';
     case 'OwnArtifacts': return 'relics';

@@ -184,6 +184,18 @@
     "arrowUp",
     null
    ]
+  },
+  {
+   "file": "sheets/ui-l1-tile.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "tile"
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [
