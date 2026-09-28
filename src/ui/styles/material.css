@@ -120,13 +120,6 @@
   background-size: 384px 384px;
 }
 
-/* ---- the banner is cloth; its tone dyes the weave ---- */
-.b-body,
-.b-tail {
-  background: var(--tone) url('../assets/tex-cloth.jpg') center / 256px 256px;
-  background-blend-mode: multiply;
-}
-
 /* ---- the research page and the build grid ---- */
 .research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
 .tech-page {

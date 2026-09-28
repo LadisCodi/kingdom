@@ -549,6 +549,21 @@ also lives.
 
 ---
 
+#### The banner (M1)
+
+- A painted cloth hanging from a wooden rod under the header, ending in a
+  point; gold for something new, green for something built, blue for
+  something learned. Fixed width (420 rpx: the point cannot stretch
+  sideways), nine-sliced vertically, so it is as tall as its words. The dials
+  sit on `.b-pennant` in `banner.css`.
+- Top to bottom: the subject's art, what happened, its name, a line about it.
+- **In**: the words hidden, the cloth fades in and grows from its rolled
+  height (the rod and the point, nothing between) to its full height in
+  520 ms; the words fade in from 80% of the way.
+- **Out** (after 5 s, or a tap): the words fade out (160 ms), then the cloth
+  shrinks back to its rolled height and fades (420 ms). Banners queue, one at
+  a time.
+
 ### 5.4 Bottom nav
 
 > **2026-09-10.** The bar carries **five** tabs — Store · Relics · Heroes ·
