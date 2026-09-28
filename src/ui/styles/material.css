@@ -324,7 +324,7 @@
 }
 
 /* A PRICED BUTTON: its cost sits ABOVE the slab, outside it, and the two are
-   grouped on a small section of darker paper (sheets/ui-section1-frame.png)
+   grouped on a small section (.k-section, below)
    — the whole thing is still one button, one press. The slab moves to the
    label, which takes the four states; the frame stays put. */
 .k-btn.k-btn.has-cost:not(.k-knob),
@@ -345,8 +345,11 @@
   max-width: 160px;
   margin-inline: auto;
   white-space: nowrap;
-  padding: 7px 8px 6px;
-  border-image: url('../assets/section-frame.png') 60 fill / 14px stretch;
+  padding: 5px 6px 4px;
+  border: 2px solid var(--section-line);
+  border-radius: 10px;
+  border-image: none;
+  background: var(--section-fill);
   color: var(--ink);
   text-shadow: none;
 }
@@ -387,13 +390,13 @@
     0 2px 0 var(--btn-ink);
 }
 
-/* A SECTION: the same darker paper, marking off a group inside a menu —
-   what a priced button sits on, at any size. */
+/* A SECTION: a flat panel a shade darker than the paper, in a flat 2-px
+   outline, marking off a group inside a menu — what a priced button sits
+   on, a stat tile, a portrait — at any size. */
 .k-section {
-  border-style: solid;
-  border-color: transparent;
-  border-width: 14px;
-  border-image: url('../assets/section-frame.png') 60 fill / 14px stretch;
+  border: 2px solid var(--section-line);
+  border-radius: 10px;
+  background: var(--section-fill);
   padding: 0;
 }
 
@@ -504,11 +507,6 @@
   background:
     linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
-}
-.dc-portrait {
-  background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 8px;
 }
 
 /* ---- the research era bar is the gold ribbon of M4 when it is open ---- */

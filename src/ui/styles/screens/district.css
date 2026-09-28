@@ -55,23 +55,53 @@
 }
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
-.dc-id { flex: 1; min-width: 0; }
-.dc-what { color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-strong); line-height: 1.25; }
+.dc-what { flex: 1; min-width: 0; color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-strong); line-height: 1.25; }
 
 
-/* The painted well, with the level on a scroll across its corner (M2). The
-   ribbon is positioned rather than stacked so it can overhang the frame — a
-   label ON the picture, the way a plaque sits on a case. */
-.dc-portrait {
+/* THE PORTRAIT: a tile of darker paper (kit .k-section, the stat tiles'
+   frame) with an ornament pressed into each corner, and the building drawn
+   larger than the tile — its mask, inset to the frame's inner edge, clips it
+   so nothing spills out. The level rides on a scroll across its corner (M2),
+   positioned so it can overhang the frame. */
+.dc-portrait.k-section {
   position: relative;
   flex: none;
-  width: 118px;
-  height: 104px;
-  display: grid;
-  place-items: center;
-  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 15px stretch;
+  width: 112px;
+  height: 100px;
 }
-.dc-portrait-art { width: 90px; height: 78px; object-fit: contain; }
+/* The picture runs right up to the outline, clipped to its inner radius. */
+.dc-portrait-mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+/* A map sprite is a tall canvas with the building in its lower part (its
+   footprint sits at the foot, its roof rises into the space above), so the
+   building's own middle is about 68% of the way down. That point goes to
+   the middle of the tile, and the building is drawn a quarter wider than
+   the tile — the mask trims what spills. */
+.dc-portrait-art {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 125%;
+  height: auto;
+  translate: -50% -68%;
+}
+.dc-portrait-mask > .icon { --icon-size: 64px; position: absolute; inset: 0; margin: auto; }
+.dc-orn {
+  position: absolute;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  background: url('../../assets/corner-ornament.png') center / contain no-repeat;
+  pointer-events: none;
+}
+.dc-orn.is-tl { top: 3px; left: 3px; }
+.dc-orn.is-tr { top: 3px; right: 3px; scale: -1 1; }
+.dc-orn.is-bl { bottom: 3px; left: 3px; scale: 1 -1; }
+.dc-orn.is-br { bottom: 3px; right: 3px; scale: -1 -1; }
 .dc-level {
   position: absolute;
   left: -8px;
@@ -717,23 +747,23 @@
  * and the only thing it says beyond "Upgrade" is the first errand in the way
  * — because sending a player into a popup to read a cross they could have
  * been told about here is a wasted tap. */
-.dc-upgrade { display: flex; flex-direction: column; gap: 6px; }
-.dc-upgrade > .k-btn {
-  width: 100%;
-  min-height: 46px;
-  font-size: var(--text-cta);
-  background: none;
-  border: 0;
-  box-shadow: none;
-  border-image: url('../../../render/assets/slab_green.png') 48 fill / 15px stretch;
-  color: var(--ink-inverse);
-  text-shadow: 0 2px 0 rgba(20, 60, 12, 0.5);
+/* The third column of the head: the kit's own button, at its fixed size, and
+   the errand in the way under it, wrapped to the button's width. */
+.dc-upgrade {
+  flex: none;
+  width: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 .dc-upgrade-gate {
   display: flex;
-  gap: 6px;
-  align-items: center;
+  gap: 4px;
+  align-items: flex-start;
   justify-content: center;
+  text-align: center;
+  line-height: 1.2;
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -741,11 +771,9 @@
 
 /* ---- the head and the stat band (M2)
  *
- * The name, the blurb and the ONE thing you buy for this building, beside its
- * picture — then a band of what it is worth right now. Both halves of
+ * The picture, the blurb and the ONE thing you buy for this building, in one
+ * row — then a band of what it is worth right now. Both halves of
  * upgradeStats.ts: the band shows this level, the popup shows the pair. */
-.dc-id { display: flex; flex-direction: column; gap: 3px; }
-.dc-id > .dc-upgrade { margin-top: 5px; }
 /* THE STATS: fixed-size tiles of darker paper (kit .k-section, the frame a
    priced button sits on), three to a row, centred — a fourth wraps to a row
    of its own, still centred. Each is a big icon, then the name — bold, in
@@ -767,9 +795,8 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  /* The frame is drawn at 14 px but insets the contents by less, so a
-     58-px tile still holds a name and a value. */
-  border-width: 8px 6px;
+  /* Inside the 2-px outline: room for the icon, a name and a value. */
+  padding: 6px 4px;
 }
 .dc-stat > .icon { --icon-size: 38px; flex: none; }
 .dc-stat-body { min-width: 0; }

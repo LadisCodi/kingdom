@@ -234,9 +234,11 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
   own red button.)
 - **Priced**: the cost sits **above** the slab, outside it — icon + amount
   per term, any term the player cannot pay in `clay` — and the two are
-  grouped on a small **section** of darker paper; the whole is one press.
-- **Sections** (`.k-section`, `section-frame.png`): that darker paper,
-  nine-sliced, is also what marks off a group of things inside a menu.
+  grouped on a small **section**; the whole is one press.
+- **Sections** (`.k-section`): a flat panel a shade darker than the paper
+  (`--section-fill`) in a flat 2-px outline (`--section-line`), rounded 10
+  px — no bevel, no texture. It marks off a group of things inside a menu:
+  a priced button, a stat tile, the district card's portrait.
 
 ### 3.4 Type & numbers
 
@@ -275,7 +277,6 @@ that replaced them.*
 | `--text-heading` | 14px | a section heading (small uppercase) |
 | `--text-helper` | 14px | a caption or fine print: a tag, a badge, a timer |
 | `--text-button` | 16px | a button's label |
-| `--text-cta` | 22px | the one big call to action a screen leads with |
 
 - Tiny tags (a count on a slot, a timer on a portrait) may go to 11–12px;
   a sentence never does.
@@ -384,6 +385,12 @@ side on anything wider. A centred modal keeps its own narrower cap.
   section is: *Stats*, then what the building does — *Villagers* (the
   Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
   *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
+- **The district card's head**: one row — the portrait, the description
+  (bold, lighter ink), and Upgrade (the kit's default button, its fixed size,
+  with the first errand in the way under it) — each anchored to the top and
+  growing down. The portrait is a section with a small leafy ornament pressed
+  into each corner, and the building drawn larger than the tile, clipped to
+  it by a mask.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
   *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's

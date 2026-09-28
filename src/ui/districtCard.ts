@@ -71,8 +71,14 @@ function portrait(
   const url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`)
     ?? spriteUrl(`${def.sprite}_l${level}`)
     ?? spriteUrl(def.sprite);
-  return el('div', { class: 'dc-portrait' },
-    url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' }),
+  // A tile of darker paper (kit .k-section) with a small ornament pressed
+  // into each corner. The picture is drawn LARGER than the tile and clipped
+  // by the mask, so the building fills its frame without spilling out.
+  return el('div', { class: 'dc-portrait k-section' },
+    el('div', { class: 'dc-portrait-mask' },
+      url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' })),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) =>
+      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })),
     el('span', { class: 'dc-level' }, `Lv ${level}`));
 }
 
@@ -430,13 +436,12 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
 
   return el('div', { class: 'dc' },
     header,
+    // ONE ROW: the picture, what the building is, and the one thing you BUY
+    // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
       portrait(def, district.level),
-      el('div', { class: 'dc-id' },
-        el('div', { class: 'dc-what' }, def.description),
-        // The one thing you BUY for this building sits with its picture, not
-        // at the bottom of everything it does (M2).
-        ...upgradeAction)),
+      el('div', { class: 'dc-what' }, def.description),
+      ...upgradeAction),
     ...stats,
     body,
     foot,

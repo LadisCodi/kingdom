@@ -88,6 +88,10 @@
   --clay: #d4553e; /* can't afford, destructive */
   --sky: #4fa3c7; /* in progress, research, information */
   --locked: #cbba96; /* gated — warm, never grey */
+  /* A SECTION of a menu (kit .k-section): flat, a shade darker than the
+   * window's paper, in a 2-px flat outline — no bevel, no texture. */
+  --section-fill: #f0d9ae;
+  --section-line: #cfa874;
 
   /* ---- rarity ----
    * A hero's rarity is the whole background of its tile, so the roster reads
@@ -170,7 +174,6 @@
    *   --text-heading  a section's heading (kit sectionHead), small uppercase
    *   --text-helper   a caption or fine print: a tag, a badge, a timer
    *   --text-button   a button's label (kit btn), at its slab's fixed height
-   *   --text-cta      the one big call to action a screen leads with
    *
    * Sized for the phone: body a size above the iOS reading size, because a
    * menu is read at arm's length over a busy map. */
@@ -180,7 +183,6 @@
   --text-heading: 14px;
   --text-helper: 14px;
   --text-button: 16px;
-  --text-cta: 22px;
 
   /* ---- form ---- */
   --gutter: 12px; /* the side padding a sheet keeps from the frame */
