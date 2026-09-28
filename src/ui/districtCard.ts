@@ -78,8 +78,7 @@ function portrait(
     el('div', { class: 'dc-portrait-mask' },
       url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' })),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) =>
-      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })),
-    el('span', { class: 'dc-level' }, `Lv ${level}`));
+      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
 }
 
 /**
@@ -413,12 +412,13 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // the footer's one-primary-action slot (§2.2): it is something you do TO
   // the building, and it is free, so it carries no price to show.
   const name = districtLabel(game.state, district);
+  // The level rides on the title, a size down: *Housing #3 Lv 2*.
   const header = windowHead(name, [
     ...(canMoveDistrict(district)
       ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
       : []),
     closeKnob(() => game.dismiss(), `Close ${name}`),
-  ]);
+  ], `Lv ${district.level}`);
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
   // reads, at this level alone (upgradeStats.ts). It used to be scattered

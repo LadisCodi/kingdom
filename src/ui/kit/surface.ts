@@ -16,9 +16,14 @@ export const plank = (title: string, ...trailing: Array<Node | string>): HTMLEle
  *  the close last (sheets/ui-window3-header.png, three-sliced so it takes
  *  any width). `sheet({ header })` builds one; a window that is not a kit
  *  sheet — the district card — places it as the first thing in its frame. */
-export const windowHead = (title: string, buttons: readonly Node[]): HTMLElement =>
+export const windowHead = (
+  title: string, buttons: readonly Node[], sub?: string,
+): HTMLElement =>
   el('div', { class: 'k-head' },
-    el('h2', { class: 'k-head-title' }, title),
+    // `sub` is a small word after the title, in the same letters a size
+    // down — the district card's level, *Housing #3 Lv 2*.
+    el('h2', { class: 'k-head-title' }, title,
+      ...(sub === undefined ? [] : [' ', el('span', { class: 'k-head-sub' }, sub)])),
     el('div', { class: 'k-head-actions' }, ...buttons));
 
 /**

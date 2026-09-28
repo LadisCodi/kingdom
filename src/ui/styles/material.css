@@ -156,6 +156,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* A small word after the title — the district card's level — in the same
+   gradient letters, a size down. */
+.k-head-sub { font-size: 0.72em; }
 .k-head-actions {
   grid-column: 3;
   justify-self: end;

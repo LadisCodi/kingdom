@@ -375,8 +375,9 @@ side on anything wider. A centred modal keeps its own narrower cap.
 - **The close**: a round button of red lacquered wood with the X carved
   into it (kit `closeKnob`), the last button on the header. Its pressed twin
   is the same wood pushed in.
-- **The district card's header**: the building's name (*Housing #3*), then
-  Move (when the building can move) and Close. **Move** is the close's twin in
+- **The district card's header**: the building's name and its level a size
+  down (*Housing #3* *Lv 2*, `windowHead`'s `sub`), then Move (when the
+  building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
