@@ -209,7 +209,9 @@
  * top-right corner, inside the right roller. */
 .q-scroll.is-complete { animation: q-bob 1.4s ease-in-out infinite alternate; }
 .q-content > .k-cta { top: calc(var(--rpx) * -34); right: calc(var(--rpx) * -30); }
-.q-scroll.is-complete .q-cta { filter: hue-rotate(62deg) saturate(1.5) brightness(1.08); }
+.q-scroll.is-complete .q-cta { border-image-source: url('../../assets/btn-green.png'); }
+.q-scroll.is-complete:hover .q-cta { border-image-source: url('../../assets/btn-green-hover.png'); }
+.q-scroll.is-complete:active .q-cta { border-image-source: url('../../assets/btn-green-down.png'); }
 .q-scroll.is-complete:active,
 .q-scroll.is-leaving { animation: none; }
 @keyframes q-bob {

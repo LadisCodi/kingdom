@@ -21,7 +21,7 @@ import { el } from '../format';
 import { iconEl, type IconName } from './icon';
 import { costTerms, isShort, type CostTerm } from './stats';
 
-export type ButtonKind = 'primary' | 'secondary' | 'destructive' | 'gem';
+export type ButtonKind = 'primary' | 'secondary' | 'destructive' | 'gem' | 'blue' | 'gold';
 
 export interface ActionOpts {
   label: string;

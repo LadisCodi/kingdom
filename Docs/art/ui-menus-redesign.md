@@ -185,17 +185,34 @@ the flat kit.
 
 ### 3.3 Buttons
 
-| Kind | Look | Used for |
-|---|---|---|
-| Primary | `leaf` slab, `leaf-dark` 3px bottom lip, ink-cream label, min 56px tall | Build, Claim, Train, Sell, Start, Upgrade |
-| Secondary | `wood` slab, `wood-dark` lip | Select, filters, amount picker |
-| Icon/stepper | 48×48 round wooden knob | Worker `−`/`+`, close, zoom |
-| Destructive | `clay` slab, dark-clay lip | Reset, Cancel construction |
-| Gem action | `sky`-to-violet slab with a gem icon | Finish now, buy research slot |
-| Disabled | `locked` fill, ink-muted label, small padlock, **reason line beside it** | any gated action |
-| **Priced** | label on top, **the cost inside the button** underneath — icon + amount per term, any term the player cannot pay in `clay` | anything that spends: Build, Upgrade, Train, Recruit, Start, Claim, Cast, Call, Set off, Refill |
+Two materials, one silhouette — a rounded slab with a lip under its face —
+nine-sliced so a label of any length fits.
 
-Pressed state: the slab drops onto its lip (3px down, lip hidden).
+- **Wood** for plain actions: the ones a player does, not the ones they want.
+- **Gemstone** for the actions worth wanting: a slab of crystal in a thin gold
+  bezel, glowing a little from inside, with reflections and facets. Five
+  stones, one per meaning.
+
+| Kit kind | Material | Used for |
+|---|---|---|
+| `secondary` (default) | wood | Select, filters, amount picker, Buy with coins |
+| `primary` | emerald | Build, Claim, Train, Upgrade, Start — the one green action |
+| `blue` | sapphire | watch a video, a free call |
+| `gold` | topaz | a premium or advanced call |
+| `destructive` | ruby | Reset, Cancel |
+| `gem` | amethyst | anything that spends Gems: Finish now, buy a slot |
+| knob | round wood | worker `−` / `+`, zoom (the window's close is its own red button) |
+
+Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
+
+- **Normal** and **pressed** — drawn (the pressed one is the same slab pushed
+  in: no lip, face lower).
+- **Highlight** (pointer over it) and **disabled** — derived from the normal
+  art by `npm run art:buttons`: brighter and a touch warmer; drained toward
+  a muted blue-grey. Derived, so all four share one outline.
+- A disabled button keeps its **reason line beside it**.
+- **Priced**: label on top, **the cost inside the button** underneath — icon
+  + amount per term, any term the player cannot pay in `clay`.
 
 ### 3.4 Type & numbers
 

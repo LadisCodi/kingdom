@@ -11,6 +11,7 @@
     "harness": "KINGDOM_HARNESS=1 vitest run tests/thirtyDays.test.ts",
     "art": "node scripts/ui-atlas.mjs build",
     "art:check": "node scripts/ui-atlas.mjs check",
+    "art:buttons": "node scripts/ui-buttons.mjs",
     "art:characters": "node scripts/char-atlas.mjs build"
   },
   "dependencies": {

@@ -41,12 +41,22 @@ export function mountGallery(root: HTMLElement): void {
   const noop = () => {};
   page.append(section(
     'Buttons',
+    // THE COLLECTION: every material, live and disabled. Hover and press any
+    // of them for the other two states.
+    ...([
+      ['wood · secondary', 'secondary', 'Select'],
+      ['emerald · primary', 'primary', 'Build'],
+      ['sapphire · blue', 'blue', 'Watch'],
+      ['topaz · gold', 'gold', 'Claim'],
+      ['ruby · destructive', 'destructive', 'Reset'],
+      ['amethyst · gem', 'gem', 'Finish'],
+    ] as const).map(([name, kind, label]) => el('div', { class: 'gal-row' },
+      specimen(name, btn({ label, onClick: noop, kind })),
+      specimen('disabled', btn({ label, onClick: noop, kind, disabledReason: 'Not yet' }))
+    )),
     el('div', { class: 'gal-row' },
-      specimen('primary', btn({ label: 'Build', onClick: noop, kind: 'primary' })),
-      specimen('secondary', btn({ label: 'Select', onClick: noop })),
-      specimen('destructive', btn({ label: 'Reset', onClick: noop, kind: 'destructive' })),
-      specimen('gem', btn({ label: 'Finish', onClick: noop, kind: 'gem', icon: 'Gems' })),
       specimen('with icon', btn({ label: 'Show me', onClick: noop, icon: 'showme' })),
+      specimen('gem, with icon', btn({ label: 'Finish', onClick: noop, kind: 'gem', icon: 'Gems' })),
     ),
     // §6.4: a price lives INSIDE the button that spends it, and a term the
     // player cannot pay turns clay — which is itself the reason the button is
