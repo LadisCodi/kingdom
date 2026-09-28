@@ -19,8 +19,8 @@
 | **Schedule payloads** | a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
 | **Where schedules live** | in code, beside the definitions | a hand-written events file (live-ops content with wall-clock dates) |
 
-- `grantModifier` carries a template id, not a magnitude. Magnitudes live in a
-  workbook sheet.
+- `grantModifier` carries a template id, not a magnitude. Magnitudes are data, in
+  `?dev=data`.
 - `eventTrack` is the milestone ladder: an ordered list of point thresholds,
   each with a **free** and a **paid** reward. It is both the grand-prize bar and
   the two-track pass (§2.4).
@@ -164,12 +164,12 @@ What survives is the part every future event needs, and it keeps its tests:
 
 | Dial | Where |
 |---|---|
-| Track thresholds and both reward columns | workbook |
-| Points per source (§2.2) | workbook |
-| Reveal prices on the event island | workbook |
-| Shop stock, prices, refresh cadence | workbook |
+| Track thresholds and both reward columns | `?dev=data` |
+| Points per source (§2.2) | `?dev=data` |
+| Reveal prices on the event island | `?dev=data` |
+| Shop stock, prices, refresh cadence | `?dev=data` |
 | Window duration and period | `EVENTS` (empty today) |
-| Modifier template magnitudes | workbook |
+| Modifier template magnitudes | `?dev=data` |
 
 ## 7. Deliberately not in this design
 

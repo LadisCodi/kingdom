@@ -1,0 +1,46 @@
+{
+  "Warrior": {
+    "power": 3,
+    "dmg": 8,
+    "def": 3,
+    "hp": 20,
+    "squadSize": 100,
+    "frontage": 50,
+    "cooldown": 10,
+    "recruitCost": { "Gold": 20, "Wood": 5, "Food": 8 },
+    "trainDurationSeconds": 15
+  },
+  "Lancer": {
+    "power": 4,
+    "dmg": 10,
+    "def": 2,
+    "hp": 16,
+    "squadSize": 100,
+    "frontage": 60,
+    "cooldown": 10,
+    "recruitCost": { "Gold": 40, "Wood": 12, "Food": 4 },
+    "trainDurationSeconds": 20
+  },
+  "Archer": {
+    "power": 4,
+    "dmg": 7,
+    "def": 1,
+    "hp": 10,
+    "squadSize": 80,
+    "frontage": 80,
+    "cooldown": 12,
+    "recruitCost": { "Gold": 25, "Wood": 12 },
+    "trainDurationSeconds": 12
+  },
+  "Cavalry": {
+    "power": 7,
+    "dmg": 22,
+    "def": 2,
+    "hp": 24,
+    "squadSize": 60,
+    "frontage": 30,
+    "cooldown": 15,
+    "recruitCost": { "Gold": 60, "Food": 16, "Stone": 24 },
+    "trainDurationSeconds": 30
+  }
+}

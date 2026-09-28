@@ -70,7 +70,7 @@ describe('map data', () => {
   });
 });
 
-describe('reveal cost curve (balance.xlsx FogRings)', () => {
+describe('reveal cost curve (fog.rings)', () => {
   it('d 1–10 → 3,5,10,20,40,75,120,250,500,1000', () => {
     const expected = [3, 5, 10, 20, 40, 75, 120, 250, 500, 1000];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));

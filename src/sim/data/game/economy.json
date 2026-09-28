@@ -1,0 +1,52 @@
+{
+  "tap": {
+    "collectCooldownSeconds": 0.5,
+    "manaCost": 1,
+    "workSeconds": 10
+  },
+  "taxes": {
+    "goldPerPopulationPerMinute": 30,
+    "townhallMultiplierPerLevel": [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25]
+  },
+  "mana": {
+    "baseCap": 100,
+    "basePerHour": 12,
+    "sanctumCapPerLevel": [24, 48, 72, 100, 132, 168, 208, 252, 300, 352],
+    "sanctumPerHourPerLevel": [3, 6, 9, 12, 16, 20, 25, 30, 36, 42],
+    "landmarkCap": 10,
+    "meditationCap": 30,
+    "gemRefillCosts": [400, 600, 800, 1000, 2000]
+  },
+  "city": {
+    "initialCurrencies": { "Gold": 100, "Food": 0 },
+    "initialPopulation": 0,
+    "populationCostFirst": [5, 20, 100, 300, 500, 1000],
+    "populationCostGrowth": 1.05,
+    "lateUpgradeFromLevel": 6
+  },
+  "kingdom": {
+    "startBuilders": 1,
+    "maxBuilders": 4,
+    "builderGemCostBase": 2500,
+    "builderGemCostGrowth": 2
+  },
+  "harmony": {
+    "surplusTiers": [{ "at": 1.1, "bonus": 0.05 }, { "at": 1.25, "bonus": 0.1 }, { "at": 1.5, "bonus": 0.15 }]
+  },
+  "worker": {
+    "moveSpeedTilesPerSecond": 1
+  },
+  "training": {
+    "seconds": 20
+  },
+  "rush": {
+    "secondsPerGem": 5
+  },
+  "research": {
+    "techSlots": 1,
+    "maxSlots": 3,
+    "slotGemCostBase": 2500,
+    "slotGemCostGrowth": 2
+  },
+  "offlineCapHours": 8
+}

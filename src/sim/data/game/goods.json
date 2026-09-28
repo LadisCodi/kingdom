@@ -1,0 +1,38 @@
+{
+  "Planks": {
+    "name": "Planks",
+    "tier": 1,
+    "input": { "Wood": 10 },
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": 1200
+  },
+  "CutStone": {
+    "name": "Cut Stone",
+    "tier": 1,
+    "input": { "Stone": 10 },
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": 1800
+  },
+  "Iron": {
+    "name": "Iron",
+    "tier": 1,
+    "input": { "Gold": 200, "Stone": 20 },
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": 3600
+  },
+  "Runestone": {
+    "name": "Runestone",
+    "tier": 2,
+    "input": {},
+    "inputMana": 20,
+    "inputGood": "CutStone",
+    "inputGoodAmount": 2,
+    "workSeconds": 10800
+  }
+}

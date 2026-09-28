@@ -17,6 +17,8 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Who wrote a data file, so ?dev=data can tell its own saves from a checkout.
+import { noteWrite } from './vite-data-editor.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const MAP_PATH = join(ROOT, 'src/sim/data/region-map.json');
@@ -87,6 +89,7 @@ export function mapEditorPlugin() {
           if (errors.length > 0) {
             return send(422, { error: 'the map does not validate', errors });
           }
+          noteWrite(MAP_PATH, 'map');
           writeFileSync(MAP_PATH, serialiseRegionMap(doc));
           const cells = doc.terrain.cells.length;
           server.config.logger.info(

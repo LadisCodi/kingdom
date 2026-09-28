@@ -64,24 +64,26 @@ import { legacy, ScreenSlot } from './ui/kit/host';
 const AUTOSAVE_TICKS = 30;
 
 async function boot(): Promise<void> {
-  // ?dev=map — the map editor, INSTEAD of the game. Checked before anything
-  // else boots: it needs no save, no tick and no supabase, and the game's
-  // chrome is in the way of looking at a region. `?dev=tree`
-  // below is the same deal for the tech tree.
-  if (new URLSearchParams(location.search).get('dev') === 'map') {
-    const { mountEditor } = await import('./editor/mount');
+  // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),
+  // INSTEAD of the game. Checked before anything else boots: it needs no
+  // save, no tick and no supabase, and the game's chrome is in the way of a
+  // desk tool. The map and tech tree editors live inside
+  // it; their old URLs land on them there.
+  const dev = new URLSearchParams(location.search).get('dev');
+  if (dev === 'map' || dev === 'tree') {
+    location.replace(`${location.pathname}?dev=data#${dev}`);
+    return;
+  }
+  if (dev === 'data') {
+    const { mountEditor } = await import('./editor/data/mount');
     mountEditor();
     return;
   }
 
-  // ?dev=tree — the tech tree editor, on the same terms as the map's
-  // (Docs/tech-tree-editor.md): no save, no tick, no supabase, and a shape
-  // that wants a desk rather than a phone frame.
-  if (new URLSearchParams(location.search).get('dev') === 'tree') {
-    const { mountEditor } = await import('./editor/tree/mount');
-    mountEditor();
-    return;
-  }
+  // A data file changing is an event, not a module update
+  // (scripts/vite-data-editor.mjs); the game simply starts again on the new
+  // numbers, as it did when the file was a module.
+  import.meta.hot?.on('kingdom:data', () => location.reload());
 
   const map = buildMapData();
   const saveManager = new SaveManager();
@@ -492,11 +494,12 @@ async function boot(): Promise<void> {
         game.state.city.wallet.Mana = 1;
         runTick();
       }),
-      // The two authoring tools, from the bar rather than from the URL. Both
-      // mount INSTEAD of the game (see the top of boot), so this is a real
+      // The authoring tool, from the bar rather than from the URL. It mounts
+      // INSTEAD of the game (see the top of boot), so this is a real
       // navigation — and the `pagehide` handler above saves on the way out.
-      button('🗺 map editor', () => { location.search = '?dev=map'; }),
-      button('🌳 tree editor', () => { location.search = '?dev=tree'; }),
+      button('🗂 data', () => { location.href = `${location.pathname}?dev=data`; }),
+      button('🗺 map', () => { location.href = `${location.pathname}?dev=data#map`; }),
+      button('🌳 tree', () => { location.href = `${location.pathname}?dev=data#tree`; }),
       button('🗑 reset save', resetSave));
     // A tab that shows and hides the grid, so the tools stay one tap away
     // without covering the map. Whether it is open survives a reload.

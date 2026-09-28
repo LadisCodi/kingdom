@@ -1,0 +1,44 @@
+[
+  {
+    "district": "Housing",
+    "neighbor": "Housing",
+    "stat": "goldPerMinute",
+    "magnitude": -1
+  },
+  {
+    "district": "Housing",
+    "neighbor": "AnyDecoration",
+    "stat": "goldPerMinute",
+    "magnitude": 1
+  },
+  {
+    "district": "AnyHall",
+    "neighbor": "AnyHall",
+    "stat": "trainTime",
+    "magnitude": -0.1
+  },
+  {
+    "district": "Carpenter",
+    "neighbor": "Sawmill",
+    "stat": "workTime",
+    "magnitude": -0.1
+  },
+  {
+    "district": "MasonsYard",
+    "neighbor": "Quarry",
+    "stat": "workTime",
+    "magnitude": -0.1
+  },
+  {
+    "district": "Smelter",
+    "neighbor": "Quarry",
+    "stat": "workTime",
+    "magnitude": -0.1
+  },
+  {
+    "district": "RuneCarver",
+    "neighbor": "Sanctum",
+    "stat": "workTime",
+    "magnitude": -0.1
+  }
+]

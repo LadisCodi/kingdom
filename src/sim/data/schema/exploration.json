@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "fields": {
+    "fog": {
+      "type": "object",
+      "fields": {
+        "rings": {
+          "type": "list",
+          "of": { "type": "object", "fields": { "distance": { "type": "int" }, "cost": { "type": "int" } } }
+        },
+        "fallbackGrowth": { "type": "float" },
+        "tapsToReveal": { "type": "int" },
+        "minCost": { "type": "int" },
+        "claimDiscoverRadius": { "type": "int" },
+        "reachPerTownhallLevel": { "type": "list", "of": { "type": "int" }, "length": { "townhall": true } },
+        "countStep": { "type": "int" },
+        "countGrowth": { "type": "float" }
+      }
+    },
+    "knowledge": {
+      "type": "object",
+      "fields": {
+        "basePerHour": { "type": "int" },
+        "dripPerClearedRuinPerHour": { "type": "float" },
+        "perClaimedLandmarkPerHour": { "type": "float" },
+        "landmarkClaimLump": { "type": "int" },
+        "conquestPerClearedRuinPerHour": { "type": "float" }
+      }
+    },
+    "raid": { "type": "object", "fields": { "takeFractionMax": { "type": "float" }, "maxRaids": { "type": "int" } } },
+    "delve": {
+      "type": "object",
+      "fields": {
+        "firstClearGems": { "type": "int" },
+        "firstClearKnowledge": { "type": "int" },
+        "firstClearStardust": { "type": "int" }
+      }
+    }
+  }
+}

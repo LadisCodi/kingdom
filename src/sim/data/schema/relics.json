@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "fields": {
+    "artifactCooldownSeconds": { "type": "int" },
+    "artifactAutoTapPerSecond": { "type": "int" },
+    "artifactRadiusSteps": { "type": "list", "of": { "type": "int" } }
+  }
+}

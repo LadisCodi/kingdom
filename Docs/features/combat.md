@@ -45,7 +45,7 @@ and the army cap; hero slots one free, the rest Gems
 ## 4. Squads
 
 - A squad is one **unit type** at one **tier**, plus a troop **count**.
-- `count` is capped by the type's `squad_size`, and **a partial squad is
+- `count` is capped by the type's `squadSize`, and **a partial squad is
   legal**: a slot takes as many of the type as there are, up to that cap. A
   full squad is the ceiling, never the entry price — a player with eleven
   Archers sends eleven.
@@ -65,7 +65,7 @@ and the army cap; hero slots one free, the rest Gems
   A share of the fallen are carried to its beds and the rest are
   dead. Both leave the roster at once: a wounded soldier cannot be sent
   anywhere and does not count against the army cap.
-  - **The share starts at `army.wounded_share` — a tenth — and is EARNED
+  - **The share starts at `army.woundedShare` — a tenth — and is EARNED
     upward.** A battlefield keeps most of what it takes; bringing more of it
     home is something the player builds towards rather than a rate they are
     given.
@@ -76,12 +76,12 @@ and the army cap; hero slots one free, the rest Gems
     - Capped at **90%**: someone always stays out there.
   - **The ward is a building, not a rule.** With no Infirmary built there are
     no beds, so every casualty is a death. It is opened by the `Infirmary`
-    technology in Civics and holds `Districts.beds_per_level`, which is the
+    technology in Civics and holds `buildings.bedsPerLevel`, which is the
     whole of what its levels buy ([`buildings.md`](buildings.md) §4.10).
   - **Anything the beds have no room for dies**, which is what makes the
     ceiling a decision.
-  - The Infirmary mends them: `army.heal_cost_share` of what recruiting the
-    same soldiers costs and `army.heal_time_share` of the clock, as **one
+  - The Infirmary mends them: `army.healCostShare` of what recruiting the
+    same soldiers costs and `army.healTimeShare` of the clock, as **one
     order and one wait** for the whole ward, on its own bench — so mending
     never competes with recruiting. It needs no technology of its own beyond
     the building: they are already trained.
@@ -94,14 +94,14 @@ and the army cap; hero slots one free, the rest Gems
 
 ## 5. Unit stats — Tier 1
 
-| Unit | `squad_size` | `frontage` | `dmg` | `hp` | `def` | `cooldown` | `power_per_troop` | Targeting |
+| Unit | `squadSize` | `frontage` | `dmg` | `hp` | `def` | `cooldown` | `power` | Targeting |
 |---|---|---|---|---|---|---|---|---|
 | **Warrior** | 100 | 50 | 8 | 20 | 3 | 10 | 3 | Melee |
 | **Lancer** | 100 | 60 | 10 | 16 | 2 | 10 | 4 | Melee |
 | **Archer** | 80 | 80 | 7 | 10 | 1 | 12 | 4 | Ranged |
 | **Cavalry** | 60 | 30 | 22 | 24 | 2 | 15 | 7 | Flanker |
 
-`cooldown` is in ticks. `squad_size` and `frontage` are fixed constants at every
+`cooldown` is in ticks. `squadSize` and `frontage` are fixed constants at every
 tier.
 
 ## 6. Unit tiers
@@ -114,7 +114,7 @@ tier.
 | T4 | ×4.2 | Research |
 | T5 | ×6.8 | Research |
 
-- The multiplier applies to `dmg`, `hp` and `power_per_troop`. `squad_size`,
+- The multiplier applies to `dmg`, `hp` and `power`. `squadSize`,
   `frontage`, `def` and `cooldown` are unaffected.
 - **Each unit type tiers independently.**
 - Unlocking a tier switches training output to it and **converts existing troops
@@ -173,7 +173,7 @@ Ties break by lowest slot index.
 rule in this section applies to both sides. The only difference is where the
 stats come from: a hero's are derived from level and ascension
 ([`10-heroes.md`](10-heroes.md)); a villain's are authored per room
-(the `Villains` sheet). The resolver has one code path and reads a resolved
+(`villains`). The resolver has one code path and reads a resolved
 stat block either way.
 
 A hero or villain occupies a hero slot and does two things.
@@ -189,7 +189,7 @@ A hero or villain occupies a hero slot and does two things.
 
 ### 9.2 It buffs one troop type — the passive
 
-- `troop_dmg_mult`, `troop_hp_mult` and `troop_def_bonus` (flat, added to
+- `troopDmgMult`, `troopHpMult` and `troopDefBonus` (flat, added to
   `def`) apply to **every squad on that side of the board whose type matches
   the hero's type**, regardless of slot or row.
 - **No effect on non-matching types.**
@@ -211,33 +211,33 @@ A hero or villain occupies a hero slot and does two things.
 
 ## 11. Enemy generation
 
-Rooms carry a `power_req` budget and a `threat_mix`
+Rooms carry a `power_req` budget and a `threatMix`
 ([`11-expeditions.md`](11-expeditions.md) §2). The generator converts
 them:
 
 1. Seed from `(ruin_id, depth_index, room_index)`. Same room, same enemies —
    the preview and the attempt are one query.
 2. **Villains first**, because what is left is what the squads may cost. Above
-   `combat.gen_villain_threshold`, up to `combat.gen_villain_slots` of them
+   `combat.genVillainThreshold`, up to `combat.genVillainSlots` of them
    (three, the same hero slots the player fields) are drawn from the depth's
-   `villain_pool`, each costing its authored `power`.
+   `villainPool`, each costing its authored `power`.
 3. Pick a slot count of 2–6, whichever is larger: the roll, or the number of
    squads the budget actually needs.
 4. Split the budget across types, **the ruin's affinity first** and taking the
    lion's share (60%), the rest even across the others.
-5. Per type: `count = floor(share / power_per_troop)`, clamped to `squad_size`;
+5. Per type: `count = floor(share / power)`, clamped to `squadSize`;
    overflow spills into a second squad of the same type, and whatever the
    shares leave on the table goes to the affinity while a slot remains.
 6. Rows are the unit's own: melee and flankers front, ranged back (§8).
 
-**The board is the ceiling.** Six troop slots of `squad_size` is all a side
+**The board is the ceiling.** Six troop slots of `squadSize` is all a side
 can field, so past roughly two thousand points another thousand buys nothing
 — which is why a deep room spends on villains instead. Budget that cannot be
 fielded is simply not fielded, and the authored ladder lives under that
 ceiling.
 
-**Overrides:** **boss rooms always field their authored villain** (`Depths`
-`boss_villain`), never a rolled one. Authoring a whole formation — named
+**Overrides:** **boss rooms always field their authored villain** (`depths`
+› `bossVillain`), never a rolled one. Authoring a whole formation — named
 villains in named slots, beside chosen squads — is designed and not built.
 
 **Budget accounting:** a villain's `power` covers the buff it grants as well
@@ -248,9 +248,9 @@ as its own output, because it is authored rather than derived.
 Shown against `power_req` in the room sheet:
 
 ```
-squad_power = count × power_per_troop(tier)
+squad_power = count × power(tier)
 party_power = Σ squad_power + Σ hero_power
-hero_power  = dmg(hero at its level) × combat.hero_power_per_dmg
+hero_power  = dmg(hero at its level) × combat.heroPowerPerDmg
 ```
 
 **This is an estimate; the resolver decides the outcome.** A sum cannot
@@ -295,11 +295,11 @@ The cap limits **total troops owned**, not party size.
 
 - Levels 6–10 continue it: 1,100 / 1,400 / 1,750 / 2,150 / 2,600.
 - **A soldier is one place in a hall, whatever it is worth in a fight.**
-  `power_per_troop` decides what a troop DOES and never what it costs to keep,
+  `power` decides what a troop DOES and never what it costs to keep,
   so a Cavalry and a Warrior take the same room.
 - Caps sum across buildings. Each unit type is behind its own technology, as is
   each tier.
-- **What bounds a PARTY is the board** — six slots of `squad_size` (§3, §4) —
+- **What bounds a PARTY is the board** — six slots of `squadSize` (§3, §4) —
   and what bounds the board is what the city owns. The cap is the city's
   number; the board is the fight's.
 - Training is queued at the building the player pressed TRAIN on, takes time,
@@ -327,19 +327,19 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 | Dial | Key |
 |---|---|
-| Unit stats, `frontage`, `squad_size`, `power_per_troop` | `Units` sheet |
+| Unit stats, `frontage`, `squadSize`, `power` | `units` |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
-| Tier multipliers | `Units` sheet |
-| Type fractions, as integer pairs | `combat.type_advantage_num/den`, `combat.type_disadvantage_num/den` |
-| Hero stat blocks, passives, the 70% share and the rarity multipliers | `Heroes` sheet, `heroes.rarity_*` ([`10-heroes.md`](10-heroes.md) §9) |
-| Villain stat blocks, per room | `Villains` sheet |
-| Villain pool per depth | `Depths` sheet |
-| Tick length, timeout | `combat.tick_ms`, `combat.timeout_ticks` |
-| Enemy slot band, villain threshold, share and slots | `combat.gen_slots_min/max`, `combat.gen_villain_threshold`, `gen_villain_share`, `gen_villain_slots` |
-| What a hero is worth in the ESTIMATE | `combat.hero_power_per_dmg` |
-| Army cap per building level | `Districts.army_cap_per_level` |
-| How much of a casualty is saveable, and how many beds there are | `army.wounded_share` (the floor), `Heroes.trait_value`, the `Field Medicine` ranks, `Districts.beds_per_level` |
-| What mending costs against recruiting | `army.heal_cost_share`, `army.heal_time_share` |
+| Tier multipliers | `units` |
+| Type fractions, as integer pairs | `combat.typeAdvantageNum/Den`, `combat.typeDisadvantageNum/Den` |
+| Hero stat blocks, passives, the 70% share and the rarity multipliers | `heroes`, `heroes.rarity*` ([`10-heroes.md`](10-heroes.md) §9) |
+| Villain stat blocks, per room | `villains` |
+| Villain pool per depth | `depths` › `villainPool` |
+| Tick length, timeout | `combat.tickMs`, `combat.timeoutTicks` |
+| Enemy slot band, villain threshold, share and slots | `combat.genSlotsMin/Max`, `combat.genVillainThreshold`, `genVillainShare`, `genVillainSlots` |
+| What a hero is worth in the ESTIMATE | `combat.heroPowerPerDmg` |
+| Army cap per building level | `buildings.armyCapPerLevel` |
+| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), `heroes.traitValue`, the `Field Medicine` ranks, `buildings.bedsPerLevel` |
+| What mending costs against recruiting | `army.healCostShare`, `army.healTimeShare` |
 
 ## 18. Not in this version
 
@@ -348,7 +348,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - Abilities on unit types; ultimates, energy or any hero ability beyond the
   type passive
 - A hero-only battle mode — a hero arena is a possible future
-- Upgradeable `frontage` or `squad_size`
+- Upgradeable `frontage` or `squadSize`
 - Mixed tiers of one type in a squad
 - Heroes inside troop slots, or bonuses to non-matching types
 - Villains with levels or ascension — their stats are authored
@@ -359,7 +359,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - RNG in resolution
 - Draws
 
-**Pending:** tier conversion cost, if any (**OQ-85**) · `power_start`
+**Pending:** tier conversion cost, if any (**OQ-85**) · `powerStart`
 re-authoring against the full T1–T5 power range once tiers exist (**OQ-86**).
 **OQ-82 closed 2026-09-09**: three villain slots, the same three the player
 fields.

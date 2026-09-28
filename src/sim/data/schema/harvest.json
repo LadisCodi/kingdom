@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "fields": {
+    "unitsPerStrike": { "type": "int", "min": 0 },
+    "secondsPerStrike": { "type": "int", "min": 0 },
+    "stock": { "type": "int", "min": 0 },
+    "recoverySeconds": { "type": "int" },
+    "respawnSeconds": { "type": "int" }
+  }
+}

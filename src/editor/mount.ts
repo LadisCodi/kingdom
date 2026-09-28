@@ -72,9 +72,21 @@ interface Session {
   overlays: Overlays;
 }
 
-export function mountEditor(): void {
+/**
+ * What `?dev=data` needs to hold an editor it hosts: the root to attach and
+ * detach, and whether it has unsaved work. `host` defaults to the page, which
+ * is how the editor has always run on its own.
+ *
+ * Hosted, the editor is detached rather than destroyed when another
+ * collection is shown, so its undo stack and camera survive; every
+ * window-level listener below therefore does nothing while `root` is not in
+ * the document.
+ */
+export interface EditorHandle { root: HTMLElement; isDirty(): boolean }
+
+export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   document.getElementById('app')?.setAttribute('hidden', '');
-  document.title = 'Kingdom — map editor';
+  if (host === document.body) document.title = 'Kingdom — map editor';
 
   const doc = new MapDoc(regionMap as unknown as RegionMapDoc);
 
@@ -98,7 +110,7 @@ export function mountEditor(): void {
     el('main', { class: 'ed-stage' }, canvas),
     side,
     status);
-  document.body.append(root);
+  host.append(root);
 
   // The editor paints DATA by coordinate, so it keeps the FLAT square grid.
   // A diamond is the right way to look at a kingdom and the wrong way to fill
@@ -322,6 +334,7 @@ export function mountEditor(): void {
 
   // ------------------------------------------------------------ keyboard
   window.addEventListener('keydown', (e) => {
+    if (!root.isConnected) return;
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
     const key = e.key.toLowerCase();
     if (key === ' ') { spaceHeld = true; e.preventDefault(); return; }
@@ -738,7 +751,7 @@ export function mountEditor(): void {
       : hover && tool !== 'sites' && brushSize > 1 ? brushCells(hover)
         : [];
     canvas.dataset.mode = tool === 'sites' ? siteMode : 'paint';
-    drawEditor(canvas, camera, doc, overlays, view);
+    if (root.isConnected) drawEditor(canvas, camera, doc, overlays, view);
     requestAnimationFrame(frame);
   };
 
@@ -747,6 +760,7 @@ export function mountEditor(): void {
   // Camera state is written continuously so a save-triggered HMR reload lands
   // where the designer was looking.
   setInterval(writeSession, 1000);
+  return { root, isDirty: () => doc.dirty };
 }
 
 // --------------------------------------------------------------- helpers

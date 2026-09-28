@@ -29,11 +29,10 @@ outside them.** Conflicts are prevented by territory, not by care.
 6. **`Docs/` is always the safe lane.** Design work can run at any time against
    anything.
 
-### The three files that cannot be shared
+### The two files that cannot be shared
 
 | File | Why it is dangerous | The rule |
 |---|---|---|
-| **`balance/balance.xlsx`** | binary — git cannot merge it, and a conflict means one side's work is simply gone | **One lane holds it at a time.** Say so before opening it, and merge before letting go |
 | **`src/sim/data/definitions.ts`** → `SAVE_VERSION` | two lanes bumping it produce a save that claims a version it does not have | **Never reserve a number in advance.** The second lane to merge rebases and re-bumps. `MIGRATIONS` is append-only, so the order it lands in is the order it must be written in |
 | **`src/game.ts`** (4,492 lines) | everything wants to touch it, so everything collides in it | Put the work in **your own module** and touch `game.ts` in as few and as small hunks as you can. It is a wiring file; do not let it become the work |
 

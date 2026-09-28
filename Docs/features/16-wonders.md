@@ -6,8 +6,8 @@
 > **Status: designed, not built.** Late-game content by construction (§5.2), so
 > it waits behind work a player meets sooner.
 >
-> **The three balance numbers are not in this document** (§6, **OQ-58**). The
-> workbook owns them; this document owns the concept, the fit and the mechanism.
+> **The three balance numbers are not in this document** (§6, **OQ-58**). They
+> live in `?dev=data`; this document owns the concept, the fit and the mechanism.
 
 ## 1. The Gold sinks it sits beside
 
@@ -17,7 +17,7 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 |---|---|---|
 | Landmark claims | **527,000 Gold** | ten landmarks; 2,000 · 25,000 ×5 · 100,000 ×4 |
 | The whole map's fog | **4,729,789,354 Gold** | a last cell |
-| The fifteen upgrades, fully bought | **51,926 Gold** | `maxLevel` on every one; `TapPower` is **34,006** of it (65%, `cost_growth` 1.9 over ten levels) |
+| The fifteen upgrades, fully bought | **51,926 Gold** | `maxLevel` on every one; `TapPower` is **34,006** of it (65%, `costGrowth` 1.9 over ten levels) |
 | The technology tree, 24 techs | **6,600 Gold** | a last node |
 | Buildings and their levels | on a curve | `maxCountPerTownhallLevel`, and `maxLevel` on every district |
 | | **≈ 29,100,000 Gold** | nothing after it |
@@ -40,7 +40,7 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
   Gold and is worth `effectPerLevel × L`.
 - **No per-level table anywhere in a Wonder's definition.**
 - `District.level` is already a plain number: no state change, no migrator.
-  Adding Wonders is additive — new definition rows and a save-version bump.
+  Adding Wonders is additive — new `buildings` entries and a save-version bump.
 
 ### 2.1 The shell test
 
@@ -104,7 +104,7 @@ Not in the set:
   ([`combat.md`](combat.md) §14).
 - A build-speed Wonder — waits for `buildSpeed` to land as a modifier stat with
   the event archetype ([`implementation-plan.md`](../implementation-plan.md)
-  Step 2); one row after that, a code change before it.
+  Step 2); one entry after that, a code change before it.
 
 Names are a first pass, under the same standing offer as the tome titles
 (**OQ-15**).
@@ -147,13 +147,13 @@ cost(L)   = wonder.cost_base × wonder.cost_growth ^ L      Gold
 effect(L) = wonder.effect_per_level × L
 ```
 
-Two lines, three numbers. The numbers live in the workbook (**OQ-58**); the
+Two lines, three numbers. The numbers live in `?dev=data` (**OQ-58**); the
 shape is fixed here.
 
 ### 6.1 Exponential cost, linear effect
 
-- `cost_growth` is the strongest dial in the feature — the analogue of
-  `tap.work_seconds`. It decides whether a Wonder is a sink or a formality.
+- `costGrowth` is the strongest dial in the feature — the analogue of
+  `tap.workSeconds`. It decides whether a Wonder is a sink or a formality.
 - Cost compounds; effect does not. The marginal level gets worse forever.
 - A Wonder is a place to park a surplus, never a Gold investment.
 - A production Wonder's payback is `cost(L)` over a linear return, which
@@ -196,10 +196,10 @@ and the effective helpers that own each stat.
 | The Astral Spire | `manaRegen` | `src/sim/mana.ts:61` |
 | The Bell of Toil | `workerYield` | `src/sim/upgrades.ts:157` |
 
-- Cost shape: one row plus one call site, as for a modifier stat. The stat
+- Cost shape: one entry plus one call site, as for a modifier stat. The stat
   existing guarantees the helper exists.
-- This bounds the set: a fourth Wonder is a row and a line; a tenth is ten
-  lines across the sim. Ten Wonders is not ten rows of data (OQ-6, OQ-57).
+- This bounds the set: a fourth Wonder is an entry and a line; a tenth is ten
+  lines across the sim. Ten Wonders is not ten entries of data (OQ-6, OQ-57).
 - Resolution order: base → the completed technologies → modifier stack. **A
   Wonder level belongs to the base stage, not the modifier stack.** The Wonder
   term goes inside the `techValue(state, …)` the helper already hands to
@@ -233,12 +233,12 @@ differs in three ways:
 
 | Dial | Value | Key |
 |---|---|---|
-| Cost growth — sink or formality (§6) | unset (**OQ-58**) | `wonder.cost_growth` |
-| Cost base — where level 1 lands relative to a building | unset (**OQ-58**) | `wonder.cost_base` |
-| Effect per level, per Wonder — how fast the ladder flattens | unset (**OQ-58**) | `wonder.effect_per_level` |
+| Cost growth — sink or formality (§6) | unset (**OQ-58**) | `wonder.costGrowth` |
+| Cost base — where level 1 lands relative to a building | unset (**OQ-58**) | `wonder.costBase` |
+| Effect per level, per Wonder — how fast the ladder flattens | unset (**OQ-58**) | `wonder.effectPerLevel` |
 | Unlock gate — the Townhall level that lists each Wonder (§5.2) | final Townhall level | — |
 | Footprint — the non-Gold half of the price (§5.1, §8) | large | — |
-| The set — one row plus one call site each (§7.1) | three | — |
+| The set — one entry plus one call site each (§7.1) | three | — |
 
 ## 11. Acceptance
 

@@ -1,0 +1,30 @@
+{
+  "army": {
+    "typeAdvantage": 1.5,
+    "typeDisadvantage": 0.75,
+    "threatFloorFraction": 0.4,
+    "woundedShare": 0.1,
+    "healCostShare": 0.3,
+    "healTimeShare": 0.25
+  },
+  "combat": {
+    "tickMs": 100,
+    "timeoutTicks": 600,
+    "typeAdvantageNum": 3,
+    "typeAdvantageDen": 2,
+    "typeDisadvantageNum": 3,
+    "typeDisadvantageDen": 4,
+    "genSlotsMin": 2,
+    "genSlotsMax": 6,
+    "genVillainThreshold": 400,
+    "genVillainShare": 0.3,
+    "genVillainSlots": 3,
+    "heroPowerPerDmg": 0.5
+  },
+  "party": {
+    "troopSlots": 6,
+    "heroSlots": 3,
+    "heroSlotGemCostBase": 2500,
+    "heroSlotGemCostGrowth": 2
+  }
+}

@@ -275,8 +275,8 @@ Every rung that throttles the whale takes album 4 off the free player.
 |---|---|
 | `PackDef` becomes `{ cards, guarantees: Partial<Record<Rarity, number>>, weights: [7] }` — gold is a rarity in the distribution, not a separate coin | `data/definitions.ts` |
 | `packCards()` deals guarantees first, then rolls the remainder on seven ways | `sim/collection.ts` |
-| The `Packs` sheet: seven guarantee columns and seven weight columns, replacing five weights + `gold_chance` + `gold_guaranteed` | `balance.xlsx`, `scripts/balance.mjs` |
-| Nine pack ids, and a `source` for each — free, paid, or vault | the sheet |
+| `packs`: `guarantees` and a seven-way `weights`, replacing five weights + `gold_chance` + `gold_guaranteed` | `src/sim/data/game/packs.json` and its schema |
+| Nine pack ids, and a `source` for each — free, paid, or vault | `packs` |
 | `starsFor` reads the authored ladder rather than `starsPerRarity × goldMultiplier` | `sim/collection.ts` |
 | Three vault thresholds instead of two, and a ten-chest batch | `sim/collection.ts`, `ui/collectionSheet.ts` |
 

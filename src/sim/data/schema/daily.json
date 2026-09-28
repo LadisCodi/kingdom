@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "fields": {
+    "daily": {
+      "type": "object",
+      "fields": {
+        "seasonDays": { "type": "int" },
+        "manaFractions": { "type": "list", "of": { "type": "float" } },
+        "gems": { "type": "list", "of": { "type": "int" } },
+        "premiumGems": { "type": "list", "of": { "type": "int" } },
+        "premiumGoldKeys": { "type": "list", "of": { "type": "int" } },
+        "premiumXpHours": { "type": "list", "of": { "type": "int" } },
+        "premiumXpFloor": { "type": "int" }
+      }
+    },
+    "missions": {
+      "type": "object",
+      "fields": {
+        "boardSize": { "type": "int" },
+        "perWindow": { "type": "int" },
+        "windowHours": { "type": "int" },
+        "weeklyQuota": { "type": "int" },
+        "collectMinutesMin": { "type": "int" },
+        "collectMinutesMax": { "type": "int" },
+        "collectFloor": { "type": "int" },
+        "populationBand": { "type": "list", "of": { "type": "int" } },
+        "upgradeBand": { "type": "list", "of": { "type": "int" } },
+        "revealBand": { "type": "list", "of": { "type": "int" } },
+        "buildBand": { "type": "list", "of": { "type": "int" } },
+        "troopsBand": { "type": "list", "of": { "type": "int" } },
+        "heroLevelBand": { "type": "list", "of": { "type": "int" } },
+        "roomsBand": { "type": "list", "of": { "type": "int" } },
+        "depthsBand": { "type": "list", "of": { "type": "int" } },
+        "packsBand": { "type": "list", "of": { "type": "int" } },
+        "hardKinds": { "type": "list", "of": { "type": "text" } },
+        "hardPack": { "type": "text" },
+        "normalPack": { "type": "text" },
+        "rewardGems": { "type": "int" },
+        "rewardManaFraction": { "type": "float" }
+      }
+    }
+  }
+}

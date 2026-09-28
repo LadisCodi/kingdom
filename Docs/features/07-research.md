@@ -20,8 +20,7 @@
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
   `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name
   and glyph, its KIND, what it unlocks or what it moves, its Gold, Knowledge
-  and seconds, its slot on its tome page and what it requires. There is no
-  `Technologies` sheet.
+  and seconds, its slot on its tome page and what it requires.
 - **What a technology SAYS is generated from what it does**
   (`src/sim/techProse.ts`) — from its `unlocks`, or from one sentence per
   effect written against the stat in the registry. Only a `mechanic` carries
@@ -62,7 +61,7 @@
   down its own page. A card on a page's **first row** requires nothing —
   there is nothing above it to require, which is what opening a book means.
 - **Gems finish a running research**, at the same price per second a build
-  rush pays (`rush.seconds_per_gem`), pressed from the technology's own sheet.
+  rush pays (`rush.secondsPerGem`), pressed from the technology's own sheet.
   The technology is moved to completed there and then rather than by
   shortening its duration: a duration edited backwards puts a boundary in the
   past, and one-call replay and stepped ticking would land on it differently.
@@ -71,7 +70,7 @@
 
 ```
 gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time )
-       ÷ rush.seconds_per_gem
+       ÷ rush.secondsPerGem
 ```
 
 - **A currency that arrives on a clock is a duration wearing a number**, so
@@ -88,7 +87,7 @@ gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time
   what is *under study*; an instant purchase never goes under study, so it
   occupies no desk and a full strip does not stop it. On the technology's
   sheet the "Every scholar is busy" line therefore disables `Start` only.
-- **The magnitude is a live question.** `seconds_per_gem` was calibrated on
+- **The magnitude is a live question.** `rush.secondsPerGem` was calibrated on
   BUILD waits, which run in seconds and minutes; a Knowledge wait runs in
   hours. Two Knowledge at the base 1/h is two hours, which is **1,440 Gems**
   — against a 500-Gem opening purse. Consistent with every other rush, and
@@ -128,7 +127,7 @@ A `bonus` names its effects, and each is four fields:
 - A stat may **narrow which ids of a kind it accepts**, where only some of
   them have the number at all: a recovery bonus aimed at a berry bush, which
   is consumed rather than regrown, is refused the way a `flat` on a bare
-  multiplier is. The narrowing is derived from the workbook, so giving the
+  multiplier is. The narrowing is derived from the `harvest` data, so giving the
   berries a regrowth time is what makes them aimable.
 
 - A total is the **sum over completed technologies** whose effects match
@@ -176,7 +175,7 @@ A `bonus` names its effects, and each is four fields:
   and the four military halls independently of the tree, so Civics paces the
   other two without an edge.
 - Which tome a technology is in is **shape, not a number**: it is a drag in
-  `?dev=tree`, not a column in the workbook
+  `?dev=tree`, not a number
   ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
 - Exploration — Sailing, Scaling Tools, Fishing, Shipbuilding, the Docks —
   lives in Magic. Scaling Tools gates *working* a mountain, not
@@ -233,8 +232,8 @@ A `bonus` names its effects, and each is four fields:
 - **The shape of the tree — which tome and band each card is in, where on the
   page, and what it requires — is authored in `?dev=tree`** and lives in
   `src/sim/data/tech-tree.json`
-  ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Every NUMBER stays in
-  the workbook. Neither file can overwrite the other.
+  ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Every other NUMBER lives
+  in the `?dev=data` collections. Neither file can overwrite the other.
 - A page is **three columns** wide and as many rows tall as the book needs.
   Three, because a fourth does not fit a phone and the flow stops reading as a
   flow past three.
@@ -320,7 +319,7 @@ A `bonus` names its effects, and each is four fields:
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
-| the **base rate** | +1/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
+| the **base rate** | +1/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `currencies` › Knowledge › `start` |
 | each **claimed landmark** | +0.2/h | +5 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
 | each **cleared ruin** | +0.2/h | +15 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +0.3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
@@ -328,7 +327,7 @@ A `bonus` names its effects, and each is four fields:
 | `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | the `insight` delve boon (×3) |
-| the **quest chain** | — | 27 across eleven quests | `rewardKnowledge` (Quests sheet) |
+| the **quest chain** | — | 27 across eleven quests | `quests` › `rewardKnowledge` |
 
 - **The balance rides on the game's own plank while the research screen is
   open**, beside Gold, in place of Food and timber — a technology is priced in
@@ -535,14 +534,14 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 | Landmark drip · claim lump | 2/h · 50 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
 | Ruin drip · first-clear lump | 2/h · 150 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
 | Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
-| Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
+| Chain Knowledge | 500 total | `quests` › `rewardKnowledge` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many bands a book has, and what each asks for | 3 · 4 · 4 bands; 0 · 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
 | `Scriveners` per rank | −5% research time | `tech-tree.json` (its own `effects`) |
-| A spell's Mana cost | per spell | `Spells` sheet *(designed)* |
+| A spell's Mana cost | per spell | a `spells` collection *(designed)* |
 | Gems to finish a running research | undecided | *(designed)* |
 
 ## 10. Deliberately not in this design
@@ -579,9 +578,8 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   slot of its own (§2.2).
 - A rule about connectors crossing cards: the routing makes it impossible
   (§2.2).
-- A technology in a spreadsheet: the `Technologies` sheet, and the three
-  hand-written id lists that came with it (§1).
-- A district, unit or harvest source naming its own `required_tech`: the
+- A technology split across files, or a hand-written list of technology ids (§1).
+- A district, unit or harvest source naming its own `requiredTech`: the
   technology says what it opens, once (§1).
 - An editor that can author a new STAT. A `bonus` may move any number the
   registry declares, and aim it at anything that stat accepts, but the number

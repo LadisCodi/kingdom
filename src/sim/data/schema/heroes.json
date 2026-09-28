@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "fields": {
+    "rarity": { "type": "text", "options": ["Common", "Rare", "Legendary"] },
+    "unitType": { "type": "text", "ref": "unit" },
+    "trait": {
+      "type": "text",
+      "options": ["PartyDefence", "SupplyDiscount", "KnowledgeBonus", "FragmentBonus", "WoundedRecovery"]
+    },
+    "traitValue": { "type": "float" },
+    "dmg": { "type": "int" },
+    "def": { "type": "int" },
+    "hp": { "type": "int", "min": 1 },
+    "cooldown": { "type": "int" },
+    "dmgPerLevel": { "type": "int" },
+    "defPerLevel": { "type": "float" },
+    "hpPerLevel": { "type": "int" },
+    "troopDmgMult": { "type": "float" },
+    "troopHpMult": { "type": "float" },
+    "troopDefBonus": { "type": "int" },
+    "boon": { "type": "object", "fields": { "stat": { "type": "text" }, "value": { "type": "float" } }, "nullable": true }
+  }
+}
