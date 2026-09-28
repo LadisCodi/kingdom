@@ -105,7 +105,7 @@
 
   /* ---- chrome metrics ----
    * These two were hardcoded in six places (#notice, #panel, #overlay,
-   * .tech-info, #toast, .cast-banner), and the nav's height was only ever
+   * .tech-info, #toast, the dev bar), and the nav's height was only ever
    * IMPLIED by its padding — which is where the magic 58 came from. Naming
    * them is what lets the HUD and nav change height without silently
    * misaligning five other screens.

@@ -172,16 +172,39 @@ body {
 
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ---------- the ?dev bar ---------- */
-.cast-banner {
-  position: absolute; bottom: calc(var(--nav-h) + 60px); left: 50%; transform: translateX(-50%);
-  background: rgba(40, 40, 80, 0.95); border: 1px solid #5a5aa0;
-  /* Below the overlay (z 5) is not enough — this bar is dev-only and must
-   * never sit on top of a sheet it is meant to help test. */
-  padding: 10px 16px; border-radius: 10px; z-index: 4; color: #e8e2d0;
-  display: flex; gap: 12px; align-items: center; font-size: var(--text-body);
+/* ---------- the ?dev bar ----------
+ * Anchored to both sides of the frame, above the nav bar: a tab that opens
+ * and closes it, and the tools in a grid that wraps to the frame's width and
+ * scrolls if it has to. Below the overlay (z 7) on purpose: it is dev-only
+ * and must never sit on top of a sheet it is meant to help test. */
+.dev-bar {
+  position: absolute; left: 8px; right: 8px; bottom: calc(var(--nav-h) + 8px);
+  z-index: 4;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  pointer-events: none; /* the gap around the tab is still map */
+  color: #e8e2d0; font-size: var(--text-helper);
 }
-.cast-banner button {
+.dev-bar > * { pointer-events: auto; }
+.dev-toggle {
+  order: 2; /* under the grid, so it stays put when the grid opens */
+  font: inherit; font-weight: var(--weight-strong); color: inherit;
+  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0;
+  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.dev-grid {
+  display: none;
+  align-self: stretch;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0; border-radius: 10px;
+}
+.dev-bar.is-open .dev-grid { display: grid; }
+.dev-grid button {
   font: inherit; color: inherit; background: #26303e;
-  border: 1px solid #3a4757; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+  border: 1px solid #3a4757; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  line-height: 1.2;
 }
+.dev-grid button:hover { background: #313d4f; }

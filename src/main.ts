@@ -461,8 +461,8 @@ async function boot(): Promise<void> {
       saveManager.save(game.state, game.now(), true);
       location.reload();
     };
-    const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },
-      '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
+    const devGrid = el('div', { class: 'dev-grid' },
+      button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
       button('🃏 packs', somePacks), button('🗓 end season', endSeason),
@@ -498,6 +498,23 @@ async function boot(): Promise<void> {
       button('🗺 map editor', () => { location.search = '?dev=map'; }),
       button('🌳 tree editor', () => { location.search = '?dev=tree'; }),
       button('🗑 reset save', resetSave));
+    // A tab that shows and hides the grid, so the tools stay one tap away
+    // without covering the map. Whether it is open survives a reload.
+    const DEV_OPEN_KEY = 'kingdom.devBarOpen';
+    const readOpen = (): boolean => {
+      try { return localStorage.getItem(DEV_OPEN_KEY) !== '0'; } catch { return true; }
+    };
+    const devBar = el('div', { class: 'dev-bar' });
+    const devToggle = el('button', { class: 'dev-toggle', type: 'button' });
+    const setOpen = (open: boolean) => {
+      devBar.classList.toggle('is-open', open);
+      devToggle.textContent = open ? '🛠 dev ▾' : '🛠 dev ▸';
+      devToggle.setAttribute('aria-expanded', String(open));
+      try { localStorage.setItem(DEV_OPEN_KEY, open ? '1' : '0'); } catch { /* private window */ }
+    };
+    devToggle.addEventListener('click', () => setOpen(!devBar.classList.contains('is-open')));
+    devBar.append(devToggle, devGrid);
+    setOpen(readOpen());
     document.getElementById('ui')!.append(devBar);
   }
 
