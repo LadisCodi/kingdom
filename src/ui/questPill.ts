@@ -24,7 +24,7 @@
 // never have a transition.
 
 // THE SCROLL UNROLLS. A new quest arrives as the parchment unrolling — the
-// base fades in and widens from its two rollers — and its words fade in
+// base fades in and widens rightwards from its left roller — and its words fade in
 // just before it reaches full size. A claimed quest plays it backwards, and
 // a claim that hands over the next quest plays both, half a second apart.
 // Built on the Web Animations API so each phase can be awaited in order.

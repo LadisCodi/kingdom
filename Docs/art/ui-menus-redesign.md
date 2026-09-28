@@ -464,11 +464,11 @@ bottom, and the widget is now a button that wants to be reachable.
 - **The wood button** is one painted slab and its pressed twin, worn by every
   wood-coloured button in the game. A slab recoloured to another tone, and a
   locked one, keep the kit's flat fill.
-- **A new quest unrolls**: the parchment fades in and widens from its two
-  rollers (520 ms), and the words fade in from 360 ms, just before it is
+- **A new quest unrolls**: the parchment fades in and widens rightwards from
+  its left roller (520 ms), and the words fade in from 360 ms, just before it is
   fully open — with the scroll-open sound.
 - **A claimed quest rolls up**: the words fade out (160 ms), then the
-  parchment narrows back to its rollers and fades (420 ms) — with the
+  parchment narrows back to its left roller and fades (420 ms) — with the
   scroll-close sound. A claim that hands over the next quest plays both,
   **0.5 s** apart. Nothing on the scroll can be tapped while it moves.
 - A quest that arrives while a sheet covers the map unrolls when the map

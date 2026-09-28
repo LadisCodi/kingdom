@@ -53,14 +53,14 @@
 
 /* The parchment between its rollers (sheets/ui-quest1-scroll-button.png),
    nine-sliced so the rollers keep their shape at any width — which is what
-   lets the unroll animate the width alone. Centred, so it opens both ways. */
+   lets the unroll animate the width alone. Anchored left, so it unrolls
+   rightwards from the left roller, the way the widget is anchored. */
 .q-base {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
+  left: 0;
   width: 100%;
-  transform: translateX(-50%);
   border-style: solid;
   border-color: transparent;
   border-width: calc(var(--rpx) * 55) calc(var(--rpx) * 50) calc(var(--rpx) * 50);
