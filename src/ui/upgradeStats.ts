@@ -65,7 +65,7 @@ export function statsAt(game: Game, district: District, level: number): Building
     (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
 
   if (def.populationCapacityPerLevel.length > 0) {
-    add('homes', 'Housing', 'Villager cap', 'Homes', levelIndexed(def.populationCapacityPerLevel, level));
+    add('homes', 'bed', 'Beds', 'Beds', levelIndexed(def.populationCapacityPerLevel, level));
   }
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
