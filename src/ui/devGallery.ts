@@ -14,6 +14,19 @@ import {
   type IconName,
 } from './kit';
 
+/** The chrome's own art, by file stem.
+ *
+ * Through `import.meta.glob`, not as a literal path: these go into inline
+ * `style` attributes, which Vite does not rewrite, so a written-out
+ * `/src/ui/assets/x.png` renders in dev and 404s in the build. The same
+ * trick `src/render/sprites.ts` uses for map art. */
+const MATERIAL: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('./assets/*.{png,jpg}', { eager: true, query: '?url', import: 'default' }),
+  ).map(([path, url]) => [path.replace(/^.*\/|\.[a-z]+$/g, ''), url as string]),
+);
+const mat = (stem: string): string => MATERIAL[stem] ?? '';
+
 const section = (title: string, ...children: Array<Node | string>): HTMLElement =>
   el('section', { class: 'gal-section' }, el('h2', {}, title), ...children);
 
@@ -150,6 +163,115 @@ export function mountGallery(root: HTMLElement): void {
     )),
     specimen('sheet', sheet({ title: 'Sanctum', onClose: noop },
       el('p', {}, 'A bottom sheet: grab handle, titled plank, its own close knob.'))),
+    // The three it can also be. These are the REAL sheet() with its flags set,
+    // not a drawing of one, so a change to the primitive shows here by itself.
+    specimen('sheet — centred (the modal one)', sheet(
+      { title: 'Finish now?', onClose: noop, centred: true },
+      el('p', {}, 'For a short, one-decision sheet: an offer, a confirmation.'),
+    )),
+    specimen('sheet — plankless', sheet(
+      { title: 'Hero', onClose: noop, bare: true },
+      el('p', {}, 'The content already names it, so the plank would say it twice.'),
+    )),
+  ));
+
+  // ---- materials -------------------------------------------------------
+  // The 9-SLICE, which is the one thing a screenshot of a finished screen
+  // cannot check. A frame is cut once and then stretched by whatever sits in
+  // it, so what has to be seen is the SAME piece at sizes that fight it: a box
+  // tighter than the slice, a wide strip, a tall column. A wrong slice number
+  // shows as a corner that smears or an edge that repeats mid-run — never in
+  // the comfortable middle size a mockup happens to use.
+  //
+  // Named by the CSS class that draws them, so a fault here points at a line
+  // in material.css rather than at "the panels".
+  const SLICES: ReadonlyArray<{ name: string; css: string; used: string }> = [
+    {
+      name: 'frame-wood 80 / 12px round',
+      css: `border:9px solid transparent;border-image:url('${mat('frame-wood')}') 80 / 12px / 2px round;`
+        + `background:url('${mat('tex-parchment')}') padding-box 0 0 / 384px 384px;`,
+      used: '.k-panel · .dc',
+    },
+    {
+      name: 'plate-wood 44 fill / 10px',
+      css: "border:10px solid transparent;"
+        + `border-image:url('${mat('plate-wood')}') 44 fill / 10px stretch;`,
+      used: '.hud-coins · .nav-tab · .res-tome',
+    },
+    {
+      name: 'plate-parchment 64 fill / 16px round',
+      css: "border:16px solid transparent;"
+        + `border-image:url('${mat('plate-parchment')}') 64 fill / 16px round;`,
+      used: '.hud-plaque · .dly-pill · .q-scroll',
+    },
+  ];
+  // Four shapes, and the first is the cruel one: 44px of box for a 12px slice
+  // on each side leaves 20px of middle, which is where a frame drawn as a
+  // picture rather than as nine pieces falls apart.
+  const SHAPES: ReadonlyArray<[string, string]> = [
+    ['44 square — tighter than the slice', 'width:44px;height:44px'],
+    ['120 x 44', 'width:120px;height:44px'],
+    ['320 x 56 — a wide run', 'width:320px;height:56px'],
+    ['120 x 220 — a tall run', 'width:120px;height:220px'],
+  ];
+  page.append(section(
+    'Materials — the nine-slice at sizes that fight it',
+    ...SLICES.map((sl) => el('div', { class: 'gal-slice' },
+      el('div', { class: 'gal-label' }, `${sl.name}  ·  ${sl.used}`),
+      el('div', { class: 'gal-row' },
+        ...SHAPES.map(([label, box]) => specimen(
+          label,
+          el('div', { class: 'gal-box', style: `${box};${sl.css}` }),
+        )),
+      ))),
+    el('div', { class: 'gal-label' }, 'textures — tiled, at the size the CSS asks for'),
+    el('div', { class: 'gal-row' },
+      specimen('tex-wood 512', el('div', {
+        class: 'gal-box',
+        style: `width:220px;height:120px;background:url('${mat('tex-wood')}') center / 512px 512px`,
+      })),
+      specimen('tex-parchment 384', el('div', {
+        class: 'gal-box',
+        style: `width:220px;height:120px;background:url('${mat('tex-parchment')}') 0 0 / 384px 384px`,
+      })),
+      specimen('beam-wood, repeat-x', el('div', {
+        class: 'gal-box',
+        style: `width:320px;height:48px;background:url('${mat('beam-wood')}') center / auto 100% repeat-x`,
+      })),
+    ),
+  ));
+
+  // ---- decorations -----------------------------------------------------
+  // The pieces material.css hangs on a surface rather than builds it from.
+  // They are drawn at a fixed size and never stretched, so what matters here
+  // is only that each one is the right thing and reads on both grounds.
+  const deco = (file: string, w: number, h: number) => el('div', {
+    class: 'gal-box gal-box--bare',
+    style: `width:${w}px;height:${h}px;`
+      + `background:url('${mat(file)}') center / contain no-repeat`,
+  });
+  page.append(section(
+    'Decorations',
+    el('div', { class: 'gal-row' },
+      specimen('rope (grab)', deco('deco-rope', 96, 28)),
+      specimen('rope, vertical', deco('deco-rope-v', 24, 96)),
+      specimen('nail', deco('deco-nail', 20, 20)),
+      specimen('knob', deco('deco-knob', 44, 44)),
+      specimen('pennant', deco('deco-pennant', 40, 48)),
+      specimen('seal', deco('deco-seal', 48, 48)),
+    ),
+    el('div', { class: 'gal-label' }, 'tech seals — the four states a card walks through'),
+    el('div', { class: 'gal-row' },
+      specimen('plain', deco('seal-plain', 56, 56)),
+      specimen('available', deco('seal-available', 56, 56)),
+      specimen('active', deco('seal-active', 56, 56)),
+      specimen('done', deco('seal-done', 56, 56)),
+    ),
+    el('div', { class: 'gal-label' }, 'settings marks'),
+    el('div', { class: 'gal-row' },
+      ...['set-music', 'set-sfx', 'set-ambience', 'set-save', 'set-payer'].map((f) =>
+        specimen(f.slice(4), deco(f, 44, 44))),
+    ),
   ));
 
   // ---- the phone frame -------------------------------------------------
@@ -184,16 +306,27 @@ export function mountGallery(root: HTMLElement): void {
     el('div', { class: 'gal-ruler-tick' }, '44'),
     el('div', { class: 'gal-ruler-tick' }, '44'),
     el('div', { class: 'gal-ruler-tick' }, '44'));
+  // THREE widths, not one. The kit is judged at 402 because that is the phone
+  // the mockups were drawn for, but every layout fault this project has had
+  // lived at the ends: the header wraps to two rows below 426, and 375 is the
+  // narrowest phone still sold. A specimen that only exists at 402 is a
+  // specimen that cannot fail.
+  const WIDTHS = [375, 402, 426] as const;
   page.append(section(
-    'Phone frame — 402×874, header 44 · sheet ≤70% · nav 52',
+    'Phone frame — header 44 · sheet ≤70% · nav 52',
     el('div', { class: 'gal-row' },
-      specimen('iPhone 17', phone(402, 874, fakeHeader(), fakeSheet(), fakeNav())),
+      ...WIDTHS.map((w) => specimen(
+        `${w}px`,
+        phone(w, 874, fakeHeader(), fakeSheet(), fakeNav()),
+      )),
       specimen('44px ruler', ruler),
-      specimen('380px frame — the header wraps', phone(380, 140, fakeHeader())),
     ),
   ));
 
   // ---- icons on every ground -----------------------------------------
+  // Every name the kit can ask for. `tests/icons.test.ts` already proves each
+  // one has a cell; what this page is for is the thing a test cannot see —
+  // whether it READS, on the three grounds it actually sits on.
   const names = Object.keys(ICON_EMOJI) as IconName[];
   const iconRow = (ground: string, cls: string) => el(
     'div',
@@ -202,7 +335,7 @@ export function mountGallery(root: HTMLElement): void {
     ...names.map((n) => iconEl(n, { size: 'md' })),
   );
   page.append(section(
-    `Icons (${names.length}) — emoji fallback until the atlas lands`,
+    `Icons (${names.length})`,
     // An icon that reads on parchment can vanish on wood; check both.
     iconRow('on parchment', 'on-parchment'),
     iconRow('on wood', 'on-wood'),

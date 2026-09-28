@@ -22,3 +22,7 @@ coverage/
 
 # LibreOffice lock files
 .~lock.*#
+
+# Python bytecode
+__pycache__/
+*.pyc

@@ -68,49 +68,49 @@ describe('the cast', () => {
     }
   });
 
-  it('gives every crew member a real walk and a real work loop', () => {
-    // A crew that stands still while it slides to its cell, or idles while it
-    // is "Working", is the pack's gap showing through. The fallback to idle is
-    // for villagers; a working building's cast has to be complete.
-    for (const crew of Object.values(CREW)) {
+  it('gives every crew a work loop, and a walk to those that go out', () => {
+    // A crew that idles while it is "Working" is a gap in the cast showing
+    // through, so the work loop is required of everybody.
+    //
+    // A WALK is required only of the crews that leave the building. A
+    // workshop's people are drawn at its door and never travel, so drawing
+    // them a walk cycle would be asking for art nothing can ever show — and
+    // the rule is read off the building rather than listed here, because a
+    // district that harvests is exactly one that sends its crew out.
+    for (const [id, crew] of Object.entries(CREW)) {
+      const goesOut = DISTRICTS[id as DistrictId].harvestSources.length > 0;
       for (const name of crew) {
-        expect(animFor(name, 'walk')[1], `${name} walk`).toBe('walk');
         expect(animFor(name, 'work')[1], `${name} work`).toBe('action');
+        if (goesOut) expect(animFor(name, 'walk')[1], `${name} walk`).toBe('walk');
       }
     }
   });
 
-  /**
-   * Buildings that have a crew and no cast yet, stated rather than assumed.
-   *
-   * The same bargain `tests/icons.test.ts` strikes with `AWAITING_ART`: the
-   * gate stays live for everything else while the outstanding ask is
-   * reviewable in one place. The pack has no work loop for a carpenter or a
-   * rune carver, so their villagers fall back to the legacy worker sprite —
-   * deliberately, and only until those two loops are drawn.
-   */
-  const AWAITING_CAST: readonly DistrictId[] = ['Carpenter', 'RuneCarver'];
-
-  it('casts every working building except the Docks', () => {
+  it('casts every working building, with nothing left awaiting one', () => {
+    // There is no pending list any more: the Docks were the last exception,
+    // and they are cast now too — their member is the boat. A building that
+    // takes workers and draws nothing of its own would fall through to an
+    // emoji, so the gate is simply "all of them".
     for (const [id, def] of Object.entries(DISTRICTS)) {
       if (def.maxWorkersPerLevel.length === 0) continue;
-      if (AWAITING_CAST.includes(id as DistrictId)) continue;
-      const cast = castFor(id as DistrictId, 0);
-      if (def.harvestSources.includes('Fish')) expect(cast, id).toBeNull();
-      else expect(cast, id).not.toBeNull();
+      expect(castFor(id as DistrictId, 0), id).not.toBeNull();
     }
   });
 
-  it('drops a building from the pending-cast list as soon as it is cast', () => {
-    // What stops the list above from rotting.
-    for (const id of AWAITING_CAST) expect(castFor(id, 0), id).toBeNull();
-  });
-
   it('casts by seed, stably, over the whole crew', () => {
-    const farm = CREW.Farm!;
-    expect(castFor('Farm', 0)).toBe(farm[0]);
-    expect(castFor('Farm', farm.length)).toBe(farm[0]);
-    expect(castFor('Farm', 1)).toBe(farm[1]);
-    expect(villagerFor(VILLAGERS.length + 2)).toBe(VILLAGERS[2]);
+    // The PROPERTY again, not a fixed index — a crew of one is legal.
+    for (const [id, crew] of Object.entries(CREW)) {
+      for (let k = 0; k < crew.length; k++) {
+        expect(castFor(id as DistrictId, k), `${id} seed ${k}`).toBe(crew[k]);
+        expect(castFor(id as DistrictId, crew.length + k), `${id} wrap ${k}`)
+          .toBe(crew[k]);
+      }
+    }
+    // The PROPERTY, not a fixed index: a seed past the end of the list wraps
+    // to the same face it started on. Asserting VILLAGERS[2] assumed a list
+    // three long, and broke the day the pixel pack was cut back to one.
+    for (let k = 0; k < VILLAGERS.length; k++) {
+      expect(villagerFor(VILLAGERS.length + k), `seed ${k}`).toBe(VILLAGERS[k]);
+    }
   });
 });

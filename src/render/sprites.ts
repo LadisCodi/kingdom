@@ -45,6 +45,61 @@ export function spriteImg(key: string, className = ''): HTMLImageElement | null 
 }
 
 /**
+ * The authored height of a sprite as a fraction of its width. Null when the
+ * art is missing or has not loaded — which is also the signal not to draw.
+ *
+ * It is what makes a building's HEADROOM an art decision rather than a code
+ * one: a piece standing on the ground is scaled to its plot's diamond width
+ * and keeps this ratio above it, so a taller tier is a taller PNG and no
+ * table anywhere needs editing (Docs/art/art-direction.md §3.1).
+ */
+export const spriteAspect = (key: string): number | null => {
+  const s = sprites.get(key);
+  if (!s?.ready || s.img.naturalWidth === 0) return null;
+  return s.img.naturalHeight / s.img.naturalWidth;
+};
+
+/**
+ * WHERE THE ROOF IS: how far down a sprite its first opaque row sits, as a
+ * fraction of its height.
+ *
+ * Building art is authored on a canvas with HEADROOM above the plot — enough
+ * sky for the tallest tier — and a short building does not use all of it
+ * (Docs/art/art-direction.md §3.1). A label hung on the top of the canvas
+ * therefore floats in empty air. Measured once per sprite and cached: the
+ * scan is on a 64px-wide copy, so it costs a fraction of a millisecond and
+ * never runs again.
+ */
+const inkTops = new Map<string, number>();
+
+export function spriteInkTop(key: string): number {
+  const cached = inkTops.get(key);
+  if (cached !== undefined) return cached;
+  const s = sprites.get(key);
+  if (!s?.ready || s.img.naturalWidth === 0) return 0; // ask again once it loads
+  const w = Math.min(64, s.img.naturalWidth);
+  const h = Math.max(1, Math.round((s.img.naturalHeight / s.img.naturalWidth) * w));
+  let top = 0;
+  try {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(s.img, 0, 0, w, h);
+    const { data } = g.getImageData(0, 0, w, h);
+    let row = 0;
+    outer: for (; row < h; row++) {
+      for (let x = 0; x < w; x++) if (data[(row * w + x) * 4 + 3] > 8) break outer;
+    }
+    top = row / h;
+  } catch {
+    top = 0; // a tainted or unreadable canvas: treat the whole image as ink
+  }
+  inkTops.set(key, top);
+  return top;
+}
+
+/**
  * Draw sprite `key` filling (x, y, w, h). Returns false when the image is
  * missing or not yet loaded — the caller draws its glyph fallback instead.
  */

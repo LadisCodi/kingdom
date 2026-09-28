@@ -322,7 +322,12 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const place = `left:${colLeft(col)}px;top:${top}px;`
     + `width:${NODE_W}px;height:${NODE_H}px`;
   if (techVisibility(state, id) === 'silhouette') {
-    return el('div', { class: 'tech-card silhouette', style: place }, '?');
+    // A SPAN, not a bare '?'. The card overlays a dashed ring and the mark in
+    // one grid cell, and `.tech-card.silhouette > *` is what puts them there —
+    // a text node gets an anonymous grid item that no selector can reach, so
+    // the ring took row 1 and the '?' fell to row 2, stacked under it.
+    return el('div', { class: 'tech-card silhouette', style: place },
+      el('span', {}, '?'));
   }
   const done = isTechComplete(state, id);
   const active = isTechActive(state, id);
@@ -341,7 +346,13 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   // the player cannot act on yet — done, running, unaffordable, missing a
   // prerequisite, behind a bar — and `available` styling only means the
   // prerequisites are met. The dot is the difference.
-  if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
+  //
+  // It hangs on the SEAL, not on the card. The card is a 120px box around a
+  // 62px seal, so a dot in its corner sat 16px clear of the thing it marks,
+  // reading as a stray mark on the parchment rather than as a badge.
+  if (canStartTech(state, id)) {
+    node.querySelector('.tech-card-glyph')?.append(el('span', { class: 'node-dot' }));
+  }
   if (active) {
     const completesAt = techCompletesAt(state, id)!;
     const total = def.durationSeconds * 1000;

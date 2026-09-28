@@ -6,6 +6,7 @@
 // next to a dozen pixel icons, which nobody notices in review.
 //
 // Runs in node — atlas.generated.ts is deliberately DOM-free.
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
@@ -90,3 +91,58 @@ describe('the icon atlas', () => {
 // pixel art: `.icon` renders the atlas smooth, so `--icon-size` is a layout
 // choice per element rather than a ratio of the 32px cell. What is still
 // checked above is coverage — every name has a cell.
+
+// The shipped folder, not the atlas.
+//
+// `sprites.ts` globs `./assets/*.png` and Vite bundles every match, so a file
+// nobody asks for is weight the player downloads. Two ways in, both already
+// taken once: a working MASTER copied next to its normalised sprite (ten of
+// them, 7.6 MB), and a pixel-era stem left behind after its `_l1` landed,
+// which the level chain in `mapRenderer` shadows for ever.
+describe('src/render/assets', () => {
+  const dir = new URL('../src/render/assets/', import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.png'));
+
+  it('ships no working masters', () => {
+    // Masters live in Docs/art/<kind>/ — that is the workshop, not the game.
+    expect(files.filter((f) => f.includes('.master.'))).toEqual([]);
+  });
+
+  it('ships no stem an _l1 already shadows', () => {
+    // mapRenderer tries `<sprite>_l<level>` downwards, then the bare stem, so
+    // a stem with a level-1 sibling can never be reached.
+    const stems = new Set(files.map((f) => f.replace(/\.png$/, '')));
+    const shadowed = [...stems].filter((s) => stems.has(`${s}_l1`));
+    expect(shadowed).toEqual([]);
+  });
+});
+
+// The chrome's materials, which no other test can see.
+//
+// `material.css` names its art in `url(...)` and the gallery names it in
+// inline styles; neither is type-checked, so a renamed or deleted file blanks
+// a panel's frame in the build and nothing fails. The frame is the one thing
+// a player never reads as missing — it just looks flat.
+describe('the chrome materials', () => {
+  const read = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
+  const assets = new Set(
+    readdirSync(new URL('../src/ui/assets/', import.meta.url)),
+  );
+
+  it('every material.css url() points at a file that exists', () => {
+    const css = read('../src/ui/styles/material.css');
+    const wanted = [...css.matchAll(/url\('\.\.\/assets\/([^']+)'\)/g)].map((m) => m[1]);
+    expect(wanted.length).toBeGreaterThan(0);
+    expect(wanted.filter((f) => !assets.has(f))).toEqual([]);
+  });
+
+  it('every stem the kit gallery asks for exists', () => {
+    // It resolves them through import.meta.glob, so a missing one is an empty
+    // string rather than a 404 — silent twice over.
+    const src = read('../src/ui/devGallery.ts');
+    const stems = [...src.matchAll(/mat\('([^']+)'\)/g)].map((m) => m[1]);
+    expect(stems.length).toBeGreaterThan(0);
+    const have = new Set([...assets].map((f) => f.replace(/\.[a-z]+$/, '')));
+    expect(stems.filter((s) => !have.has(s))).toEqual([]);
+  });
+});

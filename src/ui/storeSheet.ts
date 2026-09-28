@@ -36,7 +36,7 @@ import { formatUsd } from '../sim/store';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
 import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { btn, card, currencyIcon, iconEl, sheet } from './kit';
 
 export function renderStoreSheet(game: Game): HTMLElement {
@@ -149,7 +149,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
       name: bundle.name,
       // Priced against the shelf it sits on: every part of a bundle has a Gem
       // price two rows up, so the sum is a claim the player can check.
-      desc: `${bundle.gemValue.toLocaleString('en-US')} gems' worth, at the prices above`,
+      desc: `${formatExact(bundle.gemValue)} gems' worth, at the prices above`,
     },
       el('div', { class: 'store-bundle-lines' },
         ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },

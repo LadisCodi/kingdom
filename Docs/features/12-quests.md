@@ -30,6 +30,15 @@
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
   quest is a row.
+- **A quest's line is rendered from its goal, never written.** The `Quests`
+  sheet carries a `name` — flavour, *Timber!*, *Tax day* — and no description;
+  the sentence the tracker shows is generated from `goal_type`, `goal_target`
+  and `goal_amount`, the way a technology's card is generated from what it
+  unlocks. So a rebalance updates its own prose, and a new goal type owes one
+  phrase rather than 53 rewrites.
+- **The tracker holds 44 characters**, and that is the whole budget: it is the
+  only place a quest's line is ever shown. Written copy ran to 105 and was
+  read cut off mid-word; the generated lines top out at 30.
 - **`DiscoverFeature`** is a `DiscoverCells` that counts only cells carrying a
   given feature.
   - The hint points at a dark cell that has the feature; with none in sight it
@@ -188,7 +197,7 @@ and the thing you press are the same object.
 - The Royal column pays a season of **25,000 Gems, ten gold keys and five XP
   grants**. Counted at the pass's own rate — a gold key at its shop price of
   1,500 Gems, Hero XP at **10 XP a Gem** — that is **50,000 Gems of value, the
-  $99.99 pack, for €9.99**.
+  $99.99 pack, for $9.99**.
 - **Half of it is deliberately not Gems.** A pass that paid 50,000 Gems would
   end the six Gem packs, and the packs are how the store measures intent
   ([`14-monetization.md`](14-monetization.md) §2.2). Keys and XP are the other
@@ -210,7 +219,7 @@ and the thing you press are the same object.
 
 ### 3.3 The Royal chest
 
-- **€9.99, one season.** A real-money SKU against the simulated budget
+- **$9.99, one season.** A real-money SKU against the simulated budget
   ([`14-monetization.md`](14-monetization.md) §3), never a Gem price
   (OQ-25).
 - **The buy button is the Royal column's header**, carrying the price. Bought,
@@ -287,7 +296,7 @@ and the thing you press are the same object.
 | Royal Gems | **25,000** a season | `daily.premium_gems` |
 | Royal Hero XP | 12 hours of the XP trickle, floored at **20,000** a grant — five grants | `daily.premium_xp_hours`, `daily.premium_xp_floor`, `collection.xp_trickle_per_tier_depth` |
 | Royal gold keys | **ten** a season | `daily.premium_gold_keys` |
-| The Royal chest's price | **€9.99** for 50,000 Gems of value | `Store` sheet |
+| The Royal chest's price | **$9.99** for 50,000 Gems of value | `Store` sheet |
 | The chain | row order is chain order | `Quests` sheet |
 
 ## 5. Acceptance

@@ -1,0 +1,150 @@
+{
+  "forest": {
+    "name": "A STAND OF FOREST",
+    "what": "THREE trees of different sizes standing apart, with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. Two or three small ferns at the roots and nothing else",
+    "scale": 1.05
+  },
+  "forest_exhausted": {
+    "name": "A FELLED STAND OF FOREST",
+    "what": "the SAME three trees after they have been felled: three low pale stumps with clean-cut tops, standing apart in the same arrangement, one cut log lying beside them, a scatter of woodchips and one small surviving sapling. It must read as the same place, logged — not as a different patch of ground",
+    "scale": 1.0
+  },
+  "mountain": {
+    "name": "A ROCKY PEAK",
+    "what": "ONE grey stone peak, cut into a few broad flat facets — six or seven large planes, not a pile of rubble. Its outline is craggy and uneven, leaning slightly, with one shoulder lower than the other. Two small boulders sit apart from it at its foot, and a little grass and moss catches in the lower cracks. It is a landmark on a single tile, not a mountain range",
+    "scale": 1.2
+  },
+  "mountain_exhausted": {
+    "name": "A QUARRIED PEAK",
+    "what": "the SAME grey peak after it has been worked: its near side cut away into three or four flat stepped benches of pale freshly-cut stone, the rest of the outline still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into",
+    "scale": 1.14
+  },
+  "mountain_iron": {
+    "name": "AN IRON PEAK",
+    "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, shot through with rusty red-brown ore: two or three bold warm reddish veins running down its faces and one exposed nugget of dark iron, with a little rust-stained rubble at its foot. It must read as iron at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
+    "scale": 1.2
+  },
+  "mountain_iron_exhausted": {
+    "name": "A WORKED-OUT IRON PEAK",
+    "what": "the SAME iron peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the red veins gone and only a little rust staining left, rubble at its foot",
+    "scale": 1.14
+  },
+  "mountain_gold": {
+    "name": "A GOLD PEAK",
+    "what": "ONE grey stone peak of a few broad flat facets, its outline craggy and uneven, with bright gold veins running through it: two or three bold seams and one glinting nugget caught in a face, a little pale rubble at its foot. It must read as gold at a glance without any label, and the veins must be few and large enough to see at thumbnail size",
+    "scale": 1.2
+  },
+  "mountain_gold_exhausted": {
+    "name": "A WORKED-OUT GOLD PEAK",
+    "what": "the SAME gold peak after it has been mined: one dark opening cut into its face with two rough timber props framing it, pale cut rock around the mouth, the gold veins gone and only the faintest glint left, rubble at its foot",
+    "scale": 1.14
+  },
+  "berry_bush": {
+    "name": "A BERRY BUSH",
+    "what": "two rounded shrubs of dense dark-green leaves, thick with small bright berries — deep blue and red — with a few berries fallen at their feet. Plump and inviting; the bushes are low, well under the height of a person",
+    "scale": 0.35
+  },
+  "wild_animals": {
+    "name": "WILD GAME",
+    "what": "two or three wild boar standing on the ground, brown and bristly, compact and rounded in the game's style, with small tusks and alert ears. A few tufts of grass around their feet. They are gameplay-scale animals, not a portrait: calm, side-on, going about their business",
+    "scale": 0.27
+  },
+  "fish_shoal": {
+    "name": "A FISH SHOAL",
+    "what": "a shoal of small silver-blue fish just under the surface of clear water, their shapes softened by the water above them, with a ring of gentle ripples and a few bubbles breaking the surface over them. NO water tile underneath — only the ripples and the fish themselves, as they will be laid over the game's own water",
+    "scale": 0.95
+  },
+  "landmark_shrine": {
+    "name": "A WAYSIDE SHRINE",
+    "what": "a small open stone shrine: four slim cream pillars carrying a little blue-tiled roof over a carved altar stone, two steps up to it, a blue-and-gold pennant on one pillar and a low ring of flowers around its base. Sacred and cared-for, and small — it seats nobody",
+    "scale": 0.95
+  },
+  "landmark_stones": {
+    "name": "A RING OF STANDING STONES",
+    "what": "NINE weathered grey monoliths set in a wide ring, each tall, narrow and slightly leaning, pale lichen on their shoulders, two fallen flat across the circle. Short grass inside the ring. Ancient and plain — no carvings, no glow. The ring is wide enough to walk into",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "landmark_leyspring": {
+    "name": "A LEYSPRING",
+    "what": "a small pool of impossibly clear water welling up between pale rocks, lit from within with a soft cyan glow, faint motes of light rising off its surface and a delicate rim of frost-white crystal growing around its edge. Magical but quiet — no beam, no explosion",
+    "scale": 0.95
+  },
+  "ruin_barrow": {
+    "name": "A BURIAL BARROW",
+    "what": "a low grassy mound with a dark stone doorway broken open in its side, two leaning standing stones flanking the entrance and a slab fallen across the threshold. Long grass over the mound, a cold dark opening. Old, quiet and unwelcoming",
+    "scale": 1.0
+  },
+  "ruin_chapel": {
+    "name": "A SUNKEN CHAPEL",
+    "what": "The broken shell of a stone chapel, large enough to have been a parish church: one gable wall still standing with an empty arched window, a stub of square tower at one end, a long run of low broken wall marking the nave, the roof gone and charred beams fallen inside. Ivy over the stones and dark water pooled where the floor was",
+    "scale": 1.15,
+    "footprint": 3
+  },
+  "ruin_counting_house": {
+    "name": "A RUINED COUNTING HOUSE",
+    "what": "The burnt-out shell of a merchant's stone hall: two storeys of cracked cream wall with empty windows, the roof gone and charred beams fallen inside, a broken strongbox and spilled coins among the rubble at its foot, a torn awning still hanging from one wall",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "ruin_ironworks": {
+    "name": "DROWNED IRONWORKS",
+    "what": "The wreck of a forge: a cracked stone chimney stack still standing, a collapsed timber roof beside it, a rusted waterwheel half off its axle, and dark still water flooding the floor around broken anvils. Wide and low, sprawling across its ground rather than rising",
+    "scale": 1.15,
+    "footprint": 2
+  },
+  "ruin_observatory": {
+    "name": "A STAR OBSERVATORY IN RUINS",
+    "what": "A broken round stone tower with its domed roof split open and half fallen away, a bent brass telescope tilting out through the gap, cracked steps spiralling up the outside, and a skirt of scattered stone rubble around its base. A trace of old blue paint left on the dome",
+    "scale": 1.15,
+    "footprint": 2
+  },
+  "farmlands": {
+    "name": "RIPE WHEAT",
+    "what": "Tall ripe wheat in warm golden straw and honey tones, grown in neat rows that run across the plot, the heads full and heavy and all at about the same height — waist-high on a person. A thin lip of dark tilled earth shows along the two near edges of the diamond, with the bottoms of the stalks visible against it",
+    "scale": 1.0,
+    "canvasPlots": 1,
+    "template": "field"
+  },
+  "farmlands_exhausted": {
+    "name": "A HARVESTED FIELD",
+    "what": "Bare warm-brown tilled earth in soft parallel ridges running across the plot, with short pale stubble left standing in the rows — ankle-high, nothing more — and a little loose straw caught between them. The same thin lip of dark earth along the two near edges of the diamond. It must read as the SAME field as the ripe one, cut",
+    "scale": 1.0,
+    "canvasPlots": 1,
+    "template": "field"
+  },
+  "forest_2": {
+    "name": "A SMALL STAND OF TREES",
+    "what": "TWO trees, one taller than the other, standing a little apart with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. One small fern at the roots and nothing else",
+    "scale": 1.05
+  },
+  "forest_3": {
+    "name": "A SMALL STAND OF TREES",
+    "what": "THREE trees of similar size in a loose triangle, one set back behind the other two, with clear sky between their canopies. Each tree is ONE straight bare trunk carrying ONE canopy, and that canopy is a single COMPACT ROUNDED MASS — a ball of foliage sitting on its trunk, closed and solid at its edge. Not a spreading crown, not several branches each with its own clump of leaves, not an open umbrella: a simple round head. The trunk is visible from the ground up to where the canopy begins, and it does not fork below that. A low bush at the foot of one of them and nothing else",
+    "scale": 1.05
+  },
+  "mountain_2x2": {
+    "name": "A ROCKY MASSIF",
+    "what": "ONE stone massif with TWO peaks of different heights sharing a base — the taller one behind and to the left, the lower one forward and right, with a saddle between them. Cut into broad flat facets, eight or ten large planes across the whole thing, not a heap of boulders. Its outline is craggy and uneven on every side, and it leans a little rather than standing square. Three or four small boulders at its foot and a little moss in the lower cracks",
+    "scale": 1.2,
+    "footprint": 2
+  },
+  "mountain_3x3": {
+    "name": "A MOUNTAIN RANGE ON ONE PLOT",
+    "what": "ONE great stone massif with THREE peaks of clearly different heights sharing a base — the tallest at the back, two lower shoulders stepping down in front of it, saddles between them. Cut into broad flat facets, a dozen or so large planes, not a heap of boulders. Its outline is craggy and uneven on every side, and it leans a little rather than standing square. A scatter of boulders at its foot and moss in the lower cracks",
+    "scale": 1.2,
+    "footprint": 3
+  },
+  "mountain_exhausted_2x2": {
+    "name": "A QUARRIED MASSIF",
+    "what": "the SAME two-peaked massif after it has been worked: its near flank cut away into four or five flat stepped benches of pale freshly-cut stone, the peaks behind still craggy, loose rubble and two squared blocks at its foot. Same rock, same place, mined into",
+    "scale": 1.14,
+    "footprint": 2
+  },
+  "mountain_exhausted_3x3": {
+    "name": "A QUARRIED RANGE",
+    "what": "the SAME three-peaked massif after it has been worked: a wide terrace of flat stepped benches cut into its near flank in pale freshly-cut stone, the peaks behind still craggy, rubble and several squared blocks at its foot. Same rock, same place, mined into",
+    "scale": 1.14,
+    "footprint": 3
+  }
+}

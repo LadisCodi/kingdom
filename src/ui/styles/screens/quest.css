@@ -47,15 +47,6 @@
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.3), 0 4px 10px rgba(60, 36, 18, 0.3);
 }
 
-/* The chain has always known its own length; now it says so. */
-.q-chain {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
 .q-name {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
@@ -135,7 +126,6 @@
   border: 0;
 }
 .q-slot .icon { --icon-size: 40px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
-.q-chain { font-size: 11px; font-weight: var(--weight-small); }
 .q-desc {
   overflow: hidden;
   display: -webkit-box;

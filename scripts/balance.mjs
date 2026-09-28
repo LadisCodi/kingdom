@@ -639,7 +639,11 @@ const SHEETS = {
   // which is the whole of OQ-48. `neighbor` takes a district id or a group
   // token (AnyHall, AnyWorkshop, AnyProducer).
   Adjacency: ['district', 'neighbor', 'stat', 'magnitude'],
-  Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
+  // No `description`: what a quest ASKS is rendered from its goal
+  // (src/sim/questProse.ts), the way a technology's card is rendered from what
+  // it unlocks. The `name` stays, because a name is flavour and carries no
+  // fact to drift from.
+  Quests: ['id', 'name', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
     'reward_gems', 'reward_stardust', 'reward_knowledge', 'reward_mana'],
   // A relic is ONE permanent passive with no ceiling, so it has two numbers:
@@ -1346,7 +1350,6 @@ async function importXlsx() {
     out.quests.push({
       id: r.id,
       name: String(r.name),
-      description: String(r.description),
       goalType: r.goal_type,
       goalTarget: target,
       goalAmount: amount,
@@ -1703,7 +1706,7 @@ async function exportXlsx() {
     [a.district, a.neighbor, a.stat, a.magnitude]));
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
-    q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
+    q.id, q.name, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
     q.rewardKnowledge || '', q.rewardMana || '',
   ]));

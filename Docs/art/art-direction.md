@@ -73,10 +73,14 @@ screenY = (cell.x + cell.y) * 32
 
 ### 3.1 Canvas sizes
 
+**A `w × h` plot's ground diamond is `(w+h)·64` wide and `(w+h)·32` tall** — it
+is the span of the cells' screen positions plus half a tile each side, and it is
+always 2:1. Canvas height is that diamond plus the footprint's headroom.
+
 | Footprint | Ground diamond | Canvas | Anchor (from canvas top-left) | Headroom |
 |---|---|---|---|---|
 | **1 × 1** | 128 × 64 | **128 × 192** | (64, 160) | 128 |
-| **2 × 1** | 256 × 64 | 256 × 192 | (128, 160) | 128 |
+| **2 × 1** | **192 × 96** | **192 × 224** | (96, 176) | 128 |
 | **2 × 2** | 256 × 128 | **256 × 320** | (128, 256) | 192 |
 | **3 × 3** | 384 × 192 | 384 × 448 | (192, 384) | 256 |
 
@@ -170,11 +174,34 @@ Every one of these is a treatment of the same asset, never a second asset.
    prompt. A montage of already-shipped assets attached alongside it is a better
    anchor than the reference alone, because the reference is a *scene* and the
    assets are *trimmed tiles*.
-2. **Trim and place.** Crop to content, rescale onto the fixed canvas for the
-   footprint (§3.1), anchored on the ground diamond's centre. The scripts in
-   [`originals/v3-sheets/`](originals/v3-sheets) generalise this — **with their
-   `-filter point` replaced by a smooth filter.** Trimming and padding survive
-   the change of style; nearest-neighbour does not.
+   - **Attach the prompt as a `.txt` and ask it to follow the file.** Typing a
+     long prompt into the composer sends it on the first newline.
+   - **Ask for the transparent PNG directly.** It delivers a real alpha channel,
+     with an anti-aliased edge and no checkerboard painted in. The black/white
+     pair in [`portraits/prompt-template.md`](portraits/prompt-template.md) §3 is
+     no longer needed for world assets.
+   - **Three things have to be hammered or they come back wrong:**
+     - **No ground plate.** Left to itself it renders the building on a raised
+       diorama block of turf and soil, which would fight the terrain tile under
+       it. Say *no grass, no soil, no platform, transparency beneath*.
+     - **Everything inside the plot.** Props left to themselves sprawl sideways —
+       the first Farm came back 2.6:1 wide on hay bales and a cart. The
+       normaliser scales the whole drawing to the plot's width, so a sprawling
+       prop shrinks the building it belongs to and the set loses its scale.
+       Say: *the leftmost and rightmost points of the drawing are the plot's
+       corners.*
+     - **The 2:1 ratio, stated as a measurement.** "Isometric" alone produces a
+       camera around 1.6:1. What works is a concrete test in the prompt: *if you
+       traced the plot, that diamond would be 1000 px wide and exactly 500 px
+       tall.* That came back at 1.99:1.
+   - The worked example is [`city/townhall-l1.prompt.txt`](city/townhall-l1.prompt.txt).
+2. **Trim and place.** [`city/norm_iso.py`](city/norm_iso.py) does it: it finds
+   the ground diamond from the master's opaque extents, Lanczos-scales the
+   render so that diamond is `128 × footprint` wide, and composites it onto the
+   canvas for the footprint (§3.1) anchored on the diamond's centre. **It prints
+   the projection ratio it measured and warns when it is not 2:1**, which is the
+   one error a contact sheet hides. It replaces the pixel era's `norm_sq.fish`:
+   trimming and padding survive the change of style, `-filter point` does not.
 3. **Verify the alpha.** The background must be genuinely transparent:
    `magick sheet.png -format "%[pixel:p{0,0}]" info:` → `srgba(0,0,0,0)`, and
    `-alpha extract -format "%[fx:mean]"` → below 0.5.

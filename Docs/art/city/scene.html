@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kingdom — isometric city set</title>
+<style>
+:root{--bg:#f3efe6;--ink:#241f18;--dim:#7d7365;--line:rgba(60,48,32,.20);
+      --t:#cfe3a8;--t2:#bcd694;--card:#fffdf8;--edge:rgba(60,48,32,.14);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#17140f;--ink:#f0e9dc;--dim:#9b9083;--line:rgba(255,255,255,.14);
+  --t:#3c4a2c;--t2:#334024;--card:#211d16;--edge:rgba(255,255,255,.10);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:14px/1.5 ui-sans-serif,system-ui,'PT Sans',sans-serif}
+header{position:sticky;top:0;z-index:5;padding:14px 20px;background:var(--card);
+       border-bottom:1px solid var(--edge);display:flex;gap:18px;align-items:baseline;flex-wrap:wrap}
+h1{margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em}
+.meta{color:var(--dim);font-size:12.5px}
+.ctl{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-size:12.5px;padding:5px 11px;border:1px solid var(--edge);
+       border-radius:7px;background:transparent;color:var(--dim);cursor:pointer}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+main{padding:24px 20px 80px;overflow-x:auto}
+.stage{position:relative;margin:0 auto;transform-origin:top left}
+.rows{display:flex;flex-direction:column;gap:36px;max-width:980px;margin:0 auto}
+.row h3{margin:0 0 10px;font-size:15px;font-weight:650;display:flex;gap:10px;align-items:baseline;
+        border-bottom:1px solid var(--edge);padding-bottom:7px}
+.row h3 em{font-style:normal;font-weight:400;font-size:12px;color:var(--dim)}
+.tiers{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap}
+.tier{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tier.todo{opacity:.55}
+.lv{font-size:11px;letter-spacing:.06em;color:var(--dim)}
+.card{position:relative;margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.slot{position:relative}
+.slot img{position:absolute;inset:0}
+.card figcaption{position:static;transform:none;bottom:auto}
+.grid{position:absolute;inset:0;pointer-events:none}
+.t{fill:var(--t);stroke:var(--line);stroke-width:1}
+.t.on{fill:var(--t2)}
+body.nogrid .t{fill:none;stroke:none}
+body.wire .t{fill:none;stroke:var(--line)}
+figure{position:absolute;margin:0}
+figure img{display:block;width:100%;height:auto;image-rendering:auto}
+figcaption{position:absolute;left:50%;transform:translateX(-50%);bottom:-26px;
+           white-space:nowrap;font-size:11.5px;color:var(--dim);text-align:center}
+figcaption em{display:block;font-style:normal;font-size:10px;opacity:.65}
+body.nolabel figcaption{display:none}
+.miss{position:absolute;border:1.5px dashed var(--line);
+      display:grid;place-items:center;border-radius:2px;
+      clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.miss span{font-size:10px;color:var(--dim);opacity:.8}
+footer{padding:0 20px 40px;color:var(--dim);font-size:12.5px;max-width:64ch}
+code{font-family:ui-monospace,monospace;font-size:.92em}
+</style></head><body class="">
+<header>
+  <h1>Kingdom — the isometric city set</h1>
+  <span class="meta">2:1 · tile 128×64 · <strong id="n">54/54</strong> sprites · tiers L1·L4·L8</span>
+  <span class="ctl">
+    <button id="m1" aria-pressed="true">Showcase</button>
+    <button id="m2" aria-pressed="false">Village</button>
+    <button id="g"  aria-pressed="true">Ground</button>
+    <button id="l"  aria-pressed="true">Labels</button>
+    <button id="z"  aria-pressed="false">Zoom ½</button>
+  </span>
+</header>
+<main>
+  <div id="v1" class="rows"><section class="row">
+      <h3>Townhall<em>2×2</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><img src="townhall_l1.png" alt="Townhall 1" width="256" height="320"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><img src="townhall_l4.png" alt="Townhall 4" width="256" height="320"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><img src="townhall_l8.png" alt="Townhall 8" width="256" height="320"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Docks<em>2×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><img src="docks_l1.png" alt="Docks 1" width="192" height="224"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><img src="docks_l4.png" alt="Docks 4" width="192" height="224"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><img src="docks_l8.png" alt="Docks 8" width="192" height="224"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Barracks<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="barracks_l1.png" alt="Barracks 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="barracks_l4.png" alt="Barracks 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="barracks_l8.png" alt="Barracks 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Carpenter<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="carpenter_l1.png" alt="Carpenter 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="carpenter_l4.png" alt="Carpenter 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="carpenter_l8.png" alt="Carpenter 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Farm<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="farm_l1.png" alt="Farm 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="farm_l4.png" alt="Farm 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="farm_l8.png" alt="Farm 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Housing<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="housing_l1.png" alt="Housing 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="housing_l4.png" alt="Housing 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="housing_l8.png" alt="Housing 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Infirmary<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="infirmary_l1.png" alt="Infirmary 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="infirmary_l4.png" alt="Infirmary 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="infirmary_l8.png" alt="Infirmary 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Mason's Yard<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="masons_yard_l1.png" alt="Mason's Yard 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="masons_yard_l4.png" alt="Mason's Yard 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="masons_yard_l8.png" alt="Mason's Yard 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Quarry<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="quarry_l1.png" alt="Quarry 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="quarry_l4.png" alt="Quarry 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="quarry_l8.png" alt="Quarry 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Rune Carver<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="rune_carver_l1.png" alt="Rune Carver 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="rune_carver_l4.png" alt="Rune Carver 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="rune_carver_l8.png" alt="Rune Carver 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Sanctum<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sanctum_l1.png" alt="Sanctum 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sanctum_l4.png" alt="Sanctum 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sanctum_l8.png" alt="Sanctum 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Sawmill<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sawmill_l1.png" alt="Sawmill 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sawmill_l4.png" alt="Sawmill 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="sawmill_l8.png" alt="Sawmill 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Shooting Grounds<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="shooting_grounds_l1.png" alt="Shooting Grounds 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="shooting_grounds_l4.png" alt="Shooting Grounds 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="shooting_grounds_l8.png" alt="Shooting Grounds 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Smelter<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="smelter_l1.png" alt="Smelter 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="smelter_l4.png" alt="Smelter 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="smelter_l8.png" alt="Smelter 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Spear Hall<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="spear_hall_l1.png" alt="Spear Hall 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="spear_hall_l4.png" alt="Spear Hall 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="spear_hall_l8.png" alt="Spear Hall 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Stables<em>1×1</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="stables_l1.png" alt="Stables 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="stables_l4.png" alt="Stables 4" width="128" height="192"></div>
+        <span class="lv">L4</span></div><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="stables_l8.png" alt="Stables 8" width="128" height="192"></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Plaza<em>2×2 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><img src="plaza_l1.png" alt="Plaza 1" width="256" height="320"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:256px;height:128px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:256px;height:128px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Shrine<em>2×2 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><img src="shrine_l1.png" alt="Shrine 1" width="256" height="320"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:256px;height:128px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:256px;height:320px"><svg class="grid" width="256" height="320"><path class="t on" d="M128 192l64 32l-64 32l-64 -32z"/><path class="t on" d="M64 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M192 224l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 256l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:256px;height:128px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Orchard<em>2×1 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><img src="orchard_l1.png" alt="Orchard 1" width="192" height="224"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:192px;height:96px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:192px;height:224px"><svg class="grid" width="192" height="224"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/><path class="t on" d="M128 160l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:192px;height:96px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Garden<em>1×1 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="garden_l1.png" alt="Garden 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Statue<em>1×1 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="statue_l1.png" alt="Statue 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section><section class="row">
+      <h3>Well<em>1×1 · decoration</em></h3>
+      <div class="tiers"><div class="tier">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><img src="well_l1.png" alt="Well 1" width="128" height="192"></div>
+        <span class="lv">L1</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l4</span></div></div>
+        <span class="lv">L4</span></div><div class="tier todo">
+        <div class="slot" style="width:128px;height:192px"><svg class="grid" width="128" height="192"><path class="t on" d="M64 128l64 32l-64 32l-64 -32z"/></svg><div class="miss" style="width:128px;height:64px"><span>l8</span></div></div>
+        <span class="lv">L8</span></div></div>
+    </section></div>
+  <div id="v2" hidden><div class="stage" style="width:1688px;height:824px">
+<svg class="grid" width="1688" height="824"><path class="t" d="M844 300l64 32l-64 32l-64 -32z"/><path class="t" d="M780 332l64 32l-64 32l-64 -32z"/><path class="t" d="M716 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M652 396l64 32l-64 32l-64 -32z"/><path class="t" d="M908 332l64 32l-64 32l-64 -32z"/><path class="t on" d="M844 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M780 396l64 32l-64 32l-64 -32z"/><path class="t on" d="M716 428l64 32l-64 32l-64 -32z"/><path class="t" d="M972 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M908 396l64 32l-64 32l-64 -32z"/><path class="t on" d="M844 428l64 32l-64 32l-64 -32z"/><path class="t on" d="M780 460l64 32l-64 32l-64 -32z"/><path class="t" d="M1036 396l64 32l-64 32l-64 -32z"/><path class="t on" d="M972 428l64 32l-64 32l-64 -32z"/><path class="t on" d="M908 460l64 32l-64 32l-64 -32z"/><path class="t" d="M844 492l64 32l-64 32l-64 -32z"/><path class="t" d="M908 204l64 32l-64 32l-64 -32z"/><path class="t" d="M844 236l64 32l-64 32l-64 -32z"/><path class="t on" d="M780 268l64 32l-64 32l-64 -32z"/><path class="t" d="M972 236l64 32l-64 32l-64 -32z"/><path class="t on" d="M908 268l64 32l-64 32l-64 -32z"/><path class="t" d="M1036 268l64 32l-64 32l-64 -32z"/><path class="t on" d="M972 300l64 32l-64 32l-64 -32z"/><path class="t" d="M1100 300l64 32l-64 32l-64 -32z"/><path class="t on" d="M1036 332l64 32l-64 32l-64 -32z"/><path class="t" d="M1164 332l64 32l-64 32l-64 -32z"/><path class="t" d="M1100 364l64 32l-64 32l-64 -32z"/><path class="t" d="M780 204l64 32l-64 32l-64 -32z"/><path class="t" d="M716 236l64 32l-64 32l-64 -32z"/><path class="t" d="M652 268l64 32l-64 32l-64 -32z"/><path class="t on" d="M716 300l64 32l-64 32l-64 -32z"/><path class="t" d="M588 300l64 32l-64 32l-64 -32z"/><path class="t" d="M652 332l64 32l-64 32l-64 -32z"/><path class="t" d="M1164 396l64 32l-64 32l-64 -32z"/><path class="t on" d="M1100 428l64 32l-64 32l-64 -32z"/><path class="t on" d="M1036 460l64 32l-64 32l-64 -32z"/><path class="t" d="M1228 428l64 32l-64 32l-64 -32z"/><path class="t" d="M1164 460l64 32l-64 32l-64 -32z"/><path class="t" d="M1100 492l64 32l-64 32l-64 -32z"/><path class="t on" d="M972 492l64 32l-64 32l-64 -32z"/><path class="t" d="M908 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1036 524l64 32l-64 32l-64 -32z"/><path class="t" d="M972 556l64 32l-64 32l-64 -32z"/><path class="t on" d="M524 332l64 32l-64 32l-64 -32z"/><path class="t" d="M460 364l64 32l-64 32l-64 -32z"/><path class="t" d="M396 396l64 32l-64 32l-64 -32z"/><path class="t" d="M588 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M524 396l64 32l-64 32l-64 -32z"/><path class="t" d="M460 428l64 32l-64 32l-64 -32z"/><path class="t" d="M588 428l64 32l-64 32l-64 -32z"/><path class="t" d="M524 460l64 32l-64 32l-64 -32z"/><path class="t" d="M716 492l64 32l-64 32l-64 -32z"/><path class="t on" d="M652 524l64 32l-64 32l-64 -32z"/><path class="t on" d="M780 524l64 32l-64 32l-64 -32z"/><path class="t" d="M716 556l64 32l-64 32l-64 -32z"/><path class="t" d="M844 556l64 32l-64 32l-64 -32z"/><path class="t" d="M780 588l64 32l-64 32l-64 -32z"/><path class="t on" d="M460 492l64 32l-64 32l-64 -32z"/><path class="t" d="M652 460l64 32l-64 32l-64 -32z"/><path class="t on" d="M588 492l64 32l-64 32l-64 -32z"/><path class="t" d="M524 524l64 32l-64 32l-64 -32z"/><path class="t" d="M588 556l64 32l-64 32l-64 -32z"/><path class="t on" d="M652 588l64 32l-64 32l-64 -32z"/><path class="t" d="M524 588l64 32l-64 32l-64 -32z"/><path class="t" d="M588 620l64 32l-64 32l-64 -32z"/><path class="t on" d="M716 620l64 32l-64 32l-64 -32z"/><path class="t" d="M652 652l64 32l-64 32l-64 -32z"/><path class="t" d="M844 620l64 32l-64 32l-64 -32z"/><path class="t" d="M780 652l64 32l-64 32l-64 -32z"/><path class="t" d="M716 684l64 32l-64 32l-64 -32z"/><path class="t" d="M396 460l64 32l-64 32l-64 -32z"/><path class="t" d="M332 492l64 32l-64 32l-64 -32z"/><path class="t" d="M396 524l64 32l-64 32l-64 -32z"/><path class="t" d="M460 556l64 32l-64 32l-64 -32z"/><path class="t" d="M1292 460l64 32l-64 32l-64 -32z"/><path class="t on" d="M1228 492l64 32l-64 32l-64 -32z"/><path class="t" d="M1164 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1356 492l64 32l-64 32l-64 -32z"/><path class="t" d="M1292 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1228 556l64 32l-64 32l-64 -32z"/><path class="t on" d="M1100 556l64 32l-64 32l-64 -32z"/><path class="t" d="M1036 588l64 32l-64 32l-64 -32z"/><path class="t" d="M1164 588l64 32l-64 32l-64 -32z"/><path class="t" d="M1100 620l64 32l-64 32l-64 -32z"/><path class="t" d="M908 588l64 32l-64 32l-64 -32z"/><path class="t on" d="M972 620l64 32l-64 32l-64 -32z"/><path class="t" d="M908 652l64 32l-64 32l-64 -32z"/><path class="t" d="M1036 652l64 32l-64 32l-64 -32z"/><path class="t" d="M972 684l64 32l-64 32l-64 -32z"/><path class="t" d="M1292 332l64 32l-64 32l-64 -32z"/><path class="t" d="M1228 364l64 32l-64 32l-64 -32z"/><path class="t" d="M1356 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M1292 396l64 32l-64 32l-64 -32z"/><path class="t" d="M1420 396l64 32l-64 32l-64 -32z"/><path class="t" d="M1356 428l64 32l-64 32l-64 -32z"/><path class="t" d="M460 236l64 32l-64 32l-64 -32z"/><path class="t" d="M396 268l64 32l-64 32l-64 -32z"/><path class="t" d="M332 300l64 32l-64 32l-64 -32z"/><path class="t" d="M524 268l64 32l-64 32l-64 -32z"/><path class="t on" d="M460 300l64 32l-64 32l-64 -32z"/><path class="t" d="M396 332l64 32l-64 32l-64 -32z"/><path class="t" d="M268 332l64 32l-64 32l-64 -32z"/><path class="t" d="M204 364l64 32l-64 32l-64 -32z"/><path class="t" d="M140 396l64 32l-64 32l-64 -32z"/><path class="t" d="M76 428l64 32l-64 32l-64 -32z"/><path class="t" d="M332 364l64 32l-64 32l-64 -32z"/><path class="t on" d="M268 396l64 32l-64 32l-64 -32z"/><path class="t on" d="M204 428l64 32l-64 32l-64 -32z"/><path class="t" d="M140 460l64 32l-64 32l-64 -32z"/><path class="t on" d="M332 428l64 32l-64 32l-64 -32z"/><path class="t on" d="M268 460l64 32l-64 32l-64 -32z"/><path class="t" d="M204 492l64 32l-64 32l-64 -32z"/><path class="t" d="M268 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1484 428l64 32l-64 32l-64 -32z"/><path class="t on" d="M1420 460l64 32l-64 32l-64 -32z"/><path class="t" d="M1548 460l64 32l-64 32l-64 -32z"/><path class="t on" d="M1484 492l64 32l-64 32l-64 -32z"/><path class="t" d="M1420 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1612 492l64 32l-64 32l-64 -32z"/><path class="t" d="M1548 524l64 32l-64 32l-64 -32z"/><path class="t" d="M1484 556l64 32l-64 32l-64 -32z"/></svg><figure style="left:844px;top:140px;width:128px"><img src="housing_l1.png" alt="Housing" width="128" height="192"></figure><figure style="left:716px;top:140px;width:128px"><img src="housing_l1.png" alt="Housing" width="128" height="192"></figure><figure style="left:908px;top:172px;width:128px"><img src="housing_l1.png" alt="Housing" width="128" height="192"></figure><figure style="left:652px;top:172px;width:128px"><img src="housing_l1.png" alt="Housing" width="128" height="192"></figure><figure style="left:396px;top:172px;width:192px"><img src="docks_l1.png" alt="Docks" width="192" height="224"></figure><figure style="left:972px;top:204px;width:128px"><img src="housing_l1.png" alt="Housing" width="128" height="192"></figure><figure style="left:716px;top:172px;width:256px"><img src="townhall_l1.png" alt="Townhall" width="256" height="320"></figure><figure style="left:460px;top:268px;width:128px"><img src="quarry_l1.png" alt="Quarry" width="128" height="192"></figure><figure style="left:1228px;top:268px;width:128px"><img src="rune_carver_l1.png" alt="Rune Carver" width="128" height="192"></figure><figure style="left:140px;top:204px;width:256px"><img src="shrine_l1.png" alt="Shrine" width="256" height="320"></figure><figure style="left:588px;top:268px;width:128px"><img src="garden_l1.png" alt="Garden" width="128" height="192"></figure><figure style="left:1036px;top:300px;width:128px"><img src="farm_l1.png" alt="Farm" width="128" height="192"></figure><figure style="left:844px;top:236px;width:256px"><img src="plaza_l1.png" alt="Plaza" width="256" height="320"></figure><figure style="left:652px;top:300px;width:128px"><img src="statue_l1.png" alt="Statue" width="128" height="192"></figure><figure style="left:1356px;top:332px;width:192px"><img src="orchard_l1.png" alt="Orchard" width="192" height="224"></figure><figure style="left:716px;top:332px;width:128px"><img src="well_l1.png" alt="Well" width="128" height="192"></figure><figure style="left:908px;top:364px;width:128px"><img src="sawmill_l1.png" alt="Sawmill" width="128" height="192"></figure><figure style="left:524px;top:364px;width:128px"><img src="barracks_l1.png" alt="Barracks" width="128" height="192"></figure><figure style="left:396px;top:364px;width:128px"><img src="infirmary_l1.png" alt="Infirmary" width="128" height="192"></figure><figure style="left:1164px;top:364px;width:128px"><img src="carpenter_l1.png" alt="Carpenter" width="128" height="192"></figure><figure style="left:716px;top:396px;width:128px"><img src="sanctum_l1.png" alt="Sanctum" width="128" height="192"></figure><figure style="left:588px;top:396px;width:128px"><img src="spear_hall_l1.png" alt="Spear Hall" width="128" height="192"></figure><figure style="left:1036px;top:428px;width:128px"><img src="masons_yard_l1.png" alt="Mason's Yard" width="128" height="192"></figure><figure style="left:588px;top:460px;width:128px"><img src="shooting_grounds_l1.png" alt="Shooting Grounds" width="128" height="192"></figure><figure style="left:652px;top:492px;width:128px"><img src="stables_l1.png" alt="Stables" width="128" height="192"></figure><figure style="left:908px;top:492px;width:128px"><img src="smelter_l1.png" alt="Smelter" width="128" height="192"></figure></div></div>
+</main>
+<footer>
+  Every sprite is placed with the renderer's own formula —
+  <code>screenX=(x−y)·64</code>, <code>screenY=(x+y)·32</code>, drawn in
+  <code>x+y</code> order, anchored on its plot's ground diamond. A building that
+  sits wrong here will sit wrong in the game. Dashed diamonds are footprints
+  whose sprite has not been generated yet.
+</footer>
+<script>
+const $=id=>document.getElementById(id), B=document.body;
+const tog=(el,cls)=>{const on=el.getAttribute('aria-pressed')==='true';
+  el.setAttribute('aria-pressed',String(!on));B.classList.toggle(cls,on)};
+$('g').onclick=()=>tog($('g'),'nogrid');
+$('l').onclick=()=>tog($('l'),'nolabel');
+$('z').onclick=()=>{const on=$('z').getAttribute('aria-pressed')==='true';
+  $('z').setAttribute('aria-pressed',String(!on));
+  document.querySelectorAll('.stage').forEach(s=>s.style.transform=on?'':'scale(.5)')};
+function mode(n){$('v1').hidden=n!==1;$('v2').hidden=n!==2;
+  $('m1').setAttribute('aria-pressed',String(n===1));
+  $('m2').setAttribute('aria-pressed',String(n===2))}
+$('m1').onclick=()=>mode(1); $('m2').onclick=()=>mode(2);
+</script></body></html>

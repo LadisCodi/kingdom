@@ -14,7 +14,7 @@
   the albums close on. There is no clock of its own.
 - Opened by tapping the **Sowing Season** pill on the map. Never auto-opened.
 - Levels come from **XP**, and the only source of XP is finishing a mission.
-- The paid column is one purchase, `SeasonPass`, **€4.99**, once a season
+- The paid column is one purchase, `SeasonPass`, **$4.99**, once a season
   ([`14-monetization.md`](14-monetization.md) §2).
 
 **The split against the daily chest.** Both are 28-day two-track ladders that

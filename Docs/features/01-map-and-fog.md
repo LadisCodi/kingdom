@@ -101,6 +101,84 @@ Mountains:
   Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)). A test
   walks the chain with zero drip to prove a follower is never short.
 
+### 3.1 A feature that spans more than one cell
+
+Some features are **one object**, not a mass of small ones. A forest is a stand
+of trees on this cell and another stand on the next; a mountain is a mountain.
+So a feature may occupy a square **footprint**.
+
+| | Footprint | How it is decided |
+|---|---|---|
+| **Mountain** | 1×1, 2×2, 3×3 | **grouped** from the painted cells |
+| **Sanctuaries and ruins** | 1×1, 2×2, 3×3 | **authored**, per site |
+| Everything else | 1×1 | — |
+
+A mountain is painted, so its blocks are derived; a sanctuary or a ruin is
+PLACED, so it carries its own size. Everything after this is the same for
+both.
+
+| Site | Cells |
+|---|---|
+| Wayside shrine | 1×1 |
+| Ring of standing stones | 2×2 |
+| Leyspring | 1×1 |
+| Hollow Barrow (T1) | 1×1 |
+| Sunken Chapel (T2) | 3×3 |
+| Drowned Ironworks (T3) | 2×2 |
+| Counting House (T4) | 2×2 |
+| Star Observatory (T5) | 2×2 |
+
+A landmark's size is per KIND, because its drawing is: three sanctuaries of
+one kind at three sizes would want three drawings. A ruin's is its own, since
+each has its own art already.
+
+- The footprint is **square**, and the feature is **drawn once** across the
+  whole of it. There is no quarter of a mountain, in any sense: not
+  part-revealed, not part-exhausted.
+- **Every cell of the footprint carries the feature.** It blocks placement on
+  each, it is a harvest node on each, and the Quarry counts each one that falls
+  inside its area of influence.
+
+**Fog.**
+
+- **Discovered when any one of its cells is.** You can see a mountain from a
+  distance, and a landmark looming out of the dark is what the fog is for.
+- A tap on any of its cells advances **all** of them. Still five taps
+  (`fog.tapsToReveal`), whatever the size.
+- **The price is the sum of its cells'**, so a tap charges a fifth of that.
+  Nothing is displayed: the floater on the tap says what it cost, and a
+  nine-cell number says "this is a big thing" more plainly than a label would.
+- **Any one cell is enough**, for the frontier and for the reach alike. The
+  frontier only has to touch a corner, and one cell inside the Townhall's
+  reach opens the whole of it. A 3×3 bought from its near corner does carry
+  the player up to two rings past the ring; that is the price of the rule
+  reading honestly, paid once per site and for the full summed cost of every
+  cell. The alternative cut a standing stone in half along the ring and
+  refused a tap on a thing the player could see they had reached.
+- It clears **all at once**.
+
+**Exhaustion.**
+
+- The footprint exhausts **as a unit**, from one depot of `stock × cells`.
+- Four workers drawing on one quadrupled depot empty it at the rate four
+  single-cell depots would, so nothing in the balance moves.
+
+**Authoring.**
+
+- Mountain cells are painted **one at a time** in `?dev=map`. Nothing declares
+  a footprint.
+- A sanctuary or a ruin declares `size` on its own row instead. The editor
+  round-trips it; `validateRegionMap` refuses a size outside 1–3 and checks
+  every cell of the footprint the way it checks a single one, so a 3×3 whose
+  far corner hangs over water is an error rather than a site nobody can
+  finish paying for.
+- The grouping is **derived from the painted cells**, by the same function the
+  editor previews and the sim loads with (`src/sim/data/mapRules.ts`): greedy
+  3×3, then 2×2, then 1×1, in a fixed scan order. Same cells in, same grouping
+  out, every time.
+- Iron and gold mountains stay 1×1. A lone rich outcrop reads, and three sizes
+  of each is nine more drawings for no gain.
+
 Respawn:
 
 - A finite feature respawns rather than dying. `respawnTerrain` decides where:
@@ -118,6 +196,8 @@ Respawn:
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
   ground already revealed.
+- A feature with a footprint (§3.1) is discovered when any one of its cells is,
+  and revealed all at once.
 - Every district has a `fogRevealRadius` (1) and a larger `fogDiscoverRadius`
   (2): finishing a build reveals a ring and discovers a wider one.
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
@@ -153,6 +233,8 @@ reaches ring 40.
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
+- A footprint is five taps too, and costs **the sum of its cells** (§3.1). A
+  3×3 therefore charges nine cells' worth a tap, which the floater states.
 - **The map gets dearer as it is revealed.** The ring price is multiplied by
   `fog.count_growth` (**×1.05**) once per `fog.count_step` (**10**) cells
   already revealed. Every revealed cell counts — seeded, built around or
@@ -251,6 +333,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `Harvest` sheet |
+| Which features may span cells, and how far | Mountain, up to 3×3 | §3.1, `definitions.ts` |
 | The world itself | — | `?dev=map` |
 
 ## 9. Deliberately not in this design
@@ -264,6 +347,11 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A `base × growth^distance` curve for landmark costs.
 - A technology that buys reveal taps back. A cell is five presses at every
   ring, so there is no tap ladder left to climb.
+- Non-square or non-contiguous footprints (§3.1).
+- A footprint revealed or exhausted cell by cell. One sprite cannot be drawn
+  part-lit or part-mined; it would read as a rendering fault, not as a state.
+- Footprints on iron and gold mountains, on forests, or on anything else that
+  is a mass of small objects rather than one thing.
 
 **Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).

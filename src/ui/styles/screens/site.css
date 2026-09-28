@@ -16,7 +16,6 @@
   padding: 8px;
   box-sizing: border-box;
   object-fit: contain;
-  image-rendering: pixelated;
   border-radius: var(--radius-sm);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);

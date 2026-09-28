@@ -461,8 +461,9 @@ export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
 
 export interface QuestDef {
   id: string; // content id — data-side, not a TS union
+  /** Flavour: "Timber!", "Tax day". What the quest ASKS is not written down —
+   *  `questLine()` renders it from the goal below (src/sim/questProse.ts). */
   name: string;
-  description: string;
   goalType: QuestGoalType;
   /** DistrictId / TechId / CurrencyId depending on goalType; null otherwise. */
   goalTarget: string | null;
@@ -875,6 +876,20 @@ export interface FeatureDef {
   source: HarvestSourceId;
   /** Terrain a FINITE feature respawns on (adjacent to its origin). */
   respawnTerrain: 'Grassland' | 'Water';
+  /**
+   * HOW BIG A BLOCK OF THIS FEATURE MAY BE, in cells a side. 1 unless stated.
+   *
+   * Some features are ONE OBJECT and some are a mass of small ones. A forest
+   * is a stand of trees on this cell and another stand on the next; a
+   * mountain is a mountain. So painted mountain cells are GROUPED into square
+   * footprints up to this size, drawn once across the whole block, revealed
+   * together and exhausted from one depot
+   * (Docs/features/01-map-and-fog.md §3.1).
+   *
+   * Iron and gold stay at 1: a lone rich outcrop reads, and three sizes of
+   * each is nine more drawings for no gain.
+   */
+  maxFootprint?: number;
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
@@ -890,6 +905,7 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
   Mountain: {
     id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
     sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
+    maxFootprint: 3,
   },
   MountainIron: {
     id: 'MountainIron', name: 'Iron mountain', glyph: '⛰️', exhaustedGlyph: '🕳️',
@@ -1270,6 +1286,10 @@ export interface LandmarkDef {
    *  the tiers are the design — one in sight to save up for, then two rings
    *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
   claimCost: number;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a sanctuary is placed, not painted. */
+  size: number;
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
@@ -1279,12 +1299,13 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; claimCost: number;
+  id: string; kind: string; x: number; y: number; claimCost: number; size?: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
   claimCost: l.claimCost,
+  size: l.size ?? 1,
 }));
 
 /**
@@ -1597,6 +1618,10 @@ export interface RuinDef {
   glyph: string;
   sprite: string;
   location: Coord;
+  /** How many cells a side it occupies, anchored at `location`. 1 unless
+   *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
+   *  grouped: a ruin is placed, not painted. */
+  size: number;
   tier: number;
   /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
    *  rather than a single unit. 'Any' rotates. */
@@ -1699,6 +1724,7 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       id,
       ...ruinContent[id],
       location: { x: b.x, y: b.y },
+      size: (b as { size?: number }).size ?? 1,
       tier: b.tier,
       affinity: b.affinity as RuinDef['affinity'],
       artifact: b.artifact as ArtifactId,
@@ -2314,4 +2340,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 59;
+export const SAVE_VERSION = 60;
