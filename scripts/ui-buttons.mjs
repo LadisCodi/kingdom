@@ -13,6 +13,9 @@
 //   btn-<m>-hover.png    highlight    derived: brighter, a touch warmer
 //   btn-<m>-off.png      disabled     derived: desaturated toward a muted blue-grey
 //
+// and the same four for the ROUND set, knob-<m>[-state].png
+// (sheets/ui-buttons2-round.png).
+//
 // Needs ImageMagick. Not in prebuild; outputs are committed.
 
 import { execFileSync } from 'node:child_process';
@@ -25,18 +28,20 @@ const MATERIALS = ['wood', 'green', 'blue', 'gold', 'red', 'purple'];
 
 const magick = (...args) => execFileSync('magick', args.map(String), { stdio: 'inherit' });
 
-for (const m of MATERIALS) {
-  const src = join(ASSETS, `btn-${m}.png`);
-  if (!existsSync(src)) {
-    console.error(`ui-buttons: missing ${src}`);
-    process.exit(1);
+for (const shape of ['btn', 'knob']) {
+  for (const m of MATERIALS) {
+    const src = join(ASSETS, `${shape}-${m}.png`);
+    if (!existsSync(src)) {
+      console.error(`ui-buttons: missing ${src}`);
+      process.exit(1);
+    }
+    // Highlight: 10% brighter, 8% more saturated — lit, not recoloured.
+    magick(src, '-modulate', '110,108', join(ASSETS, `${shape}-${m}-hover.png`));
+    // Disabled: almost all colour drained, a little darker, then washed toward
+    // a cool slate so it reads as "not now" on warm parchment without turning
+    // into flat grey. Alpha is untouched: -colorize only moves the colour.
+    magick(src, '-modulate', '94,14', '-fill', '#7d8aa3', '-colorize', '24%',
+      join(ASSETS, `${shape}-${m}-off.png`));
+    console.log(`ui-buttons: ${shape}-${m} → hover, off`);
   }
-  // Highlight: 10% brighter, 8% more saturated — lit, not recoloured.
-  magick(src, '-modulate', '110,108', join(ASSETS, `btn-${m}-hover.png`));
-  // Disabled: almost all colour drained, a little darker, then washed toward
-  // a cool slate so it reads as "not now" on warm parchment without turning
-  // into flat grey. Alpha is untouched: -colorize only moves the colour.
-  magick(src, '-modulate', '94,14', '-fill', '#7d8aa3', '-colorize', '24%',
-    join(ASSETS, `btn-${m}-off.png`));
-  console.log(`ui-buttons: ${m} → hover, off`);
 }

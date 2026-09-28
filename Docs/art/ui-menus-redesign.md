@@ -202,7 +202,6 @@ nine-sliced so a label of any length fits.
 | `gold` | topaz | a premium or advanced call |
 | `destructive` | ruby | Reset, Cancel |
 | `gem` | amethyst | anything that spends Gems: Finish now, buy a slot |
-| knob | round wood | worker `−` / `+`, zoom (the window's close is its own red button) |
 
 Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
 
@@ -215,6 +214,12 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`):
   always drawn at its own proportions. Anything taller than a label goes
   outside the slab.
 - A disabled button keeps its **reason line beside it**.
+- **Round** (`knob(glyph, …, { kind })`, `knob-<material>[-state].png`):
+  the same six materials and four states as a disc, for a one-glyph action —
+  worker `−` / `+`, zoom. Drawn at the header's Gems `+` size (50 rpx) inside
+  a hit area of at least 44 px. The glyph is carved into the face in a darker
+  tone of the material, never a flat white sign. (The window's close is its
+  own red button.)
 - **Priced**: the cost sits **above** the slab, outside it — icon + amount
   per term, any term the player cannot pay in `clay` — and the two are
   grouped on a small **section** of darker paper; the whole is one press.

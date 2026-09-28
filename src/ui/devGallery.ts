@@ -78,10 +78,22 @@ export function mountGallery(root: HTMLElement): void {
         label: 'Raise its tier', onClick: noop,
         costExtra: [{ icon: 'sparkle', amount: '3 / 20', short: true }],
       })),
-      specimen('knob −', knob('−', noop, { label: 'Remove worker' })),
-      specimen('knob +', knob('+', noop, { label: 'Add worker' })),
-      specimen('knob at limit', knob('+', noop, { label: 'Add worker', disabled: true })),
     ),
+    // THE ROUND SET: the same materials as knobs, at the header's Gems "+"
+    // size — worker steppers, and any one-glyph action.
+    el('div', { class: 'gal-label' }, 'round — the same materials, one glyph'),
+    ...([
+      ['wood', 'secondary'],
+      ['emerald', 'primary'],
+      ['sapphire', 'blue'],
+      ['topaz', 'gold'],
+      ['ruby', 'destructive'],
+      ['amethyst', 'gem'],
+    ] as const).map(([name, kind]) => el('div', { class: 'gal-row' },
+      specimen(`${name} −`, knob('−', noop, { label: 'Remove worker', kind })),
+      specimen(`${name} +`, knob('+', noop, { label: 'Add worker', kind })),
+      specimen('disabled', knob('+', noop, { label: 'Add worker', kind, disabled: true })),
+    )),
     // The rule §6.3 makes universal: never greyed out without a reason.
     specimen('priced, with a consequence beside it', action({
       label: 'Upgrade', kind: 'primary', onClick: noop,
@@ -266,7 +278,6 @@ export function mountGallery(root: HTMLElement): void {
       specimen('rope (grab)', deco('deco-rope', 96, 28)),
       specimen('rope, vertical', deco('deco-rope-v', 24, 96)),
       specimen('nail', deco('deco-nail', 20, 20)),
-      specimen('knob', deco('deco-knob', 44, 44)),
       specimen('pennant', deco('deco-pennant', 40, 48)),
       specimen('seal', deco('deco-seal', 48, 48)),
     ),

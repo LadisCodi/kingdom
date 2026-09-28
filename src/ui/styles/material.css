@@ -261,18 +261,64 @@
 .mana-tills > .mana-till:first-child > .k-btn,
 .store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); }
 .store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); }
-/* The round wooden knob is a picture now: rim, face and lip are in the art,
-   so the kit's border and drop-lip come off and the press moves the picture. */
+/* THE ROUND BUTTONS: the label buttons' materials in the round
+   (sheets/ui-buttons2-round.png) — wood by default, a gem `kind` otherwise —
+   drawn at the size of the header's Gems "+" (50 rpx), with a hit area that
+   never drops below the 44 px a thumb needs. The glyph is set INTO the face,
+   carved: a darker tone of the material with a light catch along its lower
+   edge (§2.5), never a flat white sign. Normal and pressed are drawn;
+   highlight and disabled derived (npm run art:buttons). */
 .k-btn.k-knob,
 .legacy-close {
+  --knob: url('../assets/knob-wood.png');
+  --knob-down: url('../assets/knob-wood-down.png');
+  --knob-hover: url('../assets/knob-wood-hover.png');
+  --knob-off: url('../assets/knob-wood-off.png');
+  --knob-size: calc(var(--rpx) * 50);
+  --knob-hit: max(44px, var(--knob-size));
+  width: var(--knob-hit);
+  height: var(--knob-hit);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0 calc(var(--knob-size) * 0.08);
   border: 0;
+  border-radius: 50%;
   box-shadow: none;
-  color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  background: url('../assets/deco-knob.png') center / 100% 100% no-repeat;
+  background: var(--knob) center / var(--knob-size) var(--knob-size) no-repeat;
+  font-size: calc(var(--knob-size) * 0.62);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  color: rgba(40, 20, 8, 0.62);
+  text-shadow: 0 calc(var(--knob-size) * 0.03) 0 rgba(255, 244, 220, 0.45), 0 calc(var(--knob-size) * -0.02) 0 rgba(20, 8, 2, 0.35);
+  transform: none;
+  filter: none;
 }
+.k-btn.k-knob:hover { background-image: var(--knob-hover); filter: none; }
 .k-btn.k-knob:active,
-.legacy-close:active { box-shadow: none; transform: translateY(2px); }
+.legacy-close:active {
+  background-image: var(--knob-down);
+  padding: calc(var(--knob-size) * 0.08) 0 0;
+  box-shadow: none;
+  transform: none;
+}
+.k-btn.k-knob:disabled,
+.k-btn.k-knob:disabled:hover,
+.k-btn.k-knob:disabled:active {
+  background-image: var(--knob-off);
+  padding: 0 0 calc(var(--knob-size) * 0.08);
+  color: rgba(40, 46, 60, 0.55);
+  cursor: default;
+}
+/* The hit area IS the box now; the kit's -2 px ring is not needed. */
+.k-btn.k-knob::before { content: none; }
+.k-knob.k-btn--primary { --knob: url('../assets/knob-green.png'); --knob-down: url('../assets/knob-green-down.png'); --knob-hover: url('../assets/knob-green-hover.png'); --knob-off: url('../assets/knob-green-off.png'); }
+.k-knob.k-btn--blue { --knob: url('../assets/knob-blue.png'); --knob-down: url('../assets/knob-blue-down.png'); --knob-hover: url('../assets/knob-blue-hover.png'); --knob-off: url('../assets/knob-blue-off.png'); }
+.k-knob.k-btn--gold { --knob: url('../assets/knob-gold.png'); --knob-down: url('../assets/knob-gold-down.png'); --knob-hover: url('../assets/knob-gold-hover.png'); --knob-off: url('../assets/knob-gold-off.png'); }
+.k-knob.k-btn--destructive { --knob: url('../assets/knob-red.png'); --knob-down: url('../assets/knob-red-down.png'); --knob-hover: url('../assets/knob-red-hover.png'); --knob-off: url('../assets/knob-red-off.png'); }
+.k-knob.k-btn--gem { --knob: url('../assets/knob-purple.png'); --knob-down: url('../assets/knob-purple-down.png'); --knob-hover: url('../assets/knob-purple-hover.png'); --knob-off: url('../assets/knob-purple-off.png'); }
+/* On a gem the carved glyph is the stone's own deep tone. */
+.k-knob:is(.k-btn--primary, .k-btn--blue, .k-btn--gold, .k-btn--destructive, .k-btn--gem) { color: rgba(10, 6, 30, 0.5); }
 
 /* ---- the header plank and the nav beam ----
    Both are painted in their own screens (hud.css, nav.css): the M1 pieces,
