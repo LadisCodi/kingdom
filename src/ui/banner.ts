@@ -29,11 +29,67 @@ const CLOSE_MS = 420;
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
+/** Where a sprite's visible pixels are, as fractions of its canvas. */
+interface Box { x: number; y: number; w: number; h: number }
+const boxes = new Map<string, Box>();
+
+/** The visible part of a sprite, measured once per image and kept. Map
+ *  sprites carry headroom above the building (a 128 x 192 canvas whose
+ *  house fills the bottom 110 px), which in a square slot pushed the art
+ *  down onto the words and shrank it. */
+function contentBox(img: HTMLImageElement): Box {
+  const known = boxes.get(img.src);
+  if (known) return known;
+  const full = { x: 0, y: 0, w: 1, h: 1 };
+  const W = img.naturalWidth;
+  const H = img.naturalHeight;
+  if (W === 0 || H === 0) return full;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return full;
+  ctx.drawImage(img, 0, 0);
+  const alpha = ctx.getImageData(0, 0, W, H).data;
+  let x0 = W; let y0 = H; let x1 = -1; let y1 = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (alpha[(y * W + x) * 4 + 3] > 20) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  const box = x1 < 0 ? full : { x: x0 / W, y: y0 / H, w: (x1 - x0 + 1) / W, h: (y1 - y0 + 1) / H };
+  boxes.set(img.src, box);
+  return box;
+}
+
+/** Scale and shift the image inside its slot so its VISIBLE part fills it,
+ *  centred — the slot clips the empty canvas around it. */
+function fitContent(img: HTMLImageElement): void {
+  const b = contentBox(img);
+  // Contain the visible box in the (square) slot, in percentages of the slot,
+  // at 92% so its drop shadow is not clipped by the slot's edge.
+  const scale = 0.92 / Math.max(b.w, b.h * (img.naturalHeight / img.naturalWidth));
+  const w = scale * 100; // the whole canvas's width, as % of the slot
+  const h = w * (img.naturalHeight / img.naturalWidth);
+  img.style.width = `${w}%`;
+  img.style.height = `${h}%`;
+  img.style.left = `${50 - (b.x + b.w / 2) * w}%`;
+  img.style.top = `${50 - (b.y + b.h / 2) * h}%`;
+}
+
 /** The subject's own art when it has some, else its glyph. */
 function subject(banner: Banner): HTMLElement {
   const url = banner.sprite ? spriteUrl(banner.sprite) : null;
   if (url === null) return el('span', { class: 'b-glyph' }, banner.icon);
-  return spriteImgAt(url, 'b-art');
+  const img = spriteImgAt(url, 'b-art');
+  if (img.complete && img.naturalWidth > 0) fitContent(img);
+  else img.addEventListener('load', () => fitContent(img), { once: true });
+  return img;
 }
 
 /** The cloth at its least: the rod and the point with no middle between them,
