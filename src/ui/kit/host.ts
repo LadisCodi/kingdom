@@ -102,10 +102,12 @@ export function legacy(
       // the new tree instead of a fresh one blinking in (render/sprites.ts).
       releaseSprites(root);
       const content = render();
-      // The slide-in is keyed to the FIRST element the host ever built — a
-      // tick landing inside the enter window rebuilds the sheet, and a fresh
-      // element under a still-entering container would replay it.
-      if (!built) {
+      // The window's entrance is keyed to elements built WHILE the mount is
+      // entering. A tick can rebuild the sheet mid-entrance; the rebuilt one
+      // is marked too, and the slot's --enter-offset (the time since mount,
+      // as a negative delay) makes its animation carry on from where the old
+      // one was rather than start over.
+      if (!built || root.parentElement?.hasAttribute('data-entering') === true) {
         built = true;
         content.setAttribute('data-fresh', '');
         for (const sheet of content.querySelectorAll('.k-sheet')) sheet.setAttribute('data-fresh', '');
@@ -139,10 +141,20 @@ export function legacy(
 }
 
 /**
- * How long `data-entering` stays on the container. Slightly longer than
- * --motion-sheet so the animation is never cut off mid-flight.
+ * How long `data-entering` stays on the container: the window's whole
+ * entrance (the frame growing, then the contents fading in — kit.css's
+ * `k-window-in`), so it is never cut off mid-flight.
  */
-const ENTER_MS = 240;
+const ENTER_MS = 700;
+/**
+ * How long a closed window stays on screen to play its exit (`k-window-out`:
+ * the contents fade, then the frame shrinks and fades) before it is removed.
+ */
+const LEAVE_MS = 620;
+
+/** A window worth animating out: a kit sheet, or the district card. */
+const hasWindow = (root: HTMLElement): boolean =>
+  root.querySelector('.k-sheet, .dc') !== null || root.matches('.dc');
 
 /** One mount point holding at most one Screen, identified by a key. */
 export class ScreenSlot {
@@ -151,25 +163,59 @@ export class ScreenSlot {
   // Not `window.setTimeout`: this module has to import under node so the
   // slot stays testable without a DOM.
   private enterTimer: ReturnType<typeof setTimeout> | null = null;
+  private mountedAt = 0;
+  /** A closed window still playing its exit, and the timer that removes it. */
+  private leaving: { root: HTMLElement; timer: ReturnType<typeof setTimeout> } | null = null;
 
   constructor(private readonly container: HTMLElement) {}
 
   /** Show the screen identified by `key`, building it only if it changed. */
   show(key: string, create: () => Screen): void {
     if (key !== this.key) {
+      // Another screen replaces this one outright — no exit, or two windows
+      // would share the mount — and one still leaving goes at once.
+      this.dropLeaving();
       this.teardown();
       this.key = key;
       this.screen = create();
       this.container.append(this.screen.root);
       this.markEntering();
     }
+    // While entering, the time since mount, as a negative delay: an element
+    // the refresh rebuilds picks the entrance up where the last one was.
+    if (this.container.hasAttribute('data-entering')) {
+      this.container.style.setProperty('--enter-offset', `${-(Date.now() - this.mountedAt)}ms`);
+    }
     this.screen?.refresh();
   }
 
-  /** Nothing should occupy this mount point. */
+  /**
+   * Nothing should occupy this mount point. A window leaves on its own
+   * animation: its nodes stay, frozen and marked `data-leaving`, for LEAVE_MS,
+   * then go. (The screen itself is destroyed at once — nothing refreshes it.)
+   */
   clear(): void {
     if (this.key === null) return;
-    this.teardown();
+    const root = this.screen?.root ?? null;
+    const animate = root !== null && hasWindow(root);
+    if (!animate) {
+      this.teardown();
+      return;
+    }
+    this.dropLeaving();
+    this.teardown(root);
+    root.setAttribute('data-leaving', '');
+    this.leaving = {
+      root,
+      timer: setTimeout(() => this.dropLeaving(), LEAVE_MS),
+    };
+  }
+
+  private dropLeaving(): void {
+    if (this.leaving === null) return;
+    clearTimeout(this.leaving.timer);
+    this.leaving.root.remove();
+    this.leaving = null;
   }
 
   /**
@@ -184,6 +230,8 @@ export class ScreenSlot {
    * flag. It self-clears, so a rebuild after the window is unaffected.
    */
   private markEntering(): void {
+    this.mountedAt = Date.now();
+    this.container.style.setProperty('--enter-offset', '0ms');
     this.container.setAttribute('data-entering', '');
     if (this.enterTimer !== null) clearTimeout(this.enterTimer);
     this.enterTimer = setTimeout(() => {
@@ -192,14 +240,16 @@ export class ScreenSlot {
     }, ENTER_MS);
   }
 
-  private teardown(): void {
+  /** Tear the current screen down; `keep` is a node to leave in the mount. */
+  private teardown(keep: HTMLElement | null = null): void {
     if (this.enterTimer !== null) {
       clearTimeout(this.enterTimer);
       this.enterTimer = null;
     }
     this.container.removeAttribute('data-entering');
     this.screen?.destroy?.();
-    this.container.replaceChildren();
+    if (keep === null) this.container.replaceChildren();
+    else for (const n of [...this.container.childNodes]) if (n !== keep) n.remove();
     this.screen = null;
     this.key = null;
   }

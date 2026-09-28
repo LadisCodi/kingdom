@@ -449,6 +449,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
  */
 export function districtCardScreen(game: Game, districtId: string): Screen {
   const root = el('div', { class: 'dc' });
+  // The window's frame, kept across rebuilds: the card's children are swapped
+  // when its signature moves, the frame is not (kit.css, `k-window-*`).
+  const frame = el('div', { class: 'k-frame', 'aria-hidden': 'true' });
   let signature: string | null = null;
   let live = new LiveParts();
   return {
@@ -470,7 +473,7 @@ export function districtCardScreen(game: Game, districtId: string): Screen {
       live = new LiveParts();
       releaseSprites(root);
       const card = renderDistrictCard(game, district, live);
-      root.replaceChildren(...Array.from(card.childNodes));
+      root.replaceChildren(frame, ...Array.from(card.childNodes));
     },
   };
 }

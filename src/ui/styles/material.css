@@ -17,18 +17,40 @@
  * frame's rounded corners are in the art instead. */
 
 /* ---- panels and sheets ---- */
-.k-panel {
-  /* The mockups' frame is ~9px at 402 (M5), the content 15px from the edge. */
-  border: 9px solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / 12px / 2px round;
+/* THE WINDOW (M1): every menu that leaves the map in sight — a kit sheet, the
+   district card — sits in one painted frame of wood with a knob at each
+   corner, parchment inside (sheets/ui-window1-frame.png). It is nine-sliced
+   in both directions, so it fits any width and height, and it is its OWN
+   layer (.k-frame) behind the contents: the entrance and exit animate the
+   frame's height without distorting it or reflowing what is inside. */
+.k-panel,
+.dc {
+  --win-edge: calc(var(--rpx) * 50);       /* the frame's slice: wood and corner knob */
+  --win-min: calc(var(--win-edge) * 2);    /* the frame at its least: top and bottom, nothing between */
+  position: relative;
+  isolation: isolate; /* so the frame's z-index: -1 stays inside the window */
+  border: 0;
   border-radius: 0;
-  padding: 8px;
-  background: url('../assets/tex-parchment.jpg') padding-box;
-  background-size: 384px 384px;
-  box-shadow:
-    0 6px 0 rgba(60, 36, 18, 0.3),
-    0 12px 26px rgba(60, 36, 18, 0.26);
+  background: none;
+  box-shadow: none;
+  padding: calc(var(--win-edge) * 0.72);
 }
+.k-frame {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  z-index: -1;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--win-edge);
+  border-image: url('../assets/window-frame.png') 55 fill / var(--win-edge) stretch;
+  filter: drop-shadow(0 calc(var(--rpx) * 12) calc(var(--rpx) * 20) rgba(40, 22, 10, 0.4));
+  pointer-events: none;
+}
+/* A centred window grows from its middle; a bottom sheet from its foot. */
+.k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {
   margin: -8px -8px 8px;
   background: url('../assets/tex-wood.jpg') center / 512px 512px;
@@ -108,17 +130,8 @@
    Both are painted in their own screens (hud.css, nav.css): the M1 pieces,
    sized in reference pixels. */
 
-/* ---- the district card and the quest scroll ---- */
-/* The district card wears the same frame as a sheet, open at the bottom where
-   it meets the nav: three sides of the nine-slice, the fourth width 0. */
-.dc {
-  border: 12px solid transparent;
-  border-bottom: 0;
-  border-top-width: 12px;
-  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
-  background: url('../assets/tex-parchment.jpg') padding-box;
-  background-size: 384px 384px;
-}
+/* ---- the district card ----
+   It wears the window (above), like every sheet. */
 
 /* ---- the research page and the build grid ---- */
 .research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }

@@ -11,19 +11,43 @@ import { ScreenSlot, type Screen } from '../src/ui/kit/host';
 const stubContainer = () => {
   const children: unknown[] = [];
   const attrs = new Map<string, string>();
+  const vars = new Map<string, string>();
   return {
     children,
     attrs,
-    append: (n: unknown) => { children.push(n); },
+    vars,
+    get childNodes() { return children; },
+    append: (n: unknown) => {
+      children.push(n);
+      // A root knows its mount, so it can take itself out of it.
+      (n as { remove?: () => void }).remove = () => {
+        const i = children.indexOf(n);
+        if (i >= 0) children.splice(i, 1);
+      };
+    },
     replaceChildren: () => { children.length = 0; },
     setAttribute: (k: string, v: string) => { attrs.set(k, v); },
     removeAttribute: (k: string) => { attrs.delete(k); },
+    hasAttribute: (k: string) => attrs.has(k),
+    style: { setProperty: (k: string, v: string) => { vars.set(k, v); } },
+  };
+};
+
+/** A screen root; `windowed` roots hold a sheet, so they animate out. */
+const stubRoot = (name: string, windowed = false) => {
+  const attrs = new Map<string, string>();
+  return {
+    attrs,
+    toString: () => name,
+    querySelector: () => (windowed ? {} : null),
+    matches: () => false,
+    setAttribute: (k: string, v: string) => { attrs.set(k, v); },
   };
 };
 
 /** A Screen that counts what happened to it. */
-const spyScreen = (log: string[], name: string): Screen => ({
-  root: { toString: () => name } as unknown as HTMLElement,
+const spyScreen = (log: string[], name: string, windowed = false): Screen => ({
+  root: stubRoot(name, windowed) as unknown as HTMLElement,
   refresh: () => log.push(`refresh:${name}`),
   destroy: () => log.push(`destroy:${name}`),
 });
@@ -88,7 +112,7 @@ describe('ScreenSlot', () => {
   it('tolerates a screen with no destroy()', () => {
     const container = stubContainer();
     const slot = slotWith(container);
-    const bare: Screen = { root: {} as HTMLElement, refresh: () => {} };
+    const bare: Screen = { root: stubRoot('bare') as unknown as HTMLElement, refresh: () => {} };
 
     slot.show('a', () => bare);
     expect(() => slot.clear()).not.toThrow();
@@ -110,7 +134,7 @@ describe('ScreenSlot', () => {
       slot.show('a', () => spyScreen([], 'a'));
       expect(container.attrs.has('data-entering')).toBe(true);
 
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(800);
       expect(container.attrs.has('data-entering')).toBe(false);
     });
 
@@ -121,7 +145,7 @@ describe('ScreenSlot', () => {
       const create = () => spyScreen([], 'a');
 
       slot.show('a', create);
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(800);
       slot.show('a', create); // the per-tick refresh
       slot.show('a', create);
 
@@ -134,7 +158,7 @@ describe('ScreenSlot', () => {
       const slot = slotWith(container);
 
       slot.show('a', () => spyScreen([], 'a'));
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(800);
       slot.show('b', () => spyScreen([], 'b'));
 
       expect(container.attrs.has('data-entering')).toBe(true);
@@ -150,6 +174,64 @@ describe('ScreenSlot', () => {
 
       expect(container.attrs.has('data-entering')).toBe(false);
     });
+  });
+
+  // A window closing back to the map plays its exit before it goes: the
+  // screen is destroyed at once (nothing refreshes it), but its nodes stay in
+  // the mount, marked data-leaving, until the exit has run.
+  describe('the exit', () => {
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('keeps a closed window in the mount, marked, until its exit has played', () => {
+      vi.useFakeTimers();
+      const log: string[] = [];
+      const container = stubContainer();
+      const slot = slotWith(container);
+      slot.show('a', () => spyScreen(log, 'a', true));
+      const root = container.children[0] as ReturnType<typeof stubRoot>;
+
+      slot.clear();
+      expect(log).toEqual(['refresh:a', 'destroy:a']);
+      expect(container.children).toEqual([root]);
+      expect(root.attrs.has('data-leaving')).toBe(true);
+
+      vi.advanceTimersByTime(700);
+      expect(container.children).toHaveLength(0);
+    });
+
+    it('goes at once when another screen takes the mount, so two never share it', () => {
+      vi.useFakeTimers();
+      const container = stubContainer();
+      const slot = slotWith(container);
+      slot.show('a', () => spyScreen([], 'a', true));
+      slot.clear();
+      slot.show('b', () => spyScreen([], 'b', true));
+
+      expect(container.children.map(String)).toEqual(['b']);
+    });
+
+    it('leaves a screen with no window without an exit', () => {
+      const container = stubContainer();
+      const slot = slotWith(container);
+      slot.show('a', () => spyScreen([], 'a'));
+      slot.clear();
+      expect(container.children).toHaveLength(0);
+    });
+  });
+
+  // While the mount is entering, a refresh publishes how long ago it
+  // mounted, as a negative delay: an element the refresh rebuilds then picks
+  // the entrance up where its predecessor was instead of starting over.
+  it('publishes the time since mount while entering', () => {
+    vi.useFakeTimers();
+    const container = stubContainer();
+    const slot = slotWith(container);
+    slot.show('a', () => spyScreen([], 'a', true));
+    expect(container.vars.get('--enter-offset')).toBe('0ms');
+    vi.advanceTimersByTime(250);
+    slot.show('a', () => spyScreen([], 'a', true));
+    expect(container.vars.get('--enter-offset')).toBe('-250ms');
+    vi.useRealTimers();
   });
 
   // NOTE: legacy()'s scroll preservation is not unit-tested here — it calls

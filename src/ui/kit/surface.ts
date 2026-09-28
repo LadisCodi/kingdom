@@ -67,6 +67,10 @@ export function sheet(
     el(
       'div',
       { class: 'k-panel' },
+      // The window's painted frame, its own layer behind everything else, so
+      // it can grow and shrink on the way in and out without distorting or
+      // reflowing the contents (kit.css, `k-window-*`).
+      el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
       ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title, close)]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across

@@ -246,16 +246,7 @@
   justify-content: center;
   padding-top: calc(var(--hud-h) + 16px);
 }
-/* Only while the slot says this is a fresh mount, AND only on the element the
- * host built first. A legacy screen rebuilds its subtree every tick, so keying
- * the animation to the element alone made it replay once a second; keying it
- * to the container alone let a tap inside the 240 ms window rebuild a fresh
- * `.k-sheet` under a still-entering container and replay it once more. */
-#overlay[data-entering] .k-sheet[data-fresh] { animation: sheet-in var(--motion-sheet) ease-out; }
-@keyframes sheet-in {
-  from { transform: translateY(18px); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
+/* The window's entrance and exit are kit.css's `k-window-*`. */
 
 .purse {
   display: flex;

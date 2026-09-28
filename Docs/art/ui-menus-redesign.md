@@ -277,6 +277,20 @@ still derived by the script, never drawn. No emoji anywhere —
 
 Sheets slide up 180ms ease-out. Counters roll rather than snap.
 
+**The window** (`.k-frame`, material.css; `k-window-*`, kit.css): every menu
+that leaves the map in sight — each kit sheet, the district card — sits in
+one painted frame of wood with a knob at each corner and parchment inside,
+nine-sliced both ways so it fits any width and height.
+
+- **In**: the contents hidden; the frame fades in and grows from its least
+  height (its top and bottom slices, nothing between) to its full height in
+  520 ms — from the foot for a bottom sheet, from the middle for a centred
+  one; the contents fade in from 80% of the way.
+- **Out** (closing back to the map): the contents fade out (160 ms), then the
+  frame shrinks back to its least height and fades (420 ms); the window stays
+  in the DOM, untappable, until it has. Switching straight to another menu
+  is immediate.
+
 **One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
 for you here" in the game wears the same badge — a small scrying orb on its
 host's corner, a red halo pulsing slowly behind it, a glint stirring inside
