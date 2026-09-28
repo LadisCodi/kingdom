@@ -293,7 +293,7 @@ export function mountGallery(root: HTMLElement): void {
     ...(['shop', 'relics', 'helmet', 'research', 'build'] as IconName[]).map((n, i) =>
       el('span', { class: 'nav-tab', style: 'position: relative' }, iconEl(n),
         el('span', { class: 'nav-label' }, ['Store', 'Relics', 'Heroes', 'Research', 'Build'][i]),
-        i === 3 ? ctaBadge() : i === 4 ? ctaBadge(3) : '')));
+        i === 3 ? ctaBadge(1, 'gal:research') : i === 4 ? ctaBadge(3, 'gal:build') : '')));
   const fakeSheet = () => el('div', { class: 'gal-phone-sheet' }, sheet(
     { title: 'Build', onClose: noop },
     grid(

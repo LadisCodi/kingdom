@@ -84,7 +84,7 @@ export function renderDailySheet(game: Game): HTMLElement {
       ...(st.locked ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!st.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge());
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge(1, `daily:${kind}:${JSON.stringify(reward)}`));
     b.addEventListener('click', onClick);
     return b;
   };

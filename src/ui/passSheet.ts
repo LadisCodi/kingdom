@@ -95,7 +95,7 @@ export function renderPassSheet(game: Game): HTMLElement {
     // only way to a new mission is to finish an old one — there is nothing to
     // buy here.
     const action = m.complete
-      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim', ctaBadge())
+      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim', ctaBadge(1, `mission:${m.id}`))
       : null;
     action?.addEventListener('click', () => game.doClaimMission(m.id));
     // WHAT IT PAYS, on the row and before the work. Rewards vary — a pack for
@@ -181,7 +181,7 @@ export function renderPassSheet(game: Game): HTMLElement {
       ...(c.locked && !c.claimed ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!c.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge());
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge(1, `pass:${track}:${level}`));
     b.addEventListener('click', () => game.doClaimPassCell(level, track));
     return b;
   };

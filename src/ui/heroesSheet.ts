@@ -98,7 +98,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
       el('span', { class: 'hero-tile-level' }, `Lv ${view.entry.level}`),
       stars(view.entry.tier)));
     if (ready(game, view)) {
-      t.append(ctaBadge());
+      t.append(ctaBadge(1, `hero:${view.id}`));
     }
   } else {
     // An unfound hero is a SIGNPOST, not a locked box: the fragment count is
@@ -108,7 +108,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
       iconEl('fragment', { size: 'sm' }),
       `${view.entry.fragments} / ${heroUnlockCost()}`));
     if (ready(game, view)) {
-      t.append(ctaBadge());
+      t.append(ctaBadge(1, `hero:${view.id}`));
     }
   }
 

@@ -287,8 +287,9 @@ in stepped frames, and the count on it past one ("2" … "9", then "9+").
   daily or season-pass cell and the pass's Claim, the vault, an affordable
   chest, a relic page ready to close, and the quest scroll when done. It
   replaces the glows, pulses, dots, ticks and "+" each used to have.
-- Every orb stirs in unison: its phase comes from the page clock, so a
-  screen that rebuilds each tick does not restart it. It pops in only when
+- No two orbs stir in step: each takes its phase from the page clock plus an
+  offset of its own, keyed on what it marks, so a screen that rebuilds each
+  tick does not restart it either. It pops in only when
   it appears on a host that persists (the nav, the pills, the quest scroll).
 
 **A claimed reward flies into the header** (`ui/rewardFly.ts`; today the

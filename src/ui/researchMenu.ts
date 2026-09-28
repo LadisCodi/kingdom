@@ -351,7 +351,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   // 62px seal, so a badge in its corner sat 16px clear of the thing it marks,
   // reading as a stray mark on the parchment rather than as a badge.
   if (canStartTech(state, id)) {
-    node.querySelector('.tech-card-glyph')?.append(ctaBadge());
+    node.querySelector('.tech-card-glyph')?.append(ctaBadge(1, `tech:${id}`));
   }
   if (active) {
     const completesAt = techCompletesAt(state, id)!;

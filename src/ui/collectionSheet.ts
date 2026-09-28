@@ -100,7 +100,7 @@ function vaultKnob(game: Game): HTMLElement {
     iconEl('vault', { size: 'lg' }),
     el('span', { class: 'col-vault-stars' },
       iconEl('star', { size: 'sm' }), String(vault.stars)),
-    vault.affordable ? ctaBadge() : '');
+    vault.affordable ? ctaBadge(1, 'vault') : '');
   button.addEventListener('click', () => game.openVault());
   return button;
 }
@@ -116,7 +116,7 @@ function vaultShelf(game: Game): HTMLElement {
   const rows = game.vaultShelf().map((row) => el('div', {
     class: `col-chest${row.affordable ? ' is-ready' : ''}`,
   },
-    row.affordable ? ctaBadge() : '',
+    row.affordable ? ctaBadge(1, `chest:${row.tier}`) : '',
     el('div', { class: 'col-chest-head' },
       el('span', { class: 'col-chest-name' }, row.tier.replace('Chest', ' chest')),
       el('span', { class: 'col-chest-cost' },
@@ -161,7 +161,7 @@ function relicGrid(game: Game): HTMLElement {
         // A PAGE READY TO CLOSE is the only thing on this screen worth a mark:
         // nothing closes itself any more, so an unclaimed album would
         // otherwise sit there saying nothing. The mark is the kit's orb.
-        row.claimable ? ctaBadge() : ''),
+        row.claimable ? ctaBadge(1, `relic:${row.id}`) : ''),
       el('span', { class: 'col-medal-name' }, row.name),
       el('span', { class: 'col-medal-count' }, `${row.held}/${row.total}`));
     tile.addEventListener('click', () => game.openRelic(row.id));
@@ -208,7 +208,7 @@ function claimSlab(game: Game, page: ReturnType<Game['albumPage']>): HTMLElement
       chips);
   }
   return el('div', { class: `col-claim${page.claimable ? ' is-ready' : ''}` },
-    page.claimable ? ctaBadge() : '',
+    page.claimable ? ctaBadge(1, 'page') : '',
     chips,
     // A SHORT PAGE SAYS HOW SHORT, on the padlocked line `action` already
     // draws above a dead button — the count IS the reason, so it needs no
