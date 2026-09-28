@@ -11,6 +11,15 @@
   /* The plank's height in reference pixels, without the notch: the knob
      hangs from it and nothing else needs to measure it. */
   --plank-h: calc(var(--rpx) * 107);
+
+  /* THE SLOT DIALS, in reference pixels — the numbers to reach for when
+     fine-tuning the resource widgets. The icon is deliberately taller than
+     the slot, so it stands proud of the hole above and below. (The atlas
+     cell carries its own margin: a 62 cell draws a ~53 coin.) */
+  --slot-h: calc(var(--rpx) * 46);    /* the dark hole's height */
+  --slot-mid: calc(var(--rpx) * 49);  /* the hole's centre, down from the beam's top */
+  --slot-icon: calc(var(--rpx) * 62); /* the resource icon's cell */
+  --slot-text: calc(var(--rpx) * 26); /* the number */
 }
 
 /* The plank: four coins anchored left, a rope, then Mana and Gems anchored
@@ -24,7 +33,7 @@
      viewport-fit=cover that edge is under the notch. The beam runs up under
      it, so the notch reads as wood rather than map. */
   height: calc(env(safe-area-inset-top) + var(--plank-h));
-  padding: calc(env(safe-area-inset-top) + var(--rpx) * 22) calc(var(--rpx) * 20) 0;
+  padding: calc(env(safe-area-inset-top) + var(--slot-mid) - var(--slot-h) / 2) calc(var(--rpx) * 20) 0;
   background: url('../../assets/hud-beam.png') left bottom / auto var(--plank-h) repeat-x, #6b4424;
 }
 .hud-coins,
@@ -40,7 +49,7 @@
   flex: none;
   width: calc(var(--rpx) * 16);
   height: calc(var(--rpx) * 92);
-  margin: calc(var(--rpx) * -22) calc(var(--rpx) * 14) 0 auto;
+  margin: calc(var(--slot-h) / 2 - var(--slot-mid)) calc(var(--rpx) * 14) 0 auto;
   background: url('../../assets/hud-rope.png') center top / 100% auto repeat-y;
 }
 
@@ -50,7 +59,7 @@
   display: inline-flex;
   align-items: center;
   flex: none;
-  height: calc(var(--rpx) * 54);
+  height: var(--slot-h);
   padding: 0;
   /* Sliced left and right only: the slot is always the art's height, so the
      rounded ends keep their shape and only the middle stretches. */
@@ -61,7 +70,7 @@
   background: none;
   box-shadow: none;
   font-family: var(--font-body);
-  font-size: calc(var(--rpx) * 30);
+  font-size: var(--slot-text);
   font-weight: var(--weight-title);
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -72,11 +81,9 @@
 .hud-slot:hover { filter: brightness(1.06); }
 /* The icon sits proud of the hole's left end, a coin resting in it. */
 .hud-slot > .icon {
-  /* 62, not the mockup's 50: the atlas cells carry their own margin, so this
-     is what draws a 50-px coin. */
-  --icon-size: calc(var(--rpx) * 62);
+  --icon-size: var(--slot-icon);
   flex: none;
-  margin: calc(var(--rpx) * -4) 0 calc(var(--rpx) * -4) calc(var(--rpx) * -16);
+  margin: calc((var(--slot-h) - var(--slot-icon)) / 2) 0 calc((var(--slot-h) - var(--slot-icon)) / 2) calc(var(--rpx) * -16);
   filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.55));
 }
 /* Four equal slots, so the coins line up whatever they hold: formatCount
