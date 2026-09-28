@@ -280,7 +280,10 @@ Sheets slide up 180ms ease-out. Counters roll rather than snap.
 **The window** (`.k-frame`, material.css; `k-window-*`, kit.css): every menu
 that leaves the map in sight — each kit sheet, the district card — sits in
 one painted frame of wood with a knob at each corner and parchment inside,
-nine-sliced both ways so it fits any width and height.
+nine-sliced both ways so it fits any width and height. It is as wide as it
+is on the iPhone X (1053 rpx: the reference width less the overlay's gutter),
+centred — edge to edge on the reference phone, with the map showing either
+side on anything wider. A centred modal keeps its own narrower cap.
 
 - **In**: the contents hidden; the frame fades in and grows from its least
   height (its top and bottom slices, nothing between) to its full height in

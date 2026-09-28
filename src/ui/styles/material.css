@@ -49,6 +49,20 @@
   filter: drop-shadow(0 calc(var(--rpx) * 12) calc(var(--rpx) * 20) rgba(40, 22, 10, 0.4));
   pointer-events: none;
 }
+/* AS WIDE AS IT IS ON THE iPHONE X, centred. The width is the reference
+   frame's 1125 less the 12-px gutter the overlay keeps each side there
+   (36 rpx), so on the reference phone the window runs edge to edge as the
+   mockup draws it, and on anything wider — a tablet, a desktop — it keeps
+   that width and the map shows on either side instead of the window
+   stretching. The district card takes the same width, so every window
+   matches. (A centred modal keeps its own, narrower cap — kit.css.) */
+.k-sheet:not(.is-centred),
+.dc {
+  --win-w: calc(var(--rpx) * 1053);
+  width: min(100%, var(--win-w));
+  margin-left: auto;
+  margin-right: auto;
+}
 /* A centred window grows from its middle; a bottom sheet from its foot. */
 .k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {
