@@ -57,7 +57,7 @@ export type SfxName =
   // The quest scroll unrolling and rolling back up (questPill.ts).
   | 'scrollOpen' | 'scrollClose'
   // A reward flying into the header (rewardFly.ts): the burst it leaves the
-  // claim with (Special Powerup 12), and one tick per fragment landing — a coin for money, a pop
+  // claim with (Special Powerup 11), and one tick per fragment landing — a coin for money, a pop
   // for goods.
   | 'rewardBurst' | 'rewardCoin' | 'rewardPop'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
