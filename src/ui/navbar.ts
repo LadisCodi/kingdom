@@ -71,10 +71,13 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started
       // this second.
-      const cta = def.name === 'build' ? game.buildCtaLit()
-        : def.name === 'research' ? game.researchCtaLit()
-          : false;
-      button.classList.toggle('is-cta', cta);
+      const count = def.name === 'build' ? game.buildCtaCount()
+        : def.name === 'research' ? game.researchCtaCount()
+          : 0;
+      button.classList.toggle('is-cta', count > 0);
+      // One is the orb alone; more carry the number, capped at "9+".
+      if (count > 1) button.dataset.count = count > 9 ? '9+' : String(count);
+      else delete button.dataset.count;
     }
   };
   game.onChange(refresh);

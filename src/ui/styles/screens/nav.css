@@ -95,11 +95,14 @@
 
 /* THE CALL TO ACTION is a small scrying orb on the tab's corner: the screen
    behind it has something the player can press right now. Three layers:
-     ::before  a red halo behind it, breathing slowly;
-     ::after   the orb (sheets/ui-nav3-orb.png) under a warm glint that
-               jumps between a few spots in STEPPED frames — a flicker, not
-               a glide — then rests, as if something inside is waking.
-   It pops in when it appears. */
+     ::before  a red halo behind it, pulsing very slowly;
+     ::after   the orb (sheets/ui-nav4-orb.png) under a warm glint that
+               jumps between spots in STEPPED frames — a flicker, not a
+               glide — in two stirrings of a few frames each, then rests:
+               something inside is waking.
+   More than one thing to do puts the count on the orb (navbar.ts sets
+   data-count: "2" … "9", then "9+"); one is the orb alone. It pops in when
+   it appears. */
 #navbar.nav .nav-tab.is-cta::before,
 #navbar.nav .nav-tab.is-cta::after {
   content: '';
@@ -114,7 +117,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 70, 40, 0.7) 0%, rgba(230, 40, 20, 0.4) 38%, rgba(200, 20, 10, 0.12) 55%, transparent 70%);
   transform: scale(2.4);
-  animation: nav-orb-halo 2.6s ease-in-out infinite alternate, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
+  animation: nav-orb-halo 5.5s ease-in-out infinite alternate, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
 }
 #navbar.nav .nav-tab.is-cta::after {
   /* The glint is a small warm spot kept inside the glass: its radius is a
@@ -124,26 +127,52 @@
     url('../../assets/badge-orb.png') center / contain no-repeat;
   background-blend-mode: screen, normal;
   filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4));
-  animation: nav-orb-wake 3.2s steps(1) infinite, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
+  animation: nav-orb-wake 6.4s steps(1) infinite, nav-badge-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both;
 }
+/* The count, set on the orb in the chrome's cream with a dark rim so it reads
+   on the red glass at badge size. */
+#navbar.nav .nav-tab.is-cta[data-count]::after {
+  content: attr(data-count);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-body);
+  font-size: calc(var(--nav-badge) * 0.52);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  color: #fff6e0;
+  text-shadow:
+    0 calc(var(--rpx) * 2) 0 #4a0d06, calc(var(--rpx) * 2) 0 0 #4a0d06,
+    calc(var(--rpx) * -2) 0 0 #4a0d06, 0 calc(var(--rpx) * -2) 0 #4a0d06;
+}
+/* "9+" is two glyphs: a notch smaller so it stays inside the glass. */
+#navbar.nav .nav-tab.is-cta[data-count='9+']::after { font-size: calc(var(--nav-badge) * 0.42); }
 @keyframes nav-badge-in {
   from { scale: 0; }
   to { scale: 1; }
 }
 @keyframes nav-orb-halo {
-  from { opacity: 0.6; transform: scale(2.2); }
-  to { opacity: 1; transform: scale(2.7); }
+  from { opacity: 0.55; transform: scale(2.2); }
+  to { opacity: 1; transform: scale(2.75); }
 }
-/* A few frames of stirring, then a long still: brightness nudged by a few
-   percent and the glint moving between spots inside the glass. */
+/* Two stirrings — five frames, then seven — each settling back, with long
+   stills between: the glint moving between spots inside the glass and the
+   brightness nudged by a few percent. */
 @keyframes nav-orb-wake {
-  0%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  8%   { background-position: 42% 56%, center; filter: brightness(1.08) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  14%  { background-position: 57% 47%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  20%  { background-position: 48% 60%, center; filter: brightness(1.12) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  26%  { background-position: 54% 54%, center; filter: brightness(1.05) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  32%  { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
-  100% { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  0%    { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  5%    { background-position: 43% 56%, center; filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  9%    { background-position: 56% 47%, center; filter: brightness(1.03) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  13%   { background-position: 47% 60%, center; filter: brightness(1.1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  17%   { background-position: 53% 55%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  21%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  40%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  44%   { background-position: 58% 58%, center; filter: brightness(1.05) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  48%   { background-position: 45% 48%, center; filter: brightness(1.09) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  52%   { background-position: 54% 44%, center; filter: brightness(1.13) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  56%   { background-position: 42% 54%, center; filter: brightness(1.07) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  60%   { background-position: 51% 62%, center; filter: brightness(1.11) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  64%   { background-position: 55% 50%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  68%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  100%  { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
 }
 @media (prefers-reduced-motion: reduce) {
   #navbar.nav .nav-tab.is-cta::before,

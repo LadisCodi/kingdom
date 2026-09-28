@@ -91,7 +91,7 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
+  anyResearchActionable, researchActionableCount, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
   finishTechWithGems, techRushCost,
   buyTechInstantly, instantTechGems,
 } from './sim/research';
@@ -3595,15 +3595,20 @@ export class Game {
 
   /** Per-second Build CTA: some uncapped district is affordable AND has a legal cell. */
   buildCtaLit(): boolean {
-    return BUILDABLE_DISTRICTS.some((id) => {
-      const def = DISTRICTS[id];
-      const capped =
-        districtCount(this.state, id) >= maxDistrictCount(this.state, def);
-      if (capped) return false;
-      const cells = validPlacementCells(this.state, this.map, id);
-      if (cells.length === 0) return false;
-      return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
-    });
+    return BUILDABLE_DISTRICTS.some((id) => this.canBuildNow(id));
+  }
+
+  /** How many buildings could be placed right now — the Build tab's count. */
+  buildCtaCount(): number {
+    return BUILDABLE_DISTRICTS.filter((id) => this.canBuildNow(id)).length;
+  }
+
+  /** Under its cap, somewhere legal to put it, and affordable this second. */
+  private canBuildNow(id: DistrictId): boolean {
+    const def = DISTRICTS[id];
+    if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
+    if (validPlacementCells(this.state, this.map, id).length === 0) return false;
+    return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
   }
 
   /** Per-second Research CTA: some technology can be started. The same shape
@@ -3614,6 +3619,11 @@ export class Game {
    *  purchase. Every node is a technology now, so it is one. */
   researchCtaLit(): boolean {
     return anyResearchActionable(this.state);
+  }
+
+  /** How many technologies can be started — the Research tab's count. */
+  researchCtaCount(): number {
+    return researchActionableCount(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */

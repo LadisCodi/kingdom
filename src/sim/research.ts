@@ -182,6 +182,10 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
 export const anyResearchActionable = (state: GameState): boolean =>
   TECH_ORDER.some((id) => canStartTech(state, id));
 
+/** How many technologies can be started right now — the Research tab's count. */
+export const researchActionableCount = (state: GameState): number =>
+  TECH_ORDER.filter((id) => canStartTech(state, id)).length;
+
 // ------------------------------------------------------------- tree fog
 
 /**
