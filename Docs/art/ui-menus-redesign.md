@@ -465,8 +465,8 @@ bottom, and the widget is now a button that wants to be reachable.
 - **Running**: the title and description; under them, the goal's mark resting
   on the start of the trough, which runs to the right roller. There is no
   control on it: a tap anywhere on the scroll points at the goal.
-- **Done**: the scroll shows only the reward and a green **Claim** slab under
-  it, shrunk to fit; no title, mark, description, trough or magnifier.
+- **Done**: the scroll shows only the reward — each prize an icon and its
+  count, no label, no chip — and a green **Claim** slab under it, shrunk to fit; no title, mark, description, trough or magnifier.
 - **The wood button** is one painted slab and its pressed twin, worn by every
   wood-coloured button in the game. A slab recoloured to another tone, and a
   locked one, keep the kit's flat fill.

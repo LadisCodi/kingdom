@@ -190,27 +190,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--rpx) * 14);
+  gap: calc(var(--rpx) * 28);
   flex-wrap: wrap;
-}
-.q-reward-label {
-  font-size: var(--q-desc);
-  font-weight: var(--weight-small);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-muted);
 }
 /* Loot, not a sentence. */
 .q-reward-item {
   display: inline-flex;
   align-items: center;
-  gap: calc(var(--rpx) * 6);
-  padding: calc(var(--rpx) * 4) calc(var(--rpx) * 18);
-  font-size: calc(var(--rpx) * 34);
-  font-weight: var(--weight-strong);
-  background: var(--gold);
-  border: calc(var(--rpx) * 4) solid var(--gold-dark);
-  border-radius: 999px;
+  gap: calc(var(--rpx) * 8);
+  font-size: calc(var(--rpx) * 38);
+  font-weight: var(--weight-title);
 }
 .q-reward-item .icon { --icon-size: calc(var(--rpx) * 52); }
 

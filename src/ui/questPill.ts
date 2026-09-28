@@ -176,7 +176,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     shownIndex = info.index;
     name.textContent = quest.name;
     desc.textContent = questLine(quest);
-    reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
+    reward.replaceChildren(...rewardNodes(quest));
     slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
   };
 
