@@ -19,7 +19,8 @@ export interface Change {
 interface Step { path: Path; before: unknown; existed: boolean }
 
 export class DataModel {
-  readonly reference: DataDoc;
+  /** The document as last written to disk: what the diff is against. */
+  reference: DataDoc;
   doc: DataDoc;
   private undoStack: Step[][] = [];
   private redoStack: Step[][] = [];
@@ -89,6 +90,16 @@ export class DataModel {
     for (const [k, v] of Object.entries(map)) next[k === from ? to : k] = v;
     this.set(path, next);
   }
+
+  /** The files now hold what is on screen: the diff starts again from here.
+   *  Undo still walks back past the save, and a step back is a change again. */
+  markSaved(): void {
+    this.reference = structuredClone(this.doc);
+    this.emit();
+  }
+
+  /** Tell listeners something outside the document changed (a schema). */
+  touch(): void { this.emit(); }
 
   canUndo(): boolean { return this.undoStack.length > 0; }
   canRedo(): boolean { return this.redoStack.length > 0; }

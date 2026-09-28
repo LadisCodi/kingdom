@@ -472,3 +472,22 @@ function inline(v: unknown): string {
   const e = Object.entries(v as Record<string, unknown>);
   return e.length === 0 ? '{}' : `{ ${e.map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(', ')} }`;
 }
+
+/** The document the sim reads, from one value per collection file — the
+ *  runtime twin of `balance.ts`, for the save endpoint. */
+export function assemble(files: Readonly<Record<string, unknown>>): DataDoc {
+  const doc: DataDoc = {};
+  for (const c of COLLECTIONS) {
+    const f = files[c.id];
+    if (c.view === 'canvas' || f === undefined) continue;
+    if (c.source) doc[c.source] = f;
+    else Object.assign(doc, f as Record<string, unknown>);
+  }
+  return doc;
+}
+
+/** What one collection's file holds, cut out of the document. */
+export function sliceOf(doc: DataDoc, c: CollectionDef): unknown {
+  if (c.source) return doc[c.source];
+  return Object.fromEntries((c.groups ?? []).map((g) => [g, doc[g]]));
+}

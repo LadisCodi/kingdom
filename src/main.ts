@@ -79,6 +79,11 @@ async function boot(): Promise<void> {
     return;
   }
 
+  // A data file changing is an event, not a module update
+  // (scripts/vite-data-editor.mjs); the game simply starts again on the new
+  // numbers, as it did when the file was a module.
+  import.meta.hot?.on('kingdom:data', () => location.reload());
+
   const map = buildMapData();
   const saveManager = new SaveManager();
   await saveManager.init();

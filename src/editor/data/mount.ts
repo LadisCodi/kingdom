@@ -1,11 +1,11 @@
 // `?dev=data` — every number in the game, in one tool.
 //
-// The replacement for the balance workbook (Docs/plans/data-editor.md). This
-// is PHASE 1: the tool reads `balance.json` as the workbook generates it,
-// edits it in memory, validates it against `sim/data/dataRules.ts` and shows
-// the diff — but does not write it, because `npm run dev` regenerates that
-// file from `balance.xlsx` and would silently throw the edit away. Saving
-// arrives with the migration, when JSON becomes the source.
+// The source of truth for the game's data (Docs/plans/data-editor.md). Each
+// collection is a file in `src/sim/data/game/` and its schema one in
+// `src/sim/data/schema/`; the tool edits them in memory, validates against
+// `sim/data/dataRules.ts`, and Save writes the collections that changed
+// through the dev endpoint (scripts/vite-data-editor.mjs). The map and the
+// tech tree are their own editors, hosted here, saving to their own files.
 //
 // Layout: a RAIL of collections grouped by game domain; a BREADCRUMB whose
 // every crumb goes up and whose ▾ lists its siblings; a MAIN view chosen by
@@ -19,7 +19,7 @@ import balance from '../../sim/data/balance';
 import techTree from '../../sim/data/tech-tree.json';
 import {
   COLLECTIONS, DOMAINS, QUEST_GOALS, REF_COLLECTION, collectionById, entriesOf, getAt, isListCollection,
-  refIds, refsIn, schemaOf, validateData,
+  SCHEMAS, refIds, refsIn, schemaOf, sliceOf, validateData,
   type CollectionDef, type DataDoc, type DataIssue, type FieldSpec, type RefKind,
 } from '../../sim/data/dataRules';
 import { ARTIFACTS, CURRENCIES, DISTRICTS, HEROES, UNITS } from '../../sim/data/definitions';
@@ -117,6 +117,22 @@ const TECHS = (techTree as unknown as TechDoc).technologies;
 
 interface Route { c: string; e: string | null; t: string | null; v: string | null }
 
+/** The Schema view's "+ Field" form, as typed. */
+interface FieldForm {
+  collection: string;
+  group: string;
+  key: string;
+  kind: 'int' | 'float' | 'text' | 'bool' | 'ref' | 'options' | 'list' | 'currencyMap' | 'goodsMap';
+  ref: RefKind;
+  options: string;
+  optional: boolean;
+  perLevel: boolean;
+  min: string;
+  max: string;
+  doc: string;
+  def: string;
+}
+
 const ENTITY_TABS = ['levels', 'identity', 'visuals', 'adjacency', 'gates'] as const;
 const TAB_LABEL: Record<string, string> = {
   levels: 'Levels', identity: 'Identity', visuals: 'Visuals', adjacency: 'Adjacency', gates: 'Gates',
@@ -128,7 +144,11 @@ export function mountEditor(): void {
   document.title = 'Kingdom — data';
 
   const model = new DataModel(balance as unknown as DataDoc);
-  let issues: DataIssue[] = validateData(model.doc, model.reference);
+  /** The schemas as edited in the Schema view, and as last saved. */
+  const schemas: Record<string, FieldSpec> = structuredClone(SCHEMAS) as Record<string, FieldSpec>;
+  const savedSchema: Record<string, string> = Object.fromEntries(Object.entries(schemas).map(([k, v]) => [k, JSON.stringify(v)]));
+  const schemaDirty = (): string[] => Object.keys(schemas).filter((k) => JSON.stringify(schemas[k]) !== savedSchema[k]);
+  let issues: DataIssue[] = validateData(model.doc, model.reference, schemas);
   let changed = new Set<string>();
 
   const ui = {
@@ -143,6 +163,13 @@ export function mountEditor(): void {
     gridAnchor: null as null | { r: number; c: number },
     bulk: '1.1',
     dragFrom: -1,
+    saving: false,
+    toast: null as null | { text: string; bad: boolean },
+    /** Data files changed on disk while this page held unsaved work. */
+    diskChanged: [] as string[],
+    /** Per collection, which source files name each field. */
+    usage: {} as Record<string, Record<string, string[]> | 'loading'>,
+    fieldForm: null as null | FieldForm,
   };
 
   const parseRoute = (): Route => {
@@ -178,17 +205,13 @@ export function mountEditor(): void {
   document.body.append(root);
 
   model.onChange(() => {
-    issues = validateData(model.doc, model.reference);
+    issues = validateData(model.doc, model.reference, schemas);
     changed = new Set(model.diff().map((c) => pathKey(c.path)));
     render();
   });
 
   const coll = (): CollectionDef => collectionById(route.c)!;
-  const specCache = new Map<string, FieldSpec>();
-  const specOf = (c: CollectionDef): FieldSpec => {
-    if (!specCache.has(c.id)) specCache.set(c.id, schemaOf(model.reference, c));
-    return specCache.get(c.id)!;
-  };
+  const specOf = (c: CollectionDef): FieldSpec => schemaOf(model.reference, c, schemas);
   /** The document path of an entry (or of a form collection's root). */
   const entryPath = (c: CollectionDef, id: string): Path =>
     isListCollection(model.doc, c) ? [c.source!, Number(id)] : [c.source!, id];
@@ -222,7 +245,7 @@ export function mountEditor(): void {
     const active = document.activeElement as HTMLElement | null;
     focusKey = active?.dataset?.k ?? null;
     const c = coll();
-    root.classList.toggle('dx-noside', c.view === 'form' || c.view === 'canvas' || (c.view === 'entity' && route.v === 'grid'));
+    root.classList.toggle('dx-noside', c.view === 'form' || c.view === 'canvas' || route.v === 'schema' || (c.view === 'entity' && route.v === 'grid'));
     main.classList.toggle('canvas', c.view === 'canvas');
     const put = (el: HTMLElement, kids: Kid[]) =>
       el.replaceChildren(...kids.filter((k): k is Node | string => k !== null && k !== undefined && k !== false));
@@ -267,7 +290,7 @@ export function mountEditor(): void {
     });
     const errs = issues.filter((i) => i.level === 'error').length;
     const warns = issues.length - errs;
-    const nChanges = changed.size;
+    const nChanges = changed.size + schemaDirty().length;
     return [
       h('div', { class: 'dx-brand mono' }, 'KINGDOM · DATA'),
       nav,
@@ -281,10 +304,15 @@ export function mountEditor(): void {
         nChanges === 0 ? 'No changes' : `${nChanges} unsaved`),
       errs ? h('span', { class: 'dx-chip err' }, `${errs} error${errs === 1 ? '' : 's'}`) : h('span', { class: 'dx-chip ok' }, '0 errors'),
       warns ? h('span', { class: 'dx-chip wrn' }, `${warns} warning${warns === 1 ? '' : 's'}`) : null,
+      ui.diskChanged.length ? h('button', {
+        class: 'dx-btn warn', title: ui.diskChanged.join('\n'),
+        onclick: () => { if (confirm('Reload from disk? Unsaved changes here are lost.')) location.reload(); },
+      }, `${ui.diskChanged.length} changed on disk · reload`) : null,
       c.view === 'canvas' ? null : h('button', {
-        class: 'dx-btn primary', disabled: true,
-        title: 'Saving arrives with the migration (phase 3). Until then balance.xlsx is the source: "N unsaved" lists what to carry over.',
-      }, 'Save'),
+        class: 'dx-btn primary', disabled: nChanges === 0 || errs > 0 || ui.saving,
+        title: errs > 0 ? 'Fix the errors first — a save that breaks the data is refused.' : 'Write the changed collections (Ctrl S)',
+        onclick: () => void save(),
+      }, ui.saving ? 'Saving…' : 'Save'),
     ];
   }
 
@@ -365,7 +393,7 @@ export function mountEditor(): void {
       h('div', {},
         h('div', { class: 'dx-title' }, c.label),
         h('div', { class: 'dx-sub' }, `${KIND_LABEL[c.view]} · `,
-          h('span', { class: 'mono' }, c.source ? `balance.json › ${c.source}` : c.groups ? `balance.json › ${c.groups.join(', ')}` : c.file ?? ''))),
+          h('span', { class: 'mono' }, c.file ?? `src/sim/data/game/${c.id}.json`))),
       h('div', { class: 'dx-spacer' }),
       ...extra,
       views.length > 1 ? h('div', { class: 'dx-seg', role: 'tablist' },
@@ -737,14 +765,61 @@ export function mountEditor(): void {
 
   // ---- schema
 
+  /** Top-level fields of a collection's schema: an entry's fields, or a
+   *  form's `group.field`s. The Schema view edits these; deeper ones it shows. */
+  function topFields(c: CollectionDef): Array<{ label: string; path: string[]; spec: FieldSpec }> {
+    const spec = specOf(c);
+    const out: Array<{ label: string; path: string[]; spec: FieldSpec }> = [];
+    for (const [k, f] of Object.entries(spec.fields ?? {})) {
+      if (c.view === 'form' && f.type === 'object') {
+        for (const [k2, f2] of Object.entries(f.fields ?? {})) out.push({ label: `${k}.${k2}`, path: [k, k2], spec: f2 });
+      } else out.push({ label: k, path: [k], spec: f });
+    }
+    return out;
+  }
+
+  /** The schema node at a top-level path, to patch in place. */
+  function schemaNode(c: CollectionDef, path: string[]): { parent: Record<string, FieldSpec>; key: string } {
+    let node = schemas[c.id];
+    for (const p of path.slice(0, -1)) node = node.fields![p];
+    return { parent: node.fields!, key: path[path.length - 1] };
+  }
+
+  function patchField(c: CollectionDef, path: string[], patch: Partial<FieldSpec>): void {
+    const { parent, key } = schemaNode(c, path);
+    const next: FieldSpec = { ...parent[key], ...patch };
+    for (const k of Object.keys(next) as Array<keyof FieldSpec>) if (next[k] === undefined || next[k] === '') delete next[k];
+    parent[key] = next;
+    model.touch();
+  }
+
+  function loadUsage(c: CollectionDef): Record<string, string[]> | null {
+    const u = ui.usage[c.id];
+    if (u === 'loading') return null;
+    if (u) return u;
+    ui.usage[c.id] = 'loading';
+    const keys = topFields(c).map((f) => f.path[f.path.length - 1]);
+    void fetch('/__data/usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keys }) })
+      .then((r) => r.json()).then((m) => { ui.usage[c.id] = m as Record<string, string[]>; render(); })
+      .catch(() => { ui.usage[c.id] = {}; render(); });
+    return null;
+  }
+
+  /** Remove a field from the schema and from every entry — only one nothing
+   *  reads, so a removal can never quietly break the sim. */
+  function removeField(c: CollectionDef, path: string[]): void {
+    if (!confirm(`Remove ${path.join('.')} from the schema and from every ${c.noun}?`)) return;
+    const { parent, key } = schemaNode(c, path);
+    delete parent[key];
+    model.batch(() => {
+      if (c.view === 'form') model.set(path, undefined);
+      else for (const [id] of entriesOf(model.doc, c)) model.set([...entryPath(c, id), key], undefined);
+    });
+    model.touch();
+  }
+
   function renderSchema(c: CollectionDef): HTMLElement {
-    const rows: Array<[string, FieldSpec]> = [];
-    const walk = (s: FieldSpec, p: string): void => {
-      if (p) rows.push([p, s]);
-      if (s.type === 'object') for (const [k, f] of Object.entries(s.fields ?? {})) walk(f, p ? `${p}.${k}` : k);
-      if ((s.type === 'list' || s.type === 'map') && s.of && (s.of.type === 'object' || s.of.type === 'list' || s.of.type === 'map')) walk(s.of, `${p}.*`);
-    };
-    walk(specOf(c), '');
+    const usage = loadUsage(c);
     const len = (s: FieldSpec) => {
       const l = s.length;
       if (!l) return '';
@@ -752,18 +827,164 @@ export function mountEditor(): void {
       const tgt = l.townhall ? 'Townhall max level' : `${l.sibling}${l.offset ? ` ${l.offset > 0 ? '+' : '−'} ${Math.abs(l.offset)}` : ''}`;
       return `${l.upTo ? '≤' : '='} ${tgt}${l.orEmpty ? ' or none' : ''}`;
     };
-    return h('div', { style: 'display:flex;flex-direction:column;gap:10px' },
-      h('p', { class: 'dx-note' }, 'What each field is. Inferred from the data and sharpened by the rules in src/sim/data/dataRules.ts. Adding a field from here arrives with the migration, when the schema becomes a file of its own.'),
-      h('div', { class: 'dx-card', style: 'overflow:auto' }, h('table', { class: 'dx-table' },
-        h('thead', {}, h('tr', {}, ...['Field', 'Type', 'Names', 'Range', 'Length', 'Optional', 'Means'].map((t) => h('th', {}, t)))),
-        h('tbody', {}, ...rows.map(([p, s]) => h('tr', {},
-          h('td', { class: 'id' }, p),
+    const nested = (s: FieldSpec, p: string): Array<[string, FieldSpec]> => {
+      const out: Array<[string, FieldSpec]> = [];
+      const walk = (x: FieldSpec, q: string, top: boolean): void => {
+        if (!top) out.push([q, x]);
+        if (x.type === 'object') for (const [k, f] of Object.entries(x.fields ?? {})) walk(f, `${q}.${k}`, false);
+        if ((x.type === 'list' || x.type === 'map') && x.of && ['object', 'list', 'map'].includes(x.of.type)) walk(x.of, `${q}.*`, false);
+      };
+      walk(s, p, true);
+      return out;
+    };
+    const numCell = (c2: CollectionDef, path: string[], s: FieldSpec, k: 'min' | 'max') => h('input', {
+      class: 'dx-cell', style: 'width:64px;min-width:0', value: s[k] === undefined ? '' : String(s[k]), 'data-k': `__schema.${c2.id}.${path.join('.')}.${k}`,
+      onchange: (e: Event) => { const v = (e.target as HTMLInputElement).value.trim(); patchField(c2, path, { [k]: v === '' ? undefined : Number(v) }); },
+    });
+    const rows: HTMLElement[] = [];
+    for (const f of topFields(c)) {
+      const key = f.path[f.path.length - 1];
+      const readers = usage?.[key];
+      const numeric = f.spec.type === 'int' || f.spec.type === 'float';
+      rows.push(h('tr', {},
+        h('td', { class: 'id' }, f.label),
+        h('td', {}, numeric
+          ? h('select', { class: 'dx-cell', style: 'min-width:0;width:72px', value: f.spec.type, onchange: (e: Event) => patchField(c, f.path, { type: (e.target as HTMLSelectElement).value as FieldSpec['type'] }) },
+            h('option', { value: 'int', selected: f.spec.type === 'int' }, 'int'), h('option', { value: 'float', selected: f.spec.type === 'float' }, 'float'))
+          : h('span', { class: 'mono', style: 'color:var(--blue)' }, f.spec.type)),
+        h('td', { class: 'mono dim' }, f.spec.ref ?? f.spec.keysRef ?? (f.spec.options ? f.spec.options.join(' · ') : '')),
+        h('td', {}, numeric || f.spec.of?.type === 'int' || f.spec.of?.type === 'float' ? h('span', { class: 'dx-row' }, numCell(c, f.path, f.spec, 'min'), '…', numCell(c, f.path, f.spec, 'max')) : null),
+        h('td', { class: 'mono dim' }, len(f.spec)),
+        h('td', { class: 'dim' }, f.spec.nullable ? 'yes' : ''),
+        h('td', { class: 'mono', style: `font-size:11px;white-space:normal;color:${readers && readers.length === 0 ? 'var(--accent)' : 'var(--dim)'}` },
+          usage === null ? '…' : readers === undefined ? '' : readers.length === 0 ? 'not read by code' : readers.map((r) => r.replace(/^src\//, '')).slice(0, 3).join(', ') + (readers.length > 3 ? ` +${readers.length - 3}` : '')),
+        h('td', { style: 'min-width:260px' }, h('input', {
+          class: 'dx-cell text', style: 'width:100%', value: f.spec.doc ?? '', placeholder: 'what it means', 'data-k': `__schema.${c.id}.${f.path.join('.')}.doc`,
+          onchange: (e: Event) => patchField(c, f.path, { doc: (e.target as HTMLInputElement).value.trim() || undefined }),
+        })),
+        h('td', {}, readers && readers.length === 0 ? h('button', { class: 'dx-btn sm', onclick: () => removeField(c, f.path) }, 'Remove') : null)));
+      for (const [p, s] of nested(f.spec, f.label)) {
+        rows.push(h('tr', {},
+          h('td', { class: 'id dim', style: 'padding-left:22px' }, p),
           h('td', { class: 'mono', style: 'color:var(--blue)' }, s.type),
           h('td', { class: 'mono dim' }, s.ref ?? s.keysRef ?? (s.options ? s.options.join(' · ') : '')),
           h('td', { class: 'mono dim' }, s.min !== undefined || s.max !== undefined ? `${s.min ?? ''} … ${s.max ?? ''}` : ''),
           h('td', { class: 'mono dim' }, len(s)),
           h('td', { class: 'dim' }, s.nullable ? 'yes' : ''),
-          h('td', { class: 'dim', style: 'white-space:normal;min-width:280px' }, s.doc ?? '')))))));
+          h('td', {}), h('td', { class: 'dim', style: 'white-space:normal' }, s.doc ?? ''), h('td', {})));
+      }
+    }
+    return h('div', { style: 'display:flex;flex-direction:column;gap:10px' },
+      h('div', { class: 'dx-row', style: 'justify-content:space-between' },
+        h('p', { class: 'dx-note', style: 'margin:0' }, `What each field is — schema/${c.id}.json. "Read by" is every source file that names the field; one nothing reads is data waiting for its code, and only such a field can be removed.`),
+        ui.fieldForm?.collection === c.id ? null : h('button', { class: 'dx-btn dash', onclick: () => { ui.fieldForm = newFieldForm(c); render(); } }, '+ Field')),
+      ui.fieldForm?.collection === c.id ? fieldFormCard(c) : null,
+      h('div', { class: 'dx-card', style: 'overflow:auto' }, h('table', { class: 'dx-table' },
+        h('thead', {}, h('tr', {}, ...['Field', 'Type', 'Names', 'Range', 'Length', 'Optional', 'Read by', 'Means', ''].map((t) => h('th', {}, t)))),
+        h('tbody', {}, ...rows))));
+  }
+
+  // ---- adding a field
+
+  function newFieldForm(c: CollectionDef): FieldForm {
+    return {
+      collection: c.id, group: c.view === 'form' ? (c.groups ?? [])[0] ?? '' : '', key: '', kind: 'int',
+      ref: 'building', options: '', optional: false, perLevel: false, min: '', max: '', doc: '', def: '',
+    };
+  }
+
+  const FIELD_KINDS: Array<[FieldForm['kind'], string]> = [
+    ['int', 'whole number'], ['float', 'decimal number'], ['text', 'text'], ['bool', 'on / off'],
+    ['ref', 'an id of…'], ['options', 'one of…'], ['list', 'list of numbers'],
+    ['currencyMap', 'amount per currency'], ['goodsMap', 'amount per good'],
+  ];
+  const REF_KINDS: RefKind[] = ['building', 'good', 'currency', 'unit', 'hero', 'villain', 'pack', 'artifact', 'harvest', 'terrain', 'tech', 'feature', 'ruin'];
+
+  function specFromForm(f: FieldForm): FieldSpec {
+    const num = (v: string) => (v.trim() === '' ? undefined : Number(v));
+    let spec: FieldSpec;
+    switch (f.kind) {
+      case 'int': case 'float': spec = { type: f.kind, min: num(f.min), max: num(f.max) }; break;
+      case 'text': spec = { type: 'text' }; break;
+      case 'bool': spec = { type: 'bool' }; break;
+      case 'ref': spec = { type: 'text', ref: f.ref }; break;
+      case 'options': spec = { type: 'text', options: f.options.split(',').map((x) => x.trim()).filter(Boolean) }; break;
+      case 'list': spec = { type: 'list', of: { type: 'float', min: num(f.min), max: num(f.max) }, length: f.perLevel ? { sibling: 'maxLevel', upTo: true } : undefined }; break;
+      case 'currencyMap': spec = { type: 'map', of: { type: 'int', min: 0 }, keysRef: 'currency' }; break;
+      case 'goodsMap': spec = { type: 'map', of: { type: 'int', min: 0 }, keysRef: 'good' }; break;
+    }
+    if (f.optional) spec.nullable = true;
+    if (f.doc.trim()) spec.doc = f.doc.trim();
+    return JSON.parse(JSON.stringify(spec)) as FieldSpec; // drops the undefineds
+  }
+
+  function defaultFromForm(f: FieldForm, spec: FieldSpec): unknown {
+    const raw = f.def.trim();
+    if (spec.type === 'int' || spec.type === 'float') return raw === '' ? (spec.min ?? 0) : Number(raw);
+    if (spec.type === 'bool') return raw === 'true';
+    if (spec.type === 'text') return raw !== '' ? raw : blank(spec);
+    return blank(spec);
+  }
+
+  function addField(c: CollectionDef, f: FieldForm): string | null {
+    const key = f.key.trim();
+    if (!/^[a-z][A-Za-z0-9]*$/.test(key)) return 'A field name is camelCase: letters and digits, starting lower case.';
+    const parentPath = c.view === 'form' ? [f.group] : [];
+    let parent = schemas[c.id];
+    for (const p of parentPath) parent = parent.fields![p];
+    if (parent.type !== 'object') return `${parentPath.join('.')} is not a record — it cannot take a field.`;
+    if (parent.fields?.[key]) return `${key} already exists.`;
+    const spec = specFromForm(f);
+    if (f.kind === 'options' && (spec.options ?? []).length === 0) return 'Name at least one option, comma separated.';
+    const def = defaultFromForm(f, spec);
+    parent.fields = { ...(parent.fields ?? {}), [key]: spec };
+    model.batch(() => {
+      if (f.optional) return;
+      if (c.view === 'form') model.set([f.group, key], def);
+      else for (const [id] of entriesOf(model.doc, c)) model.set([...entryPath(c, id), key], structuredClone(def));
+    });
+    delete ui.usage[c.id];
+    model.touch();
+    return null;
+  }
+
+  function fieldFormCard(c: CollectionDef): HTMLElement {
+    const f = ui.fieldForm!;
+    const set = (patch: Partial<FieldForm>) => { Object.assign(f, patch); render(); };
+    const lbl = (text: string, control: HTMLElement) => h('label', { class: 'dx-field' }, h('span', { class: 'lbl' }, text), control);
+    const inp = (k: keyof FieldForm, ph = '') => h('input', {
+      class: 'dx-in', value: String(f[k]), placeholder: ph, 'data-k': `__ff.${k}`,
+      onchange: (e: Event) => { (f as unknown as Record<string, unknown>)[k] = (e.target as HTMLInputElement).value; },
+    });
+    const hasLevels = c.view !== 'form' && specOf(c).fields?.maxLevel !== undefined;
+    let err: string | null = null;
+    return h('div', { class: 'dx-card dx-pad', style: 'display:flex;flex-direction:column;gap:12px;border-color:var(--accent)' },
+      h('b', {}, `New field on every ${c.view === 'form' ? 'setting group' : c.noun}`),
+      h('div', { style: 'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px' },
+        c.view === 'form' ? lbl('group', h('select', { class: 'dx-in', value: f.group, onchange: (e: Event) => set({ group: (e.target as HTMLSelectElement).value }) },
+          ...(c.groups ?? []).filter((g) => specOf(c).fields?.[g]?.type === 'object').map((g) => h('option', { value: g, selected: g === f.group }, g)))) : null,
+        lbl('name', inp('key', 'repairCost')),
+        lbl('type', h('select', { class: 'dx-in', value: f.kind, onchange: (e: Event) => set({ kind: (e.target as HTMLSelectElement).value as FieldForm['kind'] }) },
+          ...FIELD_KINDS.map(([k, t]) => h('option', { value: k, selected: k === f.kind }, t)))),
+        f.kind === 'ref' ? lbl('names a', h('select', { class: 'dx-in', value: f.ref, onchange: (e: Event) => set({ ref: (e.target as HTMLSelectElement).value as RefKind }) },
+          ...REF_KINDS.map((k) => h('option', { value: k, selected: k === f.ref }, k)))) : null,
+        f.kind === 'options' ? lbl('options, comma separated', inp('options', 'Small, Large')) : null,
+        f.kind === 'int' || f.kind === 'float' || f.kind === 'list' ? lbl('min', inp('min')) : null,
+        f.kind === 'int' || f.kind === 'float' || f.kind === 'list' ? lbl('max', inp('max')) : null,
+        ['int', 'float', 'text', 'bool', 'options', 'ref'].includes(f.kind) ? lbl('default', inp('def', f.kind === 'bool' ? 'true / false' : '')) : null),
+      lbl('what it means', inp('doc', 'What it costs to repair this building after a raid, at this level.')),
+      h('div', { class: 'dx-row', style: 'gap:18px' },
+        h('label', { class: 'dx-row' }, h('input', { type: 'checkbox', checked: f.optional, onchange: (e: Event) => { f.optional = (e.target as HTMLInputElement).checked; } }), h('span', {}, 'optional (entries may leave it out)')),
+        hasLevels && f.kind === 'list' ? h('label', { class: 'dx-row' }, h('input', { type: 'checkbox', checked: f.perLevel, onchange: (e: Event) => { f.perLevel = (e.target as HTMLInputElement).checked; } }), h('span', {}, 'one per level')) : null),
+      h('p', { class: 'dx-note', style: 'margin:0' }, 'Saving adds it to the schema and, unless optional, to every entry with its default. The game ignores it until code reads it; until then the Schema view lists it as "not read by code".'),
+      h('div', { class: 'dx-row', style: 'justify-content:flex-end' },
+        h('button', { class: 'dx-btn', onclick: () => { ui.fieldForm = null; render(); } }, 'Cancel'),
+        h('button', { class: 'dx-btn primary', onclick: () => {
+          const active = document.activeElement as HTMLInputElement | null;
+          active?.dispatchEvent?.(new Event('change'));
+          err = addField(c, f);
+          if (err) toast(err, true); else { ui.fieldForm = null; render(); }
+        } }, 'Add field')));
   }
 
   // ---- entity (buildings)
@@ -1267,7 +1488,7 @@ export function mountEditor(): void {
   function renderStatus(): Kid[] {
     return [
       h('span', {}, `?dev=data${location.hash}`),
-      h('span', {}, 'phase 1 · reads balance.json, edits in memory'),
+      h('span', {}, 'src/sim/data/game · schema'),
       h('div', { class: 'dx-spacer' }),
       h('span', {}, 'Ctrl K jump · Ctrl Z undo · [ ] previous / next entry · browser back works'),
     ];
@@ -1293,6 +1514,7 @@ export function mountEditor(): void {
       if (items.length > 10) focusKey = '__menu';
     }
     if (ui.palette) out.push(renderPalette());
+    if (ui.toast) out.push(h('div', { class: 'dx-toast' + (ui.toast.bad ? ' bad' : ''), role: 'status' }, ui.toast.text));
     if (ui.diffOpen) out.push(renderDiff());
     return out;
   }
@@ -1382,11 +1604,15 @@ export function mountEditor(): void {
     return h('div', { class: 'dx-overlay', onmousedown: (e: MouseEvent) => { if (e.target === e.currentTarget) close(); } },
       h('div', { class: 'dx-palette dx-diff', role: 'dialog', 'aria-label': 'Unsaved changes' },
         h('div', { class: 'dx-row', style: 'padding:12px 14px;border-bottom:1px solid var(--line)' },
-          h('b', { style: 'flex:1' }, `${changes.length} unsaved change${changes.length === 1 ? '' : 's'}`),
+          h('b', { style: 'flex:1' }, `${changes.length + schemaDirty().length} unsaved change${changes.length + schemaDirty().length === 1 ? '' : 's'}`),
           h('button', { class: 'dx-btn sm', onclick: copy }, 'Copy as JSON'),
           h('button', { class: 'dx-btn sm', onclick: close }, 'Close')),
-        h('div', { class: 'dx-note', style: 'padding:8px 14px' }, 'Phase 1 cannot save: balance.xlsx is still the source, and npm run dev rebuilds balance.json from it. Carry these into the workbook, or keep them here until the migration.'),
-        h('div', { class: 'dx-results' }, ...changes.map((ch) => {
+        h('div', { class: 'dx-results' },
+          ...schemaDirty().map((id) => h('div', { class: 'chg' },
+            h('span', {}, `Schema › ${collectionById(id)?.label ?? id}`),
+            h('span', { class: 'mono dim' }, `schema/${id}.json`),
+            h('button', { class: 'dx-btn sm', onclick: () => { schemas[id] = JSON.parse(savedSchema[id]); model.touch(); } }, 'Revert'))),
+          ...changes.map((ch) => {
           const d = describePath(ch.path);
           return h('div', { class: 'chg' },
             h('button', { class: 'dx-crumb', style: 'height:auto;padding:0;text-align:left;white-space:normal', onclick: () => { ui.diffOpen = false; d.go(); } }, d.where),
@@ -1402,6 +1628,8 @@ export function mountEditor(): void {
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = ui.palette ? null : { q: '', i: 0 }; render(); return; }
     if (e.key === 'Escape' && (ui.menu || ui.diffOpen || ui.palette)) { ui.menu = null; ui.diffOpen = false; ui.palette = null; render(); return; }
+    // A hosted board saves itself on Ctrl S; everywhere else it is this Save.
+    if (mod && e.key.toLowerCase() === 's' && coll().view !== 'canvas') { e.preventDefault(); void save(); return; }
     if (typing) return;
     // A hosted board has its own undo and its own keys.
     if (coll().view === 'canvas') return;
@@ -1414,7 +1642,67 @@ export function mountEditor(): void {
       if (next !== undefined) go({ e: next });
     }
   });
-  window.addEventListener('beforeunload', (e) => { if (changed.size) e.preventDefault(); });
+  window.addEventListener('beforeunload', (e) => { if (changed.size || schemaDirty().length) e.preventDefault(); });
+
+  // ---- saving, and files changing under the page
+
+  /** Which collections the unsaved changes touch. */
+  function dirtyCollections(): string[] {
+    const tops = new Set([...changed].map((k) => k.split('.')[0]));
+    const ids = COLLECTIONS.filter((c) => c.view !== 'canvas'
+      && (c.source ? tops.has(c.source) : (c.groups ?? []).some((g) => tops.has(g)))).map((c) => c.id);
+    return [...new Set([...ids, ...schemaDirty()])];
+  }
+
+  function toast(text: string, bad = false): void {
+    ui.toast = { text, bad };
+    render();
+    const mine = ui.toast;
+    setTimeout(() => { if (ui.toast === mine) { ui.toast = null; render(); } }, bad ? 8000 : 3000);
+  }
+
+  async function save(): Promise<void> {
+    if (ui.saving) return;
+    const ids = dirtyCollections();
+    if (ids.length === 0) { toast('Nothing to save.'); return; }
+    if (issues.some((i) => i.level === 'error')) { toast('Fix the errors first — a save that breaks the data is refused.', true); return; }
+    const data: Record<string, unknown> = {};
+    const schema: Record<string, FieldSpec> = {};
+    for (const id of ids) {
+      const c = collectionById(id)!;
+      data[id] = sliceOf(model.doc, c);
+      if (schemaDirty().includes(id)) schema[id] = schemas[id];
+    }
+    ui.saving = true;
+    render();
+    try {
+      const res = await fetch('/__data/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data, schema }),
+      });
+      const body = await res.json() as { ok?: boolean; error?: string; written?: string[] };
+      if (!res.ok || body.ok !== true) throw new Error(body.error ?? `HTTP ${res.status}`);
+      for (const id of Object.keys(schema)) savedSchema[id] = JSON.stringify(schemas[id]);
+      model.markSaved();
+      toast(body.written?.length ? `Saved ${body.written.length} file${body.written.length === 1 ? '' : 's'}: ${body.written.map((f) => f.replace('src/sim/data/', '')).join(', ')}` : 'Saved — nothing on disk needed to change.');
+    } catch (err) {
+      toast(`Save failed: ${(err as Error).message}`, true);
+    } finally {
+      ui.saving = false;
+      render();
+    }
+  }
+
+  // A data file changed (scripts/vite-data-editor.mjs). Our own saves and the
+  // hosted editors' are already on screen. Anything else — a checkout, a hand
+  // edit, another tab — reloads the page if nothing here is unsaved, and
+  // otherwise waits on a button, so unsaved work is never thrown away.
+  import.meta.hot?.on('kingdom:data', (d: { file: string; origin: string }) => {
+    if (d.origin !== 'disk') return;
+    const busy = changed.size > 0 || schemaDirty().length > 0 || [...hosted.keys()].some(canvasDirty);
+    if (!busy) { location.reload(); return; }
+    if (!ui.diskChanged.includes(d.file)) ui.diskChanged.push(d.file);
+    render();
+  });
 
   render();
 }

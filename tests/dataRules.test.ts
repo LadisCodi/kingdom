@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import balance from '../src/sim/data/balance';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import {
   COLLECTIONS, IGNORED_KEYS, SCHEMAS, collectionById, formatData, inferSpec, schemaOf, validateData,
   type DataDoc,
 } from '../src/sim/data/dataRules';
 
-const DATA = join(__dirname, '../src/sim/data');
+const DATA = new URL('../src/sim/data/', import.meta.url);
+const join = (base: URL, ...parts: string[]): URL => new URL(parts.map((p) => `${p}`).join('/'), base);
 
 const doc = balance as unknown as DataDoc;
 
