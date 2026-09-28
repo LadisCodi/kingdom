@@ -177,7 +177,8 @@ than the build is rejected rather than downgraded.
   inside it can rise above the header — **which is the design, not a
   limitation**: a menu is opened over the game, so the purse stays readable.
   The nav bar is the exception that steps aside: it slides out of the frame
-  while `#overlay` has content, and every menu carries its own way out.
+  while `#overlay` has content or the district card is open, and every menu
+  carries its own way out.
   The ad screen lives at z 200 in its own mount for that reason, and the gacha
   reveal at z 100 in its own for the same one; both carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every

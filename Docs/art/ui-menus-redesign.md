@@ -287,12 +287,14 @@ side on anything wider. A centred modal keeps its own narrower cap.
 
 - **In**: the contents hidden; the frame fades in and grows from its least
   height (its top and bottom slices, nothing between) to its full height in
-  520 ms — from the foot for a bottom sheet, from the middle for a centred
-  one; the contents fade in from 80% of the way.
-- **Out** (closing back to the map): the contents fade out (160 ms), then the
-  frame shrinks back to its least height and fades (420 ms); the window stays
+  160 ms — from the foot for a bottom sheet, from the middle for a centred
+  one; the contents fade in from 80% of the way (about 0.2 s in all).
+- **Out** (closing back to the map): the contents fade out (60 ms), then the
+  frame shrinks back to its least height and fades (140 ms); the window stays
   in the DOM, untappable, until it has. Switching straight to another menu
   is immediate.
+- The nav bar steps aside while any window is open, the district card's
+  included (§6.5).
 
 **One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
 for you here" in the game wears the same badge — a small scrying orb on its
@@ -1259,8 +1261,9 @@ than a currency, and they go in the button like everything else, reading
 - A menu is opened **over** the game. The resource header stays above it,
   undimmed and tappable, full-screen menus included: what you can afford is
   the reason you opened the menu.
-- **The nav bar leaves while a menu is open**: it slides down out of the
-  frame (260 ms) and slides back up when the map returns. Every menu brings
+- **The nav bar leaves while a menu is open** — a sheet, or the district
+  card: it slides down out of the frame (200 ms) and slides back up when the
+  map returns. Every menu brings
   its own way out, and the space the bar held goes to the menu — `--nav-h`
   is only the bottom inset while it is away.
 - The stack, bottom to top: map · the right-edge column (4) · district card

@@ -769,21 +769,21 @@
  * holds for the length of the exit. */
 [data-entering] .k-sheet[data-fresh] > .k-panel > .k-frame,
 #panel[data-entering] .dc > .k-frame {
-  animation: k-window-in 520ms cubic-bezier(0.2, 0.7, 0.3, 1) var(--enter-offset, 0ms) both;
+  animation: k-window-in 160ms cubic-bezier(0.2, 0.7, 0.3, 1) var(--enter-offset, 0ms) both;
 }
 [data-entering] .k-sheet[data-fresh] > .k-panel > :not(.k-frame),
 #panel[data-entering] .dc > :not(.k-frame) {
-  animation: k-window-words-in 200ms ease calc(var(--enter-offset, 0ms) + 416ms) both;
+  animation: k-window-words-in 70ms ease calc(var(--enter-offset, 0ms) + 128ms) both;
 }
 [data-leaving] .k-panel > .k-frame,
 .dc[data-leaving] > .k-frame,
 [data-leaving] .dc > .k-frame {
-  animation: k-window-out 420ms cubic-bezier(0.5, 0, 0.8, 0.5) 160ms both;
+  animation: k-window-out 140ms cubic-bezier(0.5, 0, 0.8, 0.5) 60ms both;
 }
 [data-leaving] .k-panel > :not(.k-frame),
 .dc[data-leaving] > :not(.k-frame),
 [data-leaving] .dc > :not(.k-frame) {
-  animation: k-window-words-out 160ms ease both;
+  animation: k-window-words-out 60ms ease both;
 }
 /* A closed window is on its way out: nothing on it takes a tap. */
 [data-leaving] { pointer-events: none; }

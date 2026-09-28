@@ -145,12 +145,12 @@ export function legacy(
  * entrance (the frame growing, then the contents fading in — kit.css's
  * `k-window-in`), so it is never cut off mid-flight.
  */
-const ENTER_MS = 700;
+const ENTER_MS = 260;
 /**
  * How long a closed window stays on screen to play its exit (`k-window-out`:
  * the contents fade, then the frame shrinks and fades) before it is removed.
  */
-const LEAVE_MS = 620;
+const LEAVE_MS = 220;
 
 /** A window worth animating out: a kit sheet, or the district card. */
 const hasWindow = (root: HTMLElement): boolean =>
