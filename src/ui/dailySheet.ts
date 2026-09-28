@@ -27,7 +27,7 @@ import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { formatUsd } from '../sim/store';
 import { el, formatCount } from './format';
-import { currencyIcon, iconEl } from './kit';
+import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 
 /** The reward as icon-and-number chips, in wallet order. */
@@ -84,7 +84,7 @@ export function renderDailySheet(game: Game): HTMLElement {
       ...(st.locked ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!st.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits);
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge());
     b.addEventListener('click', onClick);
     return b;
   };

@@ -203,15 +203,12 @@
 }
 .q-reward-item .icon { --icon-size: calc(var(--rpx) * 52); }
 
-/* Done: the whole card becomes the Claim button — a gold glow round the
- * parchment, a green slab and a gentle bob, so it is the only lively thing on
- * screen and the tap target is the entire widget. */
+/* Done: the whole card becomes the Claim button — the kit's orb on its
+ * corner, a green slab and a gentle bob, so the tap target is the entire
+ * widget. The orb rides the words (questPill.ts), near the parchment's
+ * top-right corner, inside the right roller. */
 .q-scroll.is-complete { animation: q-bob 1.4s ease-in-out infinite alternate; }
-.q-scroll.is-complete .q-base {
-  filter:
-    drop-shadow(0 0 calc(var(--rpx) * 6) var(--gold))
-    drop-shadow(0 calc(var(--rpx) * 6) calc(var(--rpx) * 8) rgba(40, 22, 10, 0.35));
-}
+.q-content > .k-cta { top: calc(var(--rpx) * -34); right: calc(var(--rpx) * -30); }
 .q-scroll.is-complete .q-cta { filter: hue-rotate(62deg) saturate(1.5) brightness(1.08); }
 .q-scroll.is-complete:active,
 .q-scroll.is-leaving { animation: none; }

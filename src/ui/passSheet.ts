@@ -27,7 +27,7 @@ import type { CurrencyId, Wallet } from '../sim/state';
 import type { PackTier } from '../sim/data/definitions';
 import { formatUsd } from '../sim/store';
 import { el, formatCount } from './format';
-import { currencyIcon, iconEl } from './kit';
+import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 import { spriteUrl } from '../render/sprites';
 
@@ -95,7 +95,7 @@ export function renderPassSheet(game: Game): HTMLElement {
     // only way to a new mission is to finish an old one — there is nothing to
     // buy here.
     const action = m.complete
-      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim')
+      ? el('button', { class: 'pss-claim', type: 'button' }, 'Claim', ctaBadge())
       : null;
     action?.addEventListener('click', () => game.doClaimMission(m.id));
     // WHAT IT PAYS, on the row and before the work. Rewards vary — a pack for
@@ -181,7 +181,7 @@ export function renderPassSheet(game: Game): HTMLElement {
       ...(c.locked && !c.claimed ? [iconEl('padlock', { size: 'sm' })] : []),
     ];
     if (!c.claimable) return el('div', { class: classes }, ...bits);
-    const b = el('button', { class: classes, type: 'button' }, ...bits);
+    const b = el('button', { class: classes, type: 'button' }, ...bits, ctaBadge());
     b.addEventListener('click', () => game.doClaimPassCell(level, track));
     return b;
   };

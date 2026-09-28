@@ -620,7 +620,6 @@
   background: var(--parchment-shade); border: 2px solid var(--wood-dark); border-radius: var(--radius-sm);
 }
 .gal-phone-nav .nav-tab .icon { --icon-size: 24px; }
-.gal-phone-nav .nav-tab.is-cta { background: var(--gold); border-color: var(--gold-dark); }
 .gal-ruler { display: flex; flex-direction: column; gap: 4px; }
 .gal-ruler-tick {
   display: grid; place-items: center;
@@ -654,3 +653,99 @@
 /* …except where the specimen IS the background, which the checkerboard would
  * then be painted over anyway. Those set their own, so keep the box bare. */
 .gal-box--bare { background-image: none; }
+
+/* ------------------------------------------------------ the call to action
+ * THE ONE BADGE for "there is something for you here", everywhere in the
+ * game (kit/cta.ts builds it): a small scrying orb on its host's corner
+ * (sheets/ui-nav4-orb.png). Three layers:
+ *   ::before  a red halo behind it, pulsing very slowly;
+ *   ::after   the orb under a warm glint that jumps between spots in STEPPED
+ *             frames — a flicker, not a glide — in two stirrings, then rests:
+ *             something inside is waking. The count, when there is one, is
+ *             printed on it.
+ * Both loops take their phase from --cta-*-delay, which cta.ts sets from the
+ * page clock, so a badge rebuilt every tick carries on where the last one was
+ * and every orb on screen stirs in unison. The host must be positioned. */
+.k-cta {
+  --cta-size: calc(var(--rpx) * 44);
+  position: absolute;
+  top: calc(var(--cta-size) * -0.3);
+  right: calc(var(--cta-size) * -0.3);
+  z-index: 2;
+  width: var(--cta-size);
+  height: var(--cta-size);
+  pointer-events: none;
+}
+.k-cta::before,
+.k-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.k-cta::before {
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 70, 40, 0.7) 0%, rgba(230, 40, 20, 0.4) 38%, rgba(200, 20, 10, 0.12) 55%, transparent 70%);
+  transform: scale(2.4);
+  animation: k-cta-halo 5.5s ease-in-out var(--cta-halo-delay, 0ms) infinite alternate;
+}
+.k-cta::after {
+  /* The glint is a small warm spot kept inside the glass: its radius is a
+     third of the orb, so no frame below lets it spill past the rim. */
+  background:
+    radial-gradient(circle, rgba(255, 214, 150, 0.55), rgba(255, 140, 60, 0.18) 45%, transparent 70%) 50% 50% / 46% 46% no-repeat,
+    url('../assets/badge-orb.png') center / contain no-repeat;
+  background-blend-mode: screen, normal;
+  filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4));
+  animation: k-cta-wake 6.4s steps(1) var(--cta-wake-delay, 0ms) infinite;
+}
+/* The count, in the chrome's cream with a dark rim so it reads on the red
+   glass at badge size; "9+" a notch smaller so it stays inside it. */
+.k-cta[data-count]::after {
+  content: attr(data-count);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-body);
+  font-size: calc(var(--cta-size) * 0.52);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  color: #fff6e0;
+  text-shadow:
+    0 calc(var(--cta-size) * 0.04) 0 #4a0d06, calc(var(--cta-size) * 0.04) 0 0 #4a0d06,
+    calc(var(--cta-size) * -0.04) 0 0 #4a0d06, 0 calc(var(--cta-size) * -0.04) 0 #4a0d06;
+}
+.k-cta[data-count='9+']::after { font-size: calc(var(--cta-size) * 0.42); }
+/* A badge that has just appeared pops in (set by setCta on a lasting host). */
+.k-cta.is-new { animation: k-cta-in 240ms cubic-bezier(0.3, 1.6, 0.6, 1) both; }
+@keyframes k-cta-in {
+  from { scale: 0; }
+  to { scale: 1; }
+}
+@keyframes k-cta-halo {
+  from { opacity: 0.55; transform: scale(2.2); }
+  to { opacity: 1; transform: scale(2.75); }
+}
+/* Two stirrings — five frames, then seven — each settling back, with long
+   stills between: the glint moving between spots inside the glass and the
+   brightness nudged by a few percent. */
+@keyframes k-cta-wake {
+  0%    { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  5%    { background-position: 43% 56%, center; filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  9%    { background-position: 56% 47%, center; filter: brightness(1.03) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  13%   { background-position: 47% 60%, center; filter: brightness(1.1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  17%   { background-position: 53% 55%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  21%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  40%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  44%   { background-position: 58% 58%, center; filter: brightness(1.05) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  48%   { background-position: 45% 48%, center; filter: brightness(1.09) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  52%   { background-position: 54% 44%, center; filter: brightness(1.13) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  56%   { background-position: 42% 54%, center; filter: brightness(1.07) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  60%   { background-position: 51% 62%, center; filter: brightness(1.11) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  64%   { background-position: 55% 50%, center; filter: brightness(1.04) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  68%   { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+  100%  { background-position: 50% 52%, center; filter: brightness(1) drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.4)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-cta,
+  .k-cta::before,
+  .k-cta::after { animation: none; }
+}

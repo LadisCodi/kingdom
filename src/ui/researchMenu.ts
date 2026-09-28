@@ -29,7 +29,7 @@ import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
 } from './research/layout';
-import { action, btn, iconEl, knob } from './kit';
+import { action, btn, ctaBadge, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
 /** Which book is open on the lectern. Module-level so it survives the
@@ -342,16 +342,16 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   },
   el('span', { class: 'tech-card-glyph' }, def.glyph),
   el('span', { class: 'tech-card-name' }, def.name));
-  // A dot on everything startable RIGHT NOW. The page shows a lot of cards
+  // The kit's orb on everything startable RIGHT NOW. The page shows a lot of cards
   // the player cannot act on yet — done, running, unaffordable, missing a
   // prerequisite, behind a bar — and `available` styling only means the
-  // prerequisites are met. The dot is the difference.
+  // prerequisites are met. The orb is the difference.
   //
   // It hangs on the SEAL, not on the card. The card is a 120px box around a
-  // 62px seal, so a dot in its corner sat 16px clear of the thing it marks,
+  // 62px seal, so a badge in its corner sat 16px clear of the thing it marks,
   // reading as a stray mark on the parchment rather than as a badge.
   if (canStartTech(state, id)) {
-    node.querySelector('.tech-card-glyph')?.append(el('span', { class: 'node-dot' }));
+    node.querySelector('.tech-card-glyph')?.append(ctaBadge());
   }
   if (active) {
     const completesAt = techCompletesAt(state, id)!;

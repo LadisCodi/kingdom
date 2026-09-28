@@ -312,15 +312,9 @@
 .pss-claim:hover { filter: brightness(1.06); }
 .pss-claim:active { transform: translateY(var(--lip)); box-shadow: none; }
 .pss-claim:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-/* It pulses, because it is the only thing on the board that can be pressed —
-   the daily cell's rule applied to a row. */
-.pss-claim { animation: pss-ready 1.6s ease-in-out infinite; }
-@keyframes pss-ready {
-  50% { box-shadow: 0 var(--lip) 0 var(--leaf-dark), 0 0 14px rgba(120, 200, 90, 0.85); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pss-claim { animation: none; }
-}
+/* It wears the kit's orb, because it is the only thing on the board that can
+   be pressed — the daily cell's rule applied to a row. */
+.pss-claim { position: relative; }
 
 /* ---- the ladder. One grid template for the heads and every row, declared
    once so the columns cannot drift apart: free · the level · paid. */
@@ -434,22 +428,15 @@
   box-shadow: inset 0 0 12px rgba(242, 178, 51, 0.55);
 }
 
-/* Waiting. Lit gold, and the only thing on the ladder that moves. */
+/* Waiting. Lit gold, with the kit's orb on its corner. */
 button.pss-cell {
   cursor: pointer;
   border: 3px solid var(--gold);
   box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
-  animation: pss-cell-ready 1.6s ease-in-out infinite;
 }
 button.pss-cell:hover { filter: brightness(1.05); }
 button.pss-cell:active { transform: translateY(2px); box-shadow: none; }
 button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-@keyframes pss-cell-ready {
-  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark), 0 0 14px rgba(242, 178, 51, 0.9); }
-}
-@media (prefers-reduced-motion: reduce) {
-  button.pss-cell { animation: none; }
-}
 
 .pss-prize { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .pss-prize > .icon { --icon-size: 20px; }

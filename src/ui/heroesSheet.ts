@@ -32,7 +32,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, btn, iconEl, knob, sheet, stat } from './kit';
+import { action, btn, ctaBadge, iconEl, knob, sheet, stat } from './kit';
 
 /** Blue → violet → gold. The rarity is the tile's whole background, so the
  *  roster reads as a ladder before a single label is read. */
@@ -98,7 +98,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
       el('span', { class: 'hero-tile-level' }, `Lv ${view.entry.level}`),
       stars(view.entry.tier)));
     if (ready(game, view)) {
-      t.append(el('span', { class: 'hero-tile-ready' }, iconEl('plus', { size: 'sm' })));
+      t.append(ctaBadge());
     }
   } else {
     // An unfound hero is a SIGNPOST, not a locked box: the fragment count is
@@ -108,7 +108,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
       iconEl('fragment', { size: 'sm' }),
       `${view.entry.fragments} / ${heroUnlockCost()}`));
     if (ready(game, view)) {
-      t.append(el('span', { class: 'hero-tile-ready' }, iconEl('plus', { size: 'sm' })));
+      t.append(ctaBadge());
     }
   }
 

@@ -15,7 +15,7 @@
 
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { iconEl } from './kit';
+import { iconEl, setCta } from './kit';
 
 export function mountSeasonPill(game: Game, root: HTMLElement): void {
   const name = el('span', { class: 'sea-pill-name' }, '');
@@ -52,6 +52,8 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
     fill.style.width = `${Math.round((info.held / info.total) * 100)}%`;
     left.textContent = info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`;
     pill.classList.toggle('is-quiet', !state!.glowing);
+    // The orb is the ask (kit/cta.ts), the same one every waiting thing wears.
+    setCta(pill, state!.glowing ? 1 : 0);
     pill.setAttribute('aria-label', state!.glowing
       ? 'A reward is waiting on the season pass'
       : `${info.name} — the season pass`);

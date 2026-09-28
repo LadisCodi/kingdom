@@ -168,7 +168,7 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
    to be read anyway — so the card is an emblem and the panel does the talking.
    The name gets two lines because the card no longer competes for them. */
 .tech-card-glyph {
-  /* So the "press me" dot can hang on the seal's corner. */
+  /* So the call-to-action orb can hang on the seal's corner. */
   position: relative;
   --seal: var(--parchment-shade);
   --seal-dark: #b9a37a;
@@ -231,22 +231,6 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 }
 .tech-card.silhouette > * { grid-area: 1 / 1; }
 
-/* "You can press this, now." The page shows a lot of cards the player cannot
- * act on — done, running, unaffordable, prerequisite missing, band locked —
- * and the `available` styling only means the prerequisites are met. The dot
- * is the difference. */
-.node-dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--clay);
-  border: 2px solid var(--parchment);
-  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
-  pointer-events: none;
-}
 .tech-card .node-bar {
   position: absolute;
   left: 34px;

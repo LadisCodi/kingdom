@@ -18,7 +18,7 @@
 
 import type { Game } from '../game';
 import { el } from './format';
-import { iconEl } from './kit';
+import { iconEl, setCta } from './kit';
 
 export function mountDailyPill(game: Game, root: HTMLElement): void {
   const day = el('span', { class: 'dly-pill-day' }, '');
@@ -41,9 +41,10 @@ export function mountDailyPill(game: Game, root: HTMLElement): void {
     root.hidden = !showing;
     if (!showing) return;
     day.textContent = state!.label;
-    // The glow is the ask. Without a rung waiting there is nothing to ask for,
-    // so the pill goes quiet and merely stays available.
+    // The orb is the ask (kit/cta.ts). Without a rung waiting there is
+    // nothing to ask for, so the pill goes quiet and merely stays available.
     pill.classList.toggle('is-quiet', !state!.glowing);
+    setCta(pill, state!.glowing ? 1 : 0);
     pill.setAttribute('aria-label', state!.glowing
       ? 'Your daily chest is ready'
       : 'The daily chest season');

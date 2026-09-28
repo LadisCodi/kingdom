@@ -12,7 +12,7 @@
 
 import type { Game, OverlayName } from '../game';
 import { el } from './format';
-import { iconEl, type IconName } from './kit';
+import { iconEl, setCta, type IconName } from './kit';
 
 // Army lost its tab. An army only matters at the moment it is SENT somewhere,
 // so composition is set inside the expedition sheet and units are trained at
@@ -67,17 +67,15 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const refresh = () => {
     for (const { def, button } of tabs) {
       button.classList.toggle('is-active', game.openOverlay === def.name);
-      // The red dot (nav.css) shows when the screen behind the tab has
+      // The orb shows when the screen behind the tab has
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started
       // this second.
       const count = def.name === 'build' ? game.buildCtaCount()
         : def.name === 'research' ? game.researchCtaCount()
           : 0;
-      button.classList.toggle('is-cta', count > 0);
-      // One is the orb alone; more carry the number, capped at "9+".
-      if (count > 1) button.dataset.count = count > 9 ? '9+' : String(count);
-      else delete button.dataset.count;
+      // The kit's orb, with the count on it past one (kit/cta.ts).
+      setCta(button, count);
     }
   };
   game.onChange(refresh);

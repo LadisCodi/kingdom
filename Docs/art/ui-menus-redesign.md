@@ -277,6 +277,20 @@ still derived by the script, never drawn. No emoji anywhere —
 
 Sheets slide up 180ms ease-out. Counters roll rather than snap.
 
+**One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
+for you here" in the game wears the same badge — a small scrying orb on its
+host's corner, a red halo pulsing slowly behind it, a glint stirring inside
+in stepped frames, and the count on it past one ("2" … "9", then "9+").
+
+- Where: the nav tabs (Build, Research), a startable technology's seal, the
+  daily and season pills, a hero tile with something to do, a claimable
+  daily or season-pass cell and the pass's Claim, the vault, an affordable
+  chest, a relic page ready to close, and the quest scroll when done. It
+  replaces the glows, pulses, dots, ticks and "+" each used to have.
+- Every orb stirs in unison: its phase comes from the page clock, so a
+  screen that rebuilds each tick does not restart it. It pops in only when
+  it appears on a host that persists (the nav, the pills, the quest scroll).
+
 **A claimed reward flies into the header** (`ui/rewardFly.ts`; today the
 quest claim and the daily / season chests):
 
