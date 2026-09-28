@@ -151,6 +151,16 @@ export function closeKnob(onClick: () => void, label = 'Close'): HTMLButtonEleme
   return wire(b, onClick);
 }
 
+/**
+ * THE MOVE: a round wood button with the four-way arrows carved into it
+ * (kit.css `.k-move`, sheets/ui-window4-move.png) — the close's twin in
+ * wood, drawn to sit beside it in a window's header.
+ */
+export function moveKnob(onClick: () => void, label = 'Move'): HTMLButtonElement {
+  const b = el('button', { class: 'k-move', type: 'button', 'aria-label': label });
+  return wire(b, onClick);
+}
+
 /** An on/off switch (music, sound effects, ambience). */
 export function switchCtl(on: boolean, onToggle: () => void, label: string): HTMLButtonElement {
   const b = el('button', {

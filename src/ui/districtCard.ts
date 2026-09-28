@@ -39,7 +39,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { btn, closeKnob, iconEl, knob, pips, progress, stat } from './kit';
+import { btn, closeKnob, iconEl, knob, moveKnob, pips, progress, stat, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -396,17 +396,18 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ));
   }
 
-  // Moving is not an upgrade path, so it does not belong in the footer's
-  // one-primary-action slot (§2.2). It is a quiet secondary on the head, next
-  // to Close: something you do TO the building rather than something you buy
-  // for it — and it is free, so it carries no price to show.
-  const head = el('div', { class: 'dc-tools' });
-  if (canMoveDistrict(district)) {
-    head.append(knob('✥', () => game.startMove(district.uniqueId), { label: 'Move' }));
-  }
-  // The window's close sits on the frame's top-right corner (kit closeKnob),
-  // not in this column: it closes the window, it does nothing TO the building.
-  const close = closeKnob(() => game.dismiss());
+  // THE HEADER: the building's name, and its two tools on the right — Move,
+  // then Close, which stays last so it never shifts when a building happens
+  // to be movable. Moving is not an upgrade path, so it does not belong in
+  // the footer's one-primary-action slot (§2.2): it is something you do TO
+  // the building, and it is free, so it carries no price to show.
+  const name = districtLabel(game.state, district);
+  const header = windowHead(name, [
+    ...(canMoveDistrict(district)
+      ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
+      : []),
+    closeKnob(() => game.dismiss(), `Close ${name}`),
+  ]);
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
   // reads, at this level alone (upgradeStats.ts). It used to be scattered
@@ -422,19 +423,17 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         el('b', { class: 'dc-stat-value' }, f.value)))))];
 
   return el('div', { class: 'dc' },
+    header,
     el('div', { class: 'dc-head' },
       portrait(def, district.level),
       el('div', { class: 'dc-id' },
-        el('div', { class: 'dc-name' }, districtLabel(game.state, district)),
         el('div', { class: 'dc-what' }, def.description),
-        // The one thing you BUY for this building sits with its name and its
-        // picture, not at the bottom of everything it does (M2).
-        ...upgradeAction),
-      head),
+        // The one thing you BUY for this building sits with its picture, not
+        // at the bottom of everything it does (M2).
+        ...upgradeAction)),
     ...stats,
     body,
     foot,
-    close,
   );
 }
 

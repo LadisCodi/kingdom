@@ -354,6 +354,10 @@ side on anything wider. A centred modal keeps its own narrower cap.
   stretched). The title on the left, in light ink with a dark-wood outline;
   a row of buttons anchored right, the close always last and any `actions`
   before it. A headed window has no plank, no rope and no corner close.
+  The district card has one: the building's name (*Housing #3*), then Move
+  (when the building can move) and Close. **Move** is the close's twin in
+  wood — a round wood button with four-way arrows carved into it (kit
+  `moveKnob`).
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 

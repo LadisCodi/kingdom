@@ -93,7 +93,8 @@
    fixed; the width is three-sliced — both ends kept, the plain middle
    stretched. The title sits on its left; its buttons on its right, the
    window's close always last. */
-.k-sheet.has-head > .k-panel > .k-head {
+.k-sheet.has-head > .k-panel > .k-head,
+.dc > .k-head {
   --head-h: calc(var(--rpx) * 130);
   --head-cap: calc(var(--head-h) * 170 / 207); /* the art's 170-px ends, at this height */
   position: relative;
@@ -148,7 +149,23 @@
   gap: calc(var(--rpx) * 14);
   margin-right: calc(var(--head-cap) * -0.18);
 }
-/* In the header the close is one of the row, not pinned to the corner. */
+/* THE MOVE (kit moveKnob): the close's twin in wood, the arrows carved in. */
+.k-move {
+  --close-size: calc(var(--rpx) * 100);
+  width: var(--close-size);
+  height: var(--close-size);
+  padding: 0;
+  border: 0;
+  background: url('../assets/btn-move.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+  cursor: pointer;
+}
+.k-move:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
+.k-move:active { background-image: url('../assets/btn-move-down.png'); }
+.k-move:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+/* In the header the close is one of the row, not pinned to the corner, and
+   the move is its size. */
+.k-head .k-move,
 .k-head .k-close {
   position: relative;
   top: auto;

@@ -12,9 +12,11 @@ export const panel = (...children: Array<Node | string>): HTMLElement =>
 export const plank = (title: string, ...trailing: Array<Node | string>): HTMLElement =>
   el('div', { class: 'k-plank' }, el('span', {}, title), ...trailing);
 
-/** A window's header bar: the title on the left, the buttons on the right
- *  (sheets/ui-window3-header.png, three-sliced so it takes any width). */
-const head = (title: string, buttons: readonly Node[]): HTMLElement =>
+/** A window's header bar: the title on the left, the buttons on the right,
+ *  the close last (sheets/ui-window3-header.png, three-sliced so it takes
+ *  any width). `sheet({ header })` builds one; a window that is not a kit
+ *  sheet — the district card — places it as the first thing in its frame. */
+export const windowHead = (title: string, buttons: readonly Node[]): HTMLElement =>
   el('div', { class: 'k-head' },
     el('h2', { class: 'k-head-title' }, title),
     el('div', { class: 'k-head-actions' }, ...buttons));
@@ -88,7 +90,7 @@ export function sheet(
       // reflowing the contents (kit.css, `k-window-*`).
       el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
       ...(opts.bare ? []
-        : opts.header ? [head(opts.title, [...(opts.header.actions ?? []), close])]
+        : opts.header ? [windowHead(opts.title, [...(opts.header.actions ?? []), close])]
           : [el('div', { class: 'k-grab' }), plank(opts.title), close]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
