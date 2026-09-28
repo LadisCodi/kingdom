@@ -15,7 +15,7 @@
 //   btn-<m>-off.png      disabled     derived: desaturated toward a muted blue-grey
 //
 // and the same four for the ROUND set, knob-<m>[-state].png
-// (sheets/ui-buttons2-round.png).
+// (sheets/ui-buttons2-round.png, ui-buttons4-round-paint.png).
 //
 // Needs ImageMagick. Not in prebuild; outputs are committed.
 
@@ -26,13 +26,13 @@ import { fileURLToPath } from 'node:url';
 
 const ASSETS = join(dirname(fileURLToPath(import.meta.url)), '..', 'src/ui/assets');
 const MATERIALS = ['wood', 'green', 'blue', 'gold', 'red', 'purple'];
-/** The painted colours — the label buttons only; the round set is wood and gems. */
+/** The painted colours, for both shapes. */
 const PAINTS = ['paint-green', 'paint-blue', 'paint-gold', 'paint-red', 'paint-purple'];
 
 const magick = (...args) => execFileSync('magick', args.map(String), { stdio: 'inherit' });
 
 for (const shape of ['btn', 'knob']) {
-  for (const m of shape === 'btn' ? [...MATERIALS, ...PAINTS] : MATERIALS) {
+  for (const m of [...MATERIALS, ...PAINTS]) {
     const src = join(ASSETS, `${shape}-${m}.png`);
     if (!existsSync(src)) {
       console.error(`ui-buttons: missing ${src}`);

@@ -87,17 +87,22 @@ export function mountGallery(root: HTMLElement): void {
     // THE ROUND SET: the same materials as knobs, at the header's Gems "+"
     // size — worker steppers, and any one-glyph action.
     el('div', { class: 'gal-label' }, 'round — the same materials, one glyph'),
+    el('div', { class: 'gal-row' },
+      specimen('wood −', knob('−', noop, { label: 'Remove worker' })),
+      specimen('wood +', knob('+', noop, { label: 'Add worker' })),
+      specimen('disabled', knob('+', noop, { label: 'Add worker', disabled: true })),
+    ),
     ...([
-      ['wood', 'secondary'],
-      ['emerald', 'primary'],
-      ['sapphire', 'blue'],
-      ['topaz', 'gold'],
-      ['ruby', 'destructive'],
-      ['amethyst', 'gem'],
-    ] as const).map(([name, kind]) => el('div', { class: 'gal-row' },
-      specimen(`${name} −`, knob('−', noop, { label: 'Remove worker', kind })),
-      specimen(`${name} +`, knob('+', noop, { label: 'Add worker', kind })),
-      specimen('disabled', knob('+', noop, { label: 'Add worker', kind, disabled: true })),
+      ['green', 'emerald', 'primary'],
+      ['blue', 'sapphire', 'blue'],
+      ['gold', 'topaz', 'gold'],
+      ['red', 'ruby', 'destructive'],
+      ['purple', 'amethyst', 'gem'],
+    ] as const).map(([name, stone, kind]) => el('div', { class: 'gal-row' },
+      specimen(`${name} −`, knob('−', noop, { label: 'Remove worker', kind, finish: 'paint' })),
+      specimen(`${name} +`, knob('+', noop, { label: 'Add worker', kind, finish: 'paint' })),
+      specimen(`${stone} +`, knob('+', noop, { label: 'Add worker', kind, finish: 'gem' })),
+      specimen('disabled', knob('+', noop, { label: 'Add worker', kind, finish: 'paint', disabled: true })),
     )),
     // The rule §6.3 makes universal: never greyed out without a reason.
     specimen('priced, with a consequence beside it', action({

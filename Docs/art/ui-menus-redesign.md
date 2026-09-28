@@ -222,8 +222,9 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
   darker tone of the slab's own colour (dark green on green, dark brown on
   wood, slate on disabled).
 - A disabled button keeps its **reason line beside it**.
-- **Round** (`knob(glyph, …, { kind })`, `knob-<material>[-state].png`):
-  the same six materials and four states as a disc, for a one-glyph action —
+- **Round** (`knob(glyph, …, { kind, finish })`, `knob-<material>[-state].png`
+  and `knob-paint-<colour>[-state].png`): wood and every colour in both
+  finishes, with the same four states, as a disc, for a one-glyph action —
   worker `−` / `+`, zoom. Drawn at the header's Gems `+` size (50 rpx) inside
   a hit area of at least 44 px. The glyph is carved into the face in a darker
   tone of the material, never a flat white sign. (The window's close is its

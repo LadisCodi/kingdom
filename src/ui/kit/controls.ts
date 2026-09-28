@@ -118,15 +118,18 @@ export function action(opts: ActionOpts & { info?: Node | string }): HTMLElement
 }
 
 /** A ROUND button — worker steppers, move, zoom, arrows. The same materials
- *  as the label buttons (wood by default, or a gem `kind`), the glyph set
- *  into its face as if carved (material.css). */
+ *  and finishes as the label buttons (wood by default; a colour `kind`,
+ *  painted unless `finish: 'gem'`), the glyph set into its face as if carved
+ *  (material.css). */
 export function knob(
   glyph: string,
   onClick: () => void,
-  opts: { label?: string; disabled?: boolean; kind?: ButtonKind } = {},
+  opts: { label?: string; disabled?: boolean; kind?: ButtonKind; finish?: ButtonFinish } = {},
 ): HTMLButtonElement {
+  const kind = opts.kind ?? 'secondary';
+  const finish = opts.finish ?? (kind === 'gem' ? 'gem' : 'paint');
   const b = el('button', {
-    class: `k-btn k-btn--${opts.kind ?? 'secondary'} k-knob`, type: 'button',
+    class: `k-btn k-btn--${kind} is-${finish} k-knob`, type: 'button',
   }, glyph);
   if (opts.label) b.setAttribute('aria-label', opts.label);
   // A stepper at its limit has nothing to explain — the number beside it

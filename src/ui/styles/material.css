@@ -283,7 +283,8 @@
 .store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
 .store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
 /* THE ROUND BUTTONS: the label buttons' materials in the round
-   (sheets/ui-buttons2-round.png) — wood by default, a gem `kind` otherwise —
+   (sheets/ui-buttons2-round.png, ui-buttons4-round-paint.png) — wood by
+   default, a colour `kind` painted or, with `.is-gem`, a stone —
    drawn at the size of the header's Gems "+" (50 rpx), with a hit area that
    never drops below the 44 px a thumb needs. The glyph is set INTO the face,
    carved: a darker tone of the material with a light catch along its lower
@@ -333,11 +334,17 @@
 }
 /* The hit area IS the box now; the kit's -2 px ring is not needed. */
 .k-btn.k-knob::before { content: none; }
-.k-knob.k-btn--primary { --knob: url('../assets/knob-green.png'); --knob-down: url('../assets/knob-green-down.png'); --knob-hover: url('../assets/knob-green-hover.png'); --knob-off: url('../assets/knob-green-off.png'); }
-.k-knob.k-btn--blue { --knob: url('../assets/knob-blue.png'); --knob-down: url('../assets/knob-blue-down.png'); --knob-hover: url('../assets/knob-blue-hover.png'); --knob-off: url('../assets/knob-blue-off.png'); }
-.k-knob.k-btn--gold { --knob: url('../assets/knob-gold.png'); --knob-down: url('../assets/knob-gold-down.png'); --knob-hover: url('../assets/knob-gold-hover.png'); --knob-off: url('../assets/knob-gold-off.png'); }
-.k-knob.k-btn--destructive { --knob: url('../assets/knob-red.png'); --knob-down: url('../assets/knob-red-down.png'); --knob-hover: url('../assets/knob-red-hover.png'); --knob-off: url('../assets/knob-red-off.png'); }
+/* Painted unless `.is-gem`; the Gems kind is a stone unless `.is-paint`. */
+.k-knob.k-btn--primary { --knob: url('../assets/knob-paint-green.png'); --knob-down: url('../assets/knob-paint-green-down.png'); --knob-hover: url('../assets/knob-paint-green-hover.png'); --knob-off: url('../assets/knob-paint-green-off.png'); }
+.k-knob.k-btn--blue { --knob: url('../assets/knob-paint-blue.png'); --knob-down: url('../assets/knob-paint-blue-down.png'); --knob-hover: url('../assets/knob-paint-blue-hover.png'); --knob-off: url('../assets/knob-paint-blue-off.png'); }
+.k-knob.k-btn--gold { --knob: url('../assets/knob-paint-gold.png'); --knob-down: url('../assets/knob-paint-gold-down.png'); --knob-hover: url('../assets/knob-paint-gold-hover.png'); --knob-off: url('../assets/knob-paint-gold-off.png'); }
+.k-knob.k-btn--destructive { --knob: url('../assets/knob-paint-red.png'); --knob-down: url('../assets/knob-paint-red-down.png'); --knob-hover: url('../assets/knob-paint-red-hover.png'); --knob-off: url('../assets/knob-paint-red-off.png'); }
+.k-knob.k-btn--primary.is-gem { --knob: url('../assets/knob-green.png'); --knob-down: url('../assets/knob-green-down.png'); --knob-hover: url('../assets/knob-green-hover.png'); --knob-off: url('../assets/knob-green-off.png'); }
+.k-knob.k-btn--blue.is-gem { --knob: url('../assets/knob-blue.png'); --knob-down: url('../assets/knob-blue-down.png'); --knob-hover: url('../assets/knob-blue-hover.png'); --knob-off: url('../assets/knob-blue-off.png'); }
+.k-knob.k-btn--gold.is-gem { --knob: url('../assets/knob-gold.png'); --knob-down: url('../assets/knob-gold-down.png'); --knob-hover: url('../assets/knob-gold-hover.png'); --knob-off: url('../assets/knob-gold-off.png'); }
+.k-knob.k-btn--destructive.is-gem { --knob: url('../assets/knob-red.png'); --knob-down: url('../assets/knob-red-down.png'); --knob-hover: url('../assets/knob-red-hover.png'); --knob-off: url('../assets/knob-red-off.png'); }
 .k-knob.k-btn--gem { --knob: url('../assets/knob-purple.png'); --knob-down: url('../assets/knob-purple-down.png'); --knob-hover: url('../assets/knob-purple-hover.png'); --knob-off: url('../assets/knob-purple-off.png'); }
+.k-knob.k-btn--gem.is-paint { --knob: url('../assets/knob-paint-purple.png'); --knob-down: url('../assets/knob-paint-purple-down.png'); --knob-hover: url('../assets/knob-paint-purple-hover.png'); --knob-off: url('../assets/knob-paint-purple-off.png'); }
 /* On a gem the carved glyph is the stone's own deep tone. */
 .k-knob:is(.k-btn--primary, .k-btn--blue, .k-btn--gold, .k-btn--destructive, .k-btn--gem) { color: rgba(10, 6, 30, 0.5); }
 
