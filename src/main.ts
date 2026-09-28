@@ -82,6 +82,14 @@ async function boot(): Promise<void> {
     return;
   }
 
+  // ?dev=data — every number in the game, the workbook's replacement
+  // (Docs/plans/data-editor.md). Same terms as the two above.
+  if (new URLSearchParams(location.search).get('dev') === 'data') {
+    const { mountEditor } = await import('./editor/data/mount');
+    mountEditor();
+    return;
+  }
+
   const map = buildMapData();
   const saveManager = new SaveManager();
   await saveManager.init();
