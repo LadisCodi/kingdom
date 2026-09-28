@@ -417,10 +417,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
-    ...figures.map((f) => el('div', { class: 'dc-stat k-section' },
+    ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
-      el('div', { class: 'dc-stat-body' },
-        el('div', { class: 'dc-stat-label' }, f.label),
+      el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
+        el('div', { class: 'dc-stat-label' }, f.short),
         el('b', { class: 'dc-stat-value' }, f.value)))))];
 
   return el('div', { class: 'dc' },

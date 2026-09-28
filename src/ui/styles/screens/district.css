@@ -744,7 +744,8 @@
 .dc-id > .dc-upgrade { margin-top: 5px; }
 /* THE STATS: fixed-size tiles of darker paper (kit .k-section, the frame a
    priced button sits on), three to a row, centred — a fourth wraps to a row
-   of its own, still centred. Each is icon, then name over value. */
+   of its own, still centred. Each is a big icon, then the name — bold, in
+   ink — over the value in a lighter ink. */
 .dc-stats {
   --stat-gap: 6px;
   display: flex;
@@ -764,21 +765,23 @@
      58-px tile still holds a name and a value. */
   border-width: 8px 10px;
 }
-.dc-stat > .icon { --icon-size: 36px; flex: none; }
+.dc-stat > .icon { --icon-size: 40px; flex: none; }
 .dc-stat-body { min-width: 0; }
 .dc-stat-label {
-  font-size: 11px;
-  font-weight: var(--weight-small);
+  font-size: 13px;
+  font-weight: var(--weight-title);
   line-height: 1.15;
-  color: var(--ink-muted);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dc-stat-value {
   display: block;
-  font-size: var(--text-body);
-  font-weight: var(--weight-strong);
+  font-size: 14px;
+  font-weight: var(--weight-body);
+  line-height: 1.2;
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
