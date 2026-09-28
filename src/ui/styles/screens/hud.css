@@ -102,33 +102,51 @@
   opacity: 0.75;
 }
 
-/* ONE gauge: the orb, a slim bar, the pool. The rate and the ceiling live in
-   the aria-label and in the Reliquary this opens. */
-.hud-mana { gap: calc(var(--rpx) * 6); }
+/* THE SLOT IS THE GAUGE. The fill runs under the whole hole — orb and
+   number sit on it — so "how close to spilling" reads from across the room.
+   The ceiling and the rate live in the aria-label and in the Reliquary. */
+.hud-mana { min-width: calc(var(--rpx) * 204); }
 .hud-mana-bar {
-  position: relative;
-  flex: 1;
-  min-width: calc(var(--rpx) * 50);
-  height: calc(var(--rpx) * 22);
+  position: absolute;
+  /* Out over the slot's side borders, which are part of the painted hole,
+     and a hair inside its rim so the recess still frames the fill. */
+  inset: calc(var(--rpx) * 4) calc(var(--rpx) * -17);
   overflow: hidden;
-  border-radius: calc(var(--rpx) * 11);
-  background: #1e1309;
-  box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(0, 0, 0, 0.45);
+  border-radius: calc(var(--rpx) * 16);
+  pointer-events: none;
 }
 .hud-mana-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, #b79bf2, #7b55cc);
+  background: linear-gradient(180deg, rgba(190, 160, 250, 0.95), rgba(112, 72, 200, 0.95) 60%, rgba(84, 50, 164, 0.95));
+  box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(255, 255, 255, 0.28);
   transition: width var(--motion-quick, 160ms) linear;
 }
-.hud-mana > b { min-width: 2ch; text-align: right; font-weight: inherit; }
+.hud-mana > .icon,
+.hud-mana > b { position: relative; }
+.hud-mana > b { flex: 1; text-align: center; font-weight: inherit; }
 /* Full means spilling, and spilling is the one thing the design wants the
  * player to notice from across the room. */
 .hud-mana-bar.is-full { box-shadow: inset 0 0 0 calc(var(--rpx) * 3) var(--gold); }
 /* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
    because full means "you are spilling" and this means "you are ahead". */
-.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
+.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #8fd48f, #4e8f5a); }
+/* The next unit's countdown, straddling the slot's bottom edge. */
+.hud-mana-next {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--rpx) * 10);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: calc(var(--rpx) * 21);
+  font-weight: var(--weight-title);
+  color: var(--parchment);
+  text-shadow:
+    calc(var(--rpx) * 2) 0 0 #2a170a, calc(var(--rpx) * -2) 0 0 #2a170a,
+    0 calc(var(--rpx) * 2) 0 #2a170a, 0 calc(var(--rpx) * -2) 0 #2a170a;
+  pointer-events: none;
+}
+.hud-mana-next[hidden] { display: none; }
 
 /* Gems end in the store's door: the green knob, which presses with the slot. */
 .hud-gems { min-width: calc(var(--rpx) * 172); }

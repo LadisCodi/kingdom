@@ -57,10 +57,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   });
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
-  // An orb, a slim gauge and the pool, in one slot (mockup M1). The button is
-  // the whole slot.
+  // The slot IS the gauge: the fill runs under the orb and the pool, and
+  // while the pool is filling, the next unit's countdown hangs off its
+  // bottom edge. The button is the whole slot.
   const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill);
-  manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar, manaValue);
+  const manaNext = el('span', { class: 'hud-mana-next', 'aria-hidden': 'true' });
+  manaGauge.append(manaBar, currencyIcon('Mana', { size: 'sm' }), manaValue, manaNext);
   manaGauge.addEventListener('click', () => game.openMana());
 
   // The Settings knob hangs from the plank's right end (M1). It is a drawer
@@ -169,6 +171,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // twice. The full reading stays in the aria-label and in the
     // Reliquary, which is what this gauge opens.
     manaValue.textContent = formatCount(m.value);
+    manaNext.hidden = m.nextIn === null;
+    manaNext.textContent = m.nextIn ?? '';
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
     // Full and OVERCHARGED are different states: full means the next hour is
     // spilling, overcharged means an ad bought a pool the ceiling cannot hold.

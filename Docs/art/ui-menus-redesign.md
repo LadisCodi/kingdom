@@ -159,7 +159,9 @@ and the plaque (the two planks with bare corners — on a titled plank they read
 as dirt); and the pennant flying from the quest scroll's corner in place of the
 seal once the quest is done. The header is M1's: a wooden beam, one recessed
 slot per resource (four coins at the left; Mana and Gems at the right, past a
-hanging rope), the green `+` knob inside the Gems slot, and the round Settings
+hanging rope), the green `+` knob inside the Gems slot, the Mana slot filled as its own gauge with the pool
+over it (and, while it fills, "+1 in 4m 12s" straddling its bottom edge), and
+the round Settings
 knob hanging on a rope under the beam's right end. Every size on it is in
 reference pixels (§3.6), budgeted so four four-character coins, the gauge, the
 rope and Gems share one line at every width. The nav's

@@ -79,7 +79,7 @@ import {
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, knowledgePerHour,
+  mana, manaCap, manaNetRegen, manaProduction, msToNextMana, knowledgePerHour,
 } from './sim/mana';
 import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
@@ -1828,14 +1828,20 @@ export class Game {
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
    *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
-  manaInfo(): { value: number; cap: number; net: number; production: number; over: boolean } {
+  manaInfo(): {
+    value: number; cap: number; net: number; production: number; over: boolean;
+    nextIn: string | null;
+  } {
     const value = mana(this.state);
     const cap = manaCap(this.state);
+    const nextMs = msToNextMana(this.state, this.now());
     return {
       value,
       cap,
       net: manaNetRegen(this.state),
       production: manaProduction(this.state),
+      /** "+1 in 4m 12s" while the pool is filling; null when it is not. */
+      nextIn: nextMs === null ? null : `+1 in ${formatDuration(Math.ceil(nextMs / 1000))}`,
       /** An ad reward can push the pool past its ceiling; the UI shows that
        *  differently from merely being full. */
       over: value > cap,
