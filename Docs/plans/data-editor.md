@@ -4,8 +4,10 @@ Data editor — replacing the balance workbook
 > **Scope.** `?dev=data`: one tool for every piece of game data, and the
 > migration that retires `balance/balance.xlsx`.
 >
-> **Status: phase 1 in progress.** The tool reads `balance.json`, edits in
-> memory, validates and shows the diff. It does not save.
+> **Status: phases 1 and 2 built.** The balance collections read
+> `balance.json`, edit in memory, validate and show the diff; they do not save.
+> The map and the tech tree are collections of the tool and save to their own
+> files.
 
 ## 1. What it is
 
@@ -44,8 +46,11 @@ Data editor — replacing the balance workbook
 
 1. **The tool beside the workbook.** New files only. Reads `balance.json`;
    cannot save, because `npm run dev` regenerates that file from the xlsx.
-2. **Map and tech tree become collections of Data.** `?dev=map` and
-   `?dev=tree` fold into it.
+2. **Map and tech tree become collections of Data.** Each is its own editor
+   hosted in the tool's main area, kept alive while other collections are
+   shown, saving through its own endpoint. `?dev=map` and `?dev=tree`
+   redirect to `?dev=data#map` and `?dev=data#tree`; `#tree/<id>` opens a
+   technology on its page, which is where every link to one lands.
 3. **The migration, in one change.** A one-off script writes one JSON file
    per collection and a schema file per collection; saving is switched on;
    `balance.xlsx`, `scripts/balance.mjs`, `balance.json` and the `balance`

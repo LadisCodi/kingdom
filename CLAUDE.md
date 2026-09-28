@@ -33,13 +33,16 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
-reset). `?dev=kit` opens the UI primitive gallery. `?dev=map` opens the map
-editor (`Docs/map-editor.md`) — paint terrain and features, place
-landmarks and ruins; it saves straight into `src/sim/data/region-map.json`
-through a dev-only Vite middleware. `?dev=tree` opens the tech tree editor
-(`Docs/tech-tree-editor.md`) — drag technologies into the slots of a tome
-page, which sets their requirements; it saves into
-`src/sim/data/tech-tree.json` the same way.
+reset). `?dev=kit` opens the UI primitive gallery. `?dev=data` opens the
+data editor (`Docs/plans/data-editor.md`) — every collection of game data
+in one tool; the balance numbers are read-only until the workbook is
+retired. The map editor (`Docs/map-editor.md`) lives in it at
+`?dev=data#map` — paint terrain and features, place landmarks and ruins; it
+saves straight into `src/sim/data/region-map.json` through a dev-only Vite
+middleware. The tech tree editor (`Docs/tech-tree-editor.md`) is
+`?dev=data#tree` — drag technologies into the slots of a tome page, which
+sets their requirements; it saves into `src/sim/data/tech-tree.json` the
+same way. `?dev=map` and `?dev=tree` redirect there.
 
 ## Five invariants. Breaking one is a bug even if the tests pass.
 

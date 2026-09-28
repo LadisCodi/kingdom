@@ -13,6 +13,7 @@
 // INSPECTOR for the selected entry — its fields, what it points to, what uses
 // it, and its problems. Ctrl K jumps anywhere. Every screen is a URL hash.
 
+import '../editor.css';
 import './data.css';
 import balance from '../../sim/data/balance.json';
 import techTree from '../../sim/data/tech-tree.json';
@@ -27,6 +28,8 @@ import { questLine } from '../../sim/questProse';
 import { spriteUrl } from '../../render/sprites';
 import { CREW } from '../../render/cast';
 import { DataModel, type Change, type Path } from './doc';
+import type { EditorHandle } from '../mount';
+import type { TreeHandle } from '../tree/mount';
 
 // ------------------------------------------------------------------ helpers
 
@@ -220,6 +223,7 @@ export function mountEditor(): void {
     focusKey = active?.dataset?.k ?? null;
     const c = coll();
     root.classList.toggle('dx-noside', c.view === 'form' || c.view === 'canvas' || (c.view === 'entity' && route.v === 'grid'));
+    main.classList.toggle('canvas', c.view === 'canvas');
     const put = (el: HTMLElement, kids: Kid[]) =>
       el.replaceChildren(...kids.filter((k): k is Node | string => k !== null && k !== undefined && k !== false));
     put(top, renderTop(c));
@@ -228,6 +232,7 @@ export function mountEditor(): void {
     put(side, renderSide(c));
     put(status, renderStatus());
     put(layer, renderLayer());
+    if (c.view === 'canvas') syncCanvas();
     if (focusKey) {
       const el = root.querySelector<HTMLElement>(`[data-k="${CSS.escape(focusKey)}"]`);
       el?.focus();
@@ -242,6 +247,7 @@ export function mountEditor(): void {
       { id: 'coll', text: c.label },
     ];
     if (route.e !== null && c.source) crumbs.push({ id: 'entry', text: nameOf(c, route.e) });
+    if (route.e !== null && c.id === 'tree') crumbs.push({ id: 'entry', text: TECHS[route.e]?.name ?? route.e });
     if (c.view === 'entity' && route.e !== null && (route.v ?? 'entry') === 'entry') {
       crumbs.push({ id: 'tab', text: TAB_LABEL[route.t ?? 'levels'] });
     }
@@ -268,13 +274,14 @@ export function mountEditor(): void {
       h('div', { class: 'dx-spacer' }),
       h('button', { class: 'dx-jump', onclick: () => { ui.palette = { q: '', i: 0 }; render(); } },
         h('span', {}, 'Jump to anything…'), h('span', { class: 'dx-kbd mono' }, 'Ctrl K')),
-      h('button', { class: 'dx-btn sm', disabled: !model.canUndo(), title: 'Undo (Ctrl Z)', onclick: () => model.undo() }, 'Undo'),
-      h('button', { class: 'dx-btn sm', disabled: !model.canRedo(), title: 'Redo (Ctrl Shift Z)', onclick: () => model.redo() }, 'Redo'),
+      c.view === 'canvas' ? h('span', { class: 'dx-chip' }, h('span', { class: 'dim' }, 'saves with its own Save to'), h('span', { class: 'mono' }, c.file ?? '')) : null,
+      c.view === 'canvas' ? null : h('button', { class: 'dx-btn sm', disabled: !model.canUndo(), title: 'Undo (Ctrl Z)', onclick: () => model.undo() }, 'Undo'),
+      c.view === 'canvas' ? null : h('button', { class: 'dx-btn sm', disabled: !model.canRedo(), title: 'Redo (Ctrl Shift Z)', onclick: () => model.redo() }, 'Redo'),
       h('button', { class: 'dx-btn' + (nChanges ? ' warn' : ''), disabled: nChanges === 0, onclick: () => { ui.diffOpen = true; render(); } },
         nChanges === 0 ? 'No changes' : `${nChanges} unsaved`),
       errs ? h('span', { class: 'dx-chip err' }, `${errs} error${errs === 1 ? '' : 's'}`) : h('span', { class: 'dx-chip ok' }, '0 errors'),
       warns ? h('span', { class: 'dx-chip wrn' }, `${warns} warning${warns === 1 ? '' : 's'}`) : null,
-      h('button', {
+      c.view === 'canvas' ? null : h('button', {
         class: 'dx-btn primary', disabled: true,
         title: 'Saving arrives with the migration (phase 3). Until then balance.xlsx is the source: "N unsaved" lists what to carry over.',
       }, 'Save'),
@@ -294,6 +301,9 @@ export function mountEditor(): void {
         text: x.label, n: countOf(x), on: x.id === c.id, act: () => openCollection(x),
       }));
     }
+    if (id === 'entry' && c.id === 'tree') {
+      return Object.entries(TECHS).map(([tid, t]) => ({ text: t.name ?? tid, on: tid === route.e, act: () => go({ e: tid }) }));
+    }
     if (id === 'entry') {
       return entriesOf(model.doc, c).map(([eid, v]) => ({
         text: nameOf(c, eid, v), on: eid === route.e, act: () => go({ e: eid }),
@@ -311,7 +321,6 @@ export function mountEditor(): void {
   const countOf = (x: CollectionDef): string => (x.source ? String(entriesOf(model.doc, x).length) : '·');
 
   function openCollection(x: CollectionDef): void {
-    if (x.view === 'canvas') { location.href = location.pathname + x.href; return; }
     go({ c: x.id });
   }
 
@@ -325,12 +334,11 @@ export function mountEditor(): void {
         return h('button', {
           class: 'dx-rail-item' + (x.id === route.c ? ' on' : ''),
           'aria-current': x.id === route.c ? 'page' : undefined,
-          title: x.view === 'canvas' ? `Opens ${x.href} — it moves inside Data in phase 2` : undefined,
           onclick: () => openCollection(x),
         },
         h('span', { class: `dx-kind ${x.view}` }),
         h('span', { class: 'name' }, x.label),
-        collDirty(x) ? h('span', { class: 'dx-dot dirty', 'aria-label': 'unsaved changes' }) : null,
+        collDirty(x) || canvasDirty(x.id) ? h('span', { class: 'dx-dot dirty', 'aria-label': 'unsaved changes' }) : null,
         iss.some((i) => i.level === 'error') ? h('span', { class: 'dx-dot err', 'aria-label': 'has errors' })
           : iss.length ? h('span', { class: 'dx-dot wrn', 'aria-label': 'has warnings' }) : null,
         h('span', { class: 'n mono' }, countOf(x)));
@@ -357,7 +365,7 @@ export function mountEditor(): void {
       h('div', {},
         h('div', { class: 'dx-title' }, c.label),
         h('div', { class: 'dx-sub' }, `${KIND_LABEL[c.view]} · `,
-          h('span', { class: 'mono' }, c.source ? `balance.json › ${c.source}` : c.groups ? `balance.json › ${c.groups.join(', ')}` : c.href ?? ''))),
+          h('span', { class: 'mono' }, c.source ? `balance.json › ${c.source}` : c.groups ? `balance.json › ${c.groups.join(', ')}` : c.file ?? ''))),
       h('div', { class: 'dx-spacer' }),
       ...extra,
       views.length > 1 ? h('div', { class: 'dx-seg', role: 'tablist' },
@@ -367,12 +375,53 @@ export function mountEditor(): void {
         }, label))) : null);
   }
 
-  function renderMain(c: CollectionDef): Kid[] {
-    if (c.view === 'canvas') {
-      return [header(c), h('div', { class: 'dx-card dx-pad' },
-        h('p', { class: 'dx-note' }, `${c.label} is authored on a board, not in a table. It still opens in its own editor; it moves inside Data in phase 2.`),
-        h('a', { class: 'dx-btn primary', href: location.pathname + c.href, style: 'display:inline-flex;align-items:center;text-decoration:none' }, `Open ${c.label}`))];
+  // ---- canvas: the map and tree editors, hosted
+
+  /**
+   * A board collection is its own editor, mounted once into a host that is
+   * kept while the rest of Data is used, so its undo stack, camera and
+   * selection survive a trip to Buildings and back. It saves as it always
+   * has, through its own endpoint (scripts/vite-map-editor.mjs,
+   * vite-tree-editor.mjs) — those files are already JSON, so this half of
+   * Data writes for real.
+   */
+  const hosted = new Map<string, { host: HTMLElement; handle: EditorHandle | TreeHandle | null; selected: string | null }>();
+
+  function canvasHost(c: CollectionDef): HTMLElement {
+    let slot = hosted.get(c.id);
+    if (!slot) {
+      const host = h('div', { class: 'dx-canvas' }, h('div', { class: 'dx-empty' }, `Opening ${c.label}…`));
+      slot = { host, handle: null, selected: null };
+      hosted.set(c.id, slot);
+      const s = slot;
+      const load = c.id === 'map'
+        ? import('../mount').then((m) => { host.replaceChildren(); s.handle = m.mountEditor(host); })
+        : import('../tree/mount').then((m) => { host.replaceChildren(); s.handle = m.mountEditor(host); });
+      void load.then(() => { syncCanvas(); render(); });
     }
+    return slot.host;
+  }
+
+  /** Point a hosted tree at the technology the route names. */
+  function syncCanvas(): void {
+    const slot = hosted.get(route.c);
+    if (!slot?.handle || route.e === null || slot.selected === route.e) return;
+    slot.selected = route.e;
+    if ('select' in slot.handle) slot.handle.select(route.e);
+  }
+
+  const canvasDirty = (id: string): boolean => hosted.get(id)?.handle?.isDirty() ?? false;
+
+  // The hosted editors change without telling Data; a second is soon enough
+  // for a dot on the rail.
+  let lastDirty = '';
+  setInterval(() => {
+    const now = [...hosted.keys()].map((k) => `${k}:${canvasDirty(k)}`).join();
+    if (now !== lastDirty) { lastDirty = now; rail.replaceChildren(...renderRail().filter((k): k is Node => k instanceof Node)); }
+  }, 1000);
+
+  function renderMain(c: CollectionDef): Kid[] {
+    if (c.view === 'canvas') return [canvasHost(c)];
     if (route.v === 'schema') return [header(c), renderSchema(c)];
     if (c.view === 'form') return [header(c), renderForm(c)];
     if (c.view === 'entity') return route.v === 'grid' ? [header(c), ...renderGrid(c)] : [header(c), renderEntity(c)];
@@ -962,7 +1011,7 @@ export function mountEditor(): void {
       h('div', { class: 'dx-card', style: 'overflow:auto' }, h('table', { class: 'dx-table' },
         h('thead', {}, h('tr', {}, h('th', {}, 'Gate'), h('th', {}, 'Technology'))),
         h('tbody', {}, ...(gates.length ? gates.map((g) => h('tr', {}, h('td', {}, g.what),
-          h('td', {}, h('a', { class: 'dx-chip', href: `${location.pathname}?dev=tree` }, TECHS[g.tech]?.name ?? g.tech))))
+          h('td', {}, linkChip('tree', g.tech))))
           : [h('tr', {}, h('td', { class: 'dim' }, 'No technology gates it.'), h('td', {}))])))));
   }
 
@@ -1173,7 +1222,7 @@ export function mountEditor(): void {
   function linkChip(cid: string, id: string, extra = ''): HTMLElement {
     const target = collectionById(cid)!;
     return h('button', {
-      class: 'dx-chip', onclick: () => (target.view === 'canvas' ? openCollection(target) : go({ c: cid, e: id })),
+      class: 'dx-chip', onclick: () => go({ c: cid, e: id }),
     }, h('span', { class: 'dim' }, `${target.label} ›`), ` ${target.source ? nameOf(target, id) : TECHS[id]?.name ?? id}${extra}`);
   }
 
@@ -1269,7 +1318,7 @@ export function mountEditor(): void {
         }
       }
     }
-    for (const [tid, t] of Object.entries(TECHS)) hits.push({ group: 'Entries', text: t.name ?? tid, where: 'Research › Tech tree', act: () => { location.href = `${location.pathname}?dev=tree`; } });
+    for (const [tid, t] of Object.entries(TECHS)) hits.push({ group: 'Entries', text: t.name ?? tid, where: 'Research › Tech tree', act: () => go({ c: 'tree', e: tid }) });
     const c = coll();
     if (c.source) hits.push({ group: 'Commands', text: `New ${c.noun}…`, where: c.label, act: () => addEntry(c) });
     hits.push({ group: 'Commands', text: 'Undo', where: 'Ctrl Z', act: () => model.undo() });
@@ -1354,6 +1403,8 @@ export function mountEditor(): void {
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = ui.palette ? null : { q: '', i: 0 }; render(); return; }
     if (e.key === 'Escape' && (ui.menu || ui.diffOpen || ui.palette)) { ui.menu = null; ui.diffOpen = false; ui.palette = null; render(); return; }
     if (typing) return;
+    // A hosted board has its own undo and its own keys.
+    if (coll().view === 'canvas') return;
     if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) model.redo(); else model.undo(); return; }
     if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); model.redo(); return; }
     if ((e.key === '[' || e.key === ']') && coll().source) {

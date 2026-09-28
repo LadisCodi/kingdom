@@ -85,6 +85,11 @@ a.dx-chip:hover, button.dx-chip:hover { border-color: #3a4658; }
 .dx-note { font-size: 12px; color: var(--dim); line-height: 1.5; }
 .dx-empty { padding: 40px; text-align: center; color: var(--dim); }
 
+/* ---- canvas: a hosted map or tree editor fills the main area */
+.dx-main.canvas { padding: 0; overflow: hidden; gap: 0; }
+.dx-canvas { position: relative; flex: 1; min-height: 0; }
+.dx-canvas > .ed-root { position: absolute; inset: 0; }
+
 /* ---- tables */
 .dx-table { width: 100%; border-collapse: collapse; }
 .dx-table th { font-size: 11px; color: var(--dim); font-weight: 500; padding: 8px 6px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1; }

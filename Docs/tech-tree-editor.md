@@ -238,8 +238,11 @@ empty, and steps out into the side channel when it is not
 
 ## 5. Using it
 
-`npm run dev`, then `http://localhost:5173/?dev=tree` — or the **🌳 tree
-editor** button on the `?dev` bar. `← game` in the status bar goes back.
+`npm run dev`, then `http://localhost:5173/?dev=data#tree` — the **Tech tree**
+collection of the data editor ([`plans/data-editor.md`](plans/data-editor.md)),
+or the **🌳 tree** button on the `?dev` bar. `?dev=tree` redirects there, and
+`?dev=data#tree/<id>` opens that technology on its page. `← game` in the
+status bar goes back.
 
 | Pane | What it holds |
 |---|---|

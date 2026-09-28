@@ -37,12 +37,12 @@ export interface CollectionDef {
   /** form: the top-level keys it shows, one group each (a bare number is a
    *  group of one). */
   groups?: string[];
-  /** canvas: the editor that authors it, until it moves inside Data. */
-  href?: string;
+  /** canvas: the file its own editor writes, through its own endpoint. */
+  file?: string;
 }
 
 export const COLLECTIONS: readonly CollectionDef[] = [
-  { id: 'map', label: 'Region map', domain: 'World', view: 'canvas', noun: 'cell', href: '?dev=map' },
+  { id: 'map', label: 'Region map', domain: 'World', view: 'canvas', noun: 'cell', file: 'src/sim/data/region-map.json' },
   { id: 'terrain', label: 'Terrain', domain: 'World', view: 'table', noun: 'terrain', source: 'terrain' },
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
   { id: 'depths', label: 'Ruin depths', domain: 'World', view: 'table', noun: 'depth', source: 'depths' },
@@ -55,7 +55,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'economy', label: 'Economy', domain: 'City', view: 'form', noun: 'setting',
     groups: ['tap', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'research', 'offlineCapHours'] },
 
-  { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', href: '?dev=tree' },
+  { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', file: 'src/sim/data/tech-tree.json' },
 
   { id: 'units', label: 'Units', domain: 'Army', view: 'table', noun: 'unit', source: 'units' },
   { id: 'heroes', label: 'Heroes', domain: 'Army', view: 'table', noun: 'hero', source: 'heroes' },

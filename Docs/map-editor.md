@@ -105,9 +105,11 @@ finds it, and it was invisible in the spreadsheet by construction.
 
 ## 4. Using it
 
-`npm run dev`, then `http://localhost:5173/?dev=map`. It replaces the game
-rather than sitting inside it — the game frames itself to a 9:16 phone, which
-is the wrong shape for looking at a region.
+`npm run dev`, then `http://localhost:5173/?dev=data#map` — the **Region map**
+collection of the data editor ([`plans/data-editor.md`](plans/data-editor.md)).
+`?dev=map` redirects there. It replaces the game rather than sitting inside
+it — the game frames itself to a 9:16 phone, which is the wrong shape for
+looking at a region.
 
 | Tool | Key | |
 |---|---|---|
