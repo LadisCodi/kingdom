@@ -413,10 +413,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // reads, at this level alone (upgradeStats.ts). It used to be scattered
   // through the body as label/value rows; a band of tiles under the name is
   // where a player looks for it, and it is the half of the model the popup
-  // does not show.
+  // does not show. Each figure is a tile of darker paper (kit .k-section),
+  // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
-    ...figures.map((f) => el('div', { class: 'dc-stat' },
+    ...figures.map((f) => el('div', { class: 'dc-stat k-section' },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'dc-stat-body' },
         el('div', { class: 'dc-stat-label' }, f.label),

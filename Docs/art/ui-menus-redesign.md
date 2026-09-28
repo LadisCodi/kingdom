@@ -358,6 +358,11 @@ side on anything wider. A centred modal keeps its own narrower cap.
   (when the building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
+- **Stat tiles** (the district card's figures): one tile per figure — icon,
+  then name over value, at the building's CURRENT level only (the next
+  level's value is the upgrade popup's). Each is a `.k-section` of darker
+  paper, a fixed third of the row wide and 58 px tall; three to a row,
+  centred, a fourth wrapping to a centred row of its own.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 
