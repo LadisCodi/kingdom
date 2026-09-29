@@ -754,3 +754,18 @@ for.
 - **What to know:** M42 drew its undiscovered cards as plain tiles rather than
   pills, and cut its bottom tabs off at the frame's edge; M41 dropped the
   paper stack behind the scroll, as the prompt allowed.
+
+## M43 — the research tree, combined (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M42 one above, continued.
+- **Attached:** a labelled montage (A M42's background, B M40's bookmarks,
+  C M41's nodes) and two real screenshots from the game (the Townhall card's
+  stat tiles, the Knowledge sheet's bar), uploaded straight from Chrome's
+  screenshots with `upload_image`.
+- **File:** `mockups/m43-research-tree.png` (941×1672), opaque, one screen.
+- **What worked:** the real screenshots pinned the tile and the bar better
+  than any wording: flat tan-outlined tiles, glossy bars with the numbers
+  inside, green with a tick when completed.
+- **What to know:** it widened the rows of one and two nodes to fill the page
+  instead of keeping three equal columns; only the full rows are a third wide.
