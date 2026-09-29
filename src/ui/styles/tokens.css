@@ -193,9 +193,9 @@
    * menu is read at arm's length over a busy map. */
   --text-title: calc(var(--px) * 28);
   --text-body: calc(var(--px) * 17);
-  --text-desc: calc(var(--px) * 15);
-  --text-heading: calc(var(--px) * 14);
-  --text-helper: calc(var(--px) * 14);
+  --text-desc: calc(var(--px) * 13);
+  --text-heading: calc(var(--px) * 13);
+  --text-helper: calc(var(--px) * 13);
   --text-button: calc(var(--px) * 16);
 
   /* ---- form ---- */

@@ -273,9 +273,9 @@ that replaced them.*
 |---|---|---|
 | `--text-title` | 28px | a window's title, on its header band |
 | `--text-body` | 17px | what the window is about: names, values, copy |
-| `--text-desc` | 15px | the line that describes it: a description, a rate, a note |
-| `--text-heading` | 14px | a section heading (small uppercase) |
-| `--text-helper` | 14px | a caption or fine print: a tag, a badge, a timer |
+| `--text-desc` | 13px | the line that describes it: a description, a rate, a note |
+| `--text-heading` | 13px | a section heading (small uppercase) |
+| `--text-helper` | 13px | a caption or fine print: a tag, a badge, a timer |
 | `--text-button` | 16px | a button's label |
 
 - Tiny tags (a count on a slot, a timer on a portrait) may go to 11–12px;
