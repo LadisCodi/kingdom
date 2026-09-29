@@ -151,9 +151,11 @@ than the build is rejected rather than downgraded.
 
 - **One tick driver.** The Unity build double-ticked its timer; the web build
   ticks from exactly one place. Do not add a second.
-- **Three distance metrics coexist by design.** Fog, placement and BFS use
-  **4-way von Neumann** (`grid.ts` — diagonals are not adjacent); building areas
-  of influence use **Chebyshev**; worker travel uses **Euclidean**.
+- **Three distance metrics coexist by design.** Adjacency — fog state, the
+  connected frontier, placement — uses **4-way von Neumann** (`grid.ts` —
+  diagonals are not adjacent); every radius and the Townhall's rings use
+  **Chebyshev**, a square that the isometric view draws as a tile-shaped
+  diamond; worker travel uses **Euclidean**.
 - **Money and identity are different things.** A cell's feature is not its
   currency: berries, game and shoals all pay Food (1, 3, 2 a tap) and an iron
   vein is a rich Stone node. `HarvestSpec.id` vs `HarvestSpec.currencyId`.

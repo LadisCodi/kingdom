@@ -1671,7 +1671,7 @@
   ],
   "ruins": {
     "HollowBarrow": {
-      "x": 7, "y": 1,
+      "x": 5, "y": 1,
       "tier": 1,
       "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30, "periodMinutes": 30 },
       "affinity": "Warrior", "artifact": "DowsingRod"

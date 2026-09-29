@@ -40,7 +40,7 @@
   Food rather than a lifetime.
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 - It also sets **how far the fog can be paid for**: `fog.reachPerTownhallLevel`,
-  in BFS rings, 3 at level 1 to the whole province at 10
+  in Townhall rings, 2 at level 1 to the whole province at 10
   ([`01-map-and-fog.md`](01-map-and-fog.md) §4). The Level Up card shows the
   ring beside the rent.
 

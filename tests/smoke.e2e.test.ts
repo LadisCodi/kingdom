@@ -162,7 +162,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     completeTech(state, 'Consecration');
     reveal(state, [{ x: 6, y: 0 }]); // open water east of the isle
     expect(enqueueBuild(state, map, 'Sanctum', { x: 6, y: 0 })).toBe('InvalidCell'); // water
-    expect(enqueueBuild(state, map, 'Sanctum', { x: 3, y: 1 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 1, y: -1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);

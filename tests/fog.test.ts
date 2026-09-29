@@ -61,29 +61,30 @@ describe('map data', () => {
       }
     }
   });
-  it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
+  it('rings are squares: 0 across the 2x2 footprint, 1 beside it or off a corner', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);
     expect(townhallDistance(map, { x: 1, y: 1 })).toBe(0); // inside the footprint
     expect(townhallDistance(map, { x: 2, y: 0 })).toBe(1); // beside its edge
-    expect(townhallDistance(map, { x: 2, y: 2 })).toBe(2); // diagonal from its corner
-    expect(townhallDistance(map, { x: -1, y: -1 })).toBe(2);
+    expect(townhallDistance(map, { x: 2, y: 2 })).toBe(1); // diagonal from its corner
+    expect(townhallDistance(map, { x: -1, y: -1 })).toBe(1);
+    expect(townhallDistance(map, { x: 3, y: -1 })).toBe(2);
   });
 });
 
 describe('reveal cost curve (fog.rings)', () => {
-  it('d 1–10 → 3,5,10,20,40,75,120,250,500,1000', () => {
-    const expected = [3, 5, 10, 20, 40, 75, 120, 250, 500, 1000];
+  it('d 1–14 → 4,8,20,55,110,330,800,2200,5900,15000,43000,105000,330000,925000', () => {
+    const expected = [4, 8, 20, 55, 110, 330, 800, 2200, 5900, 15000, 43000, 105000, 330000, 925000];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
   });
-  // The workbook authors twenty rings, and the second ten is a clean
-  // doubling: the far province is priced by the curve, not by the fallback.
-  it('doubles from d10 to d20, then falls back on ×1.25 a ring', () => {
-    for (let d = 11; d <= 20; d += 1) {
-      expect(revealCost(d), `ring ${d}`).toBe(revealCost(d - 1) * 2);
+  // Fourteen rings are authored and every one is dearer than the last; past
+  // them the far province is priced by the fallback.
+  it('rises every ring to d14, then falls back on ×fallbackGrowth a ring', () => {
+    for (let d = 2; d <= 14; d += 1) {
+      expect(revealCost(d), `ring ${d}`).toBeGreaterThan(revealCost(d - 1));
     }
-    const last = revealCost(20);
-    expect(revealCost(21)).toBe(Math.round(last * FOG.fallbackGrowth));
-    expect(revealCost(23)).toBe(Math.round(last * FOG.fallbackGrowth ** 3));
+    const last = revealCost(14);
+    expect(revealCost(15)).toBe(Math.round(last * FOG.fallbackGrowth));
+    expect(revealCost(17)).toBe(Math.round(last * FOG.fallbackGrowth ** 3));
   });
   // Five taps a cell, so a ring price five does not divide charges uneven
   // fifths. Every ring from 3 out — the whole of the province a player really
@@ -116,7 +117,7 @@ describe('paying to reveal', () => {
   it('counts the taps and reveals on the fifth', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50; // the start has 0 Gold
-    // Distance 2 from the footprint → 5 Gold, on ungated ground.
+    // Ring 2 from the footprint → 8 Gold, on ungated ground.
     const cell = { x: 3, y: 1 };
     for (let tap = 1; tap < FOG.tapsToReveal; tap += 1) {
       expect(revealTap(state, map, cell)).toBe('Paid');
@@ -125,7 +126,7 @@ describe('paying to reveal', () => {
     expect(revealTap(state, map, cell)).toBe('Revealed');
     expect(state.fog.revealed[coordKey(cell)]).toBe(true);
     expect(state.fog.progress[coordKey(cell)]).toBeUndefined();
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 5);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 8);
   });
   it('rejects taps on Undiscovered cells', () => {
     const state = newGame(map, NOW);
@@ -210,8 +211,10 @@ describe('exploring pays in ground, not in currency', () => {
     while (revealTap(state, map, near) === 'Paid') { /* pay it off */ }
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
 
+    townhall(state).level = 2; // ring 3 is past the first level's reach
     const far = { x: 4, y: 1 }; // ring 3, reachable now
     expect(townhallDistance(map, far)).toBe(3);
+    expect(revealTap(state, map, far)).toBe('Paid');
     while (revealTap(state, map, far) === 'Paid') { /* pay it off */ }
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
   });
@@ -275,9 +278,9 @@ describe('a cell is five taps at every ring', () => {
   it('takes exactly fog.tapsToReveal taps, near ring and far ring alike', () => {
     const near = newGame(map, NOW);
     near.city.wallet.Gold = 99_999;
-    reveal(near, [{ x: 0, y: 3 }]);
-    const cheapPrice = revealCostForCell(near, map, { x: 0, y: 4 });
-    const cheap = payFor(near, { x: 0, y: 4 }); // ring 3
+    reveal(near, [{ x: 0, y: 2 }]);
+    const cheapPrice = revealCostForCell(near, map, { x: 0, y: 3 });
+    const cheap = payFor(near, { x: 0, y: 3 }); // ring 2
     expect(cheap.taps).toBe(FOG.tapsToReveal);
     expect(cheap.spent).toBe(cheapPrice);
 
@@ -305,8 +308,8 @@ describe('a cell is five taps at every ring', () => {
   it('charges a fifth a tap, and the five sum to the price exactly', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 99_999;
-    reveal(state, [{ x: 0, y: 3 }]);
-    const cell = { x: 0, y: 4 };
+    reveal(state, [{ x: 0, y: 2 }]);
+    const cell = { x: 0, y: 3 };
     const total = revealCostForCell(state, map, cell);
     const { charges, spent } = payFor(state, cell);
 
@@ -334,8 +337,8 @@ describe('a cell is five taps at every ring', () => {
   it('counts taps, not Gold, so the bar means the same on every cell', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 99_999;
-    reveal(state, [{ x: 0, y: 3 }]);
-    const cell = { x: 0, y: 4 };
+    reveal(state, [{ x: 0, y: 2 }]);
+    const cell = { x: 0, y: 3 };
     expect(revealTapsDone(state, map, cell)).toBe(0);
     revealTap(state, map, cell);
     revealTap(state, map, cell);
@@ -345,8 +348,8 @@ describe('a cell is five taps at every ring', () => {
 
   it('refuses the tap the purse cannot cover, and takes nothing', () => {
     const state = newGame(map, NOW);
-    reveal(state, [{ x: 0, y: 3 }]);
-    const cell = { x: 0, y: 4 };
+    reveal(state, [{ x: 0, y: 2 }]);
+    const cell = { x: 0, y: 3 };
     state.city.wallet.Gold = nextRevealTapCost(state, map, cell) - 1;
     expect(revealTap(state, map, cell)).toBe('NotEnoughGold');
     expect(revealTapsDone(state, map, cell)).toBe(0);
@@ -476,10 +479,15 @@ describe('a site announces itself when it comes into view', () => {
 // Sailing; only the player's own reveal is refused.
 describe('the Townhall is the reach', () => {
   /** A Discovered, connected cell exactly one ring past the reach, on land. */
+  const neighborsOf = (c: Coord): Coord[] =>
+    [{ x: c.x + 1, y: c.y }, { x: c.x - 1, y: c.y }, { x: c.x, y: c.y + 1 }, { x: c.x, y: c.y - 1 }]
+      .filter((n) => map.terrain.has(coordKey(n)));
   const justPastReach = (state: ReturnType<typeof newGame>): Coord => {
     const reach = explorationReach(state);
+    // Not a corner of the square: a corner's neighbours are all on its own ring.
     const cell = map.cells.find((c) => townhallDistance(map, c) === reach + 1
-      && explorationGate(map, c) === null);
+      && explorationGate(map, c) === null
+      && neighborsOf(c).some((n) => townhallDistance(map, n) === reach));
     expect(cell, `no land cell at ring ${reach + 1}`).toBeDefined();
     // Stand right next to it, so the frontier rule is satisfied and the only
     // thing left to refuse is the reach.
@@ -488,9 +496,6 @@ describe('the Townhall is the reach', () => {
     reveal(state, [inside!]);
     return cell!;
   };
-  const neighborsOf = (c: Coord): Coord[] =>
-    [{ x: c.x + 1, y: c.y }, { x: c.x - 1, y: c.y }, { x: c.x, y: c.y + 1 }, { x: c.x, y: c.y - 1 }]
-      .filter((n) => map.terrain.has(coordKey(n)));
 
   it('is authored per Townhall level, never shrinks, and reaches the whole province at the top', () => {
     const ladder = FOG.reachPerTownhallLevel;
@@ -674,6 +679,6 @@ describe('the map gets dearer as it is revealed', () => {
       expect(revealCost(d)).toBe(revealCost(d)); // no state, no count
       expect(revealCost(d)).toBeGreaterThan(0);
     }
-    expect(revealCost(3)).toBe(10);
+    expect(revealCost(3)).toBe(20);
   });
 });
