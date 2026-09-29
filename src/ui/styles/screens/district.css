@@ -373,10 +373,12 @@
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
 .tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
 .tr-batch-face > .k-portrait { --portrait-size: inherit; }
-.tr-count { /* a count on a portrait's corner: owned, or in the batch */
+.tr-count { /* a count on a portrait's foot, centred: owned, or in the batch */
   position: absolute;
-  right: calc(var(--px) * -6);
-  bottom: calc(var(--px) * -6);
+  left: 50%;
+  bottom: calc(var(--px) * -4);
+  translate: -50% 0;
+  white-space: nowrap;
   padding: 0 calc(var(--px) * 4);
   border-radius: calc(var(--px) * 6);
   background: rgba(40, 24, 12, 0.85);
