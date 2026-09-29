@@ -7,7 +7,7 @@
 .bt {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: calc(var(--px) * 12);
 }
 /* …and the height goes to the two BOARDS, because the slots are what the
    thumb is aimed at. Everything else keeps the size it asked for, so nothing
@@ -20,31 +20,31 @@
    square vignette down the left, the where-line and the lines beside it. */
 .bt-head {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: calc(var(--px) * 96) minmax(0, 1fr);
   grid-template-areas: 'art where' 'art info';
-  column-gap: 12px;
-  row-gap: 4px;
+  column-gap: calc(var(--px) * 12);
+  row-gap: calc(var(--px) * 4);
   align-items: start;
-  padding: 10px;
-  border: 2px solid var(--wood-dark);
+  padding: calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius);
   background: var(--parchment-shade);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
 }
 .bt-art {
   grid-area: art;
-  width: 96px;
-  height: 96px;
-  padding: 8px;
+  width: calc(var(--px) * 96);
+  height: calc(var(--px) * 96);
+  padding: calc(var(--px) * 8);
   box-sizing: border-box;
   object-fit: contain;
   image-rendering: pixelated;
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
   background: var(--parchment);
 }
-.bt-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
-.bt-head > .bt-where { grid-area: where; align-self: end; font-weight: var(--weight-strong); font-size: 18px; color: var(--ink); }
+.bt-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 32); }
+.bt-head > .bt-where { grid-area: where; align-self: end; font-weight: var(--weight-strong); font-size: calc(var(--px) * 18); color: var(--ink); }
 .bt-head > .bt-info { grid-area: info; }
 .bt-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--ink); }
 .bt-where { font-family: var(--font-body); font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-soft); }
@@ -53,20 +53,20 @@
 .bt-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
 }
 .bt-info:empty { display: none; }
 .bt-info-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   line-height: 1.3;
   color: var(--ink);
 }
-.bt-info-line > .icon { --icon-size: 22px; flex: none; }
+.bt-info-line > .icon { --icon-size: calc(var(--px) * 22); flex: none; }
 .bt-info-line.is-soft { color: var(--ink-soft); }
 
 /* ------------------------------------------------------- the two armies */
@@ -75,12 +75,12 @@
 .bt-rewards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  border: 2px solid var(--wood-dark);
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius);
   background: var(--parchment-shade);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
 }
 .bt-army { flex: 1 1 auto; }
 /* Both boards are parchment (M10); the power number is what tells them
@@ -89,22 +89,22 @@
 .bt-army-head .bt-power::before {
   content: '';
   display: inline-block;
-  width: 22px;
-  height: 22px;
-  margin-right: 6px;
-  vertical-align: -3px;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  margin-right: calc(var(--px) * 6);
+  vertical-align: calc(var(--px) * -3);
   background: var(--ink);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
   opacity: 0.8;
 }
 
-.bt-army-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bt-army-head { display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--px) * 8); }
 .bt-army-head h3 {
   margin: 0;
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 20px;
+  font-size: calc(var(--px) * 20);
   color: var(--ink);
 }
 .bt-power {
@@ -118,7 +118,7 @@
 .bt-army-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(var(--px) * 10);
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
   font-size: var(--text-helper);
@@ -126,7 +126,7 @@
   text-align: center;
 }
 .bt-army-label::before,
-.bt-army-label::after { content: ''; flex: 1; height: 2px; background: rgba(92, 58, 30, 0.28); border-radius: 1px; }
+.bt-army-label::after { content: ''; flex: 1; height: calc(var(--px) * 2); background: rgba(92, 58, 30, 0.28); border-radius: 1px; }
 .bt-army-note,
 .bt-note {
   font-family: var(--font-body);
@@ -139,7 +139,7 @@
 
 /* One row of squares, wrapping rather than scrolling: a board the player can
    see all of is the point of a board. */
-.bt-slots { display: flex; flex-wrap: wrap; gap: 20px 10px; justify-content: center; padding: 4px 0 14px; }
+.bt-slots { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 20) calc(var(--px) * 10); justify-content: center; padding: calc(var(--px) * 4) 0 calc(var(--px) * 14); }
 
 /* THE SIZE OF THE BARRACKS PICKER (`.tr-pick`, screens/district.css), on
    purpose: a squad on this board and a unit on that one are the same kind of
@@ -151,24 +151,24 @@
   appearance: none;
   display: grid;
   place-items: center;
-  gap: 2px;
-  width: 84px;
-  height: 84px;
-  padding: 4px;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 84);
+  height: calc(var(--px) * 84);
+  padding: calc(var(--px) * 4);
   /* A slot is a RING carved in the wood (M10): a filled one shows the face
      in a parchment disc, an empty one is solid wood with a plus on it. */
-  border: 5px solid var(--wood);
+  border: calc(var(--px) * 5) solid var(--wood);
   border-radius: 50%;
   background: var(--parchment);
-  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
   color: var(--ink);
   cursor: pointer;
 }
 .bt-slot.is-empty,
 .bt-slot.is-locked { background: var(--wood-dark); color: var(--parchment); }
 .bt-slot.is-empty > .icon,
-.bt-slot.is-locked > .icon { --icon-size: 34px; }
-.bt-slot.is-filled { box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark); }
+.bt-slot.is-locked > .icon { --icon-size: calc(var(--px) * 34); }
+.bt-slot.is-filled { box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark); }
 .bt-slot:hover { filter: brightness(1.05); }
 
 .bt-face { position: relative; display: grid; place-items: center; }
@@ -178,54 +178,54 @@
    height it was given. */
 .bt-count {
   position: absolute;
-  right: -10px;
-  bottom: -6px;
-  padding: 0 6px;
-  border-radius: 999px;
+  right: calc(var(--px) * -10);
+  bottom: calc(var(--px) * -6);
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 999);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
 }
-.bt-portrait { width: 64px; height: 64px; image-rendering: pixelated; object-fit: contain; }
-.bt-portrait.is-glyph { display: grid; place-items: center; font-size: 36px; }
+.bt-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); image-rendering: pixelated; object-fit: contain; }
+.bt-portrait.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 36); }
 /* A hero's slot spends some of its height on the one word that matters on it
    — which type its passive buffs — so the portrait gives that room back. */
 /* The type word hangs under the ring, like the price does. */
 .bt-slot-name {
   position: absolute;
-  bottom: -18px;
+  bottom: calc(var(--px) * -18);
   left: 50%;
   translate: -50% 0;
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   color: var(--ink-soft);
   white-space: nowrap;
 }
-.bt-slot.is-hero .bt-portrait { width: 64px; height: 64px; }
+.bt-slot.is-hero .bt-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); }
 .bt-slot.is-filled { overflow: visible; }
 .bt-slot.is-filled .bt-face,
 .bt-slot.is-filled > .bt-portrait { border-radius: 50%; }
 /* The price hangs off the shut ring as a parchment chip (M10). */
 .bt-price {
   position: absolute;
-  bottom: -8px;
+  bottom: calc(var(--px) * -8);
   left: 50%;
   translate: -50% 0;
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 0 6px;
-  border-radius: 999px;
+  gap: calc(var(--px) * 3);
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 999);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   color: var(--ink);
   white-space: nowrap;
 }
@@ -234,19 +234,19 @@
    inside a button, so it stops the tap from re-opening the panel. */
 .bt-clear {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: calc(var(--px) * -8);
+  right: calc(var(--px) * -8);
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
   padding: 0;
-  border: 2px solid #6d1f1f;
+  border: calc(var(--px) * 2) solid #6d1f1f;
   border-radius: 50%;
   background: #c8402f;
   color: #fff;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
   line-height: 1;
   cursor: pointer;
@@ -255,17 +255,17 @@
 
 /* ----------------------------------------------------------- the rewards */
 
-.bt-rewards h3 { margin: 0; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 20px; color: var(--ink); }
+.bt-rewards h3 { margin: 0; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 20); color: var(--ink); }
 /* Reward chips are parchment tiles sharing the row (M10). */
-.bt-chips { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.bt-chips { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--px) * 8); }
 .bt-chip {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 4px 8px;
-  border: 2px solid rgba(92, 58, 30, 0.45);
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 48);
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   border-radius: var(--radius-sm);
   background: var(--parchment);
   font-family: var(--font-body);
@@ -274,7 +274,7 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
-.bt-chip > .icon { --icon-size: 28px; }
+.bt-chip > .icon { --icon-size: calc(var(--px) * 28); }
 /* The one verb is the width of the sheet. */
 .bt > .k-action { display: flex; flex-direction: column; align-items: stretch; }
 .bt > .k-action > .k-btn { width: 100%; }
@@ -295,16 +295,16 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px calc(var(--nav-h) + 10px);
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10) calc(var(--px) * 12) calc(var(--nav-h) + calc(var(--px) * 10));
   /* The picker wears the sheet's carved frame, open at the bottom where it
      meets the nav, like the district card. */
   border-top: var(--outline) solid var(--wood-dark);
-  border-radius: 14px 14px 0 0;
+  border-radius: calc(var(--px) * 14) calc(var(--px) * 14) 0 0;
   background: var(--parchment);
-  box-shadow: 0 -8px 24px rgba(20, 12, 6, 0.4);
+  box-shadow: 0 calc(var(--px) * -8) calc(var(--px) * 24) rgba(20, 12, 6, 0.4);
 }
-.bt-picker-head h3 { font-size: 20px; }
+.bt-picker-head h3 { font-size: calc(var(--px) * 20); }
 /* The slide runs when the panel ARRIVES and never again: the class is added
    by the mount, which knows the difference between opening and refreshing
    (ui/battlePicker.ts). */
@@ -316,7 +316,7 @@
 @media (prefers-reduced-motion: reduce) {
   .bt-picker.is-in { animation: none; }
 }
-.bt-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bt-picker-head { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--px) * 8); }
 .bt-picker-head h3 {
   margin: 0;
   font-family: var(--font-body);
@@ -328,9 +328,9 @@
 /* The rail: cards side by side, scrolled with the thumb. */
 .bt-rail {
   display: flex;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: calc(var(--px) * 4);
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
@@ -347,11 +347,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  width: 148px;
-  padding: 22px 8px 10px;
-  border: 2px solid var(--wood-dark);
-  border-radius: 10px;
+  gap: calc(var(--px) * 3);
+  width: calc(var(--px) * 148);
+  padding: calc(var(--px) * 22) calc(var(--px) * 8) calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 10);
   background: var(--parchment-shade);
   color: var(--ink);
   cursor: pointer;
@@ -359,9 +359,9 @@
 }
 .bt-card:hover { filter: brightness(1.05); }
 .bt-card.is-out { opacity: 0.45; cursor: default; }
-.bt-card-art { display: grid; place-items: center; height: 64px; }
-.bt-card-portrait { width: 64px; height: 64px; image-rendering: pixelated; object-fit: contain; }
-.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: 36px; }
+.bt-card-art { display: grid; place-items: center; height: calc(var(--px) * 64); }
+.bt-card-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); image-rendering: pixelated; object-fit: contain; }
+.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 36); }
 .bt-card-name {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
@@ -374,7 +374,7 @@
 .bt-card-power {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
   font-family: var(--font-body);
   color: var(--ink);
 }
@@ -384,23 +384,23 @@
   font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
-.bt-card-power span { font-size: 12px; font-weight: var(--weight-small); color: var(--ink-soft); }
+.bt-card-power span { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); color: var(--ink-soft); }
 
 /* What it is made of. One row, three numbers, the same icons the party
    read-out uses everywhere else. */
 .bt-card-stats {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: calc(var(--px) * 8);
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
 }
-.bt-card-stats .k-stat { gap: 2px; }
-.bt-card-stats .k-stat-value { font-size: 12px; font-weight: var(--weight-small); }
+.bt-card-stats .k-stat { gap: calc(var(--px) * 2); }
+.bt-card-stats .k-stat-value { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); }
 
 .bt-card-note {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
   color: var(--ink-soft);
   text-align: center;
@@ -415,11 +415,11 @@
   top: 0;
   left: 0;
   right: 0;
-  padding: 2px 6px;
-  border-radius: 8px 8px 0 0;
+  padding: calc(var(--px) * 2) calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 8) calc(var(--px) * 8) 0 0;
   background: rgba(60, 36, 18, 0.14);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
   color: var(--ink-soft);
   text-align: center;

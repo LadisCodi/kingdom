@@ -8,10 +8,10 @@
  * Rarity is the tile's background rather than a badge on it, so the ladder is
  * legible at arm's length with no label read. */
 
-.hero { display: flex; flex-direction: column; gap: 14px; }
+.hero { display: flex; flex-direction: column; gap: calc(var(--px) * 14); }
 /* A bare sheet has no plank to sit under, so the card starts at the top of
    the panel and the portrait is the first thing on screen. */
-.k-sheet.is-bare .hero { gap: 12px; }
+.k-sheet.is-bare .hero { gap: calc(var(--px) * 12); }
 
 /* --------------------------------------------------------------- the purse */
 
@@ -21,22 +21,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  min-height: 24px;
-  padding: 1px 12px;
+  gap: calc(var(--px) * 14);
+  min-height: calc(var(--px) * 24);
+  padding: 1px calc(var(--px) * 12);
   border-radius: var(--radius-sm);
   background: var(--parchment);
-  border: 2px solid rgba(92, 58, 30, 0.45);
-  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.08);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.08);
 }
-.hero-purse-found { font-size: 14px; font-weight: var(--weight-strong); color: var(--ink); }
+.hero-purse-found { font-size: calc(var(--px) * 14); font-weight: var(--weight-strong); color: var(--ink); }
 
 /* ---------------------------------------------------------------- the grid */
 
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: calc(var(--px) * 6);
 }
 /* A narrow frame drops to two rather than squeezing three portraits into
    thumbnails nobody can tell apart. */
@@ -52,17 +52,17 @@
   aspect-ratio: 3 / 4;
   padding: 0;
   overflow: hidden;
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius);
   /* The rarity is a thin ring INSIDE the wood, on a parchment tile (M6):
      the collection is parchment cards, and the ladder still reads. */
-  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 var(--wood-dark);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), 0 var(--lip) 0 var(--wood-dark);
   cursor: pointer;
   transition: transform var(--motion-snap) steps(1);
   background: var(--parchment-shade);
 }
 .hero-tile:hover { filter: brightness(1.06); }
-.hero-tile:active { transform: translateY(var(--lip)); box-shadow: inset 0 0 0 2px var(--tile, transparent); }
+.hero-tile:active { transform: translateY(var(--lip)); box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent); }
 
 .hero-tile.is-common { --tile: transparent; }
 .hero-tile.is-rare { --tile: var(--rarity-rare); }
@@ -81,12 +81,12 @@
    so a tall hero and a square one line up across a row. */
 .hero-art {
   position: absolute;
-  top: 8px;
-  left: 4px;
-  right: 4px;
-  bottom: 30px;
-  width: calc(100% - 8px);
-  height: calc(100% - 38px);
+  top: calc(var(--px) * 8);
+  left: calc(var(--px) * 4);
+  right: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 30);
+  width: calc(100% - calc(var(--px) * 8));
+  height: calc(100% - calc(var(--px) * 38));
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
@@ -99,7 +99,7 @@
 .hero-art--glyph {
   display: grid;
   place-items: center;
-  font-size: 40px;
+  font-size: calc(var(--px) * 40);
   line-height: 1;
 }
 
@@ -107,8 +107,8 @@
    screens: the four unit icons are four similar silhouettes at 16px, and the
    card was saying it twice — icon and name side by side. */
 .hero-type {
-  padding: 1px 8px;
-  border-radius: 999px;
+  padding: 1px calc(var(--px) * 8);
+  border-radius: calc(var(--px) * 999);
   background: rgba(59, 36, 18, 0.6);
   color: var(--ink-inverse);
   font-size: var(--text-helper);
@@ -118,19 +118,19 @@
 }
 .hero-type.is-tile {
   position: absolute;
-  top: 6px;
-  left: -2px;
-  padding: 0 12px 0 8px;
-  border-radius: 0 3px 3px 0;
-  font-size: 13px;
+  top: calc(var(--px) * 6);
+  left: calc(var(--px) * -2);
+  padding: 0 calc(var(--px) * 12) 0 calc(var(--px) * 8);
+  border-radius: 0 calc(var(--px) * 3) calc(var(--px) * 3) 0;
+  font-size: calc(var(--px) * 13);
   font-weight: var(--weight-strong);
   line-height: 1.5;
   color: var(--ink-inverse);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   background: var(--ribbon, var(--wood));
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.35);
   /* A ribbon: square at the left where it is pinned, a swallowtail at the right. */
-  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 50%, 100% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, calc(100% - calc(var(--px) * 6)) 50%, 100% 100%, 0 100%);
 }
 /* The ribbon takes the class's colour: which of the four it fights as is the
    one fact a roster is scanned for (M6). */
@@ -144,25 +144,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2px;
-  margin: 0 4px 4px;
-  padding: 0 6px;
-  min-height: 20px;
-  border-radius: 6px;
-  border: 2px solid rgba(92, 58, 30, 0.35);
+  gap: calc(var(--px) * 2);
+  margin: 0 calc(var(--px) * 4) calc(var(--px) * 4);
+  padding: 0 calc(var(--px) * 6);
+  min-height: calc(var(--px) * 20);
+  border-radius: calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
   background: var(--parchment);
   color: var(--ink);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-strong);
   line-height: 1.4;
 }
-.hero-tile-foot.is-frag { justify-content: center; gap: 4px; }
+.hero-tile-foot.is-frag { justify-content: center; gap: calc(var(--px) * 4); }
 .hero-tile-level { font-family: var(--font-body); white-space: nowrap; }
 
 /* The call-to-action orb: this card has something to press right now — the
    roster's whole job is pointing at the one tile worth opening. The tile
    clips its art, so the orb sits just inside its corner. */
-.hero-tile > .k-cta { top: 4px; right: 4px; }
+.hero-tile > .k-cta { top: calc(var(--px) * 4); right: calc(var(--px) * 4); }
 
 /* ------------------------------------------------------------- the stars -- */
 
@@ -170,18 +170,18 @@
 .hero-stars .icon.is-locked { opacity: 0.35; }
 /* The card's row. Ascension is the ladder the player is chasing and a row of
    16px pips said so in a whisper; these are the loudest thing under the art. */
-.hero-stars.is-big { gap: 2px; }
-.hero-stars.is-big .icon { --icon-size: 34px; }
+.hero-stars.is-big { gap: calc(var(--px) * 2); }
+.hero-stars.is-big .icon { --icon-size: calc(var(--px) * 34); }
 /* An unearned star is a DERIVED cell in the atlas now, not a CSS filter, so
    the silhouette is pixel-identical to an earned one and the row cannot
    shift as a hero ascends. The drop shadow is kept off it — a star that is
    not there casts nothing. */
 .hero-stars.is-big .icon:not(.is-locked) {
-  filter: drop-shadow(0 2px 0 rgba(24, 15, 8, 0.55));
+  filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(24, 15, 8, 0.55));
 }
 .hero-stars.is-big .icon.is-locked { opacity: 0.6; }
 @container frame (max-width: 380px) {
-  .hero-stars.is-big .icon { --icon-size: 26px; }
+  .hero-stars.is-big .icon { --icon-size: calc(var(--px) * 26); }
 }
 
 /* ------------------------------------------------------------- the detail - */
@@ -194,17 +194,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 220px;
+  gap: calc(var(--px) * 6);
+  min-height: calc(var(--px) * 220);
   /* The bottom padding is the band the foot rides in. The stars overlap the
      art rather than clearing it, so it is deliberately less than the foot is
      tall. */
-  padding: 12px 8px 34px;
-  border: 2px solid var(--wood-dark);
+  padding: calc(var(--px) * 12) calc(var(--px) * 8) calc(var(--px) * 34);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius);
   /* A parchment vignette with a soft wash of the rarity's colour (M17), and
      the rarity ringed inside the wood like the roster's tiles. */
-  box-shadow: inset 0 0 0 2px var(--tile, transparent), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3);
   background:
     radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
     linear-gradient(var(--wash, transparent), var(--wash, transparent)),
@@ -221,7 +221,7 @@
   position: static;
   inset: auto;
   width: 60%;
-  height: 170px;
+  height: calc(var(--px) * 170);
   object-position: center;
 }
 
@@ -229,12 +229,12 @@
    to a row under the hero, and the overlap is what says so. */
 .hero-stage-foot {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 6px;
+  left: calc(var(--px) * 10);
+  right: calc(var(--px) * 10);
+  bottom: calc(var(--px) * 6);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   pointer-events: none;
 }
 .hero-stage-foot > * { pointer-events: auto; }
@@ -246,7 +246,7 @@
 .hero-ascend {
   flex: 0 0 auto;
   min-height: 0;
-  padding: 4px 10px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
 }
 .hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
 
@@ -256,14 +256,14 @@
 /* The window's carved close (kit closeKnob), on the stage's corner rather than
    the frame's: the card's own way back to the roster. */
 .k-close.hero-close {
-  top: 8px;
-  right: 8px;
+  top: calc(var(--px) * 8);
+  right: calc(var(--px) * 8);
   z-index: 2;
 }
 .hero-stage > .hero-type {
   position: absolute;
-  top: 8px;
-  left: 10px;
+  top: calc(var(--px) * 8);
+  left: calc(var(--px) * 10);
   z-index: 2;
 }
 
@@ -271,9 +271,9 @@
    belongs to the way out now. */
 .hero-rarity {
   position: absolute;
-  top: 12px;
-  right: 60px; /* beside the way out, as M17 places it */
-  padding: 2px 8px;
+  top: calc(var(--px) * 12);
+  right: calc(var(--px) * 60); /* beside the way out, as M17 places it */
+  padding: calc(var(--px) * 2) calc(var(--px) * 8);
   border-radius: var(--radius-sm);
   background: rgba(59, 36, 18, 0.6);
   color: var(--ink-inverse);
@@ -292,17 +292,17 @@
 .hero-level {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: calc(var(--px) * 12);
   margin-top: auto;
-  padding: 8px 12px;
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
   border-radius: var(--radius-sm);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
 }
 .hero-level-read {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   flex: 1;
   min-width: 0;
   font-size: var(--text-helper);
@@ -323,7 +323,7 @@
 .hero-level-block {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -331,25 +331,25 @@
 }
 
 /* Three parchment tiles sharing the row, the icon over the number (M17). */
-.hero-statline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.hero-statline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--px) * 8); }
 .hero-statline > .k-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  min-height: 64px;
-  padding: 6px 4px;
+  gap: calc(var(--px) * 2);
+  min-height: calc(var(--px) * 64);
+  padding: calc(var(--px) * 6) calc(var(--px) * 4);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   background: var(--parchment-shade);
 }
-.hero-statline > .k-stat > .icon { --icon-size: 26px; }
+.hero-statline > .k-stat > .icon { --icon-size: calc(var(--px) * 26); }
 
 .hero-passive {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   line-height: 1.35;
@@ -359,9 +359,9 @@
    party, this one moves the kingdom — and the card has to say so without a
    label saying it. */
 .hero-passive.is-boon {
-  margin-top: 2px;
-  padding-top: 6px;
-  border-top: 2px solid var(--gold-dark);
+  margin-top: calc(var(--px) * 2);
+  padding-top: calc(var(--px) * 6);
+  border-top: calc(var(--px) * 2) solid var(--gold-dark);
   color: var(--wood-dark);
   font-weight: var(--weight-strong);
 }

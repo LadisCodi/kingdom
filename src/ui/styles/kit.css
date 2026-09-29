@@ -34,36 +34,36 @@
 .k-panel {
   color: var(--ink);
   /* 6 + 10: a 402px phone cannot spend 44px of its width on frame. */
-  border: 6px solid transparent;
+  border: calc(var(--px) * 6) solid transparent;
   border-radius: var(--radius);
-  padding: 10px;
+  padding: calc(var(--px) * 10);
   background:
     linear-gradient(var(--parchment), var(--parchment)) padding-box,
     linear-gradient(var(--wood), var(--wood)) border-box;
   box-shadow:
     0 0 0 var(--outline) var(--wood-dark),
-    inset 2px 2px 0 var(--wood-light),
-    inset -2px -2px 0 var(--wood-dark),
-    0 6px 0 rgba(60, 36, 18, 0.3),
-    0 12px 26px rgba(60, 36, 18, 0.26);
+    inset calc(var(--px) * 2) calc(var(--px) * 2) 0 var(--wood-light),
+    inset calc(var(--px) * -2) calc(var(--px) * -2) 0 var(--wood-dark),
+    0 calc(var(--px) * 6) 0 rgba(60, 36, 18, 0.3),
+    0 calc(var(--px) * 12) calc(var(--px) * 26) rgba(60, 36, 18, 0.26);
 }
 
 /* Wooden header plank, bleeding to the frame's inner edge. */
 .k-plank {
-  margin: -10px -10px 8px;
-  padding: 6px 10px;
+  margin: calc(var(--px) * -10) calc(var(--px) * -10) calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10);
   position: relative;
   display: flex;
   align-items: center;
   /* The title is CENTRED on the strip (M3–M18); the way out rides at the
      right end, off the flow, so the word never shifts for it. */
   justify-content: center;
-  gap: 8px;
-  min-height: 38px;
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 38);
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
-  border-radius: 4px 4px 0 0;
-  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 var(--wood-dark);
+  border-radius: calc(var(--px) * 4) calc(var(--px) * 4) 0 0;
+  box-shadow: inset 0 calc(var(--px) * 2) 0 var(--wood-light), inset 0 calc(var(--px) * -2) 0 var(--wood-dark);
   color: var(--parchment);
   font-size: var(--text-title);
   font-weight: var(--font-display-weight);
@@ -78,7 +78,7 @@
  * the cap, because a title needing three is a title, not a sentence. */
 .k-plank > span:first-child {
   min-width: 0;
-  max-width: calc(100% - 96px);
+  max-width: calc(100% - calc(var(--px) * 96));
   text-align: center;
   line-height: 1.15;
   overflow: hidden;
@@ -86,15 +86,15 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.k-plank .k-knob { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
+.k-plank .k-knob { position: absolute; right: calc(var(--px) * 8); top: 50%; translate: 0 -50%; width: calc(var(--px) * 36); height: calc(var(--px) * 36); min-height: calc(var(--px) * 36); margin-bottom: 0; font-size: calc(var(--px) * 16); }
 
 /* A section's heading inside a menu (kit sectionHead): a short rule, the
    label in small uppercase wood, and a rule running on to the edge. */
 .k-section-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 14px 0 8px;
+  gap: calc(var(--px) * 8);
+  margin: calc(var(--px) * 14) 0 calc(var(--px) * 8);
   font-family: var(--font-body);
   font-size: var(--text-heading);
   font-weight: var(--weight-strong);
@@ -105,19 +105,19 @@
 .k-section-head::before,
 .k-section-head::after {
   content: '';
-  height: 2px;
+  height: calc(var(--px) * 2);
   border-radius: 1px;
   background: rgba(92, 58, 30, 0.28);
 }
-.k-section-head::before { flex: none; width: 10px; }
+.k-section-head::before { flex: none; width: calc(var(--px) * 10); }
 .k-section-head::after { flex: 1; }
 
 /* Rope grab handle on a sheet. */
 .k-grab {
-  width: 40px;
-  height: 4px;
-  margin: -4px auto 6px;
-  border-radius: 2px;
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 4);
+  margin: calc(var(--px) * -4) auto calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 2);
   background: var(--wood-dark);
   opacity: 0.65;
 }
@@ -126,32 +126,32 @@
 .k-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 60px;
-  padding: 8px 10px;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 60);
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
   color: var(--ink);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
   text-align: left;
 }
 .k-card.is-locked { background: var(--locked); }
 .k-card > .k-slot {
   flex: none;
-  width: 36px;
-  height: 36px;
+  width: calc(var(--px) * 36);
+  height: calc(var(--px) * 36);
   display: grid;
   place-items: center;
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  border-radius: 6px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 6);
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
 .k-card .k-desc { font-size: var(--text-desc); font-weight: var(--weight-small); color: var(--ink-muted); }
-.k-card > .k-slot .icon { --icon-size: 28px; }
+.k-card > .k-slot .icon { --icon-size: calc(var(--px) * 28); }
 
-.k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: calc(var(--px) * 8); }
 
 /* Warm, 35% — the kingdom stays legible behind an open sheet (§3.2). */
 .k-scrim { position: absolute; inset: 0; background: var(--scrim); }
@@ -165,15 +165,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 40px; /* the mockups' slabs measure ~38px at 402; 40 keeps a thumb's margin */
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 40); /* the mockups' slabs measure ~38px at 402; 40 keeps a thumb's margin */
   /* A FLOOR, so a slab's width comes from the row it sits in rather than from
      how many characters its label happens to have. "Finish 10" next to
      "Upgrade 180 60" read as two different kinds of control when one was half
      the other's width. Knobs are excluded by name: they set an explicit
      square, and `min-width` would beat it. */
-  min-width: 96px;
-  padding: 8px 14px;
+  min-width: calc(var(--px) * 96);
+  padding: calc(var(--px) * 8) calc(var(--px) * 14);
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
   font-family: var(--font-body);
   font-size: var(--text-button);
@@ -199,11 +199,11 @@
 /* §6.4 — a price belongs INSIDE the button that spends it. The label rides on
  * top, the cost sits under it, and the whole thing is one press-target that
  * reads in a single glance instead of a caption the eye has to pair up. */
-.k-btn-label { display: inline-flex; align-items: center; gap: 8px; }
+.k-btn-label { display: inline-flex; align-items: center; gap: calc(var(--px) * 8); }
 .k-btn.has-cost {
   flex-direction: column;
-  gap: 2px;
-  padding: 6px 12px; /* label over price: ~56px, the tallest slab in the kit */
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 6) calc(var(--px) * 12); /* label over price: ~56px, the tallest slab in the kit */
 }
 /* A fact about the button itself, riding above the label: when this press
  * turns free. Smaller and dimmer than the label so it reads as a caption on
@@ -218,12 +218,12 @@
 .k-btn-cost {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(var(--px) * 10);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
 }
-.k-cost { display: inline-flex; align-items: center; gap: 4px; }
+.k-cost { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); }
 /* The red IS the reason the button is dead, so it has to survive the disabled
  * fill — which is a warm tan, not a grey, and would swallow a subtler red. */
 .k-cost.is-short { color: var(--clay); }
@@ -244,26 +244,26 @@
 /* Round wooden knob — worker steppers, close, zoom. */
 .k-knob {
   position: relative;
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
+  min-height: calc(var(--px) * 40);
   min-width: 0;
   padding: 0;
   border-radius: 50%;
-  font-size: 18px;
+  font-size: calc(var(--px) * 18);
 }
 /* Drawn at 40, tapped at 44: the hit area grows past the drawing so a row of
    knobs can sit closer than the brief's minimum target would let them. */
-.k-knob::before { content: ''; position: absolute; inset: -2px; border-radius: 50%; }
+.k-knob::before { content: ''; position: absolute; inset: calc(var(--px) * -2); border-radius: 50%; }
 
 /* An action and the plain-language reason it is unavailable (§6.3). */
-.k-action { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.k-action { display: flex; align-items: center; gap: calc(var(--px) * 12); margin-top: calc(var(--px) * 10); }
 .k-action .k-reason {
   flex: 1;
   min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -286,28 +286,28 @@
 .k-switch {
   position: relative;
   flex: none;
-  width: 56px;
-  height: 32px;
-  min-height: 32px;
+  width: calc(var(--px) * 56);
+  height: calc(var(--px) * 32);
+  min-height: calc(var(--px) * 32);
   padding: 0;
   margin-bottom: 0;
-  border-radius: 16px;
+  border-radius: calc(var(--px) * 16);
   /* A wooden trough with a brass knob in it (M9); on, the trough is leaf. */
   background: var(--wood);
-  border: 2px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.35), 0 2px 0 var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.35), 0 calc(var(--px) * 2) 0 var(--wood-dark);
   transition: background var(--motion-snap) steps(1);
 }
 .k-switch::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
+  top: calc(var(--px) * 2);
+  left: calc(var(--px) * 2);
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffe08a, var(--gold) 55%, var(--gold-dark));
-  border: 2px solid var(--gold-dark);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
   transition: transform var(--motion-snap) steps(1);
 }
@@ -315,19 +315,19 @@
  * TARGET has no business being 32px tall. This grows the hit area to 56x48
  * without moving a pixel of the drawing. Vertical only — the height was the
  * failing dimension, and widening it would push the knob past the row. */
-.k-switch::before { content: ''; position: absolute; inset: -8px 0; }
+.k-switch::before { content: ''; position: absolute; inset: calc(var(--px) * -8) 0; }
 .k-switch:active { transform: none; }
 .k-switch.is-on { background: var(--leaf); }
 /* 22, not 24: the track's inner width is 52 and the knob is 28, so 24 put
    its edge 2px past the border — enough to make the whole sheet scrollable
    sideways. */
-.k-switch.is-on::after { transform: translateX(22px); }
+.k-switch.is-on::after { transform: translateX(calc(var(--px) * 22)); }
 
 /* Segmented wooden toggles (the market's x1 / x10 / …). */
-.k-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.k-toggles { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 6); align-items: center; }
 .k-toggles .k-btn {
-  min-height: 36px;
-  padding: 4px 10px;
+  min-height: calc(var(--px) * 36);
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
 }
@@ -339,56 +339,56 @@
 .k-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-strong);
   color: var(--ink);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 999);
 }
 .k-chip.is-short { color: var(--clay); border-color: var(--clay); }
 /* A chip that is a GAIN rather than a price — what a decoration adds, beside
  * what it costs. */
 .k-chip.is-gain { color: var(--leaf-dark); border-color: var(--leaf-dark); }
-.k-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.k-chips { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 6); }
 
 /* icon + value + unit, for a rate or a count. */
-.k-stat { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.k-stat { display: inline-flex; align-items: baseline; gap: calc(var(--px) * 6); font-variant-numeric: tabular-nums; }
 .k-stat .k-stat-value { font-weight: var(--weight-strong); font-size: var(--text-body); }
 .k-stat .k-stat-unit { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* Countable progress, when the total is small enough to see at a glance. */
-.k-pips { display: inline-flex; gap: 4px; }
+.k-pips { display: inline-flex; gap: calc(var(--px) * 4); }
 .k-pip {
-  width: 12px;
-  height: 12px;
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
   border-radius: 50%;
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
 }
 .k-pip.is-on { background: var(--gold); border-color: var(--gold-dark); }
 
 /* A carved trough with a fill — the progress bar. */
 .k-trough {
   position: relative;
-  height: 14px;
-  border-radius: 7px;
+  height: calc(var(--px) * 14);
+  border-radius: calc(var(--px) * 7);
   overflow: hidden;
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.25);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.25);
 }
 .k-trough .k-fill {
   height: 100%;
   width: 0;
   background: var(--leaf);
-  box-shadow: inset 0 -2px 0 var(--leaf-dark);
+  box-shadow: inset 0 calc(var(--px) * -2) 0 var(--leaf-dark);
   transition: width 240ms ease-out;
 }
-.k-trough.k-trough--sky .k-fill { background: var(--sky); box-shadow: inset 0 -2px 0 #2f7d9c; }
-.k-trough.k-trough--gold .k-fill { background: var(--gold); box-shadow: inset 0 -2px 0 var(--gold-dark); }
+.k-trough.k-trough--sky .k-fill { background: var(--sky); box-shadow: inset 0 calc(var(--px) * -2) 0 #2f7d9c; }
+.k-trough.k-trough--gold .k-fill { background: var(--gold); box-shadow: inset 0 calc(var(--px) * -2) 0 var(--gold-dark); }
 .k-trough .k-trough-label {
   position: absolute;
   inset: 0;
@@ -400,11 +400,11 @@
 }
 
 /* A row of unit pips — army strength and the like. */
-.k-meter { display: flex; flex-wrap: wrap; gap: 3px; }
+.k-meter { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 3); }
 .k-meter .k-tick {
-  width: 8px;
-  height: 14px;
-  border-radius: 2px;
+  width: calc(var(--px) * 8);
+  height: calc(var(--px) * 14);
+  border-radius: calc(var(--px) * 2);
   background: var(--parchment-shade);
   border: 1px solid var(--wood-dark);
 }
@@ -422,7 +422,7 @@
  * nav, 28 in a card slot). The old rule — sizes as whole ratios of the 32px
  * cell, for `image-rendering: pixelated` — is gone with the pixel look. */
 .icon {
-  --icon-size: 24px;
+  --icon-size: calc(var(--px) * 24);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -445,8 +445,8 @@
 .k-plank .icon, .k-btn .icon { color: var(--ink-inverse); }
 /* …except a cost the player is short of, which stays clay icon and all. */
 .k-btn .k-cost.is-short .icon { color: var(--clay); }
-.icon--sm { --icon-size: 16px; }
-.icon--lg { --icon-size: 40px; }
+.icon--sm { --icon-size: calc(var(--px) * 16); }
+.icon--lg { --icon-size: calc(var(--px) * 40); }
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 
 /* ------------------------------------------------- the ?dev=kit gallery ---
@@ -458,8 +458,8 @@
   inset: 0;
   z-index: 100;
   overflow-y: auto;
-  padding: 20px 16px 60px;
-  background: var(--parchment) url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+  padding: calc(var(--px) * 20) calc(var(--px) * 16) calc(var(--px) * 60);
+  background: var(--parchment) url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
   color: var(--ink);
   font-size: var(--text-body);
 }
@@ -468,23 +468,23 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--wood-dark);
-  margin: 22px 0 10px;
+  margin: calc(var(--px) * 22) 0 calc(var(--px) * 10);
   border-bottom: 1px solid rgba(92, 58, 30, 0.35);
-  padding-bottom: 4px;
+  padding-bottom: calc(var(--px) * 4);
 }
-.gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
-.gal-item { margin: 8px 0; min-width: 0; }
+.gal-row { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 16); align-items: flex-end; }
+.gal-item { margin: calc(var(--px) * 8) 0; min-width: 0; }
 .gal-label {
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);
-  margin-bottom: 4px;
+  margin-bottom: calc(var(--px) * 4);
 }
 /* Icons get checked against every ground they actually sit on. */
-.gal-icons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
-.gal-icons .gal-label { margin: 0 8px 0 0; }
+.gal-icons { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 8); align-items: center; padding: calc(var(--px) * 10); border-radius: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 8); }
+.gal-icons .gal-label { margin: 0 calc(var(--px) * 8) 0 0; }
 .gal-icons.on-parchment { background: var(--parchment); color: var(--ink); }
 .gal-icons.on-parchment .gal-label { color: var(--ink-muted); }
 .gal-icons.on-wood { background: var(--wood); color: var(--ink-inverse); }
@@ -542,7 +542,7 @@
    * reads as a broken layout for no gain. The clip margin keeps the bleed
    * painted; it only stops it being scrollable. */
   overflow-x: clip;
-  overflow-clip-margin: 6px;
+  overflow-clip-margin: calc(var(--px) * 6);
   overscroll-behavior: contain; /* don't scroll the page behind it */
   -webkit-overflow-scrolling: touch;
 }
@@ -578,13 +578,13 @@
     bottom: 0;
     /* Negative margin so the strip overlays the last line of content instead
        of adding a gap under it; it has no height in the flow. */
-    height: 18px;
-    margin-top: -18px;
+    height: calc(var(--px) * 18);
+    margin-top: calc(var(--px) * -18);
     pointer-events: none;
     background: linear-gradient(rgba(60, 36, 18, 0), rgba(60, 36, 18, 0.32));
     animation: k-scroll-shade linear both;
     animation-timeline: scroll(self block);
-    animation-range: calc(100% - 28px) 100%;
+    animation-range: calc(100% - calc(var(--px) * 28)) 100%;
   }
 }
 @keyframes k-scroll-shade { to { opacity: 0; } }
@@ -598,8 +598,8 @@
   flex-direction: column;
   overflow: hidden;
   background: #4a7c3f;
-  border: 2px solid var(--wood-dark);
-  border-radius: 12px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 12);
   container-type: inline-size;
   container-name: frame;
 }
@@ -607,64 +607,64 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
   min-height: 44px;
-  padding: 4px 6px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 6);
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
 }
 .gal-phone-hud .hud-coin {
-  display: inline-flex; align-items: center; gap: 4px;
-  min-height: 32px; padding: 2px 6px;
+  display: inline-flex; align-items: center; gap: calc(var(--px) * 4);
+  min-height: calc(var(--px) * 32); padding: calc(var(--px) * 2) calc(var(--px) * 6);
   font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink);
-  background: var(--parchment); border: 2px solid var(--wood-dark); border-radius: 999px;
+  background: var(--parchment); border: calc(var(--px) * 2) solid var(--wood-dark); border-radius: calc(var(--px) * 999);
 }
-.gal-phone-hud .hud-coin .icon { --icon-size: 20px; }
+.gal-phone-hud .hud-coin .icon { --icon-size: calc(var(--px) * 20); }
 .gal-phone-sheet {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 24px var(--gutter) 8px;
+  padding: calc(var(--px) * 24) var(--gutter) calc(var(--px) * 8);
   background: var(--scrim);
 }
 .gal-phone-nav {
   display: flex;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
   background: var(--wood);
   border-top: var(--outline) solid var(--wood-dark);
 }
 .gal-phone-nav .nav-tab {
   flex: 1 1 0; min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 3px 4px 4px;
-  font-size: 12px;
+  padding: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 4);
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small); color: var(--ink);
-  background: var(--parchment-shade); border: 2px solid var(--wood-dark); border-radius: var(--radius-sm);
+  background: var(--parchment-shade); border: calc(var(--px) * 2) solid var(--wood-dark); border-radius: var(--radius-sm);
 }
-.gal-phone-nav .nav-tab .icon { --icon-size: 24px; }
-.gal-ruler { display: flex; flex-direction: column; gap: 4px; }
+.gal-phone-nav .nav-tab .icon { --icon-size: calc(var(--px) * 24); }
+.gal-ruler { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
 .gal-ruler-tick {
   display: grid; place-items: center;
   width: 44px; height: 44px;
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   background: var(--parchment); color: var(--ink);
-  border: 2px dashed var(--clay); border-radius: 4px;
+  border: calc(var(--px) * 2) dashed var(--clay); border-radius: calc(var(--px) * 4);
 }
 
 /* A centred dialog is narrower than a drawer (M14, M18): ~82% of the frame. */
-.k-sheet.is-centred { max-width: 340px; max-height: 78%; margin-left: auto; margin-right: auto; }
+.k-sheet.is-centred { max-width: calc(var(--px) * 340); max-height: 78%; margin-left: auto; margin-right: auto; }
 /* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
-.k-sheet.is-tall { height: auto; max-height: calc(100% - 96px); margin-top: auto; }
+.k-sheet.is-tall { height: auto; max-height: calc(100% - calc(var(--px) * 96)); margin-top: auto; }
 
 /* The materials page. A specimen sits on a CHECKERBOARD, not on the page's
  * brown: a frame whose corner is transparent where it should be opaque, or
  * opaque where it should be cut away, is invisible against a flat ground and
  * obvious against this one. */
-.gal-slice { margin-bottom: 18px; }
+.gal-slice { margin-bottom: calc(var(--px) * 18); }
 .gal-box {
   box-sizing: border-box;
   background-color: transparent;
@@ -672,8 +672,8 @@
   background-image:
     linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%),
     linear-gradient(45deg, var(--sq) 25%, transparent 25%, transparent 75%, var(--sq) 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 8px 8px;
+  background-size: calc(var(--px) * 16) calc(var(--px) * 16);
+  background-position: 0 0, calc(var(--px) * 8) calc(var(--px) * 8);
 }
 /* …except where the specimen IS the background, which the checkerboard would
  * then be painted over anyway. Those set their own, so keep the box bare. */

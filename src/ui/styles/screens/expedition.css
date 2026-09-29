@@ -14,12 +14,12 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10) calc(var(--px) * 14);
   border-radius: var(--radius);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment-shade);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
 }
 .exp-safe b {
   font-family: var(--font-body); font-weight: var(--weight-strong);
@@ -39,9 +39,9 @@
  * the same pixel: they are read as a pair or they are read as decoration. */
 .exp-track {
   display: grid;
-  grid-template-columns: 54px 1fr auto;
+  grid-template-columns: calc(var(--px) * 54) 1fr auto;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
 }
 .exp-track-name {
   font-family: var(--font-body);
@@ -55,7 +55,7 @@
 .exp-track-boss { display: grid; place-items: center; opacity: 0.55; filter: grayscale(1); }
 .exp-track-boss.is-now {
   opacity: 1;
-  filter: drop-shadow(0 0 3px var(--gold, #d9a441));
+  filter: drop-shadow(0 0 calc(var(--px) * 3) var(--gold, #d9a441));
   animation: exp-boss-beat 1.2s ease-in-out infinite alternate;
 }
 @keyframes exp-boss-beat { from { transform: scale(1); } to { transform: scale(1.12); } }

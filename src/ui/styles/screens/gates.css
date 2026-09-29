@@ -15,17 +15,17 @@
 .raid-tab {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(var(--px) * 10);
   max-width: 100%;
-  padding: 6px 22px 6px 8px;
+  padding: calc(var(--px) * 6) calc(var(--px) * 22) calc(var(--px) * 6) calc(var(--px) * 8);
   text-align: left;
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(40, 16, 10, 0.6);
   background: #8a3a2a;
   border: var(--outline) solid #4a1c14;
   border-right: none;
-  border-radius: 12px 0 0 12px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 3px 0 #4a1c14;
+  border-radius: calc(var(--px) * 12) 0 0 calc(var(--px) * 12);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.14), 0 calc(var(--px) * 3) 0 #4a1c14;
   cursor: pointer;
   transform: translateX(110%);
 }
@@ -33,12 +33,12 @@
 .raid-tab::after {
   content: '';
   position: absolute;
-  right: 8px;
+  right: calc(var(--px) * 8);
   top: 50%;
-  width: 8px;
-  height: 8px;
-  border-right: 3px solid var(--parchment);
-  border-bottom: 3px solid var(--parchment);
+  width: calc(var(--px) * 8);
+  height: calc(var(--px) * 8);
+  border-right: calc(var(--px) * 3) solid var(--parchment);
+  border-bottom: calc(var(--px) * 3) solid var(--parchment);
   transform: translateY(-50%) rotate(-45deg);
   opacity: 0.85;
 }
@@ -61,11 +61,11 @@
 .raid-tab-mark {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
   flex: none;
   border-radius: var(--radius-sm);
-  border: 2px solid #4a1c14;
+  border: calc(var(--px) * 2) solid #4a1c14;
   background: var(--parchment);
   color: var(--ink);
 }
@@ -93,30 +93,30 @@
 .site-gate {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   margin-top: 0;
-  padding: 10px;
-  border: 2px solid var(--wood-dark);
+  padding: calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
   background: var(--parchment-shade);
 }
 /* The creature's mark stands in a small vignette at the left (M11). */
-.site-gate-head { display: flex; align-items: center; gap: 12px; }
+.site-gate-head { display: flex; align-items: center; gap: calc(var(--px) * 12); }
 .site-gate-head > .icon {
-  --icon-size: 36px;
+  --icon-size: calc(var(--px) * 36);
   flex: none;
-  margin: 10px;
-  border-radius: 4px;
+  margin: calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 4);
   /* The vignette is drawn AROUND the atlas cell, so the sprite's own box is
      untouched: padding would shift the sheet under it. */
-  box-shadow: 0 0 0 8px var(--parchment), 0 0 0 10px var(--wood-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 8) var(--parchment), 0 0 0 calc(var(--px) * 10) var(--wood-dark);
 }
 /* The body face, bold: the display face is legal only at --text-title
    (tests/fonts.test.ts), and a band heading is not a title. */
 .site-gate-name {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 18px;
+  font-size: calc(var(--px) * 18);
   line-height: 1.15;
   color: var(--ink);
 }
@@ -128,7 +128,7 @@
   font-weight: var(--weight-small);
   color: var(--ink-soft);
 }
-.site-gate-trips { display: flex; align-items: center; gap: 6px; }
+.site-gate-trips { display: flex; align-items: center; gap: calc(var(--px) * 6); }
 .site-gate-hoard { color: var(--ink); }
 
 /* The room sheet on a gate is the BATTLE screen (screens/battle.css); what

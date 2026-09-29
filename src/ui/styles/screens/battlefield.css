@@ -12,8 +12,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: calc(var(--px) * 12);
+  padding: calc(var(--px) * 12);
   /* OPAQUE, with no alpha at all. The sheet that launched the fight is still
      standing behind this — it has to be, so the player lands back on the
      next room — and even a few per cent of parchment showing through turns
@@ -32,24 +32,24 @@
 .bs-bar {
   position: relative;
   width: 100%;
-  height: 40px;
+  height: calc(var(--px) * 40);
   display: flex;
   align-items: center;
-  border: 3px solid var(--wood-dark);
-  border-radius: 12px;
+  border: calc(var(--px) * 3) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 12);
   /* A wooden plank (M16): our number in leaf at the left, theirs in clay at
      the right, the fill a thin leaf band along the bottom edge. */
   background: var(--wood);
-  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -3px 0 rgba(60, 36, 18, 0.35), 0 3px 0 var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 var(--wood-light), inset 0 calc(var(--px) * -3) 0 rgba(60, 36, 18, 0.35), 0 calc(var(--px) * 3) 0 var(--wood-dark);
   overflow: hidden;
   flex: none;
 }
 .bs-bar-fill {
   position: absolute;
   inset: auto auto 0 0;
-  height: 6px;
+  height: calc(var(--px) * 6);
   background: var(--leaf);
-  box-shadow: inset 0 -2px 0 var(--leaf-dark);
+  box-shadow: inset 0 calc(var(--px) * -2) 0 var(--leaf-dark);
   transition: width 120ms linear;
 }
 .bs-bar::after {
@@ -58,8 +58,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 26px;
-  height: 26px;
+  width: calc(var(--px) * 26);
+  height: calc(var(--px) * 26);
   translate: -50% -50%;
   background: var(--parchment);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -71,9 +71,9 @@
   position: relative;
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 20px;
+  font-size: calc(var(--px) * 20);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  padding: 0 16px;
+  padding: 0 calc(var(--px) * 16);
 }
 .bs-bar-mine { color: #9be36f; }
 .bs-bar-theirs { color: #ff8a70; }
@@ -84,9 +84,9 @@
   flex-direction: column;
   align-items: center;
   gap: 0;
-  padding: 4px 16px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 16);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   font-family: var(--font-body);
@@ -106,25 +106,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
 }
 /* The two armies facing each other. The one piece of empty space on the
    screen that is doing a job. */
 .bs-gap {
   position: relative;
   width: 100%;
-  height: 36px;
+  height: calc(var(--px) * 36);
   flex: none;
   /* The line the two armies face across: dashed rope (M16). */
-  background: linear-gradient(to right, rgba(244, 228, 193, 0.35) 0 60%, transparent 60%) center / 14px 3px repeat-x;
+  background: linear-gradient(to right, rgba(244, 228, 193, 0.35) 0 60%, transparent 60%) center / calc(var(--px) * 14) calc(var(--px) * 3) repeat-x;
 }
 
 .bs-row {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  min-height: 12px;
-  padding-bottom: 10px; /* room for the count tag under the ring */
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 12);
+  padding-bottom: calc(var(--px) * 10); /* room for the count tag under the ring */
 }
 /* The back rank sits behind the front one, and says so by being smaller —
    the row is what decides who gets hit (Docs/features/combat.md §8). */
@@ -132,21 +132,21 @@
 
 .bs-slot {
   position: relative;
-  width: 66px;
-  height: 66px;
+  width: calc(var(--px) * 66);
+  height: calc(var(--px) * 66);
   display: grid;
   place-items: center;
   /* Rings carved in the wood, like the board's slots (M10, M16). */
-  border: 4px solid var(--wood);
+  border: calc(var(--px) * 4) solid var(--wood);
   border-radius: 50%;
   background: var(--parchment-shade);
-  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
 }
-.bs-slot.is-hero { background: var(--parchment); border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-dark), inset 0 0 0 2px var(--gold-dark), 0 var(--lip) 0 var(--gold-dark); }
+.bs-slot.is-hero { background: var(--parchment); border-color: var(--gold); box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold-dark), inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 var(--lip) 0 var(--gold-dark); }
 
 .bs-portrait {
-  width: 48px;
-  height: 48px;
+  width: calc(var(--px) * 48);
+  height: calc(var(--px) * 48);
   object-fit: contain;
   image-rendering: pixelated;
 }
@@ -159,14 +159,14 @@
   position: absolute;
   left: 50%;
   translate: -50% 0;
-  bottom: -9px;
-  padding: 0 5px;
-  border-radius: 999px;
+  bottom: calc(var(--px) * -9);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 999);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   color: var(--ink);
 }
 
@@ -187,7 +187,7 @@
    the player can still see WHICH squad is gone. */
 .bs-skull {
   position: absolute;
-  inset: auto 0 2px 0;
+  inset: auto 0 calc(var(--px) * 2) 0;
   display: none;
   place-items: center;
 }
@@ -209,12 +209,12 @@
   font-size: var(--text-title);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  padding: 12px 36px;
+  padding: calc(var(--px) * 12) calc(var(--px) * 36);
   /* A wooden plaque with a gold rim (M16); the verdict is in the rim's tone. */
-  border: 3px solid var(--gold);
+  border: calc(var(--px) * 3) solid var(--gold);
   border-radius: var(--radius);
   background: var(--wood);
-  box-shadow: 0 0 0 2px var(--wood-dark), 0 6px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 calc(var(--px) * 6) 0 rgba(0, 0, 0, 0.35);
 }
 .bs-plaque.is-won { color: var(--gold); }
 .bs-plaque.is-lost { border-color: var(--clay); color: var(--parchment); }

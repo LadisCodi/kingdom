@@ -16,43 +16,43 @@
 /* Under the header, above the quest scroll's corner — its own row in the #ui
  * flex column, so it never lands on the settings knob (which is why #delves
  * carries a right padding; this one is narrow enough not to need one). */
-#daily { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#daily { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
 #daily[hidden] { display: none; }
 
 .dly-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 4px 16px 4px 10px;
-  border-radius: 10px;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 52);
+  padding: calc(var(--px) * 4) calc(var(--px) * 16) calc(var(--px) * 4) calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 10);
   /* A parchment card in a wood border, nailed at the corners (M12); the
      glow says it is waiting. */
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
   position: relative;
-  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  box-shadow: 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.35);
   /* The ask is the kit's orb on its corner (dailyPill.ts). */
 }
 .dly-pill:hover { filter: brightness(1.04); }
-.dly-pill:active { transform: translateY(2px); box-shadow: none; }
+.dly-pill:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
 /* Every rung taken, the season still running: the pill stays as the door to a
    purchase, and stops asking for anything. */
 .dly-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.85; }
 /* The orb sits out on the corner, clear of the title (the season pill's too). */
 .dly-pill > .k-cta,
 .sea-pill > .k-cta { top: calc(var(--cta-size) * -0.45); right: calc(var(--cta-size) * -0.5); }
-.dly-pill > .icon { --icon-size: 30px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
+.dly-pill > .icon { --icon-size: calc(var(--px) * 30); filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
 .dly-pill-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.15; }
 .dly-pill-day { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* -------------------------------------------------------------- the sheet */
 
-.dly { display: flex; flex-direction: column; gap: 10px; }
+.dly { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
 .dly-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
 
 /* The one clock. Stated plainly and once, at the top, in ink rather than in
@@ -61,18 +61,18 @@
 .dly-clock {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 40px;
-  padding: 4px 12px;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 40);
+  padding: calc(var(--px) * 4) calc(var(--px) * 12);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   background: var(--parchment);
   font-size: var(--text-body);
   font-weight: var(--weight-strong);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.dly-clock > .icon { --icon-size: 24px; }
+.dly-clock > .icon { --icon-size: calc(var(--px) * 24); }
 .dly-progress { margin-left: auto; font-family: var(--font-body); color: var(--ink); }
 .dly-note { text-align: center; }
 
@@ -84,21 +84,21 @@
 .dly-heads,
 .dly-row {
   display: grid;
-  grid-template-columns: 1fr 40px 1.5fr;
-  gap: 6px;
+  grid-template-columns: 1fr calc(var(--px) * 40) 1.5fr;
+  gap: calc(var(--px) * 6);
   align-items: stretch;
 }
 
-.dly-heads { position: sticky; top: 0; z-index: 1; padding-bottom: 4px; background: var(--parchment); }
+.dly-heads { position: sticky; top: 0; z-index: 1; padding-bottom: calc(var(--px) * 4); background: var(--parchment); }
 .dly-head {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   min-height: 44px;
-  padding: 6px 8px;
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
   border-radius: var(--radius);
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   box-shadow: 0 var(--lip) 0 var(--wood-dark);
   font-family: var(--font-body);
   font-size: var(--text-body);
@@ -128,7 +128,7 @@
 /* Fourteen rows do not fit a phone, so this one scrolls — unlike the seven-rung
    version it replaces. The headers stay pinned above it so a prize is never
    read against the wrong column. */
-.dly-ladder { display: flex; flex-direction: column; gap: 4px; }
+.dly-ladder { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
 
 .dly-row { min-height: 44px; }
 
@@ -143,11 +143,11 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  min-height: 48px;
-  padding: 5px 34px 5px 8px;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 48);
+  padding: calc(var(--px) * 5) calc(var(--px) * 34) calc(var(--px) * 5) calc(var(--px) * 8);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.55);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.55);
   background: var(--parchment-shade);
   color: var(--ink);
   font: inherit;
@@ -160,31 +160,31 @@
 .dly-cell.is-taken > .icon:last-child,
 .dly-cell.is-locked > .icon:last-child {
   position: absolute;
-  right: 6px;
+  right: calc(var(--px) * 6);
   top: 50%;
   translate: 0 -50%;
 }
 .dly-cell.is-taken > .icon:last-child {
-  --icon-size: 16px;
-  right: 12px;
+  --icon-size: calc(var(--px) * 16);
+  right: calc(var(--px) * 12);
   border-radius: 50%;
   background-color: var(--leaf);
-  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 4) var(--leaf), 0 0 0 calc(var(--px) * 6) var(--leaf-dark);
   color: var(--ink-inverse);
 }
 .dly-cell.is-locked > .icon:last-child { opacity: 0.8; }
-.dly-cell:not(.is-taken):not(.is-locked) { padding-right: 8px; }
+.dly-cell:not(.is-taken):not(.is-locked) { padding-right: calc(var(--px) * 8); }
 
 /* Waiting. Lit gold, with the kit's orb on its corner, so there is never a
    question about where the tap goes. */
 button.dly-cell {
   cursor: pointer;
-  border: 3px solid var(--gold);
-  box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
+  border: calc(var(--px) * 3) solid var(--gold);
+  box-shadow: 0 calc(var(--px) * 2) 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
 }
 button.dly-cell:hover { filter: brightness(1.05); }
-button.dly-cell:active { transform: translateY(2px); box-shadow: none; }
-button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+button.dly-cell:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
+button.dly-cell:focus-visible { outline: calc(var(--px) * 3) solid var(--ink); outline-offset: calc(var(--px) * 2); }
 
 /* The rung number, between the columns: it belongs to the row, not to either
    track. It darkens once the row has been climbed, which is what draws the
@@ -195,12 +195,12 @@ button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
   align-items: center;
   justify-content: center;
   align-self: center;
-  width: 36px;
-  height: 36px;
+  width: calc(var(--px) * 36);
+  height: calc(var(--px) * 36);
   border-radius: 50%;
   background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 2px 0 var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 2) 0 var(--wood-dark);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-body);
@@ -225,28 +225,28 @@ button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc((100% - 40px - 12px) / 2.5 + 6px + 18px);
-  width: 4px;
+  left: calc((100% - calc(var(--px) * 40) - calc(var(--px) * 12)) / 2.5 + calc(var(--px) * 6) + calc(var(--px) * 18));
+  width: calc(var(--px) * 4);
   background: rgba(92, 58, 30, 0.35);
-  border-radius: 2px;
+  border-radius: calc(var(--px) * 2);
 }
 
 .dly-prize {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: calc(var(--px) * 5);
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
-.dly-prize > .icon { --icon-size: 26px; }
+.dly-prize > .icon { --icon-size: calc(var(--px) * 26); }
 
 /* Where the season stands. Not a button — pressing the day is what takes the
    day, so there is nothing at the foot to press. */
 .dly-foot {
   position: sticky;
   bottom: 0;
-  padding-top: 6px;
+  padding-top: calc(var(--px) * 6);
   background: var(--parchment);
   text-align: center;
 }

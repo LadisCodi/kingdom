@@ -111,25 +111,25 @@
 .legacy-screen { display: contents; }
 .legacy-close {
   position: absolute;
-  right: 12px;
+  right: calc(var(--px) * 12);
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   z-index: 30;
   border-radius: 50%;
-  font-size: 16px;
+  font-size: calc(var(--px) * 16);
   color: var(--ink);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 3px 0 var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  box-shadow: 0 calc(var(--px) * 3) 0 var(--wood-dark);
   cursor: pointer;
 }
 .legacy-close:hover { filter: brightness(1.08); }
-.legacy-close:active { transform: translateY(3px); box-shadow: none; }
+.legacy-close:active { transform: translateY(calc(var(--px) * 3)); box-shadow: none; }
 /* The settings knob is hidden while a menu is open, so the corner is free. */
-#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 12px; }
-#panel .legacy-close { top: 8px; }
+#overlay .legacy-close { top: calc(var(--hud-h) + calc(var(--px) * 8)); right: calc(var(--px) * 12); }
+#panel .legacy-close { top: calc(var(--px) * 8); }
 /* Reserve the corner so the knob can't sit on a legacy screen's first action
  * row. Goes away per screen as each grows a sheet with a plank of its own. */
-#panel:has(.legacy-close) { padding-right: 64px; }
+#panel:has(.legacy-close) { padding-right: calc(var(--px) * 64); }

@@ -312,8 +312,16 @@ still derived by the script, never drawn. No emoji anywhere —
   of the screen's height. The width is a ceiling: on a screen narrower than
   the reference (9:20, 9:21) the scale follows the width instead, so the
   1125-wide header always fits (Unity's "Expand"). Sizes are measured on the
-  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll,
-  the reward flight and the nav bar.
+  mockup scaled to 1125 wide.
+- **Everything scales together.** Every size in the UI styles is either in
+  `--rpx` or in `--px` — one CSS pixel of the reference phone (the iPhone X
+  shown 402 CSS px wide, `--rpx × 1125/402`) — so text, buttons, tiles and
+  gaps shrink and grow with the frame as one picture, and every device shows
+  the same composition. A number written `calc(var(--px) * 17)` still reads
+  as "17 px on the reference phone". Kept in real pixels: 1 px hairlines,
+  the 44 px minimum tap area, the measured metrics (`--hud-h`, `--nav-h`) and
+  `@media` / `@container` queries. The research page is not converted yet:
+  its tree is laid out in pixels by code.
 - Safe zones: the header is a 107-rpx beam (62-rpx slots, 30-rpx figures,
   76-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a

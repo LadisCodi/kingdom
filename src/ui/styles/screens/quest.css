@@ -170,7 +170,7 @@
   font-weight: var(--weight-title);
   color: var(--ink-inverse);
   --q-cta-ink: #5d3014;
-  text-shadow: 1px 0 0 var(--q-cta-ink), -1px 0 0 var(--q-cta-ink), 0 1px 0 var(--q-cta-ink), 0 -1px 0 var(--q-cta-ink), 1px 1px 0 var(--q-cta-ink), -1px 1px 0 var(--q-cta-ink), 1px -1px 0 var(--q-cta-ink), -1px -1px 0 var(--q-cta-ink), 0 2px 0 var(--q-cta-ink);
+  text-shadow: 1px 0 0 var(--q-cta-ink), -1px 0 0 var(--q-cta-ink), 0 1px 0 var(--q-cta-ink), 0 -1px 0 var(--q-cta-ink), 1px 1px 0 var(--q-cta-ink), -1px 1px 0 var(--q-cta-ink), 1px -1px 0 var(--q-cta-ink), -1px -1px 0 var(--q-cta-ink), 0 calc(var(--px) * 2) 0 var(--q-cta-ink);
   border: 0;
   border-radius: 0;
   background: none;

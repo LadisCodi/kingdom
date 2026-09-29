@@ -67,6 +67,20 @@
    * (the `frame` container), so the value is per element and needs no script. */
   --rpx: min(calc(100cqh / 2436), calc(100cqw / 1125));
 
+  /* ---- the reference CSS pixel ----
+   * EVERY size in the UI is written in these: one CSS pixel of the reference
+   * phone, the iPhone X at 1125 px wide shown 402 CSS px wide. So a number in
+   * the stylesheets still reads as "17 px on the phone the game is drawn
+   * for", and the whole interface — text, buttons, tiles, gaps — scales with
+   * the frame as one picture, the way a Unity CanvasScaler scales a canvas:
+   * every device shows the same composition, larger or smaller.
+   *
+   * Written `calc(var(--px) * N)`. Three things stay in real pixels on
+   * purpose: a 1px hairline (it would blur), the 44px minimum a finger needs
+   * to hit (a physical size, not a drawn one), and `@media` / `@container`
+   * queries (CSS allows no var() there). */
+  --px: calc(var(--rpx) * 1125 / 402);
+
   /* ---- surfaces ---- */
   --parchment: #f4e4c1;
   --parchment-shade: #e2cca0;
@@ -129,7 +143,7 @@
    * --quest-h is the same trick for a widget: the toast slip stacks above the
    * quest scroll, which it can only do if it knows how tall the scroll is. */
   --hud-h: 44px;
-  --nav-h: 52px;
+  --nav-h: 52px; /* measured, in real px: chromeMetrics.ts overwrites it */
   --quest-h: 0px;
 
   /* ---- type ----
@@ -177,19 +191,19 @@
    *
    * Sized for the phone: body a size above the iOS reading size, because a
    * menu is read at arm's length over a busy map. */
-  --text-title: 28px;
-  --text-body: 17px;
-  --text-desc: 15px;
-  --text-heading: 14px;
-  --text-helper: 14px;
-  --text-button: 16px;
+  --text-title: calc(var(--px) * 28);
+  --text-body: calc(var(--px) * 17);
+  --text-desc: calc(var(--px) * 15);
+  --text-heading: calc(var(--px) * 14);
+  --text-helper: calc(var(--px) * 14);
+  --text-button: calc(var(--px) * 16);
 
   /* ---- form ---- */
-  --gutter: 12px; /* the side padding a sheet keeps from the frame */
-  --radius: 10px;
-  --radius-sm: 8px;
-  --outline: 3px; /* panel frame outline */
-  --lip: 3px; /* the drop under a pressable slab */
+  --gutter: calc(var(--px) * 12); /* the side padding a sheet keeps from the frame */
+  --radius: calc(var(--px) * 10);
+  --radius-sm: calc(var(--px) * 8);
+  --outline: calc(var(--px) * 3); /* panel frame outline */
+  --lip: calc(var(--px) * 3); /* the drop under a pressable slab */
 
   /* ---- motion ---- */
   --motion-sheet: 180ms;

@@ -38,8 +38,11 @@ const sheets = files.map((f) => [f.split('/').pop()!, readFileSync(new URL(f), '
 const tokens = readFileSync(new URL('../src/ui/styles/tokens.css', import.meta.url), 'utf8');
 
 const tokenPx = (name: string): number => {
-  const m = new RegExp(`--text-${name}:\\s*(\\d+)px`).exec(tokens);
-  expect(m, `--text-${name} is not declared in px`).not.toBeNull();
+  // Sizes are written in REFERENCE pixels, `calc(var(--px) * N)` (tokens.css):
+  // N is px on the phone the game is drawn for, which is what the brief's
+  // minimums mean.
+  const m = new RegExp(`--text-${name}:\\s*calc\\(var\\(--px\\) \\* (\\d+)\\)`).exec(tokens);
+  expect(m, `--text-${name} is not declared in reference px`).not.toBeNull();
   return Number(m![1]);
 };
 
@@ -95,7 +98,11 @@ describe('the type scale', () => {
   // below the point where text stops being readable on the device.
   it('never hardcodes a font-size below the floor', () => {
     const tiny = blocks()
-      .map((b) => ({ ...b, px: /font-size:\s*(\d+)px/.exec(b.body)?.[1] }))
+      .map((b) => ({
+        ...b,
+        px: (/font-size:\s*calc\(var\(--px\) \* (\d+(?:\.\d+)?)\)/.exec(b.body)
+          ?? /font-size:\s*(\d+(?:\.\d+)?)px/.exec(b.body))?.[1],
+      }))
       .filter((b) => b.px !== undefined && Number(b.px) < MIN_ANY_PX)
       .map((b) => `${b.file} ${b.sel} = ${b.px}px`);
     expect(tiny).toEqual([]);
