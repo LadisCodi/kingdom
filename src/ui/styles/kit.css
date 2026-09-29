@@ -260,7 +260,15 @@
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
 }
-.k-cost { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); }
+.k-cost {
+  display: inline-flex;
+  align-items: center;
+  /* The mark close to its figure, and the figure set heavy and tight, so a
+     price reads as one word: "🪙20", not "🪙  2 0". */
+  gap: calc(var(--px) * 1);
+  font-weight: var(--weight-title);
+  letter-spacing: -0.03em;
+}
 /* A price's mark reads at the size of its number, a little over: the icon
    is what says WHICH coin, and at the small size it was a speck beside the
    figure. Sized to the term's own font, so a price in any font keeps it.
