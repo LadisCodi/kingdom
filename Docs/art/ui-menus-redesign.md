@@ -488,8 +488,9 @@ wood of its sides touches the screen's edges.
     done, in one word (*Upgrading*, *Building*, or *Waiting* for a
     builder), breathing slowly between 75% and full opacity;
   - the painted hammer floats over the portrait, with no base, and works it
-    in a loop: one blow at the right corner, a flight to the left corner —
-    turning over on the way — two small taps there, and back. Each blow
+    in a loop, like a magic hammer: one blow at the right corner, a flight
+    round in a loop over the picture and across to the left corner — keeping
+    its bearing, never turning over — two small taps there, and an arc back. Each blow
     throws a few sparks where it lands. Still with reduced motion;
   - nothing else on the card changes, and there is nothing at its foot.
 - **The upgrade popup** (the card's Upgrade opens it; reference

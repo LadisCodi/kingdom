@@ -584,20 +584,23 @@
 .dc-upgrade:has(.k-btn.has-cost) { width: auto; }
 
 /* THE WORKING HAMMER: the painted hammer, floating with no base, over the
- * portrait while it is being built. One loop: raised over the right corner,
- * one full blow, a flight to the left corner, two small taps there, and the
- * flight back. It swings on the end of its handle, so the head travels the
- * arc a real hammer does, and each blow throws sparks where it lands.
+ * portrait while it is being built — a magic hammer, flying on its own. One
+ * loop: raised over the right corner, one full blow, a flight round in a loop
+ * down over the picture and across to the left corner, two small taps there, and an arc low
+ * over the picture back. It keeps its bearing in the air (it never turns over) and swings on
+ * the end of its handle, so each blow's head travels the arc a real hammer's
+ * does, and throws sparks where it lands.
  *
  * Geometry, in the 84 × 75 portrait: the pivot (the handle's end) sits
  * 29 px left of where the head lands at the bottom of a blow — the right
- * blow lands at (70, 20), the left taps at (14, 26). */
+ * blow lands at (70, 20), the left taps at (30, 24), far enough in that the
+ * handle stays over the tile. */
 .dc-work {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  --work-loop: 2.6s;
+  --work-loop: 3.2s;
 }
 .dc-hammer {
   position: absolute;
@@ -612,23 +615,31 @@
   animation: dc-hammer var(--work-loop) ease-in-out infinite;
 }
 @keyframes dc-hammer {
-  0%   { translate: 0 0; rotate: -20deg; scale: 1 1; }
+  0%   { translate: 0 0; rotate: -20deg; }
   /* the blow: fast in, a small rebound, then raised again */
   9%   { rotate: -24deg; animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
   15%  { rotate: 70deg; animation-timing-function: ease-out; }
   20%  { rotate: 58deg; }
-  30%  { translate: 0 0; rotate: -20deg; scale: 1 1; }
-  /* the flight to the left corner, turning over on the way so it works that
-     corner from inside the tile, the mirror of the right one */
-  46%  { translate: calc(var(--px) * 2) calc(var(--px) * 6); rotate: -20deg; scale: -1 1; }
+  30%  { translate: 0 0; rotate: -20deg; animation-timing-function: linear; }
+  /* the flight: round in a full loop down over the picture — never up into
+     the window's header — then a wave across to the left */
+  32%  { translate: calc(var(--px) * 9) calc(var(--px) * 4); rotate: -26deg; animation-timing-function: linear; }
+  34.5% { translate: calc(var(--px) * 11) calc(var(--px) * 14); rotate: -34deg; animation-timing-function: linear; }
+  37%  { translate: calc(var(--px) * 3) calc(var(--px) * 20); rotate: -22deg; animation-timing-function: linear; }
+  39.5% { translate: calc(var(--px) * -5) calc(var(--px) * 13); rotate: -8deg; animation-timing-function: linear; }
+  42%  { translate: calc(var(--px) * -2) calc(var(--px) * 3); rotate: -14deg; animation-timing-function: linear; }
+  44.5% { translate: calc(var(--px) * -14) calc(var(--px) * 7); rotate: -24deg; animation-timing-function: linear; }
+  47%  { translate: calc(var(--px) * -27) calc(var(--px) * 1); rotate: -16deg; animation-timing-function: ease-out; }
+  50%  { translate: calc(var(--px) * -40) calc(var(--px) * 4); rotate: -20deg; }
   /* two small taps */
-  52%  { rotate: -30deg; animation-timing-function: ease-in; }
-  56%  { rotate: -70deg; animation-timing-function: ease-out; }
-  62%  { rotate: -30deg; animation-timing-function: ease-in; }
-  66%  { rotate: -70deg; animation-timing-function: ease-out; }
-  74%  { translate: calc(var(--px) * 2) calc(var(--px) * 6); rotate: -20deg; scale: -1 1; }
-  /* and back */
-  92%, 100% { translate: 0 0; rotate: -20deg; scale: 1 1; }
+  54%  { rotate: 30deg; animation-timing-function: ease-in; }
+  57%  { rotate: 70deg; animation-timing-function: ease-out; }
+  63%  { rotate: 30deg; animation-timing-function: ease-in; }
+  66%  { rotate: 70deg; animation-timing-function: ease-out; }
+  74%  { translate: calc(var(--px) * -40) calc(var(--px) * 4); rotate: -20deg; animation-timing-function: ease-in-out; }
+  /* and back, in an arc low over the picture */
+  83%  { translate: calc(var(--px) * -20) calc(var(--px) * 10); rotate: -14deg; animation-timing-function: ease-in-out; }
+  92%, 100% { translate: 0 0; rotate: -20deg; }
 }
 
 /* THE SPARKS: four specks at the spot a blow lands, thrown out and fading.
@@ -639,7 +650,7 @@
   height: 0;
 }
 .dc-sparks.is-r { left: calc(var(--px) * 70); top: calc(var(--px) * 20); }
-.dc-sparks.is-l { left: calc(var(--px) * 14); top: calc(var(--px) * 26); }
+.dc-sparks.is-l { left: calc(var(--px) * 30); top: calc(var(--px) * 24); }
 .dc-spark {
   position: absolute;
   left: calc(var(--px) * -3);
@@ -666,9 +677,9 @@
   100% { opacity: 0; }
 }
 @keyframes dc-spark-l {
-  0%, 55.9% { opacity: 0; translate: 0 0; scale: 1; }
-  56%  { opacity: 1; translate: 0 0; scale: 0.8; }
-  62%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx) * -1) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
+  0%, 56.9% { opacity: 0; translate: 0 0; scale: 1; }
+  57%  { opacity: 1; translate: 0 0; scale: 0.8; }
+  62%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
   65.9% { opacity: 0; translate: 0 0; scale: 0.8; }
   66%  { opacity: 1; translate: 0 0; scale: 0.8; }
   72%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sy)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
