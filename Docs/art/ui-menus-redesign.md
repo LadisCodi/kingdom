@@ -360,7 +360,9 @@ contents start. Three pieces, each cut to slice
 the paper (under the ring), and the header band. It is as wide as it is on
 the iPhone X (1053 rpx: the reference width less the overlay's gutter),
 centred — edge to edge on the reference phone, with the map showing either
-side on anything wider. A centred modal keeps its own narrower cap.
+side on anything wider. A centred modal keeps its own narrower cap. The
+district card is the full reference width (1125 rpx): on the iPhone X the
+wood of its sides touches the screen's edges.
 
 - **In**: the contents hidden; the frame fades in and grows from its least
   height (its top and bottom slices, nothing between) to its full height in

@@ -65,8 +65,7 @@
    (36 rpx), so on the reference phone the window runs edge to edge as the
    mockup draws it, and on anything wider — a tablet, a desktop — it keeps
    that width and the map shows on either side instead of the window
-   stretching. The district card takes the same width, so every window
-   matches. (A centred modal keeps its own, narrower cap — kit.css.) */
+   stretching. (A centred modal keeps its own, narrower cap — kit.css.) */
 .k-sheet:not(.is-centred),
 .dc {
   --win-w: calc(var(--rpx) * 1053);
@@ -74,6 +73,11 @@
   margin-left: auto;
   margin-right: auto;
 }
+/* THE DISTRICT CARD runs the reference width itself, 1125: on the iPhone X
+   the wood of its sides touches the screen's edges — it is the map's own
+   panel, not a menu opened over it — and on anything wider it keeps that
+   width, centred. */
+.dc { --win-w: calc(var(--rpx) * 1125); }
 /* The nav steps aside for the card as for a sheet, so the card keeps the
    sheets' 8 px off the bottom edge rather than sitting on it. */
 .dc { margin-bottom: calc(var(--px) * 8); }
