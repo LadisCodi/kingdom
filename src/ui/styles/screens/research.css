@@ -67,7 +67,7 @@
 /* The tree is laid out at its own width (layout.ts PAGE_W) and zoomed to the
    page's by researchMenu.ts, so three columns fit any phone. */
 
-/* The pins, at the stack's top corners, and the sheet's one at its top. */
+/* The pin, at the stack's top corner. */
 .rb-pin {
   position: absolute;
   z-index: 2;
@@ -78,7 +78,6 @@
 }
 .rb-pin.is-left { top: calc(var(--px) * 10); left: calc(var(--px) * 12); }
 .rb-pin.is-right { top: calc(var(--px) * 10); right: calc(var(--px) * 12); }
-.rb-pin.is-centre { top: calc(var(--px) * -8); left: 50%; transform: translateX(-50%); }
 .rb-stack > .k-close { position: absolute; z-index: 3; top: calc(var(--px) * -6); right: calc(var(--px) * -4); }
 
 /* A chapter: the book's first at the top of the page, the rest where each
@@ -247,8 +246,8 @@
   background: rgba(24, 14, 6, 0.55);
 }
 .rb-sheet-wrap { position: relative; width: min(460px, 100%); max-height: 100%; display: flex; }
-.rb-sheet-wrap > .rb-pin.is-centre { top: -8px; }
-.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: -10px; right: -4px; }
+/* In the top sheet's corner, on the paper: the drawing's margins, in % of it. */
+.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: 5.5%; right: 8%; }
 .rb-sheet {
   position: relative;
   flex: 1;
@@ -270,6 +269,7 @@
   font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   text-align: center;
+  padding: 0 calc(var(--px) * 34); /* clear of the close knob */
 }
 .rb-about { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; margin: 4px 0 6px; }
 .rb-emblem {

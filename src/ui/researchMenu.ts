@@ -273,8 +273,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
 }
 
 /**
- * A technology, opened (M46): a loose research page — the same parchment as
- * the book, pinned — read top to bottom in three parts that are never
+ * A technology, opened (M46): a loose research page over the book, read top to bottom in three parts that are never
  * numbered on it:
  *
  *  1. what it is — its emblem and one plain sentence; the name is the heading;
@@ -379,9 +378,8 @@ function techSheet(game: Game, id: TechId): HTMLElement {
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 
-  // The pin and the way out sit on the page's edge, outside what scrolls.
+  // The way out sits in the page's corner, outside what scrolls.
   const scrim = el('div', { class: 'tech-modal' }, el('div', { class: 'rb-sheet-wrap' },
-    el('span', { class: 'rb-pin is-centre', 'aria-hidden': 'true' }),
     closeKnob(dismiss),
     page));
   // The scrim dismisses; the page does not, or every press inside it would

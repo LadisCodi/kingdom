@@ -430,7 +430,7 @@ minute. Each is in one of three states:
 ### 5.4 The technology's sheet
 
 **A loose research page** over the dimmed book — a small stack of parchment,
-one pin at its top, the name as its heading, a close knob in its corner; the
+the name as its heading, a close knob in its top corner, on the paper; the
 scrim closes it too. **Every sheet is the same size**: as tall as the tallest
 technology's needs, whatever state it is in. It reads top to bottom in three parts, never numbered:
 
