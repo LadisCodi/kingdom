@@ -305,14 +305,15 @@
   white-space: normal;
 }
 .tr-buy .k-btn.has-cost > .k-btn-cost { flex-wrap: wrap; row-gap: calc(var(--px) * 2); }
-.tr-blocked {
-  display: flex;
+/* A gated Train: the priced frame holds the reason instead of the price —
+   the padlock and a few words, wrapped to the frame — over the disabled
+   slab. */
+.tr-buy .k-btn.is-gated > .k-btn-cost > .k-cost {
   align-items: flex-start;
-  gap: calc(var(--px) * 4);
-  max-width: calc(var(--px) * 112);
-  color: var(--ink-muted);
   font-size: var(--text-desc);
   line-height: 1.2;
+  text-align: center;
+  white-space: normal;
 }
 
 /* THE TAGS: a chip for what the unit is (blue) and what it does (paper). A

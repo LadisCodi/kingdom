@@ -225,27 +225,24 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   const cost = trainCost(game.state, trainee);
   const unit = trainee === 'Villager' ? null : UNITS[trainee];
 
-  // A GATE takes the button's place. When something other than money is in
-  // the way — no room, a technology, a full army — a dead button with a
-  // caption is two things saying one thing. So the slot holds the reason
-  // alone, in the padlock's colour, and the button comes back when the gate
-  // opens. Being short of coin is not a gate: the button stays and its red
-  // price says so (§6.4).
+  // A GATE keeps the button and disables it: where the price would be, the
+  // priced frame says in a few words why it cannot be pressed. Being short of
+  // coin is not a gate: the price stays, and its red term says so (§6.4).
   const army = game.armyRoom();
   const gate = unit === null
-    ? (game.trainingInfo().atMax ? 'Nowhere to put them — build more Housing' : undefined)
+    ? (game.trainingInfo().atMax ? 'No house to live in' : undefined)
     : unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)
-      ? `Research ${TECHNOLOGIES[unit.requiredTech].name} first`
-      : army.used + 1 > army.cap ? 'The army is full — upgrade this hall' : undefined;
-  const buy = gate !== undefined
-    ? el('div', { class: 'tr-blocked' }, iconEl('padlock', { size: 'sm' }), gate)
-    : btn({
-      label: 'Train',
-      kind: 'primary',
-      onClick: () => game.doTrain(trainee, district),
-      cost,
-      have: (c) => game.walletValue(c),
-    });
+      ? `Needs ${TECHNOLOGIES[unit.requiredTech].name}`
+      : army.used + 1 > army.cap ? 'Max army reached' : undefined;
+  const buy = btn({
+    label: 'Train',
+    kind: 'primary',
+    onClick: () => game.doTrain(trainee, district),
+    ...(gate === undefined
+      ? { cost, have: (c) => game.walletValue(c) }
+      : { costExtra: [{ icon: 'padlock', amount: gate, short: true }] }),
+  });
+  if (gate !== undefined) buy.classList.add('is-gated');
 
   const tags = unit === null
     ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]

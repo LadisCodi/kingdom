@@ -424,8 +424,9 @@ wood of its sides touches the screen's edges.
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,
-    Health. A gate (no room, a technology, a full army) takes the button's
-    place with its reason.
+    Health. A gate keeps the button, disabled, and puts a padlock and a
+    short reason where its price would be: *No house to live in*, *Max army
+    reached*, *Needs Archery*.
   - **Tags:** chips for what the unit is (its type, blue: Melee, Ranged,
     Mounted; Worker for a villager) and what it does (its type-chart edge:
     *Strong vs Lancer*). Tapping one opens a one-line bubble; one at a time.
