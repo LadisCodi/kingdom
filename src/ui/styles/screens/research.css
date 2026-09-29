@@ -129,17 +129,24 @@
 /* --------------------------------------------------------- the connectors --- */
 
 .tech-flow { position: relative; margin: 0 auto 20px; }
-.tech-edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-/* Drawn with a quill: thin sepia ink, a slightly uneven stroke. */
-.tech-edge {
-  fill: none;
-  stroke: #5e4126;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: url(#rb-quill);
+.tech-edges { position: absolute; inset: 0; pointer-events: none; }
+/* Drawn with a quill: four pieces of sepia ink (assets/rb-edge-*.png, cut by
+   Docs/art/ui/sheets/rb-edges.mjs). Where each sits is set inline from
+   src/ui/research/layout.ts; this is only what they are made of. */
+.rb-edge { position: absolute; background-repeat: no-repeat; background-size: 100% 100%; }
+.rb-edge.is-v { background-image: url('../../assets/rb-edge-v.png'); background-repeat: repeat-y; background-size: 100% auto; }
+.rb-edge.is-h { background-image: url('../../assets/rb-edge-h.png'); background-repeat: repeat-x; background-size: auto 100%; }
+.rb-edge.is-elbow { background-image: url('../../assets/rb-edge-elbow.png'); }
+.rb-edge.is-right-bottom { transform: rotate(90deg); }
+.rb-edge.is-bottom-left { transform: rotate(180deg); }
+.rb-edge.is-left-top { transform: rotate(270deg); }
+/* Its tip on the card's top edge. */
+.rb-edge.is-head {
+  width: 12px;
+  height: 6.33px;
+  transform: translate(-50%, -100%);
+  background-image: url('../../assets/rb-edge-head.png');
 }
-.tech-arrowhead { fill: none; stroke: #5e4126; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------- the cards --- */
 

@@ -14,7 +14,7 @@ import {
   techKnowledgeMissing, techPoured, techState, techUnlocks,
 } from '../src/sim/research';
 import {
-  CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
+  CHANNEL_W, COLS, colLeft, edgePath, edgePieces, ELBOW_R, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
 } from '../src/ui/research/layout';
 import { getWallet, type TechId } from '../src/sim/state';
 import {
@@ -385,6 +385,37 @@ describe('tome page geometry (layout is content)', () => {
       { x: colLeft(1) + NODE_W / 2, y: NODE_H },
       { x: colLeft(1) + NODE_W / 2, y: to.top },
     ]);
+  });
+
+  // A connector is DRAWN from pieces of art (research.css): runs, elbows
+  // turned to face their bend, and a head. The pieces must meet end to end,
+  // or a gap shows in the ink.
+  it('breaks a connector into runs and elbows that meet end to end', () => {
+    const from = { top: 0, col: 0 };
+    const to = { top: NODE_H + ROW_GAP, col: 2 };
+    const points = edgePath(from, to);
+    const pieces = edgePieces(points);
+    expect(pieces.map((p) => (p.kind === 'elbow' ? p.turn : p.kind)))
+      .toEqual(['v', 'top-right', 'h', 'bottom-left', 'v', 'head']);
+    // Every run stops ELBOW_R short of the corner it turns at.
+    const [down, , across, , into] = pieces as Array<{ x: number; y: number; len: number }>;
+    expect(down.y + down.len).toBe(points[1].y - ELBOW_R);
+    expect(across.x).toBe(points[1].x + ELBOW_R);
+    expect(across.x + across.len).toBe(points[2].x - ELBOW_R);
+    expect(into.y).toBe(points[2].y + ELBOW_R);
+    expect(into.y + into.len).toBe(to.top);
+    expect(pieces.at(-1)).toEqual({ kind: 'head', x: points[3].x, y: to.top });
+  });
+
+  it('turns an elbow the way its connector bends, leftward too', () => {
+    const turns = (path: Array<{ x: number; y: number }>) =>
+      edgePieces(path).flatMap((p) => (p.kind === 'elbow' ? [p.turn] : []));
+    // Down, left, down.
+    expect(turns(edgePath({ top: 0, col: 2 }, { top: NODE_H + ROW_GAP, col: 0 })))
+      .toEqual(['left-top', 'right-bottom']);
+    // Out into the channel and back: every bend is one of the four.
+    const channel = turns(edgePath({ top: 0, col: 1 }, { top: 4 * (NODE_H + ROW_GAP), col: 1 }, false));
+    expect(channel).toHaveLength(4);
   });
 
   // The page is as long as what the player can SEE: a row the fog has emptied
