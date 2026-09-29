@@ -7,7 +7,7 @@
 > [`tech-tree.md`](tech-tree.md).
 >
 > **Status.** The three general books, the one-page-per-book flow chart with its era bars,
-> the rank ladders, the Knowledge drip and the Stardust split are
+> the rank ladders and the Stardust split are
 > **built**, and the shape is authored in `?dev=tree`
 > ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
 > **the found books (§2.3)**, spells as Magic nodes (§6),
@@ -35,7 +35,7 @@
 |---|---|---|
 | **`unlock`** | opens content, and names it | fully — a dropdown per thing it opens |
 | **`bonus`** | moves numbers, and names them (`effects`) | fully — a picker per number it moves |
-| **`mechanic`** | what the sim reads by id — `Conquest` bending the Knowledge rate, `SanctifiedRuins` doubling a drip | labelled only; the code does it |
+| **`mechanic`** | what the sim reads by id — `Conquest` adding to a ruin's lump, `SanctifiedRuins` doubling it | labelled only; the code does it |
 
 - **The technology says what it opens, and every gate is derived from that**
   (`GATES`, `src/sim/data/definitions.ts`): a district's `requiredTech`, a
@@ -276,55 +276,62 @@ A `bonus` names its effects, and each is four fields:
   `Knowledge`; survives a province reset.
 - **Buys technologies and nothing else** (plus guild investment, §8, when
   built). It is spent by pouring (§1).
-- **It fills with time, up to a cap, and the drip stops at the cap.**
-  - **The cap is hours of drip**: `cap = ceil(rate × knowledge.barHours)`.
-    A faster drip gets a bigger bar, so a full bar always takes the same time
-    to fill.
-  - **Only the drip stops.** A lump — a quest, a claim, a first clear, an
-    event — and a purchase (§3.2) always land in full, even over the cap. The
-    drip resumes once the bar is back under it.
-  - Nothing over the cap is ever lost; the cost of a full bar is the drip it
-    did not earn.
-- **A base rate, and territory on top of it.** The kingdom learns **1 an
-  hour** holding nothing; every landmark and ruin adds to that.
+- **The bar: 1 an hour, up to 10.** Both numbers are fixed for the whole
+  game; nothing raises the rate or the cap.
+  - **The drip stops while the balance is at or over 10.**
+  - **Everything else lands in full, even over 10** — a quest, a claim, a
+    first clear, an event, a purchase (§3.2). Nothing is ever lost; the cost
+    of a full bar is the drip it did not earn.
+  - The drip resumes as soon as pouring takes the balance back under 10.
+- **Offline, the bar is the only cap.** The drip is not cut by the 8-hour
+  offline cap: away for ten hours or more, the player comes back to a full
+  bar. This is the one production that ignores `offlineCapHours`, because the
+  bar already bounds it (invariant 2).
+- **Territory pays in lumps, never in rate.** Claiming a landmark and a
+  ruin's first clear each pay once. The ladders and mechanics that raise
+  those lumps are in the table.
+- **A lump raise pays back.** A technology that raises a lump pays its raise
+  at once for every site already claimed or cleared, so researching it late
+  never costs what researching it early would have paid.
 - **A new kingdom starts with no Knowledge.** The opening chain pays for its
   own cards: eleven quests pay Knowledge, enough to carry the chain to
   `Attuned` with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
-  opening the drip and the rewards are the funding.
+  opening the drip, the lumps and the purchases are the funding.
 
-| Source | Rate | One-off | Key |
-|---|---|---|---|
-| the **base rate** | +1/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `currencies` › Knowledge › `start` |
-| each **claimed landmark** | +0.2/h | +5 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
-| each **cleared ruin** | +0.2/h | +15 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
-| the **`Conquest`** technology | +0.3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
-| `SanctifiedRuins` | ×2 on the per-ruin drip | — | a `mechanic` |
-| `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
-| `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
-| `knowledgeYield` modifier | × on the whole rate | — | the `insight` delve boon (×3) |
-| the **quest chain** | — | 27 across eleven quests | `quests` › `rewardKnowledge` |
-| **events** | — | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
-| **buying it** | — | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.gemsPerPoint` |
+| Source | Pays | Key |
+|---|---|---|
+| the **drip** | 1/h while under 10 | `knowledge.basePerHour` · `knowledge.cap` |
+| claiming a **landmark** | 5, once | `knowledge.landmarkClaimLump` |
+| a ruin's **first clear** | 15, once | `delve.firstClearKnowledge` |
+| `Wayposts I–III` | +3 on every landmark claim, per rank | a `bonus` ladder |
+| `Vigils I–III` | +5 on every first clear, per rank | a `bonus` ladder |
+| `Conquest` | +15 on every first clear | a `mechanic` |
+| `SanctifiedRuins` | ×2 on the whole first-clear lump, raises included | a `mechanic` |
+| `Scriptorium I–III` | +5% on every lump, per rank | a `bonus` ladder |
+| `knowledgeYield` modifier | × on every lump while it runs | the `insight` delve boon (×3) |
+| the **quest chain** | 27 across eleven quests | `quests` › `rewardKnowledge` |
+| **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
+| **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.gemsPerPoint` |
 
-- A kingdom holding nothing drips **1/h** (24 a day); a fully explored
-  province — ten landmarks, five ruins — **4/h** (96 a day) before
-  `Conquest`, **5.5/h** after.
-- The clock banks whole units on a **whole-millisecond period** rounded from
-  the rate, which is what keeps one-call replay identical to stepped ticking
-  when the rate is a fraction (invariant 1).
-- **Invariant 2:** the drip is *production* and stops at the 8-hour offline
-  cap as well as at the bar. Lumps ride the event that grants them and pay in
-  full in the uncapped tail.
-- The balance reads as **held / cap** with the rate beside it. Where the bar
-  is shown outside the research screen is **OQ-104**.
+- The drip pays **at most 24 a day**, and only to a player who pours before
+  the bar is full.
+- A fully held province — ten landmarks, five ruins — pays **125** in lumps
+  before any ladder, **about 680** with every ladder and mechanic above
+  (a ruin's 15 + 15 + 15, doubled; every lump +15%).
+- **Recurring sources** past the drip — whether ruin rooms pay Knowledge — are
+  **OQ-106**.
+- The clock banks whole units against an anchor, the same shape as taxes and
+  Mana, so one-call replay equals stepped ticking (invariant 1).
+- The balance reads as **held / 10**, with the time until the bar is full.
+  Where the bar is shown outside the research screen is **OQ-104**.
 
 ### 3.1 Knowledge and Mana
 
 | | Mana | Knowledge |
 |---|---|---|
 | Scope | city | kingdom |
-| Fills with | time | time, landmarks and cleared ruins |
-| Ceiling | capped; what arrives over the cap is lost | capped; only the drip stops, and lumps and purchases land over it |
+| Fills with | time | time; lumps from landmarks, ruins, quests and events |
+| Ceiling | capped; what arrives over the cap is lost | 10; only the drip stops, and lumps and purchases land over it |
 | Spent on | taps and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies, poured |
 | Bought with | Gems, a rewarded video | Gold, Gems (§3.2) |
 
@@ -355,7 +362,7 @@ the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
 | **Knowledge** | technologies | time, claimed landmarks, cleared ruins, quest and event lumps, Gold, Gems | kingdom | its bar (§3, **OQ-104**) |
 | **Stardust** | the hero ascension toll (`src/sim/collection.ts`; [`10-heroes.md`](10-heroes.md) §4) — relic levels left it 2026-09-09 ([`09-relics.md`](09-relics.md)) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the hero screens |
 
-- One job each. `knowledgeYield` multiplies the drip; `stardustYield`
+- One job each. `knowledgeYield` multiplies a Knowledge lump; `stardustYield`
   multiplies what a depth pays.
 - A ruin's first clear pays **both** lumps.
 - Stardust has no row on the plank: a currency spent in exactly one screen
@@ -476,13 +483,13 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 
 ## 7. Ruins and landmarks
 
-- A **cleared ruin** pays 15 Knowledge on first clear and +0.2/h after (§3).
+- A **cleared ruin** pays 15 Knowledge on its first clear (§3).
 - **No tome is gated behind anything.** Every book is open, so a ruin being
   *discovered*, not cleared.
-- A **province landmark** pays +5 on claiming and +0.2/h while held.
+- A **province landmark** pays 5 on claiming.
 - A **contested world-map landmark** ([`02-map-scopes.md`](02-map-scopes.md)
   §4) pays a Knowledge lump when taken and nothing while held *(designed, not
-  built)*. Province landmarks stay on rate.
+  built)*.
 
 ## 8. Guild investment — designed, not built
 
@@ -499,13 +506,11 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 | Dial | Value | Key |
 |---|---|---|
 | Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
-| **The bar: hours of drip it holds** | 8 h — **OQ-105** | `knowledge.barHours` |
+| **The bar** | 1/h up to 10 | `knowledge.basePerHour` · `knowledge.cap` |
 | **Gold price of a point** | base × n, never reset — **OQ-105** | `knowledge.goldPriceBase` |
 | **Gem price of a point** | fixed — **OQ-105** | `knowledge.gemsPerPoint` |
-| Base drip | 1/h | `knowledge.basePerHour` |
-| Landmark drip · claim lump | 0.2/h · 5 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
-| Ruin drip · first-clear lump | 0.2/h · 15 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
-| Conquest drip | 0.3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
+| Landmark claim lump · per `Wayposts` rank | 5 · +3 | `knowledge.landmarkClaimLump` · `tech-tree.json` |
+| First-clear lump · per `Vigils` rank · `Conquest` | 15 · +5 · +15 | `delve.firstClearKnowledge` · `tech-tree.json` · `knowledge.conquestFirstClearLump` |
 | Chain Knowledge | 27 total | `quests` › `rewardKnowledge` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
@@ -521,7 +526,8 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   describes drifts the first time a ladder is rebalanced: 150 cards once
   shared 68 sentences, and five contradicted their own effects. The card is
   generated (§1); a `mechanic` writes one because its effect is code.
-- A Knowledge rate scaled by Townhall level or population.
+- **A Knowledge rate or cap that anything raises** — not territory, a building, a technology, the Townhall or population.
+- Territory paying Knowledge by the hour.
 - City-scoped Knowledge.
 - Buying Knowledge with anything but Gold and Gems; a Gold price that resets.
 - A library district or a scholar assignment as Knowledge sources
@@ -574,5 +580,5 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   (§1.2).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**. (**OQ-68** is retired: a band is not held by a keystone
+**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**, **OQ-106**. (**OQ-68** is retired: a band is not held by a keystone
 any more, and what each bar asks for is a number, so it is OQ-13.)

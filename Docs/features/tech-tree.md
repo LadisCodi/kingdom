@@ -156,7 +156,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Salvage** *(inert — the rule it prices was retired with the delve)* | — |
 | **Vanguard** *(planned)* | the first depth of a ruin you have already cleared is walked in one tap |
 | **Standards** *(planned)* | army power cap rises with military hall level |
-| **Conquest** | +3 Knowledge/h per cleared ruin, on top of the cleared rate ([`07-research.md`](07-research.md) §3) |
+| **Conquest** | +15 Knowledge on every ruin's first clear, paid back for ruins already cleared ([`07-research.md`](07-research.md) §3) |
 
 ### 3.4 Warfare rank ladders
 
@@ -222,7 +222,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 |---|---|
 | **Fishing** | the Docks |
 | **Shipbuilding** | Docks L2 |
-| **Sanctified Ruins** | a cleared ruin's Knowledge drip doubles |
+| **Sanctified Ruins** | a ruin's first-clear Knowledge doubles, paid back for ruins already cleared |
 | **Ritual Casting** *(planned)* | a relic active can target a **building**, not only a cell |
 | **Ley Storm** *(planned)* | once a day, cast a kingdom-wide +25% production window |
 | **Second Sanctum** | a second Sanctum may be built (`extraCountTech` on the district) |
@@ -236,14 +236,14 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Ley Taps I–III** | +1 Mana/h per claimed landmark | I / II / III |
 | **Farsight I–III** | +1 discover radius | I / II / III |
 | **Pitons I–II** | −10% Gold to clear a cell of fog | — / I / II |
-| **Scriptorium I–III** | +5% Knowledge drip rate | — / I / II |
-| **Wayposts I–III** | +1 Knowledge/h per claimed landmark | — / I / II |
+| **Scriptorium I–III** | +5% on every Knowledge lump | — / I / II |
+| **Wayposts I–III** | +3 Knowledge on every landmark claim, paid back for landmarks held | — / I / II |
 | **Reliquary I–III** *(designed, not built)* | +5% chance a room's card pack is one tier better | — / I / II |
 | **Pilgrimage I–III** | −5% landmark claim cost | — / I / II |
 | **Confluence I–III** *(designed, not built)* | +5% to the Sanctum adjacency bonus | — / I / II |
 | **Thrift I–III** *(designed, not built)* | +10% chance a tap costs no Mana | — / I / II |
 | **Big Nets I–III** | +1 Food per delivery from a shoal | — / — / I |
-| **Vigils I–III** | +1 Knowledge/h per cleared ruin | — / — / I |
+| **Vigils I–III** | +5 Knowledge on every first clear, paid back for ruins cleared | — / — / I |
 | **Focus I–III** *(designed, not built)* | +10% relic active duration | — / — / I |
 | **Tempest I–III** *(designed, not built)* | +5 min Ley Storm duration | — / — / I |
 | **Prospecting I–III** | +5% Stardust from rooms | — / — / I |
@@ -278,10 +278,10 @@ and every rank is an ordinary card gated by the row above it like any other.
 | 3 | 384,640 | 1,801 |
 | 4 | 60,000 | 300 |
 
-- At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
-  (2,024 Knowledge) are about **15 days** of unbroken drip at 5.5/h. A bar
-  left full stops earning, and Gold and Gems buy the gap, so the real pace is
-  the playtest's (**OQ-13**).
+- Eras 1–3 ask for **2,024 Knowledge**. The drip pays at most 24 a day and a
+  full province about 680 in lumps, so the drip alone is **about two months**
+  of eras 1–3 at best; events, purchases and **OQ-106** close the gap, and the
+  real pace is the playtest's (**OQ-13**).
 - The quest chain funds the **opening** — every era-1 technology and the first
   rank that follows. It also asks for enough exploring to open era 2 before it
   points at anything in it (`tests/quests.test.ts`). Era-2 majors are the
@@ -323,8 +323,9 @@ names the one call site that owns its number, and
 | `buildTime` | Carpentry | |
 | `taxRate` | Trade Routes | aimable at a kind of house; the shipped ladder is unaimed |
 | `manaCap` | Deep Wells | |
-| `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
-| `knowledgeYield` | Scriptorium | |
+| `manaPerClaimedLandmark` | Ley Taps | a per-site term the call site multiplies by the count it holds |
+| `landmarkClaimKnowledge` · `firstClearKnowledge` | Wayposts, Vigils | a raise on one lump, paid back at once for every site already held ([`07-research.md`](07-research.md) §3) |
+| `knowledgeYield` | Scriptorium | every Knowledge lump, never the drip |
 | `activeCost` | Resonance | |
 | `revealCost` · `discoverRadius` | Pitons, Farsight | `revealCost` is the fog's only dial: a cell is five taps at every ring, so nothing buys a press back ([`01-map-and-fog.md`](01-map-and-fog.md) §5). `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
 | `claimCost` | Pilgrimage | |
@@ -343,7 +344,7 @@ place.
 
 Stats the tree moves: build time · unit ATK/DEF by tag · Mana
 capacity · Mana regen · discover radius · influence radius · worker move speed
-· Knowledge drip rate · ingredient yield · Stardust yield · landmark claim cost
+· Knowledge lumps · ingredient yield · Stardust yield · landmark claim cost
 · expedition supply cost · expedition duration · failed-haul loss · army power
 cap · hero XP · relic active duration · the type-disadvantage penalty · the
 wounded share · the Sanctum adjacency bonus.

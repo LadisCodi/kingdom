@@ -108,7 +108,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - housing taxes → Gold → fog, buildings and research
   - harvest → materials → buildings
   - Mana → magic
-  - time, territory, rewards, Gold, Gems → Knowledge → research
+  - time, lumps, Gold, Gems → Knowledge → research
   - rooms → card packs → albums → relic levels
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
@@ -136,9 +136,10 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   technology opens a mechanic, a building, a unit or a number. **Knowledge is
   poured into it** until it is full, then Gold completes it on the spot — there
   is no research time and no queue.
-- **Knowledge fills a bar with time**, faster the more of the province is held,
-  and the drip stops when the bar is full. Rewards land over the cap. More can
-  be bought with Gold, dearer with every point ever bought, or with Gems.
+- **Knowledge fills a bar, 1 an hour up to 10**, and the drip stops while the
+  bar is full. Landmarks, ruins, quests and events pay it in lumps that land
+  over the cap. More can be bought with Gold, dearer with every point ever
+  bought, or with Gems.
 - **General books** are open from the start and every kingdom has them. They
   hold the spine of the game: the city, the army, the basic enchantments.
 - **Specific books are found, not bought** — at the bottom of a ruin, out of an
