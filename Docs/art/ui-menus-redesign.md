@@ -2207,6 +2207,23 @@ The M5–M14 prompts open with "Same style, same materials and chrome as the
 mockups above" instead of the style block because they were sent into the
 conversation that already held it and M0; sent cold, paste the block first.
 
+**M29 — where the Knowledge bar lives (OQ-104)**
+
+Three candidate placements for one new gauge, stacked on one image so they
+compare at a glance. The bar is 1 an hour up to 10, and stops earning while
+full ([`../features/07-research.md`](../features/07-research.md) §3), so it
+has to be readable from the map; the plank is already full.
+
+> Same style, same materials and chrome as the mockups above. M29 - one tall image showing THREE alternative versions of the same phone screen top and bottom, stacked vertically and separated by a thin plain parchment gap, each with a small sepia caps label at its left edge: A, B, C. Each version is a horizontal strip cropped from the bright pixel kingdom map, with the slim carved wooden resource plank of M1 at its top and the slim five-tab wooden nav beam of M1 at its bottom (Store, Relics, Heroes, Research, Build). The plank holds, as in M1, a gold coin 1,240, an apple 86, logs 312, a stone block 40, a rope divider, the violet mana orb with its slim gauge, and a violet gem 10 with a small green plus knob. VERSION A - the knowledge gauge joins the plank: right after the mana gauge, a small open book icon in warm blue-teal ink with a slim trough beside it filled seven tenths, reading 7/10; the four resource counters are a touch narrower to make room, nothing else moves. VERSION B - the plank is exactly as in M1; the Research tab on the nav beam carries a small round parchment badge on its top-right corner with a tiny open book and 7/10, and a thin arc around the badge filled seven tenths. VERSION C - the plank and nav are exactly as in M1; on the right edge of the map, half-way down, one tab sticks in from the edge like the raid tab of M12: a warm teal cloth tab with a small open book icon and two short lines, Knowledge full and 10 of 10, with a tiny gold glint, shown as it appears only when the bar is full. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
+**M30 — a technology filling up, and buying Knowledge**
+
+The research sheet once research has no time and no slots: Knowledge is
+poured in over visits, then Gold completes it on the spot; and the sheet
+that buys Knowledge with Gold (dearer every point, for ever) or Gems.
+
+> Same style, same materials and chrome as the mockups above. M30 - two centred sheets on one phone screen, stacked to show both, over the parchment tome page of M4 warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom with the scroll Research tab lit gold. UPPER - a technology sheet: a parchment panel in a thin carved wooden frame with a narrow wooden header strip reading Bureaucracy and a small round close knob; inside, a round wax medallion with a small crown at the left and one line Townhall level 3; a small row of two prerequisite medallions with green ticks; then a wide slim trough in warm blue-teal with a small open book icon at its left, filled a little over half, reading 14 / 25 Knowledge; under it a small sepia line with a sand-timer, 11 more, about 2 days of study; then a row of three slabs: a leaf-green slab Invest with a small book chip 7, and beside it a smaller wood slab Buy the rest with two chips stacked in it, a gold coin 6,600 and a violet gem 110; under the row a wide dimmed slab Research with a gold coin chip 1,200, shown disabled. LOWER - a Knowledge sheet: the same panel with a header strip reading Knowledge and a close knob; inside, a large open book icon in blue-teal at the left, Knowledge in bold, and at the right Full in 3h; a slim blue-teal gauge trough reading 7 / 10; one small line, One an hour while under ten; then a parchment card titled Buy Knowledge with a small minus and plus stepper around the number 5, and two slabs side by side: a wood slab Gold with a coin chip 3,000 and a tiny line under it, dearer every point, and a violet slab Gems with a gem chip 50. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
 ### 7.26 The collection's pieces (C1, C2, C3)
 
 The four screens of [`../features/09-relics.md`](../features/09-relics.md) §11
