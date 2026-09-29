@@ -275,7 +275,7 @@
  * a round picker, the panel for the picked one, and the queue right to left
  * (src/ui/trainingSection.ts). Every tile is a kit .k-section. */
 
-.tr { display: flex; flex-direction: column; gap: calc(var(--px) * 8); padding-bottom: calc(var(--px) * 14); } /* clear of the body's bottom fade */
+.tr { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
 
 /* THE PICKER: small round portraits, anchored right — round so they read as
    "choose one", never as another rectangular button. The picked one wears a

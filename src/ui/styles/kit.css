@@ -547,48 +547,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* SAY THAT THERE IS MORE. Every long screen in the game is a scroller inside
- * a fixed box, and the box's edge falls wherever the content happens to be —
- * through the middle of a Train button, halfway down a hero portrait. With no
- * mark on that edge it reads as a broken layout rather than as a page you can
- * push, and a player who reads it as broken does not push it.
- *
- * A sticky ::after rather than the usual `background-attachment: local`
- * trick: these scrollers are full of cards with opaque parchment fills of
- * their own, and a background layer paints BEHIND those, so the classic
- * version drew nothing at all here.
- *
- * The shade has to be honest — it may only appear in a direction you can
- * actually go — which is what the scroll timeline buys: the fade runs over
- * the last 28px of travel, so it is gone by the time you reach the end and
- * `both` holds it fully on everywhere before that. Where the timeline is not
- * supported the @supports gate drops the whole thing, and the screen behaves
- * exactly as it did before.
- *
- * .dc-body is the district card's scroller — same parchment ground, same
- * problem, and it is the one where a half-cut Upgrade button was worst. */
-@supports (animation-timeline: scroll()) {
-  .k-sheet-body,
-  .dc-body { position: relative; }
-  .k-sheet-body::after,
-  .dc-body::after {
-    content: '';
-    display: block;
-    position: sticky;
-    bottom: 0;
-    /* Negative margin so the strip overlays the last line of content instead
-       of adding a gap under it; it has no height in the flow. */
-    height: calc(var(--px) * 18);
-    margin-top: calc(var(--px) * -18);
-    pointer-events: none;
-    background: linear-gradient(rgba(60, 36, 18, 0), rgba(60, 36, 18, 0.32));
-    animation: k-scroll-shade linear both;
-    animation-timeline: scroll(self block);
-    animation-range: calc(100% - calc(var(--px) * 28)) 100%;
-  }
-}
-@keyframes k-scroll-shade { to { opacity: 0; } }
-
 /* The gallery's phone frame: the three chrome bands at device size, so the
  * density reads as a whole. `container-type` so the header's own
  * `@container frame` rules fire inside it. */
