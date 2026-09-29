@@ -2,6 +2,13 @@
 // stem via Vite's import.meta.glob — adding art needs no code changes.
 // Until an image exists (and has finished loading) every call site falls
 // back to its emoji glyph, so art can land one file at a time.
+//
+// A sprite is requested the first time something asks for it, not when this
+// module loads: the first frame then fetches only what it shows, the loading
+// screen waits for exactly that (ui/bootScreen.ts), and `preloadAllSprites`
+// brings in the rest behind it.
+
+import { loadImage, preloadImages, type LoadedImage } from './imageLoad';
 
 const urls = import.meta.glob('./assets/*.png', {
   eager: true,
@@ -9,21 +16,20 @@ const urls = import.meta.glob('./assets/*.png', {
   import: 'default',
 }) as Record<string, string>;
 
-interface Entry {
-  img: HTMLImageElement;
-  ready: boolean;
+const spriteKeys = new Map<string, string>(); // key → url
+for (const [path, url] of Object.entries(urls)) {
+  spriteKeys.set(path.slice('./assets/'.length, -'.png'.length), url);
 }
 
-const sprites = new Map<string, Entry>();
-for (const [path, url] of Object.entries(urls)) {
-  const key = path.slice('./assets/'.length, -'.png'.length);
-  const entry: Entry = { img: new Image(), ready: false };
-  entry.img.onload = () => {
-    entry.ready = true;
-  };
-  entry.img.src = url;
-  sprites.set(key, entry);
+/** The sprite's image, requesting it on first use; undefined when there is
+ *  no such art. */
+function sprite(key: string): LoadedImage | undefined {
+  const url = spriteKeys.get(key);
+  return url === undefined ? undefined : loadImage(url);
 }
+
+/** Request every sprite not yet asked for, a few at a time. */
+export const preloadAllSprites = (): Promise<void> => preloadImages(spriteKeys.values());
 
 /** The URL Vite emitted for a sprite, for the DOM to use in an <img>.
  *  Null when there is no such art — the caller falls back to an icon. */
@@ -54,7 +60,7 @@ export function spriteImg(key: string, className = ''): HTMLImageElement | null 
  * table anywhere needs editing (Docs/art/art-direction.md §3.1).
  */
 export const spriteAspect = (key: string): number | null => {
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready || s.img.naturalWidth === 0) return null;
   return s.img.naturalHeight / s.img.naturalWidth;
 };
@@ -75,7 +81,7 @@ const inkTops = new Map<string, number>();
 export function spriteInkTop(key: string): number {
   const cached = inkTops.get(key);
   if (cached !== undefined) return cached;
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready || s.img.naturalWidth === 0) return 0; // ask again once it loads
   const w = Math.min(64, s.img.naturalWidth);
   const h = Math.max(1, Math.round((s.img.naturalHeight / s.img.naturalWidth) * w));
@@ -111,7 +117,7 @@ export function drawSprite(
   w: number,
   h: number,
 ): boolean {
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready) return false;
   ctx.drawImage(s.img, x, y, w, h);
   return true;
@@ -130,9 +136,8 @@ export function drawSprite(
 import atlasUrl from '../ui/assets/ui-atlas.png?url';
 import { ATLAS_CELL, ATLAS_COLS, ICON_INDEX } from '../ui/kit/atlas.generated';
 
-const atlas: Entry = { img: new Image(), ready: false };
-atlas.img.onload = () => { atlas.ready = true; };
-atlas.img.src = atlasUrl;
+// Every screen draws from it, so it is requested as soon as this loads.
+const atlas = loadImage(atlasUrl);
 
 /** Below this draw size the atlas's small variants read better — the same
  *  call the DOM makes with `size: 'sm'`. */

@@ -181,7 +181,8 @@ than the build is rejected rather than downgraded.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
-  video (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
+  video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
+  the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header — **which is the design, not a
   limitation**: a menu is opened over the game, so the purse stays readable.
   The nav bar is the exception that steps aside: it slides out of the frame
