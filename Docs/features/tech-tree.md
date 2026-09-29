@@ -278,10 +278,9 @@ and every rank is an ordinary card gated by the row above it like any other.
 | 3 | 384,640 | 1,801 |
 | 4 | 60,000 | 300 |
 
-- Eras 1–3 ask for **2,024 Knowledge**. The drip pays at most 24 a day and a
-  full province about 680 in lumps, so the drip alone is **about two months**
-  of eras 1–3 at best; events, purchases and **OQ-106** close the gap, and the
-  real pace is the playtest's (**OQ-13**).
+- Eras 1–3 ask for **2,024 Knowledge**. A full province pays about 680 in
+  lumps and the ruins' rooms 1,156; the drip (at most 24 a day), events and
+  purchases pay the rest. The real pace is the playtest's (**OQ-13**).
 - The quest chain funds the **opening** — every era-1 technology and the first
   rank that follows. It also asks for enough exploring to open era 2 before it
   points at anything in it (`tests/quests.test.ts`). Era-2 majors are the

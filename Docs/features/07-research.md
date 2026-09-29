@@ -287,8 +287,9 @@ A `bonus` names its effects, and each is four fields:
   offline cap: away for ten hours or more, the player comes back to a full
   bar. This is the one production that ignores `offlineCapHours`, because the
   bar already bounds it (invariant 2).
-- **Territory pays in lumps, never in rate.** Claiming a landmark and a
-  ruin's first clear each pay once. The ladders and mechanics that raise
+- **Territory and the ruins pay in lumps, never in rate.** Claiming a
+  landmark and a ruin's first clear each pay once; every ruin room pays as
+  it is cleared. The ladders and mechanics that raise
   those lumps are in the table.
 - **A lump raise pays back.** A technology that raises a lump pays its raise
   at once for every site already claimed or cleared, so researching it late
@@ -303,6 +304,7 @@ A `bonus` names its effects, and each is four fields:
 | the **drip** | 1/h while under 10 | `knowledge.basePerHour` · `knowledge.cap` |
 | claiming a **landmark** | 5, once | `knowledge.landmarkClaimLump` |
 | a ruin's **first clear** | 15, once | `delve.firstClearKnowledge` |
+| every **ruin room** | at least 1, rising with depth, tier and room ([`11-expeditions.md`](11-expeditions.md) §7.1) — 1,156 across the 186 rooms | `ruins.knowledgeCoef` (0.25) |
 | `Wayposts I–III` | +3 on every landmark claim, per rank | a `bonus` ladder |
 | `Vigils I–III` | +5 on every first clear, per rank | a `bonus` ladder |
 | `Conquest` | +15 on every first clear | a `mechanic` |
@@ -318,8 +320,11 @@ A `bonus` names its effects, and each is four fields:
 - A fully held province — ten landmarks, five ruins — pays **125** in lumps
   before any ladder, **about 680** with every ladder and mechanic above
   (a ruin's 15 + 15 + 15, doubled; every lump +15%).
-- **Recurring sources** past the drip — whether ruin rooms pay Knowledge — are
-  **OQ-106**.
+- **Ruin rooms are the steady source**: every room pays, so the tree
+  advances as fast as the army goes down.
+- Every source together: territory ~680, rooms 1,156, the chain 27 — about
+  1,860 against the 2,324 of the whole tree. The drip, events and purchases
+  pay the rest, and set the pace.
 - The clock banks whole units against an anchor, the same shape as taxes and
   Mana, so one-call replay equals stepped ticking (invariant 1).
 - The balance reads as **held / 10**, with the time until the bar is full.
@@ -580,5 +585,5 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   (§1.2).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**, **OQ-106**. (**OQ-68** is retired: a band is not held by a keystone
+**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**. (**OQ-68** is retired: a band is not held by a keystone
 any more, and what each bar asks for is a number, so it is OQ-13.)
