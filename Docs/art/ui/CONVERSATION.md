@@ -675,3 +675,17 @@ for.
   alone. At 375px the real pill is ~140px wide, so a centred piece a third of
   the screen wide collides with it — the mockup solved a real layout problem
   without being asked.
+
+## M32 — design A tightened (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M31 conversation above, continued.
+- **File:** `mockups/m32-knowledge-coin-under-plank.png` (1145×1374), opaque.
+- **Prompt:** §7.19 M32, sent from JS; arrived whole, ~3 min.
+- **What worked:** the dark inset frame, the plank-sized book icon with no
+  boss, and the two captions (*+1 in 42m* / *Full in 3h*) came back exactly
+  as asked; the full state (*10*, every pip lit, *Full*) reads at a glance.
+- **What to know:** asked for "a quarter of the screen wide", it drew ~43%,
+  and it drew the Daily chest pill ~28% wide to make it fit. The real pill is
+  ~40% of a 375px screen, so the two touch in the game — measure before
+  building.
