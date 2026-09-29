@@ -89,11 +89,12 @@ the sheet, never numbered on it:
   tree's sheet, held by one brass pin, the name lettered as its heading, a
   small close knob in its corner, and the parts separated by hand-drawn ink
   dividers — no wooden frame and no section numbers.
-- **An undiscovered technology's sheet** (M45) adds, under part 1, its
+- **An undiscovered technology's sheet** is part 1 and, under it, its
   **requirements as the upgrade popup's rows** — one full-width row each, a
-  met one with a green tick, a missing one pink with a red cross. Parts 2 and
-  3 stay, disabled: the bar grey, the three buttons greyed, and under Research
-  *Complete all requirements to research*.
+  met one with a green tick, a missing one pink with a red cross — **and
+  nothing else**: parts 2 and 3 are not shown, since nothing in them can be
+  pressed. They appear once every requirement is met. (M45's right screen
+  still draws them disabled; the design drops them.)
 - The sheet stays open after a pour; it closes itself after Research, with the
   completion banner.
 
