@@ -146,18 +146,25 @@ export type ProgressTone = 'gold' | 'green' | 'blue' | 'red';
  *  fill of one of four colours (kit.css `.k-trough`), moved through the
  *  returned handle. */
 export function progress(tone: ProgressTone = 'green'): Progress {
+  // Three layers, bottom to top (kit.css): the tube's dark inside (the
+  // root's own background), the coloured fill — clipped to the tube's inner
+  // pill, so it rises under the glass with a straight level — and the glass
+  // tube itself, with its shine, over both. The reading sits on top of all.
   const fill = el('div', { class: 'k-fill' });
   const label = el('div', { class: 'k-trough-label' });
   const root = el(
     'div',
     { class: `k-trough k-trough--${tone}` },
-    fill,
+    el('div', { class: 'k-trough-tube' }, fill),
     label,
   );
   return {
     root,
     set(fraction, text) {
-      fill.style.width = `${Math.min(1, Math.max(0, fraction)) * 100}%`;
+      // The fill is the whole tube's length and is uncovered from the left,
+      // so its right edge is the liquid's level, not a rounded pill end.
+      const f = Math.min(1, Math.max(0, fraction));
+      fill.style.clipPath = `inset(0 ${(1 - f) * 100}% 0 0)`;
       label.textContent = text ?? '';
     },
   };

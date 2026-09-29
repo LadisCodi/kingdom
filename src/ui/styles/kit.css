@@ -477,33 +477,45 @@
 }
 .k-pip.is-on { background: var(--gold); border-color: var(--gold-dark); }
 
-/* THE PROGRESS BAR, the same one everywhere (kit progress): a painted recess
-   (sheets/ui-quest2-progress.png) and a painted fill in one of four colours
-   (gold from the same sheet; green, blue and red from ui-quest3-fills.png),
-   each sliced at its rounded ends only — the height is fixed, the middle
-   stretches. --bar-h sets its height; everything else follows it. */
+/* THE PROGRESS BAR, the same one everywhere (kit progress): a glass tube with
+   coloured liquid in it, three painted layers (sheets/ui-bar1-layers.png)
+   drawn bottom to top —
+     base    the tube's dark inside;
+     fill    the colour, the tube's whole length, uncovered from the left
+             (clip-path, stats.ts), so its level is a straight edge;
+     border  the glass: the outline and the shine, over both —
+   each sliced at its rounded ends only (the height is fixed, the middle
+   stretches). --bar-h sets the height; every inset follows it. */
 .k-trough {
   --bar-h: calc(var(--px) * 16);
   position: relative;
   height: var(--bar-h);
-  padding: calc(var(--bar-h) * 0.09);
-  overflow: visible;
   border: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
-  border-image: url('../assets/bar-trough.png') 0 46 fill / 0 calc(var(--bar-h) * 0.57) stretch;
+}
+.k-trough-tube {
+  position: absolute;
+  inset: calc(var(--bar-h) * 0.078) calc(var(--bar-h) * 0.0625);
+  border-image: url('../assets/bar-base.png') 0 54 fill / 0 calc(var(--bar-h) * 0.42) stretch;
 }
 .k-trough .k-fill {
   --bar-fill: url('../assets/bar-fill-green.png');
-  height: 100%;
-  width: 0;
-  /* At least its two rounded ends, so a sliver of progress is still a pill. */
-  min-width: calc(var(--bar-h) * 0.95);
-  border-image: var(--bar-fill) 0 38 fill / 0 calc(var(--bar-h) * 0.48) stretch;
-  transition: width 240ms ease-out;
+  position: absolute;
+  inset: 0 calc(var(--bar-h) * -0.03);
+  border-image: var(--bar-fill) 0 54 fill / 0 calc(var(--bar-h) * 0.42) stretch;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 240ms ease-out;
 }
-.k-trough .k-fill[style*='width: 0%'] { visibility: hidden; }
+.k-trough::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-image: url('../assets/bar-border.png') 0 64 fill / 0 calc(var(--bar-h) * 0.5) stretch;
+}
 .k-trough--gold .k-fill { --bar-fill: url('../assets/bar-fill-gold.png'); }
 .k-trough--green .k-fill { --bar-fill: url('../assets/bar-fill-green.png'); }
 .k-trough--blue .k-fill { --bar-fill: url('../assets/bar-fill-blue.png'); }
@@ -511,6 +523,7 @@
 .k-trough .k-trough-label {
   position: absolute;
   inset: 0;
+  z-index: 2; /* over the glass */
   display: grid;
   place-items: center;
   /* A bar's reading always sits INSIDE it, centred, as tall as the bar —

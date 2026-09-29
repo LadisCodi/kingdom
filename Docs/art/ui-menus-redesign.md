@@ -396,9 +396,12 @@ wood of its sides touches the screen's edges.
   `--space-heading` (6 px) above what it heads, and takes the place of the
   gap before its section rather than adding its own. The window's header
   band is a heading too: its content starts one heading gap under it.
-- **Progress bar** (kit `progress(tone)`), one for the whole UI: a painted
-  recess and a painted fill, sliced at their rounded ends (fixed height,
-  stretched middle; `--bar-h` sets it). Its reading — a count, a time left —
+- **Progress bar** (kit `progress(tone)`), one for the whole UI: a glass
+  tube with coloured liquid in it, three painted layers drawn bottom to top
+  — the **base** (the tube's dark inside), the **fill** (the colour, the
+  tube's whole length, uncovered from the left so its level is a straight
+  edge), and the **border** (the glass: outline and shine) — each sliced at
+  its rounded ends (fixed height, stretched middle; `--bar-h` sets it). Its reading — a count, a time left —
   always sits INSIDE it, centred, never under or beside it. Four tones,
   one per meaning: **gold** a goal (quests, collections), **green** something
   being made (training, construction), **blue** a resource filling or a timer
