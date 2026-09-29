@@ -396,6 +396,12 @@ wood of its sides touches the screen's edges.
   `--space-heading` (6 px) above what it heads, and takes the place of the
   gap before its section rather than adding its own. The window's header
   band is a heading too: its content starts one heading gap under it.
+- **Progress bar** (kit `progress(tone)`), one for the whole UI: a painted
+  recess and a painted fill, sliced at their rounded ends (fixed height,
+  stretched middle; `--bar-h` sets it), the label centred on it. Four tones,
+  one per meaning: **gold** a goal (quests, collections), **green** something
+  being made (training, construction), **blue** a resource filling or a timer
+  (Mana, research), **red** a danger or a countdown to one.
 - **Tooltip** (kit `withTooltip`, any element): a tap opens a parchment
   bubble under its anchor, arrow up, with a soft pop (*Pop 02*); a second
   tap or a tap anywhere else closes it; one open at a time in the whole UI.

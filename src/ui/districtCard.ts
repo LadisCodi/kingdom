@@ -360,7 +360,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // the price of skipping both move with the clock.
     const scaffold = () => {
       const t = game.now();
-      const bar = progress('sky');
+      const bar = progress('blue');
       bar.set(queueProgress(queueItem, t),
         queueItem.startedAt === null
           ? 'waiting for a builder'

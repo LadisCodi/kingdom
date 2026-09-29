@@ -136,13 +136,21 @@ export interface Progress {
   set(fraction: number, label?: string): void;
 }
 
-/** A carved trough with a fill you move through the returned handle. */
-export function progress(tone: 'leaf' | 'sky' | 'gold' = 'leaf'): Progress {
+/** A bar's colour, one per meaning: gold for a goal (quests, collections),
+ *  green for something being made (training, construction), blue for a
+ *  resource filling up or a timer (Mana, research), red for a danger or a
+ *  countdown to one. */
+export type ProgressTone = 'gold' | 'green' | 'blue' | 'red';
+
+/** THE PROGRESS BAR, the same one everywhere: a painted recess and a painted
+ *  fill of one of four colours (kit.css `.k-trough`), moved through the
+ *  returned handle. */
+export function progress(tone: ProgressTone = 'green'): Progress {
   const fill = el('div', { class: 'k-fill' });
   const label = el('div', { class: 'k-trough-label' });
   const root = el(
     'div',
-    { class: `k-trough${tone === 'leaf' ? '' : ` k-trough--${tone}`}` },
+    { class: `k-trough k-trough--${tone}` },
     fill,
     label,
   );

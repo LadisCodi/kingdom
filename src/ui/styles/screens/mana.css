@@ -18,9 +18,8 @@
 .mana-head > .icon { grid-area: orb; --icon-size: calc(var(--px) * 72); filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.3)); }
 .mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
 .mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
-/* The gauge is the pool's violet-blue, filled from the orb. */
-.mana-sheet > .k-trough { height: calc(var(--px) * 22); border-radius: calc(var(--px) * 11); background: #2c3c66; border-color: #1b2745; }
-.mana-sheet > .k-trough .k-fill { background: #7a5bc7; box-shadow: inset 0 calc(var(--px) * -2) 0 #4c3690; }
+/* The gauge is the kit bar (blue: a resource filling), a little taller. */
+.mana-sheet > .k-trough { --bar-h: calc(var(--px) * 22); }
 .mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: var(--weight-strong); }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so

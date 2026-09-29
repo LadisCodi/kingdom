@@ -158,12 +158,14 @@ export function mountGallery(root: HTMLElement): void {
   ));
 
   // ---- stats ----------------------------------------------------------
-  const p1 = progress('leaf');
+  const p1 = progress('green');
   p1.set(0.66, '6/10');
-  const p2 = progress('sky');
+  const p2 = progress('blue');
   p2.set(0.3, '1m 20s left');
   const p3 = progress('gold');
   p3.set(1, 'complete');
+  const p4 = progress('red');
+  p4.set(0.15, 'raid in 2m');
   page.append(section(
     'Read-outs',
     el('div', { class: 'gal-row' },
@@ -180,9 +182,10 @@ export function mountGallery(root: HTMLElement): void {
       specimen('pips 0/4', pips(0, 4)),
       specimen('meter 6/20', meter(6, 20)),
     ),
-    specimen('progress — leaf', p1.root),
-    specimen('progress — sky', p2.root),
-    specimen('progress — gold', p3.root),
+    specimen('progress — green (being made)', p1.root),
+    specimen('progress — blue (filling up)', p2.root),
+    specimen('progress — gold (a goal)', p3.root),
+    specimen('progress — red (a danger)', p4.root),
   ));
 
   // ---- surfaces -------------------------------------------------------

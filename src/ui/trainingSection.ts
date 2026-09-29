@@ -28,7 +28,7 @@ import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, btn, iconEl, withTooltip, type LiveParts } from './kit';
+import { action, btn, iconEl, progress, withTooltip, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
 
@@ -183,7 +183,8 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       el('div', { class: 'tr-batch-empty' }, 'Nothing in training'));
   }
   const count = line.reduce((n, item) => n + itemCount(item), 0);
-  const pct = Math.round(trainingProgress(game.state, district.uniqueId, now) * 100);
+  const bar = progress('green');
+  bar.set(trainingProgress(game.state, district.uniqueId, now));
   const total = isWard
     ? line.reduce((n, item, i) => n + (i === 0
       ? queueLeft(game, district, item)
@@ -195,7 +196,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
         unitPortrait(line[0].trainee),
         ...(count > 1 ? [el('span', { class: 'tr-batch-count' }, `x${count}`)] : [])),
       el('div', { class: 'tr-batch-progress' },
-        el('span', { class: 'tr-batch-bar' }, el('span', { style: `width: ${pct}%` })),
+        bar.root,
         el('span', { class: 'tr-batch-left' },
           `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`)),
       el('div', { class: 'tr-batch-total' },
