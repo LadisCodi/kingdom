@@ -643,3 +643,22 @@ for.
   Seed Basket, Old Windmill…) rather than using the album's own. Harmless in a
   mockup — the names are authored in `sim/data/seasons.ts` — but do not read
   content out of a mockup.
+
+---
+
+## M29–M30 — the Knowledge bar (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** <https://chatgpt.com/c/6aa340fa-60b0-83ed-b4d0-ed8cfa0a64c7>, continued.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m29-knowledge-bar-placements.png` (941×1672) and
+  `mockups/m30-pour-and-buy-knowledge.png` (934×1684), opaque.
+- **Prompt:** §7.19 M29 and M30, sent from JS (`.ProseMirror` +
+  `execCommand insertText`, then the send button), no quotation marks. Both
+  arrived whole on the first send.
+- **What worked:** three labelled variants stacked in ONE image (A, B, C)
+  compared the placements at the same scale and on the same map, which three
+  generations would not have. M30's two sheets came back 1:1 with the prompt.
+- **What to know:** M30 put both purchase prices inside one *Buy the rest*
+  slab, which is two buttons' worth of price on one tap target — the build
+  needs it split in two.
