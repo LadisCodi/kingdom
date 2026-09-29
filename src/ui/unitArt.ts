@@ -23,6 +23,7 @@
 
 import { UNITS } from '../sim/data/definitions';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { el } from './format';
 import type { TrainableId } from '../sim/state';
 import { iconEl } from './kit';
 import type { IconName } from './kit/icon';
@@ -62,4 +63,21 @@ export function unitBody(trainee: TrainableId, cls: string): HTMLElement {
   const stem = stemOf(trainee);
   const url = spriteUrl(stem) ?? spriteUrl(`${stem}_avatar`);
   return url ? img(url, cls) : iconEl(iconOf(trainee), { size: 'lg' });
+}
+
+/**
+ * A UNIT'S ROUND PORTRAIT, built in three layers so any bust can go in it
+ * (kit.css `.k-portrait`):
+ *
+ *   base   the round paper disc and its outline — the portrait's own frame;
+ *   mask   a circle inside it that clips whatever sits under it;
+ *   icon   the unit's bust, drawn a little larger than the mask, so a bust
+ *          that carries a medallion of its own (the soldiers' do) has that
+ *          ring cut away and every unit reads the same.
+ *
+ * Its size is the caller's `--portrait-size`; everything inside scales with it.
+ */
+export function unitPortrait(trainee: TrainableId, cls = ''): HTMLElement {
+  return el('span', { class: `k-portrait${cls ? ` ${cls}` : ''}` },
+    el('span', { class: 'k-portrait-mask' }, unitBust(trainee, 'k-portrait-art')));
 }

@@ -9,16 +9,16 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px 6px 10px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10) calc(var(--px) * 6) calc(var(--px) * 10);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(30, 20, 60, 0.6);
   /* A violet slab with the orb, the amount and a gold play knob (M12). */
   background: #6b46b8;
   border: var(--outline) solid #3c2c73;
   border-right: none;
-  border-radius: 12px 0 0 12px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 3px 0 #3c2c73;
+  border-radius: calc(var(--px) * 12) 0 0 calc(var(--px) * 12);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 3) 0 #3c2c73;
   cursor: pointer;
   /* Off-screen by default; `is-in` brings it home. Transform rather than
    * `right`, so it never reflows the frame while it moves. */
@@ -34,21 +34,21 @@
   .ad-tab.is-in { animation: none; }
 }
 .ad-tab:hover { filter: brightness(1.08); }
-.ad-tab > .icon { --icon-size: 28px; }
+.ad-tab > .icon { --icon-size: calc(var(--px) * 28); }
 .ad-tab-amount {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 18px;
+  font-size: calc(var(--px) * 18);
   font-variant-numeric: tabular-nums;
 }
 .ad-tab-play {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 26px;
-  border-radius: 6px;
+  width: calc(var(--px) * 30);
+  height: calc(var(--px) * 26);
+  border-radius: calc(var(--px) * 6);
   background: var(--gold);
-  border: 2px solid var(--gold-dark);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
   color: var(--ink);
   text-shadow: none;
   font-size: var(--text-helper);
@@ -66,35 +66,35 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 24px;
+  gap: calc(var(--px) * 18);
+  padding: calc(var(--px) * 24);
   background: #10151c;
 }
 .ad-screen-tag {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 3px 8px;
+  top: calc(var(--px) * 12);
+  left: calc(var(--px) * 12);
+  padding: calc(var(--px) * 3) calc(var(--px) * 8);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-inverse);
   background: rgba(255, 255, 255, 0.14);
-  border-radius: 4px;
+  border-radius: calc(var(--px) * 4);
 }
 .ad-screen-fake {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   width: 100%;
-  max-width: 320px;
-  padding: 40px 20px;
+  max-width: calc(var(--px) * 320);
+  padding: calc(var(--px) * 40) calc(var(--px) * 20);
   text-align: center;
   color: var(--ink-inverse);
   background: linear-gradient(160deg, #3a5fbf, #6b3f9e);
-  border-radius: 14px;
+  border-radius: calc(var(--px) * 14);
 }
 .ad-screen-fake-mark { font-size: 44px; line-height: 1; }
 .ad-screen-fake-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
@@ -102,7 +102,7 @@
 .ad-countdown {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 36px;
+  font-size: calc(var(--px) * 36);
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
 }

@@ -33,7 +33,7 @@
 .dc {
   --win-edge: calc(var(--rpx) * 46);       /* the ring's slice: the rounded corner and the wood */
   --win-rail: calc(var(--rpx) * 28);       /* where the paper starts, under the ring's inner edge */
-  --win-pad: calc(var(--rpx) * 64);        /* the frame's outer edge to the contents: a generous margin */
+  --win-pad: calc(var(--rpx) * 52);        /* the frame's outer edge to the contents */
   --win-min: calc(var(--win-edge) * 2);    /* the frame at its least: top and bottom, nothing between */
   position: relative;
   isolation: isolate; /* so the frame's z-index: -1 stays inside the window */
@@ -65,8 +65,7 @@
    (36 rpx), so on the reference phone the window runs edge to edge as the
    mockup draws it, and on anything wider — a tablet, a desktop — it keeps
    that width and the map shows on either side instead of the window
-   stretching. The district card takes the same width, so every window
-   matches. (A centred modal keeps its own, narrower cap — kit.css.) */
+   stretching. (A centred modal keeps its own, narrower cap — kit.css.) */
 .k-sheet:not(.is-centred),
 .dc {
   --win-w: calc(var(--rpx) * 1053);
@@ -74,9 +73,14 @@
   margin-left: auto;
   margin-right: auto;
 }
+/* THE DISTRICT CARD runs the reference width itself, 1125: on the iPhone X
+   the wood of its sides touches the screen's edges — it is the map's own
+   panel, not a menu opened over it — and on anything wider it keeps that
+   width, centred. */
+.dc { --win-w: calc(var(--rpx) * 1125); }
 /* The nav steps aside for the card as for a sheet, so the card keeps the
    sheets' 8 px off the bottom edge rather than sitting on it. */
-.dc { margin-bottom: 8px; }
+.dc { margin-bottom: calc(var(--px) * 8); }
 /* THE CLOSE: a round button of red lacquered wood with the X carved into it
    (sheets/ui-window2-close.png, kit closeKnob), pinned over the window
    frame's top-right knob. The pressed twin is the same wood pushed in. */
@@ -96,7 +100,7 @@
 }
 .k-close:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
 .k-close:active { background-image: url('../assets/btn-close-down.png'); }
-.k-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+.k-close:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 2); border-radius: 50%; }
 /* THE HEADER (.k-head, every titled window): the wooden band across the
    top of the frame, a fixed height, standing a little proud of the frame's
    top and a little narrower than it, so it reads as seated on the wood
@@ -120,10 +124,13 @@
   align-items: center;
   column-gap: calc(var(--rpx) * 16);
   height: var(--head-h);
+  /* Below it, only the heading gap (tokens.css, the spacing rule): the band
+     is the window's heading, so what it heads sits right under it. The
+     offset that raises it leaves its box behind, so that space comes off. */
   margin:
     calc(var(--win-pad) * -1)
     calc(var(--win-pad) * -1 + var(--head-tuck))
-    calc(var(--rpx) * 32 - var(--head-rise));
+    calc(var(--space-heading) - var(--head-rise));
   padding: 0 var(--head-inset) calc(var(--head-h) * 0.06);
   border-image: url('../assets/window-header.png') 0 60 fill / 0 var(--head-cap) stretch;
   filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.3));
@@ -151,7 +158,7 @@
   filter:
     drop-shadow(1px 0 0 #4a260f) drop-shadow(-1px 0 0 #4a260f)
     drop-shadow(0 1px 0 #4a260f) drop-shadow(0 -1px 0 #4a260f)
-    drop-shadow(0 2px 0 #4a260f);
+    drop-shadow(0 calc(var(--px) * 2) 0 #4a260f);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -179,7 +186,7 @@
 }
 .k-move:hover { filter: brightness(1.06) drop-shadow(0 calc(var(--rpx) * 5) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45)); }
 .k-move:active { background-image: url('../assets/btn-move-down.png'); }
-.k-move:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
+.k-move:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 2); border-radius: 50%; }
 /* In the header the close is one of the row, not pinned to the corner, and
    the move is its size. */
 .k-head .k-move,
@@ -190,14 +197,17 @@
   --close-size: calc(var(--head-h) * 0.8);
   flex: none;
 }
+/* In the district card the column's own gap follows the band: it comes off
+   too, so the band still sits one heading gap above the content. */
+.dc > .k-head { margin-bottom: calc(var(--space-heading) - var(--head-rise) - var(--space-section)); }
 /* A knob in the row is drawn larger than a stepper, to sit with the close. */
 .k-head .k-btn.k-knob { --knob-size: calc(var(--head-h) * 0.62); }
 
 /* A centred window grows from its middle; a bottom sheet from its foot. */
 .k-sheet.is-centred .k-frame { top: 50%; bottom: auto; transform: translateY(-50%); }
 .k-plank {
-  margin: -8px -8px 8px;
-  background: url('../assets/tex-wood.jpg') center / 512px 512px;
+  margin: calc(var(--px) * -8) calc(var(--px) * -8) calc(var(--px) * 8);
+  background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512);
   border-radius: 0;
 }
 /* The rope rides ON the frame's top edge — a handle on the lid — rather than
@@ -205,13 +215,13 @@
 .k-grab {
   position: relative;
   z-index: 1;
-  width: 72px;
-  height: 20px;
-  margin: -28px auto 4px;
+  width: calc(var(--px) * 72);
+  height: calc(var(--px) * 20);
+  margin: calc(var(--px) * -28) auto calc(var(--px) * 4);
   border-radius: 0;
   opacity: 1;
   background: url('../assets/deco-rope.png') center / contain no-repeat;
-  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.45));
+  filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.45));
 }
 
 /* ---- rows ---- */
@@ -219,13 +229,13 @@
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg');
-  background-size: auto, 384px 384px;
+  background-size: auto, calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .k-card.is-locked {
   background:
     linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
     url('../assets/tex-parchment.jpg');
-  background-size: auto, 384px 384px;
+  background-size: auto, calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- slabs and knobs ---- */
@@ -250,10 +260,10 @@
   border-radius: 0;
   box-shadow: none;
   background: none;
-  border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
+  border-image: var(--btn) 70 90 90 fill / calc(var(--px) * 14) calc(var(--px) * 18) calc(var(--px) * 18) stretch;
   /* Clear of the rim above and of the lip below, which are in the art. */
-  padding-top: 10px;
-  padding-bottom: 12px;
+  padding-top: calc(var(--px) * 10);
+  padding-bottom: calc(var(--px) * 12);
   color: var(--ink-inverse);
   /* THE LABEL'S OUTLINE: 1 px all round and a 2 px drop below, in a darker
      tone of the slab it sits on (--btn-ink, set per material below), so the
@@ -264,15 +274,15 @@
     0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
     1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
     1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
-    0 2px 0 var(--btn-ink);
+    0 calc(var(--px) * 2) 0 var(--btn-ink);
   transform: none;
   transition: none;
 }
 .k-btn:not(.k-knob):hover { border-image-source: var(--btn-hover); filter: none; }
 .k-btn:not(.k-knob):active {
   border-image-source: var(--btn-down);
-  padding-top: 13px; /* the words drop with the face */
-  padding-bottom: 9px;
+  padding-top: calc(var(--px) * 13); /* the words drop with the face */
+  padding-bottom: calc(var(--px) * 9);
   transform: none;
   box-shadow: none;
 }
@@ -283,8 +293,8 @@
 .k-btn:not(.k-knob):disabled:hover,
 .k-btn:not(.k-knob):disabled:active {
   border-image-source: var(--btn-off);
-  padding-top: 10px;
-  padding-bottom: 12px;
+  padding-top: calc(var(--px) * 10);
+  padding-bottom: calc(var(--px) * 12);
   --btn-ink: #3c3f48;
   color: #e3e6ec;
   cursor: default;
@@ -313,16 +323,16 @@
    label longer than the cap widens its button to fit its words and no more,
    and is never cut. */
 .k-btn:not(.k-knob):not(.has-cost) {
-  height: 46px;
-  min-height: 46px;
-  max-height: 46px;
+  height: calc(var(--px) * 46);
+  min-height: calc(var(--px) * 46);
+  max-height: calc(var(--px) * 46);
   min-width: min-content;
-  max-width: 144px;
+  max-width: calc(var(--px) * 144);
   margin-inline: auto;
   white-space: nowrap;
 }
 .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label {
-  min-width: calc(112px - 28px); /* 112 less the slab's 14 px sides */
+  min-width: calc(calc(var(--px) * 112) - calc(var(--px) * 28)); /* 112 less the slab's 14 px sides */
   justify-content: center;
 }
 
@@ -338,19 +348,19 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
   height: auto;
   min-height: 0;
   max-height: none;
   /* The same floor and ceiling, measured round the paper: the slab plus the
      frame's 8 px sides. */
   min-width: min-content;
-  max-width: 160px;
+  max-width: calc(var(--px) * 160);
   margin-inline: auto;
   white-space: nowrap;
-  padding: 5px 6px 4px;
-  border: 2px solid var(--section-line);
-  border-radius: 10px;
+  padding: calc(var(--px) * 5) calc(var(--px) * 6) calc(var(--px) * 4);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 10);
   border-image: none;
   background: var(--section-fill);
   color: var(--ink);
@@ -366,21 +376,21 @@
 }
 .k-btn.has-cost > .k-btn-label {
   order: 2;
-  min-width: calc(124px - 16px);
+  min-width: calc(calc(var(--px) * 124) - calc(var(--px) * 16));
   justify-content: center;
-  height: 46px;
-  padding: 0 16px 4px;
-  border-image: var(--btn) 70 90 90 fill / 14px 18px 18px stretch;
+  height: calc(var(--px) * 46);
+  padding: 0 calc(var(--px) * 16) calc(var(--px) * 4);
+  border-image: var(--btn) 70 90 90 fill / calc(var(--px) * 14) calc(var(--px) * 18) calc(var(--px) * 18) stretch;
   color: var(--ink-inverse);
   text-shadow:
     1px 0 0 var(--btn-ink), -1px 0 0 var(--btn-ink),
     0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
     1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
     1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
-    0 2px 0 var(--btn-ink);
+    0 calc(var(--px) * 2) 0 var(--btn-ink);
 }
 .k-btn.has-cost:not(:disabled):not(.is-locked):hover > .k-btn-label { border-image-source: var(--btn-hover); }
-.k-btn.has-cost:not(:disabled):not(.is-locked):active > .k-btn-label { border-image-source: var(--btn-down); padding: 4px 16px 0; }
+.k-btn.has-cost:not(:disabled):not(.is-locked):active > .k-btn-label { border-image-source: var(--btn-down); padding: calc(var(--px) * 4) calc(var(--px) * 16) 0; }
 .k-btn.has-cost:disabled > .k-btn-label,
 .k-btn.has-cost.is-locked > .k-btn-label {
   border-image-source: var(--btn-off);
@@ -390,22 +400,22 @@
     0 1px 0 var(--btn-ink), 0 -1px 0 var(--btn-ink),
     1px 1px 0 var(--btn-ink), -1px 1px 0 var(--btn-ink),
     1px -1px 0 var(--btn-ink), -1px -1px 0 var(--btn-ink),
-    0 2px 0 var(--btn-ink);
+    0 calc(var(--px) * 2) 0 var(--btn-ink);
 }
 
 /* A SECTION: a flat panel a shade darker than the paper, in a flat 2-px
    outline, marking off a group inside a menu — what a priced button sits
    on, a stat tile, a portrait — at any size. */
 .k-section {
-  border: 2px solid var(--section-line);
-  border-radius: 10px;
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 10);
   background: var(--section-fill);
   padding: 0;
 }
 
 /* A segmented choice: the selected segment is the emerald slab. */
 /* The toggles' sides are 10 px, not 14: the same 112 px floor. */
-.k-toggles .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: calc(112px - 20px); }
+.k-toggles .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: calc(calc(var(--px) * 112) - calc(var(--px) * 20)); }
 .k-toggles .k-btn.is-selected { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
 /* Screens that recoloured a slab by hand now pick a material: the video
    till and the ad call are sapphire, the advanced banner's call topaz. */
@@ -486,34 +496,27 @@
    It wears the window (above), like every sheet. */
 
 /* ---- the research page and the build grid ---- */
-.research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.research-topbar { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512); }
 .tech-page {
   background:
     radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
     radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bld-card {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bld-card.is-locked {
   background:
     linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-
-/* ---- the district card's figure tiles (M2) ---- */
-.tr-fig {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
-}
+.bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
-.res-era { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.res-era { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512); }
 .res-era.is-open {
   background: var(--gold);
   border-color: var(--gold-dark);
@@ -525,8 +528,8 @@
   border: 0;
   box-shadow: none;
   background: url('../assets/seal-plain.png') center / 100% 100% no-repeat;
-  width: 68px;
-  height: 68px;
+  width: calc(var(--px) * 68);
+  height: calc(var(--px) * 68);
   /* The plain seal on the sheet came back grey-green; M4's plain wax is
      brown, so the plain state is warmed here and the lit states keep their
      own art. */
@@ -538,27 +541,23 @@
 .tech-card.done .tech-card-glyph { background-image: url('../assets/seal-done.png'); }
 .tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
 .tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
-.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold); border-radius: 50%; }
+.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 calc(var(--px) * 3) var(--gold); border-radius: 50%; }
 
 /* ---- the research shelf and the quest slot ---- */
 .res-shelf { background: url('../assets/beam-wood.png') center / auto 100% repeat-x; }
 .res-desks {
   background:
     linear-gradient(rgba(40, 22, 10, 0.35), rgba(40, 22, 10, 0.35)),
-    url('../assets/tex-wood.jpg') center / 512px 512px;
+    url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512);
 }
 /* The books are plates on the beam (M4): the open one gold. */
 .res-tome:not(.active) {
-  border: 10px solid transparent;
-  border-image: url('../assets/plate-wood.png') 44 fill / 10px stretch;
+  border: calc(var(--px) * 10) solid transparent;
+  border-image: url('../assets/plate-wood.png') 44 fill / calc(var(--px) * 10) stretch;
   border-radius: 0;
   background: none;
 }
 .res-tome.active { background: var(--gold); }
-
-/* ---- the villagers' row ---- */
-.tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
 
 /* ---- nails, where a plank is nailed to something ----
  * Not on the planks that carry a title (they read as dirt next to the words). */
@@ -566,8 +565,8 @@
 .hud-plaque-never::after {
   content: '';
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: calc(var(--px) * 8);
+  height: calc(var(--px) * 8);
   background: url('../assets/deco-nail.png') center / contain no-repeat;
   pointer-events: none;
 }
@@ -577,32 +576,32 @@
 /* ---- the daily pill is the nailed parchment card of P1, nine-sliced so the
    nails land in the corners. (The quest scroll is its own art: quest.css.) */
 .dly-pill {
-  border: 16px solid transparent;
-  border-image: url('../assets/plate-parchment.png') 64 fill / 16px round;
+  border: calc(var(--px) * 16) solid transparent;
+  border-image: url('../assets/plate-parchment.png') 64 fill / calc(var(--px) * 16) round;
   border-radius: 0;
   background: none;
 }
-.dly-pill { border-width: 10px; border-image-width: 10px; }
-.dly-pill { padding: 0 6px 0 2px; min-height: 47px; gap: 6px; }
+.dly-pill { border-width: calc(var(--px) * 10); border-image-width: calc(var(--px) * 10); }
+.dly-pill { padding: 0 calc(var(--px) * 6) 0 calc(var(--px) * 2); min-height: calc(var(--px) * 47); gap: calc(var(--px) * 6); }
 
 /* ---- the store (M5): cards are parchment in wood, the vignettes lighter ---- */
 .store-banner,
 .store-pack {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .store-banner-art,
-.store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- the heroes' roster (M6): parchment tiles ---- */
 .hero-tile {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .hero-purse,
-.hero-tile-foot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.hero-tile-foot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- the collection (M19, M21, M22): parchment, and wood for the ring ---- */
 .col-relic-frame,
@@ -614,14 +613,14 @@
 .sea-pill {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 /* A card's rarity is a WASH over the parchment rather than a flat fill, so
    the ladder reads without the grid turning into nine coloured rectangles. */
 .col-card:not(.is-missing) {
   background:
     linear-gradient(var(--wash, transparent), var(--wash, transparent)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .col-card.r1 { --wash: rgba(79, 163, 199, 0.22); }
 .col-card.r2 { --wash: rgba(111, 191, 74, 0.22); }
@@ -631,26 +630,26 @@
 .col-card.is-missing {
   background:
     linear-gradient(rgba(120, 100, 70, 0.4), rgba(120, 100, 70, 0.4)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 /* The medallion ring and the vault knob are carved WOOD, like the nav's
    plates — the album art inside the ring is the only picture. */
 .col-ring { border-image: none; }
-.col-vault { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
-.col-plaque { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
+.col-vault { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
+.col-plaque { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 
 /* ---- the daily chest (M8): parchment cells, wood and gold slabs ---- */
 .dly-clock,
 .dly-cell,
 .dly-heads,
-.dly-foot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.dly-foot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .dly-cell {
   background:
     linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.dly-head.is-free { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
-.dly-rung { background: url('../assets/tex-wood.jpg') center / 128px 128px; }
+.dly-head.is-free { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
+.dly-rung { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 .dly-row:has(button.dly-cell) .dly-rung { background: var(--gold); }
 
 /* ---- settings and mana (M9), the battle board (M10): parchment cards ---- */
@@ -661,41 +660,41 @@
 .bt-rewards {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bt-art,
 .bt-chip,
 .bt-count,
-.bt-price { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.k-switch:not(.is-on) { background: url('../assets/tex-wood.jpg') center / 128px 128px; }
+.bt-price { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.k-switch:not(.is-on) { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 .bt-slot.is-empty,
-.bt-slot.is-locked { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
+.bt-slot.is-locked { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 
 /* ---- the site card and the placement bar (M11) ---- */
 .plc-bar {
-  border: 12px solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / 16px / 2px round;
+  border: calc(var(--px) * 12) solid transparent;
+  border-image: url('../assets/frame-wood.png') 80 / calc(var(--px) * 16) / calc(var(--px) * 2) round;
   border-radius: 0;
-  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
+  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .site-art,
-.plc-art { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.plc-art { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .site-stats > .k-stat,
 .site-gate,
 .site-gift {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- the things that float over the map (M12) ---- */
 .raid-tab-mark,
 .toast-msg,
-.dly-pill { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.dly-pill { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .raid-tab:not(.is-hit) {
   background:
     linear-gradient(rgba(138, 58, 42, 0.78), rgba(138, 58, 42, 0.78)),
-    url('../assets/tex-wood.jpg') center / 200px 200px;
+    url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200);
 }
 
 /* ---- welcome back (M13) ---- */
@@ -703,7 +702,7 @@
 .wel-done {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- the payer profile and the purchase confirmation (M14) ---- */
@@ -711,35 +710,35 @@
 .iap-rows {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- the purse, the builder offer, the tech card ---- */
 .purse {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bld-offer-mark { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.bld-offer-mark { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .tech-info {
-  border: 12px solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / 16px / 2px round;
+  border: calc(var(--px) * 12) solid transparent;
+  border-image: url('../assets/frame-wood.png') 80 / calc(var(--px) * 16) / calc(var(--px) * 2) round;
   border-radius: 0;
-  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
+  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- the reveal and the battlefield (M15, M16) ---- */
 .gr-tile,
 .bs-slot,
 .bs-where,
-.bs-count { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.bs-count { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .gr-plaque,
-.bs-plaque { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.bs-plaque { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
 .bs {
   background:
     radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.1), transparent 70%),
     linear-gradient(rgba(58, 34, 18, 0.82), rgba(46, 26, 14, 0.9)),
-    url('../assets/tex-cloth.jpg') center / 256px 256px;
+    url('../assets/tex-cloth.jpg') center / calc(var(--px) * 256) calc(var(--px) * 256);
 }
 .gr-screen {
   background:
@@ -752,57 +751,57 @@
   background:
     radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
     linear-gradient(var(--wash, transparent), var(--wash, transparent)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .col-stage {
   background:
     radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .hero-statline > .k-stat,
 .hero-level {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
 /* ---- the party picker, its cards, the room's address ---- */
 .bt-picker {
-  border: 12px solid transparent;
+  border: calc(var(--px) * 12) solid transparent;
   border-bottom: 0;
-  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
+  border-image: url('../assets/frame-wood.png') 80 / calc(var(--px) * 16) calc(var(--px) * 16) 0 / calc(var(--px) * 2) round;
   border-radius: 0;
-  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
+  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bt-card,
 .exp-safe {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .gr-calls,
-.gr-curtain-rarity { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.gr-curtain-rarity { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 /* The curtain is dark cloth lit by gold rays (M15). */
 .gr-curtain {
   background:
     radial-gradient(70% 45% at 50% 42%, var(--tile, var(--rarity-common)), transparent 72%),
     repeating-conic-gradient(from 0deg at 50% 40%, rgba(242, 178, 51, 0.09) 0 6deg, transparent 6deg 14deg),
     linear-gradient(rgba(18, 11, 6, 0.86), rgba(18, 11, 6, 0.86)),
-    url('../assets/tex-cloth.jpg') center / 256px 256px;
+    url('../assets/tex-cloth.jpg') center / calc(var(--px) * 256) calc(var(--px) * 256);
 }
 
 /* ---- the Townhall card's blocks (M2) ---- */
 .dc-up-tile,
 .bld-cost .k-chip,
-.bld-cost .k-cost { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.bld-cost .k-cost { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .set-icon {
   background-image: url('../assets/tex-parchment.jpg');
-  background-size: 384px 384px;
+  background-size: calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.set-icon.is-music { background: url('../assets/set-music.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.set-icon.is-sfx { background: url('../assets/set-sfx.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.set-icon.is-ambience { background: url('../assets/set-ambience.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.set-icon.is-save { background: url('../assets/set-save.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.set-icon.is-payer { background: url('../assets/set-payer.png') center / 32px 32px no-repeat, url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
-.bld-offer-pip:not(.is-on) { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
-.bs-bar { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.set-icon.is-music { background: url('../assets/set-music.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.set-icon.is-sfx { background: url('../assets/set-sfx.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.set-icon.is-ambience { background: url('../assets/set-ambience.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.set-icon.is-save { background: url('../assets/set-save.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.set-icon.is-payer { background: url('../assets/set-payer.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.bld-offer-pip:not(.is-on) { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
+.bs-bar { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }

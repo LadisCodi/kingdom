@@ -37,7 +37,7 @@ import { iconEl, progress } from './kit';
  * of 8 with nothing cleared is an empty bar, and it should be.
  */
 function track(
-  label: string, at: number, total: number, tone: 'sky' | 'gold', end?: HTMLElement,
+  label: string, at: number, total: number, tone: 'blue' | 'gold', end?: HTMLElement,
 ): HTMLElement {
   const bar = progress(tone);
   bar.set(total === 0 ? 0 : (at - 1) / total, `${Math.min(at, total)} / ${total}`);
@@ -69,7 +69,7 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       el('span', {}, preview.isBoss
         ? `Depth ${preview.depth}, and this one is the boss`
         : `Depth ${preview.depth} · Room ${preview.room}`)),
-    track('Depth', preview.depth, preview.depths, 'sky'),
+    track('Depth', preview.depth, preview.depths, 'blue'),
     track('Room', preview.room, preview.roomsInDepth, 'gold', boss),
     el('div', { class: 'bt-info-line is-soft' },
       'Rooms are fought one at a time, in order, and never again. Clearing the '

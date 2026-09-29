@@ -14,6 +14,7 @@ import discoveryUrl from './sounds/discovery.wav?url';
 import errorUrl from './sounds/error_denied.ogg?url';
 import gemUrl from './sounds/gem_spend.wav?url';
 import popUrl from './sounds/pop-06.wav?url';
+import tooltipUrl from './sounds/tooltip_pop.wav?url';
 import questUrl from './sounds/quest_claimed.mp3?url';
 import questCompleteUrl from './sounds/quest_complete.mp3?url';
 import researchDoneUrl from './sounds/research_complete.mp3?url';
@@ -49,7 +50,7 @@ import tapStone2 from './sounds/tap_stone_02.ogg?url';
 import tapStone3 from './sounds/tap_stone_03.ogg?url';
 
 export type SfxName =
-  | 'pop' | 'click' | 'discovery' | 'quest' | 'research'
+  | 'pop' | 'tooltip' | 'click' | 'discovery' | 'quest' | 'research'
   | 'error' | 'tapEmpty' | 'revealPaid' | 'revealDone' | 'buildPlaced'
   | 'questComplete' | 'villagerTrained' | 'coinSale' | 'researchComplete'
   | 'constructionComplete' | 'upgradeBought' | 'gemSpend' | 'unitTrained'
@@ -80,6 +81,9 @@ const one = (url: string) => [url];
 
 const SOUNDS: Record<SfxName, SoundSpec> = {
   pop: { urls: one(popUrl), volume: 0.5, jitter: 0.08 },
+  // A tooltip opening (kit/tooltip.ts): Pop 02, short and soft, apart from
+  // the generic pop so the two never read as the same event.
+  tooltip: { urls: one(tooltipUrl), volume: 0.45, jitter: 0.06 },
   click: { urls: one(clickUrl), volume: 0.35, jitter: 0.03 },
   discovery: { urls: one(discoveryUrl), volume: 0.55, jitter: 0 },
   // A quest's goal met (Fantasy Event 09) and its reward claimed (Fantasy

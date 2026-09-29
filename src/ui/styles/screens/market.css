@@ -2,15 +2,15 @@
 
 /* Striped awning across the top of the sheet body. */
 .mkt-awning {
-  height: 16px;
-  margin: -4px -2px 8px;
-  border-radius: 0 0 6px 6px;
-  border: 2px solid var(--wood-dark);
+  height: calc(var(--px) * 16);
+  margin: calc(var(--px) * -4) calc(var(--px) * -2) calc(var(--px) * 8);
+  border-radius: 0 0 calc(var(--px) * 6) calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-top: none;
   background: repeating-linear-gradient(
     90deg,
-    var(--clay) 0 14px,
-    var(--parchment) 14px 28px
+    var(--clay) 0 calc(var(--px) * 14),
+    var(--parchment) calc(var(--px) * 14) calc(var(--px) * 28)
   );
 }
 
@@ -19,18 +19,18 @@
 .mkt-bonus {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  margin-bottom: 8px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 5) calc(var(--px) * 10);
+  margin-bottom: calc(var(--px) * 8);
   font-family: var(--font-body);
   color: var(--ink);
   background: var(--gold);
-  border: 2px solid var(--gold-dark);
-  border-radius: 999px;
+  border: calc(var(--px) * 2) solid var(--gold-dark);
+  border-radius: calc(var(--px) * 999);
 }
-.mkt-blurb { color: var(--ink-muted); margin-bottom: 8px; }
+.mkt-blurb { color: var(--ink-muted); margin-bottom: calc(var(--px) * 8); }
 
-.mkt-amounts { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.mkt-amounts { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 10); }
 .mkt-amount-label {
   font-family: var(--font-body);
   text-transform: uppercase;
@@ -40,7 +40,7 @@
   color: var(--ink-muted);
 }
 
-.mkt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.mkt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: calc(var(--px) * 10); }
 
 /* Each good is a crate on the counter. */
 .mkt-crate {
@@ -48,29 +48,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 10px 8px;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 10) calc(var(--px) * 8);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(60, 36, 18, 0.22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.22);
 }
 .mkt-crate.is-empty { background: var(--locked); }
-.mkt-goods { width: 52px; height: 52px; display: grid; place-items: center; }
+.mkt-goods { width: calc(var(--px) * 52); height: calc(var(--px) * 52); display: grid; place-items: center; }
 .mkt-goods img { width: 100%; height: 100%; object-fit: contain; }
 
 /* A little hanging price tag. */
 .mkt-tag {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 2) calc(var(--px) * 8);
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 999);
 }
 .mkt-have { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); }
 
@@ -78,11 +78,11 @@
 .mkt-payout {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: calc(var(--px) * 3);
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: var(--weight-strong);
   color: var(--gold-dark);
 }
 .mkt-crate.is-empty .mkt-payout { color: var(--ink-muted); }
-.mkt-crate .k-btn { min-height: 40px; padding: 8px 18px; margin-top: 4px; }
+.mkt-crate .k-btn { min-height: calc(var(--px) * 40); padding: calc(var(--px) * 8) calc(var(--px) * 18); margin-top: calc(var(--px) * 4); }

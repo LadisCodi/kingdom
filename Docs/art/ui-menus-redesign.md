@@ -273,9 +273,9 @@ that replaced them.*
 |---|---|---|
 | `--text-title` | 28px | a window's title, on its header band |
 | `--text-body` | 17px | what the window is about: names, values, copy |
-| `--text-desc` | 15px | the line that describes it: a description, a rate, a note |
-| `--text-heading` | 14px | a section heading (small uppercase) |
-| `--text-helper` | 14px | a caption or fine print: a tag, a badge, a timer |
+| `--text-desc` | 13px | the line that describes it: a description, a rate, a note |
+| `--text-heading` | 13px | a section heading (small uppercase) |
+| `--text-helper` | 13px | a caption or fine print: a tag, a badge, a timer |
 | `--text-button` | 16px | a button's label |
 
 - Tiny tags (a count on a slot, a timer on a portrait) may go to 11–12px;
@@ -312,8 +312,16 @@ still derived by the script, never drawn. No emoji anywhere —
   of the screen's height. The width is a ceiling: on a screen narrower than
   the reference (9:20, 9:21) the scale follows the width instead, so the
   1125-wide header always fits (Unity's "Expand"). Sizes are measured on the
-  mockup scaled to 1125 wide. Migrated so far: the header, the quest scroll,
-  the reward flight and the nav bar.
+  mockup scaled to 1125 wide.
+- **Everything scales together.** Every size in the UI styles is either in
+  `--rpx` or in `--px` — one CSS pixel of the reference phone (the iPhone X
+  shown 402 CSS px wide, `--rpx × 1125/402`) — so text, buttons, tiles and
+  gaps shrink and grow with the frame as one picture, and every device shows
+  the same composition. A number written `calc(var(--px) * 17)` still reads
+  as "17 px on the reference phone". Kept in real pixels: 1 px hairlines,
+  the 44 px minimum tap area, the measured metrics (`--hud-h`, `--nav-h`) and
+  `@media` / `@container` queries. The research page is not converted yet:
+  its tree is laid out in pixels by code.
 - Safe zones: the header is a 107-rpx beam (62-rpx slots, 30-rpx figures,
   76-rpx icon cells) plus the top inset
   (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
@@ -346,13 +354,15 @@ Sheets slide up 180ms ease-out. Counters roll rather than snap.
 that leaves the map in sight — each kit sheet, the district card — is one
 simple panel of warm wood with rounded corners, a drop shadow all round to
 lift it off the map, and warm cream paper with a very soft texture inside,
-with a generous margin (80 rpx from the frame's outer edge) before the
+with a margin (52 rpx from the frame's outer edge) before the
 contents start. Three pieces, each cut to slice
 (`sheets/ui-window5-pieces.png`): the wood ring (nine-sliced, centre empty),
 the paper (under the ring), and the header band. It is as wide as it is on
 the iPhone X (1053 rpx: the reference width less the overlay's gutter),
 centred — edge to edge on the reference phone, with the map showing either
-side on anything wider. A centred modal keeps its own narrower cap.
+side on anything wider. A centred modal keeps its own narrower cap. The
+district card is the full reference width (1125 rpx): on the iPhone X the
+wood of its sides touches the screen's edges.
 
 - **In**: the contents hidden; the frame fades in and grows from its least
   height (its top and bottom slices, nothing between) to its full height in
@@ -380,12 +390,36 @@ side on anything wider. A centred modal keeps its own narrower cap.
   building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
+- **Spacing, the same in every menu** (`tokens.css`): the blocks of a
+  window's content — the top row, the stats, each section — stand
+  `--space-section` (14 px) apart; a section's heading sits
+  `--space-heading` (6 px) above what it heads, and takes the place of the
+  gap before its section rather than adding its own. The window's header
+  band is a heading too: its content starts one heading gap under it.
+- **Progress bar** (kit `progress(tone)`), one for the whole UI: a glass
+  tube with coloured liquid in it, three painted layers drawn bottom to top
+  — the **base** (the tube's dark inside), the **fill** (the colour, the
+  tube's whole length, uncovered from the left so its level is a straight
+  edge), and the **border** (the glass: outline and shine) — each sliced at
+  its rounded ends (fixed height, stretched middle; `--bar-h` sets it). Its reading — a count, a time left —
+  always sits INSIDE it, centred, never under or beside it. A timer's bar
+  (`run`) moves smoothly, frame by frame, to full over the time left — the
+  browser animates it, no script per frame. In light ink over a
+  warm dark shadow (a drop and a soft halo), neutral on any fill. Four tones,
+  one per meaning: **gold** a goal (quests, collections), **green** something
+  being made (training, construction), **blue** a resource filling or a timer
+  (Mana, research), **red** a danger or a countdown to one.
+- **Tooltip** (kit `withTooltip`, any element): a tap opens a parchment
+  bubble under its anchor, arrow up, with a soft pop (*Pop 02*); a second
+  tap or a tap anywhere else closes it; one open at a time in the whole UI.
+  It fades and scales in from the arrow (0.14–0.18 s) and out again (0.12 s).
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
   uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
   district card heads each of its sections with one, shown only when the
-  section is: *Stats*, then what the building does — *Villagers* (the
-  Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
-  *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
+  section is: what the building does — the unit it trains (*Warrior*,
+  *Villager*), *Ward*, *Workshop*, *Residents*, *Workers*, *Crops*,
+  *Harmony* — and *Neighbours* when an adjacency is in effect. The stat
+  tiles have no heading.
 - **The district card's head**: one row — the portrait, the description
   (bold, lighter ink), and Upgrade (the kit's default button, its fixed size)
   — each anchored to the top and growing down. The card lists no
@@ -395,9 +429,37 @@ side on anything wider. A centred modal keeps its own narrower cap.
   command runs. The portrait is a section with a small leafy ornament pressed
   into each corner, and the building drawn larger than the tile, clipped to
   it by a mask.
+- **The training widget** (`trainingSection.ts`; reference
+  `mockups/m28-training-widget.png`), one block for every building that
+  turns something out — the Townhall's villagers, a hall's soldiers. Each
+  building trains ONE thing, so there is no picker:
+  - **Unit portrait** (kit `unitPortrait`, reused wherever a unit is shown
+    round): three layers — a round paper base in a flat outline, a circular
+    mask inside it, and the unit's bust drawn a little larger than the mask,
+    so a bust that carries a medallion of its own has that ring cut away.
+  - **Panel** (a section), headed by the unit's name on the section's
+    rule: the round portrait with how many the player owns on a pill centred
+    over its foot (*x17*: soldiers in the army, or the city's villagers), the tags,
+    one line of flavour, and the priced
+    Train button — its costs above it. The training time is the building's
+    own stat tile (*Training*), one trainee per building.
+    A soldier adds a row of three stat tiles underneath: Attack, Defence,
+    Health. A gate keeps the button, disabled, and puts a padlock and a
+    short reason where its price would be: *No house to live in*, *Max army
+    reached*, *Needs Archery*.
+  - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
+    Worker for a villager). Tapping it opens the kit's tooltip with the type
+    chart's word on it: *Strong vs Lancers, weak vs Archers*. One
+    open at a time; paper chips are kept for special traits.
+  - **Batch**, at the foot of the same panel: one building trains one
+    unit, so its whole line is one batch — the unit's portrait with its
+    count (*x5*); beside it *Training* over the bar (the time left inside
+    it) and *Total time: 1m 20s* under it; and the gem Finish button,
+    under a rule and with no heading of its own. Nothing in the line:
+    *Nothing in training*, centred, and no Finish.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
-  icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
-  *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's
+  icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
+  *Crew*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower

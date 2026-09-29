@@ -4,24 +4,22 @@
  * happens to show a gauge. Hence the pool's blue carries the whole sheet, and
  * the offer sits inside it as a band rather than leading with a film strip. */
 
-.mana-sheet { display: flex; flex-direction: column; gap: 10px; }
+.mana-sheet { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
 
 /* The orb at the left, big, and the words stacked beside it (M9); the gauge
    sits under the words, so the head is a grid rather than a row. */
 .mana-head {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: calc(var(--px) * 72) minmax(0, 1fr);
   grid-template-areas: 'orb title' 'orb hint';
-  column-gap: 12px;
+  column-gap: calc(var(--px) * 12);
   align-items: center;
 }
-.mana-head > .icon { grid-area: orb; --icon-size: 72px; filter: drop-shadow(0 3px 0 rgba(60, 36, 18, 0.3)); }
+.mana-head > .icon { grid-area: orb; --icon-size: calc(var(--px) * 72); filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.3)); }
 .mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
 .mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
-/* The gauge is the pool's violet-blue, filled from the orb. */
-.mana-sheet > .k-trough { height: 22px; border-radius: 11px; background: #2c3c66; border-color: #1b2745; }
-.mana-sheet > .k-trough .k-fill { background: #7a5bc7; box-shadow: inset 0 -2px 0 #4c3690; }
-.mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: var(--weight-strong); }
+/* The gauge is the kit bar (blue: a resource filling), a little taller. */
+.mana-sheet > .k-trough { --bar-h: calc(var(--px) * 22); }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so
  * it stays a fact rather than a spreadsheet. */
@@ -44,31 +42,31 @@
 .mana-refills {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px 12px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10) calc(var(--px) * 12) calc(var(--px) * 12);
   border-radius: var(--radius);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
 }
 /* The prize is stated once, big: the copy across the top, the orb and the
    amount under it (M9). */
-.mana-prize { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; }
+.mana-prize { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(var(--px) * 4) calc(var(--px) * 12); }
 .mana-prize-copy { flex: 1 1 100%; min-width: 0; font-size: var(--text-body); line-height: 1.3; text-align: center; }
 .mana-prize-copy::first-line { font-weight: var(--weight-strong); }
 .mana-prize-amount {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   flex: none;
-  padding: 2px 8px;
+  padding: calc(var(--px) * 2) calc(var(--px) * 8);
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: 32px;
+  font-size: calc(var(--px) * 32);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.mana-prize-amount > .icon { --icon-size: 48px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
+.mana-prize-amount > .icon { --icon-size: calc(var(--px) * 48); filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3)); }
 /* Gems first, on a blue slab; the ad on leaf. */
 .mana-tills > .mana-till:first-child > .k-btn { --slab: #2f86d8; --slab-lip: #1b5390; }
 .mana-tills > .mana-till:first-child > .k-btn:disabled { --slab: var(--locked); --slab-lip: #a79470; }
@@ -76,8 +74,8 @@
 /* Side by side, equal widths, Gems first: two prices for one pool, and a
    player choosing between them is comparing them. A price under a price would
    be a list. */
-.mana-tills { display: flex; gap: 8px; }
-.mana-till { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mana-tills { display: flex; gap: calc(var(--px) * 8); }
+.mana-till { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
 .mana-till > .k-btn { width: 100%; margin-bottom: 0; }
 
 /* The day's count, over the button it counts for — and when it reads 0 it IS
@@ -96,7 +94,7 @@
 .mana-blocked {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   line-height: 1.3;

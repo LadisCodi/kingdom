@@ -31,9 +31,13 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
-reset). `?dev=kit` opens the UI primitive gallery. `?dev=data` opens the
-data editor (`Docs/plans/data-editor.md`) — every piece of game data in one
-tool, saving straight into `src/sim/data/` through dev-only Vite middleware.
+reset, and 📱 — the frame at an iPhone X, iPhone 17 or iPad Pro 12.9"
+aspect ratio, with that device's safe-area insets and its notch or Dynamic Island
+and home bar drawn over it, to sign off a menu per device from a desktop
+browser). `?dev=kit`
+opens the UI primitive gallery. `?dev=data` opens the data editor
+(`Docs/plans/data-editor.md`) — every piece of game data in one tool, saving
+straight into `src/sim/data/` through dev-only Vite middleware.
 The map editor (`Docs/map-editor.md`) lives in it at `?dev=data#map` — paint
 terrain and features, place landmarks and ruins; it writes
 `src/sim/data/region-map.json`. The tech tree editor
