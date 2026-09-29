@@ -643,3 +643,84 @@ for.
   Seed Basket, Old Windmill…) rather than using the album's own. Harmless in a
   mockup — the names are authored in `sim/data/seasons.ts` — but do not read
   content out of a mockup.
+
+---
+
+## M29–M30 — the Knowledge bar (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** <https://chatgpt.com/c/6aa340fa-60b0-83ed-b4d0-ed8cfa0a64c7>, continued.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m29-knowledge-bar-placements.png` (941×1672) and
+  `mockups/m30-pour-and-buy-knowledge.png` (934×1684), opaque.
+- **Prompt:** §7.19 M29 and M30, sent from JS (`.ProseMirror` +
+  `execCommand insertText`, then the send button), no quotation marks. Both
+  arrived whole on the first send.
+- **What worked:** three labelled variants stacked in ONE image (A, B, C)
+  compared the placements at the same scale and on the same map, which three
+  generations would not have. M30's two sheets came back 1:1 with the prompt.
+- **What to know:** M30 put both purchase prices inside one *Buy the rest*
+  slab, which is two buttons' worth of price on one tap target — the build
+  needs it split in two.
+
+## M31 — the Knowledge bar centred under the plank (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M30 conversation above, continued.
+- **File:** `mockups/m31-knowledge-under-plank.png` (1024×1536), opaque.
+- **Prompt:** §7.19 M31, sent from JS; arrived whole.
+- **What worked:** four labelled strips (two designs × filling/full) kept
+  every variant at one scale over the same map crop.
+- **What to know:** to make room it shrank the Daily chest pill to its icon
+  alone. At 375px the real pill is ~140px wide, so a centred piece a third of
+  the screen wide collides with it — the mockup solved a real layout problem
+  without being asked.
+
+## M32 — design A tightened (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M31 conversation above, continued.
+- **File:** `mockups/m32-knowledge-coin-under-plank.png` (1145×1374), opaque.
+- **Prompt:** §7.19 M32, sent from JS; arrived whole, ~3 min.
+- **What worked:** the dark inset frame, the plank-sized book icon with no
+  boss, and the two captions (*+1 in 42m* / *Full in 3h*) came back exactly
+  as asked; the full state (*10*, every pip lit, *Full*) reads at a glance.
+- **What to know:** asked for "a quarter of the screen wide", it drew ~43%,
+  and it drew the Daily chest pill ~28% wide to make it fit. The real pill is
+  ~40% of a 375px screen, so the two touch in the game — measure before
+  building.
+
+## M33 — M32 simplified and narrowed (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M32 conversation above, continued.
+- **File:** `mockups/m33-knowledge-tab-segmented.png` (1145×1374), opaque.
+- **Prompt:** §7.19 M33, sent from JS; arrived whole, ~3 min.
+- **What worked:** the straight-bottomed tab and the tall narrow segments
+  ("like a battery meter, each much taller than wide") came back as asked;
+  the base is ~31% of the width.
+- **What to know:** it lit six segments for *7* in strips 1 and 2, and it
+  hung the **+** outside the tab, on the map. It still drew the Daily chest
+  pill narrower (~28%) than the game's (~37% at 375px).
+
+## T1 — the Knowledge tab's painted base (nine-slice)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M33 conversation above, continued, with a
+  montage of the shipped wood pieces attached (hud-beam, frame-wood,
+  btn-wood, hud-knob, hud-slot) as the style anchor.
+- **Files:** `sheets/hud-know-tab-raw.png` (2142×734, true alpha, as
+  delivered) → `src/ui/assets/hud-know-tab.png` (the opaque box, 1970×446
+  at +86+140, halved to 985×223).
+- **Prompt:** "GENERATE A NEW IMAGE. Do not edit or export the attached
+  file…" then one wooden tab for nine-slice: straight clean top edge with no
+  outline (it tucks behind the plank), a constant-thickness rim with a gold
+  inlay on the sides and bottom, 60px bottom corners, a plain recessed centre
+  with horizontal grain only; ending with the true-alpha correction request.
+- **What worked:** the true-alpha ending gave a real transparent PNG (corner
+  `srgba(0,0,0,0)`), offered as a file card; the viewer's `data:` image is
+  the corrected file — fetch fails on it, so decode the base64 in the page and
+  download the Blob.
+- **What to know:** `-trim` keeps a faint band above the art; crop on the
+  alpha at 50% (`-alpha extract -threshold 50% -format %@`). Slices in CSS:
+  `20 64 70 fill` (top, sides, bottom).

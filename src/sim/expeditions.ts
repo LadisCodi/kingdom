@@ -38,6 +38,7 @@ import {
 import { applyLosses, availableRoster, woundedShareFor } from './army';
 import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates';
 import { fogState } from './fog';
+import { firstClearLump, payKnowledge, roomKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { spendCharge } from './casting';
@@ -451,6 +452,9 @@ export function roomReward(
       // they always did: it is the collection's own faucet.
       Stardust: Math.round(resolve(state, 'stardustYield',
         techValue(state, 'stardustYield', 2 * scale))),
+      // Every room teaches something — the tree's steady source
+      // (Docs/features/11-expeditions.md §7.1).
+      Knowledge: roomKnowledge(state, scale),
     },
     heroXp: Math.round(10 * scale),
   };
@@ -582,7 +586,8 @@ export function enterRoom(
     if (c === 'Stardust') {
       addToWallet(state.kingdom.wallet, 'Stardust', n);
       recordResourceDiscovery(state, 'Stardust');
-    } else addToWallet(state.city.wallet, c as keyof Wallet, n);
+    } else if (c === 'Knowledge') payKnowledge(state, n);
+    else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
   addHeroXp(state, reward.heroXp);
   // NO PACK. The ruins are cleared ONCE — a pack per room is 191 sobres in
@@ -615,8 +620,7 @@ export function enterRoom(
     // the long game runs on.
     addToWallet(state.player.wallet, 'Gems', DELVE.firstClearGems);
     addToWallet(state.kingdom.wallet, 'Stardust', DELVE.firstClearStardust);
-    addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
-    recordResourceDiscovery(state, 'Knowledge');
+    payKnowledge(state, firstClearLump(state));
   }
 
   return {

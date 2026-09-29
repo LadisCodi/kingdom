@@ -403,7 +403,7 @@ describe('quests fund the research tree', () => {
     // in the doorway are a company's job and the chain pays for the company.
     // 12,175: the three Market beats leave with the Market (2026-09-09).
     expect(chain).toBe(12_175);
-    expect(tree).toBe(504_430); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(494_680); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.

@@ -62,7 +62,9 @@ describe('the shipped tech tree', () => {
       expect({ row: def.row, col: def.col }).toEqual({ row: entry.row, col: entry.col });
       expect(def.cost.Gold).toBe(entry.gold);
       expect(def.cost.Knowledge ?? 0).toBe(entry.knowledge ?? 0);
-      expect(def.durationSeconds).toBe(entry.seconds);
+      // A technology takes no time: there is no clock to author.
+      expect('seconds' in entry, `${id} carries seconds`).toBe(false);
+      expect('durationSeconds' in def).toBe(false);
       expect(def.effects).toEqual(entry.effects ?? []);
       expect(def.planned).toBe(entry.planned === true);
     }
@@ -338,11 +340,14 @@ describe('what the rules refuse', () => {
 
   // NOTHING is free. The granted cover pages were the one exemption and they
   // are gone: every book is open, so there is nothing left to grant.
-  it('a technology that costs nothing and takes no time', () => {
+  it('a technology that costs neither Gold nor Knowledge', () => {
     const d = clone();
     d.technologies.Saws.gold = 0;
-    d.technologies.Saws.seconds = 0;
-    expect(messages(d).some((m) => m.includes('costs nothing and takes no time'))).toBe(true);
+    d.technologies.Saws.knowledge = 0;
+    expect(messages(d)).toContain('Saws costs nothing');
+    // Either price alone is enough: Saws is authored Knowledge-only.
+    d.technologies.Saws.knowledge = 2;
+    expect(messages(d).some((m) => m.startsWith('Saws costs nothing'))).toBe(false);
   });
 
   it('an unlock that names something the game does not have', () => {

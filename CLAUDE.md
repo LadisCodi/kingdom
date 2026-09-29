@@ -58,9 +58,11 @@ never register a source that fires more often than the sim needs to observe it.
 
 **2. The offline cap limits what the city *produces*, never what a *timer*
 does.** `offlineCapHours` is 8. Production — workers, taxes, Mana regen — stops
-at the cap. Timers — build queue, research, gate raids, event windows —
-resolve in the uncapped tail advance. When adding anything time-based, decide
-which it is and say so in the doc.
+at the cap. Timers — build queue, gate raids, event windows — resolve in the
+uncapped tail advance. **The Knowledge drip is the one exception**: it is
+production, but its bar (10) is its only cap, so it runs through the tail
+(`sim/knowledge.ts`). Research takes no time at all. When adding anything
+time-based, decide which it is and say so in the doc.
 
 **3. `now` is always passed in.** The sim never reads a clock, never calls
 `Date.now()`, never closes over the UI. Handlers are pure functions of
@@ -99,8 +101,8 @@ and ruins — is authored by coordinate, so it lives in
 (`Docs/map-editor.md`). A **technology is whole** in
 `src/sim/data/tech-tree.json`, edited at `?dev=data#tree`
 (`Docs/tech-tree-editor.md`): its name and glyph, what KIND it is
-(`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
-seconds, its slot on its tome's three-column page, and what it requires. What
+(`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold and
+Knowledge, its slot on its tome's three-column page, and what it requires. What
 it SAYS is not authored at all — the card is generated from its unlocks or its
 effects (`src/sim/techProse.ts`), and only a `mechanic`, whose effect is code,
 carries written prose. The
@@ -128,7 +130,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = an entry in `store`; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
 | a seasonal hero = one `heroes` entry + one `banners` entry; **how many bands a book has and what each asks for** — the tree editor creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
-| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — at `?dev=data#tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, slot, requirements (prose only for a `mechanic`) — at `?dev=data#tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
@@ -140,7 +142,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 
 ## Saves
 
-`SAVE_VERSION` is 60; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 61; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -199,8 +201,7 @@ than the build is rejected rather than downgraded.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a
   throttled background tab resolves correctly on return.
 - **An adjacency on a TIMER is priced when the timer starts and stored on the
-  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
-  already did it): a neighbour that moves must never reprice a wait already
+  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`): a neighbour that moves must never reprice a wait already
   running. An adjacency on a RATE is computed on read. Neither is a modifier —
   positional facts belong at the base stage.
 - **The UI is made of materials** (`Docs/art/ui-menus-redesign.md` §2.5):

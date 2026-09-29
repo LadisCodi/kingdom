@@ -13,7 +13,8 @@
   - In the province a tap is a small spell that hurries production.
   - On the world map it bends an expedition, reveals what a node holds, or
     shortens a march.
-- Mana is the only currency in the game with a cap.
+- Mana is capped, and Mana over the cap is lost. (Knowledge is capped too,
+  but only its drip stops — [`07-research.md`](07-research.md) §3.)
 - Mana is city-scoped.
 - A new kingdom starts with a full pool.
 

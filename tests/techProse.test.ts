@@ -142,8 +142,10 @@ describe('one technology, one line', () => {
     expect(effectSentence({
       stat: 'unitAtk', op: 'flat', value: 1, target: { unitTag: 'Distance' },
     })).toBe('+1 ATK to every Distance unit');
-    expect(effectSentence({ stat: 'researchTime', op: 'percent', value: -5 }))
-      .toBe('−5% time to finish a research');
+    expect(effectSentence({ stat: 'knowledgeYield', op: 'percent', value: 5 }))
+      .toBe('+5% on every lump of Knowledge');
+    expect(effectSentence({ stat: 'landmarkClaimKnowledge', op: 'flat', value: 3 }))
+      .toBe('+3 Knowledge for every landmark claimed');
     expect(effectSentence({ stat: 'autoTapCooldown', op: 'flat', value: -0.05 }))
       .toBe('−0.05s between auto-taps');
   });
@@ -177,9 +179,9 @@ describe('one technology, one line', () => {
       kind: 'bonus',
       effects: [
         { stat: 'taxRate', op: 'percent', value: 10 },
-        { stat: 'researchTime', op: 'percent', value: -5 },
+        { stat: 'knowledgeYield', op: 'percent', value: 5 },
       ],
-    })).toEqual(['+10% tax income', '−5% time to finish a research']);
+    })).toEqual(['+10% tax income', '+5% on every lump of Knowledge']);
   });
 });
 

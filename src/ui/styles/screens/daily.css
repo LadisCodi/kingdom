@@ -16,15 +16,19 @@
 /* Under the header, above the quest scroll's corner — its own row in the #ui
  * flex column, so it never lands on the settings knob (which is why #delves
  * carries a right padding; this one is narrow enough not to need one). */
-#daily { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
+/* It shares its row with the Knowledge tab hanging from the plank's middle
+ * (hud.css `.hud-know`), so the pill is budgeted to clear it at 375px: a
+ * short second line (the day, or just the time left), a tight pad and a
+ * slightly smaller title. */
+#daily { padding: calc(var(--px) * 6) calc(var(--px) * 6) 0; align-self: flex-start; max-width: 100%; }
 #daily[hidden] { display: none; }
 
 .dly-pill {
   display: flex;
   align-items: center;
-  gap: calc(var(--px) * 10);
+  gap: calc(var(--px) * 4);
   min-height: calc(var(--px) * 52);
-  padding: calc(var(--px) * 4) calc(var(--px) * 16) calc(var(--px) * 4) calc(var(--px) * 10);
+  padding: calc(var(--px) * 4) calc(var(--px) * 9) calc(var(--px) * 4) calc(var(--px) * 7);
   border-radius: calc(var(--px) * 10);
   /* A parchment card in a wood border, nailed at the corners (M12); the
      glow says it is waiting. */
@@ -45,9 +49,9 @@
 /* The orb sits out on the corner, clear of the title (the season pill's too). */
 .dly-pill > .k-cta,
 .sea-pill > .k-cta { top: calc(var(--cta-size) * -0.45); right: calc(var(--cta-size) * -0.5); }
-.dly-pill > .icon { --icon-size: calc(var(--px) * 30); filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3)); }
+.dly-pill > .icon { --icon-size: calc(var(--px) * 28); filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
-.dly-pill-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.15; }
+.dly-pill-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--text-body) * 0.86); line-height: 1.15; white-space: nowrap; }
 .dly-pill-day { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
 /* -------------------------------------------------------------- the sheet */

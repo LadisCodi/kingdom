@@ -32,11 +32,12 @@ import {
 } from '../src/sim/expeditions';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
-import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
+import { manaCap, manaProduction } from '../src/sim/mana';
+import { firstClearLump, knowledgeLump, landmarkClaimLump } from '../src/sim/knowledge';
 import { cityGoldPerMinute, districtCapacity, maxPopulation } from '../src/sim/population';
 import {
   cityGatherPerSecond, effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
-  effectiveResearchTimeMultiplier, effectiveTaxRate,
+  effectiveTaxRate,
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds, workerStrikeMs,
 } from '../src/sim/upgrades';
@@ -139,7 +140,6 @@ function probe(state: GameState): Record<string, number> {
 
   // The city's own numbers.
   put('buildTimeMultiplier', effectiveBuildTimeMultiplier(state));
-  put('researchTimeMultiplier', effectiveResearchTimeMultiplier(state));
   put('taxRate', effectiveTaxRate(state));
   put('cityGoldPerMinute', cityGoldPerMinute(state));
   put('maxPopulation', maxPopulation(state));
@@ -157,7 +157,11 @@ function probe(state: GameState): Record<string, number> {
   // Mana, Knowledge, landmarks.
   put('manaProduction', manaProduction(state));
   put('manaCap', manaCap(state));
-  put('knowledgePerHour', knowledgePerHour(state));
+  // Knowledge from the ground is lumps; a hundred is big enough that a 5%
+  // rank does not round away.
+  put('knowledge.landmarkClaimLump', landmarkClaimLump(state));
+  put('knowledge.firstClearLump', firstClearLump(state));
+  put('knowledge.lump100', knowledgeLump(state, 100));
   put('castCost.VerdantSeal', castCost(state, 'VerdantSeal'));
   put('claimCost', landmarkClaimCost(state, LANDMARKS[0]));
 

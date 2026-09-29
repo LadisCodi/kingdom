@@ -23,6 +23,11 @@
 //   * the plaque under the plank keeps only the CONTEXTUAL read-outs
 //     (workers while staffing, builders while building, the army cap while
 //     looking at a hall that trains soldiers);
+//   * KNOWLEDGE, in a tab of its own hanging under the plank's middle (M33):
+//     the bar that paces the whole game, so it is always in sight on the map
+//     — what is held, ten segments, and a caption taking turns between the
+//     next point and the full bar. It steps aside while a menu is open, like
+//     the Settings knob, and the Research book carries it on the plank;
 //   * the save badge moved to Settings, where it belongs.
 //
 // The presenter decides all of it (visibleCurrencies, hudSlot) — this file
@@ -49,6 +54,24 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const coins = el('div', { class: 'hud-coins' });
   const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
   const plaque = el('button', { class: 'hud-plaque', type: 'button' });
+
+  // THE KNOWLEDGE TAB (M33). Straight on the painted wood: the book, the
+  // number, ten segments and a caption under them; the + opens the sheet,
+  // and so does the rest of the tab.
+  const knowTab = el('button', { class: 'hud-know', type: 'button', 'aria-label': 'Knowledge' });
+  const knowValue = el('b', { class: 'hud-know-value' }, '0');
+  const segments = el('span', { class: 'hud-know-segs', 'aria-hidden': 'true' });
+  const knowNext = el('span', { class: 'hud-know-next' });
+  const knowFull = el('span', { class: 'hud-know-full' });
+  const knowCaption = el('span', { class: 'hud-know-caption', 'aria-hidden': 'true' }, knowNext, knowFull);
+  knowTab.append(
+    el('span', { class: 'hud-know-frame' },
+      currencyIcon('Knowledge', { size: 'sm' }),
+      knowValue,
+      el('span', { class: 'hud-know-gauge' }, segments, knowCaption)),
+    el('span', { class: 'hud-plus', 'aria-hidden': 'true' }),
+  );
+  knowTab.addEventListener('click', () => game.openKnowledge());
 
 
   // ONE gauge. Never "+6/h base −4/h upkeep = +2/h" — that
@@ -78,7 +101,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   });
 
   // The coins anchored left; the rope, Mana and Gems anchored right.
-  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob);
+  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob, knowTab);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values
@@ -146,9 +169,14 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     void manaReadout.offsetWidth; // commit the jump before fades come back
     manaReadout.classList.remove('is-snap');
   };
+  // The Knowledge caption takes turns the same way, between the next point
+  // and the whole bar, on its own clock.
+  let knowTurning = false;
   const cycle = () => {
     const t = (performance.now() - lastManaChange) % (POOL_MS + NEXT_MS);
     manaReadout.classList.toggle('is-next', filling && t >= POOL_MS);
+    knowCaption.classList.toggle('is-full-turn',
+      knowTurning && performance.now() % (POOL_MS + NEXT_MS) >= POOL_MS);
   };
 
   const refresh = () => {
@@ -210,6 +238,22 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
       : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
     knob.classList.toggle('is-active', game.openOverlay === 'settings');
+
+    const k = game.knowledgeInfo();
+    const held = Math.max(0, k.value - heldOf('Knowledge'));
+    knowValue.textContent = formatCount(held);
+    if (segments.childElementCount !== k.cap) {
+      segments.replaceChildren(...Array.from({ length: k.cap }, () => el('i', {})));
+    }
+    [...segments.children].forEach((seg, i) => seg.classList.toggle('is-lit', i < held));
+    knowTab.classList.toggle('is-full', held >= k.cap);
+    knowNext.textContent = k.full ? 'Full' : (k.nextIn ?? '');
+    knowFull.textContent = k.fullIn ?? '';
+    knowTurning = !k.full && k.fullIn !== null && k.nextIn !== null;
+    if (!knowTurning) knowCaption.classList.remove('is-full-turn');
+    knowTab.setAttribute('aria-label', k.full
+      ? `Knowledge ${held}, the bar is full`
+      : `Knowledge ${held} of ${k.cap}, ${k.nextIn ?? ''}, ${k.fullIn ?? ''}`);
   };
   game.onChange(refresh);
   onHoldChange(refresh);

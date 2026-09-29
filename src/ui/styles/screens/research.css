@@ -313,18 +313,21 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
 
-/* A property of the card, with the other properties. */
-.res-duration {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+/* The Knowledge poured over what it needs: the book, then the bar (M30). */
+.res-poured { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.res-poured > .k-trough { flex: 1; }
+/* "Buy the other N", over the two tills that buy them. */
+.res-buy-label {
+  margin-top: 10px;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
   color: var(--ink-muted);
+  text-align: center;
 }
 
-/* The two ways to have the same thing, side by side: choosing between them is
-   comparing two prices, and a price under a price is a list. Equal widths so
-   neither reads as the afterthought. */
+/* Two tills side by side: choosing between them is comparing two prices,
+   and a price under a price is a list. Equal widths so neither reads as the
+   afterthought. */
 .tech-info-actions { display: flex; gap: 8px; margin-top: 8px; }
 .tech-info-actions > .k-btn { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
 /* One reason for the pair, above it — saying it twice between two buttons is
