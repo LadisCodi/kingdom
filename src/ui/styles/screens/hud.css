@@ -190,8 +190,8 @@
 .hud-knob.is-active { filter: brightness(1.12) saturate(1.2); }
 #ui:has(> #overlay:not(:empty)) .hud-knob { display: none; }
 
-/* THE KNOWLEDGE TAB (M33, Docs/art/ui-menus-redesign.md §5.1): a plain
-   walnut tab with a thin gold rim, hanging from behind the plank's middle,
+/* THE KNOWLEDGE TAB (M33, Docs/art/ui-menus-redesign.md §5.1): a painted
+   wooden tab with a gold rim, hanging from behind the plank's middle,
    straight along its bottom edge. Inside it ONE dark frame like a coin's —
    the book, the number, ten segments and a caption that takes turns — and
    the Gems' + knob. Absolute, so it never changes the header's height, and
@@ -206,15 +206,20 @@
   display: flex;
   align-items: center;
   gap: calc(var(--rpx) * 4);
-  padding: calc(var(--rpx) * 22) calc(var(--rpx) * 8) calc(var(--rpx) * 12);
-  border: calc(var(--rpx) * 4) solid var(--gold-dark);
-  border-top: 0;
-  border-radius: 0 0 calc(var(--rpx) * 22) calc(var(--rpx) * 22);
-  background: linear-gradient(180deg, #4e2f18, #3a2210);
-  box-shadow: 0 calc(var(--rpx) * 6) 0 rgba(30, 16, 6, 0.35);
+  /* The painted tab (assets/hud-know-tab.png, 985×223), nine-sliced so it
+     takes any width and height: 20 px of plain wood across the top, which is
+     tucked behind the plank, and the rim and rounded corners in the 64 px
+     sides and the 70 px bottom. The padding sits inside the rim. */
+  padding: calc(var(--rpx) * 14) 0 calc(var(--rpx) * 4);
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--rpx) * 8) calc(var(--rpx) * 16) calc(var(--rpx) * 22);
+  border-image: url('../../assets/hud-know-tab.png') 20 64 70 fill / calc(var(--rpx) * 8) calc(var(--rpx) * 16) calc(var(--rpx) * 22) stretch;
+  background: none;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(30, 16, 6, 0.35));
   cursor: pointer;
 }
-.hud-know:hover { filter: brightness(1.06); }
+.hud-know:hover { filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(30, 16, 6, 0.35)) brightness(1.06); }
 .hud-know-frame {
   display: inline-flex;
   align-items: center;

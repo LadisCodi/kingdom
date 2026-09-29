@@ -702,3 +702,25 @@ for.
 - **What to know:** it lit six segments for *7* in strips 1 and 2, and it
   hung the **+** outside the tab, on the map. It still drew the Daily chest
   pill narrower (~28%) than the game's (~37% at 375px).
+
+## T1 — the Knowledge tab's painted base (nine-slice)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M33 conversation above, continued, with a
+  montage of the shipped wood pieces attached (hud-beam, frame-wood,
+  btn-wood, hud-knob, hud-slot) as the style anchor.
+- **Files:** `sheets/hud-know-tab-raw.png` (2142×734, true alpha, as
+  delivered) → `src/ui/assets/hud-know-tab.png` (the opaque box, 1970×446
+  at +86+140, halved to 985×223).
+- **Prompt:** "GENERATE A NEW IMAGE. Do not edit or export the attached
+  file…" then one wooden tab for nine-slice: straight clean top edge with no
+  outline (it tucks behind the plank), a constant-thickness rim with a gold
+  inlay on the sides and bottom, 60px bottom corners, a plain recessed centre
+  with horizontal grain only; ending with the true-alpha correction request.
+- **What worked:** the true-alpha ending gave a real transparent PNG (corner
+  `srgba(0,0,0,0)`), offered as a file card; the viewer's `data:` image is
+  the corrected file — fetch fails on it, so decode the base64 in the page and
+  download the Blob.
+- **What to know:** `-trim` keeps a faint band above the art; crop on the
+  alpha at 50% (`-alpha extract -threshold 50% -format %@`). Slices in CSS:
+  `20 64 70 fill` (top, sides, bottom).
