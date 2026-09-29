@@ -22,7 +22,8 @@ import {
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
-  colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
+  colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
+  type EdgePiece,
 } from './research/layout';
 import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
 import { el, formatExact } from './format';
@@ -167,35 +168,29 @@ export function renderResearchMenu(game: Game): HTMLElement {
 }
 
 /**
- * The connectors, under the cards: plain arrows drawn with a quill — thin
- * sepia ink, a slightly uneven stroke (an SVG displacement filter), a small
- * drawn arrowhead into the card that needs it.
+ * The connectors, under the cards: arrows drawn with a quill, assembled from
+ * four pieces of art (research.css) — a straight run repeated along its
+ * length, an elbow turned to face the way it bends, and a head. No filter and
+ * no canvas: a page is as costly as its handful of small images, which is
+ * what keeps a long book open on a phone.
  */
 function connectors(
   at: Map<string, { top: number; col: number; index: number }>,
   columnClear: (from: { col: number; index: number }, to: { index: number }) => boolean,
   height: number,
-): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', String(PAGE_W));
-  svg.setAttribute('height', String(height));
-  svg.classList.add('tech-edges');
-  svg.innerHTML = `<defs>
-    <filter id="rb-quill" filterUnits="userSpaceOnUse" x="0" y="0" width="${PAGE_W}" height="${height}">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7"/>
-      <feDisplacementMap in="SourceGraphic" scale="1.6"/>
-    </filter>
-    <marker id="rb-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 1 1.5 L 8.5 5 L 1 8.5" class="tech-arrowhead"/>
-    </marker>
-  </defs>`;
-  const stroke = (d: string): void => {
-    const path = document.createElementNS(ns, 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('class', 'tech-edge');
-    path.setAttribute('marker-end', 'url(#rb-arrow)');
-    svg.append(path);
+): HTMLElement {
+  const layer = el('div', {
+    class: 'tech-edges', 'aria-hidden': 'true', style: `width:${PAGE_W}px;height:${height}px`,
+  });
+  // Arrows out of one card share their first run; ink laid twice reads darker.
+  const drawn = new Set<string>();
+  const draw = (points: Array<{ x: number; y: number }>): void => {
+    for (const piece of edgePieces(points)) {
+      const key = JSON.stringify(piece);
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+      layer.append(edgePiece(piece));
+    }
   };
   for (const [id, to] of at) {
     const def = TECHNOLOGIES[id as TechId];
@@ -204,16 +199,48 @@ function connectors(
       const from = at.get(req);
       if (from === undefined) continue;
       drew = true;
-      stroke(edgeD(edgePath(from, to, columnClear(from, to))));
+      draw(edgePath(from, to, columnClear(from, to)));
     }
     // A requirement with no end on this page — a stub in the gutter above the
     // card, so it does not look like it grows from nowhere.
     if (!drew && def.requires.length > 0) {
       const x = colLeft(to.col) + NODE_W / 2;
-      stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`);
+      draw([{ x, y: to.top - ROW_GAP / 2 }, { x, y: to.top }]);
     }
   }
-  return svg;
+  return layer;
+}
+
+/** Half a pixel of overlap at each end of a run, so a zoomed page shows no
+ *  seam where a run meets its elbow. */
+const SEAM = 0.5;
+
+function edgePiece(piece: EdgePiece): HTMLElement {
+  const band = EDGE_BAND / 2;
+  switch (piece.kind) {
+    case 'v':
+      return el('span', {
+        class: 'rb-edge is-v',
+        style: `left:${piece.x - band}px;top:${piece.y - SEAM}px;width:${EDGE_BAND}px;height:${piece.len + 2 * SEAM}px`,
+      });
+    case 'h':
+      return el('span', {
+        class: 'rb-edge is-h',
+        style: `left:${piece.x - SEAM}px;top:${piece.y - band}px;width:${piece.len + 2 * SEAM}px;height:${EDGE_BAND}px`,
+      });
+    case 'elbow': {
+      // The art joins top to right with the corner at (band, ELBOW_R) in its
+      // box; the other three turns are that, turned about the corner.
+      const size = ELBOW_R + band;
+      return el('span', {
+        class: `rb-edge is-elbow is-${piece.turn}`,
+        style: `left:${piece.x - band}px;top:${piece.y - ELBOW_R}px;width:${size}px;height:${size}px;`
+          + `transform-origin:${band}px ${ELBOW_R}px`,
+      });
+    }
+    case 'head':
+      return el('span', { class: 'rb-edge is-head', style: `left:${piece.x}px;top:${piece.y}px` });
+  }
 }
 
 /**
