@@ -822,3 +822,19 @@ for.
   correction out entirely and came back transparent anyway.
 - **What to know:** a ribbon masked at `100% auto` from its bottom keeps its
   swallowtail at any height; stretched to `100% 100%` it distorts.
+
+## B2 — the research book's page and loose sheet, with character
+
+- **Date:** 2026-09-29
+- **Conversation:** a new one (`6abbfd0e-ae5c-83eb-bbae-f1027593b113`) — the
+  two pieces asked for separately; asked together, the model failed twice.
+- **Why:** B1's page was nearly rectangular, flatter than M43 and M46. Both
+  were re-asked with the mockups' edges: wavy worn rims on the page, deckled
+  edges and a curled lower-right corner on the loose sheet.
+- **Files:** `sheets/rb-page-raw.png` (1046×1504) → `src/ui/assets/rb-page.png`
+  (alpha box, halved, 478×706; nine-sliced at 56, drawn 26px);
+  `sheets/rb-sheet-raw.png` (1049×1499) → `rb-sheet.png` (498×700; sliced at
+  96, drawn 68px, so the curl sits whole in its corner slice).
+- **What to know:** both came back true alpha without asking for a correction.
+  The sheet's wide corner slices are what keep the curl from stretching when a
+  locked technology's sheet is short.
