@@ -25,7 +25,7 @@
   /* The ONE place the bottom inset lives (tests/chrome.test.ts): the bar is
      the only element that touches the bottom edge, and --nav-h is measured
      from it, inset included. */
-  padding: var(--nav-pad-top) calc(var(--rpx) * 20) calc(var(--nav-pad-bottom) + env(safe-area-inset-bottom));
+  padding: var(--nav-pad-top) calc(var(--rpx) * 20) calc(var(--nav-pad-bottom) + var(--safe-bottom, env(safe-area-inset-bottom)));
   /* The beam is one painted strip repeated across the frame, its lit lip at
      the top; under the home indicator it carries on as its own dark wood. */
   background: url('../../assets/nav-beam.png') left top / auto calc(var(--nav-pad-top) + var(--nav-tab-h) + var(--nav-pad-bottom)) repeat-x, #4a2e17;
@@ -43,7 +43,7 @@
  * the bar would have padded for. Keyed on what is actually mounted, like the
  * settings knob, so it cannot drift from what is on screen. */
 #ui:has(> #overlay:not(:empty)),
-#ui:has(> #panel .dc) { --nav-h: env(safe-area-inset-bottom, 0px); }
+#ui:has(> #panel .dc) { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
 #ui:has(> #overlay:not(:empty)) > #navbar.nav,
 #ui:has(> #panel .dc) > #navbar.nav {
   transform: translateY(calc(100% + var(--rpx) * 20));

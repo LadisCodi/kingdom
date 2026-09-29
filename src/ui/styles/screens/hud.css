@@ -32,8 +32,8 @@
      the only element that touches the top edge of the screen, and with
      viewport-fit=cover that edge is under the notch. The beam runs up under
      it, so the notch reads as wood rather than map. */
-  height: calc(env(safe-area-inset-top) + var(--plank-h));
-  padding: calc(env(safe-area-inset-top) + var(--slot-mid) - var(--slot-h) / 2) calc(var(--rpx) * 20) 0;
+  height: calc(var(--safe-top, env(safe-area-inset-top)) + var(--plank-h));
+  padding: calc(var(--safe-top, env(safe-area-inset-top)) + var(--slot-mid) - var(--slot-h) / 2) calc(var(--rpx) * 20) 0;
   background: url('../../assets/hud-beam.png') left bottom / auto var(--plank-h) repeat-x, #6b4424;
 }
 .hud-coins,

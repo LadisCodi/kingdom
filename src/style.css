@@ -185,6 +185,47 @@ html[data-device] #app {
   height: min(100vh, calc(100vw / var(--device-ar)));
   outline: 1px solid #5a5aa0;
 }
+/* What the device draws over the game — sized in the device's CSS pixels,
+   scaled to the frame (--d is one of them). On top of everything, and never
+   in the way of a tap. */
+html[data-device] #app { --d: calc(100cqw / var(--device-w)); }
+html[data-device] #app::before,
+html[data-device] #app::after {
+  content: none;
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+/* The iPhone X's notch, hanging from the top edge. */
+html[data-device='iphone-x'] #app::before {
+  content: '';
+  top: 0;
+  width: calc(var(--d) * 209);
+  height: calc(var(--d) * 30);
+  border-radius: 0 0 calc(var(--d) * 20) calc(var(--d) * 20);
+  background: #000;
+}
+/* The iPhone 17's Dynamic Island, a pill a little below the edge. */
+html[data-device='iphone-17'] #app::before {
+  content: '';
+  top: calc(var(--d) * 11);
+  width: calc(var(--d) * 126);
+  height: calc(var(--d) * 37);
+  border-radius: calc(var(--d) * 19);
+  background: #000;
+}
+/* The home bar, on both iPhones. */
+html[data-device^='iphone'] #app::after {
+  content: '';
+  bottom: calc(var(--d) * 8);
+  width: calc(var(--d) * 134);
+  height: calc(var(--d) * 5);
+  border-radius: calc(var(--d) * 3);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
 .dev-bar {
   position: absolute; left: calc(var(--px) * 8); right: calc(var(--px) * 8); bottom: calc(var(--nav-h) + calc(var(--px) * 8));
   z-index: 4;

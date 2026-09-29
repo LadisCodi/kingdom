@@ -32,7 +32,9 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
 reset, and 📱 — the frame at an iPhone X, iPhone 17 or 3:4 iPad aspect
-ratio, to sign off a menu per device from a desktop browser). `?dev=kit`
+ratio, with that device's safe-area insets and its notch or Dynamic Island
+and home bar drawn over it, to sign off a menu per device from a desktop
+browser). `?dev=kit`
 opens the UI primitive gallery. `?dev=data` opens the data editor
 (`Docs/plans/data-editor.md`) — every piece of game data in one tool, saving
 straight into `src/sim/data/` through dev-only Vite middleware.
