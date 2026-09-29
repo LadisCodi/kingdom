@@ -261,6 +261,19 @@
   font-variant-numeric: tabular-nums;
 }
 .k-cost { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); }
+/* A price's mark reads at the size of its number, a little over: the icon
+   is what says WHICH coin, and at the small size it was a speck beside the
+   figure. Sized to the term's own font, so a price in any font keeps it.
+   Registered as a <length> so the em resolves HERE, on the term, and reaches
+   the icon as pixels: an icon's own font follows its --icon-size, so an em
+   read on the icon would chase itself. */
+@property --cost-icon {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+.k-cost { --cost-icon: 1.35em; }
+.k-cost > .icon { --icon-size: var(--cost-icon); }
 /* The red IS the reason the button is dead, so it has to survive the disabled
  * fill — which is a warm tan, not a grey, and would swallow a subtler red. */
 .k-cost.is-short { color: var(--clay); }
