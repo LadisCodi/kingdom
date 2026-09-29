@@ -325,9 +325,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // THE CONSTRUCTION (M35, A): the Finish that skips it takes the Upgrade
     // button's place; how long is left and what is being done sit under the
     // portrait. Both are live — the bar and the price move with the clock.
+    // One word, so it fits under the portrait on one line and the head is
+    // as tall as it is with the Upgrade button.
     const what = () => (queueItem.startedAt === null
-      ? 'Waiting for a builder'
-      : queueItem.kind === 'upgrade' ? `Upgrading to Lv ${queueItem.targetLevel ?? district.level + 1}` : 'Building');
+      ? 'Waiting'
+      : queueItem.kind === 'upgrade' ? 'Upgrading' : 'Building');
     progressUnder.push(part(() => JSON.stringify([
       queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, game.now())),
       what(),

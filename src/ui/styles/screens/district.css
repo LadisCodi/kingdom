@@ -548,14 +548,15 @@
   position: relative;
   z-index: 3;
   align-self: stretch;
-  margin: calc(var(--px) * -10) calc(var(--px) * -4) 0;
+  margin: calc(var(--px) * -15) calc(var(--px) * -4) 0;
 }
 .dc-build-what {
-  margin-top: calc(var(--px) * 3);
+  margin-top: calc(var(--px) * 1);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
+  white-space: nowrap;
 }
 /* A priced button (the gem Finish) sits on its own section and is wider than
    the bare Upgrade: the slot takes the button's width. */

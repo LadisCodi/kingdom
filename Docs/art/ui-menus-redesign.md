@@ -484,8 +484,8 @@ wood of its sides touches the screen's edges.
   - the head's Upgrade slot holds the gem Finish button with its price;
   - under the portrait: a slim blue bar with the time left inside it, laid
     over the tile's bottom edge, and under it, outside the tile, what is
-    being done (*Upgrading to Lv 4*, *Building*, or *Waiting for a
-    builder*);
+    being done, in one word (*Upgrading*, *Building*, or *Waiting* for a
+    builder), so the head is as tall as it is with the Upgrade button;
   - the painted hammer floats over the portrait, with no base, and works it
     in a loop: one blow at the right corner, a flight to the left corner —
     turning over on the way — two small taps there, and back. Each blow
