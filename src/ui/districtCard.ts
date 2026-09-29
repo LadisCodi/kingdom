@@ -64,7 +64,7 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
  * older per-level map art.
  */
 export function buildingPortrait(
-  def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
+  def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number, building = false,
 ): HTMLElement {
   // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
   // below this level, walked down the way the map draws it — a level with no
@@ -79,7 +79,21 @@ export function buildingPortrait(
     el('div', { class: 'dc-portrait-mask' },
       url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' })),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) =>
-      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })),
+    ...(building ? [workingHammer()] : []));
+}
+
+/**
+ * While a building is being built or upgraded, a hammer floats over its
+ * portrait and works it: one blow at the right corner, a flight to the left
+ * one, two small taps there, and back — each blow throwing a few sparks.
+ * All CSS (district.css, `dc-hammer`), so a tick never restarts it.
+ */
+function workingHammer(): HTMLElement {
+  const sparks = (site: 'r' | 'l') => el('span', { class: `dc-sparks is-${site}` },
+    ...[0, 1, 2, 3].map((i) => el('i', { class: `dc-spark is-${i}` })));
+  return el('span', { class: 'dc-work', 'aria-hidden': 'true' },
+    el('span', { class: 'dc-hammer' }), sparks('r'), sparks('l'));
 }
 
 
@@ -126,9 +140,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   const queueItem = game.state.city.queue.find((q) => q.districtUniqueId === district.uniqueId);
 
   // ------------------------------------------------------------ variant body
-  if (district.state === 'UnderConstruction') {
-    body.append(el('div', { class: 'dc-note' }, 'Under construction.'));
-  } else {
+  // A building still going up has nothing to show yet but its construction,
+  // which the head carries.
+  if (district.state !== 'UnderConstruction') {
     // Every building that turns something out gets the same block — the
     // Townhall's villagers and a hall's soldiers are one mechanic now, so
     // they are one piece of UI. See trainingSection.ts.
@@ -299,11 +313,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }
   }
 
-  // ----------------------------------------------------------------- footer
-  const foot = el('div', { class: 'dc-foot' });
-  // The Upgrade button is built here with the rest of the footer logic but
-  // RENDERS in the head, beside the name (M2) — so the state that decides it
-  // stays with the other build-state branches.
+  // --------------------------------------------------- the head's right slot
+  // The Upgrade button, or the construction in its place.
   const upgradeAction: HTMLElement[] = [];
 
   if (queueItem) {
@@ -329,16 +340,22 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       // No Cancel: a build is paid for when it starts, and a building put in
       // the wrong place is MOVED rather than undone
       // (Docs/features/06-construction.md §1).
-      return el('div', { class: 'dc-live' }, bar.root, el('div', { class: 'dc-actions' }, rush));
+      const what = queueItem.startedAt === null
+        ? 'Waiting for a builder'
+        : queueItem.kind === 'upgrade' ? `Upgrading to Lv ${queueItem.targetLevel ?? district.level + 1}` : 'Building';
+      return el('div', { class: 'dc-live' },
+        el('div', { class: 'dc-build-what' }, what), bar.root, rush);
     };
-    foot.append(part(() => {
+    // THE CONSTRUCTION takes the Upgrade button's place in the head (M35, A):
+    // what is being done, how long is left, and the Finish that skips it.
+    upgradeAction.push(el('div', { class: 'dc-upgrade dc-build' }, part(() => {
       const t = game.now();
       return JSON.stringify([
         queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
         gemRushCost(queueItem, t),
         game.walletValue('Gems') < gemRushCost(queueItem, t),
       ]);
-    }, scaffold));
+    }, scaffold)));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
     // (upgradeSheet.ts, M25): the requirements, whether each is met, and the
@@ -407,12 +424,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // ONE ROW: the picture, what the building is, and the one thing you BUY
     // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
-      buildingPortrait(def, district.level),
+      buildingPortrait(def, district.level, queueItem !== undefined),
       el('div', { class: 'dc-what' }, def.description),
       ...upgradeAction),
     ...stats,
     body,
-    foot,
   );
 }
 

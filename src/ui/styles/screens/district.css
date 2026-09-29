@@ -119,7 +119,6 @@
  * pair of before/after building portraits that drew the eye hardest while
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
-.dc-foot { margin-top: calc(var(--px) * 6); }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -530,4 +529,116 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ---- under construction (M35, A)
+ *
+ * The construction takes the Upgrade button's slot in the head: what is being
+ * done, the time left inside a slim bar, and the gem Finish that skips it. */
+.dc-upgrade.dc-build { width: calc(var(--px) * 124); gap: calc(var(--px) * 5); }
+.dc-build .dc-live { display: contents; }
+.dc-build-what {
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+.dc-build .k-trough { align-self: stretch; }
+.dc-build .k-btn { align-self: stretch; }
+
+/* THE WORKING HAMMER: the painted hammer, floating with no base, over the
+ * portrait while it is being built. One loop: raised over the right corner,
+ * one full blow, a flight to the left corner, two small taps there, and the
+ * flight back. It swings on the end of its handle, so the head travels the
+ * arc a real hammer does, and each blow throws sparks where it lands.
+ *
+ * Geometry, in the 84 × 75 portrait: the pivot (the handle's end) sits
+ * 29 px left of where the head lands at the bottom of a blow — the right
+ * blow lands at (70, 20), the left taps at (14, 26). */
+.dc-work {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  --work-loop: 2.6s;
+}
+.dc-hammer {
+  position: absolute;
+  left: calc(var(--px) * 35);
+  top: calc(var(--px) * -16);
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
+  background: url('../../assets/art-hammer.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.35));
+  /* The handle's end, in the art's own frame. */
+  transform-origin: 15% 90%;
+  animation: dc-hammer var(--work-loop) ease-in-out infinite;
+}
+@keyframes dc-hammer {
+  0%   { translate: 0 0; rotate: -20deg; scale: 1 1; }
+  /* the blow: fast in, a small rebound, then raised again */
+  9%   { rotate: -24deg; animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
+  15%  { rotate: 70deg; animation-timing-function: ease-out; }
+  20%  { rotate: 58deg; }
+  30%  { translate: 0 0; rotate: -20deg; scale: 1 1; }
+  /* the flight to the left corner, turning over on the way so it works that
+     corner from inside the tile, the mirror of the right one */
+  46%  { translate: calc(var(--px) * 2) calc(var(--px) * 6); rotate: -20deg; scale: -1 1; }
+  /* two small taps */
+  52%  { rotate: -30deg; animation-timing-function: ease-in; }
+  56%  { rotate: -70deg; animation-timing-function: ease-out; }
+  62%  { rotate: -30deg; animation-timing-function: ease-in; }
+  66%  { rotate: -70deg; animation-timing-function: ease-out; }
+  74%  { translate: calc(var(--px) * 2) calc(var(--px) * 6); rotate: -20deg; scale: -1 1; }
+  /* and back */
+  92%, 100% { translate: 0 0; rotate: -20deg; scale: 1 1; }
+}
+
+/* THE SPARKS: four specks at the spot a blow lands, thrown out and fading.
+ * Each speck has its own direction; the keyframes carry the moments. */
+.dc-sparks {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.dc-sparks.is-r { left: calc(var(--px) * 70); top: calc(var(--px) * 20); }
+.dc-sparks.is-l { left: calc(var(--px) * 14); top: calc(var(--px) * 26); }
+.dc-spark {
+  position: absolute;
+  left: calc(var(--px) * -3);
+  top: calc(var(--px) * -3);
+  width: calc(var(--px) * 6);
+  height: calc(var(--px) * 6);
+  border-radius: 50%;
+  background: #fff3b0;
+  box-shadow: 0 0 calc(var(--px) * 3) calc(var(--px) * 1) #ffb627;
+  opacity: 0;
+  animation: dc-spark-r var(--work-loop) linear infinite;
+}
+.dc-sparks.is-l .dc-spark { animation-name: dc-spark-l; }
+.dc-spark.is-0 { --sx: 1;    --sy: -1.1; }
+.dc-spark.is-1 { --sx: 1.4;  --sy: -0.3; }
+.dc-spark.is-2 { --sx: -0.6; --sy: -1.3; }
+.dc-spark.is-3 { --sx: 0.4;  --sy: -1.5; }
+.dc-sparks.is-l .dc-spark { --reach: 10; }
+.dc-sparks.is-r .dc-spark { --reach: 16; }
+@keyframes dc-spark-r {
+  0%, 14.9% { opacity: 0; translate: 0 0; scale: 1; }
+  15%  { opacity: 1; translate: 0 0; scale: 1; }
+  26%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.4; }
+  100% { opacity: 0; }
+}
+@keyframes dc-spark-l {
+  0%, 55.9% { opacity: 0; translate: 0 0; scale: 1; }
+  56%  { opacity: 1; translate: 0 0; scale: 0.8; }
+  62%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx) * -1) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
+  65.9% { opacity: 0; translate: 0 0; scale: 0.8; }
+  66%  { opacity: 1; translate: 0 0; scale: 0.8; }
+  72%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sy)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-hammer { animation: none; rotate: -20deg; }
+  .dc-spark { animation: none; }
 }

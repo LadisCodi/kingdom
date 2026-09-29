@@ -479,6 +479,17 @@ wood of its sides touches the screen's edges.
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **Under construction** (a building being built or upgraded; reference
+  `mockups/m35-construction-ab.png`, proposal A):
+  - the head's Upgrade slot holds the construction instead: what is being
+    done (*Upgrading to Lv 4*, *Building*, or *Waiting for a builder*), a
+    slim blue bar with the time left inside it, and the gem Finish button
+    with its price;
+  - the painted hammer floats over the portrait, with no base, and works it
+    in a loop: one blow at the right corner, a flight to the left corner —
+    turning over on the way — two small taps there, and back. Each blow
+    throws a few sparks where it lands. Still with reduced motion;
+  - nothing else on the card changes, and there is nothing at its foot.
 - **The upgrade popup** (the card's Upgrade opens it; reference
   `mockups/m34-upgrade-popup-final.png`), a centred window titled
   *Upgrade to Level 3*:
