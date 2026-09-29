@@ -260,8 +260,8 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     type: 'button',
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
   },
-  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-name' }, def.name),
+  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-bar' },
     bar.root,
     ...(status === 'done' ? [iconEl('tick', { size: 'sm' })]
@@ -273,13 +273,13 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
 }
 
 /**
- * A technology, opened (M46): a loose research page — the same parchment as
- * the book, pinned — read top to bottom in three parts that are never
+ * A technology, opened (M46): a loose research page over the book, read top to bottom in three parts that are never
  * numbered on it:
  *
  *  1. what it is — its emblem and one plain sentence; the name is the heading;
  *  2. Knowledge — the bar, and three pours with the price on the button: Gems
- *     for every point still missing, +1, and as much as the bar allows;
+ *     for every point still missing, +1, and as much as the bar allows; once
+ *     it is full, a line saying so in their place;
  *  3. research — the Gold above the button, and the button.
  *
  * A technology whose requirements are not met shows part 1 and its
@@ -331,8 +331,10 @@ function techSheet(game: Game, id: TechId): HTMLElement {
       page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
         el('div', { class: 'rb-knowledge' },
           bar.root,
-          // Once the Knowledge is in there is nothing left to pour.
-          ...(pours.missing === 0 ? [] : [el('div', { class: 'rb-pours' },
+          // Once the Knowledge is in there is nothing left to pour: a line in
+          // the buttons' place, as tall as they are, so the sheet keeps its size.
+          ...(pours.missing === 0 ? [el('div', { class: 'rb-filled' },
+            iconEl('tick'), el('span', {}, 'All its Knowledge is in — it is ready to research'))] : [el('div', { class: 'rb-pours' },
             btn({
               label: formatExact(pours.gems),
               icon: 'Gems',
@@ -376,9 +378,8 @@ function techSheet(game: Game, id: TechId): HTMLElement {
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 
-  // The pin and the way out sit on the page's edge, outside what scrolls.
+  // The way out sits in the page's corner, outside what scrolls.
   const scrim = el('div', { class: 'tech-modal' }, el('div', { class: 'rb-sheet-wrap' },
-    el('span', { class: 'rb-pin is-centre', 'aria-hidden': 'true' }),
     closeKnob(dismiss),
     page));
   // The scrim dismisses; the page does not, or every press inside it would

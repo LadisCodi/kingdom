@@ -329,7 +329,9 @@ A `bonus` names its effects, and each is four fields:
 - **The bar is always on the map**, as a tab of its own centred under the
   plank ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md) §5.1,
   M33): what is held, ten segments, and when the next point and the full bar
-  arrive. Its **+** opens the purchase (§3.2).
+  arrive. Its **+** opens the purchase (§3.2). It stays down over the menus
+  that spend Knowledge — the research book and the Knowledge sheet — and
+  steps aside for every other one; Knowledge is never a coin on the plank.
 
 ### 3.1 Knowledge and Mana
 
@@ -397,8 +399,9 @@ The research screen is a book (mockups M43 and M46,
 - **An era is a chapter**: *Chapter I* at the top of the page, and a heading
   wherever the next band begins, with *Reveal N more cells* while it is shut
   (*Sealed* on the book's last band). One vertical scroll.
-- The plank carries **Gold and Knowledge**; the Knowledge tab steps aside
-  (§3).
+- The plank carries **Gold** only; Knowledge is its tab under the plank
+  (§3), which stays down while the book or the Knowledge sheet is open and
+  steps aside for every other menu.
 - It is built from shared pieces — the page, the ribbon, the pin, the kit's
   stat tile, bar and buttons — so a new book or state costs no new art.
 
@@ -419,7 +422,7 @@ minute. Each is in one of three states:
 ### 5.3 Cards
 
 - Three columns (§2.2). A card is the building card's **stat tile**: the
-  emblem, the name, and the kit's **progress bar with the numbers inside it**,
+  name at the top, the emblem under it, and the kit's **progress bar with the numbers inside it**,
   plus the tick or the padlock.
 - The orb marks a card with a press worth making now: filled and payable, or
   pourable to full from the bar.
@@ -429,9 +432,10 @@ minute. Each is in one of three states:
 
 ### 5.4 The technology's sheet
 
-**A loose research page** over the dimmed book — the same parchment, one pin
-at its top, the name as its heading, a close knob in its corner; the scrim
-closes it too. It reads top to bottom in three parts, never numbered:
+**A loose research page** over the dimmed book — a small stack of parchment,
+the name as its heading, a close knob in its top corner, on the paper; the
+scrim closes it too. **Every sheet is the same size**: as tall as the tallest
+technology's needs, whatever state it is in. It reads top to bottom in three parts, never numbered:
 
 1. **What it is** — the emblem in a framed square and one plain sentence of
    what it unlocks or does (§1). A minor rank's sentence carries its numbers.
@@ -441,7 +445,9 @@ closes it too. It reads top to bottom in three parts, never numbered:
    - **+1** — one point from the bar;
    - **+N** — as much as it can: the least of what the bar holds and what is
      missing.
-   Once the Knowledge is in, the buttons go and the full bar stays.
+   Once the Knowledge is in, the full bar stays and a line takes the buttons'
+   place, as tall as they are: *All its Knowledge is in — it is ready to
+   research*.
 3. **Research** — the upgrade popup's block: the Gold above a wide
    **Research** button, which is locked with *Assign all its Knowledge to
    research it* under it until the bar is full. It researches on the press,
