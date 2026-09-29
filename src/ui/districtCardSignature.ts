@@ -54,6 +54,9 @@ export function districtCardSignature(game: Game, district: District): string {
     // Training: its line, what it costs against the purse, the room it
     // has, the army's room, the ward.
     lineFor(s, district.uniqueId).map((i) => i.trainee),
+    // How many of its trainee the player owns, shown under the portrait.
+    def.trains.map((t) => (t === 'Villager' ? s.city.population
+      : s.army.filter((u) => u.definitionId === t).length)),
     def.trains.map((t) => shorts(trainCost(s, t) as Record<string, number>)),
     // Not the whole readout: its progress and remaining seconds tick, and
     // the queue row already carries those as a live part.

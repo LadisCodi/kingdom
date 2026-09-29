@@ -242,8 +242,16 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
     ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]
     : [typeTag(trainee as UnitId)];
 
+  // How many the player already HAS: the army's soldiers of this unit (the
+  // wounded are the ward's), or the villagers who live in the city.
+  const owned = trainee === 'Villager'
+    ? game.state.city.population
+    : game.state.army.filter((u) => u.definitionId === trainee).length;
   return el('div', { class: 'tr-info k-section' },
-    unitPortrait(trainee, 'tr-portrait'),
+    el('div', { class: 'tr-who' },
+      unitPortrait(trainee, 'tr-portrait'),
+      el('span', { class: 'tr-owned', title: `You have ${owned}` },
+        el('span', {}, 'Owned'), el('b', {}, String(owned)))),
     // No name here: it heads the whole block, on the section's rule.
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-tags' }, ...tags),

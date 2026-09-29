@@ -287,6 +287,11 @@
   padding: calc(var(--px) * 8);
 }
 .k-portrait.tr-portrait { --portrait-size: calc(var(--px) * 64); }
+/* The portrait, and under it how many the player already has. */
+.tr-who { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
+.tr-owned { display: flex; align-items: baseline; gap: calc(var(--px) * 4); line-height: 1.1; }
+.tr-owned > span { font-size: var(--text-helper); color: var(--ink-muted); }
+.tr-owned > b { font-size: var(--text-body); font-weight: var(--weight-title); }
 .tr-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
 .tr-name { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
 .tr-desc {
