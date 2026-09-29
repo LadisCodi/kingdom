@@ -149,6 +149,55 @@
 }
 .k-portrait-mask > .icon { position: absolute; inset: 0; margin: auto; --icon-size: 60%; }
 
+/* THE TOOLTIP (kit/tooltip.ts): a parchment bubble under its anchor, its
+   arrow pointing up at it. It fades and scales in from the arrow, and out
+   again — a transition rather than display, so closing animates too. */
+.k-tip-anchor { position: relative; }
+.k-tip {
+  position: absolute;
+  left: calc(var(--px) * -4);
+  top: calc(100% + calc(var(--px) * 8));
+  z-index: 20;
+  width: max-content;
+  max-width: calc(var(--px) * 200);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 8);
+  background: var(--parchment);
+  box-shadow: 0 calc(var(--px) * 3) calc(var(--px) * 8) rgba(40, 22, 10, 0.3);
+  color: var(--ink);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-body);
+  line-height: 1.25;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.85);
+  transform-origin: calc(var(--px) * 23) 0;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 0s linear 120ms;
+}
+.k-tip::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--px) * 16);
+  bottom: 100%;
+  border: calc(var(--px) * 7) solid transparent;
+  border-bottom-color: var(--section-line);
+}
+.k-tip-anchor.has-tip-open > .k-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  transition: opacity 140ms ease-out, transform 180ms cubic-bezier(0.3, 1.5, 0.5, 1), visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-tip, .k-tip-anchor.has-tip-open > .k-tip { transition: none; transform: none; }
+}
+
 /* Rope grab handle on a sheet. */
 .k-grab {
   width: calc(var(--px) * 40);

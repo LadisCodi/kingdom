@@ -28,7 +28,7 @@ import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, btn, iconEl, type LiveParts } from './kit';
+import { action, btn, iconEl, withTooltip, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
 
@@ -45,22 +45,10 @@ export const nameFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
 
 /** A TAG: a short chip for what the unit IS or does, which says a line more
- *  when tapped. Only one is open at a time; a tap anywhere else in the block
- *  closes it (the listener is on the block, `trainingSection`). */
-function tag(label: string, tip: string, tone: 'type' | 'trait'): HTMLElement {
-  const b = el('button', {
-    class: `tr-tag is-${tone}`, type: 'button', 'aria-label': `${label}: ${tip}`,
-  },
-    label,
-    el('span', { class: 'tr-tag-tip', role: 'tooltip' }, el('b', {}, label), ` — ${tip}`));
-  b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = !b.classList.contains('is-open');
-    b.closest('.tr')?.querySelectorAll('.tr-tag.is-open').forEach((t) => t.classList.remove('is-open'));
-    b.classList.toggle('is-open', open);
-  });
-  return b;
-}
+ *  when tapped — the kit's tooltip (kit/tooltip.ts). */
+const tag = (label: string, tip: string, tone: 'type' | 'trait'): HTMLElement =>
+  withTooltip(el('button', { class: `tr-tag is-${tone}`, type: 'button', 'aria-label': `${label}: ${tip}` },
+    label), tip, label);
 
 /** The type chip: what the unit IS, in the language the type chart speaks —
  *  and its tip, what that means in a fight: who it beats and who beats it.
@@ -103,10 +91,6 @@ export function trainingSection(
   if (offers.length === 0 && !isWard) return null;
 
   const root = el('div', { class: 'tr' });
-  // A tap anywhere in the block that is not on a tag closes an open tip.
-  root.addEventListener('click', () => {
-    root.querySelectorAll('.tr-tag.is-open').forEach((t) => t.classList.remove('is-open'));
-  });
 
   const batch = () => {
     const row = () => batchStrip(game, district, isWard);

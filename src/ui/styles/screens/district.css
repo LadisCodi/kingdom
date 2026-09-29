@@ -316,11 +316,10 @@
   white-space: normal;
 }
 
-/* THE TAGS: a chip for what the unit is (blue) and what it does (paper). A
-   tap opens one line more in a bubble over it; one at a time. */
+/* THE TAGS: a chip for what the unit is (blue), or a special trait (paper).
+   A tap opens the kit's tooltip under it (kit/tooltip.ts). */
 .tr-tags { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); }
 .tr-tag {
-  position: relative;
   appearance: none;
   padding: calc(var(--px) * 2) calc(var(--px) * 9);
   border: 1px solid transparent;
@@ -336,36 +335,7 @@
 }
 .tr-tag.is-type { background: var(--sky); border-color: #2f7ea3; color: var(--ink-inverse); }
 .tr-tag.is-trait { background: var(--parchment); border-color: var(--section-line); color: var(--ink); }
-.tr-tag.is-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
-.tr-tag-tip {
-  display: none;
-  position: absolute;
-  /* Below the tag, not above: the card's body scrolls, and a bubble over
-     its first line would be cut off at the body's top edge. */
-  left: calc(var(--px) * -4);
-  top: calc(100% + calc(var(--px) * 8));
-  z-index: 5;
-  width: max-content;
-  max-width: calc(var(--px) * 200);
-  padding: calc(var(--px) * 6) calc(var(--px) * 10);
-  border: calc(var(--px) * 2) solid var(--section-line);
-  border-radius: calc(var(--px) * 8);
-  background: var(--parchment);
-  box-shadow: 0 calc(var(--px) * 3) calc(var(--px) * 8) rgba(40, 22, 10, 0.3);
-  color: var(--ink);
-  font-weight: var(--weight-body);
-  text-align: left;
-  white-space: normal;
-}
-.tr-tag-tip::after {
-  content: '';
-  position: absolute;
-  left: calc(var(--px) * 16);
-  bottom: 100%;
-  border: calc(var(--px) * 7) solid transparent;
-  border-bottom-color: var(--section-line);
-}
-.tr-tag.is-open > .tr-tag-tip { display: block; }
+.tr-tag.has-tip-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
 
 .tr-stats {
   grid-column: 1 / -1;

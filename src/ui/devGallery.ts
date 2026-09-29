@@ -10,7 +10,7 @@
 import { el } from './format';
 import {
   action, btn, card, chip, costChips, ctaBadge, grid, iconEl, knob, meter, panel, pips,
-  plank, progress, sheet, stat, switchCtl, toggleGroup, ICON_EMOJI,
+  plank, progress, sheet, stat, switchCtl, toggleGroup, withTooltip, ICON_EMOJI,
   type IconName,
 } from './kit';
 
@@ -105,6 +105,11 @@ export function mountGallery(root: HTMLElement): void {
       specimen('disabled', knob('+', noop, { label: 'Add worker', kind, finish: 'paint', disabled: true })),
     )),
     // The rule §6.3 makes universal: never greyed out without a reason.
+    // THE TOOLTIP: any element can carry one (kit/tooltip.ts).
+    el('div', { class: 'gal-row' },
+      specimen('tooltip — tap it', withTooltip(
+        btn({ label: 'Melee', onClick: noop, kind: 'blue' }),
+        'Strong vs Lancers, weak vs Archers.', 'Melee'))),
     specimen('priced, with a consequence beside it', action({
       label: 'Upgrade', kind: 'primary', onClick: noop,
       cost: { Wood: 40, Stone: 20 }, have: () => 999,

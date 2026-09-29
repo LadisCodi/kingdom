@@ -396,6 +396,10 @@ wood of its sides touches the screen's edges.
   `--space-heading` (6 px) above what it heads, and takes the place of the
   gap before its section rather than adding its own. The window's header
   band is a heading too: its content starts one heading gap under it.
+- **Tooltip** (kit `withTooltip`, any element): a tap opens a parchment
+  bubble under its anchor, arrow up, with a soft pop (*Pop 02*); a second
+  tap or a tap anywhere else closes it; one open at a time in the whole UI.
+  It fades and scales in from the arrow (0.14–0.18 s) and out again (0.12 s).
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
   uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
   district card heads each of its sections with one, shown only when the
@@ -429,8 +433,8 @@ wood of its sides touches the screen's edges.
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
   - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
-    Worker for a villager). Tapping it opens a one-line bubble under it with
-    the type chart's word on it: *Strong vs Lancers, weak vs Archers*. One
+    Worker for a villager). Tapping it opens the kit's tooltip with the type
+    chart's word on it: *Strong vs Lancers, weak vs Archers*. One
     open at a time; paper chips are kept for special traits.
   - **Batch**, at the foot of the same panel: one building trains one
     unit, so its whole line is one batch — the unit's portrait with its
