@@ -28,7 +28,7 @@ import {
 import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import { trainingSection } from './trainingSection';
+import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
@@ -136,8 +136,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
     if (training) {
-      body.append(sectionHead(def.bedsPerLevel.length > 0 ? 'Ward'
-        : def.trains.every((t) => t === 'Villager') ? 'Villagers' : 'Training'), training);
+      // The block is headed by what it trains — one unit per building.
+      body.append(sectionHead(def.bedsPerLevel.length > 0 || def.trains.length === 0
+        ? 'Ward' : nameFor(def.trains[0])), training);
     }
 
     // A workshop turns things out too, so it gets the same kind of block.
@@ -425,7 +426,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
-  const stats = figures.length === 0 ? [] : [sectionHead('Stats'), el('div', { class: 'dc-stats' },
+  const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },

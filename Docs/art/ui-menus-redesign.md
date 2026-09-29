@@ -393,9 +393,10 @@ wood of its sides touches the screen's edges.
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
   uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
   district card heads each of its sections with one, shown only when the
-  section is: *Stats*, then what the building does — *Villagers* (the
-  Townhall), *Training*, *Ward*, *Workshop*, *Residents*, *Workers*,
-  *Crops*, *Harmony* — and *Neighbours* when an adjacency is in effect.
+  section is: what the building does — the unit it trains (*Warrior*,
+  *Villager*), *Ward*, *Workshop*, *Residents*, *Workers*, *Crops*,
+  *Harmony* — and *Neighbours* when an adjacency is in effect. The stat
+  tiles have no heading.
 - **The district card's head**: one row — the portrait, the description
   (bold, lighter ink), and Upgrade (the kit's default button, its fixed size)
   — each anchored to the top and growing down. The card lists no
@@ -413,8 +414,8 @@ wood of its sides touches the screen's edges.
     round): three layers — a round paper base in a flat outline, a circular
     mask inside it, and the unit's bust drawn a little larger than the mask,
     so a bust that carries a medallion of its own has that ring cut away.
-  - **Panel** (a section): the bust, the name, the tags, one line of
-    flavour, and the priced Train button — its costs and its time above it.
+  - **Panel** (a section), headed by the unit's name on the section's
+    rule: the round portrait, the tags, one line of flavour, and the priced Train button — its costs and its time above it.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,
     Health. A gate (no room, a technology, a full army) takes the button's
     place with its reason.

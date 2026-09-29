@@ -5,7 +5,8 @@
 // Each building trains ONE thing (dataRules.ts), so there is nothing to pick.
 // Two parts, top to bottom:
 //
-//  - THE PANEL for that one trainee: its bust, name, tags, one line of
+//  - THE PANEL for that one trainee (its name heads the block, on the
+//    section's rule — districtCard.ts): its portrait, tags, one line of
 //    flavour, the priced Train button — and for a soldier the three numbers
 //    it is judged on.
 //  - THE BATCH, at the foot of the same panel: how many are coming, the bar
@@ -39,7 +40,8 @@ const VILLAGER = {
   description: 'A hardworking settler who tends the fields and pays rent.',
 };
 
-const nameFor = (trainee: TrainableId) =>
+/** A trainee's name — the district card heads the training block with it. */
+export const nameFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
 
 /** A TAG: a short chip for what the unit IS or does, which says a line more
@@ -258,8 +260,8 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
 
   return el('div', { class: 'tr-info k-section' },
     unitPortrait(trainee, 'tr-portrait'),
+    // No name here: it heads the whole block, on the section's rule.
     el('div', { class: 'tr-body' },
-      el('div', { class: 'tr-name' }, nameFor(trainee)),
       el('div', { class: 'tr-tags' }, ...tags),
       el('div', { class: 'tr-desc' }, unit === null ? VILLAGER.description : unit.description)),
     el('div', { class: 'tr-buy' }, buy),
