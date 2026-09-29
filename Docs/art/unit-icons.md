@@ -48,8 +48,10 @@
 - Attach the existing icons as the anchor and say they are the style to
   match; ask for the new ones side by side on one canvas with clear
   transparent gaps.
-- End with the true-alpha request (Docs/art memory: "background alpha 0,
-  then apply the true-alpha transparency correction").
+- End with the true-alpha request: "The background must be alpha 0
+  everywhere, not white, not a checkerboard. Then apply the true-alpha
+  transparency correction and give me the download link for the corrected
+  PNG."
 - Cut each to a square around its ring, 256 px (the existing icons' size).
 
 ## Deliberately not in this design
