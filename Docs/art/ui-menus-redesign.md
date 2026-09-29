@@ -232,6 +232,10 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
   a hit area of at least 44 px. The glyph is carved into the face in a darker
   tone of the material, never a flat white sign. (The window's close is its
   own red button.)
+- **A price's icon is the plank's coin size** (76 reference pixels, the
+  header's `--slot-icon`) everywhere a price is written — above a slab, in a
+  cost chip, on a button's face — and stands proud of its line rather than
+  making it taller.
 - **Priced**: the cost sits **above** the slab, outside it — icon + amount
   per term, any term the player cannot pay in `clay` — and the two are
   grouped on a small **section**; the whole is one press.
