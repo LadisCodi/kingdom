@@ -187,7 +187,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
   // reading does (the quest scroll's counter).
   const bar = progress('green');
   bar.set(trainingProgress(game.state, district.uniqueId, now),
-    `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`);
+    formatDuration(Math.ceil(queueLeft(game, district, line[0]))));
   const total = isWard
     ? line.reduce((n, item, i) => n + (i === 0
       ? queueLeft(game, district, item)
