@@ -550,13 +550,31 @@
   align-self: stretch;
   margin: calc(var(--px) * -15) calc(var(--px) * -4) 0;
 }
+.dc-what-col {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.dc-what-col .dc-live { display: contents; }
+/* What is being done, centred under the description and level with the bar,
+   breathing slowly — never fading out — while the work goes on. */
 .dc-build-what {
-  margin-top: calc(var(--px) * 1);
-  font-size: var(--text-helper);
+  margin-top: auto;
+  font-size: var(--text-desc);
   font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
   white-space: nowrap;
+  animation: dc-breathe 2.4s ease-in-out infinite alternate;
+}
+@keyframes dc-breathe {
+  from { opacity: 0.75; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-build-what { animation: none; }
 }
 /* A priced button (the gem Finish) sits on its own section and is wider than
    the bare Upgrade: the slot takes the button's width. */

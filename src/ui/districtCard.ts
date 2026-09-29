@@ -317,29 +317,30 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // The Upgrade button, or the construction in its place.
   const upgradeAction: HTMLElement[] = [];
 
-  // Under the portrait while it is being built: the bar, over the tile's
-  // foot, and what is being done under it.
+  // While it is being built: the bar under the portrait, over the tile's
+  // foot, and what is being done under the description.
   const progressUnder: HTMLElement[] = [];
+  const doing: HTMLElement[] = [];
 
   if (queueItem) {
     // THE CONSTRUCTION (M35, A): the Finish that skips it takes the Upgrade
-    // button's place; how long is left and what is being done sit under the
-    // portrait. Both are live — the bar and the price move with the clock.
-    // One word, so it fits under the portrait on one line and the head is
-    // as tall as it is with the Upgrade button.
+    // button's place; how long is left sits under the portrait and what is
+    // being done under the description, breathing. All live — the bar and
+    // the price move with the clock; the word has a part of its own, so the
+    // clock does not restart its breath.
     const what = () => (queueItem.startedAt === null
       ? 'Waiting'
       : queueItem.kind === 'upgrade' ? 'Upgrading' : 'Building');
+    doing.push(part(what, () => el('div', { class: 'dc-build-what' }, what())));
     progressUnder.push(part(() => JSON.stringify([
       queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, game.now())),
-      what(),
     ]), () => {
       const t = game.now();
       const bar = progress('blue');
       bar.run(queueProgress(queueItem, t),
         queueItem.startedAt === null ? 0 : remainingSeconds(queueItem, t) * 1000,
         queueItem.startedAt === null ? '' : formatDuration(remainingSeconds(queueItem, t)));
-      return el('div', { class: 'dc-live' }, bar.root, el('div', { class: 'dc-build-what' }, what()));
+      return el('div', { class: 'dc-live' }, bar.root);
     }));
     // No Cancel: a build is paid for when it starts, and a building put in
     // the wrong place is MOVED rather than undone
@@ -425,7 +426,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       progressUnder.length === 0
         ? buildingPortrait(def, district.level)
         : el('div', { class: 'dc-portrait-col' }, buildingPortrait(def, district.level, true), ...progressUnder),
-      el('div', { class: 'dc-what' }, def.description),
+      doing.length === 0
+        ? el('div', { class: 'dc-what' }, def.description)
+        : el('div', { class: 'dc-what-col' }, el('div', { class: 'dc-what' }, def.description), ...doing),
       ...upgradeAction),
     ...stats,
     body,
