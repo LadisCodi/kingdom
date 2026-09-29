@@ -461,9 +461,12 @@ wood of its sides touches the screen's edges.
   `mockups/m29-workers-stepper.png`, proposal B), a stepper:
   - the red − knob, the villager's round portrait with the crew on its
     pill (*x2*), *2 / 3 Assigned* in large type, and the green + knob;
-  - two or more stat tiles of the card's kind: *Production* (the crew's
-    output a minute, per coin) and what there is to work, per source, in a
-    short word (*Fields*, *Trees*, *Rocks*, *Iron*, *Gold*, *Shoals*);
+  - a stat tile per source, of the card's kind, with what there is to work
+    in a short word (*Fields*, *Trees*, *Rocks*, *Iron*, *Gold*, *Shoals*);
+    what the crew MAKES leads the card's stat band instead (*Food +45 /min*,
+    the resource as the tile's word). The crew's haul and swing are the
+    upgrade popup's only: neutral until a late level, and already counted
+    in that output;
   - a tip in the information blue with a round "?" badge, when the crew
     outnumbers its work (a crew wants about two cells each) or nobody works
     here yet;

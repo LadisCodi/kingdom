@@ -40,6 +40,9 @@ export interface BuildingStat {
    *  fit on the iPhone X. */
   short: string;
   value: string;
+  /** False for a figure only the upgrade popup shows — one that is neutral
+   *  until a late level and that the card's Production already counts in. */
+  onCard?: false;
 }
 
 /** The same stat at two levels, and whether the level actually moves it. */
@@ -74,11 +77,16 @@ export function statsAt(game: Game, district: District, level: number): Building
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
     add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
   }
+  // A crew's haul and swing are the late levels' gift, neutral until then,
+  // and the card's Production already counts them in: the popup's pair shows
+  // what a level buys, the card does not repeat them.
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
     add('delivery', 'plus', 'Per delivery', 'Haul', `+${term(def.extraUnitsPerDeliveryPerLevel, 0)}`);
+    out[out.length - 1].onCard = false;
   }
   if (def.strikeSpeedPerLevel.length > 0) {
     add('swing', 'clock', 'Swing', 'Swing', `×${term(def.strikeSpeedPerLevel, 1)}`);
+    out[out.length - 1].onCard = false;
   }
   if (def.armyCapPerLevel.length > 0) {
     add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));

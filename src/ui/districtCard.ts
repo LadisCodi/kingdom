@@ -99,6 +99,21 @@ const SOURCE_ICON: Record<string, IconName> = {
   MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
 };
 
+/** What a crew makes a minute, per coin: the rate one worker earns at this
+ *  building — its haul and its swing included — times the crew. */
+function crewOutput(game: Game, district: District): Array<[CurrencyId, number]> {
+  const def = DISTRICTS[district.definitionId];
+  const perMinute = new Map<CurrencyId, number>();
+  for (const s of def.harvestSources) {
+    const spec = HARVEST[s];
+    if (perMinute.has(spec.currencyId)) continue;
+    perMinute.set(spec.currencyId, district.assignedWorkers
+      * effectiveWorkerStrike(game.state, spec, district)
+      * (60_000 / workerStrikeMs(game.state, spec, district)));
+  }
+  return [...perMinute];
+}
+
 /** A tile of the card's stat kind (the band under the head): icon, the short
  *  name in bold, the value under it. */
 const crewStat = (icon: IconName, label: string, value: string): HTMLElement =>
@@ -288,20 +303,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
           el('b', {}, `${crew} / ${limit}`), el('span', {}, 'Assigned')),
         plus));
 
-      // What the crew makes, a minute, per coin — the rate one worker earns
-      // at this building times the crew — and what there is to work, per
-      // source (the Quarry has three). Two cells per worker is the authoring
-      // law: a cell drains, then recovers, so a crew wants about twice its
-      // own number in reach (04-harvest.md §2.1).
-      const perMinute = new Map<CurrencyId, number>();
-      for (const s of def.harvestSources) {
-        const spec = HARVEST[s];
-        if (perMinute.has(spec.currencyId)) continue;
-        perMinute.set(spec.currencyId, crew * effectiveWorkerStrike(game.state, spec, district)
-          * (60_000 / workerStrikeMs(game.state, spec, district)));
-      }
+      // What there is to work, per source (the Quarry has three). Two cells
+      // per worker is the authoring law: a cell drains, then recovers, so a
+      // crew wants about twice its own number in reach (04-harvest.md §2.1).
+      // What the crew MAKES is the card's first stat, up top.
       const tiles = [
-        ...[...perMinute].map(([c, n]) => crewStat(c, 'Production', `+${Math.round(n)} /min`)),
         ...def.harvestSources.map((s) => {
           const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
           return crewStat(SOURCE_ICON[s], SOURCE_WORD[s], String(n));
@@ -410,7 +416,16 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // where a player looks for it, and it is the half of the model the popup
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
-  const figures = statsAt(game, district, district.level);
+  // A worker building leads with what its crew makes (the resource is the
+  // tile's word: *Food +45 /min*); the popup-only figures stay off the card.
+  const figures = [
+    ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && district.state === 'Built'
+      ? crewOutput(game, district).map(([c, n]) => ({
+        icon: c as IconName, label: `${c} a minute`, short: c, value: `+${Math.round(n)} /min`,
+      }))
+      : []),
+    ...statsAt(game, district, district.level).filter((f) => f.onCard !== false),
+  ];
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
