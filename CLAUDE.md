@@ -31,9 +31,13 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
-reset). `?dev=kit` opens the UI primitive gallery. `?dev=data` opens the
-data editor (`Docs/plans/data-editor.md`) — every piece of game data in one
-tool, saving straight into `src/sim/data/` through dev-only Vite middleware.
+reset, and 📱 — the frame at an iPhone X, iPhone 17 or iPad Pro 12.9"
+aspect ratio, with that device's safe-area insets and its notch or Dynamic Island
+and home bar drawn over it, to sign off a menu per device from a desktop
+browser). `?dev=kit`
+opens the UI primitive gallery. `?dev=data` opens the data editor
+(`Docs/plans/data-editor.md`) — every piece of game data in one tool, saving
+straight into `src/sim/data/` through dev-only Vite middleware.
 The map editor (`Docs/map-editor.md`) lives in it at `?dev=data#map` — paint
 terrain and features, place landmarks and ruins; it writes
 `src/sim/data/region-map.json`. The tech tree editor
@@ -151,9 +155,11 @@ than the build is rejected rather than downgraded.
 
 - **One tick driver.** The Unity build double-ticked its timer; the web build
   ticks from exactly one place. Do not add a second.
-- **Three distance metrics coexist by design.** Fog, placement and BFS use
-  **4-way von Neumann** (`grid.ts` — diagonals are not adjacent); building areas
-  of influence use **Chebyshev**; worker travel uses **Euclidean**.
+- **Three distance metrics coexist by design.** Adjacency — fog state, the
+  connected frontier, placement — uses **4-way von Neumann** (`grid.ts` —
+  diagonals are not adjacent); every radius and the Townhall's rings use
+  **Chebyshev**, a square that the isometric view draws as a tile-shaped
+  diamond; worker travel uses **Euclidean**.
 - **Money and identity are different things.** A cell's feature is not its
   currency: berries, game and shoals all pay Food (1, 3, 2 a tap) and an iron
   vein is a rich Stone node. `HarvestSpec.id` vs `HarvestSpec.currencyId`.

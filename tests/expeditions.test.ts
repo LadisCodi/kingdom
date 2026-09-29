@@ -567,49 +567,46 @@ describe('a relic is no part of a room', () => {
   });
 });
 
-// Stables. Each unit is still behind its own technology, so the choice fills
-// in as the player researches rather than arriving all at once.
-describe('a hall can turn out more than one unit', () => {
-  it('offers the three foot soldiers at the Barracks, and Cavalry only at the Stables', () => {
-    expect(DISTRICTS.Barracks.trains).toEqual(['Warrior', 'Lancer', 'Archer']);
-    expect(DISTRICTS.Stables.trains).toEqual(['Cavalry']);
-    // Every trainable unit has a hall, and no unit is orphaned.
-    for (const id of ['Warrior', 'Lancer', 'Archer', 'Cavalry'] as UnitId[]) {
-      const halls = Object.values(DISTRICTS).filter((d) => d.trains.includes(id));
-      expect(halls.length, `${id} is trained nowhere`).toBeGreaterThan(0);
-    }
+// ONE UNIT, ONE HALL. Each building trains exactly one thing and each unit is
+// trained in exactly one building (dataRules.ts holds the data to it), so a
+// hall's line is always one unit, and a card's training block one batch.
+describe('each unit has a hall of its own', () => {
+  it('trains every unit in exactly one building, and one unit per building', () => {
+    for (const d of Object.values(DISTRICTS)) expect(d.trains.length, d.id).toBeLessThanOrEqual(1);
+    const hallOf = (id: UnitId) => Object.values(DISTRICTS).filter((d) => d.trains.includes(id)).map((d) => d.id);
+    expect(hallOf('Warrior')).toEqual(['Barracks']);
+    expect(hallOf('Lancer')).toEqual(['SpearHall']);
+    expect(hallOf('Archer')).toEqual(['ShootingGrounds']);
+    expect(hallOf('Cavalry')).toEqual(['Stables']);
   });
 
-  it('queues each of them into the SAME line at that hall, in order', () => {
+  it('queues repeat orders of its one unit into one line, in order', () => {
     const state = readyToDelve({});
-    for (const t of ['Warrior', 'Spears', 'Archery'] as const) completeTech(state, t);
+    completeTech(state, 'Warrior');
     const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
 
-    expect(trainUnit(state, 'Archer', T0, barracks)).toBe('Queued');
-    expect(trainUnit(state, 'Lancer', T0, barracks)).toBe('Queued');
-    expect(lineFor(state, barracks.uniqueId).map((i) => i.trainee)).toEqual(['Archer', 'Lancer']);
+    expect(trainUnit(state, 'Warrior', T0, barracks)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0, barracks)).toBe('Queued');
+    expect(lineFor(state, barracks.uniqueId).map((i) => i.trainee)).toEqual(['Warrior', 'Warrior']);
 
-    // One bench: the Archer (12s) finishes first because it was queued first,
-    // and the Lancer starts only when the slot frees.
-    advance(state, map, T0 + 13_000);
-    expect(state.army.map((u) => u.definitionId)).toEqual(['Archer']);
-    advance(state, map, T0 + 30_000);
-    expect(state.army).toHaveLength(1); // the Lancer's 20s began at 12s
-    advance(state, map, T0 + 33_000);
-    expect(state.army.map((u) => u.definitionId)).toEqual(['Archer', 'Lancer']);
+    // One bench: the first (15s) finishes first, and the second starts only
+    // when the slot frees.
+    advance(state, map, T0 + 16_000);
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Warrior']);
+    advance(state, map, T0 + 31_000);
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Warrior', 'Warrior']);
   });
 
   it('refuses a unit the hall does not turn out, even when another hall does', () => {
     const state = readyToDelve({});
-    completeTech(state, 'Cavalry');
+    completeTech(state, 'Archery');
     const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
-    expect(trainUnit(state, 'Cavalry', T0, barracks)).toBe('NoBuilding');
+    expect(trainUnit(state, 'Archer', T0, barracks)).toBe('NoBuilding');
   });
 
   it('still refuses one whose technology is missing', () => {
     const state = readyToDelve({});
-    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
-    expect(trainUnit(state, 'Archer', T0, barracks)).toBe('TechRequired');
+    expect(trainUnit(state, 'Archer', T0)).toBe('TechRequired');
   });
 });
 

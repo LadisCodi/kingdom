@@ -11,3 +11,4 @@ export * from './icon';
 export * from './stats';
 export * from './surface';
 export * from './live';
+export * from './tooltip';

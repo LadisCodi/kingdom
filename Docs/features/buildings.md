@@ -41,7 +41,7 @@
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
 | **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
-| **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior, Lancer, Archer |
+| **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior |
 | **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
 | **Shooting Grounds** | 1×1 | Archery | 1 | **10** | army cap; trains Archer |
 | **Stables** | 1×1 | Cavalry | 1 | **10** | army cap; trains Cavalry |
@@ -219,12 +219,13 @@ regeneration +20, +25, +30, +36, +42 an hour.
 - Each hall raises the **army cap** and trains its units, queued at that hall
   ([`combat.md`](combat.md) §14). The cap is the sum over the four; all four at
   level 5 field 3,400 troops.
-- Every unit is behind its own technology; the Barracks trains every foot
-  soldier, the Spear Hall and Shooting Grounds are parallel lines for theirs.
+- **One unit, one hall:** every hall trains exactly one unit and every unit
+  has exactly one hall (checked by `dataRules.ts`); the technology that
+  unlocks a unit unlocks its hall.
 
 | Hall | Trains | Unlock | Build | Upgrade base |
 |---|---|---|---|---|
-| **Barracks** | Warrior · Lancer · Archer | `Warrior` | 60 W + 20 S, 60 s | 180 W + 60 S, 90 s |
+| **Barracks** | Warrior | `Warrior` | 60 W + 20 S, 60 s | 180 W + 60 S, 90 s |
 | **Spear Hall** | Lancer | `Spears` | 80 W + 30 S, 120 s | 240 W + 90 S, 120 s |
 | **Shooting Grounds** | Archer | `Archery` | 80 W + 30 S, 300 s | 240 W + 90 S, 120 s |
 | **Stables** | Cavalry | `Cavalry` | 120 W + 70 S, 90 s | 360 W + 210 S, 180 s |

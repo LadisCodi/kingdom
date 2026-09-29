@@ -14,8 +14,8 @@
  * WHAT IS MISSING IS AS MUCH OF THE CONTENT AS WHAT IS HELD, so a silhouette
  * keeps its rarity stars and its name and only loses its picture. */
 
-.col-season, .col-page, .col-relic { display: flex; flex-direction: column; gap: 12px; }
-.k-sheet.is-bare .col-relic { gap: 10px; }
+.col-season, .col-page, .col-relic { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
+.k-sheet.is-bare .col-relic { gap: calc(var(--px) * 10); }
 
 /* ------------------------------------------------------------- the prize band */
 
@@ -26,12 +26,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px 10px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 10);
   border-radius: var(--radius);
-  border: 3px solid var(--gold-dark);
+  border: calc(var(--px) * 3) solid var(--gold-dark);
   background: linear-gradient(180deg, #f8d98a, #efbe5c);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 2px 0 rgba(60, 36, 18, 0.3);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.45), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3);
 }
 .col-band.is-done { filter: saturate(0.7); }
 .col-band-kicker {
@@ -42,15 +42,15 @@
   text-transform: uppercase;
   color: var(--wood-dark);
 }
-.col-band-prizes { display: flex; gap: 10px; }
+.col-band-prizes { display: flex; gap: calc(var(--px) * 10); }
 .col-prize {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
   border-radius: var(--radius-sm);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   font-size: var(--text-body);
   font-weight: var(--weight-strong);
   color: var(--ink);
@@ -61,19 +61,19 @@
 .col-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .col-line .k-trough { flex: 1; }
-.col-left { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.col-left { display: flex; align-items: center; gap: calc(var(--px) * 4); white-space: nowrap; }
 .col-count { font-weight: var(--weight-strong); color: var(--ink); white-space: nowrap; }
 /* A relic mid-cycle: the countdown replaces the cast button rather than
    greying it, because a relic that is running is doing its job, not blocked. */
 .col-cast-phase {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: var(--gutter); padding: 10px var(--gutter);
+  display: flex; align-items: center; gap: calc(var(--px) * 6);
+  margin-top: var(--gutter); padding: calc(var(--px) * 10) var(--gutter);
   border-radius: var(--radius); font-weight: var(--weight-strong);
   background: var(--parchment-shade); color: var(--ink-muted);
 }
@@ -83,7 +83,7 @@
 .col-lap {
   font-size: var(--text-helper); font-weight: var(--weight-strong);
   color: var(--ink-muted); white-space: nowrap;
-  padding: 0 6px; border-radius: var(--radius-sm);
+  padding: 0 calc(var(--px) * 6); border-radius: var(--radius-sm);
   background: var(--parchment-shade);
 }
 
@@ -95,14 +95,14 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px 8px;
+  gap: calc(var(--px) * 10) calc(var(--px) * 8);
 }
 .col-medal {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  width: calc((100% - 16px) / 3);
+  gap: calc(var(--px) * 4);
+  width: calc((100% - calc(var(--px) * 16)) / 3);
   padding: 0;
   border: 0;
   background: none;
@@ -110,7 +110,7 @@
   font: inherit;
   color: inherit;
 }
-.col-medal:active { transform: translateY(2px); }
+.col-medal:active { transform: translateY(calc(var(--px) * 2)); }
 
 /* The carved ring. A radial parchment ground under the art so a missing
    sheet still reads as a medallion rather than as a hole. */
@@ -121,21 +121,21 @@
   width: 100%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 4px solid var(--wood-dark);
+  border: calc(var(--px) * 4) solid var(--wood-dark);
   background:
     radial-gradient(circle at 50% 35%, #fdf2d4, var(--parchment-shade));
   box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -4px 8px rgba(60, 36, 18, 0.22),
-    0 2px 0 rgba(60, 36, 18, 0.3);
+    inset 0 calc(var(--px) * 3) 0 rgba(255, 255, 255, 0.4),
+    inset 0 calc(var(--px) * -4) calc(var(--px) * 8) rgba(60, 36, 18, 0.22),
+    0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3);
   overflow: visible;
 }
 .col-medal.is-done .col-ring {
   border-color: var(--gold-dark);
   box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 2px var(--gold),
-    0 2px 0 rgba(60, 36, 18, 0.3);
+    inset 0 calc(var(--px) * 3) 0 rgba(255, 255, 255, 0.5),
+    0 0 0 calc(var(--px) * 2) var(--gold),
+    0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3);
 }
 .col-medal-art {
   width: 88%; height: 88%;
@@ -144,24 +144,24 @@
 }
 .col-medal-art.is-glyph {
   display: grid; place-items: center;
-  font-size: 30px;
+  font-size: calc(var(--px) * 30);
 }
 
 /* The relic's badge, at the ring's lower-right: a wax disc with its level. */
 .col-badge {
   position: absolute;
-  right: -2px;
-  bottom: -2px;
+  right: calc(var(--px) * -2);
+  bottom: calc(var(--px) * -2);
   display: grid;
   place-items: center;
-  min-width: 30px;
-  height: 22px;
-  padding: 0 5px;
-  border-radius: 11px;
-  border: 2px solid var(--gold-dark);
+  min-width: calc(var(--px) * 30);
+  height: calc(var(--px) * 22);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 11);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
   background: var(--clay);
   color: var(--ink-inverse);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
 }
@@ -182,11 +182,11 @@
 /* The count on a dark plate, as M21 draws it: a pill under the name rather
    than a number floating on parchment. */
 .col-medal-count {
-  padding: 1px 10px;
-  border-radius: 9px;
+  padding: 1px calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 9);
   background: rgba(60, 36, 18, 0.72);
   color: var(--ink-inverse);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-strong);
 }
 
@@ -200,27 +200,27 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 58px; height: 58px;
+  width: calc(var(--px) * 58); height: calc(var(--px) * 58);
   padding: 0;
   border-radius: 50%;
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: radial-gradient(circle at 50% 30%, var(--wood-light), var(--wood));
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(60, 36, 18, 0.4);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.4);
   cursor: pointer;
 }
-.col-vault:active { transform: translateY(2px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3); }
+.col-vault:active { transform: translateY(calc(var(--px) * 2)); box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3); }
 .col-vault.is-ready { border-color: var(--gold-dark); }
 .col-vault-stars {
   position: absolute;
-  bottom: -6px;
+  bottom: calc(var(--px) * -6);
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 1px 6px;
-  border-radius: 8px;
-  border: 2px solid var(--gold-dark);
+  gap: calc(var(--px) * 2);
+  padding: 1px calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 8);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
   background: var(--parchment);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   color: var(--ink);
 }
@@ -230,15 +230,15 @@
 .col-reward {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 8);
   border-radius: var(--radius);
-  border: 3px solid var(--gold-dark);
+  border: calc(var(--px) * 3) solid var(--gold-dark);
   background: linear-gradient(180deg, #f8d98a, #efbe5c);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.45);
 }
 .col-reward.is-done .col-chips { opacity: 0.55; text-decoration: line-through; }
-.col-reward-body { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.col-reward-body { display: flex; flex-direction: column; gap: calc(var(--px) * 6); flex: 1; min-width: 0; }
 
 /* The relic in its own frame at the left — the album page IS the relic
    screen, so the relic is the first thing on it. */
@@ -246,46 +246,46 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  width: 72px;
-  padding: 4px;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 72);
+  padding: calc(var(--px) * 4);
   border-radius: var(--radius-sm);
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: var(--parchment);
   cursor: pointer;
   font: inherit;
 }
-.col-relic-art { width: 48px; height: 48px; object-fit: contain; }
-.col-relic-art.is-glyph { display: grid; place-items: center; font-size: 28px; }
+.col-relic-art { width: calc(var(--px) * 48); height: calc(var(--px) * 48); object-fit: contain; }
+.col-relic-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 28); }
 .col-relic-lv {
-  padding: 0 6px;
-  border-radius: 8px;
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 8);
   background: var(--wood-dark);
   color: var(--ink-inverse);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
 }
 
-.col-chips { display: flex; gap: 6px; }
+.col-chips { display: flex; gap: calc(var(--px) * 6); }
 .col-chip {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: calc(var(--px) * 3);
   flex: 1;
   min-width: 0;
-  padding: 4px 6px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 6);
   border-radius: var(--radius-sm);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  font-size: 12px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-strong);
   color: var(--ink);
   white-space: nowrap;
 }
-.col-chip small { font-weight: var(--weight-small); font-size: 11px; color: var(--ink-muted); }
+.col-chip small { font-weight: var(--weight-small); font-size: calc(var(--px) * 11); color: var(--ink-muted); }
 .col-chip.is-relic { color: var(--gold-dark); }
-.col-chip-art { width: 20px; height: 20px; object-fit: contain; }
-.col-chip-art.is-glyph { display: grid; place-items: center; font-size: 14px; }
+.col-chip-art { width: calc(var(--px) * 20); height: calc(var(--px) * 20); object-fit: contain; }
+.col-chip-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 14); }
 
 /* --------------------------------------------------- the wildcard's strip */
 
@@ -295,10 +295,10 @@
 .col-arm {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 5) calc(var(--px) * 8);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment-shade);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -308,10 +308,10 @@
   border-color: var(--clay);
   background: var(--clay);
   color: var(--ink-inverse);
-  box-shadow: 0 0 12px rgba(212, 85, 62, 0.55);
+  box-shadow: 0 0 calc(var(--px) * 12) rgba(212, 85, 62, 0.55);
 }
 .col-arm-line { flex: 1; min-width: 0; line-height: 1.25; }
-.col-arm .k-btn.col-arm-pick { min-height: 30px; padding: 2px 10px; }
+.col-arm .k-btn.col-arm-pick { min-height: calc(var(--px) * 30); padding: calc(var(--px) * 2) calc(var(--px) * 10); }
 .col-arm.is-armed .k-knob { flex: 0 0 auto; }
 
 /* ------------------------------------------------------------ the 3x3 grid */
@@ -319,7 +319,7 @@
 .col-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: calc(var(--px) * 6);
 }
 /* A CARD IS UPRIGHT AND SMALL. It used to be a square box holding a round
    medallion, which made a row taller than a phone can spare — three of them
@@ -341,15 +341,15 @@
      plain mouldings between them stretch to whatever the card ends up being.
      NO `fill`, deliberately — the middle stays transparent so the rarity wash
      below shows through the frame rather than being painted over by it. */
-  border: 9px solid transparent;
-  border-image: url('../../../render/assets/card_frame.png') 45 / 9px stretch;
+  border: calc(var(--px) * 9) solid transparent;
+  border-image: url('../../../render/assets/card_frame.png') 45 / calc(var(--px) * 9) stretch;
   cursor: pointer;
   font: inherit;
   color: inherit;
   background-clip: padding-box;
   overflow: hidden;
 }
-.col-card:active { transform: translateY(2px); }
+.col-card:active { transform: translateY(calc(var(--px) * 2)); }
 /* Rarity is the ground. Five steps of one hue family rather than five
    unrelated colours: a 5★ should look like a better 4★, not like a warning. */
 .col-card.r1 { background: linear-gradient(180deg, #eef4f6, #d8e6ec); }
@@ -360,13 +360,13 @@
 /* A gold edition wears a gold frame, which is the whole of how it is told
    apart — it needs no badge, because the frame IS the badge. */
 .col-card.is-gold {
-  border-image: url('../../../render/assets/card_frame_gold.png') 45 / 9px stretch;
+  border-image: url('../../../render/assets/card_frame_gold.png') 45 / calc(var(--px) * 9) stretch;
 }
 /* AN EMPTY SLEEVE, not a dashed box. `fill` here and only here: the slot's own
    grey middle IS the empty, so it paints over the rarity wash. */
 .col-card.is-missing {
   background: none;
-  border-image: url('../../../render/assets/card_slot.png') 45 fill / 9px stretch;
+  border-image: url('../../../render/assets/card_slot.png') 45 fill / calc(var(--px) * 9) stretch;
 }
 /* Where an armed wildcard can land. Gold and lit, because the question the
    player is holding is "which of these can I fill?" and the grid answers it
@@ -374,7 +374,7 @@
 .col-card.is-fillable {
   border-style: solid;
   border-color: var(--gold-dark);
-  box-shadow: inset 0 0 0 2px var(--gold), 0 0 12px rgba(242, 178, 51, 0.75);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold), 0 0 calc(var(--px) * 12) rgba(242, 178, 51, 0.75);
 }
 .col-card.is-fillable .col-card-art.is-silhouette { opacity: 0.9; }
 
@@ -382,7 +382,7 @@
    height of its own. */
 .col-card-stars {
   position: absolute;
-  top: 2px;
+  top: calc(var(--px) * 2);
   left: 0;
   right: 0;
   display: flex;
@@ -391,7 +391,7 @@
   z-index: 1;
   filter: drop-shadow(0 1px 1px rgba(60, 36, 18, 0.7));
 }
-.col-card-stars > .icon { --icon-size: 13px; }
+.col-card-stars > .icon { --icon-size: calc(var(--px) * 13); }
 .col-card.is-missing .col-card-stars { filter: grayscale(1) brightness(1.15); opacity: 0.7; }
 
 /* THE FACE FILLS THE CARD. The album's medallion stands in for the card's own
@@ -403,24 +403,24 @@
   display: grid; place-items: center;
   opacity: 0.4;
 }
-.col-card-art.is-glyph { display: grid; place-items: center; font-size: 22px; }
+.col-card-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 22); }
 
 /* The name on a ribbon along the bottom, as M22 draws it: the card's picture
    runs to the edges and the ribbon sits on top of it. One line, clipped —
    nine names of unequal length must not give nine cards unequal heights. */
 .col-card-name {
   flex: none;
-  margin: 0 -7px -3px;
-  padding: 3px 8px 5px;
+  margin: 0 calc(var(--px) * -7) calc(var(--px) * -3);
+  padding: calc(var(--px) * 3) calc(var(--px) * 8) calc(var(--px) * 5);
   /* The ribbon is a frame too: its gold ends are the corners and the cloth
      between them stretches to the name. */
   border: 0 solid transparent;
-  border-left-width: 9px;
-  border-right-width: 9px;
-  border-image: url('../../../render/assets/card_ribbon.png') 40 20 fill / 9px 9px stretch;
+  border-left-width: calc(var(--px) * 9);
+  border-right-width: calc(var(--px) * 9);
+  border-image: url('../../../render/assets/card_ribbon.png') 40 20 fill / calc(var(--px) * 9) calc(var(--px) * 9) stretch;
   color: var(--ink-inverse);
   text-shadow: 0 1px 1px rgba(20, 60, 30, 0.8);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   line-height: 1.2;
   text-align: center;
@@ -432,14 +432,14 @@
 
 .col-dupe {
   position: absolute;
-  left: 2px;
-  bottom: 18px;
+  left: calc(var(--px) * 2);
+  bottom: calc(var(--px) * 18);
   z-index: 1;
-  padding: 0 4px;
-  border-radius: 6px;
-  border: 2px solid var(--wood-dark);
+  padding: 0 calc(var(--px) * 4);
+  border-radius: calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: #fff;
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   color: var(--ink);
 }
@@ -450,7 +450,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
 }
 .col-walk-label { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
 
@@ -471,16 +471,16 @@
   position: relative;
   display: grid;
   place-items: center;
-  padding: 10px;
+  padding: calc(var(--px) * 10);
   border-radius: var(--radius);
-  border: 2px solid rgba(92, 58, 30, 0.35);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
   background: radial-gradient(circle at 50% 42%, #ffeec2, var(--parchment-shade));
 }
 /* The relic objects are drawn at a three-quarter angle, so most of them lie
    diagonally in their square: `contain` at 60% left a band of air around
    them. */
-.col-stage-art { width: 100%; aspect-ratio: 1; max-height: 150px; object-fit: contain; }
-.col-stage-art.is-glyph { display: grid; place-items: center; font-size: 72px; }
+.col-stage-art { width: 100%; aspect-ratio: 1; max-height: calc(var(--px) * 150); object-fit: contain; }
+.col-stage-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 72); }
 
 /* THE LEVEL RIDES THE ART'S OWN CORNER, as a bare label. It used to be a
    wooden plaque across the middle of the frame, which covered the thing the
@@ -488,12 +488,12 @@
    a light sprite without a slab behind it. */
 .col-level {
   position: absolute;
-  top: 6px;
-  left: 8px;
+  top: calc(var(--px) * 6);
+  left: calc(var(--px) * 8);
   font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   color: var(--wood-dark);
-  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.9), 0 0 6px rgba(255, 246, 224, 0.9);
+  text-shadow: 0 1px 0 rgba(255, 246, 224, 0.9), 0 0 calc(var(--px) * 6) rgba(255, 246, 224, 0.9);
   pointer-events: none;
 }
 
@@ -506,7 +506,7 @@
 /* What the passive DOES, in the player's words. The numbers are in the band
    under it, so this is the only prose on the page and it earns its place. */
 .col-relic-what {
-  margin-top: 4px;
+  margin-top: calc(var(--px) * 4);
   font-size: var(--text-body);
   font-weight: var(--weight-body);
   color: var(--ink-muted);
@@ -519,42 +519,42 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
-  padding: 8px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.2);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.2);
   background: rgba(226, 204, 160, 0.55);
 }
 .col-stat {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   min-width: 0;
-  padding: 4px 10px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
   border-radius: var(--radius-sm);
   background: var(--parchment);
-  border: 2px solid rgba(92, 58, 30, 0.16);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.16);
 }
-.col-stat > .icon { --icon-size: 28px; flex: none; }
+.col-stat > .icon { --icon-size: calc(var(--px) * 28); flex: none; }
 .col-stat-body { min-width: 0; }
 .col-stat-label {
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-small);
   line-height: 1.15;
   color: var(--ink-muted);
 }
 .col-stat-nums {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: calc(var(--px) * 4);
   font-variant-numeric: tabular-nums;
 }
 .col-stat-value { font-size: var(--text-body); font-weight: var(--weight-strong); }
 .col-stat-to { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--leaf-dark); }
-.col-stat-nums > .icon { --icon-size: 16px; }
+.col-stat-nums > .icon { --icon-size: calc(var(--px) * 16); }
 
 /* THE SPELL — the one section on the page with a name over it, because a
    button needs to say what it belongs to. */
 .col-section {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: calc(var(--px) * 8);
   font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   letter-spacing: 0.08em;
@@ -563,16 +563,16 @@
 }
 .col-section::before,
 .col-section::after {
-  content: ''; flex: 1; height: 2px;
+  content: ''; flex: 1; height: calc(var(--px) * 2);
   background: rgba(92, 58, 30, 0.22);
 }
 .col-spell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.35);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
   background: var(--parchment);
 }
 .col-spell.is-pending { opacity: 0.72; }
@@ -586,35 +586,35 @@
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
-.col-spell-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.col-spell-chips { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 6); }
 /* The claim slab's chips SHARE the row, so they stretch. A spell's are three
    facts of different widths and must hug what they say instead. */
 .col-spell-chips > .col-chip { flex: 0 0 auto; }
 
 /* The album's own head inside the relic's page: its medallion, its name and
    how far along it is. */
-.col-album { display: flex; flex-direction: column; gap: 8px; }
+.col-album { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
 .col-album-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment-shade);
 }
 .col-album-head .k-trough { flex: 1; }
 .col-album-medal {
   display: grid; place-items: center;
-  width: 36px; height: 36px;
+  width: calc(var(--px) * 36); height: calc(var(--px) * 36);
   border-radius: 50%;
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: var(--parchment);
   overflow: hidden;
   flex: none;
 }
 .col-album-medal-art { width: 100%; height: 100%; object-fit: cover; }
-.col-album-medal-art.is-glyph { display: grid; place-items: center; font-size: 18px; }
+.col-album-medal-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 18); }
 .col-album-name {
   font-family: var(--font-body); font-weight: var(--weight-strong);
   font-size: var(--text-body);
@@ -625,10 +625,10 @@
   position: relative; /* the call-to-action orb hangs on its corner */
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 10);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.35);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
   background: var(--parchment);
 }
 .col-claim.is-ready { border-color: var(--leaf-dark); background: #f6f0d5; }
@@ -638,25 +638,25 @@
 
 /* Under the daily chest's pill, and wider — the two read as a pair, which is
    the whole of the placement argument (ui/seasonPill.ts). */
-#season { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#season { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
 #season[hidden] { display: none; }
 
 .sea-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 5px 14px 5px 8px;
-  border-radius: 10px;
-  border: 3px solid var(--gold-dark);
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 5) calc(var(--px) * 14) calc(var(--px) * 5) calc(var(--px) * 8);
+  border-radius: calc(var(--px) * 10);
+  border: calc(var(--px) * 3) solid var(--gold-dark);
   background: var(--parchment);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.35);
   /* The ask is the kit's orb on its corner (seasonPill.ts). */
   position: relative;
 }
-.sea-pill:active { transform: translateY(2px); box-shadow: none; }
+.sea-pill:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
 .sea-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.9; }
 
 .sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
@@ -668,9 +668,9 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 14px;
-  border-radius: 7px;
+  width: calc(var(--px) * 104);
+  height: calc(var(--px) * 14);
+  border-radius: calc(var(--px) * 7);
   background: rgba(60, 36, 18, 0.4);
   overflow: hidden;
 }
@@ -681,7 +681,7 @@
 }
 .sea-pill-count {
   position: relative;
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   color: var(--ink-inverse);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.8);
@@ -689,8 +689,8 @@
 .sea-pill-clock {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 11px;
+  gap: calc(var(--px) * 3);
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
@@ -710,8 +710,8 @@
 .col-season.is-lanterns { --season-tint: var(--clay); }
 
 .col-season > .col-line {
-  padding-bottom: 6px;
-  border-bottom: 3px solid var(--season-tint);
+  padding-bottom: calc(var(--px) * 6);
+  border-bottom: calc(var(--px) * 3) solid var(--season-tint);
 }
 .col-season > .col-line .col-count { color: var(--season-tint); }
 
@@ -724,7 +724,7 @@
 .col-effect-wait {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   font-style: italic;
@@ -736,11 +736,11 @@
 /* Three chests, and a ten at once. The knob opens this rather than buying,
    because with a choice to make a one-press knob cannot say what it is about
    to spend. */
-.col-vault-shelf { display: flex; flex-direction: column; gap: 10px; }
+.col-vault-shelf { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
 .col-vault-line {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -749,10 +749,10 @@
   position: relative; /* the call-to-action orb hangs on its corner */
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 10);
   border-radius: var(--radius);
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: var(--parchment);
   opacity: 0.6;
 }
@@ -764,11 +764,11 @@
   text-transform: capitalize;
   color: var(--ink);
 }
-.col-chest-cost { display: flex; align-items: center; gap: 4px; font-weight: var(--weight-strong); }
+.col-chest-cost { display: flex; align-items: center; gap: calc(var(--px) * 4); font-weight: var(--weight-strong); }
 .col-chest-promise {
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
-.col-chest-buttons { display: flex; gap: 8px; }
+.col-chest-buttons { display: flex; gap: calc(var(--px) * 8); }
 .col-chest-buttons > * { flex: 1; }

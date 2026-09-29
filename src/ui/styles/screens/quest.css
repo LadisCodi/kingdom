@@ -125,35 +125,16 @@
   gap: calc(var(--rpx) * 16);
 }
 
-/* The trough is painted (sheets/ui-quest2-progress.png): a recess and a gold
-   fill, each sliced at its rounded ends only, since the height is fixed. */
+/* The kit's progress bar (kit.css), at the scroll's height. */
 .q-scroll .k-trough {
   flex: 1;
-  height: var(--q-bar-h);
-  padding: calc(var(--rpx) * 4);
-  overflow: visible;
-  background: none;
-  box-shadow: none;
-  border: 0;
-  border-radius: 0;
-  border-image: url('../../assets/bar-trough.png') 0 46 fill / 0 calc(var(--rpx) * 25) stretch;
+  --bar-h: var(--q-bar-h);
 }
-/* At least its two rounded ends, so a sliver of progress is still a pill. */
-.q-scroll .k-trough .k-fill {
-  min-width: calc(var(--rpx) * 42);
-  background: none;
-  box-shadow: none;
-  border: 0;
-  border-image: url('../../assets/bar-fill-gold.png') 0 38 fill / 0 calc(var(--rpx) * 21) stretch;
-}
-.q-scroll .k-trough .k-fill[style*='width: 0%'] { visibility: hidden; }
 .q-scroll .k-trough .k-trough-label {
   /* Centred on the part of the trough the mark does not cover. */
   left: calc(var(--q-icon) * 0.45);
   font-size: calc(var(--rpx) * 30);
   font-weight: var(--weight-title);
-  color: var(--ink);
-  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(255, 246, 224, 0.55);
 }
 
 /* Drawn as the wood slab (material.css's painted button), but the scroll is
@@ -170,7 +151,7 @@
   font-weight: var(--weight-title);
   color: var(--ink-inverse);
   --q-cta-ink: #5d3014;
-  text-shadow: 1px 0 0 var(--q-cta-ink), -1px 0 0 var(--q-cta-ink), 0 1px 0 var(--q-cta-ink), 0 -1px 0 var(--q-cta-ink), 1px 1px 0 var(--q-cta-ink), -1px 1px 0 var(--q-cta-ink), 1px -1px 0 var(--q-cta-ink), -1px -1px 0 var(--q-cta-ink), 0 2px 0 var(--q-cta-ink);
+  text-shadow: 1px 0 0 var(--q-cta-ink), -1px 0 0 var(--q-cta-ink), 0 1px 0 var(--q-cta-ink), 0 -1px 0 var(--q-cta-ink), 1px 1px 0 var(--q-cta-ink), -1px 1px 0 var(--q-cta-ink), 1px -1px 0 var(--q-cta-ink), -1px -1px 0 var(--q-cta-ink), 0 calc(var(--px) * 2) 0 var(--q-cta-ink);
   border: 0;
   border-radius: 0;
   background: none;

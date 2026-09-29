@@ -288,7 +288,7 @@ The cap limits **total troops owned**, not party size.
 
 | Building | Trains | Cap per level (1–5) |
 |---|---|---|
-| **Barracks** | Warrior · Lancer · Archer | 150 / 250 / 400 / 600 / 850 |
+| **Barracks** | Warrior | 150 / 250 / 400 / 600 / 850 |
 | **Spear Hall** | Lancer | 150 / 250 / 400 / 600 / 850 |
 | **Shooting Grounds** | Archer | 150 / 250 / 400 / 600 / 850 |
 | **Stables** | Cavalry | 150 / 250 / 400 / 600 / 850 |

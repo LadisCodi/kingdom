@@ -28,7 +28,7 @@ import {
 import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import { trainingSection } from './trainingSection';
+import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
@@ -69,9 +69,12 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
 function portrait(
   def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
 ): HTMLElement {
-  const url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`)
-    ?? spriteUrl(`${def.sprite}_l${level}`)
-    ?? spriteUrl(def.sprite);
+  // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
+  // below this level, walked down the way the map draws it — a level with no
+  // art of its own must not fall past its tier to the icon.
+  let url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`);
+  for (let l = level; url === null && l >= 1; l--) url = spriteUrl(`${def.sprite}_l${l}`);
+  url ??= spriteUrl(def.sprite);
   // A tile of darker paper (kit .k-section) with a small ornament pressed
   // into each corner. The picture is drawn LARGER than the tile and clipped
   // by the mask, so the building fills its frame without spilling out.
@@ -133,8 +136,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
     if (training) {
-      body.append(sectionHead(def.bedsPerLevel.length > 0 ? 'Ward'
-        : def.trains.every((t) => t === 'Villager') ? 'Villagers' : 'Training'), training);
+      // The block is headed by what it trains — one unit per building.
+      body.append(sectionHead(def.bedsPerLevel.length > 0 || def.trains.length === 0
+        ? 'Ward' : nameFor(def.trains[0])), training);
     }
 
     // A workshop turns things out too, so it gets the same kind of block.
@@ -356,11 +360,12 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // the price of skipping both move with the clock.
     const scaffold = () => {
       const t = game.now();
-      const bar = progress('sky');
-      bar.set(queueProgress(queueItem, t),
+      const bar = progress('blue');
+      bar.run(queueProgress(queueItem, t),
+        queueItem.startedAt === null ? 0 : remainingSeconds(queueItem, t) * 1000,
         queueItem.startedAt === null
           ? 'waiting for a builder'
-          : `${formatDuration(remainingSeconds(queueItem, t))} left`);
+          : formatDuration(remainingSeconds(queueItem, t)));
       const rush = btn({
         label: 'Finish',
         kind: 'gem',
@@ -379,7 +384,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const t = game.now();
       return JSON.stringify([
         queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
-        Math.round(queueProgress(queueItem, t) * 200),
         gemRushCost(queueItem, t),
         game.walletValue('Gems') < gemRushCost(queueItem, t),
       ]);
@@ -422,7 +426,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   const figures = statsAt(game, district, district.level);
-  const stats = figures.length === 0 ? [] : [sectionHead('Stats'), el('div', { class: 'dc-stats' },
+  const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },

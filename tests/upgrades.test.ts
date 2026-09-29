@@ -250,7 +250,7 @@ describe('every ladder reaches the number it claims to', () => {
   // whole of the relief.
   it('Pitons discounts the Gold a cell costs, and the cell is still five taps', () => {
     const state = freshGame();
-    const cell = { x: 3, y: 1 };
+    const cell = { x: 4, y: 1 };
     const full = revealCostForCell(state, map, cell);
 
     completeRanks(state, 'Pitons', 2); // −20%

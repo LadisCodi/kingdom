@@ -13,8 +13,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 16px;
+  gap: calc(var(--px) * 14);
+  padding: calc(var(--px) * 24) calc(var(--px) * 16);
   background:
     radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
     rgba(24, 15, 8, 0.93);
@@ -25,12 +25,12 @@
 /* The banner ribbon. Display face at --text-title, which is the only size it
    is crisp at (tests/fonts.test.ts). */
 .gr-plaque {
-  padding: 8px 32px;
+  padding: calc(var(--px) * 8) calc(var(--px) * 32);
   border-radius: var(--radius);
   /* A wooden plaque with a gold rim (M15), not a gold bar. */
   background: var(--wood);
-  border: 3px solid var(--gold);
-  box-shadow: 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--gold);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-display); font-weight: var(--font-display-weight);
@@ -42,24 +42,24 @@
 
 .gr-grid {
   display: grid;
-  grid-template-columns: repeat(3, 76px);
-  gap: 10px;
+  grid-template-columns: repeat(3, calc(var(--px) * 76));
+  gap: calc(var(--px) * 10);
   justify-content: center;
 }
 /* A ten-call condenses into more tiles than three across can hold without
    scrolling, so past six it goes four across and smaller. */
-.gr-grid.is-dense { grid-template-columns: repeat(4, 68px); gap: 8px; }
+.gr-grid.is-dense { grid-template-columns: repeat(4, calc(var(--px) * 68)); gap: calc(var(--px) * 8); }
 
 .gr-tile {
   position: relative;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
   /* Parchment tiles dealt onto the veil (M15); the rarity is a ring inside
      the wood, like the roster's. */
-  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
   background: var(--parchment-shade);
   overflow: hidden;
 }
@@ -73,7 +73,7 @@
    glow are the whole difference, and they have to read at a glance. */
 .gr-tile.is-hero {
   border-color: var(--gold);
-  box-shadow: inset 0 0 0 2px var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(242, 178, 51, 0.75);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 14) rgba(242, 178, 51, 0.75);
 }
 
 .gr-art {
@@ -83,18 +83,18 @@
   object-position: center bottom;
   image-rendering: pixelated;
 }
-.gr-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
+.gr-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 32); }
 
 /* Bottom-right, the way every collection game counts a stack. */
 .gr-count {
   position: absolute;
-  right: 3px;
-  bottom: 2px;
-  padding: 0 4px;
-  border-radius: 5px;
+  right: calc(var(--px) * 3);
+  bottom: calc(var(--px) * 2);
+  padding: 0 calc(var(--px) * 4);
+  border-radius: calc(var(--px) * 5);
   background: rgba(24, 15, 8, 0.78);
   color: var(--ink-inverse);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
   line-height: 1.5;
 }
@@ -102,12 +102,12 @@
    four and a hero read as the same prize with a different number on it. */
 .gr-mark {
   position: absolute;
-  left: 3px;
-  top: 3px;
+  left: calc(var(--px) * 3);
+  top: calc(var(--px) * 3);
   display: grid;
   place-items: center;
   padding: 1px;
-  border-radius: 4px;
+  border-radius: calc(var(--px) * 4);
   background: rgba(24, 15, 8, 0.7);
 }
 /* ---- a card and a pack (Docs/features/09-relics.md §11.5) --------------
@@ -121,7 +121,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 1px;
-  padding-top: 11px;
+  padding-top: calc(var(--px) * 11);
 }
 .gr-tile.is-card .gr-art,
 .gr-tile.is-pack .gr-art {
@@ -142,7 +142,7 @@
 }
 .gr-tile.is-card.is-gold {
   border-color: var(--gold-dark);
-  box-shadow: inset 0 0 0 2px var(--gold), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 12px rgba(242, 178, 51, 0.7);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 12) rgba(242, 178, 51, 0.7);
 }
 .gr-stars {
   position: absolute;
@@ -153,10 +153,10 @@
 /* The name on a ribbon along the bottom, the album page's idiom. */
 .gr-name {
   width: 100%;
-  padding: 1px 2px;
+  padding: 1px calc(var(--px) * 2);
   background: var(--leaf-dark);
   color: var(--ink-inverse);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
@@ -171,27 +171,27 @@
    only ever draw one of them. */
 .gr-new {
   position: absolute;
-  left: 2px;
-  bottom: 18px;
-  padding: 0 4px;
-  border-radius: 5px;
-  border: 2px solid var(--gold-dark);
+  left: calc(var(--px) * 2);
+  bottom: calc(var(--px) * 18);
+  padding: 0 calc(var(--px) * 4);
+  border-radius: calc(var(--px) * 5);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
   background: var(--gold);
   color: var(--ink);
-  font-size: 11px;
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-strong);
 }
-.gr-tile.is-card .gr-count { bottom: 18px; }
+.gr-tile.is-card .gr-count { bottom: calc(var(--px) * 18); }
 
 .gr-tag {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 1px 3px;
+  padding: 1px calc(var(--px) * 3);
   background: rgba(24, 15, 8, 0.75);
   color: var(--ink-inverse);
-  font-size: 12px;
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-small);
   line-height: 1.4;
   text-align: center;
@@ -216,9 +216,9 @@
 
 /* The caption is a parchment slab under the grid (M15). */
 .gr-calls {
-  padding: 6px 28px;
+  padding: calc(var(--px) * 6) calc(var(--px) * 28);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   font-size: var(--text-body);
@@ -248,8 +248,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 24px 16px;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 24) calc(var(--px) * 16);
   text-align: center;
   color: var(--ink-inverse);
   background:
@@ -265,24 +265,24 @@
 .gr-curtain-kicker { color: var(--gold); font-size: var(--text-helper); font-weight: var(--weight-small); letter-spacing: 0.08em; }
 .gr-curtain-art {
   width: 60%;
-  max-width: 260px;
-  height: 260px;
+  max-width: calc(var(--px) * 260);
+  height: calc(var(--px) * 260);
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.45));
+  filter: drop-shadow(0 0 calc(var(--px) * 18) rgba(255, 240, 200, 0.45));
 }
-.gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: 96px; }
-.gr-curtain-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 28px; line-height: 1.1; }
+.gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 96); }
+.gr-curtain-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 28); line-height: 1.1; }
 .gr-curtain-title { color: var(--parchment-shade); font-size: var(--text-body); }
 .gr-curtain-kicker { font-weight: var(--weight-strong); }
 .gr-curtain-rarity {
-  padding: 2px 14px;
+  padding: calc(var(--px) * 2) calc(var(--px) * 14);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   font-weight: var(--weight-strong);
   font-size: var(--text-helper);
   letter-spacing: 0.06em;
 }
-.gr-curtain .gr-prompt { margin-top: 8px; }
+.gr-curtain .gr-prompt { margin-top: calc(var(--px) * 8); }

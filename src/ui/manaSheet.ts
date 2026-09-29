@@ -67,7 +67,7 @@ export function renderManaSheet(game: Game): HTMLElement {
   const m = game.manaInfo();
   const r = game.manaRefills();
 
-  const bar = progress('sky');
+  const bar = progress('blue');
   bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
 
   // A full pool stops both tills with the same sentence, so it is said once.

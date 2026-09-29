@@ -25,7 +25,7 @@
   /* The ONE place the bottom inset lives (tests/chrome.test.ts): the bar is
      the only element that touches the bottom edge, and --nav-h is measured
      from it, inset included. */
-  padding: var(--nav-pad-top) calc(var(--rpx) * 20) calc(var(--nav-pad-bottom) + env(safe-area-inset-bottom));
+  padding: var(--nav-pad-top) calc(var(--rpx) * 20) calc(var(--nav-pad-bottom) + var(--safe-bottom, env(safe-area-inset-bottom)));
   /* The beam is one painted strip repeated across the frame, its lit lip at
      the top; under the home indicator it carries on as its own dark wood. */
   background: url('../../assets/nav-beam.png') left top / auto calc(var(--nav-pad-top) + var(--nav-tab-h) + var(--nav-pad-bottom)) repeat-x, #4a2e17;
@@ -43,7 +43,7 @@
  * the bar would have padded for. Keyed on what is actually mounted, like the
  * settings knob, so it cannot drift from what is on screen. */
 #ui:has(> #overlay:not(:empty)),
-#ui:has(> #panel .dc) { --nav-h: env(safe-area-inset-bottom, 0px); }
+#ui:has(> #panel .dc) { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
 #ui:has(> #overlay:not(:empty)) > #navbar.nav,
 #ui:has(> #panel .dc) > #navbar.nav {
   transform: translateY(calc(100% + var(--rpx) * 20));
@@ -111,25 +111,25 @@
 .legacy-screen { display: contents; }
 .legacy-close {
   position: absolute;
-  right: 12px;
+  right: calc(var(--px) * 12);
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   z-index: 30;
   border-radius: 50%;
-  font-size: 16px;
+  font-size: calc(var(--px) * 16);
   color: var(--ink);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 3px 0 var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  box-shadow: 0 calc(var(--px) * 3) 0 var(--wood-dark);
   cursor: pointer;
 }
 .legacy-close:hover { filter: brightness(1.08); }
-.legacy-close:active { transform: translateY(3px); box-shadow: none; }
+.legacy-close:active { transform: translateY(calc(var(--px) * 3)); box-shadow: none; }
 /* The settings knob is hidden while a menu is open, so the corner is free. */
-#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 12px; }
-#panel .legacy-close { top: 8px; }
+#overlay .legacy-close { top: calc(var(--hud-h) + calc(var(--px) * 8)); right: calc(var(--px) * 12); }
+#panel .legacy-close { top: calc(var(--px) * 8); }
 /* Reserve the corner so the knob can't sit on a legacy screen's first action
  * row. Goes away per screen as each grows a sheet with a plank of its own. */
-#panel:has(.legacy-close) { padding-right: 64px; }
+#panel:has(.legacy-close) { padding-right: calc(var(--px) * 64); }

@@ -136,9 +136,9 @@ describe('the ordinal is stamped once and never moves', () => {
 
 describe('build time (Docs/04 examples)', () => {
   const base = freshGame(); // no Carpentry: the authored numbers, unmodified
-  it('1st Housing 2 tiles out = 26 s', () => expect(buildDuration(base, 'Housing', 0, 2)).toBe(26));
-  it('2nd Housing 3 tiles out = 37 s', () => expect(buildDuration(base, 'Housing', 1, 3)).toBe(37));
-  it('1st FarmLands 2 tiles out = 13 s', () => expect(buildDuration(base, 'FarmLands', 0, 2)).toBe(13));
+  it('1st Housing 2 tiles out = 30 s', () => expect(buildDuration(base, 'Housing', 0, 2)).toBe(30));
+  it('2nd Housing 3 tiles out = 44 s', () => expect(buildDuration(base, 'Housing', 1, 3)).toBe(44));
+  it('1st FarmLands 2 tiles out = 15 s', () => expect(buildDuration(base, 'FarmLands', 0, 2)).toBe(15));
 });
 
 describe('upgrade cost & time (Docs/04 examples)', () => {

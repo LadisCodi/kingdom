@@ -38,23 +38,24 @@
 .dc {
   display: flex;
   flex-direction: column;
+  gap: var(--space-section); /* the spacing rule, tokens.css */
   min-height: 0;
   max-height: 100%;
   pointer-events: auto;
   /* No env(safe-area-inset-bottom) here: #panel stops at `bottom:
      var(--nav-h)`, --nav-h is measured, and the nav bar's own padding already
      holds the inset — so the card is above it and would be padding twice. */
-  padding: 8px 10px;
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: var(--weight-body);
   background: var(--parchment);
   border-top: var(--outline) solid var(--wood-dark);
-  box-shadow: 0 -4px 14px rgba(60, 36, 18, 0.35);
+  box-shadow: 0 calc(var(--px) * -4) calc(var(--px) * 14) rgba(60, 36, 18, 0.35);
 }
 
-.dc-head { display: flex; align-items: flex-start; gap: 10px; }
+.dc-head { display: flex; align-items: flex-start; gap: calc(var(--px) * 10); }
 .dc-what { flex: 1; min-width: 0; color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-strong); line-height: 1.25; }
 
 
@@ -65,15 +66,15 @@
 .dc-portrait.k-section {
   position: relative;
   flex: none;
-  width: 112px;
-  height: 100px;
+  width: calc(var(--px) * 84);
+  height: calc(var(--px) * 75);
 }
 /* The picture runs right up to the outline, clipped to its inner radius. */
 .dc-portrait-mask {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: calc(var(--px) * 8);
 }
 /* A map sprite is a tall canvas with the building in its lower part (its
    footprint sits at the foot, its roof rises into the space above), so the
@@ -88,29 +89,28 @@
   height: auto;
   translate: -50% -68%;
 }
-.dc-portrait-mask > .icon { --icon-size: 64px; position: absolute; inset: 0; margin: auto; }
+.dc-portrait-mask > .icon { --icon-size: calc(var(--px) * 48); position: absolute; inset: 0; margin: auto; }
 .dc-orn {
   position: absolute;
   z-index: 1;
-  width: 16px;
-  height: 16px;
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
   background: url('../../assets/corner-ornament.png') center / contain no-repeat;
   pointer-events: none;
 }
-.dc-orn.is-tl { top: 3px; left: 3px; }
-.dc-orn.is-tr { top: 3px; right: 3px; scale: -1 1; }
-.dc-orn.is-bl { bottom: 3px; left: 3px; scale: 1 -1; }
-.dc-orn.is-br { bottom: 3px; right: 3px; scale: -1 -1; }
+.dc-orn.is-tl { top: calc(var(--px) * 3); left: calc(var(--px) * 3); }
+.dc-orn.is-tr { top: calc(var(--px) * 3); right: calc(var(--px) * 3); scale: -1 1; }
+.dc-orn.is-bl { bottom: calc(var(--px) * 3); left: calc(var(--px) * 3); scale: 1 -1; }
+.dc-orn.is-br { bottom: calc(var(--px) * 3); right: calc(var(--px) * 3); scale: -1 -1; }
 /* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
    bleeds a pixel or two must not make the card draggable sideways. */
 .dc-body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: clip;
-  overflow-clip-margin: 6px;
-  margin-top: 6px;
+  overflow-clip-margin: calc(var(--px) * 6);
 }
-.dc-note { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; margin: 3px 0; }
+.dc-note { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; margin: calc(var(--px) * 3) 0; }
 
 /* The upgrade block: the training panel's shape in miniature. The mark and
  * the level on the first row with the button that spends (or the gate that
@@ -119,25 +119,25 @@
  * pair of before/after building portraits that drew the eye hardest while
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
-.dc-foot { margin-top: 6px; }
+.dc-foot { margin-top: calc(var(--px) * 6); }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: calc(var(--px) * 3);
   font-family: var(--font-body);
   color: var(--ink-muted);
 }
-.dc-actions { display: flex; gap: 8px; margin-top: 8px; }
+.dc-actions { display: flex; gap: calc(var(--px) * 8); margin-top: calc(var(--px) * 8); }
 .dc-actions .k-btn { flex: 1; }
 
 /* Legacy bodies still use these until each variant migrates. */
-.dc .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
-.dc .row { display: flex; justify-content: space-between; gap: 12px; }
+.dc .rows { display: flex; flex-direction: column; gap: calc(var(--px) * 3); margin: calc(var(--px) * 8) 0; }
+.dc .row { display: flex; justify-content: space-between; gap: calc(var(--px) * 12); }
 .dc .delta { color: var(--leaf-dark); }
 .dc .blocked { color: var(--clay); }
 .dc .muted, .dc .info { color: var(--ink-muted); }
-.dc .actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.dc .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.dc .actions { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-top: calc(var(--px) * 8); }
+.dc .action-row { display: flex; align-items: center; gap: calc(var(--px) * 10); margin-top: calc(var(--px) * 8); }
 .dc .action-row .info { flex: 1; min-width: 0; }
 
 /* Legacy buttons inside the migrated shell. The old `.btn` is a dark slate
@@ -145,21 +145,21 @@
  * which on this ground is invisible. Restyled here until each variant sheds
  * them for the kit's action()/btn(). */
 .dc .btn {
-  padding: 8px 14px;
+  padding: calc(var(--px) * 8) calc(var(--px) * 14);
   font-family: var(--font-body);
   color: var(--ink-inverse);
   background: var(--wood);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: 0 2px 0 var(--wood-dark);
+  box-shadow: 0 calc(var(--px) * 2) 0 var(--wood-dark);
 }
 .dc .btn:hover { background: var(--wood); filter: brightness(1.07); }
-.dc .btn:active { transform: translateY(2px); box-shadow: none; }
+.dc .btn:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
 .dc .btn:disabled {
   opacity: 1;
   background: var(--locked);
   color: var(--ink-muted);
-  box-shadow: 0 2px 0 #a79470;
+  box-shadow: 0 calc(var(--px) * 2) 0 #a79470;
 }
 
 /* Townhall: the training queue is the point of the building. */
@@ -167,14 +167,14 @@
 .dc-homes {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 6px 0;
+  gap: calc(var(--px) * 8);
+  margin: calc(var(--px) * 6) 0;
   font-family: var(--font-body);
 }
 /* The rent, and beside it what the house's own level adds to it. */
 .dc-drip {
-  display: flex; align-items: baseline; gap: 6px;
-  margin: 4px 0;
+  display: flex; align-items: baseline; gap: calc(var(--px) * 6);
+  margin: calc(var(--px) * 4) 0;
 }
 .dc-drip .dc-army-note { font-size: var(--text-desc); font-weight: var(--weight-small); }
 
@@ -182,8 +182,8 @@
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
  * trough: a house has no timer any more, it has a price. */
 .dc-tapcost {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: 4px;
+  display: flex; align-items: center; gap: calc(var(--px) * 6);
+  margin-top: calc(var(--px) * 4);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
@@ -195,8 +195,8 @@
   font-size: var(--text-desc);
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 6px 0;
+  gap: calc(var(--px) * 6);
+  margin: calc(var(--px) * 6) 0;
   color: var(--ink-muted);
   line-height: 1.3;
 }
@@ -204,356 +204,200 @@
 /* Adjacency as a verdict, not a signed number. */
 .dc-badge {
   display: inline-block;
-  padding: 4px 10px;
-  margin: 4px 0;
-  border-radius: 999px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
+  margin: calc(var(--px) * 4) 0;
+  border-radius: calc(var(--px) * 999);
   font-weight: var(--weight-strong);
-  border: 2px solid;
+  border: calc(var(--px) * 2) solid;
 }
 .dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
 .dc-badge.is-bad { color: var(--clay); border-color: var(--clay); background: rgba(212, 85, 62, 0.15); }
 
 /* What the building can reach, as a shape rather than two numbers. */
-.dc-area { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.dc-area { display: flex; align-items: center; gap: calc(var(--px) * 12); margin: calc(var(--px) * 8) 0; }
 .dc-thumb {
   flex: none;
   display: grid;
   gap: 1px;
-  padding: 3px;
+  padding: calc(var(--px) * 3);
   background: var(--wood-dark);
-  border: 2px solid var(--wood-dark);
-  border-radius: 4px;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 4);
 }
-.dc-cell { width: 7px; height: 7px; background: var(--parchment-shade); border-radius: 1px; }
+.dc-cell { width: calc(var(--px) * 7); height: calc(var(--px) * 7); background: var(--parchment-shade); border-radius: 1px; }
 .dc-cell.is-catch { background: var(--leaf); }
 .dc-cell.is-self { background: var(--gold); }
 .dc-area-count {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: calc(var(--px) * 5);
   font-family: var(--font-body);
 }
 .dc-area-rate { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; }
 
 /* Crew slots: filled ones are people, empty ones are room for more. */
-.dc-crew { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-.dc-slots { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+.dc-crew { display: flex; align-items: center; gap: calc(var(--px) * 10); margin: calc(var(--px) * 8) 0; }
+.dc-slots { flex: 1; display: flex; flex-wrap: wrap; gap: calc(var(--px) * 5); }
 .dc-slot {
-  width: 30px;
-  height: 30px;
+  width: calc(var(--px) * 30);
+  height: calc(var(--px) * 30);
   display: grid;
   place-items: center;
   background: var(--parchment-shade);
-  border: 2px dashed var(--wood-dark);
+  border: calc(var(--px) * 2) dashed var(--wood-dark);
   border-radius: 50%;
 }
 .dc-slot.is-filled { background: var(--parchment); border-style: solid; }
-.dc-crew .k-knob { width: 40px; height: 40px; min-height: 40px; margin-bottom: 0; }
+.dc-crew .k-knob { width: calc(var(--px) * 40); height: calc(var(--px) * 40); min-height: calc(var(--px) * 40); margin-bottom: 0; }
 
 /* A military building: the same shape as the Townhall's training block,
  * because it is the same beat. */
 .dc-army {
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: baseline; gap: calc(var(--px) * 6);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
 }
 .dc-army-note { color: var(--ink-muted); }
-.dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.dc-army-stats { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 10); }
 
 /* What a decoration supplies, and — on the Townhall — what the city's whole
  * beauty is paying for. Same shape as the army line above it: both are facts
  * about the CITY that happen to be read on one building's card. */
 .dc-harmony {
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: baseline; gap: calc(var(--px) * 6);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
 }
 
 /* ------------------------------------------------- the training section ---
  * Shared by every building that turns something out — the Townhall's
- * villagers and a hall's soldiers are one mechanic, so they are one block.
- * See src/ui/trainingSection.ts for why it looks like this. */
+ * villagers, a hall's soldiers, a ward's mending — so they are one block:
+ * the panel for the building's one trainee, with its batch at the foot
+ * (src/ui/trainingSection.ts). Every tile is a kit .k-section. */
 
-.tr { display: flex; flex-direction: column; gap: 6px; }
+.tr { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
 
-/* ---- the training block's heading (M2): what it is, and how long the whole
- * line takes. The TOTAL rather than the head's countdown — "how long until
- * this queue is empty" is the question a player with five in the line asks,
- * and the head's own clock is the ring on its medallion. */
-.tr-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+/* THE PANEL: the bust, what it is, and the priced Train button in one row;
+   a soldier's three numbers in a row of their own underneath. */
+.tr-info.k-section {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: calc(var(--px) * 8) calc(var(--px) * 10);
+  padding: calc(var(--px) * 8);
 }
-.tr-head-title {
-  font-family: var(--font-display);
-  font-weight: var(--font-display-weight);
-  font-size: var(--text-title);
-  color: var(--ink);
-  letter-spacing: 0;
-  text-transform: none;
+.k-portrait.tr-portrait { --portrait-size: calc(var(--px) * 64); }
+/* The portrait, with how many the player owns on a pill at its corner. */
+.tr-who { position: relative; }
+.tr-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
+.tr-name { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
+.tr-desc {
+  color: var(--ink-muted);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-body);
+  line-height: 1.25;
 }
-.tr-head-total {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: var(--text-body);
+.tr-buy { justify-self: end; }
+/* In this panel the priced button is its narrowest: the Train slab's own
+   width, the costs (and the time) wrapped over two lines above it, so the
+   middle column keeps room for the name and the tags. */
+.tr-buy .k-btn.k-btn.has-cost:not(.k-knob) {
+  width: calc(var(--px) * 124);
+  min-width: 0;
+  white-space: normal;
+}
+.tr-buy .k-btn.has-cost > .k-btn-cost { flex-wrap: wrap; row-gap: calc(var(--px) * 2); }
+/* A gated Train: the priced frame holds the reason instead of the price —
+   the padlock and a few words, wrapped to the frame — over the disabled
+   slab. */
+.tr-buy .k-btn.is-gated > .k-btn-cost > .k-cost {
+  align-items: flex-start;
+  font-size: var(--text-desc);
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
+/* THE TAGS: a chip for what the unit is (blue), or a special trait (paper).
+   A tap opens the kit's tooltip under it (kit/tooltip.ts). */
+.tr-tags { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); }
+.tr-tag {
+  appearance: none;
+  padding: calc(var(--px) * 2) calc(var(--px) * 9);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  /* A tag is a tiny chip, the one place under the caption size (the fonts
+     rule allows 11–12 px for tags, never for a sentence). */
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-strong);
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.tr-head-total > .icon { --icon-size: 22px; }
-
-/* ---- the chain.
- *
- * RIGHT TO LEFT: the batch being worked on sits at the right end and the
- * waiting ones queue away to its left — the shape a line of people has when
- * you are standing at the front of it. `row-reverse` rather than a reversed
- * array, so the DOM keeps the head of the line first: that is the order a
- * screen reader should hear, and it is what puts the ACTIVE batch in view
- * when a long queue overflows, since a reversed flex container starts
- * scrolled to its own start. */
-.tr-queue {
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  gap: 0;
-  overflow-x: auto;
-  padding: 2px 0;
-  scrollbar-width: none;
-}
-.tr-queue::-webkit-scrollbar { display: none; }
-/* A medallion: the bust in a painted ring, with its count on a pill. The
- * ring is chrome cut from the sheet (scripts/ui-cut.mjs) and punched hollow,
- * so it sits over whichever trainee the slot holds. */
-.tr-slot {
-  position: relative;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #8a6648;
-  box-shadow: inset 0 2px 6px rgba(40, 22, 10, 0.45);
-}
-.tr-slot::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  background: url('../../../render/assets/ring_idle.png') center / contain no-repeat;
-  pointer-events: none;
-}
-/* The art is clipped to the well rather than the slot being `overflow:
-   hidden` — the count pill hangs outside this box on purpose. */
-.tr-slot-art {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-.tr-slot-count {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  min-width: 26px;
-  padding: 3px 6px 5px;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: var(--weight-strong);
-  color: var(--parchment);
-  background: url('../../../render/assets/count_pill.png') center / 100% 100% no-repeat;
-  z-index: 2;
-}
-/* The one on the bench wears the PROGRESS ARC, and keeps the plain rim under
-   it. Gold is for the unit you have SELECTED (the roster below), so an active
-   queue slot and a chosen unit stay two different marks.
-   The arc is a conic gradient, not the painted `ring_progress`: that asset
-   carries one angle and a progress ring needs every one — it is what these
-   colours are matched to. It sits OVER the rim (z-index) and is masked to a
-   band wide enough to read at 52px. */
-.tr-slot-ring {
-  position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-  background: conic-gradient(var(--leaf) var(--progress, 0deg), transparent 0);
-  -webkit-mask: radial-gradient(closest-side, transparent 72%, #000 78%, #000 100%);
-  mask: radial-gradient(closest-side, transparent 72%, #000 78%, #000 100%);
-  filter: drop-shadow(0 1px 0 var(--leaf-dark));
-  pointer-events: none;
-  z-index: 2;
-}
-/* The painted connector between two runs — drawn between, never after the
-   last, so the chain has no loose end. */
-.tr-link {
-  flex: none;
-  width: 22px;
-  height: 16px;
-  margin: 0 -2px;
-  background: url('../../../render/assets/queue_link.png') center / contain no-repeat;
-}
-
-.tr-queue-row { display: flex; align-items: center; gap: 10px; }
-.tr-queue-row > .tr-queue { flex: 1; min-width: 0; }
-.tr-queue-row .k-btn { min-height: 44px; padding: 8px 12px; }
-
-/* What this hall can turn out. Only drawn when there is a choice to make. */
-/* The picker buttons carry a PORTRAIT now, not a 16px silhouette, so they are
-   sized to be read rather than merely tapped: 44px met the tap minimum and
-   nothing else. The art fills the button and is clipped by its radius, which
-   is what makes a row of them read as a row of faces. */
-.tr-picker { display: flex; gap: 8px; flex-wrap: wrap; }
-.tr-pick {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.3);
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
 }
-.tr-pick.is-on { background: var(--gold); border-color: var(--gold-dark); }
-.tr-pick.is-locked { opacity: 0.75; cursor: default; }
-.tr-pick:active { transform: translateY(2px); box-shadow: none; }
+.tr-tag.is-type { background: var(--sky); border-color: #2f7ea3; color: var(--ink-inverse); }
+.tr-tag.is-trait { background: var(--parchment); border-color: var(--section-line); color: var(--ink); }
+.tr-tag.has-tip-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
 
-/* The detail panel: portrait, what it is, and the one button that spends. */
-/* Portrait | (what it is, then the one button that spends). The action used to
-   span the full width on a row of its own, which left a band the width of the
-   panel holding nothing but a "15s" in its corner. Putting it under the body
-   instead costs no height — the button is shorter than the text beside it was
-   tall — and hands the whole of it to the portrait. */
-.tr-info {
+.tr-stats {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 8px;
-  align-items: start;
-  padding: 6px;
-  border-radius: 8px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--px) * 8);
 }
-.tr-portrait {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-  overflow: hidden;
-}
-/* A whole soldier is drawn at 2:3, so the slot that holds one has to be TALLER
-   than it is wide or the figure letterboxes into a thumbnail. This is the one
-   place a unit is read rather than counted, and the panel beside it is about
-   this tall anyway — name, tag, description, stats. */
-.tr-portrait.is-body {
-  grid-row: 1 / 3;
-  align-self: stretch;
-  width: 124px;
-  height: auto;
-  min-height: 150px;
-  align-items: end;
-}
-.tr-pick-art,
-.tr-portrait-art {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-/* Feet on the floor of the frame: the figures are normalized standing on it
-   (Docs/art/portraits/prompt-template.md §4), so bottom-aligning them lines
-   every soldier up at the same height. */
-.tr-portrait.is-body .tr-portrait-art { object-position: center bottom; }
-.tr-pick.is-locked .tr-pick-art { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
-.tr-body { min-width: 0; }
-.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: var(--weight-small); }
-.tr-tag {
-  display: inline-block;
-  margin: 1px 0 3px;
-  padding: 1px 8px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--parchment);
-  background: var(--wood-dark);
-  border-radius: 999px;
-}
-.tr-desc { color: var(--ink-muted); font-size: var(--text-desc); font-weight: var(--weight-small); }
-.tr-stats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; align-items: center; }
-/* The type chart in one phrase, styled like the stats beside it. */
-.tr-beats {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--leaf);
-  color: var(--parchment);
-}
-.tr-heading { min-width: 0; }
-.tr-blocked .icon { flex: none; margin-top: 2px; }
-
-/* The band the button gave back: four figures, read left to right in the order
-   a soldier is judged in — what it hits for, what it takes, what it has, and
-   what it costs in time. */
-/* FLEX-WRAP, not four fixed columns: at 390px the four labelled tiles need
-   346px and the band has 314, so a rigid `repeat(4, 1fr)` cannot shrink past
-   its labels and the panel scrolls sideways instead. Wrapping keeps the order
-   and gives a phone 2+2 rather than an overflow. */
-.tr-figures {
-  grid-column: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-self: end;
-}
-.tr-fig { flex: 1 1 70px; }
-.tr-fig {
-  display: grid;
-  gap: 2px;
-  padding: 5px 6px;
-  border-radius: 8px;
-  background: var(--parchment);
-  border: 2px solid var(--wood-dark);
-}
-.tr-fig-head {
+.tr-stat.k-section {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  color: var(--ink-soft);
-  white-space: nowrap;
-}
-/* The number is the thing being compared across four tiles, so it is the
-   biggest ink in the block and it lines up under its own mark.
-   THE BODY FACE, not the display one: a number is body copy by the rule in
-   tokens.css. --text-body still reads as the loudest line here, against the
-   head's --text-helper above it. */
-.tr-fig-value {
-  padding-left: 2px;
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  color: var(--ink);
-}
-
-/* The ward: the same panel, in the colour of a thing that is waiting rather
- * than a thing that is for sale. One per wounded type this hall can mend. */
-.tr-info.is-ward {
-  border-color: var(--clay);
+  gap: calc(var(--px) * 6);
+  min-width: 0;
+  padding: calc(var(--px) * 5) calc(var(--px) * 6);
   background: var(--parchment);
-  margin-bottom: 6px;
 }
-.tr-info.is-ward .tr-tag { background: var(--clay); }
+.tr-stat > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
+.tr-stat-body { min-width: 0; }
+.tr-stat-label { font-size: var(--text-helper); font-weight: var(--weight-title); line-height: 1.15; }
+.tr-stat-value { display: block; font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
+
+/* THE BATCH, at the foot of the panel: the unit and its count, the bar and
+   time left for the one in training, the batch's total time, and Finish. */
+.tr-batch {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+  padding-top: calc(var(--px) * 8);
+  border-top: calc(var(--px) * 2) solid var(--section-line);
+}
+.tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); text-align: center; padding-bottom: calc(var(--px) * 4); }
+.tr-batch-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
+.tr-batch-row > .k-btn { flex: none; margin-left: auto; }
+.tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
+.tr-batch-face > .k-portrait { --portrait-size: inherit; }
+.tr-count { /* a count on a portrait's foot, centred: owned, or in the batch */
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--px) * -4);
+  translate: -50% 0;
+  white-space: nowrap;
+  padding: 0 calc(var(--px) * 4);
+  border-radius: calc(var(--px) * 6);
+  background: rgba(40, 24, 12, 0.85);
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-title);
+  line-height: 1.3;
+}
+.tr-batch-progress { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: calc(var(--px) * 3); }
+.tr-batch-progress > .k-trough { align-self: stretch; --bar-h: calc(var(--px) * 24); }
+.tr-batch-what { color: var(--wood); font-size: var(--text-desc); font-weight: var(--weight-strong); line-height: 1.1; }
+.tr-batch-total { color: var(--wood); font-size: var(--text-desc); font-weight: var(--weight-strong); text-align: center; line-height: 1.1; }
+/* The ward's batch has no unit panel above it: it stands in a section of
+   its own. */
+.tr-batch-box.k-section { padding: calc(var(--px) * 8); }
+.tr-batch-box > .tr-batch { padding-top: 0; border-top: 0; }
+
+/* The ward: the same panel for each wounded type it can mend. */
+.tr-info.is-ward { grid-template-columns: auto minmax(0, 1fr) auto; }
 
 /* ------------------------------------------------------- workshops (§3)
  * A workshop card is the training block in different materials: what it
@@ -563,16 +407,16 @@
 .dc-workshop {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 8px 0 4px;
-  padding-top: 8px;
+  gap: calc(var(--px) * 8);
+  margin: calc(var(--px) * 8) 0 calc(var(--px) * 4);
+  padding-top: calc(var(--px) * 8);
   border-top: 1px solid var(--parchment-shade);
   font-family: var(--font-body);
 }
 .dc-ws-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(var(--px) * 10);
 }
 .dc-ws-title { flex: 1; min-width: 0; }
 /* The body face, not the display one: this is a label on a block, not a
@@ -584,7 +428,7 @@
 .dc-ws-recipe {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
@@ -594,7 +438,7 @@
 .dc-ws-crew {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -607,28 +451,28 @@
 .dc-ws-queue {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
 }
 .dc-ws-slot {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-width: 34px;
-  min-height: 34px;
-  padding: 3px 5px;
-  border-radius: 8px;
+  gap: calc(var(--px) * 4);
+  min-width: calc(var(--px) * 34);
+  min-height: calc(var(--px) * 34);
+  padding: calc(var(--px) * 3) calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 8);
   background: var(--parchment-shade);
   box-shadow: inset 0 1px 0 #fff6;
 }
 .dc-ws-slot.is-empty { opacity: 0.45; }
 .dc-ws-slot.is-working { background: var(--parchment); box-shadow: 0 1px 0 #a79470; }
-.dc-ws-slot .k-trough { width: 42px; }
-.dc-ws-slot .k-knob { width: 20px; height: 20px; }
+.dc-ws-slot .k-trough { width: calc(var(--px) * 42); }
+.dc-ws-slot .k-knob { width: calc(var(--px) * 20); height: calc(var(--px) * 20); }
 .dc-ws-eta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   font-size: var(--text-desc);
   font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
@@ -639,90 +483,7 @@
 /* A live part (ui/kit/live.ts) wraps the lines that tick so they can be
    swapped alone; the wrapper takes no part in layout, so the card's flex
    gaps read exactly as they did when the lines were direct children. */
-.dc-live, .tr-queue-block, .dc-ws-live { display: contents; }
-
-/* ---- the villagers' row (M2): a face per bed ---- */
-.tr-roster {
-  grid-column: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  align-self: end;
-}
-.tr-roster-slot {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  overflow: visible;
-}
-.tr-roster-slot.is-empty {
-  background: rgba(60, 36, 18, 0.12);
-  border-style: dashed;
-  border-color: rgba(92, 58, 30, 0.55);
-}
-.tr-roster-slot.is-queued .tr-roster-art { opacity: 0.55; }
-/* No bed here yet: the socket is drawn, and only just. */
-.tr-roster-slot.is-none {
-  background: transparent;
-  border-style: dashed;
-  border-color: rgba(92, 58, 30, 0.3);
-}
-.tr-roster-art { width: 30px; height: 30px; object-fit: contain; border-radius: 50%; }
-/* The clock on the face being trained: small, dark, under the chin. */
-.tr-roster-timer {
-  position: absolute;
-  left: 50%;
-  bottom: -7px;
-  transform: translateX(-50%);
-  padding: 0 5px;
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: var(--weight-strong);
-  line-height: 14px;
-  color: var(--parchment);
-  background: var(--ink);
-  border-radius: 7px;
-  white-space: nowrap;
-}
-.tr-roster-more {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  color: var(--ink-muted);
-}
-
-/* ---- the villagers' row and the level-up's before → after (M2) ---- */
-.tr-info.is-villagers { display: block; }
-.tr-villagers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.tr-villagers > .tr-roster { flex: 1 1 auto; min-width: min-content; flex-wrap: nowrap; gap: 5px; }
-.tr-villagers .tr-roster-slot { width: 40px; height: 40px; }
-.tr-villagers .tr-roster-art { width: 34px; height: 34px; }
-.tr-villagers .k-btn { min-height: 34px; }
-/* Train keeps its own width, price and all; where the roster leaves it no
-   room — a phone — it takes a line of its own, under the roster, at the
-   right, rather than being squeezed past the window's edge. */
-.tr-villagers > .k-action { flex: none; margin-left: auto; }
-/* A REASON IS NOT A BUTTON. The space beside the roster is sized for
-   "Train" and its price; "Nowhere to put them — build more Housing" is forty
-   characters, and in 132px it came out as four stacked scraps next to the
-   figures it was talking about. So it takes a line of its own, under the
-   roster, where the row's full width reads it in one. */
-.tr-villagers > .tr-blocked {
-  flex: 1 0 100%;
-  max-width: none;
-  font-size: var(--text-desc);
-  font-weight: var(--weight-small);
-  line-height: 1.3;
-}
-/* A gate beside a soldier's name takes only the room it needs, so the name
-   keeps its line. */
-.tr-top > .tr-blocked { width: auto; max-width: 48%; font-size: 12px; font-weight: var(--weight-small); }
+.dc-live, .dc-ws-live { display: contents; }
 
 /* ---- the Upgrade button (M25)
  *
@@ -735,11 +496,11 @@
 .dc-upgrade .k-btn { position: relative; } /* the badge sits on its corner */
 .dc-upgrade {
   flex: none;
-  width: 112px;
+  width: calc(var(--px) * 112);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
 }
 /* ---- the head and the stat band (M2)
  *
@@ -751,7 +512,7 @@
    of its own, still centred. Each is a big icon, then the name — bold, in
    ink — over the value in a lighter ink. */
 .dc-stats {
-  --stat-gap: 10px;
+  --stat-gap: calc(var(--px) * 10);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -761,19 +522,19 @@
   flex: none;
   /* 112 px — room for the icon and a six-letter name — and never more than a
      third of the row, so three still fit on a phone. */
-  width: min(112px, calc((100% - 2 * var(--stat-gap)) / 3));
-  height: 58px;
+  width: min(calc(var(--px) * 112), calc((100% - 2 * var(--stat-gap)) / 3));
+  height: calc(var(--px) * 58);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   min-width: 0;
   /* Inside the 2-px outline: room for the icon, a name and a value. */
-  padding: 6px 4px;
+  padding: calc(var(--px) * 6) calc(var(--px) * 4);
 }
-.dc-stat > .icon { --icon-size: 38px; flex: none; }
+.dc-stat > .icon { --icon-size: calc(var(--px) * 38); flex: none; }
 .dc-stat-body { min-width: 0; }
 .dc-stat-label {
-  font-size: 13px;
+  font-size: calc(var(--px) * 13);
   font-weight: var(--weight-title);
   line-height: 1.15;
   color: var(--ink);
@@ -783,7 +544,7 @@
 }
 .dc-stat-value {
   display: block;
-  font-size: 14px;
+  font-size: calc(var(--px) * 14);
   font-weight: var(--weight-body);
   line-height: 1.2;
   color: var(--ink-muted);

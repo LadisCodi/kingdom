@@ -96,7 +96,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   max-width: 82%;
   pointer-events: none;
 }
@@ -140,7 +140,7 @@ body {
   /* --nav-h is MEASURED (ui/chromeMetrics.ts) and the nav bar pads itself by
      the safe-area inset, so that inset is already inside this number. Adding
      env() again — as this used to — reserved it twice. */
-  padding: var(--hud-h) 16px calc(var(--nav-h) + 16px);
+  padding: var(--hud-h) calc(var(--px) * 16) calc(var(--nav-h) + calc(var(--px) * 16));
 }
 
 /* ---------- the quest hint ---------- */
@@ -155,20 +155,20 @@ body {
  * whatever is under it, so the mark now reads on parchment, on wood and on
  * the gold card alike. */
 .hinted {
-  box-shadow: 0 0 0 3px var(--wood-dark), 0 0 0 6px var(--gold) !important;
+  box-shadow: 0 0 0 calc(var(--px) * 3) var(--wood-dark), 0 0 0 calc(var(--px) * 6) var(--gold) !important;
   position: relative;
 }
 .hinted::after {
   content: '';
-  position: absolute; top: -26px; left: 50%; margin-left: -9px;
+  position: absolute; top: calc(var(--px) * -26); left: 50%; margin-left: calc(var(--px) * -9);
   width: 0; height: 0; z-index: 30; pointer-events: none;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 12px solid var(--gold);
-  filter: drop-shadow(0 2px 0 var(--gold-dark));
+  border-left: calc(var(--px) * 9) solid transparent;
+  border-right: calc(var(--px) * 9) solid transparent;
+  border-top: calc(var(--px) * 12) solid var(--gold);
+  filter: drop-shadow(0 calc(var(--px) * 2) 0 var(--gold-dark));
   animation: hint-bob 0.7s ease-in-out infinite alternate;
 }
-@keyframes hint-bob { from { transform: translateY(0); } to { transform: translateY(6px); } }
+@keyframes hint-bob { from { transform: translateY(0); } to { transform: translateY(calc(var(--px) * 6)); } }
 
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
@@ -177,10 +177,59 @@ body {
  * and closes it, and the tools in a grid that wraps to the frame's width and
  * scrolls if it has to. Below the overlay (z 7) on purpose: it is dev-only
  * and must never sit on top of a sheet it is meant to help test. */
+/* The dev bar's device frame (main.ts): #app at a device's aspect ratio, as
+   large as the window allows, centred, with a hairline so its edge shows. */
+html[data-device] body { display: grid; place-items: center; }
+html[data-device] #app {
+  width: min(100vw, calc(100vh * var(--device-ar)));
+  height: min(100vh, calc(100vw / var(--device-ar)));
+  outline: 1px solid #5a5aa0;
+}
+/* What the device draws over the game — sized in the device's CSS pixels,
+   scaled to the frame (--d is one of them). On top of everything, and never
+   in the way of a tap. */
+html[data-device] #app { --d: calc(100cqw / var(--device-w)); }
+html[data-device] #app::before,
+html[data-device] #app::after {
+  content: none;
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+/* The iPhone X's notch, hanging from the top edge. */
+html[data-device='iphone-x'] #app::before {
+  content: '';
+  top: 0;
+  width: calc(var(--d) * 209);
+  height: calc(var(--d) * 30);
+  border-radius: 0 0 calc(var(--d) * 20) calc(var(--d) * 20);
+  background: #000;
+}
+/* The iPhone 17's Dynamic Island, a pill a little below the edge. */
+html[data-device='iphone-17'] #app::before {
+  content: '';
+  top: calc(var(--d) * 11);
+  width: calc(var(--d) * 126);
+  height: calc(var(--d) * 37);
+  border-radius: calc(var(--d) * 19);
+  background: #000;
+}
+/* The home bar, on the iPhones and the iPad Pro. */
+html[data-device] #app::after {
+  content: '';
+  bottom: calc(var(--d) * 8);
+  width: calc(var(--d) * 134);
+  height: calc(var(--d) * 5);
+  border-radius: calc(var(--d) * 3);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
 .dev-bar {
-  position: absolute; left: 8px; right: 8px; bottom: calc(var(--nav-h) + 8px);
+  position: absolute; left: calc(var(--px) * 8); right: calc(var(--px) * 8); bottom: calc(var(--nav-h) + calc(var(--px) * 8));
   z-index: 4;
-  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: calc(var(--px) * 6);
   pointer-events: none; /* the gap around the tab is still map */
   color: #e8e2d0; font-size: var(--text-helper);
 }
@@ -189,22 +238,22 @@ body {
   order: 2; /* under the grid, so it stays put when the grid opens */
   font: inherit; font-weight: var(--weight-strong); color: inherit;
   background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0;
-  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  border-radius: calc(var(--px) * 8); padding: calc(var(--px) * 6) calc(var(--px) * 10); cursor: pointer;
 }
 .dev-grid {
   display: none;
   align-self: stretch;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--px) * 96), 1fr));
+  gap: calc(var(--px) * 6);
   max-height: 40vh;
   overflow-y: auto;
-  padding: 8px;
-  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0; border-radius: 10px;
+  padding: calc(var(--px) * 8);
+  background: rgba(40, 40, 80, 0.92); border: 1px solid #5a5aa0; border-radius: calc(var(--px) * 10);
 }
 .dev-bar.is-open .dev-grid { display: grid; }
 .dev-grid button {
   font: inherit; color: inherit; background: #26303e;
-  border: 1px solid #3a4757; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  border: 1px solid #3a4757; border-radius: calc(var(--px) * 8); padding: calc(var(--px) * 6) calc(var(--px) * 8); cursor: pointer;
   line-height: 1.2;
 }
 .dev-grid button:hover { background: #313d4f; }

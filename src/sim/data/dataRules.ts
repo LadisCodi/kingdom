@@ -446,6 +446,19 @@ export const ADJACENCY_CLAMP = 0.25;
 export const RULES: Readonly<Record<string, Rule>> = {
   buildings: (doc, push) => {
     const lateFrom = num((doc.city as Record<string, unknown> | undefined)?.lateUpgradeFromLevel) || Infinity;
+    // ONE TRAINEE PER BUILDING, ONE BUILDING PER TRAINEE: each unit has a hall
+    // of its own, so a card's training block is one unit and one batch, and
+    // no two halls compete for the same order.
+    const trainedAt = new Map<string, string>();
+    for (const [id, b] of records(doc.districts)) {
+      const trains = list(b.trains);
+      if (trains.length > 1) push(id, ['trains'], `trains ${trains.length} things — a building trains one`);
+      for (const t of trains) {
+        const other = trainedAt.get(String(t));
+        if (other !== undefined) push(id, ['trains'], `${t} is already trained at ${other} — each unit has one building`);
+        else trainedAt.set(String(t), id);
+      }
+    }
     for (const [id, b] of records(doc.districts)) {
       const workshop = b.produces !== null && b.produces !== undefined;
       if (workshop !== (list(b.queueLengthPerLevel).length > 0)) {

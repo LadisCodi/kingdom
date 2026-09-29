@@ -463,7 +463,53 @@ async function boot(): Promise<void> {
       saveManager.save(game.state, game.now(), true);
       location.reload();
     };
+    // THE DEVICE FRAME: the game's frame (#app) forced to a phone's or a
+    // tablet's aspect ratio, as large as the window allows and centred, to
+    // sign off a menu on each device from a desktop browser. The UI scales
+    // with the frame (tokens.css, --rpx / --px), so the frame's SHAPE is what
+    // decides the composition — the size only zooms it.
+    //
+    // THE NOTCH, TOO. A desktop browser's safe-area insets are zero, so the
+    // header and the nav read `var(--safe-top, env(…))` and the frame sets
+    // --safe-top / --safe-bottom to the device's own, in the device's CSS
+    // pixels scaled to the frame (100cqw is the frame's width). style.css
+    // draws the notch or Dynamic Island and the home bar over the frame, so
+    // what they cover is in plain sight. Remembered across reloads, like
+    // whether the bar is open.
+    const DEVICES = [
+      { id: 'off', label: 'Off' },
+      { id: 'iphone-x', label: 'iPhone X', w: 375, h: 812, top: 44, bottom: 34 },
+      { id: 'iphone-17', label: 'iPhone 17', w: 402, h: 874, top: 62, bottom: 34 },
+      // The widest iPad for its height (3:4) AND one with insets: the least
+      // usable height in proportion, which is what sets the menus' size.
+      { id: 'ipad-pro', label: 'iPad Pro 12.9"', w: 1024, h: 1366, top: 24, bottom: 20 },
+    ] as const;
+    const DEVICE_KEY = 'kingdom.devDevice';
+    const deviceButton = button('', () => {});
+    const setDevice = (id: string) => {
+      const device = DEVICES.find((d) => d.id === id) ?? DEVICES[0];
+      const root = document.documentElement;
+      const dials = ['--device-ar', '--device-w', '--safe-top', '--safe-bottom'];
+      if ('w' in device) {
+        root.dataset.device = device.id;
+        root.style.setProperty('--device-ar', String(device.w / device.h));
+        root.style.setProperty('--device-w', String(device.w));
+        root.style.setProperty('--safe-top', `calc(100cqw * ${device.top} / ${device.w})`);
+        root.style.setProperty('--safe-bottom', `calc(100cqw * ${device.bottom} / ${device.w})`);
+      } else {
+        delete root.dataset.device;
+        for (const dial of dials) root.style.removeProperty(dial);
+      }
+      deviceButton.textContent = `📱 ${device.label}`;
+      try { localStorage.setItem(DEVICE_KEY, device.id); } catch { /* private window */ }
+    };
+    deviceButton.addEventListener('click', () => {
+      const at = DEVICES.findIndex((d) => d.id === (document.documentElement.dataset.device ?? 'off'));
+      setDevice(DEVICES[(at + 1) % DEVICES.length].id);
+    });
+    try { setDevice(localStorage.getItem(DEVICE_KEY) ?? 'off'); } catch { setDevice('off'); }
     const devGrid = el('div', { class: 'dev-grid' },
+      deviceButton,
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),

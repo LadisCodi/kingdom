@@ -3,7 +3,7 @@
 .bld-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: calc(var(--px) * 10);
 }
 
 .bld-card {
@@ -27,24 +27,24 @@
      72 of them, so every pixel of padding and gap comes straight out of the
      text column — which had 79px for a name AND a promise, and clipped both.
      Six gives it 85. */
-  column-gap: 6px;
-  row-gap: 2px;
+  column-gap: calc(var(--px) * 6);
+  row-gap: calc(var(--px) * 2);
   align-items: center;
-  padding: 6px;
+  padding: calc(var(--px) * 6);
   text-align: left;
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(60, 36, 18, 0.25);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.25);
   cursor: pointer;
   overflow: hidden;
 }
 .bld-card:hover { filter: brightness(1.05); }
-.bld-card:active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3); }
+.bld-card:active { transform: translateY(calc(var(--px) * 3)); box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3); }
 
 /* Capped, not greyed: the building keeps its colour and wears a ribbon, so
  * it still reads as something to want (§2.4). */
@@ -79,11 +79,11 @@
   /* 16, not 18: M3 sets this title at about 16 and 18 put "Housing #1" onto
      two lines in an 85px column. The name is the one line that must not
      wrap — it is what the player is choosing between. */
-  font-size: 16px;
+  font-size: calc(var(--px) * 16);
   line-height: 1.1;
 }
 .bld-ordinal {
-  margin-left: 4px;
+  margin-left: calc(var(--px) * 4);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
@@ -112,15 +112,15 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
-  margin-top: 6px;
+  gap: calc(var(--px) * 6);
+  margin-top: calc(var(--px) * 6);
 }
 /* Cost chips are small parchment pills with the icon and the figure (M3). */
 .bld-cost .k-chip,
 .bld-cost .k-cost {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 2px solid rgba(92, 58, 30, 0.45);
+  padding: calc(var(--px) * 2) calc(var(--px) * 8);
+  border-radius: calc(var(--px) * 999);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   background: var(--parchment);
   font-weight: var(--weight-strong);
 }
@@ -133,14 +133,14 @@
 .bld-harmony {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 6px 10px;
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 10);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink);
   background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
 }
 .bld-harmony.is-short { border-color: var(--clay); color: var(--clay); }
@@ -150,7 +150,7 @@
 /* A category heading between two grids. Decorations buy a different thing
  * from every building above them, so they are found by the category. */
 .bld-section {
-  margin: 14px 0 8px;
+  margin: calc(var(--px) * 14) 0 calc(var(--px) * 8);
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -164,10 +164,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  width: calc(100% + 12px);
-  margin: 8px -6px -10px;
-  padding: 5px 6px;
+  gap: calc(var(--px) * 5);
+  width: calc(100% + calc(var(--px) * 12));
+  margin: calc(var(--px) * 8) calc(var(--px) * -6) calc(var(--px) * -10);
+  padding: calc(var(--px) * 5) calc(var(--px) * 6);
   background: var(--clay);
   color: var(--ink-inverse);
   font-size: var(--text-helper);
@@ -185,53 +185,53 @@
  * buttons — because they are the same kind of thing: a short modal that asks
  * one question about something the player has just tried to do. */
 
-.bld-offer { display: flex; flex-direction: column; gap: 12px; }
-.bld-offer-line { display: flex; align-items: center; gap: 12px; }
+.bld-offer { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
+.bld-offer-line { display: flex; align-items: center; gap: calc(var(--px) * 12); }
 .bld-offer-mark {
   display: grid;
   place-items: center;
   flex: none;
-  width: 72px;
-  height: 72px;
+  width: calc(var(--px) * 72);
+  height: calc(var(--px) * 72);
   background: var(--parchment);
-  border: 2px solid var(--wood-dark);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3);
 }
-.bld-offer-mark .icon { --icon-size: 48px; }
+.bld-offer-mark .icon { --icon-size: calc(var(--px) * 48); }
 .bld-offer-copy { flex: 1; min-width: 0; }
-.bld-offer-head { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: 18px; line-height: 1.15; }
+.bld-offer-head { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 18); line-height: 1.15; }
 .bld-offer-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
 
 /* The crew as pips: filled = owned, hollow = room left. The ceiling is a
  * thing to SEE, so that "4 is as large as a crew gets" lands as a fact the
  * player already knew rather than as a refusal they are hearing first here. */
-.bld-offer-crew { display: flex; gap: 8px; }
+.bld-offer-crew { display: flex; gap: calc(var(--px) * 8); }
 .bld-offer-pip {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: calc(var(--px) * 46);
+  height: calc(var(--px) * 46);
   border-radius: 50%;
   /* Rings carved in the wood (M18): a shut dark one for a builder not hired,
      gold with the hammer on it for one that is. */
   background: var(--wood-dark);
-  border: 4px solid var(--wood);
-  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 3px 0 var(--wood-dark);
+  border: calc(var(--px) * 4) solid var(--wood);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 calc(var(--px) * 3) 0 var(--wood-dark);
 }
 .bld-offer-pip.is-on {
   background: var(--gold);
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px var(--gold-dark), inset 0 0 0 2px var(--gold-dark), 0 3px 0 var(--gold-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold-dark), inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 calc(var(--px) * 3) 0 var(--gold-dark);
 }
 .bld-offer-pip:not(.is-on) .icon { display: none; }
-.bld-offer-pip .icon { --icon-size: 26px; }
-.bld-offer-actions .k-btn.has-cost { flex-direction: row; gap: 8px; }
-.bld-offer-crew { gap: 12px; justify-content: center; }
+.bld-offer-pip .icon { --icon-size: calc(var(--px) * 26); }
+.bld-offer-actions .k-btn.has-cost { flex-direction: row; gap: calc(var(--px) * 8); }
+.bld-offer-crew { gap: calc(var(--px) * 12); justify-content: center; }
 
-.bld-offer-actions { display: flex; gap: 10px; }
-.bld-offer-actions .k-btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: 10px; padding-right: 10px; }
-.bld-offer-actions .k-btn:first-child { flex: 0 0 auto; min-width: 104px; }
+.bld-offer-actions { display: flex; gap: calc(var(--px) * 10); }
+.bld-offer-actions .k-btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: calc(var(--px) * 10); padding-right: calc(var(--px) * 10); }
+.bld-offer-actions .k-btn:first-child { flex: 0 0 auto; min-width: calc(var(--px) * 104); }
 
 /* Narrower than the phone the mockups were drawn for, the row gives up.
  *
@@ -256,6 +256,6 @@
     justify-items: center;
     text-align: center;
   }
-  .bld-art { width: 84px; }
+  .bld-art { width: calc(var(--px) * 84); }
   .bld-cost { justify-content: center; }
 }

@@ -38,7 +38,7 @@
 .pss {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   min-height: 0;
 }
 /* The clock and the level bar are the header: they never scroll and never
@@ -63,18 +63,18 @@
 .pss-clock {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px;
+  gap: calc(var(--px) * 8);
+  padding: 0 calc(var(--px) * 4);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
-.pss-clock > .icon { --icon-size: 16px; }
+.pss-clock > .icon { --icon-size: calc(var(--px) * 16); }
 .pss-of { margin-left: auto; }
 
 /* ---- the level bar. Where you are, the distance, and where you are going. */
-.pss-level { display: flex; align-items: center; gap: 8px; }
+.pss-level { display: flex; align-items: center; gap: calc(var(--px) * 8); }
 
 .pss-pip {
   display: flex;
@@ -85,8 +85,8 @@
   height: 44px;
   border-radius: 50%;
   background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 2px 0 var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 2) 0 var(--wood-dark);
   color: var(--parchment);
   text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-body);
@@ -99,7 +99,7 @@
 .pss-level .pss-pip.is-now {
   background: var(--gold);
   border-color: var(--gold-dark);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 var(--gold-dark);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 2) 0 var(--gold-dark);
   color: var(--ink);
   text-shadow: none;
 }
@@ -109,9 +109,9 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 30px;
-  border-radius: 999px;
-  border: 3px solid var(--wood-dark);
+  height: calc(var(--px) * 30);
+  border-radius: calc(var(--px) * 999);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   background: rgba(92, 58, 30, 0.35);
   overflow: hidden;
 }
@@ -120,7 +120,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   background: var(--gold);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.35);
   transition: width 240ms ease-out;
 }
 .pss-xp-text {
@@ -149,17 +149,17 @@
    The phone frame fits about three rows apiece, and a row cut by each pane's
    bottom edge is what says both lists run on. */
 .pss-board { flex: 1 1 0; min-height: 0; }
-.pss-rungs { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.pss-rungs { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
 
 .pss-board {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8);
   /* The same 9-slice the upgrade sheet's panel uses, measured off the same
      art — the ladder below is ~40 rows, so nothing here may be a fixed size. */
-  border: 14px solid transparent;
-  border-image: url('../../../render/assets/frame_panel_wide.png') 58 fill / 14px stretch;
+  border: calc(var(--px) * 14) solid transparent;
+  border-image: url('../../../render/assets/frame_panel_wide.png') 58 fill / calc(var(--px) * 14) stretch;
 }
 .pss-board-head {
   font-family: var(--font-body);
@@ -175,14 +175,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: calc(var(--px) * 5);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 .pss-board-head,
 .pss-board > .pss-note { flex: none; }
 .pss-empty {
-  padding: 18px 8px;
+  padding: calc(var(--px) * 18) calc(var(--px) * 8);
   text-align: center;
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -192,11 +192,11 @@
 .pss-task {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 4px 6px;
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 46);
+  padding: calc(var(--px) * 4) calc(var(--px) * 6);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.45);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   background: var(--parchment-shade);
   color: var(--ink);
 }
@@ -209,13 +209,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 10px solid transparent;
-  border-image: url('../../../render/assets/frame_chip.png') 52 fill / 10px stretch;
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
+  border: calc(var(--px) * 10) solid transparent;
+  border-image: url('../../../render/assets/frame_chip.png') 52 fill / calc(var(--px) * 10) stretch;
 }
-.pss-task-icon > .icon { --icon-size: 26px; }
-.pss-task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pss-task-icon > .icon { --icon-size: calc(var(--px) * 26); }
+.pss-task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
 .pss-task-goal {
   font-size: var(--text-body);
   font-weight: var(--weight-strong);
@@ -225,9 +225,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 16px;
-  border-radius: 999px;
-  border: 2px solid rgba(92, 58, 30, 0.5);
+  height: calc(var(--px) * 16);
+  border-radius: calc(var(--px) * 999);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.5);
   background: rgba(92, 58, 30, 0.28);
   overflow: hidden;
 }
@@ -253,15 +253,15 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  min-width: 42px;
+  gap: calc(var(--px) * 3);
+  min-width: calc(var(--px) * 42);
   justify-content: flex-end;
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.pss-task-pay > .icon { --icon-size: 18px; }
+.pss-task-pay > .icon { --icon-size: calc(var(--px) * 18); }
 /* A pack from a HARD errand is the one reward the board singles out, so it
    gets a ring rather than only a different pouch: the two tiers differ by one
    step of colour and the difference has to survive a glance.
@@ -269,18 +269,18 @@
    the numbers beside it, so a ring there came out an ellipse. */
 .pss-task-pay.is-hard .pss-pack {
   border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--gold), 0 0 6px rgba(242, 178, 51, 0.7);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold), 0 0 calc(var(--px) * 6) rgba(242, 178, 51, 0.7);
 }
 
 /* The green tick, pressed on like the daily ladder's wax seal. */
 .pss-task > .icon {
   flex: none;
-  --icon-size: 16px;
+  --icon-size: calc(var(--px) * 16);
   border-radius: 50%;
   background-color: var(--leaf);
-  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 4) var(--leaf), 0 0 0 calc(var(--px) * 6) var(--leaf-dark);
   color: var(--ink-inverse);
-  margin-right: 6px;
+  margin-right: calc(var(--px) * 6);
 }
 
 /* THE CLAIM, and there is only ever one control on a row. An unfinished
@@ -291,10 +291,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-width: 76px;
-  min-height: 40px;
-  padding: 4px 10px;
+  gap: calc(var(--px) * 4);
+  min-width: calc(var(--px) * 76);
+  min-height: calc(var(--px) * 40);
+  padding: calc(var(--px) * 4) calc(var(--px) * 10);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-size: var(--text-body);
@@ -309,14 +309,14 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  border-image: url('../../assets/btn-green.png') 70 90 90 fill / 14px 18px 18px stretch;
-  padding-bottom: 10px;
+  border-image: url('../../assets/btn-green.png') 70 90 90 fill / calc(var(--px) * 14) calc(var(--px) * 18) calc(var(--px) * 18) stretch;
+  padding-bottom: calc(var(--px) * 10);
   color: var(--ink-inverse);
-  text-shadow: 1px 0 0 #015e10, -1px 0 0 #015e10, 0 1px 0 #015e10, 0 -1px 0 #015e10, 1px 1px 0 #015e10, -1px 1px 0 #015e10, 1px -1px 0 #015e10, -1px -1px 0 #015e10, 0 2px 0 #015e10;
+  text-shadow: 1px 0 0 #015e10, -1px 0 0 #015e10, 0 1px 0 #015e10, 0 -1px 0 #015e10, 1px 1px 0 #015e10, -1px 1px 0 #015e10, 1px -1px 0 #015e10, -1px -1px 0 #015e10, 0 calc(var(--px) * 2) 0 #015e10;
 }
 .pss-claim:hover { border-image-source: url('../../assets/btn-green-hover.png'); }
-.pss-claim:active { border-image-source: url('../../assets/btn-green-down.png'); padding: 8px 10px 6px; }
-.pss-claim:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.pss-claim:active { border-image-source: url('../../assets/btn-green-down.png'); padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--px) * 6); }
+.pss-claim:focus-visible { outline: calc(var(--px) * 3) solid var(--ink); outline-offset: calc(var(--px) * 2); }
 /* It wears the kit's orb, because it is the only thing on the board that can
    be pressed — the daily cell's rule applied to a row. */
 .pss-claim { position: relative; }
@@ -326,8 +326,8 @@
 .pss-heads,
 .pss-row {
   display: grid;
-  grid-template-columns: 1fr 40px 1fr;
-  gap: 6px;
+  grid-template-columns: 1fr calc(var(--px) * 40) 1fr;
+  gap: calc(var(--px) * 6);
   align-items: stretch;
 }
 /* Pinned by its PANE rather than by `position: sticky` — the heads sit
@@ -338,11 +338,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--px) * 6);
   min-height: 44px;
-  padding: 6px 8px;
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
   border-radius: var(--radius);
-  border: 3px solid var(--wood-dark);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
   box-shadow: 0 var(--lip) 0 var(--wood-dark);
   font-family: var(--font-body);
   font-size: var(--text-body);
@@ -377,11 +377,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: calc(var(--px) * 4);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.pss-row { min-height: 40px; }
+.pss-row { min-height: calc(var(--px) * 40); }
 
 .pss-cell {
   position: relative;
@@ -389,11 +389,11 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: calc(var(--px) * 8);
   min-height: 44px;
-  padding: 4px 28px 4px 8px;
+  padding: calc(var(--px) * 4) calc(var(--px) * 28) calc(var(--px) * 4) calc(var(--px) * 8);
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(92, 58, 30, 0.55);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.55);
   background: var(--parchment-shade);
   color: var(--ink);
   font: inherit;
@@ -409,54 +409,54 @@
 .pss-cell.is-taken > .icon:last-child,
 .pss-cell.is-locked > .icon:last-child {
   position: absolute;
-  right: 6px;
+  right: calc(var(--px) * 6);
   top: 50%;
   translate: 0 -50%;
 }
 .pss-cell.is-taken > .icon:last-child {
-  --icon-size: 16px;
-  right: 12px;
+  --icon-size: calc(var(--px) * 16);
+  right: calc(var(--px) * 12);
   border-radius: 50%;
   background-color: var(--leaf);
-  box-shadow: 0 0 0 4px var(--leaf), 0 0 0 6px var(--leaf-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 4) var(--leaf), 0 0 0 calc(var(--px) * 6) var(--leaf-dark);
   color: var(--ink-inverse);
 }
-.pss-cell:not(.is-taken):not(.is-locked) { padding-right: 8px; }
+.pss-cell:not(.is-taken):not(.is-locked) { padding-right: calc(var(--px) * 8); }
 
 /* THE GRAND PRIZE, on both columns: the last rung is the one the free track
    reaches too (13-events.md §2.4), so it is framed rather than gated. */
 .pss-cell.is-grand {
-  border: 3px solid var(--gold);
+  border: calc(var(--px) * 3) solid var(--gold);
   background:
     linear-gradient(rgba(242, 178, 51, 0.22), rgba(242, 178, 51, 0.22)),
     var(--parchment-shade);
-  box-shadow: inset 0 0 12px rgba(242, 178, 51, 0.55);
+  box-shadow: inset 0 0 calc(var(--px) * 12) rgba(242, 178, 51, 0.55);
 }
 
 /* Waiting. Lit gold, with the kit's orb on its corner. */
 button.pss-cell {
   cursor: pointer;
-  border: 3px solid var(--gold);
-  box-shadow: 0 2px 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
+  border: calc(var(--px) * 3) solid var(--gold);
+  box-shadow: 0 calc(var(--px) * 2) 0 var(--gold-dark), 0 0 0 1px var(--gold-dark);
 }
 button.pss-cell:hover { filter: brightness(1.05); }
-button.pss-cell:active { transform: translateY(2px); box-shadow: none; }
-button.pss-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+button.pss-cell:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
+button.pss-cell:focus-visible { outline: calc(var(--px) * 3) solid var(--ink); outline-offset: calc(var(--px) * 2); }
 
-.pss-prize { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
-.pss-prize > .icon { --icon-size: 20px; }
+.pss-prize { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); font-variant-numeric: tabular-nums; }
+.pss-prize > .icon { --icon-size: calc(var(--px) * 20); }
 /* The pouch draws bigger than a coin because its COLOUR is the whole label:
    it is the only chip on the ladder with nothing written beside it. */
-.pss-pack { width: 26px; height: 26px; object-fit: contain; display: block; }
-.pss-task-pay .pss-pack { width: 24px; height: 24px; }
+.pss-pack { width: calc(var(--px) * 26); height: calc(var(--px) * 26); object-fit: contain; display: block; }
+.pss-task-pay .pss-pack { width: calc(var(--px) * 24); height: calc(var(--px) * 24); }
 
 /* The level, between the columns: it belongs to the row, not to either track.
    It lights once the row has been reached, which is what draws the line
    between where the player has been and where they have not. */
 .pss-pip.is-rung {
   align-self: center;
-  width: 36px;
-  height: 36px;
+  width: calc(var(--px) * 36);
+  height: calc(var(--px) * 36);
   opacity: 0.7;
 }
 .pss-row.is-reached .pss-pip.is-rung { opacity: 1; }
