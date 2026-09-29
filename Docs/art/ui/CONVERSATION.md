@@ -804,3 +804,21 @@ for.
 - **File:** `mockups/m46-tech-sheet-final.png` (1448×1086), two screens.
 - **What worked:** a short edit prompt against the attached image changed only
   the two things asked for.
+
+## B1 — the research book's pieces: the page, the ribbon, the pin
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M46 one above, continued; M43 attached as the
+  style reference for the page.
+- **Files:** `sheets/rb-page-raw.png` (1060×1484, the page) →
+  `src/ui/assets/rb-page.png` (the alpha box, halved, 485×687; nine-sliced at
+  30); `sheets/rb-ribbon-pin-raw.png` (1536×1024) → `rb-ribbon.png` (191×448,
+  a neutral grey-white ribbon tinted per book in CSS: a mask of its shape
+  filled with `--tome`, the ribbon laid over it, multiplied) and `rb-pin.png`
+  (96×96).
+- **What worked:** the page's PREVIEW image was already true alpha while the
+  model was still running its own "correction" — it looped for minutes, and
+  the preview was downloaded and used as delivered. The second prompt left the
+  correction out entirely and came back transparent anyway.
+- **What to know:** a ribbon masked at `100% auto` from its bottom keeps its
+  swallowtail at any height; stretched to `100% 100%` it distorts.

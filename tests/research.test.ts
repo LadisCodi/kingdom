@@ -11,7 +11,7 @@ import {
   anyResearchActionable, canResearchTech, canStartTech, completeTech as payAndComplete,
   eraShortfall, isTechComplete, isTechFilled, isTechStarted, isTomeOpen, openTomes,
   pourKnowledge, researchActionableCount, researchRefusal, techCost, techKnowledgeCost,
-  techKnowledgeMissing, techPoured, techUnlocks, techVisibility,
+  techKnowledgeMissing, techPoured, techState, techUnlocks,
 } from '../src/sim/research';
 import {
   CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
@@ -292,51 +292,37 @@ describe('a new kingdom starts with nothing', () => {
 // the player STARTED researching the card before it, so the next `?` only ever
 // appeared after you had committed — a tree nobody could plan a route through.
 // The doc said "every prerequisite is normal" the whole time.
-describe('tree fog', () => {
-  /** The first row of a book: nothing above it, so it is buyable from the off. */
+describe('the three states — there is no tree fog', () => {
+  /** The first row of a book: nothing above it, so it can be worked from the off. */
   const roots = (): TechId[] => TECH_ORDER
     .filter((id) => TECHNOLOGIES[id].placed && TECHNOLOGIES[id].requires.length === 0);
   /** What a root opens directly. */
   const childrenOf = (parent: TechId): TechId[] => TECH_ORDER
     .filter((id) => TECHNOLOGIES[id].requires.includes(parent));
 
-  it('shows what comes next as a silhouette, without researching anything', () => {
+  it('a root is in progress from the first minute, and what it opens is locked', () => {
     const state = freshGame();
     const root = roots()[0];
-    expect(techVisibility(state, root), 'a root is buyable from the first minute')
-      .toBe('normal');
-    // Its children require it and it is NOT researched — the point of the rule.
+    expect(techState(state, root)).toBe('progress');
     const next = childrenOf(root);
     expect(next.length, 'the fixture needs a root with children').toBeGreaterThan(0);
-    for (const id of next) {
-      expect(techVisibility(state, id), `${id} should be a silhouette under ${root}`)
-        .toBe('silhouette');
-    }
+    for (const id of next) expect(techState(state, id), id).toBe('locked');
   });
 
-  it('stops at one step, so a silhouette reveals nothing of its own', () => {
-    const state = freshGame();
-    const root = roots()[0];
-    for (const child of childrenOf(root)) {
-      for (const grandchild of childrenOf(child)) {
-        // …unless it hangs off something else that IS revealed, which is the
-        // honest reading of "every prerequisite is normal".
-        const revealedParent = TECHNOLOGIES[grandchild].requires
-          .every((r) => techVisibility(state, r) === 'normal');
-        if (revealedParent) continue;
-        expect(techVisibility(state, grandchild), `${grandchild} is two steps out`)
-          .toBe('hidden');
-      }
-    }
-  });
-
-  it('turns a silhouette normal when the card before it is researched', () => {
+  it('a requirement researched moves what it opens to in progress, and research to done', () => {
     const state = freshGame();
     const root = roots()[0];
     const child = childrenOf(root)[0];
-    expect(techVisibility(state, child)).toBe('silhouette');
     completeTech(state, root);
-    expect(techVisibility(state, child)).toBe('normal');
+    expect(techState(state, root)).toBe('done');
+    expect(techState(state, child)).toBe('progress');
+  });
+
+  it('a band still shut keeps its technologies locked even with every requirement met', () => {
+    const state = freshGame();
+    const shut = TECH_ORDER.find((id) => TECHNOLOGIES[id].placed && TECHNOLOGIES[id].era > 1)!;
+    for (const req of TECHNOLOGIES[shut].requires) completeTech(state, req);
+    expect(techState(state, shut)).toBe('locked');
   });
 });
 

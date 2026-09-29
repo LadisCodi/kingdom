@@ -6,8 +6,10 @@
 > reference is Elvenar's research screen and sheet; the look is a page of a
 > magic book with its sections as bookmarks (Heroes III's spellbook).
 >
-> **Status.** Chosen: the tree is M43, the sheet is M46 (M44 B, refined).
-> M37–M42 and M44–M45 were the rounds before. Folds into
+> **Status.** Built, and folded into
+> [`../features/07-research.md`](../features/07-research.md) §5, which is now
+> the authority. The tree is M43, the sheet M46. This plan keeps the
+> reasoning and the rounds (M37–M42, M44–M45). Folds into
 > `07-research.md` §5 and `ui-menus-redesign.md` §5.9 once chosen.
 
 ## 1. The states

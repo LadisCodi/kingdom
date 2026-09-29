@@ -2670,9 +2670,9 @@ export class Game {
     }
   }
 
-  /** Pour what the bar holds into a technology, up to what it needs. */
-  doPourTech(id: TechId): void {
-    const { result, poured } = pourKnowledge(this.state, id);
+  /** Pour from the bar into a technology: all it can, or at most `max`. */
+  doPourTech(id: TechId, max = Infinity): void {
+    const { result, poured } = pourKnowledge(this.state, id, max);
     if (result === 'Poured') {
       playSfx('research');
       this.floatKnowledge(-poured);
@@ -2692,28 +2692,28 @@ export class Game {
   }
 
   /**
-   * What "Buy the rest" costs on a technology: the points the bar cannot
-   * cover, in Gold and in Gems. Zero points when the bar already covers it.
+   * The sheet's three pours (Docs/plans/research-book.md §4): how many points
+   * the "as much as it can" button pours — the least of what the bar holds
+   * and what is missing — and what the Gems button charges to buy every point
+   * still missing.
    */
-  techBuyRest(id: TechId): { points: number; gold: number; gems: number } {
-    const points = Math.max(0, techKnowledgeMissing(this.state, id) - knowledgeHeld(this.state));
+  techPours(id: TechId): { missing: number; most: number; gems: number } {
+    const missing = techKnowledgeMissing(this.state, id);
     return {
-      points,
-      gold: knowledgeGoldPrice(this.state, points),
-      gems: knowledgeGemPrice(points),
+      missing,
+      most: Math.min(missing, knowledgeHeld(this.state)),
+      gems: knowledgeGemPrice(missing),
     };
   }
 
-  /** Buy the points the bar cannot cover, then pour everything it needs. */
-  doBuyRestAndPour(id: TechId, till: KnowledgeTill): void {
-    const { points } = this.techBuyRest(id);
-    if (points > 0) {
-      const bought = buyKnowledge(this.state, points, till);
-      if (bought === 'NotEnoughGold') { this.shake(['Gold']); this.notify(); return; }
-      if (bought === 'NotEnoughGems') { this.shake(['Gems']); this.notify(); return; }
-      if (till === 'Gems') playSfx('gemSpend');
-    }
-    this.doPourTech(id);
+  /** Buy every point a technology still misses, with Gems, and pour them. */
+  doBuyMissingWithGems(id: TechId): void {
+    const { missing } = this.techPours(id);
+    if (missing <= 0) return;
+    const bought = buyKnowledge(this.state, missing, 'Gems');
+    if (bought === 'NotEnoughGems') { this.shake(['Gems']); this.notify(); return; }
+    playSfx('gemSpend');
+    this.doPourTech(id, missing);
   }
 
   /** Renderers ask: is this UI key currently hinted? */

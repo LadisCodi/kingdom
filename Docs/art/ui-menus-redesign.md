@@ -1104,6 +1104,8 @@ Market Stall bonus — a thing the player *bought* — is a parenthetical.
 
 ### 5.9 Research
 
+> **REBUILT 2026-09-29 as the research book** (M43, M46): one pinned page on a stack of papers, bookmarks where the nav bar was, three states and no fog, the stat-tile card with the kit's bar, quill arrows, and a loose research page for a technology. The spec is [`../features/07-research.md`](../features/07-research.md) §5; what follows below is the history of the screen before it.
+
 **Purpose.** The long-term "what's next" — and the only place buildings
 and units are discovered.
 

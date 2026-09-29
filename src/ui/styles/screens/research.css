@@ -1,472 +1,303 @@
-/* Research (§5.9) — an illuminated manuscript, one page per book.
+/* Research — the research book (Docs/plans/research-book.md, mockups M43 and
+ * M46).
  *
- * The page is a FLOW read top to bottom: three columns of cards, an era bar
- * across the width wherever the next band begins, connectors running in the
- * gutter between rows or out into the side channel. Every size that has to
- * agree with the geometry is set inline from src/ui/research/layout.ts — this
- * file is materials only, so the two cannot drift. */
+ * Built from four reusable pieces, so a new book or a new state costs no new
+ * art: the PAGE (assets/rb-page.png, nine-sliced; the stack behind it is the
+ * same page twice, turned a few degrees), the BOOKMARK (assets/rb-ribbon.png,
+ * one neutral ribbon tinted per book through `--tome`), the PIN
+ * (assets/rb-pin.png), and the kit's own stat tile, progress bar and buttons.
+ * Every size that has to agree with the tree's geometry is set inline from
+ * src/ui/research/layout.ts — this file is materials only. */
 
-/* Reserves the two bars itself rather than leaning on #overlay's padding: an
-   absolutely positioned child resolves `inset` against the containing block's
-   PADDING BOX, which INCLUDES the padding — so `inset: 0` here would sit
-   under the header and the nav bar and hide the player's purse behind its own
-   top bar. The scrim still covers the whole screen; only this panel stops
-   short of the chrome. */
+/* The book takes the space between the plank and the bottom of the screen:
+   the nav bar steps aside while a menu is open, and the bookmarks hang into
+   the room it leaves. */
 .research-screen {
   position: absolute;
   top: var(--hud-h);
   right: 0;
-  bottom: var(--nav-h); /* measured; the nav's own padding holds the inset */
+  bottom: 0;
   left: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: calc(var(--px) * 10) calc(var(--px) * 6) 0;
   overflow: hidden;
 }
 
-/* TWO ROWS, because four things do not fit one 402px line.
- *
- * The title, the lectern row, the Hire button and the close knob were laid
- * out side by side; on the phone that squeezed "1 scholar idle" into a
- * two-line column two words wide and pressed the Hire slab against the knob.
- * The title and the way out are the fixed pair, so they keep the top line —
- * the same place every other sheet's plank puts them — and the scholars, who
- * are what this screen is actually about, get a line of their own. */
-.research-topbar {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 4px 14px 6px;
-  background: var(--wood);
-  border-bottom: var(--outline) solid var(--wood-dark);
-  box-shadow: inset 0 2px 0 var(--wood-light);
-}
-.research-topbar h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-title);
-  font-weight: var(--font-display-weight);
-  color: var(--parchment);
-}
-/* The knob keeps the top-right cell; the slots take the whole second row. */
-.research-topbar > .k-knob { grid-row: 1; grid-column: 2; }
-.research-topbar > .res-slots { grid-row: 2; grid-column: 1 / -1; }
-/* The desks on their own wood row under the books' plates. */
-.res-desks { display: flex; justify-content: center; padding: 4px 12px 6px; }
-.res-desks .res-slot { width: 60px; }
-.res-desks .res-slot-box { width: 48px; height: 36px; }
-.res-desks .res-slot-note { font-size: 12px; font-weight: var(--weight-small); }
+/* ------------------------------------------------------------ the page --- */
 
-/* THE SLOTS. Left-anchored and horizontal: a row of desks the player can
-   point at, in place of the sentence ("2 of 3 at work") and the Hire button
-   that used to sit beside it. Every unlocked slot, plus one locked one while
-   there are more to buy — never the whole ladder, because an empty slot is an
-   invitation and four of them is a shop. */
-.res-slots {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 10px;
-}
-.res-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 66px; }
-.res-slot-box {
-  width: 56px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
-}
-button.res-slot-box { cursor: pointer; }
-button.res-slot-box:hover { filter: brightness(1.06); }
-button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none; }
-
-/* A free desk is an invitation, so it is drawn open rather than filled. */
-.res-slot.is-free .res-slot-box {
-  background: transparent;
-  border-style: dashed;
-  box-shadow: none;
-  opacity: 0.75;
-}
-/* One at work carries what is on it. */
-.res-slot.is-busy .res-slot-box { background: var(--parchment); }
-.res-slot-glyph { font-size: 22px; line-height: 1; }
-/* One still to buy is the only slab with the gem tone on this row. */
-.res-slot.is-locked .res-slot-box { background: var(--sky); border-color: var(--wood-dark); }
-.res-slot.is-locked .res-slot-box.is-short { filter: grayscale(0.5) brightness(0.9); }
-
-.res-slot-note {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 12px;
-  font-weight: var(--weight-small);
-  line-height: 1.4;
-  color: var(--parchment);
-  white-space: nowrap;
-}
-.res-slot-note.is-short { color: var(--clay); }
-.research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
-
-/* Aged parchment ground, faintly stained. Vertical scroll only: the page is
-   sized to the phone's width by construction, so there is nothing to pan to
-   sideways and a horizontal drag would only ever lose the reader. */
-.tech-page {
+.rb-stack {
+  position: relative;
+  z-index: 1;
   flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: calc(var(--px) * 420);
+  display: flex;
+}
+/* The stack: the same page, twice, turned a little, behind the one on top. */
+.rb-stack::before,
+.rb-stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 14px solid transparent;
+  border-image: url('../../assets/rb-page.png') 30 fill / 14px stretch;
+  filter: brightness(0.93);
+}
+.rb-stack::before { transform: rotate(-1.6deg) translate(-3px, 4px); }
+.rb-stack::after { transform: rotate(1.2deg) translate(4px, 2px); filter: brightness(0.88); }
+
+.rb-page {
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
-    radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
-    var(--parchment);
-}
-.tech-page::-webkit-scrollbar { display: none; }
-.tech-flow { position: relative; margin: 10px auto 28px; }
-.tech-edges { position: absolute; inset: 0; pointer-events: none; }
-
-/* Inked trails; a finished one is gold-inked. */
-/* Dotted sepia trails between the medallions (M4): round dots, not dashes. */
-.tech-edge { fill: none; stroke: #8b6a3e; stroke-width: 4; stroke-dasharray: 0.1 9; stroke-linecap: round; }
-.tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: 0.1 9; stroke-width: 5; }
-.tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
-
-/* ---------------------------------------------------------- the cards --- */
-
-/* A card, not a medallion: it carries the NAME, which is what lets a player
-   find a technology someone told them about and read the page as a flow. What
-   it DOES is a sentence, and a sentence belongs in the panel a tap opens.
-   Width and height come from layout.ts, inline. */
-/* A MEDALLION, not a card (mockup M4, Docs/art/ui-menus-redesign.md §7.19):
-   the glyph sits on a round wax seal whose colour is the technology's state,
-   and the name hangs under it in ink on the page. The node keeps its 120×96
-   box for the layout; only the paint changed. */
-.tech-card {
-  position: absolute;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 2px;
-  padding: 2px 4px 0;
+  border: 14px solid transparent;
+  border-image: url('../../assets/rb-page.png') 30 fill / 14px stretch;
+  padding: 18px 4px 0;
   margin: 0;
-  text-align: center;
-  border-radius: 10px;
-  background: none;
-  border: 0;
   color: var(--ink);
-  font-family: var(--font-body);
-  cursor: pointer;
-  overflow: visible;
 }
-/* A GLYPH AND A NAME, and nothing else. What a technology does is a sentence,
-   and a sentence on a 120px card is three clipped lines that have to be tapped
-   to be read anyway — so the card is an emblem and the panel does the talking.
-   The name gets two lines because the card no longer competes for them. */
-.tech-card-glyph {
-  /* So the call-to-action orb can hang on the seal's corner. */
-  position: relative;
-  --seal: var(--parchment-shade);
-  --seal-dark: #b9a37a;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  font-size: 26px;
-  line-height: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.35), transparent 45%), var(--seal);
-  border: 3px solid var(--seal-dark);
-  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35), inset 0 -3px 0 rgba(60, 36, 18, 0.18);
-}
-.tech-card-name {
-  font-size: var(--text-helper);
-  line-height: 1.15;
-  font-weight: var(--weight-strong);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.tech-card.done .tech-card-glyph { --seal: var(--leaf); --seal-dark: var(--leaf-dark); }
-.tech-card.available .tech-card-glyph { --seal: var(--gold); --seal-dark: var(--gold-dark); }
-.tech-card.active .tech-card-glyph { --seal: var(--sky); --seal-dark: #2f7d9c; }
-.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
-/* Behind an era bar the player has not earned: legible, and plainly not yet
-   pressable. The bar itself carries the reason.
+.rb-page::-webkit-scrollbar { display: none; }
+/* The tree is laid out at its own width (layout.ts PAGE_W) and zoomed to the
+   page's by researchMenu.ts, so three columns fit any phone. */
 
-   Drained of colour, NOT made transparent: `opacity` would let the connectors
-   under the card show through it, which reads as a line drawn across the
-   card's face. */
-.tech-card.era-locked {
-  filter: saturate(0.25) brightness(0.94);
-  color: var(--ink-muted);
-  box-shadow: none;
-}
-
-/* A fold in the parchment: the next card along, not yet legible. */
-.tech-card.silhouette {
-  display: grid;
-  /* BOTH, and they are not the same thing. `place-items` centres the ring and
-     the mark inside their cell; the cell itself is an implicit 56px track,
-     which without `place-content` sits at the start of a 112px card — so the
-     whole mark rode 25px left of the card the edge above it points at. */
-  place-items: center;
-  place-content: center;
-  color: rgba(92, 58, 30, 0.5);
-  cursor: default;
-  font-size: 22px;
-}
-.tech-card.silhouette::before {
-  content: '';
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 3px dashed rgba(92, 58, 30, 0.5);
-  grid-area: 1 / 1;
-}
-.tech-card.silhouette > * { grid-area: 1 / 1; }
-
-.tech-card .node-bar {
+/* The pins, at the stack's top corners, and the sheet's one at its top. */
+.rb-pin {
   position: absolute;
-  left: 34px;
-  right: 34px;
-  top: 52px;
-  height: 4px;
-  background: rgba(60, 36, 18, 0.4);
-  border-radius: 2px;
-  overflow: hidden;
+  z-index: 2;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  background: url('../../assets/rb-pin.png') center / contain no-repeat;
+  pointer-events: none;
 }
-.tech-card .node-bar .fill { height: 100%; background: var(--parchment); }
+.rb-pin.is-left { top: calc(var(--px) * 10); left: calc(var(--px) * 12); }
+.rb-pin.is-right { top: calc(var(--px) * 10); right: calc(var(--px) * 12); }
+.rb-pin.is-centre { top: calc(var(--px) * -8); left: 50%; transform: translateX(-50%); }
+.rb-stack > .k-close { position: absolute; z-index: 3; top: calc(var(--px) * -6); right: calc(var(--px) * -4); }
 
-/* ------------------------------------------------------- the era bars --- */
-
-/* Not a node: it spans the page, nothing requires it, and it cannot be
-   researched. It is the door between two bands, with the price written on
-   it (Docs/features/07-research.md §2.1). */
-.res-era {
+/* A chapter: the book's first at the top of the page, the rest where each
+   band begins; a thin rule under the first, and what is still to reveal. */
+.rb-chapter-title {
+  margin: -6px 0 2px;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  text-align: center;
+  color: var(--ink);
+}
+.rb-rule {
+  height: 2px;
+  margin: 6px 12%;
+  background: linear-gradient(90deg, transparent, rgba(139, 106, 62, 0.8) 15%, rgba(139, 106, 62, 0.8) 85%, transparent);
+}
+.rb-chapter {
   position: absolute;
   left: 0;
   right: 0;
-  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.rb-chapter-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  color: var(--ink);
+}
+.rb-chapter-name::before,
+.rb-chapter-name::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: rgba(139, 106, 62, 0.7);
+}
+.rb-chapter-gate { font-size: 13px; font-weight: var(--weight-strong); color: var(--ink-muted); }
+.rb-chapter.is-open .rb-chapter-gate { display: none; }
+
+/* --------------------------------------------------------- the connectors --- */
+
+.tech-flow { position: relative; margin: 0 auto 20px; }
+.tech-edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+/* Drawn with a quill: thin sepia ink, a slightly uneven stroke. */
+.tech-edge {
+  fill: none;
+  stroke: #5e4126;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: url(#rb-quill);
+}
+.tech-arrowhead { fill: none; stroke: #5e4126; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ------------------------------------------------------------- the cards --- */
+
+/* The building card's stat tile (.k-section), the emblem, the name, and the
+   kit's progress bar with its numbers inside. */
+.tech-card.k-section {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 3px solid var(--wood-dark);
-  background: var(--wood);
-  color: var(--parchment);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-}
-.res-era-name { font-weight: var(--weight-strong); }
-.res-era-gate { opacity: 0.85; }
-.res-era.is-open { background: var(--leaf-dark); border-color: var(--leaf-dark); }
-/* Era 4 is one keystone and no content: the book says there is more, and
-   does not pretend it is reachable. */
-.res-era.is-sealed { background: rgba(92, 58, 30, 0.35); border-style: dashed; }
-
-/* A MODAL over the book, not a shelf resting on the bottom of it. The panel
-   had to stay short enough to leave the page usable behind it, which is the
-   wrong constraint on the one surface that has to say what a card does, what
-   it needs, what it costs and how long it takes. */
-.tech-modal {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--hud-h) + 12px) 12px calc(var(--nav-h) + 12px);
-  background: var(--scrim);
-}
-.tech-info {
-  width: 100%;
-  max-width: 420px;
-  max-height: 100%;
-  overflow-y: auto;
-  padding: 12px 14px;
+  gap: 3px;
+  padding: 6px 6px 7px;
+  cursor: pointer;
+  font: inherit;
   color: var(--ink);
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  background: var(--parchment);
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: var(--radius);
-  box-shadow: 0 6px 0 rgba(60, 36, 18, 0.3), 0 12px 26px rgba(60, 36, 18, 0.35);
-}
-/* The title takes the row and the way out takes its end. */
-.tech-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.tech-info-head h3 { flex: 1; min-width: 0; }
-.tech-info-head .k-knob { flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; }
-.tech-info h3 { margin: 0; font-family: var(--font-body); font-size: 20px; font-weight: var(--weight-strong); line-height: 1.15; }
-.tech-info .muted { color: var(--ink-muted); }
-.tech-info .blocked { color: var(--clay); }
-.tech-info .delta { color: var(--leaf-dark); font-weight: var(--weight-strong); }
-.tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
-.tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.tech-info .action-row .info { flex: 1; }
-
-/* The Knowledge poured over what it needs: the book, then the bar (M30). */
-.res-poured { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.res-poured > .k-trough { flex: 1; }
-/* "Buy the other N", over the two tills that buy them. */
-.res-buy-label {
-  margin-top: 10px;
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  color: var(--ink-muted);
   text-align: center;
 }
+.tech-card:hover { filter: brightness(1.04); }
+.tech-card-glyph { font-size: 30px; line-height: 1.1; }
+.tech-card-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: var(--weight-strong);
+  line-height: 1.15;
+}
+.tech-card-bar { display: flex; align-items: center; gap: 3px; width: 100%; }
+.tech-card-bar > .k-trough { --bar-h: 18px; flex: 1; min-width: 0; }
+.tech-card-bar > .k-trough .k-trough-label { font-size: 11px; }
+.tech-card-bar > .icon { --icon-size: 18px; flex: none; }
 
-/* Two tills side by side: choosing between them is comparing two prices,
-   and a price under a price is a list. Equal widths so neither reads as the
-   afterthought. */
-.tech-info-actions { display: flex; gap: 8px; margin-top: 8px; }
-.tech-info-actions > .k-btn { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
-/* One reason for the pair, above it — saying it twice between two buttons is
-   a wall of the same sentence. */
-.tech-info-blocked {
+/* In progress and FULL: the one card asking to be finished. */
+.tech-card.is-ready {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(242, 178, 51, 0.75);
+}
+/* Locked: the same card, drained of colour. */
+.tech-card.is-locked { filter: grayscale(1); opacity: 0.8; }
+.tech-card.is-locked:hover { filter: grayscale(1) brightness(1.04); }
+.tech-card.selected { outline: 2px solid var(--gold-dark); outline-offset: 1px; }
+.tech-card.hinted { box-shadow: 0 0 0 3px var(--gold), 0 0 14px var(--gold); }
+.tech-card.planned { border-style: dashed; }
+.tech-card > .k-cta { position: absolute; top: -7px; right: -7px; }
+
+/* ---------------------------------------------------------- the bookmarks --- */
+
+/* One ribbon, tinted per book: the colour fills the ribbon's shape (a mask),
+   and the ribbon's own shading is laid over it, multiplied. */
+.rb-marks {
+  position: relative;
+  z-index: 0;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  color: var(--clay);
-}
-.tech-info .progress { position: relative; height: 16px; margin: 8px 0; border-radius: 8px;
-  overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
-.tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }
-.tech-info .progress .label { position: absolute; inset: 0; display: grid; place-items: center;
-  font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink); }
-.tech-info .pips { display: flex; gap: 4px; margin: 4px 0; }
-.tech-info .pip { width: 16px; height: 7px; border-radius: 3px;
-  background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
-.tech-info .pip.on { background: var(--gold); border-color: var(--gold-dark); }
-
-/* WHAT IT DOES, whole. The card is a glyph and a name, so this is where the
- * generated sentence is read — given its own panel so it reads as the answer
- * to the tap rather than as a caption. */
-.tech-info-seal {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  font-size: 26px;
-  line-height: 1;
-  background: url('../../assets/seal-available.png') center / 100% 100% no-repeat;
-  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3));
-}
-.res-says {
-  margin: 6px 0 8px;
-  font-size: var(--text-body);
-  line-height: 1.3;
-}
-
-/* --------------------------------------------------------- the shelf --- */
-
-/* One tab per tome the player has opened. It appears only when there is more
- * than one book to choose between: a single tab is a label, not a choice. */
-.res-shelf {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px 8px;
-  background: var(--wood);
-}
-.res-shelf > .k-knob { flex: none; width: 36px; height: 36px; min-height: 36px; margin: 0 0 0 4px; }
-.res-tome {
-  flex: 1;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 7px 8px;
-  border-radius: 10px 10px 0 0;
-  border: 3px solid var(--wood-dark);
-  border-bottom: none;
-  background: var(--wood-dark);
-  color: var(--parchment);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  cursor: pointer;
+  gap: calc(var(--px) * 10);
+  margin-top: calc(var(--px) * -26);
+  height: calc(var(--px) * 96);
 }
-/* The open book sits forward and shares the page's colour, so the tab and the
- * parchment below it read as one surface rather than two. */
-.res-tome.active {
-  background: var(--gold);
-  border-color: var(--gold-dark);
-  color: var(--ink);
-  transform: translateY(1px);
-}
-.res-tome .icon { --icon-size: 22px; }
-.res-blurb {
-  margin: 0;
-  padding: 8px 14px 0;
-  background: var(--parchment);
-  color: rgba(92, 58, 30, 0.75);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-}
-
-/* ------------------------------------------------------- the clock --- */
-
-/* Knowledge, in the one screen it is spent. Balance in bold, rate beside it. */
-.res-clock {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 10px;
-  padding: 3px 8px;
-  border-radius: 10px;
-  background: rgba(60, 36, 18, 0.25);
-  color: var(--parchment);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-}
-/* The rate is the whole of this pill now — the balance moved to the plank
-   while the screen is open — so it is no longer the dimmed half of a pair. */
-.res-clock-rate { opacity: 1; }
-.res-wait {
+.rb-mark {
+  --tome: #e9dcb8;
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+  align-items: flex-end;
+  justify-content: center;
+  width: calc(var(--px) * 58);
+  height: calc(var(--px) * 74);
+  padding: 0 0 calc(var(--px) * 16);
+  border: 0;
+  background: var(--tome);
+  /* Anchored at the swallowtail and as wide as the mark: the top of the
+     ribbon runs up under the page, however tall the mark is. */
+  -webkit-mask: url('../../assets/rb-ribbon.png') center bottom / 100% auto no-repeat;
+  mask: url('../../assets/rb-ribbon.png') center bottom / 100% auto no-repeat;
+  cursor: pointer;
+  transition: height 160ms ease;
 }
-
-/* ------------------------------------------------------- planned nodes --- */
-
-/* On the tree for its shape; does nothing yet. Dashed like the fog's `?`, so
- * it reads as "not here yet" rather than "locked" — and never as pressable
- * content that quietly turns out to be a no-op. */
-.tech-card.planned { border-style: dashed; opacity: 0.85; }
-.tech-card.planned::after {
+.rb-mark::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(92, 58, 30, 0.10) 6px 8px);
+  background: url('../../assets/rb-ribbon.png') center bottom / 100% auto no-repeat;
+  mix-blend-mode: multiply;
   pointer-events: none;
 }
+.rb-mark > .icon { position: relative; --icon-size: calc(var(--px) * 30); }
+.rb-mark.is-open { height: calc(var(--px) * 90); }
+.rb-mark[data-tome='Civics'] { --tome: #efe2bd; }
+.rb-mark[data-tome='Warfare'] { --tome: #c2493b; }
+.rb-mark[data-tome='Magic'] { --tome: #3d67bf; }
+.rb-mark:not(.is-open) { filter: brightness(0.9); }
+
+/* -------------------------------------------------------------- the sheet --- */
+
+/* A loose research page over the book (M46), the book dimmed behind it. */
+.tech-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(24, 14, 6, 0.55);
+}
+.rb-sheet-wrap { position: relative; width: min(360px, 100%); max-height: 100%; display: flex; }
+.rb-sheet-wrap > .rb-pin.is-centre { top: -8px; }
+.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: -10px; right: -10px; }
+.rb-sheet {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  border: 14px solid transparent;
+  border-image: url('../../assets/rb-page.png') 30 fill / 14px stretch;
+  padding: 16px 14px 14px;
+  color: var(--ink);
+  filter: drop-shadow(0 6px 10px rgba(20, 10, 4, 0.35));
+}
+.rb-sheet-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  text-align: center;
+}
+.rb-about { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; margin: 4px 0 6px; }
+.rb-emblem {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  font-size: 46px;
+  border: 2px solid var(--section-line);
+  border-radius: 10px;
+  background: var(--section-fill);
+}
+.rb-says { margin: 0; font-size: 16px; line-height: 1.3; }
+.rb-knowledge { display: flex; flex-direction: column; gap: 10px; }
+.rb-knowledge > .k-trough { --bar-h: 26px; }
+.rb-pours { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+/* A third of the sheet each: the kit's 112px label floor and its 13px slab
+   sides do not fit, so the price sets the width. */
+.rb-pours > .k-btn.k-btn:not(.k-knob) { width: 100%; min-width: 0; margin-bottom: 0; padding-inline: 8px; }
+.rb-pours > .k-btn.k-btn:not(.k-knob) > .k-btn-label { min-width: 0; gap: 4px; }
+.rb-done { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px;
+  font-weight: var(--weight-strong); color: var(--leaf-dark); }
+.rb-sheet .up-buy.k-section { margin-top: 4px; }
+
+/* On the tree for its shape; does nothing yet. */
 .res-planned {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 6px 0;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(92, 58, 30, 0.10);
-  color: var(--wood-dark);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
+  margin: 4px 0;
+  font-size: 13px;
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
 }
