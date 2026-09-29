@@ -219,14 +219,11 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       })));
 }
 
-/** The panel for the building's one trainee: bust, name and tags, flavour, the
- *  priced Train button (its time among its costs), a soldier's three numbers
- *  in a row of their own, and the batch at the foot. */
+/** The panel for the building's one trainee: portrait, tags, flavour, the
+ *  priced Train button (its training time is the building's own stat), a
+ *  soldier's three numbers in a row of their own, and the batch at the foot. */
 function detail(game: Game, district: District, trainee: TrainableId, batch: HTMLElement): HTMLElement {
   const cost = trainCost(game.state, trainee);
-  // What it will take HERE, neighbours included — the number the player is
-  // about to commit to, not the one on the sheet.
-  const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
   const unit = trainee === 'Villager' ? null : UNITS[trainee];
 
   // A GATE takes the button's place. When something other than money is in
@@ -249,7 +246,6 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
       onClick: () => game.doTrain(trainee, district),
       cost,
       have: (c) => game.walletValue(c),
-      costExtra: [{ icon: 'hourglass', amount: formatDuration(seconds) }],
     });
 
   const tags = unit === null

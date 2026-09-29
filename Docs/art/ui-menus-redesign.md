@@ -420,7 +420,8 @@ wood of its sides touches the screen's edges.
     mask inside it, and the unit's bust drawn a little larger than the mask,
     so a bust that carries a medallion of its own has that ring cut away.
   - **Panel** (a section), headed by the unit's name on the section's
-    rule: the round portrait, the tags, one line of flavour, and the priced Train button — its costs and its time above it.
+    rule: the round portrait, the tags, one line of flavour, and the priced Train button — its costs above it. The training
+    time is the building's own stat tile (*Time*), one trainee per building.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,
     Health. A gate (no room, a technology, a full army) takes the button's
     place with its reason.
