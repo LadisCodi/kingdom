@@ -122,7 +122,12 @@ gold      = rewardBase(D) × 20 × t × 1.06^(r − 1)
 materials = rewardBase(D) ×  3 × t × 1.06^(r − 1)
 stardust  = rewardBase(D) ×  2 × t × 1.06^(r − 1)
 hero_xp   = rewardBase(D) × 10 × t × 1.06^(r − 1)
+knowledge = max(1, round(rewardBase(D) × 0.25 × t × 1.06^(r − 1)))
 ```
+
+- **Every room pays Knowledge, at least 1** — 1,156 across the 186 rooms.
+  It lands in the Knowledge bar in full, over the cap if it must
+  ([`07-research.md`](07-research.md) §3).
 
 `rewardBase(D)` continues the previous depth's curve. Individual rooms may be
 overridden by hand.
@@ -196,6 +201,7 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 | `powerStart`, `powerStep` per depth | `depths` |
 | `rooms`, `guildReq` per depth | `depths` |
 | Reward base and per-room growth (×1.06) | `depths` |
+| Knowledge per room (×0.25, at least 1) | `ruins.knowledgeCoef` |
 | Boss chest and fragment pool | a `bosses` collection *(designed)* |
 | Supplies per room attempt | `ruins.supply_*` |
 | Permanent generation coefficients | `ruins.trickle_*` |

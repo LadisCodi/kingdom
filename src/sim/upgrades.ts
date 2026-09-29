@@ -230,18 +230,6 @@ export const effectiveBuildTimeMultiplier = (state: GameState): number =>
     / Math.max(1, resolve(state, 'buildSpeed', 1));
 
 /**
- * Multiplier on research time (Scriveners: −5%/rank). Applied ONCE, when a
- * research starts, and persisted on it — see research.ts.
- *
- * Two halves pointing opposite ways, for the reason build time gives above:
- * the tree discounts a bounded ladder, the stack multiplies an unbounded
- * SPEED, and dividing is what stops a permanent passive reaching zero.
- */
-export const effectiveResearchTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)))
-    / Math.max(1, resolve(state, 'researchSpeed', 1));
-
-/**
  * Tax gold per housed villager per minute.
  *
  * `district` is the house being taxed, so the tree can aim a rate at one kind

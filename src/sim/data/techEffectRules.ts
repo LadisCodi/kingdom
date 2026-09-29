@@ -203,12 +203,6 @@ export const TECH_STATS = {
     says: { percent: '{v} time to build and upgrade' },
     reads: 'upgrades.ts#effectiveBuildTimeMultiplier',
   },
-  researchTime: {
-    what: 'the multiplier on seconds to finish a research, fixed when it starts',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} time to finish a research' },
-    reads: 'upgrades.ts#effectiveResearchTimeMultiplier',
-  },
   taxRate: {
     what: 'Gold a housed villager pays a minute',
     ops: ['percent', 'flat'], targets: ['global', 'district'], unit: 'gold/min',
@@ -240,23 +234,23 @@ export const TECH_STATS = {
     says: { flat: '{v} Mana an hour per claimed landmark' },
     reads: 'mana.ts#manaProduction',
   },
-  knowledgePerClaimedLandmark: {
-    what: 'Knowledge an hour from EVERY claimed landmark',
-    ops: ['flat'], targets: ['global'], unit: 'knowledge/h',
-    says: { flat: '{v} Knowledge an hour per claimed landmark' },
-    reads: 'mana.ts#knowledgePerHour',
+  landmarkClaimKnowledge: {
+    what: 'Knowledge a landmark pays when it is claimed, paid back at once for every landmark held',
+    ops: ['flat'], targets: ['global'], unit: 'knowledge',
+    says: { flat: '{v} Knowledge for every landmark claimed' },
+    reads: 'knowledge.ts#landmarkClaimLump',
   },
-  knowledgePerClearedRuin: {
-    what: 'Knowledge an hour from EVERY cleared ruin',
-    ops: ['flat'], targets: ['global'], unit: 'knowledge/h',
-    says: { flat: '{v} Knowledge an hour per cleared ruin' },
-    reads: 'mana.ts#knowledgePerHour',
+  firstClearKnowledge: {
+    what: 'Knowledge a ruin pays when it is first cleared, paid back at once for every ruin cleared',
+    ops: ['flat'], targets: ['global'], unit: 'knowledge',
+    says: { flat: '{v} Knowledge for every ruin cleared to its bottom' },
+    reads: 'knowledge.ts#firstClearLump',
   },
   knowledgeYield: {
-    what: 'the multiplier on the whole Knowledge drip',
+    what: 'the multiplier on every lump of Knowledge — never the drip, never a purchase',
     ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} on the whole Knowledge drip' },
-    reads: 'mana.ts#knowledgePerHour',
+    says: { percent: '{v} on every lump of Knowledge' },
+    reads: 'knowledge.ts#knowledgeLump',
   },
   activeCost: {
     what: 'the Mana a relic’s ability costs to cast',

@@ -232,6 +232,10 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
   a hit area of at least 44 px. The glyph is carved into the face in a darker
   tone of the material, never a flat white sign. (The window's close is its
   own red button.)
+- **A price's icon is the plank's coin size** (76 reference pixels, the
+  header's `--slot-icon`) everywhere a price is written — above a slab, in a
+  cost chip, on a button's face — and stands proud of its line rather than
+  making it taller.
 - **Priced**: the cost sits **above** the slab, outside it — icon + amount
   per term, any term the player cannot pay in `clay` — and the two are
   grouped on a small **section**; the whole is one press.
@@ -443,8 +447,13 @@ wood of its sides touches the screen's edges.
     one line of flavour, and the priced
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.
-    A soldier adds a row of three stat tiles underneath: Attack, Defence,
-    Health. A gate keeps the button, disabled, and puts a padlock and a
+    A soldier adds its three numbers — Attack, Defence, Health — as small
+    tiles (the mark and the number, the name under them) under the portrait
+    and the flavour, beside the Train button, which runs down past them; the
+    bust rises out of the panel through its top edge, so the tiles' feet
+    line up with Train's whenever the flavour is no taller than the bust. Any
+    further stat takes a row of its own under both, the same tiles, four to
+    the row. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
   - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
@@ -456,15 +465,63 @@ wood of its sides touches the screen's edges.
     count (*x5*); beside it *Training* over the bar (the time left inside
     it) and *Total time: 1m 20s* under it; and the gem Finish button,
     under a rule and with no heading of its own. Nothing in the line:
-    *Nothing in training*, centred, and no Finish.
+    *Nothing in training*, centred, and no Finish — at the same height as
+    a batch, so the card does not jump when training starts or ends.
+- **The workers block** (worker buildings; reference
+  `mockups/m29-workers-stepper.png`, proposal B), a stepper:
+  - the red − knob, the villager's round portrait, *2 / 3* — the crew in
+    title type, the most it can hold smaller and muted — and the green + knob;
+  - nothing else: the card's stat band leads with what the crew MAKES
+    (*Food +45 /min*, the resource as the tile's word) and what there is to
+    work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,
+    *Iron*, *Gold*, *Shoals*). The crew size, haul and swing are the
+    upgrade popup's only — the stepper already shows the crew, and haul and
+    swing are counted in that output;
+  - no tip: how many villagers a building's fields keep busy is the
+    player's to see by watching them work;
+  - the villagers still free to assign are the header's counter while the
+    card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
-  *Crew*, *Training* — so three fit a phone's width; the full name is the tile's
+  *Fields*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **Under construction** (a building being built or upgraded; reference
+  `mockups/m36-construction-ab.png`, proposal A):
+  - the head's Upgrade slot holds the gem Finish button with its price;
+  - under the portrait: a slim blue bar with the time left inside it, laid
+    over the tile's bottom edge;
+  - under the description, centred at the foot of the head: what is being
+    done, in one word (*Upgrading*, *Building*, or *Waiting* for a
+    builder), breathing slowly between 75% and full opacity;
+  - the painted hammer floats over the portrait, with no base, and works it
+    in a loop, like a magic hammer: one blow at the right corner, a flight
+    round in a loop over the picture and across to the left corner — keeping
+    its bearing, never turning over — two small taps there, and an arc back. Each blow
+    throws a few sparks where it lands. Still with reduced motion;
+  - nothing else on the card changes, and there is nothing at its foot.
+- **The upgrade popup** (the card's Upgrade opens it; reference
+  `mockups/m35-upgrade-popup-final.png`), a centred window titled
+  *Upgrade to Level 3*:
+  - two portraits, the building at its current level and at the next, a
+    yellow arrow between them, each with its level on a badge under it
+    (*Level 2* blue, *Level 3* green) — painted enamel plaques, flat, no lip
+    (`src/ui/assets/plaque-blue.png`, `plaque-green.png`);
+  - *Improvements*: one row per stat that improves — its icon, its full
+    name, its CURRENT value, and what the level adds as green text on the
+    right (*x1.25* … *+0.25*, *ring 5* … *+2 rings*). A stat the level does
+    not change is not listed;
+  - *Requirements*, shown only when the level has any: one row each — its
+    icon, what it asks, and a green tick or a red cross; an unmet row is red
+    text on a light red row. Nothing links to where it is met;
+  - the price and the build time over the Upgrade button. An unmet
+    requirement locks the button (grey, a padlock) with *Complete all
+    requirements to upgrade* under it. A short purse turns its price red and
+    the button off with no line; with no builder free the line reads *Every
+    builder is busy*.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 
@@ -575,6 +632,37 @@ exists — see questions 3 and 7, and
   their own share of the row, while Mana and Gems never leave the screen.
   A player whose tap just refused must be able to read why without scrolling
   the header, and Gems is what refills it.
+- *Knowledge, always — a tab of its own under the plank (M33).* The bar
+  paces the whole game, so it is prominent and never contextual
+  ([`../features/07-research.md`](../features/07-research.md) §3):
+  - A painted wooden tab with a gold-inlaid rim (`assets/hud-know-tab.png`,
+    nine-sliced), **centred under the plank** as if it came out from behind
+    it: straight bottom edge, rounded bottom corners, no point or decoration.
+  - **Straight on the wood, with no dark slot round them**: the Knowledge book
+    at the plank's icon size with nothing behind it, the number held, and
+    **ten narrow tall segments** packed tight, one per point of the cap.
+  - Under the segments, a small caption that **takes turns
+    with a crossfade**, the way the Mana readout does: *+1 in 42m* (the next
+    point) and *Full in 3h* (the whole bar).
+  - **Full**: every segment lit with a soft glow, a glint on the book, and the
+    caption reads *Full*. Over the cap (a lump, a purchase) the number reads
+    what is held — *23* — and the segments stay all lit.
+  - A **+** knob inside the tab, the same as the Gems', opens the Knowledge
+    sheet; tapping the tab opens it too. The sheet is the bar and **three
+    offers side by side**, each on a tile of darker paper — the building
+    card's stat tile (`.k-section`) — set straight on the sheet, with no box or
+    title round them, and the sheet a little wider than a centred sheet's
+    default so the buttons can run nearly edge to edge: the amount on top as the book
+    and a number, and the price on the button's face — 1 Knowledge for Gold
+    (dearer every time), 1 for Gems, 10 for Gems. A till the player cannot pay
+    goes dark.
+  - About 100px wide at 375px, the segments ~3px each. A centred tab still
+    leaves only 36px either side, so **the Daily chest pill starts below the
+    tab** rather than beside it.
+  - It **slides up behind the plank while any menu is open**, and back down
+    when the menu closes (260 ms in, 220 ms out; none under reduced motion):
+    it would hang over the top of every sheet. The Research book carries Knowledge on
+    the plank instead, beside Gold.
 - *Contextual:* **Stone** appears once its gating tech is complete (Masonry)
   or once the balance is above zero. The tech clause is what makes it sticky —
   a counter must not vanish when the player spends back to zero; the balance
@@ -1031,7 +1119,9 @@ one unified tree, drag-pannable in both axes:
 - **Upgrades** — 36px circles fanned below their *completed* parent tech,
   with a level badge; instant Gold purchases.
 - **Top bar** — "Research" and `Slots: 1 busy / 2`, plus
-  `extra slot — 25 💎` + **Buy** when below `maxSlots`.
+  `extra slot — 25 💎` + **Buy** when below `maxSlots`. *(Going: research has
+  no slots and no time any more — [`../features/07-research.md`](../features/07-research.md)
+  §1. The sheet is M30, upper: Invest, Buy the rest, Research.)*
 - **Info panel** (`.tech-info`) — floats above the nav bar only while a node is
   selected. **Being replaced by a centred sheet** — see the reshape note.
   Tech: glyph, name, description, `Requires Forestry ✓ / Masonry ✗`, then
@@ -2206,6 +2296,50 @@ and no ★ glyphs** — spell the stars out, "3 star 55 percent" — and
 The M5–M14 prompts open with "Same style, same materials and chrome as the
 mockups above" instead of the style block because they were sent into the
 conversation that already held it and M0; sent cold, paste the block first.
+
+**M29 — where the Knowledge bar lives (OQ-104)**
+
+Three candidate placements for one new gauge, stacked on one image so they
+compare at a glance. The bar is 1 an hour up to 10, and stops earning while
+full ([`../features/07-research.md`](../features/07-research.md) §3), so it
+has to be readable from the map; the plank is already full.
+
+> Same style, same materials and chrome as the mockups above. M29 - one tall image showing THREE alternative versions of the same phone screen top and bottom, stacked vertically and separated by a thin plain parchment gap, each with a small sepia caps label at its left edge: A, B, C. Each version is a horizontal strip cropped from the bright pixel kingdom map, with the slim carved wooden resource plank of M1 at its top and the slim five-tab wooden nav beam of M1 at its bottom (Store, Relics, Heroes, Research, Build). The plank holds, as in M1, a gold coin 1,240, an apple 86, logs 312, a stone block 40, a rope divider, the violet mana orb with its slim gauge, and a violet gem 10 with a small green plus knob. VERSION A - the knowledge gauge joins the plank: right after the mana gauge, a small open book icon in warm blue-teal ink with a slim trough beside it filled seven tenths, reading 7/10; the four resource counters are a touch narrower to make room, nothing else moves. VERSION B - the plank is exactly as in M1; the Research tab on the nav beam carries a small round parchment badge on its top-right corner with a tiny open book and 7/10, and a thin arc around the badge filled seven tenths. VERSION C - the plank and nav are exactly as in M1; on the right edge of the map, half-way down, one tab sticks in from the edge like the raid tab of M12: a warm teal cloth tab with a small open book icon and two short lines, Knowledge full and 10 of 10, with a tiny gold glint, shown as it appears only when the bar is full. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
+**M30 — a technology filling up, and buying Knowledge**
+
+The research sheet once research has no time and no slots: Knowledge is
+poured in over visits, then Gold completes it on the spot; and the sheet
+that buys Knowledge with Gold (dearer every point, for ever) or Gems.
+
+> Same style, same materials and chrome as the mockups above. M30 - two centred sheets on one phone screen, stacked to show both, over the parchment tome page of M4 warm-dimmed, slim resource plank at the top, slim five-tab wooden nav beam at the bottom with the scroll Research tab lit gold. UPPER - a technology sheet: a parchment panel in a thin carved wooden frame with a narrow wooden header strip reading Bureaucracy and a small round close knob; inside, a round wax medallion with a small crown at the left and one line Townhall level 3; a small row of two prerequisite medallions with green ticks; then a wide slim trough in warm blue-teal with a small open book icon at its left, filled a little over half, reading 14 / 25 Knowledge; under it a small sepia line with a sand-timer, 11 more, about 2 days of study; then a row of three slabs: a leaf-green slab Invest with a small book chip 7, and beside it a smaller wood slab Buy the rest with two chips stacked in it, a gold coin 6,600 and a violet gem 110; under the row a wide dimmed slab Research with a gold coin chip 1,200, shown disabled. LOWER - a Knowledge sheet: the same panel with a header strip reading Knowledge and a close knob; inside, a large open book icon in blue-teal at the left, Knowledge in bold, and at the right Full in 3h; a slim blue-teal gauge trough reading 7 / 10; one small line, One an hour while under ten; then a parchment card titled Buy Knowledge with a small minus and plus stepper around the number 5, and two slabs side by side: a wood slab Gold with a coin chip 3,000 and a tiny line under it, dearer every point, and a violet slab Gems with a gem chip 50. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
+**M31 — the Knowledge bar under the plank, centred**
+
+The Knowledge bar paces the whole game, so it gets a piece of its own: a
+base centred under the plank, as if it came out from behind the wooden bar
+(Elvenar's placement), with a **+** like the Gems' that opens the purchase
+sheet (M30, lower). Two material proposals, each in two states.
+
+> Same style, same materials and chrome as the mockups above. M31 - one tall image showing TWO alternative designs for one new piece of chrome, each in two states, as FOUR horizontal strips stacked vertically and separated by a thin plain parchment gap, each with a small sepia caps label at its left edge: A1, A2, B1, B2 (1 while filling, 2 when full). Each strip is cropped from the top of the phone screen over the bright pixel kingdom map: the slim carved wooden resource plank of M1 across the very top, exactly as in M1 (a gold coin 128k, an apple 24k, logs 31k, a stone block 18k, a rope divider, the violet mana orb with its slim gauge, a violet gem 12k with a small green plus knob), the small Daily chest parchment pill at the top-left under the plank and the round wooden cog knob at the top-right under the plank. The new piece hangs CENTRED under the plank, between the pill and the cog, as if it comes out from behind the wooden bar, its top edge tucked under the plank's bottom edge. It is about a third of the screen wide. DESIGN A - a carved wooden base shaped like a shallow shield or a hanging sign, darker walnut than the plank, with a gold rim: at its left a small open book icon in warm blue-teal ink on a round brass boss, then a bold number 7, then a row of ten small rounded pips set into the wood like inlaid tiles, seven lit warm blue-teal and three dark, and under the pips a hair-thin brass line partly filled for the next point; at its right end a small round green plus knob exactly like the Gems plus knob. In A2, the full state, it shows 10, all ten pips lit and glowing softly, a tiny gold glint on the book, and the word Full in small caps under the pips. DESIGN B - a cloth-and-parchment tab, like a bookmark ribbon hanging from behind the plank: a deep blue-teal cloth band whose bottom edge is cut into a swallowtail, a large round parchment medallion with an open book bulging out at its left over the edge of the band, a bold 7 / 10 on the cloth in cream lettering, a slim cream trough filled seven tenths, a tiny sand-timer and 3h under it, and at its right end the same small round green plus knob as the Gems. In B2, the full state, it shows 10 / 10, the trough full with a warm gold sheen, and a small wax seal on the ribbon reading Full. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
+**M32 — M31's design A, tightened**
+
+Design A kept, and brought into the plank's own language: the Knowledge coin
+at the size of the coins above it, no boss behind it, and the icon, the
+number and the pips in the same darkened frame a coin sits in. The progress
+line becomes text that takes turns with a second line, the way the Mana
+readout already alternates with its next unit's countdown.
+
+> Same style, same materials and chrome as the mockups above. M32 - a refinement of design A from M31. One tall image of THREE horizontal strips stacked vertically, separated by a thin plain parchment gap, each with a small sepia caps label at its left edge: 1, 2, 3. Each strip is cropped from the top of the phone screen over the bright pixel kingdom map, with the slim carved wooden resource plank of M1 across the very top exactly as in M31 (gold coin 128k, apple 24k, logs 31k, stone block 18k, a rope divider, the violet mana orb with its slim gauge, violet gem 12k with a small green plus knob), the Daily chest parchment pill at the top-left under the plank WITH its two lines of text, Daily chest and Day 1 of 14, and the round wooden cog knob at the top-right under the plank. Centred under the plank, as in M31 design A, hangs the walnut wooden base with a gold rim, tucked behind the plank's bottom edge, but NARROWER than in M31 - about a quarter of the screen wide, so it fits between the pill and the cog without touching either. Inside the base, ONE darkened inset frame exactly like the dark rounded frames that hold each resource on the plank above, and inside that frame, from left to right: the knowledge icon, an open book with a white quill and a small red ribbon bookmark, drawn at the SAME size as the coin, apple and logs icons on the plank and with NO round boss or circle behind it; the bold number 7; and a row of ten small rounded pips, seven lit warm blue-teal and three dark. Under the pips, still inside the same dark frame, one small line of cream text instead of any progress line. To the right of the frame, on the wooden base, the small round green plus knob exactly like the Gems plus knob. STRIP 1: the small line reads +1 in 42m. STRIP 2: the same moment, the small line reads Full in 3h. STRIP 3: the full state, the number reads 10, all ten pips lit and glowing softly, a tiny gold glint on the book, and the small line reads Full. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
+
+**M33 — M32 simplified and narrowed**
+
+The base loses its point and becomes a plain rounded tab; the ten pips become
+narrow vertical segments packed tight, as in Elvenar's bar, so the whole
+piece is narrow enough to clear the Daily chest pill at its real size.
+
+> Same style, same materials and chrome as the mockups above. M33 - a refinement of M32. One tall image of THREE horizontal strips stacked vertically, separated by a thin plain parchment gap, each with a small sepia caps label at its left edge: 1, 2, 3. Each strip is cropped from the top of the phone screen over the bright pixel kingdom map, with the slim carved wooden resource plank across the very top exactly as in M32 (gold coin 128k, apple 24k, logs 31k, stone block 18k, a rope divider, the violet mana orb with its slim gauge, violet gem 12k with a small green plus knob), the Daily chest parchment pill at the top-left under the plank at its FULL real size as in M1 and M12, with its two lines of text Daily chest and Day 1 of 14, and the round wooden cog knob at the top-right under the plank. Centred under the plank hangs the Knowledge piece, tucked behind the plank's bottom edge, and it must leave a clear gap of open map on both sides between it and the pill and between it and the cog. Two changes from M32. FIRST, the base is SIMPLER: a plain walnut tab with a thin gold rim, a perfectly straight bottom edge and gently rounded bottom corners, no point, no notch, no scroll or curl at the bottom centre, no decoration. SECOND, it is NARROWER - about 28 percent of the screen wide: the ten pips are replaced by a compact segmented gauge of ten NARROW TALL vertical segments packed tightly side by side with hairline gaps, like the segments of a battery meter, each segment much taller than it is wide; lit segments warm blue-teal, unlit segments dark. Inside the base, one darkened inset frame like the frames of the resources on the plank, holding from left to right: the open book with a white quill and a small red ribbon bookmark at the same size as the plank's icons with no circle behind it, the bold number 7, and the segmented gauge with seven segments lit; under the gauge, inside the same frame, one small line of cream text. To the right of the frame, the small round green plus knob exactly like the Gems plus knob. STRIP 1: the small line reads +1 in 42m. STRIP 2: the same moment, it reads Full in 3h. STRIP 3: full, the number reads 10, all ten segments lit and glowing softly, a tiny gold glint on the book, and the line reads Full. Compact, tactile, smooth; the interface is not pixel art. Legible chunky lettering; if text is unclear, prefer fewer, larger words.
 
 ### 7.26 The collection's pieces (C1, C2, C3)
 

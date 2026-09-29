@@ -31,6 +31,7 @@ import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
+import { renderKnowledgeSheet } from './ui/knowledgeSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
 import { renderPassSheet } from './ui/passSheet';
@@ -50,7 +51,7 @@ import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
-import { renderUpgradeSheet } from './ui/upgradeSheet';
+import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
@@ -181,6 +182,7 @@ async function boot(): Promise<void> {
     expedition: renderExpeditionSheet,
     gate: renderGateSheet,
     mana: renderManaSheet,
+    knowledge: renderKnowledgeSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     pass: renderPassSheet,
@@ -209,6 +211,10 @@ async function boot(): Promise<void> {
    */
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
+    upgrade: () => {
+      const d = game.upgradeDistrict();
+      return d === null ? 'none' : upgradeSignature(game, d);
+    },
   };
   for (const name of Object.keys(OVERLAYS) as OverlayName[]) {
     if (game.overlaySignature(name) !== null) {
@@ -275,7 +281,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
-        'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
+        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
@@ -402,7 +408,7 @@ async function boot(): Promise<void> {
       for (const q of game.state.city.queue) {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
-      for (const a of game.state.research.active) a.startedAt -= delta;
+      game.state.kingdom.lastKnowledgeAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       // The gates' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
@@ -416,7 +422,7 @@ async function boot(): Promise<void> {
       for (const id of TECH_ORDER) {
         if (!game.state.research.completed.includes(id)) game.state.research.completed.push(id);
       }
-      game.state.research.active = [];
+      game.state.research.poured = {};
       runTick();
     };
     // Relics normally arrive from albums, which is a season of packs away —

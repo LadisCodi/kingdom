@@ -59,15 +59,6 @@
     "worker": { "type": "object", "fields": { "moveSpeedTilesPerSecond": { "type": "int" } } },
     "training": { "type": "object", "fields": { "seconds": { "type": "int" } } },
     "rush": { "type": "object", "fields": { "secondsPerGem": { "type": "int" } } },
-    "research": {
-      "type": "object",
-      "fields": {
-        "techSlots": { "type": "int" },
-        "maxSlots": { "type": "int" },
-        "slotGemCostBase": { "type": "int" },
-        "slotGemCostGrowth": { "type": "int" }
-      }
-    },
     "offlineCapHours": { "type": "int", "min": 0, "doc": "Production stops after this long away; timers do not." }
   }
 }

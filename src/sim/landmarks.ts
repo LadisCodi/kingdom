@@ -23,9 +23,9 @@
 // a second, weaker copy of that encounter, so it was deleted rather than
 // built (Docs/features/18-garrisons-and-raids.md §9).
 
-import { FOG, KNOWLEDGE, LANDMARKS, type LandmarkDef } from './data/definitions';
-import { recordResourceDiscovery } from './discovery';
+import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState, recordVisibleSites } from './fog';
+import { landmarkClaimLump, payKnowledge } from './knowledge';
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
@@ -67,9 +67,8 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;
-  // Taking ground is an event, not a rate change nobody is looking at.
-  addToWallet(state.kingdom.wallet, 'Knowledge', KNOWLEDGE.landmarkClaimLump);
-  recordResourceDiscovery(state, 'Knowledge');
+  // Taking ground pays Knowledge once, in a lump (sim/knowledge.ts).
+  payKnowledge(state, landmarkClaimLump(state));
   discoverAroundLandmark(state, map, def);
   return 'Claimed';
 }

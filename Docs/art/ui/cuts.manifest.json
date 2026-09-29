@@ -1,5 +1,5 @@
 {
-  "note": "Smooth pieces for the building card and the upgrade popup (Docs/art/ui-menus-redesign.md \u00a77.27). Cut by scripts/ui-cut.mjs, which FINDS the pieces rather than slicing a grid \u2014 these sheets are not one. Names are in reading order, left to right then top to bottom; run `node scripts/ui-cut.mjs --list` to see what each index picked up. `size` is the LONG side of a piece, so nothing is letterboxed; `square: true` centres it in a square canvas instead, for a ring that has to sit dead centre of what it is layered over.",
+  "note": "Smooth pieces for the building card and the upgrade popup (Docs/art/ui-menus-redesign.md \u00a77.27). Cut by scripts/ui-cut.mjs, which FINDS the pieces rather than slicing a grid \u2014 these sheets are not one. A null name is a piece on the sheet that is no longer cut. Names are in reading order, left to right then top to bottom; run `node scripts/ui-cut.mjs --list` to see what each index picked up. `size` is the LONG side of a piece, so nothing is letterboxed; `square: true` centres it in a square canvas instead, for a ring that has to sit dead centre of what it is layered over.",
   "sheets": [
     {
       "file": "sheets/ui-k1-frames.png",
@@ -8,7 +8,7 @@
       "names": [
         "frame_plank_wide",
         "frame_plank_tall",
-        "frame_panel",
+        null,
         "frame_panel_wide",
         "frame_chip",
         "frame_strip"
@@ -17,21 +17,15 @@
     {
       "file": "sheets/ui-k2-slabs.png",
       "size": 384,
-      "note": "Button slabs as border-image, plus the popup's close knob. Green is the primary action, wood the secondary, grey the refused one \u2014 the three states the Upgrade button walks through.",
+      "note": "Button slabs as border-image. Only the wood slab and the rope tie are still cut; the kit's own buttons replaced the rest.",
       "names": [
-        "slab_green",
+        null,
         "slab_wood",
-        "slab_grey",
-        "nameplate_wood",
-        "knob_close",
+        null,
+        null,
+        null,
         "rope_tie"
-      ],
-      "each": {
-        "knob_close": {
-          "size": 192,
-          "square": true
-        }
-      }
+      ]
     },
     {
       "file": "sheets/ui-k3-queue.png",

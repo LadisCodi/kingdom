@@ -3,7 +3,7 @@
 
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectTap,
-  buyKeys, enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
+  buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
@@ -79,8 +79,12 @@ import {
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, msToNextMana, knowledgePerHour,
+  mana, manaCap, manaNetRegen, manaProduction, msToNextMana,
 } from './sim/mana';
+import {
+  buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice, knowledgeHeld,
+  knowledgePerHour, msToFullKnowledge, msToNextKnowledge, type KnowledgeTill,
+} from './sim/knowledge';
 import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
   watchedRefillsLeft,
@@ -91,9 +95,8 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, researchActionableCount, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
-  finishTechWithGems, techRushCost,
-  buyTechInstantly, instantTechGems,
+  anyResearchActionable, researchActionableCount, eraShortfall, isTechComplete,
+  pourKnowledge, techKnowledgeMissing, techUnlocks, type ResearchRefusal,
 } from './sim/research';
 import { describeTech } from './sim/techProse';
 import {
@@ -162,7 +165,9 @@ export type OverlayName =
   | 'pass'
   // Buying a level is its own surface now, opened by the card's Upgrade
   // button (Docs/art/ui-menus-redesign.md §7.27).
-  | 'upgrade';
+  | 'upgrade'
+  // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
+  | 'knowledge';
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
  *  each one into a sentence — nothing is greyed out without a reason. */
@@ -609,36 +614,6 @@ export class Game {
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',
       });
-    }
-    for (const id of result.completedResearch) {
-      const tech = TECHNOLOGIES[id];
-      this.queueBanner({
-        title: 'Research complete!', icon: tech.glyph, name: tech.name,
-        desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
-      });
-      // Everything this tech just unlocked gets its own card, queued behind.
-      // A minor RANK unlocks nothing and announces nothing: its reward is the
-      // number in its own description, and a banner per rank would be noise.
-      for (const unlock of techUnlocks(id)) {
-        if (unlock.kind === 'district') {
-          const def = DISTRICTS[unlock.id];
-          this.queueBanner({
-            title: 'New building unlocked!', icon: def.glyph, name: def.name,
-            desc: def.description, sprite: `${def.sprite}_l1`,
-          });
-        } else if (unlock.kind === 'districtLevel') {
-          const def = DISTRICTS[unlock.id];
-          this.queueBanner({
-            title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
-            desc: `${def.name} can now reach level ${unlock.level}.`,
-          });
-        } else if (unlock.kind === 'unit') {
-          const unit = UNITS[unlock.id];
-          this.queueBanner({
-            title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
-          });
-        }
-      }
     }
     this.notify();
   }
@@ -1901,6 +1876,58 @@ export class Game {
     };
   }
 
+  /**
+   * Everything the Knowledge tab under the plank shows: what is held, the cap,
+   * and the two lines its caption takes turns with — the next point and the
+   * whole bar. Both null when the bar is full.
+   */
+  knowledgeInfo(): {
+    value: number; cap: number; full: boolean; over: boolean; perHour: number;
+    nextIn: string | null; fullIn: string | null;
+  } {
+    const now = this.now();
+    const value = knowledgeHeld(this.state);
+    const cap = knowledgeCap();
+    const nextMs = msToNextKnowledge(this.state, now);
+    const fullMs = msToFullKnowledge(this.state, now);
+    return {
+      value,
+      cap,
+      full: value >= cap,
+      over: value > cap,
+      perHour: knowledgePerHour(),
+      nextIn: nextMs === null ? null : `+1 in ${formatDuration(Math.ceil(nextMs / 1000))}`,
+      fullIn: fullMs === null || fullMs === 0 ? null
+        : `Full in ${formatDuration(Math.ceil(fullMs / 1000))}`,
+    };
+  }
+
+  /** What `count` points of Knowledge cost at each till, right now. */
+  knowledgeQuote(count: number): { gold: number; gems: number } {
+    return { gold: knowledgeGoldPrice(this.state, count), gems: knowledgeGemPrice(count) };
+  }
+
+  /** The Knowledge sheet: the bar, and buying points with Gold or Gems. */
+  openKnowledge(): void {
+    this.setOverlay('knowledge');
+  }
+
+  doBuyKnowledge(count: number, till: KnowledgeTill): void {
+    const result = buyKnowledge(this.state, count, till);
+    if (result === 'Bought') {
+      playSfx(till === 'Gems' ? 'gemSpend' : 'upgradeBought');
+      this.floatKnowledge(count);
+    } else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  /** A number rising off the Knowledge tab. Nothing on the map is its source,
+   *  so it floats from the Townhall like Mana's. */
+  private floatKnowledge(amount: number): void {
+    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${amount}` : `${amount}`, 'Knowledge');
+  }
+
   // ------------------------------------------------------------- ad offers
 
   /** The standing offer, or null. Drives the widget and the popup. */
@@ -2102,11 +2129,13 @@ export class Game {
     return {
       showing: true,
       glowing: ready || pending,
+      // Short, so the pill clears the Knowledge tab beside it: the day, the
+      // word that says something waits, or just the time left.
       label: ready
-        ? `Day ${season.rung} of ${season.length}`
+        ? `Day ${season.rung}/${season.length}`
         : pending
-          ? 'Rewards waiting'
-          : `Ends in ${season.endsIn}`,
+          ? 'Rewards!'
+          : season.endsIn,
     };
   }
 
@@ -2599,47 +2628,92 @@ export class Game {
     this.notify();
   }
 
-  /** Gems to finish this research now, or null when it is not running. */
-  techRushGems(id: TechId): number | null {
-    return techRushCost(this.state, id, this.now());
+  /** The banners a completed technology earns: the completion, then one
+   *  card per thing it unlocked. A minor RANK unlocks nothing and announces
+   *  nothing past the first card: its reward is the number on it. */
+  private announceResearch(id: TechId): void {
+    const tech = TECHNOLOGIES[id];
+    this.queueBanner({
+      title: 'Research complete!', icon: tech.glyph, name: tech.name,
+      desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
+    });
+    // Everything this tech just unlocked gets its own card, queued behind.
+    // A minor RANK unlocks nothing and announces nothing: its reward is the
+    // number in its own description, and a banner per rank would be noise.
+    for (const unlock of techUnlocks(id)) {
+      if (unlock.kind === 'district') {
+        const def = DISTRICTS[unlock.id];
+        this.queueBanner({
+          title: 'New building unlocked!', icon: def.glyph, name: def.name,
+          desc: def.description, sprite: `${def.sprite}_l1`,
+        });
+      } else if (unlock.kind === 'districtLevel') {
+        const def = DISTRICTS[unlock.id];
+        this.queueBanner({
+          title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
+          desc: `${def.name} can now reach level ${unlock.level}.`,
+        });
+      } else if (unlock.kind === 'unit') {
+        const unit = UNITS[unlock.id];
+        this.queueBanner({
+          title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
+        });
+      }
+    }
   }
 
-  /** Gems to have this technology now — the Knowledge it is short of, priced
-   *  through its own drip, plus the research itself. Null when it is not
-   *  something the player could start. */
-  techInstantGems(id: TechId): number | null {
-    return instantTechGems(this.state, id, knowledgePerHour(this.state));
-  }
-
-  doBuyTechInstant(id: TechId): void {
-    const result = buyTechInstantly(this.state, id, knowledgePerHour(this.state));
-    if (result === 'Researched') playSfx('gemSpend');
-    else if (result === 'NotEnoughGems') this.shake(['Gems']);
-    else if (result === 'NotEnoughGold') this.shake(['Gold']);
-    this.notify();
-  }
-
-  doFinishTech(id: TechId): void {
-    const result = finishTechWithGems(this.state, id, this.now());
-    if (result === 'Finished') playSfx('gemSpend');
-    else if (result === 'NotEnoughGems') this.shake(['Gems']);
-    this.notify();
-  }
-
-  doStartTech(id: TechId): void {
-    const result = startTech(this.state, id, this.now());
-    if (result === 'Started') playSfx('research');
-    if (result === 'NotEnoughResources') {
-      this.shake(Object.keys(TECHNOLOGIES[id].cost) as CurrencyId[]);
-    } else if (result === 'NoFreeSlot') {
-      this.toast('All research slots are busy');
-    } else if (result === 'MissingRequirement') {
-      this.toast('Requires another technology first');
-    } else if (result === 'EraLocked') {
+  private researchRefusalToast(refusal: ResearchRefusal, id: TechId): void {
+    if (refusal === 'MissingRequirement') this.toast('Requires another technology first');
+    else if (refusal === 'EraLocked') {
       const def = TECHNOLOGIES[id];
       this.toast(`Reveal ${eraShortfall(this.state, def.tome, def.era)} more cells to read on`);
     }
+  }
+
+  /** Pour what the bar holds into a technology, up to what it needs. */
+  doPourTech(id: TechId): void {
+    const { result, poured } = pourKnowledge(this.state, id);
+    if (result === 'Poured') {
+      playSfx('research');
+      this.floatKnowledge(-poured);
+    } else if (result === 'NothingHeld') this.shake(['Knowledge']);
+    else if (result !== 'AlreadyFull' && result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();
+  }
+
+  /** Pay the Gold and complete a technology whose Knowledge is in. */
+  doResearchTech(id: TechId): void {
+    const result = researchTech(this.state, this.map, id, this.now());
+    if (result === 'Researched') this.announceResearch(id);
+    else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    else if (result === 'NotFilled') this.shake(['Knowledge']);
+    else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
+    this.notify();
+  }
+
+  /**
+   * What "Buy the rest" costs on a technology: the points the bar cannot
+   * cover, in Gold and in Gems. Zero points when the bar already covers it.
+   */
+  techBuyRest(id: TechId): { points: number; gold: number; gems: number } {
+    const points = Math.max(0, techKnowledgeMissing(this.state, id) - knowledgeHeld(this.state));
+    return {
+      points,
+      gold: knowledgeGoldPrice(this.state, points),
+      gems: knowledgeGemPrice(points),
+    };
+  }
+
+  /** Buy the points the bar cannot cover, then pour everything it needs. */
+  doBuyRestAndPour(id: TechId, till: KnowledgeTill): void {
+    const { points } = this.techBuyRest(id);
+    if (points > 0) {
+      const bought = buyKnowledge(this.state, points, till);
+      if (bought === 'NotEnoughGold') { this.shake(['Gold']); this.notify(); return; }
+      if (bought === 'NotEnoughGems') { this.shake(['Gems']); this.notify(); return; }
+      if (till === 'Gems') playSfx('gemSpend');
+    }
+    this.doPourTech(id);
   }
 
   /** Renderers ask: is this UI key currently hinted? */
@@ -3473,13 +3547,6 @@ export class Game {
     this.notify();
   }
 
-  doBuySlot(): void {
-    const result = buySlot(this.state);
-    if (result === 'Purchased') playSfx('gemSpend');
-    if (result === 'NotEnoughGems') this.shake(['Gems']);
-    this.notify();
-  }
-
   /** Army headroom, for the card's blocked reason. */
   armyRoom(): { used: number; cap: number } {
     return { used: committedTroops(this.state), cap: armyCap(this.state) };
@@ -4062,6 +4129,8 @@ export class Game {
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy
     // no research, so they stand down.
+    // Knowledge rides the plank here as well: its tab under the plank steps
+    // aside while any menu is open, like the Settings knob.
     if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
@@ -4109,10 +4178,11 @@ export class Game {
       const army = this.armyRoom();
       return { kind: 'army', value: army.used, max: army.cap };
     }
-    // Staffing something → workers assigned vs. the whole workforce.
+    // Staffing something → the villagers still free to assign. The card's
+    // own stepper says how many work HERE; this says how many more can.
     if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
       const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
-      return { kind: 'workers', value: working, max: working + this.freeWorkers() };
+      return { kind: 'workers', value: this.freeWorkers(), max: working + this.freeWorkers() };
     }
     return {
       kind: 'population',

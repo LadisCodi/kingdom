@@ -74,8 +74,7 @@ const nodeBlock = (id, n) => {
   lines.push(
     `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
     `      "gold": ${n.gold ?? 0}`
-      + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
-      + `, "seconds": ${n.seconds ?? 0}`,
+      + (n.knowledge ? `, "knowledge": ${n.knowledge}` : ''),
   );
   if ((n.unlocks ?? []).length > 0) {
     lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);

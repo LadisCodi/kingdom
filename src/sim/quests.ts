@@ -10,6 +10,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { clearedGateCount } from './gates';
+import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
 import {
   addToWallet, getWallet,
@@ -132,13 +133,9 @@ export function claimQuest(state: GameState): ClaimResult {
     addToWallet(state.kingdom.wallet, 'Stardust', quest.rewardStardust);
     recordResourceDiscovery(state, 'Stardust');
   }
-  // Knowledge too. The clock runs on territory and a player early in the
-  // chain holds none, so the chain seeds enough for every technology it asks
-  // for — tests/quests.test.ts walks it and holds that promise.
-  if (quest.rewardKnowledge > 0) {
-    addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
-    recordResourceDiscovery(state, 'Knowledge');
-  }
+  // Knowledge too, as a lump. The chain seeds enough for every technology it
+  // asks for — tests/quests.test.ts walks it and holds that promise.
+  if (quest.rewardKnowledge > 0) payKnowledge(state, knowledgeLump(state, quest.rewardKnowledge));
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

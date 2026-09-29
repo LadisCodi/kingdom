@@ -32,13 +32,15 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
+import { unitPortrait } from './unitArt';
+import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
 import {
-  coordKey, queueProgress, remainingSeconds, type District,
+  queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
-import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
+import { assignableWorkerLimit } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
@@ -54,20 +56,15 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
 
 
 /**
- * The building at its current level, in a painted well, with the level on a
- * scroll across its corner (M2).
- *
- * The LEVEL RIBBON replaced a row of stars under the name. Stars answered
- * "how far along the ladder", which is a question about the ladder; a player
- * looking at a building asks what level it IS, and past five levels the pips
- * stopped being countable anyway.
+ * The building at a level, in a tile of darker paper — the card's portrait,
+ * and the upgrade popup's two (upgradeSheet.ts).
  *
  * Two sprite namings are tried because two tools write them: `townhall_lv3`
  * from the smooth cutter (scripts/ui-cut.mjs) and `<sprite>_l3` from the
  * older per-level map art.
  */
-function portrait(
-  def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
+export function buildingPortrait(
+  def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number, building = false,
 ): HTMLElement {
   // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
   // below this level, walked down the way the map draws it — a level with no
@@ -82,34 +79,49 @@ function portrait(
     el('div', { class: 'dc-portrait-mask' },
       url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' })),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) =>
-      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+      el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })),
+    ...(building ? [workingHammer()] : []));
 }
 
 /**
- * A small map of what this building can reach: its own footprint, the cells
- * its workers will harvest, and the ground in between. Replaces "Area of
- * influence: radius 2" and "Forest cells in range: 4" — two numbers that
- * describe a shape nobody was being shown.
+ * While a building is being built or upgraded, a hammer floats over its
+ * portrait and works it: one blow at the right corner, a flight to the left
+ * one, two small taps there, and back — each blow throwing a few sparks.
+ * All CSS (district.css, `dc-hammer`), so a tick never restarts it.
  */
-function influenceThumb(game: Game, district: District): HTMLElement {
-  const def = DISTRICTS[district.definitionId];
-  const r = influenceRadius(district);
-  const caught = new Set(game.workableCellsOf(district).map((c) => coordKey(c)));
-  const grid = el('div', {
-    class: 'dc-thumb',
-    style: `grid-template-columns: repeat(${r * 2 + def.size.x}, 1fr)`,
-  });
-  for (let dy = -r; dy < r + def.size.y; dy++) {
-    for (let dx = -r; dx < r + def.size.x; dx++) {
-      const cell = { x: district.location.x + dx, y: district.location.y + dy };
-      const self = dx >= 0 && dx < def.size.x && dy >= 0 && dy < def.size.y;
-      const cls = self ? 'is-self' : caught.has(coordKey(cell)) ? 'is-catch' : '';
-      grid.append(el('span', { class: `dc-cell ${cls}` }));
-    }
-  }
-  return grid;
+function workingHammer(): HTMLElement {
+  const sparks = (site: 'r' | 'l') => el('span', { class: `dc-sparks is-${site}` },
+    ...[0, 1, 2, 3].map((i) => el('i', { class: `dc-spark is-${i}` })));
+  return el('span', { class: 'dc-work', 'aria-hidden': 'true' },
+    el('span', { class: 'dc-hammer' }), sparks('r'), sparks('l'));
 }
 
+
+
+/** What a crew works, in a stat tile's short words and mark. */
+const SOURCE_WORD: Record<string, string> = {
+  Crops: 'Fields', Forest: 'Trees', Stone: 'Rocks', MountainIron: 'Iron',
+  MountainGold: 'Gold', Fish: 'Shoals', Berries: 'Bushes', Meat: 'Game',
+};
+const SOURCE_ICON: Record<string, IconName> = {
+  Crops: 'FarmLands', Forest: 'Wood', Stone: 'Stone', MountainIron: 'Iron',
+  MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
+};
+
+/** What a crew makes a minute, per coin: the rate one worker earns at this
+ *  building — its haul and its swing included — times the crew. */
+function crewOutput(game: Game, district: District): Array<[CurrencyId, number]> {
+  const def = DISTRICTS[district.definitionId];
+  const perMinute = new Map<CurrencyId, number>();
+  for (const s of def.harvestSources) {
+    const spec = HARVEST[s];
+    if (perMinute.has(spec.currencyId)) continue;
+    perMinute.set(spec.currencyId, district.assignedWorkers
+      * effectiveWorkerStrike(game.state, spec, district)
+      * (60_000 / workerStrikeMs(game.state, spec, district)));
+  }
+  return [...perMinute];
+}
 
 /**
  * The whole card, built fresh. `live` collects the handful of lines that move
@@ -128,9 +140,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   const queueItem = game.state.city.queue.find((q) => q.districtUniqueId === district.uniqueId);
 
   // ------------------------------------------------------------ variant body
-  if (district.state === 'UnderConstruction') {
-    body.append(el('div', { class: 'dc-note' }, 'Under construction.'));
-  } else {
+  // A building still going up has nothing to show yet but its construction,
+  // which the head carries.
+  if (district.state !== 'UnderConstruction') {
     // Every building that turns something out gets the same block — the
     // Townhall's villagers and a hall's soldiers are one mechanic now, so
     // they are one piece of UI. See trainingSection.ts.
@@ -265,75 +277,28 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // card it read as a property of whichever hall was open. What this hall
     // contributes to it is already the upgrade row's delta.
 
-    // A worker building is an AREA and the people you put in it. Both were
-    // numbers in a table; both are now pictures.
+    // THE CREW (mockups: the workers stepper): how many work here against the
+    // most it can hold, and the − / + that change it. No tip: the player learns
+    // to fit a crew to its fields by watching it work. The villagers still
+    // free to assign are the header's counter while this card is open
+    // (Game.hudSlot).
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0) {
-      const cells = game.workableCellsOf(district);
       const limit = assignableWorkerLimit(district);
+      const crew = district.assignedWorkers;
 
-      // One line per thing this building goes after. For everything but the
-      // Mine that is a single line and reads exactly as it always did; the
-      // Mine gets two, because iron and gold do not pay the same coin and one
-      // averaged number would be a lie about both.
-      const perSource = def.harvestSources.map((s) => {
-        const spec = HARVEST[s];
-        const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
-        return el('div', { class: 'dc-area-count' },
-          iconEl(spec.currencyId, { size: 'sm' }),
-          el('b', {}, `×${n}`),
-          el('span', {}, `${s} in reach`),
-          el('span', { class: 'dc-area-rate' },
-            ` +${effectiveWorkerStrike(game.state, spec, district)} every `
-            + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
-      });
-
-      body.append(sectionHead('Workers'), el('div', { class: 'dc-area' },
-        influenceThumb(game, district),
-        el('div', {},
-          ...perSource,
-          el('div', { class: 'dc-area-rate' },
-            // Two cells per worker is the authoring law: a cell drains, then
-            // sits recovering, so a crew wants about twice its own number of
-            // cells in reach or the surplus stands around (04-harvest.md §2.1).
-            `${cells.length} in reach for ${district.assignedWorkers} — wants ~${
-              district.assignedWorkers * 2}`))));
-
-      // Slots, not a fraction: filled ones are people, empty ones are room.
-      const slots = el('div', { class: 'dc-slots' });
-      for (let i = 0; i < limit; i++) {
-        const filled = i < district.assignedWorkers;
-        slots.append(el('span', { class: `dc-slot${filled ? ' is-filled' : ''}` },
-          ...(filled ? [iconEl('workers', { size: 'sm' })] : [])));
-      }
       const minus = knob('−', () => game.doChangeWorkers(district.uniqueId, -1), {
-        label: 'Remove a worker', disabled: district.assignedWorkers === 0,
+        label: 'Remove a worker', disabled: crew === 0, kind: 'destructive',
       });
       const plus = knob('+', () => game.doChangeWorkers(district.uniqueId, 1), {
-        label: 'Add a worker',
-        disabled: district.assignedWorkers >= limit || game.freeWorkers() === 0,
+        label: 'Add a worker', disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
       });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
-      body.append(el('div', { class: 'dc-crew' }, minus, slots, plus));
-
-      // What the crew is doing, aggregated — a per-worker list of emoji was
-      // noise once there were more than two of them.
-      const crewWords = () => {
-        const counts = new Map<string, number>();
-        for (const w of game.state.workers) {
-          if (w.buildingId !== district.uniqueId) continue;
-          const label = { Idle: 'waiting', MovingToCell: 'heading out',
-            Working: 'working', MovingHome: 'carrying home' }[w.activity];
-          counts.set(label, (counts.get(label) ?? 0) + 1);
-        }
-        return [...counts].map(([label, n]) => `${n} ${label}`).join(' · ');
-      };
-      if (game.state.workers.some((w) => w.buildingId === district.uniqueId)) {
-        // Workers change activity many times a minute; only their words are live.
-        body.append(part(crewWords, () => el('div', { class: 'dc-note' }, crewWords())));
-      } else if (district.assignedWorkers === 0) {
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
-      }
+      body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
+        minus,
+        unitPortrait('Villager', 'dc-crew-face'),
+        el('div', { class: 'dc-crew-count', 'aria-label': `${crew} of ${limit} assigned` },
+          el('b', {}, String(crew)), el('span', {}, ` / ${limit}`)),
+        plus));
     }
 
     // Every OTHER thing the neighbours are doing to this building. Gold is
@@ -348,46 +313,48 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }
   }
 
-  // ----------------------------------------------------------------- footer
-  const foot = el('div', { class: 'dc-foot' });
-  // The Upgrade button is built here with the rest of the footer logic but
-  // RENDERS in the head, beside the name (M2) — so the state that decides it
-  // stays with the other build-state branches.
+  // --------------------------------------------------- the head's right slot
+  // The Upgrade button, or the construction in its place.
   const upgradeAction: HTMLElement[] = [];
 
+  // While it is being built: the bar under the portrait, over the tile's
+  // foot, and what is being done under the description.
+  const progressUnder: HTMLElement[] = [];
+  const doing: HTMLElement[] = [];
+
   if (queueItem) {
-    // Scaffolding: what is happening and how to skip it. Live — the bar and
-    // the price of skipping both move with the clock.
-    const scaffold = () => {
+    // THE CONSTRUCTION (M36, A): the Finish that skips it takes the Upgrade
+    // button's place; how long is left sits under the portrait and what is
+    // being done under the description, breathing. All live — the bar and
+    // the price move with the clock; the word has a part of its own, so the
+    // clock does not restart its breath.
+    const what = () => (queueItem.startedAt === null
+      ? 'Waiting'
+      : queueItem.kind === 'upgrade' ? 'Upgrading' : 'Building');
+    doing.push(part(what, () => el('div', { class: 'dc-build-what' }, what())));
+    progressUnder.push(part(() => JSON.stringify([
+      queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, game.now())),
+    ]), () => {
       const t = game.now();
       const bar = progress('blue');
       bar.run(queueProgress(queueItem, t),
         queueItem.startedAt === null ? 0 : remainingSeconds(queueItem, t) * 1000,
-        queueItem.startedAt === null
-          ? 'waiting for a builder'
-          : formatDuration(remainingSeconds(queueItem, t)));
-      const rush = btn({
-        label: 'Finish',
-        kind: 'gem',
-        onClick: () => game.doRush(queueItem.uniqueId),
-        // The price used to be glued into the label with a separator. It is a
-        // cost like any other, so it goes where every other cost now goes.
-        cost: { Gems: gemRushCost(queueItem, t) },
-        have: (c) => game.walletValue(c),
-      });
-      // No Cancel: a build is paid for when it starts, and a building put in
-      // the wrong place is MOVED rather than undone
-      // (Docs/features/06-construction.md §1).
-      return el('div', { class: 'dc-live' }, bar.root, el('div', { class: 'dc-actions' }, rush));
-    };
-    foot.append(part(() => {
+        queueItem.startedAt === null ? '' : formatDuration(remainingSeconds(queueItem, t)));
+      return el('div', { class: 'dc-live' }, bar.root);
+    }));
+    // No Cancel: a build is paid for when it starts, and a building put in
+    // the wrong place is MOVED rather than undone
+    // (Docs/features/06-construction.md §1).
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, part(() => {
       const t = game.now();
-      return JSON.stringify([
-        queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
-        gemRushCost(queueItem, t),
-        game.walletValue('Gems') < gemRushCost(queueItem, t),
-      ]);
-    }, scaffold));
+      return JSON.stringify([gemRushCost(queueItem, t), game.walletValue('Gems') < gemRushCost(queueItem, t)]);
+    }, () => btn({
+      label: 'Finish',
+      kind: 'gem',
+      onClick: () => game.doRush(queueItem.uniqueId),
+      cost: { Gems: gemRushCost(queueItem, game.now()) },
+      have: (c) => game.walletValue(c),
+    }))));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
     // (upgradeSheet.ts, M25): the requirements, whether each is met, and the
@@ -425,7 +392,25 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // where a player looks for it, and it is the half of the model the popup
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
-  const figures = statsAt(game, district, district.level);
+  // A worker building leads with what its crew makes (the resource is the
+  // tile's word: *Food +45 /min*) and what it has to work (*Fields 3*); the
+  // popup-only figures stay off the card.
+  const figures = [
+    ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && district.state === 'Built'
+      ? [
+        ...crewOutput(game, district).map(([c, n]) => ({
+          icon: c as IconName, label: `${c} a minute`, short: c, value: `+${Math.round(n)} /min`,
+        })),
+        // What there is to work, per source (the Quarry has three).
+        ...def.harvestSources.map((src) => {
+          const cells = game.workableCellsOf(district);
+          const n = cells.filter((c) => harvestSourceAt(game.state, c) === src).length;
+          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: String(n) };
+        }),
+      ]
+      : []),
+    ...statsAt(game, district, district.level).filter((f) => f.onCard !== false),
+  ];
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
@@ -438,12 +423,15 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // ONE ROW: the picture, what the building is, and the one thing you BUY
     // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
-      portrait(def, district.level),
-      el('div', { class: 'dc-what' }, def.description),
+      progressUnder.length === 0
+        ? buildingPortrait(def, district.level)
+        : el('div', { class: 'dc-portrait-col' }, buildingPortrait(def, district.level, true), ...progressUnder),
+      doing.length === 0
+        ? el('div', { class: 'dc-what' }, def.description)
+        : el('div', { class: 'dc-what-col' }, el('div', { class: 'dc-what' }, def.description), ...doing),
       ...upgradeAction),
     ...stats,
     body,
-    foot,
   );
 }
 

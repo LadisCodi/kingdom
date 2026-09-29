@@ -26,10 +26,12 @@
   },
   "knowledge": {
     "basePerHour": 1,
-    "dripPerClearedRuinPerHour": 0.2,
-    "perClaimedLandmarkPerHour": 0.2,
+    "cap": 10,
     "landmarkClaimLump": 5,
-    "conquestPerClearedRuinPerHour": 0.3
+    "conquestFirstClearLump": 15,
+    "roomCoef": 0.25,
+    "goldPriceBase": 100,
+    "gemsPerPoint": 10
   },
   "raid": {
     "takeFractionMax": 0.1,

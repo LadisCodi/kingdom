@@ -435,6 +435,9 @@ export interface GameState {
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
+    /** Points of Knowledge ever bought with Gold. The nth costs n × base, and
+     *  this never resets (sim/knowledge.ts). */
+    knowledgeBoughtWithGold: number;
     /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
      *  it survives a region reset — a habit is a property of the player, not
      *  of the city they happen to be playing. See sim/daily.ts. */
@@ -518,15 +521,9 @@ export interface GameState {
   army: ArmyUnit[];
   research: {
     completed: TechId[];
-    /** Technologies in progress — length is capped by techSlots(). */
-    /** `durationMs` is fixed when the research STARTS (Scriveners applies then,
-     *  not retroactively): a rank landing mid-research must not move a
-     *  boundary into the past, which one-call replay and stepped ticking
-     *  would then land on differently. Absent on older saves → the authored
-     *  duration, which is what they were started at. */
-    active: Array<{ id: TechId; startedAt: number; durationMs?: number }>;
-    /** Extra concurrent slots bought with Gems (escalating price). */
-    slotsPurchased: number;
+    /** Knowledge poured into technologies not yet researched. It stays there
+     *  for ever; a technology leaves this map when it is researched. */
+    poured: Partial<Record<TechId, number>>;
   };
   /**
    * Scheduled content: seasons, events and gacha banners.

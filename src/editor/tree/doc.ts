@@ -34,7 +34,6 @@ export interface BandTotals {
   count: number;
   gold: number;
   knowledge: number;
-  seconds: number;
 }
 
 export class TreeDoc {
@@ -150,7 +149,6 @@ export class TreeDoc {
         count: band.length,
         gold: band.reduce((sum, id) => sum + (this.doc.technologies[id].gold ?? 0), 0),
         knowledge: band.reduce((sum, id) => sum + (this.doc.technologies[id].knowledge ?? 0), 0),
-        seconds: band.reduce((sum, id) => sum + (this.doc.technologies[id].seconds ?? 0), 0),
       };
     });
   }
@@ -213,7 +211,6 @@ export class TreeDoc {
         col: slot.col,
         requires: [],
         gold: fields.gold ?? 0,
-        seconds: fields.seconds ?? 0,
         ...(fields.knowledge ? { knowledge: fields.knowledge } : {}),
       };
       const node = this.doc.technologies[id];

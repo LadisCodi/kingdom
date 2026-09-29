@@ -1,17 +1,17 @@
-// Technologies: one-time researches that unlock content. Cost Gold from the
-// CITY purse + time; limited by concurrent SLOTS (base from Settings, more bought with
-// Gems at an escalating price); tree edges via `requires`. Completion runs
-// in real time through the unified advance (like the build queue).
+// Technologies: one-time researches that unlock content
+// (Docs/features/07-research.md §1). A technology costs Knowledge and Gold and
+// takes no time. Knowledge is POURED in, on as many visits as it takes, and
+// stays there; once it is full, paying the Gold completes the technology on
+// the spot. There are no slots and nothing is ever under study, so research
+// has no boundary source. Tree edges via `requires`.
 
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, RUSH, TECHNOLOGIES, TECH_ORDER, TOMES,
-  UNITS,
+  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
   type DistrictId, type GameState, type TechId, type TomeId, type UnitId,
 } from './state';
-import { effectiveResearchTimeMultiplier } from './upgrades';
 
 /** Something a technology puts in the player's hands. */
 export type Unlock =
@@ -52,24 +52,13 @@ export function techUnlocks(id: TechId): Unlock[] {
 }
 
 /**
- * What a technology costs: Gold AND Knowledge, out of two purses.
+ * What a technology costs: Knowledge AND Gold, out of two purses.
  *
- * Gold is paid from `city.wallet` like everything else the city does, so the
- * tree keeps competing with clearing fog and raising a building for one
- * budget — the decision the economy is built around. Knowledge is paid from
- * `kingdom.wallet`: it is the research CLOCK (07-research.md §3), a
- * currency that drips from the ground you hold and buys nothing else, so a
- * rich city cannot skip an era. Neither alone works at this size — Gold can
- * size a tree but cannot pace it.
- *
- * EVERY era costs Knowledge, era 1 included (2026-09-08): the clock runs from
- * the first minute on a base rate, and a new kingdom is granted enough to pay
- * for the opening chain's cards (`Currencies.Knowledge.start`). Before that
- * the clock only started once the player held ground, so era 1 had to be free.
- *
- * Minor ranks cost both too. What separates a minor from a major is how much,
- * and nothing else — the tree says "small" with money and a clock, which is
- * what a tree is already made of (tech-tree.md §1 rule 3).
+ * Knowledge comes from `kingdom.wallet` and is POURED in (below). Gold comes
+ * from `city.wallet` like everything else the city does, and is paid once, at
+ * the end, so the tree keeps competing with clearing fog and raising a
+ * building for one budget. What separates a minor from a major is how much,
+ * and nothing else.
  */
 export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Gold');
 export const techKnowledgeCost = (id: TechId): number =>
@@ -78,28 +67,24 @@ export const techKnowledgeCost = (id: TechId): number =>
 const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
 const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
 
-/** Could the player pay for this technology this second — both purses? */
-export const canAffordTech = (state: GameState, id: TechId): boolean =>
-  gold(state) >= techCost(id) && knowledge(state) >= techKnowledgeCost(id);
+/** Knowledge already poured into a technology. */
+export const techPoured = (state: GameState, id: TechId): number =>
+  state.research.poured[id] ?? 0;
 
-/**
- * How long until the kingdom can afford a technology's Knowledge, in ms —
- * 0 when it already can, Infinity when nothing is dripping. A trickle
- * currency without a time-to-afford line is a currency the player cannot plan
- * against (07-research.md §4), and this is that line's source.
- */
-export function knowledgeShortfallMs(state: GameState, id: TechId, ratePerHour: number): number {
-  const short = techKnowledgeCost(id) - knowledge(state);
-  if (short <= 0) return 0;
-  if (ratePerHour <= 0) return Infinity;
-  return (short / ratePerHour) * 3_600_000;
-}
+/** Knowledge a technology still needs. */
+export const techKnowledgeMissing = (state: GameState, id: TechId): number =>
+  Math.max(0, techKnowledgeCost(id) - techPoured(state, id));
+
+/** Is every point of its Knowledge in? */
+export const isTechFilled = (state: GameState, id: TechId): boolean =>
+  techKnowledgeMissing(state, id) === 0;
 
 export const isTechComplete = (state: GameState, id: TechId): boolean =>
   state.research.completed.includes(id);
 
-export const isTechActive = (state: GameState, id: TechId): boolean =>
-  state.research.active.some((a) => a.id === id);
+/** Holds some Knowledge but is not researched yet. */
+export const isTechStarted = (state: GameState, id: TechId): boolean =>
+  !isTechComplete(state, id) && techPoured(state, id) > 0;
 
 /** All prerequisites researched? (The tree edge gate.) */
 export const requirementsMet = (state: GameState, id: TechId): boolean =>
@@ -139,50 +124,81 @@ export const eraShortfall = (state: GameState, tome: TomeId, era: number): numbe
 export const techEraUnlocked = (state: GameState, id: TechId): boolean =>
   eraUnlocked(state, TECHNOLOGIES[id].tome, TECHNOLOGIES[id].era);
 
-/** Concurrent research slots: Settings base + gem-bought extras. */
-export const techSlots = (state: GameState): number =>
-  Math.min(RESEARCH_SETTINGS.techSlots + state.research.slotsPurchased, RESEARCH_SETTINGS.maxSlots);
-
-export type StartTechResult =
-  | 'Started' | 'AlreadyDone' | 'AlreadyActive' | 'MissingRequirement'
-  | 'EraLocked' | 'NoFreeSlot' | 'NotEnoughResources';
+export type ResearchRefusal =
+  | 'AlreadyDone' | 'MissingRequirement' | 'EraLocked';
 
 /**
- * Could the player start this tech this second? Every gate `startTech` checks,
- * asked without doing it.
+ * Why a technology cannot be worked on at all, or null when it can.
  *
- * It exists so the dot on a node and the CTA on the nav tab cannot drift from
- * what the button actually does — the failure mode being a lit tab that leads
- * to a screen where nothing is pressable.
+ * One answer for both verbs, pouring and researching, so the sheet says the
+ * reason once for the whole row of buttons. A technology the tree editor left
+ * off the page is not in the game.
  */
-/**
- * A tome's cover page: granted when the book opens, never bought.
- *
- * It is the one technology with no price and no clock, and without this it
- * would be startable for nothing — which lit the Research tab on a fresh
- * kingdom with an empty purse, pointing at two books the player had not
- * earned yet.
- */
-export const isGranted = (id: TechId): boolean =>
-  techCost(id) === 0 && TECHNOLOGIES[id].durationSeconds === 0;
+export function researchRefusal(state: GameState, id: TechId): ResearchRefusal | null {
+  if (!TECHNOLOGIES[id].placed) return 'MissingRequirement';
+  if (isTechComplete(state, id)) return 'AlreadyDone';
+  if (!requirementsMet(state, id)) return 'MissingRequirement';
+  if (!techEraUnlocked(state, id)) return 'EraLocked';
+  return null;
+}
 
+export type PourResult = ResearchRefusal | 'Poured' | 'AlreadyFull' | 'NothingHeld';
+
+/**
+ * Pour what the bar holds into a technology, up to what it still needs.
+ * Returns what was poured with the verdict.
+ */
+export function pourKnowledge(state: GameState, id: TechId): { result: PourResult; poured: number } {
+  const refusal = researchRefusal(state, id);
+  if (refusal !== null) return { result: refusal, poured: 0 };
+  const missing = techKnowledgeMissing(state, id);
+  if (missing === 0) return { result: 'AlreadyFull', poured: 0 };
+  const amount = Math.min(missing, knowledge(state));
+  if (amount <= 0) return { result: 'NothingHeld', poured: 0 };
+  addToWallet(state.kingdom.wallet, 'Knowledge', -amount);
+  state.research.poured[id] = techPoured(state, id) + amount;
+  return { result: 'Poured', poured: amount };
+}
+
+export type ResearchResult = ResearchRefusal | 'Researched' | 'NotFilled' | 'NotEnoughGold';
+
+/** Could the Gold be paid and the technology completed this second? */
+export const canResearchTech = (state: GameState, id: TechId): boolean =>
+  researchRefusal(state, id) === null && isTechFilled(state, id) && gold(state) >= techCost(id);
+
+/**
+ * Pay the Gold and complete the technology. Its Knowledge must be in.
+ *
+ * The pure half: `commands.ts#researchTech` wraps it with what a completion
+ * does to the map and the purse (the Farsight sweep, a lump raise paid back).
+ */
+export function completeTech(state: GameState, id: TechId): ResearchResult {
+  const refusal = researchRefusal(state, id);
+  if (refusal !== null) return refusal;
+  if (!isTechFilled(state, id)) return 'NotFilled';
+  if (gold(state) < techCost(id)) return 'NotEnoughGold';
+  addToWallet(state.city.wallet, 'Gold', -techCost(id));
+  delete state.research.poured[id];
+  state.research.completed.push(id);
+  return 'Researched';
+}
+
+/**
+ * Is there something to DO on this technology right now — research it, or
+ * pour enough to fill it? The dot on a card and the Research tab's count read
+ * this, so neither can light for a press that would do nothing useful.
+ */
 export const canStartTech = (state: GameState, id: TechId): boolean =>
-  // A technology in the editor's holding pen is on no page, so there is no
-  // card to press and nothing should light the tab on its behalf.
-  TECHNOLOGIES[id].placed
-  && !isGranted(id)
-  && !isTechComplete(state, id)
-  && !isTechActive(state, id)
-  && requirementsMet(state, id)
-  && techEraUnlocked(state, id)
-  && state.research.active.length < techSlots(state)
-  && canAffordTech(state, id);
+  researchRefusal(state, id) === null
+  && (isTechFilled(state, id)
+    ? gold(state) >= techCost(id)
+    : knowledge(state) >= techKnowledgeMissing(state, id));
 
 /** Anything at all worth a trip to the Research screen. */
 export const anyResearchActionable = (state: GameState): boolean =>
   TECH_ORDER.some((id) => canStartTech(state, id));
 
-/** How many technologies can be started right now — the Research tab's count. */
+/** How many technologies can be acted on right now — the Research tab's count. */
 export const researchActionableCount = (state: GameState): number =>
   TECH_ORDER.filter((id) => canStartTech(state, id)).length;
 
@@ -199,7 +215,7 @@ export const researchActionableCount = (state: GameState): number =>
 export type TechVisibility = 'normal' | 'silhouette' | 'hidden';
 
 /**
- * **normal** — researched, researching, or buyable right now.
+ * **normal** — researched, partly poured, or pourable right now.
  * **silhouette** — every prerequisite is NORMAL, so what comes next appears as
  * soon as the card before it can be read. Waiting until the player had
  * committed to the step before meant a tree nobody could plan a route through:
@@ -214,153 +230,10 @@ export function techVisibility(state: GameState, id: TechId): TechVisibility {
   // Not recursive, deliberately: `revealed` IS the `normal` test, and asking
   // it of the requirements is the one step.
   const revealed = (t: TechId): boolean =>
-    isTechComplete(state, t) || isTechActive(state, t) || requirementsMet(state, t);
+    isTechComplete(state, t) || isTechStarted(state, t) || requirementsMet(state, t);
   if (revealed(id)) return 'normal';
   if (TECHNOLOGIES[id].requires.every(revealed)) return 'silhouette';
   return 'hidden';
-}
-
-export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
-  // A cover page is granted by an event in the world, so asking to research
-  // one is asking for something that has not happened yet. Same answer for a
-  // technology the tree editor left off the page: it is not in the game.
-  if (isGranted(id) || !TECHNOLOGIES[id].placed) return 'MissingRequirement';
-  if (isTechComplete(state, id)) return 'AlreadyDone';
-  if (isTechActive(state, id)) return 'AlreadyActive';
-  if (!requirementsMet(state, id)) return 'MissingRequirement';
-  if (!techEraUnlocked(state, id)) return 'EraLocked';
-  if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
-  if (!canAffordTech(state, id)) return 'NotEnoughResources';
-  addToWallet(state.city.wallet, 'Gold', -techCost(id));
-  addToWallet(state.kingdom.wallet, 'Knowledge', -techKnowledgeCost(id));
-  // Scriveners applies HERE, once. A rank completing mid-research does not
-  // shorten what is already on the desk — see the field's note in state.ts.
-  const durationMs = Math.round(
-    TECHNOLOGIES[id].durationSeconds * 1000 * effectiveResearchTimeMultiplier(state));
-  state.research.active.push({ id, startedAt: now, durationMs });
-  return 'Started';
-}
-
-export const techCompletesAt = (state: GameState, id: TechId): number | null => {
-  const active = state.research.active.find((a) => a.id === id);
-  return active === undefined
-    ? null
-    : active.startedAt + (active.durationMs ?? TECHNOLOGIES[id].durationSeconds * 1000);
-};
-
-/**
- * Gems to put a running research on the shelf right now.
- *
- * The same price a build rush pays — `RUSH.secondsPerGem` — because it is the
- * same offer, and a player who has learned what a minute costs at the
- * Townhall must not have to learn it again at the lectern
- * (Docs/features/07-research.md §1). Null when nothing is running.
- */
-export function techRushCost(state: GameState, id: TechId, now: number): number | null {
-  const at = techCompletesAt(state, id);
-  if (at === null) return null;
-  return Math.max(1, Math.ceil(Math.max(0, at - now) / 1000 / RUSH.secondsPerGem));
-}
-
-/**
- * Gems to have a technology outright, right now — the price of the whole
- * wait, not just the half of it a running research has left.
- *
- * TWO WAITS, ONE RATE. A technology idle at the lectern is behind two clocks:
- * the Knowledge it is short of, which the drip has to produce, and the
- * research itself. Both are TIME, so both are priced at
- * `RUSH.secondsPerGem` — the same per-second offer the Townhall makes.
- * Converting the Knowledge shortfall through its own rate is what makes the
- * two comparable at all: a currency that arrives on a clock is a duration
- * wearing a number.
- *
- * **Gold is not in it.** There is no Gems→Gold rate anywhere in this game and
- * inventing one here would be a monetisation decision rather than a button:
- * Gems buy time, breadth and power, and the city's own purse is the city's
- * (Docs/features/14-monetization.md §1). The Gold is still paid, so a
- * technology the city cannot afford cannot be bought instantly either.
- *
- * Null when it is not something you could start — already done, already
- * running, requirements or era unmet — or when nothing is dripping at all, in
- * which case the Knowledge half has no finite price.
- */
-export function instantTechGems(
-  state: GameState, id: TechId, ratePerHour: number,
-): number | null {
-  if (isGranted(id) || !TECHNOLOGIES[id].placed) return null;
-  if (isTechComplete(state, id) || isTechActive(state, id)) return null;
-  if (!requirementsMet(state, id) || !techEraUnlocked(state, id)) return null;
-  const waitMs = knowledgeShortfallMs(state, id, ratePerHour);
-  if (!Number.isFinite(waitMs)) return null;
-  const researchMs = TECHNOLOGIES[id].durationSeconds * 1000
-    * effectiveResearchTimeMultiplier(state);
-  return Math.max(1, Math.ceil((waitMs + researchMs) / 1000 / RUSH.secondsPerGem));
-}
-
-export type InstantTechResult =
-  | 'Researched' | 'Unavailable' | 'NotEnoughGold' | 'NotEnoughGems';
-
-/**
- * Buy it and shelve it in one press.
- *
- * **No slot check.** A slot is a scholar's desk — what the strip limits is how
- * much the kingdom can have UNDER STUDY at once, and this technology is never
- * under study: it goes straight to `completed` without occupying a desk for a
- * single tick. A full strip is exactly the moment the offer is worth taking,
- * so refusing it there would kill the button precisely where it earns its
- * price. It spends whatever Knowledge the kingdom DOES hold — the Gems paid
- * for the shortfall, not for a refund of the rest.
- */
-export function buyTechInstantly(
-  state: GameState, id: TechId, ratePerHour: number,
-): InstantTechResult {
-  const gems = instantTechGems(state, id, ratePerHour);
-  if (gems === null) return 'Unavailable';
-  if (getWallet(state.city.wallet, 'Gold') < techCost(id)) return 'NotEnoughGold';
-  if (getWallet(state.player.wallet, 'Gems') < gems) return 'NotEnoughGems';
-
-  addToWallet(state.player.wallet, 'Gems', -gems);
-  addToWallet(state.city.wallet, 'Gold', -techCost(id));
-  // Whatever is in the purse, up to the price: the Gems covered the gap.
-  const held = knowledge(state);
-  addToWallet(state.kingdom.wallet, 'Knowledge', -Math.min(held, techKnowledgeCost(id)));
-  state.research.completed.push(id);
-  return 'Researched';
-}
-
-export type TechRushResult = 'Finished' | 'NotActive' | 'NotEnoughGems';
-
-/**
- * Finish it now.
- *
- * The technology is moved to `completed` HERE rather than by shortening its
- * duration and letting the advance find it: a duration edited backwards would
- * put a boundary in the past, and one-call replay and stepped ticking would
- * then land on it differently (invariant 1).
- */
-export function finishTechWithGems(
-  state: GameState, id: TechId, now: number,
-): TechRushResult {
-  const cost = techRushCost(state, id, now);
-  if (cost === null) return 'NotActive';
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  state.research.active = state.research.active.filter((a) => a.id !== id);
-  state.research.completed.push(id);
-  return 'Finished';
-}
-
-/** Complete every active technology whose time is up (in completion order). */
-export function advanceResearch(state: GameState, toTime: number): TechId[] {
-  const due = state.research.active
-    .map((a) => ({ id: a.id, at: techCompletesAt(state, a.id)! }))
-    .filter((a) => a.at <= toTime)
-    .sort((a, b) => a.at - b.at);
-  for (const { id } of due) {
-    state.research.completed.push(id);
-    state.research.active = state.research.active.filter((a) => a.id !== id);
-  }
-  return due.map((d) => d.id);
 }
 
 // ----------------------------------------------------------------- tomes
@@ -393,23 +266,3 @@ export const isTomeOpen = (_state: GameState, _tome: TomeId): boolean => true;
 
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
-
-// ------------------------------------------------------------- gem slots
-
-/** Gems for the NEXT slot — escalates with each purchase. */
-export const slotGemCost = (state: GameState): number =>
-  Math.round(
-    RESEARCH_SETTINGS.slotGemCostBase *
-    RESEARCH_SETTINGS.slotGemCostGrowth ** state.research.slotsPurchased,
-  );
-
-export type BuySlotResult = 'Purchased' | 'AtMax' | 'NotEnoughGems';
-
-export function buySlot(state: GameState): BuySlotResult {
-  if (techSlots(state) >= RESEARCH_SETTINGS.maxSlots) return 'AtMax';
-  const cost = slotGemCost(state);
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  state.research.slotsPurchased += 1;
-  return 'Purchased';
-}

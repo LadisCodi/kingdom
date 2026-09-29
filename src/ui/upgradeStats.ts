@@ -5,15 +5,15 @@
 //   * the building card reads it at the CURRENT level and prints a band of
 //     tiles — what this building does for you right now;
 //   * the upgrade popup reads it at the current level AND the next one and
-//     prints the pairs — what the level would change.
+//     prints what the level ADDS — the current value and a green delta.
 //
 // They used to be one function that returned finished `<div>`s, which is why
 // the card could not show a stat without also showing an arrow. A stat is a
 // number with a name; turning it into a row is the screen's business.
 //
-// THE PAIRS ARE BUILT BY ZIPPING TWO READS, never by a second table of
+// THE DELTAS ARE BUILT BY ZIPPING TWO READS, never by a second table of
 // deltas. `statsAt(level)` and `statsAt(level + 1)` are the same function, so
-// a stat can never appear on one side of an arrow and not the other, and
+// a stat's gain is always the difference of what the two levels show, and
 // adding one to a building adds it to both screens at once.
 
 import {
@@ -40,16 +40,28 @@ export interface BuildingStat {
    *  fit on the iPhone X. */
   short: string;
   value: string;
+  /** The number behind `value`, for the popup's delta. */
+  n: number;
+  /** How a difference in `n` reads — `+2`, `+2 rings`, `−5s` — with its sign. */
+  gain: (d: number) => string;
+  /** A stat where less is the improvement (a wait). */
+  lowerIsBetter?: true;
+  /** False for a figure only the upgrade popup shows — one that is neutral
+   *  until a late level and that the card's Production already counts in. */
+  onCard?: false;
 }
 
-/** The same stat at two levels, and whether the level actually moves it. */
+/** A stat the next level moves: its current value and what the level adds. */
 export interface StatChange extends BuildingStat {
-  to: string;
-  /** False for a row like *Exploration range 5 → 5*, which the popup greys
-   *  rather than drops: a level that moves nothing has to SAY so, or the
-   *  player reads the missing row as a bug. */
-  changed: boolean;
+  /** The difference, in the stat's own words (`+0.25`, `+2 rings`). */
+  delta: string;
+  /** False when the level makes the stat worse. */
+  better: boolean;
 }
+
+/** A difference, rounded to what the tiles print, with its sign. */
+const signed = (d: number, text: string): string => `${d < 0 ? '−' : '+'}${text}`;
+const plain = (d: number): string => signed(d, String(Math.round(Math.abs(d) * 100) / 100));
 
 /**
  * Everything this building is worth at `level`.
@@ -61,8 +73,10 @@ export interface StatChange extends BuildingStat {
 export function statsAt(game: Game, district: District, level: number): BuildingStat[] {
   const def = DISTRICTS[district.definitionId];
   const out: BuildingStat[] = [];
-  const add = (key: string, icon: IconName, label: string, short: string, value: string | number) =>
-    out.push({ key, icon, label, short, value: String(value) });
+  const add = (
+    key: string, icon: IconName, label: string, short: string, value: string | number,
+    n = Number(value), gain: (d: number) => string = plain,
+  ) => out.push({ key, icon, label, short, value: String(value), n, gain });
   /** A per-level list that a building may not carry at all. */
   const term = (list: readonly number[], blank: number) =>
     (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
@@ -73,12 +87,21 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
     add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
+    // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
+    out[out.length - 1].onCard = false;
   }
+  // A crew's haul and swing are the late levels' gift, neutral until then,
+  // and the card's Production already counts them in: the popup's pair shows
+  // what a level buys, the card does not repeat them.
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
-    add('delivery', 'plus', 'Per delivery', 'Haul', `+${term(def.extraUnitsPerDeliveryPerLevel, 0)}`);
+    const haul = term(def.extraUnitsPerDeliveryPerLevel, 0);
+    add('delivery', 'plus', 'Per delivery', 'Haul', `+${haul}`, haul);
+    out[out.length - 1].onCard = false;
   }
   if (def.strikeSpeedPerLevel.length > 0) {
-    add('swing', 'clock', 'Swing', 'Swing', `×${term(def.strikeSpeedPerLevel, 1)}`);
+    const swing = term(def.strikeSpeedPerLevel, 1);
+    add('swing', 'clock', 'Swing', 'Swing', `×${swing}`, swing);
+    out[out.length - 1].onCard = false;
   }
   if (def.armyCapPerLevel.length > 0) {
     add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));
@@ -89,8 +112,8 @@ export function statsAt(game: Game, district: District, level: number): Building
   // A level buys a house MORE ROOM and BETTER RENT, and the second half is
   // the reason to keep upgrading a house that is already full.
   if (def.taxBonusPerLevel.length > 0) {
-    add('rent', 'Gold', 'Rent each', 'Rent',
-      `+${Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100)}%`);
+    const rent = Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100);
+    add('rent', 'Gold', 'Rent each', 'Rent', `+${rent}%`, rent, (d) => signed(d, `${Math.abs(d)}%`));
   }
   // The Sanctum owns BOTH Mana numbers — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).
@@ -100,33 +123,41 @@ export function statsAt(game: Game, district: District, level: number): Building
   }
   if (district.definitionId === 'Townhall') {
     const ladder = TAXES.townhallMultiplierPerLevel;
-    if (ladder.length > 0) add('taxes', 'Gold', 'Gold income', 'Income', `×${levelIndexed(ladder, level)}`);
+    if (ladder.length > 0) {
+      const mult = levelIndexed(ladder, level);
+      add('taxes', 'Gold', 'Gold income', 'Income', `×${mult}`, mult);
+    }
     const reach = FOG.reachPerTownhallLevel;
-    if (reach.length > 0) add('fog', 'Townhall', 'Fog reach', 'Fog', `ring ${levelIndexed(reach, level)}`);
+    if (reach.length > 0) {
+      const ring = levelIndexed(reach, level);
+      add('fog', 'Townhall', 'Fog reach', 'Fog', `ring ${ring}`, ring,
+        (d) => signed(d, `${Math.abs(d)} ring${Math.abs(d) === 1 ? '' : 's'}`));
+    }
   }
   // Last of all: what one of its trainees takes to train HERE, neighbours included. One
   // trainee per building (dataRules.ts), so the building's own figure — and
   // the Train button carries only the price.
   if (def.trains.length > 0) {
-    add('train-time', 'hourglass', 'Training time', 'Training',
-      formatDuration(trainSecondsAt(game.state, district.uniqueId, def.trains[0])));
+    const secs = trainSecondsAt(game.state, district.uniqueId, def.trains[0]);
+    add('train-time', 'hourglass', 'Training time', 'Training', formatDuration(secs), secs,
+      (d) => signed(d, formatDuration(Math.abs(d))));
+    out[out.length - 1].lowerIsBetter = true;
   }
   return out;
 }
 
 /**
- * The pairs, for the upgrade popup's Stats table.
+ * What the next level adds, for the upgrade popup's Improvements.
  *
- * Every stat the building has, whether or not the level moves it — an
- * unchanged row is a fact the player is buying against, and dropping it would
- * make the table shorter for the levels that deserve the most scrutiny.
+ * Only the stats the level MOVES: the popup lists what the player is buying,
+ * and a stat the level leaves alone is not part of it.
  */
 export function statChanges(game: Game, district: District, next: number): StatChange[] {
-  const before = statsAt(game, district, district.level);
-  const after = new Map(statsAt(game, district, next).map((s) => [s.key, s.value]));
-  return before.map((s) => {
-    const to = after.get(s.key) ?? s.value;
-    return { ...s, to, changed: to !== s.value };
+  const after = new Map(statsAt(game, district, next).map((s) => [s.key, s.n]));
+  return statsAt(game, district, district.level).flatMap((s) => {
+    const d = (after.get(s.key) ?? s.n) - s.n;
+    if (Math.abs(d) < 1e-9) return [];
+    return [{ ...s, delta: s.gain(d), better: (d > 0) !== (s.lowerIsBetter === true) }];
   });
 }
 

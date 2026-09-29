@@ -34,7 +34,7 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 | `research_complete` | Research finishes (its banner) — replaces the generic chime there | Short fanfare, bigger than `research_started` |
 | `construction_complete` | A build/upgrade finishes (its banner) | Hammer flourish + "ta-da", medium |
 | `upgrade_bought` | Buying a tech-tree upgrade circle | Ascending "power-up" blip |
-| `gem_spend` | Any gem purchase (rush, research slot) | Crystalline "ching" — premium feel |
+| `gem_spend` | Any gem purchase (rush, Knowledge) | Crystalline "ching" — premium feel |
 | `unit_trained` | Recruiting an army unit | Sword shing / drum hit |
 | `boat_splash` | A fishing boat departs the Docks | Small water plop (quiet — recurring) |
 
