@@ -29,7 +29,7 @@ export type ModifierStat =
   | 'revealCost'
   | 'cellRecovery'    // how long a cell waits before it refills in place
   | 'cellRespawn'     // how long a consumed feature waits before it reappears
-  | 'knowledgeYield'
+  | 'knowledgeYield'  // every lump of Knowledge — never the drip
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
   // The era-2/3 hooks (Docs/features/tech-tree.md §6.2). Each is reached by
@@ -37,7 +37,6 @@ export type ModifierStat =
   // in the helper that owns the number — three stages, one place, like
   // everything above.
   | 'buildTime'       // seconds to raise or upgrade a building
-  | 'researchTime'    // seconds to complete a research, fixed at start
   | 'workerSpeed'     // tiles per second a worker walks
   | 'manaCap'         // the ceiling of the pool
   | 'claimCost'       // Gold to claim a landmark
@@ -62,7 +61,6 @@ export type ModifierStat =
   // ranks, which are authored as a discount and stay one; this is the stack's
   // half of the same number, and the two multiply.
   | 'buildSpeed'      // how fast the builders work
-  | 'researchSpeed'   // how fast a research runs, fixed at start
   | 'recoverySpeed'   // how fast a cell refills in place
   | 'workerStrikeSpeed' // how fast a worker swings
   | 'worldRevealSpeed' // how fast a world-map cell is scouted — NOT READ YET

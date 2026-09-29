@@ -100,3 +100,14 @@
   line-height: 1.3;
   color: var(--clay);
 }
+
+/* The Knowledge sheet borrows the Mana sheet's frame (knowledgeSheet.ts);
+   its prize row is a count the player picks. */
+.knowledge-stepper { display: flex; align-items: center; gap: calc(var(--px) * 10); }
+.knowledge-count {
+  min-width: calc(var(--px) * 48);
+  font-family: var(--font-body);
+  font-size: var(--text-title);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}

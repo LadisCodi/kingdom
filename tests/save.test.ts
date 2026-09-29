@@ -333,6 +333,77 @@ describe('save versions', () => {
 // The Market left the game on 2026-09-09 — the building, its technology and
 // the three quests that named it. A save can be holding all three, and every
 // one of them would be read against a table that no longer has the row.
+// v61: research takes no time (Docs/features/07-research.md §1). No slots, no
+// clock — so a save written mid-research, or with slots bought, has to land
+// somewhere the new model can hold.
+describe('research without a clock (v61)', () => {
+  const v60 = (active: string[], slots: number) => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules as any)['kingdom.research'];
+    research.Completed = ['Forestry'];
+    research.Active = active.map((id) => ({ ID: id, StartedAtUtc: new Date(T0).toISOString() }));
+    research.SlotsPurchased = slots;
+    delete research.Poured;
+    save.SaveVersion = 60;
+    return { save, gems: getWallet(state.player.wallet, 'Gems') };
+  };
+
+  it('completes a research that was running — it had been paid for', () => {
+    const { save } = v60(['Agriculture'], 0);
+    expect(migrate(save)).toBe(true);
+    const research = (save.Modules as any)['kingdom.research'];
+    expect(research.Completed).toEqual(['Forestry', 'Agriculture']);
+    expect(research.Active).toBeUndefined();
+    expect(research.SlotsPurchased).toBeUndefined();
+    expect(research.Poured).toEqual({});
+    const back = deserialize(v60(['Agriculture'], 0).save, map, T0)!;
+    expect(isTechComplete(back, 'Agriculture')).toBe(true);
+    expect(back.research.poured).toEqual({});
+  });
+
+  it('refunds bought slots as Gems on the ladder they were sold on', () => {
+    for (const [slots, refund] of [[0, 0], [1, 2500], [2, 7500]] as const) {
+      const { save, gems } = v60([], slots);
+      const back = deserialize(save, map, T0)!;
+      expect(getWallet(back.player.wallet, 'Gems'), `${slots} slots`).toBe(gems + refund);
+    }
+  });
+
+  it('round-trips what is poured and how much Knowledge Gold has bought', () => {
+    const state = freshGame();
+    state.research.poured = { Agriculture: 1, Taxes01: 2 };
+    state.kingdom.knowledgeBoughtWithGold = 7;
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(back.research.poured).toEqual({ Agriculture: 1, Taxes01: 2 });
+    expect(back.kingdom.knowledgeBoughtWithGold).toBe(7);
+  });
+});
+
+// The Knowledge drip is production, but the bar bounds it: it is NOT cut at
+// the 8h offline cap (Docs/features/07-research.md §3, invariant 2).
+describe('the Knowledge drip and the offline cap', () => {
+  const awayFor = (hours: number) => {
+    const state = freshGame();
+    state.kingdom.wallet.Knowledge = 0;
+    state.kingdom.lastKnowledgeAt = T0;
+    const back = deserialize(serialize(state, T0), map, T0 + hours * 3_600_000)!;
+    return getWallet(back.kingdom.wallet, 'Knowledge');
+  };
+
+  it('fills the bar over a 12h absence — stopped by the bar, not by 8h', () => {
+    expect(awayFor(12)).toBe(10);
+  });
+
+  it('pays an hour a point inside the cap', () => {
+    expect(awayFor(5)).toBe(5);
+  });
+
+  it('pays the 9th hour too, which the cap would have cut', () => {
+    expect(awayFor(9)).toBe(9);
+  });
+});
+
 describe('the Market, retired', () => {
   it('drops a built Market, its queue item and its technologies', () => {
     const state = freshGame();

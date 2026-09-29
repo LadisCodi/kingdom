@@ -438,7 +438,6 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     syncProse();
     const era = select(doc.eraList(tome).map(String), '1');
     const gold = el('input', { class: 'tre-search', type: 'number', value: '100' });
-    const seconds = el('input', { class: 'tre-search', type: 'number', value: '60' });
     const make = el('button', { class: 'ed-btn primary' }, `create in ${tome}`);
     make.addEventListener('click', () => {
       const newId = id.value.trim();
@@ -448,7 +447,6 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
         description: description.value,
         kind: kind.value as TechKind,
         gold: Math.round(Number(gold.value)),
-        seconds: Math.round(Number(seconds.value)),
       });
       if (problem !== null) { toast(problem, true); return; }
       selected = newId;
@@ -461,7 +459,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
       el('h2', {}, 'New technology'),
       id, name, glyph,
       field('kind', kind), proseRow, field('era', era),
-      field('gold', gold), field('seconds', seconds),
+      field('gold', gold),
       make);
   }
 
@@ -757,7 +755,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     el('span', { class: 'tre-card-says' }, says),
     el('span', { class: 'tre-card-meta' },
       `${node.gold}g${node.knowledge ? `·${node.knowledge}k` : ''}`
-      + ` ${node.seconds}s ${node.requires.length}/${MAX_REQUIRES}`));
+      + ` ${node.requires.length}/${MAX_REQUIRES}`));
     card.addEventListener('dragstart', (e) => {
       dragging = id;
       e.dataTransfer?.setData(DRAG_MIME, id);
@@ -844,7 +842,6 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     card.append(field('gold', number(node.gold, (v) => doc.update(id, { gold: v }))));
     card.append(field('knowledge',
       number(node.knowledge ?? 0, (v) => doc.update(id, { knowledge: v }))));
-    card.append(field('seconds', number(node.seconds, (v) => doc.update(id, { seconds: v }))));
 
     // ---- what kind of thing it is
     const kind = select([...TECH_KINDS], node.kind);
@@ -857,8 +854,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     if (node.kind === 'bonus') card.append(effectEditor(id, node));
     if (node.kind === 'mechanic') {
       card.append(el('p', { class: 'ed-note' },
-        'A mechanic is read by id in the sim — a cover page opening its book, '
-        + 'Conquest bending the Knowledge rate. The editor labels it; the code does it.'));
+        'A mechanic is read by id in the sim — Conquest adding to a ruin\'s '
+        + 'Knowledge lump. The editor labels it; the code does it.'));
     }
     const planned = el('input', { type: 'checkbox' });
     planned.checked = node.planned === true;
@@ -1147,7 +1144,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   }
 
   /**
-   * A whole number: Gold, Knowledge, seconds, a building level. Rounded,
+   * A whole number: Gold, Knowledge, a building level. Rounded,
    * because none of those has a fraction and a stray `.5` in a price is a
    * price nobody meant. An effect's VALUE is not one of these — `−0.05`
    * seconds off the auto-tap is a real bonus, so that field steps by 0.01.

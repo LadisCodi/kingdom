@@ -5,7 +5,7 @@
 // finishes — and the player saw none of it. The game's strongest retention
 // beat was invisible, and its AdvanceResult was dropped on the floor.
 
-import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
+import { DISTRICTS, UNITS } from '../sim/data/definitions';
 import type { UnitId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
@@ -69,12 +69,6 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     finished.push(el('div', { class: 'wel-done' },
       url ? spriteImgAt(url) : iconEl(def.id, { size: 'lg' }),
       el('span', {}, `${def.name} #${district.ordinal} finished`),
-      iconEl('tick', { size: 'sm' })));
-  }
-  for (const id of report.result.completedResearch) {
-    finished.push(el('div', { class: 'wel-done' },
-      iconEl('research', { size: 'lg' }),
-      el('span', {}, `${TECHNOLOGIES[id].name} researched`),
       iconEl('tick', { size: 'sm' })));
   }
 

@@ -594,6 +594,36 @@ describe('the plank follows the screen', () => {
   });
 });
 
+// The Knowledge tab under the plank (Docs/features/07-research.md §3): a bar
+// that fills at a point an hour, and says when the next point and the full
+// bar land — and stops saying so once it is full.
+describe('the Knowledge bar read-out', () => {
+  it('counts down to the next point and to full while filling', () => {
+    const state = freshGame();
+    state.kingdom.wallet.Knowledge = 3;
+    state.kingdom.lastKnowledgeAt = T0;
+    const game = freshPresenter(state);
+    vi.spyOn(game, 'now').mockReturnValue(T0 + 20 * 60_000); // 20 min into the hour
+    const info = game.knowledgeInfo();
+    expect(info).toMatchObject({ value: 3, cap: 10, full: false, over: false, perHour: 1 });
+    expect(info.nextIn).toBe(`+1 in ${formatDuration(40 * 60)}`);
+    // 40 min to the 4th point, then six more hours to the 10th.
+    expect(info.fullIn).toBe(`Full in ${formatDuration(40 * 60 + 6 * 3600)}`);
+  });
+
+  it('reports full, and no countdown, at the cap', () => {
+    const state = freshGame();
+    state.kingdom.wallet.Knowledge = 10;
+    const game = freshPresenter(state);
+    vi.spyOn(game, 'now').mockReturnValue(T0);
+    const info = game.knowledgeInfo();
+    expect(info.full).toBe(true);
+    expect(info.over).toBe(false);
+    expect(info.nextIn).toBeNull();
+    expect(info.fullIn).toBeNull();
+  });
+});
+
 describe('the heroes screen signature', () => {
   it('does not move on a tick that changed nothing it draws', () => {
     const game = freshPresenter();

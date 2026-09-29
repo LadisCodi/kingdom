@@ -11,12 +11,12 @@ import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
 import { townhallTaxMultiplier } from '../src/sim/upgrades';
-import { isTechComplete, startTech } from '../src/sim/research';
+import { isTechComplete, researchRefusal } from '../src/sim/research';
 import { revealCostForCell, revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
 import {
-  addAllTrainers, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
+  addAllTrainers, completeTech, FOREST, freshGame, fund, map, researchNow, reveal, T0, tickAt,
 } from './helpers';
 
 describe('full harvest-loop playthrough (headless smoke)', () => {
@@ -95,7 +95,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // --- Agriculture came in with the Sawmill's chain (a requirement is the
     // row above, and Saws sits two rows under it), so the plot is open.
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
-    expect(startTech(state, 'Agriculture', now)).toBe('AlreadyDone');
+    expect(researchRefusal(state, 'Agriculture')).toBe('AlreadyDone');
     expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
@@ -107,9 +107,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // --- The Farm is one research further down: Farming, the row under
     // Agriculture (Docs/features/12-quests.md §2 steps 9-15).
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
-    expect(startTech(state, 'Farming', now)).toBe('Started');
-    now += 60_000;
-    tickAt(state, now);
+    // Research takes no time: fill it, pay it, and it is done this second.
+    expect(researchNow(state, map, 'Farming', now)).toBe('Researched');
     expect(isTechComplete(state, 'Farming')).toBe(true);
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
     tickAt(state, now);

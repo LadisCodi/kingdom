@@ -43,6 +43,7 @@ export function newGame(map: MapData, now: number): GameState {
         live: [], lastWindow: -1, issuedThisWeek: {}, week: -1,
       },
       lastKnowledgeAt: now,
+      knowledgeBoughtWithGold: 0,
     },
     player: { wallet: playerWallet, payer: null },
     fog: { revealed: {}, discovered: {}, progress: {} },
@@ -55,7 +56,7 @@ export function newGame(map: MapData, now: number): GameState {
     // Nothing is researched, and nothing is granted. Every book is open from
     // the first minute (sim/research.ts `isTomeOpen`); what paces one is the
     // era bars, which ask for revealed cells.
-    research: { completed: [], active: [], slotsPurchased: 0 },
+    research: { completed: [], poured: {} },
     schedule: [],
     ruins: {},
     // One hero free at the start — a wallet may buy power, but never sole

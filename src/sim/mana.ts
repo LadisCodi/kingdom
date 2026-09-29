@@ -47,13 +47,12 @@
 // anchor — so the offline replay and the live tick land on the same integer.
 // Mana regen IS city idle production, so it IS subject to the 8h cap.
 
-import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
-import { recordResourceDiscovery } from './discovery';
+import { MANA, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techFlat, techValue } from './techEffects';
 import {
-  addToWallet, getWallet, type GameState, type RuinId,
+  addToWallet, getWallet, type GameState,
 } from './state';
 
 /**
@@ -86,11 +85,6 @@ export function manaProduction(state: GameState): number {
 const claimedLandmarks = (state: GameState): number =>
   Object.keys(state.landmarks.claimed).filter((id) => state.landmarks.claimed[id] === true).length;
 
-const clearedRuins = (state: GameState): number => {
-  let n = 0;
-  for (const id of Object.keys(RUINS) as RuinId[]) if (state.ruinsCleared[id] === true) n += 1;
-  return n;
-};
 
 /** What actually accrues, per hour. Nothing draws against it, so this is
  *  simply production — kept as its own name because every caller means "the
@@ -211,78 +205,3 @@ export function accrueMana(state: GameState, toTime: number): number {
 /** Both ways to buy a pool back — the video's allowance and the Gem ladder —
  *  live in `manaRefill.ts`, because a refill is one offer with two tills and
  *  a day that limits both. */
-
-// ------------------------------------------------------------- the Knowledge drip
-
-/**
- * Knowledge is the research clock, and its rate is the ground you have taken:
- * every ruin CLEARED, and (next step) every landmark claimed. Discovery pays
- * nothing; taking a dungeon to its bottom turns it into a permanent faucet.
- *
- * There is deliberately NO base rate. A player who claims nothing generates
- * nothing — Knowledge is not a wage for existing, it is what the land teaches
- * you once you have taken some of it. The safety valve is that era 1 of the
- * tree costs no Knowledge at all, so the opening hours run on Gold and time.
- * See Docs/features/07-research.md §3.
- *
- * KINGDOM-scoped: a technology is something the kingdom knows, so the tree
- * survives a province reset — and the contested landmarks that will pay it
- * lumps live on the world map, not in any one city. Modified by
- * knowledgeYield (the Wanderer's Compass). Same whole-units-against-an-anchor
- * shape as taxes and Mana, so all three replay identically.
- *
- * The rate CHANGES in play — a ruin cleared, a landmark claimed — and that is
- * safe without any settling step, because `advance` runs the continuous sims
- * up to a boundary BEFORE applying the discrete work at it. The anchor is
- * always `T0 + k × msPer` at the instant the rate moves, in a one-call replay
- * and in stepped ticking alike. That ordering is held by `taxes.test.ts` and
- * `workers.test.ts`; `expeditions.test.ts` holds the drip's own behaviour
- * across a rate change. An earlier draft added a `settleKnowledge` that
- * snapped the anchor at every rate change — it was unnecessary for the reason
- * above, and it silently discarded up to one unit each time it fired.
- */
-export function knowledgePerHour(state: GameState): number {
-  const cleared = clearedRuins(state);
-  const claimed = claimedLandmarks(state);
-  // Each source has its own line: Vigils per ruin, Wayposts per landmark —
-  // and Scriptorium is a percentage on the whole, applied where the modifier
-  // stack applies, so a relic and a rank read the same number the same way.
-  // Per ruin: the drip, doubled by Sanctified Ruins, plus Vigils and — for
-  // ground held to its deepest depth, which is what a clear IS — Conquest.
-  const perRuin = KNOWLEDGE.dripPerClearedRuinPerHour
-    * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
-    + techFlat(state, 'knowledgePerClearedRuin')
-    + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
-  // The base is the floor under the clock — what a kingdom holding no ground
-  // still learns an hour — and territory adds to it rather than replacing it,
-  // so the tree opens on the calendar and the province makes it open faster.
-  const raw = KNOWLEDGE.basePerHour
-    + cleared * perRuin
-    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour
-      + techFlat(state, 'knowledgePerClaimedLandmark'));
-  if (raw === 0) return 0;
-  return Math.max(0, resolve(state, 'knowledgeYield', techValue(state, 'knowledgeYield', raw)));
-}
-
-export function accrueKnowledge(state: GameState, toTime: number): number {
-  const rate = knowledgePerHour(state);
-  if (rate <= 0) {
-    state.kingdom.lastKnowledgeAt = Math.max(state.kingdom.lastKnowledgeAt, toTime);
-    return 0;
-  }
-  // A WHOLE-millisecond period, rounded from the rate. The anchor then only
-  // ever moves by integer multiples of it, so one-call replay and stepped
-  // ticking agree to the bit (invariant 1) — with a fractional period,
-  // `units * msPer` in one call and the sum of `u * msPer` over three hundred
-  // steps differ in the last place, and the anchor drifts. The rate is
-  // authored as a FRACTION of one an hour, so this matters: 1.4 an hour is
-  // 2,571,428.57 ms a unit. The cost is a rounding of parts per million,
-  // which nobody can observe.
-  const msPer = Math.max(1, Math.round(3_600_000 / rate));
-  const units = Math.floor((toTime - state.kingdom.lastKnowledgeAt) / msPer);
-  if (units <= 0) return 0;
-  state.kingdom.lastKnowledgeAt += units * msPer;
-  addToWallet(state.kingdom.wallet, 'Knowledge', units);
-  recordResourceDiscovery(state, 'Knowledge');
-  return units;
-}

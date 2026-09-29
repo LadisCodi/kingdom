@@ -8,14 +8,15 @@
 import { describe, expect, it } from 'vitest';
 import { TECHNOLOGIES } from '../src/sim/data/definitions';
 import { trainUnit } from '../src/sim/army';
-import { changeWorkers, enqueueBuild, finishWithGems } from '../src/sim/commands';
+import { changeWorkers, enqueueBuild, finishWithGems, researchTech } from '../src/sim/commands';
 import { placementBlock } from '../src/sim/districts';
 import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
-import { startTech, techCost } from '../src/sim/research';
+import { pourKnowledge, researchRefusal, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
 import {
-  addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, reveal, T0, tickAt,
+  addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, T0,
+  tickAt,
 } from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
@@ -71,15 +72,16 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     expect(TECHNOLOGIES.Fishing.tome).toBe('Magic');
     expect(TECHNOLOGIES.Sailing.tome).toBe('Magic');
     // Nothing in the tome is reachable until the tome is open.
-    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
+    expect(researchRefusal(state, 'Fishing')).toBe('MissingRequirement');
     completeTech(state, 'Forestry'); // a Civics era-1 tech opens nothing here
-    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
+    expect(researchRefusal(state, 'Fishing')).toBe('MissingRequirement');
     // Fishing is two bands down, so it waits on what it requires AND on the
     // era bars above it, which are gates in the world (07-research.md §2.1).
     for (const req of TECHNOLOGIES.Fishing.requires) completeTech(state, req);
-    expect(startTech(state, 'Fishing', T0)).toBe('EraLocked');
+    expect(researchRefusal(state, 'Fishing')).toBe('EraLocked');
     openEveryEra(state);
-    expect(startTech(state, 'Fishing', T0)).toBe('Started');
+    expect(researchRefusal(state, 'Fishing')).toBeNull();
+    expect(pourAndResearch(state, map, 'Fishing', T0)).toBe('Researched');
   });
 
   it('the Docks must touch Water; its boats net Fish from shoals', () => {
@@ -149,9 +151,10 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     // and everything it needs is on the way to it.
     for (const req of TECHNOLOGIES.Mining.requires) completeTech(state, req);
     openEveryEra(state);
-    expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
+    expect(pourKnowledge(state, 'Mining').result).toBe('Poured');
+    expect(researchTech(state, map, 'Mining', T0)).toBe('NotEnoughGold');
     fund(state, { Gold: techCost('Mining') });
-    expect(startTech(state, 'Mining', T0)).toBe('Started');
+    expect(researchTech(state, map, 'Mining', T0)).toBe('Researched');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
     expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });

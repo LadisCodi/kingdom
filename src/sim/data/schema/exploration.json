@@ -20,11 +20,29 @@
     "knowledge": {
       "type": "object",
       "fields": {
-        "basePerHour": { "type": "int" },
-        "dripPerClearedRuinPerHour": { "type": "float" },
-        "perClaimedLandmarkPerHour": { "type": "float" },
-        "landmarkClaimLump": { "type": "int" },
-        "conquestPerClearedRuinPerHour": { "type": "float" }
+        "basePerHour": {
+          "type": "int",
+          "min": 0,
+          "doc": "The drip: Knowledge an hour while the bar is under its cap. Fixed for the whole game."
+        },
+        "cap": {
+          "type": "int",
+          "min": 1,
+          "doc": "The bar. The drip stops while the kingdom holds this much or more; lumps and purchases land over it."
+        },
+        "landmarkClaimLump": { "type": "int", "min": 0, "doc": "Knowledge a landmark pays once, when it is claimed." },
+        "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every ruin's first-clear lump." },
+        "roomCoef": {
+          "type": "float",
+          "min": 0,
+          "doc": "Knowledge a ruin room pays, on the room reward formula (at least 1)."
+        },
+        "goldPriceBase": {
+          "type": "int",
+          "min": 1,
+          "doc": "Gold for the first point of Knowledge bought; the nth point ever bought costs n times this, never reset."
+        },
+        "gemsPerPoint": { "type": "int", "min": 1, "doc": "Gems for one point of Knowledge. Never rises." }
       }
     },
     "raid": { "type": "object", "fields": { "takeFractionMax": { "type": "float" }, "maxRaids": { "type": "int" } } },

@@ -27,12 +27,14 @@ import { newGame } from '../src/sim/newGame';
 import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
-import { isTechComplete, startTech, techCost } from '../src/sim/research';
+import {
+  isTechComplete, techCost, techKnowledgeMissing,
+} from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
   type DistrictId, type TechId,
 } from '../src/sim/state';
-import { BERRIES, FOREST, map, T0 } from './helpers';
+import { BERRIES, FOREST, map, pourAndResearch, T0 } from './helpers';
 
 const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed at start
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
@@ -74,9 +76,12 @@ describe('a player can actually play the onboarding', () => {
       }
     };
     const research = (id: TechId) => {
+      // Research takes no time (07-research.md §1): the Knowledge the chain
+      // paid goes in, the Gold is paid, and it is done this second.
       expect(gold(), `cannot afford ${id}`).toBeGreaterThanOrEqual(techCost(id));
-      expect(startTech(state, id, now)).toBe('Started');
-      tick(TECHNOLOGIES[id].durationSeconds);
+      expect(getWallet(state.kingdom.wallet, 'Knowledge'), `not enough Knowledge for ${id}`)
+        .toBeGreaterThanOrEqual(techKnowledgeMissing(state, id));
+      expect(pourAndResearch(state, map, id, now)).toBe('Researched');
       expect(isTechComplete(state, id)).toBe(true);
     };
     // The forest cells the opening reveals, tapped round-robin so exhaustion
