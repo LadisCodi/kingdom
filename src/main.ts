@@ -480,8 +480,9 @@ async function boot(): Promise<void> {
       { id: 'off', label: 'Off' },
       { id: 'iphone-x', label: 'iPhone X', w: 375, h: 812, top: 44, bottom: 34 },
       { id: 'iphone-17', label: 'iPhone 17', w: 402, h: 874, top: 62, bottom: 34 },
-      // The 3:4 iPads have a home button: a status bar, and no home bar.
-      { id: 'ipad', label: 'iPad 3:4', w: 768, h: 1024, top: 20, bottom: 0 },
+      // The widest iPad for its height (3:4) AND one with insets: the least
+      // usable height in proportion, which is what sets the menus' size.
+      { id: 'ipad-pro', label: 'iPad Pro 12.9"', w: 1024, h: 1366, top: 24, bottom: 20 },
     ] as const;
     const DEVICE_KEY = 'kingdom.devDevice';
     const deviceButton = button('', () => {});

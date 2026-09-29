@@ -216,8 +216,8 @@ html[data-device='iphone-17'] #app::before {
   border-radius: calc(var(--d) * 19);
   background: #000;
 }
-/* The home bar, on both iPhones. */
-html[data-device^='iphone'] #app::after {
+/* The home bar, on the iPhones and the iPad Pro. */
+html[data-device] #app::after {
   content: '';
   bottom: calc(var(--d) * 8);
   width: calc(var(--d) * 134);
