@@ -316,24 +316,34 @@
 .tr-tag.is-trait { background: var(--parchment); border-color: var(--section-line); color: var(--ink); }
 .tr-tag.has-tip-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
 
+/* A SOLDIER'S NUMBERS: small tiles — the mark and the number, the name
+   under them. The three it is chosen on sit under the picture and blurb,
+   beside Train, which runs down past them; any more take a row of their own
+   under both, the same tiles, four to the row. */
+.tr-info.has-stats > .tr-who { grid-column: 1; grid-row: 1; }
+.tr-info.has-stats > .tr-body { grid-column: 2; grid-row: 1; }
+.tr-info.has-stats > .tr-buy { grid-column: 3; grid-row: 1 / span 2; }
+.tr-info.has-stats > .tr-stats { grid-row: 2; }
+.tr-info.has-stats > .tr-stats.is-more { grid-row: 3; }
 .tr-stats {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: calc(var(--px) * 8);
-}
-.tr-stat.k-section {
+  grid-column: 1 / 3;
   display: flex;
+  gap: calc(var(--px) * 7);
+}
+.tr-stats.is-more { grid-column: 1 / -1; }
+.tr-stat.k-section {
+  flex: none;
+  width: calc(var(--px) * 66);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: calc(var(--px) * 6);
-  min-width: 0;
-  padding: calc(var(--px) * 5) calc(var(--px) * 6);
+  padding: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 4);
   background: var(--parchment);
 }
-.tr-stat > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
-.tr-stat-body { min-width: 0; }
-.tr-stat-label { font-size: var(--text-helper); font-weight: var(--weight-title); line-height: 1.15; }
-.tr-stat-value { display: block; font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
+.tr-stat-top { display: flex; align-items: center; gap: calc(var(--px) * 4); }
+.tr-stat-top > .icon { --icon-size: calc(var(--px) * 22); flex: none; }
+.tr-stat-value { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
+.tr-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); color: var(--ink-muted); line-height: 1.1; }
 
 /* THE BATCH, at the foot of the panel: the unit and its count, the bar and
    time left for the one in training, the batch's total time, and Finish. */

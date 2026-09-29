@@ -66,13 +66,13 @@ function typeTag(unitId: UnitId): HTMLElement {
   return tag(type, tip, 'type');
 }
 
-/** One number a soldier is chosen on: a tile of the building card's kind. */
+/** One number a soldier is chosen on: a small tile of the building card's
+ *  kind — the mark and the number, the name under them. */
 const stat = (icon: IconName, label: string, value: number): HTMLElement =>
-  el('div', { class: 'tr-stat k-section' },
-    iconEl(icon, { size: 'lg' }),
-    el('div', { class: 'tr-stat-body' },
-      el('div', { class: 'tr-stat-label' }, label),
-      el('b', { class: 'tr-stat-value' }, String(value))));
+  el('div', { class: 'tr-stat k-section', 'aria-label': `${label} ${value}` },
+    el('div', { class: 'tr-stat-top', 'aria-hidden': 'true' },
+      iconEl(icon), el('b', { class: 'tr-stat-value' }, String(value))),
+    el('div', { class: 'tr-stat-label', 'aria-hidden': 'true' }, label));
 
 /**
  * `live` is where the block's ticking half goes: the queue's bar, its time and
@@ -249,7 +249,15 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   const owned = trainee === 'Villager'
     ? game.state.city.population
     : game.state.army.filter((u) => u.definitionId === trainee).length;
-  return el('div', { class: 'tr-info k-section' },
+  // A soldier's numbers: the three it is chosen on sit under its picture and
+  // blurb, beside Train; any more would take a row of their own under both,
+  // the same tiles, four to the row.
+  const figures = unit === null ? [] : [
+    stat('atk', 'Attack', unit.dmg),
+    stat('def', 'Defence', unit.def),
+    stat('hp', 'Health', unit.hp),
+  ];
+  return el('div', { class: `tr-info k-section${figures.length > 0 ? ' has-stats' : ''}` },
     el('div', { class: 'tr-who', title: `You have ${owned}` },
       unitPortrait(trainee, 'tr-portrait'),
       el('span', { class: 'tr-count' }, `x${owned}`)),
@@ -258,10 +266,8 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
       el('div', { class: 'tr-tags' }, ...tags),
       el('div', { class: 'tr-desc' }, unit === null ? VILLAGER.description : unit.description)),
     el('div', { class: 'tr-buy' }, buy),
-    ...(unit === null ? [] : [el('div', { class: 'tr-stats' },
-      stat('atk', 'Attack', unit.dmg),
-      stat('def', 'Defence', unit.def),
-      stat('hp', 'Health', unit.hp))]),
+    ...(figures.length === 0 ? [] : [el('div', { class: 'tr-stats' }, ...figures.slice(0, 3))]),
+    ...(figures.length <= 3 ? [] : [el('div', { class: 'tr-stats is-more' }, ...figures.slice(3))]),
     batch,
   );
 }

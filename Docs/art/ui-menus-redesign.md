@@ -443,8 +443,11 @@ wood of its sides touches the screen's edges.
     one line of flavour, and the priced
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.
-    A soldier adds a row of three stat tiles underneath: Attack, Defence,
-    Health. A gate keeps the button, disabled, and puts a padlock and a
+    A soldier adds its three numbers — Attack, Defence, Health — as small
+    tiles (the mark and the number, the name under them) under the portrait
+    and the flavour, beside the Train button, which runs down past them. Any
+    further stat takes a row of its own under both, the same tiles, four to
+    the row. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
   - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
