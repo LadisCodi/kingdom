@@ -48,8 +48,9 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
         k.full ? (k.over ? `${k.value - k.cap} past the bar — nothing is dripping` : 'Full — nothing is dripping')
           : k.fullIn ?? '')),
     bar.root,
-    // When the next point drips in; a full bar drips nothing.
-    el('div', { class: 'mana-note' }, k.nextIn ?? 'The bar is full'),
+    // When the next point drips in. A full bar drips nothing, and the line
+    // stays, blank, so the sheet does not change size.
+    el('div', { class: 'mana-note' }, k.nextIn ?? '\u00a0'),
 
     el('div', { class: 'knowledge-offers' },
       buy(1, 'Gold'),
