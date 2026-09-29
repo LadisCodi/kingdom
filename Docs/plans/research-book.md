@@ -85,8 +85,15 @@ the sheet, never numbered on it:
    wide **Research** button, and while the Knowledge is short the button is
    disabled with a line under it: *Assign all its Knowledge to research it*.
 
-- An undiscovered technology's sheet shows part 1 and what it needs; parts 2
-  and 3 are disabled with the reason.
+- **The sheet is a loose research page** (M44 B): the same parchment as the
+  tree's sheet, held by one brass pin, the name lettered as its heading, a
+  small close knob in its corner, and the parts separated by hand-drawn ink
+  dividers — no wooden frame and no section numbers.
+- **An undiscovered technology's sheet** (M45) adds, under part 1, its
+  **requirements as the upgrade popup's rows** — one full-width row each, a
+  met one with a green tick, a missing one pink with a red cross. Parts 2 and
+  3 stay, disabled: the bar grey, the three buttons greyed, and under Research
+  *Complete all requirements to research*.
 - The sheet stays open after a pour; it closes itself after Research, with the
   completion banner.
 
