@@ -769,3 +769,17 @@ for.
   inside, green with a tick when completed.
 - **What to know:** it widened the rows of one and two nodes to fill the page
   instead of keeping three equal columns; only the full rows are a third wide.
+
+## M44 — a technology's sheet, three proposals (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M43 one above, continued.
+- **Attached:** real screenshots of the upgrade popup and the building card
+  (Chrome `upload_image`), and `mockups/m43-research-tree.png` for the tree
+  behind.
+- **File:** `mockups/m44-tech-sheet.png` (1448×1086), three screens A B C.
+- **What worked:** asking for the three proposals in ONE image kept them at
+  one scale over the same tree, and the real popup screenshot gave the
+  research block (price above, disabled button, line under) exactly.
+- **What to know:** A and C repeat the name in the header strip and again
+  beside the emblem.
