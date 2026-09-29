@@ -6,8 +6,8 @@
 > reference is Elvenar's research screen and sheet; the look is a page of a
 > magic book with its sections as bookmarks (Heroes III's spellbook).
 >
-> **Status.** The tree is M43; the sheet is being mocked (M44). M37–M42 were
-> the rounds before. Folds into
+> **Status.** Chosen: the tree is M43, the sheet is M46 (M44 B, refined).
+> M37–M42 and M44–M45 were the rounds before. Folds into
 > `07-research.md` §5 and `ui-menus-redesign.md` §5.9 once chosen.
 
 ## 1. The states
@@ -73,8 +73,9 @@ below the other, in the order the player works through them — a way to order
 the sheet, never numbered on it:
 
 1. **About** — laid out like the top of a building card, without its upgrade
-   button: the technology's emblem in its framed picture, the name, and one
-   plain sentence of what it unlocks or does.
+   button: the technology's emblem in its framed picture and one plain
+   sentence of what it unlocks or does. The name is the page's heading, and
+   only there.
 2. **Knowledge** — the kit's blue progress bar, poured / needed, the numbers
    inside it; under it **three buttons with the price on the button**:
    - **Gems** — buys the Knowledge still missing and pours it;
@@ -93,8 +94,7 @@ the sheet, never numbered on it:
   **requirements as the upgrade popup's rows** — one full-width row each, a
   met one with a green tick, a missing one pink with a red cross — **and
   nothing else**: parts 2 and 3 are not shown, since nothing in them can be
-  pressed. They appear once every requirement is met. (M45's right screen
-  still draws them disabled; the design drops them.)
+  pressed. They appear once every requirement is met. (M46.)
 - The sheet stays open after a pour; it closes itself after Research, with the
   completion banner.
 

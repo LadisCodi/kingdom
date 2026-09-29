@@ -795,3 +795,12 @@ for.
   earlier attachment without it being sent again.
 - **What to know:** the page still prints the name twice (heading and beside
   the emblem), as M44 B does.
+
+## M46 — the technology sheet, final (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M45 one above, continued; M45 attached and asked
+  for as an edit ("everything else EXACTLY the same").
+- **File:** `mockups/m46-tech-sheet-final.png` (1448×1086), two screens.
+- **What worked:** a short edit prompt against the attached image changed only
+  the two things asked for.
