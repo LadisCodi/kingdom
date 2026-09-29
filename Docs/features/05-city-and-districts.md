@@ -197,9 +197,9 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ### 4.2 Moving
 
 - A move is free, instant, and never fails halfway.
-- A move changes nothing but position: a Built building keeps paying taxes and
-  working its cells, an unfinished one keeps its place in the queue and the
-  wait it was stamped with.
+- A move changes nothing but position: a Built building keeps paying rent,
+  working its cells and holding its store; an unfinished one keeps its place
+  in the queue and the wait it was stamped with.
 - Everything that reads position follows: housing adjacency, influence radius,
   worker walking distance, the fog ring.
 

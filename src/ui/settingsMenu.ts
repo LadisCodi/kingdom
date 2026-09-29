@@ -10,7 +10,7 @@ import { ambienceMuted, setAmbienceMuted } from '../audio/ambience';
 import { musicMuted, setMusicMuted } from '../audio/music';
 import { setSfxMuted, sfxMuted } from '../audio/sfx';
 import type { Game } from '../game';
-import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from '../sim/data/definitions';
+import { GAME_VERSION, SAVE_VERSION } from '../sim/data/definitions';
 import { el } from './format';
 import { action, sectionHead, sheet, switchCtl } from './kit';
 
@@ -80,7 +80,7 @@ export function renderSettingsMenu(
     el('div', { class: 'set-row' },
       mark('save'),
       words(opts.saveModeLabel.includes('cloud') ? 'Saved to the cloud' : 'Saved to this device',
-        `Your kingdom keeps working for up to ${OFFLINE_CAP_HOURS} hours while you are away.`)),
+        'Your kingdom keeps working while you are away, until its stores are full.')),
 
     sectionHead('Playing as'),
     el('div', { class: 'set-row' },

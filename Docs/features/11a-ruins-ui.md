@@ -158,7 +158,7 @@ Owned by the city economy.
 
 | | |
 |---|---|
-| Data | Accrued Stardust / XP / Gold, cap (2 h or 8 h), time to cap, capped flag |
+| Data | Accrued Stardust / XP / Gold, cap (2 h), time to cap, capped flag |
 | Rules | One meter for the whole idle economy. Distinct full state, visible from the city HUD |
 
 ## 3. Cross-cutting

@@ -178,9 +178,9 @@ describe('the workshop under the engine contract', () => {
       .toBe(JSON.stringify(serialize(once, T0 + 4 * 60 * MIN)));
   });
 
-  it('is production, so it stops at the eight-hour offline cap', () => {
+  it('runs the whole queue while away: its queue is its only ceiling', () => {
     // A Smelter, because Iron takes an hour: twelve queued is twelve hours of
-    // one villager, which is more work than the cap can ever pay out.
+    // one villager. There is no offline cap, so a long absence finishes it.
     const state = freshGame();
     addBuilt(state, 'Smelter', { x: 3, y: 3 });
     const shop = state.city.districts.find((d) => d.definitionId === 'Smelter')!;
@@ -189,9 +189,9 @@ describe('the workshop under the engine contract', () => {
     expect(changeWorkers(state, map, shop.uniqueId, 1, T0)).toBe('Assigned');
     fund(state, { Gold: 100_000, Stone: 10_000 });
     queue(state, shop, queueCapacity(shop));
-    // Twelve hours away: eight hours of it land, not twelve.
-    const loaded = deserialize(serialize(state, T0), map, T0 + 12 * 60 * MIN)!;
-    expect(getGood(loaded.city.goods, 'Iron')).toBe(8);
+    // A day away: all twelve land, and nothing more.
+    const loaded = deserialize(serialize(state, T0), map, T0 + 24 * 60 * MIN)!;
+    expect(getGood(loaded.city.goods, 'Iron')).toBe(queueCapacity(shop));
   });
 
   it('keeps its queue and its work through a save', () => {

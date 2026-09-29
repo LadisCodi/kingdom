@@ -22,13 +22,14 @@
 3. **Discovering the ruin starts the gate's counter**, authored in minutes.
    When it runs out the garrison raids the city, and raids again every period
    until the gate is cleared or the garrison is out of trips.
-4. **A raid is not a fight.** Nothing defends. The garrison takes, the city
-   keeps what it makes, and the only answer is to go and clear the gate.
-5. **A raid steals banked materials, and only materials.** Gold, Food, Wood,
-   Stone. Never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
+4. **A raid is not a fight.** Nothing defends. The garrison takes, and the
+   answers are to collect and to go and clear the gate.
+5. **A raid takes from the buildings' stores, never from the wallet, and only
+   materials** ([`03-economy.md`](03-economy.md) §3.2). What the player has
+   collected is safe: collecting is the defence. Gold, Food, Wood, Stone. Never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
    or units.
-6. **A raid is priced in production, not in units**, capped by a fraction of the
-   purse, and **a garrison makes at most three trips**, then sits on what it
+6. **A raid is priced in production, not in units**, capped by a fraction of
+   what the stores hold, and **a garrison makes at most three trips**, then sits on what it
    took. Bounded, and **recoverable**: clearing the gate returns its whole
    hoard.
 7. **The gate is the incentive, not the punishment.** It is a small personal
@@ -91,8 +92,7 @@ guard { threat, power, warningMinutes, periodMinutes }
   out of trips: no counter.
 - **One counter per gate.** Several may run at once; raids due at the same
   instant resolve in ruin order.
-- **It is a timer.** It runs and resolves in full while the player is away; the
-  offline cap does not touch it ([`../implementation-plan.md`](../implementation-plan.md) §1).
+- **It is a timer.** It runs and resolves in full while the player is away.
 - A cleared gate is gone for good. No re-infestation.
 - **Minutes, not hours.** The Barrow's thirty minutes says *you have this
   session and maybe the next*. What bounds a long absence is the trip limit
@@ -105,19 +105,22 @@ guard { threat, power, warningMinutes, periodMinutes }
 
 ```
 base = cityRate × takeSeconds(tier)                  # seconds of the city's own production
-take = floor( min(base, banked × raid.takeFractionMax) )
+take = floor( min(base, stored × raid.takeFractionMax) )
 ```
 
 - `cityRate` is the city's current production of that material — the crews'
   gather rate, plus rent for Gold. It is a fact about the city, not an
   accrual, so a raid replays identically. **They take from what you make**: a
   material the city does not produce is not taken.
-- `raid.takeFractionMax` bounds a raid on a small purse; `takeSeconds` bounds one
-  on a large purse.
+- `stored` is what every store in the city holds of that material.
+- `raid.takeFractionMax` (0.5) bounds a raid on nearly empty stores;
+  `takeSeconds` bounds one on full stores.
+- The take is spread across the buildings in proportion to what each holds.
+- A raid that empties a full store sets its crew going again from that moment.
 - **Trips.** A raid that takes anything counts one trip. At `raid.maxRaids` the
   garrison stops raiding and holds its hoard. The worst case of any absence is
-  three raids per open gate, each at most a tenth of the purse — and it all
-  comes back when the gate is cleared (§5).
+  three raids per open gate, each at most half of what the stores hold — and
+  it all comes back when the gate is cleared (§5).
 - The **hoard** is a per-gate counter of what it has taken.
 - A raid writes a **report** — ruin, time, what was taken — that the widget
   shows until dismissed (§7).
@@ -153,7 +156,7 @@ take = floor( min(base, banked × raid.takeFractionMax) )
     when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
   - **The screen says the price before it is paid** — the expected losses sit
     under the button, beside the supplies.
-- **What it pays:** the hoard, in full, banked immediately; Hero XP by the
+- **What it pays:** the hoard, in full, into the wallet immediately; Hero XP by the
   ruin's tier; event points ([`13-events.md`](13-events.md) §2.2); the
   `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
   reward, no loot table — the ruin behind it is the reward.
@@ -200,7 +203,7 @@ take = floor( min(base, banked × raid.takeFractionMax) )
 |---|---|---|
 | a ruin's gate: threat, power, warning and period in minutes | §2 | `?dev=map` |
 | take seconds per tier | 300 × tier | `garrisons` › `takeSeconds`, one entry per tier |
-| take fraction max | 0.10 | `raid.takeFractionMax` (`exploration`) |
+| take fraction max, of what the stores hold | 0.5 | `raid.takeFractionMax` (`exploration`) |
 | max raids per gate | 3 | `raid.maxRaids` (`exploration`) |
 | gate supplies per tier | half the ruin's own supplies | `garrisons` › `supplies` |
 
@@ -217,6 +220,7 @@ take = floor( min(base, banked × raid.takeFractionMax) )
 - One raid clock for the whole city; counters in hours or days; a counter in
   `?dev=data`.
 - Rousing conditions beyond discovery — a hall, a hero, an army.
+- Raids on the wallet.
 - Raids on Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes or
   units.
 - Buying protection: a Gem shield, an ad that repels a raid, a "peace" SKU.

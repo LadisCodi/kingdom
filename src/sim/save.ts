@@ -7,12 +7,11 @@
 // reshapes and semantic changes, and this design is shaped around that
 // reality instead of around a general framework.
 //
-// Offline catch-up: the unified advance replays the absence up to the 8h cap;
-// time beyond the cap pauses workers/townhall (queue timers and cell recovery
-// keep running in real time).
+// Offline catch-up: the unified advance replays the whole absence. There is
+// no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  GAME_VERSION, MISSIONS, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
+  GAME_VERSION, MISSIONS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -26,6 +25,7 @@ import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
+import { isStoreFull } from './storage';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
@@ -57,6 +57,11 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
+  /** What waits uncollected in its store. Additive since save 62. */
+  Stored?: Wallet;
+  /** A house's rent anchor. Additive since save 62: before it the city had
+   *  one anchor, `LastTaxAt`, which every house starts from. */
+  RentAnchorUtc?: string;
 }
 
 interface QueueItemDto {
@@ -607,6 +612,8 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
+                ...(d.stored && Object.keys(d.stored).length > 0 ? { Stored: { ...d.stored } } : {}),
+                ...(d.rentAnchor !== undefined ? { RentAnchorUtc: iso(d.rentAnchor) } : {}),
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -617,7 +624,6 @@ export function serialize(state: GameState, now: number): SaveFile {
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
-            LastTaxAt: iso(state.city.lastTaxAt),
             TrainingQueue: state.city.trainingQueue.map((i) => ({
               UniqueID: i.uniqueId,
               Trainee: i.trainee,
@@ -768,9 +774,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         LegendaryPity: state.gacha.legendaryPity,
         FreePulls: state.gacha.freePulls,
       },
-      // The ad offer. `ReadyAt` is a TIMER, so it is not shifted by the
-      // offline cap below — the cap limits what the city produces, never what
-      // a clock does. `Pending` persists because an offer the player walked
+      // The ad offer. `ReadyAt` is a TIMER. `Pending` persists because an offer the player walked
       // away from is still owed to them.
       'kingdom.adOffers': {
         ReadyAtUtc: iso(state.ads.readyAt),
@@ -787,9 +791,8 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
       },
-      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER, so it
-      // is not shifted by the offline cap below: the counter a discovery
-      // started runs while the player is away, and the raid it owes resolves
+      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER: the
+      // counter a discovery started runs while the player is away, and the raid it owes resolves
       // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
       'kingdom.gates': {
         Gates: Object.entries(state.gates).map(([ruinId, g]) => ({
@@ -870,10 +873,10 @@ export function serialize(state: GameState, now: number): SaveFile {
  */
 /** What the kingdom did while nobody was watching. */
 export interface CatchUpReport {
-  /** Milliseconds actually replayed (capped). */
+  /** Milliseconds replayed: the whole absence. */
   elapsedMs: number;
-  /** True when the absence was longer than the cap and progress paused. */
-  cappedOut: boolean;
+  /** True when some building's store filled while the player was away. */
+  storesFull: boolean;
   result: AdvanceResult;
 }
 
@@ -914,6 +917,7 @@ export function deserialize(
         })),
       };
     }
+    const legacyTaxAt = typeof cityDto.LastTaxAt === 'string' ? ms(cityDto.LastTaxAt) : null;
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
       (d): District => ({
         uniqueId: d.UniqueID,
@@ -924,6 +928,12 @@ export function deserialize(
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
+        ...(d.Stored ? { stored: { ...d.Stored } } : {}),
+        // A save from before stores had ONE rent anchor for the city; every
+        // house picks up from it, so an absence spanning the update is paid
+        // into the houses from where the old anchor stood.
+        ...(d.RentAnchorUtc ? { rentAnchor: ms(d.RentAnchorUtc) }
+          : legacyTaxAt !== null ? { rentAnchor: legacyTaxAt } : {}),
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -937,7 +947,6 @@ export function deserialize(
         startedAt: msOrNull(q.StartedAtUtc),
       }),
     );
-    state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
     state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
     state.city.trainingQueue = ((cityDto.TrainingQueue ?? []) as any[]).map((i) => ({
       uniqueId: i.UniqueID,
@@ -1355,53 +1364,23 @@ export function deserialize(
   // it, while one that closed before the save was ever written must not.
   reconcileSchedule(state, lastSaved);
 
-  // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
+  // ---- Offline catch-up: replay the whole absence. ---------------------------
+  //
+  // There is no offline cap. What bounds an absence is each building's store
+  // (sim/storage.ts), the Mana pool, the Knowledge bar and the queues — each
+  // stops its own production when it is full, in the same `advance()` the
+  // live tick runs, so a day away and a day of stepping agree exactly.
   //
   // THE WHOLE CATCH-UP RUNS WITH THE MISSION ODOMETER HELD STILL
   // (sim/events.ts). The season pass's missions are active-play only, which is
   // the one thing in this codebase that is meant to read differently in replay
   // than live; everything else in `advance()` is untouched by the flag, so
-  // invariant 1 still holds — a six-hour absence replayed in one call and in
-  // six steps agree exactly, because both run with it set.
-  const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);
-  const report = withoutTallies(state, () => advance(state, map, capEnd));
-  if (capEnd < now) {
-    const gap = now - capEnd;
-    for (const w of state.workers) {
-      // A blocked-Idle worker resumes AT `now`: keeping its pre-cap offset
-      // (stateStartedAt + gap < now) would let the final advance below fit a
-      // whole harvest cycle inside the paused window and over-pay the cap.
-      w.stateStartedAt = w.activity === 'Idle' ? now : w.stateStartedAt + gap;
-      if (w.stateUntil !== null) w.stateUntil += gap;
-    }
-    for (const item of state.city.trainingQueue) {
-      if (item.startedAt !== null) item.startedAt += gap;
-    }
-    // A workshop crew is production: it stops at the cap with the workers.
-    for (const line of Object.values(state.city.workshops)) line.anchor += gap;
-    state.city.lastTaxAt += gap; // taxes pause beyond the cap too
-    state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
-    // NOT the Knowledge drip: the bar is its only cap (sim/knowledge.ts), so
-    // the uncapped tail below pays it.
-    // Cell recovery and build-queue timers run in real time (NOT paused).
-    state.lastAdvance = capEnd;
-    // Completes remaining queue work; workers resume at now. Its results are
-    // merged in so a build that finished past the cap is still announced.
-    const tail = withoutTallies(state, () => advance(state, map, now));
-    report.deposits.push(...tail.deposits);
-    report.completedItems.push(...tail.completedItems);
-    report.goldEarned += tail.goldEarned;
-    report.trainedPopulation += tail.trainedPopulation;
-    report.manaEarned += tail.manaEarned;
-    report.knowledgeEarned += tail.knowledgeEarned;
-    report.expiredModifiers.push(...tail.expiredModifiers);
-    report.trainedUnits.push(...tail.trainedUnits);
-    // Schedule events come from the TAIL by design: their windows never
-    // paused, so most of what happened past the cap happened here. Nothing
-    // comes from the ruins — a room resolves on entry, so an absence never
-    // resolves one.
-    report.scheduleEvents.push(...tail.scheduleEvents);
-  }
-  onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });
+  // invariant 1 still holds.
+  const report = withoutTallies(state, () => advance(state, map, now));
+  onCatchUp?.({
+    elapsedMs: Math.max(0, now - lastSaved),
+    storesFull: state.city.districts.some(isStoreFull),
+    result: report,
+  });
   return state;
 }

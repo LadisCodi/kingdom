@@ -1,4 +1,5 @@
-import { advance, researchTech } from '../src/sim/commands';
+import { advance, collectBuilding, researchTech } from '../src/sim/commands';
+import { cityStored } from '../src/sim/storage';
 import {
   pourKnowledge, techCost, techKnowledgeMissing, type ResearchResult,
 } from '../src/sim/research';
@@ -15,8 +16,8 @@ import {
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
-  addToWallet, coordKey, getWallet, type Coord, type DistrictId, type GameState, type RuinId,
-  type TechId, type UnitId,
+  addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type DistrictId, type GameState,
+  type RuinId, type TechId, type UnitId, type Wallet,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -160,6 +161,20 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
     ordinal: districtCount(state, definitionId) + 1,
     level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
   });
+};
+
+/** What every building's store holds of one currency — made, not collected. */
+export const stored = (state: GameState, c: CurrencyId): number => cityStored(state, c);
+
+/** The player sweeps the city: every building's store into the wallet at `t`. */
+export const collectAll = (state: GameState, t: number): Wallet => {
+  const got: Wallet = {};
+  for (const d of state.city.districts) {
+    for (const [c, n] of Object.entries(collectBuilding(state, d.uniqueId, t))) {
+      got[c as CurrencyId] = (got[c as CurrencyId] ?? 0) + (n ?? 0);
+    }
+  }
+  return got;
 };
 
 /** Test setup: the military building a unit type needs, plus enough army cap

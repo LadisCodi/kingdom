@@ -16,8 +16,8 @@ import { trainSeconds, trainSecondsAt, trainUnit, trainingCompletesAt } from '..
 import { queueGood, queuedWorkMs } from '../src/sim/workshops';
 import { cityGoldPerMinute, houseGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type DistrictId, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import type { DistrictId, GameState } from '../src/sim/state';
+import { addBuilt, completeTech, freshGame, fund, map, stored, T0, tickAt } from './helpers';
 
 const A = { x: 2, y: 0 };
 const B = { x: 2, y: 1 }; // adjacent to A
@@ -44,7 +44,7 @@ describe('housing adjacency', () => {
     expect(houseGoldPerMinute(state, house(state, A))).toBe(59);
     expect(cityGoldPerMinute(state)).toBe(118);
     tickAt(state, T0 + 60_100); // a hair past the minute
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(118); // vs 120 if built apart
+    expect(stored(state, 'Gold')).toBe(118); // vs 120 if built apart
   });
 
   it('crowding stacks per neighbor (and would clamp at 0, never negative)', () => {

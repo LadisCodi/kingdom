@@ -28,9 +28,7 @@ import { deserialize, serialize } from '../src/sim/save';
 import {
   getWallet, townhall, type GameState, type RuinId, type UnitId,
 } from '../src/sim/state';
-import {
-  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, T0,
-} from './helpers';
+import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, stored, T0 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
 
@@ -692,13 +690,12 @@ describe('finishing a training line with gems', () => {
     const hall = townhall(state);
     trainUnit(state, 'Villager', T0, hall);
     state.city.wallet.Gold = 0;
-    state.city.lastTaxAt = T0;
     state.lastAdvance = T0;
 
     expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
     expect(state.city.population).toBe(1);
     advance(state, map, T0 + 60_000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(30); // a full minute of rent
+    expect(stored(state, 'Gold')).toBe(30); // a full minute of rent, in the house
   });
 });
 

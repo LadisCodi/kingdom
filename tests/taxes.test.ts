@@ -1,23 +1,20 @@
-// Housing taxes: passive gold from housed villagers (the idle income), plus
-// the house tap — tapping fast-forwards the tax clock (buildings never
-// exhaust; that mechanic is for natural cells only).
+// Housing rent (Docs/features/03-economy.md §3): every housed villager pays,
+// continuously — into the HOUSE's store, not the wallet. A tap on a house
+// with something in it collects the lot, free; a full house stops accruing.
 //
-// The tap is bounded by MANA, one per tap, and by nothing else: a house taps
-// like a tree, as often and as fast as the player likes. It used to run a 60s
-// per-house collection cycle, which bounded it with a WAIT — and a wait is
-// not a decision. The claim these tests protect is that the pool is the only
-// gate, that a refused tap costs nothing and moves nothing, and that the
-// share-scaling still stops a large city minting more per press than a small
-// one.
+// The claims these tests protect: rent is exact whole units per house, a
+// full house refuses rather than owes, collecting costs no Mana, and one-call
+// replay agrees with stepped ticking across a house filling up.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, TAP, TAXES } from '../src/sim/data/definitions';
+import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
+import { collectBuilding } from '../src/sim/commands';
 import { tapCell } from '../src/sim/harvest';
-import { cityGoldPerMinute, houseTap, houseTaxBonus } from '../src/sim/population';
+import { cityGoldPerMinute, houseGoldPerMinute, houseTaxBonus } from '../src/sim/population';
 import { lineFor, trainUnit } from '../src/sim/army';
 import { mana } from '../src/sim/mana';
-import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
+import { isStoreFull, storageCapacity, storedOf } from '../src/sim/storage';
 import { getWallet, townhall, type GameState } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
+import { addBuilt, freshGame, fund, map, stored, T0, tickAt } from './helpers';
 
 const house = (state: GameState) =>
   state.city.districts.find((d) => d.definitionId === 'Housing')!;
@@ -25,20 +22,22 @@ const house = (state: GameState) =>
 const HOUSE = { x: 2, y: 0 }; // revealed grassland
 const HOUSE2 = { x: 0, y: -1 }; // second house, NOT adjacent to the first
 
-describe('passive tax gold', () => {
-  it('accrues whole units: rate × housed population per minute', () => {
+describe('rent', () => {
+  it('accrues whole units into the house: rate × housed population per minute', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', HOUSE2); // capacity is 2 per house
     state.city.population = 2; // 2 housed × 30/min → 1 Gold every second
-    state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
+    const wallet = getWallet(state.city.wallet, 'Gold');
     expect(TAXES.goldPerPopulationPerMinute).toBe(30);
     tickAt(state, T0 + 900);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
+    expect(stored(state, 'Gold')).toBe(0);
     tickAt(state, T0 + 1000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1);
+    expect(stored(state, 'Gold')).toBe(1);
     tickAt(state, T0 + 60_000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(60);
+    expect(stored(state, 'Gold')).toBe(60);
+    // Made, not the player's: the wallet has not moved.
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(wallet);
   });
 
   it("a house's level raises the rent its own residents pay", () => {
@@ -56,45 +55,42 @@ describe('passive tax gold', () => {
     expect(houseTaxBonus(h)).toBe(0.25);
     expect(cityGoldPerMinute(state)).toBe(4 * TAXES.goldPerPopulationPerMinute * 1.25);
 
-    // And the passive accrual is that rate: 4 × 30 × 1.25 = 150 a minute.
-    state.city.wallet.Gold = 0;
-    state.city.lastTaxAt = T0;
+    // And the accrual is that rate: 4 × 30 × 1.25 = 150 a minute.
+    h.rentAnchor = T0;
     tickAt(state, T0 + 60_000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(150);
-  });
-
-  it("a house's level raises what a tap on it pulls forward", () => {
-    // A tap sells `tap.workSeconds` of the house's OWN rent, so the level
-    // that raised the rent has to show up in the press as well.
-    const tapWithLevel = (level: number): number => {
-      const state = freshGame();
-      addBuilt(state, 'Housing', HOUSE);
-      const h = house(state);
-      h.level = level; // the only house, so its share of the city is all of it
-      state.city.population = 2; // two residents either way
-      state.city.wallet.Gold = 0;
-      const rent = Math.floor((cityGoldPerMinute(state) / 60) * TAP.workSeconds);
-      const gold = houseTap(state, h, T0).gold;
-      expect(gold).toBe(rent);
-      return gold;
-    };
-    expect(tapWithLevel(2)).toBeGreaterThan(tapWithLevel(1));
+    expect(storedOf(h, 'Gold')).toBe(150);
   });
 
   it('only HOUSED villagers pay: no housing, no gold — and no banked time', () => {
     const state = freshGame();
     state.city.population = 3; // roofless — the Townhall houses nobody
-    state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
     tickAt(state, T0 + 600_000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
-    // Housing arrives late: taxes start from THEN, not retroactively —
+    expect(stored(state, 'Gold')).toBe(0);
+    // Housing arrives late: rent starts from THEN, not retroactively —
     // 2 housed (an L1 house holds two) × 30/min = 60/min over 30 s.
     addBuilt(state, 'Housing', HOUSE);
     tickAt(state, T0 + 600_000 + 30_000);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(30);
+    expect(stored(state, 'Gold')).toBe(30);
   });
 
-  it('one-call replay (with a training completion mid-window) matches stepped ticking', () => {
+  it('a full house stops, and owes nothing for the time it was full', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    const h = house(state);
+    state.city.population = 2; // 60 Gold a minute
+    const cap = storageCapacity(h);
+    const fillMs = (cap / houseGoldPerMinute(state, h)) * 60_000;
+    tickAt(state, T0 + fillMs * 3); // an absence three times as long as the store
+    expect(storedOf(h, 'Gold')).toBe(cap);
+    expect(isStoreFull(h)).toBe(true);
+    // Collected, it starts again from the tap — not from when it filled.
+    const now = T0 + fillMs * 3 + 500;
+    expect(collectBuilding(state, h.uniqueId, now).Gold).toBe(cap);
+    tickAt(state, now + 60_000);
+    expect(storedOf(h, 'Gold')).toBe(60);
+  });
+
+  it('one-call replay (with a training completion and a house filling mid-window) matches stepped ticking', () => {
     const mk = () => {
       const s = freshGame();
       addBuilt(s, 'Housing', HOUSE);
@@ -104,117 +100,52 @@ describe('passive tax gold', () => {
       expect(trainUnit(s, 'Villager', T0)).toBe('Queued'); // housed 1 → 2 at T0+20s
       return s;
     };
+    // Long enough for the first house to fill (its level-1 store, at 60/min).
+    const end = Math.ceil(DISTRICTS.Housing.storageCapacityPerLevel[0] / 60 + 30) * 60_000;
     const oneCall = mk();
-    tickAt(oneCall, T0 + 120_000);
+    tickAt(oneCall, T0 + end);
     const stepped = mk();
-    for (let t = 1000; t <= 120_000; t += 1000) tickAt(stepped, T0 + t);
+    for (let t = 60_000; t <= end; t += 60_000) tickAt(stepped, T0 + t);
     expect(oneCall.city.population).toBe(stepped.city.population);
-    expect(getWallet(oneCall.city.wallet, 'Gold')).toBe(getWallet(stepped.city.wallet, 'Gold'));
-    expect(oneCall.city.lastTaxAt).toBe(stepped.city.lastTaxAt);
+    expect(isStoreFull(house(oneCall))).toBe(true);
+    for (let i = 0; i < oneCall.city.districts.length; i++) {
+      const a = oneCall.city.districts[i];
+      const b = stepped.city.districts[i];
+      expect(a.stored).toEqual(b.stored);
+      expect(a.rentAnchor).toBe(b.rentAnchor);
+    }
   });
 });
 
 describe('collecting from a house', () => {
-  it('taps as often as you like, and Mana is what runs out', () => {
+  it('moves the whole store to the wallet, and costs no Mana', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
-    addBuilt(state, 'Housing', HOUSE2);
-    state.city.population = 4; // two residents each — one L1 house holds two
-
-    // The pull is scaled by this house's SHARE of city income, so sweeping
-    // every house exactly once sells one `tap.workSeconds` of the WHOLE city
-    // forward — which is what stops a big city minting more per tap.
-    // Half the city's income for boost_seconds, in whole gold — stated as a
-    // RATE so it survives the next change to housing capacity or the tax dial.
-    const halfTheCity = Math.floor((cityGoldPerMinute(state) / 60) * TAP.workSeconds / 2);
-    const first = houseTap(state, house(state), T0);
-    expect(first.result).toBe('Collected');
-    expect(first.gold).toBe(halfTheCity);
-
-    // The SAME house, immediately, as many times as the pool allows. This is
-    // the whole change: a house taps like a tree, and no timer is consulted.
-    expect(houseTap(state, house(state), T0).result).toBe('Collected');
-    expect(houseTap(state, house(state), T0).result).toBe('Collected');
-    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(halfTheCity);
+    state.city.population = 2;
+    tickAt(state, T0 + 60_000);
+    const before = { gold: getWallet(state.city.wallet, 'Gold'), mana: mana(state) };
+    const moved = collectBuilding(state, house(state).uniqueId, T0 + 60_000);
+    expect(moved.Gold).toBe(60);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(before.gold + 60);
+    expect(mana(state)).toBe(before.mana);
+    expect(house(state).stored).toBeUndefined();
   });
 
-  it('charges one Mana a tap, and stops dead when the pool is dry', () => {
-    const state = freshGame();
-    addBuilt(state, 'Housing', HOUSE);
-    state.city.population = 2; // one in the Townhall bed, one in the house
-
-    const before = mana(state);
-    expect(before).toBeGreaterThan(0); // a new kingdom starts full
-    expect(houseTap(state, house(state), T0).result).toBe('Collected');
-    expect(mana(state)).toBe(before - TAP.manaCost);
-
-    // Drain it and the tap refuses — the pool IS the gate now.
-    state.city.wallet.Mana = 0;
-    const dry = houseTap(state, house(state), T0);
-    expect(dry.result).toBe('NoMana');
-    expect(dry.gold).toBe(0);
-
-    // A refused tap must not move the tax clock, or a dry pool would still
-    // be printing gold one failed press at a time.
-    const anchor = state.city.lastTaxAt;
-    houseTap(state, house(state), T0);
-    expect(state.city.lastTaxAt).toBe(anchor);
-  });
-
-  it('never charges Mana for a tap that could not have paid out', () => {
+  it('an empty store collects nothing — the tap is the card\'s then', () => {
     const state = freshGame(); // population 0 — nobody lives there
     addBuilt(state, 'Housing', HOUSE);
-    const before = mana(state);
-    expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
-    expect(mana(state)).toBe(before);
-  });
-
-  it('paces a HELD pointer like a held tree, and a deliberate tap not at all', () => {
-    const state = freshGame();
-    addBuilt(state, 'Housing', HOUSE);
-    state.city.population = 2; // one in the Townhall bed, one in the house
-
-    expect(houseTap(state, house(state), T0, true).result).toBe('Collected');
-    // Inside the auto-tap cooldown a held pointer waits; a real tap does not.
-    expect(houseTap(state, house(state), T0 + 1, true).result).toBe('TooSoon');
-    expect(houseTap(state, house(state), T0 + 1).result).toBe('Collected');
-    const cooldown = effectiveAutoTapCooldownMs(state);
-    expect(houseTap(state, house(state), T0 + cooldown + 1, true).result).toBe('Collected');
-  });
-
-  it('a full sweep is a bounded percentage over idle, at any size', () => {
-    // Per-tap gold scales with the whole city's rate, so without the SHARE
-    // scaling a big city would mint more per press than a small one. One
-    // sweep pulls forward exactly `tap.workSeconds` of city income and costs
-    // one Mana per house, however many houses there are.
-    const sweepBonus = (houses: number): number => {
-      const state = freshGame();
-      // Spaced out: adjacent Housing carries a −1 gold/min penalty, which
-      // would put a thumb on the scale this test is reading.
-      for (let i = 0; i < houses; i++) addBuilt(state, 'Housing', { x: 2 + 2 * i, y: 4 });
-      state.city.population = houses;
-      state.city.wallet.Gold = 0;
-      state.city.lastTaxAt = T0;
-      state.lastAdvance = T0;
-      for (const d of state.city.districts) {
-        if (d.definitionId === 'Housing') houseTap(state, d, T0);
-      }
-      return getWallet(state.city.wallet, 'Gold');
-    };
-    const rate = TAXES.goldPerPopulationPerMinute;
-    for (const houses of [2, 4, 8]) {
-      // `tap.workSeconds` of the whole city's per-minute income.
-      const expected = (houses * rate * TAP.workSeconds) / 60;
-      expect(Math.abs(sweepBonus(houses) - expected)).toBeLessThanOrEqual(1);
-    }
-  });
-
-  it('an empty house cannot be boosted, and houses are not harvest cells', () => {
-    const state = freshGame(); // population 0
-    addBuilt(state, 'Housing', HOUSE);
-    expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
+    expect(collectBuilding(state, house(state).uniqueId, T0)).toEqual({});
     state.city.population = 2;
     expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable'); // no extraction
+  });
+
+  it('the Townhall collects nothing: Gold comes from each house', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    state.city.population = 2;
+    tickAt(state, T0 + 60_000);
+    expect(collectBuilding(state, townhall(state).uniqueId, T0 + 60_000)).toEqual({});
+    expect(storageCapacity(townhall(state))).toBe(0);
   });
 });
 

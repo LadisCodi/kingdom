@@ -43,9 +43,9 @@
 // end on a different instant under one-call replay than under stepped
 // ticking, which is the one property commands.ts exists to guarantee.
 //
-// Accrual mirrors accrueTaxes exactly — whole units against a `lastManaAt`
+// Accrual mirrors a house's rent exactly — whole units against a `lastManaAt`
 // anchor — so the offline replay and the live tick land on the same integer.
-// Mana regen IS city idle production, so it IS subject to the 8h cap.
+// The pool is its only ceiling, away or not.
 
 import { MANA, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
@@ -99,7 +99,7 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * The floor is 100 (`mana.base_cap`), and a new kingdom starts on exactly
  * that — the pool begins full, because every tap is paid from it. It moves
  * with `mana.base_per_hour`, never alone: the two are tuned together to keep
- * the pool filling a little SLOWER than an eight-hour absence
+ * the pool filling a little SLOWER than a night away
  * (`08-magic.md` §2), so it can run out but never by much.
  *
  * Sanctuaries raise CAPACITY rather than rate, which is what makes exploring
@@ -183,9 +183,8 @@ export function msToNextMana(state: GameState, now: number): number | null {
   return msPerMana - (elapsed % msPerMana);
 }
 
-/** Accrue whole Mana against the anchor, exactly as accrueTaxes does for Gold.
- *  Runs in `runContinuous`, so it is city production and the 8h offline cap
- *  applies to it. */
+/** Accrue whole Mana against the anchor, exactly as a house accrues rent.
+ *  Runs in `runContinuous`; the pool is its only ceiling. */
 export function accrueMana(state: GameState, toTime: number): number {
   const rate = manaNetRegen(state);
   if (rate <= 0) {

@@ -18,7 +18,7 @@ import { rand } from '../src/sim/rng';
 import { deserialize, serialize } from '../src/sim/save';
 import { enterRoom } from '../src/sim/expeditions';
 import {
-  addAllTrainers, addBuilt, freshGame, fund, map, openRuin, reveal, T0,
+  addAllTrainers, addBuilt, collectAll, freshGame, fund, map, openRuin, reveal, T0,
 } from './helpers';
 import type { GameState, Mission, MissionKind } from '../src/sim/state';
 
@@ -72,6 +72,8 @@ describe('active play only', () => {
     state.city.population = 8;
     const gold = tally(state, 'collect:Gold');
     advance(state, map, T0 + 6 * HOUR);
+    // Rent waits in the houses; the player's tap is what collects it.
+    collectAll(state, T0 + 6 * HOUR);
     expect(tally(state, 'collect:Gold')).toBeGreaterThan(gold);
   });
 

@@ -282,10 +282,8 @@ A `bonus` names its effects, and each is four fields:
     first clear, an event, a purchase (§3.2). Nothing is ever lost; the cost
     of a full bar is the drip it did not earn.
   - The drip resumes as soon as pouring takes the balance back under 10.
-- **Offline, the bar is the only cap.** The drip is not cut by the 8-hour
-  offline cap: away for ten hours or more, the player comes back to a full
-  bar. This is the one production that ignores `offlineCapHours`, because the
-  bar already bounds it (invariant 2).
+- **Offline, the bar is the cap.** Away for ten hours or more, the player
+  comes back to a full bar.
 - **Territory and the ruins pay in lumps, never in rate.** Claiming a
   landmark and a ruin's first clear each pay once; every ruin room pays as
   it is cleared. The ladders and mechanics that raise
@@ -340,7 +338,7 @@ A `bonus` names its effects, and each is four fields:
 | Scope | city | kingdom |
 | Fills with | time | time; lumps from landmarks, ruins, quests and events |
 | Ceiling | capped; what arrives over the cap is lost | 10; only the drip stops, and lumps and purchases land over it |
-| Spent on | taps and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies, poured |
+| Spent on | taps on the ground and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies, poured |
 | Bought with | Gems, a rewarded video | Gold, Gems (§3.2) |
 
 ### 3.2 Buying Knowledge

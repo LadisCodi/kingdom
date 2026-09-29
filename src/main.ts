@@ -371,7 +371,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------ render loop
   const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now());
+    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -400,7 +400,9 @@ async function boot(): Promise<void> {
       for (const item of game.state.city.trainingQueue) {
         if (item.startedAt !== null) item.startedAt -= delta;
       }
-      game.state.city.lastTaxAt -= delta;
+      for (const d of game.state.city.districts) {
+        if (d.rentAnchor !== undefined) d.rentAnchor -= delta;
+      }
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;
         if (w.stateUntil !== null) w.stateUntil -= delta;

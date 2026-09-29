@@ -122,8 +122,7 @@ export function reanchor(state: GameState, d: District, now: number): void {
   if (line) line.anchor = now;
 }
 
-/** Every workshop's crew, run between boundaries. Production, so the 8-hour
- *  offline cap applies to it exactly as it does to a Sawmill's crew. */
+/** Every workshop's crew, run between boundaries. Its ceiling is its queue. */
 export function advanceWorkshops(state: GameState, toTime: number): void {
   for (const d of workshops(state)) settle(state, d, toTime);
 }
