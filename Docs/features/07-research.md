@@ -327,8 +327,10 @@ A `bonus` names its effects, and each is four fields:
   pay the rest, and set the pace.
 - The clock banks whole units against an anchor, the same shape as taxes and
   Mana, so one-call replay equals stepped ticking (invariant 1).
-- The balance reads as **held / 10**, with the time until the bar is full.
-  Where the bar is shown outside the research screen is **OQ-104**.
+- **The bar is always on screen**, as a tab of its own centred under the
+  plank ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md) §5.1,
+  M33): what is held, ten segments, and when the next point and the full bar
+  arrive. Its **+** opens the purchase (§3.2).
 
 ### 3.1 Knowledge and Mana
 
@@ -364,7 +366,7 @@ the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
 
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
-| **Knowledge** | technologies | time, claimed landmarks, cleared ruins, quest and event lumps, Gold, Gems | kingdom | its bar (§3, **OQ-104**) |
+| **Knowledge** | technologies | the drip, lumps from landmarks, ruins, rooms, quests and events, Gold, Gems | kingdom | its tab under the plank (§3) |
 | **Stardust** | the hero ascension toll (`src/sim/collection.ts`; [`10-heroes.md`](10-heroes.md) §4) — relic levels left it 2026-09-09 ([`09-relics.md`](09-relics.md)) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the hero screens |
 
 - One job each. `knowledgeYield` multiplies a Knowledge lump; `stardustYield`
@@ -372,8 +374,9 @@ the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
 - A ruin's first clear pays **both** lumps.
 - Stardust has no row on the plank: a currency spent in exactly one screen
   lives in that screen's header. Knowledge is the exception that has to be
-  seen from the map, because a full bar stops earning (**OQ-104**). The full
-  currency table is [`03-economy.md`](03-economy.md) §1.
+  seen from the map, because a full bar stops earning, so it has a tab of its
+  own under the plank. The full currency table is
+  [`03-economy.md`](03-economy.md) §1.
 - The code and doc key is `Stardust`; *Polvo estelar* is the localised string
   only.
 
@@ -456,13 +459,12 @@ Tap Power        +40%  →  +60%
   every action, and says so once. Affordability is never in it: the red
   number inside each button has already said that.
 
-### 5.5 The bar on the book
+### 5.5 The bar
 
-- The book's header carries the Knowledge bar: **held / cap**, the rate, and
-  the time until it is full — or *Full* when the drip has stopped.
-- Tapping it opens the purchase (§3.2): how many points, and their price in
-  Gold and in Gems.
-- Where the bar lives outside the book is **OQ-104**.
+- The book has no bar of its own: the Knowledge tab under the plank (§3) is
+  above every screen, the book included.
+- On the book the plank carries **Gold** alone — the other half of every
+  price on the page.
 
 ## 6. Magic holds no spells
 
@@ -585,5 +587,5 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   (§1.2).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**. (**OQ-68** is retired: a band is not held by a keystone
+**OQ-59**, **OQ-69**, **OQ-105**. (**OQ-68** is retired: a band is not held by a keystone
 any more, and what each bar asks for is a number, so it is OQ-13.)

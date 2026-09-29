@@ -22,7 +22,7 @@
 | **Wood** | forest | buildings | city | yes |
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
-| **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its bar — **OQ-104** |
+| **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
 | **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |

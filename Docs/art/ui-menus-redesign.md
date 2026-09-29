@@ -575,6 +575,26 @@ exists — see questions 3 and 7, and
   their own share of the row, while Mana and Gems never leave the screen.
   A player whose tap just refused must be able to read why without scrolling
   the header, and Gems is what refills it.
+- *Knowledge, always — a tab of its own under the plank (M33).* The bar
+  paces the whole game, so it is prominent and never contextual
+  ([`../features/07-research.md`](../features/07-research.md) §3):
+  - A plain walnut tab with a thin gold rim, **centred under the plank** as if
+    it came out from behind it: straight bottom edge, gently rounded bottom
+    corners, no point or decoration.
+  - Inside it, **one dark inset frame, the same as a coin's on the plank**:
+    the Knowledge book at the plank's icon size with nothing behind it, the
+    number held, and **ten narrow tall segments** packed tight, one per point
+    of the cap.
+  - Under the segments, in the same frame, a small caption that **takes turns
+    with a crossfade**, the way the Mana readout does: *+1 in 42m* (the next
+    point) and *Full in 3h* (the whole bar).
+  - **Full**: every segment lit with a soft glow, a glint on the book, and the
+    caption reads *Full*. Over the cap (a lump, a purchase) the number reads
+    what is held — *23* — and the segments stay all lit.
+  - A **+** knob inside the tab, the same as the Gems', opens the Knowledge
+    sheet (M30, lower); tapping the tab opens it too.
+  - **It must clear the Daily chest pill at 375px**: about 100px wide, the
+    segments ~4px each.
 - *Contextual:* **Stone** appears once its gating tech is complete (Masonry)
   or once the balance is above zero. The tech clause is what makes it sticky —
   a counter must not vanish when the player spends back to zero; the balance
@@ -1031,7 +1051,9 @@ one unified tree, drag-pannable in both axes:
 - **Upgrades** — 36px circles fanned below their *completed* parent tech,
   with a level badge; instant Gold purchases.
 - **Top bar** — "Research" and `Slots: 1 busy / 2`, plus
-  `extra slot — 25 💎` + **Buy** when below `maxSlots`.
+  `extra slot — 25 💎` + **Buy** when below `maxSlots`. *(Going: research has
+  no slots and no time any more — [`../features/07-research.md`](../features/07-research.md)
+  §1. The sheet is M30, upper: Invest, Buy the rest, Research.)*
 - **Info panel** (`.tech-info`) — floats above the nav bar only while a node is
   selected. **Being replaced by a centred sheet** — see the reshape note.
   Tech: glyph, name, description, `Requires Forestry ✓ / Masonry ✗`, then
