@@ -6,7 +6,8 @@
 > reference is Elvenar's research screen and sheet; the look is a page of a
 > magic book with its sections as bookmarks (Heroes III's spellbook).
 >
-> **Status.** Proposal, for mockups M40–M42 (M37–M39 were the first round). Folds into
+> **Status.** The tree is M43; the sheet is being mocked (M44). M37–M42 were
+> the rounds before. Folds into
 > `07-research.md` §5 and `ui-menus-redesign.md` §5.9 once chosen.
 
 ## 1. The states
@@ -65,22 +66,27 @@ state costs no new sprite.
 - On open the page lands on **the work**: a full card, then one in progress,
   then the last completed.
 
-## 4. The sheet — three areas, read top to bottom
+## 4. The sheet — three parts, read top to bottom
 
-A centred sheet over the page. Three areas, one below the other, each a tile of
-its own, in the order the player works through them:
+A centred sheet over the page, the tree darkened behind it. Three parts, one
+below the other, in the order the player works through them — a way to order
+the sheet, never numbered on it:
 
-1. **About** — the emblem and name, what it gives (the unlocked building's
-   picture, or before → after for a rank), and its requirements with ✓ / ✗.
-2. **Knowledge** — the bar, poured / needed, and the pours: **+1**, **+N** (all
-   the bar holds, up to what is missing), and, when the bar cannot cover the
-   gap, **Buy the other M** in Gold and in Gems.
-3. **Research** — what finishing costs (the Gold) and the **Research** button.
-   **The whole area is locked**, dimmed with a padlock and *Fill the Knowledge
-   first*, until the bar is full; then it lights.
+1. **About** — laid out like the top of a building card, without its upgrade
+   button: the technology's emblem in its framed picture, the name, and one
+   plain sentence of what it unlocks or does.
+2. **Knowledge** — the kit's blue progress bar, poured / needed, the numbers
+   inside it; under it **three buttons with the price on the button**:
+   - **Gems** — buys the Knowledge still missing and pours it;
+   - **+1** — one point from the bar;
+   - **+N** — as much as it can: the least of what the bar holds and what is
+     missing.
+3. **Research** — the upgrade popup's block: the Gold **above** the button, a
+   wide **Research** button, and while the Knowledge is short the button is
+   disabled with a line under it: *Assign all its Knowledge to research it*.
 
-- An undiscovered technology's sheet shows area 1 with what it needs, and the
-  other two locked with the reason.
+- An undiscovered technology's sheet shows part 1 and what it needs; parts 2
+  and 3 are disabled with the reason.
 - The sheet stays open after a pour; it closes itself after Research, with the
   completion banner.
 
