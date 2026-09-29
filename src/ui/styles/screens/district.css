@@ -393,8 +393,7 @@
   padding-top: calc(var(--px) * 8);
   border-top: calc(var(--px) * 2) solid var(--section-line);
 }
-.tr-batch-head { color: var(--wood); font-size: var(--text-heading); font-weight: var(--weight-strong); }
-.tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); padding-bottom: calc(var(--px) * 4); }
+.tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); text-align: center; padding-bottom: calc(var(--px) * 4); }
 .tr-batch-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
 .tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }

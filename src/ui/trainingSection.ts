@@ -186,9 +186,8 @@ function queueLeft(game: Game, district: District, head: ReturnType<typeof lineF
 function batchStrip(game: Game, district: District, isWard: boolean): HTMLElement {
   const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
-  const head = el('div', { class: 'tr-batch-head' }, isWard ? 'Mending' : 'Training batch');
   if (line.length === 0) {
-    return el('div', { class: 'tr-batch' }, head,
+    return el('div', { class: 'tr-batch' },
       el('div', { class: 'tr-batch-empty' }, 'Nothing in training'));
   }
   const count = line.reduce((n, item) => n + itemCount(item), 0);
@@ -198,7 +197,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       ? queueLeft(game, district, item)
       : game.healWait(item.trainee as UnitId, itemCount(item))), 0)
     : lineRemainingSeconds(game.state, district.uniqueId, now);
-  return el('div', { class: 'tr-batch' }, head,
+  return el('div', { class: 'tr-batch' },
     el('div', { class: 'tr-batch-row' },
       el('div', { class: 'tr-batch-face', title: `${count} ${nameFor(line[0].trainee)}` },
         unitPortrait(line[0].trainee),
