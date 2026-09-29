@@ -445,7 +445,9 @@ wood of its sides touches the screen's edges.
     own stat tile (*Training*), one trainee per building.
     A soldier adds its three numbers — Attack, Defence, Health — as small
     tiles (the mark and the number, the name under them) under the portrait
-    and the flavour, beside the Train button, which runs down past them. Any
+    and the flavour, beside the Train button, which runs down past them; the
+    bust rises out of the panel through its top edge, so the tiles' feet
+    line up with Train's whenever the flavour is no taller than the bust. Any
     further stat takes a row of its own under both, the same tiles, four to
     the row. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army

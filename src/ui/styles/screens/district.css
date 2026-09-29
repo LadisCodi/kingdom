@@ -320,10 +320,15 @@
    under them. The three it is chosen on sit under the picture and blurb,
    beside Train, which runs down past them; any more take a row of their own
    under both, the same tiles, four to the row. */
-.tr-info.has-stats > .tr-who { grid-column: 1; grid-row: 1; }
+/* The soldier's bust rises out of the panel, breaking its top edge, so the
+   tiles can rise with it: they sit at the foot of their row, and Train runs
+   down both rows, so their feet line up with Train's whenever the blurb is
+   no taller than the bust. */
+.tr-info.has-stats { row-gap: calc(var(--px) * 5); }
+.tr-info.has-stats > .tr-who { grid-column: 1; grid-row: 1; margin-top: calc(var(--px) * -16); }
 .tr-info.has-stats > .tr-body { grid-column: 2; grid-row: 1; }
 .tr-info.has-stats > .tr-buy { grid-column: 3; grid-row: 1 / span 2; }
-.tr-info.has-stats > .tr-stats { grid-row: 2; }
+.tr-info.has-stats > .tr-stats { grid-row: 2; align-self: end; }
 .tr-info.has-stats > .tr-stats.is-more { grid-row: 3; }
 .tr-stats {
   grid-column: 1 / 3;
@@ -337,7 +342,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 4);
+  padding: calc(var(--px) * 2) calc(var(--px) * 4) calc(var(--px) * 3);
   background: var(--parchment);
 }
 .tr-stat-top { display: flex; align-items: center; gap: calc(var(--px) * 4); }
