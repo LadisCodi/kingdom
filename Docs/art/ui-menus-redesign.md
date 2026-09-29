@@ -451,10 +451,10 @@ wood of its sides touches the screen's edges.
     open at a time; paper chips are kept for special traits.
   - **Batch**, at the foot of the same panel: one building trains one
     unit, so its whole line is one batch — the unit's portrait with its
-    count (*x3*), the bar and time left for the one in training, the batch's
-    total time, and the gem Finish button, under a rule and with no heading of
-    its own. Nothing in the line: *Nothing in training*, centred, and no
-    Finish.
+    count (*x5*); beside it *Training* over the bar (the time left inside
+    it) and *Total time: 1m 20s* under it; and the gem Finish button,
+    under a rule and with no heading of its own. Nothing in the line:
+    *Nothing in training*, centred, and no Finish.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
   *Crew*, *Training* — so three fit a phone's width; the full name is the tile's

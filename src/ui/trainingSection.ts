@@ -198,11 +198,11 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       el('div', { class: 'tr-batch-face', title: `${count} ${nameFor(line[0].trainee)}` },
         unitPortrait(line[0].trainee),
         ...(count > 1 ? [el('span', { class: 'tr-count' }, `x${count}`)] : [])),
+      // What is happening over its bar, and the whole batch's time under it.
       el('div', { class: 'tr-batch-progress' },
-        bar.root),
-      el('div', { class: 'tr-batch-total' },
-        el('span', {}, 'Total time'),
-        el('b', {}, formatDuration(Math.ceil(total)))),
+        el('span', { class: 'tr-batch-what' }, isWard ? 'Mending' : 'Training'),
+        bar.root,
+        el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total))}`)),
       btn({
         label: 'Finish',
         kind: 'gem',
