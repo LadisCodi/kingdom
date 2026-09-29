@@ -343,10 +343,10 @@ A `bonus` names its effects, and each is four fields:
 
 ### 3.2 Buying Knowledge
 
-- **Knowledge is bought with Gold or with Gems**, from the bar's own sheet
-  and from a technology's sheet (§5.4). The bar's sheet offers three: **1 for
-  Gold, 1 for Gems, 10 for Gems**. A purchase lands
-  in the bar (over the cap if it must) and is poured like any other point.
+- **Knowledge is bought with Gold or with Gems.** The bar's own sheet offers
+  three: **1 for Gold, 1 for Gems, 10 for Gems**, landing in the bar (over the
+  cap if it must). A technology's sheet offers one: **every point it still
+  misses, for Gems**, poured into it at once (§5.4).
 - **Gold: every point costs more than the last, for ever.**
 
 ```
@@ -380,91 +380,77 @@ the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
 - The code and doc key is `Stardust`; *Polvo estelar* is the localised string
   only.
 
-## 5. The screen
+## 5. The screen — the research book
 
-### 5.1 Tabs
+The research screen is a book (mockups M43 and M46,
+[`../plans/research-book.md`](../plans/research-book.md)).
 
-- One tab per **open** book. A book the kingdom has not found is not shown.
-- Tab order: the three general books first — Civics · Magic · Warfare — then
-  found books in the order they were found.
+### 5.1 The page and the bookmarks
 
-### 5.2 Tree fog
+- **One page, never a spread**: a sheet of parchment centred on the screen,
+  on a small stack of the same sheet, pinned at its top corners — the same
+  object on a phone and on a tablet.
+- **Each open book is a bookmark**: a ribbon hanging from the page's bottom
+  edge into the room the nav bar leaves (it steps aside while a menu is open).
+  One ribbon, tinted per book, the book's emblem on it; the open one hangs
+  longer. Order: Civics · Magic · Warfare, then found books.
+- **An era is a chapter**: *Chapter I* at the top of the page, and a heading
+  wherever the next band begins, with *Reveal N more cells* while it is shut
+  (*Sealed* on the book's last band). One vertical scroll.
+- The plank carries **Gold and Knowledge**; the Knowledge tab steps aside
+  (§3).
+- It is built from shared pieces — the page, the ribbon, the pin, the kit's
+  stat tile, bar and buttons — so a new book or state costs no new art.
 
-| State | Drawn as |
-|---|---|
-| **Normal** | researched, partly poured, or pourable — every prerequisite researched |
-| **`?` silhouette** | one step ahead — every prerequisite is **normal**, so what comes next appears as soon as the card before it can be read, not once the player has paid for it. A dim dashed card with a `?`: no name, no cost, not tappable |
-| **Hidden** | anything deeper is not rendered. A silhouette does not reveal its own children, so the frontier stays one step wide |
+### 5.2 The three states
 
-- The page is as long as what the fog shows: a row the fog has emptied
-  collapses, so there are no blank lines in the middle of the flow.
-- **Era bars never collapse.** A band the player cannot read yet still shows
-  its bar, because the bar is the statement that there is more book.
-- The page scrolls vertically and nothing else — it is exactly the phone's
-  width by construction. On a fresh open it lands on the WORK: whatever is
-  partly poured or pourable, and failing that the last thing finished.
+**There is no tree fog**: every technology is on its page from the first
+minute. Each is in one of three states:
+
+| State | When | The card |
+|---|---|---|
+| **Locked** | a requirement is not researched, or its band is shut | greyscale, a padlock after the bar |
+| **In progress** | it can be worked on | full colour, the blue bar **poured / needed**; **full**, it glows gold — the one card asking to be finished |
+| **Done** | researched | the green bar, full, and a tick |
+
+- On open the page lands on the work: a full card, then one being poured
+  into, then one pourable, then the last one researched.
 
 ### 5.3 Cards
 
-- A card carries its **glyph and its name**, and nothing else. What a
-  technology does is a sentence, and a sentence on a 120px card is three
-  clipped lines that have to be tapped to be read anyway — so the card is an
-  emblem and §5.4 does the talking. A dot marks anything pourable now; a
-  technology holding poured Knowledge shows how full it is.
-- Colour is the state: researched, available, partly poured.
-- A card in a **locked band** is drained of colour and not startable; the bar
-  above it says how many cells are left.
-- A planned node is drawn dashed and hatched, like the fog's `?`, and carries
-  a `planned` badge.
-- Requirements read as ✓ / ✗ in the panel.
+- Three columns (§2.2). A card is the building card's **stat tile**: the
+  emblem, the name, and the kit's **progress bar with the numbers inside it**,
+  plus the tick or the padlock.
+- The orb marks a card with a press worth making now: filled and payable, or
+  pourable to full from the bar.
+- Connectors are **quill-drawn arrows** in sepia ink, into the card that
+  needs the one above.
+- A planned node is dashed and says so on its sheet.
 
 ### 5.4 The technology's sheet
 
-**A modal over the whole book** (built 2026-09-08), not a panel resting on the
-bottom of it. A panel had to stay short enough to leave the page usable
-behind it, which is the wrong constraint on the one surface that has to say
-what a card does, what it needs and what it costs — and
-nothing else is actionable while it is up, so nothing else needs the room.
+**A loose research page** over the dimmed book — the same parchment, one pin
+at its top, the name as its heading, a close knob in its corner; the scrim
+closes it too. It reads top to bottom in three parts, never numbered:
 
-- One tap on a card, one sheet over the page, centred, on the scrim. **Two
-  ways out** — the ✕ in its header and the scrim itself — because a modal with
-  one is a trap. Header and nav stay above it, so the purse is readable while
-  the player reads prices.
-- Title: name, with the rank numeral for a minor (*Sawpits II*).
-- **What it does:** the generated line in full (§1) — the first and only place
-  it is read.
-- A minor shows **before → after**:
+1. **What it is** — the emblem in a framed square and one plain sentence of
+   what it unlocks or does (§1). A minor rank's sentence carries its numbers.
+2. **Knowledge** — the blue bar, poured / needed, and three buttons with the
+   price on the button:
+   - **Gems** — buys every point still missing and pours it (§3.2);
+   - **+1** — one point from the bar;
+   - **+N** — as much as it can: the least of what the bar holds and what is
+     missing.
+   Once the Knowledge is in, the buttons go and the full bar stays.
+3. **Research** — the upgrade popup's block: the Gold above a wide
+   **Research** button, which is locked with *Assign all its Knowledge to
+   research it* under it until the bar is full. It researches on the press,
+   closes the sheet and raises the completion banner.
 
-```
-Rank               2  →  3
-Tap Power        +40%  →  +60%
-```
-
-- Requirements: prerequisite medallions, ✓ / ✗, tappable to scroll there —
-  including the one that reaches back over an era bar, which the page does not
-  draw (§2.2).
-- **Cost:** Knowledge as **poured / needed**, and the Gold. When the bar
-  cannot cover what is missing, the sheet says how long the drip takes to
-  cover it. Behind a locked bar the action reads "Reveal N more cells to read
-  on".
-- **Actions, in the order the player meets them:**
-  - **Invest** while Knowledge is missing — pours what the bar holds, up to
-    what is missing (§1).
-  - **Buy the rest** beside it when the bar cannot cover the gap: the missing
-    points in Gold and in Gems, two prices side by side (§3.2). Bought points
-    are poured at once.
-  - **Research** once the Knowledge is full — pays the Gold and completes the
-    technology.
-- **One reason for the whole row.** A missing requirement or a shut band stops
-  every action, and says so once. Affordability is never in it: the red
-  number inside each button has already said that.
-
-### 5.5 The bar
-
-- The Knowledge tab under the plank (§3) steps aside while any menu is open,
-  the book included, the way the Settings knob does.
-- On the book the plank carries **Gold and Knowledge** — the two halves of
-  every price on the page.
+- **A locked technology's sheet** is part 1 and its **requirements**, as the
+  upgrade popup's rows — a met one ticked, a missing one pink with a cross,
+  a shut band as *Reveal N more cells* — and nothing else.
+- Buying Knowledge with Gold is the Knowledge sheet's (§3.2), not this one's.
 
 ## 6. Magic holds no spells
 
@@ -526,6 +512,9 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 | A spell's Mana cost | per spell | a `spells` collection *(designed)* |
 
 ## 10. Deliberately not in this design
+
+- **Tree fog** — `?` silhouettes and hidden cards: every technology is on its page, locked in greyscale until it can be worked on (§5.2).
+- A two-page spread, or art made for one book or one state (§5.1).
 
 - Instant, Gold-only upgrades as a second kind of node (`UPGRADES`,
   `buyUpgrade`, `state.upgrades`, the `BuyUpgrade` quest goal).

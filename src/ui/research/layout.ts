@@ -23,13 +23,13 @@ export const COLS = 3;
  * fit on one line and wraps to two, which the card allows and 96 tall has the
  * room for: two lines of name and two of what it does. */
 export const NODE_W = 120;
-export const NODE_H = 96;
+export const NODE_H = 108;
 const COL_GAP = 6;
 /** The gutter between two rows of cards: where a connector's horizontal leg
  *  runs, so it never crosses a card. */
 export const ROW_GAP = 36;
 /** The era bar itself. */
-export const GATE_BAR_H = 34;
+export const GATE_BAR_H = 56;
 /** The line an era bar takes: the bar with a half-gutter each side, so the
  *  bar's bottom edge IS the gutter the next row's connectors come out of. */
 const GATE_H = GATE_BAR_H + ROW_GAP;

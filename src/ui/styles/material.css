@@ -495,14 +495,7 @@
 /* ---- the district card ----
    It wears the window (above), like every sheet. */
 
-/* ---- the research page and the build grid ---- */
-.research-topbar { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512); }
-.tech-page {
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
-    radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
+/* ---- the build grid ---- */
 .bld-card {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
@@ -514,50 +507,6 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-
-/* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
-.res-era { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512); }
-.res-era.is-open {
-  background: var(--gold);
-  border-color: var(--gold-dark);
-  color: var(--ink);
-}
-
-/* ---- research medallions are wax (R1, §7.22) ---- */
-.tech-card-glyph {
-  border: 0;
-  box-shadow: none;
-  background: url('../assets/seal-plain.png') center / 100% 100% no-repeat;
-  width: calc(var(--px) * 68);
-  height: calc(var(--px) * 68);
-  /* The plain seal on the sheet came back grey-green; M4's plain wax is
-     brown, so the plain state is warmed here and the lit states keep their
-     own art. */
-  filter: sepia(1) saturate(1.6) hue-rotate(-12deg) brightness(0.78);
-}
-.tech-card.done .tech-card-glyph,
-.tech-card.available .tech-card-glyph,
-.tech-card.active .tech-card-glyph { filter: none; }
-.tech-card.done .tech-card-glyph { background-image: url('../assets/seal-done.png'); }
-.tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
-.tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
-.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 calc(var(--px) * 3) var(--gold); border-radius: 50%; }
-
-/* ---- the research shelf and the quest slot ---- */
-.res-shelf { background: url('../assets/beam-wood.png') center / auto 100% repeat-x; }
-.res-desks {
-  background:
-    linear-gradient(rgba(40, 22, 10, 0.35), rgba(40, 22, 10, 0.35)),
-    url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512);
-}
-/* The books are plates on the beam (M4): the open one gold. */
-.res-tome:not(.active) {
-  border: calc(var(--px) * 10) solid transparent;
-  border-image: url('../assets/plate-wood.png') 44 fill / calc(var(--px) * 10) stretch;
-  border-radius: 0;
-  background: none;
-}
-.res-tome.active { background: var(--gold); }
 
 /* ---- nails, where a plank is nailed to something ----
  * Not on the planks that carry a title (they read as dirt next to the words). */
@@ -713,19 +662,13 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
-/* ---- the purse, the builder offer, the tech card ---- */
+/* ---- the purse, the builder offer ---- */
 .purse {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bld-offer-mark { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.tech-info {
-  border: calc(var(--px) * 12) solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / calc(var(--px) * 16) / calc(var(--px) * 2) round;
-  border-radius: 0;
-  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
 
 /* ---- the reveal and the battlefield (M15, M16) ---- */
 .gr-tile,

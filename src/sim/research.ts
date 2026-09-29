@@ -145,15 +145,20 @@ export function researchRefusal(state: GameState, id: TechId): ResearchRefusal |
 export type PourResult = ResearchRefusal | 'Poured' | 'AlreadyFull' | 'NothingHeld';
 
 /**
- * Pour what the bar holds into a technology, up to what it still needs.
- * Returns what was poured with the verdict.
+ * Pour Knowledge from the bar into a technology: as much as the bar holds, up
+ * to what it still needs, and at most `max` (the sheet's +1). Returns what was
+ * poured with the verdict.
  */
-export function pourKnowledge(state: GameState, id: TechId): { result: PourResult; poured: number } {
+export function pourKnowledge(
+  state: GameState, id: TechId,
+  /** At most this many points; absent, as many as the bar and the need allow. */
+  max = Infinity,
+): { result: PourResult; poured: number } {
   const refusal = researchRefusal(state, id);
   if (refusal !== null) return { result: refusal, poured: 0 };
   const missing = techKnowledgeMissing(state, id);
   if (missing === 0) return { result: 'AlreadyFull', poured: 0 };
-  const amount = Math.min(missing, knowledge(state));
+  const amount = Math.min(missing, knowledge(state), Math.max(0, Math.floor(max)));
   if (amount <= 0) return { result: 'NothingHeld', poured: 0 };
   addToWallet(state.kingdom.wallet, 'Knowledge', -amount);
   state.research.poured[id] = techPoured(state, id) + amount;
@@ -202,38 +207,23 @@ export const anyResearchActionable = (state: GameState): boolean =>
 export const researchActionableCount = (state: GameState): number =>
   TECH_ORDER.filter((id) => canStartTech(state, id)).length;
 
-// ------------------------------------------------------------- tree fog
+// ------------------------------------------------------------- the states
 
 /**
- * How much of a technology the page shows
- * ([`Docs/features/07-research.md`](../../Docs/features/07-research.md) §5.2).
+ * Where a technology stands (Docs/plans/research-book.md §1). There is no
+ * tree fog: every technology is on its page from the first minute, and this
+ * is what varies.
  *
- * A fact about the TREE rather than about pixels, which is why it lives here
- * and not in the screen that draws it: the screen turns `silhouette` into a
- * dashed `?` and `hidden` into nothing, and that is all it decides.
+ * **locked** — a requirement is not researched, or its band is shut: drawn in
+ * greyscale, its sheet shows only what it is and what it needs.
+ * **progress** — it can be worked on: Knowledge poured into it, full or not.
+ * **done** — researched.
  */
-export type TechVisibility = 'normal' | 'silhouette' | 'hidden';
+export type TechState = 'locked' | 'progress' | 'done';
 
-/**
- * **normal** — researched, partly poured, or pourable right now.
- * **silhouette** — every prerequisite is NORMAL, so what comes next appears as
- * soon as the card before it can be read. Waiting until the player had
- * committed to the step before meant a tree nobody could plan a route through:
- * the next `?` only ever appeared once you had already paid.
- * **hidden** — everything else.
- *
- * ONE step deep. A silhouette does not reveal its own children, so the far end
- * of a book stays a promise and the frontier stays a legible edge rather than
- * the whole page at half opacity.
- */
-export function techVisibility(state: GameState, id: TechId): TechVisibility {
-  // Not recursive, deliberately: `revealed` IS the `normal` test, and asking
-  // it of the requirements is the one step.
-  const revealed = (t: TechId): boolean =>
-    isTechComplete(state, t) || isTechStarted(state, t) || requirementsMet(state, t);
-  if (revealed(id)) return 'normal';
-  if (TECHNOLOGIES[id].requires.every(revealed)) return 'silhouette';
-  return 'hidden';
+export function techState(state: GameState, id: TechId): TechState {
+  if (isTechComplete(state, id)) return 'done';
+  return researchRefusal(state, id) === null ? 'progress' : 'locked';
 }
 
 // ----------------------------------------------------------------- tomes

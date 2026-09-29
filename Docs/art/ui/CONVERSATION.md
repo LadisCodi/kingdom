@@ -724,3 +724,117 @@ for.
 - **What to know:** `-trim` keeps a faint band above the art; crop on the
   alpha at 50% (`-alpha extract -threshold 50% -format %@`). Slices in CSS:
   `20 64 70 fill` (top, sides, bottom).
+
+---
+
+## M37–M39 — the research book, three proposals (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** <https://chatgpt.com/c/6abbde45-ab04-83ed-a630-f9fd8d39dda1> — a
+  NEW conversation: the M5–M33 one carries so many images that the page froze
+  on load. The first message attaches `style-ref.jpg` (M1 and M30 side by
+  side) with "GENERATE A NEW IMAGE… ONLY the style reference" and a short
+  style paragraph; the next two say "same style as the attached reference and
+  your last images".
+- **Files:** `mockups/m37-research-book-a.png`, `m38-research-book-b.png`,
+  `m39-research-book-c.png`, each 1448×1086, opaque, two phone screens.
+- **Prompt:** §7.19 M37–M39, sent from JS; each arrived whole, ~3 min.
+- **What to know:** M38's bottom ribbons overlap the nav beam; M39 was asked
+  for a two-page spread and drew one page with the gutter only hinted.
+
+## M40–M42 — the research book, second round (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M39 one above, continued.
+- **Files:** `mockups/m40-research-book-d.png`, `m41-research-book-e.png`,
+  `m42-research-book-f.png`, each 1448×1086, opaque.
+- **What worked:** "KEEP IT SIMPLE … flat warm colours, soft two-tone
+  shading … exactly the level of detail of the chrome in the attached
+  reference" brought the detail down to the game's chrome at once.
+- **What to know:** M42 drew its undiscovered cards as plain tiles rather than
+  pills, and cut its bottom tabs off at the frame's edge; M41 dropped the
+  paper stack behind the scroll, as the prompt allowed.
+
+## M43 — the research tree, combined (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M42 one above, continued.
+- **Attached:** a labelled montage (A M42's background, B M40's bookmarks,
+  C M41's nodes) and two real screenshots from the game (the Townhall card's
+  stat tiles, the Knowledge sheet's bar), uploaded straight from Chrome's
+  screenshots with `upload_image`.
+- **File:** `mockups/m43-research-tree.png` (941×1672), opaque, one screen.
+- **What worked:** the real screenshots pinned the tile and the bar better
+  than any wording: flat tan-outlined tiles, glossy bars with the numbers
+  inside, green with a tick when completed.
+- **What to know:** it widened the rows of one and two nodes to fill the page
+  instead of keeping three equal columns; only the full rows are a third wide.
+
+## M44 — a technology's sheet, three proposals (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M43 one above, continued.
+- **Attached:** real screenshots of the upgrade popup and the building card
+  (Chrome `upload_image`), and `mockups/m43-research-tree.png` for the tree
+  behind.
+- **File:** `mockups/m44-tech-sheet.png` (1448×1086), three screens A B C.
+- **What worked:** asking for the three proposals in ONE image kept them at
+  one scale over the same tree, and the real popup screenshot gave the
+  research block (price above, disabled button, line under) exactly.
+- **What to know:** A and C repeat the name in the header strip and again
+  beside the emblem.
+
+## M45 — the chosen sheet, for a technology not yet reachable (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M44 one above, continued; M44's B cropped and
+  attached, and the upgrade popup screenshot from M44's message referred to.
+- **File:** `mockups/m45-tech-sheet-locked.png` (1448×1086), two screens.
+- **What worked:** "exactly like the requirement rows of the real upgrade
+  popup … attached earlier in this conversation" — the model reused the
+  earlier attachment without it being sent again.
+- **What to know:** the page still prints the name twice (heading and beside
+  the emblem), as M44 B does.
+
+## M46 — the technology sheet, final (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M45 one above, continued; M45 attached and asked
+  for as an edit ("everything else EXACTLY the same").
+- **File:** `mockups/m46-tech-sheet-final.png` (1448×1086), two screens.
+- **What worked:** a short edit prompt against the attached image changed only
+  the two things asked for.
+
+## B1 — the research book's pieces: the page, the ribbon, the pin
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M46 one above, continued; M43 attached as the
+  style reference for the page.
+- **Files:** `sheets/rb-page-raw.png` (1060×1484, the page) →
+  `src/ui/assets/rb-page.png` (the alpha box, halved, 485×687; nine-sliced at
+  30); `sheets/rb-ribbon-pin-raw.png` (1536×1024) → `rb-ribbon.png` (191×448,
+  a neutral grey-white ribbon tinted per book in CSS: a mask of its shape
+  filled with `--tome`, the ribbon laid over it, multiplied) and `rb-pin.png`
+  (96×96).
+- **What worked:** the page's PREVIEW image was already true alpha while the
+  model was still running its own "correction" — it looped for minutes, and
+  the preview was downloaded and used as delivered. The second prompt left the
+  correction out entirely and came back transparent anyway.
+- **What to know:** a ribbon masked at `100% auto` from its bottom keeps its
+  swallowtail at any height; stretched to `100% 100%` it distorts.
+
+## B2 — the research book's page and loose sheet, with character
+
+- **Date:** 2026-09-29
+- **Conversation:** a new one (`6abbfd0e-ae5c-83eb-bbae-f1027593b113`) — the
+  two pieces asked for separately; asked together, the model failed twice.
+- **Why:** B1's page was nearly rectangular, flatter than M43 and M46. Both
+  were re-asked with the mockups' edges: wavy worn rims on the page, deckled
+  edges and a curled lower-right corner on the loose sheet.
+- **Files:** `sheets/rb-page-raw.png` (1046×1504) → `src/ui/assets/rb-page.png`
+  (alpha box, halved, 478×706; nine-sliced at 56, drawn 26px);
+  `sheets/rb-sheet-raw.png` (1049×1499) → `rb-sheet.png` (498×700; sliced at
+  96, drawn 68px, so the curl sits whole in its corner slice).
+- **What to know:** both came back true alpha without asking for a correction.
+  The sheet's wide corner slices are what keep the curl from stretching when a
+  locked technology's sheet is short.
