@@ -2,18 +2,21 @@
 // the bar, and buying points of it with Gold or with Gems. Opened by the +
 // on the Knowledge tab under the plank, and by tapping the tab itself.
 //
-// THREE OFFERS, ONE A ROW: one point for Gold, one for Gems, ten for Gems —
-// a list rather than three tills side by side, which a phone cannot fit. Gold's price rises with every point ever bought and never resets, so
+// THREE OFFERS, SIDE BY SIDE: one point for Gold, one for Gems, ten for Gems,
+// as three upright cards in the store's own shape (the Gem packs, M5) — the
+// amount on top as the book and a number, a line under it, then the price. Gold's price rises with every point ever bought and never resets, so
 // its till says so; the Gem price never moves.
 
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, iconEl, progress, sheet } from './kit';
+import { btn, currencyIcon, iconEl, progress, sheet } from './kit';
 
-/** One offer: what it is at the left, the button that buys it at the right. */
-const offer = (title: string, note: string, button: HTMLElement): HTMLElement =>
-  el('div', { class: 'knowledge-offer' },
-    el('div', { class: 'knowledge-offer-copy' }, el('b', {}, title), el('span', {}, note)),
+/** One offer: the amount over a line over the button that buys it. */
+const offer = (count: number, note: string, button: HTMLElement): HTMLElement =>
+  el('div', { class: 'store-pack knowledge-offer' },
+    el('div', { class: 'store-pack-count knowledge-offer-count' },
+      currencyIcon('Knowledge', { size: 'md' }), el('span', {}, String(count))),
+    el('div', { class: 'knowledge-offer-note' }, note),
     button);
 
 export function renderKnowledgeSheet(game: Game): HTMLElement {
@@ -23,7 +26,7 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
 
   const buy = (count: number, till: 'Gold' | 'Gems', note: string): HTMLElement => {
     const quote = game.knowledgeQuote(count);
-    return offer(`${count} Knowledge`, note, btn({
+    return offer(count, note, btn({
       label: 'Buy',
       kind: till === 'Gold' ? 'secondary' : 'gem',
       onClick: () => game.doBuyKnowledge(count, till),
@@ -47,7 +50,7 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
     el('div', { class: 'mana-refills' },
       el('div', { class: 'mana-prize' },
         el('span', { class: 'mana-prize-copy' }, 'Buy Knowledge')),
-      el('div', { class: 'knowledge-offers' },
+      el('div', { class: 'store-packs knowledge-offers' },
         buy(1, 'Gold', 'Dearer every time'),
         buy(1, 'Gems', 'Always the same'),
         buy(10, 'Gems', 'Always the same'))),

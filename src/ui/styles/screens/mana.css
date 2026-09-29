@@ -102,10 +102,22 @@
 }
 
 /* The Knowledge sheet borrows the Mana sheet's frame (knowledgeSheet.ts);
-   its three offers are a list, one a row. */
-.knowledge-offers { display: grid; gap: calc(var(--px) * 8); }
-.knowledge-offer { display: flex; align-items: center; gap: calc(var(--px) * 10); }
-.knowledge-offer-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.knowledge-offer-copy > b { font-size: var(--text-body); }
-.knowledge-offer-copy > span { font-size: var(--text-helper); color: var(--ink-muted); }
-.knowledge-offer > .k-btn { flex: none; margin-bottom: 0; }
+   its three offers are the store's Gem-pack cards (store.css .store-pack),
+   with the amount as the book and a number. */
+.knowledge-offers { margin-top: calc(var(--px) * 4); }
+.knowledge-offer { cursor: default; }
+.knowledge-offer-count { display: flex; align-items: center; gap: calc(var(--px) * 4); font-size: var(--text-title); }
+.knowledge-offer-count > .icon { --icon-size: calc(var(--px) * 40); }
+.knowledge-offer-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.2; min-height: 2.4em; }
+/* The priced button fits its third of the row: the card is already the
+   frame, so the button's own paper and its label's floor go. */
+.knowledge-offer > .k-btn.k-btn.has-cost:not(.k-knob) {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.knowledge-offer > .k-btn.has-cost > .k-btn-label { min-width: 0; padding-inline: calc(var(--px) * 8); }
