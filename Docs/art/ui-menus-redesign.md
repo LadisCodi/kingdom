@@ -459,8 +459,8 @@ wood of its sides touches the screen's edges.
     *Nothing in training*, centred, and no Finish.
 - **The workers block** (worker buildings; reference
   `mockups/m29-workers-stepper.png`, proposal B), a stepper:
-  - the red − knob, the villager's round portrait with the crew on its
-    pill (*x2*), *2 / 3 Assigned* in large type, and the green + knob;
+  - the red − knob, the villager's round portrait, *2 / 3* — the crew in
+    title type, the most it can hold smaller and muted — and the green + knob;
   - nothing else: the card's stat band leads with what the crew MAKES
     (*Food +45 /min*, the resource as the tile's word) and what there is to
     work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,

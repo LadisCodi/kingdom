@@ -286,11 +286,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
       body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
         minus,
-        el('div', { class: 'dc-crew-who' },
-          unitPortrait('Villager', 'dc-crew-face'),
-          el('span', { class: 'tr-count' }, `x${crew}`)),
-        el('div', { class: 'dc-crew-count' },
-          el('b', {}, `${crew} / ${limit}`), el('span', {}, 'Assigned')),
+        unitPortrait('Villager', 'dc-crew-face'),
+        el('div', { class: 'dc-crew-count', 'aria-label': `${crew} of ${limit} assigned` },
+          el('b', {}, String(crew)), el('span', {}, ` / ${limit}`)),
         plus));
     }
 

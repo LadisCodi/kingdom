@@ -221,16 +221,13 @@
   align-items: center;
   justify-content: center;
   gap: calc(var(--px) * 12);
-  /* Room for the count that hangs off the portrait's foot (.tr-count), so the
-     last row of the card never overflows .dc-body into a scroller. */
-  padding-bottom: calc(var(--px) * 6);
 }
 .dc-crew .k-btn.k-knob { --knob-size: calc(var(--px) * 46); }
-.dc-crew-who { position: relative; }
 .k-portrait.dc-crew-face { --portrait-size: calc(var(--px) * 56); }
-.dc-crew-count { display: flex; flex-direction: column; align-items: center; line-height: 1.05; min-width: calc(var(--px) * 64); }
+/* What works here at the title's size; the most it can hold, smaller. */
+.dc-crew-count { min-width: calc(var(--px) * 64); text-align: center; white-space: nowrap; line-height: 1; }
 .dc-crew-count > b { font-size: var(--text-title); font-weight: var(--weight-title); }
-.dc-crew-count > span { font-size: var(--text-helper); color: var(--ink-muted); }
+.dc-crew-count > span { font-size: var(--text-body); font-weight: var(--weight-title); color: var(--ink-muted); }
 /* A military building: the same shape as the Townhall's training block,
  * because it is the same beat. */
 .dc-army {
