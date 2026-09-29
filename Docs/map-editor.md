@@ -28,9 +28,8 @@ of the things that actually make map authoring hard:
   shrine in the water" was a question you answered by cross-referencing two
   sheets by hand — which is why the importer had to grow `checkSites()` to
   catch it.
-- **It could not show a derived number.** Every fog price in the game is a BFS
-  distance from the Townhall. A spreadsheet cell cannot know its own distance
-  through the world, so the single most important consequence of a map edit was
+- **It could not show a derived number.** Every fog price in the game is a ring
+  around the Townhall. A spreadsheet cell cannot know its own ring, so the single most important consequence of a map edit was
   invisible in the tool that made it.
 - **Errors arrived late and in a terminal.** `npm run balance` failing with
   `cell (3,-9): unknown terrain code "x"` is a fine error, half a minute after

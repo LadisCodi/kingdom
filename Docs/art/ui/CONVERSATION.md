@@ -592,9 +592,9 @@ for.
   - `spriteSize` is now per-sheet. The default 128 is a MAP sprite's size and
     the relics are never on the map: their card draws them at 170px, so 128
     was an upscale of a downscale.
-- The 45 CARD FACES are not drawn and are a content job rather than a sheet: a
-  card is its album's medallion behind its name and its stars, which is what
-  makes a nine-card page read as one album.
+- The CARD FACES were not drawn here: a card was its album's medallion behind
+  its name and its stars until the 72 were painted as eight 3×3 sheets, one an
+  album (`originals/v3-sheets/LOG.md`, spr-y).
 
 ---
 
