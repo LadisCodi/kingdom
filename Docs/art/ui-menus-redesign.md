@@ -479,6 +479,22 @@ wood of its sides touches the screen's edges.
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **The upgrade popup** (the card's Upgrade opens it; reference
+  `mockups/m34-upgrade-popup-final.png`), a centred window titled
+  *Upgrade to Level 3*:
+  - two portraits, the building at its current level and at the next, a
+    yellow arrow between them, each with its level on a badge under it
+    (*Level 2* blue, *Level 3* green);
+  - *Improvements*: one row per stat that improves — its icon, its full
+    name, its CURRENT value, and what the level adds as green text on the
+    right (*x1.25* … *+0.25*, *ring 5* … *+2 rings*). A stat the level does
+    not change is not listed;
+  - *Requirements*, shown only when the level has any: one row each — its
+    icon, what it asks, and a green tick or a red cross; an unmet row is red
+    text on a light red row. Nothing links to where it is met;
+  - the price and the build time over the Upgrade button. An unmet
+    requirement locks the button (grey, a padlock) with *Complete all
+    requirements to upgrade* under it; a short purse only colours the price.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 
