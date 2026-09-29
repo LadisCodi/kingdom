@@ -135,8 +135,6 @@
   left: calc(var(--q-icon) * 0.45);
   font-size: calc(var(--rpx) * 30);
   font-weight: var(--weight-title);
-  color: var(--ink);
-  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(255, 246, 224, 0.55);
 }
 
 /* Drawn as the wood slab (material.css's painted button), but the scroll is

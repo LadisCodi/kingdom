@@ -20,7 +20,6 @@
 .mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
 /* The gauge is the kit bar (blue: a resource filling), a little taller. */
 .mana-sheet > .k-trough { --bar-h: calc(var(--px) * 22); }
-.mana-sheet > .k-trough .k-trough-label { color: #fff6e0; font-weight: var(--weight-strong); }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so
  * it stays a fact rather than a spreadsheet. */

@@ -523,19 +523,34 @@
 .k-trough--green .k-fill { --bar-fill: url('../assets/bar-fill-green.png'); }
 .k-trough--blue .k-fill { --bar-fill: url('../assets/bar-fill-blue.png'); }
 .k-trough--red .k-fill { --bar-fill: url('../assets/bar-fill-red.png'); }
+.k-trough { --bar-ink: #2d6a10; }
+.k-trough--gold { --bar-ink: #8a5700; }
+.k-trough--green { --bar-ink: #2d6a10; }
+.k-trough--blue { --bar-ink: #13548e; }
+.k-trough--red { --bar-ink: #7e1712; }
 .k-trough .k-trough-label {
   position: absolute;
   inset: 0;
   z-index: 2; /* over the glass */
   display: grid;
   place-items: center;
-  /* A bar's reading always sits INSIDE it, centred, as tall as the bar —
-     with the quest counter's light edge, so it holds over any fill. */
+  /* A bar's reading always sits INSIDE it, centred, as tall as the bar: in
+     light ink with a 2-px outline of the bar's own darker tone (--bar-ink),
+     the button labels' treatment, so it reads over the fill and the dark
+     base alike. */
   line-height: 1;
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 246, 224, 0.6), 0 0 calc(var(--px) * 3) rgba(255, 246, 224, 0.5);
+  color: var(--ink-inverse);
+  text-shadow:
+    2px 0 0 var(--bar-ink), -2px 0 0 var(--bar-ink),
+    0 2px 0 var(--bar-ink), 0 -2px 0 var(--bar-ink),
+    2px 2px 0 var(--bar-ink), -2px 2px 0 var(--bar-ink),
+    2px -2px 0 var(--bar-ink), -2px -2px 0 var(--bar-ink),
+    1px 2px 0 var(--bar-ink), -1px 2px 0 var(--bar-ink),
+    1px -2px 0 var(--bar-ink), -1px -2px 0 var(--bar-ink),
+    2px 1px 0 var(--bar-ink), -2px 1px 0 var(--bar-ink),
+    2px -1px 0 var(--bar-ink), -2px -1px 0 var(--bar-ink);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
-  color: var(--ink);
 }
 
 /* A row of unit pips — army strength and the like. */
