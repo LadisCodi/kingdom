@@ -509,13 +509,6 @@
 }
 .bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
-/* ---- the district card's figure tiles (M2) ---- */
-.tr-fig {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
-
 /* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
 .res-era { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 512) calc(var(--px) * 512); }
 .res-era.is-open {
@@ -559,10 +552,6 @@
   background: none;
 }
 .res-tome.active { background: var(--gold); }
-
-/* ---- the villagers' row ---- */
-.tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
 
 /* ---- nails, where a plank is nailed to something ----
  * Not on the planks that carry a title (they read as dirt next to the words). */

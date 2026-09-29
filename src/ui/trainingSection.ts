@@ -1,40 +1,38 @@
 // The training section of a district card — the one block every building that
-// turns anything out shares (§5.x, the training mockup).
+// turns anything out shares: the Townhall's villagers, a hall's soldiers, a
+// ward's mending (Docs/art/ui-menus-redesign.md, "the training widget").
 //
-// It replaced two blocks that did the same job in different words: the
-// Townhall's "Train" row for villagers and the military halls' "Recruit" row
-// for soldiers. They had already been merged in the sim (one queue per
-// building), and the card is where that shows: a QUEUE strip of who is coming,
-// a picker for what this hall can turn out, and one detail panel for whichever
-// is picked.
+// Three parts, top to bottom:
 //
-// Three things it deliberately does:
+//  - THE PICKER: a small round portrait per thing this hall can turn out,
+//    anchored right. Round, so it reads as "choose one of these" and never as
+//    one more rectangular button. A hall that trains one thing still shows
+//    its one portrait: the widget keeps its shape from building to building.
+//  - THE PANEL for whichever is picked: its bust, name, tags, one line of
+//    flavour, the priced Train button — and for a soldier the three numbers
+//    it is chosen on. Picking is separate from buying: the player reads about
+//    a unit, and trains it with a second, deliberate press.
+//  - THE QUEUE, right to left: the batch being trained NOW sits at the right,
+//    beside the gem button that finishes it, so it is plain what Finish
+//    finishes; what waits lines up to its left.
 //
-//  - The QUEUE is portraits, not a number. "Three in the line" tells you how
-//    long to wait; a row of faces tells you WHAT you are waiting for, which is
-//    the question when a hall can turn out three different units.
-//  - Picking is separate from buying. The player selects a unit to read about
-//    it, and trains it with a second, deliberate press — so the detail panel
-//    can be browsed without spending anything.
-//  - Everything the panel says is DERIVED. The tags give the type chip, the
-//    BEATS chart gives "Strong vs", the units table gives cost and duration.
-//    Nothing here is authored twice.
+// Everything the panel says is DERIVED — the tags from the unit's type and
+// the type chart, the numbers from the units table — so nothing here is
+// authored twice.
 
 import type { Game } from '../game';
-import { DISTRICTS, UNITS, type UnitDef } from '../sim/data/definitions';
+import { DISTRICTS, TECHNOLOGIES, UNITS, type UnitDef } from '../sim/data/definitions';
 import {
   itemCount, lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt,
   trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
-import { maxPopulation } from '../sim/population';
 import { isTechComplete } from '../sim/research';
-import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, iconEl, type LiveParts } from './kit';
+import { action, btn, iconEl, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
-import { unitBody, unitBust } from './unitArt';
+import { unitBust } from './unitArt';
 import { pickedTrainee, pickTrainee } from './trainingPick';
 
 /** A villager is not in the UNITS table — no stats, no power, a price that
@@ -42,37 +40,55 @@ import { pickedTrainee, pickTrainee } from './trainingPick';
  *  roster. One place, and it reads like the others. */
 const VILLAGER = {
   name: 'Villager',
-  tag: 'Worker',
-  description: 'Works your buildings and pays rent. Everything else needs them.',
+  description: 'A hardworking settler who tends the fields and pays rent.',
 };
 
-/**
- * One number a thing is judged ON, at a size that can be read across a panel:
- * the mark and the word on top, the value under them.
- *
- * The inline `stat()` shape — icon, value, word, all on one line — is right in
- * a card the width of a thumb, and wrong here: a panel has a band of its own
- * for these, and several in a row is the comparison the player is actually
- * making. Exported because the upgrade block reads the same way — a level is
- * judged on what it buys, one tile per number, `before → after`.
- */
-export const figure = (icon: IconName, label: string, value: string): HTMLElement =>
-  el('div', { class: 'tr-fig' },
-    el('div', { class: 'tr-fig-head' }, iconEl(icon, { size: 'sm' }), label),
-    el('div', { class: 'tr-fig-value' }, value));
+/** How many places the queue strip always draws: a run per place, the rest
+ *  empty, so the strip keeps its length and its right end never moves. Four
+ *  is what fits beside Finish on the iPhone X. The line itself has no limit —
+ *  past this the strip scrolls. */
+const QUEUE_PLACES = 4;
 
 const nameFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
 
-/** The one-word type chip: what the unit IS, in the language the type chart
- *  speaks. Derived from its tags so it cannot disagree with the chart. */
-const tagFor = (unit: UnitDef): string =>
-  (unit.tags.includes('Distance') ? 'Ranged'
-    : unit.tags.includes('Mounted') ? 'Mounted' : 'Melee');
+/** A TAG: a short chip for what the unit IS or does, which says a line more
+ *  when tapped. Only one is open at a time; a tap anywhere else in the block
+ *  closes it (the listener is on the block, `trainingSection`). */
+function tag(label: string, tip: string, tone: 'type' | 'trait'): HTMLElement {
+  const b = el('button', {
+    class: `tr-tag is-${tone}`, type: 'button', 'aria-label': `${label}: ${tip}`,
+  },
+    label,
+    el('span', { class: 'tr-tag-tip', role: 'tooltip' }, el('b', {}, label), ` — ${tip}`));
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = !b.classList.contains('is-open');
+    b.closest('.tr')?.querySelectorAll('.tr-tag.is-open').forEach((t) => t.classList.remove('is-open'));
+    b.classList.toggle('is-open', open);
+  });
+  return b;
+}
+
+/** The type chip: what the unit IS, in the language the type chart speaks.
+ *  Derived from its tags so it cannot disagree with the chart. */
+function typeTag(unit: UnitDef): HTMLElement {
+  if (unit.tags.includes('Distance')) return tag('Ranged', 'Shoots from behind the line.', 'type');
+  if (unit.tags.includes('Mounted')) return tag('Mounted', 'Rides into battle: fast and hard-hitting.', 'type');
+  return tag('Melee', 'Fights up close, at the front of the line.', 'type');
+}
+
+/** One number a soldier is chosen on: a tile of the building card's kind. */
+const stat = (icon: IconName, label: string, value: number): HTMLElement =>
+  el('div', { class: 'tr-stat k-section' },
+    iconEl(icon, { size: 'lg' }),
+    el('div', { class: 'tr-stat-body' },
+      el('div', { class: 'tr-stat-label' }, label),
+      el('b', { class: 'tr-stat-value' }, String(value))));
 
 /**
- * `live` is where the block's ticking half goes: the queue's bar and its
- * Finish price move every second, and with a live part they are the only
+ * `live` is where the block's ticking half goes: the queue's bar, its time and
+ * its Finish price move every second, and with a live part they are the only
  * thing that is rebuilt for it. Without one (a caller that rebuilds the
  * whole card anyway) the block is simply built once.
  */
@@ -86,24 +102,29 @@ export function trainingSection(
   const isWard = def.bedsPerLevel.length > 0;
   if (offers.length === 0 && !isWard) return null;
 
-  const line = lineFor(game.state, district.uniqueId);
   const root = el('div', { class: 'tr' });
+  // A tap anywhere in the block that is not on a tag closes an open tip.
+  root.addEventListener('click', () => {
+    root.querySelectorAll('.tr-tag.is-open').forEach((t) => t.classList.remove('is-open'));
+  });
 
-  // ---------------------------------------------------------- the queue
-  if (line.length > 0) {
-    const queueRow = () => queueSection(game, district, isWard);
-    const queueSig = () => {
+  const queue = () => {
+    const row = () => queueSection(game, district, isWard);
+    const sig = () => {
       const now = game.now();
-      const head = lineFor(game.state, district.uniqueId)[0];
+      const line = lineFor(game.state, district.uniqueId);
+      const head = line[0];
       return JSON.stringify([
-        lineFor(game.state, district.uniqueId).map((i) => [i.trainee, itemCount(i)]),
+        line.map((i) => [i.trainee, itemCount(i)]),
         head === undefined ? null : head.startedAt === null,
         head === undefined ? null : Math.ceil(queueLeft(game, district, head)),
+        Math.round(trainingProgress(game.state, district.uniqueId, now) * 100),
         lineRushCost(game.state, district.uniqueId, now),
       ]);
     };
-    root.append(live ? live.add(queueSig, queueRow) : queueRow());
-  }
+    return live ? live.add(sig, row) : row();
+  };
+
   // ------------------------------------------------------------- the ward
   //
   // Every wounded soldier in the city, on the building that has the beds.
@@ -111,18 +132,17 @@ export function trainingSection(
   // player looking at the card wants to know how much of it is spoken for.
   if (isWard) {
     const ward = game.woundedInfo();
-    root.append(el('div', { class: 'tr-head' }, `The ward — ${ward.used} of ${ward.cap} beds`));
+    root.append(el('div', { class: 'tr-desc' }, `${ward.used} of ${ward.cap} beds taken`));
     if (ward.byUnit.length === 0) {
       root.append(el('div', { class: 'tr-desc' },
         'Nobody in the beds. Soldiers hurt in a fight wait here instead of dying.'));
     }
     for (const { unitId, count } of ward.byUnit) {
       const seconds = game.healWait(unitId, count);
-      root.append(el('div', { class: 'tr-info is-ward' },
+      root.append(el('div', { class: 'tr-info is-ward k-section' },
         el('div', { class: 'tr-portrait' }, unitBust(unitId, 'tr-portrait-art')),
         el('div', { class: 'tr-body' },
           el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
-          el('div', { class: 'tr-tag' }, 'Wounded'),
           el('div', { class: 'tr-desc' },
             'Off the roster until they are back on their feet. Cheaper to mend '
             + 'than to replace.')),
@@ -140,41 +160,37 @@ export function trainingSection(
         }),
       ));
     }
+    if (lineFor(game.state, district.uniqueId).length > 0) root.append(queue());
   }
   if (offers.length === 0) return root;
 
   // --------------------------------------------------------- the picker
   const current = pickedTrainee(district.uniqueId) ?? offers[0];
   const selected = offers.includes(current) ? current : offers[0];
+  root.append(el('div', { class: 'tr-picker' }, ...offers.map((t) => {
+    const locked = t !== 'Villager'
+      && UNITS[t].requiredTech !== null
+      && !isTechComplete(game.state, UNITS[t].requiredTech!);
+    const b = el('button', {
+      class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
+      type: 'button',
+      'aria-pressed': String(t === selected),
+    },
+      el('span', { class: 'tr-pick-disc' }, unitBust(t, 'tr-pick-art')),
+      el('span', { class: 'tr-pick-name' }, nameFor(t)));
+    b.addEventListener('click', () => {
+      pickTrainee(district.uniqueId, t);
+      game.notify();
+    });
+    return b;
+  })));
 
-  if (offers.length > 1) {
-    root.append(
-      el('div', { class: 'tr-head' }, 'Units'),
-      el('div', { class: 'tr-picker' }, ...offers.map((t) => {
-        const locked = t !== 'Villager'
-          && UNITS[t].requiredTech !== null
-          && !isTechComplete(game.state, UNITS[t].requiredTech!);
-        const b = el('button', {
-          class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
-          type: 'button',
-          title: nameFor(t),
-        }, unitBust(t, 'tr-pick-art'));
-        b.addEventListener('click', () => {
-          pickTrainee(district.uniqueId, t);
-          game.notify();
-        });
-        return b;
-      })),
-    );
-  }
-
-  // ---------------------------------------------------- the detail panel
-  root.append(detail(game, district, selected, live));
+  // ---------------------------------------------------- the panel, the queue
+  root.append(detail(game, district, selected), queue());
   return root;
 }
 
-
-/** Seconds the head of the line still needs — the number under the bar. */
+/** Seconds the head of the line still needs — the time under its bar. */
 function queueLeft(game: Game, district: District, head: ReturnType<typeof lineFor>[number]): number {
   return head.startedAt === null
     ? (head.kind === 'heal'
@@ -183,259 +199,118 @@ function queueLeft(game: Game, district: District, head: ReturnType<typeof lineF
     : Math.max(0, (trainingCompletesAt(head) - game.now()) / 1000);
 }
 
-/** The queue: who is coming, the bar under the one being worked on, and the
- *  price of not waiting. The ticking half of the block. */
+/**
+ * THE QUEUE, right to left, and the price of not waiting. The ticking half of
+ * the block.
+ *
+ * CONSECUTIVE RUNS are the batches — "Warrior x3" — not one place each and not
+ * one per type: four warriors in a row is one fact, and collapsing by type
+ * ALONE would lie about the order (Warrior, Lancer, Warrior shown as
+ * "Warrior x2, Lancer" says the wrong thing comes out next). A ward's item
+ * already hands over many, so a run adds those counts up.
+ */
 function queueSection(game: Game, district: District, isWard: boolean): HTMLElement {
-  const def = DISTRICTS[district.definitionId];
   const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
-  const root = el('div', { class: 'tr-queue-block' });
-  // CONSECUTIVE RUNS, not one slot each and not one slot per type. Four
-  // warriors in a row is one fact — "four warriors" — and four identical
-  // faces spent four slots saying it. Collapsing by type ALONE would be
-  // wrong for the opposite reason: the line is ordered, and a queue of
-  // Warrior, Lancer, Warrior, Warrior shown as "Warrior x3, Lancer x1"
-  // lies about what comes out next. So: runs.
-  //
-  // A ward is already one item that hands over many, so a run adds those
-  // counts up rather than counting items.
-  const runs: Array<{ trainee: TrainableId; count: number; first: number }> = [];
-  line.forEach((item, i) => {
+  const runs: Array<{ trainee: TrainableId; count: number }> = [];
+  for (const item of line) {
     const last = runs[runs.length - 1];
     if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
-    else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
-  });
+    else runs.push({ trainee: item.trainee, count: itemCount(item) });
+  }
 
-  // THE CHAIN (M2). A run is a medallion with its count on a pill, and the
-  // runs are joined by a painted link — so the line reads as an order of
-  // events rather than as a row of icons. The HEAD of the line wears the
-  // progress ring, because that is the one being worked on and the ring is
-  // the bar that used to sit underneath the whole strip.
-  const progressPct = trainingProgress(game.state, district.uniqueId, now);
-  const strip = el('div', { class: 'tr-queue', 'data-keep-scroll': 'tr-queue' },
-    ...runs.flatMap((run, i) => {
-      const name = nameFor(run.trainee);
-      const active = run.first === 0;
-      const slot = el('div', {
-        class: `tr-slot${active ? ' is-active' : ''}`,
-        title: run.count > 1
-          ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
-          : name,
-      },
-        unitBust(run.trainee, 'tr-slot-art'),
-        // The ring is a conic gradient rather than the painted `ring_progress`
-        // asset: the painted one carries ONE arc, and a progress ring has to
-        // show every angle. The asset is what the colours are matched to.
-        ...(active
-          ? [el('span', {
-            class: 'tr-slot-ring',
-            style: `--progress: ${Math.round(progressPct * 360)}deg`,
-          })]
-          : []),
-        ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
-      // A link BETWEEN slots, never after the last one.
-      return i === runs.length - 1 ? [slot] : [slot, el('span', { class: 'tr-link' })];
-    }));
+  const place = (run: { trainee: TrainableId; count: number }, active: boolean): HTMLElement => {
+    const face = el('div', { class: 'tr-slot-face' },
+      unitBust(run.trainee, 'tr-slot-art'),
+      ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
+    if (!active) {
+      return el('div', { class: 'tr-slot is-waiting', title: `${run.count} ${nameFor(run.trainee)}` },
+        face, el('span', { class: 'tr-slot-note' }, 'Waiting'));
+    }
+    const pct = Math.round(trainingProgress(game.state, district.uniqueId, now) * 100);
+    return el('div', { class: 'tr-slot is-active', title: `${run.count} ${nameFor(run.trainee)}` },
+      face,
+      el('span', { class: 'tr-slot-bar' }, el('span', { style: `width: ${pct}%` })),
+      el('span', { class: 'tr-slot-note' },
+        `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`));
+  };
 
-  const head = line[0];
-  const left = queueLeft(game, district, head);
-  // THE WHOLE LINE, not the head of it: the heading answers "how long until
-  // this queue is empty", which is the question a player with five in the
-  // line is asking. The head's own countdown is the ring.
-  const total = line.reduce((n, item, i) => n + (i === 0
-    ? left
-    : (item.kind === 'heal'
-      ? game.healWait(item.trainee as UnitId, itemCount(item))
-      : trainSecondsAt(game.state, district.uniqueId, item.trainee) * itemCount(item))), 0);
+  // In LINE order — the batch in training first, then what waits, then the
+  // empty places — and the strip lays it out right to left (`row-reverse`,
+  // district.css): so it starts at Finish, and when a long line outgrows the
+  // row, what scrolls out of sight is its far end, not the batch in training.
+  const empties = Math.max(0, QUEUE_PLACES - runs.length);
+  const strip = el('div', { class: 'tr-queue' },
+    ...runs.map((run, i) => place(run, i === 0)),
+    ...Array.from({ length: empties }, () =>
+      el('div', { class: 'tr-slot is-empty' },
+        el('div', { class: 'tr-slot-face' }), el('span', { class: 'tr-slot-note' }, 'Empty'))));
 
   const rush = lineRushCost(game.state, district.uniqueId, now);
-  root.append(
-    el('div', { class: 'tr-head' },
-      el('span', { class: 'tr-head-title' }, isWard ? 'On the table' : 'Train units'),
-      el('span', { class: 'tr-head-total' },
-        iconEl('hourglass', { size: 'sm' }),
-        `${formatDuration(Math.ceil(total))} total`)),
+  return el('div', { class: 'tr-queue-block' },
+    el('div', { class: 'tr-sub' }, isWard ? 'Mending' : 'Queue'),
     el('div', { class: 'tr-queue-row' },
       strip,
-      action({
-        label: 'Finish now',
-        kind: 'gem',
-        onClick: () => game.doFinishTraining(district),
-        cost: { Gems: rush },
-        have: (c) => game.walletValue(c),
-      })),
-    // The tap boost is an affordance on the BUILDING, so it is pointed at
-    // rather than described.
-    el('div', { class: 'dc-tapline' },
-      iconEl('showme', { size: 'sm' }),
-      `Tap the ${def.name} itself to hurry it along`),
-  );
-  return root;
+      ...(line.length > 0
+        ? [btn({
+          label: 'Finish',
+          kind: 'gem',
+          onClick: () => game.doFinishTraining(district),
+          cost: { Gems: rush },
+          have: (c) => game.walletValue(c),
+        })]
+        : [])));
 }
 
-/** What the detail panel says about one trainee. The PANEL is the same for a
- *  villager and a soldier — portrait, heading with the button, a line of
- *  copy, a band of figures — and only these parts differ. Keeping the two in
- *  one shape is what stops the Townhall's card drifting from the halls' again:
- *  it had, and the villager's own layout grew taller than the card and put
- *  the Train button under the fold. */
-interface TraineeCopy {
-  name: string;
-  tag: string;
-  description: string;
-  /** The one phrase under the copy, when there is one — a soldier's place in
-   *  the type chart. A villager has no chart. */
-  note: HTMLElement | null;
-  /** Why the button is off, or nothing when it is on. */
-  disabledReason: string | undefined;
-  /** The figures a trainee is chosen on. A soldier has four; a villager three. */
-  figures: HTMLElement[];
-}
-
-/** How many faces the roster draws before it says "+N": five reads as a
- *  household, eight as a village; past that a row of heads is a crowd and the
- *  number does the job. */
-const ROSTER_FACES = 8;
-
-/**
- * The villagers' row (mockup M2, Docs/art/ui-menus-redesign.md §7.19): one
- * round portrait per bed the houses hold — filled for a villager living here,
- * a face under a sand-timer for the one being trained, an empty socket for a
- * free bed — so "how many, how much room, how long" is one picture rather
- * than three figures. The timer ticks, so the caller makes it a live part.
- */
-function villagerRoster(game: Game, district: District): HTMLElement {
-  const living = game.state.city.population;
-  const cap = maxPopulation(game.state);
-  const line = lineFor(game.state, district.uniqueId);
-  const queued = line.reduce((n, i) => n + itemCount(i), 0);
-  // Five sockets are always drawn (M2): a socket past the houses' capacity is
-  // a bed that does not exist yet, and reads fainter than a free one.
-  const shown = Math.max(Math.min(cap, ROSTER_FACES), Math.min(ROSTER_FACES, 5));
-  const row = el('div', { class: 'tr-roster' });
-  for (let i = 0; i < shown; i++) {
-    const kind = i < living ? 'is-living'
-      : i < living + queued ? 'is-queued'
-        : i < cap ? 'is-empty' : 'is-none';
-    const slot = el('div', { class: `tr-roster-slot ${kind}` });
-    if (kind === 'is-living' || kind === 'is-queued') slot.append(unitBust('Villager', 'tr-roster-art'));
-    // The first queued face carries the clock: it is the one being trained.
-    if (kind === 'is-queued' && i === living && line[0] !== undefined) {
-      slot.append(el('span', { class: 'tr-roster-timer' },
-        formatDuration(Math.ceil(queueLeft(game, district, line[0])))));
-    }
-    row.append(slot);
-  }
-  if (cap > shown) {
-    row.append(el('span', { class: 'tr-roster-more' }, `+${cap - shown}`));
-  }
-  return row;
-}
-
-function villagerCopy(game: Game, district: District, live: LiveParts | undefined): TraineeCopy {
-  const room = game.trainingInfo();
-  const roster = () => villagerRoster(game, district);
-  const rosterSig = () => {
-    const line = lineFor(game.state, district.uniqueId);
-    return JSON.stringify([
-      game.state.city.population, maxPopulation(game.state), room.queued,
-      line[0] === undefined ? null : Math.ceil(queueLeft(game, district, line[0])),
-    ]);
-  };
-  return {
-    ...VILLAGER,
-    note: null,
-    disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
-    // A villager is judged on where it goes rather than what it hits, and the
-    // roster says it in one row: who lives here, who is on the way, how many
-    // beds are left. The time it takes rides on the button.
-    figures: [live ? live.add(rosterSig, roster) : roster()],
-  };
-}
-
-function soldierCopy(game: Game, unitId: UnitId, seconds: number): TraineeCopy {
-  const unit = UNITS[unitId];
-  const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
-  const army = game.armyRoom();
-  return {
-    name: unit.name,
-    tag: tagFor(unit),
-    description: unit.description,
-    // The chart, in one phrase, rather than a table the player has to read.
-    note: el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[unitId]].name}`),
-    disabledReason: !techOk
-      ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-      : army.used + 1 > army.cap
-        ? 'Your army is full — upgrade this hall'
-        : undefined,
-    // The four numbers a soldier is chosen on, in the band the button used to
-    // waste: what it hits for, what it takes, what it has, and what it costs
-    // in time. The atlas grew dedicated marks for the first three
-    // (Docs/art/ui/icon_stat_*.png), so they stop borrowing the army sword,
-    // the padlock and a villager's head.
-    figures: [
-      figure('atk', 'Damage', String(unit.dmg)),
-      figure('def', 'Defence', String(unit.def)),
-      figure('hp', 'Health', String(unit.hp)),
-      figure('hourglass', 'Time', formatDuration(seconds)),
-    ],
-  };
-}
-
-function detail(
-  game: Game, district: District, trainee: TrainableId, live?: LiveParts,
-): HTMLElement {
+/** The panel for the picked trainee: bust, name and tags, flavour, the priced
+ *  Train button (its time among its costs) — and a soldier's three numbers
+ *  in a row of their own underneath. */
+function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
   const cost = trainCost(game.state, trainee);
   // What it will take HERE, neighbours included — the number the player is
   // about to commit to, not the one on the sheet.
   const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
-  const copy = trainee === 'Villager'
-    ? villagerCopy(game, district, live)
-    : soldierCopy(game, trainee, seconds);
+  const unit = trainee === 'Villager' ? null : UNITS[trainee];
 
-  // The button shares its row with the NAME, not with the description: a name
-  // and a tag are short, so a fixed-width button beside them still leaves the
-  // description its full measure on a 390px phone. Beside the description it
-  // would have squeezed it to a sliver.
-  //
   // A GATE takes the button's place. When something other than money is in
   // the way — no room, a technology, a full army — a dead button with a
-  // caption is two things saying one thing, and the caption was wrapping
-  // around it. So the slot holds the reason alone, in the padlock's colour,
-  // and the button comes back when the gate opens. Being short of coin is not
-  // a gate: the button stays and its red price says so (§6.4).
-  const buy = copy.disabledReason !== undefined
-    ? el('div', { class: 'tr-blocked' },
-      iconEl('padlock', { size: 'sm' }), copy.disabledReason)
-    : action({
+  // caption is two things saying one thing. So the slot holds the reason
+  // alone, in the padlock's colour, and the button comes back when the gate
+  // opens. Being short of coin is not a gate: the button stays and its red
+  // price says so (§6.4).
+  const army = game.armyRoom();
+  const gate = unit === null
+    ? (game.trainingInfo().atMax ? 'Nowhere to put them — build more Housing' : undefined)
+    : unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)
+      ? `Research ${TECHNOLOGIES[unit.requiredTech].name} first`
+      : army.used + 1 > army.cap ? 'The army is full — upgrade this hall' : undefined;
+  const buy = gate !== undefined
+    ? el('div', { class: 'tr-blocked' }, iconEl('padlock', { size: 'sm' }), gate)
+    : btn({
       label: 'Train',
       kind: 'primary',
       onClick: () => game.doTrain(trainee, district),
       cost,
       have: (c) => game.walletValue(c),
-      // The villager's clock moved off the figures band and onto the thing
-      // that starts it; a soldier keeps it among its four numbers.
-      ...(trainee === 'Villager'
-        ? { info: el('span', { class: 'dc-uptime' }, iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)) }
-        : {}),
+      costExtra: [{ icon: 'hourglass', amount: formatDuration(seconds) }],
     });
-  // The villagers' block is the roster and the button on one row (M2): the
-  // faces say who lives here and who is on the way, the slab says what one
-  // more costs. No portrait — the faces are the portrait.
-  if (trainee === 'Villager') {
-    return el('div', { class: 'tr-info is-villagers' },
-      el('div', { class: 'tr-villagers' }, ...copy.figures, buy));
-  }
-  return el('div', { class: 'tr-info' },
-    el('div', { class: 'tr-portrait is-body' }, unitBody(trainee, 'tr-portrait-art')),
+
+  const tags = unit === null
+    ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]
+    : [typeTag(unit),
+      tag(`Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`,
+        `Deals extra damage to ${UNITS[BEATS[trainee as UnitId]].name}s.`, 'trait')];
+
+  return el('div', { class: 'tr-info k-section' },
+    el('div', { class: 'tr-portrait' }, unitBust(trainee, 'tr-portrait-art')),
     el('div', { class: 'tr-body' },
-      el('div', { class: 'tr-top' },
-        el('div', { class: 'tr-heading' },
-          el('div', { class: 'tr-name' }, copy.name),
-          el('div', { class: 'tr-tag' }, copy.tag)),
-        buy),
-      el('div', { class: 'tr-desc' }, copy.description),
-      ...(copy.note ? [copy.note] : [])),
-    el('div', { class: 'tr-figures' }, ...copy.figures),
+      el('div', { class: 'tr-name' }, nameFor(trainee)),
+      el('div', { class: 'tr-tags' }, ...tags),
+      el('div', { class: 'tr-desc' }, unit === null ? VILLAGER.description : unit.description)),
+    el('div', { class: 'tr-buy' }, buy),
+    ...(unit === null ? [] : [el('div', { class: 'tr-stats' },
+      stat('atk', 'Attack', unit.dmg),
+      stat('def', 'Defence', unit.def),
+      stat('hp', 'Health', unit.hp))]),
   );
 }

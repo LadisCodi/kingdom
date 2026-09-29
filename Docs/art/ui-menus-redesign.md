@@ -405,6 +405,24 @@ wood of its sides touches the screen's edges.
   command runs. The portrait is a section with a small leafy ornament pressed
   into each corner, and the building drawn larger than the tile, clipped to
   it by a mask.
+- **The training widget** (`trainingSection.ts`; reference
+  `mockups/m28-training-widget.png`), one block for every building that
+  turns something out — the Townhall's villagers, a hall's soldiers:
+  - **Picker:** a small round portrait per trainee, anchored right, the
+    picked one in a gold ring. Round so it never reads as another button;
+    shown even when the building trains only one thing.
+  - **Panel** (a section): the bust, the name, the tags, one line of
+    flavour, and the priced Train button — its costs and its time above it.
+    A soldier adds a row of three stat tiles underneath: Attack, Defence,
+    Health. A gate (no room, a technology, a full army) takes the button's
+    place with its reason.
+  - **Tags:** chips for what the unit is (its type, blue: Melee, Ranged,
+    Mounted; Worker for a villager) and what it does (its type-chart edge:
+    *Strong vs Lancer*). Tapping one opens a one-line bubble; one at a time.
+  - **Queue, right to left:** the batch in training at the right with its
+    bar and time left, beside the gem Finish button; what waits to its left;
+    empty places up to four. A batch is a run of the same trainee in the
+    line, one portrait with a count (*x5*).
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
   *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's
