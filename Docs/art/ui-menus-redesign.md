@@ -597,8 +597,10 @@ exists — see questions 3 and 7, and
     what is held — *23* — and the segments stay all lit.
   - A **+** knob inside the tab, the same as the Gems', opens the Knowledge
     sheet; tapping the tab opens it too. The sheet is the bar and **three
-    offers side by side**, cut like the store's Gem packs and set straight on
-    the sheet, with no box or title round them: the amount on top as the book
+    offers side by side**, each on a tile of darker paper — the building
+    card's stat tile (`.k-section`) — set straight on the sheet, with no box or
+    title round them, and the sheet a little wider than a centred sheet's
+    default so the buttons can run nearly edge to edge: the amount on top as the book
     and a number, and the price on the button's face — 1 Knowledge for Gold
     (dearer every time), 1 for Gems, 10 for Gems. A till the player cannot pay
     goes dark.

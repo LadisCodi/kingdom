@@ -101,12 +101,41 @@
   color: var(--clay);
 }
 
-/* The Knowledge sheet borrows the Mana sheet's frame (knowledgeSheet.ts);
-   its three offers are the store's Gem-pack cards (store.css .store-pack),
-   with the amount as the book and a number and the price on the button. */
-.knowledge-offers { margin-top: calc(var(--px) * 6); }
-.knowledge-offer { cursor: default; }
-.knowledge-offer-count { display: flex; align-items: center; gap: calc(var(--px) * 4); font-size: var(--text-title); }
+/* The Knowledge sheet borrows the Mana sheet's frame (knowledgeSheet.ts),
+   a little wider: at 375px its three offers need the room. Each offer is a
+   tile of darker paper, the building card's stat tile (.k-section), with the
+   amount on top and the price on the button, which runs nearly edge to edge. */
+.k-sheet.is-centred:has(.knowledge-sheet) { max-width: calc(var(--px) * 386); }
+.knowledge-offers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--px) * 8);
+  margin-top: calc(var(--px) * 6);
+}
+.knowledge-offer.k-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  min-width: 0;
+  padding: calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 6);
+}
+.knowledge-offer-count {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-family: var(--font-body);
+  font-weight: var(--weight-strong);
+  font-size: var(--text-title);
+  line-height: 1;
+}
 .knowledge-offer-count > .icon { --icon-size: calc(var(--px) * 40); }
-.knowledge-offer > .k-btn { width: 100%; margin-bottom: 0; }
-.knowledge-offer > .k-btn > .k-btn-label { gap: calc(var(--px) * 4); }
+/* The kit floors a label at 112px and pads the slab 13px a side; a third of
+   a phone has no room for either, so the price sets the width. */
+.knowledge-offer > .k-btn.k-btn:not(.k-knob) {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+  padding-inline: calc(var(--px) * 8);
+}
+.knowledge-offer > .k-btn.k-btn:not(.k-knob) > .k-btn-label { gap: calc(var(--px) * 4); min-width: 0; }

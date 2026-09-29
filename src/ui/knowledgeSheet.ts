@@ -3,9 +3,9 @@
 // on the Knowledge tab under the plank, and by tapping the tab itself.
 //
 // THREE OFFERS, SIDE BY SIDE: one point for Gold, one for Gems, ten for Gems,
-// as three upright cards in the store's own shape (the Gem packs, M5) — the
-// amount on top as the book and a number, and the price IS the button, as a
-// pack's is. No box around the three and no title over them: the sheet is
+// each on a tile of darker paper — the building card's stat tiles (kit
+// .k-section) — with the amount on top as the book and a number, and the
+// price IS the button, as a Gem pack's is. No box around the three and no title over them: the sheet is
 // already the frame, and the cards say what they sell. Gold's price rises with every point ever bought and never resets, so
 // its till says so; the Gem price never moves.
 
@@ -15,8 +15,8 @@ import { btn, currencyIcon, iconEl, progress, sheet } from './kit';
 
 /** One offer: the amount over the button that buys it, priced on its face. */
 const offer = (count: number, button: HTMLElement): HTMLElement =>
-  el('div', { class: 'store-pack knowledge-offer' },
-    el('div', { class: 'store-pack-count knowledge-offer-count' },
+  el('div', { class: 'k-section knowledge-offer' },
+    el('div', { class: 'knowledge-offer-count' },
       currencyIcon('Knowledge', { size: 'md' }), el('span', {}, String(count))),
     button);
 
@@ -52,7 +52,7 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
       `${k.perHour === 1 ? 'One' : k.perHour} an hour while under ${k.cap}. `
       + 'Landmarks, ruins and quests pay it in lumps, over the bar if they must.'),
 
-    el('div', { class: 'store-packs knowledge-offers' },
+    el('div', { class: 'knowledge-offers' },
       buy(1, 'Gold'),
       buy(1, 'Gems'),
       buy(10, 'Gems')),
