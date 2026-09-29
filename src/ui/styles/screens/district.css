@@ -340,8 +340,10 @@
 .tr-tag-tip {
   display: none;
   position: absolute;
+  /* Below the tag, not above: the card's body scrolls, and a bubble over
+     its first line would be cut off at the body's top edge. */
   left: calc(var(--px) * -4);
-  bottom: calc(100% + calc(var(--px) * 8));
+  top: calc(100% + calc(var(--px) * 8));
   z-index: 5;
   width: max-content;
   max-width: calc(var(--px) * 200);
@@ -359,9 +361,9 @@
   content: '';
   position: absolute;
   left: calc(var(--px) * 16);
-  top: 100%;
+  bottom: 100%;
   border: calc(var(--px) * 7) solid transparent;
-  border-top-color: var(--section-line);
+  border-bottom-color: var(--section-line);
 }
 .tr-tag.is-open > .tr-tag-tip { display: block; }
 

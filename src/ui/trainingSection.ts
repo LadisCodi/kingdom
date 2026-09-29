@@ -19,7 +19,7 @@
 // authored twice.
 
 import type { Game } from '../game';
-import { DISTRICTS, TECHNOLOGIES, UNITS, type UnitDef } from '../sim/data/definitions';
+import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
 import {
   itemCount, lineFor, lineRemainingSeconds, lineRushCost, trainCost, trainSecondsAt,
   trainingCompletesAt, trainingProgress,
@@ -62,12 +62,20 @@ function tag(label: string, tip: string, tone: 'type' | 'trait'): HTMLElement {
   return b;
 }
 
-/** The type chip: what the unit IS, in the language the type chart speaks.
- *  Derived from its tags so it cannot disagree with the chart. */
-function typeTag(unit: UnitDef): HTMLElement {
-  if (unit.tags.includes('Distance')) return tag('Ranged', 'Shoots from behind the line.', 'type');
-  if (unit.tags.includes('Mounted')) return tag('Mounted', 'Rides into battle: fast and hard-hitting.', 'type');
-  return tag('Melee', 'Fights up close, at the front of the line.', 'type');
+/** The type chip: what the unit IS, in the language the type chart speaks —
+ *  and its tip, what that means in a fight: who it beats and who beats it.
+ *  Both read off the chart (combat.ts BEATS), so neither can disagree with
+ *  what a battle does. */
+function typeTag(unitId: UnitId): HTMLElement {
+  const unit = UNITS[unitId];
+  const type = unit.tags.includes('Distance') ? 'Ranged'
+    : unit.tags.includes('Mounted') ? 'Mounted' : 'Melee';
+  const plural = (id: UnitId) => `${UNITS[id].name}s`;
+  const beats = BEATS[unitId];
+  const beatenBy = (Object.keys(BEATS) as UnitId[]).find((k) => BEATS[k] === unitId);
+  const tip = `Strong vs ${plural(beats)}`
+    + (beatenBy === undefined ? '.' : `, weak vs ${plural(beatenBy)}.`);
+  return tag(type, tip, 'type');
 }
 
 /** One number a soldier is chosen on: a tile of the building card's kind. */
@@ -246,9 +254,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
 
   const tags = unit === null
     ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]
-    : [typeTag(unit),
-      tag(`Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`,
-        `Deals extra damage to ${UNITS[BEATS[trainee as UnitId]].name}s.`, 'trait')];
+    : [typeTag(trainee as UnitId)];
 
   return el('div', { class: 'tr-info k-section' },
     unitPortrait(trainee, 'tr-portrait'),

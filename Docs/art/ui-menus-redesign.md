@@ -428,9 +428,10 @@ wood of its sides touches the screen's edges.
     Health. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
-  - **Tags:** chips for what the unit is (its type, blue: Melee, Ranged,
-    Mounted; Worker for a villager) and what it does (its type-chart edge:
-    *Strong vs Lancer*). Tapping one opens a one-line bubble; one at a time.
+  - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
+    Worker for a villager). Tapping it opens a one-line bubble under it with
+    the type chart's word on it: *Strong vs Lancers, weak vs Archers*. One
+    open at a time; paper chips are kept for special traits.
   - **Batch**, at the foot of the same panel: one building trains one
     unit, so its whole line is one batch — the unit's portrait with its
     count (*x3*), the bar and time left for the one in training, the batch's
