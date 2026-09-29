@@ -48,9 +48,8 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
         k.full ? (k.over ? `${k.value - k.cap} past the bar — nothing is dripping` : 'Full — nothing is dripping')
           : k.fullIn ?? '')),
     bar.root,
-    el('div', { class: 'mana-note' },
-      `${k.perHour === 1 ? 'One' : k.perHour} an hour while under ${k.cap}. `
-      + 'Landmarks, ruins and quests pay it in lumps, over the bar if they must.'),
+    // When the next point drips in; a full bar drips nothing.
+    el('div', { class: 'mana-note' }, k.nextIn ?? 'The bar is full'),
 
     el('div', { class: 'knowledge-offers' },
       buy(1, 'Gold'),
