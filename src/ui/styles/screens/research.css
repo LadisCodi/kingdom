@@ -242,12 +242,13 @@
   z-index: 5;
   display: grid;
   place-items: center;
-  padding: 16px;
+  /* Near the screen's edges on a phone; a tablet stops it at 460px. */
+  padding: 16px 8px;
   background: rgba(24, 14, 6, 0.55);
 }
-.rb-sheet-wrap { position: relative; width: min(360px, 100%); max-height: 100%; display: flex; }
+.rb-sheet-wrap { position: relative; width: min(460px, 100%); max-height: 100%; display: flex; }
 .rb-sheet-wrap > .rb-pin.is-centre { top: -8px; }
-.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: -10px; right: -10px; }
+.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: -10px; right: -4px; }
 .rb-sheet {
   position: relative;
   flex: 1;
