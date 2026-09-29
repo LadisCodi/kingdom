@@ -323,7 +323,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   const doing: HTMLElement[] = [];
 
   if (queueItem) {
-    // THE CONSTRUCTION (M35, A): the Finish that skips it takes the Upgrade
+    // THE CONSTRUCTION (M36, A): the Finish that skips it takes the Upgrade
     // button's place; how long is left sits under the portrait and what is
     // being done under the description, breathing. All live — the bar and
     // the price move with the clock; the word has a part of its own, so the

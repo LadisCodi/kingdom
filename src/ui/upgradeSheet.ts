@@ -1,4 +1,4 @@
-// The upgrade popup (Docs/art/ui-menus-redesign.md, mockup M34).
+// The upgrade popup (Docs/art/ui-menus-redesign.md, mockup M35).
 //
 // The card's Upgrade button opens it. Three blocks, in the order a player
 // asks for them:

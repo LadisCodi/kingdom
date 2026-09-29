@@ -490,7 +490,7 @@ wood of its sides touches the screen's edges.
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
 - **Under construction** (a building being built or upgraded; reference
-  `mockups/m35-construction-ab.png`, proposal A):
+  `mockups/m36-construction-ab.png`, proposal A):
   - the head's Upgrade slot holds the gem Finish button with its price;
   - under the portrait: a slim blue bar with the time left inside it, laid
     over the tile's bottom edge;
@@ -504,7 +504,7 @@ wood of its sides touches the screen's edges.
     throws a few sparks where it lands. Still with reduced motion;
   - nothing else on the card changes, and there is nothing at its foot.
 - **The upgrade popup** (the card's Upgrade opens it; reference
-  `mockups/m34-upgrade-popup-final.png`), a centred window titled
+  `mockups/m35-upgrade-popup-final.png`), a centred window titled
   *Upgrade to Level 3*:
   - two portraits, the building at its current level and at the next, a
     yellow arrow between them, each with its level on a badge under it
