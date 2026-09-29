@@ -221,6 +221,9 @@
   align-items: center;
   justify-content: center;
   gap: calc(var(--px) * 12);
+  /* Room for the count that hangs off the portrait's foot (.tr-count), so the
+     last row of the card never overflows .dc-body into a scroller. */
+  padding-bottom: calc(var(--px) * 6);
 }
 .dc-crew .k-btn.k-knob { --knob-size: calc(var(--px) * 46); }
 .dc-crew-who { position: relative; }
