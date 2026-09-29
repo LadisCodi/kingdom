@@ -1,6 +1,7 @@
 // Square-grid map math. 4-neighbor (Von Neumann) adjacency is used uniformly
-// for fog discovery, placement adjacency, worked-unit connectivity, and BFS
-// distance (user decision — diagonals do not count as adjacent).
+// for fog discovery, placement adjacency and worked-unit connectivity (user
+// decision — diagonals do not count as adjacent). Distance from the Townhall
+// is Chebyshev, like every radius.
 
 import { DISTRICTS, FEATURES } from './data/definitions';
 import { groupFootprints, type RegionMapDoc } from './data/mapRules';
@@ -23,7 +24,7 @@ const NEIGHBOR_OFFSETS: ReadonlyArray<Coord> = [
 export interface MapData {
   terrain: ReadonlyMap<string, TerrainId>;
   initialFeatures: ReadonlyMap<string, FeatureId>;
-  /** BFS distance from the Townhall footprint over existing cells; unreachable → 0 (as built). */
+  /** Chebyshev ring of every existing cell around the Townhall footprint; the footprint is 0. */
   distanceFromTownhall: ReadonlyMap<string, number>;
   cells: ReadonlyArray<Coord>;
   /**
@@ -60,29 +61,17 @@ export function buildMapDataFrom(region: RegionMapDoc): MapData {
     initialFeatures.set(coordKey({ x: c.x, y: c.y }), c.id as FeatureId);
   }
 
-  // Multi-source BFS over existing cells from the Townhall's whole footprint
-  // (every footprint cell is distance 0).
+  // Chebyshev rings around the Townhall footprint (every footprint cell is 0):
+  // a ring is a SQUARE on the grid, which the isometric projection draws as a
+  // diamond the shape of a tile. A Manhattan ring drew as a flat rectangle,
+  // twice as wide as tall.
   const distanceFromTownhall = new Map<string, number>();
-  const frontier: Coord[] = [];
-  for (const c of cellsOfRect(TOWNHALL_ORIGIN, DISTRICTS.Townhall.size)) {
-    if (terrain.has(coordKey(c))) {
-      distanceFromTownhall.set(coordKey(c), 0);
-      frontier.push(c);
-    }
-  }
-  {
-    while (frontier.length > 0) {
-      const cell = frontier.shift()!;
-      const d = distanceFromTownhall.get(coordKey(cell))!;
-      for (const off of NEIGHBOR_OFFSETS) {
-        const n = { x: cell.x + off.x, y: cell.y + off.y };
-        const k = coordKey(n);
-        if (terrain.has(k) && !distanceFromTownhall.has(k)) {
-          distanceFromTownhall.set(k, d + 1);
-          frontier.push(n);
-        }
-      }
-    }
+  const size = DISTRICTS.Townhall.size;
+  const gap = (d: number, n: number): number => (d < 0 ? -d : d > n - 1 ? d - (n - 1) : 0);
+  for (const k of terrain.keys()) {
+    const c = parseCoordKey(k);
+    distanceFromTownhall.set(k, Math.max(
+      gap(c.x - TOWNHALL_ORIGIN.x, size.x), gap(c.y - TOWNHALL_ORIGIN.y, size.y)));
   }
 
   // Group each spanning feature's painted cells into blocks. Per feature, so
@@ -160,7 +149,7 @@ export function neighbors(map: MapData, cell: Coord): Coord[] {
   return out;
 }
 
-/** BFS distance from the Townhall; unreachable or off-map → 0 (no penalty, as built). */
+/** Chebyshev ring from the Townhall footprint; off-map → 0. */
 export const townhallDistance = (map: MapData, cell: Coord): number =>
   map.distanceFromTownhall.get(coordKey(cell)) ?? 0;
 

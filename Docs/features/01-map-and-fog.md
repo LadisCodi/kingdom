@@ -18,12 +18,15 @@
 
 | Metric | Used for |
 |---|---|
-| **4-way von Neumann** | fog state, placement, BFS distance from the Townhall (diagonals are not adjacent) |
-| **Chebyshev** | a building's area of influence |
+| **4-way von Neumann** | adjacency: fog state, the connected frontier, placement (diagonals are not adjacent) |
+| **Chebyshev** | the Townhall's rings, a building's fog radii and area of influence |
 | **Euclidean** | worker travel time |
 
-- Distance from the Townhall is a **BFS over walkable cells**, not a straight
-  line: a cell across water is as far as the walk around it.
+- **Every radius and ring is a square** on the grid, measured from the edge of
+  the footprint. The 2:1 isometric projection draws a square as a diamond the
+  shape of a tile, so what the fog uncovers grows as evenly up and down the
+  screen as across it.
+- A ring ignores water: a cell across a bay is as far as it looks.
 
 ## 2. Terrain
 
@@ -204,8 +207,8 @@ Respawn:
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
 - **The Townhall is the reach.** A cell can be paid for only within
-  `fog.reachPerTownhallLevel` BFS rings of the Townhall, indexed by its
-  level: **3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40**. Level 10 reaches the
+  `fog.reachPerTownhallLevel` rings of the Townhall, indexed by its
+  level: **3 · 5 · 7 · 8 · 10 · 11 · 13 · 15 · 17 · 23**. Level 10 reaches the
   province's last ring.
 - A building's fog radii and a claim's discover ring ignore the reach, the way
   they ignore Sailing. Only the player's tap and a Divination are refused, and a
@@ -219,17 +222,16 @@ Respawn:
 
 ## 5. The price of a cell
 
-Authored per ring out to ring 20 — roughly doubling from ring 3, exactly
-doubling from ring 10 — with a ×1.25 fallback past ring 20. The province
-reaches ring 40.
+Authored per ring out to ring 14 — roughly ×2.5 a ring — with a ×1.37
+fallback past ring 14. The province reaches ring 23.
 
-| Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| **Gold** | 3 | 5 | 10 | 20 | 40 | 75 | 120 | 250 | 500 | 1,000 |
+| Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| **Gold** | 4 | 8 | 20 | 55 | 110 | 330 | 800 |
 
-| Distance | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21+ |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Gold** | 2,000 | 4,000 | 8,000 | 16,000 | 32,000 | 64,000 | 128,000 | 256,000 | 512,000 | 1,024,000 | ×1.25/ring |
+| Distance | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15+ |
+|---|---|---|---|---|---|---|---|---|
+| **Gold** | 2,200 | 5,900 | 15,000 | 43,000 | 105,000 | 330,000 | 925,000 | ×1.37/ring |
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
@@ -244,8 +246,8 @@ reaches ring 40.
 - The order: ring price × count multiplier, then **Pitons** (−10%/level), then
   the floor. A cell never costs less than `fog.minCost`, however deep the
   discounts go. Nothing buys a tap back.
-- Every ring price from 2 out is a multiple of five. A price five does not
-  divide — ring 1, a multiplied one, a discounted one — is split into slices
+- Every ring price from 3 out is a multiple of five. A price five does not
+  divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
 - At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
@@ -288,14 +290,14 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Ruin | Tier | Artifact | Ring |
 |---|---|---|---|
-| Hollow Barrow | I | Dowsing Rod | 6 |
-| Sunken Chapel | II | Verdant Seal | 11 |
-| Drowned Ironworks | III | Foreman's Sigil | 34 |
-| The Counting House | IV | Gilded Ledger | 21 |
-| Star Observatory | V | Wanderer's Compass | 30 |
+| Hollow Barrow | I | Dowsing Rod | 4 |
+| Sunken Chapel | II | Verdant Seal | 8 |
+| Drowned Ironworks | III | Foreman's Sigil | 19 |
+| The Counting House | IV | Gilded Ledger | 15 |
+| Star Observatory | V | Wanderer's Compass | 15 |
 
 - The first two are the ones a month of play reaches, and they sit on the fog
-  curve's near half. The last three are deep province: past ring 20 a single
+  curve's near half. The last three are deep province: past ring 12 a single
   cell costs six figures (§5), so meeting them is a late-game project and
   their order is not the tier order.
 - Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
@@ -323,7 +325,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 3 → 1,024,000, ×1.25 past ring 20 | `fog.rings` |
+| Fog price per ring | 4 → 925,000, ×1.37 past ring 14 | `fog.rings` |
 | How far each Townhall level lets the fog be paid for | 3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40 rings | `fog.reachPerTownhallLevel` |
 | How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.countStep`, `fog.countGrowth` |
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
