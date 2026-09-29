@@ -436,8 +436,8 @@ wood of its sides touches the screen's edges.
     mask inside it, and the unit's bust drawn a little larger than the mask,
     so a bust that carries a medallion of its own has that ring cut away.
   - **Panel** (a section), headed by the unit's name on the section's
-    rule: the round portrait with how many the player owns under it
-    (*Owned 17*: soldiers in the army, or the city's villagers), the tags,
+    rule: the round portrait with how many the player owns on a pill at its
+    corner (*x17*: soldiers in the army, or the city's villagers), the tags,
     one line of flavour, and the priced
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.

@@ -197,7 +197,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
     el('div', { class: 'tr-batch-row' },
       el('div', { class: 'tr-batch-face', title: `${count} ${nameFor(line[0].trainee)}` },
         unitPortrait(line[0].trainee),
-        ...(count > 1 ? [el('span', { class: 'tr-batch-count' }, `x${count}`)] : [])),
+        ...(count > 1 ? [el('span', { class: 'tr-count' }, `x${count}`)] : [])),
       el('div', { class: 'tr-batch-progress' },
         bar.root),
       el('div', { class: 'tr-batch-total' },
@@ -248,10 +248,9 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
     ? game.state.city.population
     : game.state.army.filter((u) => u.definitionId === trainee).length;
   return el('div', { class: 'tr-info k-section' },
-    el('div', { class: 'tr-who' },
+    el('div', { class: 'tr-who', title: `You have ${owned}` },
       unitPortrait(trainee, 'tr-portrait'),
-      el('span', { class: 'tr-owned', title: `You have ${owned}` },
-        el('span', {}, 'Owned'), el('b', {}, String(owned)))),
+      el('span', { class: 'tr-count' }, `x${owned}`)),
     // No name here: it heads the whole block, on the section's rule.
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-tags' }, ...tags),

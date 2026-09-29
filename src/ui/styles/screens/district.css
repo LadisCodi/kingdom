@@ -287,11 +287,8 @@
   padding: calc(var(--px) * 8);
 }
 .k-portrait.tr-portrait { --portrait-size: calc(var(--px) * 64); }
-/* The portrait, and under it how many the player already has. */
-.tr-who { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
-.tr-owned { display: flex; align-items: baseline; gap: calc(var(--px) * 4); line-height: 1.1; }
-.tr-owned > span { font-size: var(--text-helper); color: var(--ink-muted); }
-.tr-owned > b { font-size: var(--text-body); font-weight: var(--weight-title); }
+/* The portrait, with how many the player owns on a pill at its corner. */
+.tr-who { position: relative; }
 .tr-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
 .tr-name { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
 .tr-desc {
@@ -376,7 +373,7 @@
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
 .tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
 .tr-batch-face > .k-portrait { --portrait-size: inherit; }
-.tr-batch-count {
+.tr-count { /* a count on a portrait's corner: owned, or in the batch */
   position: absolute;
   right: calc(var(--px) * -6);
   bottom: calc(var(--px) * -6);
