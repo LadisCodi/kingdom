@@ -228,37 +228,6 @@
 .dc-crew-count { display: flex; flex-direction: column; align-items: center; line-height: 1.05; min-width: calc(var(--px) * 64); }
 .dc-crew-count > b { font-size: var(--text-title); font-weight: var(--weight-title); }
 .dc-crew-count > span { font-size: var(--text-helper); color: var(--ink-muted); }
-.dc-hint { margin-top: calc(var(--px) * 10); }
-/* A tip, in the information blue with its question mark. */
-.dc-hint {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 6) calc(var(--px) * 10);
-  border: calc(var(--px) * 2) solid #7fb3d3;
-  border-radius: calc(var(--px) * 10);
-  background: #dcebf5;
-  color: #1f4f73;
-  font-size: var(--text-desc);
-  font-weight: var(--weight-strong);
-  line-height: 1.25;
-}
-/* The tip's mark: a round information-blue badge with a light "?". */
-.dc-hint-mark {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 24);
-  height: calc(var(--px) * 24);
-  border-radius: 50%;
-  background: #3f8ec2;
-  box-shadow: inset 0 calc(var(--px) * -2) 0 #2a6d99;
-  color: #fff;
-  font-size: calc(var(--px) * 16);
-  font-weight: var(--weight-title);
-  line-height: 1;
-}
-
 /* A military building: the same shape as the Townhall's training block,
  * because it is the same beat. */
 .dc-army {

@@ -269,12 +269,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // contributes to it is already the upgrade row's delta.
 
     // THE CREW (mockups: the workers stepper): how many work here against the
-    // most it can hold, and the − / + that change it; then what they make and
-    // what they have to work, as the card's own stat tiles; then, when the
-    // crew outnumbers its work, a tip. The villagers still free to assign are
-    // the header's counter while this card is open (Game.hudSlot).
+    // most it can hold, and the − / + that change it. No tip: the player learns
+    // to fit a crew to its fields by watching it work. The villagers still
+    // free to assign are the header's counter while this card is open
+    // (Game.hudSlot).
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0) {
-      const cells = game.workableCellsOf(district);
       const limit = assignableWorkerLimit(district);
       const crew = district.assignedWorkers;
 
@@ -293,17 +292,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         el('div', { class: 'dc-crew-count' },
           el('b', {}, `${crew} / ${limit}`), el('span', {}, 'Assigned')),
         plus));
-
-      const want = crew * 2;
-      const hint = crew === 0
-        ? 'Nobody works here yet — add a villager.'
-        : cells.length < want
-          ? `More ${SOURCE_WORD[def.harvestSources[0]].toLowerCase()} in range would keep them busy.`
-          : null;
-      if (hint !== null) {
-        body.append(el('div', { class: 'dc-hint' },
-          el('span', { class: 'dc-hint-mark', 'aria-hidden': 'true' }, '?'), el('span', {}, hint)));
-      }
     }
 
     // Every OTHER thing the neighbours are doing to this building. Gold is

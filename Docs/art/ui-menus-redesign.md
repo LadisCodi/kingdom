@@ -467,9 +467,8 @@ wood of its sides touches the screen's edges.
     *Iron*, *Gold*, *Shoals*). The crew size, haul and swing are the
     upgrade popup's only — the stepper already shows the crew, and haul and
     swing are counted in that output;
-  - a tip in the information blue with a round "?" badge, when the crew
-    outnumbers its work (a crew wants about two cells each) or nobody works
-    here yet;
+  - no tip: how many villagers a building's fields keep busy is the
+    player's to see by watching them work;
   - the villagers still free to assign are the header's counter while the
     card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
