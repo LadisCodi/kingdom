@@ -305,7 +305,7 @@ The outer scope feeds the inner one.
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
 | **Rare spellbooks**, from outer-ring dungeons | [`07-research.md`](07-research.md) |
 | **Star card packs** — a gold card guaranteed | the collection's two hardest albums ([`09-relics.md`](09-relics.md) §6) |
-| **Knowledge cap**, from held landmarks | research ([`07-research.md`](07-research.md) §7) |
+| **Knowledge lumps**, from taken landmarks | research ([`07-research.md`](07-research.md) §7) |
 
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.

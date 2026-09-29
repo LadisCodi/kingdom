@@ -531,6 +531,37 @@ const MIGRATIONS: readonly Migration[] = [
       dto.Progress = [...taps].map(([k, Taps]) => ({ Coord: parseCoordKey(k), Taps }));
     },
   },
+  {
+    // v61: research takes no time and has no slots
+    // (Docs/features/07-research.md §1). A research running when the save was
+    // written had already been paid for, Gold and Knowledge, so it is
+    // COMPLETED here — the player owned it the moment the clock would have
+    // run out. The slots bought with Gems go back as Gems: 2,500, then ×2 a
+    // slot, the ladder they were sold on.
+    to: 61,
+    migrate: (modules) => {
+      const dto = modules['kingdom.research'] as {
+        Completed?: string[];
+        Active?: Array<{ ID: string }>;
+        SlotsPurchased?: number;
+        Poured?: Record<string, number>;
+      } | undefined;
+      if (dto === undefined) return;
+      const completed = new Set(dto.Completed ?? []);
+      for (const a of dto.Active ?? []) completed.add(a.ID);
+      dto.Completed = [...completed];
+      const slots = dto.SlotsPurchased ?? 0;
+      if (slots > 0) {
+        let refund = 0;
+        for (let i = 0; i < slots; i++) refund += 2500 * 2 ** i;
+        const player = modules['player.currencies'] as Record<string, number> | undefined;
+        if (player !== undefined) player.Gems = (player.Gems ?? 0) + refund;
+      }
+      delete dto.Active;
+      delete dto.SlotsPurchased;
+      dto.Poured = dto.Poured ?? {};
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -613,6 +644,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         MaxBuilders: state.kingdom.builders,
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
+        KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
         Daily: {
           Season: state.kingdom.daily.season,
           Rung: state.kingdom.daily.rung,
@@ -701,12 +733,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.research': {
         Completed: state.research.completed,
-        Active: state.research.active.map((a) => ({
-          ID: a.id,
-          StartedAtUtc: iso(a.startedAt),
-          DurationMs: a.durationMs ?? null, // additive; older saves have none
-        })),
-        SlotsPurchased: state.research.slotsPurchased,
+        Poured: state.research.poured,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -964,6 +991,7 @@ export function deserialize(
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
+    state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
     // Additive: a save written before the chest existed has no Daily block and
     // the defaults below start the season at rung zero, which is exactly right
     // for a player meeting it for the first time. `Season: -1` matches no real
@@ -1096,13 +1124,10 @@ export function deserialize(
       // summed into every total and indexed by anything that trusts the list.
       completed: ((researchDto.Completed ?? []) as TechId[])
         .filter((id) => TECHNOLOGIES[id] !== undefined),
-      active: ((researchDto.Active ?? []) as
-        Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
-        (a) => ({
-          id: a.ID, startedAt: ms(a.StartedAtUtc),
-          ...(typeof a.DurationMs === 'number' ? { durationMs: a.DurationMs } : {}),
-        })),
-      slotsPurchased: researchDto.SlotsPurchased ?? 0,
+      // Same filter, and a technology already researched holds nothing.
+      poured: Object.fromEntries(Object.entries((researchDto.Poured ?? {}) as Record<string, number>)
+        .filter(([id, n]) => TECHNOLOGIES[id as TechId] !== undefined && n > 0
+          && !(researchDto.Completed ?? []).includes(id))) as Partial<Record<TechId, number>>,
     };
   }
 
@@ -1356,7 +1381,8 @@ export function deserialize(
     for (const line of Object.values(state.city.workshops)) line.anchor += gap;
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
-    state.kingdom.lastKnowledgeAt += gap; // the ruin drip is production too
+    // NOT the Knowledge drip: the bar is its only cap (sim/knowledge.ts), so
+    // the uncapped tail below pays it.
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     // Completes remaining queue work; workers resume at now. Its results are
@@ -1364,7 +1390,6 @@ export function deserialize(
     const tail = withoutTallies(state, () => advance(state, map, now));
     report.deposits.push(...tail.deposits);
     report.completedItems.push(...tail.completedItems);
-    report.completedResearch.push(...tail.completedResearch);
     report.goldEarned += tail.goldEarned;
     report.trainedPopulation += tail.trainedPopulation;
     report.manaEarned += tail.manaEarned;

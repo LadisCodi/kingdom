@@ -481,7 +481,7 @@
     "troopDmgMult": 1.25,
     "troopHpMult": 1.15,
     "troopDefBonus": 2,
-    "boon": { "stat": "researchSpeed", "value": 1.25 }
+    "boon": { "stat": "knowledgeYield", "value": 1.25 }
   },
   "Pharao": {
     "rarity": "Legendary",

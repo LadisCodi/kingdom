@@ -28,7 +28,7 @@
   in `tech-tree.json`.
 - A technology never requires a technology in another tome.
 
-## 2. Tome I — Civics — 66 nodes
+## 2. Tome I — Civics — 63 nodes
 
 > *The city and its purse.* Open, like every book.
 
@@ -81,7 +81,7 @@ hang off it.
 | **Gardening** | the Garden and the Orchard — the first decorations, under Engineering |
 | **Sculpture** | the Well and the Statue — cut stone for the eye, under Architecture |
 | **Paving** | the Plaza, under Deep Mining |
-| **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
+| **Sacred Grounds** | the Shrine — the last thing the band opens |
 
 The four decoration cards sit where their pieces' Townhall gates fall
 ([`21-harmony.md`](21-harmony.md)): a piece is DISCOVERED here and then waits
@@ -111,7 +111,6 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Irrigation I–III** | +1 Food per tap and delivery from a farm plot | I / II / III |
 | **Butchery I–III** | +1 Food per tap and delivery from wild game | — / I·II / III |
 | **Iron Picks I–III** | +1 Stone per tap and delivery from an iron mountain | — / I·II / III |
-| **Scriveners I–III** | −5% time to finish a research | — / — / I·II·III |
 | **Cartage I–III** | +5% worker walking speed | — / — / I·II·III |
 | **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | — |
 | **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — |
@@ -157,7 +156,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Salvage** *(inert — the rule it prices was retired with the delve)* | — |
 | **Vanguard** *(planned)* | the first depth of a ruin you have already cleared is walked in one tap |
 | **Standards** *(planned)* | army power cap rises with military hall level |
-| **Conquest** | +3 Knowledge/h per cleared ruin, on top of the cleared rate ([`07-research.md`](07-research.md) §3) |
+| **Conquest** | +15 Knowledge on every ruin's first clear, paid back for ruins already cleared ([`07-research.md`](07-research.md) §3) |
 
 ### 3.4 Warfare rank ladders
 
@@ -223,7 +222,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 |---|---|
 | **Fishing** | the Docks |
 | **Shipbuilding** | Docks L2 |
-| **Sanctified Ruins** | a cleared ruin's Knowledge drip doubles |
+| **Sanctified Ruins** | a ruin's first-clear Knowledge doubles, paid back for ruins already cleared |
 | **Ritual Casting** *(planned)* | a relic active can target a **building**, not only a cell |
 | **Ley Storm** *(planned)* | once a day, cast a kingdom-wide +25% production window |
 | **Second Sanctum** | a second Sanctum may be built (`extraCountTech` on the district) |
@@ -237,14 +236,14 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Ley Taps I–III** | +1 Mana/h per claimed landmark | I / II / III |
 | **Farsight I–III** | +1 discover radius | I / II / III |
 | **Pitons I–II** | −10% Gold to clear a cell of fog | — / I / II |
-| **Scriptorium I–III** | +5% Knowledge drip rate | — / I / II |
-| **Wayposts I–III** | +1 Knowledge/h per claimed landmark | — / I / II |
+| **Scriptorium I–III** | +5% on every Knowledge lump | — / I / II |
+| **Wayposts I–III** | +3 Knowledge on every landmark claim, paid back for landmarks held | — / I / II |
 | **Reliquary I–III** *(designed, not built)* | +5% chance a room's card pack is one tier better | — / I / II |
 | **Pilgrimage I–III** | −5% landmark claim cost | — / I / II |
 | **Confluence I–III** *(designed, not built)* | +5% to the Sanctum adjacency bonus | — / I / II |
 | **Thrift I–III** *(designed, not built)* | +10% chance a tap costs no Mana | — / I / II |
 | **Big Nets I–III** | +1 Food per delivery from a shoal | — / — / I |
-| **Vigils I–III** | +1 Knowledge/h per cleared ruin | — / — / I |
+| **Vigils I–III** | +5 Knowledge on every first clear, paid back for ruins cleared | — / — / I |
 | **Focus I–III** *(designed, not built)* | +10% relic active duration | — / — / I |
 | **Tempest I–III** *(designed, not built)* | +5 min Ley Storm duration | — / — / I |
 | **Prospecting I–III** | +5% Stardust from rooms | — / — / I |
@@ -253,9 +252,9 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 | | Minor | Major | Keystone |
 |---|---|---|---|
-| **Era 1** | 40–150 G · **1 K** · 20–60 s | 200–500 G · **2 K** · 2–5 min | 800 G · 2 K · 15 min |
-| **Era 2** | 250–800 G · 1–3 K · 3–8 min | 1,000–2,500 G · 4–10 K · 15–30 min | 5,000 G · 25 K · 1 h |
-| **Era 3** | 1,500–5,000 G · 8–25 K · 20–45 min | 6,000–15,000 G · 30–75 K · 1–3 h | 30,000 G · 150 K · 6 h |
+| **Era 1** | 40–150 G · **1 K** | 200–500 G · **2 K** | 800 G · 2 K |
+| **Era 2** | 250–800 G · 1–3 K | 1,000–2,500 G · 4–10 K | 5,000 G · 25 K |
+| **Era 3** | 1,500–5,000 G · 8–25 K | 6,000–15,000 G · 30–75 K | 30,000 G · 150 K |
 
 - **Knowledge is authored in TENS, and the rate in fractions of one an hour**
   ([`07-research.md`](07-research.md) §3). Both were divided by twenty on
@@ -268,20 +267,20 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 - The bands are the design; the exact numbers are `tech-tree.json`'s.
 - **Era 1 costs Knowledge too** — 1 or 2, out of what the chain has paid.
-- Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
-  3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **506,110 Gold and 2,370 Knowledge**, of which the two
+- Era 1's majors sit *below* the band as authored (Forestry: 25 Gold). `tests/onboarding.test.ts` pins the opening beat by beat.
+- Whole tree: **494,680 Gold and 2,324 Knowledge**, of which the two
   sealed era-4 keystones are 60,000 Gold and 300 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 3,845 | 52 |
-| 2 | 47,875 | 175 |
-| 3 | 394,390 | 1,843 |
+| 1 | 3,665 | 54 |
+| 2 | 46,375 | 169 |
+| 3 | 384,640 | 1,801 |
 | 4 | 60,000 | 300 |
 
-- At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
-  are about **eight weeks** at 30/h and **five and a half** at 45/h.
+- Eras 1–3 ask for **2,024 Knowledge**. A full province pays about 680 in
+  lumps and the ruins' rooms 1,156; the drip (at most 24 a day), events and
+  purchases pay the rest. The real pace is the playtest's (**OQ-13**).
 - The quest chain funds the **opening** — every era-1 technology and the first
   rank that follows. It also asks for enough exploring to open era 2 before it
   points at anything in it (`tests/quests.test.ts`). Era-2 majors are the
@@ -296,7 +295,7 @@ and every rank is an ordinary card gated by the row above it like any other.
   nearest built major and moves when its own arrives: Deep Wells and
   Scriptorium under Consecration, Ley Taps and Wayposts under Meditation,
   Vigils under Scaling Tools, Pilgrimage under Sailing, Prospecting under
-  Shipbuilding, Scriveners under Architecture, Cartage under Roadworks.
+  Shipbuilding, Cartage under Roadworks.
 - Every rank has a slot of its own on the page, so nothing limits how many
   ladders hang off one major any more; what a ladder still needs is a MAJOR at
   its root, not another ladder's rank (`tests/upgrades.test.ts`).
@@ -321,11 +320,11 @@ names the one call site that owns its number, and
 | `workerStrikeUnits` | Worker Load | the crew only — deliberately not the tap |
 | `workerSpeed` | Cartage | |
 | `buildTime` | Carpentry | |
-| `researchTime` | Scriveners | fixed at research start ([`07-research.md`](07-research.md) §1) |
 | `taxRate` | Trade Routes | aimable at a kind of house; the shipped ladder is unaimed |
 | `manaCap` | Deep Wells | |
-| `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
-| `knowledgeYield` | Scriptorium | |
+| `manaPerClaimedLandmark` | Ley Taps | a per-site term the call site multiplies by the count it holds |
+| `landmarkClaimKnowledge` · `firstClearKnowledge` | Wayposts, Vigils | a raise on one lump, paid back at once for every site already held ([`07-research.md`](07-research.md) §3) |
+| `knowledgeYield` | Scriptorium | every Knowledge lump, never the drip |
 | `activeCost` | Resonance | |
 | `revealCost` · `discoverRadius` | Pitons, Farsight | `revealCost` is the fog's only dial: a cell is five taps at every ring, so nothing buys a press back ([`01-map-and-fog.md`](01-map-and-fog.md) §5). `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
 | `claimCost` | Pilgrimage | |
@@ -342,9 +341,9 @@ Every one of these is ALSO a `ModifierStat` where a modifier can reach it
 (`src/sim/modifiers.ts`), resolved in the same helper — three stages, one
 place.
 
-Stats the tree moves: build time · research time · unit ATK/DEF by tag · Mana
+Stats the tree moves: build time · unit ATK/DEF by tag · Mana
 capacity · Mana regen · discover radius · influence radius · worker move speed
-· Knowledge drip rate · ingredient yield · Stardust yield · landmark claim cost
+· Knowledge lumps · ingredient yield · Stardust yield · landmark claim cost
 · expedition supply cost · expedition duration · failed-haul loss · army power
 cap · hero XP · relic active duration · the type-disadvantage penalty · the
 wounded share · the Sanctum adjacency bonus.
@@ -382,11 +381,11 @@ Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 | Dial | Where | What it moves |
 |---|---|---|
 | the era price bands (§5) | `?dev=tree`, whose status bar totals each band | how long the whole tree lasts — the first thing to touch |
-| a technology's `gold` / `knowledge` / `seconds` | `?dev=tree` | one node |
+| a technology's `gold` / `knowledge` | `?dev=tree` | one node |
 | `requires` | `?dev=tree` — drag, or click a connector to cut it | the shape |
 | `kind` and `unlocks` | `?dev=tree` | what the technology IS, and every gate derived from it |
 | a ladder's rank count | `?dev=tree` — add a rank | how many eras a ladder spans |
-| a rank's `effects` | `?dev=tree` | what it moves and by how much; `Scriveners` is the only Gold lever on the tree's pace |
+| a rank's `effects` | `?dev=tree` | what it moves and by how much |
 | `planned` | `?dev=tree` | whether a major is live |
 
 ## 9. Deliberately not in this design

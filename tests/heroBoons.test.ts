@@ -18,7 +18,8 @@ import {
   activeBoons, boonText, grantHero, syncHeroBoons,
 } from '../src/sim/heroes';
 import { resolve } from '../src/sim/modifiers';
-import { effectiveBuildTimeMultiplier, effectiveResearchTimeMultiplier } from '../src/sim/upgrades';
+import { effectiveBuildTimeMultiplier } from '../src/sim/upgrades';
+import { firstClearLump, knowledgeLump } from '../src/sim/knowledge';
 import { manaProduction } from '../src/sim/mana';
 import { drillOf } from '../src/sim/expeditions';
 import { buildBoard } from '../src/sim/battle';
@@ -160,12 +161,15 @@ describe('each boon reaches the number it names', () => {
       .toBeCloseTo(before / HEROES.Pharao.boon!.value, 6);
   });
 
-  it('the Necromancer — research runs faster', () => {
+  it('the Necromancer — every lump of Knowledge is bigger', () => {
     const state = freshGame();
-    const before = effectiveResearchTimeMultiplier(state);
+    expect(HEROES.Necromancer.boon!.stat).toBe('knowledgeYield');
+    expect(HEROES.Necromancer.boon!.value).toBe(1.25);
+    const before = knowledgeLump(state, 100);
+    const clear = firstClearLump(state);
     own(state, 'Necromancer');
-    expect(effectiveResearchTimeMultiplier(state))
-      .toBeCloseTo(before / HEROES.Necromancer.boon!.value, 6);
+    expect(knowledgeLump(state, 100)).toBe(Math.round(before * 1.25));
+    expect(firstClearLump(state)).toBe(Math.round(clear * 1.25));
   });
 
   it('the Elven Princess — the kingdom makes more Mana', () => {

@@ -190,6 +190,100 @@
 .hud-knob.is-active { filter: brightness(1.12) saturate(1.2); }
 #ui:has(> #overlay:not(:empty)) .hud-knob { display: none; }
 
+/* THE KNOWLEDGE TAB (M33, Docs/art/ui-menus-redesign.md §5.1): a painted
+   wooden tab with a gold rim, hanging from behind the plank's middle,
+   straight along its bottom edge. On the wood itself — the book, the
+   number, ten segments and a caption that takes turns — and the Gems' +
+   knob. Absolute, so it never changes the header's height, and
+   it steps aside while a menu is open, like the Settings knob. It has to
+   clear the Daily chest pill at 375px, so every width here is budgeted. */
+.hud-know {
+  position: absolute;
+  top: calc(100% - var(--rpx) * 12);
+  left: 50%;
+  z-index: -1; /* tucked behind the plank's lower lip */
+  transform: translate(-50%, 0);
+  /* IN AND OUT FROM BEHIND THE PLANK. While a menu is open the tab slides up
+     under the plank rather than vanishing, and slides back down when the
+     menu closes; `visibility` follows the slide so a hidden tab takes no
+     taps. */
+  transition: transform 260ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)), visibility 0s linear 0s;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 4);
+  /* The painted tab (assets/hud-know-tab.png, 985×223), nine-sliced so it
+     takes any width and height: 20 px of plain wood across the top, which is
+     tucked behind the plank, and the rim and rounded corners in the 64 px
+     sides and the 70 px bottom. The padding sits inside the rim. */
+  padding: calc(var(--rpx) * 10) 0 0;
+  border-style: solid;
+  border-color: transparent;
+  /* The slices drawn at one scale (a quarter), so the rim is as thick along
+     the bottom as up the sides and the bottom leaves no dead wood. */
+  border-width: calc(var(--rpx) * 5) calc(var(--rpx) * 16) calc(var(--rpx) * 17);
+  border-image: url('../../assets/hud-know-tab.png') 20 64 70 fill / calc(var(--rpx) * 5) calc(var(--rpx) * 16) calc(var(--rpx) * 17) stretch;
+  background: none;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(30, 16, 6, 0.35));
+  cursor: pointer;
+}
+.hud-know:hover { filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(30, 16, 6, 0.35)) brightness(1.06); }
+.hud-know-frame {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 5);
+  height: calc(var(--rpx) * 62);
+  /* Straight on the painted wood — no dark slot round it. */
+  padding: 0 calc(var(--rpx) * 8);
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--parchment);
+  text-shadow: 0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.8);
+}
+/* The book at the plank's own icon size, with nothing behind it. */
+.hud-know-frame > .icon {
+  --icon-size: calc(var(--rpx) * 66);
+  flex: none;
+  margin-left: calc(var(--rpx) * -10);
+  filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.55));
+}
+.hud-know-value { font-size: var(--slot-text); font-weight: inherit; text-align: center; }
+.hud-know-gauge { display: grid; gap: calc(var(--rpx) * 5); justify-items: center; }
+/* Ten narrow tall segments, packed tight — a battery meter, as Elvenar's. */
+.hud-know-segs { display: flex; gap: calc(var(--rpx) * 3); }
+.hud-know-segs > i {
+  width: calc(var(--rpx) * 9);
+  height: calc(var(--rpx) * 28);
+  border-radius: calc(var(--rpx) * 3);
+  background: rgba(20, 10, 4, 0.75);
+  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(0, 0, 0, 0.4);
+}
+.hud-know-segs > i.is-lit {
+  background: linear-gradient(180deg, #8ee6e8, #2fa5b8 60%, #1f7e92);
+  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(255, 255, 255, 0.35);
+}
+.hud-know.is-full .hud-know-segs > i.is-lit {
+  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(255, 255, 255, 0.45), 0 0 calc(var(--rpx) * 8) rgba(142, 230, 232, 0.8);
+}
+/* The caption: the next point and the whole bar share one place and take
+   turns (header.ts), the way the Mana readout does. */
+.hud-know-caption { display: grid; justify-items: center; font-size: calc(var(--rpx) * 19); letter-spacing: -0.01em; }
+.hud-know-caption > * { grid-area: 1 / 1; white-space: nowrap; transition: opacity 300ms ease; }
+.hud-know-full { opacity: 0; }
+.hud-know-caption.is-full-turn > .hud-know-next { opacity: 0; }
+.hud-know-caption.is-full-turn > .hud-know-full { opacity: 1; }
+.hud-know > .hud-plus { margin-right: 0; width: calc(var(--rpx) * 46); height: calc(var(--rpx) * 46); }
+.hud-know:active > .hud-plus { background-image: url('../../assets/hud-plus-down.png'); }
+#ui:has(> #overlay:not(:empty)) .hud-know {
+  transform: translate(-50%, calc(-100% - var(--rpx) * 12));
+  visibility: hidden;
+  transition: transform 220ms ease-in, visibility 0s linear 220ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-know, #ui:has(> #overlay:not(:empty)) .hud-know { transition: none; }
+}
+
 /* The one contextual plaque, hanging under the plank. */
 .hud-under { display: flex; align-items: flex-start; gap: calc(var(--rpx) * 22); }
 .hud-plaque[hidden] { display: none; }

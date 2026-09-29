@@ -1,4 +1,8 @@
-import { advance } from '../src/sim/commands';
+import { advance, researchTech } from '../src/sim/commands';
+import {
+  pourKnowledge, techCost, techKnowledgeMissing, type ResearchResult,
+} from '../src/sim/research';
+import type { MapData } from '../src/sim/grid';
 import { tapCell } from '../src/sim/harvest';
 import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
@@ -11,7 +15,7 @@ import {
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
-  coordKey, getWallet, type Coord, type DistrictId, type GameState, type RuinId,
+  addToWallet, coordKey, getWallet, type Coord, type DistrictId, type GameState, type RuinId,
   type TechId, type UnitId,
 } from '../src/sim/state';
 
@@ -289,3 +293,32 @@ export const completeRanks = (state: GameState, ladder: string, rank: number): v
 
 /** Advance the unified sim to a given time. */
 export const tickAt = (state: GameState, now: number) => advance(state, map, now);
+
+/**
+ * Research a technology the way a player does, from what the kingdom already
+ * holds: pour the bar into it, then pay the Gold and complete it through the
+ * real command (Docs/features/07-research.md §1). Research takes no time, so
+ * nothing is ticked. Funds NOTHING — a test that means "the game gave them
+ * enough" uses this and asserts on the result.
+ */
+export const pourAndResearch = (
+  state: GameState, mapData: MapData, id: TechId, now: number = T0,
+): ResearchResult => {
+  pourKnowledge(state, id);
+  return researchTech(state, mapData, id, now);
+};
+
+/**
+ * Research a technology NOW, topping the purse up with exactly the Knowledge
+ * and Gold it is short of first. For a test about something else — what the
+ * technology opens — rather than about paying for it.
+ */
+export const researchNow = (
+  state: GameState, mapData: MapData, id: TechId, now: number = T0,
+): ResearchResult => {
+  const shortK = techKnowledgeMissing(state, id) - getWallet(state.kingdom.wallet, 'Knowledge');
+  if (shortK > 0) addToWallet(state.kingdom.wallet, 'Knowledge', shortK);
+  const shortG = techCost(id) - getWallet(state.city.wallet, 'Gold');
+  if (shortG > 0) addToWallet(state.city.wallet, 'Gold', shortG);
+  return pourAndResearch(state, mapData, id, now);
+};

@@ -67,8 +67,7 @@ export interface TechnologyDef {
    *  derived from these (`GATES` below), so this is the ONE statement of
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
-  cost: Wallet; // city currencies
-  durationSeconds: number;
+  cost: Wallet; // city Gold and kingdom Knowledge
   requires: TechId[]; // tree edges — all must be completed first
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
@@ -131,7 +130,6 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
-      durationSeconds: node.seconds,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];
@@ -745,9 +743,6 @@ export const KINGDOM_DEF = {
   ...balance.kingdom,
 };
 
-// Slots & gem pricing for extra slots.
-export const RESEARCH_SETTINGS = balance.research;
-
 /**
  * Combat, in six numbers.
  *
@@ -1065,8 +1060,8 @@ export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSt
  */
 export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
 
-/** Knowledge drips from every ruin the player has FOUND, whether or not they
- *  ever delve it — so the fog keeps paying even between expeditions. */
+/** The Knowledge bar — its drip, its cap, what a landmark, a ruin and a room
+ *  pay into it, and what a point costs to buy (07-research.md §3). */
 export const KNOWLEDGE = balance.knowledge;
 
 export interface LandmarkDef {
@@ -2131,4 +2126,7 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 60;
+// v61: research takes no time and has no slots. A running research is
+// completed and the slots bought go back as Gems (save.ts); Knowledge poured
+// into a technology and the count bought with Gold are new, additive fields.
+export const SAVE_VERSION = 61;

@@ -110,7 +110,7 @@
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
 - Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
-  — the first four cards are priced in the clock alone — and 2 Knowledge,
+  — the first four cards are priced in Knowledge alone — and 2 Knowledge,
   which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the
   cells, **asserted at the dearest frontier the player could pick**.
 - Forest cells refuse work until Forestry is researched; the refusal names

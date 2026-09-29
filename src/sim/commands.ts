@@ -22,10 +22,11 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { accrueKnowledge, accrueMana } from './mana';
+import { accrueMana } from './mana';
+import { accrueKnowledge, payKnowledge, territoryKnowledge } from './knowledge';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
-import { advanceResearch, isTechComplete, techCompletesAt } from './research';
+import { completeTech, isTechComplete, type ResearchResult } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay } from './wallet';
 import { canAffordGoods, payGoods } from './goods';
@@ -229,6 +230,41 @@ export type UpgradeResult =
  * district card's call to action) and the command that does it cannot
  * disagree.
  */
+/**
+ * Research a technology whose Knowledge is in: pay the Gold and complete it,
+ * now (Docs/features/07-research.md §1).
+ *
+ * The pure `completeTech` plus the two things a completion does to the rest
+ * of the game, which is why it is a command and takes the map:
+ *
+ *  * **A technology that widens sight** re-applies every standing building's
+ *    fog radii, not only the next one built. Keyed on the STAT rather than on
+ *    Farsight by name, so a second technology that moves `discoverRadius`
+ *    needs no line of its own.
+ *  * **A technology that raises a lump pays it back** for every landmark and
+ *    ruin already held (sim/knowledge.ts `territoryKnowledge`).
+ *
+ * Bracketed by the tax repricing, because a technology can move the tax rate
+ * (Communities) and the anchor must not bank the old rate's time at the new.
+ */
+export function researchTech(
+  state: GameState, map: MapData, id: TechId, now: number,
+): ResearchResult {
+  let result: ResearchResult = 'NotFilled';
+  repriceTaxAnchorAround(state, now, () => {
+    const before = territoryKnowledge(state);
+    result = completeTech(state, id);
+    if (result !== 'Researched') return;
+    payKnowledge(state, territoryKnowledge(state) - before);
+    if (TECHNOLOGIES[id].effects.some((e) => e.stat === 'discoverRadius')) {
+      for (const d of state.city.districts) {
+        if (d.state === 'Built') revealAroundDistrict(state, map, d);
+      }
+    }
+  });
+  return result;
+}
+
 export function upgradeRefusal(
   state: GameState, districtUniqueId: string,
 ): Exclude<UpgradeResult, 'Started'> | null {
@@ -408,7 +444,6 @@ export interface AdvanceResult {
    *  at the BUILDING. The gap between a strike and its deposit is the walk. */
   deposits: DepositEvent[];
   completedItems: QueueItem[];
-  completedResearch: TechId[];
   goldEarned: number; // passive tax gold accrued in this window
   trainedPopulation: number; // villagers who finished training
   /** Modifiers whose window closed inside this advance — the "your Haste ran
@@ -432,7 +467,7 @@ export interface AdvanceResult {
 }
 
 const emptyResult = (): AdvanceResult => ({
-  strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
+  strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
   trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
 });
@@ -453,24 +488,6 @@ function applyDueAt(
     for (const item of advanceQueue(state.city.queue, t, builders)) {
       completeQueueItem(state, map, item, Math.min(completesAt(item), t));
       out.completedItems.push(item);
-    }
-    const finished = advanceResearch(state, t);
-    out.completedResearch.push(...finished);
-    // A technology that widens sight widens what every STANDING building can
-    // see, not only the next one built — so one landing re-applies each
-    // district's fog radii. It happens here, inside the walk, because this is
-    // where the map is; and it is deterministic, so replay and stepped ticking
-    // discover the same cells.
-    //
-    // Keyed on the STAT rather than on Farsight by name: a second technology
-    // that moves `discoverRadius` — a different tome's, a later era's — needs
-    // this same sweep, and asking "does it move the radius?" is a question the
-    // data answers.
-    if (finished.some((id) => TECHNOLOGIES[id].effects.some(
-      (e) => e.stat === 'discoverRadius'))) {
-      for (const d of state.city.districts) {
-        if (d.state === 'Built') revealAroundDistrict(state, map, d);
-      }
     }
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
     // One line, two kinds of trainee: villagers land on the population, units
@@ -531,7 +548,6 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   for (const item of state.city.queue.slice(0, builders)) {
     if (item.startedAt !== null) consider(completesAt(item));
   }
-  for (const a of state.research.active) consider(techCompletesAt(state, a.id));
   consider(nextModifierExpiry(state, after));
   consider(nextTrainingCompletion(state, after));
   consider(nextRaidBoundary(state, after));

@@ -42,8 +42,8 @@ export type TechUnlock =
  *
  * `unlock` opens content and says which (`unlocks`). `bonus` moves numbers and
  * says which (`effects`). `mechanic` is
- * everything the CODE reads by id — a cover page opening its book, `Conquest`
- * bending the Knowledge rate — which is the one kind whose effect the editor
+ * everything the CODE reads by id — `Conquest` adding to a ruin's Knowledge
+ * lump — which is the one kind whose effect the editor
  * cannot author, only label.
  */
 export type TechKind = 'unlock' | 'bonus' | 'mechanic';
@@ -78,10 +78,9 @@ export interface TechNodeDoc {
   col?: number;
   /** One to three, and exactly none on a tome's cover page. */
   requires: string[];
-  /** City Gold, kingdom Knowledge, and seconds on a scholar's desk. */
+  /** City Gold and kingdom Knowledge. A technology takes no time. */
   gold: number;
   knowledge?: number;
-  seconds: number;
   /** `kind: 'unlock'` only. */
   unlocks?: TechUnlock[];
   /** `kind: 'bonus'` only: what this technology moves, and what it aims at
@@ -576,27 +575,24 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
-  // ---- the price and the clock ------------------------------------------
+  // ---- the price ---------------------------------------------------------
   for (const id of all) {
     const node = nodes[id];
     const gold = node.gold ?? 0;
     const knowledge = node.knowledge ?? 0;
-    const seconds = node.seconds ?? 0;
     const money: Array<readonly [string, number]> = [
-      ['gold', gold], ['knowledge', knowledge], ['seconds', seconds],
+      ['gold', gold], ['knowledge', knowledge],
     ];
     for (const [what, value] of money) {
       if (!Number.isInteger(value) || value < 0) {
         errors.push({ message: `${id} has ${what} of ${value}`, tech: id });
       }
     }
-    // NOTHING is free. A technology that cost no Gold and took no time would
-    // be startable and finishable in the same frame, for nothing — which is
-    // what the granted cover pages used to be, and they are gone: every book
-    // is simply open now.
-    if (gold === 0 && seconds === 0) {
+    // NOTHING is free. A technology that cost neither Gold nor Knowledge
+    // would be researched for nothing the moment it was pressed.
+    if (gold === 0 && knowledge === 0) {
       errors.push({
-        message: `${id} costs nothing and takes no time`,
+        message: `${id} costs nothing`,
         tech: id,
       });
     }

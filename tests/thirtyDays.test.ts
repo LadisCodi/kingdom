@@ -17,7 +17,7 @@ import {
   DECORATIONS, DISTRICTS, GOODS, TAP, TECH_ORDER, TECHNOLOGIES, type DistrictDef,
 } from '../src/sim/data/definitions';
 import {
-  advance, changeWorkers, enqueueBuild, upgradeDistrict,
+  advance, changeWorkers, enqueueBuild, researchTech, upgradeDistrict,
 } from '../src/sim/commands';
 import {
   LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredPopulation,
@@ -31,7 +31,10 @@ import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { availableWorkers, houseTap, housedPopulation, maxPopulation } from '../src/sim/population';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
-import { canStartTech, isTechComplete, startTech, techCost } from '../src/sim/research';
+import {
+  isTechComplete, isTechFilled, isTechStarted, pourKnowledge, researchRefusal, techCost,
+  techKnowledgeMissing,
+} from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { choosePayerProfile } from '../src/sim/store';
 import {
@@ -76,9 +79,6 @@ const BUILD_ORDER: DistrictId[] = [
   // is priced in what they make, and the Townhall's own from 5.
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
 ];
-/** A visit is about this long. A research that finishes inside it is waited
- *  for and the next one started — a player does not leave after one card. */
-const VISIT_MS = 10 * 60_000;
 
 interface WeekRow {
   week: number; townhall: number; population: number; roofs: number; food: number; districts: number;
@@ -438,20 +438,23 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   // has to cover the first cells of fog AND the first roof, which is the
   // knife-edge that set the opening purse (12-quests.md §2.1).
   let budget = getWallet(state.city.wallet, 'Gold') / 2;
+  // Research takes no time (07-research.md §1): pour what the bar holds into
+  // one technology — one already started, else a wanted one, else the
+  // cheapest — and research it the moment it is filled and affordable.
   for (let i = 0; i < 40; i++) {
-    const byCost = (a: TechId, b: TechId) => techCost(a) - techCost(b);
-    const startable = TECH_ORDER.filter((id) => canStartTech(state, id));
-    const next = startable.filter((id) => wanted.has(id)).sort(byCost)[0]
-      ?? startable.sort(byCost)[0];
-    if (!next || techCost(next) > budget) break;
-    if (startTech(state, next, t) !== 'Started') break;
+    const reachable = TECH_ORDER.filter((id) => researchRefusal(state, id) === null);
+    const cheapest = (a: TechId, b: TechId) =>
+      techKnowledgeMissing(state, a) - techKnowledgeMissing(state, b)
+      || techCost(a) - techCost(b);
+    const next = reachable.filter((id) => isTechStarted(state, id)).sort(cheapest)[0]
+      ?? reachable.filter((id) => wanted.has(id)).sort(cheapest)[0]
+      ?? reachable.sort(cheapest)[0];
+    if (!next) break;
+    if (pourKnowledge(state, next).result === 'Poured') acted = true;
+    if (!isTechFilled(state, next) || techCost(next) > budget) break;
+    if (researchTech(state, map, next, t) !== 'Researched') break;
     budget -= techCost(next);
     acted = true;
-    // A short card finishes while the player is still here, and the next one
-    // is started in the same sitting. A long one is left running.
-    const doneMs = TECHNOLOGIES[next].durationSeconds * 1000;
-    if (t + doneMs - now > VISIT_MS) break;
-    tick(doneMs);
   }
 
   // 8. Claim an affordable landmark: Mana capacity and the research clock.
@@ -513,7 +516,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
         last = Math.max(visit.until, now + 60_000);
         advance(state, map, last);
       }
-      const inProgress = state.city.queue.length > 0 || state.research.active.length > 0;
+      const inProgress = state.city.queue.length > 0;
       if (!actedToday && !inProgress) { idleDays++; idleInWeek++; }
       for (let l = 1; l <= townhall(state).level; l++) milestones[`TH${l}`] ??= day + 1;
       for (const level of [2, 3, 4, 5, 6, 7, 8, 9, 10]) {

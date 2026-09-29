@@ -3,7 +3,7 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  ARMY, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
+  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
   TECH_ORDER, WORKER, levelIndexed,
 } from '../src/sim/data/definitions';
 import { grantArtifactLevel } from '../src/sim/artifacts';
@@ -11,91 +11,80 @@ import { castCost } from '../src/sim/casting';
 import { effectiveDiscoverRadius, revealCostForCell, revealTapCost } from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
 import { getWallet } from '../src/sim/state';
-import { advance } from '../src/sim/commands';
-import { canStartTech, startTech, techCompletesAt } from '../src/sim/research';
+import { researchTech } from '../src/sim/commands';
+import { canStartTech, pourKnowledge, techKnowledgeCost } from '../src/sim/research';
 import {
   effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
   effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds,
 } from '../src/sim/upgrades';
-import { techMultiplier } from '../src/sim/techEffects';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { armyCap, trainCost } from '../src/sim/army';
 import { drillOf, partyBoard, partyOf, supplyCost } from '../src/sim/expeditions';
 import { partyStats, typeMultiplier } from '../src/sim/combat';
-import type { GameState } from '../src/sim/state';
+import type { GameState, TechId } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
-import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
+import { manaCap, manaProduction } from '../src/sim/mana';
+import {
+  firstClearLump, knowledgeHeld, knowledgeLump, landmarkClaimLump, territoryKnowledge,
+} from '../src/sim/knowledge';
 import {
   addBuilt, bonusLadders, canGather, completeRanks, completeTech, FOREST, freshGame, fund,
   completeRequirements, ladders, map, openEveryEra, rankOf, T0, tickAt,
 } from './helpers';
 
 
-/** Research one rank end to end, through the real command and the real clock
- *  — the whole point of the collapse is that a rank goes through `startTech`
- *  like anything else. */
-const research = (state: ReturnType<typeof freshGame>, id: Parameters<typeof startTech>[1]) => {
-  const r = startTech(state, id, T0);
-  advance(state, map, T0 + TECHNOLOGIES[id].durationSeconds * 1000);
-  return r;
+/** Research one rank end to end, through the real commands — pour, then pay
+ *  — the way the sheet's two presses do. A rank takes no time. */
+const research = (state: ReturnType<typeof freshGame>, id: TechId) => {
+  pourKnowledge(state, id);
+  return researchTech(state, map, id, T0);
 };
 
 describe('researching a rank', () => {
-  it('costs Gold and TIME — the opening rank as authored, the later ones on the bands', () => {
+  it('costs Gold and Knowledge and no time — the opening rank as authored, the later ones on the bands', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Knowledge: 500 });
-    // Whatever the row above holds — the designer's to move in `?dev=tree`,
-    // so it is read off the tree rather than named here.
+    fund(state, { Gold: 1000, Knowledge: 10 });
     completeRequirements(state, 'TapPowerI');
-    // Rank I is era 1 and keeps the price the opening was tuned around; rank
-    // II is era 2 and sits in tech-tree.md §5's minor band (250–800).
     expect(TECHNOLOGIES.TapPowerI.cost.Gold).toBe(50);
     expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeGreaterThanOrEqual(250);
     expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeLessThanOrEqual(800);
-    // …and unlike an upgrade, it is not instant.
-    expect(TECHNOLOGIES.TapPowerI.durationSeconds).toBeGreaterThan(0);
+    expect(techKnowledgeCost('TapPowerI')).toBeGreaterThan(0);
+    expect('durationSeconds' in TECHNOLOGIES.TapPowerI).toBe(false);
 
-    expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
+    expect(research(state, 'TapPowerI')).toBe('Researched');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(950);
-    expect(rankOf(state, 'TapPower')).toBe(0); // not yet — it is on the clock
-    advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
+    expect(knowledgeHeld(state)).toBe(10 - techKnowledgeCost('TapPowerI'));
+    // Landed on the press, with no clock to run.
     expect(rankOf(state, 'TapPower')).toBe(1);
   });
 
-  // WHICH major a ladder hangs off is content — a drag in `?dev=tree`. That
+  // WHICH card a ladder hangs off is content — a drag in `?dev=tree`. That
   // it hangs off one, and is refused until that one is researched, is not.
   it('hangs off its parent technology in the tree', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Knowledge: 500 });
-    // Refused on a fresh kingdom, and startable the moment the major it hangs
-    // off is researched — for every ladder the tree has, not one named pair.
     for (const ladder of bonusLadders) {
-      expect(startTech(state, ladders[ladder][0], T0),
-        `${ladder} I starts with nothing researched`).not.toBe('Started');
+      expect(research(state, ladders[ladder][0]),
+        `${ladder} I researches with nothing researched`).not.toBe('Researched');
     }
     completeRequirements(state, 'TapPowerI');
-    expect(research(state, 'TapPowerI')).toBe('Started');
+    expect(research(state, 'TapPowerI')).toBe('Researched');
   });
 
   it('rejects when poor, and runs out of ranks at the top of the ladder', () => {
     const state = freshGame();
-    state.city.wallet.Gold = 0; // the opening grant would cover the first rank
+    fund(state, { Gold: 0, Knowledge: 10 });
     completeRequirements(state, 'TapPowerI');
-    expect(startTech(state, 'TapPowerI', T0)).toBe('NotEnoughResources');
-    // Ranks II+ sit in later bands, which are gates in the world.
+    expect(research(state, 'TapPowerI')).toBe('NotEnoughGold');
     openEveryEra(state);
     fund(state, { Gold: 1_000_000, Knowledge: 1_000_000 });
     for (const id of ladders.TapPower) {
-      // Each rank is gated by the row above it, which is NOT the rank before
-      // it — a ladder is a name, not a chain — so its own prerequisites are
-      // what has to be standing.
       for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
-      expect(research(state, id), id).toBe('Started');
+      expect(research(state, id), id).toBe('Researched');
     }
     expect(rankOf(state, 'TapPower')).toBe(ladders.TapPower.length);
-    // There is no "AtMax": the ladder simply has no further rung.
     for (const id of ladders.TapPower) expect(canStartTech(state, id)).toBe(false);
   });
 });
@@ -344,28 +333,81 @@ describe('the era-2/3 lines reach their numbers', () => {
     expect(manaProduction(state)).toBe(base + 2);
   });
 
-  it('Wayposts and Vigils each add to their own source of Knowledge', () => {
+  // Knowledge from the ground is LUMPS now (07-research.md §3): Wayposts
+  // raise what a landmark claim pays, Vigils what a first clear pays.
+  it('Wayposts and Vigils each raise their own lump of Knowledge', () => {
     const state = freshGame();
-    state.landmarks.claimed[LANDMARKS[0].id] = true;
-    state.ruinsCleared.HollowBarrow = true;
-    // A rank adds a tenth an hour to its own source, which is half again on
-    // top of the sheet's 0.2 — the rate is authored as a fraction of one an
-    // hour (2026-09-08), so the ranks that lift it are fractions too.
-    const step = 0.1;
-    const base = knowledgePerHour(state);
-    completeRanks(state, 'Wayposts', 1);
-    expect(knowledgePerHour(state)).toBeCloseTo(base + step, 10);
-    completeRanks(state, 'Vigils', 2);
-    expect(knowledgePerHour(state)).toBeCloseTo(base + step + 2 * step, 10);
+    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump);
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
+    completeRanks(state, 'Wayposts', 1); // +3 a claim
+    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump + 3);
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
+    completeRanks(state, 'Vigils', 2); // +5 a clear, a rank
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge + 10);
+    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump + 3);
   });
 
-  it('Scriptorium is a percentage on the whole drip', () => {
+  it('Scriptorium is a percentage on every lump, rounded', () => {
     const state = freshGame();
-    state.landmarks.claimed[LANDMARKS[0].id] = true;
-    state.ruinsCleared.HollowBarrow = true;
-    const base = knowledgePerHour(state);
+    expect(knowledgeLump(state, 100)).toBe(100);
     completeRanks(state, 'Scriptorium', 2); // +10%
-    expect(knowledgePerHour(state)).toBeCloseTo(base * 1.1);
+    expect(knowledgeLump(state, 100)).toBe(110);
+    expect(knowledgeLump(state, 15)).toBe(Math.round(15 * 1.1));
+    expect(knowledgeLump(state, 0)).toBe(0);
+  });
+
+  // Researching a lump raise late must never cost what researching it early
+  // would have paid: the command pays the raise back for every site held.
+  describe('a lump raise is paid back for the ground already held', () => {
+    const holding = () => {
+      const state = freshGame();
+      openEveryEra(state);
+      state.landmarks.claimed[LANDMARKS[0].id] = true;
+      state.landmarks.claimed[LANDMARKS[1].id] = true;
+      state.ruinsCleared.HollowBarrow = true;
+      fund(state, { Gold: 99_999, Knowledge: 10 });
+      return state;
+    };
+    const payback = (id: TechId) => {
+      const state = holding();
+      completeRequirements(state, id);
+      const before = territoryKnowledge(state);
+      const held = knowledgeHeld(state);
+      expect(research(state, id)).toBe('Researched');
+      const raise = territoryKnowledge(state) - before;
+      expect(knowledgeHeld(state)).toBe(held - techKnowledgeCost(id) + raise);
+      return raise;
+    };
+
+    it('Wayposts pays its raise for each landmark already claimed', () => {
+      expect(payback('WaypostsI')).toBe(2 * 3);
+    });
+
+    it('Vigils pays its raise for each ruin already cleared', () => {
+      expect(payback('VigilsI')).toBe(5);
+    });
+
+    it('Scriptorium pays its percentage on the lumps already earned', () => {
+      expect(payback('ScriptoriumI')).toBeGreaterThan(0);
+    });
+
+    it('pays nothing back when the research is refused', () => {
+      const state = holding();
+      completeRequirements(state, 'WaypostsI');
+      fund(state, { Gold: 0 });
+      const held = knowledgeHeld(state);
+      pourKnowledge(state, 'WaypostsI');
+      expect(researchTech(state, map, 'WaypostsI', T0)).toBe('NotEnoughGold');
+      expect(knowledgeHeld(state)).toBe(held - techKnowledgeCost('WaypostsI'));
+    });
+
+    it('pays nothing back with no ground held', () => {
+      const state = freshGame();
+      fund(state, { Gold: 99_999, Knowledge: 10 });
+      completeRequirements(state, 'WaypostsI');
+      expect(research(state, 'WaypostsI')).toBe('Researched');
+      expect(knowledgeHeld(state)).toBe(10 - techKnowledgeCost('WaypostsI'));
+    });
   });
 
   it('Pilgrimage discounts a claim, and never makes one free', () => {
@@ -375,64 +417,6 @@ describe('the era-2/3 lines reach their numbers', () => {
     completeRanks(state, 'Pilgrimage', 3); // −15%
     expect(landmarkClaimCost(state, def)).toBe(Math.round(full * 0.85));
     expect(landmarkClaimCost(state, def)).toBeGreaterThan(0);
-  });
-
-  // Scriveners is the one hook that touches a BOUNDARY, so it is fixed when a
-  // research starts and never applied retroactively: a rank landing while a
-  // tech is on the desk must not move that tech's completion into the past,
-  // which one-call replay and stepped ticking would then land on differently.
-  it('Scriveners shortens a research that starts AFTER it, not one already running', () => {
-    const state = freshGame();
-    fund(state, { Gold: 99_999, Knowledge: 500 });
-    completeRequirements(state, 'Saws');
-    const full = TECHNOLOGIES.Saws.durationSeconds * 1000;
-    expect(startTech(state, 'Saws', T0)).toBe('Started');
-    expect(techCompletesAt(state, 'Saws')).toBe(T0 + full);
-
-    completeRanks(state, 'Scriveners', 2); // −10%, lands mid-research
-    expect(techCompletesAt(state, 'Saws'), 'must not shorten what is on the desk').toBe(T0 + full);
-
-    // The next research is quicker — whichever one the page offers next, since
-    // what sits beside `Saws` is a drag away in `?dev=tree`.
-    state.research.slotsPurchased = 1;
-    const next = TECH_ORDER.find((id) => canStartTech(state, id));
-    expect(next, 'the fixture needs a second startable technology').toBeDefined();
-    expect(startTech(state, next!, T0)).toBe('Started');
-    expect(techCompletesAt(state, next!))
-      .toBe(T0 + Math.round(TECHNOLOGIES[next!].durationSeconds * 1000 * 0.9));
-  });
-
-  it('one-call replay equals stepped ticking with Scriveners landing mid-window', () => {
-    // Scriveners I is started alongside a long research and completes first.
-    // Both paths must agree on when the long one lands.
-    const setup = () => {
-      const s = freshGame();
-      fund(s, { Gold: 99_999, Knowledge: 99_999 });
-      // Warband IV is the six-hour keystone; Scriveners I is twenty minutes.
-      // They sit in different books, so each needs its own chain brought in.
-      for (const id of TECHNOLOGIES.WarbandIV.requires) completeTech(s, id);
-      for (const id of TECHNOLOGIES.ScrivenersI.requires) completeTech(s, id);
-      openEveryEra(s); // both keystones sit behind era bars
-      s.research.slotsPurchased = 2;
-      expect(startTech(s, 'WarbandIV', T0)).toBe('Started');   // long
-      expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
-      return s;
-    };
-    const oneCall = setup();
-    const stepped = setup();
-    const END = T0 + 60 * 60_000;
-    advance(oneCall, map, END);
-    for (let t = 1000; t <= 60 * 60_000; t += 1000) advance(stepped, map, T0 + t);
-    // The rank really did land inside the window…
-    expect(oneCall.research.completed).toContain('ScrivenersI');
-    expect(stepped.research.completed).toContain('ScrivenersI');
-    // …and the keystone still on the desk lands at the pace it STARTED at, in
-    // both paths alike — not five percent sooner because a rank arrived.
-    const authored = T0 + TECHNOLOGIES.WarbandIV.durationSeconds * 1000;
-    expect(techCompletesAt(oneCall, 'WarbandIV')).toBe(authored);
-    expect(techCompletesAt(stepped, 'WarbandIV')).toBe(authored);
-    expect(stepped.research.completed).toEqual(oneCall.research.completed);
-    expect(stepped.research.active).toEqual(oneCall.research.active);
   });
 });
 
@@ -545,39 +529,36 @@ describe('the combat lines reach the fight', () => {
 
 // Fourth: Farsight, the one hook with a DISCRETE effect at completion.
 describe('Farsight reaches the fog', () => {
+  const ready = () => {
+    const s = freshGame();
+    fund(s, { Gold: 99_999, Knowledge: 10 });
+    completeRequirements(s, 'FarsightI');
+    openEveryEra(s);
+    return s;
+  };
+
   it('widens how far a building marks the fog, and re-discovers around standing ones', () => {
-    const state = freshGame();
-    fund(state, { Gold: 99_999, Knowledge: 99_999 });
+    const state = ready();
     const before = Object.keys(state.fog.discovered).length;
     expect(effectiveDiscoverRadius(state, 2)).toBe(2);
 
-    // Research the rank through the real clock, so the re-discover fires
-    // where it lives — inside the boundary walk.
-    completeTech(state, 'ScalingTools');
-    openEveryEra(state);
-    expect(startTech(state, 'FarsightI', T0)).toBe('Started');
-    advance(state, map, T0 + TECHNOLOGIES.FarsightI.durationSeconds * 1000);
+    expect(research(state, 'FarsightI')).toBe('Researched');
 
     expect(effectiveDiscoverRadius(state, 2)).toBe(3);
     expect(Object.keys(state.fog.discovered).length, 'the Townhall should see farther now')
       .toBeGreaterThan(before);
   });
 
-  it('one-call replay equals stepped ticking across a Farsight landing', () => {
-    const setup = () => {
-      const s = freshGame();
-      fund(s, { Gold: 99_999, Knowledge: 99_999 });
-      completeTech(s, 'ScalingTools');
-      openEveryEra(s);
-      expect(startTech(s, 'FarsightI', T0)).toBe('Started');
-      return s;
-    };
-    const oneCall = setup(); const stepped = setup();
-    const END = T0 + 2 * TECHNOLOGIES.FarsightI.durationSeconds * 1000;
-    advance(oneCall, map, END);
-    for (let t = 1000; t <= END - T0; t += 1000) advance(stepped, map, T0 + t);
-    expect(Object.keys(stepped.fog.discovered).sort())
-      .toEqual(Object.keys(oneCall.fog.discovered).sort());
+  // The sweep belongs to the research COMMAND: marking the rank done by hand
+  // widens the radius but discovers nothing until something is placed.
+  it('re-discovers at completion, not later', () => {
+    const viaCommand = ready();
+    research(viaCommand, 'FarsightI');
+    const byHand = ready();
+    completeRanks(byHand, 'Farsight', 1);
+    expect(effectiveDiscoverRadius(byHand, 2)).toBe(3);
+    expect(Object.keys(byHand.fog.discovered).length)
+      .toBeLessThan(Object.keys(viaCommand.fog.discovered).length);
   });
 });
 
@@ -625,22 +606,24 @@ describe('the era-2/3 majors that are live', () => {
     expect(manaCap(state)).toBe(cap + MANA.meditationCap);
   });
 
-  it('Conquest and Sanctified Ruins both pay per cleared ruin, and compose', () => {
+  // Both raise the first-clear lump. Pushed by id, not through the chain
+  // helper, so no other rank that moves a lump comes along with them.
+  it('Conquest and Sanctified Ruins both raise the first-clear lump, and compose', () => {
     const state = freshGame();
-    state.ruinsCleared.HollowBarrow = true;
-    const drip = KNOWLEDGE.dripPerClearedRuinPerHour;
-    // Against the yield the state actually carries: `completeTech` pulls in
-    // the chain above whatever it is asked for, and which technologies that
-    // is — including any that lift the whole drip — is the designer's to
-    // rearrange.
-    const yielded = (n: number): number => n * techMultiplier(state, 'knowledgeYield');
-    const base = KNOWLEDGE.basePerHour;
-    expect(knowledgePerHour(state)).toBe(base + drip);
-    completeTech(state, 'Conquest');
-    expect(knowledgePerHour(state))
-      .toBeCloseTo(yielded(base + drip + KNOWLEDGE.conquestPerClearedRuinPerHour));
-    completeTech(state, 'SanctifiedRuins');
-    expect(knowledgePerHour(state))
-      .toBeCloseTo(yielded(base + drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour));
+    const base = DELVE.firstClearKnowledge;
+    expect(firstClearLump(state)).toBe(base);
+    state.research.completed.push('Conquest');
+    expect(firstClearLump(state)).toBe(base + KNOWLEDGE.conquestFirstClearLump);
+    state.research.completed.push('SanctifiedRuins');
+    expect(firstClearLump(state)).toBe((base + KNOWLEDGE.conquestFirstClearLump) * 2);
+    // Sanctified doubles Vigils too — the whole of it.
+    completeRanks(state, 'Vigils', 1);
+    expect(firstClearLump(state)).toBe((base + KNOWLEDGE.conquestFirstClearLump + 5) * 2);
+  });
+
+  it('Sanctified Ruins alone doubles the lump', () => {
+    const state = freshGame();
+    state.research.completed.push('SanctifiedRuins');
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge * 2);
   });
 });

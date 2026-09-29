@@ -45,7 +45,7 @@ in one place. What it SAYS is not authored at all (§3.1).
   "name": "Saws", "glyph": "🪚", "kind": "unlock",
   "tome": "Civics", "era": 1, "row": 2, "col": 0,
   "requires": ["Forestry"],
-  "gold": 175, "seconds": 20,
+  "gold": 175, "knowledge": 2,
   "unlocks": [{ "district": "Sawmill" }]
 }
 ```
@@ -62,7 +62,7 @@ technology says is generated from what it does (§3.1).
 | `tome` · `era` | which book, which band — the book says how many it has (`eras`) |
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
 | `requires` | one to three technologies, all on the **row immediately above** — none needed by anything on the page's first row |
-| `gold` · `knowledge` · `seconds` | what it costs and how long it takes; `knowledge` omitted when 0 |
+| `gold` · `knowledge` | what it costs — a technology takes no time; `knowledge` omitted when 0 |
 | `unlocks` | `kind: unlock` only (§3) |
 | `effects` | `kind: bonus` only — one line each, so a rebalance diffs as the values that changed (§3) |
 | `planned` | on the tree for its shape, does nothing yet |
@@ -207,7 +207,7 @@ ungated until it is placed again.
   line at a time
 - a band that starts at or above the one before it
 - a negative or fractional price; anything free at all, since nothing is
-  granted any more; Knowledge charged in era 1, where the clock has not started
+  granted any more
 - a book with no bands, or more than eight; a band asking for fewer cells than
   the one above it; era 1 asking for anything at all
 - a kind that disagrees with what the technology carries — an `unlock` that
@@ -252,8 +252,8 @@ status bar goes back.
 | middle | the open book's page: three columns of slots, era bars between bands |
 | right | the selected technology's fields, its unlocks, and the problem list |
 
-- **+ new technology** asks for an id, name, glyph, kind, era, Gold and
-  seconds — and for prose only when the kind is `mechanic`, because every
+- **+ new technology** asks for an id, name, glyph, kind, era and Gold — and
+  for prose only when the kind is `mechanic`, because every
   other card writes its own line. It drops the result at the end of that band,
   placed. Then say what it unlocks or moves; the problem list will be asking
   you to.
@@ -279,7 +279,7 @@ status bar goes back.
   are NOT on neighbouring rows: select one, press it, click the other.
   `take the slot's default` puts the drop's guess back.
 - **Everything in the inspector is editable** — name, glyph, Gold, Knowledge,
-  seconds, kind, what it unlocks or moves, `planned`. Switching the kind clears
+  kind, what it unlocks or moves, `planned`. Switching the kind clears
   the fields that no longer mean anything. Where the prose box would be, a
   technology that says it itself shows **the sentence the player will read**,
   and cannot be typed over; only a `mechanic` still has the box.
