@@ -69,9 +69,12 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
 function portrait(
   def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
 ): HTMLElement {
-  const url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`)
-    ?? spriteUrl(`${def.sprite}_l${level}`)
-    ?? spriteUrl(def.sprite);
+  // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
+  // below this level, walked down the way the map draws it — a level with no
+  // art of its own must not fall past its tier to the icon.
+  let url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`);
+  for (let l = level; url === null && l >= 1; l--) url = spriteUrl(`${def.sprite}_l${l}`);
+  url ??= spriteUrl(def.sprite);
   // A tile of darker paper (kit .k-section) with a small ornament pressed
   // into each corner. The picture is drawn LARGER than the tile and clipped
   // by the mask, so the building fills its frame without spilling out.
