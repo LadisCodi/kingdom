@@ -461,7 +461,8 @@ wood of its sides touches the screen's edges.
     count (*x5*); beside it *Training* over the bar (the time left inside
     it) and *Total time: 1m 20s* under it; and the gem Finish button,
     under a rule and with no heading of its own. Nothing in the line:
-    *Nothing in training*, centred, and no Finish.
+    *Nothing in training*, centred, and no Finish — at the same height as
+    a batch, so the card does not jump when training starts or ends.
 - **The workers block** (worker buildings; reference
   `mockups/m29-workers-stepper.png`, proposal B), a stepper:
   - the red − knob, the villager's round portrait, *2 / 3* — the crew in

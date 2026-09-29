@@ -357,8 +357,19 @@
   gap: calc(var(--px) * 6);
   padding-top: calc(var(--px) * 8);
   border-top: calc(var(--px) * 2) solid var(--section-line);
+  /* As tall empty as with a batch in it — the priced Finish is what sets
+     that height — so the card does not jump when training starts or ends. */
+  box-sizing: border-box;
+  min-height: calc(var(--px) * 99);
 }
-.tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); text-align: center; padding-bottom: calc(var(--px) * 4); }
+.tr-batch-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+  font-size: var(--text-desc);
+  text-align: center;
+}
 .tr-batch-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
 .tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
