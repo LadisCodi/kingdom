@@ -317,45 +317,41 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // The Upgrade button, or the construction in its place.
   const upgradeAction: HTMLElement[] = [];
 
+  // Under the portrait while it is being built: the bar, over the tile's
+  // foot, and what is being done under it.
+  const progressUnder: HTMLElement[] = [];
+
   if (queueItem) {
-    // Scaffolding: what is happening and how to skip it. Live — the bar and
-    // the price of skipping both move with the clock.
-    const scaffold = () => {
+    // THE CONSTRUCTION (M35, A): the Finish that skips it takes the Upgrade
+    // button's place; how long is left and what is being done sit under the
+    // portrait. Both are live — the bar and the price move with the clock.
+    const what = () => (queueItem.startedAt === null
+      ? 'Waiting for a builder'
+      : queueItem.kind === 'upgrade' ? `Upgrading to Lv ${queueItem.targetLevel ?? district.level + 1}` : 'Building');
+    progressUnder.push(part(() => JSON.stringify([
+      queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, game.now())),
+      what(),
+    ]), () => {
       const t = game.now();
       const bar = progress('blue');
       bar.run(queueProgress(queueItem, t),
         queueItem.startedAt === null ? 0 : remainingSeconds(queueItem, t) * 1000,
-        queueItem.startedAt === null
-          ? 'waiting for a builder'
-          : formatDuration(remainingSeconds(queueItem, t)));
-      const rush = btn({
-        label: 'Finish',
-        kind: 'gem',
-        onClick: () => game.doRush(queueItem.uniqueId),
-        // The price used to be glued into the label with a separator. It is a
-        // cost like any other, so it goes where every other cost now goes.
-        cost: { Gems: gemRushCost(queueItem, t) },
-        have: (c) => game.walletValue(c),
-      });
-      // No Cancel: a build is paid for when it starts, and a building put in
-      // the wrong place is MOVED rather than undone
-      // (Docs/features/06-construction.md §1).
-      const what = queueItem.startedAt === null
-        ? 'Waiting for a builder'
-        : queueItem.kind === 'upgrade' ? `Upgrading to Lv ${queueItem.targetLevel ?? district.level + 1}` : 'Building';
-      return el('div', { class: 'dc-live' },
-        el('div', { class: 'dc-build-what' }, what), bar.root, rush);
-    };
-    // THE CONSTRUCTION takes the Upgrade button's place in the head (M35, A):
-    // what is being done, how long is left, and the Finish that skips it.
-    upgradeAction.push(el('div', { class: 'dc-upgrade dc-build' }, part(() => {
+        queueItem.startedAt === null ? '' : formatDuration(remainingSeconds(queueItem, t)));
+      return el('div', { class: 'dc-live' }, bar.root, el('div', { class: 'dc-build-what' }, what()));
+    }));
+    // No Cancel: a build is paid for when it starts, and a building put in
+    // the wrong place is MOVED rather than undone
+    // (Docs/features/06-construction.md §1).
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, part(() => {
       const t = game.now();
-      return JSON.stringify([
-        queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
-        gemRushCost(queueItem, t),
-        game.walletValue('Gems') < gemRushCost(queueItem, t),
-      ]);
-    }, scaffold)));
+      return JSON.stringify([gemRushCost(queueItem, t), game.walletValue('Gems') < gemRushCost(queueItem, t)]);
+    }, () => btn({
+      label: 'Finish',
+      kind: 'gem',
+      onClick: () => game.doRush(queueItem.uniqueId),
+      cost: { Gems: gemRushCost(queueItem, game.now()) },
+      have: (c) => game.walletValue(c),
+    }))));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
     // (upgradeSheet.ts, M25): the requirements, whether each is met, and the
@@ -424,7 +420,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // ONE ROW: the picture, what the building is, and the one thing you BUY
     // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
-      buildingPortrait(def, district.level, queueItem !== undefined),
+      progressUnder.length === 0
+        ? buildingPortrait(def, district.level)
+        : el('div', { class: 'dc-portrait-col' }, buildingPortrait(def, district.level, true), ...progressUnder),
       el('div', { class: 'dc-what' }, def.description),
       ...upgradeAction),
     ...stats,

@@ -481,10 +481,11 @@ wood of its sides touches the screen's edges.
   fourth wrapping to a centred row of its own.
 - **Under construction** (a building being built or upgraded; reference
   `mockups/m35-construction-ab.png`, proposal A):
-  - the head's Upgrade slot holds the construction instead: what is being
-    done (*Upgrading to Lv 4*, *Building*, or *Waiting for a builder*), a
-    slim blue bar with the time left inside it, and the gem Finish button
-    with its price;
+  - the head's Upgrade slot holds the gem Finish button with its price;
+  - under the portrait: a slim blue bar with the time left inside it, laid
+    over the tile's bottom edge, and under it, outside the tile, what is
+    being done (*Upgrading to Lv 4*, *Building*, or *Waiting for a
+    builder*);
   - the painted hammer floats over the portrait, with no base, and works it
     in a loop: one blow at the right corner, a flight to the left corner —
     turning over on the way — two small taps there, and back. Each blow

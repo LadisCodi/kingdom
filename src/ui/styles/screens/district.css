@@ -533,19 +533,33 @@
 
 /* ---- under construction (M35, A)
  *
- * The construction takes the Upgrade button's slot in the head: what is being
- * done, the time left inside a slim bar, and the gem Finish that skips it. */
-.dc-upgrade.dc-build { width: calc(var(--px) * 124); gap: calc(var(--px) * 5); }
-.dc-build .dc-live { display: contents; }
+ * The gem Finish takes the Upgrade button's slot; under the portrait, the
+ * bar with the time left inside it rides over the tile's foot, and what is
+ * being done sits under it, outside the tile. */
+.dc-portrait-col {
+  flex: none;
+  width: calc(var(--px) * 84);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dc-portrait-col .dc-live { display: contents; }
+.dc-portrait-col .k-trough {
+  position: relative;
+  z-index: 3;
+  align-self: stretch;
+  margin: calc(var(--px) * -10) calc(var(--px) * -4) 0;
+}
 .dc-build-what {
+  margin-top: calc(var(--px) * 3);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   line-height: 1.15;
   text-align: center;
-  white-space: nowrap;
 }
-.dc-build .k-trough { align-self: stretch; }
-.dc-build .k-btn { align-self: stretch; }
+/* A priced button (the gem Finish) sits on its own section and is wider than
+   the bare Upgrade: the slot takes the button's width. */
+.dc-upgrade:has(.k-btn.has-cost) { width: auto; }
 
 /* THE WORKING HAMMER: the painted hammer, floating with no base, over the
  * portrait while it is being built. One loop: raised over the right corner,
