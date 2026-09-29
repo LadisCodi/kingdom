@@ -143,8 +143,8 @@
 
 /* ------------------------------------------------------------- the cards --- */
 
-/* The building card's stat tile (.k-section), the emblem, the name, and the
-   kit's progress bar with its numbers inside. */
+/* The building card's stat tile (.k-section): the name, the emblem under it,
+   and the kit's progress bar with its numbers inside. */
 .tech-card.k-section {
   position: absolute;
   display: flex;

@@ -422,7 +422,7 @@ minute. Each is in one of three states:
 ### 5.3 Cards
 
 - Three columns (§2.2). A card is the building card's **stat tile**: the
-  emblem, the name, and the kit's **progress bar with the numbers inside it**,
+  name at the top, the emblem under it, and the kit's **progress bar with the numbers inside it**,
   plus the tick or the padlock.
 - The orb marks a card with a press worth making now: filled and payable, or
   pourable to full from the bar.

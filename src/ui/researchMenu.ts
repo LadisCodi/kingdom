@@ -260,8 +260,8 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     type: 'button',
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
   },
-  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-name' }, def.name),
+  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-bar' },
     bar.root,
     ...(status === 'done' ? [iconEl('tick', { size: 'sm' })]
