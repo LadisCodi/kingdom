@@ -2,32 +2,35 @@
 // the bar, and buying points of it with Gold or with Gems. Opened by the +
 // on the Knowledge tab under the plank, and by tapping the tab itself.
 //
-// ONE COUNT, TWO PRICES. The stepper says how many points; the two tills
-// under it are that many points at each price, side by side like the Mana
-// sheet's — a player choosing between them is comparing them. Gold's price
-// rises with every point ever bought and never resets, so its till says so.
+// THREE OFFERS, ONE A ROW: one point for Gold, one for Gems, ten for Gems —
+// a list rather than three tills side by side, which a phone cannot fit. Gold's price rises with every point ever bought and never resets, so
+// its till says so; the Gem price never moves.
 
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, iconEl, knob, progress, sheet } from './kit';
+import { btn, iconEl, progress, sheet } from './kit';
 
-/** How many points the stepper holds. Module-level so the per-tick
- *  re-render keeps it; null means "not chosen yet", which starts it at what
- *  fills the bar. */
-let count: number | null = null;
-
-const MAX_COUNT = 100;
+/** One offer: what it is at the left, the button that buys it at the right. */
+const offer = (title: string, note: string, button: HTMLElement): HTMLElement =>
+  el('div', { class: 'knowledge-offer' },
+    el('div', { class: 'knowledge-offer-copy' }, el('b', {}, title), el('span', {}, note)),
+    button);
 
 export function renderKnowledgeSheet(game: Game): HTMLElement {
   const k = game.knowledgeInfo();
-  const toFill = Math.max(1, k.cap - k.value);
-  const n = Math.min(MAX_COUNT, Math.max(1, count ?? toFill));
-  const set = (v: number): void => { count = Math.min(MAX_COUNT, Math.max(1, v)); game.notify(); };
-
   const bar = progress('blue');
   bar.set(Math.min(1, k.value / k.cap), `${k.value} / ${k.cap}`);
 
-  const quote = game.knowledgeQuote(n);
+  const buy = (count: number, till: 'Gold' | 'Gems', note: string): HTMLElement => {
+    const quote = game.knowledgeQuote(count);
+    return offer(`${count} Knowledge`, note, btn({
+      label: 'Buy',
+      kind: till === 'Gold' ? 'secondary' : 'gem',
+      onClick: () => game.doBuyKnowledge(count, till),
+      cost: till === 'Gold' ? { Gold: quote.gold } : { Gems: quote.gems },
+      have: (c) => game.walletValue(c),
+    }));
+  };
 
   const body = el('div', { class: 'mana-sheet knowledge-sheet' },
     el('div', { class: 'mana-head' },
@@ -43,35 +46,12 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
 
     el('div', { class: 'mana-refills' },
       el('div', { class: 'mana-prize' },
-        el('span', { class: 'mana-prize-copy' }, 'Buy Knowledge'),
-        el('span', { class: 'knowledge-stepper' },
-          knob('−', () => set(n - 1), { label: 'One fewer' }),
-          el('b', { class: 'knowledge-count' }, String(n)),
-          knob('+', () => set(n + 1), { label: 'One more' }))),
-      el('div', { class: 'mana-tills' },
-        el('div', { class: 'mana-till' },
-          el('div', { class: 'mana-till-count' }, 'Dearer every point'),
-          btn({
-            label: 'Gold',
-            kind: 'secondary',
-            onClick: () => { game.doBuyKnowledge(n, 'Gold'); count = null; },
-            cost: { Gold: quote.gold },
-            have: (c) => game.walletValue(c),
-          })),
-        el('div', { class: 'mana-till' },
-          el('div', { class: 'mana-till-count' }, 'Always the same'),
-          btn({
-            label: 'Gems',
-            kind: 'gem',
-            onClick: () => { game.doBuyKnowledge(n, 'Gems'); count = null; },
-            cost: { Gems: quote.gems },
-            have: (c) => game.walletValue(c),
-          })))),
+        el('span', { class: 'mana-prize-copy' }, 'Buy Knowledge')),
+      el('div', { class: 'knowledge-offers' },
+        buy(1, 'Gold', 'Dearer every time'),
+        buy(1, 'Gems', 'Always the same'),
+        buy(10, 'Gems', 'Always the same'))),
   );
 
-  return sheet({
-    title: 'Knowledge',
-    onClose: () => { count = null; game.dismiss(); },
-    centred: true,
-  }, body);
+  return sheet({ title: 'Knowledge', onClose: () => game.dismiss(), centred: true }, body);
 }

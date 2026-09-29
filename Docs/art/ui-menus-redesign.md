@@ -592,7 +592,9 @@ exists — see questions 3 and 7, and
     caption reads *Full*. Over the cap (a lump, a purchase) the number reads
     what is held — *23* — and the segments stay all lit.
   - A **+** knob inside the tab, the same as the Gems', opens the Knowledge
-    sheet (M30, lower); tapping the tab opens it too.
+    sheet; tapping the tab opens it too. The sheet is the bar and **three
+    offers, one a row**: 1 Knowledge for Gold (dearer every time), 1 for
+    Gems, 10 for Gems.
   - About 100px wide at 375px, the segments ~3px each. A centred tab still
     leaves only 36px either side, so **the Daily chest pill starts below the
     tab** rather than beside it.

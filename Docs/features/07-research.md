@@ -343,8 +343,9 @@ A `bonus` names its effects, and each is four fields:
 
 ### 3.2 Buying Knowledge
 
-- **Knowledge is bought one point at a time, with Gold or with Gems**, from
-  the bar's own button and from a technology's sheet (§5.4). A purchase lands
+- **Knowledge is bought with Gold or with Gems**, from the bar's own sheet
+  and from a technology's sheet (§5.4). The bar's sheet offers three: **1 for
+  Gold, 1 for Gems, 10 for Gems**. A purchase lands
   in the bar (over the cap if it must) and is poured like any other point.
 - **Gold: every point costs more than the last, for ever.**
 
