@@ -457,6 +457,18 @@ wood of its sides touches the screen's edges.
     it) and *Total time: 1m 20s* under it; and the gem Finish button,
     under a rule and with no heading of its own. Nothing in the line:
     *Nothing in training*, centred, and no Finish.
+- **The workers block** (worker buildings; reference
+  `mockups/m29-workers-stepper.png`, proposal B), a stepper:
+  - the red − knob, the villager's round portrait with the crew on its
+    pill (*x2*), *2 / 3 Assigned* in large type, and the green + knob;
+  - two or more stat tiles of the card's kind: *Production* (the crew's
+    output a minute, per coin) and what there is to work, per source, in a
+    short word (*Fields*, *Trees*, *Rocks*, *Iron*, *Gold*, *Shoals*);
+  - a tip in the information blue with a round "?" badge, when the crew
+    outnumbers its work (a crew wants about two cells each) or nobody works
+    here yet;
+  - the villagers still free to assign are the header's counter while the
+    card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
   *Crew*, *Training* — so three fit a phone's width; the full name is the tile's

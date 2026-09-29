@@ -32,13 +32,15 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
+import { unitPortrait } from './unitArt';
+import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
 import {
-  coordKey, queueProgress, remainingSeconds, type District,
+  queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
-import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
+import { assignableWorkerLimit } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
@@ -85,31 +87,26 @@ function portrait(
       el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
 }
 
-/**
- * A small map of what this building can reach: its own footprint, the cells
- * its workers will harvest, and the ground in between. Replaces "Area of
- * influence: radius 2" and "Forest cells in range: 4" — two numbers that
- * describe a shape nobody was being shown.
- */
-function influenceThumb(game: Game, district: District): HTMLElement {
-  const def = DISTRICTS[district.definitionId];
-  const r = influenceRadius(district);
-  const caught = new Set(game.workableCellsOf(district).map((c) => coordKey(c)));
-  const grid = el('div', {
-    class: 'dc-thumb',
-    style: `grid-template-columns: repeat(${r * 2 + def.size.x}, 1fr)`,
-  });
-  for (let dy = -r; dy < r + def.size.y; dy++) {
-    for (let dx = -r; dx < r + def.size.x; dx++) {
-      const cell = { x: district.location.x + dx, y: district.location.y + dy };
-      const self = dx >= 0 && dx < def.size.x && dy >= 0 && dy < def.size.y;
-      const cls = self ? 'is-self' : caught.has(coordKey(cell)) ? 'is-catch' : '';
-      grid.append(el('span', { class: `dc-cell ${cls}` }));
-    }
-  }
-  return grid;
-}
 
+
+/** What a crew works, in a stat tile's short words and mark. */
+const SOURCE_WORD: Record<string, string> = {
+  Crops: 'Fields', Forest: 'Trees', Stone: 'Rocks', MountainIron: 'Iron',
+  MountainGold: 'Gold', Fish: 'Shoals', Berries: 'Bushes', Meat: 'Game',
+};
+const SOURCE_ICON: Record<string, IconName> = {
+  Crops: 'FarmLands', Forest: 'Wood', Stone: 'Stone', MountainIron: 'Iron',
+  MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
+};
+
+/** A tile of the card's stat kind (the band under the head): icon, the short
+ *  name in bold, the value under it. */
+const crewStat = (icon: IconName, label: string, value: string): HTMLElement =>
+  el('div', { class: 'dc-stat k-section', 'aria-label': `${label} ${value}` },
+    iconEl(icon, { size: 'lg' }),
+    el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
+      el('div', { class: 'dc-stat-label' }, label),
+      el('b', { class: 'dc-stat-value' }, value)));
 
 /**
  * The whole card, built fresh. `live` collects the handful of lines that move
@@ -265,74 +262,62 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // card it read as a property of whichever hall was open. What this hall
     // contributes to it is already the upgrade row's delta.
 
-    // A worker building is an AREA and the people you put in it. Both were
-    // numbers in a table; both are now pictures.
+    // THE CREW (mockups: the workers stepper): how many work here against the
+    // most it can hold, and the − / + that change it; then what they make and
+    // what they have to work, as the card's own stat tiles; then, when the
+    // crew outnumbers its work, a tip. The villagers still free to assign are
+    // the header's counter while this card is open (Game.hudSlot).
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0) {
       const cells = game.workableCellsOf(district);
       const limit = assignableWorkerLimit(district);
+      const crew = district.assignedWorkers;
 
-      // One line per thing this building goes after. For everything but the
-      // Mine that is a single line and reads exactly as it always did; the
-      // Mine gets two, because iron and gold do not pay the same coin and one
-      // averaged number would be a lie about both.
-      const perSource = def.harvestSources.map((s) => {
-        const spec = HARVEST[s];
-        const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
-        return el('div', { class: 'dc-area-count' },
-          iconEl(spec.currencyId, { size: 'sm' }),
-          el('b', {}, `×${n}`),
-          el('span', {}, `${s} in reach`),
-          el('span', { class: 'dc-area-rate' },
-            ` +${effectiveWorkerStrike(game.state, spec, district)} every `
-            + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
-      });
-
-      body.append(sectionHead('Workers'), el('div', { class: 'dc-area' },
-        influenceThumb(game, district),
-        el('div', {},
-          ...perSource,
-          el('div', { class: 'dc-area-rate' },
-            // Two cells per worker is the authoring law: a cell drains, then
-            // sits recovering, so a crew wants about twice its own number of
-            // cells in reach or the surplus stands around (04-harvest.md §2.1).
-            `${cells.length} in reach for ${district.assignedWorkers} — wants ~${
-              district.assignedWorkers * 2}`))));
-
-      // Slots, not a fraction: filled ones are people, empty ones are room.
-      const slots = el('div', { class: 'dc-slots' });
-      for (let i = 0; i < limit; i++) {
-        const filled = i < district.assignedWorkers;
-        slots.append(el('span', { class: `dc-slot${filled ? ' is-filled' : ''}` },
-          ...(filled ? [iconEl('workers', { size: 'sm' })] : [])));
-      }
       const minus = knob('−', () => game.doChangeWorkers(district.uniqueId, -1), {
-        label: 'Remove a worker', disabled: district.assignedWorkers === 0,
+        label: 'Remove a worker', disabled: crew === 0, kind: 'destructive',
       });
       const plus = knob('+', () => game.doChangeWorkers(district.uniqueId, 1), {
-        label: 'Add a worker',
-        disabled: district.assignedWorkers >= limit || game.freeWorkers() === 0,
+        label: 'Add a worker', disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
       });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
-      body.append(el('div', { class: 'dc-crew' }, minus, slots, plus));
+      body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
+        minus,
+        el('div', { class: 'dc-crew-who' },
+          unitPortrait('Villager', 'dc-crew-face'),
+          el('span', { class: 'tr-count' }, `x${crew}`)),
+        el('div', { class: 'dc-crew-count' },
+          el('b', {}, `${crew} / ${limit}`), el('span', {}, 'Assigned')),
+        plus));
 
-      // What the crew is doing, aggregated — a per-worker list of emoji was
-      // noise once there were more than two of them.
-      const crewWords = () => {
-        const counts = new Map<string, number>();
-        for (const w of game.state.workers) {
-          if (w.buildingId !== district.uniqueId) continue;
-          const label = { Idle: 'waiting', MovingToCell: 'heading out',
-            Working: 'working', MovingHome: 'carrying home' }[w.activity];
-          counts.set(label, (counts.get(label) ?? 0) + 1);
-        }
-        return [...counts].map(([label, n]) => `${n} ${label}`).join(' · ');
-      };
-      if (game.state.workers.some((w) => w.buildingId === district.uniqueId)) {
-        // Workers change activity many times a minute; only their words are live.
-        body.append(part(crewWords, () => el('div', { class: 'dc-note' }, crewWords())));
-      } else if (district.assignedWorkers === 0) {
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
+      // What the crew makes, a minute, per coin — the rate one worker earns
+      // at this building times the crew — and what there is to work, per
+      // source (the Quarry has three). Two cells per worker is the authoring
+      // law: a cell drains, then recovers, so a crew wants about twice its
+      // own number in reach (04-harvest.md §2.1).
+      const perMinute = new Map<CurrencyId, number>();
+      for (const s of def.harvestSources) {
+        const spec = HARVEST[s];
+        if (perMinute.has(spec.currencyId)) continue;
+        perMinute.set(spec.currencyId, crew * effectiveWorkerStrike(game.state, spec, district)
+          * (60_000 / workerStrikeMs(game.state, spec, district)));
+      }
+      const tiles = [
+        ...[...perMinute].map(([c, n]) => crewStat(c, 'Production', `+${Math.round(n)} /min`)),
+        ...def.harvestSources.map((s) => {
+          const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
+          return crewStat(SOURCE_ICON[s], SOURCE_WORD[s], String(n));
+        }),
+      ];
+      body.append(el('div', { class: 'dc-stats dc-crew-stats' }, ...tiles));
+
+      const want = crew * 2;
+      const hint = crew === 0
+        ? 'Nobody works here yet — add a villager.'
+        : cells.length < want
+          ? `More ${SOURCE_WORD[def.harvestSources[0]].toLowerCase()} in range would keep them busy.`
+          : null;
+      if (hint !== null) {
+        body.append(el('div', { class: 'dc-hint' },
+          el('span', { class: 'dc-hint-mark', 'aria-hidden': 'true' }, '?'), el('span', {}, hint)));
       }
     }
 

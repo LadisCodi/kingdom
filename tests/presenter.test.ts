@@ -367,7 +367,9 @@ describe('the HUD', () => {
 
     const slot = game.hudSlot();
     expect(slot.kind).toBe('workers');
-    expect(slot.value).toBe(2); // working
+    // The villagers still free to assign — the card's stepper says how many
+    // work here.
+    expect(slot.value).toBe(game.freeWorkers());
     expect(slot.max).toBe(2 + game.freeWorkers()); // of the whole workforce
   });
 
