@@ -124,10 +124,13 @@
   align-items: center;
   column-gap: calc(var(--rpx) * 16);
   height: var(--head-h);
+  /* Below it, only the heading gap (tokens.css, the spacing rule): the band
+     is the window's heading, so what it heads sits right under it. The
+     offset that raises it leaves its box behind, so that space comes off. */
   margin:
     calc(var(--win-pad) * -1)
     calc(var(--win-pad) * -1 + var(--head-tuck))
-    calc(var(--rpx) * 32 - var(--head-rise));
+    calc(var(--space-heading) - var(--head-rise));
   padding: 0 var(--head-inset) calc(var(--head-h) * 0.06);
   border-image: url('../assets/window-header.png') 0 60 fill / 0 var(--head-cap) stretch;
   filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.3));
@@ -194,6 +197,9 @@
   --close-size: calc(var(--head-h) * 0.8);
   flex: none;
 }
+/* In the district card the column's own gap follows the band: it comes off
+   too, so the band still sits one heading gap above the content. */
+.dc > .k-head { margin-bottom: calc(var(--space-heading) - var(--head-rise) - var(--space-section)); }
 /* A knob in the row is drawn larger than a stepper, to sit with the close. */
 .k-head .k-btn.k-knob { --knob-size: calc(var(--head-h) * 0.62); }
 

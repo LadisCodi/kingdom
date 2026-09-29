@@ -394,7 +394,8 @@ wood of its sides touches the screen's edges.
   window's content — the top row, the stats, each section — stand
   `--space-section` (14 px) apart; a section's heading sits
   `--space-heading` (6 px) above what it heads, and takes the place of the
-  gap before its section rather than adding its own.
+  gap before its section rather than adding its own. The window's header
+  band is a heading too: its content starts one heading gap under it.
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
   uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
   district card heads each of its sections with one, shown only when the
