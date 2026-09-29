@@ -420,8 +420,9 @@ wood of its sides touches the screen's edges.
     mask inside it, and the unit's bust drawn a little larger than the mask,
     so a bust that carries a medallion of its own has that ring cut away.
   - **Panel** (a section), headed by the unit's name on the section's
-    rule: the round portrait, the tags, one line of flavour, and the priced Train button — its costs above it. The training
-    time is the building's own stat tile (*Time*), one trainee per building.
+    rule: the round portrait, the tags, one line of flavour, and the priced
+    Train button — its costs above it. The training time is the building's
+    own stat tile (*Training*), one trainee per building.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,
     Health. A gate (no room, a technology, a full army) takes the button's
     place with its reason.
@@ -434,8 +435,8 @@ wood of its sides touches the screen's edges.
     total time, and the gem Finish button. Nothing in the line: *Nothing in
     training*, and no Finish.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
-  icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
-  *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's
+  icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
+  *Crew*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower

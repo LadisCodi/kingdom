@@ -36,7 +36,8 @@ export interface BuildingStat {
   icon: IconName;
   label: string;
   /** The label cut to a word that fits a stat tile on a phone (the district
-   *  card's three-up band): six letters at most. */
+   *  card's three-up band): eight letters at most, which three to a row still
+   *  fit on the iPhone X. */
   short: string;
   value: string;
 }
@@ -107,7 +108,7 @@ export function statsAt(game: Game, district: District, level: number): Building
   // trainee per building (dataRules.ts), so the building's own figure — and
   // the Train button carries only the price.
   if (def.trains.length > 0) {
-    add('train-time', 'hourglass', 'Training time', 'Time',
+    add('train-time', 'hourglass', 'Training time', 'Training',
       formatDuration(trainSecondsAt(game.state, district.uniqueId, def.trains[0])));
   }
   return out;
