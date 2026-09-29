@@ -156,7 +156,7 @@ describe('the frontier stays connected', () => {
   it('opens up the moment a neighbour is cleared', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
-    townhall(state).level = 2; // ring 4 is inside the capital's reach from level 2
+    townhall(state).level = 2; // the reach is not what this tests
     const far = { x: 3, y: 3 };
     expect(revealTap(state, map, far)).toBe('NotReachable');
     state.fog.revealed[coordKey({ x: 3, y: 2 })] = true;
@@ -211,7 +211,6 @@ describe('exploring pays in ground, not in currency', () => {
     while (revealTap(state, map, near) === 'Paid') { /* pay it off */ }
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
 
-    townhall(state).level = 2; // ring 3 is past the first level's reach
     const far = { x: 4, y: 1 }; // ring 3, reachable now
     expect(townhallDistance(map, far)).toBe(3);
     expect(revealTap(state, map, far)).toBe('Paid');

@@ -208,7 +208,7 @@ Respawn:
 - Revealed outranks discovered: cells already revealed are never overwritten.
 - **The Townhall is the reach.** A cell can be paid for only within
   `fog.reachPerTownhallLevel` rings of the Townhall, indexed by its
-  level: **2 · 4 · 6 · 7 · 9 · 10 · 12 · 14 · 16 · 23**. Level 10 reaches the
+  level: **3 · 5 · 7 · 8 · 10 · 11 · 13 · 15 · 17 · 23**. Level 10 reaches the
   province's last ring.
 - A building's fog radii and a claim's discover ring ignore the reach, the way
   they ignore Sailing. Only the player's tap and a Divination are refused, and a
