@@ -2,7 +2,7 @@
   "Townhall": {
     "name": "Townhall",
     "promise": "Trains new villagers",
-    "description": "Heart of the city. Trains new villagers — tap it to speed training up.",
+    "description": "The heart of the city, where new villagers begin their lives.",
     "glyph": "🏛️",
     "sprite": "townhall",
     "buildable": false,
@@ -54,7 +54,7 @@
   "Housing": {
     "name": "Housing",
     "promise": "Villagers live here and pay taxes",
-    "description": "Provides homes. Residents pay taxes in Gold — tap to speed collection up.",
+    "description": "A snug home for villagers, who pay their rent in gold.",
     "glyph": "🏠",
     "sprite": "housing",
     "buildable": true,
@@ -106,7 +106,7 @@
   "Farm": {
     "name": "Farm",
     "promise": "Workers harvest crops nearby",
-    "description": "Sends workers to harvest Crops within its area of influence.",
+    "description": "Its farmhands reap the fields nearby and fill the granary.",
     "glyph": "🌾",
     "sprite": "farm",
     "buildable": true,
@@ -158,7 +158,7 @@
   "FarmLands": {
     "name": "crop plots",
     "promise": "A crop plot you can tap for food",
-    "description": "A crop plot: tap it for Food. Build a Farm nearby to have workers harvest it.",
+    "description": "A field of golden wheat, ripe for the reaping.",
     "glyph": "🟩",
     "sprite": "farmlands",
     "buildable": true,
@@ -199,7 +199,7 @@
   "Sawmill": {
     "name": "Sawmill",
     "promise": "Workers fell the forest around it",
-    "description": "Sends workers to harvest Forest cells within its area of influence.",
+    "description": "Woodcutters fell the forest nearby and stack the timber.",
     "glyph": "🪚",
     "sprite": "sawmill",
     "buildable": true,
@@ -251,7 +251,7 @@
   "Quarry": {
     "name": "Quarry",
     "promise": "Workers cut stone from nearby rock",
-    "description": "Sends workers into every mountain within its area of influence — bare rock and metal alike.",
+    "description": "Its workers cut stone and iron from the hills nearby.",
     "glyph": "⛏️",
     "sprite": "quarry",
     "buildable": true,
@@ -303,7 +303,7 @@
   "Docks": {
     "name": "Docks",
     "promise": "Boats bring in fish",
-    "description": "A pier: one half on land, one on water. Its boats net Fish (1 Food each).",
+    "description": "Fishing boats set out from here and come home full.",
     "glyph": "⚓",
     "sprite": "docks",
     "buildable": true,
@@ -355,7 +355,7 @@
   "Sanctum": {
     "name": "Sanctum",
     "promise": "Holds more Mana while you are away",
-    "description": "A vault for raw magic. Each level holds more Mana against the hours you are away.",
+    "description": "Stores Mana within its enchanted walls.",
     "glyph": "🔯",
     "sprite": "sanctum",
     "buildable": true,
@@ -407,7 +407,7 @@
   "Barracks": {
     "name": "Barracks",
     "promise": "Trains soldiers and raises the army cap",
-    "description": "Drills foot soldiers, and every level lets you keep a bigger army.",
+    "description": "Trains sturdy foot soldiers.",
     "glyph": "🛖",
     "sprite": "barracks",
     "buildable": true,
@@ -459,7 +459,7 @@
   "SpearHall": {
     "name": "Spear Hall",
     "promise": "Trains Lancers, who stop a charge",
-    "description": "Trains Lancers — long reach that stops a charge.",
+    "description": "Trains lancers, who hold the line against a charge.",
     "glyph": "🏚️",
     "sprite": "spear_hall",
     "buildable": true,
@@ -511,7 +511,7 @@
   "ShootingGrounds": {
     "name": "Shooting Grounds",
     "promise": "Trains Archers, all attack and no armour",
-    "description": "Trains Archers — the most attack per Gold, and the least armour.",
+    "description": "Trains archers, deadly at range but fragile up close.",
     "glyph": "🎯",
     "sprite": "shooting_grounds",
     "buildable": true,
@@ -563,7 +563,7 @@
   "Stables": {
     "name": "Stables",
     "promise": "Trains Cavalry, fast and expensive",
-    "description": "Trains Cavalry — fast, hard-hitting, and expensive to keep.",
+    "description": "Trains riders, swift and fierce but costly to keep.",
     "glyph": "🐴",
     "sprite": "stables",
     "buildable": true,
@@ -615,7 +615,7 @@
   "Infirmary": {
     "name": "Infirmary",
     "promise": "Mends wounded soldiers cheaply",
-    "description": "Beds for the soldiers who came back hurt. Mending one costs a fraction of replacing them.",
+    "description": "Heals wounded soldiers so they can fight again.",
     "glyph": "⛑️",
     "sprite": "infirmary",
     "buildable": true,
@@ -667,7 +667,7 @@
   "Carpenter": {
     "name": "Carpenter",
     "promise": "Villagers work Wood into Planks",
-    "description": "Villagers here work Wood into Planks.",
+    "description": "Rough logs go in, and smooth planks come out.",
     "glyph": "🔨",
     "sprite": "carpenter",
     "buildable": true,
@@ -719,7 +719,7 @@
   "MasonsYard": {
     "name": "Mason's Yard",
     "promise": "Villagers dress Stone into blocks",
-    "description": "Villagers here dress Stone into blocks.",
+    "description": "Masons shape raw stone into fine building blocks.",
     "glyph": "🧱",
     "sprite": "masons_yard",
     "buildable": true,
@@ -771,7 +771,7 @@
   "Smelter": {
     "name": "Smelter",
     "promise": "Villagers smelt ore into Iron",
-    "description": "Villagers here smelt ore and gold into Iron.",
+    "description": "Ore goes into the furnace and comes out as iron.",
     "glyph": "🔥",
     "sprite": "smelter",
     "buildable": true,
@@ -823,7 +823,7 @@
   "RuneCarver": {
     "name": "Rune Carver",
     "promise": "Villagers pour Mana into cut stone",
-    "description": "Villagers here pour Mana into cut stone.",
+    "description": "Carvers bind magic into stone, rune by rune.",
     "glyph": "🔯",
     "sprite": "rune_carver",
     "buildable": true,
@@ -875,7 +875,7 @@
   "Garden": {
     "name": "Garden",
     "promise": "Beds of flowers",
-    "description": "Beds of flowers. The cheapest beauty a city can keep.",
+    "description": "Bright flowerbeds that make the whole street smile.",
     "glyph": "🌷",
     "sprite": "garden",
     "buildable": true,
@@ -916,7 +916,7 @@
   "Well": {
     "name": "Well",
     "promise": "Cobbled stone and a bucket",
-    "description": "Cobbled stone and a bucket — where the street meets.",
+    "description": "Fresh water, and a spot where neighbours stop to chat.",
     "glyph": "🪣",
     "sprite": "well",
     "buildable": true,
@@ -957,7 +957,7 @@
   "Orchard": {
     "name": "Orchard",
     "promise": "Two rows of fruit trees",
-    "description": "Two rows of fruit trees, kept for the look of them.",
+    "description": "Rows of fruit trees that sweeten the air of the town.",
     "glyph": "🌳",
     "sprite": "orchard",
     "buildable": true,
@@ -998,7 +998,7 @@
   "Statue": {
     "name": "Statue",
     "promise": "A crowned figure in pale stone",
-    "description": "A crowned figure in pale stone. Somebody paid for this.",
+    "description": "A proud monument the townsfolk love to show off.",
     "glyph": "🗿",
     "sprite": "statue",
     "buildable": true,
@@ -1039,7 +1039,7 @@
   "Plaza": {
     "name": "Plaza",
     "promise": "A paved square for market day",
-    "description": "A paved square with room for a market day.",
+    "description": "A paved square where the town comes alive on market day.",
     "glyph": "⛲",
     "sprite": "plaza",
     "buildable": true,
@@ -1080,7 +1080,7 @@
   "Shrine": {
     "name": "Shrine",
     "promise": "A round temple cut through with runes",
-    "description": "A round temple of pale stone, cut through with runes.",
+    "description": "A quiet temple of runes that brings the city peace.",
     "glyph": "⛩️",
     "sprite": "shrine",
     "buildable": true,
