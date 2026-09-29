@@ -200,6 +200,13 @@
 
   /* ---- form ---- */
   --gutter: calc(var(--px) * 12); /* the side padding a sheet keeps from the frame */
+  /* THE SPACING RULE, the same in every menu: blocks of a window's content —
+   * the top row, the stats, each section — stand one --space-section apart,
+   * and a section's heading sits --space-heading above what it heads. A
+   * heading takes the place of the gap before its section; it never adds
+   * one of its own on top. */
+  --space-section: calc(var(--px) * 14);
+  --space-heading: calc(var(--px) * 6);
   --radius: calc(var(--px) * 10);
   --radius-sm: calc(var(--px) * 8);
   --outline: calc(var(--px) * 3); /* panel frame outline */

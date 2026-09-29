@@ -94,7 +94,9 @@
   display: flex;
   align-items: center;
   gap: calc(var(--px) * 8);
-  margin: calc(var(--px) * 14) 0 calc(var(--px) * 8);
+  /* One section gap above (none when it opens its column), and the heading
+     gap below — tokens.css, the spacing rule. */
+  margin: var(--space-section) 0 var(--space-heading);
   font-family: var(--font-body);
   font-size: var(--text-heading);
   font-weight: var(--weight-strong);
@@ -102,6 +104,7 @@
   text-transform: uppercase;
   color: var(--wood);
 }
+.k-section-head:first-child { margin-top: 0; }
 .k-section-head::before,
 .k-section-head::after {
   content: '';

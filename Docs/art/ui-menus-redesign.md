@@ -390,6 +390,11 @@ wood of its sides touches the screen's edges.
   building can move) and Close. **Move** is the close's twin in
   wood — a round wood button with four-way arrows carved into it (kit
   `moveKnob`).
+- **Spacing, the same in every menu** (`tokens.css`): the blocks of a
+  window's content — the top row, the stats, each section — stand
+  `--space-section` (14 px) apart; a section's heading sits
+  `--space-heading` (6 px) above what it heads, and takes the place of the
+  gap before its section rather than adding its own.
 - **Section headings** (kit `sectionHead`): a short rule, the label in small
   uppercase wood, then a rule to the edge — the settings menu's *Sound*. The
   district card heads each of its sections with one, shown only when the

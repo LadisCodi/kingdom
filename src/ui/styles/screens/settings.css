@@ -1,7 +1,6 @@
 /* Settings (§5.11). Calm and uncluttered — this is a drawer, not a screen. */
 
 /* A section is a small brown caps word with a rule running off it (M9). */
-.set > .k-section-head:first-child { margin-top: calc(var(--px) * 2); }
 
 /* Every row is a parchment card in a thin wood border (M9). */
 .set-row {
@@ -19,7 +18,6 @@
 }
 .set-label { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 16); line-height: 1.15; }
 .set-hint { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.set > .k-section-head { margin: calc(var(--px) * 8) 0 calc(var(--px) * 6); }
 .set-words { flex: 1; min-width: 0; }
 /* The mark in its parchment vignette (M9); the pictures come from
    sheets/ui-i1-settings.png. */
