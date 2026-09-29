@@ -783,3 +783,15 @@ for.
   research block (price above, disabled button, line under) exactly.
 - **What to know:** A and C repeat the name in the header strip and again
   beside the emblem.
+
+## M45 — the chosen sheet, for a technology not yet reachable (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M44 one above, continued; M44's B cropped and
+  attached, and the upgrade popup screenshot from M44's message referred to.
+- **File:** `mockups/m45-tech-sheet-locked.png` (1448×1086), two screens.
+- **What worked:** "exactly like the requirement rows of the real upgrade
+  popup … attached earlier in this conversation" — the model reused the
+  earlier attachment without it being sent again.
+- **What to know:** the page still prints the name twice (heading and beside
+  the emblem), as M44 B does.
