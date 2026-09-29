@@ -29,7 +29,7 @@ import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
-import { unitBust } from './unitArt';
+import { unitPortrait } from './unitArt';
 
 /** A villager is not in the UNITS table — no stats, no power, a price that
  *  climbs — so its card copy lives here rather than being faked into the
@@ -131,7 +131,7 @@ export function trainingSection(
     for (const { unitId, count } of ward.byUnit) {
       const seconds = game.healWait(unitId, count);
       root.append(el('div', { class: 'tr-info is-ward k-section' },
-        el('div', { class: 'tr-portrait' }, unitBust(unitId, 'tr-portrait-art')),
+        unitPortrait(unitId, 'tr-portrait'),
         el('div', { class: 'tr-body' },
           el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
           el('div', { class: 'tr-desc' },
@@ -199,7 +199,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
   return el('div', { class: 'tr-batch' }, head,
     el('div', { class: 'tr-batch-row' },
       el('div', { class: 'tr-batch-face', title: `${count} ${nameFor(line[0].trainee)}` },
-        unitBust(line[0].trainee, 'tr-batch-art'),
+        unitPortrait(line[0].trainee),
         ...(count > 1 ? [el('span', { class: 'tr-batch-count' }, `x${count}`)] : [])),
       el('div', { class: 'tr-batch-progress' },
         el('span', { class: 'tr-batch-bar' }, el('span', { style: `width: ${pct}%` })),
@@ -257,7 +257,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
         `Deals extra damage to ${UNITS[BEATS[trainee as UnitId]].name}s.`, 'trait')];
 
   return el('div', { class: 'tr-info k-section' },
-    el('div', { class: 'tr-portrait' }, unitBust(trainee, 'tr-portrait-art')),
+    unitPortrait(trainee, 'tr-portrait'),
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-name' }, nameFor(trainee)),
       el('div', { class: 'tr-tags' }, ...tags),

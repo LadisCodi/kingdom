@@ -286,15 +286,7 @@
   gap: calc(var(--px) * 8) calc(var(--px) * 10);
   padding: calc(var(--px) * 8);
 }
-.tr-portrait {
-  width: calc(var(--px) * 64);
-  height: calc(var(--px) * 64);
-  overflow: hidden;
-  border-radius: calc(var(--px) * 8);
-  background: var(--parchment);
-}
-.tr-portrait-art { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-.tr-portrait > .icon { --icon-size: calc(var(--px) * 48); margin: calc(var(--px) * 8); }
+.k-portrait.tr-portrait { --portrait-size: calc(var(--px) * 64); }
 .tr-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
 .tr-name { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
 .tr-desc {
@@ -405,16 +397,8 @@
 .tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); padding-bottom: calc(var(--px) * 4); }
 .tr-batch-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
-.tr-batch-face {
-  position: relative;
-  flex: none;
-  width: calc(var(--px) * 46);
-  height: calc(var(--px) * 46);
-  border: calc(var(--px) * 2) solid var(--section-line);
-  border-radius: calc(var(--px) * 8);
-  background: var(--parchment);
-}
-.tr-batch-art { width: 100%; height: 100%; object-fit: cover; object-position: center top; border-radius: calc(var(--px) * 6); }
+.tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
+.tr-batch-face > .k-portrait { --portrait-size: inherit; }
 .tr-batch-count {
   position: absolute;
   right: calc(var(--px) * -6);

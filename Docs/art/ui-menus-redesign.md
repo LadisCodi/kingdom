@@ -409,6 +409,10 @@ wood of its sides touches the screen's edges.
   `mockups/m28-training-widget.png`), one block for every building that
   turns something out — the Townhall's villagers, a hall's soldiers. Each
   building trains ONE thing, so there is no picker:
+  - **Unit portrait** (kit `unitPortrait`, reused wherever a unit is shown
+    round): three layers — a round paper base in a flat outline, a circular
+    mask inside it, and the unit's bust drawn a little larger than the mask,
+    so a bust that carries a medallion of its own has that ring cut away.
   - **Panel** (a section): the bust, the name, the tags, one line of
     flavour, and the priced Train button — its costs and its time above it.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,

@@ -112,6 +112,40 @@
 .k-section-head::before { flex: none; width: calc(var(--px) * 10); }
 .k-section-head::after { flex: 1; }
 
+/* A UNIT'S ROUND PORTRAIT (unitArt.ts `unitPortrait`), in three layers:
+   the base — a paper disc in a flat outline; the mask — a circle inside it
+   that clips what sits under it; and the unit's bust, a little larger than
+   the mask, so a bust that carries a medallion of its own has that ring cut
+   away. The caller sets --portrait-size. */
+.k-portrait {
+  --portrait-size: calc(var(--px) * 64);
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  box-sizing: border-box;
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: 50%;
+  background: var(--section-fill);
+}
+.k-portrait-mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.k-portrait-art {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 128%;
+  height: 128%;
+  translate: -50% -50%;
+  object-fit: cover;
+}
+.k-portrait-mask > .icon { position: absolute; inset: 0; margin: auto; --icon-size: 60%; }
+
 /* Rope grab handle on a sheet. */
 .k-grab {
   width: calc(var(--px) * 40);
