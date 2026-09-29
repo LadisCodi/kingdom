@@ -558,10 +558,13 @@
   flex-direction: column;
 }
 .dc-what-col .dc-live { display: contents; }
-/* What is being done, centred under the description and level with the bar,
-   breathing slowly — never fading out — while the work goes on. */
+/* What is being done, centred under the description, breathing slowly —
+   never fading out — while the work goes on. Its foot lines up with the foot
+   of the Finish slab beside it, not of the price's frame around the slab:
+   the margin is that frame's padding plus the slab's painted lip. */
 .dc-build-what {
   margin-top: auto;
+  margin-bottom: calc(var(--px) * 9);
   font-size: var(--text-desc);
   font-weight: var(--weight-strong);
   line-height: 1.15;
