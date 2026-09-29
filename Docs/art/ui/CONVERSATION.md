@@ -741,3 +741,16 @@ for.
 - **Prompt:** §7.19 M37–M39, sent from JS; each arrived whole, ~3 min.
 - **What to know:** M38's bottom ribbons overlap the nav beam; M39 was asked
   for a two-page spread and drew one page with the gutter only hinted.
+
+## M40–M42 — the research book, second round (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M37–M39 one above, continued.
+- **Files:** `mockups/m40-research-book-d.png`, `m41-research-book-e.png`,
+  `m42-research-book-f.png`, each 1448×1086, opaque.
+- **What worked:** "KEEP IT SIMPLE … flat warm colours, soft two-tone
+  shading … exactly the level of detail of the chrome in the attached
+  reference" brought the detail down to the game's chrome at once.
+- **What to know:** M42 drew its undiscovered cards as plain tiles rather than
+  pills, and cut its bottom tabs off at the frame's edge; M41 dropped the
+  paper stack behind the scroll, as the prompt allowed.
