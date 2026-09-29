@@ -51,7 +51,7 @@ import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
-import { renderUpgradeSheet } from './ui/upgradeSheet';
+import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
@@ -211,6 +211,10 @@ async function boot(): Promise<void> {
    */
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
+    upgrade: () => {
+      const d = game.upgradeDistrict();
+      return d === null ? 'none' : upgradeSignature(game, d);
+    },
   };
   for (const name of Object.keys(OVERLAYS) as OverlayName[]) {
     if (game.overlaySignature(name) !== null) {

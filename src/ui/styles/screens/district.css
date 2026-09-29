@@ -119,7 +119,6 @@
  * pair of before/after building portraits that drew the eye hardest while
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
-.dc-foot { margin-top: calc(var(--px) * 6); }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -317,24 +316,37 @@
 .tr-tag.is-trait { background: var(--parchment); border-color: var(--section-line); color: var(--ink); }
 .tr-tag.has-tip-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
 
+/* A SOLDIER'S NUMBERS: small tiles — the mark and the number, the name
+   under them. The three it is chosen on sit under the picture and blurb,
+   beside Train, which runs down past them; any more take a row of their own
+   under both, the same tiles, four to the row. */
+/* The tiles sit at the foot of their row, and Train runs down both rows, so
+   their feet line up with Train's whenever the bust and the blurb leave room. */
+.tr-info.has-stats { row-gap: calc(var(--px) * 5); }
+.tr-info.has-stats > .tr-who { grid-column: 1; grid-row: 1; }
+.tr-info.has-stats > .tr-body { grid-column: 2; grid-row: 1; }
+.tr-info.has-stats > .tr-buy { grid-column: 3; grid-row: 1 / span 2; }
+.tr-info.has-stats > .tr-stats { grid-row: 2; align-self: end; }
+.tr-info.has-stats > .tr-stats.is-more { grid-row: 3; }
 .tr-stats {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: calc(var(--px) * 8);
-}
-.tr-stat.k-section {
+  grid-column: 1 / 3;
   display: flex;
+  gap: calc(var(--px) * 7);
+}
+.tr-stats.is-more { grid-column: 1 / -1; }
+.tr-stat.k-section {
+  flex: none;
+  width: calc(var(--px) * 66);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: calc(var(--px) * 6);
-  min-width: 0;
-  padding: calc(var(--px) * 5) calc(var(--px) * 6);
+  padding: calc(var(--px) * 2) calc(var(--px) * 4) calc(var(--px) * 3);
   background: var(--parchment);
 }
-.tr-stat > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
-.tr-stat-body { min-width: 0; }
-.tr-stat-label { font-size: var(--text-helper); font-weight: var(--weight-title); line-height: 1.15; }
-.tr-stat-value { display: block; font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
+.tr-stat-top { display: flex; align-items: center; gap: calc(var(--px) * 4); }
+.tr-stat-top > .icon { --icon-size: calc(var(--px) * 22); flex: none; }
+.tr-stat-value { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
+.tr-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); color: var(--ink-muted); line-height: 1.1; }
 
 /* THE BATCH, at the foot of the panel: the unit and its count, the bar and
    time left for the one in training, the batch's total time, and Finish. */
@@ -345,8 +357,19 @@
   gap: calc(var(--px) * 6);
   padding-top: calc(var(--px) * 8);
   border-top: calc(var(--px) * 2) solid var(--section-line);
+  /* As tall empty as with a batch in it — the priced Finish is what sets
+     that height — so the card does not jump when training starts or ends. */
+  box-sizing: border-box;
+  min-height: calc(var(--px) * 99);
 }
-.tr-batch-empty { color: var(--ink-muted); font-size: var(--text-desc); text-align: center; padding-bottom: calc(var(--px) * 4); }
+.tr-batch-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+  font-size: var(--text-desc);
+  text-align: center;
+}
 .tr-batch-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
 .tr-batch-row > .k-btn { flex: none; margin-left: auto; }
 .tr-batch-face { position: relative; flex: none; --portrait-size: calc(var(--px) * 46); }
@@ -530,4 +553,163 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ---- under construction (M36, A)
+ *
+ * The gem Finish takes the Upgrade button's slot; under the portrait, the
+ * bar with the time left inside it rides over the tile's foot, and what is
+ * being done sits under it, outside the tile. */
+.dc-portrait-col {
+  flex: none;
+  width: calc(var(--px) * 84);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dc-portrait-col .dc-live { display: contents; }
+.dc-portrait-col .k-trough {
+  position: relative;
+  z-index: 3;
+  align-self: stretch;
+  margin: calc(var(--px) * -15) calc(var(--px) * -4) 0;
+}
+.dc-what-col {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.dc-what-col .dc-live { display: contents; }
+/* What is being done, centred under the description, breathing slowly —
+   never fading out — while the work goes on. Its foot lines up with the foot
+   of the Finish slab beside it, not of the price's frame around the slab:
+   the margin is that frame's padding plus the slab's painted lip. */
+.dc-build-what {
+  margin-top: auto;
+  margin-bottom: calc(var(--px) * 9);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+  animation: dc-breathe 2.4s ease-in-out infinite alternate;
+}
+@keyframes dc-breathe {
+  from { opacity: 0.75; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-build-what { animation: none; }
+}
+/* A priced button (the gem Finish) sits on its own section and is wider than
+   the bare Upgrade: the slot takes the button's width. */
+.dc-upgrade:has(.k-btn.has-cost) { width: auto; }
+
+/* THE WORKING HAMMER: the painted hammer, floating with no base, over the
+ * portrait while it is being built — a magic hammer, flying on its own. One
+ * loop: raised over the right corner, one full blow, a flight round in a loop
+ * down over the picture and across to the left corner, two small taps there, and an arc low
+ * over the picture back. It keeps its bearing in the air (it never turns over) and swings on
+ * the end of its handle, so each blow's head travels the arc a real hammer's
+ * does, and throws sparks where it lands.
+ *
+ * Geometry, in the 84 × 75 portrait: the pivot (the handle's end) sits
+ * 29 px left of where the head lands at the bottom of a blow — the right
+ * blow lands at (70, 20), the left taps at (30, 24), far enough in that the
+ * handle stays over the tile. */
+.dc-work {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  --work-loop: 3.2s;
+}
+.dc-hammer {
+  position: absolute;
+  left: calc(var(--px) * 35);
+  top: calc(var(--px) * -16);
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
+  background: url('../../assets/art-hammer.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.35));
+  /* The handle's end, in the art's own frame. */
+  transform-origin: 15% 90%;
+  animation: dc-hammer var(--work-loop) ease-in-out infinite;
+}
+@keyframes dc-hammer {
+  0%   { translate: 0 0; rotate: -20deg; }
+  /* the blow: fast in, a small rebound, then raised again */
+  9%   { rotate: -24deg; animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
+  15%  { rotate: 70deg; animation-timing-function: ease-out; }
+  20%  { rotate: 58deg; }
+  30%  { translate: 0 0; rotate: -20deg; animation-timing-function: linear; }
+  /* the flight: round in a full loop down over the picture — never up into
+     the window's header — then a wave across to the left */
+  32%  { translate: calc(var(--px) * 9) calc(var(--px) * 4); rotate: -26deg; animation-timing-function: linear; }
+  34.5% { translate: calc(var(--px) * 11) calc(var(--px) * 14); rotate: -34deg; animation-timing-function: linear; }
+  37%  { translate: calc(var(--px) * 3) calc(var(--px) * 20); rotate: -22deg; animation-timing-function: linear; }
+  39.5% { translate: calc(var(--px) * -5) calc(var(--px) * 13); rotate: -8deg; animation-timing-function: linear; }
+  42%  { translate: calc(var(--px) * -2) calc(var(--px) * 3); rotate: -14deg; animation-timing-function: linear; }
+  44.5% { translate: calc(var(--px) * -14) calc(var(--px) * 7); rotate: -24deg; animation-timing-function: linear; }
+  47%  { translate: calc(var(--px) * -27) calc(var(--px) * 1); rotate: -16deg; animation-timing-function: ease-out; }
+  50%  { translate: calc(var(--px) * -40) calc(var(--px) * 4); rotate: -20deg; }
+  /* two small taps */
+  54%  { rotate: 30deg; animation-timing-function: ease-in; }
+  57%  { rotate: 70deg; animation-timing-function: ease-out; }
+  63%  { rotate: 30deg; animation-timing-function: ease-in; }
+  66%  { rotate: 70deg; animation-timing-function: ease-out; }
+  74%  { translate: calc(var(--px) * -40) calc(var(--px) * 4); rotate: -20deg; animation-timing-function: ease-in-out; }
+  /* and back, in an arc low over the picture */
+  83%  { translate: calc(var(--px) * -20) calc(var(--px) * 10); rotate: -14deg; animation-timing-function: ease-in-out; }
+  92%, 100% { translate: 0 0; rotate: -20deg; }
+}
+
+/* THE SPARKS: four specks at the spot a blow lands, thrown out and fading.
+ * Each speck has its own direction; the keyframes carry the moments. */
+.dc-sparks {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.dc-sparks.is-r { left: calc(var(--px) * 70); top: calc(var(--px) * 20); }
+.dc-sparks.is-l { left: calc(var(--px) * 30); top: calc(var(--px) * 24); }
+.dc-spark {
+  position: absolute;
+  left: calc(var(--px) * -3);
+  top: calc(var(--px) * -3);
+  width: calc(var(--px) * 6);
+  height: calc(var(--px) * 6);
+  border-radius: 50%;
+  background: #fff3b0;
+  box-shadow: 0 0 calc(var(--px) * 3) calc(var(--px) * 1) #ffb627;
+  opacity: 0;
+  animation: dc-spark-r var(--work-loop) linear infinite;
+}
+.dc-sparks.is-l .dc-spark { animation-name: dc-spark-l; }
+.dc-spark.is-0 { --sx: 1;    --sy: -1.1; }
+.dc-spark.is-1 { --sx: 1.4;  --sy: -0.3; }
+.dc-spark.is-2 { --sx: -0.6; --sy: -1.3; }
+.dc-spark.is-3 { --sx: 0.4;  --sy: -1.5; }
+.dc-sparks.is-l .dc-spark { --reach: 10; }
+.dc-sparks.is-r .dc-spark { --reach: 16; }
+@keyframes dc-spark-r {
+  0%, 14.9% { opacity: 0; translate: 0 0; scale: 1; }
+  15%  { opacity: 1; translate: 0 0; scale: 1; }
+  26%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.4; }
+  100% { opacity: 0; }
+}
+@keyframes dc-spark-l {
+  0%, 56.9% { opacity: 0; translate: 0 0; scale: 1; }
+  57%  { opacity: 1; translate: 0 0; scale: 0.8; }
+  62%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sx)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
+  65.9% { opacity: 0; translate: 0 0; scale: 0.8; }
+  66%  { opacity: 1; translate: 0 0; scale: 0.8; }
+  72%  { opacity: 0; translate: calc(var(--px) * var(--reach) * var(--sy)) calc(var(--px) * var(--reach) * var(--sy)); scale: 0.3; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-hammer { animation: none; rotate: -20deg; }
+  .dc-spark { animation: none; }
 }

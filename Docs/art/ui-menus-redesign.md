@@ -447,8 +447,13 @@ wood of its sides touches the screen's edges.
     one line of flavour, and the priced
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.
-    A soldier adds a row of three stat tiles underneath: Attack, Defence,
-    Health. A gate keeps the button, disabled, and puts a padlock and a
+    A soldier adds its three numbers — Attack, Defence, Health — as small
+    tiles (the mark and the number, the name under them) under the portrait
+    and the flavour, beside the Train button, which runs down past them; the
+    bust rises out of the panel through its top edge, so the tiles' feet
+    line up with Train's whenever the flavour is no taller than the bust. Any
+    further stat takes a row of its own under both, the same tiles, four to
+    the row. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
   - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
@@ -460,7 +465,8 @@ wood of its sides touches the screen's edges.
     count (*x5*); beside it *Training* over the bar (the time left inside
     it) and *Total time: 1m 20s* under it; and the gem Finish button,
     under a rule and with no heading of its own. Nothing in the line:
-    *Nothing in training*, centred, and no Finish.
+    *Nothing in training*, centred, and no Finish — at the same height as
+    a batch, so the card does not jump when training starts or ends.
 - **The workers block** (worker buildings; reference
   `mockups/m29-workers-stepper.png`, proposal B), a stepper:
   - the red − knob, the villager's round portrait, *2 / 3* — the crew in
@@ -483,6 +489,39 @@ wood of its sides touches the screen's edges.
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **Under construction** (a building being built or upgraded; reference
+  `mockups/m36-construction-ab.png`, proposal A):
+  - the head's Upgrade slot holds the gem Finish button with its price;
+  - under the portrait: a slim blue bar with the time left inside it, laid
+    over the tile's bottom edge;
+  - under the description, centred at the foot of the head: what is being
+    done, in one word (*Upgrading*, *Building*, or *Waiting* for a
+    builder), breathing slowly between 75% and full opacity;
+  - the painted hammer floats over the portrait, with no base, and works it
+    in a loop, like a magic hammer: one blow at the right corner, a flight
+    round in a loop over the picture and across to the left corner — keeping
+    its bearing, never turning over — two small taps there, and an arc back. Each blow
+    throws a few sparks where it lands. Still with reduced motion;
+  - nothing else on the card changes, and there is nothing at its foot.
+- **The upgrade popup** (the card's Upgrade opens it; reference
+  `mockups/m35-upgrade-popup-final.png`), a centred window titled
+  *Upgrade to Level 3*:
+  - two portraits, the building at its current level and at the next, a
+    yellow arrow between them, each with its level on a badge under it
+    (*Level 2* blue, *Level 3* green) — painted enamel plaques, flat, no lip
+    (`src/ui/assets/plaque-blue.png`, `plaque-green.png`);
+  - *Improvements*: one row per stat that improves — its icon, its full
+    name, its CURRENT value, and what the level adds as green text on the
+    right (*x1.25* … *+0.25*, *ring 5* … *+2 rings*). A stat the level does
+    not change is not listed;
+  - *Requirements*, shown only when the level has any: one row each — its
+    icon, what it asks, and a green tick or a red cross; an unmet row is red
+    text on a light red row. Nothing links to where it is met;
+  - the price and the build time over the Upgrade button. An unmet
+    requirement locks the button (grey, a padlock) with *Complete all
+    requirements to upgrade* under it. A short purse turns its price red and
+    the button off with no line; with no builder free the line reads *Every
+    builder is busy*.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 
