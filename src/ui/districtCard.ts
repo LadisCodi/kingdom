@@ -56,19 +56,14 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
 
 
 /**
- * The building at its current level, in a painted well, with the level on a
- * scroll across its corner (M2).
- *
- * The LEVEL RIBBON replaced a row of stars under the name. Stars answered
- * "how far along the ladder", which is a question about the ladder; a player
- * looking at a building asks what level it IS, and past five levels the pips
- * stopped being countable anyway.
+ * The building at a level, in a tile of darker paper — the card's portrait,
+ * and the upgrade popup's two (upgradeSheet.ts).
  *
  * Two sprite namings are tried because two tools write them: `townhall_lv3`
  * from the smooth cutter (scripts/ui-cut.mjs) and `<sprite>_l3` from the
  * older per-level map art.
  */
-function portrait(
+export function buildingPortrait(
   def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
 ): HTMLElement {
   // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
@@ -412,7 +407,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // ONE ROW: the picture, what the building is, and the one thing you BUY
     // for it (M2) — each anchored to the top, each growing down.
     el('div', { class: 'dc-head' },
-      portrait(def, district.level),
+      buildingPortrait(def, district.level),
       el('div', { class: 'dc-what' }, def.description),
       ...upgradeAction),
     ...stats,

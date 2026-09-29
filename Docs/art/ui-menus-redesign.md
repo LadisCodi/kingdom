@@ -484,7 +484,8 @@ wood of its sides touches the screen's edges.
   *Upgrade to Level 3*:
   - two portraits, the building at its current level and at the next, a
     yellow arrow between them, each with its level on a badge under it
-    (*Level 2* blue, *Level 3* green);
+    (*Level 2* blue, *Level 3* green) — painted enamel plaques, flat, no lip
+    (`src/ui/assets/plaque-blue.png`, `plaque-green.png`);
   - *Improvements*: one row per stat that improves — its icon, its full
     name, its CURRENT value, and what the level adds as green text on the
     right (*x1.25* … *+0.25*, *ring 5* … *+2 rings*). A stat the level does
@@ -494,7 +495,9 @@ wood of its sides touches the screen's edges.
     text on a light red row. Nothing links to where it is met;
   - the price and the build time over the Upgrade button. An unmet
     requirement locks the button (grey, a padlock) with *Complete all
-    requirements to upgrade* under it; a short purse only colours the price.
+    requirements to upgrade* under it. A short purse turns its price red and
+    the button off with no line; with no builder free the line reads *Every
+    builder is busy*.
 - The nav bar steps aside while any window is open, the district card's
   included (§6.5).
 
