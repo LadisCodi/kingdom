@@ -513,8 +513,10 @@
   inset: 0;
   display: grid;
   place-items: center;
-  /* As tall as the bar, so it centres on it rather than spilling under. */
+  /* A bar's reading always sits INSIDE it, centred, as tall as the bar —
+     with the quest counter's light edge, so it holds over any fill. */
   line-height: 1;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 246, 224, 0.6), 0 0 calc(var(--px) * 3) rgba(255, 246, 224, 0.5);
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
   color: var(--ink);

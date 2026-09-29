@@ -398,7 +398,8 @@ wood of its sides touches the screen's edges.
   band is a heading too: its content starts one heading gap under it.
 - **Progress bar** (kit `progress(tone)`), one for the whole UI: a painted
   recess and a painted fill, sliced at their rounded ends (fixed height,
-  stretched middle; `--bar-h` sets it), the label centred on it. Four tones,
+  stretched middle; `--bar-h` sets it). Its reading — a count, a time left —
+  always sits INSIDE it, centred, never under or beside it. Four tones,
   one per meaning: **gold** a goal (quests, collections), **green** something
   being made (training, construction), **blue** a resource filling or a timer
   (Mana, research), **red** a danger or a countdown to one.

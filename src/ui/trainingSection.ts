@@ -183,8 +183,11 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       el('div', { class: 'tr-batch-empty' }, 'Nothing in training'));
   }
   const count = line.reduce((n, item) => n + itemCount(item), 0);
+  // The time left rides INSIDE the bar, on its own label, as every bar's
+  // reading does (the quest scroll's counter).
   const bar = progress('green');
-  bar.set(trainingProgress(game.state, district.uniqueId, now));
+  bar.set(trainingProgress(game.state, district.uniqueId, now),
+    `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`);
   const total = isWard
     ? line.reduce((n, item, i) => n + (i === 0
       ? queueLeft(game, district, item)
@@ -196,9 +199,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
         unitPortrait(line[0].trainee),
         ...(count > 1 ? [el('span', { class: 'tr-batch-count' }, `x${count}`)] : [])),
       el('div', { class: 'tr-batch-progress' },
-        bar.root,
-        el('span', { class: 'tr-batch-left' },
-          `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`)),
+        bar.root),
       el('div', { class: 'tr-batch-total' },
         el('span', {}, 'Total time'),
         el('b', {}, formatDuration(Math.ceil(total)))),
