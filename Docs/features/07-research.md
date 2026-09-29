@@ -11,10 +11,9 @@
 > **built**, and the shape is authored in `?dev=tree`
 > ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
 > **the found books (§2.3)**, spells as Magic nodes (§6),
-> contested-landmark lumps (§7), guild investment (§8), and **the Knowledge
-> bar (§3) — its cap, pouring into a technology and instant completion (§1),
-> and buying Knowledge with Gold and Gems (§3.2)**. The build still runs
-> research time and slots.
+> contested-landmark lumps (§7) and guild investment (§8). **The Knowledge
+> bar (§3), pouring and instant completion (§1) and buying Knowledge (§3.2)
+> are built.**
 
 ## 1. Technologies
 
@@ -327,7 +326,7 @@ A `bonus` names its effects, and each is four fields:
   pay the rest, and set the pace.
 - The clock banks whole units against an anchor, the same shape as taxes and
   Mana, so one-call replay equals stepped ticking (invariant 1).
-- **The bar is always on screen**, as a tab of its own centred under the
+- **The bar is always on the map**, as a tab of its own centred under the
   plank ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md) §5.1,
   M33): what is held, ten segments, and when the next point and the full bar
   arrive. Its **+** opens the purchase (§3.2).
@@ -461,10 +460,10 @@ Tap Power        +40%  →  +60%
 
 ### 5.5 The bar
 
-- The book has no bar of its own: the Knowledge tab under the plank (§3) is
-  above every screen, the book included.
-- On the book the plank carries **Gold** alone — the other half of every
-  price on the page.
+- The Knowledge tab under the plank (§3) steps aside while any menu is open,
+  the book included, the way the Settings knob does.
+- On the book the plank carries **Gold and Knowledge** — the two halves of
+  every price on the page.
 
 ## 6. Magic holds no spells
 

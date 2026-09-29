@@ -593,8 +593,12 @@ exists — see questions 3 and 7, and
     what is held — *23* — and the segments stay all lit.
   - A **+** knob inside the tab, the same as the Gems', opens the Knowledge
     sheet (M30, lower); tapping the tab opens it too.
-  - **It must clear the Daily chest pill at 375px**: about 100px wide, the
-    segments ~4px each.
+  - About 100px wide at 375px, the segments ~3px each. A centred tab still
+    leaves only 36px either side, so **the Daily chest pill starts below the
+    tab** rather than beside it.
+  - It **steps aside while any menu is open**, like the Settings knob: it
+    hangs over the top of every sheet. The Research book carries Knowledge on
+    the plank instead, beside Gold.
 - *Contextual:* **Stone** appears once its gating tech is complete (Masonry)
   or once the balance is above zero. The tech clause is what makes it sticky —
   a counter must not vanish when the player spends back to zero; the balance
