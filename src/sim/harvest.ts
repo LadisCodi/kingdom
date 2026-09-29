@@ -406,10 +406,9 @@ export function tapCell(
  *  Every successful collect stamps the clock, so starting a hold right after
  *  a manual tap still waits one full cooldown.
  *
- *  It IS gated by energy: every collect costs `TAP.manaCost` Mana, the same
- *  price a house tap pays. Mana is what lets a player accelerate any
- *  generator by hand, so it is one budget across every tap in the game rather
- *  than a rule that happens to apply to houses.
+ *  It IS gated by energy: every collect costs `TAP.manaCost` Mana. Mana is
+ *  what a tap on the GROUND costs; a tap on a building collects its store
+ *  and is free (sim/storage.ts).
  *
  *  The cell is asked first and charged second: tapping an exhausted or
  *  unrevealed cell costs nothing, and says the more useful thing. */

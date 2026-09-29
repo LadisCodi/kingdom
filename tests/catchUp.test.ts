@@ -1,18 +1,17 @@
 // The offline catch-up report (§5.12).
 //
-// deserialize() replays the whole absence and used to throw the result away,
-// so the player never saw what they earned while gone — the idle half of the
-// design was invisible. The report has to agree with what actually landed in
-// the wallet, or it is worse than nothing.
+// deserialize() replays the whole absence — there is no offline cap — and
+// reports what it made. Rent and hauls land in the buildings' stores, so the
+// report has to agree with what is waiting there, not with the wallet.
 import { describe, expect, it } from 'vitest';
-import { OFFLINE_CAP_HOURS } from '../src/sim/data/definitions';
+import { DISTRICTS } from '../src/sim/data/definitions';
 import { deserialize, serialize, type CatchUpReport } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, freshGame, fund, map, stored, T0 } from './helpers';
 
 const HOUR = 3_600_000;
 
-/** A kingdom that earns while away: housed villagers paying taxes. */
+/** A kingdom that earns while away: housed villagers paying rent. */
 function earningKingdom() {
   const state = freshGame();
   addBuilt(state, 'Housing', { x: 3, y: 2 });
@@ -29,27 +28,32 @@ const reload = (state: ReturnType<typeof freshGame>, at: number) => {
 };
 
 describe('the offline report', () => {
-  it('accounts for every gold the wallet gained', () => {
-    const { loaded, report } = reload(earningKingdom(), T0 + 2 * HOUR);
+  it('accounts for every gold the stores gained, and leaves the wallet alone', () => {
+    const { loaded, report } = reload(earningKingdom(), T0 + HOUR);
 
     expect(report).not.toBeNull();
     expect(report!.result.goldEarned).toBeGreaterThan(0);
-    // The report IS the wallet delta — it started at zero.
-    expect(getWallet(loaded.city.wallet, 'Gold')).toBe(report!.result.goldEarned);
+    expect(stored(loaded, 'Gold')).toBe(report!.result.goldEarned);
+    expect(getWallet(loaded.city.wallet, 'Gold')).toBe(0);
   });
 
-  it('reports the elapsed time it actually replayed', () => {
-    const { report } = reload(earningKingdom(), T0 + 2 * HOUR);
+  it('reports the whole absence it replayed', () => {
+    const { report } = reload(earningKingdom(), T0 + HOUR);
 
-    expect(report!.elapsedMs).toBe(2 * HOUR);
-    expect(report!.cappedOut).toBe(false);
+    expect(report!.elapsedMs).toBe(HOUR);
+    expect(report!.storesFull).toBe(false);
   });
 
-  it('stops at the cap and says so', () => {
-    const { report } = reload(earningKingdom(), T0 + (OFFLINE_CAP_HOURS + 5) * HOUR);
+  it('replays a long absence in full, and says when the stores filled', () => {
+    const { loaded, report } = reload(earningKingdom(), T0 + 30 * HOUR);
 
-    expect(report!.cappedOut).toBe(true);
-    expect(report!.elapsedMs).toBe(OFFLINE_CAP_HOURS * HOUR);
+    expect(report!.elapsedMs).toBe(30 * HOUR);
+    expect(report!.storesFull).toBe(true);
+    // Each house holds its level's capacity and no more: what bounds an
+    // absence is the store, not a clock.
+    for (const d of loaded.city.districts.filter((x) => x.definitionId === 'Housing')) {
+      expect(d.stored?.Gold).toBe(DISTRICTS.Housing.storageCapacityPerLevel[0]);
+    }
   });
 
   it('fires even for a blink, so the UI decides what is worth showing', () => {
@@ -58,16 +62,5 @@ describe('the offline report', () => {
 
     expect(report).not.toBeNull();
     expect(report!.elapsedMs).toBe(1000);
-  });
-
-  it('still announces work that finished past the cap', () => {
-    // Queue timers run in real time rather than pausing, so a build that
-    // completed during the paused window must survive into the report — it
-    // comes from the SECOND advance, which used to be discarded entirely.
-    const state = earningKingdom();
-    const { report } = reload(state, T0 + (OFFLINE_CAP_HOURS + 2) * HOUR);
-
-    expect(report!.result.completedItems).toBeDefined();
-    expect(report!.cappedOut).toBe(true);
   });
 });

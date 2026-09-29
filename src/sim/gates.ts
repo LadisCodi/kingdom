@@ -2,7 +2,8 @@
 //
 // Every ruin opens with one garrison camped on its doorstep, and DISCOVERING
 // the ruin starts its counter. When the counter runs out the garrison walks to
-// the city and takes a slice of the banked materials; it does that at most
+// the city and takes a slice of what sits UNCOLLECTED in the buildings'
+// stores — never the wallet; it does that at most
 // three times and then sits on what it took. Clearing the gate stops the clock
 // and hands the whole hoard back.
 //
@@ -12,11 +13,11 @@
 //     and clear the gate, which is the point: the gate is the incentive that
 //     sends a player into the ruin, not a punishment for being away.
 //  2. IT IS A TIMER, NOT PRODUCTION. It runs and resolves in full while the
-//     player is away — the 8-hour offline cap limits what the city MAKES,
-//     never what a clock does.
+//     player is away.
 //  3. A RAID IS PRICED IN PRODUCTION, NOT IN UNITS. It takes `take_seconds` of
-//     the city's own output of each material, capped by a fraction of the
-//     purse. `cityRate` is a FACT about the city rather than an accrual, so a
+//     the city's own output of each material, capped by a fraction of what
+//     the stores hold. What is in the wallet is safe: collecting is the
+//     defence. `cityRate` is a FACT about the city rather than an accrual, so a
 //     raid replays identically however the window was split — and a material
 //     the city does not produce is never taken.
 //  4. IT IS RECOVERABLE. The hoard is a per-gate counter, and clearing pays
@@ -36,8 +37,9 @@ import { fogState } from './fog';
 import type { MapData } from './grid';
 import { cityGoldPerMinute } from './population';
 import { cityGatherPerSecond } from './upgrades';
+import { cityStored, storedOf, takeFromStore } from './storage';
 import {
-  addToWallet, getWallet, newId,
+  addToWallet, newId,
   type GameState, type GateState, type RuinId, type Wallet,
 } from './state';
 
@@ -116,10 +118,10 @@ export function cityRatePerSecond(state: GameState, currency: RaidableId): numbe
 /**
  * What one raid on this ruin would take right now.
  *
- * `take_seconds` bounds it on a large purse — a raid is a number of SECONDS of
+ * `take_seconds` bounds it on full stores — a raid is a number of SECONDS of
  * the city's own work, so it stays the same size relative to the city as the
- * city grows — and `take_fraction_max` bounds it on a small one, so a player
- * who has just started is never cleaned out.
+ * city grows — and `take_fraction_max` bounds it on nearly empty ones, so a
+ * player who collects often loses little. The wallet is never touched.
  */
 export function raidTake(state: GameState, ruinId: RuinId): Wallet {
   const seconds = garrisonForTier(RUINS[ruinId].tier).takeSeconds;
@@ -127,8 +129,8 @@ export function raidTake(state: GameState, ruinId: RuinId): Wallet {
   for (const c of RAIDABLE) {
     const produced = cityRatePerSecond(state, c) * seconds;
     if (produced <= 0) continue; // they take from what you MAKE
-    const banked = getWallet(state.city.wallet, c);
-    const take = Math.floor(Math.min(produced, banked * RAID.takeFractionMax));
+    const stored = cityStored(state, c);
+    const take = Math.floor(Math.min(produced, stored * RAID.takeFractionMax));
     if (take > 0) took[c] = take;
   }
   return took;
@@ -164,9 +166,11 @@ export function advanceRaids(state: GameState, t: number): RaidEvent[] {
       const took = raidTake(state, ruinId);
       let taken = 0;
       for (const [c, n] of Object.entries(took)) {
-        addToWallet(state.city.wallet, c as RaidableId, -n);
-        gate.hoard[c as RaidableId] = (gate.hoard[c as RaidableId] ?? 0) + n;
-        taken += n;
+        const got = takeFromStores(state, c as RaidableId, n);
+        if (got <= 0) { delete took[c as RaidableId]; continue; }
+        took[c as RaidableId] = got;
+        gate.hoard[c as RaidableId] = (gate.hoard[c as RaidableId] ?? 0) + got;
+        taken += got;
       }
       if (taken > 0) {
         gate.trips += 1;
@@ -182,6 +186,24 @@ export function advanceRaids(state: GameState, t: number): RaidEvent[] {
     }
   }
   return events;
+}
+
+/**
+ * Take `amount` of one material out of the city's stores, each store giving
+ * its share of what they hold between them — rounded up, in district order,
+ * so the same raid takes the same units from the same buildings in replay.
+ */
+function takeFromStores(state: GameState, c: RaidableId, amount: number): number {
+  const total = cityStored(state, c);
+  if (total <= 0 || amount <= 0) return 0;
+  let left = Math.min(amount, total);
+  for (const d of state.city.districts) {
+    if (left <= 0) break;
+    const here = storedOf(d, c);
+    if (here <= 0) continue;
+    left -= takeFromStore(d, c, Math.min(left, Math.ceil((amount * here) / total)));
+  }
+  return Math.min(amount, total) - left;
 }
 
 /** A boundary source: the earliest raid still to come. */

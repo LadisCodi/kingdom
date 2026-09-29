@@ -20,10 +20,7 @@
 // the cap would then end on a different instant under one-call replay than
 // under stepped ticking (invariant 1).
 //
-// THE DRIP IGNORES THE OFFLINE CAP. It is production, but the bar already
-// bounds it: ten hours away fills it, and cutting it at eight would mean a
-// bar that never fills overnight (invariant 2 — save.ts's capped replay
-// leaves `lastKnowledgeAt` alone so the uncapped tail pays it).
+// THE BAR IS THE DRIP'S ONLY CEILING, away or not: ten hours away fills it.
 
 import { DELVE, KNOWLEDGE, RUINS } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';

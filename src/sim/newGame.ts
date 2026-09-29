@@ -31,7 +31,6 @@ export function newGame(map: MapData, now: number): GameState {
       trainingQueue: [],
       workshops: {},
       wounded: {},
-      lastTaxAt: now,
       lastManaAt: now,
     },
     kingdom: {
@@ -116,7 +115,7 @@ export function newGame(map: MapData, now: number): GameState {
   });
 
   // A new kingdom starts with a FULL pool, not an empty one. Mana is what
-  // every house tap is paid from, so an empty pool at minute zero would gate
+  // every tap on the ground is paid from, so an empty pool at minute zero would gate
   // the city's most-used verb behind a wait before the player has learned
   // that the verb exists. Set after the Townhall is placed, because the cap
   // is read from it.

@@ -21,8 +21,10 @@
   *Townhall at level 2*, *10 Wood in stock*). Work done before activation
   counts; the quest completes on activation.
 - **Relative** goals count events from activation only (*collect 30 Gold*,
-  *reveal 6 cells*). They hook the sim's income, tap, reveal and sale paths,
-  so offline replay feeds them.
+  *reveal 6 cells*). They hook the sim's collect, tap, reveal and sale paths.
+- A `collect` counts when units reach the wallet — a tap on the ground, or
+  collecting a building's store ([`03-economy.md`](03-economy.md) §3.2) —
+  never when rent accrues or a haul lands.
 
 | Absolute | Relative |
 |---|---|
@@ -252,8 +254,8 @@ and the thing you press are the same object.
 - `lastClaimedDay` is stamped, not incremented, so a second claim in one day is
   impossible however the clock moves — including backwards.
 - Nothing here is a boundary source in `advance()`: a daily timer would propose
-  a boundary a day across a long absence for no simulation benefit, the tail
-  advance is uncapped, and claiming is always a live player command.
+  a boundary a day across a long absence for no simulation benefit, and
+  claiming is always a live player command.
 
 ### 3.6 Where it lives
 

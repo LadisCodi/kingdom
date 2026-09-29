@@ -329,9 +329,11 @@ export const buildingsIn = (state: GameState, area: ModifierArea): District[] =>
  * `spendTaps` for HOUSES. Same budget, same round robin, same freedom from
  * Mana — and one difference that is the whole asymmetry the cooldown exists
  * to hold: a house never runs dry, so this always spends the lot (OQ-99).
+ * Each tap pulls one tap's worth of rent straight into the wallet, past the
+ * house's store (`pullHouseForward`).
  */
 export function spendHouseTaps(
-  state: GameState, houses: readonly District[], budget: number, now: number,
+  state: GameState, houses: readonly District[], budget: number,
 ): { spent: number; touched: Coord[]; gold: number } {
   const touched: Coord[] = [];
   let spent = 0;
@@ -340,7 +342,7 @@ export function spendHouseTaps(
   while (spent < budget) {
     for (const d of houses) {
       if (spent >= budget) break;
-      gold += pullHouseForward(state, d, now);
+      gold += pullHouseForward(state, d);
       spent += 1;
       if (!touched.some((c) => coordKey(c) === coordKey(d.location))) touched.push(d.location);
     }
@@ -445,7 +447,7 @@ export function cast(
       const zone = { centre: target!, radius: activeRadius(state, id), relic: id, since: now };
       const houses = buildingsIn(state, zone)
         .filter((d) => d.state === 'Built' && residentsOf(state, d) > 0);
-      const run = spendHouseTaps(state, houses, tapBudget(state, id), now);
+      const run = spendHouseTaps(state, houses, tapBudget(state, id));
       report.affected.push(...run.touched);
       report.taps = run.spent;
       report.goldSaved = run.gold;

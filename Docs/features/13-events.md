@@ -125,15 +125,14 @@ threshold   free reward         paid reward
 - The track is completable at that budget, without the shop, inside the window.
 - Checked by timing a real session, not by arithmetic.
 
-## 4. The offline cap and event rewards
+## 4. Absences and event rewards
 
-- The offline cap limits what the city produces while away. It never limits
-  what a timer does.
-- Event windows are timers, like the build queue, research and delve depths.
-  They resolve in the post-cap tail advance.
+- An absence is replayed in full; there is no offline cap
+  ([`04-harvest.md`](04-harvest.md) §8).
+- Event windows are timers, like the build queue. They resolve at their
+  absolute timestamps inside the offline advance.
 - A 20-hour absence spanning a 24-hour window pays in full.
 - A window that opens and closes inside an absence still fires.
-- **OQ-24.**
 
 ## 5. The scheduling machinery (built, with nothing scheduled)
 
@@ -182,4 +181,4 @@ What survives is the part every future event needs, and it keeps its tests:
 - A full second region for the island (§2.3)
 - Re-expressing upgrade levels as modifiers
 
-**Open questions:** OQ-18, OQ-19, OQ-20, OQ-21, OQ-22, OQ-23, OQ-24, OQ-4.
+**Open questions:** OQ-18, OQ-19, OQ-20, OQ-21, OQ-22, OQ-23, OQ-4.

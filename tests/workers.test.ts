@@ -1,6 +1,7 @@
 // Worker units: claims, the harvest cycle, exhaustion interplay, determinism,
 // plus Townhall villager training that shares the unified advance.
 import { describe, expect, it } from 'vitest';
+import { storedOf } from '../src/sim/storage';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { populationCost } from '../src/sim/population';
 import { cancelTraining, lineFor, trainCost, trainUnit } from '../src/sim/army';
@@ -105,9 +106,11 @@ describe('the harvest cycle', () => {
     expect(state.harvest[coordKey(FOREST_A)].units).toBe(HARVEST.Forest.stock - 1);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // …still walking
     expect(w.carrying).toBe(1); // matter in transit, and it is real
-    // …and reach the WALLET only when the worker gets home.
+    // …and reach the Sawmill's STORE when the worker gets home — the wallet
+    // only when the player collects it.
     tickAt(state, start + CYCLE_MS + 100);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
+    expect(storedOf(sawmill, 'Wood')).toBe(1);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore);
     expect(w.carrying).toBe(0);
     expect(w.activity).toBe('MovingToCell'); // straight back out
   });
@@ -145,7 +148,7 @@ describe('the harvest cycle', () => {
 
     // And the load still lands, so the tree paid its stock exactly once.
     tickAt(state, start + CYCLE_MS + 200);
-    expect(getWallet(state.city.wallet, 'Wood') - woodBefore)
+    expect(getWallet(state.city.wallet, 'Wood') - woodBefore + storedOf(sawmill, 'Wood'))
       .toBe(HARVEST.Forest.stock);
   });
 
@@ -413,7 +416,6 @@ describe('one training line per building', () => {
       addBuilt(s, 'Housing', { x: 2, y: 0 });
       fund(s, { Food: 500 });
       trainUnit(s, 'Villager', T0);
-      s.city.lastTaxAt = T0;
       s.lastAdvance = T0;
       return s;
     };
@@ -426,7 +428,9 @@ describe('one training line per building', () => {
     expect(oneCall.city.population).toBe(stepped.city.population);
     expect(getWallet(oneCall.city.wallet, 'Gold'))
       .toBe(getWallet(stepped.city.wallet, 'Gold'));
-    expect(oneCall.city.lastTaxAt).toBe(stepped.city.lastTaxAt);
+    const house = (g: GameState) => g.city.districts.find((d) => d.definitionId === 'Housing')!;
+    expect(house(oneCall).stored).toEqual(house(stepped).stored);
+    expect(house(oneCall).rentAnchor).toBe(house(stepped).rentAnchor);
   });
 
   it('survives a save round-trip, both kinds together', () => {

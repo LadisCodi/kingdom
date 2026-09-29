@@ -14,10 +14,7 @@ import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { pourKnowledge, researchRefusal, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
-import {
-  addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, T0,
-  tickAt,
-} from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, stored, T0, tickAt } from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
 // when the province was redrawn — the western cove became grassland, the
@@ -58,7 +55,7 @@ describe('stone line (Masonry → Quarry)', () => {
     const quarry = state.city.districts.find((d) => d.definitionId === 'Quarry')!;
     expect(changeWorkers(state, map, quarry.uniqueId, 1, T0)).toBe('Assigned');
     tickAt(state, T0 + 60_000);
-    expect(getWallet(state.city.wallet, 'Stone')).toBeGreaterThan(1); // deliveries landed
+    expect(stored(state, 'Stone')).toBeGreaterThan(0); // deliveries landed in the Quarry
   });
 });
 
@@ -99,8 +96,8 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     const docks = state.city.districts.find((d) => d.definitionId === 'Docks')!;
     expect(changeWorkers(state, map, docks.uniqueId, 1, T0)).toBe('Assigned');
     tickAt(state, T0 + 60_000);
-    // A shoal is a Food cell — the boats land Food, 2 a delivery.
-    expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(0);
+    // A shoal is a Food cell — the boats land Food, 2 a delivery, in the Docks.
+    expect(stored(state, 'Food')).toBeGreaterThan(0);
   });
 
   it('a drained shoal respawns on WATER next to its origin', () => {

@@ -15,7 +15,7 @@ import { advance, enqueueBuild } from '../src/sim/commands';
 import { validPlacementCells } from '../src/sim/districts';
 import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { completesAt, getWallet, townhall, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, stored, T0 } from './helpers';
 
 /** One L1 Housing plus the Townhall's bed is three; four villagers, so one is
  *  homeless until a second house, queued at T0, finishes. */
@@ -30,7 +30,7 @@ function onTheEdgeOfAHouse(): { state: GameState; doneAt: number } {
   fund(state, { Gold: 10_000, Wood: 10_000, Stone: 10_000, Food: 10_000 });
   const cell = validPlacementCells(state, map, 'Housing')[0]!;
   expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
-  state.city.lastTaxAt = T0;
+  for (const d of state.city.districts) if (d.definitionId === 'Housing') d.rentAnchor = T0;
   state.lastAdvance = T0;
   advance(state, map, T0); // a builder picks it up at T0
   const item = state.city.queue[0]!;
@@ -43,7 +43,7 @@ describe('the boundary loop', () => {
     const { state, doneAt } = onTheEdgeOfAHouse();
     state.city.population = homelessOne(state);
     const before = cityGoldPerMinute(state);
-    const gold0 = getWallet(state.city.wallet, 'Gold');
+    const gold0 = stored(state, 'Gold');
 
     // The whole build plus 30s, in ONE call, spanning the completion.
     const secs = (doneAt - T0) / 1000;
@@ -52,7 +52,7 @@ describe('the boundary loop', () => {
     expect(after).toBeGreaterThan(before); // the homeless villager got a roof
 
     // The build at the old rate + 30s at the new one — NOT all at the old.
-    const earned = getWallet(state.city.wallet, 'Gold') - gold0;
+    const earned = stored(state, 'Gold') - gold0;
     const oldRateOnly = ((secs + 30) / 60) * before;
     const correct = (secs / 60) * before + (30 / 60) * after;
     expect(earned).toBeGreaterThan(oldRateOnly);
@@ -72,7 +72,13 @@ describe('the boundary loop', () => {
 
     expect(getWallet(stepped.city.wallet, 'Gold'))
       .toBe(getWallet(oneCall.city.wallet, 'Gold'));
-    expect(stepped.city.districts).toEqual(oneCall.city.districts);
+    // A rent anchor is a float that one call and many steps reach by
+    // different sums; they agree to well under a millisecond, and every
+    // whole unit it pays agrees exactly (the stores below).
+    const settled = (s: GameState) => s.city.districts.map((d) => ({
+      ...d, rentAnchor: d.rentAnchor === undefined ? undefined : Math.round(d.rentAnchor),
+    }));
+    expect(settled(stepped)).toEqual(settled(oneCall));
     expect(stepped.city.queue).toEqual(oneCall.city.queue);
   });
 

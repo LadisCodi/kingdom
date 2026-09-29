@@ -108,7 +108,7 @@ The eight, and which one axis each grows:
 | **Dowsing Rod** | **Divining** — wakes every tired node in the zone at once, then keeps them coming back faster | a centre | **duration** |
 | **Verdant Seal** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
 | **Foreman's Sigil** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
-| **Gilded Ledger** | **Tithe** — collects from every house in the zone, over and over, free | a centre | **taps per Mana** |
+| **Gilded Ledger** | **Tithe** — pulls rent forward from every house in the zone, over and over, straight into the wallet, free | a centre | **taps per Mana** |
 | **Wanderer's Compass** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
 | **The Delver's Lantern** | **Lamplight** — the next rooms you clear pay double | nothing; it is lit and carried | **rooms** |
 | **The Muster Horn** | — *waits on the world map* | a fortification | — |
@@ -140,10 +140,12 @@ The eight, and which one axis each grows:
   - It is **untargeted**: a delve is the place, and the player casting it is
     already standing in it.
 - **The two auto-tap abilities are an EXCHANGE RATE**, and the rate is what
-  the level moves. A tap they land **costs no Mana** — thirty at a Mana each
-  would be impossible — so they are the one exception to *every player tap
-  costs 1 Mana*, and the exception is the design. Holding a finger does 2 a
-  second at a Mana each; a spell does 4 a second for nothing.
+  the level moves. A tap they land **costs no Mana**. Holding a finger on the
+  ground does 2 a second at a Mana each; a spell does 4 a second for nothing.
+- **A Tithe tap pulls `tap.workSeconds` of that house's rent straight into the
+  wallet**, past the house's store
+  ([`03-economy.md`](03-economy.md) §3.2). It mints Gold, and a full house
+  does not stop it. It is the only way rent is pulled forward.
 - **The budget is spent round robin, nearest first.** The budget is the
   decision and the area is only where it is spent, so a zone over five nodes
   means all five.
@@ -154,8 +156,8 @@ The eight, and which one axis each grows:
   rate — and never authored.
 - **The nodes run dry and the houses do not.** Reap's run hits a wall when the
   ground is empty; Tithe's always spends the whole budget, because a house
-  always has rent to pull forward. That is the asymmetry the cooldown exists to
-  hold, and the number to watch first — **OQ-99**.
+  with residents always has rent to pull forward. That is the asymmetry the
+  cooldown exists to hold, and the number to watch first — **OQ-99**.
 
 - **The cooldown counts from the window's close, never from the cast.** A
   10-minute window on a 5-minute cooldown counted from the cast is 100%
@@ -239,8 +241,8 @@ The eight, and which one axis each grows:
   albums — the same 72 cards behind a new season frame and name, and the relic
   pairing moved one step. New card art is a decision a season may take, never
   a requirement.
-- The close is a **timer**, not production: it resolves in the uncapped tail
-  of the offline advance, at its absolute timestamp. A player away for a month
+- The close is a **timer**: it resolves at its absolute timestamp inside the
+  offline advance. A player away for a month
   comes back to the melted album and to **the season the calendar is in**, not
   to the one after the one they left — the season is a floor division from the
   epoch, so catching up is one step however long the absence was.
@@ -299,9 +301,8 @@ Three things, on the ninth card, in one sheet:
   ladder is what the code did before this was authored, and it paid the three
   hardest pages a beginner's chest and no key at all. A test now refuses a
   ladder shorter than the album list.
-- The hours are banded: the easy albums pay a morning, the hard ones the whole
-  offline cap and never more — a chest that outpays a night's sleep would make
-  the night look small.
+- The hours are banded: the easy albums pay a morning, the hard ones a night
+  (8 h) and never more.
 - **Completing all eight pays the collection prize**: a **golden call that is
   guaranteed to be the season hero** (§10) and **25,000 Gems**. The prize is
   dealt in the gacha reveal screen, which is the most exciting screen the game

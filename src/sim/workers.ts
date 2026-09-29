@@ -2,21 +2,19 @@
 // event-driven advance that serves both the live tick and offline replay
 // (Docs/features/04-harvest.md §4).
 //
-// A worker walks out ONCE and then works the cell in place, STRIKING it every
-// `secondsPerStrike` and crediting the wallet on the strike. There is no load,
-// no return trip and no delivery — the strike is the player's tap performed by
-// somebody else. What is left of travel is MIGRATION: a worker whose cell
-// empties releases the claim and walks to another, and that is both where the
-// distance cost lives and the visible signal that you are over-extracting.
+// A worker walks to its cell, STRIKES it, walks the load home and puts it in
+// the building's STORE — not in the wallet (sim/storage.ts). The player
+// collects the store with a tap. A full store keeps the crew at home: nobody
+// sets out while there is no room for what they would bring back, and a load
+// already on its way lands whole.
 
 import { DISTRICTS, HARVEST, levelIndexed, type HarvestSpec } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
 import { drawFromCell, harvestSourceAt, harvestSpecAt, isExhausted, recoversForSpec } from './harvest';
-import { recordResourceDiscovery } from './discovery';
-import { recordEvent } from './events';
+import { isStoreFull, storeInto } from './storage';
 import {
-  addToWallet, coordKey, districtById, newId,
+  coordKey, districtById, newId,
   type Coord, type CurrencyId, type District, type GameState,
   type HarvestSourceId, type Worker,
 } from './state';
@@ -197,7 +195,8 @@ function tryDispatch(
   at: number,
   index: CrewIndex,
 ): void {
-  const cell = findClaimableCell(state, map, building, at, index, w);
+  // A full store keeps the crew at the door: there is nowhere to put a load.
+  const cell = isStoreFull(building) ? null : findClaimableCell(state, map, building, at, index, w);
   if (cell) {
     w.claimedCell = cell;
     setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell, building.location));
@@ -216,9 +215,8 @@ export interface StrikeEvent {
   source: HarvestSourceId; // which ground — the renderer picks the foley from it
 }
 
-/** A haul landing at the BUILDING. This is where the wallet moves and where
- *  the number pops, and the gap between it and the strike that earned it is
- *  the walk you can watch. */
+/** A haul landing at the BUILDING, in its store. The gap between it and the
+ *  strike that earned it is the walk you can watch. */
 export interface DepositEvent {
   cell: Coord; // the building
   currencyId: CurrencyId;
@@ -240,6 +238,9 @@ function nextEventAt(
   index: CrewIndex,
 ): number | null {
   if (w.activity !== 'Idle') return w.stateUntil;
+  // Blocked while the store is full; a collection or a raid wakes it
+  // (`wakeIdleWorkersAt`).
+  if (isStoreFull(building)) return null;
   // Idle: wake when any unclaimed workable cell exists or recovers — never
   // before stateStartedAt (which completion/reveal events bump forward, so a
   // cell that appeared mid-absence isn't worked retroactively).
@@ -306,24 +307,22 @@ function step(
       break;
     }
     case 'MovingHome': {
-      // THE HAUL LANDS. The wallet is credited only now, which is why the
-      // trip is worth watching: what you see walking is matter you do not
-      // have yet.
+      // THE HAUL LANDS — in the building's store, whole, even when it tips
+      // the store over its capacity: matter that left the ground is never
+      // destroyed. It reaches the wallet only when the player collects.
       if (w.carrying > 0 && w.carriedSource !== null) {
         const spec = HARVEST[w.carriedSource];
         const amount = w.carrying;
-        addToWallet(state.city.wallet, spec.currencyId, amount);
-        recordResourceDiscovery(state, spec.currencyId);
-        recordEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
-        // Deliberately NOT a { kind: 'tap' } event. The two look alike on
-        // screen; a quest that asks the player to tap is asking for the hand,
-        // and unifying them would complete those with the city idle.
+        storeInto(building, spec.currencyId, amount);
+        // No `collect` event here: a quest counts what the player COLLECTS
+        // (sim/storage.ts `collectStore`).
         deposits.push({ cell: building.location, currencyId: spec.currencyId, amount });
       }
       w.carrying = 0;
       w.carriedSource = null;
-      // Keep the claim while the cell still holds something; otherwise migrate.
-      if (w.claimedCell !== null && !isExhausted(state, map, w.claimedCell, t)
+      // Keep the claim while the cell still holds something and there is
+      // room at home; otherwise migrate, or wait by the door.
+      if (w.claimedCell !== null && !isStoreFull(building) && !isExhausted(state, map, w.claimedCell, t)
         && worksHere(sources, state, w.claimedCell)) {
         setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell, building.location));
       } else {
@@ -362,6 +361,14 @@ export function advanceWorkers(state: GameState, map: MapData, toTime: number): 
       next.stateStartedAt = nextAt + 1;
     }
     index.after(next, hadClaim, before === 'Working' ? hadClaim : null);
+  }
+}
+
+/** Idle workers re-check availability from `t` (never retroactively earlier):
+ *  a cell appeared, a claim was freed, or a store was emptied. */
+export function wakeIdleWorkersAt(state: GameState, t: number): void {
+  for (const w of state.workers) {
+    if (w.activity === 'Idle') w.stateStartedAt = Math.max(w.stateStartedAt, t);
   }
 }
 
