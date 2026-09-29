@@ -489,6 +489,9 @@
 .k-trough {
   --bar-h: calc(var(--px) * 16);
   position: relative;
+  /* Its three layers and label stack inside it and nowhere else, so what a
+     screen lays over the bar — the quest's mark — stays over all of it. */
+  isolation: isolate;
   height: var(--bar-h);
   border: 0;
   border-radius: 0;
