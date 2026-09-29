@@ -417,10 +417,11 @@ wood of its sides touches the screen's edges.
   - **Tags:** chips for what the unit is (its type, blue: Melee, Ranged,
     Mounted; Worker for a villager) and what it does (its type-chart edge:
     *Strong vs Lancer*). Tapping one opens a one-line bubble; one at a time.
-  - **Queue, right to left:** the batch in training at the right with its
-    bar and time left, beside the gem Finish button; what waits to its left;
-    empty places up to four. A batch is a run of the same trainee in the
-    line, one portrait with a count (*x5*).
+  - **Batch**, at the foot of the same panel: one building trains one
+    unit, so its whole line is one batch — the unit's portrait with its
+    count (*x3*), the bar and time left for the one in training, the batch's
+    total time, and the gem Finish button. Nothing in the line: *Nothing in
+    training*, and no Finish.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; six letters at most — *Range*,
   *Crew*, *Haul* — so three fit a phone's width; the full name is the tile's

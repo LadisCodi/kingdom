@@ -8,9 +8,10 @@
 //  - THE PANEL for that one trainee: its bust, name, tags, one line of
 //    flavour, the priced Train button — and for a soldier the three numbers
 //    it is judged on.
-//  - THE QUEUE, right to left: the batch being trained NOW sits at the right,
-//    beside the gem button that finishes it, so it is plain what Finish
-//    finishes; what waits lines up to its left.
+//  - THE BATCH, at the foot of the same panel: how many are coming, the bar
+//    and time left for the one being trained, the whole batch's time, and
+//    the gem button that finishes it. One unit per building means the line
+//    is only ever one batch — "Warrior x3" — so it is one strip, not a queue.
 //
 // Everything the panel says is DERIVED — the tags from the unit's type and
 // the type chart, the numbers from the units table — so nothing here is
@@ -19,8 +20,8 @@
 import type { Game } from '../game';
 import { DISTRICTS, TECHNOLOGIES, UNITS, type UnitDef } from '../sim/data/definitions';
 import {
-  itemCount, lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt,
-  trainingProgress,
+  itemCount, lineFor, lineRemainingSeconds, lineRushCost, trainCost, trainSecondsAt,
+  trainingCompletesAt, trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
@@ -37,12 +38,6 @@ const VILLAGER = {
   name: 'Villager',
   description: 'A hardworking settler who tends the fields and pays rent.',
 };
-
-/** How many places the queue strip always draws: a run per place, the rest
- *  empty, so the strip keeps its length and its right end never moves. Four
- *  is what fits beside Finish on the iPhone X. The line itself has no limit —
- *  past this the strip scrolls. */
-const QUEUE_PLACES = 4;
 
 const nameFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
@@ -103,8 +98,8 @@ export function trainingSection(
     root.querySelectorAll('.tr-tag.is-open').forEach((t) => t.classList.remove('is-open'));
   });
 
-  const queue = () => {
-    const row = () => queueSection(game, district, isWard);
+  const batch = () => {
+    const row = () => batchStrip(game, district, isWard);
     const sig = () => {
       const now = game.now();
       const line = lineFor(game.state, district.uniqueId);
@@ -114,6 +109,7 @@ export function trainingSection(
         head === undefined ? null : head.startedAt === null,
         head === undefined ? null : Math.ceil(queueLeft(game, district, head)),
         Math.round(trainingProgress(game.state, district.uniqueId, now) * 100),
+        Math.ceil(lineRemainingSeconds(game.state, district.uniqueId, now)),
         lineRushCost(game.state, district.uniqueId, now),
       ]);
     };
@@ -155,14 +151,16 @@ export function trainingSection(
         }),
       ));
     }
-    if (lineFor(game.state, district.uniqueId).length > 0) root.append(queue());
+    if (lineFor(game.state, district.uniqueId).length > 0) {
+      root.append(el('div', { class: 'tr-batch-box k-section' }, batch()));
+    }
   }
   if (offers.length === 0) return root;
 
   // ---------------------------------------------------- the panel, the queue
   // One trainee per building (dataRules.ts): the first is the only one.
   const selected = offers[0];
-  root.append(detail(game, district, selected), queue());
+  root.append(detail(game, district, selected, batch()));
   return root;
 }
 
@@ -176,72 +174,53 @@ function queueLeft(game: Game, district: District, head: ReturnType<typeof lineF
 }
 
 /**
- * THE QUEUE, right to left, and the price of not waiting. The ticking half of
- * the block.
+ * THE BATCH, and the price of not waiting. The ticking half of the block.
  *
- * CONSECUTIVE RUNS are the batches — "Warrior x3" — not one place each and not
- * one per type: four warriors in a row is one fact, and collapsing by type
- * ALONE would lie about the order (Warrior, Lancer, Warrior shown as
- * "Warrior x2, Lancer" says the wrong thing comes out next). A ward's item
- * already hands over many, so a run adds those counts up.
+ * One unit per building (dataRules.ts), so everything in the line is one
+ * batch of it — counted as one, "x3". (A ward's line mends whichever
+ * soldiers came back hurt; its count is everyone on the table, and its face
+ * is the one being mended now.)
  */
-function queueSection(game: Game, district: District, isWard: boolean): HTMLElement {
+function batchStrip(game: Game, district: District, isWard: boolean): HTMLElement {
   const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
-  const runs: Array<{ trainee: TrainableId; count: number }> = [];
-  for (const item of line) {
-    const last = runs[runs.length - 1];
-    if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
-    else runs.push({ trainee: item.trainee, count: itemCount(item) });
+  const head = el('div', { class: 'tr-batch-head' }, isWard ? 'Mending' : 'Training batch');
+  if (line.length === 0) {
+    return el('div', { class: 'tr-batch' }, head,
+      el('div', { class: 'tr-batch-empty' }, 'Nothing in training'));
   }
-
-  const place = (run: { trainee: TrainableId; count: number }, active: boolean): HTMLElement => {
-    const face = el('div', { class: 'tr-slot-face' },
-      unitBust(run.trainee, 'tr-slot-art'),
-      ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
-    if (!active) {
-      return el('div', { class: 'tr-slot is-waiting', title: `${run.count} ${nameFor(run.trainee)}` },
-        face, el('span', { class: 'tr-slot-note' }, 'Waiting'));
-    }
-    const pct = Math.round(trainingProgress(game.state, district.uniqueId, now) * 100);
-    return el('div', { class: 'tr-slot is-active', title: `${run.count} ${nameFor(run.trainee)}` },
-      face,
-      el('span', { class: 'tr-slot-bar' }, el('span', { style: `width: ${pct}%` })),
-      el('span', { class: 'tr-slot-note' },
-        `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`));
-  };
-
-  // In LINE order — the batch in training first, then what waits, then the
-  // empty places — and the strip lays it out right to left (`row-reverse`,
-  // district.css): so it starts at Finish, and when a long line outgrows the
-  // row, what scrolls out of sight is its far end, not the batch in training.
-  const empties = Math.max(0, QUEUE_PLACES - runs.length);
-  const strip = el('div', { class: 'tr-queue' },
-    ...runs.map((run, i) => place(run, i === 0)),
-    ...Array.from({ length: empties }, () =>
-      el('div', { class: 'tr-slot is-empty' },
-        el('div', { class: 'tr-slot-face' }), el('span', { class: 'tr-slot-note' }, 'Empty'))));
-
-  const rush = lineRushCost(game.state, district.uniqueId, now);
-  return el('div', { class: 'tr-queue-block' },
-    el('div', { class: 'tr-sub' }, isWard ? 'Mending' : 'Queue'),
-    el('div', { class: 'tr-queue-row' },
-      strip,
-      ...(line.length > 0
-        ? [btn({
-          label: 'Finish',
-          kind: 'gem',
-          onClick: () => game.doFinishTraining(district),
-          cost: { Gems: rush },
-          have: (c) => game.walletValue(c),
-        })]
-        : [])));
+  const count = line.reduce((n, item) => n + itemCount(item), 0);
+  const pct = Math.round(trainingProgress(game.state, district.uniqueId, now) * 100);
+  const total = isWard
+    ? line.reduce((n, item, i) => n + (i === 0
+      ? queueLeft(game, district, item)
+      : game.healWait(item.trainee as UnitId, itemCount(item))), 0)
+    : lineRemainingSeconds(game.state, district.uniqueId, now);
+  return el('div', { class: 'tr-batch' }, head,
+    el('div', { class: 'tr-batch-row' },
+      el('div', { class: 'tr-batch-face', title: `${count} ${nameFor(line[0].trainee)}` },
+        unitBust(line[0].trainee, 'tr-batch-art'),
+        ...(count > 1 ? [el('span', { class: 'tr-batch-count' }, `x${count}`)] : [])),
+      el('div', { class: 'tr-batch-progress' },
+        el('span', { class: 'tr-batch-bar' }, el('span', { style: `width: ${pct}%` })),
+        el('span', { class: 'tr-batch-left' },
+          `${formatDuration(Math.ceil(queueLeft(game, district, line[0])))} left`)),
+      el('div', { class: 'tr-batch-total' },
+        el('span', {}, 'Total time'),
+        el('b', {}, formatDuration(Math.ceil(total)))),
+      btn({
+        label: 'Finish',
+        kind: 'gem',
+        onClick: () => game.doFinishTraining(district),
+        cost: { Gems: lineRushCost(game.state, district.uniqueId, now) },
+        have: (c) => game.walletValue(c),
+      })));
 }
 
-/** The panel for the picked trainee: bust, name and tags, flavour, the priced
- *  Train button (its time among its costs) — and a soldier's three numbers
- *  in a row of their own underneath. */
-function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
+/** The panel for the building's one trainee: bust, name and tags, flavour, the
+ *  priced Train button (its time among its costs), a soldier's three numbers
+ *  in a row of their own, and the batch at the foot. */
+function detail(game: Game, district: District, trainee: TrainableId, batch: HTMLElement): HTMLElement {
   const cost = trainCost(game.state, trainee);
   // What it will take HERE, neighbours included — the number the player is
   // about to commit to, not the one on the sheet.
@@ -288,5 +267,6 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
       stat('atk', 'Attack', unit.dmg),
       stat('def', 'Defence', unit.def),
       stat('hp', 'Health', unit.hp))]),
+    batch,
   );
 }
