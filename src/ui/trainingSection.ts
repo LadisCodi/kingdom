@@ -102,7 +102,6 @@ export function trainingSection(
         line.map((i) => [i.trainee, itemCount(i)]),
         head === undefined ? null : head.startedAt === null,
         head === undefined ? null : Math.ceil(queueLeft(game, district, head)),
-        Math.round(trainingProgress(game.state, district.uniqueId, now) * 100),
         Math.ceil(lineRemainingSeconds(game.state, district.uniqueId, now)),
         lineRushCost(game.state, district.uniqueId, now),
       ]);
@@ -186,8 +185,11 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
   // The time left rides INSIDE the bar, on its own label, as every bar's
   // reading does (the quest scroll's counter).
   const bar = progress('green');
-  bar.set(trainingProgress(game.state, district.uniqueId, now),
-    formatDuration(Math.ceil(queueLeft(game, district, line[0]))));
+  const left = queueLeft(game, district, line[0]);
+  // Running only once the head has started; waiting, it stays where it is.
+  bar.run(trainingProgress(game.state, district.uniqueId, now),
+    line[0].startedAt === null ? 0 : left * 1000,
+    formatDuration(Math.ceil(left)));
   const total = isWard
     ? line.reduce((n, item, i) => n + (i === 0
       ? queueLeft(game, district, item)

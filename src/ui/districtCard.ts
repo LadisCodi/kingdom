@@ -361,7 +361,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     const scaffold = () => {
       const t = game.now();
       const bar = progress('blue');
-      bar.set(queueProgress(queueItem, t),
+      bar.run(queueProgress(queueItem, t),
+        queueItem.startedAt === null ? 0 : remainingSeconds(queueItem, t) * 1000,
         queueItem.startedAt === null
           ? 'waiting for a builder'
           : formatDuration(remainingSeconds(queueItem, t)));
@@ -383,7 +384,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const t = game.now();
       return JSON.stringify([
         queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
-        Math.round(queueProgress(queueItem, t) * 200),
         gemRushCost(queueItem, t),
         game.walletValue('Gems') < gemRushCost(queueItem, t),
       ]);

@@ -402,7 +402,9 @@ wood of its sides touches the screen's edges.
   tube's whole length, uncovered from the left so its level is a straight
   edge), and the **border** (the glass: outline and shine) — each sliced at
   its rounded ends (fixed height, stretched middle; `--bar-h` sets it). Its reading — a count, a time left —
-  always sits INSIDE it, centred, never under or beside it. In light ink over a
+  always sits INSIDE it, centred, never under or beside it. A timer's bar
+  (`run`) moves smoothly, frame by frame, to full over the time left — the
+  browser animates it, no script per frame. In light ink over a
   warm dark shadow (a drop and a soft halo), neutral on any fill. Four tones,
   one per meaning: **gold** a goal (quests, collections), **green** something
   being made (training, construction), **blue** a resource filling or a timer

@@ -134,6 +134,12 @@ export interface Progress {
   root: HTMLElement;
   /** `fraction` is clamped to 0..1. */
   set(fraction: number, label?: string): void;
+  /** A TIMER: at `fraction` now, and full in `msLeft`. The fill runs there on
+   *  its own, linearly, frame by frame (a Web Animation, so the compositor
+   *  moves it and no script runs per frame) — a bar rebuilt every second
+   *  starts where the last one was, so the motion is smooth, not a step a
+   *  second. */
+  run(fraction: number, msLeft: number, label?: string): void;
 }
 
 /** A bar's colour, one per meaning: gold for a goal (quests, collections),
@@ -160,6 +166,17 @@ export function progress(tone: ProgressTone = 'green'): Progress {
   );
   return {
     root,
+    run(fraction, msLeft, text) {
+      this.set(fraction, text);
+      const f = Math.min(1, Math.max(0, fraction));
+      if (msLeft <= 0 || f >= 1 || typeof fill.animate !== 'function') return;
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+      fill.style.transition = 'none';
+      fill.animate(
+        [{ clipPath: `inset(0 ${(1 - f) * 100}% 0 0)` }, { clipPath: 'inset(0 0% 0 0)' }],
+        { duration: msLeft, easing: 'linear', fill: 'forwards' },
+      );
+    },
     set(fraction, text) {
       // The fill is the whole tube's length and is uncovered from the left,
       // so its right edge is the liquid's level, not a rounded pill end.
