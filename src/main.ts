@@ -463,7 +463,41 @@ async function boot(): Promise<void> {
       saveManager.save(game.state, game.now(), true);
       location.reload();
     };
+    // THE DEVICE FRAME: the game's frame (#app) forced to a phone's or a
+    // tablet's aspect ratio, as large as the window allows and centred, to
+    // sign off a menu on each device from a desktop browser. The UI scales
+    // with the frame (tokens.css, --rpx / --px), so the frame's SHAPE is what
+    // decides the composition — the size only zooms it. It cannot fake a
+    // notch: env(safe-area-inset-*) stays the browser's, which is zero.
+    // Remembered across reloads, like whether the bar is open.
+    const DEVICES = [
+      { id: 'off', label: 'Off' },
+      { id: 'iphone-x', label: 'iPhone X', w: 375, h: 812 },
+      { id: 'iphone-17', label: 'iPhone 17', w: 402, h: 874 },
+      { id: 'ipad', label: 'iPad 3:4', w: 768, h: 1024 },
+    ] as const;
+    const DEVICE_KEY = 'kingdom.devDevice';
+    const deviceButton = button('', () => {});
+    const setDevice = (id: string) => {
+      const device = DEVICES.find((d) => d.id === id) ?? DEVICES[0];
+      const root = document.documentElement;
+      if ('w' in device) {
+        root.dataset.device = device.id;
+        root.style.setProperty('--device-ar', String(device.w / device.h));
+      } else {
+        delete root.dataset.device;
+        root.style.removeProperty('--device-ar');
+      }
+      deviceButton.textContent = `📱 ${device.label}`;
+      try { localStorage.setItem(DEVICE_KEY, device.id); } catch { /* private window */ }
+    };
+    deviceButton.addEventListener('click', () => {
+      const at = DEVICES.findIndex((d) => d.id === (document.documentElement.dataset.device ?? 'off'));
+      setDevice(DEVICES[(at + 1) % DEVICES.length].id);
+    });
+    try { setDevice(localStorage.getItem(DEVICE_KEY) ?? 'off'); } catch { setDevice('off'); }
     const devGrid = el('div', { class: 'dev-grid' },
+      deviceButton,
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),

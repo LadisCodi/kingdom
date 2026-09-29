@@ -177,6 +177,14 @@ body {
  * and closes it, and the tools in a grid that wraps to the frame's width and
  * scrolls if it has to. Below the overlay (z 7) on purpose: it is dev-only
  * and must never sit on top of a sheet it is meant to help test. */
+/* The dev bar's device frame (main.ts): #app at a device's aspect ratio, as
+   large as the window allows, centred, with a hairline so its edge shows. */
+html[data-device] body { display: grid; place-items: center; }
+html[data-device] #app {
+  width: min(100vw, calc(100vh * var(--device-ar)));
+  height: min(100vh, calc(100vw / var(--device-ar)));
+  outline: 1px solid #5a5aa0;
+}
 .dev-bar {
   position: absolute; left: calc(var(--px) * 8); right: calc(var(--px) * 8); bottom: calc(var(--nav-h) + calc(var(--px) * 8));
   z-index: 4;
