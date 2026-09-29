@@ -17,7 +17,7 @@ import {
   DECORATIONS, DISTRICTS, GOODS, TAP, TECH_ORDER, TECHNOLOGIES, type DistrictDef,
 } from '../src/sim/data/definitions';
 import {
-  advance, changeWorkers, enqueueBuild, researchTech, upgradeDistrict,
+  advance, changeWorkers, enqueueBuild, researchTech, upgradeDistrict, collectBuilding,
 } from '../src/sim/commands';
 import {
   LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredPopulation,
@@ -29,7 +29,7 @@ import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/l
 import { harmonyBlock, harmonyDemand, harmonySupply } from '../src/sim/harmony';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
-import { availableWorkers, houseTap, housedPopulation, maxPopulation } from '../src/sim/population';
+import { availableWorkers, housedPopulation, maxPopulation } from '../src/sim/population';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
   isTechComplete, isTechFilled, isTechStarted, pourKnowledge, researchRefusal, techCost,
@@ -135,6 +135,12 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   let t = now;
   const tick = (ms: number) => { t += ms; advance(state, map, t); };
 
+  // 0. Collect every store: rent and hauls wait in the buildings, and a tap
+  //    on one is free (03-economy.md §3.2).
+  for (const d of state.city.districts) {
+    if (Object.keys(collectBuilding(state, d.uniqueId, t)).length > 0) acted = true;
+  }
+
   // 1. Claim every quest that is complete.
   for (let i = 0; i < 20; i++) {
     const q = activeQuest(state);
@@ -152,19 +158,14 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   const manaReserve = state.city.districts.some((d) => d.definitionId === 'RuneCarver' && d.state === 'Built')
     ? runestoneShort * GOODS.Runestone.inputMana : 0;
 
-  // 2. Tap: houses first (rent), then every revealed resource cell, round
-  //    robin, until Mana or the thumb budget runs out.
-  const houses = state.city.districts.filter((d) => d.definitionId === 'Housing' && d.state === 'Built');
+  // 2. Tap every revealed resource cell, round robin, until Mana or the
+  //    thumb budget runs out. Houses take no Mana and were collected above.
   const resourceCells = map.cells.filter((c) => harvestSourceAt(state, c) !== null
     && fogState(state, map, c) === 'Revealed');
   // One tick per ROUND, not per tap: the collect cooldown is per cell, so a
   // round-robin over every cell already leaves each one longer than its
   // cooldown. Ticking per tap would be a full advance() per tap.
   let taps = 0;
-  for (const h of houses) {
-    if (mana(state) < 1 || taps >= TAPS_PER_VISIT) break;
-    if (houseTap(state, h, t).result === 'Collected') taps++;
-  }
   let rounds = 0;
   while (mana(state) >= 1 && taps < TAPS_PER_VISIT && rounds++ < 12) {
     let any = false;
@@ -311,6 +312,8 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       if (cell && builtCount(state, 'Housing') < maxDistrictCount(state, DISTRICTS.Housing)
         && enqueueBuild(state, map, 'Housing', cell) === 'Started') started = true;
       if (!started) {
+        const houses = state.city.districts
+          .filter((d) => d.definitionId === 'Housing' && d.state === 'Built');
         for (const h of houses) {
           if (upgradeDistrict(state, h.uniqueId) === 'Started') { started = true; break; }
         }

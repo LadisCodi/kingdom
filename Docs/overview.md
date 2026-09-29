@@ -15,7 +15,7 @@
   players.
 - **The twist is exploration.** The player **buys back the map from the fog**,
   one tap at a time; builds districts whose workers harvest; grows a population
-  that pays taxes; and recovers the magic buried in ruins.
+  that pays rent; and recovers the magic buried in ruins.
 - **Magic is how a kingdom becomes yours.** Spellbooks hold the research that
   opens mechanics, and which books you own is a choice the game does not make
   for you (§ *Magic and the books*).
@@ -32,8 +32,9 @@
 1. **Your city can never be attacked. Everything outside it can be.** The
    province is inviolable: no player reaches it, and the only thing that ever
    takes from it is a garrison you have seen and left standing — three raids
-   per camp at most, a tenth of the purse each, and handed back in full when
-   you clear it. No decay, no starvation, no failure state. **What a player can
+   per camp at most, at most half of what sits uncollected in the buildings'
+   stores each — never the wallet — and handed back in full when you clear
+   it. No decay, no starvation, no failure state. **What a player can
    take from a player is territory** — a claimed hex on the world map, never a
    building, never a purse. Losing ground costs you what it was producing; it
    never costs you what you built.
@@ -54,18 +55,20 @@
    sees further than it can buy.
 2. **Clear** — every ruin opens with a gate, and discovering the ruin starts
    the gate's counter: clear it with hero and troops before it raids the city.
-3. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**. Cells
-   exhaust after a number of taps and recover on a timer.
+3. **Harvest** — tap resource cells directly. Every tap on the ground spends
+   **1 Mana**. Cells exhaust after a number of taps and recover on a timer.
 4. **Build** — place districts on revealed land. Costs are charged up front;
    construction takes time and runs while the player is away.
-5. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, the
+5. **Grow** — train villagers at the Townhall. Housed villagers pay rent, the
    idle backbone of the economy.
 6. **Staff** — assign workers. They are units that walk to cells inside their
    building's area of influence, harvest, and carry back.
-7. **Reinvest** — upgrade districts, research technologies, buy upgrades.
-8. **Fight** — clear the garrison at a ruin's gate, then take its rooms one at
+7. **Collect** — what a building makes waits in its store, under a bubble. A
+   tap collects it, free. A full store stops the building.
+8. **Reinvest** — upgrade districts, research technologies, buy upgrades.
+9. **Fight** — clear the garrison at a ruin's gate, then take its rooms one at
    a time with a hero and a party.
-9. **Empower** — fill the albums that level the relics, and spend Mana on magic.
+10. **Empower** — fill the albums that level the relics, and spend Mana on magic.
 
 ## The fog
 
@@ -87,7 +90,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   place the player returns to.
 - Every site is held by a garrison. Discovering one starts a counter measured
   in minutes; when it runs out the garrison raids the city and takes a bounded
-  slice of the banked materials, at most three times, all of it returned when
+  slice of what waits uncollected in the buildings' stores, at most three times, all of it returned when
   the garrison is cleared. **Defend your village** is the doorway to combat
   ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
 
@@ -105,8 +108,9 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   wild game and fish shoals all pay **Food** (1, 3 and 2 a tap); an iron vein
   is a **Stone** node at 3.
 - Flows:
-  - housing taxes → Gold → fog, buildings and research
-  - harvest → materials → buildings
+  - housing rent → the house's store → a collect → Gold → fog, buildings and
+    research
+  - harvest → the building's store → a collect → materials → buildings
   - Mana → magic
   - time, lumps, Gold, Gems → Knowledge → research
   - rooms → card packs → albums → relic levels
@@ -116,13 +120,13 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 ## Mana
 
 - **Mana is what magic costs, wherever you are.** In the city it hurries
-  production — a tap is a small spell. On the world map it bends an expedition
+  production — a tap on the ground is a small spell. Collecting a building is
+  free. On the world map it bends an expedition
   or shortens a march.
 - Capped, and what arrives over the cap is lost. It refills whether or not
   the player is playing.
 - A new kingdom starts full.
-- The pool fills in 10 hours at every stage — past the 8-hour offline cap, so
-  the pool can run out.
+- The pool fills in about a night at every stage, so the pool can run out.
 - **Nothing draws against it but the player.** Relics carry no upkeep.
 - Unspent potential is lost, never property.
 
@@ -271,13 +275,14 @@ supplies the world.
 - A tap is priced against **the ground and the thumb, never against the
   payroll** ([`features/04-harvest.md`](features/04-harvest.md)).
 
-> **The offline cap limits what the city PRODUCES while you are away. It never
-> limits what a TIMER does.**
+> **There is no offline cap. What the city makes while you are away is bounded
+> by what it can hold.**
 
-- Production — workers, taxes, Mana regen — stops at 8 hours.
-- Timers — the build queue, research, a gate's raid, event windows — resolve in
-  full.
-- Anything new that is time-based is classified as one or the other in its doc.
+- An absence is replayed in full.
+- Production stops at its own ceiling: each building's store, the Mana pool,
+  the Knowledge bar, the workshop and training queues.
+- Timers — the build queue, a gate's raid, event windows — resolve in full.
+- Anything new that is time-based and produces names its ceiling in its doc.
 
 ## What the prototype is for
 

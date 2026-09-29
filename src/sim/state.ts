@@ -155,6 +155,15 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
+  /** What this building has made and the player has not collected yet —
+   *  a house's rent, a producer's hauls. Absent = empty. It is not the
+   *  player's until a tap moves it to the wallet, and a raid may take from
+   *  it (Docs/features/03-economy.md §3.2). */
+  stored?: Wallet;
+  /** A house's rent anchor, epoch ms: rent accrues in whole units from here,
+   *  into `stored`, the way Mana accrues against `lastManaAt`. Absent on
+   *  anything that is not a house. */
+  rentAnchor?: number;
 }
 
 export interface QueueItem {
@@ -202,10 +211,8 @@ export interface City {
    * a bill rather than a loss.
    */
   wounded: Partial<Record<UnitId, number>>;
-  /** Epoch ms anchor for passive tax gold (whole units only). */
-  lastTaxAt: number;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
-   *  shape as lastTaxAt so both replay deterministically. */
+   *  shape as a house's `rentAnchor` so both replay deterministically. */
   lastManaAt: number;
 }
 

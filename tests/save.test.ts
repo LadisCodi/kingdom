@@ -6,11 +6,12 @@ import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
 import { getWallet, parseCoordKey, type DistrictId } from '../src/sim/state';
+import { isStoreFull } from '../src/sim/storage';
 import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, T0, tickAt,
+  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, stored, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -62,15 +63,35 @@ describe('save round-trip', () => {
     ).toBeNull();
   });
 
-  it('offline replay: an aged save accrues housing taxes and pays deliveries', () => {
+  it('offline replay: an aged save accrues rent and deliveries into the stores', () => {
     const state = workingGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // 2 of the 4 villagers move in
-    const saveAt = T0 + 30_000; // tax clock already anchored here by the ticks
+    const saveAt = T0 + 30_000;
+    state.city.districts.at(-1)!.rentAnchor = saveAt;
     const gold = getWallet(state.city.wallet, 'Gold');
-    const wood = getWallet(state.city.wallet, 'Wood');
+    const wood = stored(state, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 600); // 2 housed × 30/min × 10 min
-    expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
+    expect(stored(restored, 'Gold')).toBe(600); // 2 housed × 30/min × 10 min
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold); // not the player's until collected
+    expect(stored(restored, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
+  });
+
+  it('keeps what waits in a store, and a pre-store save pays its houses from the old anchor', () => {
+    const state = workingGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    const house = state.city.districts.at(-1)!;
+    house.stored = { Gold: 42 };
+    house.rentAnchor = T0;
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(back.city.districts.at(-1)!.stored).toEqual({ Gold: 42 });
+    expect(back.city.districts.at(-1)!.rentAnchor).toBe(T0);
+    // A save from before stores had one city anchor, LastTaxAt.
+    const save = serialize(state, T0) as any;
+    const city = save.Modules['kingdom.cities'].Cities[0];
+    city.LastTaxAt = new Date(T0 - 60_000).toISOString();
+    for (const d of city.Districts) { delete d.Stored; delete d.RentAnchorUtc; }
+    const legacy = deserialize(save, map, T0)!;
+    expect(legacy.city.districts.at(-1)!.stored?.Gold).toBe(60); // the minute since the old anchor
   });
 
   it('offline replay matches a live-ticked session exactly (same horizon)', () => {
@@ -81,24 +102,27 @@ describe('save round-trip', () => {
     for (let t = 1000; t <= horizon; t += 1000) tickAt(live, saveAt + t);
     expect(getWallet(offline.city.wallet, 'Wood')).toBe(getWallet(live.city.wallet, 'Wood'));
     expect(getWallet(offline.city.wallet, 'Gold')).toBe(getWallet(live.city.wallet, 'Gold'));
+    expect(stored(offline, 'Wood')).toBe(stored(live, 'Wood'));
+    expect(stored(offline, 'Gold')).toBe(stored(live, 'Gold'));
   });
 
-  it('the 8h offline cap: a 20h absence earns exactly what 8h earns; queue still completes', () => {
+  it('no offline cap: the stores are the ceiling — 3 and 6 days away land the same; the queue still completes', () => {
     const mk = () => {
       const s = workingGame();
       fund(s, { Gold: 5000, Wood: 5000 });
       enqueueBuild(s, map, 'Housing', { x: 2, y: 0 });
       return serialize(s, T0 + 30_000);
     };
-    const capped = deserialize(mk(), map, T0 + 30_000 + 20 * 3_600_000)!;
-    const exact8h = deserialize(mk(), map, T0 + 30_000 + 8 * 3_600_000)!;
-    expect(getWallet(capped.city.wallet, 'Wood')).toBe(getWallet(exact8h.city.wallet, 'Wood'));
-    expect(getWallet(capped.city.wallet, 'Gold')).toBe(getWallet(exact8h.city.wallet, 'Gold'));
-    // The queued Housing finished regardless of the cap.
-    expect(capped.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
-    // Workers resume from "now", not from 12h ago.
-    const w = capped.workers[0];
-    expect(w.stateUntil === null || w.stateUntil > T0 + 30_000 + 20 * 3_600_000 - 60_000).toBe(true);
+    const longer = deserialize(mk(), map, T0 + 30_000 + 144 * 3_600_000)!;
+    const shorter = deserialize(mk(), map, T0 + 30_000 + 72 * 3_600_000)!;
+    expect(stored(longer, 'Wood')).toBe(stored(shorter, 'Wood'));
+    expect(stored(longer, 'Gold')).toBe(stored(shorter, 'Gold'));
+    expect(longer.city.districts.filter(isStoreFull).length).toBeGreaterThan(0);
+    // The queued Housing finished.
+    expect(longer.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
+    // A crew by a full store waits at the door rather than walking.
+    const w = longer.workers[0];
+    expect(w.stateUntil === null || w.stateUntil > T0 + 30_000 + 144 * 3_600_000 - 60_000).toBe(true);
   });
 });
 

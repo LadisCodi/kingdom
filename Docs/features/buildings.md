@@ -111,12 +111,12 @@
 
 ### 4.1 Housing
 
-- Residents pay `taxes.goldPerPopulationPerMinute` = 30 Gold/min each; a tap
-  pulls 10 s of the house's rent forward ([`03-economy.md`](03-economy.md)
-  §3).
-- A level buys **room and rent**: +25% on what each resident pays, a total
-  from level 1 (`buildings.taxBonusPerLevel`). A tap on the house is worth
-  the same more, since it sells the house's own rent.
+- Residents pay `taxes.goldPerPopulationPerMinute` = 30 Gold/min each, into
+  the house's store; a tap collects it, free
+  ([`03-economy.md`](03-economy.md) §3, §3.2).
+- A level buys **room, rent and store**: +25% on what each resident pays, a
+  total from level 1 (`buildings.taxBonusPerLevel`), and a bigger store
+  (`storageCapacityPerLevel`).
 - Housing next to Housing: −1 Gold/min per neighbour, flat — a level does not
   scale it.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
@@ -307,7 +307,7 @@ written once. The Townhall's own ladder is §3.
   ladder reached at 5 ([`05-city-and-districts.md`](05-city-and-districts.md)
   §3).
 - **The wait is 2 h at level 6 and ×1.7 a level after it** — about 17 h at
-  level 10. It is a timer, so it resolves in the uncapped tail of an absence.
+  level 10. It is a timer, so it resolves in full during an absence.
 - **What the level buys**, by building:
 
 | Building | Levels 6–10 add |

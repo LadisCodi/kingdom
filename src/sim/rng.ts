@@ -15,8 +15,7 @@
 //     subsequent draw for every existing player under a stream. Under a hash a
 //     new consumer occupies a new key namespace and disturbs nothing.
 //  3. Save/load is one integer — no cursor to keep consistent with a partially
-//     replayed window, and no question about what the 8h cap's time-shift does
-//     to it.
+//     replayed window.
 //  4. It is already the proven pattern here: feature respawn placement used
 //     exactly this shape, which is why tests/respawn.test.ts is green.
 //

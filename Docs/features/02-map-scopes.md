@@ -78,13 +78,17 @@ One tactile loop and one planning loop, across two or three visits a day.
   explored* — it becomes server-authoritative state. **That is a deliberate
   decision, never a drift.**
 
-## 4. Production is capped; timers are not
+## 4. Absences are replayed in full
 
-- Production — workers, taxes, Mana regen — stops at the 8-hour offline cap.
-- **Timers resolve in full**, uncapped: the build queue, research, a gate's
-  raid, event windows, **and every world-map march**.
+- There is no offline cap. An absence is replayed whole by the same advance
+  the live tick runs.
+- **Production is bounded by its own ceiling**: each building's store, the
+  Mana pool, the Knowledge bar, the workshop and training queues
+  ([`03-economy.md`](03-economy.md) §3.2).
+- **Timers resolve in full**: the build queue, a gate's raid, event windows,
+  **and every world-map march**.
 - An army sent before a twelve-hour absence has arrived on return.
-- Anything new that is time-based is classified as one or the other in its doc.
+- Anything new that is time-based and produces names its ceiling in its doc.
 
 ## 5. What the promises allow to be contested
 
@@ -95,7 +99,7 @@ One tactile loop and one planning loop, across two or three visits a day.
 | Leagues and rankings | status | No |
 | **Contested claim** — first to a hex keeps it | the opportunity | **No** — "opportunity that expires", with another player as the clock |
 | **Territory that changes hands** — hold a hex, it produces for you, it can be taken | **the hex, never your property** | **No** — what is lost is future rent from something that was never in your city |
-| **A garrison raiding your city** ([`18`](18-garrisons-and-raids.md)) | banked materials — bounded, and returned when it is cleared | **Yes, by design** — the one exception, and it is never another player |
+| **A garrison raiding your city** ([`18`](18-garrisons-and-raids.md)) | materials waiting uncollected in the buildings' stores — bounded, and returned when it is cleared | **Yes, by design** — the one exception, and it is never another player |
 | **Raiding another player's city** | their property | **Yes, head-on. Excluded** |
 
 - Design rule, technical boundary and marketing line at once: **province private

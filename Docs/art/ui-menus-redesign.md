@@ -1308,8 +1308,7 @@ zone** with a two-step Reset ("Tap again to confirm", armed for 4s).
 
 **Problems.** Almost fine. "Danger zone" is developer language. Music is
 the only audio control although the game has a full SFX layer and an
-ambience bed. There is no way to see the offline cap, no credits, no link
-back to the quest chain.
+ambience bed. There are no credits and no link back to the quest chain.
 
 **Show this.**
 
@@ -1322,8 +1321,8 @@ back to the quest chain.
 - Rename **Danger zone** → **Start over**, keep the two-step confirm,
   and state the consequence in the first step, not the second.
 - Room for: Credits, a "How to play" recap, and the offline-progress
-  explainer ("Your kingdom keeps working for up to 8 hours while you're
-  away").
+  explainer ("Your kingdom keeps working while you are away, until its
+  stores are full").
 
 ---
 
@@ -1331,22 +1330,23 @@ back to the quest chain.
 
 **Purpose.** Pay off the idle half of the design.
 
-**Today.** Nothing. On load, `runTick()` replays the whole absence
-(capped at `OFFLINE_CAP_HOURS`), workers deliver, taxes accrue, the queue
+**Today.** Nothing. On load, `runTick()` replays the whole absence,
+workers deliver, rent accrues, the queue
 cascades, research completes — and the player sees none of it. Completed
 items may fire banners in a burst; everything else is silent. The game's
 single strongest retention beat is invisible.
 
 **Show this.** A modal on load, only when the gap exceeded ~2 minutes:
 
-- "Welcome back — your kingdom worked for **6h 20m**" (and, at the cap,
-  "…your stores filled up after 8h" as a gentle nudge, not a scold).
-- Earnings as a short list of **icon + amount** rows: Gold from taxes,
-  each resource delivered by workers, Food from the Market, villagers
-  trained.
+- "Welcome back — your kingdom worked for **6h 20m**" (and, when some
+  building's store filled, "Some stores filled up before you got back — tap
+  them to collect" as a gentle nudge, not a scold).
+- What the stores gained as a short list of **icon + amount** rows: Gold
+  from rent, each resource delivered by workers, villagers trained.
 - What finished while away: buildings completed, upgrades, research —
   each with its sprite.
-- One green button: **Collect**. Coins fly to the HUD.
+- One green button: **Continue**. The stores are collected on the map, a
+  building at a time.
 - If the quest advanced, hand off directly to the quest card.
 
 ---
@@ -1932,7 +1932,7 @@ variant sheet.
 > villager heads "+2". Below a rope divider, a smaller section headed
 > "While you were away" with two little building sprites — a finished
 > cottage and a sawmill — each with a tiny gold tick. At the bottom, one
-> wide green "Collect" slab. A few gold sparkles drift around the card.
+> wide green "Continue" slab. A few gold sparkles drift around the card.
 > Warm, generous, celebratory.
 
 ### 7.15 Iteration phrases that work
@@ -2233,7 +2233,7 @@ titles. Image models misspell; judge layout and material, never the words.
 
 **M13 — Welcome back**
 
-> Same style, same materials and chrome as the mockups above. M13 — the Welcome back sheet, the one a player sees on returning. Full phone screen. The kingdom map fills the top 35%, warm-dimmed, with the slim resource plank at the top. A bottom sheet covers the lower 65%, above the slim five-tab wooden nav beam: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Welcome back" (no close knob). Inside, a lede in bold "Your kingdom worked for 3h 20m." and a small line with a sand-timer "Your stores filled up before you got back." Then a parchment ledger card with one row per resource, each a painted icon, the name and a bold green "+" amount at the right: a gold coin "Gold +1,240", an apple "Food +86", logs "Wood +312", a stone "Stone +40", three villager heads "Villagers +2". Then a small brown caps label "WHILE YOU WERE AWAY" with a rule, and three parchment rows each with a small picture and a green wax tick at the right: a cottage "Housing #3 finished", a scroll with a candle "Forestry researched", a sparkle "A festival came and went". At the bottom a wide leaf-green slab "Collect". Compact, tactile, smooth, no pixel art in the interface.
+> Same style, same materials and chrome as the mockups above. M13 — the Welcome back sheet, the one a player sees on returning. Full phone screen. The kingdom map fills the top 35%, warm-dimmed, with the slim resource plank at the top. A bottom sheet covers the lower 65%, above the slim five-tab wooden nav beam: a parchment panel in a thin carved wooden frame, a small rope grab-handle, a narrow wooden header strip reading "Welcome back" (no close knob). Inside, a lede in bold "Your kingdom worked for 3h 20m." and a small line with a sand-timer "Some stores filled up before you got back — tap them to collect." Then a parchment ledger card with one row per resource, each a painted icon, the name and a bold green "+" amount at the right: a gold coin "Gold +1,240", an apple "Food +86", logs "Wood +312", a stone "Stone +40", three villager heads "Villagers +2". Then a small brown caps label "WHILE YOU WERE AWAY" with a rule, and three parchment rows each with a small picture and a green wax tick at the right: a cottage "Housing #3 finished", a scroll with a candle "Forestry researched", a sparkle "A festival came and went". At the bottom a wide leaf-green slab "Continue". Compact, tactile, smooth, no pixel art in the interface.
 
 **M14 — the payer profile and the purchase confirmation, stacked**
 

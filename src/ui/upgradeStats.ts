@@ -17,7 +17,7 @@
 // adding one to a building adds it to both screens at once.
 
 import {
-  DISTRICTS, FOG, MANA, TAXES, levelIndexed,
+  DISTRICTS, FOG, HARVEST, MANA, TAXES, levelIndexed,
 } from '../sim/data/definitions';
 import { trainSecondsAt } from '../sim/army';
 import { requiredPopulation, requiredTechForLevel, requiredTownhallLevel } from '../sim/districts';
@@ -27,7 +27,7 @@ import { TECHNOLOGIES } from '../sim/data/definitions';
 import { townhall, type District } from '../sim/state';
 import type { Game } from '../game';
 import type { IconName } from './kit/icon';
-import { formatDuration } from './format';
+import { formatCount, formatDuration } from './format';
 
 /** One number a building is judged on, at one level. */
 export interface BuildingStat {
@@ -102,6 +102,15 @@ export function statsAt(game: Game, district: District, level: number): Building
     const swing = term(def.strikeSpeedPerLevel, 1);
     add('swing', 'clock', 'Swing', 'Swing', `×${swing}`, swing);
     out[out.length - 1].onCard = false;
+  }
+  // What it holds uncollected (03-economy.md §3.2), in the coin it makes: a
+  // level buys a bigger store, and a bigger store is a longer absence.
+  if (def.storageCapacityPerLevel.length > 0) {
+    const cap = levelIndexed(def.storageCapacityPerLevel, level);
+    const coin = (def.harvestSources.length > 0
+      ? HARVEST[def.harvestSources[0]].currencyId : 'Gold') as IconName;
+    add('store', coin, 'Storage', 'Storage', formatCount(cap), cap,
+      (d) => signed(d, formatCount(Math.abs(d))));
   }
   if (def.armyCapPerLevel.length > 0) {
     add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));

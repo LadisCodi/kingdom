@@ -12,11 +12,11 @@ import {
 } from '../src/sim/modifiers';
 import { cityGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type GameState } from '../src/sim/state';
+import type { GameState } from '../src/sim/state';
 import {
   effectiveTaxRate, effectiveWorkerStrike, tapWorkSeconds,
 } from '../src/sim/upgrades';
-import { addBuilt, freshGame, map, T0 } from './helpers';
+import { addBuilt, freshGame, map, stored, T0 } from './helpers';
 
 const mod = (over: Partial<Modifier> = {}): Modifier => ({
   id: 'mod_1',
@@ -99,7 +99,6 @@ describe('expiry', () => {
       addBuilt(state, 'Housing', { x: 3, y: 2 });
       state.city.population = 2;
       state.city.wallet.Gold = 0;
-      state.city.lastTaxAt = T0;
       state.lastAdvance = T0;
       if (withBuff) {
         addModifier(state, mod({
@@ -107,9 +106,10 @@ describe('expiry', () => {
         }));
       }
       advance(state, map, T0 + 120_000);
-      return getWallet(state.city.wallet, 'Gold');
+      return stored(state, 'Gold'); // rent lands in the house
     };
     const plain = earn(false);          // 120s at 1x
+    expect(plain).toBeGreaterThan(0);
     const buffed = earn(true);          // 60s at 2x + 60s at 1x
     expect(buffed).toBe(Math.round(plain * 1.5));
   });
@@ -120,7 +120,6 @@ describe('expiry', () => {
       addBuilt(state, 'Housing', { x: 3, y: 2 });
       state.city.population = 2;
       state.city.wallet.Gold = 0;
-      state.city.lastTaxAt = T0;
       state.lastAdvance = T0;
       addModifier(state, mod({
         id: 'haste', stat: 'taxRate', op: 'mul', value: 2, expiresAt: T0 + 60_000,
@@ -134,8 +133,8 @@ describe('expiry', () => {
 
     const stepped = build();
     for (let t = 1000; t <= 120_000; t += 1000) advance(stepped, map, T0 + t);
-    expect(getWallet(stepped.city.wallet, 'Gold'))
-      .toBe(getWallet(oneCall.city.wallet, 'Gold'));
+    expect(stored(stepped, 'Gold')).toBe(stored(oneCall, 'Gold'));
+    expect(stored(oneCall, 'Gold')).toBeGreaterThan(0);
   });
 
   it('keeps a permanent passive forever', () => {

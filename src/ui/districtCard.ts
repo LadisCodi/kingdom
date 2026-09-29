@@ -14,7 +14,7 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARMONY, HARVEST, TAP, type AdjacencyStat,
+  DISTRICTS, HARMONY, HARVEST, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import { upgradeRefusal } from '../sim/commands';
@@ -25,7 +25,7 @@ import {
 import {
   districtCapacity, houseGoldPerMinute, houseTaxBonus,
 } from '../sim/population';
-import { mana } from '../sim/mana';
+import { isStoreFull, storageCapacity, storedTotal } from '../sim/storage';
 import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { nameFor, trainingSection } from './trainingSection';
@@ -39,9 +39,9 @@ import {
   queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
-import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
+import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { el, formatDuration } from './format';
+import { el, formatCount, formatDuration } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
@@ -250,26 +250,34 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
-      // No cycle bar and no cap: a house has no timer to show and no advance
-      // budget to spend (one was built and removed on playtest — it read as an
-      // arbitrary refusal on the building the player taps most). What bounds
-      // the tap is the Mana pool, so the card says the price and what is left
-      // to spend, which is a number the player can act on.
-      body.append(el('div', { class: 'dc-tapline' },
-        iconEl('showme', { size: 'sm' }),
-        residents === 0
-          ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Tap to pull ${Math.round(tapWorkSeconds(game.state))}s of rent forward, `
-            + 'as often as you like'));
-      if (residents > 0) {
-        // The pool refills on its own, so this line is live.
-        body.append(part(() => String(mana(game.state)), () => {
-          const pool = mana(game.state);
-          return el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
-            iconEl('Mana', { size: 'sm' }),
-            `${TAP.manaCost} per tap — ${pool} left`);
-        }));
+      if (residents === 0) {
+        body.append(el('div', { class: 'dc-tapline' },
+          iconEl('showme', { size: 'sm' }),
+          'Nobody lives here yet — train villagers at the Townhall'));
       }
+    }
+
+    // THE STORE (03-economy.md §3.2): what this building has made and the
+    // player has not collected. A tap on the building collects it once it is
+    // ready; the card says how full it is, and collects whatever is there.
+    if (storageCapacity(district) > 0) {
+      body.append(part(() => JSON.stringify([district.stored ?? {}, storageCapacity(district)]), () => {
+        const cap = storageCapacity(district);
+        const held = storedTotal(district);
+        const full = isStoreFull(district);
+        const main = (Object.entries(district.stored ?? {}) as Array<[CurrencyId, number]>)
+          .sort((a, b) => b[1] - a[1])[0]?.[0]
+          ?? (def.harvestSources.length > 0 ? HARVEST[def.harvestSources[0]].currencyId : 'Gold');
+        return el('div', { class: 'dc-live' },
+          sectionHead('Store'),
+          el('div', { class: `dc-homes${full ? ' is-bad' : ''}` },
+            iconEl(main, { size: 'sm' }),
+            el('span', {}, `${formatCount(held)} of ${formatCount(cap)}`
+              + (full ? ' — full, work has stopped' : ''))),
+          ...(held > 0
+            ? [btn({ label: 'Collect', kind: 'primary', onClick: () => game.collectFromCard(district) })]
+            : []));
+      }));
     }
 
     // The army headroom moved to the HEADER's plaque (`hudSlot`), where the

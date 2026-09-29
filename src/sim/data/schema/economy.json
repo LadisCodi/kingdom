@@ -9,6 +9,17 @@
         "workSeconds": { "type": "int", "min": 1, "doc": "A tap pays this many seconds of what it touches produces." }
       }
     },
+    "storage": {
+      "type": "object",
+      "fields": {
+        "collectFraction": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "A store is ready to collect — its bubble shows and a tap collects rather than opening the building — once it holds this share of its capacity, or is full."
+        }
+      }
+    },
     "taxes": {
       "type": "object",
       "fields": {
@@ -58,7 +69,6 @@
     },
     "worker": { "type": "object", "fields": { "moveSpeedTilesPerSecond": { "type": "int" } } },
     "training": { "type": "object", "fields": { "seconds": { "type": "int" } } },
-    "rush": { "type": "object", "fields": { "secondsPerGem": { "type": "int" } } },
-    "offlineCapHours": { "type": "int", "min": 0, "doc": "Production stops after this long away; timers do not." }
+    "rush": { "type": "object", "fields": { "secondsPerGem": { "type": "int" } } }
   }
 }

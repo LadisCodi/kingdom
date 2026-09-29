@@ -20,6 +20,9 @@ import {
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
+import type { CollectBubbles } from './collectBubbles';
+import { drawCollectBubble } from './collectBubbleArt';
+import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
@@ -105,6 +108,7 @@ export function drawMap(
   villagers: Villagers,
   tapFx: TapFx,
   now: number,
+  bubbles: CollectBubbles,
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -793,13 +797,20 @@ export function drawMap(
   // Pass 1.5: districts, each drawn once spanning its full footprint — and
   // queued into the same depth-sorted list the props are in, so a hall in
   // front of a forest covers it and never the other way round.
+  // Where each building's art was drawn, so its collect bubble can sit on
+  // its roof whatever height the art is.
+  const artOf = new Map<string, PlotBox>();
   for (const district of state.city.districts) {
     if (fogState(state, map, district.location) !== 'Revealed') continue;
     const def = DISTRICTS[district.definitionId];
     const box = camera.plotBox(district.location, def.size);
     if (box.x + box.w < 0 || box.y + box.h < 0 || box.x > w || box.y - box.w > h) continue;
     later(district.location,
-      (mark) => mark(artRect(box, drawDistrict(district, box), 1)), def.size,
+      (mark) => {
+        const art = artRect(box, drawDistrict(district, box), 1);
+        artOf.set(district.uniqueId, art);
+        mark(art);
+      }, def.size,
       { occludes: !NEVER_HIDES.has(district.definitionId) });
   }
 
@@ -1136,6 +1147,19 @@ export function drawMap(
     later(pos, () => paint(ctx), { x: 1, y: 1 },
       { rect, ghost: (clip) => asGhost(clip, rect, paint) });
   }
+  }
+
+  // Pass 4: COLLECT BUBBLES — over the whole world, under the UI. One per
+  // building with something in its store (render/collectBubbles.ts).
+  const clock = performance.now();
+  for (const district of state.city.districts) {
+    if (!readyToCollect(district)) { bubbles.forget(district.uniqueId); continue; }
+    const art = artOf.get(district.uniqueId);
+    if (!art) continue;
+    const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);
+    // The art's box carries transparent headroom; a tenth of it down is the roof.
+    drawCollectBubble(ctx, bubbles, district, art.x + art.w / 2, art.y + art.h * 0.12,
+      Math.max(34, Math.min(88, plot.w * 0.4)), clock);
   }
 
   // Pass 5: floaters.

@@ -82,12 +82,11 @@
 - A queue is refused for want of resources, of a good, or of Mana — each says
   which, because the errand is different for each.
 
-## 6. Offline, and the timer rule
+## 6. Offline
 
-- A workshop crew is **production**: it stops at the 8-hour offline cap, as a
-  Sawmill's crew does ([`04-harvest.md`](04-harvest.md) §8).
-- A player away twelve hours comes back to eight hours of goods, delivered.
-  What is queued past that waits.
+- A workshop runs while the player is away until its queue is done. The
+  queue's length is its only ceiling ([`04-harvest.md`](04-harvest.md) §8).
+- Goods go straight to the stockpile; a workshop has no store to collect.
 
 ## 7. Gems
 
@@ -120,7 +119,6 @@
 | How many the city may own | 1 at TH4, 2 at TH8 | `buildings.maxCountPerTownhallLevel` |
 | What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | `buildings` › `costPerLevel`, that level's `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | Gem price of the item in progress | 5 s a Gem | `rush.secondsPerGem` |
-| Offline cap | 8 h | `offlineCapHours` |
 
 ## 10. Deliberately not in this design
 

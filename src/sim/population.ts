@@ -1,13 +1,13 @@
-// Population: housing, auto-assigned residents, passive tax gold, and the
-// Townhall's villager-training queue.
+// Population: housing, auto-assigned residents, and the rent each house
+// stores for the player to collect.
 
-import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
+import { CITY_DEF, DISTRICTS, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordEvent } from './events';
 import { techValue } from './techEffects';
-import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
-import { payMana } from './mana';
+import { effectiveTaxRate, tapWorkSeconds } from './upgrades';
+import { storageSpace, storeInto } from './storage';
 import { addToWallet, type District, type GameState } from './state';
 
 /**
@@ -94,7 +94,7 @@ export function cityGoldPerMinute(state: GameState): number {
 }
 
 /** Residents are AUTO-assigned: houses fill in build order, no player input
- *  (which house someone lives in has no mechanical effect beyond its tap). */
+ *  (which house someone lives in decides only where their rent is stored). */
 export function residentsOf(state: GameState, district: District): number {
   let remaining = state.city.population;
   for (const d of state.city.districts) {
@@ -138,142 +138,111 @@ export const populationCost = (currentPopulation: number): number => {
 //
 // `queueTraining` and `trainingCompletesAt` live in `army.ts` now.
 
-// ---------------------------------------------------------------- house tap
+// ------------------------------------------------------------------- rent
 
 /**
- * The house tap (Docs/features/03-economy.md §5, revised 2026-09-02).
+ * RENT LANDS IN THE HOUSE (Docs/features/03-economy.md §3.2).
  *
- * A house taps like a TREE: as many times as you like, as fast as you like.
- * What bounds it is **Mana** — one per tap — so the ceiling is the size of the
- * pool rather than a per-house timer.
+ * Each house accrues its own rent, in whole units against its own
+ * `rentAnchor`, into its own store — not into the wallet. A tap on the house
+ * moves the store to the wallet, free (sim/storage.ts). A full house stops:
+ * its anchor follows time instead of banking it, so nothing is owed when the
+ * player finally collects. That capacity is the only ceiling on what the
+ * neighbourhood makes while the player is away.
  *
- * This replaces a 60s per-house collection cycle. The cycle did bound the tap,
- * but it bounded it with a wait, and a wait is not a decision: there was
- * nothing to spend, nothing to run out of, and nothing to buy. Paying Mana
- * makes the same tap a draw against a pool the player can see, plan around and
- * refill — and it puts the city's most-used verb on the one currency the
- * design already builds pressure with.
- *
- * The pull is scaled by this house's SHARE of city income, which is what
- * stops a large city minting more per tap than a small one: a full sweep of
- * the neighbourhood sells one `tap.workSeconds` of the WHOLE city's income
- * and costs one Mana a house, whatever the city's size.
- *
- * **The Mana pool is the only bound, and that is a decision.** A per-house
- * advance budget was built and then REMOVED on playtest: capping how far a
- * house could be pulled forward made the neighbourhood a once-a-minute round,
- * and it read as an arbitrary refusal on the one building the player taps
- * most. A house may be tapped as often as the pool allows.
- *
- * What that leaves live is the ratio: a house tap mints (§4.1 of
- * `Docs/features/04-harvest.md` — an advance against a continuous accrual
- * would otherwise be a no-op) and there are far fewer houses than workers, so
- * Mana spent on rent is worth several times Mana spent on trees. Watching
- * whether that makes the harvest tap vestigial is OQ-55.
- *
- * Holding is paced by the same auto-tap cooldown a held tree uses, and a
- * DELIBERATE tap is never paced — the asymmetry `effectiveAutoTapCooldownMs`
- * exists to preserve.
+ * The Townhall collects nothing: Gold comes from each house.
  */
-export type HouseTapResult = 'Collected' | 'NoResidents' | 'NoMana' | 'TooSoon';
+
+/** The houses that pay rent right now: built, and with room for anyone. */
+const rentPayers = (state: GameState): District[] =>
+  state.city.districts.filter((d) => d.state === 'Built' && districtCapacity(state, d) > 0);
 
 /**
- * Collect a house early. Returns the gold that matured from the pull-forward.
+ * A house's rate just changed at `t`: rescale its partial progress since the
+ * anchor so the elapsed stretch is not repriced at the new rate. A house that
+ * paid nothing before starts paying at `t` — a fresh build, a first resident.
  *
- * `autoRepeat` marks the held-pointer path, which waits out the auto-tap
- * cooldown; a deliberate tap never does.
+ * `applyDueAt` brackets its whole batch with `repriceTaxAnchorAround`, which
+ * means ONE call site covers every boundary kind there will ever be.
  */
-export function houseTap(
-  state: GameState,
-  district: District,
-  now: number,
-  autoRepeat = false,
-): { result: HouseTapResult; gold: number } {
-  if (residentsOf(state, district) === 0) return { result: 'NoResidents', gold: 0 };
-  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
-    return { result: 'TooSoon', gold: 0 };
+function repriceHouse(d: District, t: number, rateBefore: number, rateAfter: number): void {
+  if (rateBefore <= 0 || d.rentAnchor === undefined) {
+    d.rentAnchor = t;
+    return;
   }
-  if (cityGoldPerMinute(state) <= 0) return { result: 'NoResidents', gold: 0 };
-  // Charged LAST, so a tap that could not have paid out never takes the Mana.
-  if (!payMana(state, TAP.manaCost)) return { result: 'NoMana', gold: 0 };
-  state.lastCollectTapAt = now;
-  return { result: 'Collected', gold: pullHouseForward(state, district, now) };
-}
-
-/**
- * THE RENT PULL ITSELF, with no price on it — `houseTap` above is this plus
- * the Mana and the hold cooldown, exactly as `collectTap` is `tapCell` plus
- * the same two.
- *
- * Split out for the auto-tap abilities, which buy their taps with the Mana of
- * the cast and so must not be charged again per tap
- * (Docs/features/09-relics.md §2.1). Returns the Gold that matured.
- */
-export function pullHouseForward(
-  state: GameState, district: District, now: number,
-): number {
-  const cityRate = cityGoldPerMinute(state);
-  if (cityRate <= 0 || residentsOf(state, district) === 0) return 0;
-  const share = houseGoldPerMinute(state, district) / cityRate;
-  state.city.lastTaxAt -= tapWorkSeconds(state) * 1000 * share;
-  return advanceCityLife(state, now).gold;
-}
-
-/**
- * The tax rate just changed at `t`: rescale the partial progress since the
- * anchor so the elapsed stretch is not repriced at the new rate.
- *
- * This used to be four inline lines that only training completion ran, so a
- * Housing finishing, `Communities` landing, or a taxRate modifier expiring all
- * quietly repriced their partial stretch. `applyDueAt` now brackets its whole
- * batch with `repriceTaxAnchorAround`, which means ONE call site covers every
- * boundary kind there will ever be.
- */
-export function repriceTaxAnchor(state: GameState, t: number, rateBefore: number): void {
-  const rateAfter = cityGoldPerMinute(state);
-  if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
-    state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
+  if (rateAfter !== rateBefore && rateAfter > 0) {
+    d.rentAnchor = t - ((t - d.rentAnchor) * rateBefore) / rateAfter;
   }
 }
 
-/** Run `work` (anything that might move the tax rate) with the anchor
- *  repriced across it. */
+/** Run `work` (anything that might move a house's rent) with every house's
+ *  anchor repriced across it. */
 export function repriceTaxAnchorAround(state: GameState, t: number, work: () => void): void {
-  const rateBefore = cityGoldPerMinute(state);
+  const before = new Map<string, number>();
+  for (const d of rentPayers(state)) before.set(d.uniqueId, houseGoldPerMinute(state, d));
   work();
-  repriceTaxAnchor(state, t, rateBefore);
+  for (const d of rentPayers(state)) {
+    repriceHouse(d, t, before.get(d.uniqueId) ?? 0, houseGoldPerMinute(state, d));
+  }
 }
 
-// ------------------------------------------------------- taxes + training tick
-
 /**
- * Advance passive taxes to `toTime`. Gold accrues in WHOLE units against the
- * lastTaxAt anchor.
+ * Advance every house's rent to `toTime`, into its store. Returns the Gold
+ * that landed in the stores — made, not yet the player's.
  *
- * It used to interleave villager completions itself, so a villager finishing
- * mid-window started paying taxes from that moment. It no longer has to: a
- * completion is a BOUNDARY now, so `advance()` splits the window at it and
- * `repriceTaxAnchor` runs at the exact instant the rate changed. Same
- * property, one mechanism instead of two.
+ * A completion is a BOUNDARY, so `advance()` splits the window at it and the
+ * repricing runs at the exact instant a rate changed; between boundaries each
+ * house's rate is constant, which is what lets one call and many steps agree.
  */
 export function advanceCityLife(state: GameState, toTime: number): { gold: number } {
   const result = { gold: 0 };
-  accrueTaxes(state, toTime, result);
+  for (const d of rentPayers(state)) result.gold += accrueRent(state, d, toTime);
   return result;
 }
 
-function accrueTaxes(state: GameState, toTime: number, out: { gold: number }): void {
-  const rate = cityGoldPerMinute(state); // all houses, adjacency included
-  if (rate <= 0) {
-    state.city.lastTaxAt = Math.max(state.city.lastTaxAt, toTime); // nobody pays: no banking
-    return;
+function accrueRent(state: GameState, d: District, toTime: number): number {
+  // A house placed outside `advance()` (a test, a dev grant) starts paying
+  // from the last advance; one built inside it was stamped by the repricing.
+  const anchor = d.rentAnchor ?? state.lastAdvance;
+  const rate = houseGoldPerMinute(state, d);
+  const space = storageSpace(d);
+  if (rate <= 0 || space <= 0) {
+    // Nobody pays, or the house is full: no banking.
+    d.rentAnchor = Math.max(anchor, toTime);
+    return 0;
   }
   const msPerGold = 60_000 / rate;
-  const units = Math.floor((toTime - state.city.lastTaxAt) / msPerGold);
-  if (units <= 0) return;
-  addToWallet(state.city.wallet, 'Gold', units);
+  const units = Math.floor((toTime - anchor) / msPerGold);
+  if (units <= 0) {
+    d.rentAnchor = anchor;
+    return 0;
+  }
+  if (units >= space) {
+    // Filled inside this stretch: the rest of it is refused, not owed.
+    storeInto(d, 'Gold', space);
+    d.rentAnchor = toTime;
+    return space;
+  }
+  storeInto(d, 'Gold', units);
+  d.rentAnchor = anchor + units * msPerGold;
+  return units;
+}
+
+/**
+ * THE TITHE's pull (Docs/features/09-relics.md §2.1): one tap's worth of this
+ * house's rent — `tap.workSeconds` of it — paid straight into the wallet.
+ *
+ * A house needs no tap to be collected any more, so this is the one place
+ * rent is still paid forward, and it mints: an advance against a
+ * continuous accrual. It bypasses the store, so a full house is no reason
+ * for the spell to fizzle.
+ */
+export function pullHouseForward(state: GameState, district: District): number {
+  const rate = houseGoldPerMinute(state, district);
+  if (rate <= 0) return 0;
+  const gold = Math.max(1, Math.round((tapWorkSeconds(state) * rate) / 60));
+  addToWallet(state.city.wallet, 'Gold', gold);
   recordResourceDiscovery(state, 'Gold');
-  recordEvent(state, { kind: 'collect', currency: 'Gold', amount: units });
-  state.city.lastTaxAt += units * msPerGold;
-  out.gold += units;
+  recordEvent(state, { kind: 'collect', currency: 'Gold', amount: gold });
+  return gold;
 }

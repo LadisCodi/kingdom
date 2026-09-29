@@ -56,13 +56,13 @@ time**, never relative to a tick. Any new scheduled or expiring thing is a
 `MAX_BOUNDARY_STEPS` (10,000, `commands.ts`) is a seatbelt, not a design limit:
 never register a source that fires more often than the sim needs to observe it.
 
-**2. The offline cap limits what the city *produces*, never what a *timer*
-does.** `offlineCapHours` is 8. Production — workers, taxes, Mana regen — stops
-at the cap. Timers — build queue, gate raids, event windows — resolve in the
-uncapped tail advance. **The Knowledge drip is the one exception**: it is
-production, but its bar (10) is its only cap, so it runs through the tail
-(`sim/knowledge.ts`). Research takes no time at all. When adding anything
-time-based, decide which it is and say so in the doc.
+**2. There is no offline cap.** An absence is replayed in full by the one
+`advance()`. Production is bounded by ceilings of its own, all inside that
+advance: each building's store (`sim/storage.ts` — rent and hauls land there,
+a full store stops the building), the Mana pool, the Knowledge bar (10), the
+workshop and training queues. Timers — build queue, gate raids, event windows
+— simply resolve. Research takes no time at all. **Anything time-based that
+produces needs a ceiling of its own**; say which it is in the doc.
 
 **3. `now` is always passed in.** The sim never reads a clock, never calls
 `Date.now()`, never closes over the UI. Handlers are pure functions of
@@ -138,11 +138,12 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
+| a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
 
-`SAVE_VERSION` is 61; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 62; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -173,8 +174,11 @@ than the build is rejected rather than downgraded.
   hands the player that many seconds of what they tapped is producing, floored
   at the authored yield. **Follow this for every new reward** — absolute
   amounts in a spreadsheet go stale on their own as the city grows.
-- **Every player tap costs 1 Mana**, except paying fog (which already costs
-  Gold). Nothing else draws against the pool; artifact upkeep was removed.
+- **Every tap on the ground costs 1 Mana** (trees, berries, crops, rocks,
+  mountains, shoals); paying fog costs Gold. **A tap on a building never costs
+  Mana**: a ready store is collected free, otherwise the building opens.
+  There is no house tap — only the Tithe pulls rent forward. Nothing else
+  draws against the pool; artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
   `raidPill.ts`, `adOfferPill.ts`. They hide behind any sheet.

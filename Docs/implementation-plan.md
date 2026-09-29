@@ -30,10 +30,11 @@ because they constrain what a *design* may ask for.
    and applies discrete work exactly at it; boundaries are **absolute time**,
    never relative to a tick. Anything newly scheduled or expiring is one
    boundary source plus one branch — nothing else.
-2. **The offline cap limits what the city PRODUCES, never what a TIMER does.**
-   Production — workers, taxes, Mana regen — stops at 8 hours. Timers — build
-   queue, research, delve depths, event windows — resolve in the uncapped tail.
-   **When adding anything time-based, decide which it is and say so in the
+2. **There is no offline cap.** An absence is replayed in full by the same
+   advance. Production is bounded by ceilings of its own — each building's
+   store, the Mana pool, the Knowledge bar, the workshop and training queues.
+   Timers — build queue, gate raids, event windows — resolve in full.
+   **When adding anything time-based that produces, name its ceiling in the
    design.**
 3. **The clock is always passed in.** The sim never reads a clock and never
    closes over the UI. A modifier's expiry is read from the sim's own last-advance
@@ -68,6 +69,7 @@ Two more that are design-visible:
 |---|---|---|
 | The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** — the Townhall's reach and the count multiplier on the price landed 2026-09-10; their numbers are OQ-92 |
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
+| **Building stores, the collect bubble, no offline cap** | [`03`](features/03-economy.md) §3.2 | **built 2026-09-29** — rent and hauls land in the building's store, a tap collects it free, a full store stops the building, raids take from the stores; the house tap and the offline cap are gone. `SAVE_VERSION` 62, no migrator |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** — the Townhall's levels ask for villagers since 2026-09-10 (OQ-93) |
 | The chrome — kit, sheets, nav, header, icons, fonts | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | **rebuilt for the phone 2026-09-10**: Nunito (one family, four weights — 2026-09-11), smooth 64px icon atlas, 44/52px chrome, sheets ≤ 70%, screens built once (§6.8); the density is OQ-94 until it has been held |
@@ -99,7 +101,7 @@ each has an answer, or has one waiting in a doc.
 | ~~**H1**~~ | ~~**Four of ten landmarks cannot be claimed.**~~ **FIXED 2026-09-09.** `defended` is gone from the map, the code and the save; every sanctuary is claimed for Gold. The fight with a clock lives on the ruins' gates. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
 | ~~**H2**~~ | ~~**Hero XP is written and never read.**~~ **FIXED 2026-09-08.** It is a kingdom wallet row that buys any hero's levels; Stardust moved to the ascension toll. `SAVE_VERSION` 33 folds every save's per-hero tally into the one counter — nothing was ever spent from it, so every point is still owed. | [`10`](features/10-heroes.md) §4 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue is **empty** since the Conjunction was retired — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
-| **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
+| ~~**H4**~~ | ~~**The event cap behaviour was decided rather than flagged.**~~ **GONE 2026-09-29** with the offline cap: an absence is replayed in full, so a window spanning it pays in full by the same rule as everything else. | **OQ-24** closed |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
 | **H8** | **Two rank ladders price rules the room model retired.** `Bearers I–III` buys back part of a haul (`haulLoss`) and `Pathfinders I–III` hurries a depth's clock (`delveSpeed`); a room has neither — it pays the instant it falls, and a failed one takes nothing the player has banked ([`11`](features/11-expeditions.md) §5). Both stats are marked `retired` in `techEffectRules.ts`, which is what keeps the cards valid and legible while nothing reads them, and `tests/ladderEffects.test.ts` names the two ladders so the debt cannot be forgotten. **The fix is to re-point them in `?dev=tree`** — the tree is authored, not code. | [`11`](features/11-expeditions.md) §5 |
 | **H7** | **No new sounds.** Casting, claiming, clearing a room and taking a depth all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
@@ -161,10 +163,9 @@ production beat.
 - **One piece was built and cut the same day:** a per-house **advance budget**,
   capping how far a house's rent could be pulled forward and therefore capping a
   house at twice its own rent. It was consistent and it read as an arbitrary
-  refusal in the hand, on the building the player taps most. The argument, the
-  numbers and the risk it leaves live are kept in
-  [`04-harvest.md`](features/04-harvest.md) §3.1 and **OQ-55**, because the
-  reasoning is still sound and somebody will reach for it again.
+  refusal in the hand, on the building the player taps most. The house tap
+  itself is gone since 2026-09-29: a tap on a house collects its store, free
+  ([`03-economy.md`](features/03-economy.md) §3.2).
 - **The numbers:** `tap.workSeconds` is **10**, a tactile choice — about ten
   taps to a ten-unit tree. It was briefly 20 (five taps) and came back down on
   play. A full pool is then ~**5.5 minutes** of the city's own production **at
@@ -301,12 +302,8 @@ player's magic away.
   because the pour is by hand and a ready technology is today's technology,
   **`advance()` gains no boundary source** (the design's §12 records the auto-pour variant
   that would have cost one).
-- **One bound is design rather than balance, and it is easy to miss.** Knowledge
-  accrual runs in the continuous pass, so it is **production** and invariant 2
-  stops it at the 8-hour offline cap. **The pool cap therefore only does any work
-  while it sits below eight hours of drip** — above that the visible ceiling is
-  decoration and an invariant the player cannot see does the limiting.
-  **Assert it before it is argued twice.**
+- **The bar is the Knowledge drip's only ceiling**, away or not: there is no
+  offline cap (invariant 2).
 - **The real cost is authoring**, not engineering: six pages of technologies that
   do not exist yet, with **Arcana first** because it stands at one node.
 - **Size:** weeks, most of it content.
@@ -403,9 +400,8 @@ stops the next three events from each being a sprint.**
 
 - **Design:** [`13-events.md`](features/13-events.md) — complete.
 - **Blocked on: OQ-18** (does the event currency get a wallet row — the design
-  says no and it must be settled before points exist), **OQ-19** (do events
-  close — *not a dial: a deadline is a content-pipeline commitment*), and
-  **OQ-24**. **OQ-4** and **OQ-22** shape the cost of the island but do not block
+  says no and it must be settled before points exist) and **OQ-19** (do events
+  close — *not a dial: a deadline is a content-pipeline commitment*). **OQ-4** and **OQ-22** shape the cost of the island but do not block
   starting.
 - **The gate is a measurement, not a feature:** **author the second event and
   record the hours it took.** The first event is a build; the second is the
@@ -550,7 +546,7 @@ their systems.
 **The doorway to combat, and the clock that sends the player to it.** Every
 ruin opens with one garrison before Depth 1; discovering the ruin starts a
 minute-scale counter; when it runs out the garrison takes a bounded,
-recoverable slice of the banked materials, with no fight; a hero and a party
+recoverable slice of the materials in the buildings' stores, with no fight; a hero and a party
 clear the gate as a room. **This is the step that reopened promise 1**, on
 purpose and in writing ([`overview.md`](overview.md)), and it closed **H1** by
 deletion — `defended` is retired and every landmark is claimed for Gold.
@@ -580,7 +576,8 @@ deletion — `defended` is retired and every landmark is claimed for Gold.
   generator's budget and nothing else about this step moves.
 - **What is asserted:** the replay assertion across an absence with three
   raids in it; a week away is three raids and never more; a raid takes only
-  what the city produces and at most a tenth of the purse; clearing returns
+  what the city produces and at most half of what the stores hold (a tenth
+  of the purse until the stores landed on 2026-09-29); clearing returns
   the hoard in full and stops the counter for good; no ruin is enterable while
   its gate stands; and every authored gate is weaker than the first depth of
   the ruin it guards (`tests/gates.test.ts`, 29 tests).

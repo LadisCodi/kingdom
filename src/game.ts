@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectTap,
+  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -91,7 +91,7 @@ import {
 } from './sim/manaRefill';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import {
-  availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, residentsOf,
+  availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
@@ -135,6 +135,8 @@ import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
+import { CollectBubbles } from './render/collectBubbles';
+import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
@@ -417,6 +419,8 @@ export class Game {
    */
   private packsSeen = -1;
   readonly floaters = new Floaters();
+  /** The bounce a store's bubble gives when a haul lands in it. */
+  readonly collectBubbles = new CollectBubbles();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
@@ -549,12 +553,9 @@ export class Game {
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
     for (const s of result.strikes) this.strikeFeedback(s.cell, s.source);
-    for (const d of result.deposits) {
-      this.floaters.add(d.cell, `+${d.amount}`, d.currencyId);
-    }
-    if (result.goldEarned > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.goldEarned}`, 'Gold');
-    }
+    // A haul lands in the building's store, not the purse, so it pops no
+    // number: the store's bubble is what says there is something to collect.
+    for (const d of result.deposits) this.collectBubbles.bump(d.cell);
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
       this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
@@ -722,19 +723,17 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        // Housing: tapping fast-forwards tax collection (and opens the card).
+        // A building with something in its store: the tap COLLECTS, free, and
+        // does nothing else. The next tap, with the store empty, opens it
+        // (Docs/features/03-economy.md §3.2).
+        if (district && district.state === 'Built' && readyToCollect(district)) {
+          this.collectStoreOf(district);
+          this.notify();
+          return true;
+        }
+        // An empty house opens its card.
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
-          const { result, gold } = houseTap(this.state, district, this.now());
-          if (result === 'Collected') {
-            this.tapFeedback(district.location, 'tapHouse');
-            if (gold > 0) {
-              this.floaters.add(cell, `+${gold}`, 'Gold');
-              this.tapReward(cell, 'Gold', gold);
-            } else this.floaters.add(cell, '⏩');
-          } else if (result === 'NoMana') {
-            this.outOfMana(cell);
-          }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -776,6 +775,27 @@ export class Game {
         return true;
       },
     });
+  }
+
+  /** The card's Collect button: the same collect a tap on the building makes. */
+  collectFromCard(district: District): void {
+    this.collectStoreOf(district);
+    this.notify();
+  }
+
+  /** Empty a building's store into the purse, with the tap's own feedback:
+   *  the punch on the building, a floater per currency, and the haul flying
+   *  to the header. */
+  private collectStoreOf(district: District): void {
+    const moved = collectBuilding(this.state, district.uniqueId, this.now());
+    const entries = (Object.entries(moved) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+    if (entries.length === 0) return;
+    this.tapFeedback(district.location,
+      districtCapacity(this.state, district) > 0 ? 'tapHouse' : 'pop');
+    for (const [c, n] of entries) this.floaters.add(district.location, `+${formatCount(n)}`, c);
+    const box = this.camera.cellToScreen(district.location);
+    const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+    queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
   }
 
   /** Punch + flash + a target-appropriate sound on a successful tap. */
@@ -881,26 +901,15 @@ export class Game {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a house keeps collecting, paced by the same auto-tap cooldown a
-    // held tree uses, and stopping when the Mana runs out.
+    // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' &&
-        districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now(), true);
-      if (result === 'NoMana') {
-        playSfx('error');
-        this.shake(['Mana']);
-        return false;
-      }
-      if (result !== 'Collected') return false;
-      this.tapFeedback(district.location, 'tapHouse');
-      if (gold > 0) {
-        this.floaters.add(cell, `+${gold}`, 'Gold');
-        this.tapReward(cell, 'Gold', gold);
-      } else this.floaters.add(cell, '⏩');
+    if (district && district.state === 'Built' && readyToCollect(district)) {
+      this.collectStoreOf(district);
       this.notify();
       return true;
     }
+    if (district && district.state === 'Built' &&
+        districtCapacity(this.state, district) > 0) return false;
     if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;

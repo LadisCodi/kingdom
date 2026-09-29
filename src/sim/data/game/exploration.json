@@ -34,7 +34,7 @@
     "gemsPerPoint": 10
   },
   "raid": {
-    "takeFractionMax": 0.1,
+    "takeFractionMax": 0.5,
     "maxRaids": 3
   },
   "delve": {
