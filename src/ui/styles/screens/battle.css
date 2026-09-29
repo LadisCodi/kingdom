@@ -141,7 +141,7 @@
    see all of is the point of a board. */
 .bt-slots { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 20) calc(var(--px) * 10); justify-content: center; padding: calc(var(--px) * 4) 0 calc(var(--px) * 14); }
 
-/* A ROUND slot, like the training picker's (`.tr-pick`, screens/district.css):
+/* A ROUND slot:
    a squad on this board and a unit in a hall are the same kind of choice,
    and picking one is the same gesture. Six of them wrap to two rows
    of three on a phone, which is the shape the board itself has

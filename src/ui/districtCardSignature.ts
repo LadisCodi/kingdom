@@ -23,7 +23,6 @@ import { mana } from '../sim/mana';
 import { districtCapacity, houseGoldPerMinute, maxPopulation } from '../sim/population';
 import { townhall, type CurrencyId, type District } from '../sim/state';
 import { isWorkshop, queueCapacity, recipeOf } from '../sim/workshops';
-import { pickedTrainee } from './trainingPick';
 
 export function districtCardSignature(game: Game, district: District): string {
   const def = DISTRICTS[district.definitionId];
@@ -52,9 +51,8 @@ export function districtCardSignature(game: Game, district: District): string {
     adjacencyInEffect(s, district),
     // Worker buildings: the cells in reach and the crew's size.
     def.harvestSources.length > 0 ? game.workableCellsOf(district).length : null,
-    // Training: what is picked, what it costs against the purse, the room it
+    // Training: its line, what it costs against the purse, the room it
     // has, the army's room, the ward.
-    pickedTrainee(district.uniqueId) ?? null,
     lineFor(s, district.uniqueId).map((i) => i.trainee),
     def.trains.map((t) => shorts(trainCost(s, t) as Record<string, number>)),
     // Not the whole readout: its progress and remaining seconds tick, and

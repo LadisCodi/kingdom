@@ -76,6 +76,7 @@ describe('data rules', () => {
     b.districts.Garden.maxLevel = 2;
     b.districts.Sawmill.harmonyCostPerLevel = [0, 0, 0, 0, 0, 0, 0, 4, 2, 6];
     b.districts.Farm.taxBonusPerLevel = [0.1];
+    b.districts.Barracks.trains = ['Warrior', 'Lancer'];
     b.goods.Planks.inputGood = 'Planks';
     b.currencies.Gold.goldValue = 3;
     b.units.Archer.frontage = b.units.Archer.squadSize + 1;
@@ -94,6 +95,8 @@ describe('data rules', () => {
       'buildings/Garden/maxLevel: a decoration has no ladder — maxLevel must be 1',
       'buildings/Sawmill/harmonyCostPerLevel.8: falls at level 9 (4 then 2) — it is a total, not an increment',
       'buildings/Farm/taxBonusPerLevel: on a building that houses nobody',
+      'buildings/Barracks/trains: trains 2 things — a building trains one',
+      'buildings/SpearHall/trains: Lancer is already trained at Barracks — each unit has one building',
       'goods/Planks/inputGood: a good cannot be made of itself',
       'currencies/Gold/goldValue: must be positive, and not on Gold itself',
       'units/Archer/frontage: cannot exceed squadSize',

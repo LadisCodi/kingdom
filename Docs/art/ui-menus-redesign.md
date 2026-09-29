@@ -407,10 +407,8 @@ wood of its sides touches the screen's edges.
   it by a mask.
 - **The training widget** (`trainingSection.ts`; reference
   `mockups/m28-training-widget.png`), one block for every building that
-  turns something out — the Townhall's villagers, a hall's soldiers:
-  - **Picker:** a small round portrait per trainee, anchored right, the
-    picked one in a gold ring. Round so it never reads as another button;
-    shown even when the building trains only one thing.
+  turns something out — the Townhall's villagers, a hall's soldiers. Each
+  building trains ONE thing, so there is no picker:
   - **Panel** (a section): the bust, the name, the tags, one line of
     flavour, and the priced Train button — its costs and its time above it.
     A soldier adds a row of three stat tiles underneath: Attack, Defence,

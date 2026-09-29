@@ -2,16 +2,12 @@
 // turns anything out shares: the Townhall's villagers, a hall's soldiers, a
 // ward's mending (Docs/art/ui-menus-redesign.md, "the training widget").
 //
-// Three parts, top to bottom:
+// Each building trains ONE thing (dataRules.ts), so there is nothing to pick.
+// Two parts, top to bottom:
 //
-//  - THE PICKER: a small round portrait per thing this hall can turn out,
-//    anchored right. Round, so it reads as "choose one of these" and never as
-//    one more rectangular button. A hall that trains one thing still shows
-//    its one portrait: the widget keeps its shape from building to building.
-//  - THE PANEL for whichever is picked: its bust, name, tags, one line of
+//  - THE PANEL for that one trainee: its bust, name, tags, one line of
 //    flavour, the priced Train button — and for a soldier the three numbers
-//    it is chosen on. Picking is separate from buying: the player reads about
-//    a unit, and trains it with a second, deliberate press.
+//    it is judged on.
 //  - THE QUEUE, right to left: the batch being trained NOW sits at the right,
 //    beside the gem button that finishes it, so it is plain what Finish
 //    finishes; what waits lines up to its left.
@@ -33,7 +29,6 @@ import { el, formatDuration } from './format';
 import { action, btn, iconEl, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitBust } from './unitArt';
-import { pickedTrainee, pickTrainee } from './trainingPick';
 
 /** A villager is not in the UNITS table — no stats, no power, a price that
  *  climbs — so its card copy lives here rather than being faked into the
@@ -164,28 +159,9 @@ export function trainingSection(
   }
   if (offers.length === 0) return root;
 
-  // --------------------------------------------------------- the picker
-  const current = pickedTrainee(district.uniqueId) ?? offers[0];
-  const selected = offers.includes(current) ? current : offers[0];
-  root.append(el('div', { class: 'tr-picker' }, ...offers.map((t) => {
-    const locked = t !== 'Villager'
-      && UNITS[t].requiredTech !== null
-      && !isTechComplete(game.state, UNITS[t].requiredTech!);
-    const b = el('button', {
-      class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
-      type: 'button',
-      'aria-pressed': String(t === selected),
-    },
-      el('span', { class: 'tr-pick-disc' }, unitBust(t, 'tr-pick-art')),
-      el('span', { class: 'tr-pick-name' }, nameFor(t)));
-    b.addEventListener('click', () => {
-      pickTrainee(district.uniqueId, t);
-      game.notify();
-    });
-    return b;
-  })));
-
   // ---------------------------------------------------- the panel, the queue
+  // One trainee per building (dataRules.ts): the first is the only one.
+  const selected = offers[0];
   root.append(detail(game, district, selected), queue());
   return root;
 }
