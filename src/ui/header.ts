@@ -55,7 +55,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
   const plaque = el('button', { class: 'hud-plaque', type: 'button' });
 
-  // THE KNOWLEDGE TAB (M33). One dark frame, like a coin's: the book, the
+  // THE KNOWLEDGE TAB (M33). Straight on the painted wood: the book, the
   // number, ten segments and a caption under them; the + opens the sheet,
   // and so does the rest of the tab.
   const knowTab = el('button', { class: 'hud-know', type: 'button', 'aria-label': 'Knowledge' });

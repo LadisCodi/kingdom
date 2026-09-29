@@ -582,14 +582,13 @@ exists — see questions 3 and 7, and
 - *Knowledge, always — a tab of its own under the plank (M33).* The bar
   paces the whole game, so it is prominent and never contextual
   ([`../features/07-research.md`](../features/07-research.md) §3):
-  - A plain walnut tab with a thin gold rim, **centred under the plank** as if
-    it came out from behind it: straight bottom edge, gently rounded bottom
-    corners, no point or decoration.
-  - Inside it, **one dark inset frame, the same as a coin's on the plank**:
-    the Knowledge book at the plank's icon size with nothing behind it, the
-    number held, and **ten narrow tall segments** packed tight, one per point
-    of the cap.
-  - Under the segments, in the same frame, a small caption that **takes turns
+  - A painted wooden tab with a gold-inlaid rim (`assets/hud-know-tab.png`,
+    nine-sliced), **centred under the plank** as if it came out from behind
+    it: straight bottom edge, rounded bottom corners, no point or decoration.
+  - **Straight on the wood, with no dark slot round them**: the Knowledge book
+    at the plank's icon size with nothing behind it, the number held, and
+    **ten narrow tall segments** packed tight, one per point of the cap.
+  - Under the segments, a small caption that **takes turns
     with a crossfade**, the way the Mana readout does: *+1 in 42m* (the next
     point) and *Full in 3h* (the whole bar).
   - **Full**: every segment lit with a soft glow, a glint on the book, and the

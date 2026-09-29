@@ -192,9 +192,9 @@
 
 /* THE KNOWLEDGE TAB (M33, Docs/art/ui-menus-redesign.md §5.1): a painted
    wooden tab with a gold rim, hanging from behind the plank's middle,
-   straight along its bottom edge. Inside it ONE dark frame like a coin's —
-   the book, the number, ten segments and a caption that takes turns — and
-   the Gems' + knob. Absolute, so it never changes the header's height, and
+   straight along its bottom edge. On the wood itself — the book, the
+   number, ten segments and a caption that takes turns — and the Gems' +
+   knob. Absolute, so it never changes the header's height, and
    it steps aside while a menu is open, like the Settings knob. It has to
    clear the Daily chest pill at 375px, so every width here is budgeted. */
 .hud-know {
@@ -225,11 +225,8 @@
   align-items: center;
   gap: calc(var(--rpx) * 5);
   height: calc(var(--rpx) * 78);
-  padding: 0;
-  border-style: solid;
-  border-color: transparent;
-  border-width: 0 calc(var(--rpx) * 12);
-  border-image: url('../../assets/hud-slot.png') 0 50 fill / 0 calc(var(--rpx) * 12) stretch;
+  /* Straight on the painted wood — no dark slot round it. */
+  padding: 0 calc(var(--rpx) * 8);
   font-family: var(--font-body);
   font-weight: var(--weight-title);
   font-variant-numeric: tabular-nums;
