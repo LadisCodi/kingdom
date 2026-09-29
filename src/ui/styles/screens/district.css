@@ -213,43 +213,21 @@
 .dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
 .dc-badge.is-bad { color: var(--clay); border-color: var(--clay); background: rgba(212, 85, 62, 0.15); }
 
-/* What the building can reach, as a shape rather than two numbers. */
-.dc-area { display: flex; align-items: center; gap: calc(var(--px) * 12); margin: calc(var(--px) * 8) 0; }
-.dc-thumb {
-  flex: none;
-  display: grid;
-  gap: 1px;
-  padding: calc(var(--px) * 3);
-  background: var(--wood-dark);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 4);
-}
-.dc-cell { width: calc(var(--px) * 7); height: calc(var(--px) * 7); background: var(--parchment-shade); border-radius: 1px; }
-.dc-cell.is-catch { background: var(--leaf); }
-.dc-cell.is-self { background: var(--gold); }
-.dc-area-count {
+/* THE CREW, a stepper: the red − knob, the villager's portrait with the crew
+   on its pill, "2 / 3 Assigned" in large, the green + knob — big knobs,
+   next to what they change. */
+.dc-crew {
   display: flex;
   align-items: center;
-  gap: calc(var(--px) * 5);
-  font-family: var(--font-body);
+  justify-content: center;
+  gap: calc(var(--px) * 12);
 }
-.dc-area-rate { color: var(--ink-muted); font-size: var(--text-desc); line-height: 1.3; }
-
-/* Crew slots: filled ones are people, empty ones are room for more. */
-.dc-crew { display: flex; align-items: center; gap: calc(var(--px) * 10); margin: calc(var(--px) * 8) 0; }
-.dc-slots { flex: 1; display: flex; flex-wrap: wrap; gap: calc(var(--px) * 5); }
-.dc-slot {
-  width: calc(var(--px) * 30);
-  height: calc(var(--px) * 30);
-  display: grid;
-  place-items: center;
-  background: var(--parchment-shade);
-  border: calc(var(--px) * 2) dashed var(--wood-dark);
-  border-radius: 50%;
-}
-.dc-slot.is-filled { background: var(--parchment); border-style: solid; }
-.dc-crew .k-knob { width: calc(var(--px) * 40); height: calc(var(--px) * 40); min-height: calc(var(--px) * 40); margin-bottom: 0; }
-
+.dc-crew .k-btn.k-knob { --knob-size: calc(var(--px) * 46); }
+.k-portrait.dc-crew-face { --portrait-size: calc(var(--px) * 56); }
+/* What works here at the title's size; the most it can hold, smaller. */
+.dc-crew-count { min-width: calc(var(--px) * 64); text-align: center; white-space: nowrap; line-height: 1; }
+.dc-crew-count > b { font-size: var(--text-title); font-weight: var(--weight-title); }
+.dc-crew-count > span { font-size: var(--text-body); font-weight: var(--weight-title); color: var(--ink-muted); }
 /* A military building: the same shape as the Townhall's training block,
  * because it is the same beat. */
 .dc-army {

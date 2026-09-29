@@ -457,9 +457,23 @@ wood of its sides touches the screen's edges.
     it) and *Total time: 1m 20s* under it; and the gem Finish button,
     under a rule and with no heading of its own. Nothing in the line:
     *Nothing in training*, centred, and no Finish.
+- **The workers block** (worker buildings; reference
+  `mockups/m29-workers-stepper.png`, proposal B), a stepper:
+  - the red − knob, the villager's round portrait, *2 / 3* — the crew in
+    title type, the most it can hold smaller and muted — and the green + knob;
+  - nothing else: the card's stat band leads with what the crew MAKES
+    (*Food +45 /min*, the resource as the tile's word) and what there is to
+    work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,
+    *Iron*, *Gold*, *Shoals*). The crew size, haul and swing are the
+    upgrade popup's only — the stepper already shows the crew, and haul and
+    swing are counted in that output;
+  - no tip: how many villagers a building's fields keep busy is the
+    player's to see by watching them work;
+  - the villagers still free to assign are the header's counter while the
+    card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
-  *Crew*, *Training* — so three fit a phone's width; the full name is the tile's
+  *Fields*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower

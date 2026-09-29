@@ -39,7 +39,7 @@ const SLOT_ICON = {
   population: 'population', workers: 'workers', builders: 'builders', army: 'army',
 } as const;
 const SLOT_LABEL = {
-  population: 'Population', workers: 'Workers at work', builders: 'Builders free',
+  population: 'Population', workers: 'Free villagers', builders: 'Builders free',
   army: 'Army',
 } as const;
 
@@ -173,8 +173,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       // md, not sm: the status icons carry more internal detail than a coin
       // and turn to mush at 16px — the contact sheet made that obvious.
       plaqueIcon.replaceChildren(iconEl(SLOT_ICON[slot.kind]));
-      plaqueValue.textContent = `${slot.value}/${slot.max}`;
-      plaque.setAttribute('aria-label', `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);
+      // Workers is a plain count — the villagers free to assign; the rest
+      // read as a share of their ceiling.
+      plaqueValue.textContent = slot.kind === 'workers' ? String(slot.value) : `${slot.value}/${slot.max}`;
+      plaque.setAttribute('aria-label', slot.kind === 'workers'
+        ? `${SLOT_LABEL[slot.kind]} ${slot.value}`
+        : `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);
       plaque.disabled = true; // both remaining kinds are read-outs
     }
 

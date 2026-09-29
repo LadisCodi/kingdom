@@ -4109,10 +4109,11 @@ export class Game {
       const army = this.armyRoom();
       return { kind: 'army', value: army.used, max: army.cap };
     }
-    // Staffing something → workers assigned vs. the whole workforce.
+    // Staffing something → the villagers still free to assign. The card's
+    // own stepper says how many work HERE; this says how many more can.
     if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
       const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
-      return { kind: 'workers', value: working, max: working + this.freeWorkers() };
+      return { kind: 'workers', value: this.freeWorkers(), max: working + this.freeWorkers() };
     }
     return {
       kind: 'population',
