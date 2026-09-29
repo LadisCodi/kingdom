@@ -662,3 +662,16 @@ for.
 - **What to know:** M30 put both purchase prices inside one *Buy the rest*
   slab, which is two buttons' worth of price on one tap target — the build
   needs it split in two.
+
+## M31 — the Knowledge bar centred under the plank (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M30 conversation above, continued.
+- **File:** `mockups/m31-knowledge-under-plank.png` (1024×1536), opaque.
+- **Prompt:** §7.19 M31, sent from JS; arrived whole.
+- **What worked:** four labelled strips (two designs × filling/full) kept
+  every variant at one scale over the same map crop.
+- **What to know:** to make room it shrank the Daily chest pill to its icon
+  alone. At 375px the real pill is ~140px wide, so a centred piece a third of
+  the screen wide collides with it — the mockup solved a real layout problem
+  without being asked.
