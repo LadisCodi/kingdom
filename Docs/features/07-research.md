@@ -329,7 +329,9 @@ A `bonus` names its effects, and each is four fields:
 - **The bar is always on the map**, as a tab of its own centred under the
   plank ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md) §5.1,
   M33): what is held, ten segments, and when the next point and the full bar
-  arrive. Its **+** opens the purchase (§3.2).
+  arrive. Its **+** opens the purchase (§3.2). It stays down over the menus
+  that spend Knowledge — the research book and the Knowledge sheet — and
+  steps aside for every other one; Knowledge is never a coin on the plank.
 
 ### 3.1 Knowledge and Mana
 
@@ -397,8 +399,9 @@ The research screen is a book (mockups M43 and M46,
 - **An era is a chapter**: *Chapter I* at the top of the page, and a heading
   wherever the next band begins, with *Reveal N more cells* while it is shut
   (*Sealed* on the book's last band). One vertical scroll.
-- The plank carries **Gold and Knowledge**; the Knowledge tab steps aside
-  (§3).
+- The plank carries **Gold** only; Knowledge is its tab under the plank
+  (§3), which stays down while the book or the Knowledge sheet is open and
+  steps aside for every other menu.
 - It is built from shared pieces — the page, the ribbon, the pin, the kit's
   stat tile, bar and buttons — so a new book or state costs no new art.
 

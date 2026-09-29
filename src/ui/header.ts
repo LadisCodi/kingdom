@@ -247,6 +247,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     }
     [...segments.children].forEach((seg, i) => seg.classList.toggle('is-lit', i < held));
     knowTab.classList.toggle('is-full', held >= k.cap);
+    knowTab.classList.toggle('is-kept', game.keepsKnowledgeTab());
     knowNext.textContent = k.full ? 'Full' : (k.nextIn ?? '');
     knowFull.textContent = k.fullIn ?? '';
     knowTurning = !k.full && k.fullIn !== null && k.nextIn !== null;
