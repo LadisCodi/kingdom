@@ -724,3 +724,20 @@ for.
 - **What to know:** `-trim` keeps a faint band above the art; crop on the
   alpha at 50% (`-alpha extract -threshold 50% -format %@`). Slices in CSS:
   `20 64 70 fill` (top, sides, bottom).
+
+---
+
+## M37–M39 — the research book, three proposals (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** <https://chatgpt.com/c/6abbde45-ab04-83ed-a630-f9fd8d39dda1> — a
+  NEW conversation: the M5–M33 one carries so many images that the page froze
+  on load. The first message attaches `style-ref.jpg` (M1 and M30 side by
+  side) with "GENERATE A NEW IMAGE… ONLY the style reference" and a short
+  style paragraph; the next two say "same style as the attached reference and
+  your last images".
+- **Files:** `mockups/m37-research-book-a.png`, `m38-research-book-b.png`,
+  `m39-research-book-c.png`, each 1448×1086, opaque, two phone screens.
+- **Prompt:** §7.19 M37–M39, sent from JS; each arrived whole, ~3 min.
+- **What to know:** M38's bottom ribbons overlap the nav beam; M39 was asked
+  for a two-page spread and drew one page with the gutter only hinted.
