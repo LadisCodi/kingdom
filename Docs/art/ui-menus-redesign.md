@@ -606,8 +606,9 @@ exists — see questions 3 and 7, and
   - About 100px wide at 375px, the segments ~3px each. A centred tab still
     leaves only 36px either side, so **the Daily chest pill starts below the
     tab** rather than beside it.
-  - It **steps aside while any menu is open**, like the Settings knob: it
-    hangs over the top of every sheet. The Research book carries Knowledge on
+  - It **slides up behind the plank while any menu is open**, and back down
+    when the menu closes (260 ms in, 220 ms out; none under reduced motion):
+    it would hang over the top of every sheet. The Research book carries Knowledge on
     the plank instead, beside Gold.
 - *Contextual:* **Stone** appears once its gating tech is complete (Masonry)
   or once the balance is above zero. The tech clause is what makes it sticky —

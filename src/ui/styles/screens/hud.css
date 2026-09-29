@@ -202,7 +202,12 @@
   top: calc(100% - var(--rpx) * 12);
   left: 50%;
   z-index: -1; /* tucked behind the plank's lower lip */
-  transform: translateX(-50%);
+  transform: translate(-50%, 0);
+  /* IN AND OUT FROM BEHIND THE PLANK. While a menu is open the tab slides up
+     under the plank rather than vanishing, and slides back down when the
+     menu closes; `visibility` follows the slide so a hidden tab takes no
+     taps. */
+  transition: transform 260ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)), visibility 0s linear 0s;
   display: flex;
   align-items: center;
   gap: calc(var(--rpx) * 4);
@@ -210,11 +215,13 @@
      takes any width and height: 20 px of plain wood across the top, which is
      tucked behind the plank, and the rim and rounded corners in the 64 px
      sides and the 70 px bottom. The padding sits inside the rim. */
-  padding: calc(var(--rpx) * 14) 0 calc(var(--rpx) * 4);
+  padding: calc(var(--rpx) * 10) 0 0;
   border-style: solid;
   border-color: transparent;
-  border-width: calc(var(--rpx) * 8) calc(var(--rpx) * 16) calc(var(--rpx) * 22);
-  border-image: url('../../assets/hud-know-tab.png') 20 64 70 fill / calc(var(--rpx) * 8) calc(var(--rpx) * 16) calc(var(--rpx) * 22) stretch;
+  /* The slices drawn at one scale (a quarter), so the rim is as thick along
+     the bottom as up the sides and the bottom leaves no dead wood. */
+  border-width: calc(var(--rpx) * 5) calc(var(--rpx) * 16) calc(var(--rpx) * 17);
+  border-image: url('../../assets/hud-know-tab.png') 20 64 70 fill / calc(var(--rpx) * 5) calc(var(--rpx) * 16) calc(var(--rpx) * 17) stretch;
   background: none;
   filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(30, 16, 6, 0.35));
   cursor: pointer;
@@ -224,7 +231,7 @@
   display: inline-flex;
   align-items: center;
   gap: calc(var(--rpx) * 5);
-  height: calc(var(--rpx) * 78);
+  height: calc(var(--rpx) * 62);
   /* Straight on the painted wood — no dark slot round it. */
   padding: 0 calc(var(--rpx) * 8);
   font-family: var(--font-body);
@@ -268,7 +275,14 @@
 .hud-know-caption.is-full-turn > .hud-know-full { opacity: 1; }
 .hud-know > .hud-plus { margin-right: 0; width: calc(var(--rpx) * 46); height: calc(var(--rpx) * 46); }
 .hud-know:active > .hud-plus { background-image: url('../../assets/hud-plus-down.png'); }
-#ui:has(> #overlay:not(:empty)) .hud-know { display: none; }
+#ui:has(> #overlay:not(:empty)) .hud-know {
+  transform: translate(-50%, calc(-100% - var(--rpx) * 12));
+  visibility: hidden;
+  transition: transform 220ms ease-in, visibility 0s linear 220ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-know, #ui:has(> #overlay:not(:empty)) .hud-know { transition: none; }
+}
 
 /* The one contextual plaque, hanging under the plank. */
 .hud-under { display: flex; align-items: flex-start; gap: calc(var(--rpx) * 22); }
