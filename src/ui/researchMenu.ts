@@ -1,74 +1,74 @@
-// Research overlay: ONE PAGE PER TOME, read top to bottom.
-//  - A tab per open book; inside it, the whole book as a flow chart of cards
-//    three columns wide, with an ERA BAR spanning the page wherever the next
-//    band begins (Docs/features/07-research.md §2.2).
-//  - Every technology has a slot, minor ranks included: rank II is a card in
-//    band 2, not a bead hanging off its parent.
-//  - Connectors run in the gutter between two rows, or out into the side
-//    channel when they reach further — so a line never crosses a card
-//    (research/layout.ts).
-//  - Tree fog: researched/available cards render normally; one step beyond
-//    what is researched or poured into shows as an anonymous "?"; anything deeper
-//    is not drawn, and the rows it would have filled collapse.
-//  - An era bar the player has not earned says what is left to reveal. The
-//    band below it draws, dimmed: the page is legible, and nothing in it is
-//    startable until the region is.
+// Research: the research book (Docs/plans/research-book.md, mockups M43 and
+// M46).
+//
+//  - ONE page, never a spread: a sheet of parchment centred on the screen on a
+//    small stack of papers, pinned at its top corners. The same sheet is the
+//    technology's sheet, so the two read as one object.
+//  - The books are BOOKMARKS hanging from the page's bottom edge, in the space
+//    the nav bar leaves (it steps aside while a menu is open). One ribbon,
+//    tinted per book in CSS — a new book costs no new sprite.
+//  - A book is one page read top to bottom: three columns of cards in the
+//    layout of src/ui/research/layout.ts, with a CHAPTER heading wherever the
+//    next band begins. Connectors are quill-drawn arrows.
+//  - No tree fog: every technology is on the page from the first minute, in
+//    one of three states — locked (greyscale), in progress, done.
 
 import type { Game } from '../game';
-import {
-  ERA_COUNT, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER,
-} from '../sim/data/definitions';
+import { ERA_COUNT, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled, isTechStarted,
-  isTomeOpen, requirementsMet, techCost, techEraUnlocked, techKnowledgeCost,
-  techKnowledgeMissing, techPoured, techVisibility,
+  isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
 } from './research/layout';
-import { btn, ctaBadge, iconEl, knob, progress } from './kit';
-import { el } from './format';
+import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
+import { el, formatExact } from './format';
 
-/** Which book is open on the lectern. Module-level so it survives the
- *  per-tick re-render, like the selection below. */
+/** Which book is open. Module-level so it survives the per-tick re-render,
+ *  like the selection below. */
 let activeTome: TomeId = 'Civics';
 
 // Module-level so the selection survives the per-tick re-render.
-type Selected = { kind: 'tech'; id: TechId } | null;
-let selected: Selected = null;
+let selected: TechId | null = null;
 
 /** The page element of the last render, used only to tell a fresh mount from
  *  a per-tick refresh: on a refresh the old subtree is still in the document
  *  (the host replaces it afterwards), on a fresh mount it is already gone. */
 let pageEl: HTMLElement | null = null;
 const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
+/** The zoom the tree was last drawn at (see the page below). */
+let lastZoom = 1;
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-/** The shelf: one tab per tome the player has actually opened. A book they
- *  have not earned is not shown at all — an empty tab is the same lie as a
- *  lit nav button that leads nowhere. */
-function shelf(game: Game): HTMLElement | null {
-  const open = TOME_ORDER.filter((t) => isTomeOpen(game.state, t));
-  if (open.length < 2) return null; // one book is not a shelf
-  const row = el('div', { class: 'res-shelf' });
-  for (const id of open) {
-    const def = TOMES[id];
-    // Each book wears its own mark on its plate (M4): the scroll, the
-    // crossed arms, the orb.
-    const mark = id === 'Warfare' ? 'army' : id === 'Magic' ? 'Mana' : 'research';
-    const tab = el('button', {
-      class: `btn res-tome${id === activeTome ? ' active' : ''}`,
-    }, iconEl(mark, { size: 'sm' }), el('span', {}, def.name));
-    tab.addEventListener('click', () => {
+/** A book's emblem, stamped on its bookmark. */
+const TOME_MARK: Record<string, string> = { Civics: 'research', Warfare: 'army', Magic: 'Mana' };
+
+/**
+ * The bookmarks: one ribbon per open book, hanging from the page's bottom
+ * edge. The ribbon is ONE shape; its colour is the book's (`--tome`, in
+ * research.css), so a found book is a new colour, not a new sprite.
+ */
+function bookmarks(game: Game): HTMLElement {
+  const row = el('div', { class: 'rb-marks' });
+  for (const id of TOME_ORDER.filter((t) => isTomeOpen(game.state, t))) {
+    const mark = el('button', {
+      class: `rb-mark${id === activeTome ? ' is-open' : ''}`,
+      type: 'button',
+      'data-tome': id,
+      'aria-label': TOMES[id].name,
+      'aria-pressed': id === activeTome ? 'true' : 'false',
+    }, iconEl((TOME_MARK[id] ?? 'research') as never));
+    mark.addEventListener('click', () => {
       if (activeTome === id) return;
       activeTome = id;
       selected = null; // a selection on another page is not on this one
       game.notify();
     });
-    row.append(tab);
+    row.append(mark);
   }
   return row;
 }
@@ -77,30 +77,14 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
   const root = el('div', { class: 'research-screen' });
 
-  // A tome can close behind the player only by a save being loaded that never
-  // opened it, so fall back to the one book that is always open.
   if (!isTomeOpen(state, activeTome)) { activeTome = 'Civics'; selected = null; }
-  // Drop a selection the fog no longer shows (e.g. after a fresh load), or one
-  // that belongs to a page the player has since turned away from.
-  if (selected?.kind === 'tech'
-    && (techVisibility(state, selected.id) !== 'normal'
-      || TECHNOLOGIES[selected.id].tome !== activeTome)) selected = null;
+  // A selection on a page the player has turned away from is not on this one.
+  if (selected !== null && TECHNOLOGIES[selected].tome !== activeTome) selected = null;
 
-  const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
-  close.setAttribute('data-own-close', '');
-  const tabs = shelf(game);
-  // The books' plates (M4). With them on the beam the title bar says nothing
-  // the lit plate does not, so the way out rides the shelf instead.
-  if (tabs) { tabs.append(close); root.append(tabs); }
-  else root.append(el('div', { class: 'research-topbar' }, el('h2', {}, TOMES[activeTome].name), close));
-  root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
-
-  // ---- the page (as long as what the fog currently shows) ----
-  const rows = pageRows(TECHNOLOGIES, activeTome,
-    (id) => TECHNOLOGIES[id as TechId].placed
-      && techVisibility(state, id as TechId) !== 'hidden');
+  // ---- the page: every placed technology of the book, no fog ----
+  const rows = pageRows(TECHNOLOGIES, activeTome, (id) => TECHNOLOGIES[id as TechId].placed);
   const { tops, height } = rowTops(rows);
-  /** Where a technology's card sits, or null when this page does not show it. */
+  /** Where a technology's card sits on this page. */
   const at = new Map<string, { top: number; col: number; index: number }>();
   rows.forEach((row, i) => {
     if (row.kind !== 'techs') return;
@@ -120,81 +104,53 @@ export function renderResearchMenu(game: Game): HTMLElement {
     return true;
   };
 
-  const flow = el('div', {
-    class: 'tech-flow',
-    style: `width:${PAGE_W}px;height:${height}px`,
-  });
-
-  // Connectors, under the cards.
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', String(PAGE_W));
-  svg.setAttribute('height', String(height));
-  svg.classList.add('tech-edges');
-  const stroke = (d: string, cls: string) => {
-    const path = document.createElementNS(ns, 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('class', cls);
-    svg.append(path);
-  };
-  for (const [id, to] of at) {
-    const def = TECHNOLOGIES[id as TechId];
-    let drew = false;
-    for (const req of def.requires) {
-      const from = at.get(req);
-      // Every requirement on this page, band or no band: an edge that reaches
-      // back over an era bar is how the two bands connect
-      // (techTreeRules.isDrawnEdge). It passes under the bar, which is the
-      // honest picture of a gate you cross.
-      if (from === undefined) continue;
-      drew = true;
-      stroke(edgeD(edgePath(from, to, columnClear(from, to))),
-        techVisibility(state, id as TechId) === 'silhouette' ? 'tech-edge dim'
-          : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
-    }
-    // A requirement with no end on this page — off the page mid-rearrangement,
-    // which the rules refuse to ship. A stub in the gutter above the card, so
-    // it does not look like it grows from nowhere: half a gutter long and
-    // pointing at the card, not a path from anywhere.
-    if (!drew && def.requires.length > 0) {
-      const x = colLeft(to.col) + NODE_W / 2;
-      stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`,
-        def.requires.every((r) => isTechComplete(state, r)) ? 'tech-edge open' : 'tech-edge');
-    }
-  }
-  flow.append(svg);
-
-  // Era bars and cards.
+  const flow = el('div', { class: 'tech-flow', style: `width:${PAGE_W}px;height:${height}px` });
+  flow.append(connectors(at, columnClear, height));
   rows.forEach((row, i) => {
-    if (row.kind === 'gate') { flow.append(eraBar(state, activeTome, row.era, tops[i])); return; }
+    if (row.kind === 'gate') { flow.append(chapter(state, activeTome, row.era, tops[i])); return; }
     for (const [col, id] of row.slots.entries()) {
-      if (id === null) continue;
-      flow.append(card(game, id as TechId, tops[i], col));
+      if (id !== null) flow.append(card(game, id as TechId, tops[i], col));
     }
   });
 
   // Captured BEFORE pageEl is reassigned — the old element is the evidence,
   // and overwriting it first would make every render look fresh.
   const fresh = isFreshMount();
-  const page = el('div', { class: 'tech-page', 'data-keep-scroll': 'tech-page' }, flow);
+  const page = el('div', { class: 'rb-page', 'data-keep-scroll': 'tech-page' },
+    el('h2', { class: 'rb-chapter-title' }, 'Chapter I'),
+    el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
+    flow);
   pageEl = page;
-  // Tapping the page beside a card deselects (the info panel hides).
-  page.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('.tech-card')) return;
-    if (selected !== null) { selected = null; game.notify(); }
+  // The tree is laid out at its own width and zoomed to the page's, so three
+  // columns fit any phone. The last zoom is applied at once, so a per-tick
+  // re-render does not flash; the measured one follows on the next frame.
+  flow.style.zoom = String(lastZoom);
+  requestAnimationFrame(() => {
+    const w = page.clientWidth - 8;
+    if (w <= 0) return;
+    lastZoom = Math.min(1, w / PAGE_W);
+    flow.style.zoom = String(lastZoom);
   });
 
-  // Where the eye should land. A hint wins outright — it is the game asking
-  // for attention at a specific node. Otherwise, on a FRESH mount only: the
-  // WORK, meaning whatever is poured into or actionable right now, and failing
-  // that the last thing finished, which is where the next branch grows from.
-  // The scroll across a per-tick re-render is the host's job
-  // (data-keep-scroll), and must never be yanked while a finger is on it.
+  const close = closeKnob(() => game.dismiss(), 'Close Research');
+  const sheet = el('div', { class: 'rb-stack' },
+    // Two pins at the top corners; the way out sits over the right one.
+    el('span', { class: 'rb-pin is-left', 'aria-hidden': 'true' }),
+    close,
+    page);
+  root.append(sheet, bookmarks(game));
+
+  // Where the eye should land. A hint wins outright; otherwise, on a FRESH
+  // mount only, the work: a card whose Knowledge is in, then one being
+  // poured into, then the last one researched. The scroll across a per-tick
+  // re-render is the host's job (data-keep-scroll).
   const hint = game.uiHint();
   const hinted = hint?.startsWith('tech:')
     ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
   const shown = [...at.keys()] as TechId[];
-  const frontier = shown.find((id) => isTechStarted(state, id))
+  const frontier = shown.find((id) => !isTechComplete(state, id) && isTechFilled(state, id)
+      && techState(state, id) === 'progress')
+    ?? shown.find((id) => isTechStarted(state, id))
     ?? shown.find((id) => canStartTech(state, id))
     ?? [...shown].reverse().find((id) => isTechComplete(state, id))
     ?? null;
@@ -202,215 +158,230 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const focusAt = focus === null ? undefined : at.get(focus);
   if (focusAt !== undefined) {
     requestAnimationFrame(() => {
-      page.scrollTop = Math.max(0, focusAt.top - page.clientHeight / 2 + NODE_H / 2);
+      page.scrollTop = Math.max(0, (focusAt.top + NODE_H / 2) * lastZoom - page.clientHeight / 2);
     });
   }
-  root.append(page);
 
-  // ---- the card's own sheet, over everything, while one is selected ----
-  if (selected?.kind === 'tech') {
-    root.append(techInfoModal(game, selected.id));
-  }
+  if (selected !== null) root.append(techSheet(game, selected));
   return root;
 }
 
 /**
- * The bar between two bands: what the book calls the next part of itself, and
- * what the world still owes before it opens.
- *
- * It spans the page because it is not a node — nothing requires it and it
- * cannot be researched. It is a door, and the price is written on it.
+ * The connectors, under the cards: plain arrows drawn with a quill — thin
+ * sepia ink, a slightly uneven stroke (an SVG displacement filter), a small
+ * drawn arrowhead into the card that needs it.
  */
-function eraBar(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
-  const open = eraUnlocked(state, tome, era);
-  const short = eraShortfall(state, tome, era);
-  // The book's LAST band is the sealed one, and a book carries its own count
-  // now — Civics may run deeper than Warfare without either being wrong.
-  const sealed = era >= ERA_COUNT[tome];
-  const bar = el('div', {
-    class: `res-era${open ? ' is-open' : ''}${sealed ? ' is-sealed' : ''}`,
-    style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
-  },
-  el('span', { class: 'res-era-name' }, `Tome of ${TOMES[tome].name} ${ROMAN[era] ?? era}`));
-  bar.append(el('span', { class: 'res-era-gate' },
-    sealed ? 'Sealed'
-      : open ? 'Opened'
-        : `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
-  return bar;
+function connectors(
+  at: Map<string, { top: number; col: number; index: number }>,
+  columnClear: (from: { col: number; index: number }, to: { index: number }) => boolean,
+  height: number,
+): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', String(PAGE_W));
+  svg.setAttribute('height', String(height));
+  svg.classList.add('tech-edges');
+  svg.innerHTML = `<defs>
+    <filter id="rb-quill" filterUnits="userSpaceOnUse" x="0" y="0" width="${PAGE_W}" height="${height}">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="1.6"/>
+    </filter>
+    <marker id="rb-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1.5 L 8.5 5 L 1 8.5" class="tech-arrowhead"/>
+    </marker>
+  </defs>`;
+  const stroke = (d: string): void => {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', 'tech-edge');
+    path.setAttribute('marker-end', 'url(#rb-arrow)');
+    svg.append(path);
+  };
+  for (const [id, to] of at) {
+    const def = TECHNOLOGIES[id as TechId];
+    let drew = false;
+    for (const req of def.requires) {
+      const from = at.get(req);
+      if (from === undefined) continue;
+      drew = true;
+      stroke(edgeD(edgePath(from, to, columnClear(from, to))));
+    }
+    // A requirement with no end on this page — a stub in the gutter above the
+    // card, so it does not look like it grows from nowhere.
+    if (!drew && def.requires.length > 0) {
+      const x = colLeft(to.col) + NODE_W / 2;
+      stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`);
+    }
+  }
+  return svg;
 }
 
-/** One technology, as a card in its slot. */
+/**
+ * A chapter heading where the next band begins, and — while the band is shut —
+ * what the world still owes before it opens. The book's last band says it is
+ * sealed.
+ */
+function chapter(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
+  const open = eraUnlocked(state, tome, era);
+  const short = eraShortfall(state, tome, era);
+  const sealed = era >= ERA_COUNT[tome];
+  return el('div', {
+    class: `rb-chapter${open ? ' is-open' : ''}`,
+    style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
+  },
+  el('span', { class: 'rb-chapter-name' }, `Chapter ${ROMAN[era] ?? era}`),
+  open ? el('span', { class: 'rb-chapter-gate' }, '')
+    : el('span', { class: 'rb-chapter-gate' },
+      sealed ? 'Sealed' : `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
+}
+
+/**
+ * One technology, as a card in its slot: the building card's stat tile, the
+ * emblem, the name, and the game's own progress bar with the Knowledge
+ * poured over what it needs written inside it — blue while it is being
+ * filled, green with a tick once researched. A locked card is the same card
+ * in greyscale, with a padlock.
+ */
 function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const state = game.state;
   const def = TECHNOLOGIES[id];
-  const place = `left:${colLeft(col)}px;top:${top}px;`
-    + `width:${NODE_W}px;height:${NODE_H}px`;
-  if (techVisibility(state, id) === 'silhouette') {
-    // A SPAN, not a bare '?'. The card overlays a dashed ring and the mark in
-    // one grid cell, and `.tech-card.silhouette > *` is what puts them there —
-    // a text node gets an anonymous grid item that no selector can reach, so
-    // the ring took row 1 and the '?' fell to row 2, stacked under it.
-    return el('div', { class: 'tech-card silhouette', style: place },
-      el('span', {}, '?'));
-  }
-  const done = isTechComplete(state, id);
-  const started = isTechStarted(state, id);
-  const cls = done ? 'done' : started ? 'active' : 'available';
-  const isSel = selected?.kind === 'tech' && selected.id === id;
-  const hinted = game.uiHint() === `tech:${id}`;
+  const status = techState(state, id);
+  const need = techKnowledgeCost(id);
+  const poured = status === 'done' ? need : techPoured(state, id);
+  const ready = status === 'progress' && isTechFilled(state, id);
+
+  const bar = progress(status === 'done' ? 'green' : 'blue');
+  bar.set(need === 0 ? 1 : poured / need, `${poured} / ${need}`);
   const node = el('button', {
-    class: `btn tech-card ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
-      + (def.planned ? ' planned' : '')
-      + (techEraUnlocked(state, id) ? '' : ' era-locked'),
-    style: place,
+    class: `tech-card k-section is-${status}${ready ? ' is-ready' : ''}`
+      + (selected === id ? ' selected' : '')
+      + (game.uiHint() === `tech:${id}` ? ' hinted' : '')
+      + (def.planned ? ' planned' : ''),
+    type: 'button',
+    style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
   },
-  el('span', { class: 'tech-card-glyph' }, def.glyph),
-  el('span', { class: 'tech-card-name' }, def.name));
-  // The kit's orb on everything startable RIGHT NOW. The page shows a lot of cards
-  // the player cannot act on yet — done, running, unaffordable, missing a
-  // prerequisite, behind a bar — and `available` styling only means the
-  // prerequisites are met. The orb is the difference.
-  //
-  // It hangs on the SEAL, not on the card. The card is a 120px box around a
-  // 62px seal, so a badge in its corner sat 16px clear of the thing it marks,
-  // reading as a stray mark on the parchment rather than as a badge.
-  if (canStartTech(state, id)) {
-    node.querySelector('.tech-card-glyph')?.append(ctaBadge(1, `tech:${id}`));
-  }
-  // How full it is, on a card holding poured Knowledge.
-  if (started) {
-    const fill = el('div', { class: 'fill' });
-    fill.style.width = `${Math.min(100, (techPoured(state, id) / techKnowledgeCost(id)) * 100)}%`;
-    node.append(el('div', { class: 'node-bar' }, fill));
-  }
-  node.addEventListener('click', () => {
-    selected = { kind: 'tech', id };
-    game.notify();
-  });
+  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
+  el('span', { class: 'tech-card-name' }, def.name),
+  el('span', { class: 'tech-card-bar' },
+    bar.root,
+    ...(status === 'done' ? [iconEl('tick', { size: 'sm' })]
+      : status === 'locked' ? [iconEl('padlock', { size: 'sm' })] : [])));
+  // The orb on anything with a press worth making right now.
+  if (canStartTech(state, id)) node.append(ctaBadge(1, `tech:${id}`));
+  node.addEventListener('click', () => { selected = id; game.notify(); });
   return node;
 }
 
 /**
- * A technology, opened (M30, upper).
+ * A technology, opened (M46): a loose research page — the same parchment as
+ * the book, pinned — read top to bottom in three parts that are never
+ * numbered on it:
  *
- * A MODAL over the whole book, not a panel resting on the bottom of it: the
- * one surface that says what a card does, what it needs and what it costs.
- * Two ways out, because a modal with one is a trap: the ✕ and the scrim.
+ *  1. what it is — its emblem and one plain sentence; the name is the heading;
+ *  2. Knowledge — the bar, and three pours with the price on the button: Gems
+ *     for every point still missing, +1, and as much as the bar allows;
+ *  3. research — the Gold above the button, and the button.
  *
- * The verbs follow the price (07-research.md §1, §5.4): **Invest** pours what
- * the bar holds; **Buy the rest** — once in Gold, once in Gems — covers what
- * the bar cannot; **Research** pays the Gold once the Knowledge is in.
+ * A technology whose requirements are not met shows part 1 and its
+ * requirements — the upgrade popup's rows — and nothing else: there is
+ * nothing in the other two to press. Two ways out: the knob and the scrim.
  */
-function techInfoModal(game: Game, id: TechId): HTMLElement {
+function techSheet(game: Game, id: TechId): HTMLElement {
   const state = game.state;
   const def = TECHNOLOGIES[id];
   const dismiss = (): void => { selected = null; game.notify(); };
+  const status = techState(state, id);
 
-  const panel = el('div', { class: 'tech-info', 'data-keep-scroll': 'tech-info' });
-  // The medallion at the left, the name beside it (M18).
-  const head = el('div', { class: 'tech-info-head' },
-    el('span', { class: 'tech-info-seal' }, def.glyph),
-    el('h3', {}, def.name),
-    knob('✕', dismiss, { label: 'Close' }));
-  panel.append(head);
-  // WHAT IT DOES, in full. The card carries only the glyph and the name, so
-  // this is the first place the player reads the sentence.
-  panel.append(el('div', { class: 'res-says' }, techLine(id)));
+  const page = el('div', { class: 'rb-sheet', 'data-keep-scroll': 'tech-info' },
+    el('h2', { class: 'rb-sheet-title' }, def.name),
+    el('div', { class: 'rb-rule', 'aria-hidden': 'true' }));
+
+  // ---- 1. what it is
+  page.append(el('div', { class: 'rb-about' },
+    el('span', { class: 'rb-emblem', 'aria-hidden': 'true' }, def.glyph),
+    el('p', { class: 'rb-says' }, techLine(id))));
   if (def.planned) {
-    // Said in the game, not only in a doc: a playtester who researches this
-    // must know before they pay that it does nothing yet.
-    panel.append(el('div', { class: 'res-planned' },
+    page.append(el('div', { class: 'res-planned' },
       iconEl('hourglass', { size: 'sm' }), 'Not yet in the prototype'));
   }
-  if (def.requires.length > 0) {
-    panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
-      el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },
-        `Requires ${TECHNOLOGIES[req].name} ${isTechComplete(state, req) ? '✓' : '✗'}`))));
-  }
 
-  if (isTechComplete(state, id)) {
-    panel.append(el('div', { class: 'delta' }, 'Researched ✓'));
+  if (status === 'done') {
+    page.append(el('div', { class: 'rb-done' }, iconEl('tick', { size: 'sm' }), 'Researched'));
+  } else if (status === 'locked') {
+    // What it needs, as the upgrade popup says it: a row each, ticked or not.
+    const short = eraShortfall(state, def.tome, def.era);
+    const gates = [
+      ...def.requires.map((req) => ({
+        met: isTechComplete(state, req), icon: 'research', label: `Research ${TECHNOLOGIES[req].name}`,
+      })),
+      ...(short > 0 ? [{ met: false, icon: 'compass', label: `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}` }] : []),
+    ];
+    page.append(sectionHead('Requirements'), el('div', { class: 'up-table' },
+      ...gates.map((g) => el('div', { class: `up-row k-section is-gate${g.met ? ' is-met' : ''}` },
+        iconEl(g.icon as never),
+        el('span', { class: 'up-row-label' }, g.label),
+        iconEl(g.met ? 'tick' : 'cross', { label: g.met ? 'Met' : 'Not met' })))));
   } else {
+    // ---- 2. Knowledge
     const need = techKnowledgeCost(id);
-    const poured = techPoured(state, id);
-    const missing = techKnowledgeMissing(state, id);
-    const held = game.walletValue('Knowledge');
-
-    // THE KNOWLEDGE, poured over need, as a bar you can watch fill.
+    const pours = game.techPours(id);
     if (need > 0) {
       const bar = progress('blue');
-      bar.set(poured / need, `${poured} / ${need}`);
-      panel.append(el('div', { class: 'res-poured' },
-        iconEl('Knowledge', { size: 'sm' }), bar.root));
-      if (missing > 0) {
-        panel.append(el('div', { class: 'muted res-wait' },
-          held >= missing ? `${missing} more — your bar covers it`
-            : held > 0 ? `${missing} more, ${held} in your bar` : `${missing} more`));
-      }
+      bar.set(techPoured(state, id) / need, `${techPoured(state, id)} / ${need}`);
+      page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
+        el('div', { class: 'rb-knowledge' },
+          bar.root,
+          // Once the Knowledge is in there is nothing left to pour.
+          ...(pours.missing === 0 ? [] : [el('div', { class: 'rb-pours' },
+            btn({
+              label: formatExact(pours.gems),
+              icon: 'Gems',
+              kind: 'gem',
+              onClick: () => game.doBuyMissingWithGems(id),
+              disabledReason: game.walletValue('Gems') < pours.gems ? 'Not enough Gems' : undefined,
+            }),
+            btn({
+              label: '+1',
+              icon: 'Knowledge',
+              kind: 'secondary',
+              onClick: () => game.doPourTech(id, 1),
+              disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
+            }),
+            btn({
+              label: `+${pours.most}`,
+              icon: 'Knowledge',
+              kind: 'secondary',
+              onClick: () => game.doPourTech(id),
+              disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
+            }))])));
     }
 
-    const short = eraShortfall(state, def.tome, def.era);
-    // ONE reason for the whole row, whichever is true. Affordability is never
-    // in it — the red number inside each button has already said that.
-    const blocked = !requirementsMet(state, id)
-      ? 'Research what it needs first'
-      : short > 0
-        ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
-        : undefined;
-    if (blocked !== undefined) {
-      panel.append(el('div', { class: 'tech-info-blocked' },
-        iconEl('padlock', { size: 'sm' }), blocked));
-    }
-
-    if (!isTechFilled(state, id)) {
-      const row = el('div', { class: 'tech-info-actions' });
-      row.append(btn({
-        label: 'Invest',
-        kind: 'primary',
-        onClick: () => game.doPourTech(id),
-        cost: { Knowledge: Math.min(missing, held) },
-        disabledReason: blocked ?? (held <= 0 ? 'Your bar is empty' : undefined),
-      }));
-      panel.append(row);
-      // What the bar cannot cover, at both tills — two buttons, because one
-      // press can only spend one currency.
-      const rest = game.techBuyRest(id);
-      if (rest.points > 0) {
-        panel.append(el('div', { class: 'res-buy-label' }, `Buy the other ${rest.points}`));
-        const buy = el('div', { class: 'tech-info-actions' });
-        buy.append(btn({
-          label: 'Gold',
-          kind: 'secondary',
-          onClick: () => game.doBuyRestAndPour(id, 'Gold'),
-          cost: { Gold: rest.gold },
-          have: (c) => game.walletValue(c),
-          disabledReason: blocked,
-        }));
-        buy.append(btn({
-          label: 'Gems',
-          kind: 'gem',
-          onClick: () => game.doBuyRestAndPour(id, 'Gems'),
-          cost: { Gems: rest.gems },
-          have: (c) => game.walletValue(c),
-          disabledReason: blocked,
-        }));
-        panel.append(buy);
-      }
-    }
-
-    panel.append(btn({
-      label: 'Research',
-      kind: isTechFilled(state, id) ? 'primary' : 'secondary',
-      onClick: () => game.doResearchTech(id),
-      cost: { Gold: techCost(id) },
-      have: (c) => game.walletValue(c),
-      disabledReason: blocked
-        ?? (isTechFilled(state, id) ? undefined : 'Fill it with Knowledge first'),
-    }));
+    // ---- 3. research — the upgrade popup's block: the price above, the button
+    const filled = isTechFilled(state, id);
+    const gold = techCost(id);
+    const shortGold = game.walletValue('Gold') < gold;
+    const note = filled ? null : 'Assign all its Knowledge to research it';
+    page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
+      el('div', { class: 'up-buy k-section' },
+        el('div', { class: 'up-price' },
+          ...(gold > 0 ? [el('span', { class: `up-price-chip${shortGold ? ' is-short' : ''}` },
+            iconEl('Gold'), el('b', {}, formatExact(gold)))] : [])),
+        btn({
+          label: 'Research',
+          kind: 'primary',
+          icon: filled ? undefined : 'padlock',
+          onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
+          disabledReason: !filled ? note! : shortGold ? 'Not enough Gold' : undefined,
+        }),
+        ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 
-  const scrim = el('div', { class: 'tech-modal' }, panel);
-  // The scrim dismisses; the panel does not, or every press inside it would
+  // The pin and the way out sit on the page's edge, outside what scrolls.
+  const scrim = el('div', { class: 'tech-modal' }, el('div', { class: 'rb-sheet-wrap' },
+    el('span', { class: 'rb-pin is-centre', 'aria-hidden': 'true' }),
+    closeKnob(dismiss),
+    page));
+  // The scrim dismisses; the page does not, or every press inside it would
   // close the thing being pressed.
   scrim.addEventListener('click', (e) => { if (e.target === scrim) dismiss(); });
   return scrim;
