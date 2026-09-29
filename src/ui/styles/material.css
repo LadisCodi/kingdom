@@ -33,7 +33,7 @@
 .dc {
   --win-edge: calc(var(--rpx) * 46);       /* the ring's slice: the rounded corner and the wood */
   --win-rail: calc(var(--rpx) * 28);       /* where the paper starts, under the ring's inner edge */
-  --win-pad: calc(var(--rpx) * 64);        /* the frame's outer edge to the contents: a generous margin */
+  --win-pad: calc(var(--rpx) * 52);        /* the frame's outer edge to the contents */
   --win-min: calc(var(--win-edge) * 2);    /* the frame at its least: top and bottom, nothing between */
   position: relative;
   isolation: isolate; /* so the frame's z-index: -1 stays inside the window */

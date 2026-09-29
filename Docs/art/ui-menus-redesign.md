@@ -354,7 +354,7 @@ Sheets slide up 180ms ease-out. Counters roll rather than snap.
 that leaves the map in sight — each kit sheet, the district card — is one
 simple panel of warm wood with rounded corners, a drop shadow all round to
 lift it off the map, and warm cream paper with a very soft texture inside,
-with a generous margin (80 rpx from the frame's outer edge) before the
+with a margin (52 rpx from the frame's outer edge) before the
 contents start. Three pieces, each cut to slice
 (`sheets/ui-window5-pieces.png`): the wood ring (nine-sliced, centre empty),
 the paper (under the ring), and the header band. It is as wide as it is on

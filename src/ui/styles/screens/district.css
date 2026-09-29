@@ -65,8 +65,8 @@
 .dc-portrait.k-section {
   position: relative;
   flex: none;
-  width: calc(var(--px) * 112);
-  height: calc(var(--px) * 100);
+  width: calc(var(--px) * 84);
+  height: calc(var(--px) * 75);
 }
 /* The picture runs right up to the outline, clipped to its inner radius. */
 .dc-portrait-mask {
@@ -88,12 +88,12 @@
   height: auto;
   translate: -50% -68%;
 }
-.dc-portrait-mask > .icon { --icon-size: calc(var(--px) * 64); position: absolute; inset: 0; margin: auto; }
+.dc-portrait-mask > .icon { --icon-size: calc(var(--px) * 48); position: absolute; inset: 0; margin: auto; }
 .dc-orn {
   position: absolute;
   z-index: 1;
-  width: calc(var(--px) * 16);
-  height: calc(var(--px) * 16);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
   background: url('../../assets/corner-ornament.png') center / contain no-repeat;
   pointer-events: none;
 }
