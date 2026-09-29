@@ -689,3 +689,16 @@ for.
   and it drew the Daily chest pill ~28% wide to make it fit. The real pill is
   ~40% of a 375px screen, so the two touch in the game — measure before
   building.
+
+## M33 — M32 simplified and narrowed (§7.19)
+
+- **Date:** 2026-09-29
+- **Conversation:** the M29–M32 conversation above, continued.
+- **File:** `mockups/m33-knowledge-tab-segmented.png` (1145×1374), opaque.
+- **Prompt:** §7.19 M33, sent from JS; arrived whole, ~3 min.
+- **What worked:** the straight-bottomed tab and the tall narrow segments
+  ("like a battery meter, each much taller than wide") came back as asked;
+  the base is ~31% of the width.
+- **What to know:** it lit six segments for *7* in strips 1 and 2, and it
+  hung the **+** outside the tab, on the map. It still drew the Daily chest
+  pill narrower (~28%) than the game's (~37% at 375px).
