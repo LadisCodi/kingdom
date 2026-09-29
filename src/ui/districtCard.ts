@@ -364,7 +364,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       bar.set(queueProgress(queueItem, t),
         queueItem.startedAt === null
           ? 'waiting for a builder'
-          : `${formatDuration(remainingSeconds(queueItem, t))} left`);
+          : formatDuration(remainingSeconds(queueItem, t)));
       const rush = btn({
         label: 'Finish',
         kind: 'gem',
