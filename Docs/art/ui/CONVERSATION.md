@@ -838,3 +838,16 @@ for.
 - **What to know:** both came back true alpha without asking for a correction.
   The sheet's wide corner slices are what keep the curl from stretching when a
   locked technology's sheet is short.
+
+## B3 — the technology sheet, drawn whole
+
+- **Date:** 2026-09-29
+- **Conversation:** `6abbfd0e-ae5c-83eb-bbae-f1027593b113`, continued; the
+  M46 sheet cropped from the mockup attached as the reference.
+- **Why:** B2's nine-sliced leaf read worse than M46's. The sheet never needs
+  to change size, so it is asked for whole: empty, a small stack, the curl.
+- **Files:** `sheets/rb-sheet-raw.png` (1024×1536) → `src/ui/assets/rb-sheet.png`
+  (the alpha box, 640×913), drawn at its own ratio across the sheet's width —
+  359×512 on a 375pt phone, which fits the tallest technology's sheet exactly.
+- **What to know:** the prompt said "NOT for nine-slicing … EMPTY" and it came
+  back true alpha with nothing painted on it.

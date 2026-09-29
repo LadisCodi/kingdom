@@ -429,9 +429,10 @@ minute. Each is in one of three states:
 
 ### 5.4 The technology's sheet
 
-**A loose research page** over the dimmed book — the same parchment, one pin
-at its top, the name as its heading, a close knob in its corner; the scrim
-closes it too. It reads top to bottom in three parts, never numbered:
+**A loose research page** over the dimmed book — a small stack of parchment,
+one pin at its top, the name as its heading, a close knob in its corner; the
+scrim closes it too. **Every sheet is the same size**: as tall as the tallest
+technology's needs, whatever state it is in. It reads top to bottom in three parts, never numbered:
 
 1. **What it is** — the emblem in a framed square and one plain sentence of
    what it unlocks or does (§1). A minor rank's sentence carries its numbers.
@@ -441,7 +442,9 @@ closes it too. It reads top to bottom in three parts, never numbered:
    - **+1** — one point from the bar;
    - **+N** — as much as it can: the least of what the bar holds and what is
      missing.
-   Once the Knowledge is in, the buttons go and the full bar stays.
+   Once the Knowledge is in, the full bar stays and a line takes the buttons'
+   place, as tall as they are: *All its Knowledge is in — it is ready to
+   research*.
 3. **Research** — the upgrade popup's block: the Gold above a wide
    **Research** button, which is locked with *Assign all its Knowledge to
    research it* under it until the bar is full. It researches on the press,

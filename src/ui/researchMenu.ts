@@ -279,7 +279,8 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
  *
  *  1. what it is — its emblem and one plain sentence; the name is the heading;
  *  2. Knowledge — the bar, and three pours with the price on the button: Gems
- *     for every point still missing, +1, and as much as the bar allows;
+ *     for every point still missing, +1, and as much as the bar allows; once
+ *     it is full, a line saying so in their place;
  *  3. research — the Gold above the button, and the button.
  *
  * A technology whose requirements are not met shows part 1 and its
@@ -331,8 +332,10 @@ function techSheet(game: Game, id: TechId): HTMLElement {
       page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
         el('div', { class: 'rb-knowledge' },
           bar.root,
-          // Once the Knowledge is in there is nothing left to pour.
-          ...(pours.missing === 0 ? [] : [el('div', { class: 'rb-pours' },
+          // Once the Knowledge is in there is nothing left to pour: a line in
+          // the buttons' place, as tall as they are, so the sheet keeps its size.
+          ...(pours.missing === 0 ? [el('div', { class: 'rb-filled' },
+            iconEl('tick'), el('span', {}, 'All its Knowledge is in — it is ready to research'))] : [el('div', { class: 'rb-pours' },
             btn({
               label: formatExact(pours.gems),
               icon: 'Gems',
