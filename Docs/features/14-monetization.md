@@ -48,15 +48,17 @@
 | Family | Examples | Effect |
 |---|---|---|
 | **Power** | silver and gold keys; card packs and wildcards | stronger heroes and higher relics, sooner — at published odds |
-| **Comfort** | rush a timer, refill Mana, refresh the shop | buys back the player's time |
+| **Comfort** | rush a timer, refill Mana, buy Knowledge, refresh the shop | buys back the player's time |
 | **Breadth** | hero slots, builders | more things at once |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
 
 - The Gems plaque in the header opens the store (§2.1).
-- Gems buy **five** things: **keys**, hero slots, builders, Mana refills, and
-  the collection's **packs and wildcards**, through offers
+- Gems buy **six** things: **keys**, hero slots, builders, Mana refills,
+  **Knowledge** at a fixed price a point
+  ([`07-research.md`](07-research.md) §3.2), and the collection's **packs and
+  wildcards**, through offers
   ([`09-relics.md`](09-relics.md) §6, §9). Two of those are one-time ladders;
   the refill is a ladder that **resets every day**
   ([`08-magic.md`](08-magic.md) §6).
@@ -339,7 +341,7 @@ One page, refreshed weekly:
 | Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gemRefillCosts` |
 | Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.secondsPerGem` |
-| Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slotGemCost*` |
+| A point of Knowledge | fixed — **OQ-105** | `knowledge.gemsPerPoint` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.heroSlotGemCost*` |
 | Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `packs`, `gemCost` |
 | Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |

@@ -2,8 +2,8 @@
 
 > **Scope.** Every currency and its job, and where the city's Gold comes from.
 > Mana is [`08-magic.md`](08-magic.md); the collection's cards
-> are [`09-relics.md`](09-relics.md); Knowledge as a research clock is
-> [`07-research.md`](07-research.md).
+> are [`09-relics.md`](09-relics.md); the Knowledge bar and buying Knowledge
+> are [`07-research.md`](07-research.md) §3.
 >
 > **Status: built**, except the Knowledge ↔ Stardust split (§1.1), which is
 > designed, not built.
@@ -13,7 +13,7 @@
 - The city runs on Gold, Food, Wood and Stone.
 - Mana is what magic costs.
 - Stardust comes out of dungeons and pays a hero's ascension toll.
-- Knowledge is a clock that paces research.
+- Knowledge fills a bar with time and is poured into research.
 
 | Currency | Source | Buys | Scope | On the plank? |
 |---|---|---|---|---|
@@ -22,7 +22,7 @@
 | **Wood** | forest | buildings | city | yes |
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
-| **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
+| **Knowledge** | time, capped · territory · rewards · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its bar — **OQ-104** |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
 | **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
@@ -52,12 +52,12 @@
 
 | Name | Job | Source | Scope |
 |---|---|---|---|
-| **Knowledge** | the research clock | time, capped | **city** |
+| **Knowledge** | what research is paid in | time, capped · rewards · Gold · Gems | **kingdom** |
 | **Stardust** | the toll on a hero's ascension | dungeons | **kingdom** |
 | **Hero XP** | levels of heroes | dungeons | **kingdom** |
 
-- Knowledge is city-scoped, like Mana; it does not survive a region reset.
-- Stardust and Hero XP are kingdom-scoped; they survive a region reset.
+- Knowledge is kingdom-scoped; it survives a region reset.
+- Stardust and Hero XP are kingdom-scoped too.
 - In docs and code the key is `Stardust`; *Polvo estelar* is the localised
   string.
 

@@ -45,7 +45,7 @@
    what you can control and the rest is their preparation.
 3. **Wallets buy power, comfort and breadth — but never exclusivity.**
    Nothing is purchase-only that cannot also be earned. Every paid ladder is
-   earned first — research grants a slot before Gems can buy one.
+   earned first — Knowledge drips before Gold or Gems can buy more.
 
 ## The core loop
 
@@ -96,7 +96,8 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 ## The economy
 
 > **The city runs on Gold, Food, Wood and Stone. Mana is what magic costs.
-> Stardust comes out of dungeons. Knowledge is a clock that paces research.**
+> Stardust comes out of dungeons. Knowledge fills a bar, and research is paid
+> in it.**
 
 - Eight wallet rows; **five on the plank, three of them for the whole first
   hour**.
@@ -107,6 +108,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - housing taxes → Gold → fog, buildings and research
   - harvest → materials → buildings
   - Mana → magic
+  - time, territory, rewards, Gold, Gems → Knowledge → research
   - rooms → card packs → albums → relic levels
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
@@ -116,7 +118,8 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 - **Mana is what magic costs, wherever you are.** In the city it hurries
   production — a tap is a small spell. On the world map it bends an expedition
   or shortens a march.
-- The only capped currency. It refills whether or not the player is playing.
+- Capped, and what arrives over the cap is lost. It refills whether or not
+  the player is playing.
 - A new kingdom starts full.
 - The pool fills in 10 hours at every stage — past the 8-hour offline cap, so
   the pool can run out.
@@ -130,8 +133,12 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 > **A book is a choice about what kind of kingdom this is.**
 
 - Research lives in **spellbooks**. A book is a page of technologies; a
-  technology opens a mechanic, a building, a unit or a number, and **Knowledge
-  is the clock** that paces it.
+  technology opens a mechanic, a building, a unit or a number. **Knowledge is
+  poured into it** until it is full, then Gold completes it on the spot — there
+  is no research time and no queue.
+- **Knowledge fills a bar with time**, faster the more of the province is held,
+  and the drip stops when the bar is full. Rewards land over the cap. More can
+  be bought with Gold, dearer with every point ever bought, or with Gems.
 - **General books** are open from the start and every kingdom has them. They
   hold the spine of the game: the city, the army, the basic enchantments.
 - **Specific books are found, not bought** — at the bottom of a ruin, out of an

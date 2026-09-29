@@ -1,8 +1,8 @@
-# 7 · Research — the books, eras, and Knowledge as a clock
+# 7 · Research — the books, eras, and the Knowledge bar
 
 > **Scope.** The research **system**: technologies, the books and their
-> eras, the Knowledge currency that paces them, the Knowledge ↔ Stardust split,
-> the research screen, and spells as technologies. The **content** — every
+> eras, the Knowledge bar that pays for them, buying Knowledge, the
+> Knowledge ↔ Stardust split, the research screen, and spells as technologies. The **content** — every
 > node, the rank ladders and the price bands — is
 > [`tech-tree.md`](tech-tree.md).
 >
@@ -11,7 +11,10 @@
 > **built**, and the shape is authored in `?dev=tree`
 > ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
 > **the found books (§2.3)**, spells as Magic nodes (§6),
-> contested-landmark lumps (§7), guild investment (§8).
+> contested-landmark lumps (§7), guild investment (§8), and **the Knowledge
+> bar (§3) — its cap, pouring into a technology and instant completion (§1),
+> and buying Knowledge with Gold and Gems (§3.2)**. The build still runs
+> research time and slots.
 
 ## 1. Technologies
 
@@ -19,8 +22,8 @@
   district level, a unit, a terrain, a mechanic, or one numeric step.
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
   `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name
-  and glyph, its KIND, what it unlocks or what it moves, its Gold, Knowledge
-  and seconds, its slot on its tome page and what it requires.
+  and glyph, its KIND, what it unlocks or what it moves, its Gold and
+  Knowledge, its slot on its tome page and what it requires.
 - **What a technology SAYS is generated from what it does**
   (`src/sim/techProse.ts`) — from its `unlocks`, or from one sentence per
   effect written against the stat in the registry. Only a `mechanic` carries
@@ -39,69 +42,43 @@
   level's, one more of a district, a unit's, a harvest source's, a terrain's.
   No district, unit or harvest row names its own technology any more, and two
   technologies claiming one gate is an error.
-- **Cost: Gold + Knowledge + time.** Gold is paid from the **city** purse, so
-  the tree competes with fog, buildings and Wonders for one budget
-  ([`16-wonders.md`](16-wonders.md) §1). Knowledge is paid from the **kingdom**
-  wallet (§3). Both are paid up front, in one go, like a build. No
-  part-payment.
-- **Every era costs Knowledge, era 1 included** (2026-09-08): the clock runs
-  from the first minute on a base rate, so the opening pays it too — 1 for a
-  rank, 2 for a major, against nothing at all — the quest chain pays for what
-  it asks for ([`12-quests.md`](12-quests.md) §2.1). Era-1 nodes run 3–120 s.
-- Research completes through the unified advance, in real time, while the
-  player is away. `techCompletesAt` is its boundary source.
-- **Slots:** base 1, max 3. Slot 2 costs 2,500 Gems, slot 3 costs 5,000
-  (`base × growth^purchased`). Slots are bought with Gems and by nothing else;
-  no technology grants one.
-- `Scriveners I–III`: −5% research time per rank, fixed when the research
-  starts and persisted on it. A rank landing mid-research does not move that
-  research; the next one is quicker.
+- **Cost: Knowledge + Gold. There is no research time.**
+  - **Knowledge is poured in.** `Invest` moves Knowledge from the bar into the
+    technology — as much as the bar holds, up to what is still missing — on as
+    many visits as it takes (§3).
+  - **Gold is paid once, when the Knowledge is full**, from the **city**
+    purse, so the tree competes with fog, buildings and Wonders for one budget
+    ([`16-wonders.md`](16-wonders.md) §1).
+  - **Paying the Gold completes the technology at that instant.** Nothing is
+    under study and nothing waits, so research has no boundary source.
+- **Poured Knowledge stays in its technology.** It is never returned, moved to
+  another technology or lost; a half-filled technology keeps its progress for
+  ever.
+- **Any number of technologies may hold poured Knowledge at once.** There are
+  no research slots.
+- Pouring needs what starting needs: every requirement researched and the
+  band open (§2.1). A technology that cannot be researched cannot be poured
+  into.
+- **Every era costs Knowledge, era 1 included** — 1 for a rank, 2 for a major
+  — and the quest chain pays for what it asks for
+  ([`12-quests.md`](12-quests.md) §2.1).
 - Each node lists `requires` (one to three); content gates on `requiredTech`.
   A prerequisite never points into another tome, and never at a card further
   down its own page. A card on a page's **first row** requires nothing —
   there is nothing above it to require, which is what opening a book means.
-- **Gems finish a running research**, at the same price per second a build
-  rush pays (`rush.secondsPerGem`), pressed from the technology's own sheet.
-  The technology is moved to completed there and then rather than by
-  shortening its duration: a duration edited backwards puts a boundary in the
-  past, and one-call replay and stepped ticking would land on it differently.
-- **Gems also buy an idle technology outright — `Instant`.** Two clocks stand
-  between it and the shelf, and both are priced the same way:
-
-```
-gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time )
-       ÷ rush.secondsPerGem
-```
-
-- **A currency that arrives on a clock is a duration wearing a number**, so
-  the shortfall is converted through its own rate and the two waits become
-  comparable. Knowledge always has a base rate, which is what keeps the
-  conversion finite; at a rate of zero there is no honest price and the button
-  is not offered.
-- **Gold is not in it.** There is no Gems→Gold rate anywhere in the game and
-  this does not invent one: Gems buy time, breadth and power, and the city's
-  purse is the city's ([`14-monetization.md`](14-monetization.md) §1). The
-  Gold is still paid, and the Knowledge already held is still spent — the Gems
-  bought the gap, not a refund.
-- **It needs no free slot.** A slot is a scholar's desk and the strip limits
-  what is *under study*; an instant purchase never goes under study, so it
-  occupies no desk and a full strip does not stop it. On the technology's
-  sheet the "Every scholar is busy" line therefore disables `Start` only.
-- **The magnitude is a live question.** `rush.secondsPerGem` was calibrated on
-  BUILD waits, which run in seconds and minutes; a Knowledge wait runs in
-  hours. Two Knowledge at the base 1/h is two hours, which is **1,440 Gems**
-  — against a 500-Gem opening purse. Consistent with every other rush, and
-  probably too steep to ever be pressed. **OQ-87.**
-- The tree has 172 rows: **Civics 66 · Magic 53 · Warfare 53**, totalling
-  **504,430 Gold and 2,366 Knowledge**. Price bands per era are in
+- **Gems never complete a technology.** They buy Knowledge (§3.2), which is
+  poured like any other; the Gold is always the city's
+  ([`14-monetization.md`](14-monetization.md) §1).
+- The tree has 169 rows: **Civics 63 · Magic 53 · Warfare 53**, totalling
+  **494,680 Gold and 2,324 Knowledge**. Price bands per era are in
   [`tech-tree.md`](tech-tree.md) §5.
 
 ### 1.1 Majors and minors
 
 | Band | What it does | Price |
 |---|---|---|
-| **Major** | unlocks content | expensive, long |
-| **Minor** | one numeric step; carries a roman numeral (`Sawpits I → II → III`) | cheap, short |
+| **Major** | unlocks content | expensive |
+| **Minor** | one numeric step; carries a roman numeral (`Sawpits I → II → III`) | cheap |
 
 - A **rank ladder** is a chain of ranks; each rank requires the one before.
   A ladder is a naming convention — a stem plus a roman numeral — not a field.
@@ -109,8 +86,7 @@ gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time
   of every earlier ladder, and rank I of the ladders it introduces.
 - A ladder may **ramp**: each rank carries its own value, so +1, +2, +3 is as
   legal as +1, +1, +1.
-- A rank costs Gold, Knowledge and time like any other node. There are no
-  instant purchases in the tree.
+- A rank costs Knowledge and Gold like any other node.
 - The ladders per tome are listed in [`tech-tree.md`](tech-tree.md) §2–§4.
 
 ### 1.2 What a bonus moves
@@ -170,7 +146,7 @@ A `bonus` names its effects, and each is four fields:
   ever after. No technology opens a book. What paces an open book is its era
   bars, which ask for revealed cells (§2.1).
 - **Nothing is granted and nothing is free.** A fresh kingdom has an empty
-  `completed`, and every technology costs Gold and takes time.
+  `completed`, and every technology costs Knowledge and Gold.
 - **No edge crosses tomes.** Townhall level gates the Sanctum (L2 needs TH2)
   and the four military halls independently of the tree, so Civics paces the
   other two without an edge.
@@ -270,7 +246,7 @@ A `bonus` names its effects, and each is four fields:
 > **A book is a choice about what kind of kingdom this is.**
 
 - A specific book is **the same object as a general one** — one page, three
-  columns, era bars, technologies that cost Gold and take time. What differs is
+  columns, era bars, technologies that cost Knowledge and Gold. What differs is
   that it is **narrow and deep**: it does one thing no general book does, and it
   is shut until the kingdom owns it.
 - **Where they come from:**
@@ -294,28 +270,27 @@ A `bonus` names its effects, and each is four fields:
   how fast** — which is what makes a ruin worth returning to once its loot has
   stopped mattering.
 
-## 3. Knowledge, the clock
+## 3. Knowledge, the bar
 
 - **Kingdom-scoped.** Lives in `state.kingdom.wallet` under the key
   `Knowledge`; survives a province reset.
 - **Buys technologies and nothing else** (plus guild investment, §8, when
-  built).
-- **Uncapped.** A lump is a plain addition.
+  built). It is spent by pouring (§1).
+- **It fills with time, up to a cap, and the drip stops at the cap.**
+  - **The cap is hours of drip**: `cap = ceil(rate × knowledge.barHours)`.
+    A faster drip gets a bigger bar, so a full bar always takes the same time
+    to fill.
+  - **Only the drip stops.** A lump — a quest, a claim, a first clear, an
+    event — and a purchase (§3.2) always land in full, even over the cap. The
+    drip resumes once the bar is back under it.
+  - Nothing over the cap is ever lost; the cost of a full bar is the drip it
+    did not earn.
 - **A base rate, and territory on top of it.** The kingdom learns **1 an
-  hour** holding nothing, so the tree opens on the calendar; every landmark
-  and ruin adds to that, so the province makes it open faster. A new kingdom
-  starts with **no Knowledge**. The opening chain pays for its own cards
-  instead — quest 1 covers the first research, and eleven quests pay Knowledge
-  between them, enough to carry the chain to `Attuned` with no drip
-  ([`12-quests.md`](12-quests.md) §2.1). A grant at the title screen
-  taught the player nothing about where the clock comes from. **After the
-  opening the base rate is the funding**, which is what the rate is for.
-- **The rate is a fraction of one an hour, and the prices are tens.** Both
-  were divided by ten on 2026-09-08: a research had come to cost thousands of
-  a currency that dripped in whole units, which is a number nobody can hold in
-  their head. Nothing about the pacing moved — the harness reaches the same
-  Townhall level on the same day — and the ranks that lift the rate are
-  fractions too (Wayposts, Vigils: +0.1 an hour each).
+  hour** holding nothing; every landmark and ruin adds to that.
+- **A new kingdom starts with no Knowledge.** The opening chain pays for its
+  own cards: eleven quests pay Knowledge, enough to carry the chain to
+  `Attuned` with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
+  opening the drip and the rewards are the funding.
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
@@ -328,58 +303,65 @@ A `bonus` names its effects, and each is four fields:
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | the `insight` delve boon (×3) |
 | the **quest chain** | — | 27 across eleven quests | `quests` › `rewardKnowledge` |
+| **events** | — | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
+| **buying it** | — | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.gemsPerPoint` |
 
-- **The balance rides on the game's own plank while the research screen is
-  open**, beside Gold, in place of Food and timber — a technology is priced in
-  both halves and neither should be a screen away from the button that spends
-  it. **The rate rides with it**, a small `+1/h` beside the number, because a
-  drip you cannot see the speed of is a drip you cannot plan against.
 - A kingdom holding nothing drips **1/h** (24 a day); a fully explored
   province — ten landmarks, five ruins — **4/h** (96 a day) before
   `Conquest`, **5.5/h** after.
 - The clock banks whole units on a **whole-millisecond period** rounded from
   the rate, which is what keeps one-call replay identical to stepped ticking
   when the rate is a fraction (invariant 1).
-- **The chain seeds the clock, then lets go.** Eleven quests pay Knowledge —
-  `FirstSteps`, `Explorer`, `Fields`, `ProperCapital`, `TheSawmill`, `Crewed`,
-  `Levies`, `FurtherAfield`, `OldStones`, `IntoTheDark`, `Stoneworks` — all of
-  them in the opening, so every technology the chain asks for **up to
-  `Attuned`** is affordable when asked with zero drip
-  (`tests/quests.test.ts`). Past it the drip pays, and the back half's cards
-  are a wait rather than a wall.
-- `knowledgePerHour` and `accrueKnowledge` (`src/sim/mana.ts`) accrue whole
-  units against the anchor `state.kingdom.lastKnowledgeAt` — the same shape as
-  taxes and Mana, so all three replay identically. No boundary source and no
-  settling step at a rate change.
 - **Invariant 2:** the drip is *production* and stops at the 8-hour offline
-  cap. Lumps ride the event that grants them and pay in full in the uncapped
-  tail.
-- Knowledge has no coin on the plank. It shows in the Research header with its
-  rate; a node the player cannot yet afford shows a time-to-afford line
-  (`knowledgeShortfallMs`).
+  cap as well as at the bar. Lumps ride the event that grants them and pay in
+  full in the uncapped tail.
+- The balance reads as **held / cap** with the rate beside it. Where the bar
+  is shown outside the research screen is **OQ-104**.
 
 ### 3.1 Knowledge and Mana
 
 | | Mana | Knowledge |
 |---|---|---|
 | Scope | city | kingdom |
-| Fills with | time | claimed landmarks and cleared ruins |
-| Ceiling | capped | uncapped |
-| Spent on | taps and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies |
+| Fills with | time | time, landmarks and cleared ruins |
+| Ceiling | capped; what arrives over the cap is lost | capped; only the drip stops, and lumps and purchases land over it |
+| Spent on | taps and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies, poured |
+| Bought with | Gems, a rewarded video | Gold, Gems (§3.2) |
+
+### 3.2 Buying Knowledge
+
+- **Knowledge is bought one point at a time, with Gold or with Gems**, from
+  the bar's own button and from a technology's sheet (§5.4). A purchase lands
+  in the bar (over the cap if it must) and is poured like any other point.
+- **Gold: every point costs more than the last, for ever.**
+
+```
+the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
+```
+
+  - The count is the kingdom's and **never resets** —
+    not daily, not at a season, not at a province reset.
+  - Buying several at once costs the sum of their prices, shown as one number.
+  - Gold is the city's purse: a point bought is fog, a building or a Wonder
+    level not bought.
+- **Gems: a fixed price per point**, `knowledge.gemsPerPoint`. It never
+  rises.
+- Buying never needs a free anything: there is nothing to occupy.
 
 ## 4. Knowledge and Stardust
 
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
-| **Knowledge** | technologies | claimed landmarks, cleared ruins, quest lumps | kingdom | the Research header, with its rate |
+| **Knowledge** | technologies | time, claimed landmarks, cleared ruins, quest and event lumps, Gold, Gems | kingdom | its bar (§3, **OQ-104**) |
 | **Stardust** | the hero ascension toll (`src/sim/collection.ts`; [`10-heroes.md`](10-heroes.md) §4) — relic levels left it 2026-09-09 ([`09-relics.md`](09-relics.md)) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the hero screens |
 
 - One job each. `knowledgeYield` multiplies the drip; `stardustYield`
   multiplies what a depth pays.
 - A ruin's first clear pays **both** lumps.
-- Neither has a row on the plank: a currency spent in exactly one screen
-  lives in that screen's header. The full currency table is
-  [`03-economy.md`](03-economy.md) §1.
+- Stardust has no row on the plank: a currency spent in exactly one screen
+  lives in that screen's header. Knowledge is the exception that has to be
+  seen from the map, because a full bar stops earning (**OQ-104**). The full
+  currency table is [`03-economy.md`](03-economy.md) §1.
 - The code and doc key is `Stardust`; *Polvo estelar* is the localised string
   only.
 
@@ -395,7 +377,7 @@ A `bonus` names its effects, and each is four fields:
 
 | State | Drawn as |
 |---|---|
-| **Normal** | researched, researching, or buyable — every prerequisite researched |
+| **Normal** | researched, partly poured, or pourable — every prerequisite researched |
 | **`?` silhouette** | one step ahead — every prerequisite is **normal**, so what comes next appears as soon as the card before it can be read, not once the player has paid for it. A dim dashed card with a `?`: no name, no cost, not tappable |
 | **Hidden** | anything deeper is not rendered. A silhouette does not reveal its own children, so the frontier stays one step wide |
 
@@ -405,16 +387,16 @@ A `bonus` names its effects, and each is four fields:
   its bar, because the bar is the statement that there is more book.
 - The page scrolls vertically and nothing else — it is exactly the phone's
   width by construction. On a fresh open it lands on the WORK: whatever is
-  running or startable, and failing that the last thing finished.
+  partly poured or pourable, and failing that the last thing finished.
 
 ### 5.3 Cards
 
 - A card carries its **glyph and its name**, and nothing else. What a
   technology does is a sentence, and a sentence on a 120px card is three
   clipped lines that have to be tapped to be read anyway — so the card is an
-  emblem and §5.4 does the talking. A dot marks anything startable now; an
-  active research shows a progress bar.
-- Colour is the state: researched, available, running.
+  emblem and §5.4 does the talking. A dot marks anything pourable now; a
+  technology holding poured Knowledge shows how full it is.
+- Colour is the state: researched, available, partly poured.
 - A card in a **locked band** is drained of colour and not startable; the bar
   above it says how many cells are left.
 - A planned node is drawn dashed and hatched, like the fog's `?`, and carries
@@ -426,15 +408,13 @@ A `bonus` names its effects, and each is four fields:
 **A modal over the whole book** (built 2026-09-08), not a panel resting on the
 bottom of it. A panel had to stay short enough to leave the page usable
 behind it, which is the wrong constraint on the one surface that has to say
-what a card does, what it needs, what it costs and how long it takes — and
+what a card does, what it needs and what it costs — and
 nothing else is actionable while it is up, so nothing else needs the room.
 
 - One tap on a card, one sheet over the page, centred, on the scrim. **Two
   ways out** — the ✕ in its header and the scrim itself — because a modal with
   one is a trap. Header and nav stay above it, so the purse is readable while
   the player reads prices.
-- **Start research** while it is idle, and **Finish now** in Gems while it is
-  running (§1).
 - Title: name, with the rank numeral for a minor (*Sawpits II*).
 - **What it does:** the generated line in full (§1) — the first and only place
   it is read.
@@ -448,41 +428,29 @@ Tap Power        +40%  →  +60%
 - Requirements: prerequisite medallions, ✓ / ✗, tappable to scroll there —
   including the one that reaches back over an era bar, which the page does not
   draw (§2.2).
-- Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short. Behind
-  a locked bar the action reads "Reveal N more cells to read on".
-- Actions: **Instant** and **Start** side by side on an idle one, the Gem one
-  on the left — two ways to have the same thing, and choosing between them is
-  comparing two prices, so neither sits under the other. **Finish now** in
-  Gems on a running one.
-- **One blocked line for the pair.** A missing requirement or a shut band
-  stops both buttons; a full slot strip stops `Start` alone, since `Instant`
-  needs no scholar (§1).
-- **`Duration: 5m` reads with the other properties**, under the description.
-  It is a fact about the technology, true whichever button the player uses or
-  neither, so it does not live inside one of them.
-- **One reason for the pair**, above it. Both are stopped by the same three
-  things — a requirement, a shut band, a full strip — and saying it twice
-  between two buttons is a wall of the same sentence. Affordability is never
-  in it: the red number inside each button has already said that.
+- **Cost:** Knowledge as **poured / needed**, and the Gold. When the bar
+  cannot cover what is missing, the sheet says how long the drip takes to
+  cover it. Behind a locked bar the action reads "Reveal N more cells to read
+  on".
+- **Actions, in the order the player meets them:**
+  - **Invest** while Knowledge is missing — pours what the bar holds, up to
+    what is missing (§1).
+  - **Buy the rest** beside it when the bar cannot cover the gap: the missing
+    points in Gold and in Gems, two prices side by side (§3.2). Bought points
+    are poured at once.
+  - **Research** once the Knowledge is full — pays the Gold and completes the
+    technology.
+- **One reason for the whole row.** A missing requirement or a shut band stops
+  every action, and says so once. Affordability is never in it: the red
+  number inside each button has already said that.
 
-### 5.5 The slots
+### 5.5 The bar on the book
 
-**A horizontal strip anchored left, across the top of the book.** It replaced
-a sentence — *2 of 3 at work* — and a Hire button beside it. A count is an
-abstraction; a row of desks is the thing itself: how many you have, which are
-running, when each frees up, and what the next one costs, in one glance and
-in the same units.
-
-- **Every unlocked slot, plus one locked one while there are more to buy.**
-  Never the whole ladder: an empty slot is an invitation, and four of them is
-  a shop.
-- Three states, each with its own line underneath:
-
-| State | The box | The line under it |
-|---|---|---|
-| **Free** | drawn open, dashed — an invitation, not a filled thing | *Free* |
-| **In use** | the technology's glyph; tapping it opens that technology's sheet, which is where the Gem finish is | the time left |
-| **Locked** | the one gem-toned slab on the row; tapping it buys | the Gems it costs |
+- The book's header carries the Knowledge bar: **held / cap**, the rate, and
+  the time until it is full — or *Full* when the drip has stopped.
+- Tapping it opens the purchase (§3.2): how many points, and their price in
+  Gold and in Gems.
+- Where the bar lives outside the book is **OQ-104**.
 
 ## 6. Magic holds no spells
 
@@ -508,10 +476,10 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 
 ## 7. Ruins and landmarks
 
-- A **cleared ruin** pays 150 Knowledge on first clear and +2/h after (§3).
+- A **cleared ruin** pays 15 Knowledge on first clear and +0.2/h after (§3).
 - **No tome is gated behind anything.** Every book is open, so a ruin being
   *discovered*, not cleared.
-- A **province landmark** pays +50 on claiming and +2/h while held.
+- A **province landmark** pays +5 on claiming and +0.2/h while held.
 - A **contested world-map landmark** ([`02-map-scopes.md`](02-map-scopes.md)
   §4) pays a Knowledge lump when taken and nothing while held *(designed, not
   built)*. Province landmarks stay on rate.
@@ -520,8 +488,8 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 
 - The same "invest N Knowledge" action points at a guild structure; the top
   contributors are paid when it completes.
-- Investment is a separate verb from buying a technology (a technology is
-  bought outright, §1); the UI teaches the gesture on its own.
+- It is the same gesture as pouring into a technology (§1), aimed at a
+  guild structure instead.
 - Dependency of [`15-social.md`](15-social.md) §7. Donating to another
   player's Wonder is kept out of [`16-wonders.md`](16-wonders.md) §12 and is
   **OQ-59**.
@@ -531,18 +499,19 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 | Dial | Value | Key |
 |---|---|---|
 | Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
-| Landmark drip · claim lump | 2/h · 50 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
-| Ruin drip · first-clear lump | 2/h · 150 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
-| Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
-| Chain Knowledge | 500 total | `quests` › `rewardKnowledge` |
-| **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **The bar: hours of drip it holds** | 8 h — **OQ-105** | `knowledge.barHours` |
+| **Gold price of a point** | base × n, never reset — **OQ-105** | `knowledge.goldPriceBase` |
+| **Gem price of a point** | fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| Base drip | 1/h | `knowledge.basePerHour` |
+| Landmark drip · claim lump | 0.2/h · 5 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
+| Ruin drip · first-clear lump | 0.2/h · 15 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
+| Conquest drip | 0.3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
+| Chain Knowledge | 27 total | `quests` › `rewardKnowledge` |
+| **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many bands a book has, and what each asks for | 3 · 4 · 4 bands; 0 · 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
-| Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
-| `Scriveners` per rank | −5% research time | `tech-tree.json` (its own `effects`) |
 | A spell's Mana cost | per spell | a `spells` collection *(designed)* |
-| Gems to finish a running research | undecided | *(designed)* |
 
 ## 10. Deliberately not in this design
 
@@ -552,14 +521,15 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   describes drifts the first time a ladder is rebalanced: 150 cards once
   shared 68 sentences, and five contradicted their own effects. The card is
   generated (§1); a `mechanic` writes one because its effect is code.
-- A Knowledge cap.
-- A base Knowledge rate, or one scaled by Townhall level or population.
-- A city-scoped research clock.
-- Buying Knowledge with resources.
+- A Knowledge rate scaled by Townhall level or population.
+- City-scoped Knowledge.
+- Buying Knowledge with anything but Gold and Gems; a Gold price that resets.
 - A library district or a scholar assignment as Knowledge sources
   ([`03-economy.md`](03-economy.md) §9).
 - Mana paying for research.
-- Trickle-and-commit: pouring Knowledge into a technology across visits.
+- **Research time**, and anything that shortens it.
+- Withdrawing poured Knowledge, or moving it to another technology.
+- Gems completing a technology, or paying its Gold.
 - A Knowledge or Stardust row on the plank (§4).
 - Five *general* books; one radial canvas for the whole tree; a tab per band.
 - A global age ladder instead of per-tome eras.
@@ -591,7 +561,7 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 - The same stat appearing in two tomes (§2).
 - A spell gated on anything after its discovery — a slot, a charge, a
   cooldown, an equipped item (§6).
-- A technology that grants a slot; a per-tome research slot.
+- **Research slots** of any kind, bought or granted.
 - Tomes found in ruins; a tome gated behind a ruin (§7).
 - A contested landmark that raises the Knowledge rate (§7).
 - A `mul` op beside `percent` and `flat`. `SanctifiedRuins` and `Roadworks`
@@ -604,5 +574,5 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   (§1.2).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-69**. (**OQ-68** is retired: a band is not held by a keystone
+**OQ-59**, **OQ-69**, **OQ-104**, **OQ-105**. (**OQ-68** is retired: a band is not held by a keystone
 any more, and what each bar asks for is a number, so it is OQ-13.)
