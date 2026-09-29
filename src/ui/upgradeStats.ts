@@ -76,6 +76,8 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
     add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
+    // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
+    out[out.length - 1].onCard = false;
   }
   // A crew's haul and swing are the late levels' gift, neutral until then,
   // and the card's Production already counts them in: the popup's pair shows

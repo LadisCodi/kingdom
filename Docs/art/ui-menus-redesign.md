@@ -461,12 +461,12 @@ wood of its sides touches the screen's edges.
   `mockups/m29-workers-stepper.png`, proposal B), a stepper:
   - the red − knob, the villager's round portrait with the crew on its
     pill (*x2*), *2 / 3 Assigned* in large type, and the green + knob;
-  - a stat tile per source, of the card's kind, with what there is to work
-    in a short word (*Fields*, *Trees*, *Rocks*, *Iron*, *Gold*, *Shoals*);
-    what the crew MAKES leads the card's stat band instead (*Food +45 /min*,
-    the resource as the tile's word). The crew's haul and swing are the
-    upgrade popup's only: neutral until a late level, and already counted
-    in that output;
+  - nothing else: the card's stat band leads with what the crew MAKES
+    (*Food +45 /min*, the resource as the tile's word) and what there is to
+    work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,
+    *Iron*, *Gold*, *Shoals*). The crew size, haul and swing are the
+    upgrade popup's only — the stepper already shows the crew, and haul and
+    swing are counted in that output;
   - a tip in the information blue with a round "?" badge, when the crew
     outnumbers its work (a crew wants about two cells each) or nobody works
     here yet;
@@ -474,7 +474,7 @@ wood of its sides touches the screen's edges.
     card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
-  *Crew*, *Training* — so three fit a phone's width; the full name is the tile's
+  *Fields*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower

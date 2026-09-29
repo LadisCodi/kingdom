@@ -228,11 +228,6 @@
 .dc-crew-count { display: flex; flex-direction: column; align-items: center; line-height: 1.05; min-width: calc(var(--px) * 64); }
 .dc-crew-count > b { font-size: var(--text-title); font-weight: var(--weight-title); }
 .dc-crew-count > span { font-size: var(--text-helper); color: var(--ink-muted); }
-/* What the crew makes and has to work: the card's stat tiles. */
-.dc-crew-stats { margin-top: calc(var(--px) * 10); }
-/* Two to four tiles here, with the longer words of this block
-   ("Production"): wider than the stat band's, a half row each at most. */
-.dc-crew-stats > .dc-stat.k-section { width: min(calc(var(--px) * 160), calc((100% - var(--stat-gap)) / 2)); }
 .dc-hint { margin-top: calc(var(--px) * 10); }
 /* A tip, in the information blue with its question mark. */
 .dc-hint {

@@ -114,15 +114,6 @@ function crewOutput(game: Game, district: District): Array<[CurrencyId, number]>
   return [...perMinute];
 }
 
-/** A tile of the card's stat kind (the band under the head): icon, the short
- *  name in bold, the value under it. */
-const crewStat = (icon: IconName, label: string, value: string): HTMLElement =>
-  el('div', { class: 'dc-stat k-section', 'aria-label': `${label} ${value}` },
-    iconEl(icon, { size: 'lg' }),
-    el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
-      el('div', { class: 'dc-stat-label' }, label),
-      el('b', { class: 'dc-stat-value' }, value)));
-
 /**
  * The whole card, built fresh. `live` collects the handful of lines that move
  * every second — a countdown, a trough, a stock — so the screen that owns
@@ -303,18 +294,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
           el('b', {}, `${crew} / ${limit}`), el('span', {}, 'Assigned')),
         plus));
 
-      // What there is to work, per source (the Quarry has three). Two cells
-      // per worker is the authoring law: a cell drains, then recovers, so a
-      // crew wants about twice its own number in reach (04-harvest.md §2.1).
-      // What the crew MAKES is the card's first stat, up top.
-      const tiles = [
-        ...def.harvestSources.map((s) => {
-          const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
-          return crewStat(SOURCE_ICON[s], SOURCE_WORD[s], String(n));
-        }),
-      ];
-      body.append(el('div', { class: 'dc-stats dc-crew-stats' }, ...tiles));
-
       const want = crew * 2;
       const hint = crew === 0
         ? 'Nobody works here yet — add a villager.'
@@ -417,12 +396,21 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   // A worker building leads with what its crew makes (the resource is the
-  // tile's word: *Food +45 /min*); the popup-only figures stay off the card.
+  // tile's word: *Food +45 /min*) and what it has to work (*Fields 3*); the
+  // popup-only figures stay off the card.
   const figures = [
     ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && district.state === 'Built'
-      ? crewOutput(game, district).map(([c, n]) => ({
-        icon: c as IconName, label: `${c} a minute`, short: c, value: `+${Math.round(n)} /min`,
-      }))
+      ? [
+        ...crewOutput(game, district).map(([c, n]) => ({
+          icon: c as IconName, label: `${c} a minute`, short: c, value: `+${Math.round(n)} /min`,
+        })),
+        // What there is to work, per source (the Quarry has three).
+        ...def.harvestSources.map((src) => {
+          const cells = game.workableCellsOf(district);
+          const n = cells.filter((c) => harvestSourceAt(game.state, c) === src).length;
+          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: String(n) };
+        }),
+      ]
       : []),
     ...statsAt(game, district, district.level).filter((f) => f.onCard !== false),
   ];
