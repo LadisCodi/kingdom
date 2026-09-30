@@ -157,6 +157,20 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     const workshop = workshopSection(game, district, live);
     if (workshop) body.append(sectionHead('Workshop'), workshop);
 
+    // THE TAVERN hosts the banner (Docs/features/22-progression.md §6): its
+    // card is the way to the heroes and to a call.
+    if (def.heroXpBonusPerLevel.length > 0) {
+      body.append(sectionHead('Heroes'), el('div', { class: 'dc-tavern' },
+        btn({
+          label: 'Heroes', kind: 'secondary', icon: 'helmet',
+          onClick: () => game.setOverlay('heroes'),
+        }),
+        el('span', { 'data-coach': 'card:call' }, btn({
+          label: 'Call', kind: 'gem', icon: 'star',
+          onClick: () => game.setOverlay('store'),
+        }))));
+    }
+
     // A decoration is ONE number, and this is it. It has no crew, no queue
     // and no tap, so without this line its card would be empty.
     if (isDecoration(def)) {
@@ -253,6 +267,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         label: 'Add a worker', disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
       });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
+      plus.dataset.coach = 'card:workers';
       body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
         minus,
         unitPortrait('Villager', 'dc-crew-face'),

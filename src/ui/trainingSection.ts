@@ -238,6 +238,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
       ? { cost, have: (c) => game.walletValue(c) }
       : { costExtra: [{ icon: 'padlock', amount: gate, short: true }] }),
   });
+  buy.dataset.coach = 'card:train';
   if (gate !== undefined) buy.classList.add('is-gated');
 
   const tags = unit === null

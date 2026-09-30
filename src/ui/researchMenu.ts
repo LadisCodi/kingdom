@@ -17,7 +17,7 @@ import type { Game } from '../game';
 import { ERA_COUNT, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled, isTechStarted,
-  isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
+  isFoundTome, isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
@@ -26,7 +26,7 @@ import {
   type EdgePiece,
 } from './research/layout';
 import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
-import { el, formatExact } from './format';
+import { el, formatExact, coach } from './format';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
  *  like the selection below. */
@@ -46,7 +46,17 @@ let lastZoom = 1;
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 /** A book's emblem, stamped on its bookmark. */
-const TOME_MARK: Record<string, string> = { Civics: 'research', Warfare: 'army', Magic: 'Mana' };
+const TOME_MARK: Record<string, string> = {
+  Civics: 'research', Warfare: 'army', Magic: 'Mana', Sagas: 'helmet', Atlas: 'compass',
+};
+
+/** What opens a shut general book, on its padlocked bookmark
+ *  (Docs/features/22-progression.md §3). A found book has no bookmark until
+ *  it is found. */
+const TOME_HINT: Partial<Record<TomeId, string>> = {
+  Warfare: 'Find a lair to open the Book of Warfare.',
+  Magic: 'Claim a landmark to open the Book of Magic.',
+};
 
 /**
  * The bookmarks: one ribbon per open book, hanging from the page's bottom
@@ -55,13 +65,28 @@ const TOME_MARK: Record<string, string> = { Civics: 'research', Warfare: 'army',
  */
 function bookmarks(game: Game): HTMLElement {
   const row = el('div', { class: 'rb-marks' });
-  for (const id of TOME_ORDER.filter((t) => isTomeOpen(game.state, t))) {
+  for (const id of TOME_ORDER) {
+    const open = isTomeOpen(game.state, id);
+    // A found book is not on the shelf until it is found.
+    if (!open && isFoundTome(id)) continue;
+    if (!open) {
+      // A shut general book: its ribbon hangs, greyed, with a padlock; a tap
+      // says what opens it (Docs/features/22-progression.md §3).
+      const mark = el('button', {
+        class: 'rb-mark is-locked', type: 'button', 'data-tome': id,
+        'aria-label': `${TOMES[id].name} — shut`, 'data-coach': `tome:${id}`,
+      }, iconEl('padlock'));
+      mark.addEventListener('click', () => game.toast(TOME_HINT[id] ?? 'This book is shut.'));
+      row.append(mark);
+      continue;
+    }
     const mark = el('button', {
       class: `rb-mark${id === activeTome ? ' is-open' : ''}`,
       type: 'button',
       'data-tome': id,
       'aria-label': TOMES[id].name,
       'aria-pressed': id === activeTome ? 'true' : 'false',
+      'data-coach': `tome:${id}`,
     }, iconEl((TOME_MARK[id] ?? 'research') as never));
     mark.addEventListener('click', () => {
       if (activeTome === id) return;
@@ -133,7 +158,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     flow.style.zoom = String(lastZoom);
   });
 
-  const close = closeKnob(() => game.dismiss(), 'Close Research');
+  const close = coach(closeKnob(() => game.dismiss(), 'Close Research'), 'close');
   const sheet = el('div', { class: 'rb-stack' },
     // Two pins at the top corners; the way out sits over the right one.
     el('span', { class: 'rb-pin is-left', 'aria-hidden': 'true' }),
@@ -286,6 +311,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
       + (def.planned ? ' planned' : ''),
     type: 'button',
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
+    'data-coach': `tech:${id}`,
   },
   el('span', { class: 'tech-card-name' }, def.name),
   el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
@@ -319,7 +345,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
   const dismiss = (): void => { selected = null; game.notify(); };
   const status = techState(state, id);
 
-  const page = el('div', { class: 'rb-sheet', 'data-keep-scroll': 'tech-info' },
+  const page = el('div', { class: 'rb-sheet', 'data-keep-scroll': 'tech-info', 'data-coach': `techsheet:${id}` },
     el('h2', { class: 'rb-sheet-title' }, def.name),
     el('div', { class: 'rb-rule', 'aria-hidden': 'true' }));
 
@@ -376,13 +402,13 @@ function techSheet(game: Game, id: TechId): HTMLElement {
               onClick: () => game.doPourTech(id, 1),
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
             }),
-            btn({
+            coach(btn({
               label: `+${formatExact(pours.most)}`,
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id),
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
-            }))])));
+            }), 'tech-pour'))])));
     }
 
     // ---- 3. research — the upgrade popup's block: the price above, the button
@@ -395,13 +421,13 @@ function techSheet(game: Game, id: TechId): HTMLElement {
         el('div', { class: 'up-price' },
           ...(gold > 0 ? [el('span', { class: `up-price-chip${shortGold ? ' is-short' : ''}` },
             iconEl('Gold'), el('b', {}, formatExact(gold)))] : [])),
-        btn({
+        coach(btn({
           label: 'Research',
           kind: 'primary',
           icon: filled ? undefined : 'padlock',
           onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
           disabledReason: !filled ? note! : shortGold ? 'Not enough Gold' : undefined,
-        }),
+        }), 'tech-research'),
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 

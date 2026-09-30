@@ -455,3 +455,15 @@
   font-size: var(--text-body);
 }
 .ban-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
+
+/* The banner before the Tavern stands (Docs/features/22-progression.md §3). */
+.store-banner-locked {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 14) calc(var(--px) * 16);
+  border-radius: calc(var(--px) * 10);
+  background: var(--locked);
+  color: var(--ink-muted);
+  font-weight: var(--weight-title);
+}

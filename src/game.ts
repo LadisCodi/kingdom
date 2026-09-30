@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
@@ -173,7 +174,17 @@ export type OverlayName =
   // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
-  | 'heroPicker';
+  | 'heroPicker'
+  // The world beyond the province — a preview until the board is built
+  // (Docs/features/22-progression.md §5).
+  | 'world';
+
+/** Which door an overlay stands behind (Docs/features/22-progression.md §3).
+ *  An overlay not named here is never padlocked. */
+const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
+  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
+  world: 'world', knowledge: 'knowledge', daily: 'daily',
+};
 
 /** How the hero picker orders the heroes it offers. */
 export type HeroPickSort = 'level' | 'rarity';
@@ -463,6 +474,21 @@ export class Game {
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
+  /** Doors that opened since the stage last drained them — the padlock
+   *  breaking, and the introduction that goes with it. Transient. */
+  doorsJustOpened: DoorId[] = [];
+
+  /**
+   * THE TUTORIAL'S GATE ON THE MAP (Docs/features/23-tutorials.md §6): the
+   * stage sets it while a line holds a lock, and every tap, hold and ghost
+   * drag asks it first. Absent = everything goes through.
+   */
+  tapGate: ((cell: Coord | null, how: 'tap' | 'hold' | 'ghost') => boolean) | null = null;
+
+  /** Is this door of the UI open (Docs/features/22-progression.md §3)? */
+  doorOpen(door: DoorId): boolean {
+    return isDoorOpen(this.state, door);
+  }
 
   constructor(
     public state: GameState,
@@ -531,6 +557,12 @@ export class Game {
         const banner = siteBanner(id);
         if (banner) this.queueBanner(banner);
       }
+    }
+    // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
+    // again, and announced to whoever draws padlocks and plays scenes.
+    for (const door of freshlyOpenDoors(this.state)) {
+      markDoorSeen(this.state, door);
+      this.doorsJustOpened.push(door);
     }
     // The moment the active quest's goal is met, ding — before any claim.
     const questDone = this.questInfo()?.complete ?? false;
@@ -946,6 +978,7 @@ export class Game {
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
+    if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
@@ -2235,6 +2268,9 @@ export class Game {
    *  waiting, or a Royal chest still on the table (§3.4). */
   dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
     const now = this.now();
+    // The chest arrives when the First Morning ends
+    // (Docs/features/22-progression.md §3).
+    if (!this.doorOpen('daily')) return null;
     if (!chestSheetOpen(this.state, now)) return null;
     const ready = chestAvailable(this.state, now);
     const pending = anyRoyalPending(this.state, now);
@@ -3810,6 +3846,14 @@ export class Game {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
     }
+    // A padlocked door says what opens it and opens nothing
+    // (Docs/features/22-progression.md §3).
+    const door = name === null ? undefined : OVERLAY_DOOR[name];
+    if (door !== undefined && !isDoorOpen(this.state, door)) {
+      this.toast(DOOR_HINT[door]);
+      this.notify();
+      return;
+    }
     this.openOverlay = name;
     if (name !== null) {
       this.inspectedDistrictId = null;
@@ -4186,6 +4230,7 @@ export class Game {
   grabGhost(sx: number, sy: number): boolean {
     const ghost = this.ghostFootprint();
     if (ghost === null) return false;
+    if (this.tapGate !== null && !this.tapGate(null, 'ghost')) return false;
     const cell = this.camera.screenToCell(sx, sy);
     return cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
       && cell.y >= ghost.cell.y && cell.y < ghost.cell.y + ghost.size.y;
@@ -4272,6 +4317,7 @@ export class Game {
       }
       return;
     }
+    if (this.tapGate !== null && !this.tapGate(cell, 'tap')) return;
     this.tapChain.dispatch(cell);
   }
 

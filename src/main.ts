@@ -50,6 +50,9 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
+import { renderWorldSheet } from './ui/worldSheet';
+import { mountWorldKnob } from './ui/worldKnob';
+import { mountStage } from './ui/stage/stage';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -148,6 +151,10 @@ async function boot(): Promise<void> {
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountWorldKnob(game, document.getElementById('worldknob')!);
+  // The tutorial's stage: the First Morning, the introductions and the help
+  // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
+  mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
@@ -180,6 +187,7 @@ async function boot(): Promise<void> {
     heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
+    world: renderWorldSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     pass: renderPassSheet,
@@ -286,7 +294,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
+        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {

@@ -1,0 +1,111 @@
+{
+  "type": "object",
+  "fields": {
+    "id": { "type": "text" },
+    "trigger": {
+      "type": "text",
+      "options": [
+        "always",
+        "questReached",
+        "questComplete",
+        "questClaimed",
+        "questProgress",
+        "techDone",
+        "techFilled",
+        "placing",
+        "placed",
+        "built",
+        "overlay",
+        "noOverlay",
+        "ui",
+        "taps",
+        "lairFound",
+        "lairDefeated",
+        "lairCleared",
+        "landmarkClaimed",
+        "landmarkSeen",
+        "bookOpen",
+        "doorOpen",
+        "manaEmpty",
+        "buildersBusy",
+        "raided",
+        "wounded",
+        "heroes",
+        "population",
+        "revealed"
+      ],
+      "doc": "What starts the scene, the first time it holds."
+    },
+    "triggerTarget": { "type": "text", "doc": "What the trigger names, where it names anything." },
+    "triggerAmount": { "type": "int", "min": 0 },
+    "anywhere": { "type": "bool", "doc": "May start over a sheet the player has open. Off: waits for the map." },
+    "skippable": { "type": "bool", "doc": "Carries a Skip knob. The First Morning does not." },
+    "lines": {
+      "type": "list",
+      "of": {
+        "type": "object",
+        "fields": {
+          "speaker": { "type": "text", "ref": "speaker", "doc": "Who says it." },
+          "side": {
+            "type": "text",
+            "options": ["left", "right"],
+            "doc": "Which side of the stage the speaker stands on."
+          },
+          "text": { "type": "text", "doc": "What is said. The box holds about three lines on a phone." },
+          "box": {
+            "type": "text",
+            "options": ["bottom", "top", "middle", "auto"],
+            "doc": "Where the box sits; auto takes the half of the screen the pointer is not in."
+          },
+          "point": {
+            "type": "text",
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id>, landmark:<id>, quest — or empty."
+          },
+          "lock": {
+            "type": "text",
+            "options": ["none", "target", "map", "all"],
+            "doc": "What taps reach while the line is up (Docs/features/23-tutorials.md §6)."
+          },
+          "until": {
+            "type": "text",
+            "options": [
+              "tap",
+              "always",
+              "questReached",
+              "questComplete",
+              "questClaimed",
+              "questProgress",
+              "techDone",
+              "techFilled",
+              "placing",
+              "placed",
+              "built",
+              "overlay",
+              "noOverlay",
+              "ui",
+              "taps",
+              "lairFound",
+              "lairDefeated",
+              "lairCleared",
+              "landmarkClaimed",
+              "landmarkSeen",
+              "bookOpen",
+              "doorOpen",
+              "manaEmpty",
+              "buildersBusy",
+              "raided",
+              "wounded",
+              "heroes",
+              "population",
+              "revealed"
+            ],
+            "doc": "What moves the line on; tap is a tap on the box."
+          },
+          "untilTarget": { "type": "text", "doc": "What the condition names, where it names anything." },
+          "untilAmount": { "type": "int", "min": 0, "doc": "How many, where the condition counts." },
+          "exit": { "type": "bool", "doc": "The speaker leaves the stage after this line." }
+        }
+      }
+    }
+  }
+}

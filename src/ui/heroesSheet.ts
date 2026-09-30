@@ -148,10 +148,9 @@ function grid(game: Game): HTMLElement {
     el('div', { class: 'hero-purse' },
       el('div', { class: 'hero-purse-found' }, `${found} of ${roster.length} found`)),
     el('div', { class: 'hero-grid' }, ...ordered.map((view) => tile(game, view))),
-    // The way to another hero. The banner lives in the store
-    // (Docs/features/14-monetization.md §2.1) and moves to the Tavern when
-    // that building lands, so the roster POINTS at it rather than holding a
-    // copy of it.
+    // The way to another hero: the banner the Tavern hosts, sold in the
+    // store (Docs/features/22-progression.md §6), so the roster POINTS at it
+    // rather than holding a copy of it.
     action({
       label: 'Call for aid',
       kind: 'gem',

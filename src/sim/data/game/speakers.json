@@ -1,0 +1,32 @@
+{
+  "advisor": {
+    "name": "Isolde",
+    "title": "Royal Advisor",
+    "portrait": "portrait_advisor",
+    "frame": "figure"
+  },
+  "warden": {
+    "name": "The Warden",
+    "title": "Captain of the Guard",
+    "portrait": "hero_warden",
+    "frame": "figure"
+  },
+  "cook": {
+    "name": "Bess",
+    "title": "Tavern keeper",
+    "portrait": "hero_cook",
+    "frame": "figure"
+  },
+  "villager": {
+    "name": "A villager",
+    "title": "Your first settler",
+    "portrait": "unit_villager_avatar",
+    "frame": "medallion"
+  },
+  "orcChief": {
+    "name": "Grukk",
+    "title": "Orc warchief",
+    "portrait": "creature_orc_avatar",
+    "frame": "medallion"
+  }
+}

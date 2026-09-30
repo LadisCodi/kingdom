@@ -490,6 +490,64 @@ export interface QuestDef {
 /** The chain, in sheet order — one quest active at a time. */
 export const QUESTS = balance.quests as unknown as QuestDef[];
 
+// ------------------------------------------------------------- the stage
+//
+// The first-time experience's scenes, speakers and help timings
+// (Docs/features/23-tutorials.md, 24-dialogue.md). Data the SIM never reads:
+// the stage is UI. They live here beside the quests they walk through so the
+// tool, the tests and the stage read one definition.
+
+/** What starts a scene, or moves a line on. The kinds are code
+ *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
+export type SceneCondition =
+  | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
+  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
+  | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
+  | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
+  | 'population' | 'revealed';
+
+export interface SceneLine {
+  speaker: string;
+  side: 'left' | 'right';
+  text: string;
+  box: 'bottom' | 'top' | 'middle' | 'auto';
+  /** What the pointer shows; empty = nothing (24-dialogue.md §4). */
+  point: string;
+  lock: 'none' | 'target' | 'map' | 'all';
+  until: SceneCondition;
+  untilTarget: string;
+  untilAmount: number;
+  exit: boolean;
+}
+
+export interface SceneDef {
+  id: string;
+  trigger: Exclude<SceneCondition, 'tap'>;
+  triggerTarget: string;
+  triggerAmount: number;
+  /** May start over a sheet the player opened. */
+  anywhere: boolean;
+  skippable: boolean;
+  lines: SceneLine[];
+}
+
+export interface SpeakerDef {
+  name: string;
+  title: string;
+  portrait: string;
+  frame: 'figure' | 'medallion';
+}
+
+/** Every scene, in the order the stage considers them. */
+export const SCENES = balance.scenes as unknown as SceneDef[];
+export const SPEAKERS = balance.speakers as unknown as Record<string, SpeakerDef>;
+/** The help's timings (23-tutorials.md §5, §8). */
+export const HELP = balance.help as {
+  idleWiggleSeconds: number; idleAdvisorSeconds: number; advisorRestSeconds: number;
+  advisorShowSeconds: number; pointerSeconds: number; untilQuest: string;
+  lockFailsafeSeconds: number; typeCharsPerSecond: number;
+};
+
 // ----------------------------------------------------------------- districts
 
 /** The Build menu's three tabs, in their order on the menu. */

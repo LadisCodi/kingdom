@@ -120,7 +120,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       el('div', { class: 'q-text' }, name, desc),
       el('div', { class: 'q-foot' }, slot, bar.root)),
     el('div', { class: 'q-done' }, reward, claim));
-  const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);
+  const scroll = el('button', { class: 'q-scroll', type: 'button', 'data-coach': 'quest' }, base, content);
 
   // Nothing to tap while the scroll is rolling or unrolling.
   let busy = false;
