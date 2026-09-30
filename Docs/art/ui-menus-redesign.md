@@ -986,6 +986,8 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 **Purpose.** Put the building somewhere good, and understand why one cell
 is better than another. Only reached with the price in hand (§5.5).
 
+Reference: `mockups/m49-placement.png`.
+
 **On the map.**
 
 - The camera centres on the legal cell closest to the Townhall and the ghost
