@@ -1,11 +1,10 @@
 // THE AREA AND THE REACH, drawn as UI laid OVER the view.
 //
 // A building's work area (mockup:
-// Docs/art/mockups/area-overlays/area-simple-2-two-tone.png) is a two-tone
-// line — a warm-white core inside an intense blue outline, its corners
-// rounded — and a light sky-blue glow inside it, strongest against the line
-// and gone a third of a tile in, breathing slowly. Blue, because a gold
-// tint on the grass did not read. All of it is vector: no art.
+// Docs/art/mockups/area-overlays/area-simple-2-two-tone.png) is a white line
+// with rounded corners and a light sky-blue glow inside it, strongest against
+// the line and fading most of a tile in, breathing slowly. Blue, because a
+// gold tint on the grass did not read. All of it is vector: no art.
 //
 // The Townhall's reach is a red-brown ink dash-and-dot, laid from two pieces
 // cut by Docs/art/originals/area-overlays/cut_ink.py:
@@ -139,7 +138,7 @@ function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], alpha: n
     if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
     const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
     g.addColorStop(0, `rgba(${GLOW_RGB}, ${alpha.toFixed(3)})`);
-    g.addColorStop(0.4, `rgba(${GLOW_RGB}, ${(alpha * 0.4).toFixed(3)})`);
+    g.addColorStop(0.5, `rgba(${GLOW_RGB}, ${(alpha * 0.45).toFixed(3)})`);
     g.addColorStop(1, `rgba(${GLOW_RGB}, 0)`);
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -153,16 +152,14 @@ function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], alpha: n
 }
 
 /** How the overlays are sized: `unit` is a cell's worth of pixels. */
-const LINE_PX = 0.085;   // the area's line, outline included, as a fraction of a cell
-const CORE_PX = 0.045;   // its warm-white core
+const LINE_PX = 0.05;    // the area's line, as a fraction of a cell
 const ROUND_PX = 0.14;   // the radius a corner of the line is rounded to
-const OUTLINE = '#1d63d8';
-const CORE = '#fff8e6';
+const LINE = 'rgba(255, 255, 255, 0.9)';
 /** The glow: sky blue, `GLOW_ALPHA` against the line and gone `GLOW_DEPTH`
  *  of a cell in, breathing between `BREATH_LOW` and full once a period. */
 const GLOW_RGB = '125, 205, 255';
-const GLOW_ALPHA = 0.8;
-const GLOW_DEPTH = 0.34;
+const GLOW_ALPHA = 0.7;
+const GLOW_DEPTH = 0.9;
 const BREATH_MS = 2600;
 const BREATH_LOW = 0.45;
 const DASH_PX = 0.07;    // the reach's dash, thickness as a fraction of a cell
@@ -231,16 +228,12 @@ export function drawArea(
   glow(ctx, edges, GLOW_ALPHA * breath);
   ctx.restore();
 
-  const width = Math.max(4, unit * LINE_PX);
   ctx.save();
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   borderPath(ctx, edges, Math.max(2, unit * ROUND_PX));
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = width;
-  ctx.stroke();
-  ctx.strokeStyle = CORE;
-  ctx.lineWidth = Math.max(2, Math.min(width - 2, unit * CORE_PX));
+  ctx.strokeStyle = LINE;
+  ctx.lineWidth = Math.max(2, unit * LINE_PX);
   ctx.stroke();
   ctx.restore();
 }
