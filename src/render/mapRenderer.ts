@@ -1154,7 +1154,7 @@ export function drawMap(
   // building with something in its store (render/collectBubbles.ts).
   const clock = performance.now();
   for (const district of state.city.districts) {
-    if (!readyToCollect(district)) { bubbles.forget(district.uniqueId); continue; }
+    if (!readyToCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
     const art = artOf.get(district.uniqueId);
     if (!art) continue;
     const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);

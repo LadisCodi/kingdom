@@ -726,7 +726,7 @@ export class Game {
         // A building with something in its store: the tap COLLECTS, free, and
         // does nothing else. The next tap, with the store empty, opens it
         // (Docs/features/03-economy.md §3.2).
-        if (district && district.state === 'Built' && readyToCollect(district)) {
+        if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
           this.collectStoreOf(district);
           this.notify();
           return true;
@@ -897,7 +897,7 @@ export class Game {
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && readyToCollect(district)) {
+    if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
       this.collectStoreOf(district);
       this.notify();
       return true;
