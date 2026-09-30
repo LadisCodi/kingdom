@@ -14,7 +14,7 @@
 //    one of three states — locked (greyscale), in progress, done.
 
 import type { Game } from '../game';
-import { ERA_COUNT, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
+import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled, isTechStarted,
   isFoundTome, isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
@@ -270,13 +270,13 @@ function edgePiece(piece: EdgePiece): HTMLElement {
 
 /**
  * A chapter heading where the next band begins, and — while the band is shut —
- * what the world still owes before it opens. The book's last band says it is
- * sealed.
+ * what the world still owes before it opens. Every band says it, the last
+ * one included: a two-band found book's second chapter is content, not a
+ * wall (Docs/features/22-progression.md §4).
  */
 function chapter(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
   const open = eraUnlocked(state, tome, era);
   const short = eraShortfall(state, tome, era);
-  const sealed = era >= ERA_COUNT[tome];
   return el('div', {
     class: `rb-chapter${open ? ' is-open' : ''}`,
     style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
@@ -284,7 +284,7 @@ function chapter(state: GameState, tome: TomeId, era: number, top: number): HTML
   el('span', { class: 'rb-chapter-name' }, `Chapter ${ROMAN[era] ?? era}`),
   open ? el('span', { class: 'rb-chapter-gate' }, '')
     : el('span', { class: 'rb-chapter-gate' },
-      sealed ? 'Sealed' : `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
+      `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
 }
 
 /**

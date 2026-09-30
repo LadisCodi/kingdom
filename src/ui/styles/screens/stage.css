@@ -211,8 +211,10 @@
   transform: translateX(-110%);
   transition: transform 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
-.stg-peek.is-in { transform: translateX(-18%); }
-.stg-peek-face { width: calc(var(--px) * 110); }
+.stg-peek.is-in { transform: translateX(calc(var(--px) * -22)); }
+.stg-peek-face { width: calc(var(--px) * 92); flex: none; }
+.stg-peek-face .stg-portrait.is-medallion { width: 100%; margin: 0; }
+.stg-peek-face .stg-portrait.is-figure { max-height: calc(var(--px) * 140); overflow: hidden; }
 .stg-peek-say {
   margin-bottom: calc(var(--px) * 60);
   padding: calc(var(--px) * 8) calc(var(--px) * 12);

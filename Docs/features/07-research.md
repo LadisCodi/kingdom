@@ -202,8 +202,8 @@ A `bonus` names its effects, and each is four fields:
   technology that raises the Townhall's level (`Bureaucracy`, `Magistracy`) is
   an ordinary card, placed wherever the designer puts it, and the gate is
   derived from its `unlocks` like every other.
-- A book's last band is drawn behind a dashed **Sealed** bar. Filling it is
-  data.
+- A book's last band opens on cells like every other and says how many it
+  still needs.
 - A player may research ahead in one tome; content still gates on Townhall
   level.
 
@@ -381,8 +381,8 @@ The research screen is a book (mockups M43 and M46,
   One ribbon, tinted per book, the book's emblem on it; the open one hangs
   longer. Order: Civics · Magic · Warfare, then found books.
 - **An era is a chapter**: *Chapter I* at the top of the page, and a heading
-  wherever the next band begins, with *Reveal N more cells* while it is shut
-  (*Sealed* on the book's last band). One vertical scroll.
+  wherever the next band begins, with *Reveal N more cells* while it is shut.
+  One vertical scroll.
 - The plank carries **Gold** only; Knowledge is its tab under the plank
   (§3), which stays down while the book or the Knowledge sheet is open and
   steps aside for every other menu.

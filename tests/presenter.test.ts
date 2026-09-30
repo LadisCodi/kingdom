@@ -5,6 +5,7 @@
 //
 // Node environment, no jsdom: `Game` constructs fine without a DOM, and the
 // views hold nothing but markup once the decisions live here.
+import { HELP } from '../src/sim/data/definitions';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
 import { formatDuration } from '../src/ui/format';
@@ -296,7 +297,10 @@ describe('transient UI hints', () => {
     game.setUiHint('build:Housing');
     expect(game.uiHint()).toBe('build:Housing');
 
-    vi.advanceTimersByTime(8001);
+    // It points for `help.pointerSeconds` (Docs/features/23-tutorials.md §5).
+    vi.advanceTimersByTime(HELP.pointerSeconds * 1000 - 1);
+    expect(game.uiHint()).toBe('build:Housing');
+    vi.advanceTimersByTime(2);
     expect(game.uiHint()).toBe(null);
   });
 
