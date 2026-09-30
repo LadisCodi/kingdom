@@ -959,8 +959,6 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
   375px, so the cut-off card says there is more.
 - Order within a tab is `buildMenuOrder`; startable cards are not re-sorted
   to the front.
-- A tab with buildings still behind research ends with a **More to
-  discover** card that opens Research.
 
 **The card**, top to bottom:
 

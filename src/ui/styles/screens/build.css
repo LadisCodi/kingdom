@@ -58,6 +58,9 @@
   overscroll-behavior-x: contain;
 }
 .bld-row::-webkit-scrollbar { display: none; }
+/* Held by a mouse (kit/scroll.ts): the hand leads, the snap waits. */
+.bld-row.is-dragging { scroll-snap-type: none; cursor: grabbing; }
+.bld-row.is-dragging .bld-card:active { transform: none; }
 
 /* THE CARD, tall: the art, the name, the promise, the price, and a foot. */
 .bld-card {
@@ -238,10 +241,6 @@
 @media (prefers-reduced-motion: reduce) {
   .bld-card.is-refused, .bld-card.is-refused .k-chip.is-short { animation: none; }
 }
-
-/* The tab grows as research lands; this says where from. */
-.bld-more { background: var(--parchment); border-style: dashed; justify-content: center; }
-.bld-more .bld-art { opacity: 0.55; height: calc(var(--px) * 72); }
 
 /* Harmony over the decorations: supply of demand, and what it pays. */
 .bld-harmony {

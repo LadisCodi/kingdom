@@ -38,7 +38,7 @@ import { renderDailySheet } from './ui/dailySheet';
 import { renderPassSheet } from './ui/passSheet';
 import { mountDailyPill } from './ui/dailyPill';
 import { mountSeasonPill } from './ui/seasonPill';
-import { renderBuildMenu } from './ui/buildMenu';
+import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
@@ -60,7 +60,7 @@ import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
-import { legacy, ScreenSlot } from './ui/kit/host';
+import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -208,6 +208,7 @@ async function boot(): Promise<void> {
    */
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
+    build: () => buildMenuSignature(game),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
@@ -288,11 +289,15 @@ async function boot(): Promise<void> {
         'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
-      overlaySlot.show(overlay, () => legacy(
-        () => OVERLAYS[overlay](game),
-        needsKnob ? () => game.dismiss() : undefined,
-        OVERLAY_SIGNATURES[overlay],
-      ));
+      overlaySlot.show(overlay, () => {
+        const screen = legacy(
+          () => OVERLAYS[overlay](game),
+          needsKnob ? () => game.dismiss() : undefined,
+          OVERLAY_SIGNATURES[overlay],
+        );
+        // Its row of cards is browsed by dragging while the purse fills.
+        return overlay === 'build' ? holdWhileScrolling(screen) : screen;
+      });
     }
     else overlaySlot.clear();
   };
