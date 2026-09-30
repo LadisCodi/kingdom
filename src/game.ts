@@ -777,12 +777,6 @@ export class Game {
     });
   }
 
-  /** The card's Collect button: the same collect a tap on the building makes. */
-  collectFromCard(district: District): void {
-    this.collectStoreOf(district);
-    this.notify();
-  }
-
   /** Empty a building's store into the purse, with the tap's own feedback:
    *  the punch on the building, a floater per currency, and the haul flying
    *  to the header. */

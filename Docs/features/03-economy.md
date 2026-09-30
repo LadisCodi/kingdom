@@ -188,6 +188,8 @@ running. Research already worked this way.
 - A tap on a building whose store is ready moves the **whole store** to the
   wallet. It is **free** — no Mana — and does nothing else.
 - A tap on a building that is not ready opens its card, as always.
+- The card has no Collect: its **Storage** tile reads what the store holds
+  against its capacity (*120/8.6k*), in clay when full.
 - Holding the pointer on a ready building collects once.
 - Collecting is where a `collect` event (quests, missions) and a first
   discovery of a currency are recorded — never when rent accrues or a haul
