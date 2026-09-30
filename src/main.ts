@@ -53,6 +53,8 @@ import { renderLairSheet } from './ui/lairSheet';
 import { renderWorldSheet } from './ui/worldSheet';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
+import { SCENES } from './sim/data/definitions';
+import { activeQuest, claimQuest } from './sim/quests';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -574,6 +576,26 @@ async function boot(): Promise<void> {
       button('🗂 data', () => { location.href = `${location.pathname}?dev=data`; }),
       button('🗺 map', () => { location.href = `${location.pathname}?dev=data#map`; }),
       button('🌳 tree', () => { location.href = `${location.pathname}?dev=data#tree`; }),
+      // THE FIRST-TIME EXPERIENCE, for reviewing it (Docs/features/23-tutorials.md):
+      // skip the First Morning, finish the active quest, or play every scene
+      // again from where the kingdom stands.
+      button('⏭ quest', () => {
+        const q = activeQuest(game.state);
+        if (q === null) return;
+        // An absolute goal is met by state; a relative one by its counter.
+        game.state.quests.progress = Math.max(game.state.quests.progress, q.goalAmount);
+        if (claimQuest(game.state) !== 'Claimed') game.toast(`${q.name} needs its goal met first`);
+        runTick();
+      }),
+      button('🌅 skip morning', () => {
+        for (const s of SCENES) if (s.id === 'intro' || s.id.startsWith('morning')) game.state.tutorial.seen[`scene:${s.id}`] = true;
+        runTick();
+      }),
+      button('🎬 replay scenes', () => {
+        for (const k of Object.keys(game.state.tutorial.seen)) if (k.startsWith('scene:')) delete game.state.tutorial.seen[k];
+        game.state.tutorial.veteran = false;
+        runTick();
+      }),
       button('🗑 reset save', resetSave));
     // A tab that shows and hides the grid, so the tools stay one tap away
     // without covering the map. Whether it is open survives a reload.

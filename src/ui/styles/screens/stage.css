@@ -79,6 +79,11 @@
 .stg .stg-box[data-place='top'] { bottom: auto; top: calc(var(--hud-h) + var(--px) * 10); }
 .stg .stg-box[data-place='middle'] { bottom: auto; top: 50%; translate: 0 -50%; }
 .stg-box.is-waiting { cursor: default; }
+/* The box clears the quest scroll while it is on the map, so a line about
+   the scroll never covers it. */
+#ui:has(> #quest:not([hidden]) .q-scroll) .stg .stg-box[data-place='bottom'] {
+  bottom: calc(var(--nav-h) + var(--px) * 104);
+}
 @keyframes stg-box-in { from { opacity: 0; transform: translateY(calc(var(--px) * 10)); } }
 
 .stg-name {

@@ -1224,7 +1224,9 @@ export function drawMap(
 
 
 
-  // Pass 3.8: the quest-hint arrow — a bouncing 👇 over the hinted cell.
+  // Pass 3.8: the quest-hint arrow — the stage's own gold arrow, drawn,
+  // bobbing over the hinted cell (Docs/features/24-dialogue.md §4): one
+  // sign for "here" across the map and the menus, and never an emoji.
   if (markers.hintCell) {
     const b = cellRect(markers.hintCell);
     const c = mid(b);
@@ -1232,7 +1234,18 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     strokeDiamond(ctx, b, 3);
-    drawGlyph(ctx, '👇', c.x - size / 2, c.y - size * 1.1 + bob, size, size * 0.5);
+    const tipY = c.y - size * 0.35 + bob;
+    const half = size * 0.22;
+    ctx.beginPath();
+    ctx.moveTo(c.x, tipY);
+    ctx.lineTo(c.x - half, tipY - half * 1.4);
+    ctx.lineTo(c.x + half, tipY - half * 1.4);
+    ctx.closePath();
+    ctx.fillStyle = '#f2b233';
+    ctx.strokeStyle = '#5c3a1e';
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
   }
 
   function queueWorkers(): void {

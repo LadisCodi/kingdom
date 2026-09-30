@@ -15,8 +15,7 @@ import {
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type FaceId, type PackTier,
-} from './sim/data/definitions';
+  type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -217,7 +216,9 @@ export type Hint =
   | { kind: 'ui'; key: string; until: number }
   | { kind: 'cell'; cell: Coord; until: number };
 
-const HINT_MS = 8000;
+/** How long a hint points before it lets go (`tutorial` › `help.pointerSeconds`,
+ *  Docs/features/23-tutorials.md §5). */
+const HINT_MS = HELP.pointerSeconds * 1000;
 
 /** A queued top-of-screen notification card (shown one at a time, 5s each). */
 export interface Banner {

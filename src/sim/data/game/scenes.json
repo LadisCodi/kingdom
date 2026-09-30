@@ -348,10 +348,10 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Train one. They’ll need that roof.",
+        "text": "Train one. They’ll need that roof — and a moment to arrive.",
         "box": "top",
         "point": "ui:card:train",
-        "lock": "target",
+        "lock": "none",
         "until": "population",
         "untilTarget": "",
         "untilAmount": 1,
