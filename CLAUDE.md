@@ -39,7 +39,7 @@ opens the UI primitive gallery. `?dev=data` opens the data editor
 (`Docs/plans/data-editor.md`) — every piece of game data in one tool, saving
 straight into `src/sim/data/` through dev-only Vite middleware.
 The map editor (`Docs/map-editor.md`) lives in it at `?dev=data#map` — paint
-terrain and features, place landmarks and ruins; it writes
+terrain and features, place landmarks and lairs; it writes
 `src/sim/data/region-map.json`. The tech tree editor
 (`Docs/tech-tree-editor.md`) is `?dev=data#tree` — drag technologies into
 the slots of a tome page, which sets their requirements; it writes
@@ -92,11 +92,11 @@ There is no cost curve: `instanceLinearGrowth` and
 `instanceExponentialGrowth` say how much dearer a LATER instance is
 (`Docs/features/05-city-and-districts.md` §3). Art tiers are files: a level
 draws the highest `<sprite>_l<n>.png` at or below it. `DistrictId` is the
-file's keys, and the build menu reads `buildable`, `produces` and
-`harmonySupply`, so a building made in the tool needs no code to exist.
+file's keys, and the build menu reads `buildable`, `buildTab`, `produces`
+and `harmonySupply`, so a building made in the tool needs no code to exist.
 Two kinds of content are authored on a BOARD rather than in fields, each in
 its own editor inside the tool. Map content — terrain, features, landmarks
-and ruins — is authored by coordinate, so it lives in
+and lairs — is authored by coordinate, so it lives in
 `src/sim/data/region-map.json` and is edited at `?dev=data#map`
 (`Docs/map-editor.md`). A **technology is whole** in
 `src/sim/data/tech-tree.json`, edited at `?dev=data#tree`
@@ -125,7 +125,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | Data — no code change | Code |
 |---|---|
 | every balance number, in `?dev=data` — every collection's entries and settings | new quest **goal types** |
-| the whole map — terrain, features, landmark and ruin placement and properties — at `?dev=data#map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
+| the whole map — terrain, features, landmark and lair placement and properties — at `?dev=data#map` | a new terrain/feature id, or a sixth lair (`LairId` is a union) |
 | the whole quest chain — **list order is chain order**, reordered by dragging | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = an entry in `store`; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
@@ -181,9 +181,9 @@ than the build is rejected rather than downgraded.
   draws against the pool; artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
-  `raidPill.ts`, `adOfferPill.ts`. They hide behind any sheet.
+  `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
-  column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
+  column — the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
   video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
   the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing

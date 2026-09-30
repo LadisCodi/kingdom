@@ -9,7 +9,7 @@
 // and building and upgrading them is what raises the cap. Three things fall
 // out of that, which is why it was worth doing:
 //
-//   - The deepest ruins become reachable BY BUILDING rather than by waiting.
+//   - The deepest lairs become reachable BY BUILDING rather than by waiting.
 //   - Composition costs MAP SPACE: wanting Cavalry means finding room for
 //     Stables, so the type chart reaches back into the city-builder instead of
 //     living only in a party screen.

@@ -13,7 +13,6 @@
     "wildcardGemCosts": [100, 200, 400, 800, 1500],
     "wildcardOfferAt": 3,
     "bundleWithdrawHours": 24,
-    "xpTricklePerTierDepth": 10,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,
     "fragmentsPerTierGrowth": 2,

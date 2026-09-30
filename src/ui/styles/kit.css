@@ -551,6 +551,92 @@
   font-weight: var(--weight-strong);
 }
 
+/* THE HP BAR: the kit's bar (kit.css `.k-trough`) redrawn to read at card
+   size — assets/hp-*.png, sheets/ui-bar2-hp-small.png — in the same three
+   layers: the tube's dark inside, the colour (its whole length, uncovered
+   from the left by an inline clip-path), and the glass over both. Where it sits
+   is the caller's. Green, yellow under half, red under a
+   tenth (kit/stats.ts `hpBar`). */
+.k-hp {
+  --hp-bar-h: calc(var(--px) * 9);
+  position: relative;
+  display: block;
+  height: var(--hp-bar-h);
+  isolation: isolate;
+}
+.k-hp::before,
+.k-hp-fill {
+  position: absolute;
+  inset: calc(var(--hp-bar-h) * 0.30) calc(var(--hp-bar-h) * 0.30) calc(var(--hp-bar-h) * 0.18);
+  border-image: url('../assets/hp-base.png') 0 27 fill / 0 calc(var(--hp-bar-h) * 0.26) stretch;
+}
+.k-hp::before { content: ''; }
+.k-hp-fill {
+  --hp-fill: url('../assets/hp-fill-green.png');
+  display: block;
+  border-image: var(--hp-fill) 0 28 fill / 0 calc(var(--hp-bar-h) * 0.26) stretch;
+}
+.k-hp.is-yellow .k-hp-fill { --hp-fill: url('../assets/hp-fill-yellow.png'); }
+.k-hp.is-red .k-hp-fill { --hp-fill: url('../assets/hp-fill-red.png'); }
+.k-hp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-image: url('../assets/hp-border.png') 0 33 fill / 0 calc(var(--hp-bar-h) * 0.5) stretch;
+}
+
+/* RESTING (kit/stats.ts `restMarks`): three solid white Zs rising off a
+   sleeping figure's top-right, as a status mark — no plate behind them, a
+   dark drop so they read on any art. Each drifts up and out, growing and
+   fading, a beat after the one before. */
+.k-zzz {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(var(--zzz-size, calc(var(--px) * 14)) * 2.2);
+  height: calc(var(--zzz-size, calc(var(--px) * 14)) * 2.4);
+  pointer-events: none;
+  color: #fff;
+  font-weight: var(--weight-title);
+  line-height: 1;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1) rgba(30, 16, 6, 0.8));
+}
+.k-zzz > span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  font-size: var(--zzz-size, calc(var(--px) * 14));
+  opacity: 0;
+  animation: k-zzz 2.4s ease-out infinite;
+}
+.k-zzz > span:nth-child(2) { animation-delay: 0.8s; }
+.k-zzz > span:nth-child(3) { animation-delay: 1.6s; }
+@keyframes k-zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.55) rotate(-8deg); }
+  20% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(120%, -150%) scale(1.1) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-zzz > span { animation: none; opacity: 1; }
+  .k-zzz > span:nth-child(1) { transform: scale(0.6); }
+  .k-zzz > span:nth-child(2) { transform: translate(50%, -60%) scale(0.8); }
+  .k-zzz > span:nth-child(3) { transform: translate(110%, -130%); }
+}
+/* How long the rest has left, in the dark pill a count wears. */
+.k-rest-left {
+  display: inline-block;
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 8);
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* A row of unit pips — army strength and the like. */
 .k-meter { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 3); }
 .k-meter .k-tick {
@@ -946,3 +1032,74 @@
   [data-leaving] .k-panel > *,
   [data-leaving] .dc > * { animation-duration: 1ms; animation-delay: 0ms; }
 }
+
+/* THE HEAD PANEL (kit/surface.ts `headPanel`): two pieces, layered — a sheet
+   of paper with deckled edges (assets/panel-paper.png, 673×918), and a
+   painted plank nailed across its top (assets/plank-<tone>.png, 765×169).
+   The paper is nine-sliced at 48 and its edges ROUND-tiled, so the rough
+   edge repeats rather than smears; the plank is three-sliced at 115 — its
+   two nails live in the ends, and only the plain middle stretches. The pair
+   casts one soft shadow onto the menu's paper. */
+.k-headpanel {
+  --hp-h: calc(var(--px) * 34);              /* the plank, on screen */
+  --hp-cap: calc(var(--hp-h) * 115 / 169);   /* one plank end, nail and all */
+  --hp-edge: calc(var(--px) * 14);           /* the paper's rough edge */
+  --hp-img: url('../assets/plank-wood.png');
+  position: relative;
+  border: var(--hp-edge) solid transparent;
+  padding: 0 calc(var(--px) * 2) 0;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(70, 42, 18, 0.28));
+}
+/* The paper, a touch narrower than the plank, so its top corners tuck in
+   under the plank's rounded ends instead of peeking out beside them. Behind
+   the content: the filter above makes the panel its own stacking context. */
+.k-headpanel::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1 + var(--px) * 5);
+  z-index: -1;
+  border: var(--hp-edge) solid transparent;
+  border-image: url('../assets/panel-paper.png') 48 fill / var(--hp-edge) round;
+  pointer-events: none;
+}
+.k-headpanel.is-red { --hp-img: url('../assets/plank-red.png'); }
+.k-headpanel.is-blue { --hp-img: url('../assets/plank-blue.png'); }
+.k-headpanel.is-green { --hp-img: url('../assets/plank-green.png'); }
+.k-headpanel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 8);
+  box-sizing: border-box;
+  height: var(--hp-h);
+  /* Over the paper's top edge, end to end, and never past the panel's own
+     box — a scrolling body would clip anything that pokes out. The ends are
+     borders, so the title and the trail start inside the nails. */
+  margin: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1) calc(var(--px) * 4);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--hp-cap);
+  border-image: var(--hp-img) 0 115 fill / 0 var(--hp-cap) stretch;
+  padding: 0 0 calc(var(--px) * 1);
+  color: var(--ink-inverse);
+  font-weight: var(--weight-title);
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 14, 4, 0.6);
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1.5) rgba(60, 30, 10, 0.3));
+}
+.k-headpanel-title {
+  font-size: calc(var(--px) * 15);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-headpanel-trail {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-size: calc(var(--px) * 16);
+  font-variant-numeric: tabular-nums;
+}
+.k-headpanel-trail > .icon { --icon-size: calc(var(--px) * 22); }
+.k-headpanel-body { min-width: 0; }

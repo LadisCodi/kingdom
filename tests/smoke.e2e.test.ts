@@ -7,6 +7,8 @@ import {
   changeWorkers, collectBuilding, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
 import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
+import { validPlacementCells } from '../src/sim/districts';
+import { townhallDistance } from '../src/sim/grid';
 import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
@@ -14,7 +16,7 @@ import { townhallTaxMultiplier } from '../src/sim/upgrades';
 import { isTechComplete, researchRefusal } from '../src/sim/research';
 import { revealCostForCell, revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, townhall } from '../src/sim/state';
+import { completesAt, getWallet, townhall } from '../src/sim/state';
 import {
   addAllTrainers, completeTech, FOREST, freshGame, fund, map, researchNow, reveal, stored, T0, tickAt,
 } from './helpers';
@@ -168,10 +170,21 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     completeTech(state, 'Consecration');
     reveal(state, [{ x: 6, y: 0 }]); // open water east of the isle
     expect(enqueueBuild(state, map, 'Sanctum', { x: 6, y: 0 })).toBe('InvalidCell'); // water
-    expect(enqueueBuild(state, map, 'Sanctum', { x: 1, y: -1 })).toBe('Started');
+    // Legal ground: the first cell the 2×2 fits on, with a little more of the
+    // isle opened so there is room for one.
+    const around: Array<{ x: number; y: number }> = [];
+    for (let x = -4; x <= 4; x++) for (let y = -4; y <= 4; y++) around.push({ x, y });
+    reveal(state, around.filter((c) => c.x !== 6));
+    // Nearest the Townhall: a build's wait grows with the distance.
+    const sanctumAt = validPlacementCells(state, map, 'Sanctum')
+      .sort((a, b) => townhallDistance(map, a) - townhallDistance(map, b))[0];
+    expect(sanctumAt).toBeDefined();
+    expect(enqueueBuild(state, map, 'Sanctum', sanctumAt)).toBe('Started');
     tickAt(state, now);
-    now += 60_000;
+    // Until it stands: its wait depends on how far from the hall it is.
+    now = Math.max(now + 60_000, completesAt(state.city.queue[0]));
     tickAt(state, now);
+    expect(state.city.queue).toHaveLength(0);
 
     // --- Army: a unit sits behind a technology AND behind its own building,
     // and the cap comes from the buildings rather than from the Townhall.

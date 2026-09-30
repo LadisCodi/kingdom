@@ -13,7 +13,7 @@
 //      difference, so nothing that happened before the mission existed counts
 //      and nothing it counts can be taken back.
 //   2. NEVER ISSUE WHAT CANNOT BE DONE. `canIssue` asks the same questions the
-//      buttons ask — `maxLevel`, `isHeroMaxLevel`, `gateIsCleared`,
+//      buttons ask — `maxLevel`, `isHeroMaxLevel`,
 //      `maxDistrictCount` — so a mission can never disagree with the refusal
 //      the player would get. And there is a FALLBACK that is always eligible,
 //      so a board can always be filled.
@@ -33,10 +33,8 @@
 import { DISTRICTS, MISSIONS, CURRENCIES } from './data/definitions';
 import { armyCap, committedTroops, trainerFor } from './army';
 import { maxDistrictCount, requiredTechForLevel } from './districts';
-import { gateIsCleared } from './gates';
 import { heroEntry } from './heroes';
 import { isHeroMaxLevel } from './heroLadder';
-import { ruinIsFinished } from './expeditions';
 import { isTechComplete } from './research';
 import { rand } from './rng';
 import { tally } from './events';
@@ -45,7 +43,7 @@ import { cityGoldPerSecond } from './collection';
 import {
   newId,
   type CurrencyId, type DistrictId, type GameState, type Mission, type MissionKind,
-  type MissionReward, type RuinId,
+  type MissionReward,
 } from './state';
 
 const HOUR_MS = 3_600_000;
@@ -72,7 +70,7 @@ export const weekIndex = (t: number): number => Math.floor((t - WEEK_EPOCH) / WE
 export const MISSION_KINDS: readonly MissionKind[] = [
   'Population', 'UpgradeDistricts', 'RaiseTownhall', 'CollectResource',
   'DiscoverCells', 'BuildDistricts', 'TrainTroops', 'LevelHeroes',
-  'ClearRooms', 'CompleteDepths', 'OpenPacks',
+  'OpenPacks',
 ];
 
 /**
@@ -117,13 +115,6 @@ const anyBuildable = (state: GameState): boolean =>
       < maxDistrictCount(state, def);
   });
 
-/** A ruin with its gate down and rooms left, and a hero to send into it. */
-const anyRuinOpen = (state: GameState): boolean =>
-  state.heroes.owned.length > 0 &&
-  (Object.keys(state.ruins) as RuinId[]).concat(
-    (Object.keys(state.gates) as RuinId[]),
-  ).some((id) => gateIsCleared(state, id) && !ruinIsFinished(state, id));
-
 /**
  * CAN THIS KIND BE ISSUED RIGHT NOW?
  *
@@ -162,9 +153,6 @@ export function canIssue(state: GameState, kind: MissionKind): boolean {
           .some((u) => trainerFor(state, u) !== undefined);
     case 'LevelHeroes':
       return state.heroes.owned.some((id) => !isHeroMaxLevel(heroEntry(state, id)));
-    case 'ClearRooms':
-    case 'CompleteDepths':
-      return anyRuinOpen(state);
     case 'OpenPacks':
       return true;
     default:
@@ -188,8 +176,6 @@ function meterFor(state: GameState, kind: MissionKind): { meter: string; subject
     case 'BuildDistricts': return { meter: 'built', subject: null };
     case 'TrainTroops': return { meter: 'troops', subject: null };
     case 'LevelHeroes': return { meter: 'heroLevels', subject: null };
-    case 'ClearRooms': return { meter: 'rooms', subject: null };
-    case 'CompleteDepths': return { meter: 'depths', subject: null };
     default: return { meter: 'packs', subject: null };
   }
 }
@@ -204,7 +190,7 @@ const inBand = (roll: number, band: readonly number[]): number => {
 /**
  * HOW MUCH THIS MISSION ASKS FOR.
  *
- * Counts for everything a player does one of at a time — a level, a room, a
+ * Counts for everything a player does one of at a time — a level, a
  * trainee — because those are the same size for every city. The one exception
  * is "collect X", which is priced in MINUTES OF THE PLAYER'S OWN PRODUCTION
  * (`tap.workSeconds`'s rule, and `productionChest`'s): an absolute pile is a
@@ -232,8 +218,6 @@ function targetFor(
     case 'BuildDistricts': return inBand(roll, MISSIONS.buildBand);
     case 'TrainTroops': return inBand(roll, MISSIONS.troopsBand);
     case 'LevelHeroes': return inBand(roll, MISSIONS.heroLevelBand);
-    case 'ClearRooms': return inBand(roll, MISSIONS.roomsBand);
-    case 'CompleteDepths': return inBand(roll, MISSIONS.depthsBand);
     default: return inBand(roll, MISSIONS.packsBand);
   }
 }

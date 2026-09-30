@@ -29,17 +29,16 @@
     "cap": 10,
     "landmarkClaimLump": 5,
     "conquestFirstClearLump": 15,
-    "roomCoef": 0.25,
     "goldPriceBase": 100,
     "gemsPerPoint": 10
   },
   "raid": {
     "takeFractionMax": 0.5,
-    "maxRaids": 3
+    "perDay": 3,
+    "windowStartHour": 9,
+    "windowEndHour": 23
   },
   "delve": {
-    "firstClearGems": 500,
-    "firstClearKnowledge": 15,
-    "firstClearStardust": 150
+    "firstClearKnowledge": 15
   }
 }

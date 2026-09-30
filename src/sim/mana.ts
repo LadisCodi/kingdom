@@ -61,7 +61,7 @@ import {
  * The Townhall used to be the whole of it. It produces nothing now — it gates
  * and nothing else (Docs/features/08-magic.md §2) — so the Sanctum is the
  * engine as well as the reservoir, and the whole Mana curve lives in the
- * Magic tome where the fog, the landmarks and the ruins already are.
+ * Magic tome where the fog, the landmarks and the lairs already are.
  *
  * The floor is what a kingdom regenerates before it has built anything, which
  * has to be non-zero or the opening session has no Mana to tap with.

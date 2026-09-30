@@ -49,12 +49,11 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'CompleteTech': case 'CompleteTechs': return 'research';
     case 'ReachPopulation': return 'population';
     case 'AssignWorkers': return 'workers';
-    case 'TrainArmy': case 'ClearGarrisons': return 'army';
+    case 'TrainArmy': case 'ClearLairs': return 'army';
     case 'CollectTaps': return 'showme';
     case 'DiscoverCells': return 'tile';
     case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
-    case 'ReachDepth': case 'ClearRuins': return 'dungeon';
     case 'OwnArtifacts': return 'relics';
     case 'OwnHeroes': return 'Warrior';
     default: return 'quest';

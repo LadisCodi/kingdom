@@ -15,7 +15,7 @@ import {
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
-import { advance, type AdvanceResult } from './commands';
+import { advance, settleFootprints, type AdvanceResult } from './commands';
 import { withoutTallies } from './events';
 import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
@@ -31,7 +31,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
+  type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -567,7 +567,77 @@ const MIGRATIONS: readonly Migration[] = [
       dto.Poured = dto.Poured ?? {};
     },
   },
+  {
+    // v63: the depths behind the gate are retired — a ruin is its gate
+    // (Docs/proposals/lairs.md §7). The rooms cleared, the ruins bottomed and
+    // the deepest depth have nothing left to mean, so the module goes.
+    //
+    // NO RETRO-PAY. The first-clear Knowledge lump moved from a ruin's bottom
+    // room to its gate. A save that bottomed a ruin was paid it then; a save
+    // whose gate fell but whose ruin was never bottomed never got it, and does
+    // not get it here — a one-off lump on load, for a fight already won, is
+    // not worth the second code path.
+    //
+    // The season pass's live missions of the two retired kinds (`ClearRooms`,
+    // `CompleteDepths`) go too: their odometers can never move again, so they
+    // would sit on the board unfinishable until their window rolled over.
+    to: 63,
+    migrate: (modules) => {
+      delete modules['kingdom.ruins'];
+      const kingdom = modules['kingdom.kingdoms'] as {
+        Pass?: { Live?: Array<{ Kind?: string }> };
+      } | undefined;
+      const pass = kingdom?.Pass;
+      if (pass?.Live !== undefined) {
+        pass.Live = pass.Live.filter((m) => m.Kind !== 'ClearRooms' && m.Kind !== 'CompleteDepths');
+      }
+    },
+  },
+  {
+    // v64: ruins and gates are LAIRS (Docs/proposals/lairs.md). A rename, not
+    // a reshape: `kingdom.gates` becomes `kingdom.lairs`, its `Gates` list
+    // becomes `Lairs`, every `RuinID` becomes `LairID`, and every persisted
+    // place id becomes its creature's — the lairs' own state, the raid
+    // reports, and the `site:<id>` keys of the discoveries already announced,
+    // so a lair the player has seen is not announced twice.
+    to: 64,
+    migrate: (modules) => {
+      const renamed = (id: unknown): unknown =>
+        typeof id === 'string' ? (LAIR_RENAMES[id] ?? id) : id;
+      const gates = modules['kingdom.gates'] as {
+        Gates?: Array<Record<string, unknown>>;
+        Reports?: Array<Record<string, unknown>>;
+      } | undefined;
+      if (gates !== undefined) {
+        const rekey = (row: Record<string, unknown>): Record<string, unknown> => {
+          const { RuinID, ...rest } = row;
+          return { ...rest, LairID: renamed(RuinID) };
+        };
+        const { Gates, Reports, ...rest } = gates;
+        modules['kingdom.lairs'] = {
+          ...rest,
+          Lairs: (Gates ?? []).map(rekey),
+          Reports: (Reports ?? []).map(rekey),
+        };
+        delete modules['kingdom.gates'];
+      }
+      const discoveries = modules['kingdom.discoveries'] as { Keys?: string[] } | undefined;
+      if (discoveries?.Keys !== undefined) {
+        discoveries.Keys = discoveries.Keys.map((k) =>
+          k.startsWith('site:') ? `site:${renamed(k.slice(5)) as string}` : k);
+      }
+    },
+  },
 ];
+
+/** The v63 place ids of the five lairs, and the creature each one became. */
+const LAIR_RENAMES: Record<string, LairId> = {
+  HollowBarrow: 'Orcs',
+  SunkenChapel: 'Harpies',
+  DrownedIronworks: 'Goblins',
+  CountingHouse: 'WolfRiders',
+  StarObservatory: 'Drake',
+};
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
  *  Exported for the test that walks the chain end to end. */
@@ -651,6 +721,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
+        UtcOffsetMinutes: state.kingdom.utcOffsetMinutes,
         Daily: {
           Season: state.kingdom.daily.season,
           Rung: state.kingdom.daily.rung,
@@ -751,22 +822,14 @@ export function serialize(state: GameState, now: number): SaveFile {
           Phase: e.phase,
         })),
       },
-      // HOW FAR INTO EACH RUIN, and nothing in flight: a room resolves the
-      // instant it is entered, so there is no party to persist
-      // (Docs/features/11-expeditions.md §5).
-      'kingdom.ruins': {
-        Progress: Object.entries(state.ruins).map(([ruinId, p]) => ({
-          RuinID: ruinId, Depth: p!.depth, Cleared: p!.cleared,
-        })),
-        Cleared: Object.keys(state.ruinsCleared),
-        DeepestDepth: state.deepestDepth,
-      },
       'kingdom.heroes': {
         Owned: state.heroes.owned,
         Levels: state.heroes.levels,
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
         HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
+        Hurt: Object.fromEntries(Object.entries(state.heroes.hurt)
+          .map(([id, h]) => [id, { Missing: h!.missing, AtUtc: iso(h!.at), Exhausted: h!.exhausted === true }])),
       },
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
@@ -791,19 +854,17 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
       },
-      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER: the
-      // counter a discovery started runs while the player is away, and the raid it owes resolves
-      // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
-      'kingdom.gates': {
-        Gates: Object.entries(state.gates).map(([ruinId, g]) => ({
-          RuinID: ruinId,
+      // The lairs and what they carry. `NextRaidAtUtc` is a TIMER: the clock
+      // a find started runs while the player is away, and the raids it owes
+      // resolve on the next advance (Docs/proposals/lairs.md §4).
+      'kingdom.lairs': {
+        Lairs: Object.entries(state.lairs).map(([lairId, g]) => ({
+          LairID: lairId,
+          ArmedAtUtc: iso(g!.armedAt),
           NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
-          Trips: g!.trips,
           Hoard: g!.hoard,
+          Defeated: g!.defeated,
           Cleared: g!.cleared,
-        })),
-        Reports: state.raidReports.map((r) => ({
-          ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
       // A relic is a level and a cast clock. The passives are re-derived on
@@ -1001,6 +1062,7 @@ export function deserialize(
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
+    state.kingdom.utcOffsetMinutes = Number.isFinite(kingdomDto.UtcOffsetMinutes) ? kingdomDto.UtcOffsetMinutes : 0;
     // Additive: a save written before the chest existed has no Daily block and
     // the defaults below start the season at rung zero, which is exactly right
     // for a player meeting it for the first time. `Season: -1` matches no real
@@ -1169,19 +1231,6 @@ export function deserialize(
     }));
   }
 
-  const ruinsDto = modules['kingdom.ruins'];
-  if (ruinsDto) {
-    state.ruins = {};
-    for (const p of (ruinsDto.Progress ?? []) as any[]) {
-      state.ruins[p.RuinID as RuinId] = { depth: p.Depth ?? 1, cleared: p.Cleared ?? 0 };
-    }
-    state.deepestDepth = ruinsDto.DeepestDepth ?? 0;
-    state.ruinsCleared = {};
-    for (const id of (ruinsDto.Cleared ?? []) as string[]) {
-      state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;
-    }
-  }
-
   const heroesDto = modules['kingdom.heroes'];
   if (heroesDto) {
     state.heroes = {
@@ -1192,6 +1241,11 @@ export function deserialize(
       // `PartySlotsPurchased` is gone: every troop slot is open from the
       // start, so an older save's count is simply not read.
       heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
+      hurt: Object.fromEntries(Object.entries(
+        (heroesDto.Hurt ?? {}) as Record<string, { Missing: number; AtUtc: string; Exhausted?: boolean }>,
+      ).map(([id, h]) => [id, {
+        missing: h.Missing, at: ms(h.AtUtc), ...(h.Exhausted === true ? { exhausted: true } : {}),
+      }])),
     };
   }
 
@@ -1233,20 +1287,25 @@ export function deserialize(
     for (const id of (landmarksDto.Claimed ?? []) as string[]) state.landmarks.claimed[id] = true;
   }
 
-  const gatesDto = modules['kingdom.gates'];
-  if (gatesDto) {
-    state.gates = {};
-    for (const g of (gatesDto.Gates ?? []) as any[]) {
-      state.gates[g.RuinID as RuinId] = {
+  const lairsDto = modules['kingdom.lairs'];
+  if (lairsDto) {
+    state.lairs = {};
+    for (const g of (lairsDto.Lairs ?? []) as any[]) {
+      // `Trips` and `Reports` belonged to the three-raid garrison and are not
+      // read. A lair that had spent its trips has no clock; the next advance
+      // puts it on the daily schedule (`armLairs`). `ArmedAtUtc` is new, and a
+      // lair without one only loses the first-warning exemption of
+      // `setUtcOffset`, which it no longer needs.
+      state.lairs[g.LairID as LairId] = {
+        armedAt: g.ArmedAtUtc ? ms(g.ArmedAtUtc) : 0,
         nextRaidAt: msOrNull(g.NextRaidAtUtc),
-        trips: g.Trips ?? 0,
         hoard: { ...(g.Hoard ?? {}) },
+        // Absent before the claim existed: a lair was cleared the instant it
+        // was beaten, so a cleared one was also defeated.
+        defeated: g.Defeated === true || g.Cleared === true,
         cleared: g.Cleared === true,
       };
     }
-    state.raidReports = ((gatesDto.Reports ?? []) as any[]).map((r) => ({
-      id: r.ID, ruinId: r.RuinID as RuinId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
-    }));
   }
 
   const artifactsDto = modules['kingdom.artifacts'];
@@ -1377,6 +1436,9 @@ export function deserialize(
   // than live; everything else in `advance()` is untouched by the flag, so
   // invariant 1 still holds.
   const report = withoutTallies(state, () => advance(state, map, now));
+  // A footprint may have grown in the data since this city was built: put
+  // every building back on ground it may stand on (commands.ts).
+  settleFootprints(state, map, now);
   onCatchUp?.({
     elapsedMs: Math.max(0, now - lastSaved),
     storesFull: state.city.districts.some(isStoreFull),

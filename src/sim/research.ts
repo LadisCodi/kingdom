@@ -233,7 +233,7 @@ export function techState(state: GameState, id: TechId): TechState {
  * granted by an event in the world, never bought.
  *
  * Civics is granted at the new-game seed because it is the game. Magic is
- * granted on the first paid reveal and Warfare on the first discovered ruin
+ * granted on the first paid reveal and Warfare on the first discovered lair
  * (Docs/features/07-research.md §2). Nothing in the tree is reachable
  * before its cover page, so this is the one gate that decides whether a book
  * exists for the player at all.
@@ -242,7 +242,7 @@ export function techState(state: GameState, id: TechId): TechState {
  * Every book is open, always.
  *
  * Opening one used to be a TECHNOLOGY — a free, instant cover page granted by
- * an event in the world (the first paid reveal for Magic, the first ruin in
+ * an event in the world (the first paid reveal for Magic, the first lair in
  * sight for Warfare) and by `newGame` for Civics. The card existed only to be
  * the marker, so the three of them were free clicks that did nothing, and the
  * era bars already pace a book by what the player has revealed. So the marker

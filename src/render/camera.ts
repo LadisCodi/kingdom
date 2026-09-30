@@ -131,8 +131,11 @@ export class Camera {
 
   // -------------------------------------------------------------- movement
 
-  centerOnCell(cell: Coord): void {
-    const p = this.project(cell.x + 0.5, cell.y + 0.5);
+  /** Centre the view on a plot — a cell, or a building's whole footprint
+   *  when `span` is given, so a 2×2 hall is centred on its middle rather
+   *  than on its corner cell. */
+  centerOnCell(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }): void {
+    const p = this.project(cell.x + span.x / 2, cell.y + span.y / 2);
     this.x = p.x;
     this.y = p.y;
   }

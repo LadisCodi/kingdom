@@ -62,8 +62,8 @@ export type HarvestSourceId =
   | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
-export type RuinId =
-  | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
+export type LairId =
+  | 'Orcs' | 'Harpies' | 'Goblins' | 'WolfRiders' | 'Drake';
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
   // The three pillars the city relics do not touch: the dungeon, the war and
@@ -326,48 +326,29 @@ export interface PartySlotState {
 }
 
 /**
- * One ruin's gate.
+ * One lair.
  *
- * `nextRaidAt` is the whole clock: null means nothing is counting — the gate
+ * `nextRaidAt` is the whole clock: null means nothing is counting — the lair
  * is cleared, or the garrison is out of trips and sitting on what it took.
- * The `hoard` is what it holds, and clearing the gate hands every coin of it
+ * The `hoard` is what it holds, and clearing the lair hands every coin of it
  * back, which is what keeps a raid a bill rather than a loss.
  */
-export interface GateState {
-  /** Epoch ms of the next raid, or null when nothing is counting. */
+export interface LairState {
+  /** Epoch ms of the boundary that DISCOVERED it — the first raid is
+   *  `armedAt + warningMinutes`, and every one after it follows the daily
+   *  schedule (Docs/proposals/lairs.md §4.1). */
+  armedAt: number;
+  /** Epoch ms of the next raid, or null once it is cleared. */
   nextRaidAt: number | null;
-  /** Raids that actually took something. Capped at `raid.maxRaids`. */
-  trips: number;
-  /** What it has taken, returned in full when the gate falls. */
+  /** What it carries of what it took, capped at a day of raids per material
+   *  (§4.2), and handed back when the lair falls. */
   hoard: Wallet;
+  /** Its garrison is beaten and it raids no more, but what it owes has not
+   *  been CLAIMED: it still stands on the map, holding its ground, with its
+   *  reward waiting on its card (Docs/proposals/lairs.md §5). */
+  defeated: boolean;
+  /** Claimed: the reward is paid and the lair is gone for good. */
   cleared: boolean;
-}
-
-/** One raid, for the widget. Kept until the player dismisses it. */
-export interface RaidReport {
-  id: string;
-  ruinId: RuinId;
-  at: number;
-  took: Wallet;
-}
-
-/**
- * HOW FAR INTO ONE RUIN THE PLAYER HAS GOT.
- *
- * A ruin is depths of rooms and a room is one fight, cleared in order and
- * never replayed (Docs/features/11-expeditions.md §1). So progress is one
- * address — the deepest room cleared — and the FRONTIER is the room after it.
- *
- * There is no party underground and no timer: a room resolves the instant it
- * is entered, so nothing about a ruin is ever in flight. That is why this
- * replaced the staged delve wholesale rather than being added beside it.
- */
-export interface RuinProgress {
-  /** The depth the frontier is in, 1-based. */
-  depth: number;
-  /** Rooms cleared IN that depth. The frontier is room `cleared + 1`; when it
-   *  reaches the depth's room count, the next depth opens at 0. */
-  cleared: number;
 }
 
 /**
@@ -378,7 +359,7 @@ export interface RuinProgress {
 export type MissionKind =
   | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
   | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
-  | 'ClearRooms' | 'CompleteDepths' | 'OpenPacks';
+  | 'OpenPacks';
 
 /**
  * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
@@ -445,6 +426,11 @@ export interface GameState {
     /** Points of Knowledge ever bought with Gold. The nth costs n × base, and
      *  this never resets (sim/knowledge.ts). */
     knowledgeBoughtWithGold: number;
+    /** The player's local time, as minutes EAST of UTC (UTC+2 is 120). The
+     *  device reports it and the sim only ever reads it — a lair raids inside
+     *  the player's local day (Docs/proposals/lairs.md §4.1), and the sim has
+     *  no clock of its own to find out where that day is. */
+    utcOffsetMinutes: number;
     /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
      *  it survives a region reset — a habit is a property of the player, not
      *  of the city they happen to be playing. See sim/daily.ts. */
@@ -541,9 +527,6 @@ export interface GameState {
    * absolute-time and reconciliation happens before the replay.
    */
   schedule: ScheduledEntry[];
-  /** How far into each ruin the player has got. Absent = the gate is still
-   *  standing, or nobody has been in yet. */
-  ruins: Partial<Record<RuinId, RuinProgress>>;
   /** The hero roster, on the same collection substrate as the relics. */
   heroes: {
     owned: HeroId[];
@@ -554,6 +537,11 @@ export interface GameState {
      *  is Gems, always, up to the board's three
      *  (Docs/features/10-heroes.md §3). */
     heroSlotsPurchased: number;
+    /** What fights have taken from each hero and not yet given back: the
+     *  share of its HP missing at `at` (epoch ms), recovering on its own,
+     *  and whether it fell — an exhausted hero rests until whole. Absent =
+     *  whole (sim/heroHealth.ts). */
+    hurt: Partial<Record<HeroId, { missing: number; at: number; exhausted?: boolean }>>;
   };
   /** Pull counters, per banner. Persisted because pity depends on them — and
    *  because the counter IS the rng key, which is what lets a hash beat a
@@ -612,35 +600,23 @@ export interface GameState {
      */
     refills: { day: number; watched: number; bought: number };
   };
-  /** The deepest depth cleared in ANY ruin — a milestone, and what the quest
-   *  chain reads. Derived from `ruins` on write rather than recomputed, so a
-   *  ruin the player abandons still counts for how deep they have been. */
-  deepestDepth: number;
-  /** Ruins whose deepest depth has been cleared at least once. The artifact
-   *  is granted on the FIRST one — no randomness on the thing that gates a
-   *  system. */
-  ruinsCleared: Partial<Record<RuinId, true>>;
   /** Claimed landmarks, by content id. Claiming raises the Mana CEILING,
    *  which is what makes exploration compound rather than merely pay. No
    *  landmark is defended: a sanctuary is bought with Gold, and the fight
-   *  with a clock belongs to the ruins (sim/gates.ts). */
+   *  with a clock belongs to the lairs (sim/lairs.ts). */
   landmarks: {
     claimed: Record<string, true>;
   };
   /**
-   * The gate on every ruin — one garrison, one clock
+   * Every lair — one garrison, one clock
    * (Docs/features/18-garrisons-and-raids.md).
    *
-   * Absent = the ruin has not been discovered, so nothing is counting. The
+   * Absent = the lair has not been discovered, so nothing is counting. The
    * entry is written by the sweep in `advance()` rather than by the reveal,
    * so the counter is stamped with a boundary's `t` and never with a clock
    * the sim is not allowed to read.
    */
-  gates: Partial<Record<RuinId, GateState>>;
-  /** Raids the player has not read yet. Persisted: a raid that landed over
-   *  lunch is still news when they come back, and the widget carries it until
-   *  it is dismissed. */
-  raidReports: RaidReport[];
+  lairs: Partial<Record<LairId, LairState>>;
   /**
    * The five relics, as levels. Absent = not found; a relic is owned iff it
    * has a level, and every relic the player has is always on

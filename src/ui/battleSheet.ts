@@ -1,245 +1,232 @@
-// The screen before a fight (Docs/features/11a-ruins-ui.md §2.5, §2.6).
+// The attack screen (Docs/proposals/lairs.md §6).
 //
-// One screen serves every fight in the game — a gate today, a ruin's rooms
-// when they land — so it takes a DESCRIPTOR rather than a ruin: what the
-// battle is called, what is standing there, what the fight pays, and what the
-// button says. The caller (`gateSheet.ts`) knows about garrisons; this file
-// knows about boards.
+// One screen serves every fight in the game — a lair today, whatever else
+// fights tomorrow — so it takes a DESCRIPTOR rather than a lair: what the
+// battle is called, what is standing there, what it costs and what the button
+// does. The caller (`lairSheet.ts`) knows about lairs; this file knows about
+// boards.
 //
-// THE SCREEN IS A BOARD, NOT A FORM. The party used to be four steppers, one
-// per unit type, and the player did arithmetic to fill them. It is slots now:
+// TOP TO BOTTOM, and nothing else:
 //
-//   tap a slot → a panel of cards rises → tap a card → the slot fills
+//   the enemy's board — its six troop slots, its hero slots, and its power;
+//   your board — the same, and your power;
+//   the ROSTER: one tile per troop type, one per hero;
+//   the action box — the supplies over Attack, Quick deploy beside it, and
+//   the soldiers the fight will cost as its hint.
 //
-// and the count is the game's problem, not the player's — a card puts a whole
-// squad in, or everything that is left of that type, or everything the army
-// cap still allows (`Game.troopsAvailableFor`). What that buys is the thing
-// the type chart needs to be legible: the decision on this screen is WHICH
-// types stand against what is in the doorway, and a stepper buries that under
-// eight plus-and-minus knobs.
+// NO ROWS. A squad's place in the fight — in front or behind — is its unit
+// type's (combat.md §8), never a choice the player makes, so the deploy
+// screen does not draw it: six troop slots of anything, and the hero slots.
+// The fight's playback is where the rows are seen (battleScreen.ts). Built
+// from the kit the district card and the upgrade popup use — the inset box,
+// the section heading, the game's buttons — so the screen reads as one of
+// theirs rather than as a thing of its own.
 //
-// The panel is NOT drawn here: it is its own mount (`ui/battlePicker.ts`),
-// built once and mutated. This sheet rebuilds on the tick — it carries a
-// countdown — and a panel rebuilt with it restarts its slide-in animation
-// every second, loses the rail's scroll position, and re-decodes every
-// portrait on it. The same reason the quest pill and the ad tab are mutated
-// rather than replaced.
+// THE PLAYER NEVER PICKS A SLOT. A tap on a troop tile sends one squad into
+// the next free troop slot (`Game.assignTroop`), a tap on a
+// hero tile puts the hero in or takes it out, and a tap on a filled slot of
+// your board sends it home. The board above only shows the party.
 
-import { HEROES, UNITS } from '../sim/data/definitions';
+import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { CurrencyId, UnitId, Wallet } from '../sim/state';
+import type { UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
-import { action, iconEl, sheet } from './kit';
+import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
+import { emptyHeroSlot, heroCard } from './heroCard';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
-  /** What this fight is called — the loudest line on the screen. */
+  /** What this fight is called — the sheet's title plank. */
   title: string;
-  /** Where it is happening. */
-  subtitle: string;
-  sprite: string;
-  glyph: string;
-  /** The dynamic band under the art: whatever this KIND of battle has to say
-   *  — a garrison's countdown, a room's depth. Nodes, so the caller can put a
-   *  countdown or a hoard in it. */
-  info: Array<Node | string>;
   enemy: {
     squads: readonly EnemySquad[];
     power: number;
-    threat: UnitId | 'Any';
+    /** The face a squad of each type wears on the enemy side: a lair's
+     *  creatures, not the player's own soldiers. */
+    portrait: (unitId: UnitId) => HTMLElement;
+    /** The faces of the heroes or villains it fields, if any. */
+    heroes?: HTMLElement[];
   };
-  /** The party's attack after the matchup, and what it is up against. */
+  /** The party's power, and whether it beats the enemy's on paper. */
   attack: number;
   enough: boolean;
   supplies: Wallet;
-  /** What winning pays, as icon-and-amount chips. Empty is a legal state and
-   *  says so — a gate's reward is the ruin behind it. */
-  rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment' | 'pack'; label: string }>;
-  /** One line under the chips: what winning is really for. */
-  rewardNote?: string;
+  /** Soldiers the fight will cost the party as it stands. */
+  fallen: number;
   actionLabel: string;
-  /** The small print under the button, when this kind of fight has something
-   *  to say that the board does not already show. Most do not. */
-  actionNote?: string;
   onFight: () => void;
   /** Why the fight cannot start. A power SHORTFALL is never one of these: it
    *  warns and lets the player go anyway. */
   blocked: string | null;
 }
 
-const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
-  const url = spriteUrl(sprite);
-  return url
-    ? spriteImgAt(url, cls)
-    : el('div', { class: `${cls} is-glyph` }, glyph);
+/** A squad on the board: its face in the round frame, its count under it. */
+const squadCell = (face: HTMLElement, count: number): HTMLElement =>
+  el('span', { class: 'bt-cell is-filled' },
+    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, face)),
+    el('span', { class: 'bt-count' }, `×${formatExact(count)}`));
+
+const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
+const emptyCard = (): HTMLElement => el('span', { class: 'bt-card is-empty', 'aria-hidden': 'true' });
+
+/** A line of slots — the troops' or the heroes' — padded with empty ones to
+ *  `slots`, so both boards keep one shape. No label: a hero slot is its own
+ *  SHAPE (a gilt square, battle.css), so the two lines read apart unnamed. */
+const slotGroup = (label: string, cells: HTMLElement[], slots: number, cls: string): HTMLElement => {
+  while (cells.length < slots) cells.push(cls === 'is-heroes' ? emptyCard() : emptyCell());
+  return el('div', { class: `bt-group ${cls}`, role: 'group', 'aria-label': label }, ...cells);
 };
 
-/** A troop icon with a count under it — the shape both armies' slots share,
- *  so a filled slot on one side reads against the other at a glance. */
-const squadFace = (unitId: UnitId, count: number): HTMLElement =>
-  el('div', { class: 'bt-face' },
-    unitBust(unitId, 'bt-portrait'),
-    el('span', { class: 'bt-count' }, `x${formatExact(count)}`));
+/** A board in a head panel (kit `headPanel`): the enemy's plank red, ours
+ *  blue, the side's name on it and its total power anchored right — the
+ *  crossed swords and the number. */
+const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[]): HTMLElement =>
+  headPanel({
+    tone: cls.includes('is-enemy') ? 'red' : 'blue',
+    title: label,
+    trailing: [iconEl('power', { size: 'sm' }), formatExact(power)],
+    cls: `bt-army ${cls}`,
+  }, ...groups);
+
+/** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
+ *  they get more room and a shape of their own beside the troops' rounds. */
+const cardSlot = (cls: string, ...children: HTMLElement[]): HTMLElement =>
+  el('span', { class: `bt-card ${cls}` }, ...children);
 
 // ------------------------------------------------------------- the enemy
 
-function enemyBox(view: BattleView): HTMLElement {
-  const box = el('div', { class: 'bt-army is-enemy' },
-    el('div', { class: 'bt-army-head' },
-      el('h3', {}, 'Enemy army'),
-      el('b', { class: 'bt-power' }, formatExact(view.enemy.power))),
-  );
-  const row = el('div', { class: 'bt-slots' });
-  for (const squad of view.enemy.squads) {
-    row.append(el('div', { class: 'bt-slot is-filled' }, squadFace(squad.unitId, squad.count)));
-  }
-  box.append(row);
-  // No line under the squads: the faces say what is standing there and the
-  // number on the right says what it is worth. Prose that restates both is
-  // what the screen was cut down to remove.
-  return box;
+/** The enemy shows only what it FIELDS: its squads, centred, and a line of
+ *  heroes or villains only when it has any. An empty slot on their side says
+ *  nothing the player can act on. */
+function enemyBoard(view: BattleView): HTMLElement {
+  const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count));
+  const heroes = (view.enemy.heroes ?? []).map((face) => squadlessCell(face));
+  return armyBox('Enemy', view.enemy.power, 'is-enemy', [
+    slotGroup('Troops', troops, 0, 'is-troops'),
+    ...(heroes.length > 0 ? [slotGroup('Villains', heroes, 0, 'is-heroes')] : []),
+  ]);
 }
 
-// -------------------------------------------------------------- the party
+/** A villain on the enemy's side: its card, no count and no HP bar — what it
+ *  has is the fight's business. */
+const squadlessCell = (face: HTMLElement): HTMLElement => {
+  face.classList.add('bt-card-art');
+  return cardSlot('is-filled is-villain', face);
+};
 
-/** The X in the corner of a filled slot. */
-function clearBadge(label: string, onClear: () => void): HTMLElement {
-  const b = el('button', { class: 'bt-clear', type: 'button', 'aria-label': label }, '✕');
-  b.addEventListener('click', (event) => {
-    event.stopPropagation(); // the slot underneath must not re-open the panel
-    onClear();
-  });
-  return b;
-}
+// -------------------------------------------------------------- your board
 
-/** An empty slot: the tap target that opens the panel. */
-function emptySlot(label: string, onOpen: () => void): HTMLElement {
-  const b = el('button', { class: 'bt-slot is-empty', type: 'button', 'aria-label': label },
-    iconEl('plus', { size: 'lg' }));
-  b.addEventListener('click', onOpen);
-  return b;
-}
+function partyBoard(game: Game, view: BattleView): HTMLElement {
+  const troops = game.expeditionParty
+    .map((slot, index) => {
+      const cell = el('button', {
+        class: 'bt-cell is-filled is-mine', type: 'button',
+        'aria-label': `Send ${slot.count} ${UNITS[slot.unitId].name}s home`,
+      },
+      el('span', { class: 'k-portrait' },
+        el('span', { class: 'k-portrait-mask' }, unitBust(slot.unitId, 'k-portrait-art'))),
+      el('span', { class: 'bt-count' }, `×${formatExact(slot.count)}`));
+      cell.addEventListener('click', () => game.clearTroopSlot(index));
+      return cell;
+    });
 
-/** A slot the player does not own yet. The padlock is the state; the price is
- *  the way out of it, and it is on the slot rather than in a separate button
- *  because the slot IS what is being bought. */
-function lockedSlot(
-  cost: number | null, label: string, onBuy: () => void,
-): HTMLElement {
-  const b = el('button', { class: 'bt-slot is-locked', type: 'button', 'aria-label': label },
-    iconEl('padlock', { size: 'lg' }),
-    // Only the NEXT slot carries a price. The ladder climbs, so printing this
-    // one's Gems on all three would quote the wrong number twice.
-    cost === null ? '' : el('span', { class: 'bt-price' },
-      iconEl('Gems', { size: 'sm' }), formatExact(cost)),
-  );
-  b.addEventListener('click', onBuy);
-  return b;
-}
-
-/** The troop row. Every slot is open — there is no locked troop slot and
- *  nothing to buy, so this row has exactly two states. */
-function troopSlots(game: Game): HTMLElement {
-  const row = el('div', { class: 'bt-slots' });
-  for (let i = 0; i < game.troopSlotsOpen(); i++) {
-    const slot = game.expeditionParty[i];
-    if (slot === undefined) {
-      row.append(emptySlot('Add troops', () => game.openBattlePicker('troops')));
-      continue;
-    }
-    const filled = el('div', { class: 'bt-slot is-filled' },
-      squadFace(slot.unitId, slot.count),
-      clearBadge(`Send no ${UNITS[slot.unitId].name}s`, () => game.clearTroopSlot(i)));
-    filled.addEventListener('click', () => game.openBattlePicker('troops'));
-    row.append(filled);
-  }
-  return row;
-}
-
-function heroSlots(game: Game): HTMLElement {
-  const row = el('div', { class: 'bt-slots' });
+  const heroes: HTMLElement[] = [];
   const open = game.heroSlotsOpen();
   for (let i = 0; i < game.heroSlotCeiling(); i++) {
     const heroId = game.partyHeroes[i];
+    // An open slot, filled or not, opens the hero picker for all of them.
     if (heroId !== undefined) {
-      const def = HEROES[heroId];
-      const filled = el('div', { class: 'bt-slot is-filled is-hero' },
-        art(def.sprite, def.glyph, 'bt-portrait'),
-        el('span', { class: 'bt-slot-name' }, def.unitType),
-        clearBadge(`Leave ${def.name} behind`, () => game.clearHeroSlot(i)));
-      filled.addEventListener('click', () => game.openBattlePicker('heroes'));
-      row.append(filled);
+      heroes.push(heroCard(game, heroId, {
+        small: true, onClick: () => game.pickPartyHeroes(),
+        label: `Choose heroes — ${HEROES[heroId].name} leads`,
+      }));
     } else if (i < open) {
-      row.append(emptySlot('Add a hero', () => game.openBattlePicker('heroes')));
+      heroes.push(emptyHeroSlot({ small: true, onClick: () => game.pickPartyHeroes(), label: 'Choose heroes' }));
     } else {
+      // Only the NEXT slot carries a price: the ladder climbs, so printing
+      // this one's Gems on every locked slot would quote the wrong number.
       const next = i === open;
-      row.append(lockedSlot(next ? game.heroSlotOffer().cost : null,
-        'Buy another hero slot', () => game.doBuyHeroSlot()));
+      const cell = el('button', {
+        class: 'bt-card is-locked', type: 'button', 'aria-label': 'Buy another hero slot',
+      },
+      iconEl('padlock', { size: 'md' }),
+      ...(next ? [el('span', { class: 'bt-price' },
+        iconEl('Gems', { size: 'sm' }), formatExact(game.heroSlotOffer().cost))] : []));
+      cell.addEventListener('click', () => game.doBuyHeroSlot());
+      heroes.push(cell);
     }
   }
-  return row;
+
+  return armyBox('Your army', view.attack, `is-mine${view.enough ? '' : ' is-short'}`, [
+    slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
+    slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes'),
+  ]);
 }
 
-function partyBox(game: Game, view: BattleView): HTMLElement {
-  return el('div', { class: `bt-army is-mine${view.enough ? '' : ' is-short'}` },
-    el('div', { class: 'bt-army-head' },
-      el('h3', {}, 'Your army'),
-      el('b', { class: 'bt-power' }, formatExact(view.attack))),
-    troopSlots(game),
-    el('div', { class: 'bt-army-label' }, 'Heroes'),
-    heroSlots(game),
-  );
+// -------------------------------------------------------------- the roster
+
+function troopTile(game: Game, unitId: UnitId): HTMLElement {
+  const left = game.troopsLeftAtHome(unitId);
+  const refusal = game.troopRefusal(unitId);
+  // The board's own medallion, so a troop reads the same at home and in the
+  // party; its name under it says which it is.
+  const tile = el('button', {
+    class: `bt-troop${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
+    type: 'button',
+    'aria-label': refusal ?? `Send a squad of ${UNITS[unitId].name}s`,
+  },
+  el('span', { class: 'bt-cell is-filled' },
+    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, unitBust(unitId, 'k-portrait-art'))),
+    el('span', { class: 'bt-count' }, formatExact(left))),
+  el('span', { class: 'bt-troop-name' }, UNITS[unitId].name));
+  tile.addEventListener('click', () => game.assignTroop(unitId));
+  return tile;
 }
 
-// ------------------------------------------------------------- the panels
+// -------------------------------------------------------------- the action
+
+function actionBox(game: Game, view: BattleView): HTMLElement {
+  // The upgrade popup's cost box: the price over the button, inside the box.
+  const price = el('div', { class: 'bt-go-price' },
+    ...Object.entries(view.supplies).map(([c, n]) =>
+      el('span', { class: `bt-go-chip${game.walletValue(c as never) < (n as number) ? ' is-short' : ''}` },
+        iconEl(c as never), el('b', {}, formatExact(n as number)))));
+  const hint = view.blocked
+    ?? (view.fallen === 0 ? 'No soldiers lost' : `Expected losses: ~${view.fallen} soldier${view.fallen === 1 ? '' : 's'}`);
+  return el('div', { class: 'bt-go k-section' },
+    el('div', { class: 'bt-go-row' },
+      btn({ label: 'Quick deploy', kind: 'blue', onClick: () => game.quickDeploy() }),
+      el('div', { class: 'bt-go-buy' },
+        price,
+        btn({
+          label: view.actionLabel,
+          kind: 'primary',
+          onClick: view.onFight,
+          disabledReason: view.blocked ?? undefined,
+        }))),
+    el('div', { class: 'bt-go-note' }, hint));
+}
 
 // -------------------------------------------------------------- the screen
 
 export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
+  const troops = UNIT_ORDER.filter((u) => UNITS[u] !== undefined);
   const body = el('div', { class: 'bt' },
-    // The sheet's plank is the battle's NAME, so the band under the art says
-    // where it is and what it is worth instead of saying the name twice.
-    // One parchment card (M10): the art down the left, the where-line and
-    // the band's lines beside it.
-    el('div', { class: 'bt-head' },
-      art(view.sprite, view.glyph, 'bt-art'),
-      el('div', { class: 'bt-where' }, view.subtitle),
-      el('div', { class: 'bt-info' }, ...view.info)),
-    enemyBox(view),
-    partyBox(game, view),
+    enemyBoard(view),
+    partyBoard(game, view),
+    sectionHead('Troops'),
+    el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
+    actionBox(game, view),
   );
-
-  const rewards = el('div', { class: 'bt-rewards' },
-    el('div', { class: 'bt-army-head' }, el('h3', {}, 'Rewards')));
-  if (view.rewards.length > 0) {
-    rewards.append(el('div', { class: 'bt-chips' },
-      ...view.rewards.map((r) => el('span', { class: 'bt-chip' },
-        iconEl(r.icon, { size: 'sm' }), r.label))));
-  }
-  if (view.rewardNote !== undefined) {
-    rewards.append(el('div', { class: 'bt-army-note' }, view.rewardNote));
-  }
-  body.append(rewards);
-
-  body.append(action({
-    label: view.actionLabel,
-    kind: 'primary',
-    onClick: view.onFight,
-    cost: view.supplies,
-    have: (c) => game.walletValue(c),
-    disabledReason: view.blocked ?? undefined,
-  }));
-  if (view.actionNote !== undefined) {
-    body.append(el('div', { class: 'bt-note' }, view.actionNote));
-  }
-
-  // No second way out: the sheet's own knob, top right, is the way back.
-  // TALL, because this is a screen the player works in: the board has to be
-  // readable against the room's, and a drawer that grew a row every time a
-  // squad was added would move the button they are reaching for.
-  return sheet(
-    { title: view.title, onClose: () => game.dismiss(), tall: true }, body);
+  // TALL: the two boards, the roster and the button are all read together,
+  // and a drawer that grew a row every time a squad went on would move the
+  // button the thumb is reaching for.
+  const surface = sheet({ title: view.title, onClose: () => game.dismiss(), tall: true }, body);
+  // …and it gives up the tall sheet's strip of sky (battle.css, `is-board`):
+  // every pixel of it belongs to the boards, so the screen fits without a
+  // scroll on a phone.
+  surface.classList.add('is-board');
+  return surface;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, LAIRS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   countMultiplier, explorationGate, explorationReach, fogState, isPayable, isReachable,
@@ -197,7 +197,7 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
 
 // Docs/features/10-heroes.md §4 — clearing fog pays no currency at all.
 //
-// CLAIM: a reveal buys GROUND. Resource cells, buildable land, ruins and
+// CLAIM: a reveal buys GROUND. Resource cells, buildable land, lairs and
 // landmarks, against a Gold price that doubles from ring 4 — and nothing
 // else. Knowledge used to be paid here, linear in the ring, because it
 // bought the tech tree; the tree is Gold now and Knowledge comes out of
@@ -456,17 +456,17 @@ describe('a site announces itself when it comes into view', () => {
 
   it("fires when a building's fog radius lands near one", () => {
     const state = newGame(map, T0);
-    const ruin = Object.values(RUINS).reduce((a, b) =>
+    const lair = Object.values(LAIRS).reduce((a, b) =>
       townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
     state.pendingDiscoveries = [];
 
-    // A Sawmill dropped beside the ruin: its own radii do the revealing.
-    addBuilt(state, 'Sawmill', { x: ruin.location.x, y: ruin.location.y - 2 });
+    // A Sawmill dropped beside the lair: its own radii do the revealing.
+    addBuilt(state, 'Sawmill', { x: lair.location.x, y: lair.location.y - 2 });
     revealAroundDistrict(state, map,
       state.city.districts.find((d) => d.definitionId === 'Sawmill')!);
 
-    expect(fogState(state, map, ruin.location)).not.toBe('Undiscovered');
-    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(ruin.id));
+    expect(fogState(state, map, lair.location)).not.toBe('Undiscovered');
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(lair.id));
   });
 });
 

@@ -10,7 +10,7 @@
 //  4. What is in the wallet is safe: a raid takes from the stores.
 import { describe, expect, it } from 'vitest';
 import { advance, changeWorkers, collectBuilding, enqueueBuild } from '../src/sim/commands';
-import { DISTRICTS, HARVEST, RUINS, STORAGE, WORKER } from '../src/sim/data/definitions';
+import { DISTRICTS, HARVEST, LAIRS, STORAGE, WORKER } from '../src/sim/data/definitions';
 import { tally } from '../src/sim/events';
 import {
   collectThreshold, isStoreFull, productionPerSecond, readyToCollect, storageCapacity, storedOf, storedTotal,
@@ -128,11 +128,11 @@ describe('a store', () => {
     tickAt(state, start + 60_000);
     expect(state.workers[0].activity).toBe('Idle');
     const wallet = getWallet(state.city.wallet, 'Wood');
-    reveal(state, [RUINS.HollowBarrow.location]);
-    advance(state, map, start + 60_000); // the sweep arms the gate
-    const raidAt = state.gates.HollowBarrow!.nextRaidAt!;
-    advance(state, map, raidAt + 1000);
-    const took = state.raidReports[0]?.took.Wood ?? 0;
+    reveal(state, [LAIRS.Orcs.location]);
+    advance(state, map, start + 60_000); // the sweep arms the lair
+    const raidAt = state.lairs.Orcs!.nextRaidAt!;
+    const result = advance(state, map, raidAt + 1000);
+    const took = result.raids[0]?.took.Wood ?? 0;
     expect(took).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wallet);
     expect(isStoreFull(mill)).toBe(false);

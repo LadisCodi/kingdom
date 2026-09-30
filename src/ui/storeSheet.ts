@@ -13,7 +13,7 @@
 //     ODDS
 //     PRINTED ON THE SHELF. §6 of the relics design says "at published odds",
 //     and a store is the one place that promise has to be kept where the
-//     money is. Bronze and Silver are not here: selling what a ruin already
+//     money is. Bronze and Silver are not here: selling what a lair already
 //     drips would undercut the only free source the collection has, and the
 //     fine print under the shelf says so in the player's words. Under it,
 //     the three CARD BUNDLES — star packs and wildcards for dollars rather
@@ -200,7 +200,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         formatExact(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
-    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the ruins.'),
+    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the season pass and the daily chest.'),
     // The bundles keep their own heading under Cards: same shelf, other till.
     // A player scanning for cards finds every way to get one in one place,
     // and the `$` on the button is what says the rail changed.

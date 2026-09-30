@@ -1,426 +1,230 @@
-/* The screen before a fight (Docs/features/11a-ruins-ui.md §2.5) — the board,
- * the slots, and the card panels that fill them. The gate's own band is
- * screens/gates.css; the room's widget is screens/expedition.css. */
+/* The attack screen (Docs/proposals/lairs.md §6, ui/battleSheet.ts): the two
+ * boards, the roster and the action box. Every piece is the kit's — the inset
+ * box (.k-section), the section heading (.k-section-head), the round portrait
+ * (.k-portrait) and the game's buttons — so the only rules here are layout. */
 
-/* The sheet is TALL (kit.css `.k-sheet.is-tall`), so the screen takes the
-   whole frame whatever is on it. */
+/* THE WHOLE FRAME between the header and the bottom, not the tall sheet's
+   frame less a strip of sky (kit.css): #overlay already pads itself by the
+   header, so 100% hides nothing, and the strip was exactly the scroll a
+   phone had to do to reach the button. The pass screen bends the same rule
+   for the same reason (pass.css). */
+.k-sheet.is-tall.is-board { max-height: 100%; }
+/* …AND THE WHOLE WIDTH: the frame's wood reaches the device's edges on the
+   narrowest phone (the iPhone X), stepping over #overlay's 16-px side gutter,
+   and on anything wider keeps the district card's width, centred. The width
+   is what pays for slots big enough to read a face in. */
+#overlay .k-sheet.is-board {
+  --board-w: min(calc(100% + var(--px) * 32), calc(var(--rpx) * 1125));
+  width: var(--board-w);
+  /* Both margins, or the overflow is a horizontal scroll: width plus
+     margins must come back to the container's own width. */
+  margin-left: calc((100% - var(--board-w)) / 2);
+  margin-right: calc((100% - var(--board-w)) / 2);
+}
+
 .bt {
+  --slot-size: calc(var(--px) * 48);
   display: flex;
   flex-direction: column;
-  gap: calc(var(--px) * 12);
+  gap: calc(var(--px) * 6);
 }
-/* …and the height goes to the two BOARDS, because the slots are what the
-   thumb is aimed at. Everything else keeps the size it asked for, so nothing
-   moves as the party changes. */
-.bt-army > .bt-slots { flex: 1; align-content: center; }
+.bt > .k-section-head { margin: calc(var(--px) * 2) 0 0; }
 
-/* ------------------------------------------------------------ the header */
+/* ------------------------------------------------------------ the boards */
 
-/* The head and the info band are ONE parchment card (M10): the ruin in a
-   square vignette down the left, the where-line and the lines beside it. */
-.bt-head {
-  display: grid;
-  grid-template-columns: calc(var(--px) * 96) minmax(0, 1fr);
-  grid-template-areas: 'art where' 'art info';
-  column-gap: calc(var(--px) * 12);
-  row-gap: calc(var(--px) * 4);
-  align-items: start;
-  padding: calc(var(--px) * 10);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius);
-  background: var(--parchment-shade);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
-}
-.bt-art {
-  grid-area: art;
-  width: calc(var(--px) * 96);
-  height: calc(var(--px) * 96);
-  padding: calc(var(--px) * 8);
-  box-sizing: border-box;
-  object-fit: contain;
-  image-rendering: pixelated;
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  background: var(--parchment);
-}
-.bt-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 32); }
-.bt-head > .bt-where { grid-area: where; align-self: end; font-weight: var(--weight-strong); font-size: calc(var(--px) * 18); color: var(--ink); }
-.bt-head > .bt-info { grid-area: info; }
-.bt-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--ink); }
-.bt-where { font-family: var(--font-body); font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-soft); }
-
-/* The dynamic band: whatever THIS kind of battle has to say. */
-.bt-info {
+/* The two boards are head panels (kit.css `.k-headpanel`): the enemy's plank
+   red, ours blue. A shortfall on paper only warms our number. */
+.bt-army .k-headpanel-body {
   display: flex;
   flex-direction: column;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 4) calc(var(--px) * 2) calc(var(--px) * 2);
+}
+.bt-army.is-mine.is-short .k-headpanel-trail { color: #ffd0c0; }
+
+/* ONE LINE EACH: the six troop slots, then the hero slots. No labels — a
+   hero slot is a gilt square where a troop slot is a round, so the two read
+   apart on their own. */
+.bt-group {
+  display: flex;
+  justify-content: space-between;
   gap: calc(var(--px) * 4);
 }
-.bt-info:empty { display: none; }
-.bt-info-line {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 8);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.3;
-  color: var(--ink);
+/* The enemy's line holds only what it fields, centred. */
+.bt-army.is-enemy .bt-group.is-troops { justify-content: center; gap: calc(var(--px) * 10); }
+.bt-group.is-heroes {
+  justify-content: center;
+  gap: calc(var(--px) * 14);
+  padding-top: calc(var(--px) * 6);
+  border-top: calc(var(--px) * 1) dashed var(--section-line);
 }
-.bt-info-line > .icon { --icon-size: calc(var(--px) * 22); flex: none; }
-.bt-info-line.is-soft { color: var(--ink-soft); }
-
-/* ------------------------------------------------------- the two armies */
-
-.bt-army,
-.bt-rewards {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 10);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius);
-  background: var(--parchment-shade);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.22);
-}
-.bt-army { flex: 1 1 auto; }
-/* Both boards are parchment (M10); the power number is what tells them
-   apart — ours turns clay when it is short. */
-.bt-army.is-mine.is-short .bt-power { color: var(--clay); }
-.bt-army-head .bt-power::before {
-  content: '';
-  display: inline-block;
-  width: calc(var(--px) * 22);
-  height: calc(var(--px) * 22);
-  margin-right: calc(var(--px) * 6);
-  vertical-align: calc(var(--px) * -3);
-  background: var(--ink);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3l6 1 9 9-2 2-9-9-1-6zm18 0l-6 1-9 9 2 2 9-9 1-6zM7 15l2 2-3 3H4v-2l3-3zm10 0l-2 2 3 3h2v-2l-3-3z' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
-  opacity: 0.8;
-}
-
-.bt-army-head { display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--px) * 8); }
-.bt-army-head h3 {
-  margin: 0;
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: calc(var(--px) * 20);
-  color: var(--ink);
-}
-.bt-power {
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-title);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-/* "Heroes" sits on a rule between the two rows (M10). */
-.bt-army-label {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 10);
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-helper);
-  color: var(--ink-soft);
-  text-align: center;
-}
-.bt-army-label::before,
-.bt-army-label::after { content: ''; flex: 1; height: calc(var(--px) * 2); background: rgba(92, 58, 30, 0.28); border-radius: 1px; }
-.bt-army-note,
-.bt-note {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  color: var(--ink-soft);
-}
-
-/* ------------------------------------------------------------- the slots */
-
-/* One row of squares, wrapping rather than scrolling: a board the player can
-   see all of is the point of a board. */
-.bt-slots { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 20) calc(var(--px) * 10); justify-content: center; padding: calc(var(--px) * 4) 0 calc(var(--px) * 14); }
-
-/* A ROUND slot:
-   a squad on this board and a unit in a hall are the same kind of choice,
-   and picking one is the same gesture. Six of them wrap to two rows
-   of three on a phone, which is the shape the board itself has
-   (Docs/features/combat.md §3). */
-.bt-slot {
-  position: relative; /* the clear badge hangs off the corner */
-  appearance: none;
+.bt-cell {
+  --portrait-size: var(--slot-size);
+  position: relative;
   display: grid;
   place-items: center;
-  gap: calc(var(--px) * 2);
-  width: calc(var(--px) * 84);
-  height: calc(var(--px) * 84);
-  padding: calc(var(--px) * 4);
-  /* A slot is a RING carved in the wood (M10): a filled one shows the face
-     in a parchment disc, an empty one is solid wood with a plus on it. */
-  border: calc(var(--px) * 5) solid var(--wood);
-  border-radius: 50%;
-  background: var(--parchment);
-  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
-  color: var(--ink);
-  cursor: pointer;
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
 }
-.bt-slot.is-empty,
-.bt-slot.is-locked { background: var(--wood-dark); color: var(--parchment); }
-.bt-slot.is-empty > .icon,
-.bt-slot.is-locked > .icon { --icon-size: calc(var(--px) * 34); }
-.bt-slot.is-filled { box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark); }
-.bt-slot:hover { filter: brightness(1.05); }
+button.bt-cell { cursor: pointer; }
+/* The portrait takes the slot's size, not the kit's 64 px default — so a
+   filled slot is exactly the size of an empty one and the rows keep their
+   pitch. */
+.bt-cell > .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
 
-.bt-face { position: relative; display: grid; place-items: center; }
-/* The count rides ON the bust rather than under it, the way a batch in the
-   training queue does (`.tr-slot-count`): at this size the figure is the thing being
-   read and a line of its own under it would have cost the portrait the
-   height it was given. */
-.bt-count {
-  position: absolute;
-  right: calc(var(--px) * -10);
-  bottom: calc(var(--px) * -6);
-  padding: 0 calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 999);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-helper);
-  font-variant-numeric: tabular-nums;
+/* A HERO OR VILLAIN SLOT is a CARD, 2:3 (battleSheet.ts `heroCard`): the
+   illustration fills it and the card masks it, in a gilt frame, where a troop
+   slot is the round medallion. Filled or empty, locked or open. Ours carry an
+   HP bar along the foot. */
+.bt-card {
+  --card-w: calc(var(--px) * 54);
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--card-w);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: calc(var(--px) * 2) solid var(--gold-dark);
+  border-radius: calc(var(--px) * 8);
+  background: var(--section-fill);
+  box-shadow: inset 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.7),
+    0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(60, 36, 16, 0.25);
+  font: inherit;
+  color: inherit;
 }
-.bt-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); image-rendering: pixelated; object-fit: contain; }
-.bt-portrait.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 36); }
-/* A hero's slot spends some of its height on the one word that matters on it
-   — which type its passive buffs — so the portrait gives that room back. */
-/* The type word hangs under the ring, like the price does. */
-.bt-slot-name {
-  position: absolute;
-  bottom: calc(var(--px) * -18);
-  left: 50%;
-  translate: -50% 0;
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: calc(var(--px) * 12);
-  color: var(--ink-soft);
-  white-space: nowrap;
+button.bt-card { cursor: pointer; }
+.bt-card.is-empty,
+.bt-card.is-locked {
+  background: color-mix(in srgb, var(--gold) 14%, var(--parchment-shade));
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
 }
-.bt-slot.is-hero .bt-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); }
-.bt-slot.is-filled { overflow: visible; }
-.bt-slot.is-filled .bt-face,
-.bt-slot.is-filled > .bt-portrait { border-radius: 50%; }
-/* The price hangs off the shut ring as a parchment chip (M10). */
+.bt-card.is-locked > .icon { --icon-size: calc(var(--px) * 22); }
+.bt-card.is-locked > .bt-price { bottom: calc(var(--px) * 3); }
+/* The art fills the card, anchored at the top so a full-length figure
+   shows its face; the frame's own inner glow sits over it. */
+.bt-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+  /* The card does not clip — the HP bar hangs over its edge — so the art
+     rounds its own corners inside the frame. */
+  border-radius: calc(var(--px) * 6);
+}
+.bt-card-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 26); }
+/* Our hero slots are the picker's own cards (heroCard.ts), at the board's
+   card width, so the party reads as the popup that fills it. */
+.bt-group.is-heroes .hc.is-small { --hc-w: var(--card-w, calc(var(--px) * 54)); }
+
+/* An empty slot is the portrait's own ring, empty and sunk in. */
+.bt-cell.is-empty {
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: 50%;
+  background: var(--parchment-shade);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
+}
+/* The count, in the same small dark pill the villager's count wears. */
+.bt-count,
 .bt-price {
   position: absolute;
-  bottom: calc(var(--px) * -8);
+  bottom: calc(var(--px) * -4);
   left: 50%;
   translate: -50% 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: calc(var(--px) * 3);
+  gap: calc(var(--px) * 2);
   padding: 0 calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 999);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: calc(var(--px) * 12);
-  color: var(--ink);
+  border-radius: calc(var(--px) * 8);
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.bt-price > .icon { --icon-size: calc(var(--px) * 12); }
 
-/* The X: a red disc on the corner, the way the mockup has it. It is a button
-   inside a button, so it stops the tap from re-opening the panel. */
-.bt-clear {
-  position: absolute;
-  top: calc(var(--px) * -8);
-  right: calc(var(--px) * -8);
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 24);
-  height: calc(var(--px) * 24);
+/* ------------------------------------------------------------ the roster */
+
+.bt-roster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+}
+/* A TROOP at home: the board's round medallion, its count on it and its
+   name under it. */
+.bt-troop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  width: calc(var(--px) * 60);
   padding: 0;
-  border: calc(var(--px) * 2) solid #6d1f1f;
-  border-radius: 50%;
-  background: #c8402f;
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
-  line-height: 1;
-  cursor: pointer;
-}
-.bt-clear:hover { filter: brightness(1.1); }
-
-/* ----------------------------------------------------------- the rewards */
-
-.bt-rewards h3 { margin: 0; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 20); color: var(--ink); }
-/* Reward chips are parchment tiles sharing the row (M10). */
-.bt-chips { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--px) * 8); }
-.bt-chip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 8);
-  min-height: calc(var(--px) * 48);
-  padding: calc(var(--px) * 4) calc(var(--px) * 8);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
-  border-radius: var(--radius-sm);
-  background: var(--parchment);
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-body);
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.bt-chip > .icon { --icon-size: calc(var(--px) * 28); }
-/* The one verb is the width of the sheet. */
-.bt > .k-action { display: flex; flex-direction: column; align-items: stretch; }
-.bt > .k-action > .k-btn { width: 100%; }
-.bt-note { text-align: center; }
-
-.bt-back { display: flex; justify-content: center; }
-
-/* ------------------------------------------------------------ the panels */
-
-/* The panel lives in #picker (style.css), which is a child of #ui and
-   therefore already the frame — no geometry to restate here. */
-.bt-scrim { position: absolute; inset: 0; background: var(--scrim); }
-
-.bt-picker {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 10) calc(var(--px) * 12) calc(var(--nav-h) + calc(var(--px) * 10));
-  /* The picker wears the sheet's carved frame, open at the bottom where it
-     meets the nav, like the district card. */
-  border-top: var(--outline) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 14) calc(var(--px) * 14) 0 0;
-  background: var(--parchment);
-  box-shadow: 0 calc(var(--px) * -8) calc(var(--px) * 24) rgba(20, 12, 6, 0.4);
-}
-.bt-picker-head h3 { font-size: calc(var(--px) * 20); }
-/* The slide runs when the panel ARRIVES and never again: the class is added
-   by the mount, which knows the difference between opening and refreshing
-   (ui/battlePicker.ts). */
-.bt-picker.is-in { animation: bt-picker-in var(--motion-sheet) ease-out; }
-@keyframes bt-picker-in {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bt-picker.is-in { animation: none; }
-}
-.bt-picker-head { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--px) * 8); }
-.bt-picker-head h3 {
-  margin: 0;
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-body);
-  color: var(--ink);
-}
-
-/* The rail: cards side by side, scrolled with the thumb. */
-.bt-rail {
-  display: flex;
-  gap: calc(var(--px) * 8);
-  overflow-x: auto;
-  padding-bottom: calc(var(--px) * 4);
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-.bt-rail-empty { font-family: var(--font-body); font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-soft); }
-
-/* Big enough to read the three numbers on: art, name, what it is worth, and
-   what it is made of. A card the thumb picks a COMPOSITION from has to be
-   readable without opening anything else, so it is a card rather than a row.
-   The rail scrolls, so width is the only thing being spent here. */
-.bt-card {
-  position: relative;
-  appearance: none;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 3);
-  width: calc(var(--px) * 148);
-  padding: calc(var(--px) * 22) calc(var(--px) * 8) calc(var(--px) * 10);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 10);
-  background: var(--parchment-shade);
+  border: 0;
+  background: none;
+  font: inherit;
   color: var(--ink);
   cursor: pointer;
-  scroll-snap-align: start;
 }
-.bt-card:hover { filter: brightness(1.05); }
-.bt-card.is-out { opacity: 0.45; cursor: default; }
-.bt-card-art { display: grid; place-items: center; height: calc(var(--px) * 64); }
-.bt-card-portrait { width: calc(var(--px) * 64); height: calc(var(--px) * 64); image-rendering: pixelated; object-fit: contain; }
-.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 36); }
-.bt-card-name {
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-helper);
-  text-align: center;
+.bt-troop > .bt-cell { --slot-size: calc(var(--px) * 52); }
+.bt-troop-name {
+  max-width: 100%;
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
   line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.bt-troop.is-out { filter: grayscale(0.9); opacity: 0.6; }
+.bt-troop.is-full { opacity: 0.8; }
 
-/* The headline number: the one that compares to the enemy box behind. */
-.bt-card-power {
+
+/* ----------------------------------------------------------- the action */
+
+/* The upgrade popup's cost box (upgrade.css `.up-buy`): the price over the
+   button inside it, Quick deploy beside, the fight's price as the hint. */
+.bt-go.k-section {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+  margin-top: calc(var(--px) * 2);
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
+}
+.bt-go-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: calc(var(--px) * 10);
+}
+.bt-go-buy {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: calc(var(--px) * 4);
-  font-family: var(--font-body);
-  color: var(--ink);
 }
-.bt-card-power b {
-  font-family: var(--font-body);
-  font-weight: var(--weight-strong);
-  font-size: var(--text-body);
-  font-variant-numeric: tabular-nums;
-}
-.bt-card-power span { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); color: var(--ink-soft); }
-
-/* What it is made of. One row, three numbers, the same icons the party
-   read-out uses everywhere else. */
-.bt-card-stats {
+.bt-go-price {
   display: flex;
   justify-content: center;
-  gap: calc(var(--px) * 8);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
+  gap: calc(var(--px) * 14);
+  color: var(--ink);
 }
-.bt-card-stats .k-stat { gap: calc(var(--px) * 2); }
-.bt-card-stats .k-stat-value { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); }
-
-.bt-card-note {
-  font-family: var(--font-body);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
-  color: var(--ink-soft);
-  text-align: center;
-  line-height: 1.2;
-}
-/* The one fact that decides whether this card belongs in the party: its
-   type, as the WORD — four unit icons at 16px are four similar silhouettes.
-   Same call the roster tile makes. Across the top, because on a hero card it
-   is what the player is scanning for. */
-.bt-card-tag {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: calc(var(--px) * 2) calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 8) calc(var(--px) * 8) 0 0;
-  background: rgba(60, 36, 18, 0.14);
-  font-family: var(--font-body);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
-  color: var(--ink-soft);
+.bt-go-chip { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.bt-go-chip > .icon { --icon-size: calc(var(--px) * 24); }
+.bt-go-chip.is-short { color: var(--clay); }
+.bt-go-row .k-btn { width: 100%; min-width: 0; font-size: calc(var(--px) * 17); }
+.bt-go-note {
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
   text-align: center;
 }

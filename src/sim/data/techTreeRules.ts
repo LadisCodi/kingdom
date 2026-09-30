@@ -42,7 +42,7 @@ export type TechUnlock =
  *
  * `unlock` opens content and says which (`unlocks`). `bonus` moves numbers and
  * says which (`effects`). `mechanic` is
- * everything the CODE reads by id — `Conquest` adding to a ruin's Knowledge
+ * everything the CODE reads by id — `Conquest` adding to a lair's Knowledge
  * lump — which is the one kind whose effect the editor
  * cannot author, only label.
  */

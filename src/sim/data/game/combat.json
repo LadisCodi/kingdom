@@ -25,6 +25,7 @@
     "troopSlots": 6,
     "heroSlots": 3,
     "heroSlotGemCostBase": 2500,
-    "heroSlotGemCostGrowth": 2
+    "heroSlotGemCostGrowth": 2,
+    "heroRecoverHours": 8
   }
 }

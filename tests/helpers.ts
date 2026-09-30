@@ -17,7 +17,7 @@ import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
   addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type DistrictId, type GameState,
-  type RuinId, type TechId, type UnitId, type Wallet,
+  type LairId, type TechId, type UnitId, type Wallet,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -103,15 +103,14 @@ export const reveal = (state: GameState, cells: Coord[]): void => {
 };
 
 /**
- * Take the gate down without fighting for it.
+ * Mark a lair CLEARED without fighting for it, as if won.
  *
- * Every ruin opens with a garrison, and nothing inside can be entered until
- * it falls (Docs/features/18-garrisons-and-raids.md §1). A test about DELVING
- * is not a test about the gate, so it says so here in one line;
- * tests/gates.test.ts is where the garrison itself is held to its contract.
+ * A lair is one fight (Docs/proposals/lairs.md §1). A test that needs "a lair
+ * cleared" but is not about the fight says so here in one line; no Knowledge
+ * lump is paid. tests/lairs.test.ts holds the garrison to its contract.
  */
-export const openRuin = (state: GameState, ruinId: RuinId): void => {
-  state.gates[ruinId] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
+export const clearLair = (state: GameState, lairId: LairId): void => {
+  state.lairs[lairId] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: true, cleared: true };
 };
 
 /**
@@ -193,11 +192,12 @@ export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): v
  *  adding one per unit would stack three Barracks on the city and treble the
  *  army cap. */
 export const addAllTrainers = (state: GameState): void => {
-  // Two cells apart, deliberately: halls that TOUCH train each other faster
-  // (the AnyHall↔AnyHall rule, sim/adjacency.ts), and a test about a training
+  // A cell apart, deliberately (the halls are 2×2, so three cells from one
+  // anchor to the next): halls that TOUCH train each other faster (the
+  // AnyHall↔AnyHall rule, sim/adjacency.ts), and a test about a training
   // line should measure the authored duration rather than a layout. The
   // adjacency itself is tested in adjacency.test.ts.
-  const cells: Coord[] = [{ x: 4, y: 4 }, { x: 6, y: 4 }, { x: 8, y: 4 }, { x: 10, y: 4 }];
+  const cells: Coord[] = [{ x: 4, y: 4 }, { x: 7, y: 4 }, { x: 10, y: 4 }, { x: 13, y: 4 }];
   const halls = Object.values(DISTRICTS)
     .filter((d) => d.armyCapPerLevel.length > 0)
     .map((d) => d.id);

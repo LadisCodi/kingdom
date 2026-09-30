@@ -160,8 +160,27 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **At least one hero is mandatory** in every fight: gates, rooms, bosses.
   There is no fight without a hero and no hero-only fight.
 - A hero is never *busy*. Fights resolve on entry
-  ([`11-expeditions.md`](11-expeditions.md) §5), so the same hero leads every
-  room the player enters.
+  ([`11-expeditions.md`](11-expeditions.md) §5); what limits leading every
+  fight with the same hero is its HP (§2.8).
+
+### 2.8 Wounds carry over
+
+- **A hero keeps the damage a fight did to it**, win or lose, and walks into
+  the next fight with the HP it has left.
+- **HP comes back on its own**, linearly: a whole bar every
+  `party.heroRecoverHours` (8), so a hero at half is whole in 4 hours.
+- It is kept as a **share of the bar**, so a level gained while hurt raises
+  the ceiling and keeps the same share missing.
+- **A hero a fight takes to 0 HP is EXHAUSTED**: it cannot be sent anywhere
+  until its HP is full again — a whole `heroRecoverHours`. Quick deploy and
+  the opening party leave it out.
+- The attack screen shows every hero's current HP as a bar along the foot of
+  its card, in the party and in the roster; the Heroes screen shows it on every
+  owned hero's tile.
+- **An exhausted hero is shown asleep**, on both screens: its art darkened
+  (never the unfound silhouette), three white Zs rising off its top-right,
+  and how long the rest has left over its HP bar.
+- Villains carry nothing between fights.
 
 ## 3. The hero slots
 
@@ -449,6 +468,35 @@ the rewarded video.
   GROWN; the party sheet is where one is SENT, and neither does the other's
   job.
 
+### 8.4 The hero picker
+
+One popup for every place the game asks for heroes. Whoever opens it passes
+how many slots it wants (1…n) and what to do with the answer.
+
+- **The hero card** it is built from — the one card a hero is wherever it is
+  offered or seated, 2:3:
+  - the illustration filling it, on its **rarity's colour**;
+  - the unit type's icon, top left;
+  - its level and its ascension stars at the foot;
+  - its HP bar inside the frame over the foot — the game's progress bar;
+    on a small card, the small HP bar hung over the bottom edge;
+  - a green check, top right, when it holds a slot;
+  - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
+  - No name: the illustration is enough.
+- **Top**: the filter bar — `All`, then one tab per unit type heroes fight
+  as — and the sort (level ↔ rarity).
+- **Middle, scrolling**: every hero the kingdom owns, three cards to a row,
+  under a text heading.
+- **Bottom, fixed**: the slots asked for, in a green head panel `Party n/m`;
+  an empty one is a sunk slot with a faint +.
+- **Select** hands the heroes back, in slot order. The window's close leaves
+  without an answer. Either way the screen that opened it comes back.
+- **Taps**:
+  - a hero in the list goes into the first free slot, or out of the slot it
+    holds;
+  - a filled slot empties;
+  - no free slot, or an exhausted hero: an error sound, nothing moves.
+
 ## 9. Dials, in the order to reach for them
 
 | Dial | Value | Key |
@@ -460,6 +508,7 @@ the rewarded video.
 | How long a hero's ladder is | 10 a tier, 50 in all | `collection.heroLevelsPerTier`, `collection.heroMaxLevel` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragmentsPerTierBase` |
 | What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragmentsPerTier*`, `collection.ascensionStardustBase`, `collection.ascensionStardustGrowth` |
+| How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |

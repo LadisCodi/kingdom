@@ -1,7 +1,8 @@
-/* The placement bar (§5.6). Slim on purpose: the map is the screen here. */
+/* The placement window (§5.6, M49): a small `.dc` window — the plank with
+ * the name and the close, then one row. Being a `.dc` in #panel is also what
+ * slides the nav bar away while it is up (nav.css). */
 
-/* The bottom panel becomes parchment when a migrated screen is in it. */
-#panel:has(.plc-bar) {
+#panel:has(.plc-win) {
   padding: 0;
   background: none;
   border: none;
@@ -9,63 +10,44 @@
   overflow: visible;
 }
 
-.plc-bar {
+.plc-row {
   display: flex;
   align-items: center;
   gap: calc(var(--px) * 10);
-  /* The nav bar below holds the safe-area inset in its own padding, and
-     --nav-h is measured, so this bar sits clear of it already. A parchment
-     strip in a wooden frame (M11), like a sheet without its plank. */
-  margin: 0 var(--gutter) calc(var(--px) * 6);
-  padding: calc(var(--px) * 8) calc(var(--px) * 10);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
-  background: var(--parchment);
-  border: var(--outline) solid var(--wood-dark);
-  border-radius: var(--radius);
-  box-shadow: 0 calc(var(--px) * 4) 0 rgba(60, 36, 18, 0.3), 0 calc(var(--px) * 8) calc(var(--px) * 18) rgba(60, 36, 18, 0.3);
 }
 
 .plc-art {
   flex: none;
-  width: calc(var(--px) * 60);
-  height: calc(var(--px) * 60);
+  width: calc(var(--px) * 68);
+  height: calc(var(--px) * 68);
   display: grid;
   place-items: center;
   padding: calc(var(--px) * 4);
   box-sizing: border-box;
   border-radius: var(--radius-sm);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  background: var(--parchment-shade);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  background: var(--section-fill);
 }
-.plc-art img { width: 100%; height: 100%; object-fit: contain; }
+/* The sprite is 128×192 with the building in its lower 60%: fit it by
+   width, feet on the tile's floor, and let the air above run out unseen. */
+.plc-art { position: relative; overflow: hidden; }
+.plc-art img { position: absolute; left: 0; bottom: calc(var(--px) * 2); width: 100%; height: auto; }
 
-.plc-body { flex: 1; min-width: 0; }
-.plc-name { font-family: var(--font-body); font-size: calc(var(--px) * 18); font-weight: var(--weight-strong); line-height: 1.15; }
-
-/* The actual decision, in words. */
-.plc-verdict { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); color: var(--ink-muted); }
-.plc-verdict.is-good { color: var(--leaf-dark); font-weight: var(--weight-strong); }
-.plc-verdict.is-bad { color: var(--clay); }
-
-/* The cost moved into the Build button (§6.4); the wait stays out here. */
+.plc-body { flex: 1 1 0; min-width: 0; }
+.plc-promise { color: var(--ink-muted); line-height: 1.25; }
 .plc-time {
   display: flex;
   align-items: center;
   gap: calc(var(--px) * 3);
-  margin-top: calc(var(--px) * 3);
-  font-family: var(--font-body);
-  color: var(--ink-muted);
+  margin-top: calc(var(--px) * 4);
+  font-size: calc(var(--px) * 15);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
 }
-
-.plc-actions { display: flex; align-items: center; gap: calc(var(--px) * 8); }
-.plc-actions .k-btn { min-height: calc(var(--px) * 46); padding: calc(var(--px) * 10) calc(var(--px) * 16); }
-/* The reason a blocked Build gives sits under the bar, not beside it —
- * there is no room on one line at phone width. */
-.plc-actions .k-btn:disabled { font-size: var(--text-helper); font-weight: var(--weight-small); }
-
 .plc-reason {
   display: flex;
   align-items: center;
@@ -75,9 +57,4 @@
   font-weight: var(--weight-strong);
 }
 
-/* The words keep their measure beside two slabs: the slabs shrink to their
-   labels first, and the verdict reads as a sentence, not a column. */
-.plc-body { flex: 1 1 calc(var(--px) * 130); }
-.plc-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 0 calc(var(--px) * 4); }
-.plc-actions .k-btn { min-width: calc(var(--px) * 72); padding: calc(var(--px) * 6) calc(var(--px) * 10); }
-.plc-actions .k-btn.has-cost { padding: calc(var(--px) * 4) calc(var(--px) * 10); }
+.plc-actions { flex: none; display: flex; align-items: center; }

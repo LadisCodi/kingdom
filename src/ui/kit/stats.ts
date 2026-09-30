@@ -186,3 +186,32 @@ export function progress(tone: ProgressTone = 'green'): Progress {
     },
   };
 }
+
+/**
+ * A HERO'S HP, as the small bar that rides on its card (kit.css `.k-hp`):
+ * the fill is the tube's whole length uncovered from the left, green, yellow
+ * under half, red under a tenth. Where it sits is the caller's.
+ */
+export function hpBar(hp: number, max: number): HTMLElement {
+  const share = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
+  const fill = el('span', { class: 'k-hp-fill' });
+  fill.style.clipPath = `inset(0 ${100 - Math.round(share * 100)}% 0 0)`;
+  const tone = share < 0.1 ? ' is-red' : share < 0.5 ? ' is-yellow' : '';
+  return el('span', {
+    class: `k-hp${tone}`,
+    role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
+    'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
+  }, fill);
+}
+
+/** RESTING: three Zs rising off the figure's top-right (kit.css `.k-zzz`). */
+export const restMarks = (): HTMLElement =>
+  el('span', { class: 'k-zzz', 'aria-hidden': 'true' },
+    el('span', {}, 'Z'), el('span', {}, 'Z'), el('span', {}, 'Z'));
+
+/** How long a rest has left, as `3h 20m` / `12m` / `<1m`, in its pill. */
+export function restLeft(ms: number): HTMLElement {
+  const min = Math.ceil(ms / 60_000);
+  const text = min < 1 ? '<1m' : min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+  return el('span', { class: 'k-rest-left' }, text);
+}
