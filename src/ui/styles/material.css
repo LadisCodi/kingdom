@@ -279,7 +279,10 @@
   transition: none;
 }
 .k-btn:not(.k-knob):hover { border-image-source: var(--btn-hover); filter: none; }
-.k-btn:not(.k-knob):active {
+.k-btn:not(.k-knob):active,
+/* LATCHED: a toggle that is on — a filter tab — stays pushed in, the same
+   pressed art held. */
+.k-btn:not(.k-knob).is-pressed {
   border-image-source: var(--btn-down);
   padding-top: calc(var(--px) * 13); /* the words drop with the face */
   padding-bottom: calc(var(--px) * 9);

@@ -15,7 +15,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { hpBar, iconEl, restLeft, restMarks } from './kit';
+import { hpBar, iconEl, restLeft, restMarks, unitTypeIcon } from './kit';
 
 export interface HeroCardOpts {
   /** It is in a slot — the green check at the top right. */
@@ -42,7 +42,7 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
     'aria-label': opts.label ?? `${def.name}, level ${game.heroLevelOf(heroId)}`,
   },
   url ? spriteImgAt(url, 'hc-art') : el('span', { class: 'hc-art is-glyph' }, def.glyph),
-  el('span', { class: 'hc-type' }, iconEl(def.unitType, { size: 'sm' })),
+  el('span', { class: 'hc-type' }, iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
   ...(health.exhausted
     ? [restMarks(), el('span', { class: 'hc-foot' }, restLeft(health.restMs))]
     : [el('span', { class: 'hc-foot' },

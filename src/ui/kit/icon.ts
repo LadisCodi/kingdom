@@ -45,6 +45,10 @@ export type UiIconName =
   | 'atk' | 'def' | 'hp'
   // A side's total strength — the crossed swords on an army's header.
   | 'power'
+  // What a hero fights as, as a symbol — the hero card's corner and the hero
+  // picker's filter: a sword, a lance, a bow, a horse's head. Not the units'
+  // own portraits, which are faces and read as people at that size.
+  | 'typeWarrior' | 'typeLancer' | 'typeArcher' | 'typeCavalry'
   // The upgrade popup's three (M25). `cross` is the REFUSAL beside a tick in
   // the requirements list — `close` is a knob that dismisses a sheet, and the
   // two must not share a picture. `arrowUp` is what a level does, drawn once
@@ -117,6 +121,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   pack: '🎴', cards: '🃏', vault: '🔐', crest: '🌾',
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️', power: '⚔️',
+  typeWarrior: '🗡️', typeLancer: '🔱', typeArcher: '🏹', typeCavalry: '🐴',
   // the upgrade popup
   cross: '✗', arrowUp: '⬆', compass: '🧭', bed: '🛏️',
   // the fog
@@ -199,3 +204,6 @@ export function costEls(cost: Wallet): DocumentFragment {
 
 /** Every currency the game defines, for the gallery and the purse sheet. */
 export const ALL_CURRENCIES = Object.keys(CURRENCIES) as CurrencyId[];
+
+/** The symbol for what a unit or a hero fights as (`typeWarrior` …). */
+export const unitTypeIcon = (unitId: UnitId): IconName => `type${unitId}` as IconName;

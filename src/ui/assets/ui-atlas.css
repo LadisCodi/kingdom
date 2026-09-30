@@ -4,7 +4,7 @@
 .icon {
   background-image: url('./ui-atlas.png');
   background-repeat: no-repeat;
-  background-size: calc(var(--icon-size) * 16) calc(var(--icon-size) * 12);
+  background-size: calc(var(--icon-size) * 16) calc(var(--icon-size) * 13);
   image-rendering: auto;
 }
 /* An atlas-backed icon has no text to show. */
@@ -186,11 +186,23 @@
 .icon-tick { background-position: calc(var(--icon-size) * -13) calc(var(--icon-size) * -10); }
 .icon-tile { background-position: calc(var(--icon-size) * -14) calc(var(--icon-size) * -10); }
 .icon-tile-locked { background-position: calc(var(--icon-size) * -15) calc(var(--icon-size) * -10); }
-.icon-unknown { background-position: calc(var(--icon-size) * -0) calc(var(--icon-size) * -11); }
-.icon-vault { background-position: calc(var(--icon-size) * -1) calc(var(--icon-size) * -11); }
-.icon-vault-locked { background-position: calc(var(--icon-size) * -2) calc(var(--icon-size) * -11); }
-.icon-video { background-position: calc(var(--icon-size) * -3) calc(var(--icon-size) * -11); }
-.icon-video-locked { background-position: calc(var(--icon-size) * -4) calc(var(--icon-size) * -11); }
-.icon-workers { background-position: calc(var(--icon-size) * -5) calc(var(--icon-size) * -11); }
-.icon-workers-locked { background-position: calc(var(--icon-size) * -6) calc(var(--icon-size) * -11); }
-.icon-workers-sm { background-position: calc(var(--icon-size) * -7) calc(var(--icon-size) * -11); }
+.icon-typeArcher { background-position: calc(var(--icon-size) * -0) calc(var(--icon-size) * -11); }
+.icon-typeArcher-locked { background-position: calc(var(--icon-size) * -1) calc(var(--icon-size) * -11); }
+.icon-typeArcher-sm { background-position: calc(var(--icon-size) * -2) calc(var(--icon-size) * -11); }
+.icon-typeCavalry { background-position: calc(var(--icon-size) * -3) calc(var(--icon-size) * -11); }
+.icon-typeCavalry-locked { background-position: calc(var(--icon-size) * -4) calc(var(--icon-size) * -11); }
+.icon-typeCavalry-sm { background-position: calc(var(--icon-size) * -5) calc(var(--icon-size) * -11); }
+.icon-typeLancer { background-position: calc(var(--icon-size) * -6) calc(var(--icon-size) * -11); }
+.icon-typeLancer-locked { background-position: calc(var(--icon-size) * -7) calc(var(--icon-size) * -11); }
+.icon-typeLancer-sm { background-position: calc(var(--icon-size) * -8) calc(var(--icon-size) * -11); }
+.icon-typeWarrior { background-position: calc(var(--icon-size) * -9) calc(var(--icon-size) * -11); }
+.icon-typeWarrior-locked { background-position: calc(var(--icon-size) * -10) calc(var(--icon-size) * -11); }
+.icon-typeWarrior-sm { background-position: calc(var(--icon-size) * -11) calc(var(--icon-size) * -11); }
+.icon-unknown { background-position: calc(var(--icon-size) * -12) calc(var(--icon-size) * -11); }
+.icon-vault { background-position: calc(var(--icon-size) * -13) calc(var(--icon-size) * -11); }
+.icon-vault-locked { background-position: calc(var(--icon-size) * -14) calc(var(--icon-size) * -11); }
+.icon-video { background-position: calc(var(--icon-size) * -15) calc(var(--icon-size) * -11); }
+.icon-video-locked { background-position: calc(var(--icon-size) * -0) calc(var(--icon-size) * -12); }
+.icon-workers { background-position: calc(var(--icon-size) * -1) calc(var(--icon-size) * -12); }
+.icon-workers-locked { background-position: calc(var(--icon-size) * -2) calc(var(--icon-size) * -12); }
+.icon-workers-sm { background-position: calc(var(--icon-size) * -3) calc(var(--icon-size) * -12); }

@@ -235,6 +235,21 @@
     "power"
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-n2-unit-types.png",
+   "grid": {
+    "rows": 2,
+    "cols": 2
+   },
+   "fill": 0.86,
+   "names": [
+    "typeWarrior",
+    "typeLancer",
+    "typeArcher",
+    "typeCavalry"
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [
@@ -358,6 +373,10 @@
    "padlock",
    "population",
    "power",
+   "typeArcher",
+   "typeCavalry",
+   "typeLancer",
+   "typeWarrior",
    "workers"
   ]
  }

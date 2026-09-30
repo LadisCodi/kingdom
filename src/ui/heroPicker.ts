@@ -18,7 +18,7 @@ import { HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
+import { btn, headPanel, iconEl, sectionHead, sheet, unitTypeIcon } from './kit';
 import { emptyHeroSlot, heroCard } from './heroCard';
 
 /** The unit types heroes fight as, in roster order — the filter's tabs. */
@@ -30,16 +30,21 @@ export function renderHeroPicker(game: Game): HTMLElement {
 
   const tab = (filter: UnitId | 'All'): HTMLElement => {
     const on = pick.filter === filter;
+    // The game's wooden button; the filter that is on stays pushed in —
+    // the pressed art, latched (material.css `is-pressed`).
     const b = el('button', {
-      class: `hp-tab${on ? ' is-on' : ''}`, type: 'button',
+      class: `k-btn k-btn--secondary is-paint hp-tab${on ? ' is-pressed' : ''}`, type: 'button',
       'aria-pressed': on ? 'true' : 'false',
       'aria-label': filter === 'All' ? 'All heroes' : `${filter} heroes`,
-    }, filter === 'All' ? 'All' : iconEl(filter, { size: 'sm' }));
+    }, el('span', { class: 'k-btn-label' },
+      filter === 'All' ? 'All' : iconEl(unitTypeIcon(filter), { size: 'sm' })));
     b.addEventListener('click', () => game.heroPickFilter(filter));
     return b;
   };
-  const sort = el('button', { class: 'hp-sort', type: 'button', 'aria-label': 'Sort heroes' },
-    pick.sort === 'level' ? 'Lv' : 'Rarity', el('span', { class: 'hp-sort-caret', 'aria-hidden': 'true' }, '▾'));
+  const sort = el('button', {
+    class: 'k-btn k-btn--secondary is-paint hp-sort', type: 'button', 'aria-label': 'Sort heroes',
+  }, el('span', { class: 'k-btn-label' },
+    pick.sort === 'level' ? 'Lv' : 'Rarity', el('span', { class: 'hp-sort-caret', 'aria-hidden': 'true' }, '▾')));
   sort.addEventListener('click', () => game.heroPickCycleSort());
 
   const list = game.heroPickList();
