@@ -68,13 +68,12 @@ const squadCell = (face: HTMLElement, count: number): HTMLElement =>
 
 const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
 
-/** A group of slots — the troops' or the heroes' — padded with empty ones
- *  to `slots`, so both boards keep one shape. */
+/** A line of slots — the troops' or the heroes' — padded with empty ones to
+ *  `slots`, so both boards keep one shape. No label: a hero slot is its own
+ *  SHAPE (a gilt square, battle.css), so the two lines read apart unnamed. */
 const slotGroup = (label: string, cells: HTMLElement[], slots: number, cls: string): HTMLElement => {
   while (cells.length < slots) cells.push(emptyCell());
-  return el('div', { class: `bt-group ${cls}` },
-    el('span', { class: 'bt-group-label' }, label),
-    el('div', { class: 'bt-group-slots' }, ...cells));
+  return el('div', { class: `bt-group ${cls}`, role: 'group', 'aria-label': label }, ...cells);
 };
 
 /** A board in its inset box, headed like a section — `ENEMY · 60`. */

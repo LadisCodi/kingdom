@@ -34,28 +34,20 @@
 .bt-army.is-mine > .bt-army-head { color: var(--leaf-dark); }
 .bt-army.is-mine.is-short > .bt-army-head { color: var(--clay); }
 
+/* ONE LINE EACH: the six troop slots, then the hero slots. No labels — a
+   hero slot is a gilt square where a troop slot is a round, so the two read
+   apart on their own. */
 .bt-group {
-  display: grid;
-  grid-template-columns: calc(var(--px) * 64) 1fr;
-  align-items: center;
-  gap: calc(var(--px) * 8);
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--px) * 4);
 }
-.bt-group-label {
-  color: var(--ink);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-title);
-  line-height: 1.1;
+.bt-group.is-heroes {
+  justify-content: center;
+  gap: calc(var(--px) * 14);
+  padding-top: calc(var(--px) * 6);
+  border-top: calc(var(--px) * 1) dashed var(--section-line);
 }
-/* Three to a line: the six troop slots are two lines, the heroes one. The
-   lines are only how six fit a phone — they are not the fight's rows. */
-.bt-group-slots {
-  display: grid;
-  grid-template-columns: repeat(3, var(--slot-size));
-  justify-content: space-around;
-  row-gap: calc(var(--px) * 6);
-  column-gap: calc(var(--px) * 6);
-}
-.bt-group.is-heroes { padding-top: calc(var(--px) * 3); border-top: calc(var(--px) * 1) dashed var(--section-line); }
 .bt-cell {
   --portrait-size: var(--slot-size);
   position: relative;
@@ -74,6 +66,24 @@ button.bt-cell { cursor: pointer; }
    filled slot is exactly the size of an empty one and the rows keep their
    pitch. */
 .bt-cell > .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
+
+/* A HERO OR VILLAIN SLOT: a square with rounded corners in a gilt frame, set
+   on a darker paper — the hero tiles' shape (the roster below), where a troop
+   slot is the round medallion. Filled or empty, locked or open. */
+.bt-group.is-heroes .bt-cell,
+.bt-group.is-heroes .bt-cell > .k-portrait,
+.bt-group.is-heroes .bt-cell .k-portrait-mask { border-radius: calc(var(--px) * 10); }
+.bt-group.is-heroes .bt-cell {
+  --slot-size: calc(var(--px) * 46);
+  box-sizing: border-box;
+  border: calc(var(--px) * 2) solid var(--gold-dark);
+  background: var(--section-fill);
+  box-shadow: inset 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.7);
+}
+.bt-group.is-heroes .bt-cell.is-empty {
+  background: color-mix(in srgb, var(--gold) 14%, var(--parchment-shade));
+}
+.bt-group.is-heroes .bt-cell > .k-portrait { border: 0; }
 /* An empty slot is the portrait's own ring, empty and sunk in. */
 .bt-cell.is-empty {
   border: calc(var(--px) * 2) solid var(--section-line);
@@ -81,7 +91,6 @@ button.bt-cell { cursor: pointer; }
   background: var(--parchment-shade);
   box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
 }
-.bt-group.is-heroes .bt-cell.is-empty { opacity: 0.8; }
 .bt-cell.is-locked {
   border: calc(var(--px) * 2) solid var(--section-line);
   border-radius: 50%;
