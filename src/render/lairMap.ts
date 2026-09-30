@@ -96,6 +96,38 @@ export function markLairBubble(id: LairId, r: { x: number; y: number; w: number;
   bubbleRects.set(id, r);
 }
 
+/**
+ * WHERE EACH LAIR'S PICTURE LANDED on the last frame, and which sprite it
+ * is. The picture stands taller than its 2x2 ground, so a tap on its upper
+ * half lands on the cells behind it; resolved here — by the sprite's own
+ * pixels — it is a tap on the lair.
+ */
+type InkTest = (u: number, v: number) => boolean;
+const artRects = new Map<LairId, { x: number; y: number; w: number; h: number; ink: InkTest }>();
+
+export function clearLairArt(): void { artRects.clear(); }
+
+/** `ink` answers whether the picture has a pixel at (u, v), fractions of its
+ *  box — handed in by the renderer, which owns the images, so this module
+ *  stays loadable where there are none (the presenter's tests). */
+export function markLairArt(
+  id: LairId, r: { x: number; y: number; w: number; h: number }, ink: InkTest,
+): void {
+  artRects.set(id, { ...r, ink });
+}
+
+/** The lair whose drawn picture is under the screen point, or null — its
+ *  ink, not its box, so the transparent corners of the art fall through. */
+export function lairArtAt(sx: number, sy: number): LairId | null {
+  for (const [id, r] of artRects) {
+    if (r.w <= 0 || r.h <= 0) continue;
+    const u = (sx - r.x) / r.w;
+    const v = (sy - r.y) / r.h;
+    if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && r.ink(u, v)) return id;
+  }
+  return null;
+}
+
 /** The lair whose bubble covers the screen point, or null. */
 export function lairBubbleAt(sx: number, sy: number): LairId | null {
   for (const [id, r] of bubbleRects) {

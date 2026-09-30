@@ -61,3 +61,17 @@ describe('compactCountdown', () => {
     expect(compactCountdown(ms)).toBe(text);
   });
 });
+
+describe('a tap on the lair\'s picture', () => {
+  it('hits its ink, and falls through its transparent corners', async () => {
+    const { clearLairArt, lairArtAt, markLairArt } = await import('../src/render/lairMap');
+    clearLairArt();
+    // A picture 100×200 at (10, 20) whose ink is its lower half only.
+    markLairArt('Orcs', { x: 10, y: 20, w: 100, h: 200 }, (_u, v) => v > 0.5);
+    expect(lairArtAt(60, 200)).toBe('Orcs');   // in the ink
+    expect(lairArtAt(60, 40)).toBeNull();       // in the box, over nothing
+    expect(lairArtAt(300, 200)).toBeNull();     // outside the box
+    clearLairArt();
+    expect(lairArtAt(60, 200)).toBeNull();
+  });
+});

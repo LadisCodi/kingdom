@@ -9,7 +9,7 @@ import { landmarkDefAt, standingLairAt } from '../sim/sites';
 import { lairZoneCells } from '../sim/lairZone';
 import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
-  clearLairBubbles, compactCountdown, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
+  clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
 } from './lairMap';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
@@ -31,7 +31,7 @@ import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
-import { drawIcon, drawSprite, spriteAspect, spriteInkTop } from './sprites';
+import { drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
@@ -859,6 +859,7 @@ export function drawMap(
   // which skips Undiscovered cells, and depth-sorted with everything else.
   // Under fog the model is dimmed as a feature would be; its bubble is not.
   const lairArt = new Map<LairId, PlotBox>();
+  clearLairArt();
   for (const id of LAIR_ORDER) {
     const lair = standingLairAt(state, LAIRS[id].location);
     if (!lair) continue;
@@ -874,6 +875,7 @@ export function drawMap(
           const art = artRect(plot,
             stand(plot, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS);
           lairArt.set(id, art);
+          markLairArt(id, art, (u, v) => spriteSolidAt(lair.sprite, u, v));
           mark(art);
         });
       });
