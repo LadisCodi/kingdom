@@ -7,8 +7,8 @@
 // right but aimed at the wrong harvest source, an effect on a card whose
 // reader was deleted, a value of 0 saved from the editor. So this walks every
 // ladder, rank by rank, and reads **the numbers a player actually meets** —
-// what a tap owes, what a house pays, how long a build takes, what a depth
-// hauls out — then asserts that a fully-researched ladder has moved at least
+// what a tap owes, what a house pays, how long a build takes, what a lair
+// costs to provision — then asserts that a fully-researched ladder has moved at least
 // one of them away from its own rank-0 baseline.
 //
 // It does NOT assert the amounts. It used to: a frozen fixture of every
@@ -23,13 +23,11 @@
 import { describe, expect, it } from 'vitest';
 import { getWallet } from '../src/sim/state';
 import {
-  HARVEST, LANDMARKS, RUINS, TECHNOLOGIES, roomPower,
+  HARVEST, LANDMARKS, LAIRS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
 import { armyCap, trainCost, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
-import {
-  drillOf, enterRoom, roomReward, supplyCost,
-} from '../src/sim/expeditions';
+import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { manaCap, manaProduction } from '../src/sim/mana';
@@ -45,7 +43,7 @@ import { addHeroXp } from '../src/sim/heroes';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import {
-  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, openRuin, reveal, T0,
+  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, clearLair, reveal, T0,
 } from './helpers';
 
 
@@ -76,42 +74,17 @@ function probeState(): GameState {
   addBuilt(state, 'Barracks', { x: 8, y: 2 });
   addBuilt(state, 'Sanctum', { x: 9, y: 2 });
   state.city.population = 4;
-  // Two landmarks held and one ruin cleared, so the per-entity drips are not
+  // Two landmarks held and one lair cleared, so the per-entity drips are not
   // multiplied by zero.
   state.landmarks.claimed = { 'Shrine:1': true, 'Leyspring:1': true };
-  state.ruinsCleared = { HollowBarrow: true };
+  clearLair(state, 'Orcs');
   state.heroes.owned = ['Scout'];
-  // One Warrior and a revealed ruin, so the Stardust probe below can send a
-  // party down. A one-unit party is always inside the army cap, which is what
-  // keeps that probe independent of the Colours ladder.
   state.army.push({ uniqueId: 'probe_warrior', definitionId: 'Warrior' });
-  reveal(state, [RUINS.HollowBarrow.location]);
+  reveal(state, [LAIRS.Orcs.location]);
   grantArtifactLevel(state, 'VerdantSeal');
   state.modifiers = [];
   state.lastAdvance = T0;
   return state;
-}
-
-/**
- * The Stardust ONE ROOM of a ruin pays.
- *
- * `roomReward` is not private, but reading it through the command is what
- * proves the ladder reaches the sim: a room is entered, the wallets move, and
- * the difference is what the ladder bought. On a CLONE — the attempt spends
- * supplies, and a probe must not change what the next probe measures.
- */
-function stardustOneRoom(state: GameState): number {
-  const probe = structuredClone(state);
-  openRuin(probe, 'HollowBarrow');
-  probe.army = Array.from({ length: 200 }, (_, i) => (
-    { uniqueId: `probe_${i}`, definitionId: 'Warrior' as const }));
-  probe.city.wallet.Gold = 100_000;
-  probe.city.wallet.Food = 100_000;
-  const before = getWallet(probe.kingdom.wallet, 'Stardust');
-  const report = enterRoom(probe, map, 'HollowBarrow', ['Scout'],
-    [{ unitId: 'Warrior', count: 200 }]);
-  if (report.result !== 'Cleared') return -1;
-  return getWallet(probe.kingdom.wallet, 'Stardust') - before;
 }
 
 /** Every player-visible number a ladder could plausibly move. */
@@ -169,15 +142,10 @@ function probe(state: GameState): Record<string, number> {
   put('armyCap', armyCap(state));
   const warrior = trainCost(state, 'Warrior');
   for (const [c, n] of Object.entries(warrior)) put(`trainCost.Warrior.${c}`, n as number);
-  const supplies = supplyCost(state, 'HollowBarrow', 1, []);
+  // The deepest lair's supplies: big enough that a 5% rank does not round
+  // away.
+  const supplies = lairSupplyCost(state, 'Drake', []);
   for (const [c, n] of Object.entries(supplies)) put(`supplyCost.${c}`, n as number);
-  put('stardust.oneRoom', stardustOneRoom(state));
-  // …and a DEEP room, read straight off the reward. The Barrow's first room
-  // pays two Stardust and +5% of two is two, so a ladder that moves the line
-  // by a fraction is invisible on it — the probe needs a number big enough to
-  // round differently, and the deepest boss in the game is that number.
-  put('stardust.deepRoom',
-    roomReward(state, 'StarObservatory', 3, 18).wallet.Stardust ?? 0);
   // What a fight gives back: the share of the fallen that reaches a bed
   // (Docs/features/combat.md §4). Probed without heroes, so this is the
   // TREE's half of the number.
@@ -197,9 +165,9 @@ function probe(state: GameState): Record<string, number> {
   put('heroXp.per100', getWallet(state.kingdom.wallet, 'HeroXp') - before);
   state.kingdom.wallet.HeroXp = before;
 
-  // A control that no ladder may move: what a room fields, which is authored
+  // A control that no ladder may move: what a lair fields, which is authored
   // and belongs to nobody's ladder.
-  put('control.roomPower', roomPower('HollowBarrow', 1, 1));
+  put('control.lairPower', LAIRS.Orcs.guard.power);
   return out;
 }
 
@@ -239,8 +207,12 @@ describe('every rank ladder in the tree', () => {
    * hurried a depth's clock. The room model has neither: a failed room grants
    * nothing and deducts nothing, and a room resolves the instant it is
    * entered (Docs/features/11-expeditions.md §5).
+   *
+   * `Prospecting` raised the Stardust a ROOM paid, and the rooms were retired
+   * with the depths: `stardustYield` has no reader (Docs/open-questions.md
+   * OQ-113).
    */
-  const RETIRED_RULES = ['Bearers', 'Pathfinders'];
+  const RETIRED_RULES = ['Bearers', 'Pathfinders', 'Prospecting'];
 
   it('moves at least one number a player can see', () => {
     const moved = movements();
@@ -252,12 +224,9 @@ describe('every rank ladder in the tree', () => {
     expect(inert, 'these ladders move nothing at full rank').toEqual([]);
   });
 
-  // Asserted at FULL rank, not at every rank. `ProspectingI` moves nothing
-  // this probe can see: +5% Stardust on a single depth rounds back to the
-  // same integer, and the probe reads one depth because that is what a
-  // deterministic delve gives it. Per-rank would need an exception list for
-  // rounding, and a guard with an exception list for the interesting cases is
-  // not a guard.
+  // Asserted at FULL rank, not at every rank: a 5% rank on a small number
+  // can round back to the same integer, and a per-rank guard would need an
+  // exception list for rounding.
 
   it('is a chain of bonuses, so the stems above mean what they say', () => {
     for (const ladder of bonusLadders) {

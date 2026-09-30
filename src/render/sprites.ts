@@ -106,6 +106,45 @@ export function spriteInkTop(key: string): number {
 }
 
 /**
+ * Is sprite `key` INK at (u, v) — fractions of its width and height — or
+ * transparent? For a tap on a drawing that is taller than the ground it
+ * stands on: the hit is the picture's own pixels, not the box around it.
+ * A 64-px-wide alpha mask, built once per sprite on first ask; false until
+ * the image has loaded (or when it cannot be read, true: better a tap too
+ * many on a site than one that falls through).
+ */
+const solidMasks = new Map<string, { w: number; h: number; alpha: Uint8Array } | null>();
+
+export function spriteSolidAt(key: string, u: number, v: number): boolean {
+  if (u < 0 || u > 1 || v < 0 || v > 1) return false;
+  let mask = solidMasks.get(key);
+  if (mask === undefined) {
+    const s = sprite(key);
+    if (!s?.ready || s.img.naturalWidth === 0) return false; // ask again once it loads
+    const w = Math.min(64, s.img.naturalWidth);
+    const h = Math.max(1, Math.round((s.img.naturalHeight / s.img.naturalWidth) * w));
+    try {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const g = c.getContext('2d', { willReadFrequently: true })!;
+      g.drawImage(s.img, 0, 0, w, h);
+      const { data } = g.getImageData(0, 0, w, h);
+      const alpha = new Uint8Array(w * h);
+      for (let i = 0; i < w * h; i++) alpha[i] = data[i * 4 + 3];
+      mask = { w, h, alpha };
+    } catch {
+      mask = null; // a tainted or unreadable canvas: the whole box is the hit
+    }
+    solidMasks.set(key, mask);
+  }
+  if (mask === null) return true;
+  const x = Math.min(mask.w - 1, Math.floor(u * mask.w));
+  const y = Math.min(mask.h - 1, Math.floor(v * mask.h));
+  return mask.alpha[y * mask.w + x] > 32;
+}
+
+/**
  * Draw sprite `key` filling (x, y, w, h). Returns false when the image is
  * missing or not yet loaded — the caller draws its glyph fallback instead.
  */
@@ -122,6 +161,78 @@ export function drawSprite(
   ctx.drawImage(s.img, x, y, w, h);
   return true;
 }
+
+/** One solid-colour silhouette per sprite and colour, at the art's own size:
+ *  the ghost's outline is drawn from it every frame. */
+const silhouettes = new Map<string, HTMLCanvasElement>();
+
+/** The sprite's silhouette in one colour, cached per sprite and colour. */
+function silhouetteOf(key: string, color: string): HTMLCanvasElement | null {
+  const s = sprite(key);
+  if (!s?.ready) return null;
+  const id = `${key}|${color}`;
+  let sil = silhouettes.get(id);
+  if (!sil) {
+    sil = document.createElement('canvas');
+    sil.width = s.img.naturalWidth;
+    sil.height = s.img.naturalHeight;
+    const c = sil.getContext('2d')!;
+    c.drawImage(s.img, 0, 0);
+    c.globalCompositeOperation = 'source-in';
+    c.fillStyle = color;
+    c.fillRect(0, 0, sil.width, sil.height);
+    silhouettes.set(id, sil);
+  }
+  return sil;
+}
+
+/**
+ * An OUTLINE round sprite `key` filling (x, y, w, h): its silhouette in
+ * `color`, stamped `px` pixels out in eight directions. Drawn UNDER the
+ * sprite, so only the ring round its edge shows. False while the art is
+ * missing or loading.
+ */
+export function drawSpriteOutline(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  px: number,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  // The ring alone, on a scratch canvas: the eight stamps, then the
+  // silhouette itself cut back out — so a TRANSLUCENT sprite drawn over it
+  // shows the ground through its body, not a white fill.
+  const scale = ctx.getTransform().a || 1;
+  const pad = Math.ceil(px) + 1;
+  const cw = Math.ceil((w + pad * 2) * scale);
+  const ch = Math.ceil((h + pad * 2) * scale);
+  if (cw <= 0 || ch <= 0) return true;
+  ringCanvas ??= document.createElement('canvas');
+  if (ringCanvas.width < cw || ringCanvas.height < ch) {
+    ringCanvas.width = Math.max(ringCanvas.width, cw);
+    ringCanvas.height = Math.max(ringCanvas.height, ch);
+  }
+  const r = ringCanvas.getContext('2d')!;
+  r.setTransform(1, 0, 0, 1, 0, 0);
+  r.clearRect(0, 0, cw, ch);
+  r.setTransform(scale, 0, 0, scale, 0, 0);
+  const d = px * Math.SQRT1_2;
+  r.globalCompositeOperation = 'source-over';
+  for (const [ox, oy] of [[px, 0], [-px, 0], [0, px], [0, -px], [d, d], [-d, d], [d, -d], [-d, -d]]) {
+    r.drawImage(sil, pad + ox, pad + oy, w, h);
+  }
+  r.globalCompositeOperation = 'destination-out';
+  r.drawImage(sil, pad, pad, w, h);
+  r.globalCompositeOperation = 'source-over';
+  ctx.drawImage(ringCanvas, 0, 0, cw, ch, x - pad, y - pad, cw / scale, ch / scale);
+  return true;
+}
+let ringCanvas: HTMLCanvasElement | null = null;
 
 // ---------------------------------------------------------------- UI atlas
 

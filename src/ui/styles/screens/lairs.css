@@ -1,0 +1,48 @@
+/* The lair (Docs/proposals/lairs.md §6): the band on the lair card, and the
+ * battle sheet the band opens. The party pickers inside that sheet are screens/battle.css. */
+
+/* -------------------------------------------------- the band on the card */
+
+.site-lair {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  margin-top: 0;
+  padding: calc(var(--px) * 10);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+}
+/* The creature's mark stands in a small vignette at the left (M11). */
+.site-lair-head { display: flex; align-items: center; gap: calc(var(--px) * 12); }
+.site-lair-head > .icon {
+  --icon-size: calc(var(--px) * 36);
+  flex: none;
+  margin: calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 4);
+  /* The vignette is drawn AROUND the atlas cell, so the sprite's own box is
+     untouched: padding would shift the sheet under it. */
+  box-shadow: 0 0 0 calc(var(--px) * 8) var(--parchment), 0 0 0 calc(var(--px) * 10) var(--wood-dark);
+}
+/* The body face, bold: the display face is legal only at --text-title
+   (tests/fonts.test.ts), and a band heading is not a title. */
+.site-lair-name {
+  font-family: var(--font-body);
+  font-weight: var(--weight-strong);
+  font-size: calc(var(--px) * 18);
+  line-height: 1.15;
+  color: var(--ink);
+}
+.site-lair-sub,
+.site-lair-trips,
+.site-lair-hoard {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-soft);
+}
+.site-lair-trips { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.site-lair-hoard { color: var(--ink); }
+
+/* The room sheet on a lair is the BATTLE screen (screens/battle.css); what
+ * the lair adds to it is the clock, and that rides in the dynamic band. */

@@ -40,11 +40,14 @@ export type ModifierStat =
   | 'workerSpeed'     // tiles per second a worker walks
   | 'manaCap'         // the ceiling of the pool
   | 'claimCost'       // Gold to claim a landmark
-  | 'stardustYield'   // Stardust a depth pays
+  // TODO(OQ-113): NOTHING READS `stardustYield` since the depths were retired
+  // — the rooms were its only payer. The Wanderer's Compass passive and the
+  // Prospecting ranks still name it and move nothing.
+  | 'stardustYield'   // Stardust a room paid — NOT READ
   // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
   // adding a twin of it.
   | 'armyCap'         // power the halls can field
-  | 'supplyCost'      // what an expedition costs to provision
+  | 'supplyCost'      // what a lair attack costs in supplies
   | 'haulLoss'        // the fraction a failed depth loses
   | 'heroXp'          // XP a delve pays a hero
   | 'recruitCost'     // what a unit costs to recruit
@@ -73,11 +76,11 @@ export type ModifierStat =
   // queue (Docs/proposals/relic-effects.md §4.2).
   | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
   | 'harvestStock'    // units a cell holds before it is spent
-  // The three pillars outside the city. `roomHaul` moves the MATERIAL half of
-  // a room's line only: its Stardust is the Wanderer's Compass's and its Hero
-  // XP is a legendary's boon, and one number carrying three permanent layers
-  // would be unreadable.
-  | 'roomHaul'        // a room's Gold and Stone
+  // TODO(OQ-113): NOTHING READS `roomHaul`. It moved a ROOM's Gold and Stone,
+  // and the rooms were retired with the depths; it stays defined so the
+  // Delver's Lantern that names it still loads. The Lantern needs a new
+  // effect (Docs/open-questions.md OQ-113, Docs/proposals/relic-effects.md).
+  | 'roomHaul'        // a room's Gold and Stone — NOT READ
   | 'worldImprovementYield'; // what a world-map improvement grants an hour — NOT READ YET
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';

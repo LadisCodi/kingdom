@@ -21,7 +21,7 @@ import { upgradeCost, upgradeDuration, upgradeGoodsCost } from '../sim/districts
 import { getGood } from '../sim/goods';
 import type { District, GoodId } from '../sim/state';
 import { buildingPortrait } from './districtCard';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, sectionHead, sheet } from './kit';
 import { requirements, statChanges } from './upgradeStats';
 
@@ -62,7 +62,7 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   const goods = Object.entries(upgradeGoodsCost(district.definitionId, next)) as Array<[GoodId, number]>;
   const priceChip = (icon: string, amount: number, short: boolean) =>
     el('span', { class: `up-price-chip${short ? ' is-short' : ''}` },
-      iconEl(icon as never), el('b', {}, String(amount)));
+      iconEl(icon as never), el('b', {}, formatExact(amount)));
   const price = el('div', { class: 'up-price' },
     ...Object.entries(cost).map(([c, n]) =>
       priceChip(c, n as number, game.walletValue(c as never) < (n as number))),

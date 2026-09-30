@@ -96,10 +96,10 @@ export function buildMapDataFrom(region: RegionMapDoc): MapData {
   }
 
   // Sites carry their own size rather than being grouped: a sanctuary or a
-  // ruin is PLACED, not painted. They land in the same two maps, so the one
+  // lair is PLACED, not painted. They land in the same two maps, so the one
   // set of rules — revealed as a unit, priced as the sum, drawn once — covers
   // them without knowing what they are.
-  for (const site of [...region.landmarks, ...Object.values(region.ruins)]) {
+  for (const site of [...region.landmarks, ...Object.values(region.lairs)]) {
     const size = site.size ?? 1;
     if (size <= 1) continue;
     const anchorKey = coordKey({ x: site.x, y: site.y });

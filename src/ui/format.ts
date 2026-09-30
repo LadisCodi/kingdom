@@ -6,7 +6,7 @@
 
 import { playSfx } from '../audio/sfx';
 
-/** Durations now span "instant" to "a day and a half" — a Tier V ruin is a
+/** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
  *  two largest units, because a third is noise at every scale. */
 export function formatDuration(seconds: number): string {
@@ -35,24 +35,54 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * THE VIEWER'S LOCALE decides how a number is written: *25,000* and *4.99* in
+ * London, *25.000* and *4,99* in Madrid. Every number the UI prints goes
+ * through the helpers below, which are the only place that asks — a bare
+ * `n.toLocaleString()` anywhere else is refused by tests/numberFormat.test.ts.
+ *
+ * `undefined` is the browser's own locale. Tests pin it with `setNumberLocale`.
+ */
+let numberLocale: string | undefined;
+const formatters = new Map<string, Intl.NumberFormat>();
+
+export function setNumberLocale(locale: string | undefined): void {
+  numberLocale = locale;
+  formatters.clear();
+}
+
+/** `n` grouped in the viewer's locale, with up to `maxDecimals` decimals
+ *  (exactly `minDecimals` at least). */
+export function formatNumber(n: number, maxDecimals = 0, minDecimals = 0): string {
+  const key = `${maxDecimals}:${minDecimals}`;
+  let f = formatters.get(key);
+  if (f === undefined) {
+    f = new Intl.NumberFormat(numberLocale, {
+      maximumFractionDigits: maxDecimals, minimumFractionDigits: minDecimals,
+    });
+    formatters.set(key, f);
+  }
+  return f.format(n);
+}
+
+/**
  * A wallet number, short enough to live in the HUD.
  *
  * The resource plank has to hold four coins, the Mana gauge and Gems inside
  * 402px, and a late-game Gold of 248_610 is 42px of digits on its own — so
  * the row's width was a function of how well the player was doing, and the
  * coins at the end of it got clipped away as they did better. Rolling up at
- * ten thousand caps every coin at four characters forever.
+ * ten thousand caps every coin at four digits forever: *9,999*, then *12k*.
  *
  * Only ever a DISPLAY form: nothing rounds, and tapping any coin opens the
  * purse, which prints the exact figure.
  */
 export function formatCount(n: number): string {
   const abs = Math.abs(n);
-  if (abs < 10_000) return String(n);
-  if (abs < 1_000_000) return `${Math.floor(n / 1000)}k`;
+  if (abs < 10_000) return formatNumber(n, 1);
+  if (abs < 1_000_000) return `${formatNumber(Math.trunc(n / 1000))}k`;
   // One decimal past a million, dropped when it is a zero: "1.2M", "14M".
   const millions = n / 1_000_000;
-  return `${millions.toFixed(millions < 10 ? 1 : 0).replace(/\.0$/, '')}M`;
+  return `${formatNumber(millions, Math.abs(millions) < 10 ? 1 : 0)}M`;
 }
 
 /**
@@ -61,14 +91,20 @@ export function formatCount(n: number): string {
  * `formatCount` above abbreviates, which is right for a coin on the plank and
  * wrong for a PRIZE — "complete all eight to win 25k Gems" reads as an
  * estimate of a number the game knows exactly.
- *
- * THE LOCALE IS PINNED, and that is the whole point. A bare
- * `n.toLocaleString()` asks the VIEWER'S browser how to group, so the same
- * 25000 Gems rendered "25,000" in London and "25.000" in Madrid — where an
- * English-reading player sees twenty-five. A number the game states is not a
- * number the reader's system settings get a vote on.
  */
-export const formatExact = (n: number): string => n.toLocaleString('en-US');
+export const formatExact = (n: number): string => formatNumber(n, 1);
+
+/** A count cut short for a tight slot (a stat tile): *950*, *1.2k*, *29k*.
+ *  Floored, so a store one short of full never reads as full. */
+export function formatShort(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1000 && abs < 10_000) return `${formatNumber(Math.floor(n / 100) / 10, 1)}k`;
+  return formatCount(Math.floor(n));
+}
+
+/** A price: *$4.99*, *$2,000.00* — or *$4,99* where the comma is the decimal.
+ *  The game prices in dollars, and this is the one place that says so. */
+export const formatUsd = (cents: number): string => `$${formatNumber(cents / 100, 2, 2)}`;
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,

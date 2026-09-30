@@ -11,7 +11,7 @@ import { formatDuration } from '../src/ui/format';
 import { grantPack, seasonAt, seasonDef, PRIZE_BANNER } from '../src/sim/collection';
 import { ALBUMS, ALBUM_ORDER } from '../src/sim/data/seasons';
 import type { Game } from '../src/game';
-import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, HEROES, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
 import { townhallDistance } from '../src/sim/grid';
@@ -88,17 +88,27 @@ describe('the overlay / dismiss state machine', () => {
 });
 
 describe('placement', () => {
-  it('auto-selects the legal cell nearest the Townhall and leaves menus behind', () => {
+  it('auto-selects the nearest legal cell the Townhall does not hide, and leaves menus behind', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     game.setOverlay('build');
 
     game.startPlacement('Housing');
 
-    const nearest = validPlacementCells(state, map, 'Housing')
-      .reduce((best, c) =>
-        townhallDistance(map, c) < townhallDistance(map, best) ? c : best);
-    expect(game.mode).toEqual({ kind: 'placing', definitionId: 'Housing', selected: nearest });
+    const selected = (game.mode as { selected: { x: number; y: number } }).selected;
+    const legal = validPlacementCells(state, map, 'Housing');
+    expect(legal).toContainEqual(selected);
+    // In FRONT of the Townhall on screen, or beside it — never under its art:
+    // the 2×2 hall at the origin stands over the cells behind it (x + y < 2)
+    // whose screen column (x − y) lies within its own (−2 … 2).
+    const hall = townhall(state).location;
+    const behind = selected.x + selected.y < hall.x + hall.y + 2
+      && Math.abs(selected.x - selected.y - (hall.x - hall.y)) < 2;
+    expect(behind).toBe(false);
+    // …and nothing visible was passed over for it.
+    const d = townhallDistance(map, selected);
+    const nearest = Math.min(...legal.map((c) => townhallDistance(map, c)));
+    expect(d - nearest).toBeLessThanOrEqual(1);
     expect(game.openOverlay).toBe(null);
   });
 
@@ -140,6 +150,79 @@ describe('placement', () => {
 
     expect(state.city.queue).toHaveLength(1);
     expect(game.mode).toEqual({ kind: 'normal' });
+  });
+});
+
+describe('the placement window and the builder sheet', () => {
+  it('closing a build goes back to the Build menu; closing a move back to its card', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.setOverlay('build');
+    game.startPlacement('Housing');
+    game.closePlacement();
+    expect(game.mode).toEqual({ kind: 'normal' });
+    expect(game.openOverlay).toBe('build');
+
+    const hall = townhall(state);
+    game.dismiss();
+    game.mode = { kind: 'moving', districtUniqueId: hall.uniqueId, definitionId: 'Townhall',
+      selected: hall.location, origin: hall.location };
+    game.closePlacement();
+    expect(game.inspectedDistrictId).toBe(hall.uniqueId);
+    expect(game.openOverlay).toBe(null);
+  });
+
+  it('a build card quotes the wait of the cell its ghost will appear on', () => {
+    const game = freshPresenter();
+    const quoted = game.buildCardDuration('Housing');
+    game.startPlacement('Housing');
+    expect(game.placementInfo()!.duration).toBe(quoted);
+  });
+
+  it('the ghost shows a move arrow only for legal steps, and none while it is held', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.startPlacement('Housing');
+    const at = (game.mode as { selected: { x: number; y: number } }).selected;
+    const legal = new Set(validPlacementCells(state, map, 'Housing').map((c) => `${c.x},${c.y}`));
+    const steps = game.ghostSteps();
+    expect(steps.length).toBeGreaterThan(0);
+    for (const d of steps) expect(legal.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
+    game.holdGhost(true);
+    expect(game.ghostSteps()).toEqual([]);
+    expect(game.markers().previewSteps).toEqual([]);
+    game.holdGhost(false);
+    expect(game.ghostSteps()).toEqual(steps);
+  });
+
+  it('a build every builder is busy for opens the sheet; a freed builder builds from it', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
+    game.startPlacement('Housing');
+    game.confirmBuild(); // takes the only builder
+    game.startPlacement('Housing');
+    game.confirmBuild();
+    expect(game.openOverlay).toBe('builder');
+    expect(game.mode.kind).toBe('placing'); // the ghost waits behind the sheet
+    expect(game.builderJobs()).toHaveLength(1);
+    expect(game.builderJobs()[0].task).toBe('Building');
+
+    const ask = game.builderAskJob()!;
+    expect(ask.verb).toBe('Build');
+    expect(ask.what).toBe('Ready to build the Housing');
+
+    // Finish the job: the builder is free and the sheet stays up.
+    addToWallet(state.player.wallet, 'Gems', 10_000);
+    game.doRush(game.builderJobs()[0].item.uniqueId);
+    expect(game.builderJobs()).toHaveLength(0);
+    expect(game.openOverlay).toBe('builder');
+
+    // The free row's Build starts the build on the ghost and closes the sheet.
+    ask.start();
+    expect(state.city.queue).toHaveLength(1);
+    expect(game.mode).toEqual({ kind: 'normal' });
+    expect(game.openOverlay).toBe(null);
   });
 });
 
@@ -198,7 +281,7 @@ describe('focusQuest() — the 🔍 lands somewhere for every quest in the chain
         game.openOverlay !== null ||
         game.inspectedDistrictId !== null ||
         // Sites are the fourth thing the 🔍 can land on: a landmark to claim
-        // or a ruin to send a party into.
+        // or a lair to send a party into.
         game.inspectedSite !== null;
       expect(landed).toBe(true);
     },
@@ -677,7 +760,7 @@ describe('the heroes screen signature', () => {
 describe('the overlay signatures', () => {
   it('hold still on a tick that changed nothing they draw', () => {
     const game = freshPresenter();
-    for (const name of ['builder', 'daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
+    for (const name of ['daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
       const before = game.overlaySignature(name);
       expect(before, name).not.toBeNull();
       game.tick();
@@ -685,16 +768,15 @@ describe('the overlay signatures', () => {
     }
   });
 
-  it('the store and the builder move with the Gems and the crew', () => {
+  it('the store moves with the Gems', () => {
     const game = freshPresenter();
     const store = game.overlaySignature('store');
-    const builder = game.overlaySignature('builder');
     addToWallet(game.state.player.wallet, 'Gems', 5_000);
     expect(game.overlaySignature('store')).not.toBe(store);
-    expect(game.overlaySignature('builder')).not.toBe(builder);
-    const hired = game.overlaySignature('builder');
-    game.doBuyBuilder({ closeSheet: false });
-    expect(game.overlaySignature('builder')).not.toBe(hired);
+  });
+
+  it('the builder sheet keeps rebuilding: its bars and Finish prices move with the clock', () => {
+    expect(freshPresenter().overlaySignature('builder')).toBeNull();
   });
 
   it('the purchase sheet moves with the pending pack', () => {
@@ -706,9 +788,19 @@ describe('the overlay signatures', () => {
 
   it('screens with a countdown or a regenerating pool are not signed', () => {
     const game = freshPresenter();
-    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
+    for (const name of ['collection', 'mana', 'research', 'build', 'purse'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
+  });
+
+  it('signs the attack screen, and moves it with a resting hero by the minute', () => {
+    const game = freshPresenter();
+    game.state.heroes.hurt.Warden = { missing: 1, at: game.now(), exhausted: true };
+    const before = game.overlaySignature('lair');
+    expect(before).not.toBeNull();
+    expect(game.overlaySignature('lair')).toBe(before);
+    game.state.heroes.hurt.Warden = { missing: 1, at: game.now() - 5 * 60_000, exhausted: true };
+    expect(game.overlaySignature('lair')).not.toBe(before);
   });
 });
 
@@ -836,5 +928,64 @@ describe('reward fragments', () => {
     const game = freshPresenter();
     expect(game.rewardFragments('Gems', 2)).toBe(5); // nothing makes Gems
     expect(game.rewardFragments('Wood', 2)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// THE HERO PICKER (ui/heroPicker.ts): any screen asks for n slots and gets
+// the heroes chosen back, in slot order, or nothing on a close.
+describe('the hero picker', () => {
+  const withHeroes = (): Game => {
+    const state = freshGame();
+    for (const id of ['Scout', 'Bard', 'Cleric'] as const) grantHero(state, id);
+    return freshPresenter(state);
+  };
+
+  it('seats a tapped hero in the first free slot, and a second tap takes it out', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 2, onSelect: () => {} });
+    game.heroPickToggle('Scout');
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual(['Scout', 'Bard']);
+    game.heroPickToggle('Scout');
+    expect(game.heroPick!.slots).toEqual([null, 'Bard']);
+    game.heroPickToggle('Cleric');
+    expect(game.heroPick!.slots).toEqual(['Cleric', 'Bard']);
+  });
+
+  it('refuses a hero with every slot full, and an exhausted one', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 1, selected: ['Scout'], onSelect: () => {} });
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual(['Scout']);
+    game.heroPickClearSlot(0);
+    game.state.heroes.hurt.Bard = { missing: 0.5, at: game.now(), exhausted: true };
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual([null]);
+  });
+
+  it('hands the choice back on Select and nothing on a close, returning to the screen behind', () => {
+    const game = withHeroes();
+    game.setOverlay('lair');
+    let got: string[] | null = null;
+    game.openHeroPicker({ slots: 3, selected: ['Scout'], onSelect: (h) => { got = h; } });
+    expect(game.openOverlay).toBe('heroPicker');
+    game.heroPickCancel();
+    expect(got).toBeNull();
+    expect(game.openOverlay).toBe('lair');
+
+    game.openHeroPicker({ slots: 3, selected: ['Scout'], onSelect: (h) => { got = h; } });
+    game.heroPickToggle('Cleric');
+    game.heroPickConfirm();
+    expect(got).toEqual(['Scout', 'Cleric']);
+    expect(game.openOverlay).toBe('lair');
+  });
+
+  it('filters by the type a hero fights as', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 1, onSelect: () => {} });
+    const all = game.heroPickList();
+    const type = HEROES[all[0]!].unitType;
+    game.heroPickFilter(type);
+    expect(game.heroPickList().every((h) => HEROES[h].unitType === type)).toBe(true);
   });
 });

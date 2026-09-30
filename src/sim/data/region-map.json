@@ -1669,36 +1669,41 @@
     { "id": "MirrorLeyspring", "kind": "Leyspring", "x": -10, "y": -8, "claimCost": 100000 },
     { "id": "WindwardShrine", "kind": "Shrine", "x": 15, "y": 2, "claimCost": 100000 }
   ],
-  "ruins": {
-    "HollowBarrow": {
-      "x": 5, "y": 1,
+  "lairs": {
+    "Orcs": {
+      "x": 5, "y": 1, "size": 2,
       "tier": 1,
-      "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30, "periodMinutes": 30 },
-      "affinity": "Warrior", "artifact": "DowsingRod"
+      "radius": 1,
+      "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30 },
+      "flavour": "They burn what they cannot carry. Every night the war drums draw closer to the town."
     },
-    "SunkenChapel": {
-      "x": -3, "y": 9,
+    "Harpies": {
+      "x": -3, "y": 9, "size": 2,
       "tier": 2,
-      "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90, "periodMinutes": 90 },
-      "affinity": "Archer", "artifact": "VerdantSeal"
+      "radius": 1,
+      "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90 },
+      "flavour": "Anything that shines is theirs by morning. The market has learned to trade in the dark."
     },
-    "DrownedIronworks": {
-      "x": -15, "y": 20,
+    "Goblins": {
+      "x": -15, "y": 20, "size": 2,
       "tier": 3,
-      "guard": { "threat": "Lancer", "power": 440, "warningMinutes": 120, "periodMinutes": 120 },
-      "affinity": "Lancer", "artifact": "ForemansSigil"
+      "radius": 2,
+      "guard": { "threat": "Lancer", "power": 440, "warningMinutes": 120 },
+      "flavour": "They tunnel under the yards and come up where the tools are. Nothing heavy is safe."
     },
-    "CountingHouse": {
-      "x": 7, "y": -15,
+    "WolfRiders": {
+      "x": 7, "y": -15, "size": 2,
       "tier": 4,
-      "guard": { "threat": "Cavalry", "power": 700, "warningMinutes": 180, "periodMinutes": 180 },
-      "affinity": "Cavalry", "artifact": "GildedLedger"
+      "radius": 2,
+      "guard": { "threat": "Cavalry", "power": 700, "warningMinutes": 180 },
+      "flavour": "They ride in at dawn, take the flocks and are gone before the dust settles."
     },
-    "StarObservatory": {
-      "x": -15, "y": -15,
+    "Drake": {
+      "x": -15, "y": -15, "size": 2,
       "tier": 5,
-      "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240, "periodMinutes": 240 },
-      "affinity": "Any", "artifact": "WanderersCompass"
+      "radius": 3,
+      "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240 },
+      "flavour": "It sleeps on a hill of gold and wakes hungry for more. The treasury is its larder."
     }
   }
 }

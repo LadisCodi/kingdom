@@ -241,9 +241,9 @@ export const TECH_STATS = {
     reads: 'knowledge.ts#landmarkClaimLump',
   },
   firstClearKnowledge: {
-    what: 'Knowledge a ruin pays when it is first cleared, paid back at once for every ruin cleared',
+    what: 'Knowledge a lair pays when it is first cleared, paid back at once for every lair cleared',
     ops: ['flat'], targets: ['global'], unit: 'knowledge',
-    says: { flat: '{v} Knowledge for every ruin cleared to its bottom' },
+    says: { flat: '{v} Knowledge for every lair cleared' },
     reads: 'knowledge.ts#firstClearLump',
   },
   knowledgeYield: {
@@ -313,10 +313,10 @@ export const TECH_STATS = {
   },
   // ---- the delve
   supplyCost: {
-    what: 'the multiplier on what an expedition costs to provision',
+    what: 'the multiplier on what a lair attack costs in supplies',
     ops: ['percent'], targets: ['global'], unit: '×',
     says: { percent: '{v} to what an expedition costs' },
-    reads: 'expeditions.ts#supplyCost',
+    reads: 'expeditions.ts#lairSupplyCost',
   },
   delveSpeed: {
     what: 'the multiplier on how long one depth takes to resolve',
@@ -352,8 +352,12 @@ export const TECH_STATS = {
   stardustYield: {
     what: 'the multiplier on the Stardust a depth pays',
     ops: ['percent'], targets: ['global'], unit: 'stardust',
-    says: { percent: '{v} Stardust out of a ruin' },
+    says: { percent: '{v} Stardust out of a lair' },
     reads: 'expeditions.ts#depthHaul',
+    retired: 'The rooms were the only thing that paid Stardust out of a lair, '
+      + 'and they were retired with the depths: a lair is one fight. Prospecting '
+      + 'and the Wanderer\u2019s Compass passive are inert until they are '
+      + 're-pointed (Docs/open-questions.md OQ-113).',
   },
 } as const satisfies Record<string, StatDef>;
 

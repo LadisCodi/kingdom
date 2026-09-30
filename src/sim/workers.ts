@@ -8,6 +8,7 @@
 // sets out while there is no room for what they would bring back, and a load
 // already on its way lands whole.
 
+import { lairHolding } from './lairZone';
 import { DISTRICTS, HARVEST, levelIndexed, type HarvestSpec } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
@@ -32,7 +33,8 @@ export const influenceCells = (map: MapData, district: District): Coord[] =>
   );
 
 /** Revealed resource cells of the building's source type in its area
- *  (exhausted cells count — workers wait for them to recover). */
+ *  (exhausted cells count — workers wait for them to recover). A cell a
+ *  standing lair holds is never one of them (Docs/proposals/lairs.md §3). */
 export function workableCells(state: GameState, map: MapData, district: District): Coord[] {
   const sources = DISTRICTS[district.definitionId].harvestSources;
   if (sources.length === 0) return [];
@@ -47,7 +49,10 @@ const worksHere = (
   sources: readonly HarvestSourceId[], state: GameState, cell: Coord,
 ): boolean => {
   const here = harvestSourceAt(state, cell);
-  return here !== null && sources.includes(here);
+  // The lair's ground is checked here, the one question both a fresh claim
+  // and a crew going BACK to its cell ask: a haul already on its way lands,
+  // but nobody walks out to the zone again (§3).
+  return here !== null && sources.includes(here) && lairHolding(state, cell) === null;
 };
 
 /** The per-level worker cap. Workable cells in range don't limit assignment —

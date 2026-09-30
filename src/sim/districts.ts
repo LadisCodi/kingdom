@@ -7,6 +7,7 @@ import { cellExists, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
+import { lairHolding } from './lairZone';
 import { harmonyBlock } from './harmony';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
@@ -66,7 +67,9 @@ export type PlacementBlock =
   | 'NeedsResearch' | 'NeedsShoreline'
   | 'NeedsLand'
   | 'NeedsHarmony'
-  | 'HasSite';
+  | 'HasSite'
+  /** Inside a standing lair's zone (Docs/proposals/lairs.md §3). */
+  | 'LairZone';
 
 /**
  * All placement conditions ANDed over the full footprint (cell = anchor,
@@ -104,9 +107,11 @@ export function placementBlock(
   for (const c of footprint) {
     if (!cellExists(map, c)) return 'OffMap';
     if (state.features[coordKey(c)]) return 'HasFeature';
-    // Landmarks and ruins are content, not building ground: paving over a
-    // ruin would silently delete a whole dungeon.
-    if (cellHasSite(c)) return 'HasSite';
+    // Landmarks and lairs are content, not building ground.
+    if (cellHasSite(state, c)) return 'HasSite';
+    // A lair holds the ground around it: nothing is built, or moved, into
+    // its zone while it stands.
+    if (lairHolding(state, c) !== null) return 'LairZone';
     if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     const sitting = districtAt(state, c);
     if (sitting && sitting.uniqueId !== movingId) return 'Occupied';

@@ -203,7 +203,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       plaqueIcon.replaceChildren(iconEl(SLOT_ICON[slot.kind]));
       // Workers is a plain count — the villagers free to assign; the rest
       // read as a share of their ceiling.
-      plaqueValue.textContent = slot.kind === 'workers' ? String(slot.value) : `${slot.value}/${slot.max}`;
+      plaqueValue.textContent = slot.kind === 'workers' ? formatCount(slot.value) : `${formatCount(slot.value)}/${formatCount(slot.max)}`;
       plaque.setAttribute('aria-label', slot.kind === 'workers'
         ? `${SLOT_LABEL[slot.kind]} ${slot.value}`
         : `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);

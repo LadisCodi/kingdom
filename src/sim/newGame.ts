@@ -43,6 +43,7 @@ export function newGame(map: MapData, now: number): GameState {
       },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
+      utcOffsetMinutes: 0,
     },
     player: { wallet: playerWallet, payer: null },
     fog: { revealed: {}, discovered: {}, progress: {} },
@@ -57,7 +58,6 @@ export function newGame(map: MapData, now: number): GameState {
     // era bars, which ask for revealed cells.
     research: { completed: [], poured: {} },
     schedule: [],
-    ruins: {},
     // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {
@@ -65,6 +65,7 @@ export function newGame(map: MapData, now: number): GameState {
       // One hero slot is free; the second and third are Gems, always
       // (Docs/features/10-heroes.md §3).
       heroSlotsPurchased: 0,
+      hurt: {},
       fragments: {},
     },
     gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },
@@ -76,12 +77,9 @@ export function newGame(map: MapData, now: number): GameState {
       pending: false,
       refills: { day: dayIndex(now), watched: 0, bought: 0 },
     },
-    deepestDepth: 0,
-    ruinsCleared: {},
     landmarks: { claimed: {} },
-    // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
-    gates: {},
-    raidReports: [],
+    // No lair has been seen yet, so nothing is counting (sim/lairs.ts).
+    lairs: {},
     artifacts: { levels: {}, casts: {}, charges: {} },
     collection: freshCollection(seasonAt(now)),
     modifiers: [],

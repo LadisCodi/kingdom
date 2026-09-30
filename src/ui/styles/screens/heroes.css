@@ -159,6 +159,28 @@
 .hero-tile-foot.is-frag { justify-content: center; gap: calc(var(--px) * 4); }
 .hero-tile-level { font-family: var(--font-body); white-space: nowrap; }
 
+/* EXHAUSTED: the hero is asleep (kit `restMarks`) — darkened, never the
+   unfound silhouette, since it is still the player's. The foot becomes the
+   rest's countdown over the HP bar. */
+.hero-tile.is-resting .hero-art { filter: brightness(0.5) saturate(0.7); }
+.hero-tile.is-resting > .k-zzz { --zzz-size: calc(var(--px) * 20); top: calc(var(--px) * 18); right: calc(var(--px) * 2); }
+.hero-tile-foot.is-rest {
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 2) calc(var(--px) * 4) calc(var(--px) * 4);
+  border: 0;
+  background: none;
+}
+.hero-tile-foot.is-rest > .k-hp { align-self: stretch; }
+/* An owned hero's bar, just over its foot. */
+.hero-tile-hp {
+  position: absolute;
+  left: calc(var(--px) * 8);
+  right: calc(var(--px) * 8);
+  bottom: calc(var(--px) * 28);
+}
+
 /* The call-to-action orb: this card has something to press right now — the
    roster's whole job is pointing at the one tile worth opening. The tile
    clips its art, so the orb sits just inside its corner. */

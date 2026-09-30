@@ -25,16 +25,14 @@
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 import type { PackTier } from '../sim/data/definitions';
-import { formatUsd } from '../sim/store';
-import { el, formatCount } from './format';
+import { el, formatCount, formatUsd } from './format';
 import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 import { spriteUrl } from '../render/sprites';
 
 /**
  * A reward as icon-and-number chips, in wallet order, with the pack last —
- * it is the thing the player is collecting toward rather than spending, the
- * order `roomPrizes` already keeps.
+ * it is the thing the player is collecting toward rather than spending.
  *
  * THE PACK IS ITS OWN SPRITE AND CARRIES NO LABEL. The nine pouches were drawn
  * to be told apart by colour (`pack_green.png` … `pack_golden.png`, the same

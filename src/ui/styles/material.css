@@ -279,7 +279,10 @@
   transition: none;
 }
 .k-btn:not(.k-knob):hover { border-image-source: var(--btn-hover); filter: none; }
-.k-btn:not(.k-knob):active {
+.k-btn:not(.k-knob):active,
+/* LATCHED: a toggle that is on — a filter tab — stays pushed in, the same
+   pressed art held. */
+.k-btn:not(.k-knob).is-pressed {
   border-image-source: var(--btn-down);
   padding-top: calc(var(--px) * 13); /* the words drop with the face */
   padding-bottom: calc(var(--px) * 9);
@@ -507,6 +510,12 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 .bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+/* The card's foot is a darker leaf of the same paper. */
+.bld-foot {
+  background:
+    linear-gradient(rgba(150, 100, 45, 0.22), rgba(150, 100, 45, 0.22)),
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+}
 
 /* ---- nails, where a plank is nailed to something ----
  * Not on the planks that carry a title (they read as dirt next to the words). */
@@ -601,35 +610,24 @@
 .dly-rung { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 .dly-row:has(button.dly-cell) .dly-rung { background: var(--gold); }
 
-/* ---- settings and mana (M9), the battle board (M10): parchment cards ---- */
+/* ---- settings and mana (M9): parchment cards ---- */
 .set-row,
-.mana-refills,
-.bt-head,
-.bt-army,
-.bt-rewards {
+.mana-refills {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bt-art,
-.bt-chip,
-.bt-count,
-.bt-price { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .k-switch:not(.is-on) { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
-.bt-slot.is-empty,
-.bt-slot.is-locked { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 
-/* ---- the site card and the placement bar (M11) ---- */
-.plc-bar {
-  border: calc(var(--px) * 12) solid transparent;
-  border-image: url('../assets/frame-wood.png') 80 / calc(var(--px) * 16) / calc(var(--px) * 2) round;
-  border-radius: 0;
-  background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+/* ---- the site card (M11) ---- */
+.site-art { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.plc-art {
+  background:
+    linear-gradient(rgba(150, 100, 45, 0.22), rgba(150, 100, 45, 0.22)),
+    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.site-art,
-.plc-art { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .site-stats > .k-stat,
-.site-gate,
+.site-lair,
 .site-gift {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
@@ -637,14 +635,8 @@
 }
 
 /* ---- the things that float over the map (M12) ---- */
-.raid-tab-mark,
 .toast-msg,
 .dly-pill { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.raid-tab:not(.is-hit) {
-  background:
-    linear-gradient(rgba(138, 58, 42, 0.78), rgba(138, 58, 42, 0.78)),
-    url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200);
-}
 
 /* ---- welcome back (M13) ---- */
 .wel-rows,
@@ -668,7 +660,6 @@
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bld-offer-mark { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- the reveal and the battlefield (M15, M16) ---- */
 .gr-tile,
@@ -708,7 +699,7 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
-/* ---- the party picker, its cards, the room's address ---- */
+/* ---- the party picker and its cards ---- */
 .bt-picker {
   border: calc(var(--px) * 12) solid transparent;
   border-bottom: 0;
@@ -716,8 +707,7 @@
   border-radius: 0;
   background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bt-card,
-.exp-safe {
+.bt-card {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
@@ -746,5 +736,4 @@
 .set-icon.is-ambience { background: url('../assets/set-ambience.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .set-icon.is-save { background: url('../assets/set-save.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .set-icon.is-payer { background: url('../assets/set-payer.png') center / calc(var(--px) * 32) calc(var(--px) * 32) no-repeat, url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.bld-offer-pip:not(.is-on) { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 .bs-bar { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }

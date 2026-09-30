@@ -13,7 +13,7 @@
 //     ODDS
 //     PRINTED ON THE SHELF. §6 of the relics design says "at published odds",
 //     and a store is the one place that promise has to be kept where the
-//     money is. Bronze and Silver are not here: selling what a ruin already
+//     money is. Bronze and Silver are not here: selling what a lair already
 //     drips would undercut the only free source the collection has, and the
 //     fine print under the shelf says so in the player's words. Under it,
 //     the three CARD BUNDLES — star packs and wildcards for dollars rather
@@ -32,11 +32,10 @@
 
 import type { Game } from '../game';
 import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
-import { formatUsd } from '../sim/store';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
 import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
-import { el, formatExact } from './format';
+import { el, formatExact, formatUsd } from './format';
 import { btn, card, currencyIcon, iconEl, sheet } from './kit';
 
 export function renderStoreSheet(game: Game): HTMLElement {
@@ -69,7 +68,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     return card({
       art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': offer.key }),
       name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
-      desc: `One call on ${def.name.toLowerCase()}. You hold ${offer.held}.`,
+      desc: `One call on ${def.name.toLowerCase()}. You hold ${formatExact(offer.held)}.`,
     }, btn({
       label: 'Buy',
       kind: 'gem',
@@ -177,7 +176,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     // Art over count over price, as M5 stacks it.
     const pack = el('div', { class: 'store-pack' },
       art,
-      el('div', { class: 'store-pack-count' }, `${sku.gems} gems`),
+      el('div', { class: 'store-pack-count' }, `${formatExact(sku.gems)} gems`),
       btn({
         label: formatUsd(Math.round(sku.priceUsd * 100)),
         kind: 'primary',
@@ -198,10 +197,10 @@ export function renderStoreSheet(game: Game): HTMLElement {
     el('div', { class: 'store-section' },
       el('span', {}, 'Cards'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
-    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the ruins.'),
+    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the season pass and the daily chest.'),
     // The bundles keep their own heading under Cards: same shelf, other till.
     // A player scanning for cards finds every way to get one in one place,
     // and the `$` on the button is what says the rail changed.
@@ -212,12 +211,12 @@ export function renderStoreSheet(game: Game): HTMLElement {
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     ...keys,
     el('div', { class: 'store-section' },
       el('span', {}, 'Builders'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     builders,
     el('div', { class: 'store-section' }, el('span', {}, 'Gems')),
     el('div', { class: 'store-packs' }, ...packs),

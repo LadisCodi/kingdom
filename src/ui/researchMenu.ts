@@ -278,7 +278,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const ready = status === 'progress' && isTechFilled(state, id);
 
   const bar = progress(status === 'done' ? 'green' : 'blue');
-  bar.set(need === 0 ? 1 : poured / need, `${poured} / ${need}`);
+  bar.set(need === 0 ? 1 : poured / need, `${formatExact(poured)} / ${formatExact(need)}`);
   const node = el('button', {
     class: `tech-card k-section is-${status}${ready ? ' is-ready' : ''}`
       + (selected === id ? ' selected' : '')
@@ -354,7 +354,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const pours = game.techPours(id);
     if (need > 0) {
       const bar = progress('blue');
-      bar.set(techPoured(state, id) / need, `${techPoured(state, id)} / ${need}`);
+      bar.set(techPoured(state, id) / need, `${formatExact(techPoured(state, id))} / ${formatExact(need)}`);
       page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
         el('div', { class: 'rb-knowledge' },
           bar.root,
@@ -377,7 +377,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
             }),
             btn({
-              label: `+${pours.most}`,
+              label: `+${formatExact(pours.most)}`,
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id),

@@ -109,6 +109,9 @@ export interface FighterSpec {
   dmg: number;
   def: number;
   hp: number;
+  /** The HP it starts this fight with, when less than `hp`: a hero carries
+   *  its wounds between fights (10-heroes.md §2.8). Absent = full. */
+  hpNow?: number;
   cooldown: number;
   power: number;
   troopDmgMult: number;
@@ -137,7 +140,7 @@ const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0, hpMult: () => 1 };
 
 /** Squads go where their targeting puts them (§11 step 5): the ones that have
  *  to reach the enemy stand in front, the ones that shoot stand behind. */
-const rowFor = (unitId: UnitId): Row => (targetingFor(unitId) === 'ranged' ? 'back' : 'front');
+export const rowFor = (unitId: UnitId): Row => (targetingFor(unitId) === 'ranged' ? 'back' : 'front');
 
 /**
  * Assemble one side.
@@ -204,7 +207,7 @@ export function buildBoard(
       dmg: f.dmg,
       def: f.def,
       hpUnit: f.hp,
-      hpPool: f.hp,
+      hpPool: Math.min(f.hp, f.hpNow ?? f.hp),
       cooldown: f.cooldown,
       power: f.power,
     });
@@ -447,7 +450,7 @@ export function generateEnemy(opts: {
     Math.max(COMBAT.genSlotsMin, Math.max(roll + COMBAT.genSlotsMin, needed)),
   );
 
-  // The ruin's own bias takes the lion's share and is spent FIRST, so a room
+  // The lair's own bias takes the lion's share and is spent FIRST, so a room
   // that runs out of slots runs out of them holding its own creature. The
   // rest is split evenly: a party that hard-counters the affinity should
   // still meet something awkward.

@@ -10,10 +10,10 @@
 //  4. What is in the wallet is safe: a raid takes from the stores.
 import { describe, expect, it } from 'vitest';
 import { advance, changeWorkers, collectBuilding, enqueueBuild } from '../src/sim/commands';
-import { DISTRICTS, HARVEST, RUINS, STORAGE, WORKER } from '../src/sim/data/definitions';
+import { DISTRICTS, HARVEST, LAIRS, STORAGE, WORKER } from '../src/sim/data/definitions';
 import { tally } from '../src/sim/events';
 import {
-  isStoreFull, readyToCollect, storageCapacity, storedOf, storedTotal,
+  collectThreshold, isStoreFull, productionPerSecond, readyToCollect, storageCapacity, storedOf, storedTotal,
 } from '../src/sim/storage';
 import { getWallet, type GameState } from '../src/sim/state';
 import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
@@ -51,16 +51,25 @@ describe('a store', () => {
     }
   });
 
-  it('is ready to collect at a sliver of its capacity, so the next tap after a collect opens the building', () => {
-    const { mill } = crewedSawmill();
-    const cap = storageCapacity(mill);
-    const sliver = Math.ceil(cap * STORAGE.collectFraction);
-    mill.stored = { Wood: sliver - 1 };
-    expect(readyToCollect(mill)).toBe(false); // a tap opens it
-    mill.stored = { Wood: sliver };
-    expect(readyToCollect(mill)).toBe(true); // a tap collects
-    // About a minute of a full building, whatever its level.
-    expect(sliver).toBeLessThan(cap / 200);
+  it('is ready to collect at 30 seconds of what it makes, so the next tap after a collect opens the building', () => {
+    const { state, mill } = crewedSawmill();
+    const need = collectThreshold(state, mill);
+    expect(need).toBe(Math.ceil(productionPerSecond(state, mill) * STORAGE.collectSeconds));
+    expect(STORAGE.collectSeconds).toBe(30);
+    mill.stored = { Wood: need - 1 };
+    expect(readyToCollect(state, mill)).toBe(false); // a tap opens it
+    mill.stored = { Wood: need };
+    expect(readyToCollect(state, mill)).toBe(true); // a tap collects
+    // A second worker makes twice as much, so it asks for twice as much.
+    mill.assignedWorkers = 2;
+    expect(collectThreshold(state, mill)).toBe(Math.ceil(2 * productionPerSecond(state, { ...mill, assignedWorkers: 1 }) * 30));
+  });
+
+  it('with nothing being made, anything in it is ready', () => {
+    const { state, mill } = crewedSawmill();
+    mill.assignedWorkers = 0;
+    mill.stored = { Wood: 1 };
+    expect(readyToCollect(state, mill)).toBe(true);
   });
 
   it('a full store keeps the crew at the door, and a haul on its way still lands whole', () => {
@@ -119,11 +128,11 @@ describe('a store', () => {
     tickAt(state, start + 60_000);
     expect(state.workers[0].activity).toBe('Idle');
     const wallet = getWallet(state.city.wallet, 'Wood');
-    reveal(state, [RUINS.HollowBarrow.location]);
-    advance(state, map, start + 60_000); // the sweep arms the gate
-    const raidAt = state.gates.HollowBarrow!.nextRaidAt!;
-    advance(state, map, raidAt + 1000);
-    const took = state.raidReports[0]?.took.Wood ?? 0;
+    reveal(state, [LAIRS.Orcs.location]);
+    advance(state, map, start + 60_000); // the sweep arms the lair
+    const raidAt = state.lairs.Orcs!.nextRaidAt!;
+    const result = advance(state, map, raidAt + 1000);
+    const took = result.raids[0]?.took.Wood ?? 0;
     expect(took).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wallet);
     expect(isStoreFull(mill)).toBe(false);

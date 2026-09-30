@@ -11,7 +11,6 @@
 
 import terrain from './game/terrain.json';
 import harvest from './game/harvest.json';
-import depths from './game/depths.json';
 import garrisons from './game/garrisons.json';
 import exploration from './game/exploration.json';
 import buildings from './game/buildings.json';
@@ -37,7 +36,6 @@ import monetization from './game/monetization.json';
 const balance = {
   "terrain": terrain,
   "harvest": harvest,
-  "depths": depths,
   "garrisons": garrisons,
   ...exploration,
   "districts": buildings,

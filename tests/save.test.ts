@@ -357,6 +357,124 @@ describe('save versions', () => {
 // The Market left the game on 2026-09-09 — the building, its technology and
 // the three quests that named it. A save can be holding all three, and every
 // one of them would be read against a table that no longer has the row.
+// v63: the depths behind the gate are retired (Docs/proposals/lairs.md §7).
+// A lair is one fight, so what a save knew about rooms and depths has nothing
+// left to mean — and a live mission watching a room odometer could never
+// finish.
+describe('the depths retired (v63)', () => {
+  const v62 = () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const modules = save.Modules as any;
+    modules['kingdom.ruins'] = {
+      Progress: [{ RuinID: 'HollowBarrow', Depth: 2, Cleared: 3 }],
+      Cleared: ['HollowBarrow'],
+      DeepestDepth: 2,
+    };
+    modules['kingdom.kingdoms'].Pass.Live = [
+      { UniqueID: 'm1', Kind: 'ClearRooms', Meter: 'rooms', Base: 0, Target: 3, Subject: null, Window: 0, Slot: 0 },
+      { UniqueID: 'm2', Kind: 'OpenPacks', Meter: 'packs', Base: 0, Target: 2, Subject: null, Window: 0, Slot: 1 },
+      { UniqueID: 'm3', Kind: 'CompleteDepths', Meter: 'depths', Base: 0, Target: 1, Subject: null, Window: 0, Slot: 2 },
+    ];
+    save.SaveVersion = 62;
+    return save;
+  };
+
+  it('drops the ruins module and the missions of the retired kinds', () => {
+    const save = v62();
+    expect(migrate(save)).toBe(true);
+    const modules = save.Modules as any;
+    expect(modules['kingdom.ruins']).toBeUndefined();
+    expect(modules['kingdom.kingdoms'].Pass.Live.map((m: any) => m.Kind)).toEqual(['OpenPacks']);
+    const back = deserialize(v62(), map, T0)!;
+    expect('ruins' in back).toBe(false);
+    expect(back.kingdom.pass.live.map((m) => m.kind)).toEqual(['OpenPacks']);
+  });
+
+  it('writes no ruins module any more', () => {
+    const save = serialize(freshGame(), T0);
+    expect((save.Modules as any)['kingdom.ruins']).toBeUndefined();
+  });
+});
+
+// v64: ruins and gates are lairs (Docs/proposals/lairs.md). A rename only:
+// the module, its fields and every persisted place id.
+describe('ruins and gates become lairs (v64)', () => {
+  const OLD_TO_NEW = {
+    HollowBarrow: 'Orcs',
+    SunkenChapel: 'Harpies',
+    DrownedIronworks: 'Goblins',
+    CountingHouse: 'WolfRiders',
+    StarObservatory: 'Drake',
+  } as const;
+  const oldIds = Object.keys(OLD_TO_NEW) as Array<keyof typeof OLD_TO_NEW>;
+
+  const v63 = () => {
+    const save = serialize(freshGame(), T0);
+    const modules = save.Modules as any;
+    delete modules['kingdom.lairs'];
+    modules['kingdom.gates'] = {
+      Gates: oldIds.map((id, i) => ({
+        RuinID: id,
+        NextRaidAtUtc: i === 4 ? null : new Date(T0 + (i + 1) * 60_000).toISOString(),
+        Trips: i % 3,
+        Hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
+        Cleared: i === 4,
+      })),
+      Reports: [
+        { ID: 'raid_1', RuinID: 'HollowBarrow', AtUtc: new Date(T0 - 60_000).toISOString(), Took: { Gold: 7 } },
+        { ID: 'raid_2', RuinID: 'CountingHouse', AtUtc: new Date(T0 - 30_000).toISOString(), Took: { Food: 3 } },
+      ],
+    };
+    modules['kingdom.discoveries'].Keys = [
+      'resource:Gold', ...oldIds.map((id) => `site:${id}`),
+    ];
+    save.SaveVersion = 63;
+    return save;
+  };
+
+  it('renames the module, its fields and every id', () => {
+    const save = v63();
+    expect(migrate(save)).toBe(true);
+    const modules = save.Modules as any;
+    expect(modules['kingdom.gates']).toBeUndefined();
+    expect(modules['kingdom.lairs'].Lairs.map((g: any) => g.LairID))
+      .toEqual(oldIds.map((id) => OLD_TO_NEW[id]));
+    expect(modules['kingdom.lairs'].Lairs.some((g: any) => 'RuinID' in g)).toBe(false);
+    expect(modules['kingdom.lairs'].Reports.map((r: any) => r.LairID)).toEqual(['Orcs', 'WolfRiders']);
+    expect(modules['kingdom.discoveries'].Keys)
+      .toEqual(['resource:Gold', ...oldIds.map((id) => `site:${OLD_TO_NEW[id]}`)]);
+  });
+
+  it('loads each lair with its state intact under its new id', () => {
+    const back = deserialize(v63(), map, T0)!;
+    expect(back).not.toBeNull();
+    oldIds.forEach((old, i) => {
+      const lair = back.lairs[OLD_TO_NEW[old]];
+      // Trips and raid reports belonged to the three-raid garrison and are
+      // not read any more; a v63 lair has no find time, so it reads 0.
+      expect(lair, old).toEqual({
+        armedAt: 0,
+        nextRaidAt: i === 4 ? null : T0 + (i + 1) * 60_000,
+        hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
+        // Before the claim, a lair was cleared the moment it was beaten.
+        defeated: i === 4,
+        cleared: i === 4,
+      });
+    });
+    for (const id of Object.values(OLD_TO_NEW)) expect(back.discoveries[`site:${id}`]).toBe(true);
+    for (const id of oldIds) expect(back.discoveries[`site:${id}`]).toBeUndefined();
+  });
+
+  it('round-trips under the new names', () => {
+    const state = deserialize(v63(), map, T0)!;
+    const modules = serialize(state, T0).Modules as any;
+    expect(modules['kingdom.gates']).toBeUndefined();
+    expect(modules['kingdom.lairs'].Lairs.map((g: any) => g.LairID)).toContain('Drake');
+    expect(deserialize(serialize(state, T0), map, T0)!.lairs).toEqual(state.lairs);
+  });
+});
+
 // v61: research takes no time (Docs/features/07-research.md §1). No slots, no
 // clock — so a save written mid-research, or with slots bought, has to land
 // somewhere the new model can hold.

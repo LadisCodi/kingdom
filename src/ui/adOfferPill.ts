@@ -13,7 +13,7 @@
 // frame the element stops being `hidden` does not transition.
 
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { iconEl } from './kit';
 
 export function mountAdOfferPill(game: Game, root: HTMLElement): void {
@@ -40,7 +40,7 @@ export function mountAdOfferPill(game: Game, root: HTMLElement): void {
       wasShowing = false;
       return;
     }
-    amount.textContent = `+${offer!.reward}`;
+    amount.textContent = `+${formatExact(offer!.reward)}`;
     if (!wasShowing) {
       // Restart the slide only when it genuinely arrives.
       tab.classList.remove('is-in');

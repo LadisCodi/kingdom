@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import regionMap from '../src/sim/data/region-map.json';
 import { validateRegionMap, type RegionMapDoc } from '../src/sim/data/mapRules';
 import { buildMapData, townhallDistance } from '../src/sim/grid';
-import { LANDMARKS, RUINS, RUIN_ORDER } from '../src/sim/data/definitions';
+import { LANDMARKS, LAIRS, LAIR_ORDER } from '../src/sim/data/definitions';
 
 const doc = regionMap as RegionMapDoc;
 const clone = (): RegionMapDoc => structuredClone(doc);
@@ -29,8 +29,8 @@ describe('the shipped region map', () => {
       // Distance 0 off the Townhall footprint means "the BFS never got here".
       expect(townhallDistance(map, l.location), `landmark ${l.id}`).toBeGreaterThan(0);
     }
-    for (const id of RUIN_ORDER) {
-      expect(townhallDistance(map, RUINS[id].location), `ruin ${id}`).toBeGreaterThan(0);
+    for (const id of LAIR_ORDER) {
+      expect(townhallDistance(map, LAIRS[id].location), `lair ${id}`).toBeGreaterThan(0);
     }
   });
 });
@@ -72,15 +72,15 @@ describe('the rules the editor enforces', () => {
     expect(validateRegionMap(d2).errors.some((e) => /is in the water/.test(e.message))).toBe(true);
   });
 
-  it('refuses a ruin the code does not know about, and notices a missing one', () => {
+  it('refuses a lair the code does not know about, and notices a missing one', () => {
     const d = clone();
-    d.ruins.Atlantis = structuredClone(d.ruins.HollowBarrow);
-    expect(validateRegionMap(d).errors.some((e) => /"Atlantis" is not a ruin/.test(e.message)))
+    d.lairs.Atlantis = structuredClone(d.lairs.Orcs);
+    expect(validateRegionMap(d).errors.some((e) => /"Atlantis" is not a lair/.test(e.message)))
       .toBe(true);
 
     const d2 = clone();
-    delete d2.ruins.HollowBarrow;
-    expect(validateRegionMap(d2).errors.some((e) => /ruin "HollowBarrow" is missing/.test(e.message)))
+    delete d2.lairs.Orcs;
+    expect(validateRegionMap(d2).errors.some((e) => /lair "Orcs" is missing/.test(e.message)))
       .toBe(true);
   });
 

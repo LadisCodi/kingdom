@@ -25,7 +25,7 @@
 
 import { recordQuestEvent } from './quests';
 import type {
-  CurrencyId, DistrictId, FeatureId, GameState, HeroId, RuinId, UnitId,
+  CurrencyId, DistrictId, FeatureId, GameState, HeroId, UnitId,
 } from './state';
 
 /**
@@ -48,8 +48,6 @@ export type SimEvent =
   /** A villager was delivered — the one path population grows by. */
   | { kind: 'villager' }
   | { kind: 'heroLevel'; hero: HeroId }
-  | { kind: 'roomCleared'; ruin: RuinId }
-  | { kind: 'depthCleared'; ruin: RuinId }
   | { kind: 'packOpened' };
 
 /**
@@ -73,8 +71,6 @@ function keysFor(event: SimEvent): string[] {
     case 'unitTrained': return ['troops', `troops:${event.unit}`];
     case 'villager': return ['villagers'];
     case 'heroLevel': return ['heroLevels'];
-    case 'roomCleared': return ['rooms'];
-    case 'depthCleared': return ['depths'];
     case 'packOpened': return ['packs'];
     default: return [];
   }

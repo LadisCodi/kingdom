@@ -29,8 +29,6 @@
         "buildBand": { "type": "list", "of": { "type": "int" } },
         "troopsBand": { "type": "list", "of": { "type": "int" } },
         "heroLevelBand": { "type": "list", "of": { "type": "int" } },
-        "roomsBand": { "type": "list", "of": { "type": "int" } },
-        "depthsBand": { "type": "list", "of": { "type": "int" } },
         "packsBand": { "type": "list", "of": { "type": "int" } },
         "hardKinds": { "type": "list", "of": { "type": "text" } },
         "hardPack": { "type": "text" },

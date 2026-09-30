@@ -7,7 +7,7 @@
 // it is the function it hands you.
 
 import type { CurrencyId, Wallet } from '../../sim/state';
-import { el } from '../format';
+import { el, formatExact } from '../format';
 import { currencyIcon, iconEl, type IconName } from './icon';
 
 /** icon + amount, e.g. one term of a cost. `short` turns it clay. */
@@ -16,7 +16,7 @@ export function chip(c: CurrencyId, amount: number, short = false): HTMLElement 
     'span',
     { class: `k-chip${short ? ' is-short' : ''}` },
     currencyIcon(c, { size: 'sm' }),
-    String(amount),
+    formatExact(amount),
   );
 }
 
@@ -65,7 +65,7 @@ export function costTerms(
     ...(Object.entries(cost ?? {}) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => ({
-        icon: c, amount: String(n), short: have !== undefined && have(c) < n,
+        icon: c, amount: formatExact(n), short: have !== undefined && have(c) < n,
       })),
     ...(extra ?? []),
   ];
@@ -185,4 +185,33 @@ export function progress(tone: ProgressTone = 'green'): Progress {
       label.textContent = text ?? '';
     },
   };
+}
+
+/**
+ * A HERO'S HP, as the small bar that rides on its card (kit.css `.k-hp`):
+ * the fill is the tube's whole length uncovered from the left, green, yellow
+ * under half, red under a tenth. Where it sits is the caller's.
+ */
+export function hpBar(hp: number, max: number): HTMLElement {
+  const share = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
+  const fill = el('span', { class: 'k-hp-fill' });
+  fill.style.clipPath = `inset(0 ${100 - Math.round(share * 100)}% 0 0)`;
+  const tone = share < 0.1 ? ' is-red' : share < 0.5 ? ' is-yellow' : '';
+  return el('span', {
+    class: `k-hp${tone}`,
+    role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
+    'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
+  }, fill);
+}
+
+/** RESTING: three Zs rising off the figure's top-right (kit.css `.k-zzz`). */
+export const restMarks = (): HTMLElement =>
+  el('span', { class: 'k-zzz', 'aria-hidden': 'true' },
+    el('span', {}, 'Z'), el('span', {}, 'Z'), el('span', {}, 'Z'));
+
+/** How long a rest has left, as `3h 20m` / `12m` / `<1m`, in its pill. */
+export function restLeft(ms: number): HTMLElement {
+  const min = Math.ceil(ms / 60_000);
+  const text = min < 1 ? '<1m' : min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+  return el('span', { class: 'k-rest-left' }, text);
 }

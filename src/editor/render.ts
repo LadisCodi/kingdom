@@ -10,9 +10,9 @@
 import { Camera } from '../render/camera';
 import { PALETTE, TERRAIN_COLORS, FLAT_TILE } from '../render/palette';
 import { drawSprite } from '../render/sprites';
-import { DISTRICTS, FEATURES, LANDMARK_ART, RUINS } from '../sim/data/definitions';
+import { DISTRICTS, FEATURES, LANDMARK_ART, LAIRS } from '../sim/data/definitions';
 import { TOWNHALL_FOOTPRINT } from '../sim/data/mapRules';
-import { coordKey, type Coord, type LandmarkKind, type RuinId } from '../sim/state';
+import { coordKey, type Coord, type LandmarkKind, type LairId } from '../sim/state';
 import type { MapDoc } from './doc';
 
 export interface Overlays {
@@ -29,7 +29,7 @@ export interface ViewState {
   /** Cells the current gesture would touch (brush footprint or rect drag). */
   preview: ReadonlyArray<Coord>;
   /** The selected site, drawn with a ring and always labelled. */
-  selected: { kind: 'landmark' | 'ruin'; id: string } | null;
+  selected: { kind: 'landmark' | 'lair'; id: string } | null;
 }
 
 const RING_HUES = [180, 150, 110, 80, 55, 35, 20, 5, 340, 315, 290];
@@ -145,9 +145,9 @@ export function drawEditor(
       drawSite(ctx, camera, l, size, art?.sprite ?? '', art?.glyph ?? '❔', l.id, picked,
         '#8fe08f');
     }
-    for (const [id, r] of Object.entries(doc.ruins)) {
-      const art = RUINS[id as RuinId];
-      const picked = view.selected?.kind === 'ruin' && view.selected.id === id;
+    for (const [id, r] of Object.entries(doc.lairs)) {
+      const art = LAIRS[id as LairId];
+      const picked = view.selected?.kind === 'lair' && view.selected.id === id;
       drawSite(ctx, camera, r, size, art?.sprite ?? '', art?.glyph ?? '❔',
         `${id} · T${r.tier}`, picked, '#c79bff');
     }

@@ -33,24 +33,31 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 };
 
 export const PALETTE = {
+  // The placement ghost's outline: a warm white, the brightest thing on the
+  // grass, so the building being placed reads apart from the ones around it.
+  ghostOutline: '#fff8e1',
+  // The placement ghost's move arrows: leaf green, lit from above, rimmed.
+  moveArrow: '#4f9f33',
+  moveArrowLight: '#8fd466',
+  moveArrowRim: '#2f6b1f',
   // Cast targets read blue, so they can never be confused with a build spot.
   castTarget: '#8fb4ff',
-  // Site badges: the tag on an unclaimed landmark or an undelved ruin.
+  // Site badges: the tag on an unclaimed landmark.
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
   siteBadgeInk: '#3a2716',
-  // The same badge while a garrison is counting down on a ruin: the minutes
-  // left, in the colour of the thing that is about to happen.
-  siteBadgeRaid: '#d8613f',
-  siteBadgeRaidInk: '#2a120c',
+  // THE GROUND A LAIR HOLDS (Docs/proposals/lairs.md §3): a warm dark red
+  // wash on every cell, a little stronger over the fog so it still reads
+  // there, and a red border round the union — solid on revealed ground,
+  // dashed where it crosses the fog, the way the reach is.
+  lairZoneTint: 'rgba(150, 30, 20, 0.28)',
+  lairZoneTintFog: 'rgba(170, 40, 25, 0.38)',
+  lairZoneBorder: '#b3402c',
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
-  workedTile: 'rgba(255, 226, 122, 0.75)',
-  influenceFill: 'rgba(255, 255, 255, 0.16)',
-  influenceBorder: 'rgba(255, 255, 255, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing
      else on the map uses it — the ground is warm greens and browns, so a
      player never has to ask whether the glow is terrain. */
@@ -60,7 +67,6 @@ export const PALETTE = {
   spellDial: 'rgba(28, 16, 48, 0.55)',
   // The Townhall's reach, dashed along the last ring the player may pay for.
   // Warm and half-transparent: a border the fog is drawn under, not a wall.
-  reachBorder: 'rgba(255, 226, 122, 0.6)',
   // Brighter than the old #7fd07f / #ff8a7a: these sit on the label pill,
   // which is drawn over the influence wash, and pale ink on a washed pill is
   // what made the placement labels unreadable.

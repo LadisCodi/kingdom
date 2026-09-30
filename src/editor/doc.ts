@@ -21,7 +21,7 @@ import {
 import { coordKey, type Coord, type FeatureId, type TerrainId } from '../sim/state';
 
 export type LandmarkRow = RegionMapDoc['landmarks'][number];
-export type RuinRow = RegionMapDoc['ruins'][string];
+export type LairRow = RegionMapDoc["lairs"][string];
 
 /** What the census counts, per distance ring. */
 export interface RingRow {
@@ -65,7 +65,7 @@ export class MapDoc {
   }
 
   get landmarks(): ReadonlyArray<LandmarkRow> { return this.doc.landmarks; }
-  get ruins(): Readonly<Record<string, RuinRow>> { return this.doc.ruins; }
+  get lairs(): Readonly<Record<string, LairRow>> { return this.doc.lairs; }
 
   terrainAt(cell: Coord): TerrainId | null {
     return this.map.terrain.get(coordKey(cell)) ?? null;
@@ -85,7 +85,7 @@ export class MapDoc {
     return revealCost(this.distanceAt(cell));
   }
 
-  siteAt(cell: Coord): { kind: 'landmark' | 'ruin'; id: string } | null {
+  siteAt(cell: Coord): { kind: 'landmark' | 'lair'; id: string } | null {
     return this.sitesOn(cell)[0] ?? null;
   }
 
@@ -180,7 +180,7 @@ export class MapDoc {
     this.clearFeature(cell);
     for (const site of this.sitesOn(cell)) {
       if (site.kind === 'landmark') this.removeLandmark(site.id);
-      // A ruin cannot be deleted (RuinId is fixed in code), so erasing the
+      // A lair cannot be deleted (LairId is fixed in code), so erasing the
       // ground under one is refused rather than silently stranding it.
       else this.setTerrain(cell, 'Grassland');
     }
@@ -212,8 +212,8 @@ export class MapDoc {
     if (l) { l.x = cell.x; l.y = cell.y; this.revision += 1; }
   }
 
-  moveRuin(id: string, cell: Coord): void {
-    const r = this.doc.ruins[id];
+  moveLair(id: string, cell: Coord): void {
+    const r = this.doc.lairs[id];
     if (r) { r.x = cell.x; r.y = cell.y; this.revision += 1; }
   }
 
@@ -224,9 +224,9 @@ export class MapDoc {
     this.revision += 1;
   }
 
-  updateRuin(id: string, patch: Partial<RuinRow>): void {
-    if (!this.doc.ruins[id]) return;
-    this.doc.ruins[id] = { ...this.doc.ruins[id], ...patch };
+  updateLair(id: string, patch: Partial<LairRow>): void {
+    if (!this.doc.lairs[id]) return;
+    this.doc.lairs[id] = { ...this.doc.lairs[id], ...patch };
     this.revision += 1;
   }
 
@@ -250,13 +250,13 @@ export class MapDoc {
 
   /** Every site standing on a cell (validation forbids more than one, but the
    *  editor has to cope with the moment before the designer fixes it). */
-  sitesOn(cell: Coord): Array<{ kind: 'landmark' | 'ruin'; id: string }> {
-    const out: Array<{ kind: 'landmark' | 'ruin'; id: string }> = [];
+  sitesOn(cell: Coord): Array<{ kind: 'landmark' | 'lair'; id: string }> {
+    const out: Array<{ kind: 'landmark' | 'lair'; id: string }> = [];
     for (const l of this.doc.landmarks) {
       if (l.x === cell.x && l.y === cell.y) out.push({ kind: 'landmark', id: l.id });
     }
-    for (const [id, r] of Object.entries(this.doc.ruins)) {
-      if (r.x === cell.x && r.y === cell.y) out.push({ kind: 'ruin', id });
+    for (const [id, r] of Object.entries(this.doc.lairs)) {
+      if (r.x === cell.x && r.y === cell.y) out.push({ kind: 'lair', id });
     }
     return out;
   }

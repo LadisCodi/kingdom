@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
-  claimRoyalRung, dayIndex, freeReward, heroXpPerHour, ladderLength, nextRung,
+  claimRoyalRung, dayIndex, freeReward, ladderLength, nextRung,
   royalClaimedRungs, royalOwned, royalPending, royalReward, rungsClaimed,
   seasonComplete, seasonEndsAt, seasonIndex, seasonMs,
 } from '../src/sim/daily';
@@ -203,12 +203,10 @@ describe('the Royal track', () => {
     expect(keys).toBe(10);
   });
 
-  // XP is priced in hours of the player's own trickle, floored — the same rule
-  // the Mana is priced by. A city that has never delved has no trickle at all,
-  // so the floor is what pays it.
-  it('floors Hero XP for a city that has never delved', () => {
+  // The depth trickle Hero XP was priced in retired with the depths, so the
+  // authored floor IS the grant on every rung that pays XP.
+  it('pays the Hero XP floor on a rung that pays XP', () => {
     const state = freshGame();
-    expect(heroXpPerHour(state)).toBe(0);
     const rung = DAILY.premiumXpHours.findIndex((h: number) => h > 0) + 1;
     expect(royalReward(state, rung).HeroXp).toBe(DAILY.premiumXpFloor);
   });

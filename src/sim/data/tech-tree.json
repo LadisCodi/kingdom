@@ -655,7 +655,7 @@
     },
     "Scouting": {
       "name": "Scouting", "glyph": "🔍", "kind": "mechanic",
-      "description": "Eyes ahead — a ruin shows its threat before you launch.",
+      "description": "Eyes ahead — a lair shows its threat before you launch.",
       "tome": "Warfare", "era": 2, "row": 6, "col": 0,
       "requires": ["ShieldWallII"],
       "gold": 2500, "knowledge": 10,
@@ -835,7 +835,7 @@
     },
     "Conquest": {
       "name": "Conquest", "glyph": "👑", "kind": "mechanic",
-      "description": "Held ground — every ruin cleared to its bottom teaches you 15 Knowledge more, and the ruins already cleared pay it at once.",
+      "description": "Held ground — every lair cleared teaches you 15 Knowledge more, and the lairs already cleared pay it at once.",
       "tome": "Warfare", "era": 3, "row": 13, "col": 0,
       "requires": ["ShieldWallIII"],
       "gold": 15000, "knowledge": 75
@@ -856,7 +856,7 @@
     },
     "Vanguard": {
       "name": "Vanguard", "glyph": "🏇", "kind": "mechanic",
-      "description": "Known ground — the first depth of a ruin you have cleared resolves at once.",
+      "description": "Known ground — the first depth of a lair you have cleared resolves at once.",
       "tome": "Warfare", "era": 3, "row": 14, "col": 0,
       "requires": ["Conquest"],
       "gold": 10500, "knowledge": 52,
@@ -1017,7 +1017,7 @@
     },
     "Scrying": {
       "name": "Scrying", "glyph": "🪞", "kind": "mechanic",
-      "description": "Seeing into stone — a ruin shows its tier before you commit a party.",
+      "description": "Seeing into stone — a lair shows its tier before you commit a party.",
       "tome": "Magic", "era": 1, "row": 2, "col": 2,
       "requires": ["Consecration"],
       "gold": 150, "knowledge": 2,
@@ -1145,7 +1145,7 @@
     },
     "Lorekeeping": {
       "name": "Lorekeeping", "glyph": "📚", "kind": "mechanic",
-      "description": "Records of the deep — ruins give up more of what they hold.",
+      "description": "Records of the deep — lairs give up more of what they hold.",
       "tome": "Magic", "era": 2, "row": 8, "col": 1,
       "requires": ["WaypostsII"],
       "gold": 1600, "knowledge": 6,
@@ -1333,7 +1333,7 @@
     },
     "SanctifiedRuins": {
       "name": "Sanctified Ruins", "glyph": "⛪", "kind": "mechanic",
-      "description": "Consecrated ground — a ruin cleared to its bottom pays twice the Knowledge, and the ruins already cleared pay the difference at once.",
+      "description": "Consecrated ground — a lair cleared pays twice the Knowledge, and the lairs already cleared pay the difference at once.",
       "tome": "Magic", "era": 3, "row": 15, "col": 2,
       "requires": ["Fishing"],
       "gold": 9600, "knowledge": 48

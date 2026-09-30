@@ -21,7 +21,7 @@ import { Camera } from '../render/camera';
 import { FLAT_TILE } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
-  ARTIFACT_ORDER, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
+  FEATURES, LANDMARK_ART, LAIRS, UNIT_ORDER,
 } from '../sim/data/definitions';
 import regionMap from '../sim/data/region-map.json';
 import {
@@ -124,7 +124,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   let painting = false;
   let spaceHeld = false;
   let rectFrom: Coord | null = null;
-  let dragSite: { kind: 'landmark' | 'ruin'; id: string } | null = null;
+  let dragSite: { kind: 'landmark' | 'lair'; id: string } | null = null;
   let hover: Coord | null = null;
   let lastPaint: Coord | null = null;
   let lastPointer = { x: 0, y: 0 };
@@ -256,8 +256,8 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       if (hit?.kind === 'landmark') {
         doc.stroke(() => doc.removeLandmark(hit.id));
         if (selected?.id === hit.id) selected = null;
-      } else if (hit?.kind === 'ruin') {
-        toast(`${hit.id} cannot be deleted — the five ruins are fixed in code.`, true);
+      } else if (hit?.kind === 'lair') {
+        toast(`${hit.id} cannot be deleted — the five lairs are fixed in code.`, true);
       }
       refresh();
       return;
@@ -283,7 +283,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
 
     if (dragSite && moved) {
       if (dragSite.kind === 'landmark') doc.moveLandmark(dragSite.id, cell);
-      else doc.moveRuin(dragSite.id, cell);
+      else doc.moveLair(dragSite.id, cell);
       refresh();
       return;
     }
@@ -459,7 +459,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       }
       if (siteMode === 'erase') {
         toolbar.append(el('p', { class: 'ed-note' },
-          'Ruins cannot be erased: the roster of five is fixed in code.'));
+          'Lairs cannot be erased: the roster of five is fixed in code.'));
       }
     } else {
       const sizeRow = el('div', { class: 'ed-sizes' });
@@ -599,37 +599,32 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       return card;
     }
 
-    const r = doc.ruins[sel.id];
+    const r = doc.lairs[sel.id];
     if (!r) return card;
-    const patch = (p: Parameters<MapDoc['updateRuin']>[1]) => {
-      doc.stroke(() => doc.updateRuin(sel.id, p));
+    const patch = (p: Parameters<MapDoc['updateLair']>[1]) => {
+      doc.stroke(() => doc.updateLair(sel.id, p));
       refresh();
     };
-    card.append(el('h2', {}, RUINS[sel.id as keyof typeof RUINS]?.name ?? sel.id));
+    card.append(el('h2', {}, LAIRS[sel.id as keyof typeof LAIRS]?.name ?? sel.id));
     card.append(el('p', { class: 'ed-hint' },
       `${sel.id} · at (${r.x}, ${r.y}) · ring ${doc.distanceAt(r)}. `
-      + 'The roster of five is fixed in code — a ruin can move and retune, not be added.'));
+      + 'The roster of five is fixed in code — a lair can move and retune, not be added.'));
     card.append(field('tier', numberInput(r.tier, (v) => patch({ tier: v }))));
-    // A ruin's DEPTHS — how many rooms each holds, what they field and what
-    // they pay — are rows on the `Depths` sheet, not map content
-    // (Docs/features/11-expeditions.md §2). What is authored here is where
-    // the ruin is, what it pays out, and who is standing on the door.
-    card.append(field('affinity', select(['Any', ...UNIT_ORDER], r.affinity,
-      (v) => patch({ affinity: v }))));
-    card.append(field('artifact', select([...ARTIFACT_ORDER], r.artifact,
-      (v) => patch({ artifact: v }))));
-    // The gate: one garrison on the surface, and the clock discovering the
-    // ruin starts (Docs/features/18-garrisons-and-raids.md §2). The creature
-    // is derived from the threat, so there is nothing else to pick.
-    card.append(el('div', { class: 'ed-label' }, 'The gate'));
+    // Its ground: the footprint, and how far past it the zone reaches
+    // (Docs/proposals/lairs.md §3).
+    card.append(field('size', numberInput(r.size ?? 1, (v) => patch({ size: v }))));
+    card.append(field('radius', numberInput(r.radius, (v) => patch({ radius: v }))));
+    card.append(field('flavour', textInput(r.flavour, (v) => patch({ flavour: v }))));
+    // The guard: one garrison, and the warning before its first raid; every
+    // raid after it follows the daily schedule (§4.1). The creature is
+    // derived from the threat, so there is nothing else to pick.
+    card.append(el('div', { class: 'ed-label' }, 'The guard'));
     card.append(field('threat', select(['Any', ...UNIT_ORDER], r.guard.threat,
       (v) => patch({ guard: { ...r.guard, threat: v } }))));
     card.append(field('power', numberInput(r.guard.power,
       (v) => patch({ guard: { ...r.guard, power: v } }))));
     card.append(field('warning min', numberInput(r.guard.warningMinutes,
       (v) => patch({ guard: { ...r.guard, warningMinutes: v } }))));
-    card.append(field('period min', numberInput(r.guard.periodMinutes,
-      (v) => patch({ guard: { ...r.guard, periodMinutes: v } }))));
     return card;
   }
 

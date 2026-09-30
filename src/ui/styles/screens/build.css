@@ -1,37 +1,75 @@
-/* The Build sheet (§5.5): a grid of cards, not a build-order table. */
+/* The Build menu (§5.5, M47–M48): three tabs over one sideways row of tall
+ * cards, in a drawer that leaves the map above it. */
 
-.bld-grid {
+/* THE TABS: the nav's own wooden plates. The open one is the plate PRESSED
+   INTO the wood (nav-tab-down.png), not lit or gilded. */
+.bld-tabs {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: calc(var(--px) * 10);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--px) * 6);
+  /* Room above for the orbs, which sit proud of the plates. */
+  padding-top: calc(var(--px) * 8);
+  margin-bottom: calc(var(--px) * 10);
 }
+.bld-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 4);
+  min-width: 0;
+  height: calc(var(--px) * 42);
+  padding: 0 calc(var(--px) * 4) calc(var(--px) * 4);
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 13);
+  font-weight: var(--weight-title);
+  color: var(--parchment);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
+  background: none;
+  border: 0;
+  border-image: url('../../assets/nav-tab.png') 30 30 50 fill /
+    calc(var(--px) * 10) calc(var(--px) * 10) calc(var(--px) * 16) stretch;
+  cursor: pointer;
+}
+.bld-tab .icon { --icon-size: calc(var(--px) * 18); flex: none; }
+.bld-tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bld-tab:hover { filter: brightness(1.05); }
+.bld-tab.is-open {
+  border-image-source: url('../../assets/nav-tab-down.png');
+  padding: calc(var(--px) * 3) calc(var(--px) * 4) 0;
+  cursor: default;
+}
+.bld-tab.is-open:hover { filter: none; }
+.bld-tab > .k-cta { top: calc(var(--px) * -8); right: calc(var(--px) * -6); }
 
+/* THE ROW: one line of cards that scrolls sideways, about 2.3 of them wide,
+   so the cut-off card says there is more. */
+.bld-row {
+  display: flex;
+  gap: calc(var(--px) * 8);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Room for the quest ring and the New seal, which sit proud of a card. */
+  padding: calc(var(--px) * 12) calc(var(--px) * 2) calc(var(--px) * 6);
+  margin-top: calc(var(--px) * -8);
+  scroll-padding-inline: calc(var(--px) * 2);
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.bld-row::-webkit-scrollbar { display: none; }
+
+/* THE CARD, tall: the art, the name, the promise, the price, and a foot. */
 .bld-card {
   position: relative;
-  /* A ROW, not a column (mockup M3, Docs/art/ui-menus-redesign.md §7.19): the
-     building at the left, its name and promise beside it, the price under
-     both. Two of these per line fit six cards in a 65% sheet without a
-     scroll, which the stacked card never managed. */
-  display: grid;
-  /* A SHARE of the card, not 72 fixed pixels. Fixed, the art took 40% of the
-     card at 426 and 47% at 375 — so the narrowest phone, which has the least
-     text room to begin with, gave the most of it away: 60px for a name and a
-     promise, against 85 at 426. As a fraction the proportion M3 draws holds
-     at every width. */
-  grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
-  grid-template-areas:
-    'art name'
-    'art promise'
-    'cost cost';
-  /* Six, not eight, on both. At 426 the card is 179px wide and the art takes
-     72 of them, so every pixel of padding and gap comes straight out of the
-     text column — which had 79px for a name AND a promise, and clipped both.
-     Six gives it 85. */
-  column-gap: calc(var(--px) * 6);
-  row-gap: calc(var(--px) * 2);
+  flex: 0 0 calc(var(--px) * 132);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: calc(var(--px) * 6);
-  text-align: left;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 6) calc(var(--px) * 6) 0;
+  scroll-snap-align: start;
+  text-align: center;
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -40,222 +78,294 @@
   border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
   box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.25);
-  cursor: pointer;
   overflow: hidden;
+  cursor: pointer;
 }
 .bld-card:hover { filter: brightness(1.05); }
-.bld-card:active { transform: translateY(calc(var(--px) * 3)); box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3); }
-
-/* Capped, not greyed: the building keeps its colour and wears a ribbon, so
- * it still reads as something to want (§2.4). */
+.bld-card:active { transform: translateY(calc(var(--px) * 2)); }
+/* The quest ring needs the card's overflow open to show. */
+.bld-card.hinted { overflow: visible; }
+/* Capped, not greyed: warm drained parchment, full-colour art, a ribbon. */
 .bld-card.is-locked { background: var(--locked); cursor: default; }
 .bld-card.is-locked:hover { filter: none; }
 .bld-card.is-locked:active { transform: none; }
-.bld-card.is-locked .bld-art { opacity: 0.75; }
 
 .bld-art {
-  grid-area: art;
-  width: 100%;
+  position: relative;
   display: grid;
   place-items: center;
-  align-self: start;
-}
-/* The SQUARE is the image's, not the box's. On the box it lost to the grid:
-   the cell spans the name's row and the promise's, so the box stretched to
-   105px and drew a 70px picture letterboxed inside it. On the image the box
-   hugs what it holds. */
-.bld-art img {
   width: 100%;
-  aspect-ratio: 1;
-  height: auto;
-  object-fit: contain;
+  height: calc(var(--px) * 88);
 }
+/* Absolute, because a percentage height inside an auto grid row would not
+   resolve and the picture would grow to its own aspect. */
+.bld-art img {
+  /* The sprites are 128×192 with the building in their lower 60% and air
+     above it for the map. On a card the building takes the card's width,
+     feet on the art's floor, and the air runs out of the top unseen. */
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+}
+.bld-art > .icon { --icon-size: calc(var(--px) * 56); }
 
 .bld-name {
-  grid-area: name;
-  align-self: end;
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  /* 16, not 18: M3 sets this title at about 16 and 18 put "Housing #1" onto
-     two lines in an 85px column. The name is the one line that must not
-     wrap — it is what the player is choosing between. */
   font-size: calc(var(--px) * 16);
   line-height: 1.1;
 }
 .bld-ordinal {
-  margin-left: calc(var(--px) * 4);
+  margin-left: calc(var(--px) * 3);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-muted);
 }
 .bld-promise {
-  grid-area: promise;
-  align-self: start;
+  min-height: calc(2 * 1.2em);
   color: var(--ink-muted);
   line-height: 1.2;
-  overflow: hidden;
   display: -webkit-box;
-  /* THREE, and it costs nothing. The card's height is set by the art column
-     (72px), not by the text one: a name at 18px and two promise lines come to
-     49, so the third line is slack the card has already paid for. At 85px it
-     buys the promise about 42 characters instead of 28, which is the whole
-     difference between the seven written promises reading and five of them
-     stopping mid-word. */
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-/* Currencies, refined goods and Harmony all sit in one wrapping row: they
- * are one price, told apart by their marks rather than by their position. */
+
+/* The price: currencies, refined goods and a decoration's Harmony — one
+ * price, told apart by their marks. */
 .bld-cost {
-  grid-area: cost;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: calc(var(--px) * 6);
-  margin-top: calc(var(--px) * 6);
+  justify-content: center;
+  gap: calc(var(--px) * 3);
+  margin-top: auto;
+  padding-top: calc(var(--px) * 3);
 }
-/* Cost chips are small parchment pills with the icon and the figure (M3). */
+.bld-cost .k-chips { display: contents; }
 .bld-cost .k-chip,
 .bld-cost .k-cost {
-  padding: calc(var(--px) * 2) calc(var(--px) * 8);
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 1) calc(var(--px) * 6) calc(var(--px) * 1) calc(var(--px) * 3);
+  font-size: calc(var(--px) * 13);
   border-radius: calc(var(--px) * 999);
   border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
   background: var(--parchment);
   font-weight: var(--weight-strong);
 }
-/* --------------------------------------------------------- harmony ---
- * `supply / demand` above the grid, and what a surplus is paying. It reads
- * as a fact about the city rather than as a warning — until supply falls
- * behind demand, when the number is the thing standing between the player
- * and the next level. */
+.bld-cost .k-chip.is-short { border-color: var(--clay); }
+.bld-cost .k-chip .icon { --icon-size: calc(var(--px) * 18); }
+.bld-cost .k-chip.is-gain { border-color: var(--leaf-dark); }
 
-.bld-harmony {
+/* THE FOOT: the wait, and how many of how many — a strip of darker paper
+   across the card's bottom. */
+.bld-foot {
   display: flex;
-  align-items: baseline;
-  gap: calc(var(--px) * 6);
-  margin-bottom: calc(var(--px) * 10);
-  padding: calc(var(--px) * 6) calc(var(--px) * 10);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 4);
+  align-self: stretch;
+  margin: calc(var(--px) * 6) calc(var(--px) * -6) 0;
+  padding: calc(var(--px) * 4) calc(var(--px) * 7);
+  font-size: calc(var(--px) * 12);
+  white-space: nowrap;
   color: var(--ink);
-  background: var(--parchment-shade);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius-sm);
+  background: var(--section-fill);
+  border-top: calc(var(--px) * 2) solid var(--section-line);
 }
-.bld-harmony.is-short { border-color: var(--clay); color: var(--clay); }
-.bld-harmony-note { margin-left: auto; color: var(--ink-muted); }
-.bld-harmony.is-short .bld-harmony-note { color: var(--clay); }
+.bld-card.is-locked .bld-foot { margin-top: auto; }
+.bld-foot-time { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
+.bld-foot-time .icon { --icon-size: calc(var(--px) * 16); }
+.bld-foot-built { color: var(--ink-muted); }
 
-/* A category heading between two grids. Decorations buy a different thing
- * from every building above them, so they are found by the category. */
-.bld-section {
-  margin: calc(var(--px) * 14) 0 calc(var(--px) * 8);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-
-/* The plain-language reason, across the bottom of a capped card. */
+/* The plain-language reason, across the foot of the art of a capped card. */
 .bld-ribbon {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--px) * -6);
+  right: calc(var(--px) * -6);
+  bottom: calc(var(--px) * 2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--px) * 5);
-  width: calc(100% + calc(var(--px) * 12));
-  margin: calc(var(--px) * 8) calc(var(--px) * -6) calc(var(--px) * -10);
-  padding: calc(var(--px) * 5) calc(var(--px) * 6);
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 3) calc(var(--px) * 6);
   background: var(--clay);
   color: var(--ink-inverse);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.2;
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-strong);
+  line-height: 1.15;
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 20, 10, 0.35);
 }
+.bld-ribbon .icon { flex: none; }
 
-/* The menu grows silently as techs land; this says where from. */
-.bld-more { background: var(--parchment); border-style: dashed; }
-.bld-more .bld-art { opacity: 0.55; }
-
-/* --------------------------------------------------- the builder offer ---
- * Raised by a refused build, not opened from a menu (builderSheet.ts). Same
- * shape as the ad offer's popup — a mark, a line of copy, one decision, two
- * buttons — because they are the same kind of thing: a short modal that asks
- * one question about something the player has just tried to do. */
-
-.bld-offer { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
-.bld-offer-line { display: flex; align-items: center; gap: calc(var(--px) * 12); }
-.bld-offer-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: calc(var(--px) * 72);
-  height: calc(var(--px) * 72);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3);
-}
-.bld-offer-mark .icon { --icon-size: calc(var(--px) * 48); }
-.bld-offer-copy { flex: 1; min-width: 0; }
-.bld-offer-head { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 18); line-height: 1.15; }
-.bld-offer-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
-
-/* The crew as pips: filled = owned, hollow = room left. The ceiling is a
- * thing to SEE, so that "4 is as large as a crew gets" lands as a fact the
- * player already knew rather than as a refusal they are hearing first here. */
-.bld-offer-crew { display: flex; gap: calc(var(--px) * 8); }
-.bld-offer-pip {
+/* NEW: the red wax seal stamped on the corner, until the tab is seen once. */
+.bld-new {
+  position: absolute;
+  top: calc(var(--px) * -4);
+  left: calc(var(--px) * -4);
+  z-index: 2;
   display: grid;
   place-items: center;
   width: calc(var(--px) * 46);
   height: calc(var(--px) * 46);
+  background: url('../../assets/deco-seal.png') center / contain no-repeat;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.bld-new > span {
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  color: #fff4e0;
+  text-shadow: 0 calc(var(--px) * 1) 0 #6a130c, 0 0 calc(var(--px) * 3) #6a130c;
+}
+.bld-card:has(.bld-new) { overflow: visible; }
+
+/* A card it cannot pay for says no: a shake, and its short chips pulse. */
+.bld-card.is-refused { animation: bld-refuse 360ms ease; }
+.bld-card.is-refused .k-chip.is-short { animation: bld-short-pulse 360ms ease 2; }
+@keyframes bld-refuse {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(calc(var(--px) * -5)); }
+  40%, 80% { transform: translateX(calc(var(--px) * 5)); }
+}
+@keyframes bld-short-pulse {
+  50% { transform: scale(1.15); background: #f7d3c8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bld-card.is-refused, .bld-card.is-refused .k-chip.is-short { animation: none; }
+}
+
+/* The tab grows as research lands; this says where from. */
+.bld-more { background: var(--parchment); border-style: dashed; justify-content: center; }
+.bld-more .bld-art { opacity: 0.55; height: calc(var(--px) * 72); }
+
+/* Harmony over the decorations: supply of demand, and what it pays. */
+.bld-harmony {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 10);
+  padding: calc(var(--px) * 5) calc(var(--px) * 10);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink);
+}
+.bld-harmony > b { font-size: calc(var(--px) * 16); }
+.bld-harmony.is-short { border-color: var(--clay); color: var(--clay); }
+.bld-harmony-note { margin-left: auto; color: var(--ink-muted); white-space: nowrap; }
+.bld-harmony-note.is-paying { color: var(--leaf-dark); font-weight: var(--weight-strong); }
+.bld-harmony.is-short .bld-harmony-note { color: var(--clay); }
+
+/* ------------------------------------------------------ the builder sheet ---
+ * Raised by a refused build or upgrade (builderSheet.ts, M50–M51): the pair
+ * of builders over the crew, one row per builder up to the ceiling. */
+
+.crew { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
+
+.crew-top { display: flex; align-items: center; gap: calc(var(--px) * 12); }
+.crew-illus {
+  flex: none;
+  width: calc(var(--px) * 104);
+  height: calc(var(--px) * 88);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: url('../../assets/builders-pair.jpg') center 30% / cover no-repeat;
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) rgba(255, 240, 210, 0.35), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.25);
+}
+.crew-copy { flex: 1; min-width: 0; }
+.crew-head {
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 18);
+  line-height: 1.15;
+}
+.crew-note {
+  margin-top: calc(var(--px) * 3);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+  line-height: 1.3;
+}
+
+.crew-rows { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.crew-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 72);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+}
+.crew-art {
+  flex: none;
+  width: calc(var(--px) * 56);
+  height: calc(var(--px) * 56);
+  display: grid;
+  place-items: center;
+}
+.crew-art { position: relative; overflow: hidden; }
+.crew-art img { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; }
+.crew-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 2); }
+.crew-name {
+  font-family: var(--font-body);
+  font-weight: var(--weight-strong);
+  font-size: calc(var(--px) * 15);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crew-task { font-size: calc(var(--px) * 12); color: var(--ink-muted); line-height: 1.2; }
+.crew-mid > .k-trough { --bar-h: calc(var(--px) * 18); margin-top: calc(var(--px) * 3); }
+.crew-mid > .k-trough .k-trough-label { font-size: calc(var(--px) * 12); }
+.crew-row > .k-btn { flex: none; }
+
+/* FREE: a gold builder medallion, Free in leaf, and the job's own button —
+   the first thing the eye finds, so a thin leaf rim and a soft glow. */
+.crew-row.is-free {
+  border-color: var(--leaf-dark);
+  box-shadow: 0 0 0 calc(var(--px) * 1) var(--leaf), 0 0 calc(var(--px) * 12) rgba(111, 191, 74, 0.55);
+}
+.crew-medal,
+.crew-socket {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 56);
+  height: calc(var(--px) * 56);
+}
+/* The crew's own medallion (the old offer's pip, M18): gold with the hammer. */
+.crew-medal {
   border-radius: 50%;
-  /* Rings carved in the wood (M18): a shut dark one for a builder not hired,
-     gold with the hammer on it for one that is. */
-  background: var(--wood-dark);
-  border: calc(var(--px) * 4) solid var(--wood);
-  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 calc(var(--px) * 3) 0 var(--wood-dark);
-}
-.bld-offer-pip.is-on {
   background: var(--gold);
-  border-color: var(--gold);
-  box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold-dark), inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 calc(var(--px) * 3) 0 var(--gold-dark);
+  border: calc(var(--px) * 4) solid var(--gold);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold-dark), inset 0 0 0 calc(var(--px) * 2) var(--gold-dark),
+    0 calc(var(--px) * 3) 0 var(--gold-dark), 0 0 calc(var(--px) * 10) rgba(242, 178, 51, 0.6);
 }
-.bld-offer-pip:not(.is-on) .icon { display: none; }
-.bld-offer-pip .icon { --icon-size: calc(var(--px) * 26); }
-.bld-offer-actions .k-btn.has-cost { flex-direction: row; gap: calc(var(--px) * 8); }
-.bld-offer-crew { gap: calc(var(--px) * 12); justify-content: center; }
+.crew-medal .icon { --icon-size: calc(var(--px) * 32); }
+.crew-free {
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 18);
+  color: var(--leaf-dark);
+  line-height: 1.1;
+}
 
-.bld-offer-actions { display: flex; gap: calc(var(--px) * 10); }
-.bld-offer-actions .k-btn { flex: 1; min-width: 0; white-space: nowrap; padding-left: calc(var(--px) * 10); padding-right: calc(var(--px) * 10); }
-.bld-offer-actions .k-btn:first-child { flex: 0 0 auto; min-width: calc(var(--px) * 104); }
+/* EMPTY: a dashed socket with the builder's silhouette pressed into it. */
+.crew-socket {
+  border: calc(var(--px) * 2) dashed var(--section-line);
+  border-radius: var(--radius-sm);
+}
+.crew-socket .icon { --icon-size: calc(var(--px) * 34); filter: grayscale(1) sepia(1) brightness(1.1); opacity: 0.35; }
+.crew-row.is-empty .crew-task { font-size: calc(var(--px) * 14); }
+.crew-row.is-far { opacity: 0.55; }
 
-/* Narrower than the phone the mockups were drawn for, the row gives up.
- *
- * At 375 the card is 154px wide, and a row splits that into 58 of art and 73
- * of text — which holds neither "Housing #1" on one line nor a promise in
- * three. The same breakpoint the header uses (hud.css), for the same reason
- * stated there: a layout may cost space, but it may not quietly delete the
- * thing it was laying out.
- *
- * So the card STACKS. The art caps at 84 rather than filling the column — a
- * 142px thumbnail is a poster, not a card — and the text gets the full width
- * instead of a third of it. Two cards still fit a line; they are taller, and
- * the sheet scrolls a little sooner. */
-@container frame (max-width: 380px) {
-  .bld-card {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'art'
-      'name'
-      'promise'
-      'cost';
-    justify-items: center;
-    text-align: center;
-  }
-  .bld-art { width: calc(var(--px) * 84); }
-  .bld-cost { justify-content: center; }
+.crew-ceiling {
+  text-align: center;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
 }

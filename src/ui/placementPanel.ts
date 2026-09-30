@@ -1,118 +1,94 @@
-// Placing a district (§5.6) — a slim bar, because the MAP is the screen here.
+// Placing a building (§5.6, M49) — a small window across the bottom, in the
+// format of every other menu, because the MAP is the screen here.
 //
-// It serves MOVING an existing building too. Same bar, because it is the same
-// decision: "is this a good spot". A move differs in three words — the button
-// says Move, there is no price and no wait — so it is a switch on `kind`
-// rather than a second panel that would drift from this one.
+// Its plank carries the building's name and the close, which is the cancel:
+// a build goes back to the Build menu it was picked from, a move back to the
+// card it was started from. The body is one row: the picture, what the
+// building does and how long it takes, and the priced Build.
 //
-// The old panel ate 45% of the display at exactly the moment the player
-// needs to look at the map, and spent a row on `(x, y)`, which is debug
-// output. The decision being made is "is this a good spot", so that is what
-// the bar says, in words, while the canvas shows the influence area and what
-// each captured cell will yield.
+// It serves MOVING an existing building too — the same decision, "is this a
+// good spot" — so a move is a switch on `kind`: no price, no wait, and the
+// button says Move.
+//
+// There is no verdict here any more. The map already labels every cell the
+// building would work with what it holds, and that is the whole reading of
+// a spot; a sentence repeating it was the bar saying it twice.
 
-import { DISTRICTS, HARVEST } from '../sim/data/definitions';
-import { buildGoodsCost } from '../sim/districts';
+import { DISTRICTS } from '../sim/data/definitions';
+import { buildGoodsCost, districtCount, districtLabel, isNumbered } from '../sim/districts';
+import { districtById } from '../sim/state';
 import { getGood } from '../sim/goods';
-import { isDecoration } from '../sim/harmony';
 import type { GoodId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
-import { btn, iconEl } from './kit';
-
-/** Enough captured cells that the spot is worth taking. */
-const GOOD_ENOUGH = 3;
+import { el, formatDuration, formatExact } from './format';
+import { btn, closeKnob, iconEl, windowHead } from './kit';
+import { PROMISE } from './buildPromise';
 
 export function renderPlacementPanel(game: Game): HTMLElement {
   const info = game.placementInfo()!;
   const def = DISTRICTS[info.definitionId];
   const art = spriteUrl(`${def.sprite}_l1`);
-
   const moving = info.kind === 'move';
 
-  // What this spot is worth, in words. Only harvest buildings capture
-  // anything; for the rest the placement is unconstrained and silent.
-  let verdict: HTMLElement;
-  if (info.cell === null) {
-    verdict = el('span', { class: 'plc-verdict is-bad' }, 'Nowhere to put this yet');
-  } else if (moving && info.unmoved) {
-    // The honest state before the first drag: it is where it has always been.
-    verdict = el('span', { class: 'plc-verdict' }, 'Drag it, or tap where it should go');
-  } else if (isDecoration(def)) {
-    // A decoration captures nothing, so its verdict is the one number it
-    // adds. Where it STANDS is paid for by adjacency, and those labels are
-    // already on the map beside the houses it would enrich.
-    verdict = el('span', { class: 'plc-verdict is-good' },
-      iconEl('harmony', { size: 'sm' }),
-      el('b', {}, `+${def.harmonySupply}`),
-      el('span', {}, 'Harmony for the city'));
-  } else if (def.harvestSources.length > 0) {
-    // The verdict speaks for the building as a whole, so it leads with the
-    // first thing it goes after; the per-cell labels on the map already say
-    // which coin each captured cell pays.
-    const source = HARVEST[def.harvestSources[0]];
-    const wanted = def.harvestSources.join(' or ');
-    const good = info.captured >= GOOD_ENOUGH;
-    verdict = info.captured === 0
-      ? el('span', { class: 'plc-verdict is-bad' },
-          iconEl(source.currencyId, { size: 'sm' }),
-          el('span', {}, `Nothing to harvest here — no ${wanted} in range`))
-      : el('span', { class: `plc-verdict ${good ? 'is-good' : 'is-bad'}` },
-          iconEl(source.currencyId, { size: 'sm' }),
-          el('b', {}, `×${info.captured}`),
-          el('span', {}, good ? 'Good spot' : 'Thin pickings'));
-  } else {
-    verdict = el('span', { class: 'plc-verdict' }, 'Tap the map to move it');
+  // The plank's title: the building by the name its card will use. A build
+  // is the NEXT one of its kind, so it carries the ordinal it would get.
+  let title = def.name;
+  let sub: string | undefined;
+  if (moving && game.mode.kind === 'moving') {
+    const d = districtById(game.state, game.mode.districtUniqueId);
+    if (d) title = districtLabel(game.state, d);
+  } else if (!moving) {
+    if (isNumbered(game.state, def)) sub = `#${formatExact(districtCount(game.state, def.id) + 1)}`;
   }
 
-  // Being priced out is no longer a sentence: the cost rides in the button and
-  // turns clay (§6.4), which is also why the bar got its width back.
   const blockedBy = info.cell === null
     ? (moving ? 'Nowhere legal to put it' : 'Nowhere legal to build it')
     : undefined;
-  // Refined goods ride beside the currencies, as they do everywhere a price
-  // is quoted: a move pays nothing, so only a build carries them.
+  // Refined goods ride beside the currencies, as everywhere a price is
+  // quoted: a move pays nothing, so only a build carries them.
   const goodsTerms = moving ? [] : (Object.entries(buildGoodsCost(info.definitionId)) as
     Array<[GoodId, number]>).map(([id, n]) => ({
     icon: id,
-    amount: String(n),
+    amount: formatExact(n),
     short: getGood(game.state.city.goods, id) < n,
   }));
-  const build = btn({
-    // "Move here" rather than "Move": the button confirms a destination, and
-    // the player already pressed something called Move to get to this bar.
-    label: moving ? 'Move here' : 'Build',
+  const confirm = btn({
+    // One verb on a labelled button: the destination is the ghost's cell.
+    label: moving ? 'Move' : 'Build',
     kind: 'primary',
     onClick: () => (moving ? game.confirmMove() : game.confirmBuild()),
-    cost: info.cost,
-    costExtra: goodsTerms,
-    have: (c) => game.walletValue(c),
+    ...(moving ? {} : {
+      cost: info.cost,
+      costExtra: goodsTerms,
+      have: (c) => game.walletValue(c),
+    }),
     disabledReason: blockedBy,
   });
-  const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });
-  cancel.setAttribute('data-own-close', '');
 
-  return el('div', { class: 'plc-bar' },
-    el('div', { class: 'plc-art' }, art
-      ? spriteImgAt(art)
-      : iconEl(info.definitionId, { size: 'lg' })),
-    el('div', { class: 'plc-body' },
-      el('div', { class: 'plc-name' }, def.name),
-      verdict,
-      // A move is instant and free, so it shows neither a wait nor a price —
-      // the empty space is the message.
-      ...(moving
-        ? []
-        : [el('div', { class: 'plc-time' },
-            iconEl('hourglass', { size: 'sm' }), formatDuration(info.duration))]),
-      // btn() disables but only action() draws a reason, and a bar has no
-      // room for that layout — so the reason goes here. Nothing is greyed
-      // out without saying why (§6.3). Affordability is not one of these any
-      // more; the button says that itself now.
-      ...(blockedBy
-        ? [el('div', { class: 'plc-reason' }, iconEl('padlock', { size: 'sm' }), blockedBy)]
-        : [])),
-    el('div', { class: 'plc-actions' }, cancel, build),
+  const header = windowHead(title, [
+    closeKnob(() => game.closePlacement(), `Close ${title}`),
+  ], sub);
+
+  return el('div', { class: 'dc plc-win' },
+    el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+    header,
+    el('div', { class: 'plc-row' },
+      el('div', { class: 'plc-art' }, art ? spriteImgAt(art) : iconEl(info.definitionId, { size: 'lg' })),
+      el('div', { class: 'plc-body' },
+        el('div', { class: 'plc-promise' },
+          moving && info.unmoved ? 'Drag it, or tap where it should go' : PROMISE[info.definitionId]),
+        // A move is instant and free: neither a wait nor a price — the empty
+        // space is the message.
+        ...(moving
+          ? []
+          : [el('div', { class: 'plc-time' },
+              iconEl('hourglass', { size: 'sm' }), formatDuration(info.duration))]),
+        // Nothing is greyed out without saying why (§6.3). Affordability is
+        // not one of these: the price in the button says that itself.
+        ...(blockedBy
+          ? [el('div', { class: 'plc-reason' }, iconEl('padlock', { size: 'sm' }), blockedBy)]
+          : [])),
+      el('div', { class: 'plc-actions' }, confirm)),
   );
 }

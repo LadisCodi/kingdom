@@ -34,7 +34,7 @@ import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId } from '../sim/state';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { iconEl, progress, currencyIcon, setCta, type IconName } from './kit';
 
 /** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
@@ -49,12 +49,11 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'CompleteTech': case 'CompleteTechs': return 'research';
     case 'ReachPopulation': return 'population';
     case 'AssignWorkers': return 'workers';
-    case 'TrainArmy': case 'ClearGarrisons': return 'army';
+    case 'TrainArmy': case 'ClearLairs': return 'army';
     case 'CollectTaps': return 'showme';
     case 'DiscoverCells': return 'tile';
     case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
-    case 'ReachDepth': case 'ClearRuins': return 'dungeon';
     case 'OwnArtifacts': return 'relics';
     case 'OwnHeroes': return 'Warrior';
     default: return 'quest';
@@ -64,23 +63,23 @@ const goalIcon = (quest: QuestDef): IconName => {
 const rewardNodes = (quest: QuestDef): Node[] => {
   const parts: Node[] = [];
   for (const [c, n] of Object.entries(quest.reward) as Array<[CurrencyId, number]>) {
-    parts.push(el('span', { class: 'q-reward-item' }, currencyIcon(c, { size: 'sm' }), String(n)));
+    parts.push(el('span', { class: 'q-reward-item' }, currencyIcon(c, { size: 'sm' }), formatExact(n)));
   }
   if (quest.rewardKnowledge > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
-      iconEl('Knowledge', { size: 'sm' }), String(quest.rewardKnowledge)));
+      iconEl('Knowledge', { size: 'sm' }), formatExact(quest.rewardKnowledge)));
   }
   if (quest.rewardStardust > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
-      iconEl('Stardust', { size: 'sm' }), String(quest.rewardStardust)));
+      iconEl('Stardust', { size: 'sm' }), formatExact(quest.rewardStardust)));
   }
   if (quest.rewardMana > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
-      currencyIcon('Mana', { size: 'sm' }), String(quest.rewardMana)));
+      currencyIcon('Mana', { size: 'sm' }), formatExact(quest.rewardMana)));
   }
   if (quest.rewardGems > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
-      iconEl('Gems', { size: 'sm' }), String(quest.rewardGems)));
+      iconEl('Gems', { size: 'sm' }), formatExact(quest.rewardGems)));
   }
   return parts;
 };
@@ -176,7 +175,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     const { quest } = info;
     shownIndex = info.index;
     name.textContent = quest.name;
-    desc.textContent = questLine(quest);
+    desc.textContent = questLine(quest, formatExact);
     reward.replaceChildren(...rewardNodes(quest));
     slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
   };
@@ -188,7 +187,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // which meant the widget changed SHAPE from quest to quest — and the
     // player had to re-find the number each time, on the one element whose
     // whole job is to be scannable at a glance.
-    bar.set(value / quest.goalAmount, `${value}/${quest.goalAmount}`);
+    bar.set(value / quest.goalAmount, `${formatExact(value)}/${formatExact(quest.goalAmount)}`);
 
     // The reward is the payout, so it arrives with the payout — and then it
     // is all the scroll shows (quest.css swaps .q-run for .q-done).

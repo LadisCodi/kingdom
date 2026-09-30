@@ -31,12 +31,7 @@
           "doc": "The bar. The drip stops while the kingdom holds this much or more; lumps and purchases land over it."
         },
         "landmarkClaimLump": { "type": "int", "min": 0, "doc": "Knowledge a landmark pays once, when it is claimed." },
-        "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every ruin's first-clear lump." },
-        "roomCoef": {
-          "type": "float",
-          "min": 0,
-          "doc": "Knowledge a ruin room pays, on the room reward formula (at least 1)."
-        },
+        "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every lair's first-clear lump." },
         "goldPriceBase": {
           "type": "int",
           "min": 1,
@@ -45,14 +40,25 @@
         "gemsPerPoint": { "type": "int", "min": 1, "doc": "Gems for one point of Knowledge. Never rises." }
       }
     },
-    "raid": { "type": "object", "fields": { "takeFractionMax": { "type": "float" }, "maxRaids": { "type": "int" } } },
-    "delve": {
+    "raid": {
       "type": "object",
       "fields": {
-        "firstClearGems": { "type": "int" },
-        "firstClearKnowledge": { "type": "int" },
-        "firstClearStardust": { "type": "int" }
+        "takeFractionMax": { "type": "float" },
+        "perDay": {
+          "type": "int",
+          "min": 1,
+          "max": 6,
+          "doc": "Raids a standing lair makes each local day, one in each equal slice of the window."
+        },
+        "windowStartHour": {
+          "type": "int",
+          "min": 0,
+          "max": 23,
+          "doc": "The local hour the raid window opens: raids land in the hours the player plays."
+        },
+        "windowEndHour": { "type": "int", "min": 1, "max": 24, "doc": "The local hour the raid window closes." }
       }
-    }
+    },
+    "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } }
   }
 }

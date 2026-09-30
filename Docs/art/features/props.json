@@ -146,5 +146,35 @@
     "what": "the SAME three-peaked massif after it has been worked: a wide terrace of flat stepped benches cut into its near flank in pale freshly-cut stone, the peaks behind still craggy, rubble and several squared blocks at its foot. Same rock, same place, mined into",
     "scale": 1.14,
     "footprint": 3
+  },
+  "lair_orcs": {
+    "name": "AN ORC WAR CAMP",
+    "what": "a crude war camp of green-skinned orcs: a short ring of sharpened log stakes around two patched hide tents, a crackling bonfire in the middle with a thin column of grey smoke, a tall spiked totem crowned with a horned skull and a tattered red war banner, a rack of crude axes. Two small orcs with axes stand at the fire. Menacing but cartoonish, family-friendly",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "lair_harpies": {
+    "name": "A HARPY ROOST",
+    "what": "a jagged crag of dark grey rock rising like a broken spire, its ledges crusted with huge messy twig nests full of stolen shiny things — coins, a goblet, a torn blue pennant — feathers scattered at its foot, and two small winged harpies with purple-grey wings perched on the top ledges, wings half spread. Menacing but cartoonish, family-friendly",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "lair_goblins": {
+    "name": "A GOBLIN DEN",
+    "what": "a ramshackle goblin warren dug into a low rocky mound: a dark tunnel mouth propped open with crooked planks, a rickety lookout platform on stilts beside it made of scrap wood and rope, a pile of stolen crates and sacks, a crude spear fence, and two small green goblins with long spears. Menacing but cartoonish, family-friendly",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "lair_wolfriders": {
+    "name": "A WOLF-RIDER CAMP",
+    "what": "a raider camp of wolf riders: a wide round tent of dark furs on crossed poles, a wooden hitching post where two big grey wolves with saddles are tied, bones and a gnawed barrel on the ground, a pole with a wolf-skull banner, and one small rider in furs sharpening a curved blade. Menacing but cartoonish, family-friendly",
+    "scale": 1.1,
+    "footprint": 2
+  },
+  "lair_drake": {
+    "name": "A DRAKE'S LAIR",
+    "what": "the ruined round stone tower of an old observatory, blackened by fire, its dome smashed open, a heap of gold coins spilling from its broken doorway, and a big red-and-bronze drake coiled around the top of the tower with its wings folded and a curl of smoke from its nostrils. Clearly the most dangerous thing on the map, still cartoonish and family-friendly",
+    "scale": 1.2,
+    "footprint": 2
   }
 }
