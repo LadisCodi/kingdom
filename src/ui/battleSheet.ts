@@ -102,10 +102,14 @@ const heroArt = (heroId: HeroId): HTMLElement => {
 function hpBar(game: Game, heroId: HeroId): HTMLElement {
   const { hp, max } = game.heroHealthOf(heroId);
   const share = max > 0 ? hp / max : 0;
+  // The fill is the tube's whole length, uncovered from the left, as the
+  // kit's bar does it (kit.css `.k-trough`); its colour steps down at half
+  // and at a tenth.
   const fill = el('span', { class: 'bt-hp-fill' });
-  fill.style.width = `${Math.round(share * 100)}%`;
+  fill.style.clipPath = `inset(0 ${100 - Math.round(share * 100)}% 0 0)`;
+  const tone = share < 0.1 ? ' is-red' : share < 0.5 ? ' is-yellow' : '';
   return el('span', {
-    class: `bt-hp${share < 1 / 3 ? ' is-low' : ''}`,
+    class: `bt-hp${tone}`,
     role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
     'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
   }, fill);
