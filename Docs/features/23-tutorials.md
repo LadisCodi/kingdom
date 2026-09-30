@@ -7,7 +7,7 @@
 > how a line is drawn is [`24-dialogue.md`](24-dialogue.md); the quests the
 > beats follow are [`12-quests.md`](12-quests.md) §2.
 >
-> **Status: designed 2026-10-01; built on `feat/ftue`.** Every line below is
+> **Status: built 2026-10-01** on `feat/ftue`. Every line below is
 > data in `?dev=data` › Progression › **Scenes**.
 
 ## 1. The rules
@@ -56,6 +56,7 @@ left unless a line says otherwise.
 | 2.4 | `Woodcraft` | *…then pay the Gold, and it is ours at once.* | **Research** | the button | Forestry is done |
 | 2.5 | `Woodcraft` | *Knowledge refills by itself — a point an hour, up to ten. Pour it in before the bar is full, or the drip stops.* | the Knowledge tab | all | tap |
 | 2.6 | `Woodcraft` | *Close the book and let's put it to use.* | the close knob | the knob | the book is shut |
+| 2.7 | `Woodcraft` | *And the scroll has a reward for that. Tap it.* | the quest pill | the pill | claimed |
 | 3.1 | `Timber` | *Tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.* | the nearest forest | the map | three taps |
 | 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging.* | — | none | the quest completes |
 | 3.3 | `Timber` | *Claim it — the Mana it pays is exactly what you just spent.* | the quest pill | the pill | claimed |
@@ -63,16 +64,23 @@ left unless a line says otherwise.
 | 4.2 | `ARoof` | *Buildings are paid for up front. Pick the House.* | the Housing card | the card | placing |
 | 4.3 | `ARoof` | *Anywhere on cleared ground. Drag it if you like, then confirm.* | the confirm button | the map and the panel | placed |
 | 4.4 | `ARoof` | *A builder is on it. Buildings keep rising while you are away.* | the construction | all | tap |
+| 4.5 | `ARoof` | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
 | 5.1 | `Rations` | *Villagers eat. Berry bushes give Food — tap them.* | the nearest berries | none | the quest completes |
+| 5.2 | `Rations` | (the claim, as 4.5) | the quest pill | the pill | claimed |
 | 6.1 | `FirstVillager` | *The Townhall trains villagers. Open it.* | the Townhall | the Townhall | its card is open |
-| 6.2 | `FirstVillager` | *Train one. They'll need that roof.* | **Train** | the button | a villager arrives |
+| 6.2 | `FirstVillager` | *Train one. They'll need that roof — and a moment to arrive.* | **Train** | none | a villager arrives |
 | 6.3 | `FirstVillager` | **Villager** (right): *A roof, a hearth and a monarch! I'll pay my rent on time, Your Majesty.* | — | all | tap |
+| 6.4 | `FirstVillager` | (the claim) | the quest pill | the pill | claimed |
 | 7.1 | `TaxDay` | *Housed villagers pay rent into the House's store. When the bubble shows, tap it — collecting is always free.* | the House | none | the quest completes |
+| 7.1b | `TaxDay` | (the claim) | the quest pill | the pill | claimed |
 | 7.2 | `TaxDay` | *That is the heart of it: clear the fog, gather, build, grow. The scroll will always hold your next task.* | the quest pill | all | tap |
 | 7.3 | `TaxDay` | *Lost? Tap the scroll and I'll point the way. And come back each day — there is a gift waiting.* | the daily chest (it appears) | all | tap — **the First Morning ends** |
 
 - **A beat checks its condition when it starts**, so a beat already met is
-  skipped, and a reload mid-morning resumes at the first unmet beat.
+  skipped.
+- **A scene resumes where the kingdom is**: after a reload it picks up after
+  the last line whose PROGRESS condition already holds (a quest, a research,
+  a building) — never on a moment like a sheet being shut.
 - **A lock releases itself** if its target is missing for five seconds; the
   beat then shows as a hint. Nothing can strand the player.
 - The camera flies to a map target before the beat's line appears.
@@ -146,11 +154,14 @@ last line, as a hint.
 |---|---|
 | `none` | everything |
 | `target` | the beat's target only — the map cell, or the one control |
+| `map` | the map, the placement panel and the beat's target — nothing in the menus |
 | `all` | nothing but the dialogue |
 
 - **Panning and zooming the map are never locked.**
-- A lock draws a scrim over everything but a cut-out round the target, and
-  the pointer bobs at the target.
+- `target` and `all` draw a scrim — `target` with a cut-out round the
+  target — and the pointer bobs at the target.
+- The lock is one gate on the map (`Game.tapGate`, asked by every tap, hold
+  and ghost drag) and one capture filter on the frame for everything else.
 - **A lock never outlives its beat**, and releases itself after five
   seconds with no target (§3).
 
@@ -166,8 +177,9 @@ last line, as a hint.
 |---|---|---|
 | Every line, speaker, side and box position | §3–§4 | `?dev=data` › Scenes |
 | Which scene plays on which trigger, and in what order | §3–§4 | `?dev=data` › Scenes |
-| Idle wiggle · idle advisor · her rest | 30 s · 60 s · 3 min | `scenes` settings (`help.*`) |
-| How long a pointer waits | 20 s | `help.pointerSeconds` |
+| Idle wiggle · idle advisor · her rest · how long she waits | 30 s · 60 s · 3 min · 10 s | `?dev=data` › Tutorial help (`help.*`) |
+| How long a pointer (and the quest hint) waits | 20 s | `help.pointerSeconds` |
+| How fast a line types | 40 characters a second | `help.typeCharsPerSecond` |
 | When idle help stops | quest `Attuned` | `help.untilQuest` |
 | The lock's failsafe | 5 s | `help.lockFailsafeSeconds` |
 

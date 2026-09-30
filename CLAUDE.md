@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 72 suites, keep them all green
+npm test             # vitest run — 78 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -140,10 +140,12 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
 | a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
+| **a tutorial scene, a line, a speaker** — who says what, where the box sits, what it points at, what locks, what moves it on — at `?dev=data` › Scenes / Speakers / Tutorial help (`Docs/features/23-tutorials.md`, `24-dialogue.md`) | a new scene **condition kind** (`src/ui/stage/conditions.ts`), a new pointer target syntax (`targets.ts`) |
+| which quest opens a UI door is its position in the chain | **what opens a door** (`sim/doors.ts`) and **what opens a book** (`sim/research.ts` `TOME_OPENS`) |
 
 ## Saves
 
-`SAVE_VERSION` is 62; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 69; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.

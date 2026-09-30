@@ -9,7 +9,7 @@
 > player through it is [`12-quests.md`](12-quests.md) §2. The tree's content
 > is [`tech-tree.md`](tech-tree.md).
 >
-> **Status: designed 2026-10-01; built on `feat/ftue`.**
+> **Status: built 2026-10-01** on `feat/ftue`.
 
 ## 1. The rules
 
@@ -35,7 +35,7 @@
 |---|---|---|
 | **Minute 0–10** · the First Morning | fog, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, building, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
 | **Session 1** | farms, workers, the Sawmill, Townhall 2, the daily chest | the quest chain |
-| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden**, **the Book of Warfare**, the Barracks, soldiers | revealing the Orcs' ground |
+| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing the Orcs' ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 30 cells revealed |
 | **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
@@ -98,7 +98,7 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 5 rings east of the Townhall | **the Warden joins**; the Book of Warfare opens; the raid clock starts | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Orcs** (lair, tier 1) | 5 rings east of the Townhall | **the Warden steps forward**; the Book of Warfare opens; the raid clock starts | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
 | **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 5 Knowledge; **the Book of Magic opens** |
 | **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 5 Knowledge |
 
@@ -123,11 +123,12 @@
 
 | Hero | Arrives | How |
 |---|---|---|
-| **The Warden** | the moment the first lair is discovered | granted — she is the captain of the guard, and the first fight needs a hero |
-| **Bess, the Cook** | the moment the first Tavern is finished | granted — she runs the Tavern |
+| **The Warden** | the kingdom's from the start; she **steps forward** when the first lair is discovered | the captain of the guard — nothing shows her before the Orcs, and the first fight needs a hero |
+| **Bess, the Cook** | the moment the first Tavern is finished | granted (`sim/story.ts`) — she runs the Tavern |
 | **The first call** | on the banner, free | **always a hero**: the free call cannot miss |
 
-- A new kingdom owns **no hero** until the first lair.
+- The Heroes tab stays padlocked until the Tavern; before it, the Warden is
+  met on the attack sheet's hero slot.
 
 ## 7. The first card pack
 
@@ -151,9 +152,9 @@
 
 | Era | Minor | Major | A full band, all books |
 |---|---|---|---|
-| **1** | 1–2 K | 2 K | ~75 K — the quest chain funds Civics' |
-| **2** | 2–4 K | 4–8 K | ~190 K |
-| **3** | 6–12 K | 15–25 K | ~800 K |
+| **1** | 1–2 K (the found books 2–8) | 2–3 K | ~110 K — the quest chain funds Civics' |
+| **2** | 2–4 K (the found books 8–15) | 2–10 K | ~230 K |
+| **3** | 8–14 K | 10–25 K | ~750 K |
 | **4** | — | 40 K (the keystones) | 80 K |
 
 ### 8.3 The target
@@ -166,6 +167,9 @@
 | Townhall 4 (Magistracy) | 5–6 |
 | era 2 done in every open book | ~10 |
 | era 3 done | ~6 weeks |
+
+- The 30-day harness measures Townhall 3 on day 8, 4 on 9, 5 on 11, 6 on
+  12, 7 on 17 and 8 on 25 (**OQ-116**).
 
 - **The tree is the long arc.** It outlasts the thirty-day window by design;
   the Townhall ladder and the lairs carry the month, the tree the season

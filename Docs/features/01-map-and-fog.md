@@ -246,9 +246,9 @@ fallback past ring 14. The province reaches ring 23.
   divined — the same count the era bars read
   ([`07-research.md`](07-research.md) §2.1). A fresh kingdom's 16 seeded cells
   already sit in the second step.
-- The order: ring price × count multiplier, then **Pitons** (−10%/level), then
-  the floor. A cell never costs less than `fog.minCost`, however deep the
-  discounts go. Nothing buys a tap back.
+- The order: ring price × count multiplier, then the floor. **No technology
+  discounts the fog** ([`07-research.md`](07-research.md) §1.2). A cell never
+  costs less than `fog.minCost`. Nothing buys a tap back.
 - Every ring price from 3 out is a multiple of five. A price five does not
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
@@ -264,7 +264,7 @@ fallback past ring 14. The province reaches ring 23.
 | Found in the fog | Count | Gives | Verb |
 |---|---|---|---|
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
-| **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | clear, then claim |
+| **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
 | **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
@@ -288,6 +288,12 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The far ring | **100,000** | 4 |
 
 - The nearest sanctuary is the cheapest; the far ring is the dearest.
+- **The Watchtower** (`NorthWatch`, 8 rings north, **10,000**) is a landmark
+  of its own kind: claimed like any other, it discovers **8** rings round it
+  rather than 5 and opens the world door and the Atlas
+  ([`22-progression.md`](22-progression.md) §5).
+- **A landmark inside a standing lair's ground cannot be claimed**
+  (`LairHeld`): the Thorned Shrine waits for the Orcs.
 
 ### The five ruins
 

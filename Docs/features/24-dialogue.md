@@ -5,7 +5,7 @@
 > box of text that can sit anywhere on the screen, a pointer and a lock. What
 > is said, and when, is [`23-tutorials.md`](23-tutorials.md).
 >
-> **Status: designed 2026-10-01; built on `feat/ftue`** (`src/ui/stage/`).
+> **Status: built 2026-10-01** on `feat/ftue` (`src/ui/stage/`).
 
 ## 1. The stage
 
@@ -44,12 +44,14 @@
 | `text` | what is said; `{player}` is the monarch's title |
 | `box` | `bottom` · `top` · `middle` · `auto` |
 | `point` | what the pointer shows (§4), or nothing |
-| `lock` | `none` · `target` · `all` ([`23-tutorials.md`](23-tutorials.md) §6) |
-| `until` | the condition that moves the line on, or nothing for a tap |
+| `lock` | `none` · `target` · `map` · `all` ([`23-tutorials.md`](23-tutorials.md) §6) |
+| `until` · `untilTarget` · `untilAmount` | the condition that moves the line on — `tap` for a tap on the box |
 | `exit` | the speaker leaves after this line |
 
-- A **scene** is an ordered list of lines, a **trigger** and a flag saying
-  whether it can be skipped.
+- A **scene** is an ordered list of lines, a **trigger** (a condition), and
+  two flags: `skippable`, and `anywhere` — may it start over a sheet the
+  player has open.
+- Scenes are considered **in list order**, one at a time.
 
 ## 4. The pointer
 
@@ -57,7 +59,8 @@
 |---|---|
 | `ui:<key>` | a control on screen — a nav tab, a card, a button (the keys are listed in `src/ui/stage/targets.ts`) |
 | `cell:<x>,<y>` | one map cell |
-| `feature:<id>` | the nearest cell with that feature, fogged first |
+| `feature:<id>` | the nearest fogged cell with that feature the player can pay for |
+| `feature:<id>Revealed` | the nearest revealed cell with that feature that is not spent |
 | `district:<id>` | the nearest building of that kind |
 | `lair:<id>` · `landmark:<id>` | that site |
 | `quest` | the quest pill |
@@ -75,16 +78,17 @@ which one a line waits on is data.
 
 | Kind | True when |
 |---|---|
-| `questReached` · `questComplete` · `questClaimed` | that quest is active or past · done · claimed |
-| `techDone` | that technology is researched |
-| `placed` · `built` | a building of that kind is placed · finished |
-| `revealed` | that cell, or `amount` cells, revealed |
-| `overlay` · `noOverlay` | that sheet is open · no sheet is open |
+| `questReached` · `questComplete` · `questClaimed` · `questProgress` | that quest is active or past · done · claimed · its counter at `amount` |
+| `techDone` · `techFilled` | that technology is researched · holds all its Knowledge |
+| `placing` · `placed` · `built` | placing one · one is placed · `amount` finished (`AnyWorkshop` for any) |
+| `revealed` · `population` · `heroes` | `amount` cells revealed · villagers · heroes |
+| `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen |
 | `taps` | `amount` taps on the ground since the line began |
-| `lairFound` · `lairCleared` · `landmarkClaimed` | the first, or that one |
-| `bookOpen` | that book is open |
-| `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the first time it happens |
-| `heroes` | `amount` heroes owned |
+| `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |
+| `landmarkClaimed` · `landmarkSeen` | that landmark, kind or any claimed · that one out of the dark |
+| `bookOpen` · `doorOpen` | that book · that door is open |
+| `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
+| `always` | at once |
 
 ## 6. The cast
 
@@ -98,8 +102,8 @@ which one a line waits on is data.
 
 - A **full figure** stands on the box, cut at the waist by it. A
   **medallion** is a round avatar in a brass ring on the box's corner.
-- A missing picture draws as a **parchment silhouette** of the frame, never an
-  emoji.
+- A missing picture draws as a **parchment medallion** with the speaker's
+  initial pressed into it, never an emoji.
 - **Wanted art:** `portrait_advisor` — Isolde, standing, three-quarter,
   facing right, in the hero illustrations' style
   ([`../art/portraits/prompt-template.md`](../art/portraits/prompt-template.md)):
@@ -109,8 +113,9 @@ which one a line waits on is data.
 
 ## 7. Where it lives
 
-- Scenes and speakers are two collections in `?dev=data` › Progression:
-  `scenes` and `speakers`.
+- Scenes, speakers and the help's timings are three collections in
+  `?dev=data` › Progression: **Scenes**, **Speakers** and **Tutorial help**;
+  a data rule checks every condition's target exists.
 - **The sim never reads them.** The stage is UI; the save keeps only which
   scenes have played ([`23-tutorials.md`](23-tutorials.md) §7).
 
