@@ -41,7 +41,7 @@ import {
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { el, formatCount, formatDuration } from './format';
+import { el, formatDuration, formatExact, formatShort } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
@@ -108,12 +108,6 @@ const SOURCE_ICON: Record<string, IconName> = {
   MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
 };
 
-/** A count cut to fit a stat tile's value on a phone: *950*, *1.2k*, *29k*.
- *  Floored, so a store one short of full never reads as full. */
-const tileCount = (n: number): string =>
-  (Math.abs(n) >= 1000 && Math.abs(n) < 10_000
-    ? `${Math.floor(n / 100) / 10}k` : formatCount(Math.floor(n)));
-
 /** What a crew makes an hour, per coin: the rate one worker earns at this
  *  building — its haul and its swing included — times the crew. */
 function crewOutput(game: Game, district: District): Array<[CurrencyId, number]> {
@@ -168,7 +162,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     if (isDecoration(def)) {
       body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
         iconEl('harmony', { size: 'sm' }),
-        el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
+        el('span', {}, `Supplies ${formatExact(def.harmonySupply)} Harmony`),
         el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
     }
 
@@ -191,7 +185,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             : 'nothing demands it yet';
         body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
           iconEl('harmony', { size: 'sm' }),
-          el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
+          el('span', {}, `Harmony ${formatExact(supply)} supplied, ${formatExact(demand)} demanded`),
           el('span', { class: 'dc-army-note' }, note)));
       }
     }
@@ -208,11 +202,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             iconEl('Food', { size: 'sm' }),
             pips(left, spec.stock),
             el('span', {}, readyAt === null
-              ? `${left} Food left in it`
+              ? `${formatExact(left)} Food left in it`
               : `regrowing — ${formatDuration((readyAt - t) / 1000)}`)),
           el('div', { class: 'dc-tapline' },
             iconEl('showme', { size: 'sm' }),
-            `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, t)} Food`));
+            `Tap the plot for +${formatExact(tapYieldAt(game.state, game.map, district.location, t))} Food`));
       };
       body.append(sectionHead('Crops'), part(() => {
         const t = game.now();
@@ -234,7 +228,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       body.append(sectionHead('Residents'), el('div', { class: 'dc-homes' },
         iconEl('population', { size: 'sm' }),
         pips(residents, capacity),
-        el('span', {}, `${residents} of ${capacity} homes filled`)));
+        el('span', {}, `${formatExact(residents)} of ${formatExact(capacity)} homes filled`)));
 
       // Adjacency as a verdict rather than a signed number.
       if (adjacency !== 0) {
@@ -381,25 +375,25 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && built
       ? [
         ...crewOutput(game, district).map(([c, n]) => ({
-          icon: c as IconName, label: `${c} an hour`, short: c, value: `+${tileCount(n)}/h`,
+          icon: c as IconName, label: `${c} an hour`, short: c, value: `+${formatShort(n)}/h`,
         })),
         // What there is to work, per source (the Quarry has three).
         ...def.harvestSources.map((src) => {
           const cells = game.workableCellsOf(district);
           const n = cells.filter((c) => harvestSourceAt(game.state, c) === src).length;
-          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: String(n) };
+          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: formatExact(n) };
         }),
       ]
       : []),
     ...(districtCapacity(game.state, district) > 0 && built
       ? [{
         icon: 'Gold' as IconName, label: 'Gold an hour', short: 'Gold',
-        value: `+${tileCount(houseGoldPerMinute(game.state, district) * 60)}/h`,
+        value: `+${formatShort(houseGoldPerMinute(game.state, district) * 60)}/h`,
       }]
       : []),
     ...statsAt(game, district, district.level).filter((f) => f.onCard !== false).map((f) =>
       (f.key === 'store' && built
-        ? { ...f, value: `${tileCount(storedTotal(district))}/${tileCount(f.n)}`, bad: isStoreFull(district) }
+        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(district) }
         : f)),
   ];
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },

@@ -34,6 +34,7 @@ import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
+import { formatCount, formatDuration } from '../ui/format';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -381,7 +382,7 @@ export function drawMap(
       // how many you have are one glance instead of two. It also buys the
       // header back the width the widget was costing on a phone.
       if (district.definitionId === 'Townhall') {
-        drawPill(c.x, roof - 2, `${state.city.population}/${maxPopulation(state)}`,
+        drawPill(c.x, roof - 2, `${formatCount(state.city.population)}/${formatCount(maxPopulation(state))}`,
           { icon: 'population' });
         const inLine = unitInTraining(state, district.uniqueId);
         if (inLine) {
@@ -734,7 +735,7 @@ export function drawMap(
           const gate = state.gates[ruin.id];
           const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
             ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
-          if (raidIn !== null) drawSiteBadge(plot, String(raidIn), true);
+          if (raidIn !== null) drawSiteBadge(plot, formatCount(raidIn), true);
           else drawSiteBadge(plot, String(ruin.tier));
         }, { x: ruin.size, y: ruin.size });
 
@@ -858,7 +859,7 @@ export function drawMap(
     ctx.font = labelFont(size * 0.15, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, c.x, c.y + 5);
+    ctx.fillText(item.startedAt === null ? 'queued' : formatDuration(remaining), c.x, c.y + 5);
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.

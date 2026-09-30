@@ -127,7 +127,3 @@ export function buySku(state: GameState, sku: StoreSkuId, now: number): BuySkuRe
   return 'Purchased';
 }
 
-/** `$4.99`, always two decimals, for every place a price is shown. Whole
- *  thousands stay readable: `$2,000.00`. */
-export const formatUsd = (cents: number): string =>
-  `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

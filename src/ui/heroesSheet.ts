@@ -31,7 +31,7 @@ import { tierCost, xpLevelCost } from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { action, btn, closeKnob, ctaBadge, iconEl, knob, sheet, stat } from './kit';
 
 /** Blue → violet → gold. The rarity is the tile's whole background, so the
@@ -106,7 +106,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
     // absence. Same treatment the locked relics get.
     t.append(el('span', { class: 'hero-tile-foot is-frag' },
       iconEl('fragment', { size: 'sm' }),
-      `${view.entry.fragments} / ${heroUnlockCost()}`));
+      `${formatExact(view.entry.fragments)} / ${formatExact(heroUnlockCost())}`));
     if (ready(game, view)) {
       t.append(ctaBadge(1, `hero:${view.id}`));
     }
@@ -199,7 +199,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
         have: (c) => game.walletValue(c),
         costExtra: [{
           icon: 'fragment',
-          amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
+          amount: `${formatExact(view.entry.fragments)} / ${formatExact(tierCost(view.entry.tier))}`,
           short: shortFragments,
         }],
       });
@@ -233,9 +233,9 @@ function detail(game: Game, id: HeroId): HTMLElement {
   // its passive — the card used to answer none of them and show a fragment
   // bar instead, which is a progress meter for a thing it never described.
   body.append(el('div', { class: 'hero-statline' },
-    stat('atk', String(s.atk), 'atk'),
-    stat('def', String(s.def), 'def'),
-    stat('hp', String(s.hp), 'hp'),
+    stat('atk', formatExact(s.atk), 'atk'),
+    stat('def', formatExact(s.def), 'def'),
+    stat('hp', formatExact(s.hp), 'hp'),
   ));
 
   body.append(el('div', { class: 'hero-passive' },
@@ -264,8 +264,8 @@ function detail(game: Game, id: HeroId): HTMLElement {
     body.append(el('div', { class: 'hero-level' },
       el('div', { class: 'hero-level-read' },
         el('span', { class: 'hero-level-label' }, 'Fragments'),
-        el('b', {}, `${view.entry.fragments}`),
-        el('span', { class: 'hero-level-cap' }, `of ${heroUnlockCost()}`)),
+        el('b', {}, formatExact(view.entry.fragments)),
+        el('span', { class: 'hero-level-cap' }, `of ${formatExact(heroUnlockCost())}`)),
       // Two doors to the same hero, which is the whole point of the fragment:
       // the banner may hand them over outright, and a pile of ten buys them
       // whether or not it ever does (Docs/features/10-heroes.md §4.1). One
@@ -276,7 +276,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
           kind: 'primary',
           onClick: () => game.doUnlockHero(id),
           costExtra: [{
-            icon: 'fragment', amount: `${heroUnlockCost()}`, short: false,
+            icon: 'fragment', amount: formatExact(heroUnlockCost()), short: false,
           }],
         })
         : btn({

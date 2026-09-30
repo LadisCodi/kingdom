@@ -18,7 +18,7 @@ import { isDecoration } from '../sim/harmony';
 import type { GoodId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl } from './kit';
 
 /** Enough captured cells that the spot is worth taking. */
@@ -45,7 +45,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     // already on the map beside the houses it would enrich.
     verdict = el('span', { class: 'plc-verdict is-good' },
       iconEl('harmony', { size: 'sm' }),
-      el('b', {}, `+${def.harmonySupply}`),
+      el('b', {}, `+${formatExact(def.harmonySupply)}`),
       el('span', {}, 'Harmony for the city'));
   } else if (def.harvestSources.length > 0) {
     // The verdict speaks for the building as a whole, so it leads with the
@@ -76,7 +76,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   const goodsTerms = moving ? [] : (Object.entries(buildGoodsCost(info.definitionId)) as
     Array<[GoodId, number]>).map(([id, n]) => ({
     icon: id,
-    amount: String(n),
+    amount: formatExact(n),
     short: getGood(game.state.city.goods, id) < n,
   }));
   const build = btn({

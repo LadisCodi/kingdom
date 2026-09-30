@@ -17,7 +17,7 @@ import { manaCap } from '../sim/mana';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { action, iconEl, panel, stat } from './kit';
 
 /** The site art, at card size: the sprite if it exists, its glyph if not. */
@@ -43,7 +43,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     // (which is also a bigger reward every time an ad refills it), and a
     // lantern held up over the map around it.
     el('div', { class: 'site-gift' },
-      stat('Mana', `+${MANA.landmarkCap}`, 'to your pool, for good'),
+      stat('Mana', `+${formatExact(MANA.landmarkCap)}`, 'to your pool, for good'),
       // `showme` is the "look over there" glyph the quest pill already uses,
       // and looking is exactly what a claim buys here — not owning.
       stat('showme', `${FOG.claimDiscoverRadius * 2 + 1}×${FOG.claimDiscoverRadius * 2 + 1}`,
@@ -55,8 +55,8 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
       iconEl('tick', { size: 'sm' }),
       // Spelled out against the running total, because the value of a claim
       // is what it made the ceiling, not the number on the tin.
-      `Holding ${MANA.landmarkCap} more Mana. `
-      + `Your pool: ${manaCap(game.state)}.`));
+      `Holding ${formatExact(MANA.landmarkCap)} more Mana. `
+      + `Your pool: ${formatExact(manaCap(game.state))}.`));
     return panel(body);
   }
 
@@ -65,7 +65,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   // thing. Relic upkeep is gone, so the old "how many relics you can wear"
   // framing would be describing a rule that no longer exists.
   body.append(el('div', { class: 'site-note' },
-    `Claiming it holds ${MANA.landmarkCap} more Mana, for good — a longer run of `
+    `Claiming it holds ${formatExact(MANA.landmarkCap)} more Mana, for good — a longer run of `
     + 'taps, and more from every refill. It also lifts the fog for '
     + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
     + 'though clearing it is still yours to pay for.'));
@@ -112,7 +112,7 @@ function gateBand(game: Game, def: RuinDef, gate: GateView): HTMLElement {
   }
   if (hoard.length > 0) {
     band.append(el('div', { class: 'site-gate-hoard' },
-      hoard.map(([c, n]) => `${n} ${c}`).join(', ')
+      hoard.map(([c, n]) => `${formatExact(n)} ${c}`).join(', ')
       + ' — cleared, it all comes back.'));
   }
   band.append(action({

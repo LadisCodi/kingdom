@@ -25,8 +25,7 @@
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 import type { PackTier } from '../sim/data/definitions';
-import { formatUsd } from '../sim/store';
-import { el, formatCount } from './format';
+import { el, formatCount, formatUsd } from './format';
 import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
 import { spriteUrl } from '../render/sprites';

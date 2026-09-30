@@ -27,7 +27,7 @@ import {
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { action, btn, iconEl, progress, withTooltip, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
@@ -71,7 +71,7 @@ function typeTag(unitId: UnitId): HTMLElement {
 const stat = (icon: IconName, label: string, value: number): HTMLElement =>
   el('div', { class: 'tr-stat k-section', 'aria-label': `${label} ${value}` },
     el('div', { class: 'tr-stat-top', 'aria-hidden': 'true' },
-      iconEl(icon), el('b', { class: 'tr-stat-value' }, String(value))),
+      iconEl(icon), el('b', { class: 'tr-stat-value' }, formatExact(value))),
     el('div', { class: 'tr-stat-label', 'aria-hidden': 'true' }, label));
 
 /**
@@ -126,7 +126,7 @@ export function trainingSection(
       root.append(el('div', { class: 'tr-info is-ward k-section' },
         unitPortrait(unitId, 'tr-portrait'),
         el('div', { class: 'tr-body' },
-          el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
+          el('div', { class: 'tr-name' }, `${formatExact(count)} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
           el('div', { class: 'tr-desc' },
             'Off the roster until they are back on their feet. Cheaper to mend '
             + 'than to replace.')),
@@ -260,7 +260,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   return el('div', { class: `tr-info k-section${figures.length > 0 ? ' has-stats' : ''}` },
     el('div', { class: 'tr-who', title: `You have ${owned}` },
       unitPortrait(trainee, 'tr-portrait'),
-      el('span', { class: 'tr-count' }, `x${owned}`)),
+      el('span', { class: 'tr-count' }, `x${formatExact(owned)}`)),
     // No name here: it heads the whole block, on the section's rule.
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-tags' }, ...tags),

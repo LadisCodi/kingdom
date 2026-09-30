@@ -30,7 +30,7 @@ import type { EnemySquad } from '../sim/combat';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { action, iconEl, sheet } from './kit';
 import { unitBust } from './unitArt';
 
@@ -82,7 +82,7 @@ const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
 const squadFace = (unitId: UnitId, count: number): HTMLElement =>
   el('div', { class: 'bt-face' },
     unitBust(unitId, 'bt-portrait'),
-    el('span', { class: 'bt-count' }, `x${count}`));
+    el('span', { class: 'bt-count' }, `x${formatExact(count)}`));
 
 // ------------------------------------------------------------- the enemy
 
@@ -90,7 +90,7 @@ function enemyBox(view: BattleView): HTMLElement {
   const box = el('div', { class: 'bt-army is-enemy' },
     el('div', { class: 'bt-army-head' },
       el('h3', {}, 'Enemy army'),
-      el('b', { class: 'bt-power' }, String(view.enemy.power))),
+      el('b', { class: 'bt-power' }, formatExact(view.enemy.power))),
   );
   const row = el('div', { class: 'bt-slots' });
   for (const squad of view.enemy.squads) {
@@ -134,7 +134,7 @@ function lockedSlot(
     // Only the NEXT slot carries a price. The ladder climbs, so printing this
     // one's Gems on all three would quote the wrong number twice.
     cost === null ? '' : el('span', { class: 'bt-price' },
-      iconEl('Gems', { size: 'sm' }), String(cost)),
+      iconEl('Gems', { size: 'sm' }), formatExact(cost)),
   );
   b.addEventListener('click', onBuy);
   return b;
@@ -187,7 +187,7 @@ function partyBox(game: Game, view: BattleView): HTMLElement {
   return el('div', { class: `bt-army is-mine${view.enough ? '' : ' is-short'}` },
     el('div', { class: 'bt-army-head' },
       el('h3', {}, 'Your army'),
-      el('b', { class: 'bt-power' }, String(view.attack))),
+      el('b', { class: 'bt-power' }, formatExact(view.attack))),
     troopSlots(game),
     el('div', { class: 'bt-army-label' }, 'Heroes'),
     heroSlots(game),

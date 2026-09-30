@@ -15,7 +15,7 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatCount, formatDuration, formatExact } from './ui/format';
+import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -558,7 +558,7 @@ export class Game {
     for (const d of result.deposits) this.collectBubbles.bump(d.cell);
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
-      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(result.trainedPopulation)}`, 'population');
     }
     // A quiet splash when a fishing boat sets out (one per tick, max).
     let splashed = false;
@@ -595,7 +595,7 @@ export class Game {
     // instead — the welcome sheet already owns "while you were away".
     for (const raid of result.raids) {
       if (Object.keys(raid.took).length === 0) continue;
-      const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
+      const took = Object.entries(raid.took).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
       this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
     }
     // THE SEASON ROLLED OVER while the player was here or away. It is the one
@@ -610,7 +610,7 @@ export class Game {
         icon: '\u{1F5D3}',
         name: opened.name,
         desc: closed.cards > 0
-          ? `${closed.cards} cards melted down for ${formatExact(closed.gold)} gold. `
+          ? `${formatExact(closed.cards)} cards melted down for ${formatExact(closed.gold)} gold. `
             + 'A fresh album, and your relics keep every level.'
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',
@@ -712,7 +712,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+          this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
         }
         this.notify();
         return true;
@@ -859,7 +859,7 @@ export class Game {
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
-      this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
+      this.floaters.add(cell, `+${formatExact(units)}`, HARVEST[source].currencyId);
       this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
@@ -929,7 +929,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+      this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
     }
     this.notify();
     return true;
@@ -1079,7 +1079,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
+      this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
     }
     if (report.activeId === 'Reap' && target) {
       this.floaters.add(target, `${report.taps} taps, free`);
@@ -1088,7 +1088,7 @@ export class Game {
       this.floaters.add(target, `${report.affected.length} crews hurried`);
     }
     if (report.activeId === 'Tithe' && target) {
-      this.floaters.add(target, `+${Math.round(report.goldSaved)}`, 'Gold');
+      this.floaters.add(target, `+${formatExact(Math.round(report.goldSaved))}`, 'Gold');
     }
     if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
@@ -1599,7 +1599,7 @@ export class Game {
       playSfx('upgradeBought');
       this.toast(`${many.bought} × ${tier} — open them in the Collection`);
     } else {
-      this.toast(`${vaultCost(tier) * count} stars for ten — not yet`);
+      this.toast(`${formatExact(vaultCost(tier) * count)} stars for ten — not yet`);
     }
     this.notify();
   }
@@ -1788,7 +1788,7 @@ export class Game {
   doBuyFromVault(tier: VaultTier): void {
     const result = buyFromVault(this.state, tier);
     if (result === 'Opened') playSfx('upgradeBought');
-    else this.toast(`${vaultCost(tier)} stars for a ${tier} pack — not yet`);
+    else this.toast(`${formatExact(vaultCost(tier))} stars for a ${tier} pack — not yet`);
     this.notify();
   }
 
@@ -1803,7 +1803,7 @@ export class Game {
     const result = refillManaWithGems(this.state, this.now());
     if (result === 'Refilled') {
       playSfx('gemSpend');
-      this.floaters.add(townhall(this.state).location, `+${manaCap(this.state)}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(manaCap(this.state))}`, 'Mana');
     }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     if (result === 'NoneLeft') this.toast('No more Gem refills today');
@@ -1928,7 +1928,7 @@ export class Game {
   /** A number rising off the Knowledge tab. Nothing on the map is its source,
    *  so it floats from the Townhall like Mana's. */
   private floatKnowledge(amount: number): void {
-    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${amount}` : `${amount}`, 'Knowledge');
+    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${formatExact(amount)}` : formatExact(amount), 'Knowledge');
   }
 
   // ------------------------------------------------------------- ad offers
@@ -2167,7 +2167,7 @@ export class Game {
   private announceChest(haul: Wallet): void {
     playSfx('quest');
     const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
-      .map(([c, n]) => `+${n} ${c}`);
+      .map(([c, n]) => `+${formatExact(n)} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
     this.reward(haul);
@@ -2251,7 +2251,7 @@ export class Game {
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
-      this.floaters.add(townhall(this.state).location, `+${reward}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(reward)}`, 'Mana');
     }
     this.adWatchStartedAt = null;
     this.setOverlay(null);
@@ -2288,11 +2288,11 @@ export class Game {
     }
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
-      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+      return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
     }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
-      return `Needs ${need} villagers — you have ${this.state.city.population}. Train more at the Townhall`;
+      return `Needs ${formatExact(need)} villagers — you have ${formatExact(this.state.city.population)}. Train more at the Townhall`;
     }
     return result;
   }
@@ -2995,7 +2995,7 @@ export class Game {
     const result = claimLandmark(this.state, this.map, cell);
     if (result === 'Claimed') {
       playSfx('upgradeBought');
-      this.floaters.add(cell, `+${manaProduction(this.state) - before}/h`, 'Mana');
+      this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
       this.queueBanner({
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
@@ -3606,7 +3606,7 @@ export class Game {
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${committedTroops(this.state)}/${armyCap(this.state)}) — build or upgrade a military building`);
+      this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
     this.notify();
   }
@@ -3881,7 +3881,7 @@ export class Game {
             activeRadius(this.state, this.mode.artifactId),
           ).map((cell) => ({
             cell,
-            label: String(divinationSaving(this.state, this.map, cell)),
+            label: formatCount(divinationSaving(this.state, this.map, cell)),
             icon: 'Gold' as const,
             tone: 'good' as const,
           }));
@@ -4246,7 +4246,7 @@ function providedYieldLabel(
   const spec = HARVEST[provides];
   const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel {
@@ -4257,7 +4257,7 @@ function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel
   // Toned against the authored stock, so richer and poorer ground read at a
   // glance rather than needing the player to remember the baseline.
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 /** How hard a worker's strike punches the cell, against the player's 1. Enough
@@ -4285,7 +4285,7 @@ function resourceBanner(currency: CurrencyId): Banner {
   const desc = currency === 'Gold'
     ? 'Pays for everything'
     : def.goldValue !== null
-      ? `Sells for ${def.goldValue} ${icon('Gold')}`
+      ? `Sells for ${formatExact(def.goldValue)} ${icon('Gold')}`
       : '';
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
@@ -4550,7 +4550,7 @@ function relicEffectText(id: ArtifactId, value: number): string {
   // A relic's stats all share one op — the pair the Seal and the Sigil carry
   // move together by construction — so the first one says how to read it.
   const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
-  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${formatNumber(value, 1)}`;
   // The tiles under this sentence print the same number, so both read it from
   // one place rather than each rounding it their own way.
   const pct = relicPercent(value);

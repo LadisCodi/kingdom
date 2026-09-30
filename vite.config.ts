@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 // @ts-expect-error — plain ESM, dev-only, no types worth authoring for it.
 import { mapEditorPlugin } from './scripts/vite-map-editor.mjs';
@@ -17,4 +18,6 @@ export default defineConfig({
   // small ones as data: URIs, which iOS Safari re-decodes for every fresh
   // <img> — the store's gem packs blinked once a second (host.ts, sprites.ts).
   build: { assetsInlineLimit: 0 },
+  // The suite reads numbers in English whatever the machine's locale is.
+  test: { setupFiles: ['tests/setup.ts'] },
 });

@@ -7,7 +7,7 @@
 // it is the function it hands you.
 
 import type { CurrencyId, Wallet } from '../../sim/state';
-import { el } from '../format';
+import { el, formatExact } from '../format';
 import { currencyIcon, iconEl, type IconName } from './icon';
 
 /** icon + amount, e.g. one term of a cost. `short` turns it clay. */
@@ -16,7 +16,7 @@ export function chip(c: CurrencyId, amount: number, short = false): HTMLElement 
     'span',
     { class: `k-chip${short ? ' is-short' : ''}` },
     currencyIcon(c, { size: 'sm' }),
-    String(amount),
+    formatExact(amount),
   );
 }
 
@@ -65,7 +65,7 @@ export function costTerms(
     ...(Object.entries(cost ?? {}) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => ({
-        icon: c, amount: String(n), short: have !== undefined && have(c) < n,
+        icon: c, amount: formatExact(n), short: have !== undefined && have(c) < n,
       })),
     ...(extra ?? []),
   ];
