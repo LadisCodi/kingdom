@@ -85,6 +85,9 @@ One file per feature, in the order a player meets them.
 | 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, an army that marches to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, and the weekly Portal dive | designed 2026-09-24 |
 | 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
 | 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
+| 22 | [Progression](features/22-progression.md) | **how the game opens up** — the doors and what opens each, the five books and the milestones that open them, the Orcs, the Thorned Shrine and the Watchtower as places that open mechanics, heroes by story then by the Tavern, the first pack, and the pace of the tree | designed 2026-10-01 |
+| 23 | [Tutorials](features/23-tutorials.md) | the **First Morning** — ten scripted minutes, beat by beat — then one introduction per system, help when stuck, and the input lock | designed 2026-10-01 |
+| 24 | [Dialogue](features/24-dialogue.md) | the **visual-novel stage** every tutorial speaks through: a character each side, a box that can sit anywhere, the pointer, the conditions, and the cast led by **Isolde, the Royal Advisor** | designed 2026-10-01 |
 
 ## Reference
 

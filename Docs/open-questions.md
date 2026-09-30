@@ -212,6 +212,19 @@ shape of both is closed; these are what they left open.** The screens are
 | **OQ-111** | **The rooms' rewards leave the game with the depths, and nothing replaces them until the world map.** The 186 rooms were the steady source of Knowledge (1,156), Hero XP and Stardust, the boss chests paid hero fragments, a bottomed ruin paid a Golden pack, and the depths' permanent generation (+180 Stardust/h at a full clear) fed ascension. Accepted as a gap by the lairs proposal; it has to be argued again when the world map's dungeons are designed, and the Knowledge curve (**OQ-86**) and the Stardust sink (**OQ-78**) move with it. | Research pacing, hero ascension, the pack faucet (**OQ-102**) | [`features/19-world-map.md`](features/19-world-map.md) §8, [`proposals/lairs.md`](proposals/lairs.md) §7 | — |
 | **OQ-113** | **The Delver's Lantern lost its only effect when the depths were retired, and needs a new one.** Its passive (`roomHaul`, a room's Gold and Stone) and its Lamplight charges both acted on rooms; the relic still loads, levels and casts, and moves nothing. The Wanderer's Compass passive and the Prospecting ranks (`stardustYield`, a room's Stardust) are in the same state. | The Lantern's card, the collection's eighth relic | [`proposals/relic-effects.md`](proposals/relic-effects.md) | — |
 
+## N · The first-time experience
+
+New with [`22-progression.md`](features/22-progression.md),
+[`23-tutorials.md`](features/23-tutorials.md) and
+[`24-dialogue.md`](features/24-dialogue.md) (2026-10-01).
+
+| # | Question | Blocks | Owner doc | Rec. |
+|---|---|---|---|---|
+| **OQ-114** | **What does the world door promise before the world map exists?** The Watchtower is claimed around day 5–7 and opens a preview sheet. A door that opens onto a sign saying *not yet* is a promise the build has to keep; if the world map is weeks away, the tower may be better moved further out, so it is claimed nearer the day the board arrives. | the Watchtower's place and price | [`22-progression.md`](features/22-progression.md) §5 | keep it at ring 8 while the board is being built; move it out if the board slips |
+| **OQ-115** | **Is there enough Hero XP for the Tavern's levels to matter?** Every Tavern level adds +10% Hero XP, but the faucet is thin since the rooms were retired (**OQ-111**): a lair pays its tier in XP, the Royal chest pays grants. A percentage of little is little. The natural answer is a Tavern whose **store fills with Hero XP**, the way a House fills with rent. | hero levelling, the Sagas book | [`22-progression.md`](features/22-progression.md) §6 | give the Tavern a Hero XP store |
+| **OQ-116** | **Does the tree last as long as §8 says?** The prices were set against a drip of ~20 a day and the lumps; era 3 at ~800 K is about six weeks. The harness has to be re-read against the new tree before the number is trusted. | research pacing | [`22-progression.md`](features/22-progression.md) §8 | run the harness; move the era-3 prices, not the drip |
+| **OQ-117** | **Is the First Morning the right length, and is idle help welcome or a nag?** Ten minutes of locked beats is at the long end for the genre; the idle thresholds (30 s, 60 s) are guesses. | the opening's retention | [`23-tutorials.md`](features/23-tutorials.md) §3, §5 | playtest; cut beats before cutting the lock |
+
 ---
 
 **Closed decisions** move to [`open-questions-closed.md`](open-questions-closed.md).
