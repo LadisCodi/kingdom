@@ -916,7 +916,7 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 **The flow.** Nav **Build** → Build menu → tap a card → Placement → **Build**
 → the map, with the building under construction.
 
-- **Cancel** in placement returns to the Build menu, on the same tab and
+- **Close** in placement returns to the Build menu, on the same tab and
   scroll position. The menu's close X returns to the map.
 - While the menu or placement is open, the header plaque shows **Free
   builders `n`** (§5.1).
@@ -1014,14 +1014,17 @@ Reference: `mockups/m49-placement.png`.
 - The first placement ever shows a one-time coach line: *Drag the building,
   or tap where it should go*.
 
-**The bar** — one strip across the bottom:
+**The bar** — a small window across the bottom, in the format of every other
+menu:
 
-- Left: the level-1 sprite on its tile.
-- Right of it, the name and ⏳ the build time on one line, and under them the
-  two buttons, bottom-aligned, at the kit's default label-button size:
-  - **Cancel** — red paint (`destructive`) — back to the Build menu (§5.5);
-  - **Build** — primary, a priced button (§6.4): the cost above the slab
-    on its own darker section.
+- **Header plank**: the building's name and its ordinal (*Sawmill #2*), and
+  the close knob at its right. Close is the cancel — back to the Build menu
+  (§5.5).
+- **Body**, one row:
+  - the level-1 sprite on its tile;
+  - the building's `promise`, and under it ⏳ the build time;
+  - **Build** — primary, a priced button (§6.4): the cost above the slab on
+    its own darker section, at the kit's default size.
 - No legal cell anywhere: Build is disabled and the bar says *Nowhere legal
   to build it*.
 
