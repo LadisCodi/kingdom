@@ -478,7 +478,8 @@ how many slots it wants (1…n) and what to do with the answer.
   - the illustration filling it, on its **rarity's colour**;
   - the unit type's icon, top left;
   - its level and its ascension stars at the foot;
-  - its HP bar, hung over the bottom edge;
+  - its HP bar inside the frame over the foot — the game's progress bar;
+    on a small card, the small HP bar hung over the bottom edge;
   - a green check, top right, when it holds a slot;
   - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
   - No name: the illustration is enough.

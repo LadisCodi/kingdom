@@ -91,7 +91,7 @@ button.hc { cursor: pointer; }
   position: absolute;
   left: calc(var(--hc-w) * 0.08);
   right: calc(var(--hc-w) * 0.08);
-  bottom: calc(var(--hc-w) * 0.09);
+  bottom: calc(var(--hc-w) * 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,6 +120,16 @@ button.hc { cursor: pointer; }
   text-align: center;
   white-space: nowrap;
 }
+/* The HP bar inside the frame, across the foot (the kit's progress bar). */
+.hc > .hc-hp {
+  --bar-h: calc(var(--hc-w) * 0.1);
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--hc-w) * 0.08);
+  right: calc(var(--hc-w) * 0.08);
+  bottom: calc(var(--hc-w) * 0.085);
+}
+/* A small card's bar hangs over its bottom edge instead. */
 .hc > .k-hp {
   position: absolute;
   z-index: 1;
@@ -144,6 +154,7 @@ button.hc { cursor: pointer; }
 .hc.is-resting > .k-zzz { --zzz-size: calc(var(--hc-w) * 0.13); top: calc(var(--hc-w) * 0.06); right: calc(var(--hc-w) * 0.02); }
 /* A small card: a slot on a crowded board. */
 .hc.is-small { --hc-w: calc(var(--px) * 64); }
+.hc.is-small .hc-foot { bottom: calc(var(--hc-w) * 0.09); }
 /* An empty slot: sunk into the paper, a faint + in it. */
 .hc.is-empty {
   display: grid;

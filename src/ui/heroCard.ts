@@ -15,7 +15,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { hpBar, iconEl, restLeft, restMarks, unitTypeIcon } from './kit';
+import { hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
 
 export interface HeroCardOpts {
   /** It is in a slot — the green check at the top right. */
@@ -49,10 +49,28 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
     ? [restMarks(), el('span', { class: 'hc-foot' }, restLeft(health.restMs))]
     : [el('span', { class: 'hc-foot' },
       stars, el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`))]),
-  hpBar(health.hp, health.max),
+  hpOf(health.hp, health.max, opts.small === true),
   ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []));
   if (opts.onClick) card.addEventListener('click', opts.onClick);
   return card;
+}
+
+/**
+ * THE CARD'S HP, inside the frame over the foot, as in the mockup. On a full
+ * card it is the game's own progress bar — at ~15 px tall it is the size that
+ * bar was painted for; on a small one the bar is 7 px and the small bar drawn
+ * for that size (kit `hpBar`) takes over, hung over the card's edge. Green;
+ * gold under half; red under a tenth.
+ */
+function hpOf(hp: number, max: number, small: boolean): HTMLElement {
+  if (small) return hpBar(hp, max);
+  const share = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
+  const bar = progress(share < 0.1 ? 'red' : share < 0.5 ? 'gold' : 'green');
+  bar.set(share);
+  bar.root.classList.add('hc-hp');
+  bar.root.setAttribute('role', 'meter');
+  bar.root.setAttribute('aria-label', `HP ${hp} of ${max}`);
+  return bar.root;
 }
 
 /** An EMPTY card slot, sunk into the paper with a faint +. */
