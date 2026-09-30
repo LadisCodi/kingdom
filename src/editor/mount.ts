@@ -610,9 +610,14 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       `${sel.id} · at (${r.x}, ${r.y}) · ring ${doc.distanceAt(r)}. `
       + 'The roster of five is fixed in code — a lair can move and retune, not be added.'));
     card.append(field('tier', numberInput(r.tier, (v) => patch({ tier: v }))));
-    // The guard: one garrison, and the clock discovering the
-    // lair starts (Docs/features/18-garrisons-and-raids.md §2). The creature
-    // is derived from the threat, so there is nothing else to pick.
+    // Its ground: the footprint, and how far past it the zone reaches
+    // (Docs/proposals/lairs.md §3).
+    card.append(field('size', numberInput(r.size ?? 1, (v) => patch({ size: v }))));
+    card.append(field('radius', numberInput(r.radius, (v) => patch({ radius: v }))));
+    card.append(field('flavour', textInput(r.flavour, (v) => patch({ flavour: v }))));
+    // The guard: one garrison, and the warning before its first raid; every
+    // raid after it follows the daily schedule (§4.1). The creature is
+    // derived from the threat, so there is nothing else to pick.
     card.append(el('div', { class: 'ed-label' }, 'The guard'));
     card.append(field('threat', select(['Any', ...UNIT_ORDER], r.guard.threat,
       (v) => patch({ guard: { ...r.guard, threat: v } }))));
@@ -620,8 +625,6 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       (v) => patch({ guard: { ...r.guard, power: v } }))));
     card.append(field('warning min', numberInput(r.guard.warningMinutes,
       (v) => patch({ guard: { ...r.guard, warningMinutes: v } }))));
-    card.append(field('period min', numberInput(r.guard.periodMinutes,
-      (v) => patch({ guard: { ...r.guard, periodMinutes: v } }))));
     return card;
   }
 

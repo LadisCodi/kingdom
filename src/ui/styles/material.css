@@ -637,14 +637,8 @@
 }
 
 /* ---- the things that float over the map (M12) ---- */
-.raid-tab-mark,
 .toast-msg,
 .dly-pill { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.raid-tab:not(.is-hit) {
-  background:
-    linear-gradient(rgba(138, 58, 42, 0.78), rgba(138, 58, 42, 0.78)),
-    url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200);
-}
 
 /* ---- welcome back (M13) ---- */
 .wel-rows,

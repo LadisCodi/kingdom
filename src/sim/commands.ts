@@ -519,7 +519,7 @@ function applyDueAt(
     // between two boundaries — or by a save that predates lairs entirely —
     // starts its warning HERE, stamped with this boundary's t, and cannot be
     // raided in the same instant it was noticed.
-    armLairs(state, map, t);
+    armLairs(state, t);
     const raids = advanceRaids(state, t);
     out.raids.push(...raids);
     // A raid empties stores, and a crew waiting by a full one can go out again.

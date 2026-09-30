@@ -122,8 +122,8 @@ describe('a store', () => {
     reveal(state, [LAIRS.Orcs.location]);
     advance(state, map, start + 60_000); // the sweep arms the lair
     const raidAt = state.lairs.Orcs!.nextRaidAt!;
-    advance(state, map, raidAt + 1000);
-    const took = state.raidReports[0]?.took.Wood ?? 0;
+    const result = advance(state, map, raidAt + 1000);
+    const took = result.raids[0]?.took.Wood ?? 0;
     expect(took).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wallet);
     expect(isStoreFull(mill)).toBe(false);

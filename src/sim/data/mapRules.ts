@@ -31,11 +31,13 @@ export interface RegionMapDoc {
     x: number; y: number; tier: number;
     /** Cells a side, anchored at (x, y). 1 when absent. */
     size?: number;
-    /** The garrison that holds it, and its clock
-     *  (Docs/features/18-garrisons-and-raids.md §2). */
-    guard: {
-      threat: string; power: number; warningMinutes: number; periodMinutes: number;
-    };
+    /** How far its zone reaches past its footprint, in Chebyshev rings
+     *  (Docs/proposals/lairs.md §3). */
+    radius: number;
+    /** The garrison that holds it, and the warning before its first raid. */
+    guard: { threat: string; power: number; warningMinutes: number };
+    /** The card's line over its painting, two lines at most (§6). */
+    flavour: string;
   }>;
 }
 
@@ -64,6 +66,11 @@ const NEIGHBOURS: ReadonlyArray<Coord> =
   [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
 
 const isCount = (v: unknown): boolean => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+
+/** A zone of more than four rings is a quarter of the province. */
+export const MAX_LAIR_RADIUS = 4;
+/** Two lines over the card's painting, in the sheet's body size. */
+export const MAX_FLAVOUR = 120;
 
 export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   const errors: MapIssue[] = [];
@@ -201,9 +208,14 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       if (!isCount(g.warningMinutes) || g.warningMinutes < 1) {
         err(`${what}'s guard needs a warning of 1 minute or more`, r);
       }
-      if (!isCount(g.periodMinutes) || g.periodMinutes < 1) {
-        err(`${what}'s guard needs a raid period of 1 minute or more`, r);
-      }
+    }
+    if (!isCount(r.radius) || r.radius > MAX_LAIR_RADIUS) {
+      err(`${what} needs a radius from 0 to ${MAX_LAIR_RADIUS}`, r);
+    }
+    if (typeof r.flavour !== 'string' || r.flavour.trim() === '') {
+      err(`${what} needs a flavour line for its card`, r);
+    } else if (r.flavour.length > MAX_FLAVOUR) {
+      err(`${what}'s flavour is ${r.flavour.length} characters; the card holds ${MAX_FLAVOUR}`, r);
     }
     claimSite(what, r.x, r.y, r.size);
   }

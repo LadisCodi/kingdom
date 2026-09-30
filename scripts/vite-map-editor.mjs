@@ -41,11 +41,14 @@ const landmarkLine = (l) =>
 const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   `      "x": ${r.x}, "y": ${r.y}${r.size !== undefined ? `, "size": ${r.size}` : ''}`,
   `      "tier": ${r.tier}`,
-  // The guard: one garrison, with a clock
-  // (Docs/features/18-garrisons-and-raids.md §2).
+  // How far its ground reaches past its own footprint
+  // (Docs/proposals/lairs.md §3).
+  `      "radius": ${r.radius}`,
+  // The guard: one garrison, and the warning before its first raid.
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
-    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
-    + `"periodMinutes": ${r.guard.periodMinutes} }`,
+    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes} }`,
+  // The card's line over its painting (§6).
+  `      "flavour": ${JSON.stringify(r.flavour)}`,
 ].join(',\n') + '\n    }';
 
 export function serialiseRegionMap(doc) {

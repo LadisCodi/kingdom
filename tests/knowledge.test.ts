@@ -199,7 +199,7 @@ describe('a lair teaches something, once', () => {
     completeTech(state, 'Warrior');
     fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Knowledge: 0 });
     reveal(state, [LAIRS[ORCS].location]);
-    state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
     for (let i = 0; i < 60; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' as UnitId });
     }

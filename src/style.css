@@ -101,7 +101,7 @@ body {
   pointer-events: none;
 }
 #edge > * { pointer-events: auto; }
-#adoffer[hidden], #raids[hidden] { display: none; }
+#adoffer[hidden] { display: none; }
 
 /* The battle screen's card panel. A sibling of #overlay at the same z-index
    and AFTER it in the markup, so it stacks over the sheet it belongs to while

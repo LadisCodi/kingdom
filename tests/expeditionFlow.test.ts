@@ -27,7 +27,7 @@ function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameSt
   addAllTrainers(state);
   fund(state, { Gold: 500_000, Food: 200_000, Wood: 200_000, Stone: 50_000, Iron: 500 });
   reveal(state, [LAIRS[ORCS].location]);
-  state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -85,7 +85,7 @@ describe('clearing the lair', () => {
   it('spends the supplies on the way in, whatever the fight does', () => {
     const state = ready({ Warrior: 2 });
     reveal(state, [LAIRS.Drake.location]);
-    state.lairs.Drake = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
     const game = freshPresenter(state);
     game.openLair('Drake');
     const preview = game.lairPreview()!;

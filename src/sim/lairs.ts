@@ -1,11 +1,11 @@
-// The lair — a garrison with a clock (Docs/features/18-garrisons-and-raids.md).
+// The lair — a garrison with a clock (Docs/proposals/lairs.md §4).
 //
-// Every lair holds one garrison, and DISCOVERING
-// the lair starts its counter. When the counter runs out the garrison walks to
-// the city and takes a slice of what sits UNCOLLECTED in the buildings'
-// stores — never the wallet; it does that at most
-// three times and then sits on what it took. Clearing the lair stops the clock
-// and hands the whole hoard back.
+// Every lair holds one garrison, and FINDING the lair — revealing a cell of
+// its zone — starts its clock. The first raid lands after the lair's warning;
+// from then on it raids `raid.perDay` times every local day, inside the
+// player's raid window, for as long as it stands. A raid takes a slice of what
+// sits UNCOLLECTED in the buildings' stores — never the wallet — and the lair
+// carries what it took, up to a day of raids; clearing it hands that back.
 //
 // FOUR RULES DECIDE EVERYTHING HERE, and each of them is load-bearing.
 //
@@ -13,33 +13,38 @@
 //     and clear the lair, which is the point: the raid is the incentive that
 //     sends a player to the lair, not a punishment for being away.
 //  2. IT IS A TIMER, NOT PRODUCTION. It runs and resolves in full while the
-//     player is away.
+//     player is away, and every raid time is a hash of the lair, the local
+//     day and the slice — never of the moment it is asked — so one advance
+//     over a week lands the same raids as a week of ticking (invariant 4).
 //  3. A RAID IS PRICED IN PRODUCTION, NOT IN UNITS. It takes `take_seconds` of
 //     the city's own output of each material, capped by a fraction of what
 //     the stores hold. What is in the wallet is safe: collecting is the
 //     defence. `cityRate` is a FACT about the city rather than an accrual, so a
 //     raid replays identically however the window was split — and a material
 //     the city does not produce is never taken.
-//  4. IT IS RECOVERABLE. The hoard is a per-lair counter, and clearing pays
-//     every coin of it back. That is what lets the first promise survive a
-//     system that takes: nothing is taken that cannot be taken back.
+//  4. THE HOARD IS BOUNDED. A lair carries at most a day of raids of each
+//     material; a raid over that still takes, and the rest is lost. Without
+//     the cap a lair left standing would be a store that never fills — every
+//     raid on a full store sets its crew going again, and all of it would come
+//     back on the clear.
 //
 // The FIGHT is not here. Clearing a lair is a party command — supplies, a
-// hero, a matchup — and it lives beside the delve launch in `expeditions.ts`,
-// which already owns all three. This module owns the clock, the take and the
-// hoard, and it imports nothing from expeditions so that the party code can
-// ask it whether the lair still stands.
+// hero, a matchup — and it lives in `expeditions.ts`, which already owns all
+// three. This module owns the clock, the take and the hoard, and it imports
+// nothing from expeditions so that the party code can ask it whether the lair
+// still stands.
 
 import { GARRISONS, RAID, LAIRS, LAIR_ORDER, garrisonForTier } from './data/definitions';
 import type { EnemySquad } from './combat';
 import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
-import { fogState } from './fog';
-import type { MapData } from './grid';
+import { recordSiteDiscovery } from './discovery';
+import { lairIsFound } from './lairZone';
+import { rand } from './rng';
 import { cityGoldPerMinute } from './population';
 import { cityGatherPerSecond } from './upgrades';
 import { cityStored, storedOf, takeFromStore } from './storage';
 import {
-  addToWallet, newId,
+  addToWallet,
   type GameState, type LairState, type LairId, type Wallet,
 } from './state';
 
@@ -67,37 +72,90 @@ export const lairStands = (state: GameState, lairId: LairId): boolean =>
 export const openLairs = (state: GameState): LairId[] =>
   LAIR_ORDER.filter((id) => state.lairs[id] !== undefined && !state.lairs[id]!.cleared);
 
-/** How many raids this garrison has left in it. */
-export const tripsLeft = (lair: LairState): number =>
-  Math.max(0, RAID.maxRaids - lair.trips);
-
 // ------------------------------------------------------------------ arming
 
 /**
- * Start the counter on every lair the player can now SEE.
+ * Start the clock on every lair the player has now FOUND.
  *
- * A SWEEP rather than a hook, for the reason `recordVisibleSites` is one: fog
- * state is derived, so "became visible" is not a mutation there is a single
- * write to hang off. It runs inside `advance()`, which is what stamps the
- * counter with a boundary's `t` instead of a clock the sim is not allowed to
- * read — and it is also what arms a save written before lairs existed, on the
- * first advance after the update, with the full warning rather than a raid
- * already overdue.
+ * A SWEEP rather than a hook, for the reason `recordVisibleSites` is one: a
+ * reveal happens in a tap, a finished build or a spell, and there is no single
+ * write to hang the lair off. It runs inside `advance()`, which is what stamps
+ * the clock with a boundary's `t` instead of a clock the sim is not allowed to
+ * read.
  *
- * Visible means not `Undiscovered`, exactly like the discovery banner: the
- * moment a player can make the place out is the moment the garrison notices
- * them back.
+ * It also puts a clock back on a standing lair that has none — a save from
+ * when a garrison stopped after three raids — onto the daily schedule from
+ * `t`, so an old save picks the new pace up without a migrator.
  */
-export function armLairs(state: GameState, map: MapData, t: number): void {
+export function armLairs(state: GameState, t: number): void {
   for (const id of LAIR_ORDER) {
-    if (state.lairs[id] !== undefined) continue;
-    if (fogState(state, map, LAIRS[id].location) === 'Undiscovered') continue;
+    const lair = state.lairs[id];
+    if (lair !== undefined) {
+      if (!lair.cleared && lair.nextRaidAt === null) lair.nextRaidAt = raidTimeAfter(state, id, t);
+      continue;
+    }
+    if (!lairIsFound(state, id)) continue;
     state.lairs[id] = {
+      armedAt: t,
       nextRaidAt: t + LAIRS[id].guard.warningMinutes * 60_000,
-      trips: 0,
       hoard: {},
       cleared: false,
     };
+    recordSiteDiscovery(state, id);
+  }
+}
+
+// --------------------------------------------------------------- schedule
+
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
+
+/**
+ * THE NEXT RAID STRICTLY AFTER `after`, on the daily schedule (§4.1).
+ *
+ * The player's local day is cut at the raid window — `windowStartHour` to
+ * `windowEndHour` — and the window into `perDay` equal slices. Each slice
+ * holds one raid, at a moment inside it that is a hash of the lair, the day
+ * and the slice: the same lair on the same day always raids at the same
+ * times, and two raids are never on top of each other. So a raid lands in the
+ * hours the player plays, never in the night.
+ *
+ * `after` is the raid just made, or the boundary a schedule restarts from —
+ * never the moment somebody asked.
+ */
+export function raidTimeAfter(state: GameState, lairId: LairId, after: number): number {
+  const offset = state.kingdom.utcOffsetMinutes * 60_000;
+  const open = RAID.windowStartHour * HOUR_MS;
+  // A window authored inside out collapses to one hour rather than looping.
+  const span = Math.max(HOUR_MS, RAID.windowEndHour * HOUR_MS - open);
+  const perDay = Math.max(1, RAID.perDay);
+  const slice = span / perDay;
+  // The local day `after` falls in, counted from the epoch. A slice of it
+  // already past is skipped, so the loop below ends inside two days.
+  for (let day = Math.floor((after + offset) / DAY_MS); ; day++) {
+    const localMidnight = day * DAY_MS - offset;
+    for (let k = 0; k < perDay; k++) {
+      const at = Math.floor(localMidnight + open + slice * (k + rand(state.seed, lairId, 'raid', day, k)));
+      if (at > after) return at;
+    }
+  }
+}
+
+/**
+ * The device's local time moved (travel, daylight saving): every standing
+ * lair on the daily schedule is put back on it from `t`. A lair still inside
+ * its first warning keeps it — that raid is a countdown the player has been
+ * shown, not a slot on the schedule.
+ */
+export function setUtcOffset(state: GameState, minutes: number, t: number): void {
+  if (!Number.isFinite(minutes) || state.kingdom.utcOffsetMinutes === minutes) return;
+  state.kingdom.utcOffsetMinutes = Math.round(minutes);
+  for (const id of LAIR_ORDER) {
+    const lair = state.lairs[id];
+    if (!lair || lair.cleared || lair.nextRaidAt === null) continue;
+    const firstRaid = lair.armedAt + LAIRS[id].guard.warningMinutes * 60_000;
+    if (lair.nextRaidAt === firstRaid) continue;
+    lair.nextRaidAt = raidTimeAfter(state, id, t);
   }
 }
 
@@ -135,53 +193,58 @@ export function raidTake(state: GameState, lairId: LairId): Wallet {
   return took;
 }
 
+/**
+ * The most a lair carries of one material: a day of raids at the city's
+ * current rate (§4.2). Read at the raid, like the take itself, so it grows
+ * with the city and replays identically.
+ */
+export function hoardCap(state: GameState, lairId: LairId, c: RaidableId): number {
+  const seconds = garrisonForTier(LAIRS[lairId].tier).takeSeconds;
+  return Math.floor(Math.max(1, RAID.perDay) * cityRatePerSecond(state, c) * seconds);
+}
+
 export interface RaidEvent {
   lairId: LairId;
+  /** When it landed — the raid's own time, not the boundary's. */
+  at: number;
+  /** What it took from the stores, including what it could not carry. */
   took: Wallet;
-  /** Trips the garrison has spent, after this one. */
-  trips: number;
-  /** True when this was its last: it sits on the hoard from here. */
-  done: boolean;
 }
 
 /**
  * Resolve every raid due by `t`. Runs in `applyDueAt`, because a raid changes
- * the wallet another subsystem may be reading — and in LAIR ORDER, so two
+ * the stores another subsystem may be reading — and in LAIR ORDER, so two
  * lairs due at the same instant always take in the same sequence.
  *
- * A raid that takes nothing costs the garrison no trip. It still moves its
- * clock on, so a city that produces nothing today is raided for nothing and
- * still owes three real raids once it does — the trip limit bounds what is
- * TAKEN, and taking nothing is not a raid worth counting.
+ * A raid that finds nothing to take still moves its clock on: the schedule is
+ * the lair's, not the stores'.
  */
 export function advanceRaids(state: GameState, t: number): RaidEvent[] {
   const events: RaidEvent[] = [];
   for (const lairId of LAIR_ORDER) {
     const lair = state.lairs[lairId];
     if (!lair) continue;
-    // Bounded: each pass either stops the clock or pushes it a whole period
-    // forward, and the period is at least a minute.
+    // Bounded: each pass moves the clock to a later slice, so a week away is
+    // at most `perDay × 7` passes a lair — well inside MAX_BOUNDARY_STEPS.
     while (lair.nextRaidAt !== null && lair.nextRaidAt <= t && !lair.cleared) {
+      const at = lair.nextRaidAt;
       const took = raidTake(state, lairId);
       let taken = 0;
       for (const [c, n] of Object.entries(took)) {
-        const got = takeFromStores(state, c as RaidableId, n);
-        if (got <= 0) { delete took[c as RaidableId]; continue; }
-        took[c as RaidableId] = got;
-        lair.hoard[c as RaidableId] = (lair.hoard[c as RaidableId] ?? 0) + got;
+        const r = c as RaidableId;
+        // The cap is read BEFORE the take, which moves no rate but keeps the
+        // order of questions the same in replay as in ticking.
+        const room = Math.max(0, hoardCap(state, lairId, r) - (lair.hoard[r] ?? 0));
+        const got = takeFromStores(state, r, n);
+        if (got <= 0) { delete took[r]; continue; }
+        took[r] = got;
+        // A raid always takes; what the lair cannot carry is lost (§4.2).
+        const kept = Math.min(got, room);
+        if (kept > 0) lair.hoard[r] = (lair.hoard[r] ?? 0) + kept;
         taken += got;
       }
-      if (taken > 0) {
-        lair.trips += 1;
-        state.raidReports.push({
-          id: newId(state, 'raid'), lairId, at: lair.nextRaidAt, took,
-        });
-      }
-      const done = lair.trips >= RAID.maxRaids;
-      lair.nextRaidAt = done
-        ? null
-        : lair.nextRaidAt + LAIRS[lairId].guard.periodMinutes * 60_000;
-      if (taken > 0 || done) events.push({ lairId, took, trips: lair.trips, done });
+      if (taken > 0) events.push({ lairId, at, took });
+      lair.nextRaidAt = raidTimeAfter(state, lairId, at);
     }
   }
   return events;
@@ -266,7 +329,8 @@ export const lairPower = (state: GameState, lairId: LairId): number =>
 // ---------------------------------------------------------------- clearing
 
 /**
- * The lair falls: the clock stops and the hoard comes home, in full.
+ * The lair falls: the clock stops, the hoard comes home and the ground it
+ * held is the city's (`lairZone.ts` reads `cleared`).
  *
  * Called by the party command that won the fight (`expeditions.ts`), never on
  * its own — this module has no opinion about how a garrison is beaten, only
@@ -282,8 +346,6 @@ export function markLairCleared(state: GameState, lairId: LairId): Wallet {
   lair.cleared = true;
   lair.nextRaidAt = null;
   lair.hoard = {};
-  // The reports for a lair that no longer exists are stale news.
-  state.raidReports = state.raidReports.filter((r) => r.lairId !== lairId);
   return hoard;
 }
 
@@ -318,8 +380,9 @@ export interface LairView {
   threat: (typeof LAIRS)[LairId]['guard']['threat'];
   power: number;
   nextRaidAt: number | null;
-  tripsLeft: number;
   hoard: Wallet;
+  /** True for a material the lair carries all it can of (§6's *full*). */
+  hoardFull: Partial<Record<RaidableId, boolean>>;
   cleared: boolean;
 }
 
@@ -332,8 +395,10 @@ export function lairView(state: GameState, lairId: LairId): LairView | null {
     threat: LAIRS[lairId].guard.threat,
     power: LAIRS[lairId].guard.power,
     nextRaidAt: lair.nextRaidAt,
-    tripsLeft: tripsLeft(lair),
     hoard: { ...lair.hoard },
+    hoardFull: Object.fromEntries(RAIDABLE
+      .filter((c) => (lair.hoard[c] ?? 0) > 0 && (lair.hoard[c] ?? 0) >= hoardCap(state, lairId, c))
+      .map((c) => [c, true])),
     cleared: lair.cleared,
   };
 }
@@ -350,10 +415,6 @@ export function nextLairToRaid(state: GameState): LairId | null {
   }
   return best;
 }
-
-export const dismissRaidReports = (state: GameState): void => {
-  state.raidReports = [];
-};
 
 /** The authored tiers, for the dev read-out and the tests. */
 export const GARRISON_TIERS = GARRISONS;

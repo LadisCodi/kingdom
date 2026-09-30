@@ -1,7 +1,8 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, LAIRS, levelIndexed, terrainGate } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, LAIR_ORDER, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
+import { lairIsFound } from './lairZone';
 import {
   cellsWithinRadiusOfRect, footprintAt, footprintCells, neighbors, townhallDistance,
   type MapData,
@@ -325,17 +326,19 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
  * are fifteen sites; checking all of them after a fog change is cheaper than
  * being wrong about which change mattered.
  *
- * Visible means not `Undiscovered`: a site under the fog still draws, so the
- * moment the player can make one out is the moment worth telling them about.
- * Waiting for `Revealed` would announce a place they had already walked to.
+ * A landmark is announced the moment it is visible — not `Undiscovered`: a
+ * site under the fog still draws, so the moment the player can make one out
+ * is the moment worth telling them about. A lair is announced when it is
+ * FOUND, which is its own rule (`lairIsFound`).
  */
 export function recordVisibleSites(state: GameState, map: MapData): void {
   for (const l of LANDMARKS) {
     if (fogState(state, map, l.location) !== 'Undiscovered') recordSiteDiscovery(state, l.id);
   }
-  for (const r of Object.values(LAIRS)) {
-    if (fogState(state, map, r.location) === 'Undiscovered') continue;
-    recordSiteDiscovery(state, r.id);
+  // A lair is not announced by SIGHT: it is found by revealing its ground,
+  // and it has no picture on the map until then (Docs/proposals/lairs.md §2.1).
+  for (const id of LAIR_ORDER) {
+    if (lairIsFound(state, id)) recordSiteDiscovery(state, id);
   }
 }
 

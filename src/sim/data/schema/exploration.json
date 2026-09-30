@@ -40,7 +40,25 @@
         "gemsPerPoint": { "type": "int", "min": 1, "doc": "Gems for one point of Knowledge. Never rises." }
       }
     },
-    "raid": { "type": "object", "fields": { "takeFractionMax": { "type": "float" }, "maxRaids": { "type": "int" } } },
+    "raid": {
+      "type": "object",
+      "fields": {
+        "takeFractionMax": { "type": "float" },
+        "perDay": {
+          "type": "int",
+          "min": 1,
+          "max": 6,
+          "doc": "Raids a standing lair makes each local day, one in each equal slice of the window."
+        },
+        "windowStartHour": {
+          "type": "int",
+          "min": 0,
+          "max": 23,
+          "doc": "The local hour the raid window opens: raids land in the hours the player plays."
+        },
+        "windowEndHour": { "type": "int", "min": 1, "max": 24, "doc": "The local hour the raid window closes." }
+      }
+    },
     "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } }
   }
 }

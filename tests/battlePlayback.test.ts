@@ -23,7 +23,7 @@ function mustered(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): Gam
   fund(state, { Gold: 200_000, Food: 90_000, Wood: 90_000, Stone: 40_000 });
   reveal(state, [LAIRS[ORCS].location]);
   // Standing, and not counting: these are about the screen, not the clock.
-  state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -89,7 +89,7 @@ describe('a lair attack opens the playback', () => {
     // One soldier and a hero against the drake: the fight is lost before it
     // is watched, which is exactly what the screen must say.
     reveal(game.state, [LAIRS.Drake.location]);
-    game.state.lairs.Drake = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    game.state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
     game.openLair('Drake');
     game.doAttackLair();
     const battle = game.battle!;
@@ -127,7 +127,7 @@ describe('the lair opens the same screen', () => {
   it('plays the fight, and deals the hoard and the first-clear lump', () => {
     const state = mustered();
     advance(state, map, T0); // arm the lair
-    state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: { Gold: 40 }, cleared: false };
+    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: { Gold: 40 }, cleared: false };
     const game = freshPresenter(state);
     let clock = T0;
     game.now = () => clock;

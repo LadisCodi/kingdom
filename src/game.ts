@@ -69,8 +69,8 @@ import {
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
-  RAIDABLE, cityRatePerSecond, dismissRaidReports, lairCreature, lairIsCleared,
-  lairView, nextLairToRaid, openLairs, type LairView, type RaidableId,
+  RAIDABLE, cityRatePerSecond, lairCreature, lairIsCleared,
+  lairView, openLairs, setUtcOffset, type LairView, type RaidableId,
 } from './sim/lairs';
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
@@ -88,7 +88,8 @@ import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
   watchedRefillsLeft,
 } from './sim/manaRefill';
-import { landmarkDefAt, lairDefAt } from './sim/sites';
+import { landmarkDefAt, standingLairAt } from './sim/sites';
+import { lairHolding } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
@@ -542,7 +543,12 @@ export class Game {
   // ------------------------------------------------------------------- ticking
 
   tick(): void {
+    // The device's local time, handed to the sim — it has no clock of its
+    // own, and a lair raids inside the player's local day
+    // (Docs/proposals/lairs.md §4.1). A no-op unless the offset moved.
+    // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
+    setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -583,14 +589,18 @@ export class Game {
           sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
         });
     }
-    // A raid landing while the player is HERE gets a line: the widget carries
-    // the report, but a purse that quietly shrinks is the one thing this
-    // feature must never do silently. An absence is summarised by the widget
-    // instead — the welcome sheet already owns "while you were away".
-    for (const raid of result.raids) {
-      if (Object.keys(raid.took).length === 0) continue;
+    // A raid landing while the player is HERE gets a line: a store that
+    // quietly empties under their eyes is the one thing this feature must
+    // never do silently. What an absence cost is on each lair's card, as the
+    // hoard it carries (Docs/proposals/lairs.md §6), so a catch-up that
+    // resolves a night of raids says so ONCE rather than in a stack of toasts.
+    const raided = result.raids.filter((r) => Object.keys(r.took).length > 0);
+    if (raided.length === 1) {
+      const raid = raided[0];
       const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
       this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
+    } else if (raided.length > 1) {
+      this.toast(`${raided.length} raids on the city while you were away`);
     }
     // THE SEASON ROLLED OVER while the player was here or away. It is the one
     // event that takes something from them — the album is empty and the stars
@@ -664,8 +674,12 @@ export class Game {
       priority: 100,
       handle: (cell) => {
         if (this.openOverlay !== null) return false;
-        if (!landmarkDefAt(cell) && !lairDefAt(cell)) return false;
-        if (fogState(this.state, this.map, cell) !== 'Revealed') return false;
+        // A lair answers as soon as it is FOUND — its footprint may still be
+        // under the fog, and the bubble over it is what the player taps
+        // (Docs/proposals/lairs.md §6). A landmark waits to be revealed.
+        const lair = standingLairAt(this.state, cell);
+        if (!lair && !landmarkDefAt(cell)) return false;
+        if (!lair && fogState(this.state, this.map, cell) !== 'Revealed') return false;
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
         playSfx('click');
@@ -871,6 +885,13 @@ export class Game {
       const gate = HARVEST[source].requiredTech;
       playSfx('error');
       if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
+    } else if (result === 'LairHeld' && !autoRepeat) {
+      // Say WHO: the refusal is the lair's, and naming it is what sends the
+      // player to clear it (Docs/proposals/lairs.md §6). Costs no Mana — the
+      // tap is refused before anything is charged.
+      const lairId = lairHolding(this.state, cell);
+      playSfx('error');
+      if (lairId) this.toast(`${holdsThisGround(lairCreature(lairId))}`);
     } else if (result === 'NoMana' && !autoRepeat) {
       // A held pointer stays silent — it would otherwise shake the header
       // once a frame for as long as the finger is down.
@@ -3032,54 +3053,8 @@ export class Game {
     return lairIsCleared(this.state, lairId);
   }
 
-  /**
-   * The raid widget, in the slot the Mana offer uses.
-   *
-   * It never opens itself: it says which garrison is closest to coming down
-   * the hill, or what the last one took, and waits to be tapped.
-   */
-  raidWidget(): {
-    lairId: LairId; creature: string; raidsAt: number | null; others: number;
-    took: Wallet | null; reports: number;
-  } | null {
-    if (this.state.raidReports.length > 0) {
-      const last = this.state.raidReports[this.state.raidReports.length - 1];
-      const took: Wallet = {};
-      // Several raids in one absence are ONE summary, not a stack of pills.
-      for (const r of this.state.raidReports) {
-        for (const [c, n] of Object.entries(r.took)) {
-          took[c as CurrencyId] = (took[c as CurrencyId] ?? 0) + n;
-        }
-      }
-      return {
-        lairId: last.lairId,
-        creature: lairCreature(last.lairId),
-        raidsAt: null,
-        others: 0,
-        took,
-        reports: this.state.raidReports.length,
-      };
-    }
-    const soonest = nextLairToRaid(this.state);
-    if (soonest === null) return null;
-    const lair = this.lairFor(soonest)!;
-    return {
-      lairId: soonest,
-      creature: lair.creature,
-      raidsAt: lair.nextRaidAt,
-      others: this.openLairViews().filter((g) => g.nextRaidAt !== null).length - 1,
-      took: null,
-      reports: 0,
-    };
-  }
-
-  dismissRaids(): void {
-    dismissRaidReports(this.state);
-    this.notify();
-  }
-
-  /** Fly to a lair and open its card. The widget's only action, and the
-   *  quest chain's when it points at a garrison. */
+  /** Fly to a lair and open its card — what the quest chain does when it
+   *  points at one. */
   showLair(lairId: LairId): void {
     this.setOverlay(null);
     this.inspectedSite = LAIRS[lairId].location;
@@ -4437,3 +4412,8 @@ function describeWait(ms: number): string {
   const days = Math.round(hours / 24);
   return `in ${days} day${days === 1 ? '' : 's'}`;
 }
+
+/** "Orcs hold this ground", "A drake holds this ground": the creature's own
+ *  noun decides the verb. */
+const holdsThisGround = (creature: string): string =>
+  `${creature} ${creature.startsWith('A ') ? 'holds' : 'hold'} this ground`;

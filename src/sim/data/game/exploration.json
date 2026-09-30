@@ -34,7 +34,9 @@
   },
   "raid": {
     "takeFractionMax": 0.5,
-    "maxRaids": 3
+    "perDay": 3,
+    "windowStartHour": 9,
+    "windowEndHour": 23
   },
   "delve": {
     "firstClearKnowledge": 15

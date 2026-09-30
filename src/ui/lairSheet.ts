@@ -28,13 +28,6 @@ export function renderLairSheet(game: Game): HTMLElement {
     info.push(el('div', { class: 'bt-info-line' },
       iconEl('hourglass', { size: 'sm' }),
       `They come for the city in ${formatDuration(left)}`));
-    info.push(el('div', { class: 'bt-info-line is-soft' },
-      `${lair.tripsLeft} raid${lair.tripsLeft === 1 ? '' : 's'} left in them, `
-      + 'and each takes a slice of what the city has banked.'));
-  } else if (lair !== null) {
-    info.push(el('div', { class: 'bt-info-line' },
-      iconEl('clock', { size: 'sm' }),
-      'They have taken all they came for, and sit on it.'));
   }
 
   const hoard = Object.entries(lair?.hoard ?? {}).filter(([, n]) => n > 0);

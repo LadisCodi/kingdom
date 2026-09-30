@@ -1406,6 +1406,11 @@ export interface LairDef {
    *  grouped: a lair is placed, not painted. */
   size: number;
   tier: number;
+  /** How far its zone reaches past its footprint, in Chebyshev rings: no
+   *  tap, no build, no harvest inside (Docs/proposals/lairs.md §3). */
+  radius: number;
+  /** The card's line over its painting (§6). */
+  flavour: string;
   /** The garrison that holds it (Docs/features/18-garrisons-and-raids.md). */
   guard: GuardDef;
 }
@@ -1420,10 +1425,9 @@ export interface LairDef {
 export interface GuardDef {
   threat: UnitId | 'Any';
   power: number;
-  /** Minutes from DISCOVERY to the first raid. */
+  /** Minutes from DISCOVERY to the first raid. Every raid after it follows
+   *  the daily schedule (`RAID`, Docs/proposals/lairs.md §4.1). */
   warningMinutes: number;
-  /** Minutes between raids after that. */
-  periodMinutes: number;
 }
 
 const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1450,8 +1454,8 @@ const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph'
 };
 
 const lairBalance = regionMap.lairs as Record<LairId, {
-  x: number; y: number; tier: number;
-  guard: { threat: string; power: number; warningMinutes: number; periodMinutes: number };
+  x: number; y: number; size?: number; tier: number; radius: number; flavour: string;
+  guard: { threat: string; power: number; warningMinutes: number };
 }>;
 
 /** Every lair the code knows about. LairId is a union, so the roster is fixed
@@ -1468,8 +1472,10 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
       id,
       ...lairContent[id],
       location: { x: b.x, y: b.y },
-      size: (b as { size?: number }).size ?? 1,
+      size: b.size ?? 1,
       tier: b.tier,
+      radius: b.radius,
+      flavour: b.flavour,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
   }),
@@ -1858,7 +1864,9 @@ export const GARRISONS = balance.garrisons as GarrisonDef[];
 export const garrisonForTier = (tier: number): GarrisonDef =>
   GARRISONS.find((g) => g.tier === tier) ?? GARRISONS[GARRISONS.length - 1];
 
-/** How a raid is bounded: a fraction of the purse, and a trip count. */
+/** How raids are paced and bounded: raids a day inside the player's local
+ *  window, and the fraction of the stores one may take
+ *  (Docs/proposals/lairs.md §4). */
 export const RAID = balance.raid;
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */
@@ -2065,4 +2073,4 @@ export const GAME_VERSION = '0.1.0';
 // v64: ruins and gates are lairs. `kingdom.gates` becomes `kingdom.lairs`,
 // `RuinID` becomes `LairID`, and every persisted place id becomes its
 // creature's (HollowBarrow → Orcs, …), discovery keys included.
-export const SAVE_VERSION = 64;
+export const SAVE_VERSION = 65;

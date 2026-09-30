@@ -334,21 +334,16 @@ export interface PartySlotState {
  * back, which is what keeps a raid a bill rather than a loss.
  */
 export interface LairState {
-  /** Epoch ms of the next raid, or null when nothing is counting. */
+  /** Epoch ms of the boundary that DISCOVERED it — the first raid is
+   *  `armedAt + warningMinutes`, and every one after it follows the daily
+   *  schedule (Docs/proposals/lairs.md §4.1). */
+  armedAt: number;
+  /** Epoch ms of the next raid, or null once it is cleared. */
   nextRaidAt: number | null;
-  /** Raids that actually took something. Capped at `raid.maxRaids`. */
-  trips: number;
-  /** What it has taken, returned in full when the lair falls. */
+  /** What it carries of what it took, capped at a day of raids per material
+   *  (§4.2), and handed back when the lair falls. */
   hoard: Wallet;
   cleared: boolean;
-}
-
-/** One raid, for the widget. Kept until the player dismisses it. */
-export interface RaidReport {
-  id: string;
-  lairId: LairId;
-  at: number;
-  took: Wallet;
 }
 
 /**
@@ -426,6 +421,11 @@ export interface GameState {
     /** Points of Knowledge ever bought with Gold. The nth costs n × base, and
      *  this never resets (sim/knowledge.ts). */
     knowledgeBoughtWithGold: number;
+    /** The player's local time, as minutes EAST of UTC (UTC+2 is 120). The
+     *  device reports it and the sim only ever reads it — a lair raids inside
+     *  the player's local day (Docs/proposals/lairs.md §4.1), and the sim has
+     *  no clock of its own to find out where that day is. */
+    utcOffsetMinutes: number;
     /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
      *  it survives a region reset — a habit is a property of the player, not
      *  of the city they happen to be playing. See sim/daily.ts. */
@@ -607,10 +607,6 @@ export interface GameState {
    * the sim is not allowed to read.
    */
   lairs: Partial<Record<LairId, LairState>>;
-  /** Raids the player has not read yet. Persisted: a raid that landed over
-   *  lunch is still news when they come back, and the widget carries it until
-   *  it is dismissed. */
-  raidReports: RaidReport[];
   /**
    * The five relics, as levels. Absent = not found; a relic is owned iff it
    * has a level, and every relic the player has is always on

@@ -16,7 +16,7 @@ import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
-import { landmarkDefAt, lairDefAt } from '../sim/sites';
+import { landmarkDefAt, standingLairAt } from '../sim/sites';
 import { el, formatDuration } from './format';
 import { action, iconEl, panel, stat } from './kit';
 
@@ -99,16 +99,10 @@ function lairBand(game: Game, def: LairDef, lair: LairView): HTMLElement {
       el('div', {},
         el('div', { class: 'site-lair-name' }, `${lair.creature} hold the way in`),
         el('div', { class: 'site-lair-sub' }, left !== null
-          ? `They raid the city in ${formatDuration(left)}`
-          : 'They have taken all they came for'))),
+          ? `They will attack your city in ${formatDuration(left)}`
+          : 'They are gone'))),
   );
 
-  if (left !== null) {
-    band.append(el('div', { class: 'site-lair-trips' },
-      iconEl('hourglass', { size: 'sm' }),
-      `${lair.tripsLeft} raid${lair.tripsLeft === 1 ? '' : 's'} left in them, `
-      + 'and each takes a slice of what the city has banked.'));
-  }
   if (hoard.length > 0) {
     band.append(el('div', { class: 'site-lair-hoard' },
       hoard.map(([c, n]) => `${n} ${c}`).join(', ')
@@ -149,7 +143,7 @@ function lairCard(game: Game, def: LairDef): HTMLElement {
 export function renderSiteCard(game: Game, cell: Coord): HTMLElement | null {
   const landmark = landmarkDefAt(cell);
   if (landmark) return landmarkCard(game, landmark);
-  const lair = lairDefAt(cell);
+  const lair = standingLairAt(game.state, cell);
   if (lair) return lairCard(game, lair);
   return null;
 }

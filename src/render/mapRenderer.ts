@@ -5,7 +5,7 @@
 import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
-import { landmarkDefAt, lairDefAt } from '../sim/sites';
+import { landmarkDefAt, standingLairAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
@@ -715,7 +715,10 @@ export function drawMap(
           if (!claimed) drawSiteBadge(plot, '✦');
         }, { x: landmark.size, y: landmark.size });
       }
-      const lair = lairDefAt(cell);
+      // A lair is drawn once it is FOUND and until it is cleared
+      // (Docs/proposals/lairs.md §2.1, §5): before that it is ordinary fog,
+      // after it ordinary ground.
+      const lair = standingLairAt(state, cell);
       if (lair && lair.location.x === cx && lair.location.y === cy) {
         const plot = lair.size === 1
           ? box : camera.plotBox(cell, { x: lair.size, y: lair.size });

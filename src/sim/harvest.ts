@@ -1,6 +1,7 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/04-harvest.md §2, §3).
 
+import { lairHolding } from './lairZone';
 import {
   DISTRICTS, FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
 } from './data/definitions';
@@ -339,7 +340,9 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
 }
 
 export type TapCellResult =
-  | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked';
+  | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked'
+  /** Inside a standing lair's zone (Docs/proposals/lairs.md §3). */
+  | 'LairHeld';
 export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
 
 /** Why this cell would refuse a tap, or null if it would harvest. Shared by
@@ -354,6 +357,9 @@ export function harvestBlock(
   if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
   const source = harvestSourceAt(state, cell);
   if (source === null) return 'NotHarvestable';
+  // A lair's ground is its own until it is cleared. Checked before the tech
+  // gate: "they hold it" is true whatever the player knows how to do.
+  if (lairHolding(state, cell) !== null) return 'LairHeld';
   // Checked before exhaustion: "you cannot work this yet" is the useful thing
   // to hear about a forest you have never been able to touch, and it is true
   // whether or not somebody has already worn the cell out.

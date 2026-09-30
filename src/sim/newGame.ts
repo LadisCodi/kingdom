@@ -43,6 +43,7 @@ export function newGame(map: MapData, now: number): GameState {
       },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
+      utcOffsetMinutes: 0,
     },
     player: { wallet: playerWallet, payer: null },
     fog: { revealed: {}, discovered: {}, progress: {} },
@@ -78,7 +79,6 @@ export function newGame(map: MapData, now: number): GameState {
     landmarks: { claimed: {} },
     // No lair has been seen yet, so nothing is counting (sim/lairs.ts).
     lairs: {},
-    raidReports: [],
     artifacts: { levels: {}, casts: {}, charges: {} },
     collection: freshCollection(seasonAt(now)),
     modifiers: [],

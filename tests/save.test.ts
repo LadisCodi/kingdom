@@ -451,17 +451,15 @@ describe('ruins and gates become lairs (v64)', () => {
     expect(back).not.toBeNull();
     oldIds.forEach((old, i) => {
       const lair = back.lairs[OLD_TO_NEW[old]];
+      // Trips and raid reports belonged to the three-raid garrison and are
+      // not read any more; a v63 lair has no find time, so it reads 0.
       expect(lair, old).toEqual({
+        armedAt: 0,
         nextRaidAt: i === 4 ? null : T0 + (i + 1) * 60_000,
-        trips: i % 3,
         hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
         cleared: i === 4,
       });
     });
-    expect(back.raidReports).toEqual([
-      { id: 'raid_1', lairId: 'Orcs', at: T0 - 60_000, took: { Gold: 7 } },
-      { id: 'raid_2', lairId: 'WolfRiders', at: T0 - 30_000, took: { Food: 3 } },
-    ]);
     for (const id of Object.values(OLD_TO_NEW)) expect(back.discoveries[`site:${id}`]).toBe(true);
     for (const id of oldIds) expect(back.discoveries[`site:${id}`]).toBeUndefined();
   });

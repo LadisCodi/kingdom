@@ -54,7 +54,6 @@ import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountRaidPill } from './ui/raidPill';
 import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
 import { watchChromeMetrics } from './ui/chromeMetrics';
@@ -141,7 +140,6 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
   mountSeasonPill(game, document.getElementById('season')!);
-  mountRaidPill(game, document.getElementById('raids')!);
   // The battle screen's card panel. Its own mount, because the sheet it
   // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
   mountBattlePicker(game, document.getElementById('picker')!);
@@ -413,9 +411,10 @@ async function boot(): Promise<void> {
       // The lairs' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
       for (const lair of Object.values(game.state.lairs)) {
-        if (lair !== undefined && lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
+        if (lair === undefined) continue;
+        lair.armedAt -= delta;
+        if (lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
       }
-      for (const report of game.state.raidReports) report.at -= delta;
       runTick();
     };
     const allTechs = () => {

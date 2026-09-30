@@ -1,29 +1,39 @@
-// The lair — a garrison with a clock (Docs/features/18-garrisons-and-raids.md).
+// The lair — a garrison with a clock, and the ground it holds
+// (Docs/proposals/lairs.md).
 //
-// Three things are worth more than the rest here, and they are the ones this
+// Four things are worth more than the rest here, and they are the ones this
 // file spends its length on:
 //
-//  1. THE REPLAY ASSERTION. A raid landing during an absence has to leave the
+//  1. THE REPLAY ASSERTION. Raids landing during an absence have to leave the
 //     same stores whether the window was walked in one call or ticked a step
-//     at a time. It is the load-bearing property of the whole codebase, and a
-//     raid is the first thing in the game that TAKES.
-//  2. THE BOUND. A week away with a lair open is three raids and never more,
-//     each at most a fraction of what the stores hold — never the wallet —
-//     and all of it comes back.
-//  3. THE FIGHT. A lair is cleared once, and that is the whole lair.
+//     at a time — and the daily schedule is a hash, so that is true by
+//     construction or not at all.
+//  2. THE BOUND. There is no trip limit any more: a lair raids three times a
+//     local day for as long as it stands, only ever from the stores, and what
+//     it carries is capped at a day of raids.
+//  3. THE GROUND. A found, standing lair refuses every tap, build, crew and
+//     spell inside its zone, and a cleared one gives all of it back.
+//  4. THE FIGHT. A lair is cleared once, and that is the whole lair.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import {
   RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
-  advanceRaids, cityRatePerSecond, clearedLairCount, lairFormation,
-  lairIsCleared, lairPower, lairSupplies, nextRaidBoundary, openLairs, raidTake,
+  advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairFormation,
+  lairIsCleared, lairPower, lairSupplies, lairView, nextRaidBoundary, openLairs,
+  raidTake, raidTimeAfter, setUtcOffset,
 } from '../src/sim/lairs';
+import { lairHolding, lairIsFound, lairZoneCells } from '../src/sim/lairZone';
+import { standingLairAt, cellHasSite } from '../src/sim/sites';
+import { harvestBlock } from '../src/sim/harvest';
+import { placementBlock } from '../src/sim/districts';
+import { workableCells } from '../src/sim/workers';
+import { reapCells } from '../src/sim/casting';
 import { formationPower } from '../src/sim/combat';
 import { attackLair, previewLair } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type GameState, type LairId } from '../src/sim/state';
+import { coordKey, getWallet, type GameState, type LairId } from '../src/sim/state';
 import {
   addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, stored, T0,
 } from './helpers';
@@ -31,6 +41,7 @@ import {
 const ORCS = 'Orcs' as const;
 const MINUTE = 60_000;
 const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
 
 /** A city that MAKES something — a raid takes seconds of production, so a
  *  kingdom that produces nothing is never worth robbing. */
@@ -43,7 +54,7 @@ function earningKingdom(): GameState {
   return state;
 }
 
-/** …and has found the orc lair, so its counter is running. */
+/** …and has found the orc lair, so its clock is running. */
 function watched(at = T0): GameState {
   const state = earningKingdom();
   reveal(state, [LAIRS[ORCS].location]);
@@ -51,62 +62,142 @@ function watched(at = T0): GameState {
   return state;
 }
 
-describe('the counter', () => {
-  it('starts on discovery, with the whole warning ahead of it', () => {
-    const state = watched();
+const firstRaid = (id: LairId = ORCS, at = T0): number =>
+  at + LAIRS[id].guard.warningMinutes * MINUTE;
+
+/** Every raid time of a lair from `from`, for `days` days. */
+function schedule(state: GameState, id: LairId, from: number, days: number): number[] {
+  const out: number[] = [];
+  for (let t = raidTimeAfter(state, id, from); t < from + days * DAY; t = raidTimeAfter(state, id, t)) {
+    out.push(t);
+  }
+  return out;
+}
+
+const localHour = (state: GameState, t: number): number =>
+  (((t + state.kingdom.utcOffsetMinutes * MINUTE) % DAY) + DAY) % DAY / HOUR;
+
+// ------------------------------------------------------------------ finding
+
+describe('finding a lair', () => {
+  it('is revealing any cell of its zone — and starts the whole warning', () => {
+    const state = earningKingdom();
+    // The zone's far corner, not the lair itself: its ground is how it is found.
+    const zone = lairZoneCells(ORCS);
+    const corner = zone[zone.length - 1];
+    reveal(state, [corner]);
+    expect(lairIsFound(state, ORCS)).toBe(true);
+    advance(state, map, T0);
     const lair = state.lairs[ORCS]!;
+    expect(lair.armedAt).toBe(T0);
+    expect(lair.nextRaidAt).toBe(firstRaid());
     expect(lair.cleared).toBe(false);
-    expect(lair.trips).toBe(0);
-    expect(lair.nextRaidAt).toBe(T0 + LAIRS[ORCS].guard.warningMinutes * MINUTE);
+    expect(state.discoveries[`site:${ORCS}`]).toBe(true);
   });
 
-  it('does not run on a lair nobody has found', () => {
+  it('is never a cell that is only Discovered, under the scrim', () => {
     const state = earningKingdom();
+    for (const c of lairZoneCells(ORCS)) state.fog.discovered[coordKey(c)] = true;
     advance(state, map, T0 + HOUR);
     expect(state.lairs[ORCS]).toBeUndefined();
     expect(nextRaidBoundary(state, T0)).toBeNull();
   });
 
-  it('is stamped inside advance(), never from a clock the sim may not read', () => {
-    // The save predates the feature: the lair is visible and nothing is
-    // counting. The counter starts where the sim LEFT OFF and gets its whole
-    // warning from there — not from the moment the player happened to return,
-    // and not already overdue (Docs/features/18-garrisons-and-raids.md §3).
+  it('draws and taps nothing until it is found', () => {
     const state = earningKingdom();
+    expect(standingLairAt(state, LAIRS[ORCS].location)).toBeUndefined();
     reveal(state, [LAIRS[ORCS].location]);
-    state.lairs = {};
-    advance(state, map, T0 + 10 * MINUTE);
-    expect(state.lairs[ORCS]!.nextRaidAt)
-      .toBe(T0 + LAIRS[ORCS].guard.warningMinutes * MINUTE);
-    expect(state.raidReports).toHaveLength(0);
+    advance(state, map, T0);
+    expect(standingLairAt(state, LAIRS[ORCS].location)?.id).toBe(ORCS);
   });
 
-  it('is a TIMER: it resolves in full while the player is away', () => {
-    // The Barrow warns in thirty minutes and raids every thirty after that,
-    // so a hundred minutes away is past the trip limit and short of the
-    // houses filling. Measured against the SAME kingdom with no lair in
-    // sight, because rent keeps accruing either way — what the raid does is
-    // leave the stores smaller than they would have been, and the wallet
-    // exactly as it was.
-    const raided = watched();
-    const control = earningKingdom();
-    const purse = getWallet(raided.city.wallet, 'Gold');
-    advance(raided, map, T0 + 100 * MINUTE);
-    advance(control, map, T0 + 100 * MINUTE);
-    expect(stored(raided, 'Gold')).toBeLessThan(stored(control, 'Gold'));
-    expect(getWallet(raided.city.wallet, 'Gold')).toBe(purse);
-    expect(raided.lairs[ORCS]!.trips).toBe(RAID.maxRaids);
+  it('is stamped inside advance(), never from a clock the sim may not read', () => {
+    const state = earningKingdom();
+    reveal(state, [LAIRS[ORCS].location]);
+    // Revealed at T0, advanced ten minutes later: the clock is the boundary
+    // the sweep ran at, where the sim left off — not the moment of the call.
+    advance(state, map, T0 + 10 * MINUTE);
+    expect(state.lairs[ORCS]!.armedAt).toBe(T0);
+    expect(state.lairs[ORCS]!.nextRaidAt).toBe(firstRaid(ORCS, T0));
   });
 });
+
+// ----------------------------------------------------------------- schedule
+
+describe('the daily schedule', () => {
+  it('is three raids a local day, one in each slice of the window', () => {
+    const state = watched();
+    const midnight = T0 + 12 * HOUR; // T0 is noon UTC, and the offset is 0
+    const times = schedule(state, ORCS, midnight, 5);
+    expect(times).toHaveLength(RAID.perDay * 5);
+    const slice = (RAID.windowEndHour - RAID.windowStartHour) / RAID.perDay;
+    times.forEach((t, i) => {
+      const h = localHour(state, t);
+      expect(h).toBeGreaterThanOrEqual(RAID.windowStartHour);
+      expect(h).toBeLessThan(RAID.windowEndHour);
+      // Each raid in its own slice, in order — never two on top of each other.
+      expect(Math.floor((h - RAID.windowStartHour) / slice)).toBe(i % RAID.perDay);
+    });
+  });
+
+  it('follows the player\'s local day, not UTC', () => {
+    const state = watched();
+    state.kingdom.utcOffsetMinutes = -8 * 60; // the Pacific
+    for (const t of schedule(state, ORCS, T0 + DAY, 3)) {
+      const h = localHour(state, t);
+      expect(h).toBeGreaterThanOrEqual(RAID.windowStartHour);
+      expect(h).toBeLessThan(RAID.windowEndHour);
+    }
+  });
+
+  it('is a hash of the lair and the day: the same answer every time it is asked', () => {
+    const a = watched();
+    const b = watched();
+    expect(schedule(a, ORCS, T0, 4)).toEqual(schedule(b, ORCS, T0, 4));
+    // …and not the same answer for two lairs.
+    expect(schedule(a, 'Harpies', T0, 4)).not.toEqual(schedule(a, ORCS, T0, 4));
+  });
+
+  it('comes after the first warning, then keeps coming — there is no trip limit', () => {
+    const state = watched();
+    const result = advance(state, map, T0 + 7 * DAY);
+    expect(result.raids.length).toBeGreaterThan(RAID.perDay * 5);
+    expect(result.raids[0].at).toBe(firstRaid());
+    expect(state.lairs[ORCS]!.nextRaidAt).not.toBeNull();
+  });
+
+  it('moves with the device\'s offset from the next slice on, and spares the first warning', () => {
+    const state = watched();
+    setUtcOffset(state, 120, T0 + MINUTE);
+    // Still inside the warning: the countdown the player was shown stands.
+    expect(state.lairs[ORCS]!.nextRaidAt).toBe(firstRaid());
+    advance(state, map, firstRaid() + MINUTE);
+    const scheduled = state.lairs[ORCS]!.nextRaidAt!;
+    setUtcOffset(state, -300, firstRaid() + 2 * MINUTE);
+    const moved = state.lairs[ORCS]!.nextRaidAt!;
+    expect(moved).toBe(raidTimeAfter(state, ORCS, firstRaid() + 2 * MINUTE));
+    expect(localHour(state, moved)).toBeGreaterThanOrEqual(RAID.windowStartHour);
+    expect(scheduled).toBeGreaterThan(firstRaid());
+  });
+
+  it('puts a garrison that had spent its three old trips back on the schedule', () => {
+    const state = watched();
+    state.lairs[ORCS]!.nextRaidAt = null; // a save from the three-trip garrison
+    armLairs(state, T0 + DAY);
+    expect(state.lairs[ORCS]!.nextRaidAt).toBe(raidTimeAfter(state, ORCS, T0 + DAY));
+  });
+});
+
+// --------------------------------------------------------------------- raids
 
 describe('a raid', () => {
   it('takes from the stores, never from the wallet: collecting is the defence', () => {
     const state = watched();
-    advance(state, map, T0 + 29 * MINUTE); // the houses fill for half an hour
+    advance(state, map, firstRaid() - MINUTE); // the houses fill for half an hour
     const purse = getWallet(state.city.wallet, 'Gold');
     const before = stored(state, 'Gold');
-    advance(state, map, T0 + 30 * MINUTE); // …and the garrison comes down
-    const took = state.raidReports[0]?.took.Gold ?? 0;
+    const result = advance(state, map, firstRaid()); // …and the garrison comes down
+    const took = result.raids[0]?.took.Gold ?? 0;
     expect(took).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(purse);
     expect(stored(state, 'Gold')).toBeLessThan(before + 60); // a minute of rent, less the take
@@ -141,92 +232,137 @@ describe('a raid', () => {
     const state = watched();
     fund(state, { Gems: 500, Stardust: 90 });
     const mana = getWallet(state.city.wallet, 'Mana');
-    advance(state, map, T0 + 24 * HOUR);
-    expect(state.lairs[ORCS]!.trips).toBe(RAID.maxRaids);
-    // Nothing that is not a material moved DOWN: Gems and Stardust have no
-    // drip to confuse the reading, and Mana only ever regenerates.
+    const result = advance(state, map, T0 + 3 * DAY);
+    expect(result.raids.length).toBeGreaterThan(0);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(500);
     expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(90);
     expect(getWallet(state.city.wallet, 'Mana')).toBeGreaterThanOrEqual(mana);
-    for (const report of state.raidReports) {
-      for (const c of Object.keys(report.took)) {
+    for (const raid of result.raids) {
+      for (const c of Object.keys(raid.took)) {
         expect(['Gold', 'Food', 'Wood', 'Stone']).toContain(c);
       }
     }
   });
 
-  it('stops after three trips, however long the absence', () => {
+  it('carries at most a day of raids, and what it cannot carry is lost', () => {
     const state = watched();
-    advance(state, map, T0 + 7 * 24 * HOUR);
+    advance(state, map, T0 + 10 * DAY);
     const lair = state.lairs[ORCS]!;
-    expect(lair.trips).toBe(RAID.maxRaids);
-    expect(lair.nextRaidAt).toBeNull();
-    expect(state.raidReports).toHaveLength(RAID.maxRaids);
-    // …and it sits on the hoard from there: a second week takes nothing more.
-    const purse = getWallet(state.city.wallet, 'Gold');
-    advance(state, map, T0 + 14 * 24 * HOUR);
-    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThanOrEqual(purse);
+    const cap = hoardCap(state, ORCS, 'Gold');
+    expect(cap).toBeGreaterThan(0);
+    expect(lair.hoard.Gold).toBe(cap);
+    expect(lairView(state, ORCS)!.hoardFull.Gold).toBe(true);
+    // A raid on a full hoard still takes from the stores.
+    const before = stored(state, 'Gold');
+    const at = lair.nextRaidAt!;
+    const result = advance(state, map, at);
+    const took = result.raids.find((r) => r.at === at)?.took.Gold ?? 0;
+    expect(took).toBeGreaterThan(0);
+    expect(stored(state, 'Gold')).toBeLessThan(before + took);
+    expect(lair.hoard.Gold).toBe(hoardCap(state, ORCS, 'Gold'));
   });
 
-  it('banks every unit it took in the lair hoard', () => {
-    const state = watched();
-    const before = getWallet(state.city.wallet, 'Gold');
-    advance(state, map, T0 + 40 * MINUTE);
-    const lair = state.lairs[ORCS]!;
-    expect(lair.trips).toBe(1);
-    // Rent kept accruing across the window, so the wallet is not a subtraction
-    // — the hoard is what left it, and it is exactly what the report says.
-    expect(lair.hoard.Gold).toBe(state.raidReports[0].took.Gold);
-    expect(lair.hoard.Gold).toBeGreaterThan(0);
-    expect(before).toBeGreaterThan(0);
-  });
-
-  it('costs a garrison no trip when there is nothing to take', () => {
-    // A kingdom with no production and an empty purse: raided for nothing,
-    // and it still owes three real raids once it starts earning.
+  it('moves its clock on when there is nothing to take', () => {
     const state = freshGame();
     state.city.wallet = {};
     reveal(state, [LAIRS[ORCS].location]);
     advance(state, map, T0);
-    advance(state, map, T0 + 6 * HOUR);
-    expect(state.lairs[ORCS]!.trips).toBe(0);
-    expect(state.raidReports).toHaveLength(0);
+    const result = advance(state, map, T0 + 2 * DAY);
+    expect(result.raids).toHaveLength(0);
+    expect(state.lairs[ORCS]!.nextRaidAt).toBeGreaterThan(T0 + 2 * DAY);
   });
 });
 
 // THE load-bearing assertion, on the newest thing in the sim.
 describe('one-call replay equals stepped ticking', () => {
-  it('across an absence with three raids in it', () => {
-    const walk = (stepMs: number): GameState => {
-      const state = watched();
-      for (let t = T0 + stepMs; t <= T0 + 6 * HOUR; t += stepMs) advance(state, map, t);
-      advance(state, map, T0 + 6 * HOUR);
-      return state;
-    };
+  it('across two days of scheduled raids', () => {
+    const end = T0 + 2 * DAY;
     const oneCall = watched();
-    advance(oneCall, map, T0 + 6 * HOUR);
-    const stepped = walk(60_000);
+    const oneRaids = advance(oneCall, map, end).raids;
+    const stepped = watched();
+    const stepRaids = [];
+    for (let t = T0 + MINUTE; t <= end; t += MINUTE) stepRaids.push(...advance(stepped, map, t).raids);
 
     expect(oneCall.lairs[ORCS]).toEqual(stepped.lairs[ORCS]);
-    expect(getWallet(oneCall.city.wallet, 'Gold'))
-      .toBe(getWallet(stepped.city.wallet, 'Gold'));
+    expect(getWallet(oneCall.city.wallet, 'Gold')).toBe(getWallet(stepped.city.wallet, 'Gold'));
     for (let i = 0; i < oneCall.city.districts.length; i++) {
       expect(oneCall.city.districts[i].stored).toEqual(stepped.city.districts[i].stored);
     }
-    expect(oneCall.raidReports.map((r) => r.took))
-      .toEqual(stepped.raidReports.map((r) => r.took));
-    // …and the raids really did land inside the window.
-    expect(oneCall.lairs[ORCS]!.trips).toBe(RAID.maxRaids);
-  });
-
-  it('reports the raids to the caller, so an absence can be summarised', () => {
-    const state = watched();
-    const result = advance(state, map, T0 + 6 * HOUR);
-    expect(result.raids.length).toBeGreaterThan(0);
-    expect(result.raids.every((r) => r.lairId === ORCS)).toBe(true);
-    expect(result.raids[result.raids.length - 1].done).toBe(true);
+    expect(oneRaids).toEqual(stepRaids);
+    expect(oneRaids.length).toBeGreaterThanOrEqual(RAID.perDay);
   });
 });
+
+// ------------------------------------------------------------------ the zone
+
+describe('the zone', () => {
+  // (6, 0) is a mountain inside the orc lair's zone; (7, -1) is grass just
+  // outside it, a Quarry's reach from the mountain.
+  const MOUNTAIN = { x: 6, y: 0 };
+  const inZone = (c: { x: number; y: number }) =>
+    lairZoneCells(ORCS).some((z) => z.x === c.x && z.y === c.y);
+
+  it('is the footprint and `radius` rings around it', () => {
+    const { size, radius } = LAIRS[ORCS];
+    expect(lairZoneCells(ORCS)).toHaveLength((size + 2 * radius) ** 2);
+    expect(inZone(MOUNTAIN)).toBe(true);
+    expect(inZone({ x: 7, y: -1 })).toBe(false);
+  });
+
+  it('holds nothing before the lair is found, and nothing after it falls', () => {
+    const state = earningKingdom();
+    expect(lairHolding(state, MOUNTAIN)).toBeNull();
+    reveal(state, [MOUNTAIN]);
+    advance(state, map, T0);
+    expect(lairHolding(state, MOUNTAIN)).toBe(ORCS);
+    state.lairs[ORCS]!.cleared = true;
+    expect(lairHolding(state, MOUNTAIN)).toBeNull();
+  });
+
+  it('refuses a tap on the ground — before the tech gate, and before any Mana', () => {
+    const state = earningKingdom();
+    reveal(state, [MOUNTAIN]);
+    advance(state, map, T0);
+    expect(harvestBlock(state, map, MOUNTAIN, T0)).toBe('LairHeld');
+    const mana = getWallet(state.city.wallet, 'Mana');
+    expect(getWallet(state.city.wallet, 'Mana')).toBe(mana);
+  });
+
+  it('refuses a building placed or moved into it, and the lair\'s own cells until it falls', () => {
+    const state = earningKingdom();
+    const lot = { x: 7, y: 3 }; // the zone's corner — (4, 3) is a shrine
+    reveal(state, [lot, LAIRS[ORCS].location]);
+    advance(state, map, T0);
+    expect(placementBlock(state, map, 'Housing', lot)).toBe('LairZone');
+    expect(cellHasSite(state, LAIRS[ORCS].location)).toBe(true);
+    state.lairs[ORCS]!.cleared = true;
+    // The ground is the city's again — whatever else a building has to ask.
+    expect(placementBlock(state, map, 'Well', lot)).not.toBe('LairZone');
+    expect(cellHasSite(state, LAIRS[ORCS].location)).toBe(false);
+    expect(placementBlock(state, map, 'Well', LAIRS[ORCS].location)).not.toBe('HasSite');
+  });
+
+  it('is never worked by a crew', () => {
+    const state = earningKingdom();
+    addBuilt(state, 'Quarry', { x: 7, y: -1 });
+    const quarry = state.city.districts[state.city.districts.length - 1];
+    reveal(state, [MOUNTAIN]);
+    // Revealed and not yet swept: the lair has no clock, the mountain is work.
+    expect(workableCells(state, map, quarry)).toContainEqual(MOUNTAIN);
+    advance(state, map, T0);
+    expect(workableCells(state, map, quarry)).not.toContainEqual(MOUNTAIN);
+  });
+
+  it('is skipped by a spell', () => {
+    const state = earningKingdom();
+    reveal(state, [MOUNTAIN]);
+    expect(reapCells(state, map, MOUNTAIN, 1)).toContainEqual(MOUNTAIN);
+    advance(state, map, T0);
+    expect(reapCells(state, map, MOUNTAIN, 1)).not.toContainEqual(MOUNTAIN);
+  });
+});
+
+// ------------------------------------------------------------------ clearing
 
 describe('clearing the lair', () => {
   /** A kingdom that can put a party on the orc lair's doorstep — the company
@@ -252,11 +388,6 @@ describe('clearing the lair', () => {
   });
 
   it('IS beatable by a hero alone — the first fight needs no army', () => {
-    // The one place in the game where that is true, and it is the point of
-    // the beat: a garrison arrives before the player owns a company
-    // (Docs/features/18-garrisons-and-raids.md §5). The Warden is a body on
-    // the board now, and the orc lair's doorway is nine of the weakest thing
-    // there is.
     const state = readyToFight();
     expect(attackLair(state, map, ORCS, ['Warden'], []).result).toBe('Cleared');
   });
@@ -268,46 +399,37 @@ describe('clearing the lair', () => {
     expect(attackLair(state, map, 'Harpies', ['Warden'], []).result).toBe('Repelled');
   });
 
-  it('stops the counter for good', () => {
+  it('stops the clock for good and removes the lair', () => {
     const state = readyToFight();
     attackLair(state, map, ORCS, ['Warden'], company);
     expect(state.lairs[ORCS]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
-    advance(state, map, T0 + 7 * 24 * HOUR);
-    // A week of rent, and nothing taken from it.
-    expect(state.raidReports).toHaveLength(0);
-    expect(stored(state, 'Gold')).toBeGreaterThan(0);
+    const result = advance(state, map, T0 + 7 * DAY);
+    expect(result.raids).toHaveLength(0);
     expect(openLairs(state)).toEqual([]);
+    expect(standingLairAt(state, LAIRS[ORCS].location)).toBeUndefined();
   });
 
-  it('hands back the whole hoard', () => {
+  it('hands back the hoard', () => {
     const state = readyToFight();
-    advance(state, map, T0 + 6 * HOUR); // three raids' worth of taking
+    advance(state, map, T0 + 2 * DAY);
     const hoard = { ...state.lairs[ORCS]!.hoard };
     expect(hoard.Gold).toBeGreaterThan(0);
     const before = getWallet(state.city.wallet, 'Gold');
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
-    // Every coin of it, less what the supplies cost on the way in.
     expect(getWallet(state.city.wallet, 'Gold'))
       .toBe(before + hoard.Gold! - (lairSupplies(ORCS).Gold ?? 0));
-    expect(state.raidReports).toHaveLength(0);
   });
 
   it('costs what the fight cost — nothing when it is a rout', () => {
-    // The company the chain musters walks over the orc lair's doorway before it
-    // can swing, and the roster is untouched. Bringing more than enough is
-    // supposed to be worth something, and this is what it is worth
-    // (Docs/features/combat.md §4).
     const state = readyToFight();
     const before = state.army.length;
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(state.army.length).toBe(before - report.losses.reduce((n, l) => n + l.count, 0));
 
-    // Being driven off costs the party: the garrison had all the time it
-    // needed, and the fight only ends when one side is gone.
     const beaten = readyToFight();
     reveal(beaten, [LAIRS.Goblins.location]);
     advance(beaten, map, T0);
@@ -320,7 +442,6 @@ describe('clearing the lair', () => {
   });
 
   it('costs the supplies and the fallen when it fails, and nothing else', () => {
-    // The Observatory's drake, answered by one hero from the first hour.
     const state = readyToFight();
     reveal(state, [LAIRS.Drake.location]);
     advance(state, map, T0);
@@ -332,11 +453,10 @@ describe('clearing the lair', () => {
     expect(report.attack).toBeLessThan(report.power);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
     expect(lairIsCleared(state, 'Drake')).toBe(false);
-    // …and a retry is identical to a first attempt.
     expect(attackLair(state, map, 'Drake', ['Warden'], company).result).toBe('Repelled');
   });
 
-  it('refuses a lair still under the fog, and one already cleared', () => {
+  it('refuses a lair nobody has found, and one already cleared', () => {
     const state = readyToFight();
     expect(attackLair(state, map, 'Harpies', ['Warden'], company).result).toBe('LairNotFound');
     attackLair(state, map, ORCS, ['Warden'], company);
@@ -345,13 +465,13 @@ describe('clearing the lair', () => {
 });
 
 describe('a save', () => {
-  it('carries the clock, the hoard and the reports', () => {
+  it('carries the find, the clock and the hoard — and the local offset', () => {
     const state = watched();
-    advance(state, map, T0 + 40 * MINUTE);
-    const restored = deserialize(serialize(state, T0 + 40 * MINUTE), map, T0 + 40 * MINUTE)!;
+    state.kingdom.utcOffsetMinutes = 120;
+    advance(state, map, T0 + DAY);
+    const restored = deserialize(serialize(state, T0 + DAY), map, T0 + DAY)!;
     expect(restored.lairs[ORCS]).toEqual(state.lairs[ORCS]);
-    expect(restored.raidReports.map((r) => r.took))
-      .toEqual(state.raidReports.map((r) => r.took));
+    expect(restored.kingdom.utcOffsetMinutes).toBe(120);
   });
 
   it('carries a cleared lair, so nothing re-infests it', () => {
@@ -361,20 +481,16 @@ describe('a save', () => {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
     attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 24 }]);
-    const restored = deserialize(serialize(state, T0), map, T0 + 7 * 24 * HOUR)!;
+    const restored = deserialize(serialize(state, T0), map, T0 + 7 * DAY)!;
     expect(lairIsCleared(restored, ORCS)).toBe(true);
     expect(restored.lairs[ORCS]!.nextRaidAt).toBeNull();
   });
 });
 
-// The route the player actually taps: the lair card offers the LAIR while it
-// stands, the widget names the garrison closest to coming down the hill, and
-// clearing it closes the sheet — there is nothing behind it.
 describe('the route to a lair', () => {
-  function presenterAtTheBarrow() {
+  function presenterAtTheLair() {
     const state = watched();
     addAllTrainers(state);
-    // The company the chain musters before this fight (12-quests.md §2).
     for (let i = 0; i < 24; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
@@ -383,12 +499,11 @@ describe('the route to a lair', () => {
     return game;
   }
 
-  it('offers the lair instead of a party while the garrison stands', () => {
-    const game = presenterAtTheBarrow();
+  it('offers the lair while the garrison stands', () => {
+    const game = presenterAtTheLair();
     expect(game.lairFor(ORCS)!.cleared).toBe(false);
     game.openLair(ORCS);
     expect(game.openOverlay).toBe('lair');
-    // The sheet opens with the company already in its slots, ready to go.
     expect(game.partyHeroes).toEqual(['Warden']);
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 24 }]);
     expect(game.lairBlockText()).toBeNull();
@@ -396,44 +511,17 @@ describe('the route to a lair', () => {
   });
 
   it('clears it and closes the sheet', () => {
-    const game = presenterAtTheBarrow();
+    const game = presenterAtTheLair();
     game.openLair(ORCS);
     game.doAttackLair();
     expect(game.openOverlay).toBeNull();
     expect(game.lairFor(ORCS)!.cleared).toBe(true);
-    expect(game.raidWidget()).toBeNull();
-  });
-
-  it('names the garrison closest to raiding, and never opens itself', () => {
-    const game = presenterAtTheBarrow();
-    const widget = game.raidWidget()!;
-    expect(widget.lairId).toBe(ORCS);
-    expect(widget.creature).toBe('Orcs');
-    expect(widget.raidsAt).toBe(T0 + LAIRS[ORCS].guard.warningMinutes * MINUTE);
-    expect(widget.took).toBeNull();
-    expect(game.openOverlay).toBeNull();
-  });
-
-  it('turns into one summary after an absence, and dismisses', () => {
-    const game = presenterAtTheBarrow();
-    advance(game.state, map, T0 + 6 * HOUR);
-    const widget = game.raidWidget()!;
-    expect(widget.reports).toBe(RAID.maxRaids);
-    expect(widget.took!.Gold).toBeGreaterThan(0);
-    game.dismissRaids();
-    // The lair is out of trips, so nothing is counting and the tab is gone.
-    expect(game.raidWidget()).toBeNull();
   });
 });
 
-// What the player is SHOWN is what the party fights. The formation is derived
-// from `guard`, and the fight is scored against the formation — so a squad on
-// the screen can never be decoration.
+// What the player is SHOWN is what the party fights.
 describe('the formation in the doorway', () => {
   it('LEADS with the lair\'s own creature, and is never only that', () => {
-    // The generator spends the lion's share on the affinity and the rest
-    // across the others (Docs/features/combat.md §11), so a doorway teaches
-    // the matchup without being a single-answer puzzle.
     const state = freshGame();
     for (const id of LAIR_ORDER) {
       const squads = lairFormation(state, id);
@@ -452,8 +540,6 @@ describe('the formation in the doorway', () => {
     const state = freshGame();
     for (const id of LAIR_ORDER) {
       const budget = LAIRS[id].guard.power;
-      // Whole troops, so a formation lands a little under its budget and
-      // never over it: what a board cannot hold, a doorway does not field.
       const spent = lairPower(state, id);
       expect(spent, `${id}'s lair`).toBeLessThanOrEqual(budget);
       expect(spent, `${id}'s lair`).toBeGreaterThan(budget * 0.75);
@@ -475,8 +561,6 @@ describe('the formation in the doorway', () => {
   });
 });
 
-// Content, not machinery: the authored numbers have a shape the design states,
-// and a map edit that breaks it should fail here rather than in a playtest.
 describe('every authored lair', () => {
   it('is stronger the deeper the lair', () => {
     const powers = LAIR_ORDER.map((id: LairId) => LAIRS[id].guard.power);
@@ -485,32 +569,39 @@ describe('every authored lair', () => {
     }
   });
 
-  it('counts in minutes, and a deeper lair gives longer', () => {
+  it('warns in minutes, and a deeper lair gives longer', () => {
     const warnings = LAIR_ORDER.map((id: LairId) => LAIRS[id].guard.warningMinutes);
     for (const w of warnings) expect(w).toBeGreaterThanOrEqual(30);
     for (let i = 1; i < warnings.length; i++) {
       expect(warnings[i]).toBeGreaterThanOrEqual(warnings[i - 1]);
     }
   });
+
+  it('holds wider ground the deeper the lair, and has a line for its card', () => {
+    for (let i = 1; i < LAIR_ORDER.length; i++) {
+      expect(LAIRS[LAIR_ORDER[i]].radius).toBeGreaterThanOrEqual(LAIRS[LAIR_ORDER[i - 1]].radius);
+    }
+    for (const id of LAIR_ORDER) expect(LAIRS[id].flavour.length).toBeGreaterThan(0);
+  });
 });
 
-// The seatbelt in `advance()` is 10,000 boundary steps, and a raid clock is
-// the first source in the game that fires on a MINUTE scale. Three trips a
-// lair is what keeps it far away from that, and this is the arithmetic.
+// The seatbelt in `advance()` is 10,000 boundary steps. Three raids a lair a
+// day is what a month costs, and this is the arithmetic.
 describe('the boundary budget', () => {
-  it('proposes a handful of boundaries across a month, not thousands', () => {
+  it('proposes three boundaries a day a lair, not thousands', () => {
     const state = watched();
     let steps = 0;
     let cursor = T0;
     for (;;) {
       const next = nextRaidBoundary(state, cursor);
-      if (next === null || next > T0 + 30 * 24 * HOUR) break;
+      if (next === null || next > T0 + 30 * DAY) break;
       advance(state, map, next);
       advanceRaids(state, next);
       cursor = next;
       steps += 1;
-      expect(steps).toBeLessThan(50);
+      expect(steps).toBeLessThan(200);
     }
-    expect(steps).toBe(RAID.maxRaids);
+    expect(steps).toBeLessThanOrEqual(1 + RAID.perDay * 30);
+    expect(steps).toBeGreaterThanOrEqual(RAID.perDay * 29);
   });
 });

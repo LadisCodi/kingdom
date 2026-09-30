@@ -18,7 +18,6 @@ import {
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
 import { lairBoard, lairIsCleared, lairSupplies, markLairCleared } from './lairs';
-import { fogState } from './fog';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -208,12 +207,16 @@ export type LairBlock =
 
 export function lairBlock(
   state: GameState,
-  map: MapData,
+  // Unread since a lair is found by its clock rather than by the fog over
+  // its cell; kept so the fight's two entry points keep one signature.
+  _map: MapData,
   lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
 ): LairBlock | null {
-  if (fogState(state, map, LAIRS[lairId].location) !== 'Revealed') return 'LairNotFound';
+  // Found, not revealed: a lair can be attacked the moment it has a clock,
+  // whatever the fog over its own footprint (Docs/proposals/lairs.md §2.1).
+  if (state.lairs[lairId] === undefined) return 'LairNotFound';
   if (lairIsCleared(state, lairId)) return 'AlreadyCleared';
   if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';

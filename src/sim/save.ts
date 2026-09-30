@@ -721,6 +721,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
+        UtcOffsetMinutes: state.kingdom.utcOffsetMinutes,
         Daily: {
           Season: state.kingdom.daily.season,
           Rung: state.kingdom.daily.rung,
@@ -851,19 +852,16 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
       },
-      // The lairs and what they have taken. `NextRaidAtUtc` is a TIMER: the
-      // counter a discovery started runs while the player is away, and the raid it owes resolves
-      // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
+      // The lairs and what they carry. `NextRaidAtUtc` is a TIMER: the clock
+      // a find started runs while the player is away, and the raids it owes
+      // resolve on the next advance (Docs/proposals/lairs.md §4).
       'kingdom.lairs': {
         Lairs: Object.entries(state.lairs).map(([lairId, g]) => ({
           LairID: lairId,
+          ArmedAtUtc: iso(g!.armedAt),
           NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
-          Trips: g!.trips,
           Hoard: g!.hoard,
           Cleared: g!.cleared,
-        })),
-        Reports: state.raidReports.map((r) => ({
-          ID: r.id, LairID: r.lairId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
       // A relic is a level and a cast clock. The passives are re-derived on
@@ -1061,6 +1059,7 @@ export function deserialize(
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
+    state.kingdom.utcOffsetMinutes = Number.isFinite(kingdomDto.UtcOffsetMinutes) ? kingdomDto.UtcOffsetMinutes : 0;
     // Additive: a save written before the chest existed has no Daily block and
     // the defaults below start the season at rung zero, which is exactly right
     // for a player meeting it for the first time. `Season: -1` matches no real
@@ -1284,16 +1283,18 @@ export function deserialize(
   if (lairsDto) {
     state.lairs = {};
     for (const g of (lairsDto.Lairs ?? []) as any[]) {
+      // `Trips` and `Reports` belonged to the three-raid garrison and are not
+      // read. A lair that had spent its trips has no clock; the next advance
+      // puts it on the daily schedule (`armLairs`). `ArmedAtUtc` is new, and a
+      // lair without one only loses the first-warning exemption of
+      // `setUtcOffset`, which it no longer needs.
       state.lairs[g.LairID as LairId] = {
+        armedAt: g.ArmedAtUtc ? ms(g.ArmedAtUtc) : 0,
         nextRaidAt: msOrNull(g.NextRaidAtUtc),
-        trips: g.Trips ?? 0,
         hoard: { ...(g.Hoard ?? {}) },
         cleared: g.Cleared === true,
       };
     }
-    state.raidReports = ((lairsDto.Reports ?? []) as any[]).map((r) => ({
-      id: r.ID, lairId: r.LairID as LairId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
-    }));
   }
 
   const artifactsDto = modules['kingdom.artifacts'];

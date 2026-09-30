@@ -7,7 +7,7 @@
 // the geography lives here.
 
 import { LANDMARKS, LAIRS, type LandmarkDef, type LairDef } from './data/definitions';
-import { cellsOfRect, coordKey, type Coord, type LairId } from './state';
+import { cellsOfRect, coordKey, type Coord, type GameState, type LairId } from './state';
 
 /**
  * Every cell a site stands on, not just the one it is anchored at.
@@ -38,11 +38,27 @@ export const landmarkDefAt = (cell: Coord): LandmarkDef | undefined =>
 
 export const lairDefAt = (cell: Coord): LairDef | undefined => LAIR_BY_CELL.get(coordKey(cell));
 
-/** True when the cell holds authored content — never building ground. Paving
- *  over a lair would silently delete a whole dungeon. */
-export const cellHasSite = (cell: Coord): boolean => {
+/**
+ * The lair standing on this cell, as the player sees it: FOUND (it has a
+ * clock) and not cleared. A lair nobody has found has no picture and no tap
+ * (Docs/proposals/lairs.md §2.1), and a cleared one is gone — its cells are
+ * ordinary ground (§5).
+ */
+export const standingLairAt = (state: GameState, cell: Coord): LairDef | undefined => {
+  const lair = LAIR_BY_CELL.get(coordKey(cell));
+  if (!lair) return undefined;
+  const held = state.lairs[lair.id];
+  return held !== undefined && !held.cleared ? lair : undefined;
+};
+
+/** True when the cell holds authored content — never building ground. A
+ *  landmark always; a lair until it is cleared, found or not, since a lair's
+ *  footprint sits inside its own zone and is refused either way. */
+export const cellHasSite = (state: GameState, cell: Coord): boolean => {
   const key = coordKey(cell);
-  return LANDMARK_BY_CELL.has(key) || LAIR_BY_CELL.has(key);
+  if (LANDMARK_BY_CELL.has(key)) return true;
+  const lair = LAIR_BY_CELL.get(key);
+  return lair !== undefined && state.lairs[lair.id]?.cleared !== true;
 };
 
 export const allLandmarkCells = (): Coord[] => LANDMARKS.map((l) => l.location);
