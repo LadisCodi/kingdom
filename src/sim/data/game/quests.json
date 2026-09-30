@@ -392,7 +392,7 @@
   {
     "id": "DriveThemOut",
     "name": "Drive them out",
-    "goalType": "ClearGarrisons",
+    "goalType": "ClearLairs",
     "goalTarget": null,
     "goalAmount": 1,
     "goalLevel": null,

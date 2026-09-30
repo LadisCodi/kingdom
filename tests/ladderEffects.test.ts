@@ -7,7 +7,7 @@
 // right but aimed at the wrong harvest source, an effect on a card whose
 // reader was deleted, a value of 0 saved from the editor. So this walks every
 // ladder, rank by rank, and reads **the numbers a player actually meets** —
-// what a tap owes, what a house pays, how long a build takes, what a gate
+// what a tap owes, what a house pays, how long a build takes, what a lair
 // costs to provision — then asserts that a fully-researched ladder has moved at least
 // one of them away from its own rank-0 baseline.
 //
@@ -23,11 +23,11 @@
 import { describe, expect, it } from 'vitest';
 import { getWallet } from '../src/sim/state';
 import {
-  HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
+  HARVEST, LANDMARKS, LAIRS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
 import { armyCap, trainCost, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
-import { drillOf, gateSupplyCost } from '../src/sim/expeditions';
+import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { manaCap, manaProduction } from '../src/sim/mana';
@@ -43,7 +43,7 @@ import { addHeroXp } from '../src/sim/heroes';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import {
-  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, openRuin, reveal, T0,
+  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, clearLair, reveal, T0,
 } from './helpers';
 
 
@@ -74,13 +74,13 @@ function probeState(): GameState {
   addBuilt(state, 'Barracks', { x: 8, y: 2 });
   addBuilt(state, 'Sanctum', { x: 9, y: 2 });
   state.city.population = 4;
-  // Two landmarks held and one ruin cleared, so the per-entity drips are not
+  // Two landmarks held and one lair cleared, so the per-entity drips are not
   // multiplied by zero.
   state.landmarks.claimed = { 'Shrine:1': true, 'Leyspring:1': true };
-  openRuin(state, 'HollowBarrow');
+  clearLair(state, 'Orcs');
   state.heroes.owned = ['Scout'];
   state.army.push({ uniqueId: 'probe_warrior', definitionId: 'Warrior' });
-  reveal(state, [RUINS.HollowBarrow.location]);
+  reveal(state, [LAIRS.Orcs.location]);
   grantArtifactLevel(state, 'VerdantSeal');
   state.modifiers = [];
   state.lastAdvance = T0;
@@ -142,9 +142,9 @@ function probe(state: GameState): Record<string, number> {
   put('armyCap', armyCap(state));
   const warrior = trainCost(state, 'Warrior');
   for (const [c, n] of Object.entries(warrior)) put(`trainCost.Warrior.${c}`, n as number);
-  // The deepest gate's supplies: big enough that a 5% rank does not round
+  // The deepest lair's supplies: big enough that a 5% rank does not round
   // away.
-  const supplies = gateSupplyCost(state, 'StarObservatory', []);
+  const supplies = lairSupplyCost(state, 'Drake', []);
   for (const [c, n] of Object.entries(supplies)) put(`supplyCost.${c}`, n as number);
   // What a fight gives back: the share of the fallen that reaches a bed
   // (Docs/features/combat.md §4). Probed without heroes, so this is the
@@ -165,9 +165,9 @@ function probe(state: GameState): Record<string, number> {
   put('heroXp.per100', getWallet(state.kingdom.wallet, 'HeroXp') - before);
   state.kingdom.wallet.HeroXp = before;
 
-  // A control that no ladder may move: what a gate fields, which is authored
+  // A control that no ladder may move: what a lair fields, which is authored
   // and belongs to nobody's ladder.
-  put('control.gatePower', RUINS.HollowBarrow.guard.power);
+  put('control.lairPower', LAIRS.Orcs.guard.power);
   return out;
 }
 

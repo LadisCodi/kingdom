@@ -218,14 +218,14 @@ describe('what the caller reads off it', () => {
 
 describe('the generator', () => {
   it('is a pure function of the room it is generating (§11)', () => {
-    const once = generateEnemy({ seed: 42, parts: ['HollowBarrow', 2, 5], budget: 400, affinity: 'Warrior' });
-    const twice = generateEnemy({ seed: 42, parts: ['HollowBarrow', 2, 5], budget: 400, affinity: 'Warrior' });
+    const once = generateEnemy({ seed: 42, parts: ['Orcs', 2, 5], budget: 400, affinity: 'Warrior' });
+    const twice = generateEnemy({ seed: 42, parts: ['Orcs', 2, 5], budget: 400, affinity: 'Warrior' });
     expect(twice).toEqual(once);
-    const elsewhere = generateEnemy({ seed: 42, parts: ['HollowBarrow', 2, 6], budget: 400, affinity: 'Warrior' });
+    const elsewhere = generateEnemy({ seed: 42, parts: ['Orcs', 2, 6], budget: 400, affinity: 'Warrior' });
     expect(elsewhere).not.toEqual(once);
   });
 
-  it('spends nearly all of the budget, and leads with the ruin\'s own type', () => {
+  it('spends nearly all of the budget, and leads with the lair\'s own type', () => {
     for (const budget of [80, 400, 1200]) {
       const plan = generateEnemy({ seed: 1, parts: ['probe'], budget, affinity: 'Archer' });
       const spent = boardPower(buildBoard(plan.squads, plan.fighters));

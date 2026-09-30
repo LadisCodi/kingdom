@@ -62,8 +62,8 @@ export type HarvestSourceId =
   | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
-export type RuinId =
-  | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
+export type LairId =
+  | 'Orcs' | 'Harpies' | 'Goblins' | 'WolfRiders' | 'Drake';
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
   // The three pillars the city relics do not touch: the dungeon, the war and
@@ -326,19 +326,19 @@ export interface PartySlotState {
 }
 
 /**
- * One ruin's gate.
+ * One lair.
  *
- * `nextRaidAt` is the whole clock: null means nothing is counting — the gate
+ * `nextRaidAt` is the whole clock: null means nothing is counting — the lair
  * is cleared, or the garrison is out of trips and sitting on what it took.
- * The `hoard` is what it holds, and clearing the gate hands every coin of it
+ * The `hoard` is what it holds, and clearing the lair hands every coin of it
  * back, which is what keeps a raid a bill rather than a loss.
  */
-export interface GateState {
+export interface LairState {
   /** Epoch ms of the next raid, or null when nothing is counting. */
   nextRaidAt: number | null;
   /** Raids that actually took something. Capped at `raid.maxRaids`. */
   trips: number;
-  /** What it has taken, returned in full when the gate falls. */
+  /** What it has taken, returned in full when the lair falls. */
   hoard: Wallet;
   cleared: boolean;
 }
@@ -346,7 +346,7 @@ export interface GateState {
 /** One raid, for the widget. Kept until the player dismisses it. */
 export interface RaidReport {
   id: string;
-  ruinId: RuinId;
+  lairId: LairId;
   at: number;
   took: Wallet;
 }
@@ -593,20 +593,20 @@ export interface GameState {
   /** Claimed landmarks, by content id. Claiming raises the Mana CEILING,
    *  which is what makes exploration compound rather than merely pay. No
    *  landmark is defended: a sanctuary is bought with Gold, and the fight
-   *  with a clock belongs to the ruins (sim/gates.ts). */
+   *  with a clock belongs to the lairs (sim/lairs.ts). */
   landmarks: {
     claimed: Record<string, true>;
   };
   /**
-   * The gate on every ruin — one garrison, one clock
+   * Every lair — one garrison, one clock
    * (Docs/features/18-garrisons-and-raids.md).
    *
-   * Absent = the ruin has not been discovered, so nothing is counting. The
+   * Absent = the lair has not been discovered, so nothing is counting. The
    * entry is written by the sweep in `advance()` rather than by the reveal,
    * so the counter is stamped with a boundary's `t` and never with a clock
    * the sim is not allowed to read.
    */
-  gates: Partial<Record<RuinId, GateState>>;
+  lairs: Partial<Record<LairId, LairState>>;
   /** Raids the player has not read yet. Persisted: a raid that landed over
    *  lunch is still news when they come back, and the widget carries it until
    *  it is dismissed. */

@@ -10,7 +10,7 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
@@ -65,13 +65,13 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  attemptGate, gateBlock, previewGate, troopSlots,
-  type GateBlock, type GatePreview,
+  attackLair, lairBlock, previewLair, troopSlots,
+  type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
-  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared,
-  gateView, nextGateToRaid, openGates, type GateView, type RaidableId,
-} from './sim/gates';
+  RAIDABLE, cityRatePerSecond, dismissRaidReports, lairCreature, lairIsCleared,
+  lairView, nextLairToRaid, openLairs, type LairView, type RaidableId,
+} from './sim/lairs';
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
   heroSlotGemCost, heroSlots, levelUpHero,
@@ -88,7 +88,7 @@ import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
   watchedRefillsLeft,
 } from './sim/manaRefill';
-import { landmarkDefAt, ruinDefAt } from './sim/sites';
+import { landmarkDefAt, lairDefAt } from './sim/sites';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
@@ -111,7 +111,7 @@ import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
-  type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
+  type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
   type Wallet,
 } from './sim/state';
 import {
@@ -159,7 +159,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'collection' | 'heroes' | 'gate' | 'mana' | 'builder'
+  | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -310,9 +310,9 @@ export class Game {
   inspectedDistrictId: string | null = null;
   /** Which card panel is open over the battle screen, if any. */
   battlePicker: 'troops' | 'heroes' | null = null;
-  /** The ruin whose GATE the battle sheet is being composed for
+  /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
-  gateRuin: RuinId | null = null;
+  lairId: LairId | null = null;
   /** What the player has picked so far, by unit type. Lives on the presenter
    *  rather than in the view because it survives the per-tick rebuild and is
    *  node-testable. */
@@ -340,7 +340,7 @@ export class Game {
    *  placement until the banners got their free call (2026-09-08), and the
    *  screen is the same screen — only the payout differs. */
   adWatchPurpose: 'mana' | BannerId = 'mana';
-  /** The map SITE whose card is open — a landmark or a ruin. Sites are not
+  /** The map SITE whose card is open — a landmark or a lair. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
    *  inspectedDistrictId. */
@@ -357,7 +357,7 @@ export class Game {
    *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
   battle: BattlePlayback | null = null;
   /** The hero whose card is open on the roster screen, or null for the grid.
-   *  On the presenter rather than in the view for the reason `gateRuin`
+   *  On the presenter rather than in the view for the reason `lairId`
    *  is: it survives the per-tick rebuild, and it is node-testable. */
   openHeroId: HeroId | null = null;
   /** The relic whose card is open on the Reliquary screen, or null for the
@@ -590,7 +590,7 @@ export class Game {
     for (const raid of result.raids) {
       if (Object.keys(raid.took).length === 0) continue;
       const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
-      this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
+      this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
     }
     // THE SEASON ROLLED OVER while the player was here or away. It is the one
     // event that takes something from them — the album is empty and the stars
@@ -657,14 +657,14 @@ export class Game {
         return true; // placement mode swallows all map taps
       },
     });
-    // 100 — landmarks and ruins. Above the fog handler, so a revealed site
+    // 100 — landmarks and lairs. Above the fog handler, so a revealed site
     // opens its card instead of being treated as ordinary ground, and above
     // the harvest handler, so nothing tries to tap a shrine for wood.
     this.tapChain.register({
       priority: 100,
       handle: (cell) => {
         if (this.openOverlay !== null) return false;
-        if (!landmarkDefAt(cell) && !ruinDefAt(cell)) return false;
+        if (!landmarkDefAt(cell) && !lairDefAt(cell)) return false;
         if (fogState(this.state, this.map, cell) !== 'Revealed') return false;
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
@@ -2865,12 +2865,12 @@ export class Game {
         }
         break;
       }
-      case 'ClearGarrisons': {
-        // The gate whose counter is nearest, which is the one the quest
+      case 'ClearLairs': {
+        // The lair whose counter is nearest, which is the one the quest
         // means; failing that, the frontier — the answer is "go and find
         // one".
-        const open = this.openGateViews()[0];
-        if (open) this.showRuin(open.ruinId);
+        const open = this.openLairViews()[0];
+        if (open) this.showLair(open.lairId);
         else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
       }
@@ -3015,21 +3015,21 @@ export class Game {
     }
   }
 
-  // ------------------------------------------------------------- the gate
+  // ------------------------------------------------------------- the lair
 
-  /** Gates the player has found and not yet cleared, nearest raid first. */
-  openGateViews(): GateView[] {
-    return openGates(this.state)
-      .map((id) => gateView(this.state, id)!)
+  /** Lairs the player has found and not yet cleared, nearest raid first. */
+  openLairViews(): LairView[] {
+    return openLairs(this.state)
+      .map((id) => lairView(this.state, id)!)
       .sort((a, b) => (a.nextRaidAt ?? Infinity) - (b.nextRaidAt ?? Infinity));
   }
 
-  gateFor(ruinId: RuinId): GateView | null {
-    return gateView(this.state, ruinId);
+  lairFor(lairId: LairId): LairView | null {
+    return lairView(this.state, lairId);
   }
 
-  gateIsCleared(ruinId: RuinId): boolean {
-    return gateIsCleared(this.state, ruinId);
+  lairIsCleared(lairId: LairId): boolean {
+    return lairIsCleared(this.state, lairId);
   }
 
   /**
@@ -3039,7 +3039,7 @@ export class Game {
    * the hill, or what the last one took, and waits to be tapped.
    */
   raidWidget(): {
-    ruinId: RuinId; creature: string; raidsAt: number | null; others: number;
+    lairId: LairId; creature: string; raidsAt: number | null; others: number;
     took: Wallet | null; reports: number;
   } | null {
     if (this.state.raidReports.length > 0) {
@@ -3052,22 +3052,22 @@ export class Game {
         }
       }
       return {
-        ruinId: last.ruinId,
-        creature: gateCreature(last.ruinId),
+        lairId: last.lairId,
+        creature: lairCreature(last.lairId),
         raidsAt: null,
         others: 0,
         took,
         reports: this.state.raidReports.length,
       };
     }
-    const soonest = nextGateToRaid(this.state);
+    const soonest = nextLairToRaid(this.state);
     if (soonest === null) return null;
-    const gate = this.gateFor(soonest)!;
+    const lair = this.lairFor(soonest)!;
     return {
-      ruinId: soonest,
-      creature: gate.creature,
-      raidsAt: gate.nextRaidAt,
-      others: this.openGateViews().filter((g) => g.nextRaidAt !== null).length - 1,
+      lairId: soonest,
+      creature: lair.creature,
+      raidsAt: lair.nextRaidAt,
+      others: this.openLairViews().filter((g) => g.nextRaidAt !== null).length - 1,
       took: null,
       reports: 0,
     };
@@ -3078,55 +3078,55 @@ export class Game {
     this.notify();
   }
 
-  /** Fly to a ruin and open its card. The widget's only action, and the
+  /** Fly to a lair and open its card. The widget's only action, and the
    *  quest chain's when it points at a garrison. */
-  showRuin(ruinId: RuinId): void {
+  showLair(lairId: LairId): void {
     this.setOverlay(null);
-    this.inspectedSite = RUINS[ruinId].location;
+    this.inspectedSite = LAIRS[lairId].location;
     this.inspectedDistrictId = null;
-    this.camera.centerOnCell(RUINS[ruinId].location);
+    this.camera.centerOnCell(LAIRS[lairId].location);
     this.notify();
   }
 
-  /** Open the battle sheet on a gate. A hero ALONE is a legal board here, so
+  /** Open the battle sheet on a lair. A hero ALONE is a legal board here, so
    *  this never opens pre-blocked for want of an army. */
-  openGate(ruinId: RuinId): void {
-    this.gateRuin = ruinId;
-    // A gate resolves on entry, so nobody is busy: the roster is the party.
+  openLair(lairId: LairId): void {
+    this.lairId = lairId;
+    // A lair resolves on entry, so nobody is busy: the roster is the party.
     this.partyHeroes = this.state.heroes.owned.slice(0, heroSlots(this.state));
-    this.prefillParty(RUINS[ruinId].guard.threat);
-    this.setOverlay('gate');
+    this.prefillParty(LAIRS[lairId].guard.threat);
+    this.setOverlay('lair');
   }
 
-  gatePreview(): GatePreview | null {
-    if (this.gateRuin === null) return null;
-    return previewGate(this.state, this.gateRuin, this.partyHeroes, this.expeditionParty);
+  lairPreview(): LairPreview | null {
+    if (this.lairId === null) return null;
+    return previewLair(this.state, this.lairId, this.partyHeroes, this.expeditionParty);
   }
 
   /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
    *  it warns on the sheet and lets the player go anyway. */
-  gateBlockText(): string | null {
-    if (this.gateRuin === null) return 'No gate chosen';
-    const block = gateBlock(
-      this.state, this.map, this.gateRuin, this.partyHeroes, this.expeditionParty);
-    return block === null ? null : GATE_BLOCK_TEXT[block];
+  lairBlockText(): string | null {
+    if (this.lairId === null) return 'No lair chosen';
+    const block = lairBlock(
+      this.state, this.map, this.lairId, this.partyHeroes, this.expeditionParty);
+    return block === null ? null : LAIR_BLOCK_TEXT[block];
   }
 
-  doClearGate(): void {
-    if (this.gateRuin === null || this.partyHeroes.length === 0) return;
-    const ruinId = this.gateRuin;
-    const report = attemptGate(
-      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty);
+  doAttackLair(): void {
+    if (this.lairId === null || this.partyHeroes.length === 0) return;
+    const lairId = this.lairId;
+    const report = attackLair(
+      this.state, this.map, lairId, this.partyHeroes, this.expeditionParty);
     if (report.result === 'Cleared') {
       this.setOverlay(null);
-      this.gateRuin = null;
+      this.lairId = null;
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(report.supplies) as CurrencyId[]);
       this.reconcileParty();
       this.notify();
       return;
     } else if (report.log === null) {
-      this.toast(GATE_BLOCK_TEXT[report.result as GateBlock]);
+      this.toast(LAIR_BLOCK_TEXT[report.result as LairBlock]);
       this.reconcileParty();
       this.notify();
       return;
@@ -3135,9 +3135,9 @@ export class Game {
     // What the garrison was holding comes back as the prize sequence, so the
     // hoard arrives as things rather than as a sentence.
     this.openBattle(report.log!, {
-      title: `${gateView(this.state, ruinId)?.creature ?? 'A warband'} at the gate`,
-      subtitle: RUINS[ruinId].name,
-      // The hoard, then the first-clear Knowledge: a gate falls once, and
+      title: LAIRS[lairId].name,
+      subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
+      // The hoard, then the first-clear Knowledge: a lair falls once, and
       // this is everything it pays (Docs/proposals/lairs.md §5).
       prizes: report.result === 'Cleared'
         ? walletPrizes({ ...report.hoard, Knowledge: report.knowledge }) : [],
@@ -3151,7 +3151,7 @@ export class Game {
   // a card fills the first free slot with as much as it legally can. Nothing
   // here is a stepper: the player picks a TYPE and the game works out the
   // count, which is the whole difference between composing a party and doing
-  // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
+  // arithmetic (Docs/features/11a-lairs-ui.md §2.6).
 
   /**
    * Put the board back in step with the roster.
@@ -4143,7 +4143,7 @@ function resourceBanner(currency: CurrencyId): Banner {
 }
 
 /**
- * The card for a landmark or ruin coming into view for the first time.
+ * The card for a landmark or lair coming into view for the first time.
  *
  * Sighted, not reached: the fog only has to have thinned enough to make it
  * out. That is the moment it becomes a destination, and a destination the
@@ -4166,14 +4166,14 @@ function siteBanner(id: string): Banner | null {
       tone: 'sky',
     };
   }
-  const ruin = Object.values(RUINS).find((r) => r.id === id);
-  if (ruin) {
+  const lair = Object.values(LAIRS).find((r) => r.id === id);
+  if (lair) {
     return {
-      title: 'Ruins sighted!',
-      icon: ruin.glyph,
-      name: ruin.name,
-      desc: ruin.description,
-      sprite: ruin.sprite,
+      title: 'Lair sighted!',
+      icon: lair.glyph,
+      name: lair.name,
+      desc: lair.description,
+      sprite: lair.sprite,
       tone: 'gold',
     };
   }
@@ -4410,11 +4410,11 @@ const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) a
   .filter(([, n]) => n > 0)
   .map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount }));
 
-/** Why a gate attempt is refused. A power shortfall is NOT one of these: it
+/** Why a lair attack is refused. A power shortfall is NOT one of these: it
  *  warns on the sheet and the player may go anyway. */
-const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
-  RuinNotFound: 'Clear a path to the ruin first',
-  AlreadyCleared: 'That gate is already down',
+const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
+  LairNotFound: 'Clear a path to the lair first',
+  AlreadyCleared: 'That lair is already cleared',
   NoHero: 'Pick a hero to lead them',
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
@@ -4422,7 +4422,7 @@ const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
   NotEnoughSupplies: 'Not enough supplies to march',
 };
 
-/** How well a unit type answers a gate's threat — used only to pre-fill a
+/** How well a unit type answers a lair's threat — used only to pre-fill a
  *  sensible party, never to decide anything. */
 const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
   typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;

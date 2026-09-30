@@ -9,7 +9,7 @@ import {
   QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { clearedGateCount } from './gates';
+import { clearedLairCount } from './lairs';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
 import {
@@ -82,8 +82,8 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.army.length;
     case 'ClaimLandmarks':
       return Object.keys(state.landmarks.claimed).length;
-    case 'ClearGarrisons':
-      return clearedGateCount(state);
+    case 'ClearLairs':
+      return clearedLairCount(state);
     case 'OwnArtifacts':
       // A relic arrives by finishing its album, so this counts albums
       // finished for the first time (Docs/open-questions.md OQ-91).

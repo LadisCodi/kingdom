@@ -1,9 +1,9 @@
-// The presenter's half of a gate attempt: what the player actually taps.
+// The presenter's half of a lair attack: what the player actually taps.
 //
-// The sim tests prove the rules; these prove the ROUTE — that tapping a gate
+// The sim tests prove the rules; these prove the ROUTE — that tapping a lair
 // opens a sheet with a party already in it, that the fight resolves on the
-// tap, and that a cleared gate closes the sheet and pays its first-clear lump
-// (Docs/proposals/lairs.md §5). A ruin is its gate now: there is nothing
+// tap, and that a cleared lair closes the sheet and pays its first-clear lump
+// (Docs/proposals/lairs.md §5). A lair is one fight: there is nothing
 // behind it to walk on into.
 //
 // Node env, no jsdom: everything here is presenter state, which is exactly
@@ -11,23 +11,23 @@
 import { describe, expect, it } from 'vitest';
 import { armyCap } from '../src/sim/army';
 import { grantArtifactLevel, ownsArtifact } from '../src/sim/artifacts';
-import { RUINS, UNITS } from '../src/sim/data/definitions';
+import { LAIRS, UNITS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
   addAllTrainers, freshGame, freshPresenter, fund, reveal,
 } from './helpers';
 
-const BARROW = 'HollowBarrow' as const;
+const ORCS = 'Orcs' as const;
 
-/** A kingdom with a company under arms and the Barrow's gate standing —
- *  armed but not counting: the clock is tests/gates.test.ts's. */
+/** A kingdom with a company under arms and the orc lair standing —
+ *  armed but not counting: the clock is tests/lairs.test.ts's. */
 function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
   fund(state, { Gold: 500_000, Food: 200_000, Wood: 200_000, Stone: 50_000, Iron: 500 });
-  reveal(state, [RUINS[BARROW].location]);
-  state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+  reveal(state, [LAIRS[ORCS].location]);
+  state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -36,62 +36,62 @@ function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameSt
   return state;
 }
 
-describe('the route to a gate', () => {
+describe('the route to a lair', () => {
   it('opens the sheet with a sensible party already in it', () => {
     const game = freshPresenter(ready({ Warrior: 60 }));
-    game.openGate(BARROW);
-    expect(game.openOverlay).toBe('gate');
+    game.openLair(ORCS);
+    expect(game.openOverlay).toBe('lair');
     expect(game.partyHeroes.length).toBeGreaterThan(0);
     // A player should never have to assemble a party from nothing just to see
-    // what a gate would take.
+    // what a lair would take.
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 60 }]);
-    expect(game.gateBlockText()).toBeNull();
+    expect(game.lairBlockText()).toBeNull();
   });
 
   it('never pre-fills more unit types than the board has slots', () => {
     const game = freshPresenter(ready({ Warrior: 30, Archer: 30, Lancer: 30, Cavalry: 30 }));
-    game.openGate(BARROW);
+    game.openLair(ORCS);
     expect(game.expeditionParty.length).toBeLessThanOrEqual(game.troopSlotsOpen());
     expect(game.expeditionParty.length).toBeGreaterThan(1);
-    expect(game.gateBlockText()).toBeNull();
+    expect(game.lairBlockText()).toBeNull();
   });
 
   it('proposes only what the player actually owns', () => {
     const state = ready({ Warrior: 20, Archer: 20 });
     const game = freshPresenter(state);
-    game.openGate(BARROW);
+    game.openLair(ORCS);
     for (const slot of game.expeditionParty) {
       expect(slot.count).toBeLessThanOrEqual(UNITS[slot.unitId].squadSize);
     }
     expect(state.army.length).toBeLessThanOrEqual(armyCap(state));
-    expect(game.gateBlockText()).toBeNull();
+    expect(game.lairBlockText()).toBeNull();
   });
 });
 
-describe('clearing the gate', () => {
+describe('clearing the lair', () => {
   it('resolves on the tap, closes the sheet and pays the first-clear lump', () => {
     const game = freshPresenter(ready());
-    game.openGate(BARROW);
+    game.openLair(ORCS);
     const lump = firstClearLump(game.state);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
-    expect(game.gatePreview()!.knowledge).toBe(lump);
-    game.doClearGate();
-    expect(game.gateIsCleared(BARROW)).toBe(true);
+    expect(game.lairPreview()!.knowledge).toBe(lump);
+    game.doAttackLair();
+    expect(game.lairIsCleared(ORCS)).toBe(true);
     expect(game.openOverlay).toBeNull();
-    expect(game.gateRuin).toBeNull();
+    expect(game.lairId).toBeNull();
     expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge + lump);
   });
 
   it('spends the supplies on the way in, whatever the fight does', () => {
     const state = ready({ Warrior: 2 });
-    reveal(state, [RUINS.StarObservatory.location]);
-    state.gates.StarObservatory = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    reveal(state, [LAIRS.Drake.location]);
+    state.lairs.Drake = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
     const game = freshPresenter(state);
-    game.openGate('StarObservatory');
-    const preview = game.gatePreview()!;
+    game.openLair('Drake');
+    const preview = game.lairPreview()!;
     const food = getWallet(game.state.city.wallet, 'Food');
-    game.doClearGate();
-    expect(game.gateIsCleared('StarObservatory')).toBe(false);
+    game.doAttackLair();
+    expect(game.lairIsCleared('Drake')).toBe(false);
     expect(getWallet(game.state.city.wallet, 'Food'))
       .toBe(food - (preview.supplies.Food ?? 0));
   });
@@ -100,7 +100,7 @@ describe('clearing the gate', () => {
 // Magic used to be hidden from the HUD until the player had met it — a gauge
 // with nothing to spend on was exactly the spreadsheet chrome the redesign
 // killed. Mana now pays for every tap, so hiding it would hide the reason a
-// tap refused: the gate is gone and the gauge is unconditional.
+// tap refused: the lair is gone and the gauge is unconditional.
 describe('the Mana gauge', () => {
   it('is readable from the first minute, with nothing met yet', () => {
     const game = freshPresenter(freshGame());
@@ -122,25 +122,25 @@ describe('the Mana gauge', () => {
 });
 
 // A relic never leaves the kingdom (Docs/features/09-relics.md §1): owning
-// one changes nothing about a gate attempt, in either direction.
+// one changes nothing about a lair attack, in either direction.
 describe('a relic the player owns is no part of a fight', () => {
-  it('does not block, arm, or otherwise reach the gate', () => {
+  it('does not block, arm, or otherwise reach the lair', () => {
     const state = ready();
     const game = freshPresenter(state);
-    game.openGate(BARROW);
-    const bare = game.gatePreview()!.stats.atk;
+    game.openLair(ORCS);
+    const bare = game.lairPreview()!.stats.atk;
     grantArtifactLevel(game.state, 'ForemansSigil');
-    expect(game.gateBlockText()).toBeNull();
-    expect(game.gatePreview()!.stats.atk).toBe(bare);
+    expect(game.lairBlockText()).toBeNull();
+    expect(game.lairPreview()!.stats.atk).toBe(bare);
   });
 
-  it('is still the kingdom\'s after the gate is fought', () => {
+  it('is still the kingdom\'s after the lair is fought', () => {
     const state = ready();
     grantArtifactLevel(state, 'ForemansSigil');
     const game = freshPresenter(state);
-    game.openGate(BARROW);
-    game.doClearGate();
-    expect(game.gateIsCleared(BARROW)).toBe(true);
+    game.openLair(ORCS);
+    game.doAttackLair();
+    expect(game.lairIsCleared(ORCS)).toBe(true);
     expect(ownsArtifact(game.state, 'ForemansSigil')).toBe(true);
   });
 });

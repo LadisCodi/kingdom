@@ -104,8 +104,8 @@ export function placementBlock(
   for (const c of footprint) {
     if (!cellExists(map, c)) return 'OffMap';
     if (state.features[coordKey(c)]) return 'HasFeature';
-    // Landmarks and ruins are content, not building ground: paving over a
-    // ruin would silently delete a whole dungeon.
+    // Landmarks and lairs are content, not building ground: paving over a
+    // lair would silently delete a whole dungeon.
     if (cellHasSite(c)) return 'HasSite';
     if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     const sitting = districtAt(state, c);

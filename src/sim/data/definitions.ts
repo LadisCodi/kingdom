@@ -4,7 +4,7 @@
 // data editor (`?dev=data`, Docs/plans/data-editor.md).
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 //
-// MAP content is the exception: terrain, features, landmarks and ruins are
+// MAP content is the exception: terrain, features, landmarks and lairs are
 // authored by coordinate, so they live in region-map.json and are edited in
 // the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
@@ -20,7 +20,7 @@ import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
+  LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
   Wallet,
 } from '../state';
 
@@ -448,7 +448,7 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
-  | 'ClaimLandmarks' | 'ClearGarrisons' | 'OwnArtifacts'
+  | 'ClaimLandmarks' | 'ClearLairs' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
@@ -781,7 +781,7 @@ export interface TomeDef {
  *
  * All three are open from the first minute. A book used to be opened by a
  * granted cover page — Civics with the kingdom, Magic on the first paid
- * reveal, Warfare on the first ruin in sight — and the card existed only to
+ * reveal, Warfare on the first lair in sight — and the card existed only to
  * be the marker. What paces a book is its era bars, which ask for revealed
  * cells, so the marker was doing nothing the bars were not.
  */
@@ -1064,7 +1064,7 @@ export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSt
  */
 export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
 
-/** The Knowledge bar — its drip, its cap, what a landmark and a ruin
+/** The Knowledge bar — its drip, its cap, what a landmark and a lair
  *  pay into it, and what a point costs to buy (07-research.md §3). */
 export const KNOWLEDGE = balance.knowledge;
 
@@ -1389,14 +1389,13 @@ export const ARTIFACT_ORDER: ArtifactId[] = [
   'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
 
-// ------------------------------------------------------------------- ruins
+// ------------------------------------------------------------------- lairs
 
 /**
- * A ruin is its GATE: one garrison, one fight, cleared once
- * (Docs/proposals/lairs.md §1). The depths that stood behind it are retired.
+ * A lair is one garrison, one fight, cleared once (Docs/proposals/lairs.md §1).
  */
-export interface RuinDef {
-  id: RuinId;
+export interface LairDef {
+  id: LairId;
   name: string;
   description: string;
   glyph: string;
@@ -1404,22 +1403,19 @@ export interface RuinDef {
   location: Coord;
   /** How many cells a side it occupies, anchored at `location`. 1 unless
    *  stated (Docs/features/01-map-and-fog.md §3.1). Authored rather than
-   *  grouped: a ruin is placed, not painted. */
+   *  grouped: a lair is placed, not painted. */
   size: number;
   tier: number;
-  /** The gate that holds the entrance (Docs/features/18-garrisons-and-raids.md). */
+  /** The garrison that holds it (Docs/features/18-garrisons-and-raids.md). */
   guard: GuardDef;
 }
 
 /**
- * The garrison on a ruin's doorstep, and its clock.
+ * The garrison in a lair, and its clock.
  *
  * `threat` is a unit type or 'Any', and the creature is DERIVED from it —
- * there is no second list to keep in step (§2). It is also the ruin's
- * affinity, so the first fight teaches the matchup the whole ruin is built
- * on. `power` is the gate's budget, authored BELOW the ruin's first room:
- * the gate is easier than the room it guards, because it is the room the
- * player is pushed into on a clock.
+ * there is no second list to keep in step (§2). It is also the lair's
+ * affinity, so the fight teaches the matchup. `power` is the fight's budget.
  */
 export interface GuardDef {
   threat: UnitId | 'Any';
@@ -1430,54 +1426,54 @@ export interface GuardDef {
   periodMinutes: number;
 }
 
-const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
-  HollowBarrow: {
-    name: 'Hollow Barrow', glyph: '⚱️', sprite: 'ruin_barrow',
-    description: 'A grave-mound with the turf still on it. Something down there is awake.',
+const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
+  Orcs: {
+    name: 'Orc Lair', glyph: '👹', sprite: 'lair_orcs',
+    description: 'Orcs dug in on the hillside, and bored of waiting.',
   },
-  SunkenChapel: {
-    name: 'Sunken Chapel', glyph: '⛪', sprite: 'ruin_chapel',
-    description: 'Half-drowned pews and a bell that rings when nobody is near it.',
+  Harpies: {
+    name: 'Harpy Roost', glyph: '🦅', sprite: 'lair_harpies',
+    description: 'Harpies on the high rocks, watching everything that shines.',
   },
-  DrownedIronworks: {
-    name: 'Drowned Ironworks', glyph: '🏚️', sprite: 'ruin_ironworks',
-    description: 'The furnaces went out an age ago. The hammers did not.',
+  Goblins: {
+    name: 'Goblin Den', glyph: '👺', sprite: 'lair_goblins',
+    description: 'Goblins with sharp sticks and sharper ideas about your stores.',
   },
-  CountingHouse: {
-    name: 'The Counting House', glyph: '🏦', sprite: 'ruin_counting_house',
-    description: 'Ledgers stacked to the ceiling, every column still balancing itself.',
+  WolfRiders: {
+    name: 'Wolf-rider Camp', glyph: '🐺', sprite: 'lair_wolfriders',
+    description: 'Wolf riders who reach your walls before the dust of their riding does.',
   },
-  StarObservatory: {
-    name: 'Star Observatory', glyph: '🔭', sprite: 'ruin_observatory',
-    description: 'A brass eye aimed at a sky that has since moved on.',
+  Drake: {
+    name: "Drake's Lair", glyph: '🐉', sprite: 'lair_drake',
+    description: 'A drake asleep on a hoard it means to make larger.',
   },
 };
 
-const ruinBalance = regionMap.ruins as Record<RuinId, {
+const lairBalance = regionMap.lairs as Record<LairId, {
   x: number; y: number; tier: number;
   guard: { threat: string; power: number; warningMinutes: number; periodMinutes: number };
 }>;
 
-/** Every ruin the code knows about. RuinId is a union, so the roster is fixed
- *  in code and the map editor may move and retune a ruin but not add one. */
-export const RUIN_ORDER: RuinId[] = Object.keys(ruinContent) as RuinId[];
+/** Every lair the code knows about. LairId is a union, so the roster is fixed
+ *  in code and the map editor may move and retune a lair but not add one. */
+export const LAIR_ORDER: LairId[] = Object.keys(lairContent) as LairId[];
 
-export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
-  RUIN_ORDER.map((id) => {
-    const b = ruinBalance[id];
-    // A hand-edit that drops a ruin would otherwise white-screen the app on a
+export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
+  LAIR_ORDER.map((id) => {
+    const b = lairBalance[id];
+    // A hand-edit that drops a lair would otherwise white-screen the app on a
     // TypeError three frames from here.
-    if (!b) throw new Error(`region-map.json is missing the ruin "${id}"`);
+    if (!b) throw new Error(`region-map.json is missing the lair "${id}"`);
     return [id, {
       id,
-      ...ruinContent[id],
+      ...lairContent[id],
       location: { x: b.x, y: b.y },
       size: (b as { size?: number }).size ?? 1,
       tier: b.tier,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
   }),
-) as Record<RuinId, RuinDef>;
+) as Record<LairId, LairDef>;
 
 // ------------------------------------------------------------------ heroes
 
@@ -1606,13 +1602,13 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
     traitText: 'Brings back half again as much Knowledge',
   },
   RelicHunter: {
-    name: 'The Relic-hunter', title: 'Knows a good ruin by its smell', glyph: '🗝️',
+    name: 'The Relic-hunter', title: 'Knows a good lair by its smell', glyph: '🗝️',
     sprite: 'hero_relic_hunter',
     traitText: 'Finds half again as many Fragments',
   },
   Scout: {
     name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
-    traitText: 'Knows the short road — a gate costs 40% less to supply',
+    traitText: 'Knows the short road — a lair costs 40% less to supply',
   },
   Adventurer: {
     name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
@@ -1627,7 +1623,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   BeastkinHunter: {
     name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
     sprite: 'hero_beastkin_hunter',
-    traitText: 'Lives off the land — a gate costs 15% less to supply',
+    traitText: 'Lives off the land — a lair costs 15% less to supply',
   },
   Cleric: {
     name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
@@ -1717,7 +1713,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Spymaster: {
     name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
     sprite: 'hero_spymaster',
-    traitText: 'Had the road scouted already — a gate costs 25% less to supply',
+    traitText: 'Had the road scouted already — a lair costs 25% less to supply',
   },
   ElectricArcher: {
     name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
@@ -1725,7 +1721,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
     traitText: 'Brings back 50% more Stardust',
   },
   GoldenDragon: {
-    name: 'The Golden Dragon', title: 'Older than the ruin, and bored of it', glyph: '🐉',
+    name: 'The Golden Dragon', title: 'Older than the lair, and bored of it', glyph: '🐉',
     sprite: 'hero_golden_dragon',
     traitText: 'The whole party fights harder to stay standing (+45% defence)',
   },
@@ -1837,14 +1833,14 @@ export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
 
 export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
 
-/** A ruin's first-clear Knowledge. */
+/** A lair's first-clear Knowledge. */
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
 
 /**
- * What a garrison is worth per ruin TIER: how many seconds of the city's own
+ * What a garrison is worth per lair TIER: how many seconds of the city's own
  * production a raid takes of each material, and what clearing that tier's
- * gate costs in supplies. Everything ELSE about a gate — its creature, its
+ * lair costs in supplies. Everything ELSE about a lair — its creature, its
  * power and its two counters — is authored by coordinate in `?dev=map`,
  * because it belongs to the site rather than to the tier
  * (Docs/features/18-garrisons-and-raids.md §8).
@@ -1857,7 +1853,7 @@ export interface GarrisonDef {
 
 export const GARRISONS = balance.garrisons as GarrisonDef[];
 
-/** The tier row, or the deepest one authored — a ruin can never fall off the
+/** The tier row, or the deepest one authored — a lair can never fall off the
  *  end of the table and take nothing. */
 export const garrisonForTier = (tier: number): GarrisonDef =>
   GARRISONS.find((g) => g.tier === tier) ?? GARRISONS[GARRISONS.length - 1];
@@ -2066,4 +2062,7 @@ export const GAME_VERSION = '0.1.0';
 // into a technology and the count bought with Gold are new, additive fields.
 // v63: the depths behind the gate are retired — a ruin is its gate. The
 // migrator drops `kingdom.ruins` (rooms, bottomed ruins, deepest depth).
-export const SAVE_VERSION = 63;
+// v64: ruins and gates are lairs. `kingdom.gates` becomes `kingdom.lairs`,
+// `RuinID` becomes `LairID`, and every persisted place id becomes its
+// creature's (HollowBarrow → Orcs, …), discovery keys included.
+export const SAVE_VERSION = 64;

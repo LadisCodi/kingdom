@@ -31,7 +31,7 @@
           "doc": "The bar. The drip stops while the kingdom holds this much or more; lumps and purchases land over it."
         },
         "landmarkClaimLump": { "type": "int", "min": 0, "doc": "Knowledge a landmark pays once, when it is claimed." },
-        "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every ruin's first-clear lump." },
+        "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every lair's first-clear lump." },
         "goldPriceBase": {
           "type": "int",
           "min": 1,

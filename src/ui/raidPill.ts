@@ -1,19 +1,19 @@
 // The raid widget (Docs/features/18-garrisons-and-raids.md §7).
 //
 // A tab on the right edge, in the slot the Mana offer uses, saying which
-// garrison is closest to walking down the hill — *Orcs at the Hollow Barrow
-// raid in 27 min* — and, after one has, what it took.
+// lair is closest to walking down the hill — *Orcs raid in 27 min*, over the
+// lair's name — and, after one has, what it took.
 //
 // IT NEVER OPENS ITSELF. A raid is a bill on a clock, not an interruption, so
 // the loudest this feature ever gets is a tab at the edge of the map with a
-// countdown on it. Tapping it goes to the ruin, which is the only answer the
-// game has: clear the gate.
+// countdown on it. Tapping it goes to the lair, which is the only answer the
+// game has: clear the lair.
 //
 // Built once and mutated, like the quest pill and the ad tab — a
 // `replaceChildren` every second makes the element new, and a new element
 // restarts its own slide-in animation.
 
-import { RUINS } from '../sim/data/definitions';
+import { LAIRS } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { iconEl } from './kit';
@@ -22,7 +22,7 @@ export function mountRaidPill(game: Game, root: HTMLElement): void {
   const line = el('div', { class: 'raid-tab-line' }, '');
   const sub = el('div', { class: 'raid-tab-sub' }, '');
   const tab = el('button', {
-    class: 'raid-tab', type: 'button', 'aria-label': 'A garrison is counting down',
+    class: 'raid-tab', type: 'button', 'aria-label': 'A lair is counting down',
   },
     el('div', { class: 'raid-tab-mark' }, iconEl('army', { size: 'md' })),
     el('div', { class: 'raid-tab-body' }, line, sub),
@@ -31,9 +31,9 @@ export function mountRaidPill(game: Game, root: HTMLElement): void {
     const widget = game.raidWidget();
     if (widget === null) return;
     // A report is news the player has now read; the countdown is a place to
-    // go. Either way the ruin is what they want to look at.
+    // go. Either way the lair is what they want to look at.
     if (widget.took !== null) game.dismissRaids();
-    game.showRuin(widget.ruinId);
+    game.showLair(widget.lairId);
   });
   root.replaceChildren(tab);
 
@@ -48,7 +48,7 @@ export function mountRaidPill(game: Game, root: HTMLElement): void {
       wasShowing = false;
       return;
     }
-    const name = RUINS[widget!.ruinId].name;
+    const name = LAIRS[widget!.lairId].name;
     if (widget!.took !== null) {
       // The two biggest, then a count. A slab is one line wide and four
       // materials do not fit in it — and "699 Gold" is the number the player

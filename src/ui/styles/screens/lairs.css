@@ -1,5 +1,5 @@
-/* The gate (Docs/features/18-garrisons-and-raids.md §7): the edge widget with
- * the countdown, the band on the ruin card, and the battle sheet the band
+/* The lair (Docs/features/18-garrisons-and-raids.md §7): the edge widget with
+ * the countdown, the band on the lair card, and the battle sheet the band
  * opens. The party pickers inside that sheet are screens/battle.css. */
 
 /* ------------------------------------------------------------ the widget */
@@ -28,7 +28,7 @@
   cursor: pointer;
   transform: translateX(110%);
 }
-/* The chevron: the tab opens the ruin (M12). */
+/* The chevron: the tab opens the lair (M12). */
 .raid-tab::after {
   content: '';
   position: absolute;
@@ -89,7 +89,7 @@
 
 /* -------------------------------------------------- the band on the card */
 
-.site-gate {
+.site-lair {
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 8);
@@ -100,8 +100,8 @@
   background: var(--parchment-shade);
 }
 /* The creature's mark stands in a small vignette at the left (M11). */
-.site-gate-head { display: flex; align-items: center; gap: calc(var(--px) * 12); }
-.site-gate-head > .icon {
+.site-lair-head { display: flex; align-items: center; gap: calc(var(--px) * 12); }
+.site-lair-head > .icon {
   --icon-size: calc(var(--px) * 36);
   flex: none;
   margin: calc(var(--px) * 10);
@@ -112,23 +112,23 @@
 }
 /* The body face, bold: the display face is legal only at --text-title
    (tests/fonts.test.ts), and a band heading is not a title. */
-.site-gate-name {
+.site-lair-name {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
   font-size: calc(var(--px) * 18);
   line-height: 1.15;
   color: var(--ink);
 }
-.site-gate-sub,
-.site-gate-trips,
-.site-gate-hoard {
+.site-lair-sub,
+.site-lair-trips,
+.site-lair-hoard {
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
   color: var(--ink-soft);
 }
-.site-gate-trips { display: flex; align-items: center; gap: calc(var(--px) * 6); }
-.site-gate-hoard { color: var(--ink); }
+.site-lair-trips { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.site-lair-hoard { color: var(--ink); }
 
-/* The room sheet on a gate is the BATTLE screen (screens/battle.css); what
- * the gate adds to it is the clock, and that rides in the dynamic band. */
+/* The room sheet on a lair is the BATTLE screen (screens/battle.css); what
+ * the lair adds to it is the clock, and that rides in the dynamic band. */

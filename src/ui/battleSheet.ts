@@ -1,9 +1,9 @@
 // The screen before a fight (Docs/features/11a-ruins-ui.md §2.5, §2.6).
 //
-// One screen serves every fight in the game — a gate today, a ruin's rooms
-// when they land — so it takes a DESCRIPTOR rather than a ruin: what the
+// One screen serves every fight in the game — a lair today, whatever else
+// fights tomorrow — so it takes a DESCRIPTOR rather than a lair: what the
 // battle is called, what is standing there, what the fight pays, and what the
-// button says. The caller (`gateSheet.ts`) knows about garrisons; this file
+// button says. The caller (`lairSheet.ts`) knows about garrisons; this file
 // knows about boards.
 //
 // THE SCREEN IS A BOARD, NOT A FORM. The party used to be four steppers, one
@@ -56,7 +56,7 @@ export interface BattleView {
   enough: boolean;
   supplies: Wallet;
   /** What winning pays, as icon-and-amount chips. Empty is a legal state and
-   *  says so — a gate's reward is the ruin behind it. */
+   *  says so. */
   rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment' | 'pack'; label: string }>;
   /** One line under the chips: what winning is really for. */
   rewardNote?: string;

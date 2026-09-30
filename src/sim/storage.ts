@@ -9,7 +9,7 @@
 // there is no offline cap.
 //
 // What sits in a store is not the player's yet, which is why a raid takes
-// from here and never from the wallet (sim/gates.ts).
+// from here and never from the wallet (sim/lairs.ts).
 
 import { DISTRICTS, STORAGE, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';

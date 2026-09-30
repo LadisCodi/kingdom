@@ -1,22 +1,22 @@
-// The card for a map SITE — a landmark or a ruin.
+// The card for a map SITE — a landmark or a lair.
 //
 // These are what paid fog is FOR. A player who clears a distance-9 ring and
 // finds one more iron vein has learned that exploring is a treadmill; a player
-// who finds a shrine that pays Mana forever, or a garrison worth driving out,
+// who finds a shrine that pays Mana forever, or a lair worth clearing,
 // has learned the opposite. So the card's job is to make the reward
 // legible BEFORE the player spends anything — what it gives, what it costs,
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  FOG, LANDMARK_ART, MANA, type LandmarkDef, type RuinDef,
+  FOG, LANDMARK_ART, MANA, type LandmarkDef, type LairDef,
 } from '../sim/data/definitions';
-import type { GateView } from '../sim/gates';
+import type { LairView } from '../sim/lairs';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
-import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { landmarkDefAt, lairDefAt } from '../sim/sites';
 import { el, formatDuration } from './format';
 import { action, iconEl, panel, stat } from './kit';
 
@@ -81,65 +81,64 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
 }
 
 /**
- * The gate, above everything else the ruin has to say.
+ * The lair's garrison, above everything else the card has to say.
  *
- * While it stands, the ruin behind it is not the decision — the garrison is,
- * and it is on a clock. So the band carries the creature, the countdown, how
+ * While it stands, the garrison is the decision, and it is on a clock. So the band carries the creature, the countdown, how
  * many trips are left in them and what they are holding, and the only button
  * on the card is the one that goes at them
  * (Docs/features/18-garrisons-and-raids.md §7).
  */
-function gateBand(game: Game, def: RuinDef, gate: GateView): HTMLElement {
-  const left = gate.nextRaidAt === null
-    ? null : Math.max(0, (gate.nextRaidAt - game.now()) / 1000);
-  const hoard = Object.entries(gate.hoard).filter(([, n]) => n > 0);
+function lairBand(game: Game, def: LairDef, lair: LairView): HTMLElement {
+  const left = lair.nextRaidAt === null
+    ? null : Math.max(0, (lair.nextRaidAt - game.now()) / 1000);
+  const hoard = Object.entries(lair.hoard).filter(([, n]) => n > 0);
 
-  const band = el('div', { class: 'site-gate' },
-    el('div', { class: 'site-gate-head' },
-      iconEl(gate.threat === 'Any' ? 'army' : gate.threat, { size: 'md' }),
+  const band = el('div', { class: 'site-lair' },
+    el('div', { class: 'site-lair-head' },
+      iconEl(lair.threat === 'Any' ? 'army' : lair.threat, { size: 'md' }),
       el('div', {},
-        el('div', { class: 'site-gate-name' }, `${gate.creature} hold the way in`),
-        el('div', { class: 'site-gate-sub' }, left !== null
+        el('div', { class: 'site-lair-name' }, `${lair.creature} hold the way in`),
+        el('div', { class: 'site-lair-sub' }, left !== null
           ? `They raid the city in ${formatDuration(left)}`
           : 'They have taken all they came for'))),
   );
 
   if (left !== null) {
-    band.append(el('div', { class: 'site-gate-trips' },
+    band.append(el('div', { class: 'site-lair-trips' },
       iconEl('hourglass', { size: 'sm' }),
-      `${gate.tripsLeft} raid${gate.tripsLeft === 1 ? '' : 's'} left in them, `
+      `${lair.tripsLeft} raid${lair.tripsLeft === 1 ? '' : 's'} left in them, `
       + 'and each takes a slice of what the city has banked.'));
   }
   if (hoard.length > 0) {
-    band.append(el('div', { class: 'site-gate-hoard' },
+    band.append(el('div', { class: 'site-lair-hoard' },
       hoard.map(([c, n]) => `${n} ${c}`).join(', ')
       + ' — cleared, it all comes back.'));
   }
   band.append(action({
-    label: 'Clear the gate',
+    label: 'Clear the lair',
     kind: 'primary',
-    onClick: () => game.openGate(def.id),
+    onClick: () => game.openLair(def.id),
   }));
   return band;
 }
 
-function ruinCard(game: Game, def: RuinDef): HTMLElement {
+function lairCard(game: Game, def: LairDef): HTMLElement {
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
       art(def.sprite, def.glyph),
       el('div', {},
         el('div', { class: 'site-name' }, def.name),
-        el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
+        el('div', { class: 'site-kind' }, `Tier ${def.tier} lair`))),
     el('div', { class: 'site-desc' }, def.description),
   );
 
-  // The gate is the whole ruin: while the garrison stands it IS the card's
+  // The garrison is the whole lair: while it stands it IS the card's
   // decision, and once it has fallen there is nothing behind it
   // (Docs/proposals/lairs.md §1).
-  const gate = game.gateFor(def.id);
-  if (gate !== null && !gate.cleared) {
-    body.append(gateBand(game, def, gate));
-  } else if (gate?.cleared === true) {
+  const lair = game.lairFor(def.id);
+  if (lair !== null && !lair.cleared) {
+    body.append(lairBand(game, def, lair));
+  } else if (lair?.cleared === true) {
     body.append(el('div', { class: 'site-note' },
       iconEl('tick', { size: 'sm' }), 'Cleared. Nothing holds it now.'));
   }
@@ -150,7 +149,7 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
 export function renderSiteCard(game: Game, cell: Coord): HTMLElement | null {
   const landmark = landmarkDefAt(cell);
   if (landmark) return landmarkCard(game, landmark);
-  const ruin = ruinDefAt(cell);
-  if (ruin) return ruinCard(game, ruin);
+  const lair = lairDefAt(cell);
+  if (lair) return lairCard(game, lair);
   return null;
 }

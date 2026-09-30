@@ -123,8 +123,8 @@ export function questLine(quest: {
         : `Find ${count(n)} ${plural(n, featureName(target))}.`;
     case 'ClaimLandmarks':
       return `Claim ${count(n)} ${plural(n, 'landmark')}.`;
-    case 'ClearGarrisons':
-      return `Clear ${count(n)} ${plural(n, 'garrison')}.`;
+    case 'ClearLairs':
+      return `Clear ${count(n)} ${plural(n, 'lair')}.`;
     case 'OwnArtifacts':
       return `Own ${count(n)} ${plural(n, 'relic')}.`;
     case 'OwnHeroes':

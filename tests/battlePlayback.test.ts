@@ -8,22 +8,22 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { BATTLE_RESULT_DELAY_MS } from '../src/game';
-import { COMBAT, RUINS } from '../src/sim/data/definitions';
+import { COMBAT, LAIRS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
   addAllTrainers, freshGame, freshPresenter, fund, map, reveal, T0,
 } from './helpers';
 
-const BARROW = 'HollowBarrow' as const;
+const ORCS = 'Orcs' as const;
 
 function mustered(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
   fund(state, { Gold: 200_000, Food: 90_000, Wood: 90_000, Stone: 40_000 });
-  reveal(state, [RUINS[BARROW].location]);
+  reveal(state, [LAIRS[ORCS].location]);
   // Standing, and not counting: these are about the screen, not the clock.
-  state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -41,15 +41,15 @@ const atTheDoor = (units?: Partial<Record<UnitId, number>>) => {
   return { game, tick: (ms: number) => { clock += ms; game.advanceBattle(clock); } };
 };
 
-describe('a gate attempt opens the playback', () => {
+describe('a lair attack opens the playback', () => {
   it('resolves everything first, and only then starts the replay', () => {
     const { game } = atTheDoor();
-    game.openGate(BARROW);
+    game.openLair(ORCS);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
-    game.doClearGate();
-    // The gate is cleared and paid the instant the button is pressed: the
+    game.doAttackLair();
+    // The lair is cleared and paid the instant the button is pressed: the
     // screen is watching something that already happened.
-    expect(game.gateIsCleared(BARROW)).toBe(true);
+    expect(game.lairIsCleared(ORCS)).toBe(true);
     expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).not.toBe(knowledge);
     const battle = game.battle!;
     expect(battle.phase).toBe('playing');
@@ -60,8 +60,8 @@ describe('a gate attempt opens the playback', () => {
 
   it('walks playing → result → rewards → done on the clock', () => {
     const { game, tick } = atTheDoor();
-    game.openGate(BARROW);
-    game.doClearGate();
+    game.openLair(ORCS);
+    game.doAttackLair();
     const battle = game.battle!;
     const fight = battle.log.ticks * COMBAT.tickMs;
 
@@ -88,10 +88,10 @@ describe('a gate attempt opens the playback', () => {
     const { game, tick } = atTheDoor({ Warrior: 1 });
     // One soldier and a hero against the drake: the fight is lost before it
     // is watched, which is exactly what the screen must say.
-    reveal(game.state, [RUINS.StarObservatory.location]);
-    game.state.gates.StarObservatory = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
-    game.openGate('StarObservatory');
-    game.doClearGate();
+    reveal(game.state, [LAIRS.Drake.location]);
+    game.state.lairs.Drake = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    game.openLair('Drake');
+    game.doAttackLair();
     const battle = game.battle!;
     expect(battle.log.winner).toBe('theirs');
     expect(battle.prizes).toEqual([]);
@@ -100,10 +100,10 @@ describe('a gate attempt opens the playback', () => {
     expect(game.gachaReveal).toBeNull();
   });
 
-  it('closes the gate sheet behind a win', () => {
+  it('closes the lair sheet behind a win', () => {
     const { game, tick } = atTheDoor();
-    game.openGate(BARROW);
-    game.doClearGate();
+    game.openLair(ORCS);
+    game.doAttackLair();
     tick(game.battle!.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100);
     game.dismissGachaReveal();
     tick(0);
@@ -114,8 +114,8 @@ describe('a gate attempt opens the playback', () => {
 
   it('draws the tick the log is at, and never past its end', () => {
     const { game } = atTheDoor();
-    game.openGate(BARROW);
-    game.doClearGate();
+    game.openLair(ORCS);
+    game.doAttackLair();
     const battle = game.battle!;
     expect(game.battleTick(battle.startedAt)).toBe(0);
     expect(game.battleTick(battle.startedAt + 5 * COMBAT.tickMs)).toBe(5);
@@ -123,17 +123,17 @@ describe('a gate attempt opens the playback', () => {
   });
 });
 
-describe('the gate opens the same screen', () => {
+describe('the lair opens the same screen', () => {
   it('plays the fight, and deals the hoard and the first-clear lump', () => {
     const state = mustered();
-    advance(state, map, T0); // arm the gate
-    state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: { Gold: 40 }, cleared: false };
+    advance(state, map, T0); // arm the lair
+    state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: { Gold: 40 }, cleared: false };
     const game = freshPresenter(state);
     let clock = T0;
     game.now = () => clock;
-    game.openGate(BARROW);
+    game.openLair(ORCS);
     const lump = firstClearLump(game.state);
-    game.doClearGate();
+    game.doAttackLair();
     const battle = game.battle!;
     expect(battle.log.winner).toBe('ours');
     expect(battle.prizes).toEqual([

@@ -55,7 +55,7 @@ export type UiIconName =
   | 'bed'
   // Four destinations that were borrowing a picture of something else. `relics`
   // is the tab, which wore the Mana orb until the pool got a sheet of its own;
-  // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
+  // `dungeon` is a lair mouth, which the delve pill drew as a quest scroll.
   // `chest` and `daily` are two halves of one screen and stay two cells: the
   // chest is the PRIZE and the calendar page is the DAY.
   | 'relics' | 'dungeon' | 'chest' | 'daily'
@@ -63,7 +63,7 @@ export type UiIconName =
   // one icon that is drawn ON something rather than beside it.
   | 'skull'
   // THE CARD COLLECTION (Docs/features/09-relics.md §11). `pack` is the thing
-  // a ruin pays and the reveal opens; `cards` is the nav tab, which replaced
+  // a lair pays and the reveal opens; `cards` is the nav tab, which replaced
   // the Reliquary's `relics` chest; `vault` is the safe in the corner of the
   // Collection, where duplicates go; `crest` is the season's wax seal, which
   // the pill wears and the header plank repeats.

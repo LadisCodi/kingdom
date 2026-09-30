@@ -30,9 +30,9 @@ describe('rand', () => {
   });
 
   it('is a pure function of the key, not of how many draws came before', () => {
-    const a = rand(99, 'delve', 'HollowBarrow', 3);
+    const a = rand(99, 'delve', 'Orcs', 3);
     for (let i = 0; i < 500; i++) rand(99, 'noise', i);
-    expect(rand(99, 'delve', 'HollowBarrow', 3)).toBe(a);
+    expect(rand(99, 'delve', 'Orcs', 3)).toBe(a);
   });
 
   it('separates its parts, so ("ab","c") and ("a","bc") are different questions', () => {

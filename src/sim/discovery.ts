@@ -7,7 +7,7 @@ import type { CurrencyId, GameState } from './state';
 
 export const resourceDiscoveryKey = (currency: CurrencyId): string => `resource:${currency}`;
 
-/** Landmarks and ruins, keyed by content id. One namespace for both: the
+/** Landmarks and lairs, keyed by content id. One namespace for both: the
  *  banner is "you found something out there", and the drain in `game.ts`
  *  looks the id up in whichever list holds it. */
 export const siteDiscoveryKey = (id: string): string => `site:${id}`;

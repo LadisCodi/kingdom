@@ -1,9 +1,9 @@
-// Combat as a scoring pass, the army that fights it, and the gate a party is
+// Combat as a scoring pass, the army that fights it, and the lair a party is
 // sent at (Docs/proposals/lairs.md §5, Docs/features/combat.md).
 //
-// A ruin is its GATE now: one fight, resolved on entry, cleared once. What
+// A lair is one fight, resolved on entry, cleared once. What
 // these tests protect is the party around it — the type chart, the army cap,
-// the training lines — and the two things a gate attempt spends and pays that
+// the training lines — and the two things a lair attack spends and pays that
 // are not the garrison's own clock: the supplies, and the first-clear lump.
 import { describe, expect, it } from 'vitest';
 import {
@@ -14,30 +14,30 @@ import { buildBoard, resolveBattle } from '../src/sim/battle';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import {
-  ARMY, DELVE, DISTRICTS, KNOWLEDGE, LANDMARKS, RUINS, RUIN_ORDER, UNITS,
+  ARMY, DELVE, DISTRICTS, KNOWLEDGE, LANDMARKS, LAIRS, LAIR_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import {
-  attemptGate, gateBlock, gateSupplyCost, previewGate,
+  attackLair, lairBlock, lairSupplyCost, previewLair,
 } from '../src/sim/expeditions';
-import { gateSupplies } from '../src/sim/gates';
+import { lairSupplies } from '../src/sim/lairs';
 import { claimLandmark } from '../src/sim/landmarks';
 import { firstClearLump, knowledgePerHour, landmarkClaimLump } from '../src/sim/knowledge';
 import {
   getWallet, townhall, type GameState, type UnitId,
 } from '../src/sim/state';
-import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, stored, T0 } from './helpers';
+import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, stored, T0 } from './helpers';
 
-const BARROW = 'HollowBarrow' as const;
+const ORCS = 'Orcs' as const;
 
-/** A kingdom with a company under arms, the Barrow in view and its gate
+/** A kingdom with a company under arms, the orc lair in view and it
  *  STANDING — armed but not counting, so a test is about the fight and not
- *  the clock (tests/gates.test.ts owns the clock). */
+ *  the clock (tests/lairs.test.ts owns the clock). */
 function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
-  reveal(state, [RUINS[BARROW].location]);
-  state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+  reveal(state, [LAIRS[ORCS].location]);
+  state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -64,7 +64,7 @@ describe('the type chart', () => {
     expect(typeMultiplier('Lancer', 'Cavalry')).toBe(ARMY.typeAdvantage);
     expect(typeMultiplier('Cavalry', 'Lancer')).toBe(ARMY.typeDisadvantage);
     expect(typeMultiplier('Lancer', 'Archer')).toBe(1);
-    // A ruin that answers to nothing in particular is always neutral.
+    // A lair that answers to nothing in particular is always neutral.
     expect(typeMultiplier('Lancer', 'Any')).toBe(1);
     expect(ARMY.typeAdvantage).toBeLessThanOrEqual(1.5);
     expect(ARMY.typeDisadvantage).toBeGreaterThanOrEqual(0.75);
@@ -213,51 +213,51 @@ describe('training takes time now', () => {
   });
 });
 
-// What a gate attempt costs (Docs/proposals/lairs.md §5): the tier's
+// What a lair attack costs (Docs/proposals/lairs.md §5): the tier's
 // `garrisons` supplies, discounted by the best Quartermaster in the party and
 // by the Rations line, and never below 1 of anything it asks for.
-describe('the supplies a gate asks for', () => {
+describe('the supplies a lair asks for', () => {
   const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 
   it('are the tier\'s supplies for a party with no quartermaster', () => {
     const state = readyToDelve();
-    for (const id of RUIN_ORDER) {
-      expect(gateSupplyCost(state, id, ['Warden'])).toEqual(gateSupplies(id));
+    for (const id of LAIR_ORDER) {
+      expect(lairSupplyCost(state, id, ['Warden'])).toEqual(lairSupplies(id));
     }
   });
 
   it('take the BEST quartermaster in the party, not the sum of them', () => {
     const state = readyToDelve();
-    const id = 'StarObservatory';
-    const base = gateSupplies(id);
-    const one = gateSupplyCost(state, id, ['Quartermaster']);
+    const id = 'Drake';
+    const base = lairSupplies(id);
+    const one = lairSupplyCost(state, id, ['Quartermaster']);
     expect(one.Gold).toBe(Math.round(base.Gold! * 0.75));
     // Scout (0.4) beats Quartermaster (0.25); together they are the Scout.
-    const both = gateSupplyCost(state, id, ['Quartermaster', 'Scout']);
-    expect(both).toEqual(gateSupplyCost(state, id, ['Scout']));
+    const both = lairSupplyCost(state, id, ['Quartermaster', 'Scout']);
+    expect(both).toEqual(lairSupplyCost(state, id, ['Scout']));
     expect(both.Gold).toBe(Math.round(base.Gold! * 0.6));
   });
 
   it('stack Rations on top of the quartermaster', () => {
     const state = readyToDelve();
-    const id = 'StarObservatory';
-    const before = gateSupplyCost(state, id, ['Quartermaster']).Gold!;
+    const id = 'Drake';
+    const before = lairSupplyCost(state, id, ['Quartermaster']).Gold!;
     completeTech(state, 'RationsI');
-    const after = gateSupplyCost(state, id, ['Quartermaster']).Gold!;
+    const after = lairSupplyCost(state, id, ['Quartermaster']).Gold!;
     expect(after).toBeLessThan(before);
     // The trait and the line multiply: 25% off, then Rations I's 5% off that.
-    expect(after).toBe(Math.round(gateSupplies(id).Gold! * ((1 - 0.25) * 0.95)));
+    expect(after).toBe(Math.round(lairSupplies(id).Gold! * ((1 - 0.25) * 0.95)));
   });
 
   it('is what the attempt charges, and what the preview shows', () => {
     const state = readyToDelve();
     state.heroes.owned.push('Quartermaster');
     const heroes = ['Quartermaster'] as const;
-    const cost = gateSupplyCost(state, BARROW, [...heroes]);
-    expect(cost).not.toEqual(gateSupplies(BARROW));
-    expect(previewGate(state, BARROW, [...heroes], company).supplies).toEqual(cost);
+    const cost = lairSupplyCost(state, ORCS, [...heroes]);
+    expect(cost).not.toEqual(lairSupplies(ORCS));
+    expect(previewLair(state, ORCS, [...heroes], company).supplies).toEqual(cost);
     const gold = getWallet(state.city.wallet, 'Gold');
-    const report = attemptGate(state, map, BARROW, [...heroes], company);
+    const report = attackLair(state, map, ORCS, [...heroes], company);
     expect(report.result).toBe('Cleared');
     expect(report.supplies).toEqual(cost);
     expect(getWallet(state.city.wallet, 'Gold'))
@@ -267,7 +267,7 @@ describe('the supplies a gate asks for', () => {
   it('refuses an attempt the city cannot provision', () => {
     const state = readyToDelve();
     state.city.wallet.Gold = 0;
-    expect(gateBlock(state, map, BARROW, ['Warden'], company)).toBe('NotEnoughSupplies');
+    expect(lairBlock(state, map, ORCS, ['Warden'], company)).toBe('NotEnoughSupplies');
   });
 });
 
@@ -278,10 +278,10 @@ describe('a relic is no part of a fight', () => {
 
   it('neither blocks an attempt nor arms one', () => {
     const state = readyToDelve({ Warrior: 60 });
-    const bare = previewGate(state, BARROW, ['Warden'], troops);
+    const bare = previewLair(state, ORCS, ['Warden'], troops);
     grantArtifactLevel(state, 'ForemansSigil');
-    expect(gateBlock(state, map, BARROW, ['Warden'], troops)).toBeNull();
-    const held = previewGate(state, BARROW, ['Warden'], troops);
+    expect(lairBlock(state, map, ORCS, ['Warden'], troops)).toBeNull();
+    const held = previewLair(state, ORCS, ['Warden'], troops);
     expect(held.attack).toBe(bare.attack);
     expect(held.stats.atk).toBe(bare.stats.atk);
   });
@@ -425,13 +425,13 @@ describe('finishing a training line with gems', () => {
 // Docs/features/07-research.md §3 — the Knowledge bar.
 //
 // CLAIM: the drip is a fixed 1 an hour that no ground raises; what the ground
-// pays is LUMPS, each once — a landmark taken, a ruin's gate cleared — into
+// pays is LUMPS, each once — a landmark taken, a lair cleared — into
 // the KINGDOM wallet.
 describe('Knowledge: a fixed drip, and lumps for the ground', () => {
   it('drips 1 an hour whatever ground has been taken', () => {
     const bare = freshGame();
     const owner = readyToDelve();
-    for (const id of RUIN_ORDER) openRuin(owner, id);
+    for (const id of LAIR_ORDER) clearLair(owner, id);
     for (const l of LANDMARKS) owner.landmarks.claimed[l.id] = true;
     expect(knowledgePerHour()).toBe(KNOWLEDGE.basePerHour);
     expect(KNOWLEDGE.basePerHour).toBe(1);
@@ -460,20 +460,20 @@ describe('Knowledge: a fixed drip, and lumps for the ground', () => {
     expect(knowledgePerHour()).toBe(KNOWLEDGE.basePerHour);
   });
 
-  it('clearing a gate pays the first-clear lump exactly once', () => {
+  it('clearing a lair pays the first-clear lump exactly once', () => {
     const state = readyToDelve({ Warrior: 60 });
     const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
     const lump = firstClearLump(state);
     expect(lump).toBe(DELVE.firstClearKnowledge);
     const held = getWallet(state.kingdom.wallet, 'Knowledge');
-    const report = attemptGate(state, map, BARROW, ['Warden'], company);
+    const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.knowledge).toBe(lump);
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held + lump);
     // Never into the city's purse, which a region reset would take.
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
-    // Once: a cleared gate refuses, and pays nothing for the refusal.
-    const again = attemptGate(state, map, BARROW, ['Warden'], company);
+    // Once: a cleared lair refuses, and pays nothing for the refusal.
+    const again = attackLair(state, map, ORCS, ['Warden'], company);
     expect(again.result).toBe('AlreadyCleared');
     expect(again.knowledge).toBe(0);
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held + lump);
@@ -483,17 +483,17 @@ describe('Knowledge: a fixed drip, and lumps for the ground', () => {
   it('a repulse pays no lump', () => {
     const state = readyToDelve({ Warrior: 2 });
     fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
-    reveal(state, [RUINS.StarObservatory.location]);
-    state.gates.StarObservatory = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    reveal(state, [LAIRS.Drake.location]);
+    state.lairs.Drake = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
     const held = getWallet(state.kingdom.wallet, 'Knowledge');
-    const report = attemptGate(state, map, 'StarObservatory', ['Warden'],
+    const report = attackLair(state, map, 'Drake', ['Warden'],
       [{ unitId: 'Warrior', count: 2 }]);
     expect(report.result).toBe('Repelled');
     expect(report.knowledge).toBe(0);
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held);
   });
 
-  // The old "five cleared ruins carry the TREE on a scale of weeks" runway
+  // The old "five cleared lairs carry the TREE on a scale of weeks" runway
   // measured a per-hour rate the ground no longer has. How long the tree
   // takes is now the whole economy's question — drip, lumps, quests and
   // purchases together — and it is OQ-13, pending the 30-day harness

@@ -1,4 +1,4 @@
-/* Landmark and ruin cards.
+/* Landmark and lair cards.
  *
  * These sit in the same bottom panel as a district card and deliberately read
  * differently: a district is something you built and manage, a site is
@@ -61,9 +61,9 @@
 .site-stats > .k-stat .k-stat-unit { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); line-height: 1.1; }
 /* The one verb is the width of the card. */
 .site > .k-action,
-.site-gate > .k-action { display: flex; flex-direction: column; align-items: stretch; }
+.site-lair > .k-action { display: flex; flex-direction: column; align-items: stretch; }
 .site > .k-action > .k-btn,
-.site-gate > .k-action > .k-btn { width: 100%; }
+.site-lair > .k-action > .k-btn { width: 100%; }
 .site-note {
   display: flex;
   align-items: flex-start;

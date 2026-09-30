@@ -2,8 +2,8 @@
 // at the cap, lumps that land over it, and two ways to buy it.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { KNOWLEDGE, RUINS } from '../src/sim/data/definitions';
-import { attemptGate } from '../src/sim/expeditions';
+import { KNOWLEDGE, LAIRS } from '../src/sim/data/definitions';
+import { attackLair } from '../src/sim/expeditions';
 import {
   accrueKnowledge, buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice,
   firstClearLump, knowledgeHeld, knowledgePerHour, msToFullKnowledge, msToNextKnowledge,
@@ -190,21 +190,21 @@ describe('buying Knowledge', () => {
   });
 });
 
-describe('a ruin\'s gate teaches something, once', () => {
-  const BARROW = 'HollowBarrow' as const;
+describe('a lair teaches something, once', () => {
+  const ORCS = 'Orcs' as const;
 
   it('pays its first-clear lump into the KINGDOM wallet, never the city', () => {
     const state = freshGame();
     addAllTrainers(state);
     completeTech(state, 'Warrior');
     fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Knowledge: 0 });
-    reveal(state, [RUINS[BARROW].location]);
-    state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    reveal(state, [LAIRS[ORCS].location]);
+    state.lairs[ORCS] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
     for (let i = 0; i < 60; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' as UnitId });
     }
     const expected = firstClearLump(state);
-    const report = attemptGate(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 60 }]);
+    const report = attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 60 }]);
     expect(report.result).toBe('Cleared');
     expect(report.knowledge).toBe(expected);
     expect(knowledgeHeld(state)).toBe(expected);

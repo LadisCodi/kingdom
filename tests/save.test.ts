@@ -358,7 +358,7 @@ describe('save versions', () => {
 // the three quests that named it. A save can be holding all three, and every
 // one of them would be read against a table that no longer has the row.
 // v63: the depths behind the gate are retired (Docs/proposals/lairs.md §7).
-// A ruin is its gate, so what a save knew about rooms and depths has nothing
+// A lair is one fight, so what a save knew about rooms and depths has nothing
 // left to mean — and a live mission watching a room odometer could never
 // finish.
 describe('the depths retired (v63)', () => {
@@ -394,6 +394,84 @@ describe('the depths retired (v63)', () => {
   it('writes no ruins module any more', () => {
     const save = serialize(freshGame(), T0);
     expect((save.Modules as any)['kingdom.ruins']).toBeUndefined();
+  });
+});
+
+// v64: ruins and gates are lairs (Docs/proposals/lairs.md). A rename only:
+// the module, its fields and every persisted place id.
+describe('ruins and gates become lairs (v64)', () => {
+  const OLD_TO_NEW = {
+    HollowBarrow: 'Orcs',
+    SunkenChapel: 'Harpies',
+    DrownedIronworks: 'Goblins',
+    CountingHouse: 'WolfRiders',
+    StarObservatory: 'Drake',
+  } as const;
+  const oldIds = Object.keys(OLD_TO_NEW) as Array<keyof typeof OLD_TO_NEW>;
+
+  const v63 = () => {
+    const save = serialize(freshGame(), T0);
+    const modules = save.Modules as any;
+    delete modules['kingdom.lairs'];
+    modules['kingdom.gates'] = {
+      Gates: oldIds.map((id, i) => ({
+        RuinID: id,
+        NextRaidAtUtc: i === 4 ? null : new Date(T0 + (i + 1) * 60_000).toISOString(),
+        Trips: i % 3,
+        Hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
+        Cleared: i === 4,
+      })),
+      Reports: [
+        { ID: 'raid_1', RuinID: 'HollowBarrow', AtUtc: new Date(T0 - 60_000).toISOString(), Took: { Gold: 7 } },
+        { ID: 'raid_2', RuinID: 'CountingHouse', AtUtc: new Date(T0 - 30_000).toISOString(), Took: { Food: 3 } },
+      ],
+    };
+    modules['kingdom.discoveries'].Keys = [
+      'resource:Gold', ...oldIds.map((id) => `site:${id}`),
+    ];
+    save.SaveVersion = 63;
+    return save;
+  };
+
+  it('renames the module, its fields and every id', () => {
+    const save = v63();
+    expect(migrate(save)).toBe(true);
+    const modules = save.Modules as any;
+    expect(modules['kingdom.gates']).toBeUndefined();
+    expect(modules['kingdom.lairs'].Lairs.map((g: any) => g.LairID))
+      .toEqual(oldIds.map((id) => OLD_TO_NEW[id]));
+    expect(modules['kingdom.lairs'].Lairs.some((g: any) => 'RuinID' in g)).toBe(false);
+    expect(modules['kingdom.lairs'].Reports.map((r: any) => r.LairID)).toEqual(['Orcs', 'WolfRiders']);
+    expect(modules['kingdom.discoveries'].Keys)
+      .toEqual(['resource:Gold', ...oldIds.map((id) => `site:${OLD_TO_NEW[id]}`)]);
+  });
+
+  it('loads each lair with its state intact under its new id', () => {
+    const back = deserialize(v63(), map, T0)!;
+    expect(back).not.toBeNull();
+    oldIds.forEach((old, i) => {
+      const lair = back.lairs[OLD_TO_NEW[old]];
+      expect(lair, old).toEqual({
+        nextRaidAt: i === 4 ? null : T0 + (i + 1) * 60_000,
+        trips: i % 3,
+        hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
+        cleared: i === 4,
+      });
+    });
+    expect(back.raidReports).toEqual([
+      { id: 'raid_1', lairId: 'Orcs', at: T0 - 60_000, took: { Gold: 7 } },
+      { id: 'raid_2', lairId: 'WolfRiders', at: T0 - 30_000, took: { Food: 3 } },
+    ]);
+    for (const id of Object.values(OLD_TO_NEW)) expect(back.discoveries[`site:${id}`]).toBe(true);
+    for (const id of oldIds) expect(back.discoveries[`site:${id}`]).toBeUndefined();
+  });
+
+  it('round-trips under the new names', () => {
+    const state = deserialize(v63(), map, T0)!;
+    const modules = serialize(state, T0).Modules as any;
+    expect(modules['kingdom.gates']).toBeUndefined();
+    expect(modules['kingdom.lairs'].Lairs.map((g: any) => g.LairID)).toContain('Drake');
+    expect(deserialize(serialize(state, T0), map, T0)!.lairs).toEqual(state.lairs);
   });
 });
 

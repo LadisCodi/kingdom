@@ -36,12 +36,12 @@ const landmarkLine = (l) =>
   `    { "id": ${JSON.stringify(l.id)}, "kind": ${JSON.stringify(l.kind)}, `
   + `"x": ${l.x}, "y": ${l.y}, "claimCost": ${l.claimCost} }`;
 
-// A ruin is WHERE and WHAT, and its gate: one fight, nothing behind it
+// A lair is WHERE and WHAT, and its guard: one fight, nothing behind it
 // (Docs/proposals/lairs.md §1).
-const ruinLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
+const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   `      "x": ${r.x}, "y": ${r.y}`,
   `      "tier": ${r.tier}`,
-  // The gate: one garrison on the surface, with a clock
+  // The guard: one garrison, with a clock
   // (Docs/features/18-garrisons-and-raids.md §2).
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
     + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
@@ -53,7 +53,7 @@ export function serialiseRegionMap(doc) {
     section('terrain', doc.terrain.cells),
     section('features', doc.features.cells),
     `  "landmarks": [\n${doc.landmarks.map(landmarkLine).join(',\n')}\n  ]`,
-    `  "ruins": {\n${Object.entries(doc.ruins).map(([id, r]) => ruinLines(id, r)).join(',\n')}\n  }`,
+    `  "lairs": {\n${Object.entries(doc.lairs).map(([id, r]) => lairLines(id, r)).join(',\n')}\n  }`,
   ].join(',\n') + '\n}\n';
   // Hand-rolled formatting earns a parse check before it reaches the repo.
   JSON.parse(text);

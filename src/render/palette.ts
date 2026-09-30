@@ -35,11 +35,11 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 export const PALETTE = {
   // Cast targets read blue, so they can never be confused with a build spot.
   castTarget: '#8fb4ff',
-  // Site badges: the tag on an unclaimed landmark or an undelved ruin.
+  // Site badges: the tag on an unclaimed landmark or an uncleared lair.
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
   siteBadgeInk: '#3a2716',
-  // The same badge while a garrison is counting down on a ruin: the minutes
+  // The same badge while a garrison is counting down in a lair: the minutes
   // left, in the colour of the thing that is about to happen.
   siteBadgeRaid: '#d8613f',
   siteBadgeRaidInk: '#2a120c',

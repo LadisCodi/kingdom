@@ -49,7 +49,7 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'CompleteTech': case 'CompleteTechs': return 'research';
     case 'ReachPopulation': return 'population';
     case 'AssignWorkers': return 'workers';
-    case 'TrainArmy': case 'ClearGarrisons': return 'army';
+    case 'TrainArmy': case 'ClearLairs': return 'army';
     case 'CollectTaps': return 'showme';
     case 'DiscoverCells': return 'tile';
     case 'DiscoverFeature': return 'showme';

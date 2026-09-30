@@ -31,7 +31,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
+  type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -593,7 +593,51 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v64: ruins and gates are LAIRS (Docs/proposals/lairs.md). A rename, not
+    // a reshape: `kingdom.gates` becomes `kingdom.lairs`, its `Gates` list
+    // becomes `Lairs`, every `RuinID` becomes `LairID`, and every persisted
+    // place id becomes its creature's — the lairs' own state, the raid
+    // reports, and the `site:<id>` keys of the discoveries already announced,
+    // so a lair the player has seen is not announced twice.
+    to: 64,
+    migrate: (modules) => {
+      const renamed = (id: unknown): unknown =>
+        typeof id === 'string' ? (LAIR_RENAMES[id] ?? id) : id;
+      const gates = modules['kingdom.gates'] as {
+        Gates?: Array<Record<string, unknown>>;
+        Reports?: Array<Record<string, unknown>>;
+      } | undefined;
+      if (gates !== undefined) {
+        const rekey = (row: Record<string, unknown>): Record<string, unknown> => {
+          const { RuinID, ...rest } = row;
+          return { ...rest, LairID: renamed(RuinID) };
+        };
+        const { Gates, Reports, ...rest } = gates;
+        modules['kingdom.lairs'] = {
+          ...rest,
+          Lairs: (Gates ?? []).map(rekey),
+          Reports: (Reports ?? []).map(rekey),
+        };
+        delete modules['kingdom.gates'];
+      }
+      const discoveries = modules['kingdom.discoveries'] as { Keys?: string[] } | undefined;
+      if (discoveries?.Keys !== undefined) {
+        discoveries.Keys = discoveries.Keys.map((k) =>
+          k.startsWith('site:') ? `site:${renamed(k.slice(5)) as string}` : k);
+      }
+    },
+  },
 ];
+
+/** The v63 place ids of the five lairs, and the creature each one became. */
+const LAIR_RENAMES: Record<string, LairId> = {
+  HollowBarrow: 'Orcs',
+  SunkenChapel: 'Harpies',
+  DrownedIronworks: 'Goblins',
+  CountingHouse: 'WolfRiders',
+  StarObservatory: 'Drake',
+};
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
  *  Exported for the test that walks the chain end to end. */
@@ -807,19 +851,19 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
       },
-      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER: the
+      // The lairs and what they have taken. `NextRaidAtUtc` is a TIMER: the
       // counter a discovery started runs while the player is away, and the raid it owes resolves
       // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
-      'kingdom.gates': {
-        Gates: Object.entries(state.gates).map(([ruinId, g]) => ({
-          RuinID: ruinId,
+      'kingdom.lairs': {
+        Lairs: Object.entries(state.lairs).map(([lairId, g]) => ({
+          LairID: lairId,
           NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
           Trips: g!.trips,
           Hoard: g!.hoard,
           Cleared: g!.cleared,
         })),
         Reports: state.raidReports.map((r) => ({
-          ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
+          ID: r.id, LairID: r.lairId, AtUtc: iso(r.at), Took: r.took,
         })),
       },
       // A relic is a level and a cast clock. The passives are re-derived on
@@ -1236,19 +1280,19 @@ export function deserialize(
     for (const id of (landmarksDto.Claimed ?? []) as string[]) state.landmarks.claimed[id] = true;
   }
 
-  const gatesDto = modules['kingdom.gates'];
-  if (gatesDto) {
-    state.gates = {};
-    for (const g of (gatesDto.Gates ?? []) as any[]) {
-      state.gates[g.RuinID as RuinId] = {
+  const lairsDto = modules['kingdom.lairs'];
+  if (lairsDto) {
+    state.lairs = {};
+    for (const g of (lairsDto.Lairs ?? []) as any[]) {
+      state.lairs[g.LairID as LairId] = {
         nextRaidAt: msOrNull(g.NextRaidAtUtc),
         trips: g.Trips ?? 0,
         hoard: { ...(g.Hoard ?? {}) },
         cleared: g.Cleared === true,
       };
     }
-    state.raidReports = ((gatesDto.Reports ?? []) as any[]).map((r) => ({
-      id: r.ID, ruinId: r.RuinID as RuinId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
+    state.raidReports = ((lairsDto.Reports ?? []) as any[]).map((r) => ({
+      id: r.ID, lairId: r.LairID as LairId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
     }));
   }
 

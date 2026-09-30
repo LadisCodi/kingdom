@@ -629,7 +629,7 @@
 .site-art,
 .plc-art { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .site-stats > .k-stat,
-.site-gate,
+.site-lair,
 .site-gift {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),

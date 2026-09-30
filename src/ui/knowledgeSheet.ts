@@ -50,7 +50,7 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
     bar.root,
     el('div', { class: 'mana-note' },
       `${k.perHour === 1 ? 'One' : k.perHour} an hour while under ${k.cap}. `
-      + 'Landmarks, ruins and quests pay it in lumps, over the bar if they must.'),
+      + 'Landmarks, lairs and quests pay it in lumps, over the bar if they must.'),
 
     el('div', { class: 'knowledge-offers' },
       buy(1, 'Gold'),

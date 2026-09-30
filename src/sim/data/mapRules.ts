@@ -7,12 +7,12 @@
 // gates the build on. A rule added here is enforced in both, or neither.
 //
 // Errors block a save; warnings do not. The split is deliberate: an error is
-// something the SIM cannot cope with (a Townhall that cannot stand, a ruin in
+// something the SIM cannot cope with (a Townhall that cannot stand, a lair in
 // the sea), a warning is something a designer might mean but probably does
 // not (an island nobody can walk to, whose fog is therefore free).
 
 import {
-  DISTRICTS, FEATURES, LANDMARK_ART, RUIN_ORDER, UNIT_ORDER,
+  DISTRICTS, FEATURES, LANDMARK_ART, LAIR_ORDER, UNIT_ORDER,
 } from './definitions';
 import {
   cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId,
@@ -27,11 +27,11 @@ export interface RegionMapDoc {
     /** Cells a side, anchored at (x, y). 1 when absent. */
     size?: number;
   }>;
-  ruins: Record<string, {
+  lairs: Record<string, {
     x: number; y: number; tier: number;
     /** Cells a side, anchored at (x, y). 1 when absent. */
     size?: number;
-    /** The gate that holds the entrance, and its clock
+    /** The garrison that holds it, and its clock
      *  (Docs/features/18-garrisons-and-raids.md §2). */
     guard: {
       threat: string; power: number; warningMinutes: number; periodMinutes: number;
@@ -125,7 +125,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   }
   const townhall = new Set(TOWNHALL_FOOTPRINT.map(coordKey));
 
-  // ---------------------------------------------------- landmarks & ruins
+  // ---------------------------------------------------- landmarks & lairs
   // Every site is authored by coordinate, so this is the only place that can
   // check the cell is real, dry, empty and not under the Townhall. Getting it
   // wrong authors a site nobody can ever reach, which stays invisible until a
@@ -148,7 +148,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   };
 
   /**
-   * The same checks over every cell a site stands on. A sanctuary or a ruin
+   * The same checks over every cell a site stands on. A sanctuary or a lair
    * may be more than one cell a side (Docs/features/01-map-and-fog.md §3.1),
    * and a 3×3 whose far corner hangs off the map would be a site the player
    * can see and never finish paying for.
@@ -177,23 +177,22 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     claimSite(what, l.x, l.y, l.size);
   }
 
-  for (const id of RUIN_ORDER) {
-    if (!doc.ruins[id]) err(`ruin "${id}" is missing — every ruin in the code has to be authored`);
+  for (const id of LAIR_ORDER) {
+    if (!doc.lairs[id]) err(`lair "${id}" is missing — every lair in the code has to be authored`);
   }
-  for (const [id, r] of Object.entries(doc.ruins)) {
-    const what = `ruin ${id}`;
-    if (!(RUIN_ORDER as string[]).includes(id)) {
-      err(`"${id}" is not a ruin the code knows about — RuinId is a union in state.ts`, r);
+  for (const [id, r] of Object.entries(doc.lairs)) {
+    const what = `lair ${id}`;
+    if (!(LAIR_ORDER as string[]).includes(id)) {
+      err(`"${id}" is not a lair the code knows about — LairId is a union in state.ts`, r);
       continue;
     }
     if (!isCount(r.tier) || r.tier < 1) err(`${what} needs a tier of 1 or more`, r);
-    // What lives here is where the ruin is and who is standing on the door:
-    // the gate is the whole of it (Docs/proposals/lairs.md §1).
-    // The gate. A ruin without one would be a dungeon nobody is asked to
+    // What lives here is where the lair is and who holds it: the garrison is
+    // the whole of it (Docs/proposals/lairs.md §1). A lair without one would be a dungeon nobody is asked to
     // hurry to, and the counter is what makes discovering one an event.
     const g = r.guard;
     if (!g || typeof g !== 'object') {
-      err(`${what} has no guard — every ruin opens with a gate`, r);
+      err(`${what} has no guard — every lair holds a garrison`, r);
     } else {
       if (g.threat !== 'Any' && !(UNIT_ORDER as string[]).includes(g.threat)) {
         err(`${what}'s guard threat must be a unit or "Any" (got "${g.threat}")`, r);

@@ -680,7 +680,7 @@ describe('the store', () => {
     state.collection.season = seasonAt(T0);
   });
 
-  // Bronze and Silver are the RUINS' faucet. Selling what a room already
+  // Bronze and Silver are the LAIRS' faucet. Selling what a room already
   // drips would undercut the only free source the collection has, so a tier
   // with no price is not on the shelf at all.
   it('sells the three the faucet does not drip, and only those', () => {

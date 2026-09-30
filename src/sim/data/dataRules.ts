@@ -91,7 +91,7 @@ export type FieldType = 'int' | 'float' | 'text' | 'bool' | 'list' | 'map' | 'ob
 /** What an id-valued field may name. */
 export type RefKind =
   | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact'
-  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'ruin' | 'face'
+  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'lair' | 'face'
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
   /** A character in the animated atlas (Docs/art/characters). */
@@ -144,10 +144,10 @@ export interface FieldSpec {
 }
 
 /** Id lists the data itself cannot supply: they are unions in the sim
- *  (`FeatureId`, `RuinId`) or live in another file (the technologies). */
+ *  (`FeatureId`, `LairId`) or live in another file (the technologies). */
 export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   feature: ['Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal'],
-  ruin: ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory'],
+  lair: ['Orcs', 'Harpies', 'Goblins', 'WolfRiders', 'Drake'],
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
@@ -162,7 +162,7 @@ export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
   TrainArmy: null, ClaimLandmarks: null,
-  OwnArtifacts: null, OwnHeroes: null, ClearGarrisons: null, CollectResource: 'currency',
+  OwnArtifacts: null, OwnHeroes: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
 
@@ -419,7 +419,7 @@ function checkAdjacency(doc: DataDoc, push: Push): void {
 /**
  * What a schema cannot say: rules that tie one field to another, or one entry
  * to the next. Each is a way the game goes silently wrong rather than loudly —
- * a workshop with no queue, a ruin that gets easier, a pack that guarantees
+ * a workshop with no queue, a lair that gets easier, a pack that guarantees
  * more cards than it holds — so each is an error, stated where the data is.
  */
 type Rule = (doc: DataDoc, push: Push) => void;

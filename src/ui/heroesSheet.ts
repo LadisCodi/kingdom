@@ -13,7 +13,7 @@
 //
 // So: a grid, and a detail behind each tile. Two views, one overlay — the nav
 // tab stays put and `game.openHeroId` decides which of them draws. That lives
-// on the presenter, not here, for the reason `expeditionRuin` does: it
+// on the presenter, not here, for the reason `expeditionLair` does: it
 // survives the per-tick rebuild and it is node-testable.
 //
 // THE SCREEN DOES NOT REBUILD ON THE TICK. It draws thirty-two `<img>`

@@ -62,7 +62,7 @@ describe('stone line (Masonry → Quarry)', () => {
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   // Exploration lives in the MAGIC tome now (07-research.md §2): the fog is the
   // surface Kingdom's magic presents to the player, so Sailing and Fishing
-  // sit beside Mana and the ruins rather than beside the farms.
+  // sit beside Mana and the lairs rather than beside the farms.
   it('the exploration branch is in the Magic tome, behind its own eras', () => {
     const state = freshGame();
     fund(state, { Gold: 20_000, Knowledge: 5_000 });

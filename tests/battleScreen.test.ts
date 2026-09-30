@@ -7,7 +7,7 @@
 // without a DOM, and the DOM is a pure function of them.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { PARTY, RUINS, UNITS } from '../src/sim/data/definitions';
+import { PARTY, LAIRS, UNITS } from '../src/sim/data/definitions';
 import { heroSlotGemCost, heroSlots } from '../src/sim/heroes';
 import { armyCap } from '../src/sim/army';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
@@ -15,30 +15,30 @@ import {
   addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0,
 } from './helpers';
 
-const BARROW = 'HollowBarrow' as const;
+const ORCS = 'Orcs' as const;
 
-/** A kingdom standing on the Barrow's doorstep, with an army at home. */
-function atTheGate(units: Partial<Record<UnitId, number>> = { Warrior: 30, Archer: 24 }) {
+/** A kingdom standing on the orc lair's doorstep, with an army at home. */
+function atTheLair(units: Partial<Record<UnitId, number>> = { Warrior: 30, Archer: 24 }) {
   const state: GameState = freshGame();
   addBuilt(state, 'Housing', { x: 3, y: 2 });
   state.city.population = 4;
   addAllTrainers(state);
   fund(state, { Gold: 20_000, Food: 5000, Wood: 2000, Stone: 800, Gems: 100_000 });
-  reveal(state, [RUINS[BARROW].location]);
-  advance(state, map, T0); // arms the gate
+  reveal(state, [LAIRS[ORCS].location]);
+  advance(state, map, T0); // arms the lair
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
     }
   }
   const game = freshPresenter(state);
-  game.openGate(BARROW);
+  game.openLair(ORCS);
   return game;
 }
 
 describe('the troop slots', () => {
   it('opens the card panel when a slot is tapped, and closes on the way out', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     expect(game.battlePicker).toBeNull();
     game.openBattlePicker('troops');
     expect(game.battlePicker).toBe('troops');
@@ -46,14 +46,14 @@ describe('the troop slots', () => {
     // leaves the screen behind it standing.
     game.dismiss();
     expect(game.battlePicker).toBeNull();
-    expect(game.openOverlay).toBe('gate');
+    expect(game.openOverlay).toBe('lair');
     // …and the second dismissal leaves the screen.
     game.dismiss();
     expect(game.openOverlay).toBeNull();
   });
 
   it('fills the first free slot with as big a squad as the type allows', () => {
-    const game = atTheGate({ Warrior: 12 });
+    const game = atTheLair({ Warrior: 12 });
     game.expeditionParty = [];
     game.openBattlePicker('troops');
     const would = game.troopsAvailableFor('Warrior');
@@ -63,7 +63,7 @@ describe('the troop slots', () => {
   });
 
   it('never sends more than a squad holds, than the roster has, or than the cap allows', () => {
-    const game = atTheGate({ Warrior: 12 });
+    const game = atTheLair({ Warrior: 12 });
     game.expeditionParty = [];
     // Twelve at home, a squad holds a hundred, and the cap is what it is.
     const cap = Math.floor(armyCap(game.state) / UNITS.Warrior.power);
@@ -81,7 +81,7 @@ describe('the troop slots', () => {
   });
 
   it('counts what is already committed, so two slots of one type never double-send', () => {
-    const game = atTheGate({ Archer: 8 });
+    const game = atTheLair({ Archer: 8 });
     game.expeditionParty = [];
     const first = game.troopsAvailableFor('Archer');
     game.assignTroop('Archer');
@@ -95,7 +95,7 @@ describe('the troop slots', () => {
   });
 
   it('clears a slot with its own X, and leaves the rest of the party alone', () => {
-    const game = atTheGate({ Warrior: 12, Archer: 8 });
+    const game = atTheLair({ Warrior: 12, Archer: 8 });
     game.expeditionParty = [
       { unitId: 'Warrior', count: 4 },
       { unitId: 'Archer', count: 2 },
@@ -107,7 +107,7 @@ describe('the troop slots', () => {
   // Nothing locks a troop slot and nothing sells one: the row the player sees
   // on their first fight is the row they will see on their last.
   it('opens every slot the board has, from the first fight', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     expect(game.troopSlotsOpen()).toBe(PARTY.troopSlots);
     expect(game.troopSlotCeiling()).toBe(game.troopSlotsOpen());
     expect(freshPresenter(freshGame()).troopSlotsOpen()).toBe(PARTY.troopSlots);
@@ -116,14 +116,14 @@ describe('the troop slots', () => {
 
 describe('the hero slots', () => {
   it('start at one free, and the board holds three', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     expect(game.heroSlotsOpen()).toBe(1);
     expect(game.heroSlotCeiling()).toBe(3);
     expect(heroSlots(game.state)).toBe(1);
   });
 
   it('unlock with Gems, one at a time, and stop at the board', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     const cost = heroSlotGemCost(game.state);
     const gems = getWallet(game.state.player.wallet, 'Gems');
     game.doBuyHeroSlot();
@@ -138,14 +138,14 @@ describe('the hero slots', () => {
   });
 
   it('refuses a purchase the purse cannot cover', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     game.state.player.wallet.Gems = 0;
     game.doBuyHeroSlot();
     expect(game.heroSlotsOpen()).toBe(1);
   });
 
   it('fills the first free slot, never the same hero twice', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
     game.state.heroes.tiers.Adventurer = 1;
@@ -162,54 +162,54 @@ describe('the hero slots', () => {
   });
 
   it('clears a slot, and the party is never left without a hero to send', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     game.partyHeroes = ['Warden'];
     game.clearHeroSlot(0);
     expect(game.partyHeroes).toEqual([]);
     // The fight refuses, in words, rather than the screen hiding the button.
-    expect(game.gateBlockText()).toBe('Pick a hero to lead them');
+    expect(game.lairBlockText()).toBe('Pick a hero to lead them');
   });
 });
 
 describe('what the screen adds up to', () => {
   it('opens with the roster in the slots it has, and ready to fight', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     expect(game.partyHeroes.length).toBe(game.heroSlotsOpen());
-    expect(game.gateBlockText()).toBeNull();
-    expect(game.gatePreview()!.enough).toBe(true);
+    expect(game.lairBlockText()).toBeNull();
+    expect(game.lairPreview()!.enough).toBe(true);
   });
 
   it('shows the enemy squads, and a second hero moves the number', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
     game.state.heroes.tiers.Adventurer = 1;
     game.partyHeroes = ['Warden'];
     game.expeditionParty = [];
-    const alone = game.gatePreview()!;
+    const alone = game.lairPreview()!;
     expect(alone.enemy.length).toBeGreaterThan(0);
     expect(alone.power).toBeGreaterThan(0);
 
     game.doBuyHeroSlot();
     game.assignHero('Adventurer');
-    expect(game.gatePreview()!.attack).toBeGreaterThan(alone.attack);
+    expect(game.lairPreview()!.attack).toBeGreaterThan(alone.attack);
 
     // …and so do troops.
-    const twoHeroes = game.gatePreview()!.attack;
+    const twoHeroes = game.lairPreview()!.attack;
     game.assignTroop('Warrior');
-    expect(game.gatePreview()!.attack).toBeGreaterThan(twoHeroes);
+    expect(game.lairPreview()!.attack).toBeGreaterThan(twoHeroes);
   });
 
   it('sends every hero in the slots into the fight', () => {
-    const game = atTheGate();
+    const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
     game.state.heroes.tiers.Adventurer = 1;
     game.doBuyHeroSlot();
     game.partyHeroes = ['Warden', 'Adventurer'];
-    // Twenty orcs hold the Barrow, so the heroes bring the company with them.
+    // Twenty orcs hold the orc lair, so the heroes bring the company with them.
     game.expeditionParty = [{ unitId: 'Warrior', count: 30 }];
-    game.doClearGate();
-    expect(game.gateFor(BARROW)!.cleared).toBe(true);
+    game.doAttackLair();
+    expect(game.lairFor(ORCS)!.cleared).toBe(true);
   });
 });

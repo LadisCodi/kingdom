@@ -1,6 +1,6 @@
 /* The screen before a fight (Docs/features/11a-ruins-ui.md §2.5) — the board,
- * the slots, and the card panels that fill them. The gate's own band is
- * screens/gates.css. */
+ * the slots, and the card panels that fill them. The lair's own band is
+ * screens/lairs.css. */
 
 /* The sheet is TALL (kit.css `.k-sheet.is-tall`), so the screen takes the
    whole frame whatever is on it. */
@@ -16,7 +16,7 @@
 
 /* ------------------------------------------------------------ the header */
 
-/* The head and the info band are ONE parchment card (M10): the ruin in a
+/* The head and the info band are ONE parchment card (M10): the lair in a
    square vignette down the left, the where-line and the lines beside it. */
 .bt-head {
   display: grid;

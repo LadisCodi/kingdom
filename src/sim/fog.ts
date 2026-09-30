@@ -1,6 +1,6 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, RUINS, levelIndexed, terrainGate } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, LAIRS, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import {
   cellsWithinRadiusOfRect, footprintAt, footprintCells, neighbors, townhallDistance,
@@ -303,7 +303,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
       state.fog.revealed[k] = true;
     }
     // Clearing fog pays no currency. What a reveal buys is MAP — resource
-    // cells, buildable ground, ruins and landmarks — against a Gold price
+    // cells, buildable ground, lairs and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead
     // (sim/expeditions.ts), because heroes and relics are all it buys.
     recordEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
@@ -316,7 +316,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
 }
 
 /**
- * Announce every landmark and ruin the player can now SEE, once each.
+ * Announce every landmark and lair the player can now SEE, once each.
  *
  * A SWEEP rather than a hook, because "became visible" is not a mutation.
  * Fog state is derived — a cell turns Discovered when a NEIGHBOUR is revealed,
@@ -333,7 +333,7 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
   for (const l of LANDMARKS) {
     if (fogState(state, map, l.location) !== 'Undiscovered') recordSiteDiscovery(state, l.id);
   }
-  for (const r of Object.values(RUINS)) {
+  for (const r of Object.values(LAIRS)) {
     if (fogState(state, map, r.location) === 'Undiscovered') continue;
     recordSiteDiscovery(state, r.id);
   }

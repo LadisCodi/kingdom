@@ -47,7 +47,7 @@ export type ModifierStat =
   // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
   // adding a twin of it.
   | 'armyCap'         // power the halls can field
-  | 'supplyCost'      // what a gate attempt costs in supplies
+  | 'supplyCost'      // what a lair attack costs in supplies
   | 'haulLoss'        // the fraction a failed depth loses
   | 'heroXp'          // XP a delve pays a hero
   | 'recruitCost'     // what a unit costs to recruit

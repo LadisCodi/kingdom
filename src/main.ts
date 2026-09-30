@@ -47,7 +47,7 @@ import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
-import { renderGateSheet } from './ui/gateSheet';
+import { renderLairSheet } from './ui/lairSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -178,7 +178,7 @@ async function boot(): Promise<void> {
     purse: renderPurseSheet,
     collection: renderCollectionSheet,
     heroes: renderHeroesSheet,
-    gate: renderGateSheet,
+    lair: renderLairSheet,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     builder: renderBuilderSheet,
@@ -278,7 +278,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'heroes', 'gate', 'welcome', 'settings',
+        'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -383,7 +383,7 @@ async function boot(): Promise<void> {
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
     // The presenter, reachable from the console. Every screen is a pure
-    // function of it, so `kingdom.openGate('HollowBarrow')` is a faster
+    // function of it, so `kingdom.openLair('Orcs')` is a faster
     // way to reach a sheet than finding its cell on the map — and it is the
     // difference between checking a layout in ten seconds and in ten clicks.
     (window as unknown as { kingdom: Game }).kingdom = game;
@@ -410,10 +410,10 @@ async function boot(): Promise<void> {
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
-      // The gates' counters, so the warp demos a raid landing during an
+      // The lairs' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
-      for (const gate of Object.values(game.state.gates)) {
-        if (gate !== undefined && gate.nextRaidAt !== null) gate.nextRaidAt -= delta;
+      for (const lair of Object.values(game.state.lairs)) {
+        if (lair !== undefined && lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
       }
       for (const report of game.state.raidReports) report.at -= delta;
       runTick();

@@ -5,7 +5,7 @@
 import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
-import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { landmarkDefAt, lairDefAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
@@ -686,7 +686,7 @@ export function drawMap(
         }
       }
 
-      // Landmarks and ruins: authored sites, drawn where a feature would be.
+      // Landmarks and lairs: authored sites, drawn where a feature would be.
       // They are what the fog is FOR, so they get the same weight as a forest
       // and a badge saying whether they still want something from you.
       //
@@ -715,28 +715,28 @@ export function drawMap(
           if (!claimed) drawSiteBadge(plot, '✦');
         }, { x: landmark.size, y: landmark.size });
       }
-      const ruin = ruinDefAt(cell);
-      if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
-        const plot = ruin.size === 1
-          ? box : camera.plotBox(cell, { x: ruin.size, y: ruin.size });
+      const lair = lairDefAt(cell);
+      if (lair && lair.location.x === cx && lair.location.y === cy) {
+        const plot = lair.size === 1
+          ? box : camera.plotBox(cell, { x: lair.size, y: lair.size });
         later(cell, (mark) => {
           dimmed(dim, () => {
             punched(key, plot, () => {
               mark(artRect(plot,
-                stand(plot, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
+                stand(plot, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
             });
           });
           // The tier alone: a bare digit reads at any zoom, and "T1" in a
           // display face is one stroke away from an arrow. While a garrison is
           // counting down it takes the badge instead — the minutes left, which
-          // is the only thing about this ruin that is urgent
+          // is the only thing about this lair that is urgent
           // (Docs/features/18-garrisons-and-raids.md §7).
-          const gate = state.gates[ruin.id];
-          const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
-            ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
+          const held = state.lairs[lair.id];
+          const raidIn = held && !held.cleared && held.nextRaidAt !== null
+            ? Math.max(0, Math.ceil((held.nextRaidAt - now) / 60_000)) : null;
           if (raidIn !== null) drawSiteBadge(plot, String(raidIn), true);
-          else drawSiteBadge(plot, String(ruin.tier));
-        }, { x: ruin.size, y: ruin.size });
+          else drawSiteBadge(plot, String(lair.tier));
+        }, { x: lair.size, y: lair.size });
 
       }
 

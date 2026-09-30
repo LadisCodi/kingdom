@@ -6,7 +6,7 @@
 // thing tested here and the reason `tallies` and `replaying` exist.
 
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, MISSIONS, RUINS } from '../src/sim/data/definitions';
+import { DISTRICTS, MISSIONS, LAIRS } from '../src/sim/data/definitions';
 import { recordEvent, tally } from '../src/sim/events';
 import {
   MISSION_KINDS, canIssue, isHardKind, missionComplete, missionProgress, weekIndex,
@@ -17,7 +17,7 @@ import { advance } from '../src/sim/commands';
 import { rand } from '../src/sim/rng';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  addAllTrainers, addBuilt, collectAll, freshGame, fund, map, openRuin, reveal, T0,
+  addAllTrainers, addBuilt, collectAll, freshGame, fund, map, clearLair, reveal, T0,
 } from './helpers';
 import type { GameState, Mission, MissionKind } from '../src/sim/state';
 
@@ -265,8 +265,8 @@ describe('what a mission is worth', () => {
 
   it('pays a pack for every errand that cannot be done in one session', () => {
     const state = playableKingdom();
-    openRuin(state, 'HollowBarrow');
-    reveal(state, [RUINS.HollowBarrow.location]);
+    clearLair(state, 'Orcs');
+    reveal(state, [LAIRS.Orcs.location]);
     const seen = sample(state);
     const hard = seen.filter((s) => isHardKind(s.kind));
     expect(hard.length).toBeGreaterThan(0);

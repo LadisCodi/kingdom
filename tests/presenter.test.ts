@@ -198,7 +198,7 @@ describe('focusQuest() — the 🔍 lands somewhere for every quest in the chain
         game.openOverlay !== null ||
         game.inspectedDistrictId !== null ||
         // Sites are the fourth thing the 🔍 can land on: a landmark to claim
-        // or a ruin to send a party into.
+        // or a lair to send a party into.
         game.inspectedSite !== null;
       expect(landed).toBe(true);
     },
@@ -702,7 +702,7 @@ describe('the overlay signatures', () => {
 
   it('screens with a countdown or a regenerating pool are not signed', () => {
     const game = freshPresenter();
-    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'gate'] as const) {
+    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'lair'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
   });

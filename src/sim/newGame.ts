@@ -76,8 +76,8 @@ export function newGame(map: MapData, now: number): GameState {
       refills: { day: dayIndex(now), watched: 0, bought: 0 },
     },
     landmarks: { claimed: {} },
-    // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
-    gates: {},
+    // No lair has been seen yet, so nothing is counting (sim/lairs.ts).
+    lairs: {},
     raidReports: [],
     artifacts: { levels: {}, casts: {}, charges: {} },
     collection: freshCollection(seasonAt(now)),

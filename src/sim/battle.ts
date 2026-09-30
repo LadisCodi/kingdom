@@ -447,7 +447,7 @@ export function generateEnemy(opts: {
     Math.max(COMBAT.genSlotsMin, Math.max(roll + COMBAT.genSlotsMin, needed)),
   );
 
-  // The ruin's own bias takes the lion's share and is spent FIRST, so a room
+  // The lair's own bias takes the lion's share and is spent FIRST, so a room
   // that runs out of slots runs out of them holding its own creature. The
   // rest is split evenly: a party that hard-counters the affinity should
   // still meet something awkward.

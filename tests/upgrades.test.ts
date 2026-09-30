@@ -20,7 +20,7 @@ import {
 } from '../src/sim/upgrades';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { armyCap, trainCost } from '../src/sim/army';
-import { drillOf, gateSupplyCost, partyBoard, partyOf } from '../src/sim/expeditions';
+import { drillOf, lairSupplyCost, partyBoard, partyOf } from '../src/sim/expeditions';
 import { partyStats, typeMultiplier } from '../src/sim/combat';
 import type { GameState, TechId } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
@@ -363,7 +363,7 @@ describe('the era-2/3 lines reach their numbers', () => {
       openEveryEra(state);
       state.landmarks.claimed[LANDMARKS[0].id] = true;
       state.landmarks.claimed[LANDMARKS[1].id] = true;
-      state.gates.HollowBarrow = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
+      state.lairs.Orcs = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
       fund(state, { Gold: 99_999, Knowledge: 10 });
       return state;
     };
@@ -382,7 +382,7 @@ describe('the era-2/3 lines reach their numbers', () => {
       expect(payback('WaypostsI')).toBe(2 * 3);
     });
 
-    it('Vigils pays its raise for each ruin already cleared', () => {
+    it('Vigils pays its raise for each lair already cleared', () => {
       expect(payback('VigilsI')).toBe(5);
     });
 
@@ -444,9 +444,9 @@ describe('the Warfare lines reach their numbers', () => {
 
   it('Rations cuts the provisioning, and stacks with the Quartermaster', () => {
     const state = freshGame();
-    const full = gateSupplyCost(state, 'StarObservatory', []);
+    const full = lairSupplyCost(state, 'Drake', []);
     completeRanks(state, 'Rations', 2); // −10%
-    const cut = gateSupplyCost(state, 'StarObservatory', []);
+    const cut = lairSupplyCost(state, 'Drake', []);
     for (const c of Object.keys(full) as Array<keyof typeof full>) {
       expect(cut[c]).toBe(Math.max(1, Math.round(full[c]! * 0.9)));
     }

@@ -18,8 +18,8 @@
 //
 // A sanctuary is claimed for GOLD and nothing else — an authored price, and
 // another sink on the fog's own curve. Nothing holds one: the fight with a
-// clock belongs to the ruins, where a garrison camps on the door and raids
-// the city until a party clears it (sim/gates.ts). A defended landmark was
+// clock belongs to the lairs, where a garrison camps on the door and raids
+// the city until a party clears it (sim/lairs.ts). A defended landmark was
 // a second, weaker copy of that encounter, so it was deleted rather than
 // built (Docs/features/18-garrisons-and-raids.md §9).
 

@@ -17,7 +17,7 @@ import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
   addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type DistrictId, type GameState,
-  type RuinId, type TechId, type UnitId, type Wallet,
+  type LairId, type TechId, type UnitId, type Wallet,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -103,14 +103,14 @@ export const reveal = (state: GameState, cells: Coord[]): void => {
 };
 
 /**
- * Mark a ruin CLEARED without fighting for it — its gate down, as if won.
+ * Mark a lair CLEARED without fighting for it, as if won.
  *
- * A ruin is its gate (Docs/proposals/lairs.md §1). A test that needs "a ruin
+ * A lair is one fight (Docs/proposals/lairs.md §1). A test that needs "a lair
  * cleared" but is not about the fight says so here in one line; no Knowledge
- * lump is paid. tests/gates.test.ts holds the garrison to its contract.
+ * lump is paid. tests/lairs.test.ts holds the garrison to its contract.
  */
-export const openRuin = (state: GameState, ruinId: RuinId): void => {
-  state.gates[ruinId] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
+export const clearLair = (state: GameState, lairId: LairId): void => {
+  state.lairs[lairId] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
 };
 
 /**

@@ -5,7 +5,7 @@
 //  * THE DRIP — `KNOWLEDGE.basePerHour`, fixed for the whole game, while the
 //    kingdom holds less than `KNOWLEDGE.cap`. Nothing raises the rate or the
 //    cap: territory, buildings and technologies pay lumps instead.
-//  * LUMPS — a landmark claimed, a ruin's gate cleared for the first time, a
+//  * LUMPS — a landmark claimed, a lair cleared for the first time, a
 //    quest. Every lump passes through `knowledgeLump`, which is where
 //    Scriptorium and the `knowledgeYield` stack scale it. A lump always lands
 //    in full, over the cap if it must.
@@ -23,7 +23,7 @@
 // THE BAR IS THE DRIP'S ONLY CEILING, away or not: ten hours away fills it.
 
 import { DELVE, KNOWLEDGE } from './data/definitions';
-import { clearedGateCount } from './gates';
+import { clearedLairCount } from './lairs';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
@@ -104,7 +104,7 @@ export const knowledgeLump = (state: GameState, raw: number): number =>
 export const landmarkClaimLump = (state: GameState): number =>
   knowledgeLump(state, KNOWLEDGE.landmarkClaimLump + techFlat(state, 'landmarkClaimKnowledge'));
 
-/** What clearing one ruin's gate pays, once: the lump, Vigils and Conquest
+/** What clearing one lair pays, once: the lump, Vigils and Conquest
  *  on top, and Sanctified Ruins doubling the whole of it. */
 export const firstClearLump = (state: GameState): number =>
   knowledgeLump(state,
@@ -116,7 +116,7 @@ export const firstClearLump = (state: GameState): number =>
 const claimedLandmarks = (state: GameState): number =>
   Object.values(state.landmarks.claimed).filter((c) => c === true).length;
 
-const clearedRuins = (state: GameState): number => clearedGateCount(state);
+const clearedLairs = (state: GameState): number => clearedLairCount(state);
 
 /**
  * What the ground already held is worth in lumps, at today's prices.
@@ -128,7 +128,7 @@ const clearedRuins = (state: GameState): number => clearedGateCount(state);
  */
 export const territoryKnowledge = (state: GameState): number =>
   claimedLandmarks(state) * landmarkClaimLump(state)
-  + clearedRuins(state) * firstClearLump(state);
+  + clearedLairs(state) * firstClearLump(state);
 
 // --------------------------------------------------------------- buying it
 

@@ -1,13 +1,12 @@
-// Ruins: the party and the gate (Docs/proposals/lairs.md §1, §5).
+// Lairs: the party and the fight (Docs/proposals/lairs.md §1, §5).
 //
-// A ruin is its GATE: one garrison, one fight, cleared once. The depths of
-// rooms that stood behind it are retired, so nothing here is ever in flight
-// and `advance()` has no boundary in this module at all.
+// A lair is one garrison, one fight, cleared once. Nothing here is ever in
+// flight, so `advance()` has no boundary in this module at all.
 //
 // What is left is the PARTY — what it costs to send and what it is worth —
-// and the one command that spends it: the gate attempt.
+// and the one command that spends it: the lair attack.
 
-import { COMBAT, HEROES, PARTY, RUINS, UNITS } from './data/definitions';
+import { COMBAT, HEROES, PARTY, LAIRS, UNITS } from './data/definitions';
 import { addHeroXp, heroSlots } from './heroes';
 import {
   NO_DRILL, partyPower, partyStats,
@@ -18,14 +17,14 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates';
+import { lairBoard, lairIsCleared, lairSupplies, markLairCleared } from './lairs';
 import { fogState } from './fog';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techFlat, techFlatAimed, techValue } from './techEffects';
-import type { GameState, HeroId, RuinId, UnitId, Wallet } from './state';
+import type { GameState, HeroId, LairId, UnitId, Wallet } from './state';
 import { canAfford, pay } from './wallet';
 
 // ------------------------------------------------------------------- slots
@@ -43,15 +42,15 @@ export const troopSlots = (): number => PARTY.troopSlots;
 // ---------------------------------------------------------------- supplies
 
 /**
- * What ONE gate attempt costs: the tier's `garrisons` supplies, paid on entry
+ * What ONE lair attack costs: the tier's `garrisons` supplies, paid on entry
  * and never refunded, win or lose — so an attempt is a decision with a price
  * rather than a free retry, and the price is small enough that the decision
  * is about troops. The Quartermaster and the Rations line discount it.
  */
-export function gateSupplyCost(
-  state: GameState, ruinId: RuinId, heroIds: readonly HeroId[],
+export function lairSupplyCost(
+  state: GameState, lairId: LairId, heroIds: readonly HeroId[],
 ): Wallet {
-  const base = gateSupplies(ruinId);
+  const base = lairSupplies(lairId);
   // The best quartermaster in the party, not the sum of them: two of them
   // would otherwise stack to a free trip.
   const discount = heroIds.reduce((best, id) => (HEROES[id].trait === 'SupplyDiscount'
@@ -187,15 +186,15 @@ export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.
 // and the same hero leads every attempt (Docs/features/10-heroes.md §2.6).
 export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned];
 
-// -------------------------------------------------------------- the gate
+// -------------------------------------------------------------- the lair
 
 /**
- * The gate is the whole ruin: one fight, nothing behind it
+ * A lair is one fight, nothing behind it
  * (Docs/proposals/lairs.md §5).
  *
- * It lives here rather than in `gates.ts` because clearing one is a PARTY
+ * It lives here rather than in `lairs.ts` because clearing one is a PARTY
  * command — a hero, a matchup and supplies — and this module already owns all
- * three. `gates.ts` owns the clock and the hoard, and knows nothing about how
+ * three. `lairs.ts` owns the clock and the hoard, and knows nothing about how
  * a garrison is beaten.
  *
  * Two things make it the right first fight. The threat is in VIEW — no
@@ -203,22 +202,22 @@ export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned
  * first battle needs no army at all. A shortfall warns rather than blocks, and
  * a retry is identical to a first attempt: nothing is lost but the supplies.
  */
-export type GateBlock =
-  | 'RuinNotFound' | 'AlreadyCleared' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
+export type LairBlock =
+  | 'LairNotFound' | 'AlreadyCleared' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
   | 'NotEnoughUnits' | 'NotEnoughSupplies';
 
-export function gateBlock(
+export function lairBlock(
   state: GameState,
   map: MapData,
-  ruinId: RuinId,
+  lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-): GateBlock | null {
-  if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
-  if (gateIsCleared(state, ruinId)) return 'AlreadyCleared';
+): LairBlock | null {
+  if (fogState(state, map, LAIRS[lairId].location) !== 'Revealed') return 'LairNotFound';
+  if (lairIsCleared(state, lairId)) return 'AlreadyCleared';
   if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
-  // NO 'HeroBusy'. A gate resolves on ENTRY, so a hero is never busy for it
+  // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
   // (Docs/features/10-heroes.md §2.6).
   // A hero alone is a legal board, so there is no EmptyParty here either.
   const committed = slots.filter((s) => s.count > 0);
@@ -230,12 +229,12 @@ export function gateBlock(
   // No cap check: the army cap bounds what the city OWNS
   // (Docs/features/combat.md §14), and a party is drawn from what it owns —
   // so `NotEnoughUnits` above is the only ceiling a composition can hit.
-  if (!canAfford(state.city.wallet, gateSupplyCost(state, ruinId, heroIds))) return 'NotEnoughSupplies';
+  if (!canAfford(state.city.wallet, lairSupplyCost(state, lairId, heroIds))) return 'NotEnoughSupplies';
   return null;
 }
 
-export interface GateReport {
-  result: 'Cleared' | 'Repelled' | GateBlock;
+export interface LairReport {
+  result: 'Cleared' | 'Repelled' | LairBlock;
   /** The party's power estimate, and what it was up against. Neither decided
    *  anything — `log` did (Docs/features/combat.md §12). */
   attack: number;
@@ -246,7 +245,7 @@ export interface GateReport {
   /** Everything the garrison had taken, banked on the way out. */
   hoard: Wallet;
   /** The first-clear Knowledge lump this win paid — 0 on a repulse, and on
-   *  any clear after the first (there is none today: a cleared gate refuses). */
+   *  any clear after the first (there is none today: a cleared lair refuses). */
   knowledge: number;
   supplies: Wallet;
   /** Who did not come back. A garrison fights: it costs soldiers whether it
@@ -257,24 +256,23 @@ export interface GateReport {
 }
 
 /**
- * One attempt on a gate, resolved on entry with the player attacking.
+ * One attempt on a lair, resolved on entry with the player attacking.
  *
- * Win: the gate is cleared, its counter stops, its hoard is paid in full, and
- * the ruin's first-clear Knowledge lump lands — clearing the gate IS clearing
- * the ruin. Lose: the supplies are gone and the gate stands — no cooldown, no
- * second timer. Casualties either way.
+ * Win: the lair is cleared, its counter stops, its hoard is paid in full, and
+ * the lair's first-clear Knowledge lump lands. Lose: the supplies are gone
+ * and the lair stands — no cooldown, no second timer. Casualties either way.
  */
-export function attemptGate(
+export function attackLair(
   state: GameState,
   map: MapData,
-  ruinId: RuinId,
+  lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-): GateReport {
-  const theirs = gateBoard(state, ruinId);
+): LairReport {
+  const theirs = lairBoard(state, lairId);
   const power = boardPower(theirs);
-  const supplies = gateSupplyCost(state, ruinId, heroIds);
-  const block = gateBlock(state, map, ruinId, heroIds, slots);
+  const supplies = lairSupplyCost(state, lairId, heroIds);
+  const block = lairBlock(state, map, lairId, heroIds, slots);
   if (block !== null) {
     return {
       result: block, attack: 0, power, log: null, hoard: {}, knowledge: 0, supplies,
@@ -296,22 +294,22 @@ export function attemptGate(
       result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, supplies, losses, wounded,
     };
   }
-  const hoard = markGateCleared(state, ruinId);
+  const hoard = markLairCleared(state, lairId);
   // The fight taught the party something whether or not the garrison was
-  // holding anything, and a tier-5 gate teaches more than the Barrow's.
-  addHeroXp(state, RUINS[ruinId].tier);
-  // THE FIRST CLEAR, once per ruin. `gateBlock` refuses a cleared gate, so
-  // this line runs once per ruin for the life of the kingdom; Conquest,
+  // holding anything, and a tier-5 lair teaches more than the orcs'.
+  addHeroXp(state, LAIRS[lairId].tier);
+  // THE FIRST CLEAR, once per lair. `lairBlock` refuses a cleared lair, so
+  // this line runs once per lair for the life of the kingdom; Conquest,
   // Vigils and Sanctified Ruins ride on the lump (sim/knowledge.ts).
   const knowledge = firstClearLump(state);
   payKnowledge(state, knowledge);
   return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded };
 }
 
-/** What the gate sheet shows before the player commits: the threat is always
- *  visible on a gate, so this hides nothing. */
-export interface GatePreview {
-  ruinId: RuinId;
+/** What the lair sheet shows before the player commits: the threat is always
+ *  visible on a lair, so this hides nothing. */
+export interface LairPreview {
+  lairId: LairId;
   threat: UnitId | 'Any';
   /** The squads in the doorway, and what they are worth. */
   enemy: EnemySquad[];
@@ -321,33 +319,33 @@ export interface GatePreview {
   supplies: Wallet;
   /** The first-clear Knowledge lump a win would pay, at today's prices. */
   knowledge: number;
-  /** True when the party already beats the gate ON PAPER. A shortfall warns,
+  /** True when the party already beats the lair ON PAPER. A shortfall warns,
    *  it never blocks — and the paper is an estimate now, so a party that
    *  reads short can still win the fight and one that reads long can lose it
    *  (Docs/features/combat.md §12). */
   enough: boolean;
 }
 
-export function previewGate(
+export function previewLair(
   state: GameState,
-  ruinId: RuinId,
+  lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-): GatePreview {
-  const guard = RUINS[ruinId].guard;
+): LairPreview {
+  const guard = LAIRS[lairId].guard;
   const committed = slots.filter((s) => s.count > 0);
   const party = partyOf(state, committed, heroIds);
-  const theirs = gateBoard(state, ruinId);
+  const theirs = lairBoard(state, lairId);
   const attack = partyPower(party);
   const power = boardPower(theirs);
   return {
-    ruinId,
+    lairId,
     threat: guard.threat,
     enemy: boardSquads(theirs),
     power,
     attack,
     stats: partyStats(party),
-    supplies: gateSupplyCost(state, ruinId, heroIds),
+    supplies: lairSupplyCost(state, lairId, heroIds),
     knowledge: firstClearLump(state),
     enough: attack >= power,
   };

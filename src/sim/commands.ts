@@ -12,7 +12,7 @@ import {
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
-import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
+import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { revealAroundDistrict } from './fog';
 import { recordEvent } from './events';
 import {
@@ -243,7 +243,7 @@ export type UpgradeResult =
  *    Farsight by name, so a second technology that moves `discoverRadius`
  *    needs no line of its own.
  *  * **A technology that raises a lump pays it back** for every landmark and
- *    ruin already held (sim/knowledge.ts `territoryKnowledge`).
+ *    lair already held (sim/knowledge.ts `territoryKnowledge`).
  *
  * Bracketed by the tax repricing, because a technology can move the tax rate
  * (Communities) and the anchor must not bank the old rate's time at the new.
@@ -511,15 +511,15 @@ function applyDueAt(
       if (trainee === 'Villager') out.trainedPopulation += 1;
       else out.trainedUnits.push(trainee);
     }
-    // NOTHING FOR THE RUINS. A room resolves the instant the player enters
+    // NOTHING FOR THE LAIRS. A room resolves the instant the player enters
     // it (Docs/features/11-expeditions.md §5), so no party is ever in flight
     // and this loop has no expedition work to do at all.
-    // A gate is a TIMER too: the counter a discovery started runs and pays out
-    // in full while the player is away. Arming comes first, so a ruin found
-    // between two boundaries — or by a save that predates gates entirely —
+    // A lair is a TIMER too: the counter a discovery started runs and pays out
+    // in full while the player is away. Arming comes first, so a lair found
+    // between two boundaries — or by a save that predates lairs entirely —
     // starts its warning HERE, stamped with this boundary's t, and cannot be
     // raided in the same instant it was noticed.
-    armGates(state, map, t);
+    armLairs(state, map, t);
     const raids = advanceRaids(state, t);
     out.raids.push(...raids);
     // A raid empties stores, and a crew waiting by a full one can go out again.
