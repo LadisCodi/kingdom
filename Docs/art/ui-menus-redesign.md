@@ -1032,6 +1032,18 @@ menu:
 | A builder is free | Paid, placement closes, the building stands in scaffolding with its timer and a builder walks to it; the map stays where it is |
 | Every builder is busy | The builder sheet opens over placement; dismissing it returns to the positioned ghost ([`../features/06-construction.md`](../features/06-construction.md) §2) |
 
+**The builder sheet** (reference: `mockups/m50-builder-sheet.png`) — a centred
+window over the dimmed placement screen:
+
+- Header plank *Builders* and its close knob — the only way out; there is no
+  *Not now*.
+- *All n builders are busy*, and under it *Nothing waits in line — finish or
+  rush a job to free one up.*
+- The crew as gold medallions, one per builder owned, and an empty socket for
+  each one still to hire up to the ceiling.
+- Below the ceiling: one priced gem button, *Hire a builder*, the Gems above
+  the slab. At the ceiling: no button, and *4 is as large as a crew gets.*
+
 **Moving** uses the same screen: no price and no time, and the button reads
 *Move here*.
 
