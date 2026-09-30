@@ -28,7 +28,7 @@ import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
@@ -52,6 +52,9 @@ export interface MarkerLayer {
   previewGlyph: string | null;
   previewSprite: string | null;
   previewSize: { x: number; y: number } | null; // footprint of the previewed building
+  /** The grid steps the ghost can take — one green arrow each, on the ground
+   *  beside the footprint, pointing that way. */
+  previewSteps: Coord[];
   /** The district currently being MOVED. It is drawn faint at its old address
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
@@ -77,6 +80,15 @@ export interface MarkerLayer {
  * comes down the marker layer, where it is computed once against the sim's
  * own clock.
  */
+/** The move arrows' bob, 0 → 1 → 0 over a second and a quarter; flat under
+ *  reduced motion. */
+const ARROW_CYCLE_MS = 1250;
+const reducedMotion = typeof matchMedia === 'function'
+  ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+const moveArrowBob = (): number => (reducedMotion?.matches
+  ? 0
+  : 0.5 - 0.5 * Math.cos((performance.now() % ARROW_CYCLE_MS) / ARROW_CYCLE_MS * Math.PI * 2));
+
 const SPELL_CYCLE_MS = 6000;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
 
@@ -153,6 +165,55 @@ export function drawMap(
   const mid = (b: PlotBox) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
   /** The bottom corner of a plot's ground diamond — where art STANDS. */
   const base = (b: PlotBox) => ({ x: b.x + b.w / 2, y: b.y + b.h });
+
+  /**
+   * THE GHOST'S MOVE ARROWS (Docs/art/ui-menus-redesign.md §5.6): one green
+   * arrow per grid step the ghost can take, lying flat on the ground just
+   * past the middle of that side of its footprint and pointing along the
+   * grid's axis — so on screen they run diagonally, parallel to the
+   * diamond's edges. They bob gently outward along their axis.
+   */
+  const drawMoveArrows = (cell: Coord, fp: { x: number; y: number }, steps: Coord[]) => {
+    if (steps.length === 0) return;
+    const origin = mid(cellRect(cell));
+    const stepOf = (d: Coord) => {
+      const m = mid(cellRect({ x: cell.x + d.x, y: cell.y + d.y }));
+      return { x: m.x - origin.x, y: m.y - origin.y };
+    };
+    const c = mid(camera.plotBox(cell, fp));
+    const bob = moveArrowBob();
+    for (const d of steps) {
+      const v = stepOf(d);
+      // The other axis, for the arrow's width: on the ground, not the screen.
+      const w = stepOf(d.x !== 0 ? { x: 0, y: 1 } : { x: 1, y: 0 });
+      const half = (d.x !== 0 ? fp.x : fp.y) / 2;
+      const along = half + 0.3 + bob * 0.12;
+      const at = (u: number, k: number) => ({
+        x: c.x + v.x * (along + u) + w.x * k,
+        y: c.y + v.y * (along + u) + w.y * k,
+      });
+      // Tail to tip in cells: a short shaft and a broad head.
+      const pts = [
+        at(0, -0.11), at(0.26, -0.11), at(0.26, -0.26), at(0.55, 0),
+        at(0.26, 0.26), at(0.26, 0.11), at(0, 0.11),
+      ];
+      ctx.save();
+      ctx.beginPath();
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.globalAlpha = 0.92;
+      const g = ctx.createLinearGradient(c.x, c.y - th * 0.3, c.x, c.y + th * 0.3);
+      g.addColorStop(0, PALETTE.moveArrowLight);
+      g.addColorStop(1, PALETTE.moveArrow);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(1.5, size * 0.025);
+      ctx.strokeStyle = PALETTE.moveArrowRim;
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
 
   /**
    * A prop standing on a plot: the first of `keys` whose art exists, drawn
@@ -1026,13 +1087,21 @@ export function drawMap(
   }
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
-    ctx.globalAlpha = 0.6;
-    // The ghost stands on the plot it would occupy, with no outline of its
-    // own: its range is drawn round it (Pass 1.1).
+    // No footprint diamond: the ghost's rim and its move arrows are what
+    // tell it apart, and a square round its feet was one outline too many.
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
-    stand(b, sprite ? [`${sprite}_l1`, sprite] : [], markers.previewGlyph);
+    const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    // A solid rim round the ghost, opaque under the translucent building,
+    // so it stands out from the grass and the roofs around it.
     ctx.globalAlpha = 1;
+    const foot = base(b);
+    const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostOutline, rim));
+    ctx.globalAlpha = 0.6;
+    stand(b, keys, markers.previewGlyph);
+    ctx.globalAlpha = 1;
+    drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
   }
   // A placement's or a move's target is the ghost itself; only a spell's
   // target keeps the outline.

@@ -11,7 +11,7 @@
 // express against a box than against four corners.
 
 import type { PlotBox } from './camera';
-import { drawSprite, spriteAspect, spriteInkTop } from './sprites';
+import { drawSprite, drawSpriteOutline, spriteAspect, spriteInkTop } from './sprites';
 
 /** The four corners of a plot's ground diamond, clockwise from the top. */
 export interface Corners {
@@ -182,6 +182,23 @@ export function drawGround(
  * label just clear of the roof — and zero when the art is missing or still
  * loading, which is the glyph fallback's cue.
  */
+/** The outline round what `drawStanding` would draw with the same numbers —
+ *  the placement ghost's rim (sprites.ts `drawSpriteOutline`). */
+export function drawStandingOutline(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  baseX: number,
+  baseY: number,
+  plotW: number,
+  color: string,
+  px: number,
+): boolean {
+  const aspect = spriteAspect(key);
+  if (aspect === null) return false;
+  const h = plotW * aspect;
+  return drawSpriteOutline(ctx, key, baseX - plotW / 2, baseY - h, plotW, h, color, px);
+}
+
 export function drawStanding(
   ctx: CanvasRenderingContext2D,
   key: string,

@@ -7,7 +7,8 @@
 // things position feeds — adjacency, influence, worker distance, the fog —
 // follow the building rather than being quietly re-bought.
 import { describe, expect, it } from 'vitest';
-import { advance, changeWorkers, moveDistrict } from '../src/sim/commands';
+import { DISTRICTS } from '../src/sim/data/definitions';
+import { advance, changeWorkers, moveDistrict, settleFootprints } from '../src/sim/commands';
 import { canMoveDistrict, placementBlock, validPlacementCells } from '../src/sim/districts';
 import { districtAdjacency } from '../src/sim/adjacency';
 import { coordKey, districtById, getWallet, townhall, type Coord } from '../src/sim/state';
@@ -255,7 +256,7 @@ describe('the two gestures', () => {
     game.handleTap(...screenAt(game, NEIGHBOUR_CELL));
     expect(game.placementInfo()!.cell).toEqual(NEIGHBOUR_CELL);
     expect(game.placementInfo()!.unmoved).toBe(false);
-    // Still only a ghost: nothing is committed until Move here.
+    // Still only a ghost: nothing is committed until Move.
     expect(house.location).toEqual(HOUSE_CELL);
 
     const dark = { x: 9, y: 9 };
@@ -364,5 +365,49 @@ describe('the presenter refuses what the sim refuses', () => {
     game.startMove('district_Housing_does_not_exist');
     expect(game.mode.kind).toBe('normal');
     expect(districtById(game.state, 'district_Housing_does_not_exist')).toBeUndefined();
+  });
+});
+
+// A footprint is data: a building placed on one cell can become 2×2 under a
+// city that is already built. Loading puts it back on ground it may stand on.
+describe('settling footprints on load', () => {
+  const overlapping = (state: ReturnType<typeof freshGame>) => {
+    const seen = new Map<string, string>();
+    for (const d of state.city.districts) {
+      const size = DISTRICTS[d.definitionId].size;
+      for (let x = 0; x < size.x; x++) for (let y = 0; y < size.y; y++) {
+        const k = coordKey({ x: d.location.x + x, y: d.location.y + y });
+        if (seen.has(k)) return true;
+        seen.set(k, d.uniqueId);
+      }
+    }
+    return false;
+  };
+
+  it('moves a grown building off its neighbour and leaves the neighbour where it is', () => {
+    const state = freshGame();
+    const around: Coord[] = [];
+    for (let x = -6; x <= 8; x++) for (let y = -6; y <= 8; y++) around.push({ x, y });
+    reveal(state, around);
+    completeTech(state, 'Warrior');
+    // As a 1×1 city left it: a house on what is now the Barracks' second cell.
+    const spot = validPlacementCells(state, map, 'Barracks')[0];
+    addBuilt(state, 'Barracks', spot);
+    addBuilt(state, 'Housing', { x: spot.x + 1, y: spot.y });
+    const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
+    expect(overlapping(state)).toBe(true);
+
+    const moved = settleFootprints(state, map, T0);
+
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    expect(moved).toEqual([barracks.uniqueId]);
+    expect(overlapping(state)).toBe(false);
+    expect(house.location).toEqual({ x: spot.x + 1, y: spot.y });
+    expect(placementBlock(state, map, 'Barracks', barracks.location, barracks.uniqueId)).toBeNull();
+  });
+
+  it('moves nothing in a city that fits', () => {
+    const state = freshGame();
+    expect(settleFootprints(state, map, T0)).toEqual([]);
   });
 });

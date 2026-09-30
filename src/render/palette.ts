@@ -33,6 +33,13 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 };
 
 export const PALETTE = {
+  // The placement ghost's outline: a warm white, the brightest thing on the
+  // grass, so the building being placed reads apart from the ones around it.
+  ghostOutline: '#fff8e1',
+  // The placement ghost's move arrows: leaf green, lit from above, rimmed.
+  moveArrow: '#4f9f33',
+  moveArrowLight: '#8fd466',
+  moveArrowRim: '#2f6b1f',
   // Cast targets read blue, so they can never be confused with a build spot.
   castTarget: '#8fb4ff',
   // Site badges: the tag on an unclaimed landmark or an undelved ruin.

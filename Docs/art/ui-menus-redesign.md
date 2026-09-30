@@ -919,88 +919,158 @@ reachable by finding and tapping the Market building on the map.
 
 **Purpose.** Choose what to add to the kingdom.
 
-**Today** (`src/ui/buildMenu.ts`). Full-screen list, title "Build", one row
-per district in `CITY_DEF.buildMenuOrder`, **hiding** anything whose
-`requiredTech` is unresearched (deliberate — the tech tree is where you
-discover buildings). Each row: emoji glyph, name, description, cost +
-`⏱ duration` at distance 0, a `Select` button, and `count/maxCount` — or,
-when capped, `Townhall lvl N required` / `Maxed out`. Rows dim when capped
-or unaffordable. A quest hint can highlight one row.
+Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military-decoration.png` (Military, Decoration).
 
-**Problems.** It reads as a build order table. The most interesting fact
-about each building — *what it will do for you* — is a 12px grey line. The
-cost is "indicative at distance 0" and then changes in the next screen,
-which quietly teaches the player not to trust numbers.
+**The flow.** Nav **Build** → Build menu → tap a card → Placement → **Build**
+→ the map, with the building under construction.
 
-**Show this.**
+- **Close** in placement returns to the Build menu, on the same tab and
+  scroll position. The menu's close X returns to the map.
+- While the menu or placement is open, the header plaque shows **Free
+  builders `n`** (§5.1).
 
-- **Cards, not rows** — a 2-column grid of building cards, each with the
-  building's actual **level-1 sprite** on a small grass plot (art already
-  exists in `src/render/assets/`).
-- Per card: name; one-line promise in plain language ("Villagers live
-  here and pay taxes"); cost as **icon chips** (`🪵 20  🪨 10`), each chip
-  turning `clay` when short; build time with a small hourglass;
-  `owned 2 / 4` as filled pips rather than a fraction.
-- Cap-blocked cards keep full colour, add a padlock ribbon and the plain
-  sentence **"Needs Townhall level 3"** with a tiny Townhall icon.
-- Optional grouping headers once there are more than six: **Homes ·
-  Harvest · Trade**. Do not add tabs before that.
-- Keep hiding tech-locked buildings, but add one **"More to discover"**
-  card at the end that opens Research. Right now the menu silently grows
-  and the player never learns why.
-- Selecting a card goes straight to placement — keep it.
+**The Build tab (nav).**
+
+- The call-to-action orb (§3.7) with a count: how many buildings can be
+  started right now — unlocked, under their cap and affordable. No orb at
+  zero (§6.7).
+- A quest that points at a building highlights the tab and that card.
+
+**The menu.**
+
+- A **bottom drawer**, about half the screen tall. The map stays visible and
+  dimmed above it, so placement opens on the same map the player was looking
+  at.
+- **Three tabs** — the nav's wooden tab plates. The selected one is the plate
+  pressed into the wood (the nav tab's pressed state), not lit or gilded.
+  Each wears the same orb and count as the nav tab:
+
+  | Tab | Buildings |
+  |---|---|
+  | **Economy** | Housing, Farm, FarmLands, Sawmill, Quarry, Docks, Sanctum, Carpenter, Mason's Yard, Smelter, Rune Carver |
+  | **Military** | Barracks, Spear Hall, Shooting Grounds, Stables, Infirmary |
+  | **Decoration** | Garden, Well, Orchard, Statue, Plaza, Shrine |
+
+- The Decoration tab carries the Harmony line above its cards: `supply /
+  demand` and what the surplus is paying — silent until a decoration can be
+  built or Harmony is supplied or demanded.
+- Opens on the tab last used; the first time, on Economy.
+- Cards sit in **one horizontally scrolling row**, about 2.3 cards wide at
+  375px, so the cut-off card says there is more.
+- Order within a tab is `buildMenuOrder`; startable cards are not re-sorted
+  to the front.
+- A tab with buildings still behind research ends with a **More to
+  discover** card that opens Research.
+
+**The card**, top to bottom:
+
+| Part | Shows |
+|---|---|
+| Art | The level-1 sprite on its grass plot |
+| Name | The name, and the ordinal it would get, small and quiet (*Housing #3*) — the price is that instance's |
+| Promise | One line, `promise` in `buildings.json` (≤ 42 characters) |
+| Cost | Chips for every coin and good; a short chip turns `clay`. A decoration adds a `+N Harmony` chip |
+| Footer strip | ⏳ build time on the left — the wait at the cell the ghost will appear on — and **Built `n / max`** on the right |
+
+**Card states.**
+
+| State | Looks | Tap |
+|---|---|---|
+| Startable | Plain | Opens placement |
+| **New** | A *New!* wax seal on the corner, until the tab has been seen once | Opens placement |
+| Can't afford | Plain; the short chips in `clay` | Refused: the card shakes and the short chips pulse |
+| At the Townhall cap | Padlock ribbon: *Needs Townhall level 3* | Refused |
+| At the absolute cap | Ribbon: *You have as many as the realm allows* | Refused |
+| Short of Harmony | Ribbon: *Needs 12 more Harmony* | Refused |
+| Tech-locked | Hidden | — |
+| Quest target | Highlighted | As its state |
+
+- A free builder is **not** a card state: a build with every builder busy is
+  refused when it is confirmed (§5.6).
+- A ribbon wins over the clay chips: a capped card shows the ribbon only.
 
 ---
 
 ### 5.6 Placement
 
 **Purpose.** Put the building somewhere good, and understand why one cell
-is better than another.
+is better than another. Only reached with the price in hand (§5.5).
 
-**Today** (`src/ui/placementPanel.ts` + map markers). A bottom panel:
-`🌾 Place Farm`, the description, then rows for **Cost** (exact, for the
-selected cell), **Time**, **Cell** `(x, y) — tap the map to move`, and for
-harvesting buildings **`Crops cells captured: N`** (red at 0). A green
-**Build** button, disabled when unaffordable or when no legal cell exists.
-The map shows a ghost preview and marks every legal cell; the camera
-auto-centres on the closest legal cell to the Townhall.
+Reference: `mockups/m49-placement.png`.
 
-**Problems.** `(x, y)` is debug output. "Crops cells captured" is the most
-important number on the screen and it is the fourth row. The panel eats
-45% of the screen at the exact moment the player needs to look at the map.
-And the ghost can only be *tapped* into place — the one gesture every player
-will try first, dragging it, pans the camera instead.
+**On the map.**
 
-**Show this.**
+- The camera centres on the legal cell closest to the Townhall and the ghost
+  appears there.
+- The ghost is the building half-transparent on its footprint, outlined in
+  gold, inside its **reach** drawn as one thin white line; each captured
+  cell is labelled with its depot
+  ([`../features/05-city-and-districts.md`](../features/05-city-and-districts.md)
+  §4.1).
+- **Move arrows**: four green arrows on the ground round the ghost's
+  footprint, one per side, pointing outward along the isometric grid's axes.
+  An arrow shows only where the next cell that way is legal. They bob gently
+  outward along their axis (none under reduced motion), and hide while the
+  ghost is held.
+- No verdict: the depot labels on the captured cells are the whole reading
+  of a spot.
+- Only the Docks outline their legal cells.
+- Gestures (§4.3 of the city doc): drag the ghost to carry it; tap a legal
+  cell to send it there; a drag that starts off the ghost pans the camera.
+  The ghost lifts while held, snaps to legal cells only and never commits.
+- The first placement ever shows a one-time coach line: *Drag the building,
+  or tap where it should go*.
 
-- **Shrink the panel to a single bar** across the bottom: sprite, name,
-  cost chips, time, and the Build button. Everything else moves onto the
-  map.
-- On the map, over the ghost: a **big count of what this spot captures** —
-  `🌲 ×4` in a floating parchment tag, changing live as the player moves
-  the ghost. That is the placement decision, made visual.
-- Draw the **area of influence** as a soft translucent leaf-green overlay
-  around the ghost, with captured resource cells highlighted and
-  uncaptured ones dimmed.
-- Replace `(x, y)` with nothing. Replace "tap the map to move" with a
-  one-time coach line the first time only.
-- **Make the ghost draggable, and keep the tap.** Both gestures move it:
+**The bar** — a small window across the bottom, in the format of every other
+menu:
 
-  | Gesture | Result |
-  |---|---|
-  | Drag starting **on the ghost** | The ghost follows your finger; the camera stays put |
-  | Drag starting **anywhere else** | Pans the camera, exactly as today — you need this to reach distant cells |
-  | Tap any legal cell | The ghost jumps there, exactly as today |
+- **Header plank**: the building's name and its ordinal (*Sawmill #2*), and
+  the close knob at its right. Close is the cancel — back to the Build menu
+  (§5.5).
+- **Body**, one row:
+  - the level-1 sprite on its tile;
+  - the building's `promise`, and under it ⏳ the build time;
+  - **Build** — primary, a priced button (§6.4): the cost above the slab on
+    its own darker section, at the kit's default size.
+- No legal cell anywhere: Build is disabled and the bar says *Nowhere legal
+  to build it*.
 
-  The ghost lifts slightly while held (a little scale and a shadow), snaps
-  to legal cells only — if you drag over illegal ground it stays on the
-  last legal cell rather than falling off — and **dragging never commits**.
-  Build stays an explicit button press, because confirming spends
-  resources. On touch the finger covers the ghost, so carry the grab offset
-  rather than centring the ghost on the pointer, or it teleports on pickup.
-- Quality feedback in words: **"Good spot"** (≥ 3 captured) /
-  **"Poor spot — no Crops nearby"** (0 captured), in leaf or clay.
-- Keep Build disabled + a reason chip when unaffordable: "Short 12 🪵".
+**Confirming.**
+
+| Case | Result |
+|---|---|
+| A builder is free | Paid, placement closes, the building stands in scaffolding with its timer and a builder walks to it; the map stays where it is |
+| Every builder is busy | The builder sheet opens over placement; dismissing it returns to the positioned ghost ([`../features/06-construction.md`](../features/06-construction.md) §2) |
+
+**The builder sheet** (references: `mockups/m50-builder-sheet.png`, and `m51-builder-free.png` for a free builder) — a centred
+window over the dimmed placement screen:
+
+- Header plank *Builders* and its close knob — the only way out; there is no
+  *Not now*.
+- Top row: an illustration of two builders, a man and a woman, on its tile;
+  beside it *All n builders are busy* and *Nothing waits in line — finish a
+  job to free a builder.*
+- The crew: a vertical list, one row per builder up to the ceiling.
+  - **Busy** — the building's sprite; its name and what is being done
+    (*Housing #5 · Building*, *Quarry · Upgrading to Lv 3*) over the blue bar
+    with the time left inside it; the priced gem **Finish** at the right.
+  - **Empty, the next to hire** — a dashed socket with a builder's
+    silhouette, *A third builder*, and the priced gem **Hire**.
+  - **Free** — a builder whose job ended while the sheet is open, on its own
+    or by Finish: a gold builder medallion, *Free* in leaf and *Ready to
+    build the Sawmill*, and the priced primary **Build** — the placement
+    bar's own price. The row wears a thin leaf rim and a soft glow. Build
+    starts the build on the ghost's cell and closes the sheet.
+  - **Empty, further up** — the socket and its name alone, faded.
+- With a free row the headline reads *A builder is free* and the line under
+  it *Build the Sawmill now, or keep it for later.*
+- At the ceiling there is no empty row, and the list ends with *4 is as
+  large as a crew gets.*
+- The sheet never closes on its own: a job that ends turns its row Free in
+  place. Closing it with a free builder returns to the positioned ghost.
+
+**Moving** uses the same screen: no price and no time, and the button reads
+*Move*.
 
 ---
 
@@ -1616,6 +1686,15 @@ lost its scroll and replayed its slide-in on the phone. The contract now:
   keeps rebuilding — the rebuild is invisible once images and scroll survive.
 - **The district card is the template for the next step**: built once per
   building and mutated in place, like the header and the pills.
+
+### 6.9 A labelled button is one verb
+
+- A button's label is a single verb: *Build*, *Move*, *Hire*, *Finish*,
+  *Upgrade* — never *Move here* or *Hire a builder*.
+- What the verb acts on is said by the screen around it: the row, the
+  window's title, the ghost on the map.
+
+---
 
 ## 7. Mockup prompt pack (ChatGPT)
 

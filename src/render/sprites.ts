@@ -123,6 +123,78 @@ export function drawSprite(
   return true;
 }
 
+/** One solid-colour silhouette per sprite and colour, at the art's own size:
+ *  the ghost's outline is drawn from it every frame. */
+const silhouettes = new Map<string, HTMLCanvasElement>();
+
+/** The sprite's silhouette in one colour, cached per sprite and colour. */
+function silhouetteOf(key: string, color: string): HTMLCanvasElement | null {
+  const s = sprite(key);
+  if (!s?.ready) return null;
+  const id = `${key}|${color}`;
+  let sil = silhouettes.get(id);
+  if (!sil) {
+    sil = document.createElement('canvas');
+    sil.width = s.img.naturalWidth;
+    sil.height = s.img.naturalHeight;
+    const c = sil.getContext('2d')!;
+    c.drawImage(s.img, 0, 0);
+    c.globalCompositeOperation = 'source-in';
+    c.fillStyle = color;
+    c.fillRect(0, 0, sil.width, sil.height);
+    silhouettes.set(id, sil);
+  }
+  return sil;
+}
+
+/**
+ * An OUTLINE round sprite `key` filling (x, y, w, h): its silhouette in
+ * `color`, stamped `px` pixels out in eight directions. Drawn UNDER the
+ * sprite, so only the ring round its edge shows. False while the art is
+ * missing or loading.
+ */
+export function drawSpriteOutline(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  px: number,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  // The ring alone, on a scratch canvas: the eight stamps, then the
+  // silhouette itself cut back out — so a TRANSLUCENT sprite drawn over it
+  // shows the ground through its body, not a white fill.
+  const scale = ctx.getTransform().a || 1;
+  const pad = Math.ceil(px) + 1;
+  const cw = Math.ceil((w + pad * 2) * scale);
+  const ch = Math.ceil((h + pad * 2) * scale);
+  if (cw <= 0 || ch <= 0) return true;
+  ringCanvas ??= document.createElement('canvas');
+  if (ringCanvas.width < cw || ringCanvas.height < ch) {
+    ringCanvas.width = Math.max(ringCanvas.width, cw);
+    ringCanvas.height = Math.max(ringCanvas.height, ch);
+  }
+  const r = ringCanvas.getContext('2d')!;
+  r.setTransform(1, 0, 0, 1, 0, 0);
+  r.clearRect(0, 0, cw, ch);
+  r.setTransform(scale, 0, 0, scale, 0, 0);
+  const d = px * Math.SQRT1_2;
+  r.globalCompositeOperation = 'source-over';
+  for (const [ox, oy] of [[px, 0], [-px, 0], [0, px], [0, -px], [d, d], [-d, d], [d, -d], [-d, -d]]) {
+    r.drawImage(sil, pad + ox, pad + oy, w, h);
+  }
+  r.globalCompositeOperation = 'destination-out';
+  r.drawImage(sil, pad, pad, w, h);
+  r.globalCompositeOperation = 'source-over';
+  ctx.drawImage(ringCanvas, 0, 0, cw, ch, x - pad, y - pad, cw / scale, ch / scale);
+  return true;
+}
+let ringCanvas: HTMLCanvasElement | null = null;
+
 // ---------------------------------------------------------------- UI atlas
 
 // The UI icon atlas, on the CANVAS. The DOM has had these since the atlas
