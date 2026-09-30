@@ -269,7 +269,8 @@ Quests:
 - A worker building works cells **of its type** within Chebyshev
   `radius(level)`. Revealed cells only.
 - The area is drawn while the building is selected or placed: a sepia ink line
-  round its edge with a knot on each corner, over a light parchment wash, laid
+  round its edge with a knot on each corner, over a parchment wash that glows
+  strongest along the edge and fades towards the inside, laid
   over the floor and under what stands on it (mockup
   `../art/mockups/area-overlays/area-overlays-c2.png`).
 - **One worker per cell, globally.** `tryDispatch` takes the nearest unclaimed

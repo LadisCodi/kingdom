@@ -23,7 +23,7 @@
 // Until the pieces have loaded, both fall back to plain vector lines.
 
 import type { PlotBox } from './camera';
-import { edge } from './iso';
+import { corners as diamondCorners, edge } from './iso';
 import { spriteImage } from './sprites';
 import { coordKey, type Coord } from '../sim/state';
 
@@ -42,6 +42,9 @@ interface InkEdge {
   slope: 0 | 1;
   /** Stable per edge, so a stroke's slice does not shimmer as the view pans. */
   seed: number;
+  /** Across the cell, from this edge to the opposite one: the ground's own
+   *  diagonal, so a band laid along it stays on the tile. */
+  across: Point;
 }
 
 /** A cell's side as the corners of the square lattice it runs between —
@@ -54,14 +57,22 @@ const LATTICE: Record<Side, [[number, number], [number, number]]> = {
   W: [[0, 1], [0, 0]],
 };
 
+/** From each side to the opposite one, as the difference of two corners. */
+const ACROSS: Record<Side, ['top' | 'right' | 'bottom' | 'left', 'top' | 'right' | 'bottom' | 'left']> = {
+  N: ['left', 'top'], E: ['top', 'right'], S: ['right', 'bottom'], W: ['bottom', 'left'],
+};
+
 function inkEdge(cell: Coord, side: Side, box: PlotBox): InkEdge {
   const [a, b] = edge(box, side);
+  const c = diamondCorners(box);
+  const [to, from] = ACROSS[side];
+  const across: Point = [c[to][0] - c[from][0], c[to][1] - c[from][1]];
   const [[ax, ay], [bx, by]] = LATTICE[side];
   const va = `${cell.x + ax},${cell.y + ay}`;
   const vb = `${cell.x + bx},${cell.y + by}`;
   const seed = Math.imul(cell.x * 73856093 ^ cell.y * 19349663, 2654435761)
     ^ (side.charCodeAt(0) * 83492791);
-  return { a, b, va, vb, slope: side === 'N' || side === 'S' ? 0 : 1, seed: seed >>> 0 };
+  return { a, b, va, vb, slope: side === 'N' || side === 'S' ? 0 : 1, seed: seed >>> 0, across };
 }
 
 /** Every edge of an area that faces a cell outside it. */
@@ -81,7 +92,7 @@ function areaEdges(
 }
 
 /** The vertices where the border TURNS — both slopes meet there. */
-function corners(edges: readonly InkEdge[]): Point[] {
+function turns(edges: readonly InkEdge[]): Point[] {
   const at = new Map<string, { p: Point; slopes: number }>();
   for (const e of edges) {
     for (const [k, p] of [[e.va, e.a], [e.vb, e.b]] as Array<[string, Point]>) {
@@ -131,12 +142,52 @@ function parchmentPattern(ctx: CanvasRenderingContext2D, img: HTMLImageElement):
   return parchment.pattern;
 }
 
+/**
+ * THE GLOW: along every outside edge, a band laid across its own tile — a
+ * parallelogram on the ground's diagonal, so a straight run of edges gives
+ * one seamless band — shaded from the tint on the edge to nothing inside.
+ * The gradient runs perpendicular to the edge ON SCREEN, which is what makes
+ * it even along the edge. Where two bands meet at a corner they add up, and
+ * the corner glows a little brighter, as a painted border would.
+ */
+function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[]): void {
+  for (const e of edges) {
+    const v: Point = [e.across[0] * GLOW_DEPTH, e.across[1] * GLOW_DEPTH];
+    const dx = e.b[0] - e.a[0];
+    const dy = e.b[1] - e.a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    // The unit normal on screen, pointing inside, and how far in the band's
+    // inner edge lies along it.
+    let nx = -dy / len;
+    let ny = dx / len;
+    let depth = v[0] * nx + v[1] * ny;
+    if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
+    const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
+    g.addColorStop(0, `rgba(${GLOW_RGB}, ${GLOW_ALPHA})`);
+    g.addColorStop(0.45, `rgba(${GLOW_RGB}, ${GLOW_ALPHA * 0.35})`);
+    g.addColorStop(1, `rgba(${GLOW_RGB}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(...e.a);
+    ctx.lineTo(...e.b);
+    ctx.lineTo(e.b[0] + v[0], e.b[1] + v[1]);
+    ctx.lineTo(e.a[0] + v[0], e.a[1] + v[1]);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
 /** How the overlays are sized: `unit` is a cell's worth of pixels. */
 const LINE_PX = 0.075;   // the area's stroke, as a fraction of a cell
 const KNOT_PX = 1.3;     // a corner's joint, in strokes: it closes the turn, it is not a dot
 /** The wash: a warm golden tint over the tiles — the grass must read
  *  through it, tinted, never bleached — and the parchment's grain on top. */
-const WASH_TINT = 'rgba(232, 204, 110, 0.42)';
+const WASH_TINT = 'rgba(232, 204, 110, 0.2)';
+/** The glow inside the edge: the tint at `GLOW_ALPHA` on the line, gone
+ *  `GLOW_DEPTH` of a cell in — strongest at the border, faint inside. */
+const GLOW_RGB = '224, 180, 76';
+const GLOW_ALPHA = 0.85;
+const GLOW_DEPTH = 0.6;
 const GRAIN_ALPHA = 0.5;
 const PARCHMENT_CELLS = 1.6; // one parchment tile spans this many cells
 const DASH_PX = 0.07;    // the reach's dash, thickness as a fraction of a cell
@@ -162,6 +213,10 @@ export function drawAreaInk(
   if (pattern) {
     ctx.fillStyle = WASH_TINT;
     ctx.fill();
+    ctx.clip();
+    glow(ctx, edges);
+    ctx.beginPath(); // the bands took the path; the grain wants the area again
+    for (const cell of cells) diamondPath(cellRect(cell));
     // Multiplied, the pale paper adds its grain and never lightens.
     const k = (unit * PARCHMENT_CELLS) / wash!.naturalWidth;
     pattern.setTransform(new DOMMatrix().scale(k));
@@ -196,7 +251,7 @@ export function drawAreaInk(
     const sx = (e.seed % 1000) / 1000 * (line.naturalWidth - sw);
     lay(ctx, line, sx, sw, e.a, e.b, height, stroke / 2);
   }
-  for (const p of corners(edges)) stamp(ctx, knot, p, stroke * KNOT_PX);
+  for (const p of turns(edges)) stamp(ctx, knot, p, stroke * KNOT_PX);
 }
 
 /** The Townhall's reach: a dash along every edge of the border and a dot
