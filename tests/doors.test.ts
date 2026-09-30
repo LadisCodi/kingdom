@@ -10,6 +10,7 @@ import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
 import { claimQuest } from '../src/sim/quests';
 import { deserialize, serialize } from '../src/sim/save';
+import { freshlyOpenDoors, isDoorOpen, markDoorSeen } from '../src/sim/doors';
 import { coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
 
@@ -135,5 +136,46 @@ describe('the tutorial in the save', () => {
     state.tutorial.seen.intro = true;
     const back = deserialize(serialize(state, T0), map, T0)!;
     expect(back.tutorial).toEqual({ veteran: false, seen: { intro: true } });
+  });
+});
+
+describe('the doors of the UI', () => {
+  it('shuts every door but the Store on a new kingdom', () => {
+    const state = firstGame();
+    const doors = ['research', 'build', 'heroes', 'relics', 'world', 'knowledge', 'daily', 'banner'] as const;
+    for (const d of doors) expect(isDoorOpen(state, d), d).toBe(false);
+    expect(isDoorOpen(state, 'store')).toBe(true);
+  });
+
+  it('opens Research and Build as the chain reaches them', () => {
+    const state = firstGame();
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'Woodcraft');
+    expect(isDoorOpen(state, 'research')).toBe(true);
+    expect(isDoorOpen(state, 'build')).toBe(false);
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'ARoof');
+    expect(isDoorOpen(state, 'build')).toBe(true);
+    // The daily chest waits for the First Morning's last claim.
+    expect(isDoorOpen(state, 'daily')).toBe(false);
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
+    expect(isDoorOpen(state, 'daily')).toBe(true);
+  });
+
+  it('never shuts a door once it has opened', () => {
+    const state = firstGame();
+    state.collection.packs.push({ id: 'x', tier: 'Green' } as never);
+    const fresh = freshlyOpenDoors(state);
+    expect(fresh).toContain('relics');
+    for (const d of fresh) markDoorSeen(state, d);
+    expect(freshlyOpenDoors(state)).toEqual([]);
+    // The pack is opened and the season wipes the cards: the door stays.
+    state.collection.packs = [];
+    expect(isDoorOpen(state, 'relics')).toBe(true);
+  });
+
+  it('opens every door for a veteran, and announces none', () => {
+    const state = firstGame();
+    state.tutorial.veteran = true;
+    expect(isDoorOpen(state, 'heroes')).toBe(true);
+    expect(freshlyOpenDoors(state)).toEqual([]);
   });
 });
