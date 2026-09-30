@@ -3298,8 +3298,13 @@ export class Game {
 
   /** A hero's HP as it stands — the wound the last fight left, mending
    *  (sim/heroHealth.ts). */
-  heroHealthOf(heroId: HeroId): { hp: number; max: number } {
-    return { hp: heroHp(this.state, heroId, this.now()), max: heroMaxHp(this.state, heroId) };
+  heroHealthOf(heroId: HeroId): { hp: number; max: number; exhausted: boolean } {
+    const t = this.now();
+    return {
+      hp: heroHp(this.state, heroId, t),
+      max: heroMaxHp(this.state, heroId),
+      exhausted: !heroCanFight(this.state, heroId, t),
+    };
   }
 
   /** ONE TAP ON A HERO TILE: in if it is out, out if it is in. */

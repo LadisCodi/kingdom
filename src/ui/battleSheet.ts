@@ -213,12 +213,12 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
 
 function heroTile(game: Game, heroId: HeroId): HTMLElement {
   const picked = game.partyHeroes.includes(heroId);
-  const down = game.heroHealthOf(heroId).hp <= 0;
+  const down = game.heroHealthOf(heroId).exhausted;
   const def = HEROES[heroId];
   const tile = el('button', {
     class: `bt-card is-filled is-tile${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`,
     type: 'button',
-    'aria-label': down ? `${def.name} is recovering` : picked ? `Leave ${def.name} behind` : `Take ${def.name}`,
+    'aria-label': down ? `${def.name} is exhausted` : picked ? `Leave ${def.name} behind` : `Take ${def.name}`,
     'aria-pressed': picked ? 'true' : 'false',
   },
   heroArt(heroId),
