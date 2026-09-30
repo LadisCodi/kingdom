@@ -48,7 +48,7 @@
         "side": "left",
         "text": "See the trees in the dark? Tap that patch. Five taps clear a cell, and every tap costs a pinch of Gold.",
         "box": "auto",
-        "point": "feature:Trees",
+        "point": "feature:TreesFog",
         "lock": "target",
         "until": "questProgress",
         "untilTarget": "FirstSteps",
@@ -60,7 +60,7 @@
         "side": "left",
         "text": "Timber! Clear three more forest cells — the scroll keeps count.",
         "box": "auto",
-        "point": "feature:Trees",
+        "point": "feature:TreesFog",
         "lock": "map",
         "until": "questComplete",
         "untilTarget": "FirstSteps",
@@ -813,6 +813,138 @@
         "text": "Other kingdoms, Your Majesty. Other banners. The roads out are being scouted — and the Atlas will help us read them.",
         "box": "middle",
         "point": "ui:world",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "shrineSeen",
+    "trigger": "landmarkSeen",
+    "triggerTarget": "ThornedShrine",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Old stones, still standing — a shrine. Claimed, it deepens our Mana for good. Though not while the Orcs squat beside it.",
+        "box": "auto",
+        "point": "landmark:ThornedShrine",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "huntSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "WildAnimals",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Game in the woods. A tap brings home three times what a berry bush does — once Hunting teaches us how.",
+        "box": "auto",
+        "point": "feature:WildAnimals",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "ironSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "MountainIron",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Iron in that rock. The Quarry cannot cut it until we learn Mining — and then it pays five times a bare peak.",
+        "box": "auto",
+        "point": "feature:MountainIron",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "goldSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "MountainGold",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Gold in the mountain! Deep Mining, one day, and the Quarry will dig coin out of it.",
+        "box": "auto",
+        "point": "feature:MountainGold",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "fishSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "FishShoal",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Fish in the shallows. The Docks will net them, once we have learned to build on the water.",
+        "box": "auto",
+        "point": "feature:FishShoal",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "harpies",
+    "trigger": "lairFound",
+    "triggerTarget": "Harpies",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Harpies — anything that shines is theirs by morning. They are archers on the wing: send riders, if we have them.",
+        "box": "auto",
+        "point": "lair:Harpies",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

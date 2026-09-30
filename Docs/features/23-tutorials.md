@@ -24,7 +24,7 @@
 6. **A scene waits its turn.** It never starts over the battle playback, the
    gacha reveal, the rewarded video or a sheet the player opened — unless the
    sheet is what the scene is about. Scenes due at once queue in authored
-   order.
+   order, and an introduction waits a breath (20 s) after the last scene.
 7. **A scene can be skipped** — every one but the First Morning carries a
    **Skip** knob.
 
@@ -120,7 +120,20 @@ last line, as a hint.
 | `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower, north. From its top you could see past the mountains — to whoever else is out there.* | the Watchtower |
 | `world` | the Watchtower is claimed | Isolde | *Other kingdoms, Your Majesty. Other banners. The roads out are being scouted — and the Atlas will help us read them.* | the world knob |
 
-### 4.4 Later systems
+### 4.4 What the fog gives up
+
+| Scene | Trigger | Says (Isolde) |
+|---|---|---|
+| `shrineSeen` | the Thorned Shrine is out of the dark | *Old stones, still standing — a shrine. Claimed, it deepens our Mana for good. Though not while the Orcs squat beside it.* |
+| `huntSeen` | the first wild game | *Game in the woods. A tap brings home three times what a berry bush does — once Hunting teaches us how.* |
+| `ironSeen` | the first iron mountain | *Iron in that rock. The Quarry cannot cut it until we learn Mining — and then it pays five times a bare peak.* |
+| `goldSeen` | the first gold mountain | *Gold in the mountain! Deep Mining, one day, and the Quarry will dig coin out of it.* |
+| `fishSeen` | the first shoal | *Fish in the shallows. The Docks will net them, once we have learned to build on the water.* |
+| `harpies` | the Harpies are discovered | *Harpies — anything that shines is theirs by morning. They are archers on the wing: send riders, if we have them.* |
+
+Each points at what it is about.
+
+### 4.5 Later systems
 
 | Scene | Trigger | Says (Isolde) |
 |---|---|---|
@@ -182,6 +195,7 @@ last line, as a hint.
 | How fast a line types | 40 characters a second | `help.typeCharsPerSecond` |
 | When idle help stops | quest `Attuned` | `help.untilQuest` |
 | The lock's failsafe | 5 s | `help.lockFailsafeSeconds` |
+| The breath between two introductions | 20 s | `help.sceneGapSeconds` |
 
 ## 9. Deliberately not in this design
 

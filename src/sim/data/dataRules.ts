@@ -472,6 +472,7 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   lairDefeated: () => ['', ...(STATIC_IDS.lair ?? [])],
   lairCleared: () => ['', ...(STATIC_IDS.lair ?? [])],
   bookOpen: () => ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
+  featureSeen: () => STATIC_IDS.feature ?? [],
   doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'],
 };
 

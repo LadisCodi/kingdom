@@ -504,7 +504,7 @@ export type SceneCondition =
   | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
-  | 'population' | 'revealed';
+  | 'population' | 'revealed' | 'featureSeen';
 
 export interface SceneLine {
   speaker: string;
@@ -545,7 +545,7 @@ export const SPEAKERS = balance.speakers as unknown as Record<string, SpeakerDef
 export const HELP = balance.help as {
   idleWiggleSeconds: number; idleAdvisorSeconds: number; advisorRestSeconds: number;
   advisorShowSeconds: number; pointerSeconds: number; untilQuest: string;
-  lockFailsafeSeconds: number; typeCharsPerSecond: number;
+  lockFailsafeSeconds: number; typeCharsPerSecond: number; sceneGapSeconds: number;
 };
 
 // ----------------------------------------------------------------- districts

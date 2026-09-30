@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 78 suites, keep them all green
+npm test             # vitest run — 79 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas

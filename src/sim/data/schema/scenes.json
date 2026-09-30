@@ -6,6 +6,7 @@
       "type": "text",
       "options": [
         "always",
+        "featureSeen",
         "questReached",
         "questComplete",
         "questClaimed",
@@ -71,6 +72,7 @@
             "options": [
               "tap",
               "always",
+              "featureSeen",
               "questReached",
               "questComplete",
               "questClaimed",

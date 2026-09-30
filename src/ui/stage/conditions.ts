@@ -107,6 +107,10 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'heroes': return state.heroes.owned.length >= Math.max(1, c.amount);
     case 'population': return state.city.population >= Math.max(1, c.amount);
     case 'revealed': return Object.keys(state.fog.revealed).length >= Math.max(1, c.amount);
+    // A feature out of the dark: any cell carrying it, discovered or revealed.
+    case 'featureSeen':
+      return Object.entries(state.features).some(([key, id]) => id === c.target
+        && (state.fog.discovered[key] === true || state.fog.revealed[key] === true));
     default: return false;
   }
 }

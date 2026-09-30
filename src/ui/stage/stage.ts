@@ -77,6 +77,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const layer = el('div', { class: 'stg' }, scrim, ring, arrow, box);
 
   let playing: Playing | null = null;
+  /** No introduction starts before this: the breath between two scenes. */
+  let gapUntil = 0;
   const onStage: Record<'left' | 'right', string | null> = { left: null, right: null };
 
   // ------------------------------------------------------------ the cast
@@ -167,6 +169,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   const end = (): void => {
     if (playing !== null) game.state.tutorial.seen[sceneKey(playing.scene.id)] = true;
+    gapUntil = performance.now() + HELP.sceneGapSeconds * 1000;
     playing = null;
     leave('left');
     leave('right');
@@ -266,6 +269,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (game.state.player.payer === null) return false;
     if (game.battle !== null || game.gachaReveal !== null || game.adWatch() !== null) return false;
     if (!scene.anywhere && game.hasOpenSheet()) return false;
+    // The First Morning runs beat to beat; every introduction after it waits
+    // for a breath, so the fog giving up three things at once is three
+    // moments, not a queue.
+    if (scene.skippable && performance.now() < gapUntil) return false;
     return true;
   };
 

@@ -41,20 +41,25 @@ const featureAt = (game: Game, c: Coord): FeatureId | undefined =>
 
 /** Does `cell` still answer the point it was resolved for? */
 function stillGood(game: Game, point: string, cell: Coord): boolean {
-  if (point.startsWith('feature:')) {
-    const want = point.slice('feature:'.length);
-    const revealed = want.endsWith('Revealed');
-    const id = revealed ? want.slice(0, -'Revealed'.length) : want;
-    if (featureAt(game, cell) !== id) return false;
-    const fog = fogState(game.state, game.map, cell);
-    if (revealed) {
-      return fog === 'Revealed' && harvestSourceAt(game.state, cell) !== null
-        && !isExhausted(game.state, game.map, cell, game.now());
-    }
+  if (!point.startsWith('feature:')) return true;
+  // `feature:<id>` is the nearest cell carrying it out of the dark;
+  // `…Fog` the nearest FOGGED one the player can pay for — to be bought;
+  // `…Revealed` the nearest revealed one that is not spent — to be tapped.
+  const want = point.slice('feature:'.length);
+  const mode = want.endsWith('Revealed') ? 'revealed' : want.endsWith('Fog') ? 'fog' : 'seen';
+  const id = mode === 'revealed' ? want.slice(0, -'Revealed'.length)
+    : mode === 'fog' ? want.slice(0, -'Fog'.length) : want;
+  if (featureAt(game, cell) !== id) return false;
+  const fog = fogState(game.state, game.map, cell);
+  if (mode === 'revealed') {
+    return fog === 'Revealed' && harvestSourceAt(game.state, cell) !== null
+      && !isExhausted(game.state, game.map, cell, game.now());
+  }
+  if (mode === 'fog') {
     return fog === 'Discovered' && isPayable(game.state, game.map, cell)
       && explorationGate(game.map, cell) === null;
   }
-  return true;
+  return fog !== 'Undiscovered';
 }
 
 /**

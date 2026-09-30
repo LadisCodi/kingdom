@@ -59,8 +59,9 @@
 |---|---|
 | `ui:<key>` | a control on screen — a nav tab, a card, a button (the keys are listed in `src/ui/stage/targets.ts`) |
 | `cell:<x>,<y>` | one map cell |
-| `feature:<id>` | the nearest fogged cell with that feature the player can pay for |
-| `feature:<id>Revealed` | the nearest revealed cell with that feature that is not spent |
+| `feature:<id>` | the nearest cell with that feature out of the dark |
+| `feature:<id>Fog` | the nearest fogged one the player can pay for — to be bought |
+| `feature:<id>Revealed` | the nearest revealed one that is not spent — to be tapped |
 | `district:<id>` | the nearest building of that kind |
 | `lair:<id>` · `landmark:<id>` | that site |
 | `quest` | the quest pill |
@@ -87,6 +88,7 @@ which one a line waits on is data.
 | `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |
 | `landmarkClaimed` · `landmarkSeen` | that landmark, kind or any claimed · that one out of the dark |
 | `bookOpen` · `doorOpen` | that book · that door is open |
+| `featureSeen` | a cell with that feature is out of the dark |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
 
