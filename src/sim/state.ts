@@ -352,25 +352,6 @@ export interface RaidReport {
 }
 
 /**
- * HOW FAR INTO ONE RUIN THE PLAYER HAS GOT.
- *
- * A ruin is depths of rooms and a room is one fight, cleared in order and
- * never replayed (Docs/features/11-expeditions.md §1). So progress is one
- * address — the deepest room cleared — and the FRONTIER is the room after it.
- *
- * There is no party underground and no timer: a room resolves the instant it
- * is entered, so nothing about a ruin is ever in flight. That is why this
- * replaced the staged delve wholesale rather than being added beside it.
- */
-export interface RuinProgress {
-  /** The depth the frontier is in, 1-based. */
-  depth: number;
-  /** Rooms cleared IN that depth. The frontier is room `cleared + 1`; when it
-   *  reaches the depth's room count, the next depth opens at 0. */
-  cleared: number;
-}
-
-/**
  * WHAT KIND OF ERRAND a mission is. The id is what the roll scores, so it is
  * stable for the life of a save: adding a fourteenth kind inserts one score
  * and leaves the other thirteen in the same relative order.
@@ -378,7 +359,7 @@ export interface RuinProgress {
 export type MissionKind =
   | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
   | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
-  | 'ClearRooms' | 'CompleteDepths' | 'OpenPacks';
+  | 'OpenPacks';
 
 /**
  * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
@@ -541,9 +522,6 @@ export interface GameState {
    * absolute-time and reconciliation happens before the replay.
    */
   schedule: ScheduledEntry[];
-  /** How far into each ruin the player has got. Absent = the gate is still
-   *  standing, or nobody has been in yet. */
-  ruins: Partial<Record<RuinId, RuinProgress>>;
   /** The hero roster, on the same collection substrate as the relics. */
   heroes: {
     owned: HeroId[];
@@ -612,14 +590,6 @@ export interface GameState {
      */
     refills: { day: number; watched: number; bought: number };
   };
-  /** The deepest depth cleared in ANY ruin — a milestone, and what the quest
-   *  chain reads. Derived from `ruins` on write rather than recomputed, so a
-   *  ruin the player abandons still counts for how deep they have been. */
-  deepestDepth: number;
-  /** Ruins whose deepest depth has been cleared at least once. The artifact
-   *  is granted on the FIRST one — no randomness on the thing that gates a
-   *  system. */
-  ruinsCleared: Partial<Record<RuinId, true>>;
   /** Claimed landmarks, by content id. Claiming raises the Mana CEILING,
    *  which is what makes exploration compound rather than merely pay. No
    *  landmark is defended: a sanctuary is bought with Gold, and the fight

@@ -3,16 +3,16 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { KNOWLEDGE, RUINS } from '../src/sim/data/definitions';
-import { enterRoom, roomReward } from '../src/sim/expeditions';
+import { attemptGate } from '../src/sim/expeditions';
 import {
   accrueKnowledge, buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice,
-  knowledgeHeld, knowledgePerHour, msToFullKnowledge, msToNextKnowledge, payKnowledge,
-  roomKnowledge,
+  firstClearLump, knowledgeHeld, knowledgePerHour, msToFullKnowledge, msToNextKnowledge,
+  payKnowledge,
 } from '../src/sim/knowledge';
 import { pourKnowledge } from '../src/sim/research';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, completeTech, freshGame, fund, map, openRuin, reveal, T0,
+  addAllTrainers, completeTech, freshGame, fund, map, reveal, T0,
 } from './helpers';
 
 const HOUR = 3_600_000;
@@ -190,33 +190,23 @@ describe('buying Knowledge', () => {
   });
 });
 
-describe('a ruin room teaches something', () => {
+describe('a ruin\'s gate teaches something, once', () => {
   const BARROW = 'HollowBarrow' as const;
 
-  it('pays at least 1 Knowledge, whatever the room', () => {
-    const state = freshGame();
-    expect(roomKnowledge(state, 0)).toBe(1);
-    expect(roomKnowledge(state, 0.01)).toBe(1);
-    expect(roomKnowledge(state, 100)).toBe(Math.round(KNOWLEDGE.roomCoef * 100));
-    for (let room = 1; room <= 3; room += 1) {
-      expect(roomReward(state, BARROW, 1, room).wallet.Knowledge).toBeGreaterThanOrEqual(1);
-    }
-  });
-
-  it('pays into the KINGDOM wallet, never the city', () => {
+  it('pays its first-clear lump into the KINGDOM wallet, never the city', () => {
     const state = freshGame();
     addAllTrainers(state);
     completeTech(state, 'Warrior');
     fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Knowledge: 0 });
     reveal(state, [RUINS[BARROW].location]);
-    openRuin(state, BARROW);
+    state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
     for (let i = 0; i < 60; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' as UnitId });
     }
-    const expected = roomReward(state, BARROW, 1, 1).wallet.Knowledge!;
-    const report = enterRoom(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 60 }]);
+    const expected = firstClearLump(state);
+    const report = attemptGate(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 60 }]);
     expect(report.result).toBe('Cleared');
-    expect(report.wallet.Knowledge).toBe(expected);
+    expect(report.knowledge).toBe(expected);
     expect(knowledgeHeld(state)).toBe(expected);
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
   });

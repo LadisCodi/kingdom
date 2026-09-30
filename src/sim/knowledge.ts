@@ -5,7 +5,7 @@
 //  * THE DRIP — `KNOWLEDGE.basePerHour`, fixed for the whole game, while the
 //    kingdom holds less than `KNOWLEDGE.cap`. Nothing raises the rate or the
 //    cap: territory, buildings and technologies pay lumps instead.
-//  * LUMPS — a landmark claimed, a ruin cleared to its bottom, a ruin room, a
+//  * LUMPS — a landmark claimed, a ruin's gate cleared for the first time, a
 //    quest. Every lump passes through `knowledgeLump`, which is where
 //    Scriptorium and the `knowledgeYield` stack scale it. A lump always lands
 //    in full, over the cap if it must.
@@ -22,13 +22,14 @@
 //
 // THE BAR IS THE DRIP'S ONLY CEILING, away or not: ten hours away fills it.
 
-import { DELVE, KNOWLEDGE, RUINS } from './data/definitions';
+import { DELVE, KNOWLEDGE } from './data/definitions';
+import { clearedGateCount } from './gates';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techFlat, techValue } from './techEffects';
 import {
-  addToWallet, getWallet, type GameState, type RuinId,
+  addToWallet, getWallet, type GameState,
 } from './state';
 
 export const knowledgeHeld = (state: GameState): number =>
@@ -103,7 +104,7 @@ export const knowledgeLump = (state: GameState, raw: number): number =>
 export const landmarkClaimLump = (state: GameState): number =>
   knowledgeLump(state, KNOWLEDGE.landmarkClaimLump + techFlat(state, 'landmarkClaimKnowledge'));
 
-/** What clearing one ruin to its bottom pays: the lump, Vigils and Conquest
+/** What clearing one ruin's gate pays, once: the lump, Vigils and Conquest
  *  on top, and Sanctified Ruins doubling the whole of it. */
 export const firstClearLump = (state: GameState): number =>
   knowledgeLump(state,
@@ -112,15 +113,10 @@ export const firstClearLump = (state: GameState): number =>
       + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestFirstClearLump : 0))
     * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1));
 
-/** What a ruin room pays, from the room's own reward scale — at least 1. */
-export const roomKnowledge = (state: GameState, scale: number): number =>
-  Math.max(1, knowledgeLump(state, Math.max(1, Math.round(KNOWLEDGE.roomCoef * scale))));
-
 const claimedLandmarks = (state: GameState): number =>
   Object.values(state.landmarks.claimed).filter((c) => c === true).length;
 
-const clearedRuins = (state: GameState): number =>
-  (Object.keys(RUINS) as RuinId[]).filter((id) => state.ruinsCleared[id] === true).length;
+const clearedRuins = (state: GameState): number => clearedGateCount(state);
 
 /**
  * What the ground already held is worth in lumps, at today's prices.

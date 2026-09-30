@@ -81,7 +81,6 @@ describe('data rules', () => {
     b.currencies.Gold.goldValue = 3;
     b.units.Archer.frontage = b.units.Archer.squadSize + 1;
     b.heroes[Object.keys(b.heroes).find((k) => b.heroes[k].boon)!].boon.value = 0.9;
-    b.depths[1].powerStart = 1;
     b.adjacency.push({ ...b.adjacency[0] });
     b.adjacency[3].magnitude = -0.5;
     b.store.GemsPouch.priceUsd = 0;
@@ -100,7 +99,6 @@ describe('data rules', () => {
       'goods/Planks/inputGood: a good cannot be made of itself',
       'currencies/Gold/goldValue: must be positive, and not on Gold itself',
       'units/Archer/frontage: cannot exceed squadSize',
-      'depths/1/powerStart: starts at 1, below where depth 1 finished (95)',
       'adjacency/7/: duplicate rule Housing/Housing/goldPerMinute',
       'adjacency/3/magnitude: is past the ±0.25 clamp',
       'store/GemsPouch/priceUsd: a product needs a positive price',

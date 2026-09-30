@@ -26,8 +26,8 @@
 //
 // Docs/features/12-quests.md §3.
 
-import { COLLECTION, DAILY, RUINS } from './data/definitions';
-import { addToWallet, getWallet, type GameState, type RuinId, type Wallet } from './state';
+import { DAILY } from './data/definitions';
+import { addToWallet, getWallet, type GameState, type Wallet } from './state';
 import { addHeroXp } from './heroes';
 import { manaCap } from './mana';
 import { buySku, type BuySkuResult } from './store';
@@ -102,20 +102,6 @@ export const chestSheetOpen = (state: GameState, now: number): boolean =>
 // ---------------------------------------------------------------- the rewards
 
 /**
- * The completed-depth Hero XP trickle, per hour
- * (Docs/features/10-heroes.md §5): `rate × tier × depth`.
- *
- * Zero for a city that has never delved, which is most of them — the Royal
- * track's floor is what pays those, and this is what makes the same grant grow
- * with a player who does delve.
- */
-export function heroXpPerHour(state: GameState): number {
-  const tier = (Object.keys(state.ruinsCleared) as RuinId[])
-    .reduce((best, id) => Math.max(best, RUINS[id]?.tier ?? 0), 0);
-  return COLLECTION.xpTricklePerTierDepth * tier * state.deepestDepth;
-}
-
-/**
  * What rung `rung` pays on the FREE track.
  *
  * Mana is a FRACTION of the pool for the reason `tap.workSeconds` exists: a
@@ -141,12 +127,10 @@ export function freeReward(state: GameState, rung: number): Wallet {
  * What rung `rung` pays on the ROYAL track — paid only to a player who owns
  * the season's Royal chest.
  *
- * Hero XP is priced in HOURS of the player's own trickle with an authored
- * floor, the same rule the free track's Mana follows. An absolute XP number
- * goes stale by era three; the floor is what makes the grant real for a city
- * that has never delved.
+ * Hero XP is the authored floor on every rung that has hours: the depth
+ * trickle it was priced in retired with the depths.
  */
-export function royalReward(state: GameState, rung: number): Wallet {
+export function royalReward(_state: GameState, rung: number): Wallet {
   const i = clampRung(rung);
   const reward: Wallet = {};
 
@@ -155,7 +139,9 @@ export function royalReward(state: GameState, rung: number): Wallet {
 
   const hours = DAILY.premiumXpHours[i] ?? 0;
   if (hours > 0) {
-    reward.HeroXp = Math.max(DAILY.premiumXpFloor, Math.round(heroXpPerHour(state) * hours));
+    // The floor IS the grant: the completed-depth trickle it was a floor
+    // under went with the depths (Docs/proposals/lairs.md §7).
+    reward.HeroXp = DAILY.premiumXpFloor;
   }
 
   const keys = DAILY.premiumGoldKeys[i] ?? 0;

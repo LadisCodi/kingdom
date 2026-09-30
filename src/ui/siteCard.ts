@@ -2,8 +2,8 @@
 //
 // These are what paid fog is FOR. A player who clears a distance-9 ring and
 // finds one more iron vein has learned that exploring is a treadmill; a player
-// who finds a shrine that pays Mana forever, or a dungeon that keeps paying for
-// months, has learned the opposite. So the card's job is to make the reward
+// who finds a shrine that pays Mana forever, or a garrison worth driving out,
+// has learned the opposite. So the card's job is to make the reward
 // legible BEFORE the player spends anything — what it gives, what it costs,
 // and, when it is out of reach, exactly what is missing.
 
@@ -124,8 +124,6 @@ function gateBand(game: Game, def: RuinDef, gate: GateView): HTMLElement {
 }
 
 function ruinCard(game: Game, def: RuinDef): HTMLElement {
-  const at = game.ruinProgress(def.id);
-
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
       art(def.sprite, def.glyph),
@@ -133,37 +131,18 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
         el('div', { class: 'site-name' }, def.name),
         el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
     el('div', { class: 'site-desc' }, def.description),
-    // Progress is the card's headline once the gate is down: a ruin is a
-    // path, and what a player wants to know is how far along it they are.
-    el('div', { class: 'site-stats' },
-      stat('dungeon', `${at.cleared}/${at.rooms}`, 'rooms'),
-      stat('sparkle', at.done ? 'cleared' : `${at.depth}·${at.room}`, 'frontier'),
-      stat(def.affinity === 'Any' ? 'army' : def.affinity, def.affinity === 'Any'
-        ? 'anything' : `${def.affinity}s`, 'answer best')),
   );
 
-  body.append(el('div', { class: 'site-note' }, at.done
-    ? 'Every room has fallen. Its relic is home and its rooms are spent — a '
-      + 'ruin is climbed once.'
-    : 'A path of rooms, fought one at a time and never twice. The last room of '
-      + 'the last depth gives up its relic.'));
-
-  // While the garrison stands it IS the card's decision, and the depths
-  // behind it are not offered at all.
+  // The gate is the whole ruin: while the garrison stands it IS the card's
+  // decision, and once it has fallen there is nothing behind it
+  // (Docs/proposals/lairs.md §1).
   const gate = game.gateFor(def.id);
   if (gate !== null && !gate.cleared) {
     body.append(gateBand(game, def, gate));
-    return panel(body);
+  } else if (gate?.cleared === true) {
+    body.append(el('div', { class: 'site-note' },
+      iconEl('tick', { size: 'sm' }), 'Cleared. Nothing holds it now.'));
   }
-
-  // The launch control is expeditions' to own; everything above is content
-  // the player can read the moment the fog comes off it.
-  body.append(action({
-    label: at.done ? 'Nothing left down there' : `Enter Depth ${at.depth} · Room ${at.room}`,
-    kind: 'primary',
-    onClick: () => game.openExpedition(def.id),
-    disabledReason: game.expeditionBlock(def.id) ?? undefined,
-  }));
   return panel(body);
 }
 

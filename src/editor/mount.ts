@@ -21,7 +21,7 @@ import { Camera } from '../render/camera';
 import { FLAT_TILE } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
-  ARTIFACT_ORDER, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
+  FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
 } from '../sim/data/definitions';
 import regionMap from '../sim/data/region-map.json';
 import {
@@ -610,14 +610,6 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       `${sel.id} · at (${r.x}, ${r.y}) · ring ${doc.distanceAt(r)}. `
       + 'The roster of five is fixed in code — a ruin can move and retune, not be added.'));
     card.append(field('tier', numberInput(r.tier, (v) => patch({ tier: v }))));
-    // A ruin's DEPTHS — how many rooms each holds, what they field and what
-    // they pay — are rows on the `Depths` sheet, not map content
-    // (Docs/features/11-expeditions.md §2). What is authored here is where
-    // the ruin is, what it pays out, and who is standing on the door.
-    card.append(field('affinity', select(['Any', ...UNIT_ORDER], r.affinity,
-      (v) => patch({ affinity: v }))));
-    card.append(field('artifact', select([...ARTIFACT_ORDER], r.artifact,
-      (v) => patch({ artifact: v }))));
     // The gate: one garrison on the surface, and the clock discovering the
     // ruin starts (Docs/features/18-garrisons-and-raids.md §2). The creature
     // is derived from the threat, so there is nothing else to pick.

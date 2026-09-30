@@ -16,7 +16,6 @@ import { boardIsFull, boardMissions, rollMissionsIfDue } from '../src/sim/pass';
 import { advance } from '../src/sim/commands';
 import { rand } from '../src/sim/rng';
 import { deserialize, serialize } from '../src/sim/save';
-import { enterRoom } from '../src/sim/expeditions';
 import {
   addAllTrainers, addBuilt, collectAll, freshGame, fund, map, openRuin, reveal, T0,
 } from './helpers';
@@ -124,8 +123,6 @@ describe('the odometer', () => {
       { kind: 'unitTrained', unit: 'Warrior' as const },
       { kind: 'villager' as const },
       { kind: 'heroLevel', hero: 'Warden' as const },
-      { kind: 'roomCleared', ruin: 'HollowBarrow' as const },
-      { kind: 'depthCleared', ruin: 'HollowBarrow' as const },
       { kind: 'packOpened' as const },
     ] as const) {
       recordEvent(state, e);
@@ -138,8 +135,6 @@ describe('what may be asked', () => {
   it('refuses every kind a fresh kingdom cannot do, and never the fallback', () => {
     const state = freshGame();
     expect(canIssue(state, 'CollectResource')).toBe(true);
-    expect(canIssue(state, 'ClearRooms')).toBe(false);   // no ruin open
-    expect(canIssue(state, 'CompleteDepths')).toBe(false);
     expect(canIssue(state, 'TrainTroops')).toBe(false);  // no trainer
   });
 
@@ -156,13 +151,6 @@ describe('what may be asked', () => {
     expect(canIssue(state, 'UpgradeDistricts')).toBe(true);
     for (const d of state.city.districts) d.level = DISTRICTS[d.definitionId].maxLevel;
     expect(canIssue(state, 'UpgradeDistricts')).toBe(false);
-  });
-
-  it('opens the dungeon kinds once a ruin is', () => {
-    const state = playableKingdom();
-    expect(canIssue(state, 'ClearRooms')).toBe(false);
-    openRuin(state, 'HollowBarrow');
-    expect(canIssue(state, 'ClearRooms')).toBe(true);
   });
 
   it('never issues one that is impossible, or already done', () => {
@@ -377,22 +365,5 @@ describe('the windows themselves', () => {
     expect(new Date(monday).getUTCDay()).toBe(1);
     expect(weekIndex(monday)).toBe(weekIndex(monday + 1));
     expect(weekIndex(monday - 1)).toBe(weekIndex(monday) - 1);
-  });
-});
-
-describe('the dungeon no longer pays packs', () => {
-  it('pays gold and a room event instead', () => {
-    const state = playableKingdom();
-    reveal(state, [RUINS.HollowBarrow.location]);
-    openRuin(state, 'HollowBarrow');
-    for (let i = 0; i < 400; i++) {
-      state.army.push({ uniqueId: `u${i}`, definitionId: 'Warrior' });
-    }
-    const packs = state.collection.packs.length;
-    const report = enterRoom(state, map, 'HollowBarrow', ['Warden'],
-      [{ unitId: 'Warrior', count: 400 }]);
-    expect(report.result).toBe('Cleared');
-    expect(state.collection.packs.length).toBe(packs);
-    expect(tally(state, 'rooms')).toBe(1);
   });
 });

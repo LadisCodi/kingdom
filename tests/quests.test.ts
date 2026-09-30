@@ -95,8 +95,10 @@ describe('the quest chain', () => {
       'OldStones', 'Attuned',                     // 34-35 claim the shrine
       'Mapmakers', 'Surveyors',                   // 36-37 exploration becomes a system
       'Highlands', 'PutToSea',                    // 38-39 the terrain gates
-      'IntoTheDark',                              // 40   the first depth, behind
-                                                  //   the gate that fell at 33
+      'IntoTheDark',                              // 40   a standing guard: the
+                                                  //   depths behind the gate
+                                                  //   are retired, and the
+                                                  //   Chapel is past the reach
     );
 
     // 40+: the rest of the city economy the tutorial defers, then the long game.
@@ -424,15 +426,17 @@ describe('quests fund the research tree', () => {
     expect(chain).toBeLessThan(tree);
   });
 
-  // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest
-  // that pays it is a quest about the long game — clearing a ruin, reaching a
-  // depth, owning a hero or a relic — so a player cannot bank a currency they
-  // have nothing to spend on.
-  it('only the long-game quests pay Knowledge at all', () => {
-    const LONG_GAME = ['ClearRuins', 'ReachDepth', 'OwnArtifacts', 'OwnHeroes'];
-    for (const q of QUESTS) {
-      if (q.rewardStardust > 0) expect(LONG_GAME).toContain(q.goalType);
-    }
+  // CLAIM: Stardust appears with the long game, not before it. Every quest
+  // that pays it sits at or after the first hero — the currency's only sink
+  // is the roster — so a player cannot bank a currency they have nothing to
+  // spend on. (It was a list of goal types; three of them went with the
+  // depths, and the beats that replaced them kept their rewards.)
+  it('only the long-game quests pay Stardust at all', () => {
+    const firstHero = QUESTS.findIndex((q) => q.id === 'FirstSummon');
+    expect(firstHero).toBeGreaterThan(0);
+    QUESTS.forEach((q, i) => {
+      if (q.rewardStardust > 0) expect(i, `${q.id} pays Stardust`).toBeGreaterThanOrEqual(firstHero);
+    });
     expect(QUESTS.filter((q) => q.rewardStardust > 0).length).toBeGreaterThan(0);
   });
 
@@ -628,8 +632,12 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
         expect(nearestSite(LANDMARKS.map((l) => l.location)), `${q.id} at Townhall ${levels[i]}`)
           .toBeLessThanOrEqual(reachAt(levels[i]));
       }
-      if (q.goalType === 'ClearGarrisons' || q.goalType === 'ReachDepth') {
-        expect(nearestSite(Object.values(RUINS).map((r) => r.location)), `${q.id} at Townhall ${levels[i]}`)
+      if (q.goalType === 'ClearGarrisons') {
+        // The Nth-nearest ruin, not the nearest: "clear two" asks for the
+        // second one to be in reach as well.
+        const rings = Object.values(RUINS).map((r) => townhallDistance(map, r.location))
+          .sort((a, b) => a - b);
+        expect(rings[q.goalAmount - 1], `${q.id} asks for ${q.goalAmount} at Townhall ${levels[i]}`)
           .toBeLessThanOrEqual(reachAt(levels[i]));
       }
     });

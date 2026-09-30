@@ -1,7 +1,6 @@
 /* The gate (Docs/features/18-garrisons-and-raids.md §7): the edge widget with
- * the countdown, the band on the ruin card, and the room sheet the band
- * opens. The party pickers inside that sheet are the expedition's —
- * screens/expedition.css. */
+ * the countdown, the band on the ruin card, and the battle sheet the band
+ * opens. The party pickers inside that sheet are screens/battle.css. */
 
 /* ------------------------------------------------------------ the widget */
 

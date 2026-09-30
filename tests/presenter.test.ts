@@ -702,7 +702,7 @@ describe('the overlay signatures', () => {
 
   it('screens with a countdown or a regenerating pool are not signed', () => {
     const game = freshPresenter();
-    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
+    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'gate'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
   });

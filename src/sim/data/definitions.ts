@@ -448,7 +448,7 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
-  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'ClearGarrisons' | 'OwnArtifacts'
+  | 'ClaimLandmarks' | 'ClearGarrisons' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
@@ -1064,7 +1064,7 @@ export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSt
  */
 export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
 
-/** The Knowledge bar — its drip, its cap, what a landmark, a ruin and a room
+/** The Knowledge bar — its drip, its cap, what a landmark and a ruin
  *  pay into it, and what a point costs to buy (07-research.md §3). */
 export const KNOWLEDGE = balance.knowledge;
 
@@ -1392,14 +1392,8 @@ export const ARTIFACT_ORDER: ArtifactId[] = [
 // ------------------------------------------------------------------- ruins
 
 /**
- * A ruin is a repeatable DUNGEON, not a one-time pickup. That is the whole
- * point: revealing one discovers a content node that keeps paying for months,
- * rather than a reward that ends.
- *
- * `depthTime = baseDepthSeconds × depthGrowth^(depth − 1)` — time grows with
- * depth INSIDE a run, not only across tiers, which is what makes "one more
- * depth" a real escalation and naturally caps how far anyone pushes in one
- * sitting.
+ * A ruin is its GATE: one garrison, one fight, cleared once
+ * (Docs/proposals/lairs.md §1). The depths that stood behind it are retired.
  */
 export interface RuinDef {
   id: RuinId;
@@ -1413,12 +1407,6 @@ export interface RuinDef {
    *  grouped: a ruin is placed, not painted. */
   size: number;
   tier: number;
-  /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
-   *  rather than a single unit. 'Any' rotates. */
-  affinity: UnitId | 'Any';
-  /** Granted, guaranteed, on the first full clear. No randomness on the thing
-   *  that gates a system. */
-  artifact: ArtifactId;
   /** The gate that holds the entrance (Docs/features/18-garrisons-and-raids.md). */
   guard: GuardDef;
 }
@@ -1440,36 +1428,6 @@ export interface GuardDef {
   warningMinutes: number;
   /** Minutes between raids after that. */
   periodMinutes: number;
-}
-
-/**
- * ONE DEPTH OF ONE RUIN (Docs/features/11-expeditions.md §2).
- *
- * A ruin is depths of ROOMS and a room is one fight, resolved the instant the
- * player enters it. Rooms are cleared in order and never replayed, so a
- * depth is a ladder the player climbs once: `power_start` is what room 1
- * fields and `power_step` is what each room adds.
- */
-export interface DepthDef {
-  ruin: RuinId;
-  /** 1-based. The canonical address of a fight is `Depth D · Room R`. */
-  depth: number;
-  rooms: number;
-  /** The Adventurers' Guild level that opens it. Nothing reads it yet — the
-   *  Guild is unbuilt, so a depth opens when the one above it is finished. */
-  guildReq: number;
-  powerStart: number;
-  powerStep: number;
-  /** Scales what every room in the depth pays (§7.1). */
-  rewardBase: number;
-  /** Who the generator may spend part of a room's budget on, above the
-   *  threshold ([`combat.md`](combat.md) §11). Empty = squads only. */
-  villainPool: string;
-  /** Who stands in the last room of the depth, always — a boss's villain is
-   *  authored, never rolled (§11). */
-  bossVillain: string;
-  /** What ONE room attempt costs, paid on entry and never refunded. */
-  supplies: Wallet;
 }
 
 const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1496,7 +1454,7 @@ const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph'
 };
 
 const ruinBalance = regionMap.ruins as Record<RuinId, {
-  x: number; y: number; tier: number; affinity: string; artifact: string;
+  x: number; y: number; tier: number;
   guard: { threat: string; power: number; warningMinutes: number; periodMinutes: number };
 }>;
 
@@ -1516,37 +1474,10 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       location: { x: b.x, y: b.y },
       size: (b as { size?: number }).size ?? 1,
       tier: b.tier,
-      affinity: b.affinity as RuinDef['affinity'],
-      artifact: b.artifact as ArtifactId,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
   }),
 ) as Record<RuinId, RuinDef>;
-
-/** Every depth of every ruin, in ruin order then depth order. */
-export const DEPTHS = balance.depths as DepthDef[];
-
-/** The depths of one ruin, shallowest first. */
-export const depthsOf = (ruinId: RuinId): DepthDef[] =>
-  DEPTHS.filter((d) => d.ruin === ruinId);
-
-export const depthDef = (ruinId: RuinId, depth: number): DepthDef | undefined =>
-  DEPTHS.find((d) => d.ruin === ruinId && d.depth === depth);
-
-/** How many depths a ruin has, and how many rooms in all of them. */
-export const depthCount = (ruinId: RuinId): number => depthsOf(ruinId).length;
-export const roomCount = (ruinId: RuinId): number =>
-  depthsOf(ruinId).reduce((sum, d) => sum + d.rooms, 0);
-
-/**
- * What room `room` of depth `depth` fields:
- * `power_start + power_step × (room − 1)` (§6).
- */
-export function roomPower(ruinId: RuinId, depth: number, room: number): number {
-  const def = depthDef(ruinId, depth);
-  if (def === undefined) return 0;
-  return def.powerStart + def.powerStep * (Math.max(1, room) - 1);
-}
 
 // ------------------------------------------------------------------ heroes
 
@@ -1681,7 +1612,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   },
   Scout: {
     name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
-    traitText: 'Knows the short road — a room costs 40% less to supply',
+    traitText: 'Knows the short road — a gate costs 40% less to supply',
   },
   Adventurer: {
     name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
@@ -1696,7 +1627,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   BeastkinHunter: {
     name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
     sprite: 'hero_beastkin_hunter',
-    traitText: 'Lives off the land — a room costs 15% less to supply',
+    traitText: 'Lives off the land — a gate costs 15% less to supply',
   },
   Cleric: {
     name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
@@ -1786,7 +1717,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Spymaster: {
     name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
     sprite: 'hero_spymaster',
-    traitText: 'Had the road scouted already — a room costs 25% less to supply',
+    traitText: 'Had the road scouted already — a gate costs 25% less to supply',
   },
   ElectricArcher: {
     name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
@@ -1906,7 +1837,7 @@ export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
 
 export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
 
-/** Delve rewards, the 50% failure bite, and party slots. */
+/** A ruin's first-clear Knowledge. */
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
 
@@ -2058,7 +1989,7 @@ export const MISSIONS = balance.missions as {
   collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
   populationBand: number[]; upgradeBand: number[]; revealBand: number[];
   buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
-  roomsBand: number[]; depthsBand: number[]; packsBand: number[];
+  packsBand: number[];
   /** The kinds that cannot be finished inside one session — they wait on a
    *  builder, a delve or a technology. They pay a pack; everything else rolls. */
   hardKinds: string[];
@@ -2133,4 +2064,6 @@ export const GAME_VERSION = '0.1.0';
 // v61: research takes no time and has no slots. A running research is
 // completed and the slots bought go back as Gems (save.ts); Knowledge poured
 // into a technology and the count bought with Gold are new, additive fields.
-export const SAVE_VERSION = 62;
+// v63: the depths behind the gate are retired — a ruin is its gate. The
+// migrator drops `kingdom.ruins` (rooms, bottomed ruins, deepest depth).
+export const SAVE_VERSION = 63;

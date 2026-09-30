@@ -54,7 +54,6 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'DiscoverCells': return 'tile';
     case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
-    case 'ReachDepth': case 'ClearRuins': return 'dungeon';
     case 'OwnArtifacts': return 'relics';
     case 'OwnHeroes': return 'Warrior';
     default: return 'quest';

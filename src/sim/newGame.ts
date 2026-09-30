@@ -57,7 +57,6 @@ export function newGame(map: MapData, now: number): GameState {
     // era bars, which ask for revealed cells.
     research: { completed: [], poured: {} },
     schedule: [],
-    ruins: {},
     // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {
@@ -76,8 +75,6 @@ export function newGame(map: MapData, now: number): GameState {
       pending: false,
       refills: { day: dayIndex(now), watched: 0, bought: 0 },
     },
-    deepestDepth: 0,
-    ruinsCleared: {},
     landmarks: { claimed: {} },
     // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
     gates: {},

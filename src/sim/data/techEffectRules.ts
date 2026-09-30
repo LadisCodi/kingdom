@@ -313,10 +313,10 @@ export const TECH_STATS = {
   },
   // ---- the delve
   supplyCost: {
-    what: 'the multiplier on what an expedition costs to provision',
+    what: 'the multiplier on what a gate attempt costs in supplies',
     ops: ['percent'], targets: ['global'], unit: '×',
     says: { percent: '{v} to what an expedition costs' },
-    reads: 'expeditions.ts#supplyCost',
+    reads: 'expeditions.ts#gateSupplyCost',
   },
   delveSpeed: {
     what: 'the multiplier on how long one depth takes to resolve',
@@ -354,6 +354,10 @@ export const TECH_STATS = {
     ops: ['percent'], targets: ['global'], unit: 'stardust',
     says: { percent: '{v} Stardust out of a ruin' },
     reads: 'expeditions.ts#depthHaul',
+    retired: 'The rooms were the only thing that paid Stardust out of a ruin, '
+      + 'and they were retired with the depths: a ruin is its gate. Prospecting '
+      + 'and the Wanderer\u2019s Compass passive are inert until they are '
+      + 're-pointed (Docs/open-questions.md OQ-113).',
   },
 } as const satisfies Record<string, StatDef>;
 

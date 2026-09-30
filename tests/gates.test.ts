@@ -10,18 +10,18 @@
 //  2. THE BOUND. A week away with a gate open is three raids and never more,
 //     each at most a fraction of what the stores hold — never the wallet —
 //     and all of it comes back.
-//  3. THE DOOR. Nothing enters a ruin until its gate is down.
+//  3. THE FIGHT. A gate is cleared once, and that is the whole ruin.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import {
-  RAID, RUINS, RUIN_ORDER, UNITS, depthDef, garrisonForTier, roomPower,
+  RAID, RUINS, RUIN_ORDER, UNITS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
   advanceRaids, cityRatePerSecond, clearedGateCount, gateFormation,
   gateIsCleared, gatePower, gateSupplies, nextRaidBoundary, openGates, raidTake,
 } from '../src/sim/gates';
 import { formationPower } from '../src/sim/combat';
-import { attemptGate, enterRoom, previewGate } from '../src/sim/expeditions';
+import { attemptGate, previewGate } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState, type RuinId } from '../src/sim/state';
 import {
@@ -344,26 +344,6 @@ describe('clearing the gate', () => {
   });
 });
 
-describe('the door', () => {
-  it('refuses a delve while the garrison stands, and opens once it does not', () => {
-    const state = watched();
-    addAllTrainers(state);
-    fund(state, { Gold: 10_000, Food: 5000 });
-    for (let i = 0; i < 24; i++) {
-      state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
-    }
-    const party = [{ unitId: 'Warrior' as const, count: 24 }];
-    expect(enterRoom(state, map, BARROW, ['Warden'], party).result).toBe('GateStanding');
-    expect(attemptGate(state, map, BARROW, ['Warden'], party).result).toBe('Cleared');
-    // …and the company that took it is smaller than the one that marched, so
-    // the first room is entered with the survivors (§5).
-    const left = state.army.length;
-    expect(left).toBeLessThan(24);
-    expect(enterRoom(state, map, BARROW, ['Warden'],
-      [{ unitId: 'Warrior', count: left }]).result).not.toBe('GateStanding');
-  });
-});
-
 describe('a save', () => {
   it('carries the clock, the hoard and the reports', () => {
     const state = watched();
@@ -387,9 +367,9 @@ describe('a save', () => {
   });
 });
 
-// The route the player actually taps: the ruin card offers the GATE and
-// nothing else while it stands, the widget names the garrison closest to
-// coming down the hill, and clearing it puts the delve back on the card.
+// The route the player actually taps: the ruin card offers the GATE while it
+// stands, the widget names the garrison closest to coming down the hill, and
+// clearing it closes the sheet — there is nothing behind it.
 describe('the route to a gate', () => {
   function presenterAtTheBarrow() {
     const state = watched();
@@ -406,9 +386,6 @@ describe('the route to a gate', () => {
   it('offers the gate instead of a party while the garrison stands', () => {
     const game = presenterAtTheBarrow();
     expect(game.gateFor(BARROW)!.cleared).toBe(false);
-    // The card offers the GATE, not a delve: nothing enters the ruin while
-    // the garrison stands.
-    expect(game.gateFor(BARROW)!.cleared).toBe(false);
     game.openGate(BARROW);
     expect(game.openOverlay).toBe('gate');
     // The sheet opens with the company already in its slots, ready to go.
@@ -418,7 +395,7 @@ describe('the route to a gate', () => {
     expect(game.gatePreview()!.enough).toBe(true);
   });
 
-  it('clears it, closes the sheet and opens the ruin behind it', () => {
+  it('clears it and closes the sheet', () => {
     const game = presenterAtTheBarrow();
     game.openGate(BARROW);
     game.doClearGate();
@@ -501,31 +478,10 @@ describe('the formation in the doorway', () => {
 // Content, not machinery: the authored numbers have a shape the design states,
 // and a map edit that breaks it should fail here rather than in a playtest.
 describe('every authored gate', () => {
-  // The AUTHORED budget is the designer's number and the rule is on that:
-  // a gate is easier than the first room of the ruin it guards, because it is
-  // the room the player is pushed into on a clock. What the generator makes
-  // of it can land a body above, because a formation is whole troops and at
-  // today's scale one soldier is worth more than a tier-1 ruin's first
-  // depth — which is what **OQ-86** exists to re-author.
-  it('is authored below the first room of the ruin it guards', () => {
-    for (const id of RUIN_ORDER) {
-      expect(RUINS[id].guard.power, `${id}'s gate`)
-        .toBeLessThan(roomPower(id, 1, 1));
-    }
-  });
-
-  it('never fields more than one body past that first room', () => {
-    const state = freshGame();
-    for (const id of RUIN_ORDER) {
-      const body = Math.max(...gateFormation(state, id).map((s) => UNITS[s.unitId].power));
-      expect(gatePower(state, id), `${id}'s gate`)
-        .toBeLessThanOrEqual(roomPower(id, 1, 1) + body);
-    }
-  });
-
-  it('is the ruin\'s own affinity, so the first fight teaches the matchup', () => {
-    for (const id of RUIN_ORDER) {
-      expect(RUINS[id].guard.threat, `${id}'s gate`).toBe(RUINS[id].affinity);
+  it('is stronger the deeper the ruin', () => {
+    const powers = RUIN_ORDER.map((id: RuinId) => RUINS[id].guard.power);
+    for (let i = 1; i < powers.length; i++) {
+      expect(powers[i]).toBeGreaterThan(powers[i - 1]);
     }
   });
 
@@ -534,16 +490,6 @@ describe('every authored gate', () => {
     for (const w of warnings) expect(w).toBeGreaterThanOrEqual(30);
     for (let i = 1; i < warnings.length; i++) {
       expect(warnings[i]).toBeGreaterThanOrEqual(warnings[i - 1]);
-    }
-  });
-
-  it('costs no more to enter than the first room of the ruin behind it', () => {
-    for (const id of RUIN_ORDER) {
-      const gate = gateSupplies(id);
-      const firstDepth = depthDef(id, 1)!;
-      for (const [c, n] of Object.entries(firstDepth.supplies)) {
-        expect(gate[c as 'Gold'] ?? 0, `${id}'s gate supplies`).toBeLessThanOrEqual(n);
-      }
     }
   });
 });

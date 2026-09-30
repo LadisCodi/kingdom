@@ -1,15 +1,15 @@
 // The gate, on the battle screen (Docs/features/18-garrisons-and-raids.md §7).
 //
 // The board, the slots and the panels are `battleSheet.ts` — every fight in
-// the game uses them. This file is the one thing a gate does that a ruin's
-// room does not: it carries a CLOCK, and the clock is why the player is here.
+// the game uses them. What a gate adds is its CLOCK, and the clock is why the
+// player is here.
 //
 // So the dynamic band under the art is the countdown, the trips left in the
 // garrison and what it is holding, and the Rewards box is the hoard — every
-// unit of which comes home when the gate falls. There is no room reward and
-// no loot table: the ruin behind it is the prize.
+// unit of which comes home when the gate falls — with Hero XP and the ruin's
+// first-clear Knowledge. There is nothing behind it (Docs/proposals/lairs.md).
 
-import { RUINS, depthCount } from '../sim/data/definitions';
+import { RUINS } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { el, formatDuration } from './format';
@@ -53,15 +53,16 @@ export function renderGateSheet(game: Game): HTMLElement {
     attack: preview.attack,
     enough: preview.enough,
     supplies: preview.supplies,
-    // The hoard IS the reward, and Hero XP rides on any fight. There is no
-    // room reward and no loot table: what a gate really pays is the ruin.
+    // The hoard, Hero XP by tier, and the ruin's first-clear Knowledge: a
+    // gate is cleared once, so this is everything it will ever pay.
     rewards: [
       ...hoard.map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
       { icon: 'HeroXp' as CurrencyId, label: `+${ruin.tier}` },
+      { icon: 'Knowledge' as CurrencyId, label: `+${preview.knowledge}` },
     ],
     rewardNote: hoard.length > 0
       ? 'Everything they took comes home with it.'
-      : `The way into ${ruin.name}, and its ${depthCount(ruinId)} depths.`,
+      : `Drive them out of ${ruin.name} for good.`,
     actionLabel: 'Clear the gate',
     // A garrison fights back, and how badly is the fight's own answer — so
     // this says what is at stake, not a number nothing can promise.

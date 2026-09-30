@@ -708,7 +708,7 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
-/* ---- the party picker, its cards, the room's address ---- */
+/* ---- the party picker and its cards ---- */
 .bt-picker {
   border: calc(var(--px) * 12) solid transparent;
   border-bottom: 0;
@@ -716,8 +716,7 @@
   border-radius: 0;
   background: url('../assets/tex-parchment.jpg') padding-box 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bt-card,
-.exp-safe {
+.bt-card {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);

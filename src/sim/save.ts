@@ -567,6 +567,32 @@ const MIGRATIONS: readonly Migration[] = [
       dto.Poured = dto.Poured ?? {};
     },
   },
+  {
+    // v63: the depths behind the gate are retired — a ruin is its gate
+    // (Docs/proposals/lairs.md §7). The rooms cleared, the ruins bottomed and
+    // the deepest depth have nothing left to mean, so the module goes.
+    //
+    // NO RETRO-PAY. The first-clear Knowledge lump moved from a ruin's bottom
+    // room to its gate. A save that bottomed a ruin was paid it then; a save
+    // whose gate fell but whose ruin was never bottomed never got it, and does
+    // not get it here — a one-off lump on load, for a fight already won, is
+    // not worth the second code path.
+    //
+    // The season pass's live missions of the two retired kinds (`ClearRooms`,
+    // `CompleteDepths`) go too: their odometers can never move again, so they
+    // would sit on the board unfinishable until their window rolled over.
+    to: 63,
+    migrate: (modules) => {
+      delete modules['kingdom.ruins'];
+      const kingdom = modules['kingdom.kingdoms'] as {
+        Pass?: { Live?: Array<{ Kind?: string }> };
+      } | undefined;
+      const pass = kingdom?.Pass;
+      if (pass?.Live !== undefined) {
+        pass.Live = pass.Live.filter((m) => m.Kind !== 'ClearRooms' && m.Kind !== 'CompleteDepths');
+      }
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -750,16 +776,6 @@ export function serialize(state: GameState, now: number): SaveFile {
           Payload: e.payload,
           Phase: e.phase,
         })),
-      },
-      // HOW FAR INTO EACH RUIN, and nothing in flight: a room resolves the
-      // instant it is entered, so there is no party to persist
-      // (Docs/features/11-expeditions.md §5).
-      'kingdom.ruins': {
-        Progress: Object.entries(state.ruins).map(([ruinId, p]) => ({
-          RuinID: ruinId, Depth: p!.depth, Cleared: p!.cleared,
-        })),
-        Cleared: Object.keys(state.ruinsCleared),
-        DeepestDepth: state.deepestDepth,
       },
       'kingdom.heroes': {
         Owned: state.heroes.owned,
@@ -1167,19 +1183,6 @@ export function deserialize(
       payload: e.Payload,
       phase: e.Phase ?? 'pending',
     }));
-  }
-
-  const ruinsDto = modules['kingdom.ruins'];
-  if (ruinsDto) {
-    state.ruins = {};
-    for (const p of (ruinsDto.Progress ?? []) as any[]) {
-      state.ruins[p.RuinID as RuinId] = { depth: p.Depth ?? 1, cleared: p.Cleared ?? 0 };
-    }
-    state.deepestDepth = ruinsDto.DeepestDepth ?? 0;
-    state.ruinsCleared = {};
-    for (const id of (ruinsDto.Cleared ?? []) as string[]) {
-      state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;
-    }
   }
 
   const heroesDto = modules['kingdom.heroes'];

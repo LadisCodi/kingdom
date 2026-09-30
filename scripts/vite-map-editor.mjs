@@ -36,9 +36,8 @@ const landmarkLine = (l) =>
   `    { "id": ${JSON.stringify(l.id)}, "kind": ${JSON.stringify(l.kind)}, `
   + `"x": ${l.x}, "y": ${l.y}, "claimCost": ${l.claimCost} }`;
 
-// A ruin is WHERE and WHAT, and nothing about its depths: those are rows on
-// the `Depths` sheet now (Docs/features/11-expeditions.md §2), because a
-// depth is a ladder of numbers and a spreadsheet says those best.
+// A ruin is WHERE and WHAT, and its gate: one fight, nothing behind it
+// (Docs/proposals/lairs.md §1).
 const ruinLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   `      "x": ${r.x}, "y": ${r.y}`,
   `      "tier": ${r.tier}`,
@@ -47,7 +46,6 @@ const ruinLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
     + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
     + `"periodMinutes": ${r.guard.periodMinutes} }`,
-  `      "affinity": ${JSON.stringify(r.affinity)}, "artifact": ${JSON.stringify(r.artifact)}`,
 ].join(',\n') + '\n    }';
 
 export function serialiseRegionMap(doc) {

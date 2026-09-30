@@ -12,7 +12,7 @@
 // not (an island nobody can walk to, whose fog is therefore free).
 
 import {
-  ARTIFACT_ORDER, DISTRICTS, FEATURES, LANDMARK_ART, RUIN_ORDER, UNIT_ORDER,
+  DISTRICTS, FEATURES, LANDMARK_ART, RUIN_ORDER, UNIT_ORDER,
 } from './definitions';
 import {
   cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId,
@@ -31,7 +31,6 @@ export interface RegionMapDoc {
     x: number; y: number; tier: number;
     /** Cells a side, anchored at (x, y). 1 when absent. */
     size?: number;
-    affinity: string; artifact: string;
     /** The gate that holds the entrance, and its clock
      *  (Docs/features/18-garrisons-and-raids.md §2). */
     guard: {
@@ -187,17 +186,9 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       err(`"${id}" is not a ruin the code knows about — RuinId is a union in state.ts`, r);
       continue;
     }
-    if (r.affinity !== 'Any' && !(UNIT_ORDER as string[]).includes(r.affinity)) {
-      err(`${what}'s affinity must be a unit or "Any" (got "${r.affinity}")`, r);
-    }
-    if (!(ARTIFACT_ORDER as string[]).includes(r.artifact)) {
-      err(`${what} rewards an unknown artifact "${r.artifact}"`, r);
-    }
     if (!isCount(r.tier) || r.tier < 1) err(`${what} needs a tier of 1 or more`, r);
-    // A ruin's DEPTHS are rows on the `Depths` sheet, not map content: how
-    // many rooms one holds and what they field is a ladder of numbers
-    // (Docs/features/11-expeditions.md §2). What lives here is where the ruin
-    // is, what it pays, and who is standing on the door.
+    // What lives here is where the ruin is and who is standing on the door:
+    // the gate is the whole of it (Docs/proposals/lairs.md §1).
     // The gate. A ruin without one would be a dungeon nobody is asked to
     // hurry to, and the counter is what makes discovering one an event.
     const g = r.guard;

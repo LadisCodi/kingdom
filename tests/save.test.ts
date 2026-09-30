@@ -357,6 +357,46 @@ describe('save versions', () => {
 // The Market left the game on 2026-09-09 — the building, its technology and
 // the three quests that named it. A save can be holding all three, and every
 // one of them would be read against a table that no longer has the row.
+// v63: the depths behind the gate are retired (Docs/proposals/lairs.md §7).
+// A ruin is its gate, so what a save knew about rooms and depths has nothing
+// left to mean — and a live mission watching a room odometer could never
+// finish.
+describe('the depths retired (v63)', () => {
+  const v62 = () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const modules = save.Modules as any;
+    modules['kingdom.ruins'] = {
+      Progress: [{ RuinID: 'HollowBarrow', Depth: 2, Cleared: 3 }],
+      Cleared: ['HollowBarrow'],
+      DeepestDepth: 2,
+    };
+    modules['kingdom.kingdoms'].Pass.Live = [
+      { UniqueID: 'm1', Kind: 'ClearRooms', Meter: 'rooms', Base: 0, Target: 3, Subject: null, Window: 0, Slot: 0 },
+      { UniqueID: 'm2', Kind: 'OpenPacks', Meter: 'packs', Base: 0, Target: 2, Subject: null, Window: 0, Slot: 1 },
+      { UniqueID: 'm3', Kind: 'CompleteDepths', Meter: 'depths', Base: 0, Target: 1, Subject: null, Window: 0, Slot: 2 },
+    ];
+    save.SaveVersion = 62;
+    return save;
+  };
+
+  it('drops the ruins module and the missions of the retired kinds', () => {
+    const save = v62();
+    expect(migrate(save)).toBe(true);
+    const modules = save.Modules as any;
+    expect(modules['kingdom.ruins']).toBeUndefined();
+    expect(modules['kingdom.kingdoms'].Pass.Live.map((m: any) => m.Kind)).toEqual(['OpenPacks']);
+    const back = deserialize(v62(), map, T0)!;
+    expect('ruins' in back).toBe(false);
+    expect(back.kingdom.pass.live.map((m) => m.kind)).toEqual(['OpenPacks']);
+  });
+
+  it('writes no ruins module any more', () => {
+    const save = serialize(freshGame(), T0);
+    expect((save.Modules as any)['kingdom.ruins']).toBeUndefined();
+  });
+});
+
 // v61: research takes no time (Docs/features/07-research.md §1). No slots, no
 // clock — so a save written mid-research, or with slots bought, has to land
 // somewhere the new model can hold.

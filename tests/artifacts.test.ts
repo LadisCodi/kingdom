@@ -38,7 +38,6 @@ import {
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
 import { armyCap } from '../src/sim/army';
-import { roomReward } from '../src/sim/expeditions';
 import { effectiveRecoveryMs, effectiveStock } from '../src/sim/harvest';
 import {
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs,
@@ -218,17 +217,15 @@ describe('the three relics outside the city', () => {
     }
   });
 
-  // THE MATERIAL HALF ONLY. A room's Stardust is the Compass's and its Hero XP
-  // is a boon's; the Lantern must not stack a third layer on either.
-  it('the Lantern pays a room\u2019s gold and stone, and leaves the rest alone', () => {
-    const before = roomReward(state, 'HollowBarrow', 1, 1);
+  // THE LANTERN LOST ITS NUMBER. It moved a room's Gold and Stone, and the
+  // rooms were retired with the depths: `roomHaul` is still in the stack,
+  // and nothing reads it (Docs/open-questions.md OQ-113). Delete this when
+  // the Lantern has a new effect.
+  it('the Lantern still resolves its stat, which nothing reads any more', () => {
+    expect(ARTIFACTS.DelversLantern.passive.stats[0]!.stat).toBe('roomHaul');
     grantArtifactLevel(state, 'DelversLantern');
-    const after = roomReward(state, 'HollowBarrow', 1, 1);
-    const mult = ARTIFACTS.DelversLantern.passive.base;
-    expect(after.wallet.Gold).toBe(Math.round(before.wallet.Gold! * mult));
-    expect(after.wallet.Stone).toBe(Math.round(before.wallet.Stone! * mult));
-    expect(after.wallet.Stardust).toBe(before.wallet.Stardust);
-    expect(after.heroXp).toBe(before.heroXp);
+    expect(resolve(state, 'roomHaul', 1))
+      .toBeCloseTo(ARTIFACTS.DelversLantern.passive.base, 6);
   });
 
   it('the Horn widens what the halls can field', () => {

@@ -32,11 +32,6 @@
         },
         "landmarkClaimLump": { "type": "int", "min": 0, "doc": "Knowledge a landmark pays once, when it is claimed." },
         "conquestFirstClearLump": { "type": "int", "min": 0, "doc": "What Conquest adds to every ruin's first-clear lump." },
-        "roomCoef": {
-          "type": "float",
-          "min": 0,
-          "doc": "Knowledge a ruin room pays, on the room reward formula (at least 1)."
-        },
         "goldPriceBase": {
           "type": "int",
           "min": 1,
@@ -46,13 +41,6 @@
       }
     },
     "raid": { "type": "object", "fields": { "takeFractionMax": { "type": "float" }, "maxRaids": { "type": "int" } } },
-    "delve": {
-      "type": "object",
-      "fields": {
-        "firstClearGems": { "type": "int" },
-        "firstClearKnowledge": { "type": "int" },
-        "firstClearStardust": { "type": "int" }
-      }
-    }
+    "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } }
   }
 }

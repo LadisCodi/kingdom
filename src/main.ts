@@ -47,7 +47,6 @@ import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
-import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
@@ -179,7 +178,6 @@ async function boot(): Promise<void> {
     purse: renderPurseSheet,
     collection: renderCollectionSheet,
     heroes: renderHeroesSheet,
-    expedition: renderExpeditionSheet,
     gate: renderGateSheet,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
@@ -280,7 +278,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
+        'purse', 'collection', 'heroes', 'gate', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -385,7 +383,7 @@ async function boot(): Promise<void> {
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
     // The presenter, reachable from the console. Every screen is a pure
-    // function of it, so `kingdom.openExpedition('HollowBarrow')` is a faster
+    // function of it, so `kingdom.openGate('HollowBarrow')` is a faster
     // way to reach a sheet than finding its cell on the map — and it is the
     // difference between checking a layout in ten seconds and in ten clicks.
     (window as unknown as { kingdom: Game }).kingdom = game;

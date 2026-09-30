@@ -10,7 +10,7 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
@@ -65,12 +65,11 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  attemptGate, discoveredRuins, enterRoom, freeHeroes, frontier, gateBlock,
-  previewGate, previewRoom, roomBlock, roomsCleared, troopSlots,
-  type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
+  attemptGate, gateBlock, previewGate, troopSlots,
+  type GateBlock, type GatePreview,
 } from './sim/expeditions';
 import {
-  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared, gateSupplies,
+  RAIDABLE, cityRatePerSecond, dismissRaidReports, gateCreature, gateIsCleared,
   gateView, nextGateToRaid, openGates, type GateView, type RaidableId,
 } from './sim/gates';
 import {
@@ -160,7 +159,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'collection' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
+  | 'collection' | 'heroes' | 'gate' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -309,13 +308,9 @@ export const BATTLE_RESULT_DELAY_MS = 2000;
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
-  /** The ruin the expedition sheet is being composed for. */
-  expeditionRuin: RuinId | null = null;
   /** Which card panel is open over the battle screen, if any. */
   battlePicker: 'troops' | 'heroes' | null = null;
-  /** The ruin whose GATE the room sheet is being composed for. The party
-   *  fields below are shared with the expedition sheet on purpose: it is the
-   *  same board, and the gate is the ruin's frontier room while it stands
+  /** The ruin whose GATE the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
   gateRuin: RuinId | null = null;
   /** What the player has picked so far, by unit type. Lives on the presenter
@@ -325,7 +320,6 @@ export class Game {
   /** The heroes the player has put in the hero slots, in slot order — one
    *  per slot, at most `heroSlots(state)` of them. */
   partyHeroes: HeroId[] = [];
-  expeditionOrder: number | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -363,7 +357,7 @@ export class Game {
    *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
   battle: BattlePlayback | null = null;
   /** The hero whose card is open on the roster screen, or null for the grid.
-   *  On the presenter rather than in the view for the reason `expeditionRuin`
+   *  On the presenter rather than in the view for the reason `gateRuin`
    *  is: it survives the per-tick rebuild, and it is node-testable. */
   openHeroId: HeroId | null = null;
   /** The relic whose card is open on the Reliquary screen, or null for the
@@ -2880,23 +2874,6 @@ export class Game {
         else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
       }
-      case 'ReachDepth':
-      case 'ClearRuins': {
-        // The nearest ruin with a room still to fight.
-        const found = discoveredRuins(this.state, this.map)
-          .sort((a, b) =>
-            townhallDistance(this.map, RUINS[a].location)
-            - townhallDistance(this.map, RUINS[b].location))[0];
-        if (found) {
-          this.setOverlay(null);
-          this.inspectedSite = RUINS[found].location;
-          this.camera.centerOnCell(RUINS[found].location);
-          this.notify();
-        } else {
-          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
-        }
-        break;
-      }
       case 'OwnArtifacts':
         this.setUiHint('collection');
         overlay('collection');
@@ -3016,46 +2993,7 @@ export class Game {
     this.notify();
   }
 
-  // ----------------------------------------------------------- expeditions
-
-  /** Why this ruin cannot be entered right now, in plain words; null = it can. */
-  expeditionBlock(ruinId: RuinId): string | null {
-    if (this.ruinIsDone(ruinId)) return 'Every room of this ruin has fallen';
-    if (this.state.heroes.owned.length === 0) return 'You have no hero to lead a party';
-    if (armyCap(this.state) === 0) return 'Build a Barracks — you have no army to send';
-    if (this.state.army.length === 0) return 'Train some units first';
-    return null;
-  }
-
-  /** Where the player stands in a ruin: the frontier, and the rooms behind
-   *  it. What the ruin's card and the room sheet both read. */
-  ruinProgress(ruinId: RuinId): {
-    depth: number; room: number; cleared: number; rooms: number; done: boolean;
-  } {
-    const at = frontier(this.state, ruinId);
-    return {
-      depth: at.depth,
-      room: at.room,
-      cleared: roomsCleared(this.state, ruinId),
-      rooms: roomCount(ruinId),
-      done: at.done,
-    };
-  }
-
-  ruinIsDone(ruinId: RuinId): boolean {
-    return frontier(this.state, ruinId).done;
-  }
-
-  /** Open the launch sheet, pre-filled with the best guess: the free hero and
-   *  every unit the player owns, up to their slots. A player should never have
-   *  to assemble a party from nothing to see what a ruin would take. */
-  openExpedition(ruinId: RuinId): void {
-    this.expeditionRuin = ruinId;
-    this.partyHeroes = freeHeroes(this.state).slice(0, heroSlots(this.state));
-    this.expeditionOrder = null;
-    this.prefillParty(RUINS[ruinId].affinity);
-    this.setOverlay('expedition');
-  }
+  // ----------------------------------------------------------- the party
 
   /** The party a sheet opens with: the best-answering types on hand, clamped
    *  to the army cap. Proposing a party the player cannot field is worse than
@@ -3150,7 +3088,7 @@ export class Game {
     this.notify();
   }
 
-  /** Open the room sheet on a gate. A hero ALONE is a legal board here, so
+  /** Open the battle sheet on a gate. A hero ALONE is a legal board here, so
    *  this never opens pre-blocked for want of an army. */
   openGate(ruinId: RuinId): void {
     this.gateRuin = ruinId;
@@ -3183,7 +3121,7 @@ export class Game {
       this.setOverlay(null);
       this.gateRuin = null;
     } else if (report.result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
+      this.shake(Object.keys(report.supplies) as CurrencyId[]);
       this.reconcileParty();
       this.notify();
       return;
@@ -3199,7 +3137,10 @@ export class Game {
     this.openBattle(report.log!, {
       title: `${gateView(this.state, ruinId)?.creature ?? 'A warband'} at the gate`,
       subtitle: RUINS[ruinId].name,
-      prizes: report.result === 'Cleared' ? walletPrizes(report.hoard) : [],
+      // The hoard, then the first-clear Knowledge: a gate falls once, and
+      // this is everything it pays (Docs/proposals/lairs.md §5).
+      prizes: report.result === 'Cleared'
+        ? walletPrizes({ ...report.hoard, Knowledge: report.knowledge }) : [],
     });
     this.notify();
   }
@@ -3317,14 +3258,6 @@ export class Game {
     this.notify();
   }
 
-  /** The expedition sheet's hero row is a set of toggles rather than slots,
-   *  because a delve is composed on one screen with no panel over it. */
-  toggleHero(heroId: HeroId): void {
-    const at = this.partyHeroes.indexOf(heroId);
-    if (at >= 0) this.clearHeroSlot(at);
-    else this.assignHero(heroId);
-  }
-
   /** The picker panel over the battle screen: troops, heroes, or nothing. */
   openBattlePicker(kind: 'troops' | 'heroes'): void {
     this.battlePicker = kind;
@@ -3343,13 +3276,6 @@ export class Game {
     return availableRoster(this.state);
   }
 
-  /** Whether THIS battle screen has to respect a hero being underground.
-   *  A gate resolves on entry, so it does not (Docs/features/10-heroes.md
-   *  §2.5); the delve's own launch does. */
-  battleHeroesAreCommitted(): boolean {
-    return this.gateRuin === null;
-  }
-
   heroSlotOffer(): { cost: number; slots: number; ceiling: number } {
     return {
       cost: heroSlotGemCost(this.state),
@@ -3363,86 +3289,6 @@ export class Game {
     if (result === 'Purchased') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
     else this.toast('Three heroes is the whole board');
-    this.notify();
-  }
-
-  setExpeditionCount(unitId: UnitId, count: number): void {
-    const roster = availableRoster(this.state);
-    const capped = Math.max(0, Math.min(count, roster[unitId] ?? 0));
-    const existing = this.expeditionParty.find((s) => s.unitId === unitId);
-    if (existing) existing.count = capped;
-    else if (capped > 0) this.expeditionParty.push({ unitId, count: capped });
-    this.expeditionParty = this.expeditionParty.filter((s) => s.count > 0);
-    this.notify();
-  }
-
-  setStandingOrder(depth: number | null): void {
-    this.expeditionOrder = depth;
-    this.notify();
-  }
-
-  /** The room read-out: what the frontier room fields, and what this party
-   *  is worth against it. */
-  expeditionPreview(): RoomPreview | null {
-    if (this.expeditionRuin === null) return null;
-    return previewRoom(
-      this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
-  }
-
-  expeditionLaunchBlock(): string | null {
-    if (this.expeditionRuin === null) return 'No ruin chosen';
-    const block = roomBlock(
-      this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
-    if (block === null) return null;
-    // The supplies are printed in the button and turn clay when they cannot be
-    // paid (§6.4), so saying it again in words beside it is nagging. The
-    // button still refuses — the red is what disables it.
-    if (block === 'NotEnoughSupplies') return null;
-    return ROOM_BLOCK_TEXT[block];
-  }
-
-  /**
-   * ENTER THE ROOM. The whole of an expedition, in one tap.
-   *
-   * There is no journey to start and nothing to wait for: the fight resolves
-   * here, the screen redraws on the next room, and the player decides again
-   * (Docs/features/11-expeditions.md §5).
-   */
-  doLaunchExpedition(): void {
-    if (this.expeditionRuin === null || this.partyHeroes.length === 0) return;
-    const ruinId = this.expeditionRuin;
-    const report = enterRoom(
-      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty, this.now(),
-    );
-    // The dead are off the roster now, so the squads on the board have to
-    // come back down to what is left of them.
-    this.reconcileParty();
-    if (report.result === 'Cleared') {
-      // The sheet stays open on the NEXT room, because the decision the
-      // player just made is the one they are about to make again — and it
-      // closes itself when the ruin runs out.
-      if (previewRoom(this.state, ruinId, this.partyHeroes, this.expeditionParty).done) {
-        this.expeditionRuin = null;
-        this.setOverlay(null);
-      }
-    } else if (report.result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(report.supplies) as CurrencyId[]);
-      this.notify();
-      return;
-    } else if (report.log === null) {
-      this.toast(ROOM_BLOCK_TEXT[report.result as RoomBlock]);
-      this.notify();
-      return;
-    }
-    // The fight already happened — every wallet and every roster is where the
-    // resolver left them. What opens now is a REPLAY of it.
-    this.openBattle(report.log!, {
-      title: RUINS[ruinId].name,
-      subtitle: report.depthCompleted
-        ? `Depth ${report.depth} is yours`
-        : `Depth ${report.depth} · Room ${report.room}`,
-      prizes: report.result === 'Cleared' ? roomPrizes(report) : [],
-    });
     this.notify();
   }
 
@@ -4397,14 +4243,6 @@ function trainerName(unitId: UnitId): string {
 }
 
 
-/** Why a room cannot be entered, in words the player can act on. */
-/**
- * What a cleared room paid, as a sequence of prizes.
- *
- * The wallet rows first, then the hero XP, then the relic shards — the same
- * order the reveal deals them in, and the shards last because they are the
- * thing a player is collecting toward rather than spending.
- */
 /**
  * THE ICON A MISSION KIND WEARS.
  *
@@ -4421,8 +4259,6 @@ const MISSION_ICON: Record<MissionKind, IconName> = {
   BuildDistricts: 'build',
   TrainTroops: 'army',
   LevelHeroes: 'star',
-  ClearRooms: 'dungeon',
-  CompleteDepths: 'skull',
   OpenPacks: 'pack',
 };
 
@@ -4443,18 +4279,8 @@ function missionGoal(m: Mission): string {
     case 'BuildDistricts': return `Build ${n} buildings`;
     case 'TrainTroops': return `Train ${n} soldiers`;
     case 'LevelHeroes': return `Level heroes ${n} times`;
-    case 'ClearRooms': return `Clear ${n} dungeon rooms`;
-    case 'CompleteDepths': return `Complete ${n} depths`;
     default: return `Open ${n} card packs`;
   }
-}
-
-function roomPrizes(report: { wallet: Wallet; heroXp: number }): GachaPrize[] {
-  const prizes = walletPrizes(report.wallet);
-  if (report.heroXp > 0) {
-    prizes.push({ kind: 'currency', currency: 'HeroXp', amount: report.heroXp });
-  }
-  return prizes;
 }
 
 /**
@@ -4584,17 +4410,6 @@ const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) a
   .filter(([, n]) => n > 0)
   .map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount }));
 
-const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
-  RuinNotFound: 'You have not found this ruin yet',
-  GateStanding: 'The garrison at the gate has to come down first',
-  Finished: 'Every room of this ruin has fallen',
-  NoHero: 'Pick a hero to lead them',
-  TooManyHeroes: 'More heroes than you have slots for',
-  TooManySlots: 'Too many kinds of unit for the board',
-  NotEnoughUnits: 'You do not have that many at home',
-  NotEnoughSupplies: 'Not enough supplies for the attempt',
-};
-
 /** Why a gate attempt is refused. A power shortfall is NOT one of these: it
  *  warns on the sheet and the player may go anyway. */
 const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
@@ -4607,7 +4422,7 @@ const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
   NotEnoughSupplies: 'Not enough supplies to march',
 };
 
-/** How well a unit type answers a ruin's affinity — used only to pre-fill a
+/** How well a unit type answers a gate's threat — used only to pre-fill a
  *  sensible party, never to decide anything. */
 const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
   typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;

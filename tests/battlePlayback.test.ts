@@ -9,9 +9,10 @@ import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { BATTLE_RESULT_DELAY_MS } from '../src/game';
 import { COMBAT, RUINS } from '../src/sim/data/definitions';
+import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, freshGame, freshPresenter, fund, map, openRuin, reveal, T0,
+  addAllTrainers, freshGame, freshPresenter, fund, map, reveal, T0,
 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
@@ -21,7 +22,8 @@ function mustered(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): Gam
   addAllTrainers(state);
   fund(state, { Gold: 200_000, Food: 90_000, Wood: 90_000, Stone: 40_000 });
   reveal(state, [RUINS[BARROW].location]);
-  openRuin(state, BARROW);
+  // Standing, and not counting: these are about the screen, not the clock.
+  state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -39,16 +41,16 @@ const atTheDoor = (units?: Partial<Record<UnitId, number>>) => {
   return { game, tick: (ms: number) => { clock += ms; game.advanceBattle(clock); } };
 };
 
-describe('entering a room opens the playback', () => {
+describe('a gate attempt opens the playback', () => {
   it('resolves everything first, and only then starts the replay', () => {
     const { game } = atTheDoor();
-    game.openExpedition(BARROW);
-    const gold = getWallet(game.state.city.wallet, 'Gold');
-    game.doLaunchExpedition();
-    // The room is cleared and paid the instant the button is pressed: the
+    game.openGate(BARROW);
+    const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
+    game.doClearGate();
+    // The gate is cleared and paid the instant the button is pressed: the
     // screen is watching something that already happened.
-    expect(game.ruinProgress(BARROW).cleared).toBe(1);
-    expect(getWallet(game.state.city.wallet, 'Gold')).not.toBe(gold);
+    expect(game.gateIsCleared(BARROW)).toBe(true);
+    expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).not.toBe(knowledge);
     const battle = game.battle!;
     expect(battle.phase).toBe('playing');
     expect(battle.log.winner).toBe('ours');
@@ -58,8 +60,8 @@ describe('entering a room opens the playback', () => {
 
   it('walks playing → result → rewards → done on the clock', () => {
     const { game, tick } = atTheDoor();
-    game.openExpedition(BARROW);
-    game.doLaunchExpedition();
+    game.openGate(BARROW);
+    game.doClearGate();
     const battle = game.battle!;
     const fight = battle.log.ticks * COMBAT.tickMs;
 
@@ -84,11 +86,12 @@ describe('entering a room opens the playback', () => {
 
   it('has nothing to deal after a defeat, and says so straight away', () => {
     const { game, tick } = atTheDoor({ Warrior: 1 });
-    // Two soldiers and a hero at the bottom of the first ruin: the fight is
-    // lost before it is watched, which is exactly what the screen must say.
-    game.state.ruins[BARROW] = { depth: 3, cleared: 7 };
-    game.openExpedition(BARROW);
-    game.doLaunchExpedition();
+    // One soldier and a hero against the drake: the fight is lost before it
+    // is watched, which is exactly what the screen must say.
+    reveal(game.state, [RUINS.StarObservatory.location]);
+    game.state.gates.StarObservatory = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    game.openGate('StarObservatory');
+    game.doClearGate();
     const battle = game.battle!;
     expect(battle.log.winner).toBe('theirs');
     expect(battle.prizes).toEqual([]);
@@ -97,23 +100,22 @@ describe('entering a room opens the playback', () => {
     expect(game.gachaReveal).toBeNull();
   });
 
-  it('leaves the room sheet standing on the next room when it closes', () => {
+  it('closes the gate sheet behind a win', () => {
     const { game, tick } = atTheDoor();
-    game.openExpedition(BARROW);
-    game.doLaunchExpedition();
+    game.openGate(BARROW);
+    game.doClearGate();
     tick(game.battle!.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100);
     game.dismissGachaReveal();
     tick(0);
     game.dismissBattle();
     expect(game.battle).toBeNull();
-    expect(game.openOverlay).toBe('expedition');
-    expect(game.expeditionPreview()!.room).toBe(2);
+    expect(game.openOverlay).toBeNull();
   });
 
   it('draws the tick the log is at, and never past its end', () => {
     const { game } = atTheDoor();
-    game.openExpedition(BARROW);
-    game.doLaunchExpedition();
+    game.openGate(BARROW);
+    game.doClearGate();
     const battle = game.battle!;
     expect(game.battleTick(battle.startedAt)).toBe(0);
     expect(game.battleTick(battle.startedAt + 5 * COMBAT.tickMs)).toBe(5);
@@ -122,7 +124,7 @@ describe('entering a room opens the playback', () => {
 });
 
 describe('the gate opens the same screen', () => {
-  it('plays the fight, and the hoard is what it deals', () => {
+  it('plays the fight, and deals the hoard and the first-clear lump', () => {
     const state = mustered();
     advance(state, map, T0); // arm the gate
     state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: { Gold: 40 }, cleared: false };
@@ -130,10 +132,14 @@ describe('the gate opens the same screen', () => {
     let clock = T0;
     game.now = () => clock;
     game.openGate(BARROW);
+    const lump = firstClearLump(game.state);
     game.doClearGate();
     const battle = game.battle!;
     expect(battle.log.winner).toBe('ours');
-    expect(battle.prizes).toEqual([{ kind: 'currency', currency: 'Gold', amount: 40 }]);
+    expect(battle.prizes).toEqual([
+      { kind: 'currency', currency: 'Gold', amount: 40 },
+      { kind: 'currency', currency: 'Knowledge', amount: lump },
+    ]);
     clock += battle.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100;
     game.advanceBattle(clock);
     expect(game.battle!.phase).toBe('rewards');

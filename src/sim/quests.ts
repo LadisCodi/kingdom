@@ -82,10 +82,6 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.army.length;
     case 'ClaimLandmarks':
       return Object.keys(state.landmarks.claimed).length;
-    case 'ReachDepth':
-      return state.deepestDepth;
-    case 'ClearRuins':
-      return Object.keys(state.ruinsCleared).length;
     case 'ClearGarrisons':
       return clearedGateCount(state);
     case 'OwnArtifacts':
