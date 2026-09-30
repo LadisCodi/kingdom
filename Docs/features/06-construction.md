@@ -23,7 +23,7 @@
 
 | State | Shows |
 |---|---|
-| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a **Hire a builder** in the next empty slot |
+| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot |
 | **At** the ceiling | the same, and **no hire** |
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player

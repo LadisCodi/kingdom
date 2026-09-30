@@ -92,8 +92,8 @@ There is no cost curve: `instanceLinearGrowth` and
 `instanceExponentialGrowth` say how much dearer a LATER instance is
 (`Docs/features/05-city-and-districts.md` §3). Art tiers are files: a level
 draws the highest `<sprite>_l<n>.png` at or below it. `DistrictId` is the
-file's keys, and the build menu reads `buildable`, `produces` and
-`harmonySupply`, so a building made in the tool needs no code to exist.
+file's keys, and the build menu reads `buildable`, `buildTab`, `produces`
+and `harmonySupply`, so a building made in the tool needs no code to exist.
 Two kinds of content are authored on a BOARD rather than in fields, each in
 its own editor inside the tool. Map content — terrain, features, landmarks
 and ruins — is authored by coordinate, so it lives in

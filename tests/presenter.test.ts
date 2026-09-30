@@ -143,6 +143,79 @@ describe('placement', () => {
   });
 });
 
+describe('the placement window and the builder sheet', () => {
+  it('closing a build goes back to the Build menu; closing a move back to its card', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.setOverlay('build');
+    game.startPlacement('Housing');
+    game.closePlacement();
+    expect(game.mode).toEqual({ kind: 'normal' });
+    expect(game.openOverlay).toBe('build');
+
+    const hall = townhall(state);
+    game.dismiss();
+    game.mode = { kind: 'moving', districtUniqueId: hall.uniqueId, definitionId: 'Townhall',
+      selected: hall.location, origin: hall.location };
+    game.closePlacement();
+    expect(game.inspectedDistrictId).toBe(hall.uniqueId);
+    expect(game.openOverlay).toBe(null);
+  });
+
+  it('a build card quotes the wait of the cell its ghost will appear on', () => {
+    const game = freshPresenter();
+    const quoted = game.buildCardDuration('Housing');
+    game.startPlacement('Housing');
+    expect(game.placementInfo()!.duration).toBe(quoted);
+  });
+
+  it('the ghost shows a move arrow only for legal steps, and none while it is held', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.startPlacement('Housing');
+    const at = (game.mode as { selected: { x: number; y: number } }).selected;
+    const legal = new Set(validPlacementCells(state, map, 'Housing').map((c) => `${c.x},${c.y}`));
+    const steps = game.ghostSteps();
+    expect(steps.length).toBeGreaterThan(0);
+    for (const d of steps) expect(legal.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
+    game.holdGhost(true);
+    expect(game.ghostSteps()).toEqual([]);
+    expect(game.markers().previewSteps).toEqual([]);
+    game.holdGhost(false);
+    expect(game.ghostSteps()).toEqual(steps);
+  });
+
+  it('a build every builder is busy for opens the sheet; a freed builder builds from it', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
+    game.startPlacement('Housing');
+    game.confirmBuild(); // takes the only builder
+    game.startPlacement('Housing');
+    game.confirmBuild();
+    expect(game.openOverlay).toBe('builder');
+    expect(game.mode.kind).toBe('placing'); // the ghost waits behind the sheet
+    expect(game.builderJobs()).toHaveLength(1);
+    expect(game.builderJobs()[0].task).toBe('Building');
+
+    const ask = game.builderAskJob()!;
+    expect(ask.verb).toBe('Build');
+    expect(ask.what).toBe('Ready to build the Housing');
+
+    // Finish the job: the builder is free and the sheet stays up.
+    addToWallet(state.player.wallet, 'Gems', 10_000);
+    game.doRush(game.builderJobs()[0].item.uniqueId);
+    expect(game.builderJobs()).toHaveLength(0);
+    expect(game.openOverlay).toBe('builder');
+
+    // The free row's Build starts the build on the ghost and closes the sheet.
+    ask.start();
+    expect(state.city.queue).toHaveLength(1);
+    expect(game.mode).toEqual({ kind: 'normal' });
+    expect(game.openOverlay).toBe(null);
+  });
+});
+
 describe('the quest tracker', () => {
   it('reports its position in the chain', () => {
     const game = freshPresenter();
@@ -673,7 +746,7 @@ describe('the heroes screen signature', () => {
 describe('the overlay signatures', () => {
   it('hold still on a tick that changed nothing they draw', () => {
     const game = freshPresenter();
-    for (const name of ['builder', 'daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
+    for (const name of ['daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
       const before = game.overlaySignature(name);
       expect(before, name).not.toBeNull();
       game.tick();
@@ -681,16 +754,15 @@ describe('the overlay signatures', () => {
     }
   });
 
-  it('the store and the builder move with the Gems and the crew', () => {
+  it('the store moves with the Gems', () => {
     const game = freshPresenter();
     const store = game.overlaySignature('store');
-    const builder = game.overlaySignature('builder');
     addToWallet(game.state.player.wallet, 'Gems', 5_000);
     expect(game.overlaySignature('store')).not.toBe(store);
-    expect(game.overlaySignature('builder')).not.toBe(builder);
-    const hired = game.overlaySignature('builder');
-    game.doBuyBuilder({ closeSheet: false });
-    expect(game.overlaySignature('builder')).not.toBe(hired);
+  });
+
+  it('the builder sheet keeps rebuilding: its bars and Finish prices move with the clock', () => {
+    expect(freshPresenter().overlaySignature('builder')).toBeNull();
   });
 
   it('the purchase sheet moves with the pending pack', () => {

@@ -19,7 +19,7 @@ import { formatCount, formatDuration, formatExact } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
-  buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
+  buildDurationForCell, canMoveDistrict, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
   requiredPopulation,
 } from './sim/districts';
@@ -113,7 +113,7 @@ import {
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
-  type Wallet,
+  type QueueItem, type Wallet,
 } from './sim/state';
 import {
   anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
@@ -307,6 +307,12 @@ export const BATTLE_RESULT_DELAY_MS = 2000;
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
+  /** A finger is on the ghost and carrying it: its move arrows hide, because
+   *  the finger is already saying which way it goes. */
+  ghostHeld = false;
+  /** What the builder sheet was raised for — the build on the ghost, or an
+   *  upgrade — so a builder freed while it is open offers that exact job. */
+  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string } = { kind: 'build' };
   /** The ruin the expedition sheet is being composed for. */
   expeditionRuin: RuinId | null = null;
   /** Which card panel is open over the battle screen, if any. */
@@ -934,18 +940,31 @@ export class Game {
 
   // ------------------------------------------------------------ placement mode
 
-  startPlacement(definitionId: DistrictId): void {
-    const valid = validPlacementCells(this.state, this.map, definitionId);
-    // Auto-select the legal cell closest to the Townhall; center the camera on it.
+  /** Where a ghost appears: the legal cell closest to the Townhall. */
+  defaultPlacementCell(definitionId: DistrictId): Coord | null {
     let selected: Coord | null = null;
     let best = Infinity;
-    for (const c of valid) {
+    for (const c of validPlacementCells(this.state, this.map, definitionId)) {
       const d = townhallDistance(this.map, c);
       if (d < best) {
         best = d;
         selected = c;
       }
     }
+    return selected;
+  }
+
+  /** What a build card quotes: the wait at the cell its ghost would appear
+   *  on, so the card and the placement bar say the same number. */
+  buildCardDuration(definitionId: DistrictId): number {
+    const cell = this.defaultPlacementCell(definitionId) ?? townhall(this.state)?.location;
+    return cell ? buildDurationForCell(this.state, definitionId, cell, this.map) : 0;
+  }
+
+  startPlacement(definitionId: DistrictId): void {
+    // Auto-select the legal cell closest to the Townhall; center the camera on it.
+    const selected = this.defaultPlacementCell(definitionId);
+    this.ghostHeld = false;
     this.mode = { kind: 'placing', definitionId, selected };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
@@ -2262,9 +2281,12 @@ export class Game {
     if (result === 'Started') {
       playSfx('buildPlaced');
       this.mode = { kind: 'normal' };
+      // Confirmed from a free builder's row: the sheet was only in the way.
+      if (this.openOverlay === 'builder') this.openOverlay = null;
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
     } else if (result === 'NoBuilderFree') {
+      this.builderAsk = { kind: 'build' };
       this.offerBuilder();
     } else {
       this.toast(this.refusalWords(result, definitionId, 1));
@@ -2337,6 +2359,43 @@ export class Game {
       ceiling: KINGDOM_DEF.maxBuilders,
       cost,
       affordable: this.walletValue('Gems') >= cost,
+    };
+  }
+
+  /** Every job the crew is on, in the order they were given — one row of
+   *  the builder sheet each. */
+  builderJobs(): Array<{ item: QueueItem; district: District; name: string; task: string }> {
+    return this.state.city.queue.flatMap((item) => {
+      const district = districtById(this.state, item.districtUniqueId);
+      if (!district) return [];
+      const task = item.kind === 'upgrade'
+        ? `Upgrading to Lv ${item.targetLevel ?? district.level + 1}`
+        : 'Building';
+      return [{ item, district, name: districtLabel(this.state, district), task }];
+    });
+  }
+
+  /**
+   * The job the builder sheet was raised for, as a free builder's row offers
+   * it: what it is, what it costs, and the press that starts it. Null when
+   * that job is gone — the ghost was put away, the building is at its top.
+   */
+  builderAskJob(): { verb: string; what: string; cost: Wallet; start: () => void } | null {
+    const ask = this.builderAsk;
+    if (ask.kind === 'build') {
+      if (this.mode.kind !== 'placing' || !this.mode.selected) return null;
+      const def = DISTRICTS[this.mode.definitionId];
+      return {
+        verb: 'Build', what: `Ready to build the ${def.name}`,
+        cost: nextBuildCost(this.state, def.id), start: () => this.confirmBuild(),
+      };
+    }
+    const d = districtById(this.state, ask.districtUniqueId);
+    if (!d || d.level >= DISTRICTS[d.definitionId].maxLevel) return null;
+    return {
+      verb: 'Upgrade', what: `Ready to upgrade the ${DISTRICTS[d.definitionId].name}`,
+      cost: upgradeCost(d.definitionId, d.ordinal, d.level),
+      start: () => { this.doUpgrade(d.uniqueId); },
     };
   }
 
@@ -2505,8 +2564,11 @@ export class Game {
     } else if (result === 'NoBuilderFree') {
       // An upgrade occupies a builder exactly as a build does, so it hits the
       // same wall and deserves the same offer rather than a bare refusal.
+      this.builderAsk = { kind: 'upgrade', districtUniqueId: districtId };
       this.offerBuilder();
-    } else if (result !== 'Started') {
+    } else if (result === 'Started') {
+      if (this.openOverlay === 'builder') this.openOverlay = null;
+    } else {
       const d = districtById(this.state, districtId);
       this.toast(d === undefined
         ? result
@@ -2564,7 +2626,6 @@ export class Game {
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
       case 'payerProfile': return 'payer';
-      case 'builder': return JSON.stringify(this.builderOffer());
       // `endsIn` is a string the season formats; when it changes, the sheet
       // should, and not before.
       case 'daily': return JSON.stringify(this.dailySeason());
@@ -3700,7 +3761,7 @@ export class Game {
   }
 
   /** Under its cap, somewhere legal to put it, and affordable this second. */
-  private canBuildNow(id: DistrictId): boolean {
+  canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
     if (validPlacementCells(this.state, this.map, id).length === 0) return false;
@@ -3751,6 +3812,7 @@ export class Game {
       previewGlyph: null,
       previewSprite: null,
       previewSize: null,
+      previewSteps: this.ghostSteps(),
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       hintCell: this.hintCell(),
@@ -4050,6 +4112,46 @@ export class Game {
       : placementBlock(this.state, this.map, this.mode.definitionId, cell) === null;
     if (!legal) return;
     this.mode.selected = cell;
+    this.notify();
+  }
+
+  /** The finger is on the ghost (true) or has let go (false). */
+  holdGhost(held: boolean): void {
+    if (this.ghostHeld === held) return;
+    this.ghostHeld = held;
+    this.notify();
+  }
+
+  /**
+   * Which ways the ghost can step: one grid axis each, and only where the
+   * next cell that way is legal — so the arrows say where it can go, and
+   * their absence where it cannot.
+   */
+  ghostSteps(): Coord[] {
+    if (this.ghostHeld) return [];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return [];
+    const at = this.mode.selected;
+    if (!at) return [];
+    const { definitionId } = this.mode;
+    const movingId = this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined;
+    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) => {
+      const cell = { x: at.x + d.x, y: at.y + d.y };
+      return this.map.terrain.has(coordKey(cell))
+        && placementBlock(this.state, this.map, definitionId, cell, movingId) === null;
+    });
+  }
+
+  /**
+   * The placement window's close. A build goes back to the Build menu it
+   * came from — on the tab it was picked from — so the player can compare;
+   * a move goes back to the card it was started from.
+   */
+  closePlacement(): void {
+    const mode = this.mode;
+    this.mode = { kind: 'normal' };
+    this.ghostHeld = false;
+    if (mode.kind === 'placing') this.openOverlay = 'build';
+    else if (mode.kind === 'moving') this.inspectedDistrictId = mode.districtUniqueId;
     this.notify();
   }
 

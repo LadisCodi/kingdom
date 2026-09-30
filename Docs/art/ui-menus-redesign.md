@@ -944,13 +944,15 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
   | **Decoration** | Garden, Well, Orchard, Statue, Plaza, Shrine |
 
 - The Decoration tab carries the Harmony line above its cards: `supply /
-  demand` and what the surplus is paying.
+  demand` and what the surplus is paying — silent until a decoration can be
+  built or Harmony is supplied or demanded.
 - Opens on the tab last used; the first time, on Economy.
 - Cards sit in **one horizontally scrolling row**, about 2.3 cards wide at
   375px, so the cut-off card says there is more.
 - Order within a tab is `buildMenuOrder`; startable cards are not re-sorted
   to the front.
-- Each tab ends with a **More to discover** card that opens Research.
+- A tab with buildings still behind research ends with a **More to
+  discover** card that opens Research.
 
 **The card**, top to bottom:
 
@@ -960,7 +962,7 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 | Name | The name, and the ordinal it would get, small and quiet (*Housing #3*) — the price is that instance's |
 | Promise | One line, `promise` in `buildings.json` (≤ 42 characters) |
 | Cost | Chips for every coin and good; a short chip turns `clay`. A decoration adds a `+N Harmony` chip |
-| Footer strip | ⏳ build time on the left, **Built `n / max`** on the right |
+| Footer strip | ⏳ build time on the left — the wait at the cell the ghost will appear on — and **Built `n / max`** on the right |
 
 **Card states.**
 
@@ -1045,7 +1047,7 @@ window over the dimmed placement screen:
     (*Housing #5 · Building*, *Quarry · Upgrading to Lv 3*) over the blue bar
     with the time left inside it; the priced gem **Finish** at the right.
   - **Empty, the next to hire** — a dashed socket with a builder's
-    silhouette, *A third builder*, and the priced gem **Hire a builder**.
+    silhouette, *A third builder*, and the priced gem **Hire**.
   - **Free** — a builder whose job ended while the sheet is open, on its own
     or by Finish: a gold builder medallion, *Free* in leaf and *Ready to
     build the Sawmill*, and the priced primary **Build** — the placement
@@ -1060,7 +1062,7 @@ window over the dimmed placement screen:
   place. Closing it with a free builder returns to the positioned ghost.
 
 **Moving** uses the same screen: no price and no time, and the button reads
-*Move here*.
+*Move*.
 
 ---
 
@@ -1676,6 +1678,15 @@ lost its scroll and replayed its slide-in on the phone. The contract now:
   keeps rebuilding — the rebuild is invisible once images and scroll survive.
 - **The district card is the template for the next step**: built once per
   building and mutated in place, like the header and the pills.
+
+### 6.9 A labelled button is one verb
+
+- A button's label is a single verb: *Build*, *Move*, *Hire*, *Finish*,
+  *Upgrade* — never *Move here* or *Hire a builder*.
+- What the verb acts on is said by the screen around it: the row, the
+  window's title, the ghost on the map.
+
+---
 
 ## 7. Mockup prompt pack (ChatGPT)
 

@@ -255,7 +255,7 @@ describe('the two gestures', () => {
     game.handleTap(...screenAt(game, NEIGHBOUR_CELL));
     expect(game.placementInfo()!.cell).toEqual(NEIGHBOUR_CELL);
     expect(game.placementInfo()!.unmoved).toBe(false);
-    // Still only a ghost: nothing is committed until Move here.
+    // Still only a ghost: nothing is committed until Move.
     expect(house.location).toEqual(HOUSE_CELL);
 
     const dark = { x: 9, y: 9 };

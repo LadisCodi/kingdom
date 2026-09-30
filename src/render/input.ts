@@ -35,6 +35,8 @@ export function wireInput(
   grabGhost: (sx: number, sy: number) => boolean,
   /** Drag the grabbed ghost to the pointer. */
   dragGhost: (sx: number, sy: number) => void,
+  /** The finger took the ghost (true) or let it go (false). */
+  holdGhost: (held: boolean) => void = () => {},
 ): void {
   let pointerDown = false;
   let dragged = false;
@@ -68,6 +70,7 @@ export function wireInput(
     stopHold();
     const rect = canvas.getBoundingClientRect();
     draggingGhost = grabGhost(e.clientX - rect.left, e.clientY - rect.top);
+    if (draggingGhost) holdGhost(true);
     // A press on the ghost is never a hold-to-collect: there is nothing under
     // a ghost to harvest, and starting the timer would only race the drag.
     if (draggingGhost) return;
@@ -114,12 +117,14 @@ export function wireInput(
       onTap(e.clientX - rect.left, e.clientY - rect.top);
     }
     pointerDown = false;
+    if (draggingGhost) holdGhost(false);
     draggingGhost = false;
   });
 
   canvas.addEventListener('pointercancel', () => {
     stopHold();
     pointerDown = false;
+    if (draggingGhost) holdGhost(false);
     draggingGhost = false;
   });
 

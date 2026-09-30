@@ -17,6 +17,11 @@
       "doc": "Art file stem in src/render/assets. Tiers are its _l<n> files: a level draws the highest one at or below it."
     },
     "buildable": { "type": "bool", "doc": "Off for the Townhall, which the city starts with." },
+    "buildTab": {
+      "type": "text",
+      "options": ["Economy", "Military", "Decoration"],
+      "doc": "The Build menu tab it is listed under."
+    },
     "harvestSources": {
       "type": "list",
       "of": { "type": "text", "ref": "harvest" },
