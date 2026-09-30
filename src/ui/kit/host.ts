@@ -140,6 +140,84 @@ export function legacy(
   };
 }
 
+/** How long a scroller must be still before a held rebuild may run: long
+ *  enough to span the gaps between a fling's or a snap's scroll events. */
+const SETTLE_MS = 150;
+
+/**
+ * Holds a screen's rebuilds while one of its scrollers (`data-keep-scroll`)
+ * is in a hand — pressed, dragged, or still coasting from a fling — and runs
+ * the last one held once it is still. A rebuild replaces the scroller, and a
+ * phone drops a drag along with the node it started on; resources landing
+ * while the player browses must not cut the gesture.
+ *
+ * The listeners sit on the stable root (and on window for the release, which
+ * may land outside it), so they outlive every rebuild.
+ */
+export function holdWhileScrolling(screen: Screen): Screen {
+  const { root } = screen;
+  let pressed = false;
+  let touched = false;
+  let settle: ReturnType<typeof setTimeout> | null = null;
+  let pending = false;
+  const busy = () => pressed || touched || settle !== null;
+  const flush = () => {
+    if (!pending || busy()) return;
+    pending = false;
+    screen.refresh();
+  };
+  const inScroller = (e: Event) =>
+    (e.target as Element | null)?.closest?.('[data-keep-scroll]') != null;
+
+  const onPointerDown = (e: PointerEvent) => {
+    // A touch is followed by its own touch events, which keep going once the
+    // browser takes the gesture over for scrolling (the pointer is cancelled).
+    if (e.pointerType !== 'touch' && inScroller(e)) pressed = true;
+  };
+  const onTouchStart = (e: TouchEvent) => { if (inScroller(e)) touched = true; };
+  const onScroll = (e: Event) => {
+    if (!inScroller(e)) return;
+    if (settle !== null) clearTimeout(settle);
+    settle = setTimeout(() => { settle = null; flush(); }, SETTLE_MS);
+  };
+  const onPointerUp = (e: PointerEvent) => {
+    if (e.pointerType === 'touch' || !pressed) return;
+    pressed = false;
+    flush();
+  };
+  const onTouchEnd = (e: TouchEvent) => {
+    if (!touched || e.touches.length > 0) return;
+    touched = false;
+    flush();
+  };
+
+  root.addEventListener('pointerdown', onPointerDown, true);
+  root.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+  // Scroll does not bubble; the capture phase still sees it.
+  root.addEventListener('scroll', onScroll, true);
+  window.addEventListener('pointerup', onPointerUp, true);
+  window.addEventListener('pointercancel', onPointerUp, true);
+  window.addEventListener('touchend', onTouchEnd, true);
+  window.addEventListener('touchcancel', onTouchEnd, true);
+
+  return {
+    root,
+    refresh: () => {
+      if (busy()) { pending = true; return; }
+      pending = false;
+      screen.refresh();
+    },
+    destroy: () => {
+      if (settle !== null) clearTimeout(settle);
+      window.removeEventListener('pointerup', onPointerUp, true);
+      window.removeEventListener('pointercancel', onPointerUp, true);
+      window.removeEventListener('touchend', onTouchEnd, true);
+      window.removeEventListener('touchcancel', onTouchEnd, true);
+      screen.destroy?.();
+    },
+  };
+}
+
 /**
  * How long `data-entering` stays on the container: the window's whole
  * entrance (the frame growing, then the contents fading in — kit.css's

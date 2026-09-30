@@ -223,8 +223,9 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
 
 /**
  * What the menu draws, so the host rebuilds it only when that moves
- * (kit/host.ts). A rebuild every tick replaces the row under a finger that is
- * dragging it, and a phone drops the drag with the node.
+ * (kit/host.ts). A rebuild replaces the row, and a phone drops a drag with
+ * the node — so one that does come while the row is in a hand waits for it
+ * to be still (`holdWhileScrolling`).
  */
 export function buildMenuSignature(game: Game): string {
   const seenIds = loadSeen(game);

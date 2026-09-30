@@ -60,7 +60,7 @@ import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
-import { legacy, ScreenSlot } from './ui/kit/host';
+import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -289,11 +289,15 @@ async function boot(): Promise<void> {
         'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
-      overlaySlot.show(overlay, () => legacy(
-        () => OVERLAYS[overlay](game),
-        needsKnob ? () => game.dismiss() : undefined,
-        OVERLAY_SIGNATURES[overlay],
-      ));
+      overlaySlot.show(overlay, () => {
+        const screen = legacy(
+          () => OVERLAYS[overlay](game),
+          needsKnob ? () => game.dismiss() : undefined,
+          OVERLAY_SIGNATURES[overlay],
+        );
+        // Its row of cards is browsed by dragging while the purse fills.
+        return overlay === 'build' ? holdWhileScrolling(screen) : screen;
+      });
     }
     else overlaySlot.clear();
   };

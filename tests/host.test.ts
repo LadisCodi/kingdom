@@ -1,8 +1,8 @@
 // legacy(): the per-tick rebuild must not be VISIBLE — scroll position kept
 // by name and written only when it moved, the slide-in on the first build
 // only, sprites handed back to the pool before the render that wants them.
-import { beforeAll, describe, expect, it } from 'vitest';
-import { legacy } from '../src/ui/kit/host';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { holdWhileScrolling, legacy } from '../src/ui/kit/host';
 import { pooledCount, spriteImgAt } from '../src/render/spritePool';
 import { installStubDocument, stubNode, type StubNode } from './domStub';
 
@@ -98,5 +98,69 @@ describe('legacy() across rebuilds', () => {
     sig = 'b';
     screen.refresh();
     expect(builds).toBe(2);
+  });
+});
+
+// holdWhileScrolling(): a rebuild that lands while a scroller is in a hand —
+// pressed, dragged, or coasting — waits, and the last one held runs once it
+// is still. The phone drops a drag with the node it started on.
+describe('holdWhileScrolling()', () => {
+  const fire = (target: EventTarget, type: string, props: Record<string, unknown> = {}) => {
+    const e = new Event(type);
+    for (const [k, v] of Object.entries(props)) Object.defineProperty(e, k, { value: v });
+    target.dispatchEvent(e);
+  };
+  const setup = (inScroller = true) => {
+    const win = new EventTarget();
+    (globalThis as { window?: unknown }).window = win;
+    const root = Object.assign(new EventTarget(), { closest: () => (inScroller ? {} : null) });
+    let builds = 0;
+    const screen = holdWhileScrolling({ root: root as unknown as HTMLElement, refresh: () => { builds++; } });
+    return { win, root, screen, builds: () => builds };
+  };
+  afterEach(() => {
+    vi.useRealTimers();
+    delete (globalThis as { window?: unknown }).window;
+  });
+
+  it('holds a rebuild through a touch drag and its fling, then runs it once', () => {
+    vi.useFakeTimers();
+    const { win, root, screen, builds } = setup();
+    screen.refresh();
+    expect(builds()).toBe(1);
+
+    fire(root, 'touchstart');
+    screen.refresh();
+    screen.refresh();
+    expect(builds()).toBe(1); // held
+    fire(root, 'scroll');
+    fire(win, 'touchend', { touches: [] });
+    // Still coasting: the release alone does not let it through.
+    expect(builds()).toBe(1);
+    vi.advanceTimersByTime(100);
+    fire(root, 'scroll');
+    vi.advanceTimersByTime(100);
+    expect(builds()).toBe(1);
+    vi.advanceTimersByTime(100);
+    expect(builds()).toBe(2); // the two held collapse into one
+    screen.refresh();
+    expect(builds()).toBe(3); // and nothing is held after
+  });
+
+  it('holds while a mouse is pressed on the scroller, and lets go on release', () => {
+    const { win, root, screen, builds } = setup();
+    fire(root, 'pointerdown', { pointerType: 'mouse' });
+    screen.refresh();
+    expect(builds()).toBe(0);
+    fire(win, 'pointerup', { pointerType: 'mouse' });
+    expect(builds()).toBe(1);
+  });
+
+  it('does not hold for a press outside any scroller', () => {
+    const { root, screen, builds } = setup(false);
+    fire(root, 'pointerdown', { pointerType: 'mouse' });
+    fire(root, 'touchstart');
+    screen.refresh();
+    expect(builds()).toBe(1);
   });
 });
