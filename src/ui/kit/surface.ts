@@ -115,9 +115,10 @@ export const sectionHead = (label: string): HTMLElement =>
 export type HeadTone = 'red' | 'blue' | 'wood' | 'green';
 
 /**
- * A PANEL WITH A HEADER (kit.css `.k-headpanel`): a painted plank across the
- * top — red, blue, wood or green — over a parchment body, one nine-sliced
- * piece of art (assets/panel-head-*.png) so it takes any size. The title sits
+ * A PANEL WITH A HEADER (kit.css `.k-headpanel`): a painted plank nailed
+ * across the top — red, blue, wood or green (assets/plank-*.png) — over a
+ * sheet of deckled paper (assets/panel-paper.png), both sliced so the pair
+ * takes any size. The title sits
  * on the plank at the left, in the plank's own cream; `trailing` is anchored
  * to its right — a total, a timer, a button.
  */
