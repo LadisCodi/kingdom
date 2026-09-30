@@ -992,21 +992,18 @@ Reference: `mockups/m49-placement.png`.
 
 - The camera centres on the legal cell closest to the Townhall and the ghost
   appears there.
-- The ghost is the building half-transparent on its footprint, over its
-  **area of influence** in soft leaf-green; captured resource cells are lit,
-  the rest dimmed, each captured cell labelled with its depot
+- The ghost is the building half-transparent on its footprint, outlined in
+  gold, inside its **reach** drawn as one thin white line; each captured
+  cell is labelled with its depot
   ([`../features/05-city-and-districts.md`](../features/05-city-and-districts.md)
   §4.1).
-- Over the ghost, a floating parchment tag with the **verdict**, changing live:
-
-  | Building | Tag |
-  |---|---|
-  | Harvester, ≥ 3 captured | `🌲 ×4` · *Good spot* (leaf) |
-  | Harvester, 1–2 captured | `🌲 ×2` · *Thin pickings* (clay) |
-  | Harvester, none | *Nothing to harvest here* (clay) |
-  | Decoration | `+N Harmony` |
-  | Anything else | No tag |
-
+- **Move arrows**: four green arrows on the ground round the ghost's
+  footprint, one per side, pointing outward along the isometric grid's axes.
+  An arrow shows only where the next cell that way is legal. They bob gently
+  outward along their axis (none under reduced motion), and hide while the
+  ghost is held.
+- No verdict: the depot labels on the captured cells are the whole reading
+  of a spot.
 - Only the Docks outline their legal cells.
 - Gestures (§4.3 of the city doc): drag the ghost to carry it; tap a legal
   cell to send it there; a drag that starts off the ghost pans the camera.
