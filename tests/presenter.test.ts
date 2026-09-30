@@ -577,14 +577,18 @@ describe('the plank follows the screen', () => {
     expect(game.visibleCurrencies()).toEqual(['HeroXp', 'Stardust']);
   });
 
-  it('keeps Gold beside the clock on the research screen', () => {
+  it('keeps Gold on the research screen, and Knowledge in its own tab', () => {
     const game = freshPresenter();
     game.setOverlay('research');
 
-    // Not the roster's clean swap: a technology is priced in Gold AND
-    // Knowledge, and a plank showing one half of a price is worse than one
-    // showing neither.
-    expect(game.visibleCurrencies()).toEqual(['Gold', 'Knowledge']);
+    // A technology is priced in Gold AND Knowledge: Gold on the plank, and
+    // Knowledge in the tab under it, which stays down while research is open.
+    expect(game.visibleCurrencies()).toEqual(['Gold']);
+    expect(game.keepsKnowledgeTab()).toBe(true);
+    game.setOverlay('knowledge');
+    expect(game.keepsKnowledgeTab()).toBe(true);
+    game.setOverlay('build');
+    expect(game.keepsKnowledgeTab()).toBe(false);
   });
 
   it('gives the coins back when the roster closes', () => {

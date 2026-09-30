@@ -3,7 +3,7 @@
  *
  * Built from four reusable pieces, so a new book or a new state costs no new
  * art: the PAGE (assets/rb-page.png, nine-sliced; the stack behind it is the
- * same page twice, turned a few degrees), the loose SHEET (assets/rb-sheet.png), the BOOKMARK (assets/rb-ribbon.png,
+ * same page twice, turned a few degrees), the loose SHEET (assets/rb-sheet.png, drawn whole), the BOOKMARK (assets/rb-ribbon.png,
  * one neutral ribbon tinted per book through `--tome`), the PIN
  * (assets/rb-pin.png), and the kit's own stat tile, progress bar and buttons.
  * Every size that has to agree with the tree's geometry is set inline from
@@ -67,7 +67,7 @@
 /* The tree is laid out at its own width (layout.ts PAGE_W) and zoomed to the
    page's by researchMenu.ts, so three columns fit any phone. */
 
-/* The pins, at the stack's top corners, and the sheet's one at its top. */
+/* The pin, at the stack's top corner. */
 .rb-pin {
   position: absolute;
   z-index: 2;
@@ -78,7 +78,6 @@
 }
 .rb-pin.is-left { top: calc(var(--px) * 10); left: calc(var(--px) * 12); }
 .rb-pin.is-right { top: calc(var(--px) * 10); right: calc(var(--px) * 12); }
-.rb-pin.is-centre { top: calc(var(--px) * -8); left: 50%; transform: translateX(-50%); }
 .rb-stack > .k-close { position: absolute; z-index: 3; top: calc(var(--px) * -6); right: calc(var(--px) * -4); }
 
 /* A chapter: the book's first at the top of the page, the rest where each
@@ -130,22 +129,29 @@
 /* --------------------------------------------------------- the connectors --- */
 
 .tech-flow { position: relative; margin: 0 auto 20px; }
-.tech-edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-/* Drawn with a quill: thin sepia ink, a slightly uneven stroke. */
-.tech-edge {
-  fill: none;
-  stroke: #5e4126;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: url(#rb-quill);
+.tech-edges { position: absolute; inset: 0; pointer-events: none; }
+/* Drawn with a quill: four pieces of sepia ink (assets/rb-edge-*.png, cut by
+   Docs/art/ui/sheets/rb-edges.mjs). Where each sits is set inline from
+   src/ui/research/layout.ts; this is only what they are made of. */
+.rb-edge { position: absolute; background-repeat: no-repeat; background-size: 100% 100%; }
+.rb-edge.is-v { background-image: url('../../assets/rb-edge-v.png'); background-repeat: repeat-y; background-size: 100% auto; }
+.rb-edge.is-h { background-image: url('../../assets/rb-edge-h.png'); background-repeat: repeat-x; background-size: auto 100%; }
+.rb-edge.is-elbow { background-image: url('../../assets/rb-edge-elbow.png'); }
+.rb-edge.is-right-bottom { transform: rotate(90deg); }
+.rb-edge.is-bottom-left { transform: rotate(180deg); }
+.rb-edge.is-left-top { transform: rotate(270deg); }
+/* Its tip on the card's top edge. */
+.rb-edge.is-head {
+  width: 12px;
+  height: 6.33px;
+  transform: translate(-50%, -100%);
+  background-image: url('../../assets/rb-edge-head.png');
 }
-.tech-arrowhead { fill: none; stroke: #5e4126; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------- the cards --- */
 
-/* The building card's stat tile (.k-section), the emblem, the name, and the
-   kit's progress bar with its numbers inside. */
+/* The building card's stat tile (.k-section): the name, the emblem under it,
+   and the kit's progress bar with its numbers inside. */
 .tech-card.k-section {
   position: absolute;
   display: flex;
@@ -247,8 +253,8 @@
   background: rgba(24, 14, 6, 0.55);
 }
 .rb-sheet-wrap { position: relative; width: min(460px, 100%); max-height: 100%; display: flex; }
-.rb-sheet-wrap > .rb-pin.is-centre { top: -8px; }
-.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: -10px; right: -4px; }
+/* In the top sheet's corner, on the paper: the drawing's margins, in % of it. */
+.rb-sheet-wrap > .k-close { position: absolute; z-index: 3; top: 5.5%; right: 8%; }
 .rb-sheet {
   position: relative;
   flex: 1;
@@ -256,11 +262,11 @@
   max-height: 100%;
   overflow-y: auto;
   scrollbar-width: none;
-  /* Its own loose leaf: deckled edges and a curled lower-right corner, sliced
-     wide so the curl is never stretched. */
-  border: 14px solid transparent;
-  border-image: url('../../assets/rb-sheet.png') 96 fill / 68px stretch;
-  padding: 18px 14px 26px;
+  /* Its own loose leaf on a small stack, drawn whole at one size — as tall
+     as the tallest technology's sheet needs, so every sheet is the same. */
+  aspect-ratio: 640 / 913;
+  background: url('../../assets/rb-sheet.png') center / 100% 100% no-repeat;
+  padding: 10% 8% 12% 7.5%;
   color: var(--ink);
   filter: drop-shadow(0 6px 10px rgba(20, 10, 4, 0.35));
 }
@@ -270,6 +276,7 @@
   font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   text-align: center;
+  padding: 0 calc(var(--px) * 34); /* clear of the close knob */
 }
 .rb-about { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; margin: 4px 0 6px; }
 .rb-emblem {
@@ -290,6 +297,19 @@
    sides do not fit, so the price sets the width. */
 .rb-pours > .k-btn.k-btn:not(.k-knob) { width: 100%; min-width: 0; margin-bottom: 0; padding-inline: 8px; }
 .rb-pours > .k-btn.k-btn:not(.k-knob) > .k-btn-label { min-width: 0; gap: 4px; }
+/* In the pours' place once the bar is full, as tall as they are. */
+.rb-filled {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: calc(var(--px) * 48);
+  font-size: 15px;
+  font-weight: var(--weight-strong);
+  line-height: 1.2;
+  color: var(--leaf-dark);
+}
+.rb-filled > .icon { flex: none; --icon-size: 26px; }
 .rb-done { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px;
   font-weight: var(--weight-strong); color: var(--leaf-dark); }
 .rb-sheet .up-buy.k-section { margin-top: 4px; }

@@ -272,3 +272,73 @@ export function edgeD(points: Array<{ x: number; y: number }>, radius = 8): stri
   d += ` L ${last.x} ${last.y}`;
   return d;
 }
+
+/** The radius of a connector's rounded elbow, in page pixels — measured off
+ *  the art (Docs/art/ui/sheets/rb-edges.mjs prints it). */
+export const ELBOW_R = 9;
+/** The band a connector's stroke is drawn in: the stroke and its wobble. The
+ *  art's straight runs are cut this wide (rb-edges.mjs's BAND_PX). */
+export const EDGE_BAND = 8;
+
+/** Which two sides of its box an elbow joins — the art is drawn once, joining
+ *  `top` to `right`, and turned for the other three. */
+export type ElbowTurn = 'top-right' | 'right-bottom' | 'bottom-left' | 'left-top';
+
+/**
+ * A connector as the pieces it is drawn from (research.css): straight runs
+ * that repeat a stroke along their length, elbows, and the head at the end.
+ *
+ *  - `v` / `h`: a straight run whose centre line starts at (x, y) and runs
+ *    `len` down / right.
+ *  - `elbow`: the corner at (x, y) — where the two legs would meet — rounded
+ *    at `ELBOW_R`.
+ *  - `head`: the arrowhead, its tip at (x, y), pointing down.
+ *
+ * Built from the same points as `edgeD`, so the pieces and the path are one
+ * line. Only right-angled runs exist on the page (`edgePath`).
+ */
+export type EdgePiece =
+  | { kind: 'v' | 'h'; x: number; y: number; len: number }
+  | { kind: 'elbow'; x: number; y: number; turn: ElbowTurn }
+  | { kind: 'head'; x: number; y: number };
+
+const SIDE_IN = (d: { x: number; y: number }) =>
+  d.y > 0 ? 'top' : d.y < 0 ? 'bottom' : d.x > 0 ? 'left' : 'right';
+const SIDE_OUT = (d: { x: number; y: number }) =>
+  d.y > 0 ? 'bottom' : d.y < 0 ? 'top' : d.x > 0 ? 'right' : 'left';
+const TURNS: Record<string, ElbowTurn> = {
+  'top,right': 'top-right', 'right,top': 'top-right',
+  'right,bottom': 'right-bottom', 'bottom,right': 'right-bottom',
+  'bottom,left': 'bottom-left', 'left,bottom': 'bottom-left',
+  'left,top': 'left-top', 'top,left': 'left-top',
+};
+
+export function edgePieces(points: Array<{ x: number; y: number }>): EdgePiece[] {
+  if (points.length < 2) return [];
+  const out: EdgePiece[] = [];
+  const dir = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    ({ x: Math.sign(b.x - a.x), y: Math.sign(b.y - a.y) });
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    const d = dir(a, b);
+    // An elbow takes ELBOW_R off each leg it joins.
+    const trimA = i > 0 ? ELBOW_R : 0;
+    const trimB = i + 1 < points.length - 1 ? ELBOW_R : 0;
+    const len = Math.abs(b.x - a.x) + Math.abs(b.y - a.y) - trimA - trimB;
+    if (len > 0) {
+      const sx = a.x + d.x * trimA;
+      const sy = a.y + d.y * trimA;
+      out.push(d.x === 0
+        ? { kind: 'v', x: sx, y: d.y > 0 ? sy : sy - len, len }
+        : { kind: 'h', x: d.x > 0 ? sx : sx - len, y: sy, len });
+    }
+    if (i + 1 < points.length - 1) {
+      const turn = TURNS[`${SIDE_IN(d)},${SIDE_OUT(dir(b, points[i + 2]))}`];
+      if (turn !== undefined) out.push({ kind: 'elbow', x: b.x, y: b.y, turn });
+    }
+  }
+  const last = points[points.length - 1];
+  out.push({ kind: 'head', x: last.x, y: last.y });
+  return out;
+}

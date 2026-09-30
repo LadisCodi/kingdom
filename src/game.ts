@@ -1910,6 +1910,12 @@ export class Game {
     return { gold: knowledgeGoldPrice(this.state, count), gems: knowledgeGemPrice(count) };
   }
 
+  /** Whether the open menu spends Knowledge, so its tab under the plank stays
+   *  down rather than stepping aside with every other menu. */
+  keepsKnowledgeTab(): boolean {
+    return this.openOverlay === 'research' || this.openOverlay === 'knowledge';
+  }
+
   /** The Knowledge sheet: the bar, and buying points with Gold or Gems. */
   openKnowledge(): void {
     this.setOverlay('knowledge');
@@ -4130,9 +4136,9 @@ export class Game {
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy
     // no research, so they stand down.
-    // Knowledge rides the plank here as well: its tab under the plank steps
-    // aside while any menu is open, like the Settings knob.
-    if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
+    // Knowledge is not on the plank: its tab hangs under it and stays down
+    // while a menu that spends it is open (`keepsKnowledgeTab`).
+    if (this.openOverlay === 'research') return ['Gold'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [
