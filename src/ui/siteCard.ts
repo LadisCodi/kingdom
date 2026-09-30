@@ -89,7 +89,8 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
  *   the painting of the creature at its worst, with its flavour line;
  *   the countdown, said as the threat it is;
  *   the reward — the hoard it carries, then Hero XP and Knowledge;
- *   Attack, which opens the attack screen.
+ *   Attack, which opens the attack screen — or, once the garrison is
+ *   beaten, Claim, which pays the reward and strikes the lair from the map.
  *
  * Nothing else. The enemy's squads and power are the attack screen's, and a
  * raid count is never shown anywhere. Built ONCE per lair; a tick rewrites
@@ -108,11 +109,20 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       art ? spriteImgAt(art, 'lc-art-img') : el('div', { class: 'lc-art-glyph' }, def.glyph),
       el('p', { class: 'lc-flavour' }, def.flavour));
 
-    const timer = el('div', { class: 'lc-clock k-section' },
-      iconEl('hourglass', { size: 'lg' }),
-      el('div', { class: 'lc-clock-body' },
-        el('div', { class: 'lc-clock-label' }, 'They will attack your city in'),
-        clock));
+    // Beaten, the clock has stopped for good: the box says so, and the
+    // button under the reward is the claim (Docs/proposals/lairs.md §5).
+    const timer = lair.defeated
+      ? el('div', { class: 'lc-clock k-section is-beaten' },
+        iconEl('tick', { size: 'lg' }),
+        el('div', { class: 'lc-clock-body' },
+          el('div', { class: 'lc-clock-label' },
+            `${lair.creature} ${lair.creature.startsWith('A ') ? 'is' : 'are'} beaten`),
+          el('b', { class: 'lc-clock-value' }, 'Claim what they left behind')))
+      : el('div', { class: 'lc-clock k-section' },
+        iconEl('hourglass', { size: 'lg' }),
+        el('div', { class: 'lc-clock-body' },
+          el('div', { class: 'lc-clock-label' }, 'They will attack your city in'),
+          clock));
 
     // The hoard first: it is what the raids took, and clearing the lair is
     // how it comes back — so it is the reward rather than a report.
@@ -131,9 +141,9 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       timer,
       sectionHead('Reward'),
       el('div', { class: 'lc-reward' }, ...chips),
-      el('div', { class: 'lc-go' }, btn({
-        label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId),
-      })));
+      el('div', { class: 'lc-go' }, lair.defeated
+        ? btn({ label: 'Claim', kind: 'primary', onClick: () => game.doClaimLair(lairId) })
+        : btn({ label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId) })));
   };
 
   return {
@@ -148,7 +158,7 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       }
       // Rebuilt only when what it SAYS moves — the hoard; a tick in between
       // touches the countdown's text alone.
-      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull);
+      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull) + String(lair.defeated);
       if (now !== signature) {
         signature = now;
         releaseSprites(root);

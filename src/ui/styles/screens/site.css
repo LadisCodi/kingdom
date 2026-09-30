@@ -184,3 +184,5 @@
   margin-top: var(--space-section);
 }
 .lc-go > .k-btn { min-width: calc(var(--px) * 180); }
+/* Beaten: the countdown box turns into the notice that the reward waits. */
+.lc-clock.is-beaten .lc-clock-value { font-size: calc(var(--px) * 16); color: var(--leaf-dark); }

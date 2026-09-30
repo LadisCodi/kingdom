@@ -91,7 +91,9 @@ export function armLairs(state: GameState, t: number): void {
   for (const id of LAIR_ORDER) {
     const lair = state.lairs[id];
     if (lair !== undefined) {
-      if (!lair.cleared && lair.nextRaidAt === null) lair.nextRaidAt = raidTimeAfter(state, id, t);
+      if (!lair.cleared && !lair.defeated && lair.nextRaidAt === null) {
+        lair.nextRaidAt = raidTimeAfter(state, id, t);
+      }
       continue;
     }
     if (!lairIsFound(state, id)) continue;
@@ -99,6 +101,7 @@ export function armLairs(state: GameState, t: number): void {
       armedAt: t,
       nextRaidAt: t + LAIRS[id].guard.warningMinutes * 60_000,
       hoard: {},
+      defeated: false,
       cleared: false,
     };
     recordSiteDiscovery(state, id);
@@ -329,16 +332,30 @@ export const lairPower = (state: GameState, lairId: LairId): number =>
 // ---------------------------------------------------------------- clearing
 
 /**
- * The lair falls: the clock stops, the hoard comes home and the ground it
- * held is the city's (`lairZone.ts` reads `cleared`).
- *
- * Called by the party command that won the fight (`expeditions.ts`), never on
- * its own — this module has no opinion about how a garrison is beaten, only
- * about what is owed when it is.
+ * The garrison is beaten: the clock stops for good, and the lair waits on
+ * the map, holding its ground and its hoard, for the player to claim what it
+ * owes (Docs/proposals/lairs.md §5). Called by the party command that won the
+ * fight (`expeditions.ts`), never on its own.
+ */
+export function markLairDefeated(state: GameState, lairId: LairId): void {
+  const lair = state.lairs[lairId];
+  if (!lair || lair.cleared) return;
+  lair.defeated = true;
+  lair.nextRaidAt = null;
+}
+
+/** Beaten, and its reward not yet claimed. */
+export const lairAwaitsClaim = (state: GameState, lairId: LairId): boolean =>
+  state.lairs[lairId]?.defeated === true && state.lairs[lairId]?.cleared !== true;
+
+/**
+ * The claim: the hoard comes home and the ground it held is the city's
+ * (`lairZone.ts` reads `cleared`). Only a DEFEATED lair can be cleared —
+ * `claimLair` in `expeditions.ts` pays the rest of the reward around it.
  */
 export function markLairCleared(state: GameState, lairId: LairId): Wallet {
   const lair = state.lairs[lairId];
-  if (!lair || lair.cleared) return {};
+  if (!lair || lair.cleared || !lair.defeated) return {};
   const hoard: Wallet = { ...lair.hoard };
   for (const [c, n] of Object.entries(hoard)) {
     if (n > 0) addToWallet(state.city.wallet, c as RaidableId, n);
@@ -383,6 +400,8 @@ export interface LairView {
   hoard: Wallet;
   /** True for a material the lair carries all it can of (§6's *full*). */
   hoardFull: Partial<Record<RaidableId, boolean>>;
+  /** Beaten, the reward waiting to be claimed. */
+  defeated: boolean;
   cleared: boolean;
 }
 
@@ -399,6 +418,7 @@ export function lairView(state: GameState, lairId: LairId): LairView | null {
     hoardFull: Object.fromEntries(RAIDABLE
       .filter((c) => (lair.hoard[c] ?? 0) > 0 && (lair.hoard[c] ?? 0) >= hoardCap(state, lairId, c))
       .map((c) => [c, true])),
+    defeated: lair.defeated,
     cleared: lair.cleared,
   };
 }

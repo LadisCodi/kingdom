@@ -11,7 +11,7 @@ import { compactCountdown, heldZone, outerSides } from '../src/render/lairMap';
 describe('the held zone', () => {
   const map = buildMapData();
   const hold = (state: ReturnType<typeof newGame>, id: keyof typeof LAIRS, cleared = false) => {
-    state.lairs[id] = { armedAt: 0, nextRaidAt: 1, hoard: {}, cleared };
+    state.lairs[id] = { armedAt: 0, nextRaidAt: 1, hoard: {}, defeated: cleared, cleared };
   };
 
   it('is empty until a lair is found, and again once it is cleared', () => {

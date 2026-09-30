@@ -130,15 +130,21 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   ([`18`](../features/18-garrisons-and-raids.md) §5): the garrison's squads in
   view, supplies paid on entry, a hero mandatory, troops welcome, casualties
   win or lose, retry unlimited.
-- **Win:**
+- **Win:** the garrison is **beaten**, not yet cleared:
+  - its clock stops for good — it raids no more;
+  - nothing is paid on the field;
+  - it stays on the map, holding its zone and its hoard, and its card now
+    offers **Claim** in place of Attack.
+- **Claim** (from the card):
   - the hoard, into the wallet;
   - **Hero XP** by tier;
   - the **first-clear Knowledge lump**
     ([`../features/07-research.md`](../features/07-research.md) §3), raised by
     `Conquest` and doubled by `SanctifiedRuins` as today;
-  - event points and the `ClearGarrisons` quest goal;
-  - **the zone lifts and the lair is removed.** Its cell keeps its terrain and
-    its fog state and is buildable like any other.
+  - event points and the `ClearLairs` quest goal;
+  - the card closes, and the lair **goes**: it sinks and fades under a ring
+    of dust while its zone fades out, and the ground is the city's. Its cell
+    keeps its terrain and fog state and is buildable like any other.
 - **Lose:** the supplies are gone, the lair stands, the clock keeps running.
 
 ## 6. Screens
@@ -151,6 +157,8 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   - the creature's head, small, on the left;
   - the countdown to the next raid on the right — an hourglass and *27m*.
   - Tapping it opens the lair's card.
+  - A **beaten** lair's bubble is a store's: the parchment collect bubble
+    with the reward chest, no countdown.
 - **No raid count is shown**, anywhere: no pips, no *raids left*, no *raids
   today*. A lair raids on a clock until it is cleared.
 - **A refused tap inside the zone** says why — *Orcs hold this ground* — and
@@ -174,7 +182,9 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   - **the reward** as chips: the hoard it carries, then Hero XP and
     Knowledge;
   - **Attack**, the game's green button on the sheet itself, not inside a
-    box. It opens the attack screen.
+    box. It opens the attack screen. Once the garrison is beaten, the
+    countdown box says *Orcs are beaten — claim what they left behind* and
+    the button is **Claim**.
   - **Nothing else.** The enemy's squads and power are the attack screen's.
 - **The attack screen** opens from **Attack**. It is the gate's battle screen
   ([`../features/11a-ruins-ui.md`](../features/11a-ruins-ui.md) §2.5–§2.6),

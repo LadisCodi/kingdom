@@ -6,6 +6,7 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
 import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { lairZoneCells } from '../sim/lairZone';
 import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
   clearLairBubbles, compactCountdown, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
@@ -25,7 +26,7 @@ import {
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawCollectBubble, drawLairBubble } from './collectBubbleArt';
+import { drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
 import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
@@ -113,6 +114,9 @@ export function drawMap(
   tapFx: TapFx,
   now: number,
   bubbles: CollectBubbles,
+  /** Lairs just claimed, and the `performance.now()` of the claim: their
+   *  going-away is played from it, then they are forgotten (§5). */
+  vanishing: Map<LairId, number> = new Map(),
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -123,6 +127,8 @@ export function drawMap(
     canvas.height = Math.round(h * dpr);
   }
   const ctx = canvas.getContext('2d')!;
+  // The frame's own clock, for animations the sim knows nothing about.
+  const clockNow = performance.now();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // SMOOTHING ON. The world is stylized 3D, not pixel art: every piece is
   // authored at twice the size it is drawn at (a 1×1 tile is a 256×128 PNG
@@ -782,6 +788,22 @@ export function drawMap(
     ctx.restore();
   }
 
+  // Pass 1.1b: a CLAIMED lair's ground, letting go. The zone fades out over
+  // the going-away (VANISH_MS) instead of blinking off, so the player sees the
+  // ground come back to them.
+  const letting = vanishingPhases(vanishing, clockNow);
+  for (const [id, t] of letting) {
+    const cells = lairZoneCells(id).filter((c) => map.terrain.has(coordKey(c)) && !zone.keys.has(coordKey(c)));
+    if (cells.length === 0) continue;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = PALETTE.lairZoneTint;
+    ctx.beginPath();
+    for (const c of cells) diamondPath(ctx, cellRect(c));
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
   // along the last ring the player may pay for, drawn over the fog and
   // across undiscovered ground too, so the extent of what the capital allows
@@ -855,6 +877,21 @@ export function drawMap(
           mark(art);
         });
       });
+    }, { x: lair.size, y: lair.size });
+  }
+
+  // …and a CLAIMED one, going: it sinks a little into its ground and fades,
+  // under a ring of dust, over VANISH_MS, then it is gone for good.
+  for (const [id, t] of letting) {
+    const lair = LAIRS[id];
+    const plot = camera.plotBox(lair.location, { x: lair.size, y: lair.size });
+    const sunk = { ...plot, y: plot.y + plot.h * 0.18 * t };
+    later(lair.location, (mark) => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - t * 1.15);
+      mark(artRect(sunk, stand(sunk, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
+      ctx.restore();
+      drawDust(ctx, plot, t, id);
     }, { x: lair.size, y: lair.size });
   }
 
@@ -1215,6 +1252,12 @@ export function drawMap(
     const art = lairArt.get(id);
     if (!held || held.cleared || !art) { bubbles.forget(`lair:${id}`); continue; }
     const top = art.y + art.h * spriteInkTop(LAIRS[id].sprite);
+    if (held.defeated) {
+      // Beaten: the reward waits, so the bubble is a store's — the chest.
+      markLairBubble(id, drawClaimBubble(ctx, bubbles, `lair:${id}:claim`,
+        art.x + art.w / 2, top + size * 0.1, Math.max(34, Math.min(72, size * 0.62)), clock));
+      continue;
+    }
     const countdown = held.nextRaidAt === null ? '–' : compactCountdown(held.nextRaidAt - now);
     markLairBubble(id, drawLairBubble(ctx, bubbles, `lair:${id}`, LAIR_AVATAR[id], countdown,
       labelFace(), art.x + art.w / 2, top + size * 0.1,
@@ -1330,4 +1373,45 @@ function drawBar(
   ctx.fillRect(x, y, w, h);
   ctx.fillStyle = color;
   ctx.fillRect(x, y, w * Math.min(1, Math.max(0, fraction)), h);
+}
+
+// ------------------------------------------------------------ a lair going
+
+/** How long a claimed lair takes to go (Docs/proposals/lairs.md §5). */
+const VANISH_MS = 1400;
+
+/** Each claimed lair still going, and how far along it is (0…1). Lairs done
+ *  going are dropped from the map the presenter keeps. */
+function vanishingPhases(vanishing: Map<LairId, number>, clock: number): Array<[LairId, number]> {
+  const out: Array<[LairId, number]> = [];
+  for (const [id, at] of vanishing) {
+    const t = (clock - at) / VANISH_MS;
+    if (t >= 1) { vanishing.delete(id); continue; }
+    out.push([id, Math.max(0, t)]);
+  }
+  return out;
+}
+
+/** A ring of dust puffs round the lair's foot, swelling and thinning as it
+ *  goes. Positions are a hash of the lair, so the ring is the same each frame. */
+function drawDust(ctx: CanvasRenderingContext2D, plot: PlotBox, t: number, id: string): void {
+  const cx = plot.x + plot.w / 2;
+  const cy = plot.y + plot.h * 0.55;
+  const n = 9;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0;
+  ctx.save();
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + (h % 628) / 100;
+    const reach = plot.w * (0.18 + 0.32 * t);
+    const x = cx + Math.cos(a) * reach;
+    const y = cy + Math.sin(a) * reach * 0.5 - plot.h * 0.15 * t;
+    const r = plot.w * (0.06 + 0.1 * t);
+    ctx.globalAlpha = 0.55 * (1 - t);
+    ctx.fillStyle = '#d9c7a4';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }

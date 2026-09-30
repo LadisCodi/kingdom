@@ -65,7 +65,7 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  TROOPS_PER_ROW, attackLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
+  TROOPS_PER_ROW, attackLair, claimLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
@@ -414,6 +414,9 @@ export class Game {
    */
   private packsSeen = -1;
   readonly floaters = new Floaters();
+  /** Lairs just claimed, and the `performance.now()` the claim landed at:
+   *  the renderer plays their going-away from it, then forgets them. */
+  readonly vanishingLairs = new Map<LairId, number>();
   /** The bounce a store's bubble gives when a haul lands in it. */
   readonly collectBubbles = new CollectBubbles();
   readonly villagers = new Villagers();
@@ -3087,8 +3090,13 @@ export class Game {
     const report = attackLair(
       this.state, this.map, lairId, this.partyHeroes, this.expeditionParty);
     if (report.result === 'Cleared') {
+      // Beaten, not yet paid: when the playback closes the player is back on
+      // the lair's card, where Claim has taken Attack's place
+      // (Docs/proposals/lairs.md §5).
       this.setOverlay(null);
       this.lairId = null;
+      this.inspectedSite = LAIRS[lairId].location;
+      this.inspectedDistrictId = null;
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(report.supplies) as CurrencyId[]);
       this.reconcileParty();
@@ -3101,17 +3109,36 @@ export class Game {
       return;
     }
     this.reconcileParty();
-    // What the garrison was holding comes back as the prize sequence, so the
-    // hoard arrives as things rather than as a sentence.
+    // No prizes on the field: a won fight pays nothing until the reward is
+    // claimed from the lair's card.
     this.openBattle(report.log!, {
       title: LAIRS[lairId].name,
       subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
-      // The hoard, then the first-clear Knowledge: a lair falls once, and
-      // this is everything it pays (Docs/proposals/lairs.md §5).
-      prizes: report.result === 'Cleared'
-        ? walletPrizes({ ...report.hoard, Knowledge: report.knowledge }) : [],
+      prizes: [],
     });
     this.notify();
+  }
+
+  /**
+   * THE CLAIM, from a beaten lair's card: the reward is paid and flies to the
+   * header from the lair, the card closes, and the lair is struck from the
+   * map — `vanishingLairs` is what the renderer plays its going-away from,
+   * and the ground is the city's the moment the claim lands.
+   */
+  doClaimLair(lairId: LairId): void {
+    const report = claimLair(this.state, lairId);
+    if (report.result !== 'Claimed') return;
+    const haul: Wallet = { ...report.hoard };
+    if (report.heroXp > 0) haul.HeroXp = report.heroXp;
+    if (report.knowledge > 0) haul.Knowledge = report.knowledge;
+    const def = LAIRS[lairId];
+    const box = this.camera.plotBox(def.location, { x: def.size, y: def.size });
+    const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+    this.inspectedSite = null;
+    this.vanishingLairs.set(lairId, performance.now());
+    playSfx('questComplete');
+    this.notify();
+    queueMicrotask(() => this.reward(haul, from));
   }
 
   // ------------------------------------------------- the party, slot by slot
@@ -4399,16 +4426,12 @@ const RELIC_SUBJECT: Record<ArtifactId, string> = {
   BailiffsTally: 'Every improvement you hold pays',
 };
 
-const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) as
-  Array<[CurrencyId, number]>)
-  .filter(([, n]) => n > 0)
-  .map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount }));
-
 /** Why a lair attack is refused. A power shortfall is NOT one of these: it
  *  warns on the sheet and the player may go anyway. */
 const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   LairNotFound: 'Clear a path to the lair first',
   AlreadyCleared: 'That lair is already cleared',
+  AlreadyDefeated: 'They are beaten — claim what they left behind',
   NoHero: 'Pick a hero to lead them',
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',

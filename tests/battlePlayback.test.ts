@@ -23,7 +23,7 @@ function mustered(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): Gam
   fund(state, { Gold: 200_000, Food: 90_000, Wood: 90_000, Stone: 40_000 });
   reveal(state, [LAIRS[ORCS].location]);
   // Standing, and not counting: these are about the screen, not the clock.
-  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -47,18 +47,20 @@ describe('a lair attack opens the playback', () => {
     game.openLair(ORCS);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
     game.doAttackLair();
-    // The lair is cleared and paid the instant the button is pressed: the
-    // screen is watching something that already happened.
-    expect(game.lairIsCleared(ORCS)).toBe(true);
-    expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).not.toBe(knowledge);
+    // The garrison is beaten the instant the button is pressed — the screen
+    // is watching something that already happened — but nothing is paid:
+    // the reward waits on the lair's card, for the claim.
+    expect(game.lairFor(ORCS)!.defeated).toBe(true);
+    expect(game.lairIsCleared(ORCS)).toBe(false);
+    expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge);
     const battle = game.battle!;
     expect(battle.phase).toBe('playing');
     expect(battle.log.winner).toBe('ours');
     expect(battle.log.events[0]!.kind).toBe('start');
-    expect(battle.prizes.length).toBeGreaterThan(0);
+    expect(battle.prizes).toEqual([]);
   });
 
-  it('walks playing → result → rewards → done on the clock', () => {
+  it('walks playing → result → done on the clock — the spoils are the claim\'s', () => {
     const { game, tick } = atTheDoor();
     game.openLair(ORCS);
     game.doAttackLair();
@@ -73,50 +75,8 @@ describe('a lair attack opens the playback', () => {
     tick(BATTLE_RESULT_DELAY_MS - 300);
     expect(game.battle!.phase).toBe('result');
     tick(400);
-    // The spoils are handed to the reveal — the one screen that already
-    // knows how to deal things one at a time.
-    expect(game.battle!.phase).toBe('rewards');
-    expect(game.gachaReveal!.prizes).toEqual(battle.prizes);
-    expect(game.gachaReveal!.caption).toBe('Spoils');
-    // …and the way out appears when the player has finished with it.
-    game.dismissGachaReveal();
-    tick(0);
+    // No spoils on the field: a lair pays when it is claimed.
     expect(game.battle!.phase).toBe('done');
-  });
-
-  it('has nothing to deal after a defeat, and says so straight away', () => {
-    const { game, tick } = atTheDoor({ Warrior: 1 });
-    // One soldier and a hero against the drake: the fight is lost before it
-    // is watched, which is exactly what the screen must say.
-    reveal(game.state, [LAIRS.Drake.location]);
-    game.state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
-    game.openLair('Drake');
-    game.doAttackLair();
-    const battle = game.battle!;
-    expect(battle.log.winner).toBe('theirs');
-    expect(battle.prizes).toEqual([]);
-    tick(battle.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100);
-    expect(game.battle!.phase).toBe('done');
-    expect(game.gachaReveal).toBeNull();
-  });
-
-  it('closes the lair sheet behind a win', () => {
-    const { game, tick } = atTheDoor();
-    game.openLair(ORCS);
-    game.doAttackLair();
-    tick(game.battle!.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100);
-    game.dismissGachaReveal();
-    tick(0);
-    game.dismissBattle();
-    expect(game.battle).toBeNull();
-    expect(game.openOverlay).toBeNull();
-  });
-
-  it('draws the tick the log is at, and never past its end', () => {
-    const { game } = atTheDoor();
-    game.openLair(ORCS);
-    game.doAttackLair();
-    const battle = game.battle!;
     expect(game.battleTick(battle.startedAt)).toBe(0);
     expect(game.battleTick(battle.startedAt + 5 * COMBAT.tickMs)).toBe(5);
     expect(game.battleTick(battle.startedAt + 10 * 60_000)).toBe(battle.log.ticks);
@@ -124,10 +84,10 @@ describe('a lair attack opens the playback', () => {
 });
 
 describe('the lair opens the same screen', () => {
-  it('plays the fight, and deals the hoard and the first-clear lump', () => {
+  it('plays the fight, and leaves the hoard and the lump for the claim', () => {
     const state = mustered();
     advance(state, map, T0); // arm the lair
-    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: { Gold: 40 }, cleared: false };
+    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: { Gold: 40 }, defeated: false, cleared: false };
     const game = freshPresenter(state);
     let clock = T0;
     game.now = () => clock;
@@ -136,12 +96,16 @@ describe('the lair opens the same screen', () => {
     game.doAttackLair();
     const battle = game.battle!;
     expect(battle.log.winner).toBe('ours');
-    expect(battle.prizes).toEqual([
-      { kind: 'currency', currency: 'Gold', amount: 40 },
-      { kind: 'currency', currency: 'Knowledge', amount: lump },
-    ]);
-    clock += battle.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS + 100;
-    game.advanceBattle(clock);
-    expect(game.battle!.phase).toBe('rewards');
+    expect(battle.prizes).toEqual([]);
+    // Back on the lair's card, where Claim pays the hoard and the lump.
+    expect(game.inspectedSite).toEqual(LAIRS[ORCS].location);
+    const gold = getWallet(game.state.city.wallet, 'Gold');
+    const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
+    game.doClaimLair(ORCS);
+    expect(game.lairIsCleared(ORCS)).toBe(true);
+    expect(getWallet(game.state.city.wallet, 'Gold')).toBe(gold + 40);
+    expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge + lump);
+    expect(game.inspectedSite).toBeNull();
+    expect(game.vanishingLairs.has(ORCS)).toBe(true);
   });
 });

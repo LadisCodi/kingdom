@@ -21,7 +21,7 @@ import {
 } from '../src/sim/data/definitions';
 import {
   advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairFormation,
-  lairIsCleared, lairPower, lairSupplies, lairView, nextRaidBoundary, openLairs,
+  lairAwaitsClaim, lairIsCleared, lairPower, lairSupplies, lairView, nextRaidBoundary, openLairs,
   raidTake, raidTimeAfter, setUtcOffset,
 } from '../src/sim/lairs';
 import { lairHolding, lairIsFound, lairZoneCells } from '../src/sim/lairZone';
@@ -31,7 +31,7 @@ import { placementBlock } from '../src/sim/districts';
 import { workableCells } from '../src/sim/workers';
 import { reapCells } from '../src/sim/casting';
 import { formationPower } from '../src/sim/combat';
-import { attackLair, previewLair } from '../src/sim/expeditions';
+import { attackLair, claimLair, previewLair } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, getWallet, type GameState, type LairId } from '../src/sim/state';
 import {
@@ -383,6 +383,11 @@ describe('clearing the lair', () => {
     const preview = previewLair(state, ORCS, ['Warden'], company);
     expect(preview.enough).toBe(true);
     expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('Cleared');
+    // Beaten, not yet cleared: the claim is what clears it (§5).
+    expect(lairAwaitsClaim(state, ORCS)).toBe(true);
+    expect(lairIsCleared(state, ORCS)).toBe(false);
+    expect(clearedLairCount(state)).toBe(0);
+    expect(claimLair(state, ORCS).result).toBe('Claimed');
     expect(lairIsCleared(state, ORCS)).toBe(true);
     expect(clearedLairCount(state)).toBe(1);
   });
@@ -399,15 +404,23 @@ describe('clearing the lair', () => {
     expect(attackLair(state, map, 'Harpies', ['Warden'], []).result).toBe('Repelled');
   });
 
-  it('stops the clock for good and removes the lair', () => {
+  it('stops the clock for good when beaten, and holds its ground until the claim', () => {
     const state = readyToFight();
     attackLair(state, map, ORCS, ['Warden'], company);
     expect(state.lairs[ORCS]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
     const result = advance(state, map, T0 + 7 * DAY);
     expect(result.raids).toHaveLength(0);
+    // Beaten, it is still on the map with its zone and its reward waiting.
+    expect(state.lairs[ORCS]!.nextRaidAt).toBeNull();
+    expect(standingLairAt(state, LAIRS[ORCS].location)?.id).toBe(ORCS);
+    expect(lairHolding(state, LAIRS[ORCS].location)).toBe(ORCS);
+    expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('AlreadyDefeated');
+    // Claimed, it is gone and its ground is the city's.
+    claimLair(state, ORCS);
     expect(openLairs(state)).toEqual([]);
     expect(standingLairAt(state, LAIRS[ORCS].location)).toBeUndefined();
+    expect(lairHolding(state, LAIRS[ORCS].location)).toBeNull();
   });
 
   it('hands back the hoard', () => {
@@ -419,6 +432,9 @@ describe('clearing the lair', () => {
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
+    // The fight costs the supplies and pays nothing; the claim pays the hoard.
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(before - (lairSupplies(ORCS).Gold ?? 0));
+    expect(claimLair(state, ORCS).hoard).toEqual(hoard);
     expect(getWallet(state.city.wallet, 'Gold'))
       .toBe(before + hoard.Gold! - (lairSupplies(ORCS).Gold ?? 0));
   });
@@ -460,6 +476,8 @@ describe('clearing the lair', () => {
     const state = readyToFight();
     expect(attackLair(state, map, 'Harpies', ['Warden'], company).result).toBe('LairNotFound');
     attackLair(state, map, ORCS, ['Warden'], company);
+    expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('AlreadyDefeated');
+    claimLair(state, ORCS);
     expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('AlreadyCleared');
   });
 });
@@ -481,6 +499,12 @@ describe('a save', () => {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
     attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 24 }]);
+    // A beaten lair keeps its unclaimed reward across a save…
+    const beaten = deserialize(serialize(state, T0), map, T0 + DAY)!;
+    expect(lairAwaitsClaim(beaten, ORCS)).toBe(true);
+    expect(beaten.lairs[ORCS]!.nextRaidAt).toBeNull();
+    // …and a claimed one stays gone.
+    claimLair(state, ORCS);
     const restored = deserialize(serialize(state, T0), map, T0 + 7 * DAY)!;
     expect(lairIsCleared(restored, ORCS)).toBe(true);
     expect(restored.lairs[ORCS]!.nextRaidAt).toBeNull();
@@ -510,12 +534,17 @@ describe('the route to a lair', () => {
     expect(game.lairPreview()!.enough).toBe(true);
   });
 
-  it('clears it and closes the sheet', () => {
+  it('beats it, closes the sheet and lands back on the card — where Claim clears it', () => {
     const game = presenterAtTheLair();
     game.openLair(ORCS);
     game.doAttackLair();
     expect(game.openOverlay).toBeNull();
+    expect(game.lairFor(ORCS)!.defeated).toBe(true);
+    expect(game.inspectedSite).toEqual(LAIRS[ORCS].location);
+    game.doClaimLair(ORCS);
     expect(game.lairFor(ORCS)!.cleared).toBe(true);
+    expect(game.inspectedSite).toBeNull();
+    expect(game.vanishingLairs.has(ORCS)).toBe(true);
   });
 });
 

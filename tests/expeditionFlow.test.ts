@@ -27,7 +27,7 @@ function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameSt
   addAllTrainers(state);
   fund(state, { Gold: 500_000, Food: 200_000, Wood: 200_000, Stone: 50_000, Iron: 500 });
   reveal(state, [LAIRS[ORCS].location]);
-  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -69,23 +69,27 @@ describe('the route to a lair', () => {
 });
 
 describe('clearing the lair', () => {
-  it('resolves on the tap, closes the sheet and pays the first-clear lump', () => {
+  it('resolves on the tap, closes the sheet, and the claim pays the first-clear lump', () => {
     const game = freshPresenter(ready());
     game.openLair(ORCS);
     const lump = firstClearLump(game.state);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
     expect(game.lairPreview()!.knowledge).toBe(lump);
     game.doAttackLair();
-    expect(game.lairIsCleared(ORCS)).toBe(true);
+    expect(game.lairFor(ORCS)!.defeated).toBe(true);
     expect(game.openOverlay).toBeNull();
     expect(game.lairId).toBeNull();
+    // Nothing is paid until the claim, from the lair's card.
+    expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge);
+    game.doClaimLair(ORCS);
+    expect(game.lairIsCleared(ORCS)).toBe(true);
     expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge + lump);
   });
 
   it('spends the supplies on the way in, whatever the fight does', () => {
     const state = ready({ Warrior: 2 });
     reveal(state, [LAIRS.Drake.location]);
-    state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+    state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
     const game = freshPresenter(state);
     game.openLair('Drake');
     const preview = game.lairPreview()!;
@@ -140,6 +144,7 @@ describe('a relic the player owns is no part of a fight', () => {
     const game = freshPresenter(state);
     game.openLair(ORCS);
     game.doAttackLair();
+    game.doClaimLair(ORCS);
     expect(game.lairIsCleared(ORCS)).toBe(true);
     expect(ownsArtifact(game.state, 'ForemansSigil')).toBe(true);
   });

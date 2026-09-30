@@ -363,7 +363,7 @@ describe('the era-2/3 lines reach their numbers', () => {
       openEveryEra(state);
       state.landmarks.claimed[LANDMARKS[0].id] = true;
       state.landmarks.claimed[LANDMARKS[1].id] = true;
-      state.lairs.Orcs = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: true };
+      state.lairs.Orcs = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: true, cleared: true };
       fund(state, { Gold: 99_999, Knowledge: 10 });
       return state;
     };

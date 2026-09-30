@@ -343,6 +343,11 @@ export interface LairState {
   /** What it carries of what it took, capped at a day of raids per material
    *  (§4.2), and handed back when the lair falls. */
   hoard: Wallet;
+  /** Its garrison is beaten and it raids no more, but what it owes has not
+   *  been CLAIMED: it still stands on the map, holding its ground, with its
+   *  reward waiting on its card (Docs/proposals/lairs.md §5). */
+  defeated: boolean;
+  /** Claimed: the reward is paid and the lair is gone for good. */
   cleared: boolean;
 }
 

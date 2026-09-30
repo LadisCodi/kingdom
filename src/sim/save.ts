@@ -861,6 +861,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           ArmedAtUtc: iso(g!.armedAt),
           NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
           Hoard: g!.hoard,
+          Defeated: g!.defeated,
           Cleared: g!.cleared,
         })),
       },
@@ -1292,6 +1293,9 @@ export function deserialize(
         armedAt: g.ArmedAtUtc ? ms(g.ArmedAtUtc) : 0,
         nextRaidAt: msOrNull(g.NextRaidAtUtc),
         hoard: { ...(g.Hoard ?? {}) },
+        // Absent before the claim existed: a lair was cleared the instant it
+        // was beaten, so a cleared one was also defeated.
+        defeated: g.Defeated === true || g.Cleared === true,
         cleared: g.Cleared === true,
       };
     }

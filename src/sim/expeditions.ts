@@ -17,7 +17,7 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { lairBoard, lairIsCleared, lairSupplies, markLairCleared } from './lairs';
+import { lairBoard, lairIsCleared, lairSupplies, markLairCleared, markLairDefeated } from './lairs';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -206,7 +206,7 @@ export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned
  * a retry is identical to a first attempt: nothing is lost but the supplies.
  */
 export type LairBlock =
-  | 'LairNotFound' | 'AlreadyCleared' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
+  | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
   | 'NotEnoughUnits' | 'NotEnoughSupplies';
 
 export function lairBlock(
@@ -222,6 +222,9 @@ export function lairBlock(
   // whatever the fog over its own footprint (Docs/proposals/lairs.md §2.1).
   if (state.lairs[lairId] === undefined) return 'LairNotFound';
   if (lairIsCleared(state, lairId)) return 'AlreadyCleared';
+  // Beaten, and waiting for its reward to be claimed: there is nobody left
+  // to fight (Docs/proposals/lairs.md §5).
+  if (state.lairs[lairId]?.defeated === true) return 'AlreadyDefeated';
   if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
   // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
@@ -265,9 +268,11 @@ export interface LairReport {
 /**
  * One attempt on a lair, resolved on entry with the player attacking.
  *
- * Win: the lair is cleared, its counter stops, its hoard is paid in full, and
- * the lair's first-clear Knowledge lump lands. Lose: the supplies are gone
- * and the lair stands — no cooldown, no second timer. Casualties either way.
+ * Win: the garrison is beaten — its clock stops and it raids no more — but
+ * NOTHING is paid yet: the lair stays on the map, holding its ground, until
+ * the player claims its reward from its card (`claimLair`,
+ * Docs/proposals/lairs.md §5). Lose: the supplies are gone and the lair
+ * stands — no cooldown, no second timer. Casualties either way.
  */
 export function attackLair(
   state: GameState,
@@ -301,11 +306,38 @@ export function attackLair(
       result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, supplies, losses, wounded,
     };
   }
-  const hoard = markLairCleared(state, lairId);
+  markLairDefeated(state, lairId);
+  // What the claim will pay, for the report — nothing has moved yet.
+  const hoard: Wallet = { ...state.lairs[lairId]!.hoard };
+  const { knowledge } = lairClearReward(state, lairId);
+  return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded };
+}
+
+export type ClaimResult = 'Claimed' | 'NotDefeated' | 'AlreadyClaimed';
+
+export interface ClaimReport {
+  result: ClaimResult;
+  hoard: Wallet;
+  heroXp: number;
+  knowledge: number;
+}
+
+/**
+ * CLAIM a beaten lair's reward: the hoard it carried, Hero XP by tier and
+ * the first-clear Knowledge lump — and with it the lair is gone and its
+ * ground is the city's (Docs/proposals/lairs.md §5). Once per lair: a
+ * claimed lair refuses, and so does one whose garrison still stands.
+ */
+export function claimLair(state: GameState, lairId: LairId): ClaimReport {
+  const lair = state.lairs[lairId];
+  const none = { hoard: {}, heroXp: 0, knowledge: 0 };
+  if (lair?.cleared === true) return { result: 'AlreadyClaimed', ...none };
+  if (lair?.defeated !== true) return { result: 'NotDefeated', ...none };
   const { heroXp, knowledge } = lairClearReward(state, lairId);
+  const hoard = markLairCleared(state, lairId);
   addHeroXp(state, heroXp);
   payKnowledge(state, knowledge);
-  return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded };
+  return { result: 'Claimed', hoard, heroXp, knowledge };
 }
 
 /**

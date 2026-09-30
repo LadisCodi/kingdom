@@ -457,6 +457,8 @@ describe('ruins and gates become lairs (v64)', () => {
         armedAt: 0,
         nextRaidAt: i === 4 ? null : T0 + (i + 1) * 60_000,
         hoard: i === 0 ? {} : { Gold: 10 * i, Wood: i },
+        // Before the claim, a lair was cleared the moment it was beaten.
+        defeated: i === 4,
         cleared: i === 4,
       });
     });

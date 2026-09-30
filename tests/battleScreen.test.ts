@@ -202,7 +202,7 @@ describe('what the screen adds up to', () => {
     // Twenty orcs hold the orc lair, so the heroes bring the company with them.
     game.expeditionParty = [{ unitId: 'Warrior', count: 30 }];
     game.doAttackLair();
-    expect(game.lairFor(ORCS)!.cleared).toBe(true);
+    expect(game.lairFor(ORCS)!.defeated).toBe(true);
   });
 });
 

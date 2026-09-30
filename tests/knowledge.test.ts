@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { KNOWLEDGE, LAIRS } from '../src/sim/data/definitions';
-import { attackLair } from '../src/sim/expeditions';
+import { attackLair, claimLair } from '../src/sim/expeditions';
 import {
   accrueKnowledge, buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice,
   firstClearLump, knowledgeHeld, knowledgePerHour, msToFullKnowledge, msToNextKnowledge,
@@ -199,7 +199,7 @@ describe('a lair teaches something, once', () => {
     completeTech(state, 'Warrior');
     fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Knowledge: 0 });
     reveal(state, [LAIRS[ORCS].location]);
-    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+    state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
     for (let i = 0; i < 60; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' as UnitId });
     }
@@ -207,6 +207,7 @@ describe('a lair teaches something, once', () => {
     const report = attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 60 }]);
     expect(report.result).toBe('Cleared');
     expect(report.knowledge).toBe(expected);
+    claimLair(state, ORCS);
     expect(knowledgeHeld(state)).toBe(expected);
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
   });

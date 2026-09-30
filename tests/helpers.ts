@@ -110,7 +110,7 @@ export const reveal = (state: GameState, cells: Coord[]): void => {
  * lump is paid. tests/lairs.test.ts holds the garrison to its contract.
  */
 export const clearLair = (state: GameState, lairId: LairId): void => {
-  state.lairs[lairId] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: true };
+  state.lairs[lairId] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: true, cleared: true };
 };
 
 /**

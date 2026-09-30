@@ -17,7 +17,7 @@ import {
   ARMY, DELVE, DISTRICTS, KNOWLEDGE, LANDMARKS, LAIRS, LAIR_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import {
-  attackLair, lairBlock, lairSupplyCost, previewLair,
+  attackLair, claimLair, lairBlock, lairSupplyCost, previewLair,
 } from '../src/sim/expeditions';
 import { lairSupplies } from '../src/sim/lairs';
 import { claimLandmark } from '../src/sim/landmarks';
@@ -37,7 +37,7 @@ function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 60 }):
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
   reveal(state, [LAIRS[ORCS].location]);
-  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+  state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -469,6 +469,11 @@ describe('Knowledge: a fixed drip, and lumps for the ground', () => {
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.knowledge).toBe(lump);
+    // The fight pays nothing; the claim pays the lump, once.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held);
+    expect(claimLair(state, ORCS).knowledge).toBe(lump);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held + lump);
+    expect(claimLair(state, ORCS).result).toBe('AlreadyClaimed');
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(held + lump);
     // Never into the city's purse, which a region reset would take.
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
@@ -484,7 +489,7 @@ describe('Knowledge: a fixed drip, and lumps for the ground', () => {
     const state = readyToDelve({ Warrior: 2 });
     fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
     reveal(state, [LAIRS.Drake.location]);
-    state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, cleared: false };
+    state.lairs.Drake = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
     const held = getWallet(state.kingdom.wallet, 'Knowledge');
     const report = attackLair(state, map, 'Drake', ['Warden'],
       [{ unitId: 'Warrior', count: 2 }]);

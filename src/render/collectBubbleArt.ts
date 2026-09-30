@@ -231,3 +231,69 @@ function drawHourglass(ctx: CanvasRenderingContext2D, x: number, y: number, s: n
   ctx.strokeStyle = COUNT_EDGE;
   ctx.stroke();
 }
+
+// ------------------------------------------------------------ the claim bubble
+
+/**
+ * A BEATEN lair's bubble (Docs/proposals/lairs.md §5): the collect bubble
+ * itself — parchment, the brown rim — with the reward chest in it, because a
+ * beaten lair is exactly a store with something waiting in it. No countdown:
+ * it raids no more. Returns its rect, so a tap on it opens the card.
+ */
+export function drawClaimBubble(
+  ctx: CanvasRenderingContext2D,
+  bubbles: CollectBubbles,
+  id: string,
+  tipX: number,
+  tipY: number,
+  width: number,
+  clock: number,
+): BubbleRect {
+  const still = reducedMotion();
+  const pop = still ? 1 : bubbles.appear(id, clock);
+  const scale = pop >= 1 ? 1 : 1 - (1 - pop) ** 3 * (1 - 2.2 * pop);
+  const bob = still ? 0 : (Math.sin(clock / 260 + phaseOf(id)) * 0.5 + 0.5) * width * 0.14;
+  const w = width;
+  const h = width * 0.92;
+  const tail = width * 0.2;
+  const r = width * 0.22;
+  const line = Math.max(1.5, width * 0.05);
+  const ty = tipY - bob;
+  ctx.save();
+  ctx.translate(tipX, ty);
+  ctx.scale(scale, scale);
+  const x = -w / 2;
+  const y = -tail - h;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(tail * 0.7, y + h);
+  ctx.lineTo(0, 0);
+  ctx.lineTo(-tail * 0.7, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  const fill = ctx.createLinearGradient(0, y, 0, y + h);
+  fill.addColorStop(0, PARCHMENT_LIGHT);
+  fill.addColorStop(0.45, PARCHMENT);
+  fill.addColorStop(1, PARCHMENT);
+  ctx.shadowColor = 'rgba(40, 22, 10, 0.35)';
+  ctx.shadowBlur = width * 0.18;
+  ctx.shadowOffsetY = width * 0.06;
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = line;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = RIM;
+  ctx.stroke();
+  const icon = Math.round(Math.min(w, h) * 0.72);
+  drawIcon(ctx, 'chest', -icon / 2, y + (h - icon) / 2, icon);
+  ctx.restore();
+  return { x: tipX - w / 2, y: ty - tail - h, w, h: h + tail };
+}
