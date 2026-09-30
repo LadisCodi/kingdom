@@ -933,7 +933,9 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 - A **bottom drawer**, about half the screen tall. The map stays visible and
   dimmed above it, so placement opens on the same map the player was looking
   at.
-- **Three tabs**, each with the same orb and count as the nav tab:
+- **Three tabs** — the nav's wooden tab plates. The selected one is the plate
+  pressed into the wood (the nav tab's pressed state), not lit or gilded.
+  Each wears the same orb and count as the nav tab:
 
   | Tab | Buildings |
   |---|---|
