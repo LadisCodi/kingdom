@@ -39,6 +39,13 @@ export const heroHp = (state: GameState, id: HeroId, t: number): number =>
 export const heroExhausted = (state: GameState, id: HeroId, t: number): boolean =>
   state.heroes.hurt[id]?.exhausted === true && heroHpShare(state, id, t) < 1;
 
+/** When an exhausted hero may fight again — its bar whole; null when it is
+ *  not resting. */
+export function heroRestEndsAt(state: GameState, id: HeroId, t: number): number | null {
+  if (!heroExhausted(state, id, t)) return null;
+  return t + Math.ceil((1 - heroHpShare(state, id, t)) * recoverMs());
+}
+
 export const heroCanFight = (state: GameState, id: HeroId, t: number): boolean =>
   !heroExhausted(state, id, t) && heroHp(state, id, t) > 0;
 

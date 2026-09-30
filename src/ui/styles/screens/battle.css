@@ -120,43 +120,6 @@ button.bt-card { cursor: pointer; }
   border-radius: calc(var(--px) * 6);
 }
 .bt-card-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 26); }
-/* THE HP BAR: the kit's bar (kit.css `.k-trough`) redrawn to read at card
-   size — assets/hp-*.png, sheets/ui-bar2-hp-small.png — in the same three
-   layers: the tube's dark inside, the colour (its whole length, uncovered
-   from the left by an inline clip-path), and the glass over both. It sits
-   low, over the card's bottom edge. Green, yellow under half, red under a
-   tenth (battleSheet.ts `hpBar`). */
-.bt-hp {
-  --hp-bar-h: calc(var(--px) * 9);
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--px) * 2);
-  right: calc(var(--px) * 2);
-  bottom: calc(var(--px) * -5);
-  height: var(--hp-bar-h);
-  isolation: isolate;
-}
-.bt-hp::before,
-.bt-hp-fill {
-  position: absolute;
-  inset: calc(var(--hp-bar-h) * 0.30) calc(var(--hp-bar-h) * 0.30) calc(var(--hp-bar-h) * 0.18);
-  border-image: url('../../assets/hp-base.png') 0 27 fill / 0 calc(var(--hp-bar-h) * 0.26) stretch;
-}
-.bt-hp::before { content: ''; }
-.bt-hp-fill {
-  --hp-fill: url('../../assets/hp-fill-green.png');
-  display: block;
-  border-image: var(--hp-fill) 0 28 fill / 0 calc(var(--hp-bar-h) * 0.26) stretch;
-}
-.bt-hp.is-yellow .bt-hp-fill { --hp-fill: url('../../assets/hp-fill-yellow.png'); }
-.bt-hp.is-red .bt-hp-fill { --hp-fill: url('../../assets/hp-fill-red.png'); }
-.bt-hp::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-image: url('../../assets/hp-border.png') 0 33 fill / 0 calc(var(--hp-bar-h) * 0.5) stretch;
-}
 /* The hero's level on its roster card, in the dark pill a count wears,
    sat on the HP bar so the face stays clear. */
 .bt-card-level {
@@ -174,7 +137,20 @@ button.bt-card { cursor: pointer; }
 }
 .bt-card.is-tile { --card-w: calc(var(--px) * 46); }
 .bt-card.is-picked { outline: calc(var(--px) * 2) solid var(--leaf-dark); outline-offset: calc(var(--px) * 1); }
-.bt-card.is-down .bt-card-art { filter: grayscale(0.9); opacity: 0.6; }
+/* EXHAUSTED: darkened, not greyed — still yours, only asleep — with the Zs
+   off its top-right and its rest's countdown where the level sat. */
+.bt-card.is-down .bt-card-art { filter: brightness(0.5) saturate(0.7); }
+.bt-card.is-down { cursor: default; }
+.bt-card.is-down .k-zzz { --zzz-size: calc(var(--px) * 11); top: calc(var(--px) * 2); right: calc(var(--px) * -2); }
+.bt-card-level > .k-rest-left { padding: 0; background: none; font-size: inherit; }
+/* The HP bar hangs over the card's bottom edge. */
+.bt-hp {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--px) * 2);
+  right: calc(var(--px) * 2);
+  bottom: calc(var(--px) * -5);
+}
 
 /* An empty slot is the portrait's own ring, empty and sunk in. */
 .bt-cell.is-empty {

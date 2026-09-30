@@ -33,7 +33,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
+import { btn, headPanel, hpBar, iconEl, restLeft, restMarks, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
 
 /** Everything the screen needs that is not the player's own army. */
@@ -97,22 +97,14 @@ const heroArt = (heroId: HeroId): HTMLElement => {
   return url ? spriteImgAt(url, 'bt-card-art') : el('span', { class: 'bt-card-art is-glyph' }, def.glyph);
 };
 
-/** The hero's HP as it stands, on a bar along the foot of its card: what
- *  past fights took and has not yet mended (sim/heroHealth.ts). */
-function hpBar(game: Game, heroId: HeroId): HTMLElement {
+/** The hero's HP as it stands, on the kit's small bar hung over the foot of
+ *  its card: what past fights took and has not yet mended
+ *  (sim/heroHealth.ts). */
+function heroHpBar(game: Game, heroId: HeroId): HTMLElement {
   const { hp, max } = game.heroHealthOf(heroId);
-  const share = max > 0 ? hp / max : 0;
-  // The fill is the tube's whole length, uncovered from the left, as the
-  // kit's bar does it (kit.css `.k-trough`); its colour steps down at half
-  // and at a tenth.
-  const fill = el('span', { class: 'bt-hp-fill' });
-  fill.style.clipPath = `inset(0 ${100 - Math.round(share * 100)}% 0 0)`;
-  const tone = share < 0.1 ? ' is-red' : share < 0.5 ? ' is-yellow' : '';
-  return el('span', {
-    class: `bt-hp${tone}`,
-    role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
-    'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
-  }, fill);
+  const bar = hpBar(hp, max);
+  bar.classList.add('bt-hp');
+  return bar;
 }
 
 /** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
@@ -165,7 +157,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
       const cell = el('button', {
         class: 'bt-card is-filled is-mine', type: 'button',
         'aria-label': `Leave ${HEROES[heroId].name} behind`,
-      }, heroArt(heroId), hpBar(game, heroId));
+      }, heroArt(heroId), heroHpBar(game, heroId));
       cell.addEventListener('click', () => game.clearHeroSlot(i));
       heroes.push(cell);
     } else if (i < open) {
@@ -213,7 +205,8 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
 
 function heroTile(game: Game, heroId: HeroId): HTMLElement {
   const picked = game.partyHeroes.includes(heroId);
-  const down = game.heroHealthOf(heroId).exhausted;
+  const health = game.heroHealthOf(heroId);
+  const down = health.exhausted;
   const def = HEROES[heroId];
   const tile = el('button', {
     class: `bt-card is-filled is-tile${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`,
@@ -222,8 +215,12 @@ function heroTile(game: Game, heroId: HeroId): HTMLElement {
     'aria-pressed': picked ? 'true' : 'false',
   },
   heroArt(heroId),
-  el('span', { class: 'bt-card-level' }, `Lv ${game.heroLevelOf(heroId)}`),
-  hpBar(game, heroId),
+  // Exhausted, it sleeps it off (10-heroes.md §2.8): the Zs rise off it and
+  // the pill says how long is left, where its level sits otherwise.
+  ...(down
+    ? [restMarks(), el('span', { class: 'bt-card-level' }, restLeft(health.restMs))]
+    : [el('span', { class: 'bt-card-level' }, `Lv ${game.heroLevelOf(heroId)}`)]),
+  heroHpBar(game, heroId),
   ...(picked ? [el('span', { class: 'bt-tile-check' }, iconEl('tick', { size: 'md' }))] : []));
   tile.addEventListener('click', () => game.toggleHero(heroId));
   return tile;

@@ -175,7 +175,11 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   until its HP is full again — a whole `heroRecoverHours`. Quick deploy and
   the opening party leave it out.
 - The attack screen shows every hero's current HP as a bar along the foot of
-  its card, in the party and in the roster.
+  its card, in the party and in the roster; the Heroes screen shows it on a
+  hurt hero's tile.
+- **An exhausted hero is shown asleep**, on both screens: its art darkened
+  (never the unfound silhouette), three white Zs rising off its top-right,
+  and how long the rest has left over its HP bar.
 - Villains carry nothing between fights.
 
 ## 3. The hero slots

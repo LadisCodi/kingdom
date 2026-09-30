@@ -702,9 +702,19 @@ describe('the overlay signatures', () => {
 
   it('screens with a countdown or a regenerating pool are not signed', () => {
     const game = freshPresenter();
-    for (const name of ['collection', 'mana', 'research', 'build', 'purse', 'lair'] as const) {
+    for (const name of ['collection', 'mana', 'research', 'build', 'purse'] as const) {
       expect(game.overlaySignature(name), name).toBeNull();
     }
+  });
+
+  it('signs the attack screen, and moves it with a resting hero by the minute', () => {
+    const game = freshPresenter();
+    game.state.heroes.hurt.Warden = { missing: 1, at: game.now(), exhausted: true };
+    const before = game.overlaySignature('lair');
+    expect(before).not.toBeNull();
+    expect(game.overlaySignature('lair')).toBe(before);
+    game.state.heroes.hurt.Warden = { missing: 1, at: game.now() - 5 * 60_000, exhausted: true };
+    expect(game.overlaySignature('lair')).not.toBe(before);
   });
 });
 

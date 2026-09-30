@@ -1,7 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
-import { heroCanFight, heroHp, heroMaxHp } from './sim/heroHealth';
+import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
@@ -2591,6 +2591,17 @@ export class Game {
   overlaySignature(name: OverlayName): string | null {
     switch (name) {
       case 'heroes': return this.heroesSignature();
+      // The attack screen moves when the party, the purse, the army or a
+      // hero's health does — and a resting hero's Zs are an animation a
+      // rebuild every second would restart before it ever finished.
+      case 'lair': return JSON.stringify([
+        this.lairId, this.partyHeroes, this.expeditionParty, this.state.city.wallet,
+        this.state.army.length, this.state.city.wounded, this.state.heroes, this.state.lairs,
+        this.state.heroes.owned.map((h) => {
+          const { hp, restMs } = this.heroHealthOf(h);
+          return [hp, Math.ceil(restMs / 60_000)];
+        }),
+      ]);
       // The offline report is fixed for the session; the sheet only closes.
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
@@ -2624,6 +2635,10 @@ export class Game {
       // Who is on the board right now — the one line the roster reads from
       // outside itself.
       this.partyHeroes.join(','),
+      // A resting hero's countdown, by the minute — the one thing on the
+      // grid that moves with the clock, and only while someone rests.
+      this.state.heroes.owned
+        .map((h) => Math.ceil(this.heroHealthOf(h).restMs / 60_000)).join(','),
     ].join('|');
   }
 
@@ -3298,12 +3313,14 @@ export class Game {
 
   /** A hero's HP as it stands — the wound the last fight left, mending
    *  (sim/heroHealth.ts). */
-  heroHealthOf(heroId: HeroId): { hp: number; max: number; exhausted: boolean } {
+  heroHealthOf(heroId: HeroId): { hp: number; max: number; exhausted: boolean; restMs: number } {
     const t = this.now();
+    const ends = heroRestEndsAt(this.state, heroId, t);
     return {
       hp: heroHp(this.state, heroId, t),
       max: heroMaxHp(this.state, heroId),
       exhausted: !heroCanFight(this.state, heroId, t),
+      restMs: ends === null ? 0 : ends - t,
     };
   }
 
