@@ -136,7 +136,7 @@ import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
-import { lairBubbleAt } from './render/lairMap';
+import { lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
 import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
@@ -299,6 +299,9 @@ export interface BattlePlayback {
   title: string;
   subtitle: string;
   prizes: GachaPrize[];
+  /** What the ENEMY's troops look like, by type: a lair fields creatures,
+   *  not the player's own soldiers. Absent, both sides wear the unit busts. */
+  enemyFaces?: Partial<Record<UnitId, string>>;
   /** Wall clock at the first tick — everything else is derived from it. */
   startedAt: number;
   phase: 'playing' | 'result' | 'rewards' | 'done';
@@ -3115,6 +3118,7 @@ export class Game {
       title: LAIRS[lairId].name,
       subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
       prizes: [],
+      enemyFaces: UNIT_CREATURE_AVATAR,
     });
     this.notify();
   }
@@ -3329,13 +3333,17 @@ export class Game {
   /** Start replaying a fight that has already happened. */
   private openBattle(
     log: BattleLog,
-    about: { title: string; subtitle: string; prizes: GachaPrize[] },
+    about: {
+      title: string; subtitle: string; prizes: GachaPrize[];
+      enemyFaces?: Partial<Record<UnitId, string>>;
+    },
   ): void {
     this.battle = {
       log,
       title: about.title,
       subtitle: about.subtitle,
       prizes: about.prizes,
+      enemyFaces: about.enemyFaces,
       startedAt: this.now(),
       phase: 'playing',
     };

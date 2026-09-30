@@ -21,6 +21,7 @@ import { HEROES, UNITS, VILLAINS } from '../sim/data/definitions';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { BattleEvent, BattleLog, BoardSlot, Side } from '../sim/battle';
+import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
 import { btn, iconEl } from './kit';
@@ -29,11 +30,14 @@ import { btn, iconEl } from './kit';
  *  stepped animation — a pixel-art screen snaps, it does not glow. */
 const FLASH_MS = 180;
 
-/** A slot's face: the troop's bust, a hero's portrait, a villain's. */
-function face(slot: BoardSlot): HTMLElement {
+/** A slot's face: the troop's bust — or, on a side that fields creatures, the
+ *  creature's (`enemyFaces`) — a hero's portrait, a villain's. */
+function face(slot: BoardSlot, faces?: Partial<Record<UnitId, string>>): HTMLElement {
   if (slot.unitId !== null) {
     const { sprite } = UNITS[slot.unitId];
-    const url = spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
+    const creature = faces?.[slot.unitId];
+    const url = (creature ? spriteUrl(creature) : null)
+      ?? spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
     return url
       ? spriteImgAt(url, 'bs-portrait')
       : iconEl(slot.unitId, { size: 'lg' });
@@ -57,10 +61,10 @@ interface SlotView {
   troops: number;
 }
 
-function slotView(slot: BoardSlot): SlotView {
+function slotView(slot: BoardSlot, faces?: Partial<Record<UnitId, string>>): SlotView {
   const count = el('span', { class: 'bs-count' }, slot.kind === 'hero' ? '' : `x${slot.count}`);
   const root = el('div', { class: `bs-slot is-${slot.kind}` },
-    face(slot),
+    face(slot, faces),
     count,
     el('span', { class: 'bs-skull' }, iconEl('skull', { size: 'lg' })));
   return { root, count, power: slot.power, troops: slot.count };
@@ -69,7 +73,9 @@ function slotView(slot: BoardSlot): SlotView {
 /** The six rows, top to bottom: their heroes, their back, their front, then
  *  ours the other way up. The gap in the middle is the two armies facing each
  *  other, and it is the only thing on the screen that means nothing else. */
-function boardRows(slots: readonly BoardSlot[], side: Side): {
+function boardRows(
+  slots: readonly BoardSlot[], side: Side, faces?: Partial<Record<UnitId, string>>,
+): {
   rows: HTMLElement[];
   views: Map<number, SlotView>;
 } {
@@ -77,7 +83,7 @@ function boardRows(slots: readonly BoardSlot[], side: Side): {
   const row = (cls: string, of: readonly BoardSlot[]): HTMLElement => {
     const line = el('div', { class: `bs-row ${cls}` });
     for (const slot of of) {
-      const view = slotView(slot);
+      const view = slotView(slot, faces);
       views.set(slot.id, view);
       line.append(view.root);
     }
@@ -111,7 +117,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     if (start?.kind !== 'start') return;
 
     const ours = boardRows(start.ours, 'ours');
-    const theirs = boardRows(start.theirs, 'theirs');
+    const theirs = boardRows(start.theirs, 'theirs', playback.enemyFaces);
     const views: Record<Side, Map<number, SlotView>> = {
       ours: ours.views,
       theirs: theirs.views,

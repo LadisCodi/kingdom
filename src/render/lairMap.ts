@@ -5,7 +5,7 @@
 import { LAIR_ORDER } from '../sim/data/definitions';
 import { lairHoldsGround, lairZoneCells } from '../sim/lairZone';
 import type { MapData } from '../sim/grid';
-import { coordKey, type Coord, type GameState, type LairId } from '../sim/state';
+import { coordKey, type Coord, type GameState, type LairId, type UnitId } from '../sim/state';
 
 /**
  * Every map cell some standing lair holds. Zones that overlap are ONE zone
@@ -70,6 +70,17 @@ export const LAIR_AVATAR: Record<LairId, string> = {
   Goblins: 'creature_goblin_avatar',
   WolfRiders: 'creature_wolfrider_avatar',
   Drake: 'creature_drake_avatar',
+};
+
+/** The creature a lair's squad of each troop type IS, wherever it is drawn —
+ *  the attack screen's enemy board and the fight's playback
+ *  (Docs/art/originals/lairs/LOG.md). The same four in every lair; the drake
+ *  is the Drake lair's face, never a squad's. */
+export const UNIT_CREATURE_AVATAR: Record<UnitId, string> = {
+  Warrior: 'creature_orc_avatar',
+  Lancer: 'creature_goblin_avatar',
+  Archer: 'creature_harpy_avatar',
+  Cavalry: 'creature_wolfrider_avatar',
 };
 
 /**

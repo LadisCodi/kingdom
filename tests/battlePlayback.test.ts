@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { BATTLE_RESULT_DELAY_MS } from '../src/game';
+import { UNIT_CREATURE_AVATAR } from '../src/render/lairMap';
 import { COMBAT, LAIRS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
@@ -58,6 +59,8 @@ describe('a lair attack opens the playback', () => {
     expect(battle.log.winner).toBe('ours');
     expect(battle.log.events[0]!.kind).toBe('start');
     expect(battle.prizes).toEqual([]);
+    // The enemy wears the lair's creatures in the playback, not our soldiers.
+    expect(battle.enemyFaces).toEqual(UNIT_CREATURE_AVATAR);
   });
 
   it('walks playing → result → done on the clock — the spoils are the claim\'s', () => {

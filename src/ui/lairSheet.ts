@@ -8,21 +8,13 @@
 import { LAIRS } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { UNIT_CREATURE_AVATAR } from '../render/lairMap';
 import type { UnitId } from '../sim/state';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { unitBust } from './unitArt';
 
-/** The creature a squad of each type is, on the enemy's side of the board
- *  (Docs/art/originals/lairs/LOG.md). */
-const CREATURE: Record<UnitId, string> = {
-  Warrior: 'creature_orc_avatar',
-  Lancer: 'creature_goblin_avatar',
-  Archer: 'creature_harpy_avatar',
-  Cavalry: 'creature_wolfrider_avatar',
-} as Record<UnitId, string>;
-
 const creatureFace = (unitId: UnitId): HTMLElement => {
-  const url = spriteUrl(CREATURE[unitId] ?? '');
+  const url = spriteUrl(UNIT_CREATURE_AVATAR[unitId]);
   return url ? spriteImgAt(url, 'k-portrait-art') : unitBust(unitId, 'k-portrait-art');
 };
 
