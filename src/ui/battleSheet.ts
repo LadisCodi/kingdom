@@ -169,14 +169,17 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
 function troopTile(game: Game, unitId: UnitId): HTMLElement {
   const left = game.troopsLeftAtHome(unitId);
   const refusal = game.troopRefusal(unitId);
+  // The board's own medallion, so a troop reads the same at home and in the
+  // party; its name under it says which it is.
   const tile = el('button', {
-    class: `bt-tile k-section${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
+    class: `bt-troop${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
     type: 'button',
     'aria-label': refusal ?? `Send a squad of ${UNITS[unitId].name}s`,
   },
-  unitBust(unitId, 'bt-tile-art'),
-  el('span', { class: 'bt-tile-emblem' }, iconEl(unitId, { size: 'sm' })),
-  el('span', { class: 'bt-tile-count' }, String(left)));
+  el('span', { class: 'bt-cell is-filled' },
+    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, unitBust(unitId, 'k-portrait-art'))),
+    el('span', { class: 'bt-count' }, String(left))),
+  el('span', { class: 'bt-troop-name' }, UNITS[unitId].name));
   tile.addEventListener('click', () => game.assignTroop(unitId));
   return tile;
 }

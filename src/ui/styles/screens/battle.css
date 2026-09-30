@@ -147,7 +147,6 @@ button.bt-cell { cursor: pointer; }
   font: inherit;
   color: inherit;
 }
-.bt-tile-art,
 .bt-tile > .k-portrait-art {
   position: absolute;
   inset: 0;
@@ -158,19 +157,6 @@ button.bt-cell { cursor: pointer; }
   top: 0;
   object-fit: cover;
 }
-.bt-tile-emblem {
-  position: absolute;
-  top: calc(var(--px) * 2);
-  left: calc(var(--px) * 2);
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  border-radius: calc(var(--px) * 5);
-  background: var(--section-fill);
-  border: calc(var(--px) * 1) solid var(--section-line);
-}
-.bt-tile-emblem > .icon { --icon-size: calc(var(--px) * 14); }
 .bt-tile-count {
   position: absolute;
   bottom: calc(var(--px) * 2);
@@ -184,6 +170,35 @@ button.bt-cell { cursor: pointer; }
   font-weight: var(--weight-title);
   font-variant-numeric: tabular-nums;
 }
+/* A TROOP at home: the board's round medallion, its count on it and its
+   name under it. */
+.bt-troop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  width: calc(var(--px) * 60);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.bt-troop > .bt-cell { --slot-size: calc(var(--px) * 52); }
+.bt-troop-name {
+  max-width: 100%;
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bt-troop.is-out { filter: grayscale(0.9); opacity: 0.6; }
+.bt-troop.is-full { opacity: 0.8; }
+
 /* None at home: the tile is there — an absent card reads as a bug — and it
    says so by fading, like a locked card. */
 .bt-tile.is-out { filter: grayscale(0.9); opacity: 0.6; }
