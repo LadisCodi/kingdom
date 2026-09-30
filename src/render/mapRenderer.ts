@@ -56,6 +56,9 @@ export interface MarkerLayer {
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
+  /** The building whose card is open: it pulses white, so the player can
+   *  tell which one the card is about. */
+  inspectedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
@@ -76,6 +79,12 @@ export interface MarkerLayer {
  */
 const SPELL_CYCLE_MS = 6000;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
+
+/** THE SELECTED BUILDING'S PULSE: 0 → 1 → 0 once every 1.4 s, on the same
+ *  wall clock as the spells and for the same reason. */
+const SELECTED_PULSE_MS = 1400;
+const selectedPulse = (): number =>
+  0.5 - 0.5 * Math.cos((2 * Math.PI * (performance.now() % SELECTED_PULSE_MS)) / SELECTED_PULSE_MS);
 
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
@@ -343,6 +352,15 @@ export function drawMap(
     keys.push(def.sprite);
     let drewExhaustedPlot = false;
     let tall = 0;
+    // Its card is open: a small white pulse — the art a touch brighter and a
+    // soft white glow around its edge — breathing while the card stays up.
+    const inspected = !lifted && district.uniqueId === markers.inspectedDistrictId;
+    if (inspected) {
+      const p = selectedPulse();
+      ctx.save();
+      ctx.filter = `brightness(${(1 + 0.18 * p).toFixed(3)}) `
+        + `drop-shadow(0 0 ${(size * 0.06).toFixed(1)}px rgba(255, 255, 255, ${(0.35 + 0.55 * p).toFixed(3)}))`;
+    }
     punched(coordKey(district.location), box, () => {
       tall = stand(box, keys, def.glyph, (draw) => {
         const drew = flip(draw);
@@ -351,6 +369,7 @@ export function drawMap(
         return drew;
       });
     });
+    if (inspected) ctx.restore();
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.

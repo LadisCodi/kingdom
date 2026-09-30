@@ -494,6 +494,9 @@ wood of its sides touches the screen's edges.
   the building collects. Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **The building on the map** pulses white while its card is open — its
+  art a touch brighter and a soft white glow around its edge, once every
+  1.4 s — so the card's building is told apart from its neighbours.
 - **Under construction** (a building being built or upgraded; reference
   `mockups/m36-construction-ab.png`, proposal A):
   - the head's Upgrade slot holds the gem Finish button with its price;

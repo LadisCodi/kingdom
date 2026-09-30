@@ -3756,6 +3756,7 @@ export class Game {
       previewSize: null,
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
+      inspectedDistrictId: this.inspectedDistrictId,
       hintCell: this.hintCell(),
       spellZones: this.spellZones(),
     };
