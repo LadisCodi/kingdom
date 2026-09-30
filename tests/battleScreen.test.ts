@@ -221,13 +221,15 @@ describe('the roster', () => {
     expect(game.troopsLeftAtHome('Warrior')).toBe(30 - sent);
   });
 
-  it('holds three squads a row: a fourth of the front row is refused', () => {
-    const game = atTheLair({ Warrior: 400, Lancer: 400 });
+  it('holds six squads of anything — the type never decides whether one fits', () => {
+    const game = atTheLair({ Warrior: 700 }); // seven squads' worth
     game.expeditionParty = [];
-    for (let i = 0; i < 3; i++) game.assignTroop(i % 2 === 0 ? 'Warrior' : 'Lancer');
-    expect(game.troopRefusal('Warrior')).toBe('The front row is full');
+    // Six of one melee type: there is no row to fill, only six slots.
+    for (let i = 0; i < 6; i++) game.assignTroop('Warrior');
+    expect(game.expeditionParty).toHaveLength(6);
+    expect(game.troopRefusal('Warrior')).toBe('Every troop slot is full');
     game.assignTroop('Warrior');
-    expect(game.expeditionParty).toHaveLength(3);
+    expect(game.expeditionParty).toHaveLength(6);
   });
 
   it('toggles a hero in and out with one tile', () => {
@@ -246,10 +248,7 @@ describe('the roster', () => {
     game.quickDeploy();
     expect(game.partyHeroes.length).toBeGreaterThan(0);
     expect(game.expeditionParty.length).toBeGreaterThan(0);
-    for (const row of ['front', 'back'] as const) {
-      expect(game.expeditionParty.filter((s) =>
-        (s.unitId === 'Archer') === (row === 'back')).length).toBeLessThanOrEqual(3);
-    }
+    expect(game.expeditionParty.length).toBeLessThanOrEqual(6);
   });
 
   it('states the soldiers the fight will cost before it is paid', () => {

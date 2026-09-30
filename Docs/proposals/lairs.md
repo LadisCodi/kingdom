@@ -190,10 +190,15 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   ([`../features/11a-ruins-ui.md`](../features/11a-ruins-ui.md) §2.5–§2.6),
   top to bottom:
   - the name on the plain title plank, and one line with the countdown;
-  - **the enemy's board** — heroes, back row, front row from top to bottom,
-    and its power;
-  - **your board** — front row, back row, heroes, and your power: the two
-    front rows face each other;
+  - **the enemy's board** — up to six troop slots and its hero slots, and
+    its power;
+  - **your board** — six troop slots and three hero slots (one free, the
+    rest bought with Gems), and your power;
+  - **no rows on this screen.** Where a squad stands in the fight — in
+    front or behind — is its unit type's (melee and flankers in front, the
+    ranged behind, [`../features/combat.md`](../features/combat.md) §8),
+    never the player's choice, so the deploy screen does not draw it. The
+    fight's playback does: that is where the rows are seen at work;
   - **the roster** (below);
   - **the action box** — the upgrade popup's cost box: the supplies' price
     on top, **Attack** under it with **Quick deploy** beside it, and the
@@ -204,17 +209,16 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   - **Troops: one tile per unit type** — portrait, type emblem, and how many
     are still at home.
   - **A tap sends one squad**: up to that type's `squadSize`, into the next
-    free slot of **its own row** — melee and flankers front, ranged back
-    ([`../features/combat.md`](../features/combat.md) §8). Tapped again, it
-    sends another squad beside the first.
+    free troop slot — six of anything. Tapped again, it sends another squad
+    beside the first.
     - *200 Warriors, `squadSize` 50: the first tap puts 50 on the board and
       leaves 150; the second puts 50 more beside them and leaves 100.*
     - The last squad takes what is left, if it is less than `squadSize`.
   - **Heroes: one tile per hero** — portrait and rank. A tap toggles it: in,
     it wears a green check and takes the next hero slot; tapped again, it
     leaves.
-  - A tap that cannot place — no one at home, the row full, the army cap
-    reached, a locked hero slot — does nothing and says why in one line.
+  - A tap that cannot place — no one at home, every slot full, a locked
+    hero slot — does nothing and says why in one line.
   - **Quick deploy** fills the board with the strongest legal party, answering
     the lair's creature first.
 - A tap on a filled slot of **your board** empties it: a squad goes back home,

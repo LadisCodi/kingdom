@@ -11,11 +11,12 @@
 .k-sheet.is-tall.is-board { max-height: 100%; }
 
 .bt {
+  --slot-size: calc(var(--px) * 40);
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 6);
 }
-.bt > .k-section-head { margin: calc(var(--px) * 4) 0 0; }
+.bt > .k-section-head { margin: calc(var(--px) * 2) 0 0; }
 
 /* ------------------------------------------------------------ the boards */
 
@@ -33,25 +34,30 @@
 .bt-army.is-mine > .bt-army-head { color: var(--leaf-dark); }
 .bt-army.is-mine.is-short > .bt-army-head { color: var(--clay); }
 
-.bt-row {
+.bt-group {
   display: grid;
   grid-template-columns: calc(var(--px) * 64) 1fr;
   align-items: center;
   gap: calc(var(--px) * 8);
 }
-.bt-row-label {
+.bt-group-label {
   color: var(--ink);
   font-size: var(--text-helper);
   font-weight: var(--weight-title);
   line-height: 1.1;
 }
-.bt-row-slots {
-  display: flex;
+/* Three to a line: the six troop slots are two lines, the heroes one. The
+   lines are only how six fit a phone — they are not the fight's rows. */
+.bt-group-slots {
+  display: grid;
+  grid-template-columns: repeat(3, var(--slot-size));
   justify-content: space-around;
-  gap: calc(var(--px) * 6);
+  row-gap: calc(var(--px) * 6);
+  column-gap: calc(var(--px) * 6);
 }
+.bt-group.is-heroes { padding-top: calc(var(--px) * 3); border-top: calc(var(--px) * 1) dashed var(--section-line); }
 .bt-cell {
-  --portrait-size: calc(var(--px) * 40);
+  --portrait-size: var(--slot-size);
   position: relative;
   display: grid;
   place-items: center;
@@ -75,7 +81,7 @@ button.bt-cell { cursor: pointer; }
   background: var(--parchment-shade);
   box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
 }
-.bt-row.is-heroes .bt-cell.is-empty { opacity: 0.8; }
+.bt-group.is-heroes .bt-cell.is-empty { opacity: 0.8; }
 .bt-cell.is-locked {
   border: calc(var(--px) * 2) solid var(--section-line);
   border-radius: 50%;
@@ -114,8 +120,8 @@ button.bt-cell { cursor: pointer; }
 }
 .bt-tile.k-section {
   position: relative;
-  width: calc(var(--px) * 56);
-  height: calc(var(--px) * 56);
+  width: calc(var(--px) * 52);
+  height: calc(var(--px) * 52);
   padding: 0;
   overflow: hidden;
   cursor: pointer;
@@ -181,8 +187,8 @@ button.bt-cell { cursor: pointer; }
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 6);
-  margin-top: calc(var(--px) * 4);
-  padding: calc(var(--px) * 10);
+  margin-top: calc(var(--px) * 2);
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
 }
 .bt-go-row {
   display: grid;

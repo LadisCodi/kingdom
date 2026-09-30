@@ -65,7 +65,7 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  TROOPS_PER_ROW, attackLair, claimLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
+  attackLair, claimLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
@@ -128,7 +128,7 @@ import {
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
 } from './sim/missions';
-import { rowFor, type BattleLog } from './sim/battle';
+import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
@@ -3213,10 +3213,10 @@ export class Game {
   /**
    * ONE TAP ON A TROOP TILE: one more squad of that type on the board — as
    * big as `squadSize`, or everything of it left at home — into the next free
-   * slot of ITS OWN ROW (Docs/proposals/lairs.md §6). Tapped again, another
-   * squad beside the first. The row is the unit's, never the player's: melee
-   * and flankers stand in front, the ranged behind (combat.md §8), three to a
-   * row.
+   * troop slot (Docs/proposals/lairs.md §6). Tapped again, another squad
+   * beside the first. Six slots, of any type: where a squad STANDS in the
+   * fight is its unit's business (combat.md §8), never the player's, and the
+   * deploy screen does not show it.
    */
   assignTroop(unitId: UnitId): void {
     const refusal = this.troopRefusal(unitId);
@@ -3233,10 +3233,6 @@ export class Game {
    *  or null when a tap would place a squad. */
   troopRefusal(unitId: UnitId): string | null {
     if (this.troopsAvailableFor(unitId) <= 0) return `No ${UNITS[unitId].name}s left to send`;
-    const row = rowFor(unitId);
-    if (this.expeditionParty.filter((s) => rowFor(s.unitId) === row).length >= TROOPS_PER_ROW) {
-      return `The ${row} row is full`;
-    }
     if (this.expeditionParty.length >= this.troopSlotsOpen()) return 'Every troop slot is full';
     return null;
   }
@@ -3244,8 +3240,8 @@ export class Game {
   /**
    * QUICK DEPLOY: the strongest legal party, answering the lair's creature
    * first — every hero slot with the highest-level heroes, then squad after
-   * squad of the best-answering type that still has soldiers at home and
-   * room in its row, until the board or the army runs out.
+   * squad of the best-answering type that still has soldiers at home, until
+   * the six slots or the army run out.
    */
   quickDeploy(): void {
     if (this.lairId === null) return;

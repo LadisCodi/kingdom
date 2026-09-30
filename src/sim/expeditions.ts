@@ -38,10 +38,6 @@ import { canAfford, pay } from './wallet';
  */
 export const troopSlots = (): number => PARTY.troopSlots;
 
-/** Two rows of three (Docs/features/combat.md §3). A squad's row is its
- *  unit's (`rowFor`), so a row fills up by type, not by the player's choice. */
-export const TROOPS_PER_ROW = 3;
-
 // ---------------------------------------------------------------- supplies
 
 /**

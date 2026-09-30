@@ -8,25 +8,27 @@
 //
 // TOP TO BOTTOM, and nothing else:
 //
-//   the enemy's board — heroes, back row, front row, and its power;
-//   your board — front row, back row, heroes, and your power;
+//   the enemy's board — its six troop slots, its hero slots, and its power;
+//   your board — the same, and your power;
 //   the ROSTER: one tile per troop type, one per hero;
 //   the action box — the supplies over Attack, Quick deploy beside it, and
 //   the soldiers the fight will cost as its hint.
 //
-// The two front rows face each other across the gap between the boxes. Built
+// NO ROWS. A squad's place in the fight — in front or behind — is its unit
+// type's (combat.md §8), never a choice the player makes, so the deploy
+// screen does not draw it: six troop slots of anything, and the hero slots.
+// The fight's playback is where the rows are seen (battleScreen.ts). Built
 // from the kit the district card and the upgrade popup use — the inset box,
 // the section heading, the game's buttons — so the screen reads as one of
 // theirs rather than as a thing of its own.
 //
 // THE PLAYER NEVER PICKS A SLOT. A tap on a troop tile sends one squad into
-// the next free slot of that unit's own row (`Game.assignTroop`), a tap on a
+// the next free troop slot (`Game.assignTroop`), a tap on a
 // hero tile puts the hero in or takes it out, and a tap on a filled slot of
 // your board sends it home. The board above only shows the party.
 
 import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import { rowFor, type Row } from '../sim/battle';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
@@ -58,8 +60,6 @@ export interface BattleView {
   blocked: string | null;
 }
 
-const SLOTS_PER_ROW = 3;
-
 /** A squad on the board: its face in the round frame, its count under it. */
 const squadCell = (face: HTMLElement, count: number): HTMLElement =>
   el('span', { class: 'bt-cell is-filled' },
@@ -68,20 +68,20 @@ const squadCell = (face: HTMLElement, count: number): HTMLElement =>
 
 const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
 
-/** A row of the board: its name, then its slots — never fewer than three, so
- *  both boards keep one shape. */
-const boardRow = (label: string, cells: HTMLElement[], cls = ''): HTMLElement => {
-  while (cells.length < SLOTS_PER_ROW) cells.push(emptyCell());
-  return el('div', { class: `bt-row${cls ? ` ${cls}` : ''}` },
-    el('span', { class: 'bt-row-label' }, label),
-    el('div', { class: 'bt-row-slots' }, ...cells));
+/** A group of slots — the troops' or the heroes' — padded with empty ones
+ *  to `slots`, so both boards keep one shape. */
+const slotGroup = (label: string, cells: HTMLElement[], slots: number, cls: string): HTMLElement => {
+  while (cells.length < slots) cells.push(emptyCell());
+  return el('div', { class: `bt-group ${cls}` },
+    el('span', { class: 'bt-group-label' }, label),
+    el('div', { class: 'bt-group-slots' }, ...cells));
 };
 
 /** A board in its inset box, headed like a section — `ENEMY · 60`. */
-const armyBox = (label: string, power: number, cls: string, rows: HTMLElement[]): HTMLElement => {
+const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[]): HTMLElement => {
   const head = sectionHead(`${label} · ${power}`);
   head.classList.add('bt-army-head');
-  return el('section', { class: `bt-army k-section ${cls}` }, head, ...rows);
+  return el('section', { class: `bt-army k-section ${cls}` }, head, ...groups);
 };
 
 const heroFace = (heroId: HeroId): HTMLElement => {
@@ -92,26 +92,19 @@ const heroFace = (heroId: HeroId): HTMLElement => {
 
 // ------------------------------------------------------------- the enemy
 
-function enemyBoard(view: BattleView): HTMLElement {
-  const cellsIn = (row: Row): HTMLElement[] => view.enemy.squads
-    .filter((s) => rowFor(s.unitId) === row)
-    .map((s) => squadCell(view.enemy.portrait(s.unitId), s.count));
-  // Inverted: from the top, heroes, then the back row, then the FRONT — so
-  // the front row stands nearest ours, across the gap.
+function enemyBoard(game: Game, view: BattleView): HTMLElement {
+  const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count));
   return armyBox('Enemy', view.enemy.power, 'is-enemy', [
-    boardRow('Heroes', [], 'is-heroes'),
-    boardRow('Back row', cellsIn('back')),
-    boardRow('Front row', cellsIn('front')),
+    slotGroup('Troops', troops, Math.max(game.troopSlotsOpen(), troops.length), 'is-troops'),
+    slotGroup('Heroes', [], game.heroSlotCeiling(), 'is-heroes'),
   ]);
 }
 
 // -------------------------------------------------------------- your board
 
 function partyBoard(game: Game, view: BattleView): HTMLElement {
-  const cellsIn = (row: Row): HTMLElement[] => game.expeditionParty
-    .map((slot, index) => ({ slot, index }))
-    .filter(({ slot }) => rowFor(slot.unitId) === row)
-    .map(({ slot, index }) => {
+  const troops = game.expeditionParty
+    .map((slot, index) => {
       const cell = el('button', {
         class: 'bt-cell is-filled is-mine', type: 'button',
         'aria-label': `Send ${slot.count} ${UNITS[slot.unitId].name}s home`,
@@ -152,9 +145,8 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
   }
 
   return armyBox('Your army', view.attack, `is-mine${view.enough ? '' : ' is-short'}`, [
-    boardRow('Front row', cellsIn('front')),
-    boardRow('Back row', cellsIn('back')),
-    boardRow('Heroes', heroes, 'is-heroes'),
+    slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
+    slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes'),
   ]);
 }
 
@@ -220,7 +212,7 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
 export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   const troops = UNIT_ORDER.filter((u) => UNITS[u] !== undefined);
   const body = el('div', { class: 'bt' },
-    enemyBoard(view),
+    enemyBoard(game, view),
     partyBoard(game, view),
     sectionHead('Troops'),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
