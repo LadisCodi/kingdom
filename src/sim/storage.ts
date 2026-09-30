@@ -15,16 +15,20 @@ import { DISTRICTS, HARVEST, STORAGE, levelIndexed } from './data/definitions';
 import { houseGoldPerMinute } from './population';
 import { effectiveWorkerStrike, workerStrikeMs } from './upgrades';
 import { recordResourceDiscovery } from './discovery';
+import { techMultiplier } from './techEffects';
 import { recordEvent } from './events';
 import {
   addToWallet, getWallet,
   type CurrencyId, type District, type GameState, type Wallet,
 } from './state';
 
-/** Units this building holds at its current level; 0 = it has no store. */
-export function storageCapacity(district: District): number {
+/** Units this building holds at its current level, after the tree's
+ *  Granaries (`storageCapacity`, a percent); 0 = it has no store. */
+export function storageCapacity(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].storageCapacityPerLevel;
-  return list.length === 0 ? 0 : levelIndexed(list, district.level);
+  if (list.length === 0) return 0;
+  return Math.floor(levelIndexed(list, district.level)
+    * techMultiplier(state, 'storageCapacity', { district: district.definitionId }));
 }
 
 /** Everything in the store, all currencies together — what the capacity is
@@ -40,11 +44,11 @@ export const storedOf = (district: District, c: CurrencyId): number =>
 
 /** Room left before the building stops. Never negative: a haul already on
  *  its way when the store filled lands whole, so a store can sit a load over. */
-export const storageSpace = (district: District): number =>
-  Math.max(0, storageCapacity(district) - storedTotal(district));
+export const storageSpace = (state: GameState, district: District): number =>
+  Math.max(0, storageCapacity(state, district) - storedTotal(district));
 
-export const isStoreFull = (district: District): boolean =>
-  storageCapacity(district) > 0 && storageSpace(district) === 0;
+export const isStoreFull = (state: GameState, district: District): boolean =>
+  storageCapacity(state, district) > 0 && storageSpace(state, district) === 0;
 
 /** Something waits in the store, however little. */
 export const hasStored = (district: District): boolean => storedTotal(district) > 0;
@@ -68,7 +72,7 @@ export function productionPerSecond(state: GameState, district: District): numbe
  *  the building makes now, one at least, never more than the whole store. */
 export function collectThreshold(state: GameState, district: District): number {
   const need = Math.max(1, Math.ceil(productionPerSecond(state, district) * STORAGE.collectSeconds));
-  const cap = storageCapacity(district);
+  const cap = storageCapacity(state, district);
   return cap === 0 ? need : Math.min(cap, need);
 }
 
@@ -84,7 +88,7 @@ export function collectThreshold(state: GameState, district: District): number {
 export function readyToCollect(state: GameState, district: District): boolean {
   const total = storedTotal(district);
   if (total <= 0) return false;
-  return isStoreFull(district) || total >= collectThreshold(state, district);
+  return isStoreFull(state, district) || total >= collectThreshold(state, district);
 }
 
 /** Put units in the store, uncapped — the caller decides what fits. */
@@ -125,7 +129,7 @@ export function cityStored(state: GameState, c: CurrencyId): number {
 export function collectStore(state: GameState, district: District, now: number): Wallet {
   const moved: Wallet = { ...(district.stored ?? {}) };
   if (Object.keys(moved).length === 0) return moved;
-  const wasFull = isStoreFull(district);
+  const wasFull = isStoreFull(state, district);
   delete district.stored;
   for (const [c, n] of Object.entries(moved) as Array<[CurrencyId, number]>) {
     if (n <= 0) continue;

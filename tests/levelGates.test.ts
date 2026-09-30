@@ -73,9 +73,9 @@ describe('tech-gated upgrades', () => {
     expect(says()).toBe('AlreadyUpgrading');
   });
 
-  it('the Sawmill: L2 is tech-free, L3 sits behind Engineering', () => {
+  it('the Sawmill: L2 is tech-free, L3 sits behind Timber Framing', () => {
     expect(requiredTechForLevel('Sawmill', 2)).toBe(null);
-    expect(requiredTechForLevel('Sawmill', 3)).toBe('Engineering');
+    expect(requiredTechForLevel('Sawmill', 3)).toBe('TimberFraming');
   });
 });
 
@@ -133,6 +133,8 @@ describe('every upgradable building has something to show for the level', () => 
     // The Infirmary's whole ladder: beds for the wounded
     // (Docs/features/combat.md §4).
     'bedsPerLevel',
+    // The Tavern's: a share more Hero XP (Docs/features/22-progression.md §6).
+    'heroXpBonusPerLevel',
     // What a producer's LATE level buys, since crew and reach stop growing at
     // five (Docs/plans/builder-30-days.md §4).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',
@@ -202,7 +204,6 @@ describe('the late levels are gated by goods and the Townhall, not by research',
     addBuilt(state, 'Sawmill', { x: 4, y: 2 });
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     sawmill.level = 5;
-    completeTech(state, 'Engineering');
     completeTech(state, 'Architecture');
 
     // The Townhall answers first: a trip to the workshop is pointless while
@@ -225,7 +226,7 @@ describe('the late levels are gated by goods and the Townhall, not by research',
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     sawmill.level = 5;
     townhall(state).level = 6;
-    completeTech(state, 'Engineering');
+    completeTech(state, 'Architecture');
     completeTech(state, 'Architecture');
     addGood(state.city.goods, 'Planks', 10);
     addGood(state.city.goods, 'CutStone', 4);

@@ -33,6 +33,18 @@ export const T0 = Date.parse('2026-08-20T12:00:00Z');
 export const TEST_SEED = 0x5eed;
 
 export const freshGame = (): GameState => {
+  const state = firstGame();
+  // EVERY DOOR OPEN. Most of the suite is about a system, not about when the
+  // kingdom first meets it, so a test game is a veteran's: every book open,
+  // every scene played (Docs/features/22-progression.md §1). The doors
+  // themselves — and the chain that walks through them — use `firstGame`.
+  state.tutorial.veteran = true;
+  return state;
+};
+
+/** A kingdom exactly as a new player meets it: every door but Civics shut,
+ *  no scene played. What the onboarding and the doors are tested on. */
+export const firstGame = (): GameState => {
   const state = newGame(map, T0);
   state.seed = TEST_SEED;
   // A payer profile, so the presenter does not hold every test behind the

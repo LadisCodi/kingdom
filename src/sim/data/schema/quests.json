@@ -25,13 +25,23 @@
         "DiscoverFeature"
       ]
     },
-    "goalTarget": { "type": "text", "nullable": true },
+    "goalTarget": {
+      "type": "text",
+      "nullable": true,
+      "doc": "What the goal names. ClaimLandmarks may name a landmark KIND (Watchtower) or nothing for any."
+    },
     "goalAmount": { "type": "int", "min": 1 },
     "goalLevel": { "type": "int", "nullable": true },
     "reward": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" },
     "rewardGems": { "type": "int" },
     "rewardStardust": { "type": "int" },
     "rewardKnowledge": { "type": "int" },
-    "rewardMana": { "type": "int" }
+    "rewardMana": { "type": "int" },
+    "rewardPack": {
+      "type": "text",
+      "ref": "pack",
+      "nullable": true,
+      "doc": "A card pack handed over on the claim — the first is how the collection is met (Docs/features/22-progression.md §7)."
+    }
   }
 }

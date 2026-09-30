@@ -78,11 +78,11 @@ describe('rent', () => {
     addBuilt(state, 'Housing', HOUSE);
     const h = house(state);
     state.city.population = 2; // 60 Gold a minute
-    const cap = storageCapacity(h);
+    const cap = storageCapacity(state, h);
     const fillMs = (cap / houseGoldPerMinute(state, h)) * 60_000;
     tickAt(state, T0 + fillMs * 3); // an absence three times as long as the store
     expect(storedOf(h, 'Gold')).toBe(cap);
-    expect(isStoreFull(h)).toBe(true);
+    expect(isStoreFull(state, h)).toBe(true);
     // Collected, it starts again from the tap — not from when it filled.
     const now = T0 + fillMs * 3 + 500;
     expect(collectBuilding(state, h.uniqueId, now).Gold).toBe(cap);
@@ -107,7 +107,7 @@ describe('rent', () => {
     const stepped = mk();
     for (let t = 60_000; t <= end; t += 60_000) tickAt(stepped, T0 + t);
     expect(oneCall.city.population).toBe(stepped.city.population);
-    expect(isStoreFull(house(oneCall))).toBe(true);
+    expect(isStoreFull(oneCall, house(oneCall))).toBe(true);
     for (let i = 0; i < oneCall.city.districts.length; i++) {
       const a = oneCall.city.districts[i];
       const b = stepped.city.districts[i];
@@ -145,7 +145,7 @@ describe('collecting from a house', () => {
     state.city.population = 2;
     tickAt(state, T0 + 60_000);
     expect(collectBuilding(state, townhall(state).uniqueId, T0 + 60_000)).toEqual({});
-    expect(storageCapacity(townhall(state))).toBe(0);
+    expect(storageCapacity(state, townhall(state))).toBe(0);
   });
 });
 

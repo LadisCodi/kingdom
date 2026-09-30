@@ -53,13 +53,15 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
-    // Nothing is researched, and nothing is granted. Every book is open from
-    // the first minute (sim/research.ts `isTomeOpen`); what paces one is the
-    // era bars, which ask for revealed cells.
+    // Nothing is researched, and nothing is granted. Civics is open from the
+    // first minute; every other book opens on a fact about the world
+    // (sim/research.ts `TOME_OPENS`), and the era bars pace each page.
     research: { completed: [], poured: {} },
     schedule: [],
-    // One hero free at the start — a wallet may buy power, but never sole
-    // access, so the system has to be reachable without it.
+    // One hero from the start — the Warden, captain of the guard. Nothing
+    // shows her until the first lair, where she steps forward
+    // (Docs/features/23-tutorials.md §4.2); Bess comes with the Tavern
+    // (sim/story.ts). A wallet may buy power, but never sole access.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
       // One hero slot is free; the second and third are Gems, always
@@ -87,6 +89,8 @@ export function newGame(map: MapData, now: number): GameState {
     tallies: {},
     replaying: false,
     discoveries: {},
+    // A new kingdom meets every door shut and every scene unplayed.
+    tutorial: { veteran: false, seen: {} },
     pendingDiscoveries: [],
     seed: newSeed(),
     nextId: 1,

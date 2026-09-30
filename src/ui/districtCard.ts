@@ -382,7 +382,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       : []),
     ...statsAt(game, district, district.level).filter((f) => f.onCard !== false).map((f) =>
       (f.key === 'store' && built
-        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(district) }
+        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(game.state, district) }
         : f.key === 'homes' && built
           ? { ...f, value: `${formatShort(game.residentsIn(district))}/${formatShort(districtCapacity(game.state, district))}` }
           : f)),

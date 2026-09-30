@@ -12,6 +12,11 @@
         "tapsToReveal": { "type": "int" },
         "minCost": { "type": "int" },
         "claimDiscoverRadius": { "type": "int" },
+        "watchtowerDiscoverRadius": {
+          "type": "int",
+          "min": 0,
+          "doc": "Cells a claimed Watchtower discovers round it — a shrine's lantern, held higher."
+        },
         "reachPerTownhallLevel": { "type": "list", "of": { "type": "int" }, "length": { "townhall": true } },
         "countStep": { "type": "int" },
         "countGrowth": { "type": "float" }

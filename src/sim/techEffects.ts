@@ -114,6 +114,14 @@ export function techFlatAimed(
   return (folded(state).get(effectKey(stat, target)) ?? NOTHING).flat;
 }
 
+/** ONLY the percent aimed at exactly this target, as a fraction — the twin of
+ *  `techFlatAimed`, for the same reader. */
+export function techPctAimed(
+  state: GameState, stat: TechStat, target: TechTarget,
+): number {
+  return (folded(state).get(effectKey(stat, target)) ?? NOTHING).pct;
+}
+
 /**
  * The base, after the technologies: `(base + flat) × (1 + pct)`.
  *

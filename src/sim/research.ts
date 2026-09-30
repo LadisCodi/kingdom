@@ -5,6 +5,7 @@
 // the spot. There are no slots and nothing is ever under study, so research
 // has no boundary source. Tree edges via `requires`.
 
+import { watchtowerClaimed } from './landmarks';
 import {
   DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
 } from './data/definitions';
@@ -125,7 +126,7 @@ export const techEraUnlocked = (state: GameState, id: TechId): boolean =>
   eraUnlocked(state, TECHNOLOGIES[id].tome, TECHNOLOGIES[id].era);
 
 export type ResearchRefusal =
-  | 'AlreadyDone' | 'MissingRequirement' | 'EraLocked';
+  | 'AlreadyDone' | 'MissingRequirement' | 'EraLocked' | 'TomeClosed';
 
 /**
  * Why a technology cannot be worked on at all, or null when it can.
@@ -137,6 +138,7 @@ export type ResearchRefusal =
 export function researchRefusal(state: GameState, id: TechId): ResearchRefusal | null {
   if (!TECHNOLOGIES[id].placed) return 'MissingRequirement';
   if (isTechComplete(state, id)) return 'AlreadyDone';
+  if (!isTomeOpen(state, TECHNOLOGIES[id].tome as TomeId)) return 'TomeClosed';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
   if (!techEraUnlocked(state, id)) return 'EraLocked';
   return null;
@@ -229,30 +231,36 @@ export function techState(state: GameState, id: TechId): TechState {
 // ----------------------------------------------------------------- tomes
 
 /**
- * A tome is OPEN once its cover page is researched — and a cover page is
- * granted by an event in the world, never bought.
+ * WHAT OPENS EACH BOOK (Docs/features/22-progression.md §4) — a fact about the
+ * world, never a research, and one the kingdom can only gain, so a book once
+ * open is open for ever.
  *
- * Civics is granted at the new-game seed because it is the game. Magic is
- * granted on the first paid reveal and Warfare on the first discovered lair
- * (Docs/features/07-research.md §2). Nothing in the tree is reachable
- * before its cover page, so this is the one gate that decides whether a book
- * exists for the player at all.
+ * This is the one place a book's door is decided: the tree file says what is
+ * IN a book; what makes it open is code, the way what makes a found book
+ * *found* always was (CLAUDE.md, "Data or code?").
+ *
+ * `veteran` opens every door for a save made before the doors existed
+ * (`state.tutorial.veteran`, sim/save.ts).
  */
-/**
- * Every book is open, always.
- *
- * Opening one used to be a TECHNOLOGY — a free, instant cover page granted by
- * an event in the world (the first paid reveal for Magic, the first lair in
- * sight for Warfare) and by `newGame` for Civics. The card existed only to be
- * the marker, so the three of them were free clicks that did nothing, and the
- * era bars already pace a book by what the player has revealed. So the marker
- * is gone and the shelf shows three tabs from the first minute.
- *
- * Kept as a function rather than deleted at the call sites: a book that is
- * shut is a real thing to want back (a fourth tome bought with Gems, a
- * seasonal book), and this is the one place it would go.
- */
-export const isTomeOpen = (_state: GameState, _tome: TomeId): boolean => true;
+export const TOME_OPENS: Record<TomeId, (state: GameState) => boolean> = {
+  Civics: () => true,
+  // The first lair DISCOVERED: the army is what answers it.
+  Warfare: (state) => Object.keys(state.lairs).length > 0,
+  // The first landmark CLAIMED: the old stones are where magic is felt.
+  Magic: (state) => Object.values(state.landmarks.claimed).some((c) => c === true),
+  // Found: a Tavern standing.
+  Sagas: (state) => state.city.districts.some(
+    (d) => d.definitionId === 'Tavern' && d.state === 'Built'),
+  // Found: the Watchtower claimed.
+  Atlas: (state) => watchtowerClaimed(state),
+};
+
+export const isTomeOpen = (state: GameState, tome: TomeId): boolean =>
+  state.tutorial?.veteran === true || (TOME_OPENS[tome]?.(state) ?? false);
+
+/** A found book is not on the shelf until it is found; a general one is, with
+ *  a padlock (Docs/features/22-progression.md §3). */
+export const isFoundTome = (tome: TomeId): boolean => tome === 'Sagas' || tome === 'Atlas';
 
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));

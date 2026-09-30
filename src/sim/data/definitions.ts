@@ -482,6 +482,9 @@ export interface QuestDef {
   /** The research clock, seeded by the chain before the first landmark drips
    *  (07-research.md §3). */
   rewardKnowledge: number;
+  /** A card pack handed over on the claim, or null. The first one is how the
+   *  collection is met (Docs/features/22-progression.md §7). */
+  rewardPack: PackTier | null;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -584,6 +587,9 @@ export interface DistrictDef {
    *  turns a casualty into a bill instead of a loss
    *  (Docs/features/combat.md §4). */
   bedsPerLevel: readonly number[];
+  /** Percent more Hero XP the kingdom earns while this stands — the TOTAL at
+   *  each level. Only the Tavern has any (Docs/features/22-progression.md §6). */
+  heroXpBonusPerLevel: readonly number[];
   /** Everything this building can turn out; empty = it trains nothing. A list
    *  rather than one id, so a hall can offer a choice — and so the Townhall
    *  can offer the Villager on the same footing. Army size is a
@@ -783,13 +789,12 @@ export interface TomeDef {
 }
 
 /**
- * The shelf, in reading order.
+ * The shelf, in reading order: the three general books, then the found ones.
  *
- * All three are open from the first minute. A book used to be opened by a
- * granted cover page — Civics with the kingdom, Magic on the first paid
- * reveal, Warfare on the first lair in sight — and the card existed only to
- * be the marker. What paces a book is its era bars, which ask for revealed
- * cells, so the marker was doing nothing the bars were not.
+ * Civics is open from the first minute; every other book opens on a fact
+ * about the world, never on a research (`sim/research.ts#TOME_OPENS`,
+ * Docs/features/22-progression.md §4). What paces an open book is its era
+ * bars, which ask for revealed cells.
  */
 export const TOMES: Record<TomeId, TomeDef> = {
   Civics: {
@@ -802,7 +807,15 @@ export const TOMES: Record<TomeId, TomeDef> = {
   },
   Warfare: {
     id: 'Warfare', name: 'Warfare', glyph: '🚩',
-    blurb: 'The army, and what it goes into the ground for.',
+    blurb: 'The army, and the lairs it clears.',
+  },
+  Sagas: {
+    id: 'Sagas', name: 'Sagas', glyph: '📖',
+    blurb: 'Heroes, and the Tavern that hosts them.',
+  },
+  Atlas: {
+    id: 'Atlas', name: 'Atlas', glyph: '🧭',
+    blurb: 'Sight, landmarks, and the world beyond the province.',
   },
 };
 
@@ -1092,6 +1105,7 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
   Shrine: { name: 'Shrine', glyph: '⛩️', sprite: 'landmark_shrine' },
   StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
   Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
+  Watchtower: { name: 'Watchtower', glyph: '🗼', sprite: 'landmark_watchtower' },
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
@@ -2079,4 +2093,8 @@ export const GAME_VERSION = '0.1.0';
 // v64: ruins and gates are lairs. `kingdom.gates` becomes `kingdom.lairs`,
 // `RuinID` becomes `LairID`, and every persisted place id becomes its
 // creature's (HollowBarrow → Orcs, …), discovery keys included.
-export const SAVE_VERSION = 68;
+// v69: the first-time experience. `kingdom.tutorial` (the scenes played, and
+// `Veteran` for a kingdom from before the doors) is additive: a save without
+// it reads as a veteran. A worker carries its strike's remainder
+// (`StrikeCarry`), additive too.
+export const SAVE_VERSION = 69;

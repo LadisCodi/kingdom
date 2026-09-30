@@ -20,6 +20,7 @@
     "tapsToReveal": 5,
     "minCost": 1,
     "claimDiscoverRadius": 5,
+    "watchtowerDiscoverRadius": 8,
     "reachPerTownhallLevel": [3, 5, 7, 8, 10, 11, 13, 15, 17, 23],
     "countStep": 10,
     "countGrowth": 1.05

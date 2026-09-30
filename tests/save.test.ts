@@ -117,7 +117,7 @@ describe('save round-trip', () => {
     const shorter = deserialize(mk(), map, T0 + 30_000 + 72 * 3_600_000)!;
     expect(stored(longer, 'Wood')).toBe(stored(shorter, 'Wood'));
     expect(stored(longer, 'Gold')).toBe(stored(shorter, 'Gold'));
-    expect(longer.city.districts.filter(isStoreFull).length).toBeGreaterThan(0);
+    expect(longer.city.districts.filter((d) => isStoreFull(longer, d)).length).toBeGreaterThan(0);
     // The queued Housing finished.
     expect(longer.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
     // A crew by a full store waits at the door rather than walking.
@@ -309,12 +309,14 @@ describe('save versions', () => {
     const save = serialize(state, T0);
     const research = (save.Modules['kingdom.research'] as any);
     research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
+    // Resonance left the tree in 2026-10 (it was a discount); the migrator
+    // still turns it into ranks, and the loader drops what the tree lacks.
     save.SaveVersion = 23;
 
     const restored = deserialize(save, map, T0)!;
     expect(restored).not.toBeNull();
     expect(rankOf(restored, 'TapPower')).toBe(3);
-    expect(rankOf(restored, 'Resonance')).toBe(1);
+    expect(restored.research.completed.some((id) => id.startsWith('Resonance'))).toBe(false);
     // Exactly the ranks paid for, and not one more.
     expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
     expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
@@ -514,10 +516,10 @@ describe('research without a clock (v61)', () => {
 
   it('round-trips what is poured and how much Knowledge Gold has bought', () => {
     const state = freshGame();
-    state.research.poured = { Agriculture: 1, Taxes01: 2 };
+    state.research.poured = { Agriculture: 1, TradeRoutesI: 2 };
     state.kingdom.knowledgeBoughtWithGold = 7;
     const back = deserialize(serialize(state, T0), map, T0)!;
-    expect(back.research.poured).toEqual({ Agriculture: 1, Taxes01: 2 });
+    expect(back.research.poured).toEqual({ Agriculture: 1, TradeRoutesI: 2 });
     expect(back.kingdom.knowledgeBoughtWithGold).toBe(7);
   });
 });

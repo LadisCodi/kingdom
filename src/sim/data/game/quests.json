@@ -10,7 +10,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Woodcraft",
@@ -23,7 +24,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Timber",
@@ -36,7 +38,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 30
+    "rewardMana": 30,
+    "rewardPack": null
   },
   {
     "id": "ARoof",
@@ -49,7 +52,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Rations",
@@ -62,7 +66,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 30
+    "rewardMana": 30,
+    "rewardPack": null
   },
   {
     "id": "FirstVillager",
@@ -75,7 +80,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "TaxDay",
@@ -88,7 +94,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Explorer",
@@ -101,7 +108,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Fields",
@@ -114,7 +122,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 6,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "FirstPlot",
@@ -127,7 +136,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "ByHand",
@@ -140,7 +150,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 40
+    "rewardMana": 40,
+    "rewardPack": null
   },
   {
     "id": "Lumber",
@@ -153,7 +164,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Tillage",
@@ -166,7 +178,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Farmhand",
@@ -179,11 +192,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "ToWork",
-    "name": "Put them to work",
+    "name": "To work",
     "goalType": "AssignWorkers",
     "goalTarget": null,
     "goalAmount": 1,
@@ -192,7 +206,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "GrowingTown",
@@ -205,11 +220,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Neighbors",
-    "name": "Neighbors",
+    "name": "Neighbours",
     "goalType": "ReachPopulation",
     "goalTarget": null,
     "goalAmount": 3,
@@ -218,7 +234,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "SawTeeth",
@@ -231,7 +248,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "TheSawmill",
@@ -244,7 +262,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Crewed",
@@ -257,7 +276,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "ProperCapital",
@@ -270,20 +290,22 @@
     "rewardGems": 150,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Levies",
     "name": "Levies",
     "goalType": "CompleteTech",
-    "goalTarget": "Taxes01",
+    "goalTarget": "TradeRoutesI",
     "goalAmount": 1,
     "goalLevel": null,
     "reward": { "Gold": 80 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Sawpits",
@@ -296,20 +318,22 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Regrowth",
     "name": "Regrowth",
     "goalType": "CompleteTech",
-    "goalTarget": "Reforesting01",
+    "goalTarget": "ReforestingI",
     "goalAmount": 1,
     "goalLevel": null,
     "reward": { "Gold": 90 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "FurtherAfield",
@@ -322,7 +346,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "ArmedMen",
@@ -335,7 +360,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Mustered",
@@ -348,7 +374,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "FirstSoldier",
@@ -361,20 +388,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
-  },
-  {
-    "id": "FirstSummon",
-    "name": "A hero answers",
-    "goalType": "OwnHeroes",
-    "goalTarget": null,
-    "goalAmount": 2,
-    "goalLevel": null,
-    "reward": { "Gold": 150 },
-    "rewardGems": 0,
-    "rewardStardust": 20,
-    "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "MusterCompany",
@@ -387,7 +402,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "DriveThemOut",
@@ -400,7 +416,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": "Green"
   },
   {
     "id": "OldStones",
@@ -413,11 +430,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 3,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Attuned",
-    "name": "Attunement",
+    "name": "Attuned",
     "goalType": "CompleteTech",
     "goalTarget": "Consecration",
     "goalAmount": 1,
@@ -426,7 +444,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Mapmakers",
@@ -439,7 +458,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Surveyors",
@@ -452,59 +472,36 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
-    "id": "Highlands",
-    "name": "Into the highlands",
+    "id": "Watered",
+    "name": "Watered fields",
     "goalType": "CompleteTech",
-    "goalTarget": "ScalingTools",
+    "goalTarget": "IrrigationI",
     "goalAmount": 1,
     "goalLevel": null,
-    "reward": { "Gold": 220 },
+    "reward": { "Gold": 90 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
-    "id": "PutToSea",
-    "name": "Put to sea",
+    "id": "Fallow",
+    "name": "Fallow",
     "goalType": "CompleteTech",
-    "goalTarget": "Sailing",
+    "goalTarget": "CropRotationI",
     "goalAmount": 1,
     "goalLevel": null,
-    "reward": { "Gold": 270 },
+    "reward": { "Gold": 90 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
-  },
-  {
-    "id": "IntoTheDark",
-    "name": "A standing guard",
-    "goalType": "TrainArmy",
-    "goalTarget": null,
-    "goalAmount": 40,
-    "goalLevel": null,
-    "reward": { "Gold": 200 },
-    "rewardGems": 150,
-    "rewardStardust": 25,
-    "rewardKnowledge": 2,
-    "rewardMana": 0
-  },
-  {
-    "id": "Stoneworks",
-    "name": "Stoneworks",
-    "goalType": "BuildDistrict",
-    "goalTarget": "Quarry",
-    "goalAmount": 1,
-    "goalLevel": null,
-    "reward": { "Gold": 290 },
-    "rewardGems": 0,
-    "rewardStardust": 0,
-    "rewardKnowledge": 2,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "MoreRoom",
@@ -517,11 +514,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "SecondStory",
-    "name": "Second story",
+    "name": "A second storey",
     "goalType": "UpgradeDistrict",
     "goalTarget": "Housing",
     "goalAmount": 1,
@@ -530,7 +528,106 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Chisels",
+    "name": "Chisels",
+    "goalType": "CompleteTech",
+    "goalTarget": "Masonry",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 150 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 2,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Stoneworks",
+    "name": "Stoneworks",
+    "goalType": "BuildDistrict",
+    "goalTarget": "Quarry",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 290 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 2,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Crafts",
+    "name": "Crafts",
+    "goalType": "CompleteTech",
+    "goalTarget": "WorkerLoadI",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 200 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 2,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Knack",
+    "name": "A knack for it",
+    "goalType": "CompleteTech",
+    "goalTarget": "TapPowerI",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 120 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Hearth",
+    "name": "A warm hearth",
+    "goalType": "CompleteTech",
+    "goalTarget": "Hospitality",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 250 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "OpenDoors",
+    "name": "Open doors",
+    "goalType": "BuildDistrict",
+    "goalTarget": "Tavern",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 300 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "FirstSummon",
+    "name": "First summon",
+    "goalType": "OwnHeroes",
+    "goalTarget": null,
+    "goalAmount": 3,
+    "goalLevel": null,
+    "reward": { "Gold": 150 },
+    "rewardGems": 0,
+    "rewardStardust": 20,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "FullHouse",
@@ -543,11 +640,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "IronRoad",
-    "name": "The iron road",
+    "name": "Iron road",
     "goalType": "CollectResource",
     "goalTarget": "Stone",
     "goalAmount": 30,
@@ -556,11 +654,26 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Deft",
+    "name": "Deft",
+    "goalType": "CompleteTech",
+    "goalTarget": "QuickHandsI",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 120 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Architect",
-    "name": "The architect",
+    "name": "Architect",
     "goalType": "CompleteTech",
     "goalTarget": "Bureaucracy",
     "goalAmount": 1,
@@ -569,20 +682,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
-  },
-  {
-    "id": "DeepSeams",
-    "name": "Deep seams",
-    "goalType": "CompleteTech",
-    "goalTarget": "Mining",
-    "goalAmount": 1,
-    "goalLevel": null,
-    "reward": { "Gold": 380 },
-    "rewardGems": 0,
-    "rewardStardust": 0,
-    "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "GrandCapital",
@@ -595,11 +696,26 @@
     "rewardGems": 250,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "DeepSeams",
+    "name": "Deep seams",
+    "goalType": "CompleteTech",
+    "goalTarget": "Mining",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 380 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "TheSanctum",
-    "name": "A place for magic",
+    "name": "The Sanctum",
     "goalType": "BuildDistrict",
     "goalTarget": "Sanctum",
     "goalAmount": 1,
@@ -608,7 +724,8 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "AWarband",
@@ -621,11 +738,12 @@
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "TheBarrowsPrize",
-    "name": "A second shrine",
+    "name": "Two shrines",
     "goalType": "ClaimLandmarks",
     "goalTarget": null,
     "goalAmount": 2,
@@ -634,37 +752,124 @@
     "rewardGems": 0,
     "rewardStardust": 20,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
-    "id": "WornWell",
-    "name": "Worn well",
-    "goalType": "OwnArtifacts",
-    "goalTarget": null,
+    "id": "PutToSea",
+    "name": "Put to sea",
+    "goalType": "CompleteTech",
+    "goalTarget": "Sailing",
     "goalAmount": 1,
     "goalLevel": null,
-    "reward": { "Gold": 350 },
+    "reward": { "Gold": 270 },
     "rewardGems": 0,
-    "rewardStardust": 18,
+    "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Cartographers",
+    "name": "Cartographers",
+    "goalType": "DiscoverCells",
+    "goalTarget": null,
+    "goalAmount": 20,
+    "goalLevel": null,
+    "reward": { "Gold": 400 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Magistrate",
+    "name": "Magistrate",
+    "goalType": "CompleteTech",
+    "goalTarget": "Magistracy",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 800 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Township",
+    "name": "Township",
+    "goalType": "ReachPopulation",
+    "goalTarget": null,
+    "goalAmount": 12,
+    "goalLevel": null,
+    "reward": { "Gold": 500, "Food": 80 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "Borough",
+    "name": "A borough",
+    "goalType": "UpgradeDistrict",
+    "goalTarget": "Townhall",
+    "goalAmount": 1,
+    "goalLevel": 4,
+    "reward": { "Gold": 900 },
+    "rewardGems": 200,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "Leylines",
     "name": "Leylines",
     "goalType": "ClaimLandmarks",
     "goalTarget": null,
-    "goalAmount": 4,
+    "goalAmount": 3,
     "goalLevel": null,
     "reward": { "Gold": 750, "Stone": 60 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "SecondLair",
+    "name": "Wings over the market",
+    "goalType": "ClearLairs",
+    "goalTarget": null,
+    "goalAmount": 2,
+    "goalLevel": null,
+    "reward": { "Gold": 500 },
+    "rewardGems": 150,
+    "rewardStardust": 25,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
+    "id": "TheWatchtower",
+    "name": "The watchtower",
+    "goalType": "ClaimLandmarks",
+    "goalTarget": "Watchtower",
+    "goalAmount": 1,
+    "goalLevel": null,
+    "reward": { "Gold": 1000 },
+    "rewardGems": 0,
+    "rewardStardust": 45,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
   },
   {
     "id": "DeeperStill",
-    "name": "A standing army",
+    "name": "Deeper still",
     "goalType": "TrainArmy",
     "goalTarget": null,
     "goalAmount": 100,
@@ -673,19 +878,7 @@
     "rewardGems": 0,
     "rewardStardust": 30,
     "rewardKnowledge": 0,
-    "rewardMana": 0
-  },
-  {
-    "id": "TheReliquary",
-    "name": "The Reliquary",
-    "goalType": "OwnArtifacts",
-    "goalTarget": null,
-    "goalAmount": 3,
-    "goalLevel": null,
-    "reward": { "Gold": 900 },
-    "rewardGems": 200,
-    "rewardStardust": 45,
-    "rewardKnowledge": 0,
-    "rewardMana": 0
+    "rewardMana": 0,
+    "rewardPack": null
   }
 ]

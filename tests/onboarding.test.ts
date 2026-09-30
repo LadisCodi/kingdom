@@ -28,7 +28,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  isTechComplete, techCost, techKnowledgeMissing,
+  isTechComplete, isTomeOpen, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -244,11 +244,11 @@ describe('a player can actually play the onboarding', () => {
     // Sawpits and Reforesting next. The chain asks for them in row order
     // rather than leaving the player to find out at the research sheet why
     // the card after them will not start.
-    research('Taxes01');
+    research('TradeRoutesI');
     finish('Levies');
     research('SawpitsI');
     finish('Sawpits');
-    research('Reforesting01');
+    research('ReforestingI');
     finish('Regrowth');
 
     // The player is now twenty-four beats in and has never been handed
@@ -259,6 +259,25 @@ describe('a player can actually play the onboarding', () => {
     // opening that drains the pool is an opening that stops dead in front of
     // a player who has not yet been shown what refills it.
     expect(mana(state)).toBeGreaterThan(0);
+
+    // ---- step 25: further afield — and the book of the army opens on the
+    // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
+    expect(isTomeOpen(state, 'Warfare'), 'Warfare opens on a lair, not on a quest').toBe(false);
+    expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
+    clearNearest(15);
+    finish('FurtherAfield');
+    // The Orcs' ground is the next ring out: the chain's next beat is the
+    // army, so a player who has not met them yet pushes on toward them.
+    while (Object.keys(state.lairs).length === 0) {
+      clearNearest(1);
+      tick(1);
+    }
+    expect(isTomeOpen(state, 'Warfare')).toBe(true);
+    expect(isTomeOpen(state, 'Magic')).toBe(false);
+    // The Warden has been the kingdom's all along, and steps up now.
+    expect(state.heroes.owned).toContain('Warden');
+    research('Warrior');
+    finish('ArmedMen');
   });
 
   // The rest of the chain is not playable in a unit test — it needs a Sawmill

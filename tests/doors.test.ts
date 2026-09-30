@@ -1,0 +1,139 @@
+// THE DOORS (Docs/features/22-progression.md): what opens each book, the
+// places that open a mechanic when claimed, the heroes the story brings, and
+// what a save from before the doors reads as.
+import { describe, expect, it } from 'vitest';
+import { FOG, LANDMARKS, LAIRS, QUESTS } from '../src/sim/data/definitions';
+import { advance } from '../src/sim/commands';
+import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
+import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
+import { lairZoneCells } from '../src/sim/lairZone';
+import { pull, pullPrice } from '../src/sim/heroes';
+import { claimQuest } from '../src/sim/quests';
+import { deserialize, serialize } from '../src/sim/save';
+import { coordKey, type TomeId } from '../src/sim/state';
+import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
+
+const TOMES: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
+const shrine = LANDMARKS.find((l) => l.id === 'ThornedShrine')!;
+const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+
+describe('the books open on the world', () => {
+  it('opens Civics and nothing else for a new kingdom', () => {
+    const state = firstGame();
+    expect(TOMES.filter((t) => isTomeOpen(state, t))).toEqual(['Civics']);
+    // And a card in a shut book says so before it says anything else.
+    expect(researchRefusal(state, 'Warrior')).toBe('TomeClosed');
+  });
+
+  it('opens Warfare on the first lair FOUND', () => {
+    const state = firstGame();
+    reveal(state, [LAIRS.Orcs.location]);
+    advance(state, map, T0 + 1000);
+    expect(Object.keys(state.lairs)).toContain('Orcs');
+    expect(isTomeOpen(state, 'Warfare')).toBe(true);
+    expect(isTomeOpen(state, 'Magic')).toBe(false);
+  });
+
+  it('opens Magic on the first landmark CLAIMED', () => {
+    const state = firstGame();
+    state.landmarks.claimed[LANDMARKS[1].id] = true;
+    expect(isTomeOpen(state, 'Magic')).toBe(true);
+  });
+
+  it('opens the Sagas with a standing Tavern, and the Atlas with the Watchtower', () => {
+    const state = firstGame();
+    expect(isTomeOpen(state, 'Sagas')).toBe(false);
+    addBuilt(state, 'Tavern', { x: 3, y: 1 });
+    expect(isTomeOpen(state, 'Sagas')).toBe(true);
+    expect(isTomeOpen(state, 'Atlas')).toBe(false);
+    state.landmarks.claimed[tower.id] = true;
+    expect(watchtowerClaimed(state)).toBe(true);
+    expect(isTomeOpen(state, 'Atlas')).toBe(true);
+  });
+
+  it('keeps every book open for a veteran', () => {
+    const state = firstGame();
+    state.tutorial.veteran = true;
+    expect(TOMES.every((t) => isTomeOpen(state, t))).toBe(true);
+  });
+
+  it('decides every book in one place', () => {
+    expect(Object.keys(TOME_OPENS).sort()).toEqual([...TOMES].sort());
+  });
+});
+
+describe('the places that open a mechanic', () => {
+  it('refuses the Thorned Shrine while the Orcs hold its ground', () => {
+    const state = freshGame();
+    expect(lairZoneCells('Orcs').some((c) => coordKey(c) === coordKey(shrine.location))).toBe(true);
+    reveal(state, [shrine.location]);
+    advance(state, map, T0 + 1000); // revealing its ground found the Orcs
+    fund(state, { Gold: 99_999 });
+    expect(claimLandmark(state, map, shrine.location)).toBe('LairHeld');
+    clearLair(state, 'Orcs');
+    expect(claimLandmark(state, map, shrine.location)).toBe('Claimed');
+  });
+
+  it('lets the Watchtower see further than a shrine', () => {
+    expect(FOG.watchtowerDiscoverRadius).toBeGreaterThan(FOG.claimDiscoverRadius);
+    const state = freshGame();
+    reveal(state, [tower.location]);
+    fund(state, { Gold: 99_999 });
+    expect(claimLandmark(state, map, tower.location)).toBe('Claimed');
+    const far = { x: tower.location.x, y: tower.location.y - FOG.watchtowerDiscoverRadius };
+    if (map.terrain.has(coordKey(far))) {
+      expect(state.fog.discovered[coordKey(far)] || state.fog.revealed[coordKey(far)]).toBe(true);
+    }
+  });
+});
+
+describe('the heroes the story brings', () => {
+  it('brings Bess with the first Tavern, once', () => {
+    const state = freshGame();
+    expect(state.heroes.owned).toEqual(['Warden']);
+    addBuilt(state, 'Tavern', { x: 3, y: 1 });
+    advance(state, map, T0 + 1000);
+    expect(state.heroes.owned).toContain('Cook');
+    advance(state, map, T0 + 2000);
+    expect(state.heroes.owned.filter((h) => h === 'Cook')).toHaveLength(1);
+  });
+
+  it('makes the first call on the standard banner free, and never a miss', () => {
+    const state = freshGame();
+    expect(pullPrice(state).amount).toBe(0);
+    const result = pull(state, 'basic', { free: true });
+    expect(result.result).toBe('Pulled');
+    expect(result.heroId).not.toBe(null);
+  });
+});
+
+describe('the first pack', () => {
+  it('is the first fight\'s reward', () => {
+    const state = freshGame();
+    const i = QUESTS.findIndex((q) => q.id === 'DriveThemOut');
+    state.quests.index = i;
+    clearLair(state, 'Orcs');
+    const before = state.collection.packs.length;
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(state.collection.packs.length).toBe(before + 1);
+    expect(state.collection.packs.at(-1)!.tier).toBe(QUESTS[i].rewardPack);
+  });
+});
+
+describe('the tutorial in the save', () => {
+  it('reads a save from before the doors as a veteran', () => {
+    const state = firstGame();
+    const save = serialize(state, T0);
+    delete save.Modules['kingdom.tutorial'];
+    const back = deserialize(save, map, T0)!;
+    expect(back.tutorial.veteran).toBe(true);
+    expect(isTomeOpen(back, 'Atlas')).toBe(true);
+  });
+
+  it('round-trips the scenes played, and a new kingdom stays new', () => {
+    const state = firstGame();
+    state.tutorial.seen.intro = true;
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(back.tutorial).toEqual({ veteran: false, seen: { intro: true } });
+  });
+});

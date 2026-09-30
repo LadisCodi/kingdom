@@ -23,11 +23,11 @@
 // a second, weaker copy of that encounter, so it was deleted rather than
 // built (Docs/features/18-garrisons-and-raids.md §9).
 
+import { lairHolding } from './lairZone';
 import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState, recordVisibleSites } from './fog';
 import { landmarkClaimLump, payKnowledge } from './knowledge';
 import { resolve } from './modifiers';
-import { techValue } from './techEffects';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
@@ -51,18 +51,20 @@ export const isLandmarkClaimed = (state: GameState, id: string): boolean =>
  * has been staring at for a week should cost what the designer said.
  */
 export const landmarkClaimCost = (state: GameState, def: LandmarkDef): number =>
-  Math.max(1, Math.round(resolve(
-    state, 'claimCost', def.claimCost * Math.max(0, techValue(state, 'claimCost', 1)),
-  )));
+  Math.max(1, Math.round(resolve(state, 'claimCost', def.claimCost)));
 
 export type ClaimResult =
-  | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'NotEnoughGold' | 'NoLandmark';
+  | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'NotEnoughGold' | 'NoLandmark'
+  /** It stands in a lair's ground: the lair has to fall first
+   *  (Docs/features/22-progression.md §5). */
+  | 'LairHeld';
 
 export function claimLandmark(state: GameState, map: MapData, cell: Coord): ClaimResult {
   const def = landmarkAt(cell);
   if (!def) return 'NoLandmark';
   if (isLandmarkClaimed(state, def.id)) return 'AlreadyClaimed';
   if (fogState(state, map, def.location) !== 'Revealed') return 'NotRevealed';
+  if (lairHolding(state, def.location) !== null) return 'LairHeld';
   const cost = landmarkClaimCost(state, def);
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
@@ -92,9 +94,9 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
  * discovered, and overwriting would undo paid-for progress.
  */
 function discoverAroundLandmark(state: GameState, map: MapData, def: LandmarkDef): void {
-  for (const cell of cellsWithinRadiusOfRect(
-    map, def.location, { x: 1, y: 1 }, FOG.claimDiscoverRadius,
-  )) {
+  // A watchtower sees further than a shrine: that is what it is FOR.
+  const radius = def.kind === 'Watchtower' ? FOG.watchtowerDiscoverRadius : FOG.claimDiscoverRadius;
+  for (const cell of cellsWithinRadiusOfRect(map, def.location, { x: 1, y: 1 }, radius)) {
     const key = coordKey(cell);
     if (!state.fog.revealed[key]) state.fog.discovered[key] = true;
   }
@@ -108,6 +110,10 @@ export const visibleLandmarks = (state: GameState, map: MapData): LandmarkDef[] 
 
 export const claimedLandmarkCount = (state: GameState): number =>
   Object.keys(state.landmarks.claimed).length;
+
+/** The world's door: the Watchtower claimed. */
+export const watchtowerClaimed = (state: GameState): boolean =>
+  LANDMARKS.some((l) => l.kind === 'Watchtower' && state.landmarks.claimed[l.id] === true);
 
 /** Every landmark cell, for the renderer. */
 export const landmarkCells = allLandmarkCells;

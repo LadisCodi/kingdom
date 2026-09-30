@@ -95,7 +95,9 @@ export type RefKind =
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
   /** A character in the animated atlas (Docs/art/characters). */
-  | 'character';
+  | 'character'
+  /** A kind of landmark — Shrine, Watchtower… (sim/state.ts LandmarkKind). */
+  | 'landmarkKind';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -151,6 +153,7 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
+  landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -161,10 +164,13 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
-  TrainArmy: null, ClaimLandmarks: null,
+  TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
+
+/** Goal types whose target may be left empty, meaning "any". */
+export const QUEST_OPTIONAL_TARGET: ReadonlySet<string> = new Set(['ClaimLandmarks']);
 
 /** Where each ref kind's ids come from in the document. */
 const REF_SOURCE: Partial<Record<RefKind, string>> = {
@@ -396,7 +402,9 @@ function checkQuests(doc: DataDoc, push: Push): void {
     if (kind === undefined) return; // the enum check already said so
     const target = q.goalTarget ?? null;
     if (kind === null && target !== null) push(id, ['goalTarget'], `${q.goalType} takes no target`);
-    if (kind !== null && (target === null || !refIds(doc, kind).includes(String(target)))) {
+    // A target the goal may go without: "claim a landmark" reads as any.
+    const optional = QUEST_OPTIONAL_TARGET.has(String(q.goalType));
+    if (kind !== null && (target === null ? !optional : !refIds(doc, kind).includes(String(target)))) {
       push(id, ['goalTarget'], `"${target}" is not a ${kind}`);
     }
     if (q.goalType === 'UpgradeDistrict' && typeof q.goalLevel !== 'number') push(id, ['goalLevel'], 'UpgradeDistrict needs a level');

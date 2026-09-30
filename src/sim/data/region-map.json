@@ -1667,7 +1667,8 @@
     { "id": "CliffShrine", "kind": "Shrine", "x": -4, "y": -13, "claimCost": 100000 },
     { "id": "FallenStones", "kind": "StandingStones", "x": -5, "y": -3, "claimCost": 25000 },
     { "id": "MirrorLeyspring", "kind": "Leyspring", "x": -10, "y": -8, "claimCost": 100000 },
-    { "id": "WindwardShrine", "kind": "Shrine", "x": 15, "y": 2, "claimCost": 100000 }
+    { "id": "WindwardShrine", "kind": "Shrine", "x": 15, "y": 2, "claimCost": 100000 },
+    { "id": "NorthWatch", "kind": "Watchtower", "x": 0, "y": -8, "claimCost": 10000 }
   ],
   "lairs": {
     "Orcs": {

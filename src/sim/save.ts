@@ -78,6 +78,7 @@ interface WorkerDto {
   Activity: string;
   ClaimedCell: Coord | null;
   Carrying?: number;
+  StrikeCarry?: number;
   CarriedSource?: string | null;
   StateStartedAt: string;
   StateUntil: string | null;
@@ -788,6 +789,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Activity: w.activity,
           ClaimedCell: w.claimedCell,
           Carrying: w.carrying,
+          StrikeCarry: w.strikeCarry,
           CarriedSource: w.carriedSource,
           StateStartedAt: iso(w.stateStartedAt),
           StateUntil: isoOrNull(w.stateUntil),
@@ -807,6 +809,10 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.tallies': { Counts: state.tallies },
       'kingdom.discoveries': {
         Keys: Object.keys(state.discoveries),
+      },
+      'kingdom.tutorial': {
+        Veteran: state.tutorial.veteran,
+        Seen: Object.keys(state.tutorial.seen),
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1172,6 +1178,7 @@ export function deserialize(
         activity: w.Activity as Worker['activity'],
         claimedCell: w.ClaimedCell,
         carrying: w.Carrying ?? 0,
+        strikeCarry: w.StrikeCarry ?? 0,
         carriedSource: (w.CarriedSource ?? null) as Worker['carriedSource'],
         stateStartedAt: ms(w.StateStartedAt),
         stateUntil: msOrNull(w.StateUntil),
@@ -1207,6 +1214,17 @@ export function deserialize(
     state.discoveries = {};
     for (const key of discoveriesDto.Keys as string[]) state.discoveries[key] = true;
   }
+
+  // A save with no tutorial module was made before the doors existed, so its
+  // kingdom walked in through none of them: every door opens and every scene
+  // counts as played. Additive — no migrator (v69).
+  const tutorialDto = modules['kingdom.tutorial'] as { Veteran?: boolean; Seen?: string[] } | undefined;
+  state.tutorial = tutorialDto === undefined
+    ? { veteran: true, seen: {} }
+    : {
+      veteran: tutorialDto.Veteran === true,
+      seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
+    };
 
   const questsDto = modules['kingdom.quests'];
   if (questsDto) {
@@ -1441,7 +1459,7 @@ export function deserialize(
   settleFootprints(state, map, now);
   onCatchUp?.({
     elapsedMs: Math.max(0, now - lastSaved),
-    storesFull: state.city.districts.some(isStoreFull),
+    storesFull: state.city.districts.some((d) => isStoreFull(state, d)),
     result: report,
   });
   return state;

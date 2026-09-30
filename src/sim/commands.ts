@@ -1,6 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
+import { grantStoryHeroes } from './story';
 import { BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import { RUSH } from './data/definitions';
@@ -576,6 +577,9 @@ function applyDueAt(
     // starts its warning HERE, stamped with this boundary's t, and cannot be
     // raided in the same instant it was noticed.
     armLairs(state, t);
+    // The heroes the story brings — the Warden with the first lair, Bess with
+    // the Tavern — are a sweep over standing facts, like the arming above.
+    grantStoryHeroes(state);
     const raids = advanceRaids(state, t);
     out.raids.push(...raids);
     // A raid empties stores, and a crew waiting by a full one can go out again.

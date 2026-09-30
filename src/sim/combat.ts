@@ -62,6 +62,10 @@ export interface Drill {
   atk: Partial<Record<UnitTag, number>> & { all?: number };
   /** Flat DEF per unit, by tag; `all` applies to every unit. */
   def: Partial<Record<UnitTag, number>> & { all?: number };
+  /** The tree's share on a unit's own ATK and DEF, by tag — `0.1` is +10%.
+   *  Absent = none. */
+  atkPct?: Partial<Record<UnitTag, number>> & { all?: number };
+  defPct?: Partial<Record<UnitTag, number>> & { all?: number };
   /** Added to the type-disadvantage multiplier (0.75 + 0.06 at Manoeuvre III). */
   disadvantageOffset: number;
   /** Multiplies every unit's HP. Global rather than per-tag, because the only
@@ -121,8 +125,10 @@ export function partyStats(party: Party): PartyStats {
   const drill = party.drill ?? NO_DRILL;
   for (const slot of party.slots) {
     const u = UNITS[slot.unitId];
-    atk += (u.dmg + drillFor(drill.atk, u.tags)) * slot.count;
-    def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
+    atk += (u.dmg * (1 + drillFor(drill.atkPct ?? {}, u.tags)) + drillFor(drill.atk, u.tags))
+      * slot.count;
+    def += (u.def * (1 + drillFor(drill.defPct ?? {}, u.tags)) + drillFor(drill.def, u.tags))
+      * slot.count;
     hp += u.hp * slot.count * drill.hpMult;
   }
   for (const hero of party.heroes) {

@@ -205,7 +205,7 @@ function accrueRent(state: GameState, d: District, toTime: number): number {
   // from the last advance; one built inside it was stamped by the repricing.
   const anchor = d.rentAnchor ?? state.lastAdvance;
   const rate = houseGoldPerMinute(state, d);
-  const space = storageSpace(d);
+  const space = storageSpace(state, d);
   if (rate <= 0 || space <= 0) {
     // Nobody pays, or the house is full: no banking.
     d.rentAnchor = Math.max(anchor, toTime);

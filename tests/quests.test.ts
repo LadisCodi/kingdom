@@ -79,32 +79,33 @@ describe('the quest chain', () => {
                                                   //   leaving the player to find
                                                   //   them
       'FurtherAfield',                            // 25   the shrine and the orc lair
-                                                  //   come into view — and
-                                                  //   FINDING the orc lair starts
-                                                  //   its thirty minutes
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 29-31 something worth killing
-      'FirstSummon',                              // 32   a hero, who is mandatory
-      'DriveThemOut',                             // 33   THE FIRST FIGHT, on a
-                                                  //   clock the reveal started.
-                                                  //   It sits five beats after
-                                                  //   the discovery on purpose:
-                                                  //   anything between them is
-                                                  //   time the garrison spends
-                                                  //   raiding a city that cannot
-                                                  //   answer yet
-      'OldStones', 'Attuned',                     // 34-35 claim the shrine
-      'Mapmakers', 'Surveyors',                   // 36-37 exploration becomes a system
-      'Highlands', 'PutToSea',                    // 38-39 the terrain gates
-      'IntoTheDark',                              // 40   a standing guard: the
-                                                  //   depths behind the lair
-                                                  //   are retired, and the
-                                                  //   harpy roost is past the reach
+                                                  //   come into view — FINDING the
+                                                  //   Orcs opens the Book of
+                                                  //   Warfare and starts the clock
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 26-28 something worth killing
+      'MusterCompany',                            // 29   a company, led by the Warden
+      'DriveThemOut',                             // 30   THE FIRST FIGHT — and the
+                                                  //   first card pack
+      'OldStones', 'Attuned',                     // 31-32 the shrine the Orcs held:
+                                                  //   claiming it opens Magic
+      'Mapmakers', 'Surveyors',                   // 33-34 exploration becomes a system
+      'Watered', 'Fallow', 'MoreRoom',            // 35-37 the rows above Urban Planning
+      'SecondStory', 'Chisels', 'Stoneworks',     // 38-40 a storey, then stone
+      'Crafts', 'Knack', 'Hearth',                // 41-43 the rows above Hospitality
+      'OpenDoors', 'FirstSummon',                 // 44-45 THE TAVERN: Bess, the
+                                                  //   banner and the Sagas, and a
+                                                  //   first call that cannot miss
     );
 
-    // 40+: the rest of the city economy the tutorial defers, then the long game.
-    inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
-    expect(QUESTS.at(-1)).toMatchObject(
-      { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+    // Then the city the tutorial deferred, the Townhall ladder, and the world.
+    inOrder('FirstSummon', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
+      'Magistrate', 'Borough', 'SecondLair', 'TheWatchtower');
+    expect(QUESTS.at(-1)).toMatchObject({ id: 'DeeperStill', goalType: 'TrainArmy' });
+    // The first pack is the first quest-paid pack, and it is the first fight's.
+    expect(QUESTS.find((q) => q.rewardPack !== null)!.id).toBe('DriveThemOut');
+    // The Watchtower is asked for by KIND.
+    expect(QUESTS.find((q) => q.id === 'TheWatchtower'))
+      .toMatchObject({ goalType: 'ClaimLandmarks', goalTarget: 'Watchtower' });
   });
 
   // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
@@ -141,9 +142,16 @@ describe('the quest chain', () => {
     expect(isQuestComplete(state, sawpits)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
-    expect(questValue(state, summon)).toBe(1); // the starting hero
-    state.heroes.owned.push('Scout');
+    expect(questValue(state, summon)).toBe(1); // the Warden
+    state.heroes.owned.push('Cook', 'Scout');   // Bess, and the first call
     expect(isQuestComplete(state, summon)).toBe(true);
+
+    // A landmark goal may name a KIND: the Watchtower, and only it.
+    const tower = QUESTS.find((q) => q.id === 'TheWatchtower')!;
+    state.landmarks.claimed.ThornedShrine = true;
+    expect(questValue(state, tower)).toBe(0);
+    state.landmarks.claimed.NorthWatch = true;
+    expect(isQuestComplete(state, tower)).toBe(true);
   });
 
   it('gem rewards land in the PLAYER wallet', () => {
@@ -407,8 +415,11 @@ describe('quests fund the research tree', () => {
     // 12,375: and `MusterCompany` at 400 in front of it, because twenty orcs
     // in the doorway are a company's job and the chain pays for the company.
     // 12,175: the three Market beats leave with the Market (2026-09-09).
-    expect(chain).toBe(12_175);
-    expect(tree).toBe(494_680); // the same sum tests/fog.test.ts freezes, and why
+    // 15,925: the first-time experience (2026-10-01) — the chain walks the
+    // rows above Urban Planning and Hospitality, builds the Tavern, and runs
+    // on to the Watchtower (Docs/features/12-quests.md §2).
+    expect(chain).toBe(15_925);
+    expect(tree).toBe(435_445); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
@@ -421,7 +432,9 @@ describe('quests fund the research tree', () => {
     // Market and `Field Medicine` — now a ranked ladder, not a major
     // (2026-09-09) — have left the count since. `Hunting` joined it coming
     // back to era 1, and the first four cards stopped costing Gold.
-    expect(opening).toBe(1850);
+    // 5,900 once the tree became five books (2026-10-01): the found books'
+    // first rows and the planned Cartography count as era-1 majors too.
+    expect(opening).toBe(5900);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });
@@ -494,7 +507,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null,
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -566,7 +579,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null,
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

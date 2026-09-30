@@ -6,10 +6,11 @@
 
 import { ownedArtifacts } from './artifacts';
 import {
-  QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
+  LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { clearedLairCount } from './lairs';
+import { grantPack } from './collection';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
 import {
@@ -81,7 +82,9 @@ export function questValue(state: GameState, quest: QuestDef): number {
     case 'TrainArmy':
       return state.army.length;
     case 'ClaimLandmarks':
-      return Object.keys(state.landmarks.claimed).length;
+      // A target is a landmark KIND — "claim the Watchtower" — and none is any.
+      return LANDMARKS.filter((l) => state.landmarks.claimed[l.id] === true
+        && (quest.goalTarget === null || l.kind === quest.goalTarget)).length;
     case 'ClearLairs':
       return clearedLairCount(state);
     case 'OwnArtifacts':
@@ -132,6 +135,10 @@ export function claimQuest(state: GameState): ClaimResult {
   // Knowledge too, as a lump. The chain seeds enough for every technology it
   // asks for — tests/quests.test.ts walks it and holds that promise.
   if (quest.rewardKnowledge > 0) payKnowledge(state, knowledgeLump(state, quest.rewardKnowledge));
+  // A pack waits in the pile the collection opens from, like every other.
+  if (quest.rewardPack !== null && quest.rewardPack !== undefined) {
+    grantPack(state, quest.rewardPack, 'quest');
+  }
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

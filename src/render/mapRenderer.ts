@@ -1304,7 +1304,7 @@ export function drawMap(
     if (!art) continue;
     const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);
     // The art's box carries transparent headroom; a tenth of it down is the roof.
-    drawCollectBubble(ctx, bubbles, district, art.x + art.w / 2, art.y + art.h * 0.12,
+    drawCollectBubble(ctx, bubbles, state, district, art.x + art.w / 2, art.y + art.h * 0.12,
       Math.max(34, Math.min(88, plot.w * 0.4)), clock);
   }
 

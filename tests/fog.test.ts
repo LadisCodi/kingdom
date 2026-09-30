@@ -242,8 +242,11 @@ describe('exploring pays in ground, not in currency', () => {
     // and `Hunting` came back to era 1 with them, off 1,500 Gold.
     // 494,680: Scriveners I–III left the tree with the research slots they
     // raised (07-research.md §1 — research takes no time), off 9,750 Gold.
+    // 435,445: the tree was rebuilt in five books with climbing bonuses only
+    // (2026-10-01, Docs/features/22-progression.md §9) — the discounts left,
+    // the Sagas and the Atlas joined.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(494_680);
+    expect(tree).toBe(435_445);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree
@@ -635,14 +638,13 @@ describe('the map gets dearer as it is revealed', () => {
     expect(countMultiplier(withRevealed((k + 1) * step))).toBe(growth ** (k + 1));
   });
 
-  it('sits under the ring price, and Pitons discounts the multiplied price', () => {
+  it('sits under the ring price, and no technology discounts it', () => {
     const state = withRevealed(3 * step);
     const cell = { x: 0, y: -3 }; // ring 3, whichever cells were filled
     const d = townhallDistance(map, cell);
     expect(revealCostForCell(state, map, cell)).toBe(Math.round(revealCost(d) * growth ** 3));
-    state.research.completed.push('PitonsI');
-    expect(revealCostForCell(state, map, cell))
-      .toBe(Math.max(FOG.minCost, Math.round(revealCost(d) * growth ** 3 * 0.9)));
+    state.research.completed.push(...TECH_ORDER);
+    expect(revealCostForCell(state, map, cell)).toBe(Math.round(revealCost(d) * growth ** 3));
   });
 
   it('a cell half paid keeps its paid fifths and reprices the rest when the count steps', () => {
