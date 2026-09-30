@@ -629,7 +629,40 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v69: THE TREE IN FIVE BOOKS (Docs/features/22-progression.md §9). A few
+    // cards were renamed or split, and a researched one keeps what it
+    // bought: `Engineering` becomes the four cards it split into, a renamed
+    // rank becomes its successor. Cards with no successor (the discounts,
+    // the inert delve ladders) fall to the loader's filter as before.
+    // Poured Knowledge follows its card where it has one.
+    to: 69,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; Poured?: Record<string, number> } | undefined;
+      if (research === undefined) return;
+      const next = (id: string): string[] => TECH_RENAMES_V69[id] ?? [id];
+      research.Completed = [...new Set((research.Completed ?? []).flatMap(next))];
+      const poured: Record<string, number> = {};
+      for (const [id, n] of Object.entries(research.Poured ?? {})) {
+        const to = next(id)[0];
+        poured[to] = (poured[to] ?? 0) + n;
+      }
+      research.Poured = poured;
+    },
+  },
 ];
+
+/** The technologies the v69 tree renamed or split, frozen as history. */
+const TECH_RENAMES_V69: Record<string, string[]> = {
+  Taxes01: ['TradeRoutesI'],
+  Reforesting01: ['ReforestingI'],
+  Sickles01: ['CropRotationI'],
+  Engineering: ['Joinery', 'StoneDressing', 'TimberFraming', 'QuarryHoists'],
+  VigilsI: ['BountiesI'], VigilsII: ['BountiesII'], VigilsIII: ['BountiesIII'],
+  DrillmasterI: ['TalesI'], DrillmasterII: ['TalesII'], DrillmasterIII: ['TalesIII'],
+  FieldMedicineI: ['BedsI'], FieldMedicineII: ['BedsII'], FieldMedicineIII: ['BedsIII'],
+};
 
 /** The v63 place ids of the five lairs, and the creature each one became. */
 const LAIR_RENAMES: Record<string, LairId> = {

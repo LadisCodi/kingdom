@@ -2154,5 +2154,6 @@ export const GAME_VERSION = '0.1.0';
 // v69: the first-time experience. `kingdom.tutorial` (the scenes played, and
 // `Veteran` for a kingdom from before the doors) is additive: a save without
 // it reads as a veteran. A worker carries its strike's remainder
-// (`StrikeCarry`), additive too.
+// (`StrikeCarry`), additive too. The tree in five books renamed and split a
+// few cards: the migrator carries a researched one to its successors.
 export const SAVE_VERSION = 69;

@@ -586,3 +586,23 @@ describe('the Market, retired', () => {
     expect(back.research.completed).toEqual(['Forestry']);
   });
 });
+
+// v69: the tree in five books. A researched card that was renamed or split
+// keeps what it bought (Docs/features/22-progression.md §9).
+describe('the tree in five books (v69)', () => {
+  it('turns a renamed card into its successor, and a split one into all its parts', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules as any)['kingdom.research'];
+    research.Completed = ['Forestry', 'Taxes01', 'Engineering', 'VigilsI', 'PitonsI'];
+    research.Poured = { Reforesting01: 1, DrillmasterII: 2 };
+    save.SaveVersion = 68;
+    const back = deserialize(save, map, T0)!;
+    expect(back.research.completed).toEqual(expect.arrayContaining([
+      'Forestry', 'TradeRoutesI', 'Joinery', 'StoneDressing', 'TimberFraming', 'QuarryHoists', 'BountiesI',
+    ]));
+    // A discount with no successor is gone, as any card the tree dropped is.
+    expect(back.research.completed).not.toContain('PitonsI');
+    expect(back.research.poured).toEqual({ ReforestingI: 1, TalesII: 2 });
+  });
+});
