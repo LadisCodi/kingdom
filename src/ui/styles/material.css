@@ -509,7 +509,6 @@
     linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 /* The card's foot is a darker leaf of the same paper. */
 .bld-foot {
   background:

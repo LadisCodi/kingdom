@@ -22,7 +22,7 @@ import { isTechComplete } from '../sim/research';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
-import { costChips, ctaBadge, iconEl, sheet, type IconName } from './kit';
+import { costChips, ctaBadge, iconEl, sheet, sideScroll, type IconName } from './kit';
 import type { CurrencyId, DistrictId, GoodId } from '../sim/state';
 import { PROMISE } from './buildPromise';
 
@@ -120,18 +120,30 @@ function blockedBy(game: Game, id: DistrictId): string | null {
   return short === null ? null : `Needs ${formatExact(short.shortBy)} more Harmony`;
 }
 
-function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
+/** Everything a card reads from the game — and so what its signature is. */
+function cardFacts(game: Game, id: DistrictId) {
   const def = DISTRICTS[id];
   const count = districtCount(game.state, id);
-  const max = maxDistrictCount(game.state, def);
-  const blocked = blockedBy(game, id);
   const cost = buildCost(id, count + 1);
   const goods = Object.entries(buildGoodsCost(id)) as Array<[GoodId, number]>;
   const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
-  const affordable = canAfford(game.state.city.wallet, cost) && !shortGoods;
+  return {
+    count,
+    max: maxDistrictCount(game.state, def),
+    blocked: blockedBy(game, id),
+    numbered: isNumbered(game.state, def),
+    cost,
+    goods,
+    affordable: canAfford(game.state.city.wallet, cost) && !shortGoods,
+    hinted: game.uiHint() === `build:${id}`,
+    duration: game.buildCardDuration(id),
+  };
+}
 
+function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
+  const def = DISTRICTS[id];
+  const { count, max, blocked, numbered, cost, goods, affordable, hinted, duration } = cardFacts(game, id);
   const art = spriteUrl(`${def.sprite}_l1`);
-  const hinted = game.uiHint() === `build:${id}`;
   const card = el('button', {
     class: `bld-card${blocked !== null ? ' is-locked' : ''}${hinted ? ' hinted' : ''}`,
     type: 'button',
@@ -142,7 +154,7 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
     // (Docs/features/05-city-and-districts.md §3.1). A qualifier, so quieter.
     el('div', { class: 'bld-name' },
       def.name,
-      ...(blocked !== null || !isNumbered(game.state, def)
+      ...(blocked !== null || !numbered
         ? []
         : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),
     el('div', { class: 'bld-promise' }, PROMISE[id]),
@@ -158,7 +170,7 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
         : []))]),
     el('div', { class: 'bld-foot' },
       el('span', { class: 'bld-foot-time' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(game.buildCardDuration(id))),
+        iconEl('hourglass', { size: 'sm' }), formatDuration(duration)),
       el('span', { class: 'bld-foot-built' }, `Built ${formatExact(count)}/${formatExact(max)}`)),
   );
   if (isNew && blocked === null) {
@@ -209,10 +221,29 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
 
 // ----------------------------------------------------------------- screen
 
+/**
+ * What the menu draws, so the host rebuilds it only when that moves
+ * (kit/host.ts). A rebuild replaces the row, and a phone drops a drag with
+ * the node — so one that does come while the row is in a hand waits for it
+ * to be still (`holdWhileScrolling`).
+ */
+export function buildMenuSignature(game: Game): string {
+  const seenIds = loadSeen(game);
+  const known = inTab(openTab).filter((id) => isKnown(game, id));
+  return JSON.stringify([
+    openTab,
+    BUILD_TABS.map((t) => inTab(t).filter((id) => game.canBuildNow(id)).length),
+    // The chips read every purse a price can be in, through walletValue.
+    game.state.city.wallet, game.state.kingdom.wallet, game.state.player.wallet,
+    game.state.city.goods,
+    harmonySupply(game.state), harmonyDemand(game.state), harmonySurplusTier(game.state),
+    known.map((id) => [id, seenIds.has(id), cardFacts(game, id)]),
+  ]);
+}
+
 export function renderBuildMenu(game: Game): HTMLElement {
   const seenIds = loadSeen(game);
-  const ids = inTab(openTab);
-  const known = ids.filter((id) => isKnown(game, id));
+  const known = inTab(openTab).filter((id) => isKnown(game, id));
 
   showingNew.clear();
   const cards = known.map((id) => {
@@ -220,21 +251,8 @@ export function renderBuildMenu(game: Game): HTMLElement {
     if (isNew) showingNew.add(id);
     return buildCard(game, id, isNew);
   });
-  // The tab grows as research lands; this says where from — only while
-  // there is still something in it to find.
-  if (known.length < ids.length) {
-    const more = el('button', { class: 'bld-card bld-more', type: 'button' },
-      el('div', { class: 'bld-art' }, iconEl('unknown', { size: 'lg' })),
-      el('div', { class: 'bld-name' }, 'More to discover'),
-      el('div', { class: 'bld-promise' }, 'Unlocked by research'));
-    more.addEventListener('click', () => {
-      commitSeen();
-      game.setOverlay('research');
-    });
-    cards.push(more);
-  }
 
-  const row = el('div', { class: 'bld-row', 'data-keep-scroll': `bld-row-${openTab}` }, ...cards);
+  const row = sideScroll(el('div', { class: 'bld-row', 'data-keep-scroll': `bld-row-${openTab}` }, ...cards));
   const tab = openTab;
   row.addEventListener('scroll', () => { rowScroll[tab] = row.scrollLeft; }, { passive: true });
   // Back from placement: the row the player left, where they left it. Set
