@@ -132,10 +132,15 @@ function parchmentPattern(ctx: CanvasRenderingContext2D, img: HTMLImageElement):
 }
 
 /** How the overlays are sized: `unit` is a cell's worth of pixels. */
-const LINE_PX = 0.055;   // the area's stroke, as a fraction of a cell
-const KNOT_PX = 2.3;     // a corner's blot, in strokes
-const WASH_ALPHA = 0.4;  // how much parchment the area's tiles take
+const LINE_PX = 0.075;   // the area's stroke, as a fraction of a cell
+const KNOT_PX = 1.3;     // a corner's joint, in strokes: it closes the turn, it is not a dot
+/** The wash: a warm golden tint over the tiles — the grass must read
+ *  through it, tinted, never bleached — and the parchment's grain on top. */
+const WASH_TINT = 'rgba(232, 204, 110, 0.42)';
+const GRAIN_ALPHA = 0.5;
 const PARCHMENT_CELLS = 1.6; // one parchment tile spans this many cells
+const DASH_PX = 0.07;    // the reach's dash, thickness as a fraction of a cell
+const DOT_DASHES = 1.5;  // the reach's dot, across, in dash thicknesses
 
 /** A building's work area (or any AREA the markers carry): the parchment
  *  wash over its tiles, the ink stroke round its edge, a knot on each turn. */
@@ -155,14 +160,19 @@ export function drawAreaInk(
   for (const cell of cells) diamondPath(cellRect(cell));
   const pattern = wash ? parchmentPattern(ctx, wash) : null;
   if (pattern) {
+    ctx.fillStyle = WASH_TINT;
+    ctx.fill();
+    // Multiplied, the pale paper adds its grain and never lightens.
     const k = (unit * PARCHMENT_CELLS) / wash!.naturalWidth;
     pattern.setTransform(new DOMMatrix().scale(k));
-    ctx.globalAlpha = WASH_ALPHA;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = GRAIN_ALPHA;
     ctx.fillStyle = pattern;
+    ctx.fill();
   } else {
     ctx.fillStyle = fallback.fill;
+    ctx.fill();
   }
-  ctx.fill();
   ctx.restore();
 
   const stroke = Math.max(2, unit * LINE_PX);
@@ -214,13 +224,11 @@ export function drawReachInk(
     ctx.restore();
     return;
   }
-  for (const e of edges) {
-    const len = Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]);
-    lay(ctx, dash, 0, dash.naturalWidth, e.a, e.b,
-      len * (dash.naturalHeight / dash.naturalWidth), 0);
-  }
-  // The dot keeps the sheet's own proportion to its dash.
-  const len = Math.hypot(edges[0].b[0] - edges[0].a[0], edges[0].b[1] - edges[0].a[1]);
-  const dotW = len * (dot.naturalWidth / dash.naturalWidth);
+  // Sized by the cell, not by the edge: the dash fills its edge lengthwise
+  // and keeps a fixed thickness (the sheet's dash is 20 of its 48 rows, its
+  // dot 30 of its 50 columns).
+  const thick = Math.max(2, unit * DASH_PX);
+  for (const e of edges) lay(ctx, dash, 0, dash.naturalWidth, e.a, e.b, thick * (48 / 20), 0);
+  const dotW = thick * DOT_DASHES * (50 / 30);
   for (const p of vertices(edges)) stamp(ctx, dot, p, dotW);
 }
