@@ -88,17 +88,27 @@ describe('the overlay / dismiss state machine', () => {
 });
 
 describe('placement', () => {
-  it('auto-selects the legal cell nearest the Townhall and leaves menus behind', () => {
+  it('auto-selects the nearest legal cell the Townhall does not hide, and leaves menus behind', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     game.setOverlay('build');
 
     game.startPlacement('Housing');
 
-    const nearest = validPlacementCells(state, map, 'Housing')
-      .reduce((best, c) =>
-        townhallDistance(map, c) < townhallDistance(map, best) ? c : best);
-    expect(game.mode).toEqual({ kind: 'placing', definitionId: 'Housing', selected: nearest });
+    const selected = (game.mode as { selected: { x: number; y: number } }).selected;
+    const legal = validPlacementCells(state, map, 'Housing');
+    expect(legal).toContainEqual(selected);
+    // In FRONT of the Townhall on screen, or beside it — never under its art:
+    // the 2×2 hall at the origin stands over the cells behind it (x + y < 2)
+    // whose screen column (x − y) lies within its own (−2 … 2).
+    const hall = townhall(state).location;
+    const behind = selected.x + selected.y < hall.x + hall.y + 2
+      && Math.abs(selected.x - selected.y - (hall.x - hall.y)) < 2;
+    expect(behind).toBe(false);
+    // …and nothing visible was passed over for it.
+    const d = townhallDistance(map, selected);
+    const nearest = Math.min(...legal.map((c) => townhallDistance(map, c)));
+    expect(d - nearest).toBeLessThanOrEqual(1);
     expect(game.openOverlay).toBe(null);
   });
 

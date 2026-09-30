@@ -940,18 +940,54 @@ export class Game {
 
   // ------------------------------------------------------------ placement mode
 
-  /** Where a ghost appears: the legal cell closest to the Townhall. */
+  /**
+   * Where a ghost appears: the legal cell closest to the Townhall that the
+   * player can actually SEE. The closest cell is often right behind the
+   * Townhall, whose art stands over it — the ghost then appeared under the
+   * roof. So the cells are walked nearest first and the first one whose
+   * ground is not hidden behind a building is taken; only if every one is
+   * hidden does the nearest win anyway.
+   */
   defaultPlacementCell(definitionId: DistrictId): Coord | null {
-    let selected: Coord | null = null;
-    let best = Infinity;
-    for (const c of validPlacementCells(this.state, this.map, definitionId)) {
-      const d = townhallDistance(this.map, c);
-      if (d < best) {
-        best = d;
-        selected = c;
-      }
-    }
-    return selected;
+    const size = DISTRICTS[definitionId].size;
+    const cells = validPlacementCells(this.state, this.map, definitionId)
+      .map((c) => ({ c, d: townhallDistance(this.map, c) }))
+      .sort((a, b) => a.d - b.d);
+    if (cells.length === 0) return null;
+    return (cells.find(({ c }) => !this.hiddenBehindBuilding(c, size)) ?? cells[0]).c;
+  }
+
+  /**
+   * Is a footprint at `cell` mostly covered by a building's art standing in
+   * front of it? Worked on the projected plane (zoom does not matter): a
+   * plot's ground diamond has a box (sx + sy) half-tiles wide and half as
+   * tall, and a building's art rises from the box's bottom to about 0.85 of
+   * its width above it (the Townhall's is 0.75, a house's 0.88).
+   */
+  private hiddenBehindBuilding(cell: Coord, size: { x: number; y: number }): boolean {
+    const HALF_W = 64;
+    const HALF_H = 32;
+    const ART_RISE = 0.85;
+    const box = (c: Coord, s: { x: number; y: number }) => {
+      const cx = (c.x + s.x / 2 - (c.y + s.y / 2)) * HALF_W;
+      const cy = (c.x + s.x / 2 + (c.y + s.y / 2)) * HALF_H;
+      const w = (s.x + s.y) * HALF_W;
+      const h = (s.x + s.y) * HALF_H;
+      return { x0: cx - w / 2, x1: cx + w / 2, y0: cy - h / 2, y1: cy + h / 2, w };
+    };
+    const ground = box(cell, size);
+    const area = (ground.x1 - ground.x0) * (ground.y1 - ground.y0);
+    const depth = cell.x + cell.y + size.x + size.y;
+    return this.state.city.districts.some((d) => {
+      const s = DISTRICTS[d.definitionId].size;
+      // Only a building IN FRONT hides it: nearer the viewer, deeper on screen.
+      if (d.location.x + d.location.y + s.x + s.y <= depth) return false;
+      const b = box(d.location, s);
+      const art = { x0: b.x0, x1: b.x1, y0: b.y1 - b.w * ART_RISE, y1: b.y1 };
+      const ox = Math.min(ground.x1, art.x1) - Math.max(ground.x0, art.x0);
+      const oy = Math.min(ground.y1, art.y1) - Math.max(ground.y0, art.y0);
+      return ox > 0 && oy > 0 && (ox * oy) / area > 0.25;
+    });
   }
 
   /** What a build card quotes: the wait at the cell its ghost would appear
