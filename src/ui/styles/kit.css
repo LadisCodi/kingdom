@@ -977,7 +977,7 @@
   /* Over the paper's top edge and a little past its sides, as a plank
      nailed across a page would be. The ends are borders, so the title and
      the trail start inside the nails. */
-  margin: calc(var(--hp-edge) * -1 - var(--px) * 3) calc(var(--hp-edge) * -1 - var(--px) * 4) calc(var(--px) * 4);
+  margin: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1 - var(--px) * 4) calc(var(--px) * 4);
   border-style: solid;
   border-color: transparent;
   border-width: 0 var(--hp-cap);
