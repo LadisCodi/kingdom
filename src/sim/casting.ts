@@ -13,6 +13,7 @@
 // UI, no Date.now(): the determinism argument the whole sim rests on collapses
 // the moment an effect can only be replayed by re-running the UI.
 
+import { lairHolding } from './lairZone';
 import {
   ARTIFACTS, ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS,
   ARTIFACT_RADIUS_STEPS, type ArtifactActiveId,
@@ -215,7 +216,9 @@ export const reapCells = (
   state: GameState, map: MapData, centre: Coord, radius: number,
 ): Coord[] =>
   [centre, ...cellsWithinRadius(map, centre, radius)].filter(
-    (c) => harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true,
+    (c) => harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true
+      // A spell skips a lair's ground (Docs/proposals/lairs.md §3).
+      && lairHolding(state, c) === null,
   );
 
 /**
@@ -498,5 +501,7 @@ export const divinationSaving = (state: GameState, map: MapData, cell: Coord): n
 /** Cells Bloom would touch from this centre, for the placement preview. */
 export const bloomPreview = (state: GameState, map: MapData, centre: Coord, radius: number): Coord[] =>
   [centre, ...cellsWithinRadius(map, centre, radius)].filter(
-    (c) => harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true,
+    (c) => harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true
+      // A spell skips a lair's ground (Docs/proposals/lairs.md §3).
+      && lairHolding(state, c) === null,
   );

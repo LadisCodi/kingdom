@@ -16,32 +16,34 @@
 // Deliberately NOT a lower bound: raising the faucet is a real design move
 // and should have to come here and say so, next to the budget it changes.
 import { describe, expect, it } from 'vitest';
-import { CURRENCIES, DELVE, KINGDOM_DEF, QUESTS, RUINS } from '../src/sim/data/definitions';
+import { CURRENCIES, KINGDOM_DEF, QUESTS } from '../src/sim/data/definitions';
 
 /** `Docs/features/12-quests.md` §2.2, rescaled 2026-09-04 to the Gem ladder
- *  (500 Gems to the dollar, 14-monetization.md §2.2): 500 to start, 750 across
- *  the chain, 2,500 from first clears. The number every source below has to
- *  add up to. */
-const GEM_BUDGET = 3750;
+ *  (500 Gems to the dollar, 14-monetization.md §2.2): 500 to start and 750
+ *  across the chain. The number every source below has to add up to.
+ *
+ *  It WAS 3,750, with 2,500 from five ruin first-clears at 500 each. That
+ *  source was a bottomed ruin's, and it left with the depths: a ruin is its
+ *  gate now, and a gate's first clear pays Knowledge, not Gems. The gap is
+ *  ACCEPTED, not compensated (Docs/open-questions.md OQ-111). */
+const GEM_BUDGET = 1250;
 
 // Gems are PLAYER-scoped, so the opening grant is the currency's own `start`
 // and not part of `city.initialCurrencies` — which is the sort of thing that
 // makes a faucet total easy to add up wrong by hand.
 const startingGems = () => CURRENCIES.Gems.start;
 const questGems = () => QUESTS.reduce((n, q) => n + (q.rewardGems ?? 0), 0);
-const ruinGems = () => Object.keys(RUINS).length * DELVE.firstClearGems;
 
 describe('the up-front Gem faucet', () => {
   it('adds up to the authored budget', () => {
-    expect(startingGems() + questGems() + ruinGems()).toBe(GEM_BUDGET);
+    expect(startingGems() + questGems()).toBe(GEM_BUDGET);
   });
 
   // The split matters as much as the total: it is what decides whether the
   // Gem sinks are reachable by play or only by a wallet.
-  it('is 500 to start, 750 across the quest chain, 2,500 from first clears', () => {
+  it('is 500 to start and 750 across the quest chain', () => {
     expect(startingGems()).toBe(500);
     expect(questGems()).toBe(750);
-    expect(ruinGems()).toBe(2500);
   });
 
   // Every Gem sink is invisible for the whole first session because of this,
@@ -58,14 +60,13 @@ describe('the up-front Gem faucet', () => {
 });
 
 describe('the Gem sinks the faucet has to reach', () => {
-  // Promise 3: every paid ladder is earned FIRST. Since the sinks were priced
-  // to the Gem ladder (2026-09-04) the up-front faucet no longer buys every
-  // slot by play. 3,750 Gems is the second builder and change, or seven
-  // silver keys, or two gold ones — and the rest comes at a rung a month from
-  // the daily chest. What it must always reach is the first rung of the
-  // ladder a new player meets: the second builder.
-  it('leaves the second builder reachable without a purchase', () => {
-    expect(startingGems() + questGems() + ruinGems())
-      .toBeGreaterThanOrEqual(KINGDOM_DEF.builderGemCostBase);
+  // Promise 3: every paid ladder is earned FIRST. With the ruin first-clear
+  // Gems gone (OQ-111) the up-front faucet NO LONGER reaches the second
+  // builder by play alone — the daily chest's rungs have to carry it. This
+  // asserts the gap rather than hiding it: when OQ-111 is argued and a source
+  // comes back, flip it to `toBeGreaterThanOrEqual`.
+  it('falls short of the second builder since the ruin Gems left (OQ-111)', () => {
+    expect(startingGems() + questGems())
+      .toBeLessThan(KINGDOM_DEF.builderGemCostBase);
   });
 });

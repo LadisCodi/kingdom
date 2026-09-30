@@ -1,4 +1,4 @@
-/* Landmark and ruin cards.
+/* Landmark and lair cards.
  *
  * These sit in the same bottom panel as a district card and deliberately read
  * differently: a district is something you built and manage, a site is
@@ -61,9 +61,9 @@
 .site-stats > .k-stat .k-stat-unit { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); line-height: 1.1; }
 /* The one verb is the width of the card. */
 .site > .k-action,
-.site-gate > .k-action { display: flex; flex-direction: column; align-items: stretch; }
+.site-lair > .k-action { display: flex; flex-direction: column; align-items: stretch; }
 .site > .k-action > .k-btn,
-.site-gate > .k-action > .k-btn { width: 100%; }
+.site-lair > .k-action > .k-btn { width: 100%; }
 .site-note {
   display: flex;
   align-items: flex-start;
@@ -73,3 +73,116 @@
   color: var(--ink-muted);
   line-height: 1.35;
 }
+
+/* ---- the lair's card (Docs/proposals/lairs.md §6)
+ *
+ * The district card's frame (`.dc`, material.css) and the kit's pieces: a
+ * darker-paper tile (`.k-section`) for the painting, the countdown and each
+ * reward, the upgrade popup's section heading, the game's green button. No
+ * frame, seal or divider of its own. */
+.lc > .k-head { margin-bottom: calc(var(--space-heading) - var(--rpx) * 26); }
+.lc-art.k-section {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+}
+.lc-art-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lc-art-glyph {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: calc(var(--px) * 64);
+}
+/* The flavour: white with a shadow over the painting's quiet bottom band,
+   two lines at most. The gradient only helps it read; the art keeps that
+   band calm on purpose (Docs/art/originals/lairs/LOG.md). */
+.lc-flavour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: calc(var(--px) * 18) calc(var(--px) * 12) calc(var(--px) * 8);
+  background: linear-gradient(transparent, rgba(20, 10, 4, 0.55));
+  color: #fff;
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  line-height: 1.3;
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 3) rgba(0, 0, 0, 0.85);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lc-clock.k-section {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  margin-top: var(--space-section);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
+}
+.lc-clock > .icon { --icon-size: calc(var(--px) * 38); flex: none; }
+.lc-clock-label {
+  color: var(--ink);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-title);
+}
+.lc-clock-value {
+  display: block;
+  color: var(--ink);
+  font-size: calc(var(--px) * 20);
+  font-variant-numeric: tabular-nums;
+}
+.lc-reward {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+}
+.lc-chip.k-section {
+  position: relative;
+  flex: 1 1 0;
+  min-width: calc(var(--px) * 64);
+  max-width: calc(var(--px) * 112);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 6);
+  height: calc(var(--px) * 52);
+  padding: 0 calc(var(--px) * 6);
+}
+.lc-chip > .icon { --icon-size: calc(var(--px) * 34); flex: none; }
+.lc-chip-value {
+  color: var(--ink);
+  font-size: calc(var(--px) * 16);
+  font-variant-numeric: tabular-nums;
+}
+/* "full": the lair carries all it can of this; what raids take past it is lost. */
+.lc-chip-tag {
+  position: absolute;
+  top: calc(var(--px) * -8);
+  right: calc(var(--px) * -4);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 6);
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  text-transform: uppercase;
+}
+/* Attack sits on the paper itself, centred — no box around it. */
+.lc-go {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-section);
+}
+.lc-go > .k-btn { min-width: calc(var(--px) * 180); }
+/* Beaten: the countdown box turns into the notice that the reward waits. */
+.lc-clock.is-beaten .lc-clock-value { font-size: calc(var(--px) * 16); color: var(--leaf-dark); }

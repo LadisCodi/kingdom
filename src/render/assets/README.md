@@ -48,7 +48,7 @@ their emoji fallback until then. Prompts in `Docs/art/art-direction.md`.
 | `shooting_grounds_l1..l3.png` | 🏹 | trains Archers |
 | `stables_l1..l3.png` | 🐎 | trains Cavalry |
 | `sanctum_l1..l3.png` | 🔮 | raises the Mana cap |
-| `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/11-expeditions.md` |
+| `lair_orcs.png`, `lair_harpies.png`, `lair_goblins.png`, `lair_wolfriders.png`, `lair_drake.png` | 👹 🦅 👺 🐺 🐉 | the five lairs — see `Docs/proposals/lairs.md` |
 | `landmark.png` / `_claimed` / `_defended` | 🗿 | +1 Mana/h once claimed |
 | `gems_pouch.png` … `gems_treasury.png` | 💎 (fallback) | the six store packs, in ladder order: pouch, purse, chest, vault, hoard, treasury. **64×64**, padded from `Docs/art/ui/icon_pack_gems_1..6.png` without scaling; drawn at 64 px in the store (`storeSheet.ts`), never on the map |
 

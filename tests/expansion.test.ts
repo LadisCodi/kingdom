@@ -14,7 +14,7 @@ import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { pourKnowledge, researchRefusal, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
-import { addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, stored, T0, tickAt } from './helpers';
+import { addAllTrainers, clearLair, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, stored, T0, tickAt } from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
 // when the province was redrawn — the western cove became grassland, the
@@ -35,6 +35,10 @@ const IRON_MOUNTAIN = { x: -7, y: -13 }; // MountainIron, deep in the northern f
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
     const state = freshGame();
+    // The nearest mountain is inside the orc lair's zone, which holds its
+    // ground until the orcs are driven out (Docs/proposals/lairs.md §3) —
+    // this is about the stone line, so they already have been.
+    clearLair(state, 'Orcs');
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
     reveal(state, [NEAR_ROCKS, QUARRY_CELL, COVE_WATER]);
@@ -62,7 +66,7 @@ describe('stone line (Masonry → Quarry)', () => {
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   // Exploration lives in the MAGIC tome now (07-research.md §2): the fog is the
   // surface Kingdom's magic presents to the player, so Sailing and Fishing
-  // sit beside Mana and the ruins rather than beside the farms.
+  // sit beside Mana and the lairs rather than beside the farms.
   it('the exploration branch is in the Magic tome, behind its own eras', () => {
     const state = freshGame();
     fund(state, { Gold: 20_000, Knowledge: 5_000 });

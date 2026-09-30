@@ -35,7 +35,12 @@
         "troopSlots": { "type": "int" },
         "heroSlots": { "type": "int" },
         "heroSlotGemCostBase": { "type": "int" },
-        "heroSlotGemCostGrowth": { "type": "int" }
+        "heroSlotGemCostGrowth": { "type": "int" },
+        "heroRecoverHours": {
+          "type": "float",
+          "min": 0.1,
+          "doc": "Hours a hero takes to come back from 0 HP to full; a hurt hero recovers the same share per hour."
+        }
       }
     }
   }

@@ -254,10 +254,9 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
  *
  * **One is free and every further one is Gems, always**
  * (Docs/features/10-heroes.md §3), up to the board's three
- * (Docs/features/combat.md §3). The Adventurers' Guild opens DEPTHS, never
- * slots — which is what keeps a hero slot the one thing in the party that is
- * bought rather than earned, and the party's TROOP slots the one thing that
- * is earned rather than bought.
+ * (Docs/features/combat.md §3) — which is what keeps a hero slot the one
+ * thing in the party that is bought rather than earned, and the party's TROOP
+ * slots the one thing that is earned rather than bought.
  */
 export const heroSlots = (state: GameState): number =>
   Math.min(PARTY.heroSlots, 1 + state.heroes.heroSlotsPurchased);

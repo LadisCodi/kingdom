@@ -5,7 +5,12 @@
 import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
-import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { lairZoneCells } from '../sim/lairZone';
+import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
+import {
+  clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
+} from './lairMap';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
@@ -16,17 +21,17 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState,
+  type Coord, type GameState, type LairId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawCollectBubble } from './collectBubbleArt';
+import { drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
 import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
-import { drawIcon, drawSprite, spriteAspect } from './sprites';
+import { drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
@@ -131,6 +136,9 @@ export function drawMap(
   tapFx: TapFx,
   now: number,
   bubbles: CollectBubbles,
+  /** Lairs just claimed, and the `performance.now()` of the claim: their
+   *  going-away is played from it, then they are forgotten (§5). */
+  vanishing: Map<LairId, number> = new Map(),
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -141,6 +149,8 @@ export function drawMap(
     canvas.height = Math.round(h * dpr);
   }
   const ctx = canvas.getContext('2d')!;
+  // The frame's own clock, for animations the sim knows nothing about.
+  const clockNow = performance.now();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // SMOOTHING ON. The world is stylized 3D, not pixel art: every piece is
   // authored at twice the size it is drawn at (a 1×1 tile is a 256×128 PNG
@@ -293,7 +303,7 @@ export function drawMap(
   };
 
   /** A small corner tag on a site: what it still wants from the player. */
-  const drawSiteBadge = (box: PlotBox, text: string, alarm = false): void => {
+  const drawSiteBadge = (box: PlotBox, text: string): void => {
     const r = Math.max(6, size * 0.13);
     // Off the diamond's RIGHT CORNER and raised: a badge pinned to the top of
     // a square used to sit on the tile, and a tile is now a flat lozenge with
@@ -303,12 +313,12 @@ export function drawMap(
     const by = c.y - box.h * 0.55 - r;
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
-    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaid : PALETTE.siteBadge;
+    ctx.fillStyle = PALETTE.siteBadge;
     ctx.fill();
     ctx.strokeStyle = PALETTE.siteBadgeEdge;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaidInk : PALETTE.siteBadgeInk;
+    ctx.fillStyle = PALETTE.siteBadgeInk;
     ctx.font = labelFont(r * 1.2, 11, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -767,7 +777,7 @@ export function drawMap(
         }
       }
 
-      // Landmarks and ruins: authored sites, drawn where a feature would be.
+      // Landmarks and lairs: authored sites, drawn where a feature would be.
       // They are what the fog is FOR, so they get the same weight as a forest
       // and a badge saying whether they still want something from you.
       //
@@ -796,31 +806,6 @@ export function drawMap(
           if (!claimed) drawSiteBadge(plot, '✦');
         }, { x: landmark.size, y: landmark.size });
       }
-      const ruin = ruinDefAt(cell);
-      if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
-        const plot = ruin.size === 1
-          ? box : camera.plotBox(cell, { x: ruin.size, y: ruin.size });
-        later(cell, (mark) => {
-          dimmed(dim, () => {
-            punched(key, plot, () => {
-              mark(artRect(plot,
-                stand(plot, [ruin.sprite], ruin.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
-            });
-          });
-          // The tier alone: a bare digit reads at any zoom, and "T1" in a
-          // display face is one stroke away from an arrow. While a garrison is
-          // counting down it takes the badge instead — the minutes left, which
-          // is the only thing about this ruin that is urgent
-          // (Docs/features/18-garrisons-and-raids.md §7).
-          const gate = state.gates[ruin.id];
-          const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
-            ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
-          if (raidIn !== null) drawSiteBadge(plot, formatCount(raidIn), true);
-          else drawSiteBadge(plot, String(ruin.tier));
-        }, { x: ruin.size, y: ruin.size });
-
-      }
-
       if (fog === 'Revealed') drawResourceState(cell, box);
 
       if (fog === 'Discovered') {
@@ -846,7 +831,61 @@ export function drawMap(
     }
   }
 
-  // Pass 1.1: THE WORK AREA the markers carry (a selected building's range,
+  // Pass 1.1: THE GROUND THE LAIRS HOLD (Docs/proposals/lairs.md §3), over
+  // every fog state and under everything that stands: a tint on each cell of
+  // the union of the standing zones, then a border round the union's outside
+  // — solid where the cell inside is revealed, dashed where it is fog, in the
+  // reach line's dash. Overlapping zones are one zone, one outline.
+  const zone = heldZone(state, map);
+  if (zone.cells.length > 0) {
+    ctx.save();
+    const clear: Coord[] = [];
+    const fogged: Coord[] = [];
+    for (const c of zone.cells) {
+      (fogState(state, map, c) === 'Revealed' ? clear : fogged).push(c);
+    }
+    for (const [cells, tint] of [
+      [clear, PALETTE.lairZoneTint], [fogged, PALETTE.lairZoneTintFog],
+    ] as const) {
+      if (cells.length === 0) continue;
+      ctx.fillStyle = tint;
+      ctx.beginPath();
+      for (const c of cells) diamondPath(ctx, cellRect(c));
+      ctx.fill();
+    }
+    ctx.strokeStyle = PALETTE.lairZoneBorder;
+    ctx.lineWidth = Math.max(1.5, size * 0.035);
+    ctx.lineCap = 'round';
+    for (const [cells, dashed] of [[clear, false], [fogged, true]] as const) {
+      if (cells.length === 0) continue;
+      ctx.setLineDash(dashed ? [Math.max(4, size * 0.18), Math.max(3, size * 0.12)] : []);
+      ctx.beginPath();
+      for (const c of cells) {
+        const box = cellRect(c);
+        for (const side of outerSides(c, zone.keys)) edgePath(ctx, box, side);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Pass 1.1b: a CLAIMED lair's ground, letting go. The zone fades out over
+  // the going-away (VANISH_MS) instead of blinking off, so the player sees the
+  // ground come back to them.
+  const letting = vanishingPhases(vanishing, clockNow);
+  for (const [id, t] of letting) {
+    const cells = lairZoneCells(id).filter((c) => map.terrain.has(coordKey(c)) && !zone.keys.has(coordKey(c)));
+    if (cells.length === 0) continue;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = PALETTE.lairZoneTint;
+    ctx.beginPath();
+    for (const c of cells) diamondPath(ctx, cellRect(c));
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Pass 1.1c: THE WORK AREA the markers carry (a selected building's range,
   // a placement's, a spell's targets), over the floor and under
   // everything that stands on it — trees and buildings stand in front of
   // the line (render/areaOverlays.ts).
@@ -890,6 +929,50 @@ export function drawMap(
         mark(art);
       }, def.size,
       { occludes: !NEVER_HIDES.has(district.definitionId) });
+  }
+
+  // THE LAIRS, once FOUND and until cleared (Docs/proposals/lairs.md §2.1,
+  // §5) — whatever the fog on their own plot, since a lair is found by
+  // revealing any cell of its zone. Queued here rather than in the floor loop,
+  // which skips Undiscovered cells, and depth-sorted with everything else.
+  // Under fog the model is dimmed as a feature would be; its bubble is not.
+  const lairArt = new Map<LairId, PlotBox>();
+  clearLairArt();
+  for (const id of LAIR_ORDER) {
+    const lair = standingLairAt(state, LAIRS[id].location);
+    if (!lair) continue;
+    const plot = camera.plotBox(lair.location, { x: lair.size, y: lair.size });
+    if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
+      || plot.y + plot.h < 0 || plot.y - plot.w * 1.5 > h) continue;
+    const fog = fogState(state, map, lair.location);
+    const dim = fog === 'Revealed' ? 1 : FOG_DIM;
+    const key = coordKey(lair.location);
+    later(lair.location, (mark) => {
+      dimmed(dim, () => {
+        punched(key, plot, () => {
+          const art = artRect(plot,
+            stand(plot, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS);
+          lairArt.set(id, art);
+          markLairArt(id, art, (u, v) => spriteSolidAt(lair.sprite, u, v));
+          mark(art);
+        });
+      });
+    }, { x: lair.size, y: lair.size });
+  }
+
+  // …and a CLAIMED one, going: it sinks a little into its ground and fades,
+  // under a ring of dust, over VANISH_MS, then it is gone for good.
+  for (const [id, t] of letting) {
+    const lair = LAIRS[id];
+    const plot = camera.plotBox(lair.location, { x: lair.size, y: lair.size });
+    const sunk = { ...plot, y: plot.y + plot.h * 0.18 * t };
+    later(lair.location, (mark) => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - t * 1.15);
+      mark(artRect(sunk, stand(sunk, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
+      ctx.restore();
+      drawDust(ctx, plot, t, id);
+    }, { x: lair.size, y: lair.size });
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
@@ -1072,7 +1155,7 @@ export function drawMap(
     ctx.restore();
   }
 
-  // Pass 3: markers. (The work area is Pass 1.1: it lies under what stands.)
+  // Pass 3: markers. (The work area is Pass 1.1c: it lies under what stands.)
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const b = cellRect(cell);
@@ -1225,6 +1308,27 @@ export function drawMap(
       Math.max(34, Math.min(88, plot.w * 0.4)), clock);
   }
 
+  // Pass 4.5: THE WARNING BUBBLES, one over each standing lair's model, under
+  // fog or not (Docs/proposals/lairs.md §6): the creature, and the time to
+  // its next raid. Their rects are kept so a tap on one opens the lair.
+  clearLairBubbles();
+  for (const id of LAIR_ORDER) {
+    const held = state.lairs[id];
+    const art = lairArt.get(id);
+    if (!held || held.cleared || !art) { bubbles.forget(`lair:${id}`); continue; }
+    const top = art.y + art.h * spriteInkTop(LAIRS[id].sprite);
+    if (held.defeated) {
+      // Beaten: the reward waits, so the bubble is a store's — the chest.
+      markLairBubble(id, drawClaimBubble(ctx, bubbles, `lair:${id}:claim`,
+        art.x + art.w / 2, top + size * 0.1, Math.max(34, Math.min(72, size * 0.62)), clock));
+      continue;
+    }
+    const countdown = held.nextRaidAt === null ? '–' : compactCountdown(held.nextRaidAt - now);
+    markLairBubble(id, drawLairBubble(ctx, bubbles, `lair:${id}`, LAIR_AVATAR[id], countdown,
+      labelFace(), art.x + art.w / 2, top + size * 0.1,
+      Math.max(28, Math.min(64, size * 0.62)), clock));
+  }
+
   // Pass 5: floaters.
   for (const f of floaters.alive()) {
     const c = mid(cellRect(f.cell));
@@ -1334,4 +1438,45 @@ function drawBar(
   ctx.fillRect(x, y, w, h);
   ctx.fillStyle = color;
   ctx.fillRect(x, y, w * Math.min(1, Math.max(0, fraction)), h);
+}
+
+// ------------------------------------------------------------ a lair going
+
+/** How long a claimed lair takes to go (Docs/proposals/lairs.md §5). */
+const VANISH_MS = 1400;
+
+/** Each claimed lair still going, and how far along it is (0…1). Lairs done
+ *  going are dropped from the map the presenter keeps. */
+function vanishingPhases(vanishing: Map<LairId, number>, clock: number): Array<[LairId, number]> {
+  const out: Array<[LairId, number]> = [];
+  for (const [id, at] of vanishing) {
+    const t = (clock - at) / VANISH_MS;
+    if (t >= 1) { vanishing.delete(id); continue; }
+    out.push([id, Math.max(0, t)]);
+  }
+  return out;
+}
+
+/** A ring of dust puffs round the lair's foot, swelling and thinning as it
+ *  goes. Positions are a hash of the lair, so the ring is the same each frame. */
+function drawDust(ctx: CanvasRenderingContext2D, plot: PlotBox, t: number, id: string): void {
+  const cx = plot.x + plot.w / 2;
+  const cy = plot.y + plot.h * 0.55;
+  const n = 9;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0;
+  ctx.save();
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + (h % 628) / 100;
+    const reach = plot.w * (0.18 + 0.32 * t);
+    const x = cx + Math.cos(a) * reach;
+    const y = cy + Math.sin(a) * reach * 0.5 - plot.h * 0.15 * t;
+    const r = plot.w * (0.06 + 0.1 * t);
+    ctx.globalAlpha = 0.55 * (1 - t);
+    ctx.fillStyle = '#d9c7a4';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }

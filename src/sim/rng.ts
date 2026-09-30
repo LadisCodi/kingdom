@@ -51,7 +51,7 @@ export type RngPart = string | number;
 /**
  * A uniform value in [0, 1).
  *
- * `parts` must identify the EVENT — a ruin id and a depth, an origin cell and
+ * `parts` must identify the EVENT — a lair id and a depth, an origin cell and
  * a respawn generation, a banner and a pull number — never the moment it was
  * queried. Two calls with the same parts must mean the same question.
  */

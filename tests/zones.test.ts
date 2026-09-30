@@ -16,7 +16,6 @@ import {
   tapRunSeconds,
 } from '../src/sim/casting';
 import { advance } from '../src/sim/commands';
-import { roomReward } from '../src/sim/expeditions';
 import {
   ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS, ARTIFACT_RADIUS_STEPS,
   HARVEST,
@@ -792,18 +791,6 @@ describe('Lamplight waits in the lantern until it is spent', () => {
     // nothing is happening.
     expect(castState(state, 'DelversLantern', T0 + 24 * 3600_000).phase).toBe('Active');
     expect(chargesLeft(state, 'DelversLantern')).toBeGreaterThan(0);
-  });
-
-  it('doubles the room it is spent on, and only that one', () => {
-    const state = lit(1);
-    const plain = roomReward(state, 'HollowBarrow', 1, 1).wallet.Gold!;
-    cast(state, map, 'DelversLantern', null, T0);
-    const power = spendCharge(state, 'DelversLantern', T0);
-    expect(power).toBeGreaterThan(1);
-    expect(roomReward(state, 'HollowBarrow', 1, 1, power).wallet.Gold!)
-      .toBe(Math.round(plain * power));
-    // The preview asks the same question and spends nothing.
-    expect(roomReward(state, 'HollowBarrow', 1, 1).wallet.Gold!).toBe(plain);
   });
 
   // THE LAST CHARGE IS THE CLOSE. A charged ability has no window, so the

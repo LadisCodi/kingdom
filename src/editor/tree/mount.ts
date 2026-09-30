@@ -854,7 +854,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     if (node.kind === 'bonus') card.append(effectEditor(id, node));
     if (node.kind === 'mechanic') {
       card.append(el('p', { class: 'ed-note' },
-        'A mechanic is read by id in the sim — Conquest adding to a ruin\'s '
+        'A mechanic is read by id in the sim — Conquest adding to a lair\'s '
         + 'Knowledge lump. The editor labels it; the code does it.'));
     }
     const planned = el('input', { type: 'checkbox' });

@@ -36,18 +36,19 @@ const landmarkLine = (l) =>
   `    { "id": ${JSON.stringify(l.id)}, "kind": ${JSON.stringify(l.kind)}, `
   + `"x": ${l.x}, "y": ${l.y}, "claimCost": ${l.claimCost} }`;
 
-// A ruin is WHERE and WHAT, and nothing about its depths: those are rows on
-// the `Depths` sheet now (Docs/features/11-expeditions.md §2), because a
-// depth is a ladder of numbers and a spreadsheet says those best.
-const ruinLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
-  `      "x": ${r.x}, "y": ${r.y}`,
+// A lair is WHERE and WHAT, and its guard: one fight, nothing behind it
+// (Docs/proposals/lairs.md §1).
+const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
+  `      "x": ${r.x}, "y": ${r.y}${r.size !== undefined ? `, "size": ${r.size}` : ''}`,
   `      "tier": ${r.tier}`,
-  // The gate: one garrison on the surface, with a clock
-  // (Docs/features/18-garrisons-and-raids.md §2).
+  // How far its ground reaches past its own footprint
+  // (Docs/proposals/lairs.md §3).
+  `      "radius": ${r.radius}`,
+  // The guard: one garrison, and the warning before its first raid.
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
-    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
-    + `"periodMinutes": ${r.guard.periodMinutes} }`,
-  `      "affinity": ${JSON.stringify(r.affinity)}, "artifact": ${JSON.stringify(r.artifact)}`,
+    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes} }`,
+  // The card's line over its painting (§6).
+  `      "flavour": ${JSON.stringify(r.flavour)}`,
 ].join(',\n') + '\n    }';
 
 export function serialiseRegionMap(doc) {
@@ -55,7 +56,7 @@ export function serialiseRegionMap(doc) {
     section('terrain', doc.terrain.cells),
     section('features', doc.features.cells),
     `  "landmarks": [\n${doc.landmarks.map(landmarkLine).join(',\n')}\n  ]`,
-    `  "ruins": {\n${Object.entries(doc.ruins).map(([id, r]) => ruinLines(id, r)).join(',\n')}\n  }`,
+    `  "lairs": {\n${Object.entries(doc.lairs).map(([id, r]) => lairLines(id, r)).join(',\n')}\n  }`,
   ].join(',\n') + '\n}\n';
   // Hand-rolled formatting earns a parse check before it reaches the repo.
   JSON.parse(text);

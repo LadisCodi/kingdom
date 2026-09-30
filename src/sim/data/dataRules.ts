@@ -46,7 +46,6 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'map', label: 'Region map', domain: 'World', view: 'canvas', noun: 'cell', file: 'src/sim/data/region-map.json' },
   { id: 'terrain', label: 'Terrain', domain: 'World', view: 'table', noun: 'terrain', source: 'terrain' },
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
-  { id: 'depths', label: 'Ruin depths', domain: 'World', view: 'table', noun: 'depth', source: 'depths' },
   { id: 'garrisons', label: 'Garrisons', domain: 'World', view: 'table', noun: 'garrison', source: 'garrisons' },
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
 
@@ -92,7 +91,7 @@ export type FieldType = 'int' | 'float' | 'text' | 'bool' | 'list' | 'map' | 'ob
 /** What an id-valued field may name. */
 export type RefKind =
   | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact'
-  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'ruin' | 'face'
+  | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'lair' | 'face'
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
   /** A character in the animated atlas (Docs/art/characters). */
@@ -145,10 +144,10 @@ export interface FieldSpec {
 }
 
 /** Id lists the data itself cannot supply: they are unions in the sim
- *  (`FeatureId`, `RuinId`) or live in another file (the technologies). */
+ *  (`FeatureId`, `LairId`) or live in another file (the technologies). */
 export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   feature: ['Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal'],
-  ruin: ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory'],
+  lair: ['Orcs', 'Harpies', 'Goblins', 'WolfRiders', 'Drake'],
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
@@ -162,8 +161,8 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
-  TrainArmy: null, ClaimLandmarks: null, ReachDepth: null, ClearRuins: null,
-  OwnArtifacts: null, OwnHeroes: null, ClearGarrisons: null, CollectResource: 'currency',
+  TrainArmy: null, ClaimLandmarks: null,
+  OwnArtifacts: null, OwnHeroes: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
 
@@ -420,7 +419,7 @@ function checkAdjacency(doc: DataDoc, push: Push): void {
 /**
  * What a schema cannot say: rules that tie one field to another, or one entry
  * to the next. Each is a way the game goes silently wrong rather than loudly —
- * a workshop with no queue, a ruin that gets easier, a pack that guarantees
+ * a workshop with no queue, a lair that gets easier, a pack that guarantees
  * more cards than it holds — so each is an error, stated where the data is.
  */
 type Rule = (doc: DataDoc, push: Push) => void;
@@ -520,24 +519,6 @@ export const RULES: Readonly<Record<string, Rule>> = {
       // Always a multiplier above 1: below is a discount, and a discount dies at 100%.
       if (!(num(boon.value) > 1)) push(id, ['boon', 'value'], `a boon must be more than 1 — ${boon.value} is a discount`);
       if (typeof boon.stat !== 'string' || boon.stat === '') push(id, ['boon', 'stat'], 'a boon names the stat it moves');
-    }
-  },
-  depths: (doc, push) => {
-    const all = records(doc.depths);
-    for (const ruin of refIds(doc, 'ruin')) {
-      const rows = all.filter(([, d]) => d.ruin === ruin);
-      if (rows.length === 0) push(null, [], `ruin ${ruin} has no depths`);
-      rows.forEach(([i, d], k) => {
-        if (num(d.rooms) < 1) push(i, ['rooms'], 'a depth needs at least one room');
-        if (d.depth !== k + 1) push(i, ['depth'], `${ruin} depth ${d.depth} is out of order`);
-        const prev = rows[k - 1]?.[1];
-        if (!prev) return;
-        // The ladder keeps climbing: a depth never opens easier than the one
-        // above it finished (Docs/features/11-expeditions.md §2).
-        const prevLast = num(prev.powerStart) + num(prev.powerStep) * (num(prev.rooms) - 1);
-        if (num(d.powerStart) < prevLast) push(i, ['powerStart'], `starts at ${d.powerStart}, below where depth ${prev.depth} finished (${prevLast})`);
-        if (num(d.guildReq) < num(prev.guildReq)) push(i, ['guildReq'], `opens before depth ${prev.depth}`);
-      });
     }
   },
   adjacency: (doc, push) => {

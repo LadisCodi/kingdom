@@ -111,6 +111,28 @@ export function sheet(
 export const sectionHead = (label: string): HTMLElement =>
   el('div', { class: 'k-section-head' }, label);
 
+/** What a head panel's header is painted: the four the art comes in. */
+export type HeadTone = 'red' | 'blue' | 'wood' | 'green';
+
+/**
+ * A PANEL WITH A HEADER (kit.css `.k-headpanel`): a painted plank nailed
+ * across the top — red, blue, wood or green (assets/plank-*.png) — over a
+ * sheet of deckled paper (assets/panel-paper.png), both sliced so the pair
+ * takes any size. The title sits
+ * on the plank at the left, in the plank's own cream; `trailing` is anchored
+ * to its right — a total, a timer, a button.
+ */
+export function headPanel(
+  opts: { tone: HeadTone; title: string; trailing?: Array<Node | string>; cls?: string },
+  ...children: Array<Node | string>
+): HTMLElement {
+  return el('section', { class: `k-headpanel is-${opts.tone}${opts.cls ? ` ${opts.cls}` : ''}` },
+    el('div', { class: 'k-headpanel-head' },
+      el('span', { class: 'k-headpanel-title' }, opts.title),
+      ...(opts.trailing ? [el('span', { class: 'k-headpanel-trail' }, ...opts.trailing)] : [])),
+    el('div', { class: 'k-headpanel-body' }, ...children));
+}
+
 /** The warm dim behind an open sheet. It MUST cover the map: #ui is
  *  pointer-events:none with children auto, so anything the scrim doesn't
  *  cover passes taps straight through to the canvas and fires a harvest. */

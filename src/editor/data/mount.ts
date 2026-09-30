@@ -897,7 +897,7 @@ export function mountEditor(): void {
     ['ref', 'an id of…'], ['options', 'one of…'], ['list', 'list of numbers'],
     ['currencyMap', 'amount per currency'], ['goodsMap', 'amount per good'],
   ];
-  const REF_KINDS: RefKind[] = ['building', 'good', 'currency', 'unit', 'hero', 'villain', 'pack', 'artifact', 'harvest', 'terrain', 'tech', 'feature', 'ruin'];
+  const REF_KINDS: RefKind[] = ['building', 'good', 'currency', 'unit', 'hero', 'villain', 'pack', 'artifact', 'harvest', 'terrain', 'tech', 'feature', 'lair'];
 
   function specFromForm(f: FieldForm): FieldSpec {
     const num = (v: string) => (v.trim() === '' ? undefined : Number(v));

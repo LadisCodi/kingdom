@@ -6,7 +6,7 @@
 
 import { playSfx } from '../audio/sfx';
 
-/** Durations now span "instant" to "a day and a half" — a Tier V ruin is a
+/** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
  *  two largest units, because a third is noise at every scale. */
 export function formatDuration(seconds: number): string {

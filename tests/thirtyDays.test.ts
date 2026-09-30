@@ -40,16 +40,14 @@ import { choosePayerProfile } from '../src/sim/store';
 import {
   armySize, availableRoster, armyCap, trainUnit, trainerFor,
 } from '../src/sim/army';
-import {
-  discoveredRuins, enterRoom, freeHeroes, troopSlots,
-} from '../src/sim/expeditions';
-import { gateIsCleared } from '../src/sim/gates';
+import { attackLair, freeHeroes, troopSlots } from '../src/sim/expeditions';
+import { clearedLairCount, lairIsCleared } from '../src/sim/lairs';
 import { heroSlots } from '../src/sim/heroes';
-import { RUINS, UNITS } from '../src/sim/data/definitions';
+import { LAIRS, UNITS } from '../src/sim/data/definitions';
 import { influenceCells } from '../src/sim/workers';
 import { canAffordGoods, getGood } from '../src/sim/goods';
 import { isWorkshop, queueGood } from '../src/sim/workshops';
-import type { TechId, UnitId } from '../src/sim/state';
+import type { LairId, TechId, UnitId } from '../src/sim/state';
 import {
   buildQueueCapacity, coordKey, getWallet, type Coord, type District, type DistrictId,
   type GameState,
@@ -83,7 +81,7 @@ const BUILD_ORDER: DistrictId[] = [
 interface WeekRow {
   week: number; townhall: number; population: number; roofs: number; food: number; districts: number;
   maxed: number; levels: number; techs: number; gold: number; knowledge: number;
-  army: number; ruins: number; landmarks: number; harmony: string; idleDays: number;
+  army: number; lairs: number; landmarks: number; harmony: string; idleDays: number;
 }
 
 const townhall = (state: GameState): District =>
@@ -126,8 +124,13 @@ function chooseCell(state: GameState, def: DistrictDef): Coord | null {
   return cells[0];
 }
 
-/** Delve bookkeeping, for the run's closing diagnostic. */
-let rooms = 0;
+/** Lair bookkeeping, for the run's closing diagnostic. */
+let lairAttempts = 0;
+
+/** Lairs whose cell the player has uncovered. */
+const foundLairs = (state: GameState): LairId[] =>
+  (Object.keys(LAIRS) as LairId[])
+    .filter((id) => fogState(state, map, LAIRS[id].location) === 'Revealed');
 
 /** One visit. Returns true if the player did anything that moves the city. */
 function playVisit(state: GameState, now: number): { acted: boolean; until: number } {
@@ -366,8 +369,8 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     }
   }
 
-  // 6. The army, and the ruins it is for. Knowledge only comes from ground
-  //    the kingdom holds — claimed landmarks and CLEARED RUINS — so a player
+  // 6. The army, and the lairs it is for. Knowledge only comes from ground
+  //    the kingdom holds — claimed landmarks and CLEARED LAIRS — so a player
   //    who never delves never reaches the era-3 keystones the late city is
   //    gated behind (Docs/features/07-research.md §3). Delving is on the
   //    critical path of the builder, and the harness has to walk it.
@@ -381,26 +384,21 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     acted = true;
   }
 
-  // 6. THE RUINS. A room is one fight, decided on entry, so the bot enters
-  // the frontier of whatever it can reach and stops when it is beaten — the
-  // same decision a player makes, with none of the waiting the staged delve
-  // used to have.
-  for (const ruin of discoveredRuins(state, map)) {
-    if (!gateIsCleared(state, ruin)) continue;
+  // 6. THE LAIRS. A lair is one fight, decided on entry, so the
+  //    bot goes at every standing lair it has found with everyone at home,
+  //    once a visit — the same decision a player makes.
+  for (const lair of foundLairs(state)) {
+    if (lairIsCleared(state, lair)) continue;
     const heroes = freeHeroes(state).slice(0, heroSlots(state));
     if (heroes.length === 0) break;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const roster = availableRoster(state);
-      const slots = (Object.keys(roster) as UnitId[])
-        .filter((u) => roster[u] > 0)
-        .slice(0, troopSlots())
-        .map((u) => ({ unitId: u, count: roster[u] }));
-      if (slots.length === 0) break;
-      const report = enterRoom(state, map, ruin, heroes, slots);
-      if (report.result !== 'Cleared') break;
-      rooms += 1;
-      acted = true;
-    }
+    const roster = availableRoster(state);
+    const slots = (Object.keys(roster) as UnitId[])
+      .filter((u) => roster[u] > 0)
+      .slice(0, troopSlots())
+      .map((u) => ({ unitId: u, count: Math.min(roster[u], UNITS[u].squadSize) }));
+    if (slots.length === 0) break;
+    const report = attackLair(state, map, lair, heroes, slots);
+    if (report.log !== null) { lairAttempts += 1; acted = true; }
   }
 
   // 7. Research. FIRST whatever gates the next Townhall level — the card says
@@ -500,7 +498,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const weeks: WeekRow[] = [];
     let idleDays = 0;
     let idleInWeek = 0;
-    rooms = 0;
+    lairAttempts = 0;
 
     // THE DAY each Townhall level, and each technology that gates one, was
     // first seen standing — the pacing table step 7 is measured against
@@ -565,7 +563,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           // lands: the first piece opens at TH5 and the first level that
           // demands any is 8 (Docs/features/18-harmony.md).
           harmony: `${harmonySupply(state)}/${harmonyDemand(state)}`,
-          ruins: Object.keys(state.ruinsCleared).length,
+          lairs: clearedLairCount(state),
           landmarks: Object.keys(state.landmarks.claimed).length,
           idleDays: idleInWeek,
         });
@@ -596,12 +594,11 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     // eslint-disable-next-line no-console
     console.table(early);
     // eslint-disable-next-line no-console
-    console.log('ruins', discoveredRuins(state, map).length, 'of', Object.keys(RUINS).length,
-      'discovered;', Object.keys(state.ruinsCleared).length, 'cleared; deepest',
-      state.deepestDepth,
+    console.log('lairs', foundLairs(state).length, 'of', Object.keys(LAIRS).length,
+      'discovered;', clearedLairCount(state), 'cleared;',
       '| landmarks visible', visibleLandmarks(state, map).length,
       'claimed', Object.keys(state.landmarks.claimed).length,
-      '| rooms cleared', rooms,
+      '| lair attacks', lairAttempts,
       '| revealed cells', map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length,
       'of', map.cells.length);
 
@@ -666,7 +663,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     // 4. The ground still starves, and now it starves on money. A player at
     //    the designed session length uncovers about half the province in a
     //    month — 715 of 1,470 cells, measured with the five-tap fog — so they
-    //    still meet only some of the ruins and landmarks the Knowledge drip
+    //    still meet only some of the lairs and landmarks the Knowledge drip
     //    is made of, and the drip is what the late city is gated behind.
     //
     //    Landmarks re-pinned 5 → 7 on 2026-09-09, when the Townhall's level
@@ -679,7 +676,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
     expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
       .toBeLessThan(0.55);
-    expect(end.ruins, 'ruins cleared by day 30').toBeLessThan(3);
+    expect(end.lairs, 'lairs cleared by day 30').toBeLessThan(3);
     expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThanOrEqual(7);
     expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(10_000);
 

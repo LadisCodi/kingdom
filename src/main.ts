@@ -2,6 +2,7 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+import { renderHeroPicker } from './ui/heroPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
@@ -41,22 +42,20 @@ import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { renderSiteCard } from './ui/siteCard';
+import { lairCardScreen, renderSiteCard } from './ui/siteCard';
+import { standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
-import { renderExpeditionSheet } from './ui/expeditionSheet';
-import { renderGateSheet } from './ui/gateSheet';
+import { renderLairSheet } from './ui/lairSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountRaidPill } from './ui/raidPill';
-import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
@@ -144,10 +143,6 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
   mountSeasonPill(game, document.getElementById('season')!);
-  mountRaidPill(game, document.getElementById('raids')!);
-  // The battle screen's card panel. Its own mount, because the sheet it
-  // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
-  mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
@@ -181,8 +176,8 @@ async function boot(): Promise<void> {
     purse: renderPurseSheet,
     collection: renderCollectionSheet,
     heroes: renderHeroesSheet,
-    expedition: renderExpeditionSheet,
-    gate: renderGateSheet,
+    lair: renderLairSheet,
+    heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     builder: renderBuilderSheet,
@@ -258,6 +253,12 @@ async function boot(): Promise<void> {
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
+    } else if (site !== null && standingLairAt(game.state, site)) {
+      // A lair's card is a screen of its own, built once and ticked
+      // (siteCard.ts, `lairCardScreen`), in the district card's frame.
+      const lair = standingLairAt(game.state, site)!;
+      panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
+      frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
     } else if (site !== null) {
       // Keyed by cell, so tapping a different site is a real remount.
       panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
@@ -283,7 +284,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
+        'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -373,7 +374,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------ render loop
   const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles);
+    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -390,7 +391,7 @@ async function boot(): Promise<void> {
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
     // The presenter, reachable from the console. Every screen is a pure
-    // function of it, so `kingdom.openExpedition('HollowBarrow')` is a faster
+    // function of it, so `kingdom.openLair('Orcs')` is a faster
     // way to reach a sheet than finding its cell on the map — and it is the
     // difference between checking a layout in ten seconds and in ten clicks.
     (window as unknown as { kingdom: Game }).kingdom = game;
@@ -417,12 +418,13 @@ async function boot(): Promise<void> {
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
-      // The gates' counters, so the warp demos a raid landing during an
+      // The lairs' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
-      for (const gate of Object.values(game.state.gates)) {
-        if (gate !== undefined && gate.nextRaidAt !== null) gate.nextRaidAt -= delta;
+      for (const lair of Object.values(game.state.lairs)) {
+        if (lair === undefined) continue;
+        lair.armedAt -= delta;
+        if (lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
       }
-      for (const report of game.state.raidReports) report.at -= delta;
       runTick();
     };
     const allTechs = () => {

@@ -1,0 +1,235 @@
+/* THE HERO PICKER (ui/heroPicker.ts) and THE HERO CARD (ui/heroCard.ts).
+ * Built from the kit — the window, the section heading, the head panel, the
+ * HP bar, the rest marks and the game's buttons; the rules here are the
+ * card and the layout. */
+
+/* ------------------------------------------------------------ the card -- */
+
+/* A hero, 2:3, assembled from painted pieces (assets/hero-*.png, sheets/
+   hero-card/): the rarity's face, the illustration on it, the gilt frame
+   over both, the type's banner hanging from the top-left corner, the level
+   in its dark pill and the stars at the foot, the HP bar over the bottom
+   edge, and the green check when it holds a slot.
+   Every piece is set off --hc-w, the card's width, so the same card reads
+   at any size. (Not a container query: the UI's --px is itself container
+   units, and a container around the card would redefine it inside.) */
+.hc {
+  --hc-w: calc(var(--px) * 108);
+  --hc-bg: var(--rarity-common);
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: var(--hc-w);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--hc-w) * 0.09);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(60, 36, 16, 0.3));
+}
+button.hc { cursor: pointer; }
+.hc.is-common { --hc-bg: var(--rarity-common); --hc-face: url('../../assets/hero-card-common.png'); }
+.hc.is-rare { --hc-bg: var(--rarity-rare); --hc-face: url('../../assets/hero-card-rare.png'); }
+.hc.is-legendary { --hc-bg: var(--rarity-legendary); --hc-face: url('../../assets/hero-card-legendary.png'); }
+/* The face and the art sit just inside the frame's inner edge, so the
+   frame's rounded corners cover theirs. */
+.hc::before,
+.hc-art {
+  position: absolute;
+  inset: calc(var(--hc-w) * 0.05);
+  border-radius: calc(var(--hc-w) * 0.06);
+}
+.hc::before {
+  content: '';
+  background: var(--hc-bg) var(--hc-face) center / 100% 100% no-repeat;
+}
+.hc-art {
+  width: calc(100% - calc(var(--hc-w) * 0.1));
+  height: calc(100% - calc(var(--hc-w) * 0.1));
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+.hc-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--hc-w) * 0.3); }
+/* The gilt frame, nine-sliced (hero-card-frame.png, 479×715: its corners
+   and bevel are the outer 50 px). */
+.hc-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--hc-w) * 0.104);
+  border-image: url('../../assets/hero-card-frame.png') 50 / calc(var(--hc-w) * 0.104) stretch;
+}
+/* What it fights as: the unit's symbol, in white, on its type's banner
+   hanging from the frame's top-left corner. */
+.hc-type {
+  position: absolute;
+  top: calc(var(--hc-w) * 0.01);
+  left: calc(var(--hc-w) * 0.05);
+  display: grid;
+  place-items: center;
+  width: calc(var(--hc-w) * 0.25);
+  aspect-ratio: 146 / 161;
+  padding-bottom: calc(var(--hc-w) * 0.05);
+  box-sizing: border-box;
+  background: var(--hc-banner) center / 100% 100% no-repeat;
+}
+.hc-type.is-Warrior { --hc-banner: url('../../assets/hero-banner-warrior.png'); }
+.hc-type.is-Lancer { --hc-banner: url('../../assets/hero-banner-lancer.png'); }
+.hc-type.is-Archer { --hc-banner: url('../../assets/hero-banner-archer.png'); }
+.hc-type.is-Cavalry { --hc-banner: url('../../assets/hero-banner-cavalry.png'); }
+.hc-type > .icon {
+  --icon-size: calc(var(--hc-w) * 0.15);
+  filter: brightness(0) invert(1) drop-shadow(0 calc(var(--hc-w) * 0.008) 0 rgba(40, 12, 4, 0.55));
+}
+/* Stars over the level pill, at the foot, inside the frame. */
+.hc-foot {
+  position: absolute;
+  left: calc(var(--hc-w) * 0.08);
+  right: calc(var(--hc-w) * 0.08);
+  bottom: calc(var(--hc-w) * 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--hc-w) * 0.01);
+  color: var(--ink-inverse);
+  font-weight: var(--weight-title);
+}
+.hc-stars { display: inline-flex; gap: 0; filter: drop-shadow(0 calc(var(--hc-w) * 0.006) calc(var(--hc-w) * 0.008) rgba(20, 10, 4, 0.8)); }
+.hc-stars .icon { --icon-size: calc(var(--hc-w) * 0.11); }
+.hc-stars .icon.is-locked { opacity: 0.55; }
+/* The level, in the dark glass pill (hero-level-pill.png, three-sliced). */
+.hc-level,
+.hc-foot > .k-rest-left {
+  box-sizing: border-box;
+  min-width: calc(var(--hc-w) * 0.56);
+  padding: calc(var(--hc-w) * 0.015) calc(var(--hc-w) * 0.06) calc(var(--hc-w) * 0.02);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--hc-w) * 0.07);
+  border-image: url('../../assets/hero-level-pill.png') 0 44 fill / 0 calc(var(--hc-w) * 0.07) stretch;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-inverse);
+  font-size: calc(var(--hc-w) * 0.115);
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+/* The HP bar inside the frame, across the foot (the kit's progress bar). */
+.hc > .hc-hp {
+  --bar-h: calc(var(--hc-w) * 0.1);
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--hc-w) * 0.08);
+  right: calc(var(--hc-w) * 0.08);
+  bottom: calc(var(--hc-w) * 0.085);
+}
+/* A small card's bar hangs over its bottom edge instead. */
+.hc > .k-hp {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--hc-w) * 0.04);
+  right: calc(var(--hc-w) * 0.04);
+  bottom: calc(var(--px) * -5);
+}
+/* Seated: the green check (hero-check.png) over the top-right corner. */
+.hc-check {
+  position: absolute;
+  top: calc(var(--hc-w) * -0.05);
+  right: calc(var(--hc-w) * -0.05);
+  z-index: 2;
+  width: calc(var(--hc-w) * 0.28);
+  aspect-ratio: 1;
+  background: url('../../assets/hero-check.png') center / contain no-repeat;
+  pointer-events: none;
+}
+/* Exhausted: asleep — darkened, the Zs rising, its rest's countdown. */
+.hc.is-resting .hc-art,
+.hc.is-resting::before { filter: brightness(0.5) saturate(0.7); }
+.hc.is-resting > .k-zzz { --zzz-size: calc(var(--hc-w) * 0.13); top: calc(var(--hc-w) * 0.06); right: calc(var(--hc-w) * 0.02); }
+/* A small card: a slot on a crowded board. */
+.hc.is-small { --hc-w: calc(var(--px) * 64); }
+.hc.is-small .hc-foot { bottom: calc(var(--hc-w) * 0.09); }
+/* An empty slot: sunk into the paper, a faint + in it. */
+.hc.is-empty {
+  display: grid;
+  place-items: center;
+  border: calc(var(--px) * 2) dashed color-mix(in srgb, var(--gold-dark) 60%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, var(--parchment-shade));
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
+}
+.hc-plus {
+  color: color-mix(in srgb, var(--wood-dark) 45%, transparent);
+  font-size: calc(var(--px) * 30);
+  font-weight: var(--weight-title);
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------- the picker -- */
+
+/* The whole height of the screen, however few heroes there are: the list
+   scrolls on its own, and the filter bar above it and the party and Select
+   under it stay put. */
+#overlay .k-sheet.is-picker { height: 100%; }
+.k-sheet.is-picker > .k-panel > .k-sheet-body { overflow: hidden; }
+.hp {
+  /* ONE CARD WIDTH for the list and the party, so a hero is the same size
+     in both: a third of the board, less its gaps, gutter and scrollbar. */
+  --hc-w: calc(var(--px) * 108);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  min-height: 0;
+  height: 100%;
+}
+.hp-bar { display: flex; align-items: center; gap: calc(var(--px) * 8); }
+.hp-tabs { display: flex; flex: 1; gap: calc(var(--px) * 4); }
+/* The tabs and the sort are the game's wooden button (material.css); the
+   filter that is on is latched pushed in. Only their size is set here. */
+/* A tab is narrower than the kit's floor (a label of 84 px, for words):
+   five of them share a phone's width, and an icon needs no more. */
+.hp-bar .k-btn:not(.k-knob):not(.has-cost) {
+  height: calc(var(--px) * 40);
+  min-height: calc(var(--px) * 40);
+  max-height: calc(var(--px) * 40);
+  min-width: 0;
+  margin-inline: 0;
+  padding-left: calc(var(--px) * 6);
+  padding-right: calc(var(--px) * 6);
+  font-size: calc(var(--px) * 15);
+}
+.hp-bar .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: 0; }
+.hp-tab.k-btn { flex: 1; }
+.hp-sort.k-btn { flex: 0 0 auto; padding-left: calc(var(--px) * 10); padding-right: calc(var(--px) * 10); }
+.hp-tab .icon { --icon-size: calc(var(--px) * 22); }
+.hp-sort .k-btn-label { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); }
+.hp-sort-caret { font-size: calc(var(--px) * 12); }
+.hp-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 calc(var(--px) * 4) calc(var(--px) * 10);
+}
+.hp-list > .k-section-head { margin: 0 0 calc(var(--px) * 8); }
+.hp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, var(--hc-w));
+  justify-content: center;
+  gap: calc(var(--px) * 14) calc(var(--px) * 10);
+  padding: calc(var(--px) * 6) calc(var(--px) * 4) calc(var(--px) * 4);
+}
+.hp-none { color: var(--ink-muted); text-align: center; }
+.hp-party .k-headpanel-body { padding: calc(var(--px) * 2) 0 calc(var(--px) * 8); }
+.hp-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, var(--hc-w));
+  justify-content: center;
+  gap: calc(var(--px) * 10);
+}
+.hp-go { display: flex; justify-content: center; }
+.hp-go > .k-btn { min-width: 60%; }

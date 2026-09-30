@@ -13,7 +13,7 @@
 //
 // So: a grid, and a detail behind each tile. Two views, one overlay — the nav
 // tab stays put and `game.openHeroId` decides which of them draws. That lives
-// on the presenter, not here, for the reason `expeditionRuin` does: it
+// on the presenter, not here, for the reason `expeditionLair` does: it
 // survives the per-tick rebuild and it is node-testable.
 //
 // THE SCREEN DOES NOT REBUILD ON THE TICK. It draws thirty-two `<img>`
@@ -32,7 +32,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
-import { action, btn, closeKnob, ctaBadge, iconEl, knob, sheet, stat } from './kit';
+import { action, btn, closeKnob, ctaBadge, hpBar, iconEl, knob, restLeft, restMarks, sheet, stat } from './kit';
 
 /** Blue → violet → gold. The rarity is the tile's whole background, so the
  *  roster reads as a ladder before a single label is read. */
@@ -93,7 +93,22 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
   t.append(el('span', { class: 'hero-type is-tile' }, def.unitType));
   t.append(heroArt(def, !view.owned));
 
-  if (view.owned) {
+  const health = view.owned ? game.heroHealthOf(view.id) : null;
+  if (health?.exhausted) {
+    // EXHAUSTED (10-heroes.md §2.8): asleep, not locked — the art darkens
+    // rather than going to a silhouette, the Zs rise off it, and the foot is
+    // how long the rest has left over the bar filling back up.
+    t.classList.add('is-resting');
+    t.append(restMarks(), el('span', { class: 'hero-tile-foot is-rest' },
+      restLeft(health.restMs), hpBar(health.hp, health.max)));
+    if (ready(game, view)) t.append(ctaBadge(1, `hero:${view.id}`));
+  } else if (view.owned) {
+    // Every owned hero shows its HP, on the bar over its foot.
+    if (health !== null) {
+      const bar = hpBar(health.hp, health.max);
+      bar.classList.add('hero-tile-hp');
+      t.append(bar);
+    }
     t.append(el('span', { class: 'hero-tile-foot' },
       el('span', { class: 'hero-tile-level' }, `Lv ${view.entry.level}`),
       stars(view.entry.tier)));
