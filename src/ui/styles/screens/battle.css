@@ -3,6 +3,13 @@
  * box (.k-section), the section heading (.k-section-head), the round portrait
  * (.k-portrait) and the game's buttons — so the only rules here are layout. */
 
+/* THE WHOLE FRAME between the header and the bottom, not the tall sheet's
+   frame less a strip of sky (kit.css): #overlay already pads itself by the
+   header, so 100% hides nothing, and the strip was exactly the scroll a
+   phone had to do to reach the button. The pass screen bends the same rule
+   for the same reason (pass.css). */
+.k-sheet.is-tall.is-board { max-height: 100%; }
+
 .bt {
   display: flex;
   flex-direction: column;
@@ -15,7 +22,7 @@
 .bt-army.k-section {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--px) * 4);
+  gap: calc(var(--px) * 2);
   padding: calc(var(--px) * 6) calc(var(--px) * 12) calc(var(--px) * 8);
 }
 /* The box's heading is the kit's section heading, set inside the box: the
@@ -44,7 +51,7 @@
   gap: calc(var(--px) * 6);
 }
 .bt-cell {
-  --portrait-size: calc(var(--px) * 44);
+  --portrait-size: calc(var(--px) * 40);
   position: relative;
   display: grid;
   place-items: center;
@@ -57,6 +64,10 @@
   color: inherit;
 }
 button.bt-cell { cursor: pointer; }
+/* The portrait takes the slot's size, not the kit's 64 px default — so a
+   filled slot is exactly the size of an empty one and the rows keep their
+   pitch. */
+.bt-cell > .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
 /* An empty slot is the portrait's own ring, empty and sunk in. */
 .bt-cell.is-empty {
   border: calc(var(--px) * 2) solid var(--section-line);

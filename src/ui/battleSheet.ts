@@ -232,5 +232,10 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   // TALL: the two boards, the roster and the button are all read together,
   // and a drawer that grew a row every time a squad went on would move the
   // button the thumb is reaching for.
-  return sheet({ title: view.title, onClose: () => game.dismiss(), tall: true }, body);
+  const surface = sheet({ title: view.title, onClose: () => game.dismiss(), tall: true }, body);
+  // …and it gives up the tall sheet's strip of sky (battle.css, `is-board`):
+  // every pixel of it belongs to the boards, so the screen fits without a
+  // scroll on a phone.
+  surface.classList.add('is-board');
+  return surface;
 }
