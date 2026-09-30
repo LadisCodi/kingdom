@@ -3064,8 +3064,11 @@ export class Game {
       case 'ClaimLandmarks': {
         // The nearest landmark that is visible and unclaimed; failing that,
         // the nearest frontier cell — because the answer is "explore".
+        // A goal naming a KIND (the Watchtower) points at that kind only.
+        const kind = quest.goalTarget;
         const claimable = visibleLandmarks(this.state, this.map)
-          .filter((l) => this.state.landmarks.claimed[l.id] !== true)
+          .filter((l) => this.state.landmarks.claimed[l.id] !== true
+            && (kind === null || l.kind === kind))
           .sort((a, b) =>
             townhallDistance(this.map, a.location) - townhallDistance(this.map, b.location))[0];
         if (claimable) {

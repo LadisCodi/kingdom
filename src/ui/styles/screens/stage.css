@@ -39,6 +39,13 @@
   animation: stg-ring 1.2s ease-in-out infinite;
 }
 .stg-ring[hidden], .stg-arrow[hidden] { display: none; }
+.stg-ring > svg { display: none; position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.stg-ring.is-cell { border-radius: 0; box-shadow: none; animation: none; }
+.stg-ring.is-cell > svg { display: block; }
+.stg-ring polygon { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.stg-ring .stg-ring-dark { stroke: var(--wood-dark); stroke-width: calc(var(--px) * 9); }
+.stg-ring .stg-ring-gold { stroke: var(--gold); stroke-width: calc(var(--px) * 4); animation: stg-ring-glow 1.2s ease-in-out infinite; }
+@keyframes stg-ring-glow { 50% { stroke-width: calc(var(--px) * 6); } }
 @keyframes stg-ring { 50% { box-shadow: 0 0 0 calc(var(--px) * 3) var(--wood-dark), 0 0 0 calc(var(--px) * 9) var(--gold); } }
 .stg-arrow {
   position: absolute;

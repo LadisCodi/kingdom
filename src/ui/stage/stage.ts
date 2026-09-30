@@ -53,7 +53,12 @@ const PROGRESS: ReadonlySet<string> = new Set([
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
   // ------------------------------------------------------------ the pieces
   const scrim = el('div', { class: 'stg-scrim' });
+  // The ring is the hint's double ring round a control, and — round a map
+  // plot — the same two strokes drawn as the plot's own diamond.
   const ring = el('div', { class: 'stg-ring' });
+  ring.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+    + '<polygon class="stg-ring-dark" points="50,3 97,50 50,97 3,50"/>'
+    + '<polygon class="stg-ring-gold" points="50,3 97,50 50,97 3,50"/></svg>';
   const arrow = el('div', { class: 'stg-arrow', 'aria-hidden': 'true' });
   const left = el('div', { class: 'stg-actor is-left' });
   const right = el('div', { class: 'stg-actor is-right' });
@@ -320,10 +325,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const show = r !== null;
     ring.hidden = !show;
     arrow.hidden = !show;
+    ring.classList.toggle('is-cell', playing?.target?.kind === 'cell');
     scrim.classList.toggle('is-dim', lock === 'all' || lock === 'target');
     scrim.classList.toggle('is-cut', show && lock === 'target');
     if (!show) return;
-    const pad = 6;
+    const pad = playing?.target?.kind === 'cell' ? 0 : 6;
     Object.assign(ring.style, {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
     });
