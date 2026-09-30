@@ -1016,10 +1016,12 @@ Reference: `mockups/m49-placement.png`.
 
 **The bar** — one strip across the bottom:
 
-- The level-1 sprite, the name and ⏳ the build time.
-- **Cancel** (wood) — back to the Build menu (§5.5).
-- **Build** (primary) — the price on its face, as everywhere a price is
-  quoted.
+- Left: the level-1 sprite on its tile.
+- Right of it, the name and ⏳ the build time on one line, and under them the
+  two buttons, bottom-aligned, at the kit's default label-button size:
+  - **Cancel** — red paint (`destructive`) — back to the Build menu (§5.5);
+  - **Build** — primary, a priced button (§6.4): the cost above the slab
+    on its own darker section.
 - No legal cell anywhere: Build is disabled and the bar says *Nowhere legal
   to build it*.
 
