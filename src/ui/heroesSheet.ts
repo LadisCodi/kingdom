@@ -103,8 +103,8 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
       restLeft(health.restMs), hpBar(health.hp, health.max)));
     if (ready(game, view)) t.append(ctaBadge(1, `hero:${view.id}`));
   } else if (view.owned) {
-    // A hurt hero shows what it has left, on the bar over its foot.
-    if (health !== null && health.hp < health.max) {
+    // Every owned hero shows its HP, on the bar over its foot.
+    if (health !== null) {
       const bar = hpBar(health.hp, health.max);
       bar.classList.add('hero-tile-hp');
       t.append(bar);

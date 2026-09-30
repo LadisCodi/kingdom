@@ -173,7 +173,7 @@
   background: none;
 }
 .hero-tile-foot.is-rest > .k-hp { align-self: stretch; }
-/* A hurt hero's bar, just over its foot. */
+/* An owned hero's bar, just over its foot. */
 .hero-tile-hp {
   position: absolute;
   left: calc(var(--px) * 8);
