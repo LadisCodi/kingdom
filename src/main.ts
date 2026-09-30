@@ -38,7 +38,7 @@ import { renderDailySheet } from './ui/dailySheet';
 import { renderPassSheet } from './ui/passSheet';
 import { mountDailyPill } from './ui/dailyPill';
 import { mountSeasonPill } from './ui/seasonPill';
-import { renderBuildMenu } from './ui/buildMenu';
+import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
@@ -208,6 +208,7 @@ async function boot(): Promise<void> {
    */
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
+    build: () => buildMenuSignature(game),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
