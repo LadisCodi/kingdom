@@ -9,9 +9,21 @@
    phone had to do to reach the button. The pass screen bends the same rule
    for the same reason (pass.css). */
 .k-sheet.is-tall.is-board { max-height: 100%; }
+/* …AND THE WHOLE WIDTH: the frame's wood reaches the device's edges on the
+   narrowest phone (the iPhone X), stepping over #overlay's 16-px side gutter,
+   and on anything wider keeps the district card's width, centred. The width
+   is what pays for slots big enough to read a face in. */
+#overlay .k-sheet.is-board {
+  --board-w: min(calc(100% + var(--px) * 32), calc(var(--rpx) * 1125));
+  width: var(--board-w);
+  /* Both margins, or the overflow is a horizontal scroll: width plus
+     margins must come back to the container's own width. */
+  margin-left: calc((100% - var(--board-w)) / 2);
+  margin-right: calc((100% - var(--board-w)) / 2);
+}
 
 .bt {
-  --slot-size: calc(var(--px) * 40);
+  --slot-size: calc(var(--px) * 48);
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 6);
@@ -42,6 +54,8 @@
   justify-content: space-between;
   gap: calc(var(--px) * 4);
 }
+/* The enemy's line holds only what it fields, centred. */
+.bt-army.is-enemy .bt-group.is-troops { justify-content: center; gap: calc(var(--px) * 10); }
 .bt-group.is-heroes {
   justify-content: center;
   gap: calc(var(--px) * 14);
@@ -74,7 +88,7 @@ button.bt-cell { cursor: pointer; }
 .bt-group.is-heroes .bt-cell > .k-portrait,
 .bt-group.is-heroes .bt-cell .k-portrait-mask { border-radius: calc(var(--px) * 10); }
 .bt-group.is-heroes .bt-cell {
-  --slot-size: calc(var(--px) * 46);
+  --slot-size: calc(var(--px) * 52);
   box-sizing: border-box;
   border: calc(var(--px) * 2) solid var(--gold-dark);
   background: var(--section-fill);

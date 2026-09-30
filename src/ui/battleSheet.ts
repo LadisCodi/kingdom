@@ -46,6 +46,8 @@ export interface BattleView {
     /** The face a squad of each type wears on the enemy side: a lair's
      *  creatures, not the player's own soldiers. */
     portrait: (unitId: UnitId) => HTMLElement;
+    /** The faces of the heroes or villains it fields, if any. */
+    heroes?: HTMLElement[];
   };
   /** The party's power, and whether it beats the enemy's on paper. */
   attack: number;
@@ -91,13 +93,22 @@ const heroFace = (heroId: HeroId): HTMLElement => {
 
 // ------------------------------------------------------------- the enemy
 
-function enemyBoard(game: Game, view: BattleView): HTMLElement {
+/** The enemy shows only what it FIELDS: its squads, centred, and a line of
+ *  heroes or villains only when it has any. An empty slot on their side says
+ *  nothing the player can act on. */
+function enemyBoard(view: BattleView): HTMLElement {
   const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count));
+  const heroes = (view.enemy.heroes ?? []).map((face) => squadlessCell(face));
   return armyBox('Enemy', view.enemy.power, 'is-enemy', [
-    slotGroup('Troops', troops, Math.max(game.troopSlotsOpen(), troops.length), 'is-troops'),
-    slotGroup('Heroes', [], game.heroSlotCeiling(), 'is-heroes'),
+    slotGroup('Troops', troops, 0, 'is-troops'),
+    ...(heroes.length > 0 ? [slotGroup('Villains', heroes, 0, 'is-heroes')] : []),
   ]);
 }
+
+/** A hero or villain on the enemy's side: a face, no count. */
+const squadlessCell = (face: HTMLElement): HTMLElement =>
+  el('span', { class: 'bt-cell is-filled' },
+    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, face)));
 
 // -------------------------------------------------------------- your board
 
@@ -211,7 +222,7 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
 export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   const troops = UNIT_ORDER.filter((u) => UNITS[u] !== undefined);
   const body = el('div', { class: 'bt' },
-    enemyBoard(game, view),
+    enemyBoard(view),
     partyBoard(game, view),
     sectionHead('Troops'),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
