@@ -1004,7 +1004,7 @@ export class Game {
     this.mode = { kind: 'placing', definitionId, selected };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected);
+    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size);
     this.notify();
   }
 
@@ -1034,7 +1034,7 @@ export class Game {
     this.inspectedDistrictId = null;
     // The ghost is out where the building stands: bring it into view, as
     // placement does for a new one.
-    this.camera.centerOnCell(district.location);
+    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
     this.notify();
   }
 
@@ -2863,7 +2863,7 @@ export class Game {
       }
       this.setOverlay(null);
       this.inspectedDistrictId = district.uniqueId;
-      this.camera.centerOnCell(district.location);
+      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
       this.notify();
     };
     const built = (pred: (d: District) => boolean) =>
