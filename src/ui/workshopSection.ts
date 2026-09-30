@@ -22,7 +22,7 @@ import {
   isWorkshop, itemRemainingSeconds, itemRushCost, queueCapacity, queuedWorkMs, recipeOf,
 } from '../sim/workshops';
 import type { District, GoodId } from '../sim/state';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { action, iconEl, knob, progress, stat, type LiveParts } from './kit';
 
 /** The whole block, or null when this building is not a workshop. `live`
@@ -47,11 +47,11 @@ export function workshopSection(
       el('div', { class: 'dc-ws-recipe' },
         ...costLine(recipe.input as Record<string, number>),
         ...(recipe.inputGood !== null
-          ? [iconEl(recipe.inputGood, { size: 'sm' }), String(recipe.inputGoodAmount)] : []),
+          ? [iconEl(recipe.inputGood, { size: 'sm' }), formatExact(recipe.inputGoodAmount)] : []),
         ...(recipe.inputMana > 0
-          ? [iconEl('Mana', { size: 'sm' }), String(recipe.inputMana)] : []))),
+          ? [iconEl('Mana', { size: 'sm' }), formatExact(recipe.inputMana)] : []))),
     el('div', { class: 'dc-ws-held' },
-      stat(recipe.id as GoodId, String(getGood(game.state.city.goods, recipe.id)), 'in store')),
+      stat(recipe.id as GoodId, formatExact(getGood(game.state.city.goods, recipe.id)), 'in store')),
   ));
 
   // ---- the crew, which is the engine -------------------------------------
@@ -100,13 +100,13 @@ export function workshopSection(
       ...(recipe.inputGood !== null
         ? [{
           icon: recipe.inputGood,
-          amount: String(recipe.inputGoodAmount),
+          amount: formatExact(recipe.inputGoodAmount),
           short: getGood(game.state.city.goods, recipe.inputGood) < recipe.inputGoodAmount,
         }] : []),
       ...(recipe.inputMana > 0
         ? [{
           icon: 'Mana' as const,
-          amount: String(recipe.inputMana),
+          amount: formatExact(recipe.inputMana),
           short: mana(game.state) < recipe.inputMana,
         }] : []),
     ],
@@ -167,7 +167,7 @@ function workshopQueue(game: Game, district: District): HTMLElement {
 function costLine(cost: Record<string, number>): Node[] {
   const out: Node[] = [];
   for (const [c, n] of Object.entries(cost)) {
-    out.push(iconEl(c as never, { size: 'sm' }), document.createTextNode(String(n)));
+    out.push(iconEl(c as never, { size: 'sm' }), document.createTextNode(formatExact(n)));
   }
   return out;
 }

@@ -25,7 +25,7 @@ import { RUINS } from '../sim/data/definitions';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { iconEl, progress } from './kit';
 
 /**
@@ -93,8 +93,8 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
     rewards: [
       ...Object.entries(reward.wallet)
         .filter(([, n]) => n > 0)
-        .map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
-      { icon: 'HeroXp' as CurrencyId, label: `+${reward.heroXp}` },
+        .map(([c, n]) => ({ icon: c as CurrencyId, label: formatExact(n) })),
+      { icon: 'HeroXp' as CurrencyId, label: `+${formatExact(reward.heroXp)}` },
     ],
     rewardNote: preview.isBoss
       ? 'A boss pays four times a room, and the depth behind it opens on the way out.'

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { armySize, armyCap, trainUnit, lineFor } from '../src/sim/army';
 import {
-  changeWorkers, enqueueBuild, finishWithGems, upgradeDistrict,
+  changeWorkers, collectBuilding, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
 import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
@@ -18,7 +18,7 @@ import { revealCostForCell, revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { completesAt, getWallet, townhall } from '../src/sim/state';
 import {
-  addAllTrainers, completeTech, FOREST, freshGame, fund, map, researchNow, reveal, T0, tickAt,
+  addAllTrainers, completeTech, FOREST, freshGame, fund, map, researchNow, reveal, stored, T0, tickAt,
 } from './helpers';
 
 describe('full harvest-loop playthrough (headless smoke)', () => {
@@ -123,6 +123,9 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const food = getWallet(state.city.wallet, 'Food');
     now += 60_000;
     tickAt(state, now);
+    // The haul waits in the Farm; a tap on it brings it home.
+    expect(getWallet(state.city.wallet, 'Food')).toBe(food);
+    expect(collectBuilding(state, farm.uniqueId, now).Food).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(food);
 
     // --- Housing: villagers live there (2 per house) and pay taxes.
@@ -152,10 +155,14 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     }
     expect(maxPopulation(state)).toBe(8); // two L2 houses (4 each)
 
-    // --- Taxes: 4 housed villagers x 30 Gold/min, fully idle.
+    // --- Rent: 4 housed villagers x 30 Gold/min, into the houses; a tap on
+    // each brings it home.
     const goldBeforeTaxes = getWallet(state.city.wallet, 'Gold');
     now += 60_000;
     tickAt(state, now);
+    for (const house of state.city.districts.filter((d) => d.definitionId === 'Housing')) {
+      collectBuilding(state, house.uniqueId, now);
+    }
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThanOrEqual(goldBeforeTaxes + 7);
 
     // --- A building is gated by its technology, and by the ground.
@@ -234,11 +241,12 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(state.city.population).toBe(6);
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
 
-    // --- Offline: 10 minutes away keep taxes and deliveries flowing.
+    // --- Offline: 10 minutes away keep rent and deliveries flowing, into
+    // the buildings' stores.
+    for (const d of state.city.districts) collectBuilding(state, d.uniqueId, now);
     const save = serialize(state, now);
-    const gold = getWallet(state.city.wallet, 'Gold');
     const restored = deserialize(save, map, now + 600_000)!;
-    const earned = getWallet(restored.city.wallet, 'Gold') - gold;
+    const earned = stored(restored, 'Gold');
     // Six villagers across four houses, filled in BUILD ORDER: the two L2
     // houses (capacity 4) take 4 and 2, the two L1 houses stand empty and pay
     // nothing. A level buys rent as well as room, so each of those residents
@@ -257,7 +265,6 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(perMinute).toBe(cityGoldPerMinute(state));
     expect(earned).toBeGreaterThanOrEqual(perMinute * 10 - 1);
     expect(earned).toBeLessThanOrEqual(perMinute * 10 + 1);
-    expect(getWallet(restored.city.wallet, 'Wood'))
-      .toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
+    expect(stored(restored, 'Wood')).toBeGreaterThan(0);
   });
 });

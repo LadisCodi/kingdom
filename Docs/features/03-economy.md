@@ -1,12 +1,13 @@
 # 3 · The economy — currencies and taxes
 
-> **Scope.** Every currency and its job, and where the city's Gold comes from.
+> **Scope.** Every currency and its job, where the city's Gold comes from, and
+> the stores a building keeps what it makes in until the player collects it.
 > Mana is [`08-magic.md`](08-magic.md); the collection's cards
 > are [`09-relics.md`](09-relics.md); the Knowledge bar and buying Knowledge
 > are [`07-research.md`](07-research.md) §3.
 >
-> **Status: built**, except the Knowledge ↔ Stardust split (§1.1), which is
-> designed, not built.
+> **Status: built**, building stores included (§3.2), except the Knowledge ↔
+> Stardust split (§1.1), which is designed, not built.
 
 ## 1. One job each
 
@@ -17,11 +18,11 @@
 
 | Currency | Source | Buys | Scope | On the plank? |
 |---|---|---|---|---|
-| **Gold** | housing taxes, **gold mountains**, quests | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
+| **Gold** | housing rent, **gold mountains**, quests | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
 | **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
 | **Wood** | forest | buildings | city | yes |
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
-| **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
+| **Mana** | time, capped | every tap on the ground · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
@@ -74,16 +75,16 @@
   Nets** on shoals. Both move Food.
 - Four city materials is the ceiling, not the floor.
 
-## 3. Housing taxes
+## 3. Housing rent
 
 - Every housed villager pays `taxes.goldPerPopulationPerMinute` = 30 Gold/min,
   continuously.
-- Accrued in whole units against an anchor; replayed exactly offline within
-  the 8 h cap.
+- Each house accrues its own rent in whole units against its own anchor, into
+  **its own store** (§3.2) — not into the wallet.
 - Residents are auto-assigned: houses fill in build order as population grows.
-  The only effect is which house the player taps.
+  The only effect is which house their rent is stored in.
 - Roofless villagers pay nothing; empty minutes are never banked.
-- A lived-in house is a tappable Gold cell (§5).
+- The Townhall collects nothing: Gold comes from each house.
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
@@ -91,14 +92,12 @@
   `buildings.taxBonusPerLevel` is a fraction of the base rate and a
   **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
   +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
-  minute — and a tap on the house is worth the same more (§5), because a tap
-  sells that house's own rent.
+  minute.
 - **The Townhall's level multiplies every house's rent.**
   `taxes.townhallMultiplierPerLevel` is a **total** at each level, indexed
   from level 1: ×1 at 1, then +0.25 a level to ×3.25 at 10. It rides at the
   base stage of the rate beside the Harmony surplus — a level fact, never a
-  modifier — so it reaches the residents' rent and the house tap alike, and
-  adjacency stays flat. It is the one number the Townhall's Level Up card
+  modifier — so it reaches every resident's rent, and adjacency stays flat. It is the one number the Townhall's Level Up card
   shows. What it moves in a month is the frontier, not the ladder: the
   30-day harness reaches every Townhall level on the same day ±1 with or
   without it, and claims 7 landmarks of 10 instead of 5, because the extra
@@ -148,6 +147,80 @@ running. Research already worked this way.
 - More rules arrive as `adjacency` entries; a new **stat** is one line in `AdjacencyStat`
   plus one call site.
 
+### 3.2 Building stores
+
+**What a building makes waits inside it until the player collects it.**
+
+- Every building that makes Gold or harvests — Housing, Farm, Sawmill,
+  Quarry, Docks — has a **store**. A house's rent lands in it; a worker's
+  haul lands in it when the worker gets home.
+- Capacity is per building, per level, in units: `buildings` ›
+  `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
+  Stone and Gold in one store.
+- Capacity is authored as about **8 h** of the building at full strength at
+  level 1, rising to about **12 h** at level 10 (OQ-107). Nothing but the
+  building's level raises it (OQ-108).
+
+| Building | Level 1 | Level 10 |
+|---|---|---|
+| Housing | 29,000 Gold | 4,600,000 |
+| Farm | 8,600 | 250,000 |
+| Sawmill | 7,200 | 170,000 |
+| Quarry | 3,100 | 100,000 |
+| Docks | 6,200 | 120,000 |
+
+- A data rule requires a store on anything that makes Gold or harvests, and
+  forbids one on anything else.
+
+**A full store stops its building.**
+
+- A full house stops accruing. Nothing is banked: collecting a full house
+  restarts its rent from the tap.
+- A full producer's crew waits by the door, idle. A haul already on its way
+  lands whole, even over capacity (OQ-107).
+- Collecting — or a raid emptying the store — sets the crew going again from
+  that moment.
+
+**Collecting.**
+
+- A store is **ready** once it holds `storage.collectSeconds` (30) of what the
+  building makes now — a house's rent, a crew at its main source — or is full.
+- A building making nothing (no residents, no crew) is ready with anything in it.
+- A tap on a building whose store is ready moves the **whole store** to the
+  wallet. It is **free** — no Mana — and does nothing else.
+- A tap on a building that is not ready opens its card, as always.
+- The card has no Collect: its **Storage** tile reads what the store holds
+  against its capacity (*120/8.6k*), in clay when full.
+- Holding the pointer on a ready building collects once.
+- Collecting is where a `collect` event (quests, missions) and a first
+  discovery of a currency are recorded — never when rent accrues or a haul
+  lands.
+- A collect pops `+N` per currency at the building and flies the haul to the
+  header. Rent and hauls landing in a store pop nothing.
+
+**The Tithe bypasses the store**: its taps pay rent straight into the wallet,
+and a full house does not stop it ([`09-relics.md`](09-relics.md) §2.1).
+
+**Raids take from the stores, never from the wallet**
+([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §4). Collecting is
+the defence.
+
+**The collect bubble.**
+
+- Over every building whose store is ready floats a parchment speech bubble:
+  the UI tooltip's bubble living in the world — parchment lit from above, a
+  thin brown rim, rounded, a tail pointing down at the roof, a soft shadow.
+- It carries **one icon**: the currency the store holds most of.
+- Drawn over the world (buildings, people, markers), under the DOM UI.
+- It bobs gently, each building on its own phase; pops in when it appears;
+  gives a small hop when a haul lands.
+- Its rim turns **red** when the store is full: the building has stopped.
+- Mockup: [`../art/mockups/collect-bubbles-mockup.png`](../art/mockups/collect-bubbles-mockup.png).
+
+**An absence is bounded by the stores.** There is no offline cap: the whole
+absence is replayed, and each building stops when its store is full
+([`04-harvest.md`](04-harvest.md) §8).
+
 ## 4. Villager training
 
 - The Townhall trains villagers in a queue.
@@ -165,15 +238,15 @@ running. Research already worked this way.
 
 ## 5. A tap is priced in production, not in units
 
-- A tap hands the player `tap.workSeconds` = 10 seconds of work on the thing
-  tapped, floored at one unit.
-- A house tap pulls that share of the house's own rent forward.
+- A tap on the ground hands the player `tap.workSeconds` = 10 seconds of work
+  on the thing tapped, floored at one unit.
 - The rate a tap reads is the cell's own measured rate — its chunk over its
   rhythm ([`04-harvest.md`](04-harvest.md) §4) — never the city-wide total for
   that resource. Full design: [`04-harvest.md`](04-harvest.md) §3.
 - `TapPower` buys the tap's duration: +20% a level over ten levels.
-- Every player tap costs 1 Mana, except paying fog, which costs Gold. A tap
-  refused by a tech gate costs no Mana.
+- **Mana is spent only on taps on the ground** — trees, berries, crops, rocks,
+  mountains, shoals: `tap.manaCost` = 1. A tap on a building never costs Mana
+  (§3.2). Paying fog costs Gold. A tap refused by a tech gate costs no Mana.
 - Every new reward follows the same rule: priced as a duration of the player's
   own production, not as an absolute amount. Quest rewards are currently
   absolute Gold amounts.
@@ -187,7 +260,8 @@ A full pool buys about the same slice of progress at every stage:
 
 ## 6. Where Gold goes
 
-Flow: **housing taxes → Gold → fog, buildings and research**.
+Flow: **housing rent → the house's store → a collect → Gold → fog, buildings
+and research**.
 
 | Sink | Size |
 |---|---|
@@ -212,7 +286,9 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | House rent bonus per level | +0% then +25% a level, to +225% | `buildings.taxBonusPerLevel` |
 | Townhall rent multiplier per level | ×1 then +0.25 a level, to ×3.25 | `taxes.townhallMultiplierPerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
-| Tap Mana cost | 1 | `tap.manaCost` |
+| Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
+| Store capacity per level | about 8 h of the building at level 1, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
 | Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
@@ -226,9 +302,13 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
   a Food breakdown in the purse.
 - Iron as a wallet row.
 - A second purse for research.
-- Generators and vaults; building storage of any kind.
+- Generators and vaults.
+- An offline cap: the stores are what bound an absence (§3.2).
+- A Townhall store: Gold comes from each house.
+- A tap that pulls rent forward. Only the Tithe does it
+  ([`09-relics.md`](09-relics.md) §2.1).
 - Silver.
 - A library district or a scholar assignment as Knowledge sources.
 - A Townhall tap that hurries villager training.
 
-**Open questions:** OQ-46 in [`../open-questions.md`](../open-questions.md).
+**Open questions:** OQ-46, OQ-107, OQ-108 in [`../open-questions.md`](../open-questions.md).

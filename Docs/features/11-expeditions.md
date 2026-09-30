@@ -159,9 +159,13 @@ Full launch clear = +180 Stardust/h.
 
 ### 7.4 Offline accumulation
 
-Ruin generation accrues into the **city's shared offline reservoir**. One cap:
-**2 h default, 8 h with the offline manager.** Nothing accrues past it. At +180
-Stardust/h a full reservoir is 360 (2 h) or 1,440 (8 h).
+*Designed, not built.*
+
+- Ruin generation accrues into a **reservoir of its own**, capped at **2 h** of
+  generation. Nothing accrues past it; the player collects it.
+- The reservoir is its only ceiling: there is no offline cap
+  ([`04-harvest.md`](04-harvest.md) §8).
+- At +180 Stardust/h a full reservoir is 360.
 
 ## 8. Currencies
 
@@ -205,7 +209,7 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 | Boss chest and fragment pool | a `bosses` collection *(designed)* |
 | Supplies per room attempt | `ruins.supply_*` |
 | Permanent generation coefficients | `ruins.trickle_*` |
-| Offline cap (2 h / 8 h) | `offlineCapHours` |
+| Generation reservoir cap (2 h) | *designed, no key yet* |
 
 ## 11. Adding content
 

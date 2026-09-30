@@ -17,7 +17,7 @@
 // adding one to a building adds it to both screens at once.
 
 import {
-  DISTRICTS, FOG, MANA, TAXES, levelIndexed,
+  DISTRICTS, FOG, HARVEST, MANA, TAXES, levelIndexed,
 } from '../sim/data/definitions';
 import { trainSecondsAt } from '../sim/army';
 import { requiredPopulation, requiredTechForLevel, requiredTownhallLevel } from '../sim/districts';
@@ -27,7 +27,7 @@ import { TECHNOLOGIES } from '../sim/data/definitions';
 import { townhall, type District } from '../sim/state';
 import type { Game } from '../game';
 import type { IconName } from './kit/icon';
-import { formatDuration } from './format';
+import { formatDuration, formatExact, formatNumber } from './format';
 
 /** One number a building is judged on, at one level. */
 export interface BuildingStat {
@@ -61,7 +61,7 @@ export interface StatChange extends BuildingStat {
 
 /** A difference, rounded to what the tiles print, with its sign. */
 const signed = (d: number, text: string): string => `${d < 0 ? '−' : '+'}${text}`;
-const plain = (d: number): string => signed(d, String(Math.round(Math.abs(d) * 100) / 100));
+const plain = (d: number): string => signed(d, formatNumber(Math.abs(d), 2));
 
 /**
  * Everything this building is worth at `level`.
@@ -76,7 +76,7 @@ export function statsAt(game: Game, district: District, level: number): Building
   const add = (
     key: string, icon: IconName, label: string, short: string, value: string | number,
     n = Number(value), gain: (d: number) => string = plain,
-  ) => out.push({ key, icon, label, short, value: String(value), n, gain });
+  ) => out.push({ key, icon, label, short, value: typeof value === 'number' ? formatNumber(value, 2) : value, n, gain });
   /** A per-level list that a building may not carry at all. */
   const term = (list: readonly number[], blank: number) =>
     (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
@@ -86,6 +86,9 @@ export function statsAt(game: Game, district: District, level: number): Building
   }
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
+    // The map draws the range around the building while its card is open;
+    // the popup keeps the pair, since a level can widen it.
+    out[out.length - 1].onCard = false;
     add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
     // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
     out[out.length - 1].onCard = false;
@@ -95,13 +98,22 @@ export function statsAt(game: Game, district: District, level: number): Building
   // what a level buys, the card does not repeat them.
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
     const haul = term(def.extraUnitsPerDeliveryPerLevel, 0);
-    add('delivery', 'plus', 'Per delivery', 'Haul', `+${haul}`, haul);
+    add('delivery', 'plus', 'Per delivery', 'Haul', `+${formatExact(haul)}`, haul);
     out[out.length - 1].onCard = false;
   }
   if (def.strikeSpeedPerLevel.length > 0) {
     const swing = term(def.strikeSpeedPerLevel, 1);
     add('swing', 'clock', 'Swing', 'Swing', `×${swing}`, swing);
     out[out.length - 1].onCard = false;
+  }
+  // What it holds uncollected (03-economy.md §3.2), in the coin it makes: a
+  // level buys a bigger store, and a bigger store is a longer absence.
+  if (def.storageCapacityPerLevel.length > 0) {
+    const cap = levelIndexed(def.storageCapacityPerLevel, level);
+    const coin = (def.harvestSources.length > 0
+      ? HARVEST[def.harvestSources[0]].currencyId : 'Gold') as IconName;
+    add('store', coin, 'Storage', 'Storage', formatExact(cap), cap,
+      (d) => signed(d, formatExact(Math.abs(d))));
   }
   if (def.armyCapPerLevel.length > 0) {
     add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));
@@ -114,6 +126,8 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.taxBonusPerLevel.length > 0) {
     const rent = Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100);
     add('rent', 'Gold', 'Rent each', 'Rent', `+${rent}%`, rent, (d) => signed(d, `${Math.abs(d)}%`));
+    // The card's Gold /h already counts it in; the popup shows what a level adds.
+    out[out.length - 1].onCard = false;
   }
   // The Sanctum owns BOTH Mana numbers — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).
@@ -205,7 +219,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (pop > 0) {
     out.push({
       icon: 'population',
-      label: `Reach ${pop} population`,
+      label: `Reach ${formatExact(pop)} population`,
       met: game.state.city.population >= pop,
     });
   }
@@ -216,7 +230,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (demand > harmonyCost(def, district.level)) {
     out.push({
       icon: 'harmony',
-      label: `${demand} Harmony`,
+      label: `${formatExact(demand)} Harmony`,
       met: harmonyBlock(game.state, def, next, district) === null,
     });
   }

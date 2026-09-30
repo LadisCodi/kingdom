@@ -27,7 +27,7 @@ import {
 } from './data/definitions';
 import { isTechComplete } from './research';
 import {
-  cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
+  maxPopulation, populationCost, repriceTaxAnchorAround,
 } from './population';
 import { adjacencyMultiplier } from './adjacency';
 import {
@@ -477,13 +477,11 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
  */
 function deliver(state: GameState, trainee: TrainableId, at: number, count = 1): void {
   if (trainee === 'Villager') {
-    const rateBefore = cityGoldPerMinute(state);
     // THE ONE RUNTIME WRITER OF `city.population`, which is what makes the
     // `villagers` odometer honest: a mission asking the player to grow the
     // city counts arrivals here and nowhere else. A second writer would have
     // to announce the same event, or the mission would quietly under-count.
-    state.city.population += count;
-    repriceTaxAnchor(state, at, rateBefore);
+    repriceTaxAnchorAround(state, at, () => { state.city.population += count; });
     for (let i = 0; i < count; i++) recordEvent(state, { kind: 'villager' });
     return;
   }

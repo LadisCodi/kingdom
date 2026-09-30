@@ -10,7 +10,9 @@
 ## 1. The rule
 
 - **Mana is what magic costs, on both maps.**
-  - In the province a tap is a small spell that hurries production.
+  - In the province a tap on the ground is a small spell that hurries
+    production. A tap on a building is free: it collects the building's store
+    ([`03-economy.md`](03-economy.md) §3.2).
   - On the world map it bends an expedition, reveals what a node holds, or
     shortens a march.
 - Mana is capped, and Mana over the cap is lost. (Knowledge is capped too,
@@ -38,15 +40,11 @@ cap     = 100 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landma
 | Fill from empty | 8.3 h | 8.3 h | 8.2 h | 8.2 h | 8.3 h | 8.3 h |
 
 - The Townhall level touches neither number.
-- The pool fills from empty in **8.2–8.3 h at every Sanctum level** — just
-  past the 8 h offline cap (**OQ-70**), which is the alignment both base dials
-  are tuned to hold. **Both doubled together on 2026-09-08** (pool 50 → 100,
-  regen 6 → 12): a bigger pool is a longer session and a bigger ad, and the
-  rate had to follow or the pool would have taken sixteen hours to refill and
-  the Sanctum would have become the answer to a wait rather than a choice.
-  Landmarks add capacity, never rate, so each one lengthens the fill. The gap
-  past 8 h is the demand a Gem refill and a
-  rewarded ad sell against.
+- The pool fills from empty in **8.2–8.3 h at every Sanctum level** — about a
+  night. Both base dials are tuned to hold that fill.
+- Landmarks add capacity, never rate, so each one lengthens the fill.
+- The pool is its own ceiling while the player is away: there is no offline
+  cap, and regen stops only when the pool is full.
 - Mana is a **spend** budget: the pool is tuned to be able to run dry, not to
   refill exactly overnight.
 - Mana over the cap is lost. Unspent potential is lost, never property.
@@ -59,7 +57,8 @@ cap     = 100 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landma
 
 | Sink | Cost |
 |---|---|
-| Every player tap — a house, a tree, a rock | **1 Mana** |
+| Every tap on the ground — a tree, a bush, a rock, a shoal | **1 Mana** |
+| A tap on a building | **nothing** — it collects its store |
 | Casting a **spell**, either map ([`07-research.md`](07-research.md) §6) | its authored Mana cost, −20%/level of Resonance |
 | Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item — the only sink that is not a tap or a spell |
 | Paying fog | **nothing** — a reveal costs Gold |
@@ -140,7 +139,7 @@ Two routes pay it, and they share nothing but the prize.
 ### Session arithmetic
 
 ```
-arrive          96 mana   (12/h × the 8 h cap, or 60 over a 5 h gap)
+arrive          96 mana   (12/h × 8 h away, or 60 over a 5 h gap)
 tap 46      →   50        offer appears at half a pool
 tap 50      →    0        ~25–50 s of tapping
 watch ad    →  100        the reward is a whole pool
@@ -177,7 +176,7 @@ tap 50      →   50        offer returns
 3. **`mana.baseCap`** — 100, flat. Session length per pool.
 4. **`ads.manaRefillsPerDay`** — 5. The video's allowance, its own counter.
 5. **`ads.cooldownMaxSeconds`** — 90. The rhythm between offers.
-6. **`mana.basePerHour`** — 12, flat. The free allowance. Moves with `mana.baseCap`: the two are tuned to keep the fill just past the offline cap (§2).
+6. **`mana.basePerHour`** — 12, flat. The free allowance. Moves with `mana.baseCap`: the two are tuned to keep the fill about a night (§2).
 7. **`ads.eligibleBelowFraction`** — 0.5. How early the offer shows up.
 
 | Also | Value | Key |
@@ -189,7 +188,7 @@ tap 50      →   50        offer returns
 | `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.4) |
 | Gem refill | a whole pool, **400 → 2,000 Gems** by rung, 5 a day | `mana.gemRefillCosts` |
 | Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
-| Tap Mana cost | 1 | `tap.manaCost` |
+| Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
 | Ad reward | the whole cap | — |
 
 ## 8. What the player sees
@@ -211,4 +210,4 @@ tap 50      →   50        offer returns
 - Mana as the price of a Wonder level ([`16-wonders.md`](16-wonders.md) §3)
 - Mana production or capacity from the Townhall level
 
-**Open questions:** OQ-43, OQ-44, OQ-45, OQ-47, OQ-70.
+**Open questions:** OQ-43, OQ-44, OQ-45, OQ-47.

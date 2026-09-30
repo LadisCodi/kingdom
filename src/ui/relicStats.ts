@@ -20,7 +20,7 @@ import {
   activeChargesAt, activeDurationMsAt, activePowerAt, activeRadiusAt,
 } from '../sim/casting';
 import { passiveValueAtLevel } from '../sim/artifacts';
-import { formatDuration } from './format';
+import { formatDuration, formatExact, formatNumber } from './format';
 import type { ModifierStat } from '../sim/modifiers';
 import type { ArtifactId } from '../sim/state';
 import type { IconName } from './kit/icon';
@@ -81,7 +81,7 @@ export const relicPercent = (value: number): string =>
 const say = (op: 'add' | 'mul', value: number): string =>
   op === 'mul'
     ? `+${relicPercent(value)}`
-    : `+${Math.round(value * 10) / 10}`;
+    : `+${formatNumber(value, 1)}`;
 
 /**
  * Everything this relic is worth at `level`.
@@ -114,7 +114,7 @@ export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
   const active = ARTIFACTS[id].active;
   if (active === null) return [];
   const out: RelicStat[] = [
-    { key: 'mana', icon: 'Mana', label: 'Mana', value: String(active.manaCost) },
+    { key: 'mana', icon: 'Mana', label: 'Mana', value: formatExact(active.manaCost) },
   ];
   const window = activeDurationMsAt(id, level) / 1000;
   if (window > 0) {

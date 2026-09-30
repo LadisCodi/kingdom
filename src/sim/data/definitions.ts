@@ -363,6 +363,7 @@ export const WORKER = balance.worker;
 
 // Player collect taps: cooldown between collects (upgradeable later).
 export const TAP = balance.tap;
+export const STORAGE = balance.storage;
 
 // Buying time with Gems: seconds of a build or training line one Gem finishes.
 export const RUSH = balance.rush;
@@ -438,8 +439,6 @@ export const ADJACENCY = balance.adjacency as unknown as AdjacencyRule[];
 /** No single stat may be moved more than this by neighbours, either way, so
  *  no layout is ever wrong — only better. */
 export const ADJACENCY_CLAMP = 0.25;
-
-export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
 // -------------------------------------------------------------------- quests
 
@@ -525,6 +524,11 @@ export interface DistrictDef {
    *  levels. Empty = +0% everywhere, which is every building that houses
    *  nobody. A level fact, read at the base stage — never a modifier. */
   taxBonusPerLevel: readonly number[];
+  /** What it holds uncollected, in units, by level: a house's rent, a
+   *  producer's hauls. Production stops while it is full; a tap empties it
+   *  into the wallet (Docs/features/03-economy.md §3.2). Empty = it makes
+   *  nothing that waits for a tap. */
+  storageCapacityPerLevel: readonly number[];
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
   /** Chebyshev radius of the area of influence, by level. Empty = no area. */
@@ -1297,7 +1301,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     },
     // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Seal's
     // because the ground is: a node empties and stops paying, so the Seal's
-    // run hits a wall, where a house always has rent to pull forward and the
+    // run hits a wall, where a house always has rent to pay forward and the
     // Ledger's run always spends the whole budget (OQ-99).
     active: {
       id: 'Tithe', name: 'Tithe', targeted: true,
@@ -2135,4 +2139,4 @@ export const GAME_VERSION = '0.1.0';
 // v61: research takes no time and has no slots. A running research is
 // completed and the slots bought go back as Gems (save.ts); Knowledge poured
 // into a technology and the count bought with Gold are new, additive fields.
-export const SAVE_VERSION = 61;
+export const SAVE_VERSION = 62;

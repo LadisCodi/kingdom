@@ -22,7 +22,7 @@ import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { BattleEvent, BattleLog, BoardSlot, Side } from '../sim/battle';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { btn, iconEl } from './kit';
 
 /** How long the white flash sits on a slot that was hit. Two frames of a
@@ -58,7 +58,7 @@ interface SlotView {
 }
 
 function slotView(slot: BoardSlot): SlotView {
-  const count = el('span', { class: 'bs-count' }, slot.kind === 'hero' ? '' : `x${slot.count}`);
+  const count = el('span', { class: 'bs-count' }, slot.kind === 'hero' ? '' : `x${formatExact(slot.count)}`);
   const root = el('div', { class: `bs-slot is-${slot.kind}` },
     face(slot),
     count,
@@ -123,15 +123,15 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     for (const side of ['ours', 'theirs'] as Side[]) {
       for (const v of views[side].values()) power[side] += v.power * v.troops;
     }
-    const mine = el('span', { class: 'bs-bar-mine' }, String(power.ours));
-    const yours = el('span', { class: 'bs-bar-theirs' }, String(power.theirs));
+    const mine = el('span', { class: 'bs-bar-mine' }, formatExact(power.ours));
+    const yours = el('span', { class: 'bs-bar-theirs' }, formatExact(power.theirs));
     const fill = el('div', { class: 'bs-bar-fill' });
     const bar = el('div', { class: 'bs-bar' }, fill, mine, yours);
     const paintBar = (): void => {
       const total = Math.max(1, power.ours + power.theirs);
       fill.style.width = `${Math.round((power.ours / total) * 100)}%`;
-      mine.textContent = String(power.ours);
-      yours.textContent = String(power.theirs);
+      mine.textContent = formatExact(power.ours);
+      yours.textContent = formatExact(power.theirs);
     };
     paintBar();
 
@@ -166,7 +166,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         if (view === undefined) return;
         power[event.at.side] -= (view.troops - event.alive) * view.power;
         view.troops = event.alive;
-        view.count.textContent = `x${event.alive}`;
+        view.count.textContent = `x${formatExact(event.alive)}`;
         paintBar();
         return;
       }

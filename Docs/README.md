@@ -42,7 +42,9 @@ Every feature below is shaped by these.
    absolute amounts. A tap pays seconds of WORK on what you tapped; a daily
    chest pays a fraction of the pool. A ladder is relative too: a Wonder's cost
    is a curve, not a table.
-3. **The offline cap limits what the city produces, never what a timer does.**
+3. **There is no offline cap.** An absence is replayed in full; what the city
+   makes is bounded by what it can hold — each building's store, the Mana
+   pool, the Knowledge bar, the queues.
 4. **Adding a wallet row needs an argument.** Ten rows, five things on the
    plank. A counter beside the thing it belongs to usually beats a coin — the
    argument that wins is that the thing is a *price* on a button, which is

@@ -20,17 +20,22 @@ import {
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
+import type { CollectBubbles } from './collectBubbles';
+import { drawCollectBubble } from './collectBubbleArt';
+import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingOutline, drawStandingTint, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
+import { formatCount, formatDuration } from '../ui/format';
+import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -38,7 +43,6 @@ export interface MarkerLayer {
   validCells: Array<{ cell: Coord; label: string }>; // valid placement cells
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
-  claimedCells: Coord[]; // cells claimed by the inspected building's workers
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
   yieldCells: Array<{
@@ -55,9 +59,9 @@ export interface MarkerLayer {
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
-  /** The district whose card is open: it pulses white on the map, so it is
-   *  told apart from its neighbours without an outline round its plot. */
-  pulseDistrictId: string | null;
+  /** The building whose card is open: it pulses white, so the player can
+   *  tell which one the card is about. */
+  inspectedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
@@ -85,15 +89,14 @@ const moveArrowBob = (): number => (reducedMotion?.matches
   ? 0
   : 0.5 - 0.5 * Math.cos((performance.now() % ARROW_CYCLE_MS) / ARROW_CYCLE_MS * Math.PI * 2));
 
-/** The inspected building's pulse, 0 → 1 → 0 every 1.4 s; a steady half
- *  under reduced motion. */
-const PULSE_CYCLE_MS = 1400;
-const selectionPulse = (): number => (reducedMotion?.matches
-  ? 0.5
-  : 0.5 - 0.5 * Math.cos((performance.now() % PULSE_CYCLE_MS) / PULSE_CYCLE_MS * Math.PI * 2));
-
 const SPELL_CYCLE_MS = 6000;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
+
+/** THE SELECTED BUILDING'S PULSE: 0 → 1 → 0 once every 1.4 s, on the same
+ *  wall clock as the spells and for the same reason. */
+const SELECTED_PULSE_MS = 1400;
+const selectedPulse = (): number =>
+  0.5 - 0.5 * Math.cos((2 * Math.PI * (performance.now() % SELECTED_PULSE_MS)) / SELECTED_PULSE_MS);
 
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
@@ -127,6 +130,7 @@ export function drawMap(
   villagers: Villagers,
   tapFx: TapFx,
   now: number,
+  bubbles: CollectBubbles,
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -409,28 +413,24 @@ export function drawMap(
     keys.push(def.sprite);
     let drewExhaustedPlot = false;
     let tall = 0;
+    // Its card is open: a small white pulse — the art a touch brighter and a
+    // soft white glow around its edge — breathing while the card stays up.
+    const inspected = !lifted && district.uniqueId === markers.inspectedDistrictId;
+    if (inspected) {
+      const p = selectedPulse();
+      ctx.save();
+      ctx.filter = `brightness(${(1 + 0.18 * p).toFixed(3)}) `
+        + `drop-shadow(0 0 ${(size * 0.06).toFixed(1)}px rgba(255, 255, 255, ${(0.35 + 0.55 * p).toFixed(3)}))`;
+    }
     punched(coordKey(district.location), box, () => {
       tall = stand(box, keys, def.glyph, (draw) => {
-        const drew = flip(() => {
-          const d = draw();
-          // THE PULSE: a white wash over the building's own shape, breathing
-          // between nothing and a third, once every 1.4 s.
-          if (d > 0 && district.uniqueId === markers.pulseDistrictId) {
-            const key = keys.find((k) => spriteAspect(k) !== null);
-            if (key) {
-              const a = ctx.globalAlpha;
-              ctx.globalAlpha = a * selectionPulse() * 0.38;
-              drawStandingTint(ctx, key, foot.x, foot.y, box.w, '#ffffff');
-              ctx.globalAlpha = a;
-            }
-          }
-          return d;
-        });
+        const drew = flip(draw);
         drewExhaustedPlot = drew > 0 && exhaustedPlot &&
           spriteAspect(`${def.sprite}_exhausted`) !== null;
         return drew;
       });
     });
+    if (inspected) ctx.restore();
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.
@@ -462,7 +462,7 @@ export function drawMap(
       // how many you have are one glance instead of two. It also buys the
       // header back the width the widget was costing on a phone.
       if (district.definitionId === 'Townhall') {
-        drawPill(c.x, roof - 2, `${state.city.population}/${maxPopulation(state)}`,
+        drawPill(c.x, roof - 2, `${formatCount(state.city.population)}/${formatCount(maxPopulation(state))}`,
           { icon: 'population' });
         const inLine = unitInTraining(state, district.uniqueId);
         if (inLine) {
@@ -815,7 +815,7 @@ export function drawMap(
           const gate = state.gates[ruin.id];
           const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
             ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
-          if (raidIn !== null) drawSiteBadge(plot, String(raidIn), true);
+          if (raidIn !== null) drawSiteBadge(plot, formatCount(raidIn), true);
           else drawSiteBadge(plot, String(ruin.tier));
         }, { x: ruin.size, y: ruin.size });
 
@@ -846,45 +846,49 @@ export function drawMap(
     }
   }
 
-  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
-  // along the last ring the player may pay for, drawn over the fog and
-  // across undiscovered ground too, so the extent of what the capital allows
-  // is read off the map before a tap is refused. Nothing is drawn when the
-  // reach holds the whole province.
-  //
-  // The sim answers in N/S/E/W on its square grid; `edgePath` rotates each
-  // one onto the diamond (src/render/iso.ts).
+  // Pass 1.1: THE WORK AREA the markers carry (a selected building's range,
+  // a placement's, a spell's targets), over the floor and under
+  // everything that stands on it — trees and buildings stand in front of
+  // the line (render/areaOverlays.ts).
+  drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
+    performance.now());
+  // Where a building may go (or a spell may land): ONE region in the work
+  // area's line, not a diamond per cell (render/areaOverlays.ts); its
+  // labels, if any, are Pass 3's.
+  drawAreaLine(ctx, markers.validCells
+    .filter(({ cell }) => fogState(state, map, cell) !== 'Undiscovered')
+    .map(({ cell }) => cell), cellRect, size);
+
+  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A line of white
+  // dots along the last ring the player may pay for, with a soft shadow on
+  // the far side, drawn over the fog and across undiscovered ground too, so
+  // the extent of what the capital allows is read off the map before a tap
+  // is refused. Nothing is drawn when the reach holds the whole province.
   {
     const visible: Coord[] = [];
     for (let cy = view.y0; cy <= view.y1; cy++) {
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
-    const border = reachBorder(state, map, visible);
-    if (border.length > 0) {
-      ctx.save();
-      ctx.strokeStyle = PALETTE.reachBorder;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([Math.max(4, size * 0.18), Math.max(3, size * 0.12)]);
-      ctx.beginPath();
-      for (const { cell, sides } of border) {
-        const box = cellRect(cell);
-        for (const side of sides) edgePath(ctx, box, side);
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
+    drawReach(ctx, reachBorder(state, map, visible), cellRect, size);
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and
   // queued into the same depth-sorted list the props are in, so a hall in
   // front of a forest covers it and never the other way round.
+  // Where each building's art was drawn, so its collect bubble can sit on
+  // its roof whatever height the art is.
+  const artOf = new Map<string, PlotBox>();
   for (const district of state.city.districts) {
     if (fogState(state, map, district.location) !== 'Revealed') continue;
     const def = DISTRICTS[district.definitionId];
     const box = camera.plotBox(district.location, def.size);
     if (box.x + box.w < 0 || box.y + box.h < 0 || box.x > w || box.y - box.w > h) continue;
     later(district.location,
-      (mark) => mark(artRect(box, drawDistrict(district, box), 1)), def.size,
+      (mark) => {
+        const art = artRect(box, drawDistrict(district, box), 1);
+        artOf.set(district.uniqueId, art);
+        mark(art);
+      }, def.size,
       { occludes: !NEVER_HIDES.has(district.definitionId) });
   }
 
@@ -932,7 +936,7 @@ export function drawMap(
     ctx.font = labelFont(size * 0.15, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, c.x, c.y + 5);
+    ctx.fillText(item.startedAt === null ? 'queued' : formatDuration(remaining), c.x, c.y + 5);
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.
@@ -1068,27 +1072,10 @@ export function drawMap(
     ctx.restore();
   }
 
-  // Pass 3: markers.
-  // Working area: one translucent white region with a crisp outline — border
-  // segments are drawn only on edges that face a cell outside the area.
-  if (markers.influenceCells.length > 0) {
-    const inArea = new Set(markers.influenceCells.map(coordKey));
-    ctx.fillStyle = PALETTE.influenceFill;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) diamondPath(ctx, cellRect(cell));
-    ctx.fill();
-    ctx.strokeStyle = PALETTE.influenceBorder;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) outline(cellRect(cell), cell, inArea);
-    ctx.stroke();
-  }
+  // Pass 3: markers. (The work area is Pass 1.1: it lies under what stands.)
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const b = cellRect(cell);
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 3);
     if (label) {
       const c = mid(b);
       ctx.fillStyle = markers.validColor;
@@ -1097,11 +1084,6 @@ export function drawMap(
       ctx.textBaseline = 'middle';
       ctx.fillText(label, c.x, c.y);
     }
-  }
-  for (const cell of markers.claimedCells) {
-    ctx.strokeStyle = PALETTE.workedTile;
-    ctx.lineWidth = 3;
-    strokeDiamond(ctx, cellRect(cell), 4);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
@@ -1121,7 +1103,9 @@ export function drawMap(
     ctx.globalAlpha = 1;
     drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
   }
-  if (markers.selected) {
+  // A placement's or a move's target is the ghost itself; only a spell's
+  // target keeps the outline.
+  if (markers.selected && !markers.previewCell) {
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     strokeDiamond(ctx, camera.plotBox(markers.selected, markers.selectedSize ?? { x: 1, y: 1 }), 2);
@@ -1226,6 +1210,19 @@ export function drawMap(
     later(pos, () => paint(ctx), { x: 1, y: 1 },
       { rect, ghost: (clip) => asGhost(clip, rect, paint) });
   }
+  }
+
+  // Pass 4: COLLECT BUBBLES — over the whole world, under the UI. One per
+  // building with something in its store (render/collectBubbles.ts).
+  const clock = performance.now();
+  for (const district of state.city.districts) {
+    if (!readyToCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
+    const art = artOf.get(district.uniqueId);
+    if (!art) continue;
+    const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);
+    // The art's box carries transparent headroom; a tenth of it down is the roof.
+    drawCollectBubble(ctx, bubbles, district, art.x + art.w / 2, art.y + art.h * 0.12,
+      Math.max(34, Math.min(88, plot.w * 0.4)), clock);
   }
 
   // Pass 5: floaters.

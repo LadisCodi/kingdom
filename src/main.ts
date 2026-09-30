@@ -58,6 +58,7 @@ import { mountQuestPill } from './ui/questPill';
 import { mountRaidPill } from './ui/raidPill';
 import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
+import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
 import { legacy, ScreenSlot } from './ui/kit/host';
@@ -77,6 +78,7 @@ async function boot(): Promise<void> {
   }
   if (dev === 'data') {
     const { mountEditor } = await import('./editor/data/mount');
+    dismissBootScreen();
     mountEditor();
     return;
   }
@@ -371,10 +373,11 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------ render loop
   const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now());
+    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
+  void revealWhenReady();
 
   // ?dev=kit — the UI-kit gallery, in place of the game. Mounted before the
   // time-warp bar so it takes the whole screen.
@@ -399,7 +402,9 @@ async function boot(): Promise<void> {
       for (const item of game.state.city.trainingQueue) {
         if (item.startedAt !== null) item.startedAt -= delta;
       }
-      game.state.city.lastTaxAt -= delta;
+      for (const d of game.state.city.districts) {
+        if (d.rentAnchor !== undefined) d.rentAnchor -= delta;
+      }
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;
         if (w.stateUntil !== null) w.stateUntil -= delta;
@@ -578,4 +583,9 @@ async function boot(): Promise<void> {
   refreshScreens();
 }
 
-void boot();
+// Whatever goes wrong, the loading screen must not be what the player is
+// left looking at.
+boot().catch((err) => {
+  dismissBootScreen();
+  throw err;
+});

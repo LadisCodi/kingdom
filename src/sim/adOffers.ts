@@ -2,8 +2,8 @@
 // surface, and the thing the Mana pool was made scarce FOR.
 //
 // Mana is the energy every tap is paid from, and `magic.md` records that its
-// tuning law was suspended deliberately — cap 50 against 4/h is a 12.5 h
-// refill, past the 8 h offline cap — so that a refill has something to sell.
+// tuning law was suspended deliberately — the pool takes longer than a night
+// to refill — so that a refill has something to sell.
 // This is the refill: a full pool's worth of Mana for watching a video.
 //
 // FIVE A DAY, AND THE GEMS ARE THE OTHER TILL. The videos pay at most

@@ -11,7 +11,7 @@ import { fogState } from '../src/sim/fog';
 import { townhallDistance } from '../src/sim/grid';
 import { addModifier, type Modifier } from '../src/sim/modifiers';
 import {
-  DISTRICTS, FOG, MANA, OFFLINE_CAP_HOURS, RUINS, type LandmarkDef,
+  DISTRICTS, FOG, MANA, RUINS, type LandmarkDef,
 } from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
@@ -109,16 +109,18 @@ describe('the two dials', () => {
   // This test pins the intent rather than a number, so the day someone
   // re-tunes either dial they have to come here and say which budget they are
   // tuning for.
-  it('is a SPEND budget now: the pool no longer refills inside an absence', () => {
+  it('is a SPEND budget: the pool takes longer than a night to refill', () => {
     // Walked up the SANCTUM now, not the Townhall — that is where both dials
-    // live. Every level has to stay on the spend side of the law.
+    // live. Every level has to stay on the spend side of the law: a pool that
+    // refilled in a night would be a daily grant, not a budget.
+    const A_NIGHT_HOURS = 8;
     const bare = freshGame();
-    expect(manaFillHours(bare)).toBeGreaterThan(OFFLINE_CAP_HOURS);
+    expect(manaFillHours(bare)).toBeGreaterThan(A_NIGHT_HOURS);
     for (let level = 1; level <= DISTRICTS.Sanctum.maxLevel; level++) {
       const state = freshGame();
       sanctum(state, level);
       expect(manaFillHours(state), `Sanctum ${level} refills inside an absence`)
-        .toBeGreaterThan(OFFLINE_CAP_HOURS);
+        .toBeGreaterThan(A_NIGHT_HOURS);
       expect(Number.isFinite(manaFillHours(state))).toBe(true);
     }
   });
@@ -240,14 +242,12 @@ describe('the pool', () => {
     expect(stepped.city.lastManaAt).toBe(oneCall.city.lastManaAt);
   });
 
-  it('is city production, so the 8h offline cap applies to it', () => {
-    // Unlike a timer. The rule: the cap limits what the CITY PRODUCES while
-    // you are away; it never limits what a timer does.
+  it('refills while away up to the pool, and no further — the pool is its only cap', () => {
     const state = freshGame();
-    sanctum(state, 3); // a pool big enough that 8h of production cannot fill it
-    state.city.wallet.Mana = 0; // …and empty, so the 8h is what is measured
+    sanctum(state, 3);
+    state.city.wallet.Mana = 0;
     const restored = deserialize(serialize(state, T0), map, T0 + 40 * HOUR)!;
-    expect(mana(restored)).toBeLessThan(manaCap(restored));
+    expect(mana(restored)).toBe(manaCap(restored));
   });
 });
 

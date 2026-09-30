@@ -113,8 +113,8 @@
 - **When the board feels wrong — too much conflict, too little, the Portal
   eating every army — the numbers to move are how many armies a player has and
   how long casualties take to replace.** Not the +200%, not the march times.
-- Marching is a **timer**, so the offline cap never touches it: an army sent
-  before a twelve-hour absence has arrived on return
+- Marching is a **timer**: an army sent before a twelve-hour absence has
+  arrived on return
   ([`02-map-scopes.md`](02-map-scopes.md) §4).
 - March time is **linear in hexes** — *Y hexes cost X·Y*. The board is ten hexes
   across at its widest; superlinear scaling exists to stop large maps

@@ -37,15 +37,16 @@ import {
 } from './workshops';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
-  type DepositEvent, type StrikeEvent,
+  wakeIdleWorkersAt, type DepositEvent, type StrikeEvent,
 } from './workers';
 import {
   addToWallet, builderCount, buildQueueCapacity, cellsOfRect, completesAt, districtById,
   districtOccupies, getWallet,
   newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type TechId, type UnitId,
+  type QueueItem, type TechId, type UnitId, type Wallet,
 } from './state';
+import { collectStore } from './storage';
 
 // ------------------------------------------------------------------ building
 
@@ -383,12 +384,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
 
 // --------------------------------------------------------------- completions
 
-/** Idle workers re-check availability from `t` (never retroactively earlier). */
-export function wakeIdleWorkersAt(state: GameState, t: number): void {
-  for (const w of state.workers) {
-    if (w.activity === 'Idle') w.stateStartedAt = Math.max(w.stateStartedAt, t);
-  }
-}
+export { wakeIdleWorkersAt };
 
 function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: number): void {
   const district = districtById(state, item.districtUniqueId);
@@ -461,6 +457,25 @@ export function changeWorkers(
   return 'Unassigned';
 }
 
+// ------------------------------------------------------------ collecting
+
+/**
+ * Tap a building with something in its store: everything in it moves to the
+ * wallet, free (Docs/features/03-economy.md §3.2). Mana is what a tap on the
+ * GROUND costs; a building's store is the player's own work waiting for
+ * them. Returns what moved — empty when there was nothing, which is the
+ * caller's cue to open the building instead.
+ *
+ * Emptying a full store sets its crew going again from `now`.
+ */
+export function collectBuilding(state: GameState, districtUniqueId: string, now: number): Wallet {
+  const district = districtById(state, districtUniqueId);
+  if (!district || district.state !== 'Built') return {};
+  const moved = collectStore(state, district, now);
+  if (Object.keys(moved).length > 0) wakeIdleWorkersAt(state, now);
+  return moved;
+}
+
 // The Townhall no longer answers a tap. A training queue is a FIXED duration
 // and a tap is a scaling one, so a maxed thumb would finish a 20-second
 // villager in a single press — `Docs/features/04-harvest.md` §3.2. Timers are
@@ -487,7 +502,7 @@ export function changeWorkers(
 // code never called `advanceQueue` at `toTime` either, and adding one would
 // change when a newly enqueued item is stamped.
 //
-// Deliberately NOT a boundary: feature respawns. Over an 8h replay a finite
+// Deliberately NOT a boundary: feature respawns. Over a long replay a finite
 // feature can cycle dozens of times, and each boundary costs a full
 // `advanceWorkers` sweep — O(workers × workableCells) with a fresh allocation
 // per worker. Thousands of boundaries would turn a ~10-iteration replay into a
@@ -496,11 +511,11 @@ export function changeWorkers(
 export interface AdvanceResult {
   /** Axe-lands-on-cell events: the renderer hits the CELL with them. */
   strikes: StrikeEvent[];
-  /** Haul-lands-at-building events: the wallet moved, so the number pops
-   *  at the BUILDING. The gap between a strike and its deposit is the walk. */
+  /** Haul-lands-at-building events: the building's store grew. The gap
+   *  between a strike and its deposit is the walk. */
   deposits: DepositEvent[];
   completedItems: QueueItem[];
-  goldEarned: number; // passive tax gold accrued in this window
+  goldEarned: number; // rent that landed in the houses' stores in this window
   trainedPopulation: number; // villagers who finished training
   /** Modifiers whose window closed inside this advance — the "your Haste ran
    *  out while you were away" half of the offline report. */
@@ -561,13 +576,15 @@ function applyDueAt(
     // starts its warning HERE, stamped with this boundary's t, and cannot be
     // raided in the same instant it was noticed.
     armGates(state, map, t);
-    out.raids.push(...advanceRaids(state, t));
+    const raids = advanceRaids(state, t);
+    out.raids.push(...raids);
+    // A raid empties stores, and a crew waiting by a full one can go out again.
+    if (raids.length > 0) wakeIdleWorkersAt(state, t);
     out.scheduleEvents.push(...advanceSchedule(state, t));
-    // THE SEASON'S CLOSE IS A TIMER, NOT PRODUCTION (Docs/features/09-relics.md
-    // §3, and invariant 2 in CLAUDE.md): it resolves in the uncapped tail at
-    // its absolute timestamp, so a player away for a week comes back to the
-    // wiped album and the new season rather than to a stale one that waits
-    // for them. `season` moving is what stops it firing twice.
+    // THE SEASON'S CLOSE IS A TIMER (Docs/features/09-relics.md §3): it
+    // resolves at its absolute timestamp, so a player away for a week comes
+    // back to the wiped album and the new season rather than to a stale one
+    // that waits for them. `season` moving is what stops it firing twice.
     if (t >= seasonEndsAt(state.collection.season)) {
       out.seasonClosed = closeSeason(state, t);
     }
@@ -584,12 +601,12 @@ function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceRe
   const crew = advanceWorkers(state, map, t);
   out.strikes.push(...crew.strikes);
   out.deposits.push(...crew.deposits);
-  // A workshop crew is production like any other: the 8-hour offline cap
-  // applies to it exactly as it does to a Sawmill's.
+  // A workshop's ceiling is its queue: it runs until the queue is done.
   advanceWorkshops(state, t);
   out.goldEarned += advanceCityLife(state, t).gold;
-  // Mana regen is city idle PRODUCTION, so it belongs here with the workers
-  // and the taxes — and the 8h offline cap applies to it, unlike a timer.
+  // Rent lands in the houses and hauls in the producers, each up to its
+  // store; Mana up to its pool. Those capacities are the only ceilings on
+  // an absence — there is no offline cap.
   out.manaEarned += accrueMana(state, t);
   out.knowledgeEarned += accrueKnowledge(state, t);
 }

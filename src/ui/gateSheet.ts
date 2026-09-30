@@ -12,7 +12,7 @@
 import { RUINS, depthCount } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { iconEl } from './kit';
 import type { CurrencyId } from '../sim/state';
 
@@ -56,7 +56,7 @@ export function renderGateSheet(game: Game): HTMLElement {
     // The hoard IS the reward, and Hero XP rides on any fight. There is no
     // room reward and no loot table: what a gate really pays is the ruin.
     rewards: [
-      ...hoard.map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
+      ...hoard.map(([c, n]) => ({ icon: c as CurrencyId, label: formatExact(n) })),
       { icon: 'HeroXp' as CurrencyId, label: `+${ruin.tier}` },
     ],
     rewardNote: hoard.length > 0

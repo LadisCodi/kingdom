@@ -10,7 +10,7 @@
 import type { Game } from '../game';
 import { CURRENCIES } from '../sim/data/definitions';
 import { type CurrencyId } from '../sim/state';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { currencyIcon, sheet } from './kit';
 
 /** Currencies worth a row: the city's goods, the kingdom's Stardust, the
@@ -44,7 +44,7 @@ export function renderPurseSheet(game: Game): HTMLElement {
       { class: 'purse-row' },
       currencyIcon(c),
       el('span', { class: 'purse-name' }, currencyName(c)),
-      el('span', { class: 'purse-value' }, String(held)),
+      el('span', { class: 'purse-value' }, formatExact(held)),
     ));
   }
 

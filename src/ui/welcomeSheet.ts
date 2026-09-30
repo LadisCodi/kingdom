@@ -18,7 +18,9 @@ import { btn, currencyIcon, iconEl, sheet } from './kit';
 export const WELCOME_MIN_MS = 120_000;
 
 export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLElement {
-  // Deliveries arrive per cell; the player wants one line per resource.
+  // Hauls and rent went into the buildings' stores, not the purse: these rows
+  // say what is WAITING for a tap. Deliveries arrive per cell; the player
+  // wants one line per resource.
   const earned = new Map<CurrencyId, number>();
   for (const d of report.result.deposits) {
     earned.set(d.currencyId, (earned.get(d.currencyId) ?? 0) + d.amount);
@@ -93,10 +95,10 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
   const body = el('div', { class: 'wel' },
     el('div', { class: 'wel-lede' },
       `Your kingdom worked for ${formatDuration(report.elapsedMs / 1000)}.`),
-    ...(report.cappedOut
+    ...(report.storesFull
       ? [el('div', { class: 'wel-capped' },
           iconEl('hourglass', { size: 'sm' }),
-          'Your stores filled up before you got back.')]
+          'Some stores filled up before you got back — tap them to collect.')]
       : []),
     ...(nothing
       ? [el('div', { class: 'wel-lede' }, 'Nothing to collect — it was a quiet spell.')]
@@ -107,7 +109,7 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
          el('div', { class: 'wel-dones' }, ...finished)]
       : []),
     el('div', { class: 'wel-collect' },
-      btn({ label: 'Collect', kind: 'primary', onClick: () => game.dismiss() })),
+      btn({ label: 'Continue', kind: 'primary', onClick: () => game.dismiss() })),
   );
 
   return sheet({ title: 'Welcome back', onClose: () => game.dismiss() }, body);

@@ -23,7 +23,7 @@ import { heroStats, rosterView } from '../sim/heroes';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { knob, stat } from './kit';
 import { unitBust } from './unitArt';
 
@@ -66,9 +66,9 @@ function pickerCard(opts: {
     opts.art,
     el('span', { class: 'bt-card-name' }, opts.name),
     el('span', { class: 'bt-card-power' },
-      el('b', {}, String(opts.power)), el('span', {}, 'power')),
+      el('b', {}, formatExact(opts.power)), el('span', {}, 'power')),
     el('span', { class: 'bt-card-stats' },
-      ...opts.stats.map((n) => stat(n.icon, String(n.value)))),
+      ...opts.stats.map((n) => stat(n.icon, formatExact(n.value)))),
     el('span', { class: 'bt-card-note' }, opts.note),
   );
   if (opts.disabled === true) card.disabled = true;
@@ -93,7 +93,7 @@ function troopCards(game: Game): HTMLElement[] {
     // The only ceiling a card can hit now is the roster: the army cap bounds
     // what the city OWNS, and every soldier it owns may be sent.
     const note = would > 0
-      ? `Send ${would} of ${roster[unitId]}`
+      ? `Send ${formatExact(would)} of ${formatExact(roster[unitId])}`
       : 'All of them are with the party';
     return pickerCard({
       cls: 'is-troop',

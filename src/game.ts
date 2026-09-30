@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectTap,
+  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -15,7 +15,7 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatCount, formatDuration, formatExact } from './ui/format';
+import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -91,7 +91,7 @@ import {
 } from './sim/manaRefill';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import {
-  availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, residentsOf,
+  availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
@@ -135,6 +135,8 @@ import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
+import { CollectBubbles } from './render/collectBubbles';
+import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
@@ -423,6 +425,8 @@ export class Game {
    */
   private packsSeen = -1;
   readonly floaters = new Floaters();
+  /** The bounce a store's bubble gives when a haul lands in it. */
+  readonly collectBubbles = new CollectBubbles();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
@@ -555,15 +559,12 @@ export class Game {
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
     for (const s of result.strikes) this.strikeFeedback(s.cell, s.source);
-    for (const d of result.deposits) {
-      this.floaters.add(d.cell, `+${d.amount}`, d.currencyId);
-    }
-    if (result.goldEarned > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.goldEarned}`, 'Gold');
-    }
+    // A haul lands in the building's store, not the purse, so it pops no
+    // number: the store's bubble is what says there is something to collect.
+    for (const d of result.deposits) this.collectBubbles.bump(d.cell);
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
-      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(result.trainedPopulation)}`, 'population');
     }
     // A quiet splash when a fishing boat sets out (one per tick, max).
     let splashed = false;
@@ -600,7 +601,7 @@ export class Game {
     // instead — the welcome sheet already owns "while you were away".
     for (const raid of result.raids) {
       if (Object.keys(raid.took).length === 0) continue;
-      const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
+      const took = Object.entries(raid.took).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
       this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
     }
     // THE SEASON ROLLED OVER while the player was here or away. It is the one
@@ -615,7 +616,7 @@ export class Game {
         icon: '\u{1F5D3}',
         name: opened.name,
         desc: closed.cards > 0
-          ? `${closed.cards} cards melted down for ${formatExact(closed.gold)} gold. `
+          ? `${formatExact(closed.cards)} cards melted down for ${formatExact(closed.gold)} gold. `
             + 'A fresh album, and your relics keep every level.'
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',
@@ -717,7 +718,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+          this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
         }
         this.notify();
         return true;
@@ -728,19 +729,17 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        // Housing: tapping fast-forwards tax collection (and opens the card).
+        // A building with something in its store: the tap COLLECTS, free, and
+        // does nothing else. The next tap, with the store empty, opens it
+        // (Docs/features/03-economy.md §3.2).
+        if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+          this.collectStoreOf(district);
+          this.notify();
+          return true;
+        }
+        // An empty house opens its card.
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
-          const { result, gold } = houseTap(this.state, district, this.now());
-          if (result === 'Collected') {
-            this.tapFeedback(district.location, 'tapHouse');
-            if (gold > 0) {
-              this.floaters.add(cell, `+${gold}`, 'Gold');
-              this.tapReward(cell, 'Gold', gold);
-            } else this.floaters.add(cell, '⏩');
-          } else if (result === 'NoMana') {
-            this.outOfMana(cell);
-          }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -782,6 +781,21 @@ export class Game {
         return true;
       },
     });
+  }
+
+  /** Empty a building's store into the purse, with the tap's own feedback:
+   *  the punch on the building, a floater per currency, and the haul flying
+   *  to the header. */
+  private collectStoreOf(district: District): void {
+    const moved = collectBuilding(this.state, district.uniqueId, this.now());
+    const entries = (Object.entries(moved) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+    if (entries.length === 0) return;
+    this.tapFeedback(district.location,
+      districtCapacity(this.state, district) > 0 ? 'tapHouse' : 'pop');
+    for (const [c, n] of entries) this.floaters.add(district.location, `+${formatCount(n)}`, c);
+    const box = this.camera.cellToScreen(district.location);
+    const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+    queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
   }
 
   /** Punch + flash + a target-appropriate sound on a successful tap. */
@@ -851,7 +865,7 @@ export class Game {
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
-      this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
+      this.floaters.add(cell, `+${formatExact(units)}`, HARVEST[source].currencyId);
       this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
@@ -887,26 +901,15 @@ export class Game {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a house keeps collecting, paced by the same auto-tap cooldown a
-    // held tree uses, and stopping when the Mana runs out.
+    // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' &&
-        districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now(), true);
-      if (result === 'NoMana') {
-        playSfx('error');
-        this.shake(['Mana']);
-        return false;
-      }
-      if (result !== 'Collected') return false;
-      this.tapFeedback(district.location, 'tapHouse');
-      if (gold > 0) {
-        this.floaters.add(cell, `+${gold}`, 'Gold');
-        this.tapReward(cell, 'Gold', gold);
-      } else this.floaters.add(cell, '⏩');
+    if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+      this.collectStoreOf(district);
       this.notify();
       return true;
     }
+    if (district && district.state === 'Built' &&
+        districtCapacity(this.state, district) > 0) return false;
     if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;
@@ -932,7 +935,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+      this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
     }
     this.notify();
     return true;
@@ -1134,7 +1137,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
+      this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
     }
     if (report.activeId === 'Reap' && target) {
       this.floaters.add(target, `${report.taps} taps, free`);
@@ -1143,7 +1146,7 @@ export class Game {
       this.floaters.add(target, `${report.affected.length} crews hurried`);
     }
     if (report.activeId === 'Tithe' && target) {
-      this.floaters.add(target, `+${Math.round(report.goldSaved)}`, 'Gold');
+      this.floaters.add(target, `+${formatExact(Math.round(report.goldSaved))}`, 'Gold');
     }
     if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
@@ -1654,7 +1657,7 @@ export class Game {
       playSfx('upgradeBought');
       this.toast(`${many.bought} × ${tier} — open them in the Collection`);
     } else {
-      this.toast(`${vaultCost(tier) * count} stars for ten — not yet`);
+      this.toast(`${formatExact(vaultCost(tier) * count)} stars for ten — not yet`);
     }
     this.notify();
   }
@@ -1843,7 +1846,7 @@ export class Game {
   doBuyFromVault(tier: VaultTier): void {
     const result = buyFromVault(this.state, tier);
     if (result === 'Opened') playSfx('upgradeBought');
-    else this.toast(`${vaultCost(tier)} stars for a ${tier} pack — not yet`);
+    else this.toast(`${formatExact(vaultCost(tier))} stars for a ${tier} pack — not yet`);
     this.notify();
   }
 
@@ -1858,7 +1861,7 @@ export class Game {
     const result = refillManaWithGems(this.state, this.now());
     if (result === 'Refilled') {
       playSfx('gemSpend');
-      this.floaters.add(townhall(this.state).location, `+${manaCap(this.state)}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(manaCap(this.state))}`, 'Mana');
     }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     if (result === 'NoneLeft') this.toast('No more Gem refills today');
@@ -1965,6 +1968,12 @@ export class Game {
     return { gold: knowledgeGoldPrice(this.state, count), gems: knowledgeGemPrice(count) };
   }
 
+  /** Whether the open menu spends Knowledge, so its tab under the plank stays
+   *  down rather than stepping aside with every other menu. */
+  keepsKnowledgeTab(): boolean {
+    return this.openOverlay === 'research' || this.openOverlay === 'knowledge';
+  }
+
   /** The Knowledge sheet: the bar, and buying points with Gold or Gems. */
   openKnowledge(): void {
     this.setOverlay('knowledge');
@@ -1983,7 +1992,7 @@ export class Game {
   /** A number rising off the Knowledge tab. Nothing on the map is its source,
    *  so it floats from the Townhall like Mana's. */
   private floatKnowledge(amount: number): void {
-    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${amount}` : `${amount}`, 'Knowledge');
+    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${formatExact(amount)}` : formatExact(amount), 'Knowledge');
   }
 
   // ------------------------------------------------------------- ad offers
@@ -2222,7 +2231,7 @@ export class Game {
   private announceChest(haul: Wallet): void {
     playSfx('quest');
     const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
-      .map(([c, n]) => `+${n} ${c}`);
+      .map(([c, n]) => `+${formatExact(n)} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
     this.reward(haul);
@@ -2306,7 +2315,7 @@ export class Game {
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
-      this.floaters.add(townhall(this.state).location, `+${reward}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(reward)}`, 'Mana');
     }
     this.adWatchStartedAt = null;
     this.setOverlay(null);
@@ -2346,11 +2355,11 @@ export class Game {
     }
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
-      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+      return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
     }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
-      return `Needs ${need} villagers — you have ${this.state.city.population}. Train more at the Townhall`;
+      return `Needs ${formatExact(need)} villagers — you have ${formatExact(this.state.city.population)}. Train more at the Townhall`;
     }
     return result;
   }
@@ -3092,7 +3101,7 @@ export class Game {
     const result = claimLandmark(this.state, this.map, cell);
     if (result === 'Claimed') {
       playSfx('upgradeBought');
-      this.floaters.add(cell, `+${manaProduction(this.state) - before}/h`, 'Mana');
+      this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
       this.queueBanner({
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
@@ -3703,7 +3712,7 @@ export class Game {
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${committedTroops(this.state)}/${armyCap(this.state)}) — build or upgrade a military building`);
+      this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
     this.notify();
   }
@@ -3845,7 +3854,6 @@ export class Game {
       validCells: [],
       validColor: PALETTE.validTarget,
       influenceCells: [],
-      claimedCells: [],
       yieldCells: [],
       previewCell: null,
       previewGlyph: null,
@@ -3854,7 +3862,7 @@ export class Game {
       previewSteps: this.ghostSteps(),
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
-      pulseDistrictId: this.mode.kind === 'normal' ? this.inspectedDistrictId : null,
+      inspectedDistrictId: this.inspectedDistrictId,
       hintCell: this.hintCell(),
       spellZones: this.spellZones(),
     };
@@ -3894,9 +3902,9 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
-        layer.influenceCells = cellsWithinRadiusOfRect(
+        layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
-        );
+        ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
             // What each captured cell HOLDS, so a Sawmill's radius shows which
@@ -3938,10 +3946,10 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
-          layer.influenceCells = cellsWithinRadiusOfRect(
+          layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
             levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
-          );
+          ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
@@ -3980,7 +3988,7 @@ export class Game {
             activeRadius(this.state, this.mode.artifactId),
           ).map((cell) => ({
             cell,
-            label: String(divinationSaving(this.state, this.map, cell)),
+            label: formatCount(divinationSaving(this.state, this.map, cell)),
             icon: 'Gold' as const,
             tone: 'good' as const,
           }));
@@ -3994,14 +4002,12 @@ export class Game {
       }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
+      // No selection outline: the building pulses white while its card is
+      // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
-        // No outline round its plot: the building itself pulses white
-        // (pulseDistrictId), which says which one the card is about.
         if (district.state === 'Built') {
-          layer.influenceCells = influenceCells(this.map, district);
-          layer.claimedCells = this.state.workers
-            .filter((w) => w.buildingId === district.uniqueId && w.claimedCell !== null)
-            .map((w) => w.claimedCell!);
+          layer.influenceCells = withFootprint(influenceCells(this.map, district),
+            district.location, DISTRICTS[district.definitionId].size);
         }
       }
     }
@@ -4271,9 +4277,9 @@ export class Game {
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy
     // no research, so they stand down.
-    // Knowledge rides the plank here as well: its tab under the plank steps
-    // aside while any menu is open, like the Settings knob.
-    if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
+    // Knowledge is not on the plank: its tab hangs under it and stays down
+    // while a menu that spends it is open (`keepsKnowledgeTab`).
+    if (this.openOverlay === 'research') return ['Gold'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [
@@ -4385,7 +4391,7 @@ function providedYieldLabel(
   const spec = HARVEST[provides];
   const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel {
@@ -4396,7 +4402,7 @@ function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel
   // Toned against the authored stock, so richer and poorer ground read at a
   // glance rather than needing the player to remember the baseline.
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 /** How hard a worker's strike punches the cell, against the player's 1. Enough
@@ -4424,7 +4430,7 @@ function resourceBanner(currency: CurrencyId): Banner {
   const desc = currency === 'Gold'
     ? 'Pays for everything'
     : def.goldValue !== null
-      ? `Sells for ${def.goldValue} ${icon('Gold')}`
+      ? `Sells for ${formatExact(def.goldValue)} ${icon('Gold')}`
       : '';
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
@@ -4484,6 +4490,17 @@ export function formatSigned(goldPerMinute: number): string {
 }
 
 /** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
+/** A building's range as the map DRAWS it: its rings AND the ground it
+ *  stands on. The sim's rings start at 1 — the footprint is not worked —
+ *  and drawn without it the area has a hole, outlined round the building. */
+function withFootprint(cells: Coord[], anchor: Coord, size: { x: number; y: number }): Coord[] {
+  const out = [...cells];
+  for (let dy = 0; dy < size.y; dy++) {
+    for (let dx = 0; dx < size.x; dx++) out.push({ x: anchor.x + dx, y: anchor.y + dy });
+  }
+  return out;
+}
+
 export const formatAdjacency = (goldPerMinute: number): string =>
   `${formatSigned(goldPerMinute)} 🪙`;
 
@@ -4689,7 +4706,7 @@ function relicEffectText(id: ArtifactId, value: number): string {
   // A relic's stats all share one op — the pair the Seal and the Sigil carry
   // move together by construction — so the first one says how to read it.
   const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
-  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${formatNumber(value, 1)}`;
   // The tiles under this sentence print the same number, so both read it from
   // one place rather than each rounding it their own way.
   const pct = relicPercent(value);

@@ -12,9 +12,9 @@
 // named here too, so nobody has to go looking for it.
 
 import type { Game } from '../game';
-import { PAYER_PROFILES, PROFILE_LABEL, formatUsd, monthlyBudgetCents } from '../sim/store';
+import { PAYER_PROFILES, PROFILE_LABEL, monthlyBudgetCents } from '../sim/store';
 import type { PayerProfile } from '../sim/state';
-import { el } from './format';
+import { el, formatUsd } from './format';
 import { btn, currencyIcon, iconEl, panel, windowHead } from './kit';
 
 const BLURB: Record<PayerProfile, string> = {

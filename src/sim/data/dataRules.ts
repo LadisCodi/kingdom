@@ -54,7 +54,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
   { id: 'adjacency', label: 'Adjacency', domain: 'City', view: 'table', noun: 'rule', source: 'adjacency' },
   { id: 'economy', label: 'Economy', domain: 'City', view: 'form', noun: 'setting',
-    groups: ['tap', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'offlineCapHours'] },
+    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush'] },
 
   { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', file: 'src/sim/data/tech-tree.json' },
 
@@ -481,6 +481,14 @@ export const RULES: Readonly<Record<string, Rule>> = {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');
       }
       neverFalls(push, id, 'taxBonusPerLevel', b.taxBonusPerLevel);
+      // What a building makes waits inside it for a tap, so anything that
+      // makes Gold or harvests has a store — without one its production
+      // would have no ceiling at all while the player is away.
+      const makes = list(b.populationCapacityPerLevel).length > 0 || list(b.harvestSources).length > 0;
+      const stores = list(b.storageCapacityPerLevel).length > 0;
+      if (makes && !stores) push(id, ['storageCapacityPerLevel'], 'it makes Gold or harvests, so it needs a store');
+      if (!makes && stores) push(id, ['storageCapacityPerLevel'], 'on a building that makes nothing to collect');
+      neverFalls(push, id, 'storageCapacityPerLevel', b.storageCapacityPerLevel);
       // The late ladder only exists past the pivot level.
       const lateAuthored = num(b.upgradeDurationLateSeconds) > 0 || num(b.upgradeDurationLateLevelGrowth) > 0;
       if (lateAuthored && num(b.maxLevel) < lateFrom) {

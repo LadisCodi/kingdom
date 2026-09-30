@@ -34,7 +34,7 @@ import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
   type DistrictId, type TechId,
 } from '../src/sim/state';
-import { BERRIES, FOREST, map, pourAndResearch, T0 } from './helpers';
+import { BERRIES, collectAll, FOREST, map, pourAndResearch, T0 } from './helpers';
 
 const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed at start
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
@@ -52,7 +52,14 @@ describe('a player can actually play the onboarding', () => {
       expect(isQuestComplete(state, quest), `${id} is not complete`).toBe(true);
       expect(claimQuest(state)).toBe('Claimed');
     };
-    const tick = (seconds: number) => { now += seconds * 1000; advance(state, map, now); };
+    // A player who waits also taps what filled up: rent and hauls wait in
+    // the buildings until collected (03-economy.md §3.2), and collecting is
+    // free, so every wait ends with a sweep.
+    const tick = (seconds: number) => {
+      now += seconds * 1000;
+      advance(state, map, now);
+      collectAll(state, now);
+    };
     const gold = () => getWallet(state.city.wallet, 'Gold');
     const wood = () => getWallet(state.city.wallet, 'Wood');
     const clear = (cell: Coord) => {

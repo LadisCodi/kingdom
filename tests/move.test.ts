@@ -13,7 +13,7 @@ import { canMoveDistrict, placementBlock, validPlacementCells } from '../src/sim
 import { districtAdjacency } from '../src/sim/adjacency';
 import { coordKey, districtById, getWallet, townhall, type Coord } from '../src/sim/state';
 import {
-  addBuilt, completeTech, freshGame, freshPresenter, fund, map, reveal, screenAt, T0,
+  addBuilt, completeTech, freshGame, freshPresenter, fund, map, reveal, screenAt, stored, T0,
 } from './helpers';
 
 // Real grassland from the authored map. The Townhall spans (0,0)-(1,1), so
@@ -173,7 +173,7 @@ describe('moving costs nothing and takes nothing', () => {
     // Still legal (it keeps touching the Townhall) but no longer crowded.
     expect(moveDistrict(state, map, a.uniqueId, AWAY_CELL, T0)).toBe('Moved');
     expect(districtAdjacency(state, a)).toBe(0);
-    expect(state.city.lastTaxAt).toBe(T0); // repriced at the instant it moved
+    expect(a.rentAnchor).toBe(T0); // repriced at the instant it moved
   });
 
   it('the new address pushes back the fog, exactly as finishing a build does', () => {
@@ -214,7 +214,7 @@ describe('the crew comes with it', () => {
     expect(worker.activity).toBe('Idle');
     // And it works from the new address rather than stalling.
     advance(state, map, T0 + 120_000);
-    expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(0);
+    expect(stored(state, 'Wood')).toBeGreaterThan(0);
   });
 
   // The units left the ground when the swing landed, so confiscating them on
@@ -229,12 +229,12 @@ describe('the crew comes with it', () => {
       if (w.carrying === 0 || w.activity !== 'MovingHome') continue;
       carried = true;
       const load = w.carrying;
-      const before = getWallet(state.city.wallet, 'Wood');
+      const before = stored(state, 'Wood');
       expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + t)).toBe('Moved');
       expect(w.carrying).toBe(load); // not confiscated
       expect(w.activity).toBe('MovingHome'); // just to a new address
       advance(state, map, T0 + t + 120_000);
-      expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
+      expect(stored(state, 'Wood')).toBeGreaterThan(before);
     }
     expect(carried, 'the worker never picked anything up').toBe(true);
   });

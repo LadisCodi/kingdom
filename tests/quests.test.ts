@@ -21,8 +21,8 @@ import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type Coord, type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf,
-  map, T0, tickAt } from './helpers';
+  addBuilt, BERRIES, canGather, collectAll, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
+} from './helpers';
 
 
 describe('the quest chain', () => {
@@ -214,16 +214,19 @@ describe('the quest chain', () => {
     expect(claimQuest(state)).toBe('NoQuest');
   });
 
-  it('progress survives the save and grows during offline replay', () => {
+  it('progress survives the save, and what the absence made counts once it is collected', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 1; // 30 gold/min in taxes (one of the two beds)
+    state.city.population = 1; // 30 gold/min in rent (one of the two beds)
     state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay');
     state.quests.progress = 7;
-    tickAt(state, T0); // anchor the tax clock
+    tickAt(state, T0); // anchor the rent clock
     const restored = deserialize(serialize(state, T0), map, T0 + 120_000)!;
     expect(restored.quests.index).toBe(state.quests.index);
-    // 2 offline minutes × 30 gold/min flowed through the collect hook.
+    // 2 offline minutes × 30 gold/min wait in the house, not in the quest…
+    expect(restored.quests.progress).toBe(7);
+    // …until the player taps it.
+    collectAll(restored, T0 + 120_000);
     expect(restored.quests.progress).toBe(7 + 60);
     expect(isQuestComplete(restored, activeQuest(restored)!)).toBe(true);
   });

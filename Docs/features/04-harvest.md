@@ -15,9 +15,12 @@
   extraction — thumb or worker — draws that stock down. A cell refills by its
   own recovery. Nothing else in the city makes matter.
 - **One tap is `tap.workSeconds` of work** (10 s) on whatever was tapped: ten
-  seconds of a woodcutter's swing at a tree, ten seconds of a house's rent.
+  seconds of a woodcutter's swing at a tree.
 - A tap is priced against the ground and the thumb, never against the payroll.
-- The one exception to the first rule is the house tap, which mints Gold (§3.1).
+- A tap on a building is not a harvest: it collects the building's store, free
+  ([`03-economy.md`](03-economy.md) §3.2).
+- The one exception to the first rule is the Tithe relic ability, which pulls
+  rent forward and mints Gold ([`09-relics.md`](09-relics.md) §2.1).
 
 ### 1.1 The thumb's worth
 
@@ -168,20 +171,11 @@ carry   = max(0, owed + carry − paid)
   travel term. It does not read `cityGatherPerSecond` (§4).
 - A tap refused by a tech gate costs no Mana.
 
-### 3.1 The house tap
+### 3.1 A tap on a building
 
-- Tapping a house moves its tax anchor back by `tap.workSeconds × that house's
-  share of city income` — exactly `tap.workSeconds` of that house's own rent.
-  `TapPower` lifts it too.
-- A house tap **mints** Gold: taxes accrue continuously, so an advance against
-  them is new Gold. It is the single exception to §1's first rule.
-- The Mana pool is its only bound. A house may be tapped as often as the pool
-  allows; there is no per-house advance budget.
-- Mana spent on rent is worth several times Mana spent on trees: a full pool on
-  the neighbourhood is worth about **9 minutes** of the city's tax income,
-  against **1.8** for the same pool on wood. Whether this makes the harvest tap
-  vestigial is **OQ-55**; the lever is `tap.workSeconds` and the ground's
-  abundance.
+- A tap on a building whose store is ready collects it, free; otherwise it
+  opens the building ([`03-economy.md`](03-economy.md) §3.2).
+- It never costs Mana and never pulls rent forward.
 
 ### 3.2 Taps that do not exist
 
@@ -221,8 +215,14 @@ A rewarded ad pays a whole pool:
 
 - A worker walks to its claimed cell, **strikes** it once, walks the load home,
   and goes out again: `Idle → MovingToCell → Working → MovingHome`.
-- **Units leave the depot when the swing lands. They reach the wallet when the
-  worker gets home.** A load in transit is real matter.
+- **Units leave the depot when the swing lands. They land in the building's
+  store when the worker gets home**, and reach the wallet when the player
+  collects it ([`03-economy.md`](03-economy.md) §3.2). A load in transit is
+  real matter.
+- **A full store keeps the crew at the door**: nobody sets out while there is
+  no room. A load already on its way lands whole, even over capacity
+  (OQ-107). Collecting, or a raid emptying the store, sends the crew out again
+  from that moment.
 - Nobody double-dips: tapping a tree a woodcutter just struck pays what is
   left. A cell can show a stump while its last load is still being carried.
 - A carrying worker keeps its load when its building moves and walks to the new
@@ -243,14 +243,15 @@ Strike feedback:
 
 - Same hit, same cell, same foley as the player's tap, at **half volume**,
   **without the white flash**, punch scaled to **0.55** of the player's.
-- A strike punches the **cell**; the haul's floater pops at the **building**
-  when the wallet moves.
+- A strike punches the **cell**; a haul landing makes the building's collect
+  bubble hop. It pops no number: the `+N` comes when the player collects.
 - Audio: on-screen cells only; silent below zoom 0.8; at most three voices in
   flight, the rest dropped; ±5% extra pitch jitter.
 
 Quests:
 
-- Both paths bank a `collect`; only the thumb banks a `tap`. A strike never
+- A `collect` is banked when the units reach the wallet — a ground tap, or
+  collecting a store — never when a haul lands. Only the thumb banks a `tap`. A strike never
   completes a `CollectTaps` goal (comment at both call sites, test in
   `quests.test.ts`). A `WorkerCollect` goal type is OQ-53.
 
@@ -267,6 +268,10 @@ Quests:
 
 - A worker building works cells **of its type** within Chebyshev
   `radius(level)`. Revealed cells only.
+- The area is drawn while the building is selected or placed: a white line
+  with rounded corners, and a light sky-blue glow inside it that is strongest
+  against the line, fades most of a tile in, and breathes slowly. It lies over the floor and under what stands on it
+  (mockup `../art/mockups/area-overlays/area-simple-2-two-tone.png`).
 - **One worker per cell, globally.** `tryDispatch` takes the nearest unclaimed
   cell.
 - A worker whose cell exhausts releases the claim and walks to another.
@@ -285,8 +290,9 @@ Quests:
 
 ## 6. Idle workers
 
-- Workers with no cell to claim wait **outside**, milling in the cells around
-  their building: idle animation, no strikes, no destination.
+- Workers with no cell to claim, or whose building's store is full, wait
+  **outside**, milling in the cells around their building: idle animation, no
+  strikes, no destination.
 - A worker moving with purpose is migrating; a knot of workers by a door is
   idle. No icon.
 - The count lives in the district card only (`4/7` busy). Nothing on the map.
@@ -313,11 +319,13 @@ Quests:
 
 ## 8. Offline
 
-- Worker strikes, cell recoveries and Townhall cycles are replayed
-  deterministically, **capped at 8 hours** per absence.
+- An absence is replayed **in full**, deterministically, by the same
+  `advance()` the live tick runs: worker strikes, hauls, rent, cell
+  recoveries, queues.
+- There is no offline cap. What bounds an absence is each building's **store**
+  ([`03-economy.md`](03-economy.md) §3.2): a building stops when its store is
+  full.
 - No player taps happen offline.
-- The cap limits production, never a timer: recovery stamps and build queues
-  resolve in the uncapped tail.
 
 ## 9. Dials, in the order to reach for them
 
@@ -333,12 +341,12 @@ Quests:
 | Worker move speed | 1 tile/s | `worker.moveSpeedTilesPerSecond` |
 | Influence radius, plazas per level | §5 | `buildings` › `influenceRadiusPerLevel` |
 | What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
-| Mana per tap | 1 | `tap.manaCost` |
+| Mana per tap on the ground | 1 | `tap.manaCost` |
 | Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |
 | Strike punch, against the player's 1 | 0.55 | `STRIKE_PUNCH`, code |
 | Strike volume · extra jitter · voices | ×0.5 · ±5% · 3 | `strikeFeedback`, code |
 | Zoom below which a strike is silent | 0.8 | `STRIKE_AUDIBLE_ZOOM`, code |
-| Offline cap | 8 h | `offlineCapHours` |
+| Store capacity, which bounds an absence | [`03-economy.md`](03-economy.md) §3.2 | `buildings` › `storageCapacityPerLevel` |
 
 Two relations to hold while tuning:
 
@@ -353,13 +361,14 @@ Two relations to hold while tuning:
 - continuous regrowth
 - a per-distance strike penalty
 - a worker reserve floor
-- a per-house advance budget
+- a tap that pulls rent forward
 - a tap on training queues
-- building storage, vaults or generators of any kind
+- vaults or generators of any kind
+- an offline cap
 - offline tapping
 - fractional wallets
 - per-cell yield variety beyond the authored table
 - permanent destruction of a renewable feature
 
-**Open questions:** OQ-43, OQ-44, OQ-50, OQ-51, OQ-52, OQ-53, OQ-54, OQ-55,
-OQ-56.
+**Open questions:** OQ-43, OQ-44, OQ-50, OQ-51, OQ-52, OQ-53, OQ-54, OQ-56,
+OQ-107.

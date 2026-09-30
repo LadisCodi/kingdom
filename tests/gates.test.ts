@@ -4,11 +4,12 @@
 // file spends its length on:
 //
 //  1. THE REPLAY ASSERTION. A raid landing during an absence has to leave the
-//     same wallet whether the window was walked in one call or ticked a step
+//     same stores whether the window was walked in one call or ticked a step
 //     at a time. It is the load-bearing property of the whole codebase, and a
 //     raid is the first thing in the game that TAKES.
 //  2. THE BOUND. A week away with a gate open is three raids and never more,
-//     each at most a tenth of the purse — and all of it comes back.
+//     each at most a fraction of what the stores hold — never the wallet —
+//     and all of it comes back.
 //  3. THE DOOR. Nothing enters a ruin until its gate is down.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
@@ -24,7 +25,7 @@ import { attemptGate, enterRoom, previewGate } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState, type RuinId } from '../src/sim/state';
 import {
-  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0,
+  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, stored, T0,
 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
@@ -80,38 +81,56 @@ describe('the counter', () => {
     expect(state.raidReports).toHaveLength(0);
   });
 
-  it('is a TIMER: it resolves past the offline cap', () => {
+  it('is a TIMER: it resolves in full while the player is away', () => {
     // The Barrow warns in thirty minutes and raids every thirty after that,
-    // so an absence of a day is well past both the 8-hour production cap and
-    // the trip limit. Measured against the SAME kingdom with no ruin in
+    // so a hundred minutes away is past the trip limit and short of the
+    // houses filling. Measured against the SAME kingdom with no ruin in
     // sight, because rent keeps accruing either way — what the raid does is
-    // leave the purse smaller than it would have been.
+    // leave the stores smaller than they would have been, and the wallet
+    // exactly as it was.
     const raided = watched();
     const control = earningKingdom();
-    advance(raided, map, T0 + 24 * HOUR);
-    advance(control, map, T0 + 24 * HOUR);
-    expect(getWallet(raided.city.wallet, 'Gold'))
-      .toBeLessThan(getWallet(control.city.wallet, 'Gold'));
+    const purse = getWallet(raided.city.wallet, 'Gold');
+    advance(raided, map, T0 + 100 * MINUTE);
+    advance(control, map, T0 + 100 * MINUTE);
+    expect(stored(raided, 'Gold')).toBeLessThan(stored(control, 'Gold'));
+    expect(getWallet(raided.city.wallet, 'Gold')).toBe(purse);
     expect(raided.gates[BARROW]!.trips).toBe(RAID.maxRaids);
   });
 });
 
 describe('a raid', () => {
-  it('takes seconds of production, capped at a fraction of the purse', () => {
+  it('takes from the stores, never from the wallet: collecting is the defence', () => {
     const state = watched();
+    advance(state, map, T0 + 29 * MINUTE); // the houses fill for half an hour
+    const purse = getWallet(state.city.wallet, 'Gold');
+    const before = stored(state, 'Gold');
+    advance(state, map, T0 + 30 * MINUTE); // …and the garrison comes down
+    const took = state.raidReports[0]?.took.Gold ?? 0;
+    expect(took).toBeGreaterThan(0);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(purse);
+    expect(stored(state, 'Gold')).toBeLessThan(before + 60); // a minute of rent, less the take
+    expect(state.gates[BARROW]!.hoard.Gold).toBe(took);
+  });
+
+  it('takes seconds of production, capped at a fraction of what is stored', () => {
+    const state = watched();
+    advance(state, map, T0 + 20 * MINUTE); // something in the houses
     const took = raidTake(state, BARROW);
+    expect(took.Gold ?? 0).toBeGreaterThan(0);
     const seconds = garrisonForTier(RUINS[BARROW].tier).takeSeconds;
     for (const [c, n] of Object.entries(took)) {
       const rate = cityRatePerSecond(state, c as 'Gold');
       expect(n).toBeLessThanOrEqual(Math.floor(rate * seconds));
       expect(n).toBeLessThanOrEqual(
-        Math.floor(getWallet(state.city.wallet, c as 'Gold') * RAID.takeFractionMax));
+        Math.floor(stored(state, c as 'Gold') * RAID.takeFractionMax));
     }
   });
 
   it('takes only what the city MAKES', () => {
     // Two houses and nobody in the woods: rent, and nothing else.
     const state = watched();
+    advance(state, map, T0 + 20 * MINUTE);
     const took = raidTake(state, BARROW);
     expect(took.Gold ?? 0).toBeGreaterThan(0);
     expect(took.Wood ?? 0).toBe(0);
@@ -191,6 +210,9 @@ describe('one-call replay equals stepped ticking', () => {
     expect(oneCall.gates[BARROW]).toEqual(stepped.gates[BARROW]);
     expect(getWallet(oneCall.city.wallet, 'Gold'))
       .toBe(getWallet(stepped.city.wallet, 'Gold'));
+    for (let i = 0; i < oneCall.city.districts.length; i++) {
+      expect(oneCall.city.districts[i].stored).toEqual(stepped.city.districts[i].stored);
+    }
     expect(oneCall.raidReports.map((r) => r.took))
       .toEqual(stepped.raidReports.map((r) => r.took));
     // …and the raids really did land inside the window.
@@ -251,9 +273,10 @@ describe('clearing the gate', () => {
     attemptGate(state, map, BARROW, ['Warden'], company);
     expect(state.gates[BARROW]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
-    const purse = getWallet(state.city.wallet, 'Gold');
     advance(state, map, T0 + 7 * 24 * HOUR);
-    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(purse);
+    // A week of rent, and nothing taken from it.
+    expect(state.raidReports).toHaveLength(0);
+    expect(stored(state, 'Gold')).toBeGreaterThan(0);
     expect(openGates(state)).toEqual([]);
   });
 
