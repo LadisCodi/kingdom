@@ -109,6 +109,9 @@ export interface FighterSpec {
   dmg: number;
   def: number;
   hp: number;
+  /** The HP it starts this fight with, when less than `hp`: a hero carries
+   *  its wounds between fights (10-heroes.md §2.8). Absent = full. */
+  hpNow?: number;
   cooldown: number;
   power: number;
   troopDmgMult: number;
@@ -204,7 +207,7 @@ export function buildBoard(
       dmg: f.dmg,
       def: f.def,
       hpUnit: f.hp,
-      hpPool: f.hp,
+      hpPool: Math.min(f.hp, f.hpNow ?? f.hp),
       cooldown: f.cooldown,
       power: f.power,
     });

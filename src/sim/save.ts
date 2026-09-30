@@ -828,6 +828,8 @@ export function serialize(state: GameState, now: number): SaveFile {
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
         HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
+        Hurt: Object.fromEntries(Object.entries(state.heroes.hurt)
+          .map(([id, h]) => [id, { Missing: h!.missing, AtUtc: iso(h!.at) }])),
       },
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
@@ -1239,6 +1241,9 @@ export function deserialize(
       // `PartySlotsPurchased` is gone: every troop slot is open from the
       // start, so an older save's count is simply not read.
       heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
+      hurt: Object.fromEntries(Object.entries(
+        (heroesDto.Hurt ?? {}) as Record<string, { Missing: number; AtUtc: string }>,
+      ).map(([id, h]) => [id, { missing: h.Missing, at: ms(h.AtUtc) }])),
     };
   }
 

@@ -69,12 +69,13 @@ const squadCell = (face: HTMLElement, count: number): HTMLElement =>
     el('span', { class: 'bt-count' }, `×${count}`));
 
 const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
+const emptyCard = (): HTMLElement => el('span', { class: 'bt-card is-empty', 'aria-hidden': 'true' });
 
 /** A line of slots — the troops' or the heroes' — padded with empty ones to
  *  `slots`, so both boards keep one shape. No label: a hero slot is its own
  *  SHAPE (a gilt square, battle.css), so the two lines read apart unnamed. */
 const slotGroup = (label: string, cells: HTMLElement[], slots: number, cls: string): HTMLElement => {
-  while (cells.length < slots) cells.push(emptyCell());
+  while (cells.length < slots) cells.push(cls === 'is-heroes' ? emptyCard() : emptyCell());
   return el('div', { class: `bt-group ${cls}`, role: 'group', 'aria-label': label }, ...cells);
 };
 
@@ -89,11 +90,31 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
     cls: `bt-army ${cls}`,
   }, ...groups);
 
-const heroFace = (heroId: HeroId): HTMLElement => {
+/** A hero's illustration, filling its card and masked by it. */
+const heroArt = (heroId: HeroId): HTMLElement => {
   const def = HEROES[heroId];
   const url = spriteUrl(def.sprite);
-  return url ? spriteImgAt(url, 'k-portrait-art') : el('span', { class: 'k-portrait-art is-glyph' }, def.glyph);
+  return url ? spriteImgAt(url, 'bt-card-art') : el('span', { class: 'bt-card-art is-glyph' }, def.glyph);
 };
+
+/** The hero's HP as it stands, on a bar along the foot of its card: what
+ *  past fights took and has not yet mended (sim/heroHealth.ts). */
+function hpBar(game: Game, heroId: HeroId): HTMLElement {
+  const { hp, max } = game.heroHealthOf(heroId);
+  const share = max > 0 ? hp / max : 0;
+  const fill = el('span', { class: 'bt-hp-fill' });
+  fill.style.width = `${Math.round(share * 100)}%`;
+  return el('span', {
+    class: `bt-hp${share < 1 / 3 ? ' is-low' : ''}`,
+    role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
+    'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
+  }, fill);
+}
+
+/** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
+ *  they get more room and a shape of their own beside the troops' rounds. */
+const heroCard = (cls: string, ...children: HTMLElement[]): HTMLElement =>
+  el('span', { class: `bt-card ${cls}` }, ...children);
 
 // ------------------------------------------------------------- the enemy
 
@@ -109,10 +130,12 @@ function enemyBoard(view: BattleView): HTMLElement {
   ]);
 }
 
-/** A hero or villain on the enemy's side: a face, no count. */
-const squadlessCell = (face: HTMLElement): HTMLElement =>
-  el('span', { class: 'bt-cell is-filled' },
-    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, face)));
+/** A villain on the enemy's side: its card, no count and no HP bar — what it
+ *  has is the fight's business. */
+const squadlessCell = (face: HTMLElement): HTMLElement => {
+  face.classList.add('bt-card-art');
+  return heroCard('is-filled is-villain', face);
+};
 
 // -------------------------------------------------------------- your board
 
@@ -136,19 +159,19 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     const heroId = game.partyHeroes[i];
     if (heroId !== undefined) {
       const cell = el('button', {
-        class: 'bt-cell is-filled is-mine is-hero', type: 'button',
+        class: 'bt-card is-filled is-mine', type: 'button',
         'aria-label': `Leave ${HEROES[heroId].name} behind`,
-      }, el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, heroFace(heroId))));
+      }, heroArt(heroId), hpBar(game, heroId));
       cell.addEventListener('click', () => game.clearHeroSlot(i));
       heroes.push(cell);
     } else if (i < open) {
-      heroes.push(emptyCell());
+      heroes.push(emptyCard());
     } else {
       // Only the NEXT slot carries a price: the ladder climbs, so printing
       // this one's Gems on every locked slot would quote the wrong number.
       const next = i === open;
       const cell = el('button', {
-        class: 'bt-cell is-locked', type: 'button', 'aria-label': 'Buy another hero slot',
+        class: 'bt-card is-locked', type: 'button', 'aria-label': 'Buy another hero slot',
       },
       iconEl('padlock', { size: 'md' }),
       ...(next ? [el('span', { class: 'bt-price' },
@@ -186,15 +209,17 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
 
 function heroTile(game: Game, heroId: HeroId): HTMLElement {
   const picked = game.partyHeroes.includes(heroId);
+  const down = game.heroHealthOf(heroId).hp <= 0;
   const def = HEROES[heroId];
   const tile = el('button', {
-    class: `bt-tile k-section is-hero${picked ? ' is-picked' : ''}`,
+    class: `bt-card is-filled is-tile${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`,
     type: 'button',
-    'aria-label': picked ? `Leave ${def.name} behind` : `Take ${def.name}`,
+    'aria-label': down ? `${def.name} is recovering` : picked ? `Leave ${def.name} behind` : `Take ${def.name}`,
     'aria-pressed': picked ? 'true' : 'false',
   },
-  heroFace(heroId),
-  el('span', { class: 'bt-tile-count' }, `Lv ${game.heroLevelOf(heroId)}`),
+  heroArt(heroId),
+  el('span', { class: 'bt-card-level' }, `Lv ${game.heroLevelOf(heroId)}`),
+  hpBar(game, heroId),
   ...(picked ? [el('span', { class: 'bt-tile-check' }, iconEl('tick', { size: 'md' }))] : []));
   tile.addEventListener('click', () => game.toggleHero(heroId));
   return tile;

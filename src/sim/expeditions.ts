@@ -6,6 +6,7 @@
 // What is left is the PARTY — what it costs to send and what it is worth —
 // and the one command that spends it: the lair attack.
 
+import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
 import { COMBAT, HEROES, PARTY, LAIRS, UNITS } from './data/definitions';
 import { addHeroXp, heroSlots } from './heroes';
 import {
@@ -114,8 +115,10 @@ export function drillOf(state: GameState): Drill {
  */
 export const partyOf = (
   state: GameState, slots: readonly PartySlot[], heroIds: readonly HeroId[] = [],
+  t: number = state.lastAdvance,
 ): Party => ({
-  heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id) })),
+  // Each hero walks in with what the last fight left it (sim/heroHealth.ts).
+  heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id), hp: heroHp(state, id, t) })),
   slots,
   drill: drillOf(state),
 });
@@ -137,6 +140,7 @@ export function partyBoard(party: Party): Board {
       dmg: def.dmg + def.dmgPerLevel * step,
       def: def.def + def.defPerLevel * step,
       hp: def.hp + def.hpPerLevel * step,
+      hpNow: h.hp,
       cooldown: def.cooldown,
       power: Math.round((def.dmg + def.dmgPerLevel * step) * COMBAT.heroPowerPerDmg),
       troopDmgMult: def.troopDmgMult,
@@ -203,7 +207,7 @@ export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned
  */
 export type LairBlock =
   | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
-  | 'NotEnoughUnits' | 'NotEnoughSupplies';
+  | 'NotEnoughUnits' | 'NotEnoughSupplies' | 'HeroDown';
 
 export function lairBlock(
   state: GameState,
@@ -213,6 +217,7 @@ export function lairBlock(
   lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
+  t: number = state.lastAdvance,
 ): LairBlock | null {
   // Found, not revealed: a lair can be attacked the moment it has a clock,
   // whatever the fog over its own footprint (Docs/proposals/lairs.md §2.1).
@@ -223,6 +228,8 @@ export function lairBlock(
   if (state.lairs[lairId]?.defeated === true) return 'AlreadyDefeated';
   if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
+  // A hero the last fight left with nothing has to get some of it back first.
+  if (heroIds.some((id) => !heroCanFight(state, id, t))) return 'HeroDown';
   // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
   // (Docs/features/10-heroes.md §2.6).
   // A hero alone is a legal board, so there is no EmptyParty here either.
@@ -259,6 +266,9 @@ export interface LairReport {
   losses: Array<{ unitId: UnitId; count: number }>;
   /** The share of them that reached the infirmary and can be healed back. */
   wounded: Array<{ unitId: UnitId; count: number }>;
+  /** What each hero came home with, and its full HP: the wound it carries
+   *  into the next fight (sim/heroHealth.ts). */
+  heroes: Array<{ id: HeroId; hp: number; max: number }>;
 }
 
 /**
@@ -276,37 +286,57 @@ export function attackLair(
   lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
+  t: number = state.lastAdvance,
 ): LairReport {
   const theirs = lairBoard(state, lairId);
   const power = boardPower(theirs);
   const supplies = lairSupplyCost(state, lairId, heroIds);
-  const block = lairBlock(state, map, lairId, heroIds, slots);
+  const block = lairBlock(state, map, lairId, heroIds, slots, t);
   if (block !== null) {
     return {
       result: block, attack: 0, power, log: null, hoard: {}, knowledge: 0, supplies,
-      losses: [], wounded: [],
+      losses: [], wounded: [], heroes: [],
     };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
-  const party = partyOf(state, committed, heroIds);
+  const party = partyOf(state, committed, heroIds, t);
   const ours = partyBoard(party);
   const attack = partyPower(party);
   const log = resolveBattle(ours, theirs);
+  // Win or lose, every hero keeps what the fight did to it.
+  const heroes = heroesAfter(log, ours);
+  for (const h of heroes) setHeroHp(state, h.id, h.hp, t);
   // The garrison swings back either way, and who fell is read straight off
   // the fight: some are carried home to the infirmary, the rest are gone.
   const { losses, wounded } = applyLosses(
     state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
     return {
-      result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, supplies, losses, wounded,
+      result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, supplies, losses, wounded, heroes,
     };
   }
   markLairDefeated(state, lairId);
   // What the claim will pay, for the report — nothing has moved yet.
   const hoard: Wallet = { ...state.lairs[lairId]!.hoard };
   const { knowledge } = lairClearReward(state, lairId);
-  return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded };
+  return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded, heroes };
+}
+
+/** What each hero on our board has left when the fight ends: what it walked
+ *  in with, less every blow that landed on it. */
+function heroesAfter(log: BattleLog, board: Board): Array<{ id: HeroId; hp: number; max: number }> {
+  const taken = new Map<number, number>();
+  for (const e of log.events) {
+    if (e.kind === 'attack' && e.to.side === 'ours') taken.set(e.to.id, (taken.get(e.to.id) ?? 0) + e.dealt);
+  }
+  return board.slots
+    .filter((s) => s.kind === 'hero' && s.fighterId !== null)
+    .map((s) => ({
+      id: s.fighterId as HeroId,
+      hp: Math.max(0, s.hpPool - (taken.get(s.id) ?? 0)),
+      max: s.hpUnit,
+    }));
 }
 
 export type ClaimResult = 'Claimed' | 'NotDefeated' | 'AlreadyClaimed';
@@ -383,10 +413,11 @@ export function previewLair(
   lairId: LairId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
+  t: number = state.lastAdvance,
 ): LairPreview {
   const guard = LAIRS[lairId].guard;
   const committed = slots.filter((s) => s.count > 0);
-  const party = partyOf(state, committed, heroIds);
+  const party = partyOf(state, committed, heroIds, t);
   const theirs = lairBoard(state, lairId);
   const attack = partyPower(party);
   const power = boardPower(theirs);

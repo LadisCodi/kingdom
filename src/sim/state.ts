@@ -537,6 +537,10 @@ export interface GameState {
      *  is Gems, always, up to the board's three
      *  (Docs/features/10-heroes.md §3). */
     heroSlotsPurchased: number;
+    /** What fights have taken from each hero and not yet given back: the
+     *  share of its HP missing at `at` (epoch ms), recovering on its own.
+     *  Absent = whole (sim/heroHealth.ts). */
+    hurt: Partial<Record<HeroId, { missing: number; at: number }>>;
   };
   /** Pull counters, per banner. Persisted because pity depends on them — and
    *  because the counter IS the rng key, which is what lets a hash beat a

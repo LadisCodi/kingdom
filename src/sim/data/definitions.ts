@@ -2073,4 +2073,4 @@ export const GAME_VERSION = '0.1.0';
 // v64: ruins and gates are lairs. `kingdom.gates` becomes `kingdom.lairs`,
 // `RuinID` becomes `LairID`, and every persisted place id becomes its
 // creature's (HollowBarrow → Orcs, …), discovery keys included.
-export const SAVE_VERSION = 66;
+export const SAVE_VERSION = 67;

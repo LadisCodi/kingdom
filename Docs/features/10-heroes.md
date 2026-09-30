@@ -160,8 +160,22 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **At least one hero is mandatory** in every fight: gates, rooms, bosses.
   There is no fight without a hero and no hero-only fight.
 - A hero is never *busy*. Fights resolve on entry
-  ([`11-expeditions.md`](11-expeditions.md) §5), so the same hero leads every
-  room the player enters.
+  ([`11-expeditions.md`](11-expeditions.md) §5); what limits leading every
+  fight with the same hero is its HP (§2.8).
+
+### 2.8 Wounds carry over
+
+- **A hero keeps the damage a fight did to it**, win or lose, and walks into
+  the next fight with the HP it has left.
+- **HP comes back on its own**, linearly: a whole bar every
+  `party.heroRecoverHours` (8), so a hero at half is whole in 4 hours.
+- It is kept as a **share of the bar**, so a level gained while hurt raises
+  the ceiling and keeps the same share missing.
+- **A hero at 0 HP cannot be sent** until some comes back. Quick deploy and
+  the opening party leave it out.
+- The attack screen shows every hero's current HP as a bar along the foot of
+  its card, in the party and in the roster.
+- Villains carry nothing between fights.
 
 ## 3. The hero slots
 
@@ -460,6 +474,7 @@ the rewarded video.
 | How long a hero's ladder is | 10 a tier, 50 in all | `collection.heroLevelsPerTier`, `collection.heroMaxLevel` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragmentsPerTierBase` |
 | What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragmentsPerTier*`, `collection.ascensionStardustBase`, `collection.ascensionStardustGrowth` |
+| How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |

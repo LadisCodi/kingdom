@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { heroCanFight, heroHp, heroMaxHp } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
@@ -3068,14 +3069,16 @@ export class Game {
   openLair(lairId: LairId): void {
     this.lairId = lairId;
     // A lair resolves on entry, so nobody is busy: the roster is the party.
-    this.partyHeroes = this.state.heroes.owned.slice(0, heroSlots(this.state));
+    this.partyHeroes = this.state.heroes.owned
+      .filter((h) => heroCanFight(this.state, h, this.now()))
+      .slice(0, heroSlots(this.state));
     this.prefillParty(LAIRS[lairId].guard.threat);
     this.setOverlay('lair');
   }
 
   lairPreview(): LairPreview | null {
     if (this.lairId === null) return null;
-    return previewLair(this.state, this.lairId, this.partyHeroes, this.expeditionParty);
+    return previewLair(this.state, this.lairId, this.partyHeroes, this.expeditionParty, this.now());
   }
 
   /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
@@ -3083,7 +3086,7 @@ export class Game {
   lairBlockText(): string | null {
     if (this.lairId === null) return 'No lair chosen';
     const block = lairBlock(
-      this.state, this.map, this.lairId, this.partyHeroes, this.expeditionParty);
+      this.state, this.map, this.lairId, this.partyHeroes, this.expeditionParty, this.now());
     return block === null ? null : LAIR_BLOCK_TEXT[block];
   }
 
@@ -3091,7 +3094,7 @@ export class Game {
     if (this.lairId === null || this.partyHeroes.length === 0) return;
     const lairId = this.lairId;
     const report = attackLair(
-      this.state, this.map, lairId, this.partyHeroes, this.expeditionParty);
+      this.state, this.map, lairId, this.partyHeroes, this.expeditionParty, this.now());
     if (report.result === 'Cleared') {
       // Beaten, not yet paid: when the playback closes the player is back on
       // the lair's card, where Claim has taken Attack's place
@@ -3245,7 +3248,8 @@ export class Game {
    */
   quickDeploy(): void {
     if (this.lairId === null) return;
-    this.partyHeroes = [...this.state.heroes.owned]
+    this.partyHeroes = this.state.heroes.owned
+      .filter((h) => heroCanFight(this.state, h, this.now()))
       .sort((a, b) => heroLevel(this.state, b) - heroLevel(this.state, a))
       .slice(0, heroSlots(this.state));
     this.fillTroops(LAIRS[this.lairId].guard.threat);
@@ -3275,6 +3279,10 @@ export class Game {
   /** Put a hero in the first free hero slot. */
   assignHero(heroId: HeroId): void {
     if (this.partyHeroes.includes(heroId)) return;
+    if (!heroCanFight(this.state, heroId, this.now())) {
+      this.toast(`${HEROES[heroId].name} is still recovering`);
+      return;
+    }
     if (this.partyHeroes.length >= this.heroSlotsOpen()) {
       this.toast('Every hero slot is full — clear one first');
       return;
@@ -3286,6 +3294,12 @@ export class Game {
 
   heroLevelOf(heroId: HeroId): number {
     return heroLevel(this.state, heroId);
+  }
+
+  /** A hero's HP as it stands — the wound the last fight left, mending
+   *  (sim/heroHealth.ts). */
+  heroHealthOf(heroId: HeroId): { hp: number; max: number } {
+    return { hp: heroHp(this.state, heroId, this.now()), max: heroMaxHp(this.state, heroId) };
   }
 
   /** ONE TAP ON A HERO TILE: in if it is out, out if it is in. */
@@ -4444,6 +4458,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
   NotEnoughSupplies: 'Not enough supplies to march',
+  HeroDown: 'A hero in the party has no HP left — let them recover',
 };
 
 /** How well a unit type answers a lair's threat — used only to pre-fill a

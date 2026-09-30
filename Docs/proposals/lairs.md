@@ -194,6 +194,9 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
     its power;
   - **your board** — six troop slots and three hero slots (one free, the
     rest bought with Gems), and your power;
+  - **troop slots are rounds, hero and villain slots are 2:3 cards** — the
+    hero's illustration fills the card, masked by it; your heroes carry their
+    HP bar along its foot ([`../features/10-heroes.md`](../features/10-heroes.md) §2.8);
   - **no rows on this screen.** Where a squad stands in the fight — in
     front or behind — is its unit type's (melee and flankers in front, the
     ranged behind, [`../features/combat.md`](../features/combat.md) §8),
@@ -206,17 +209,17 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
   - **No reward on this screen**: it is the card's.
 - **Choosing the army** is a **roster** fixed under the boards — no panel
   rises, no slot is picked:
-  - **Troops: one tile per unit type** — portrait, type emblem, and how many
-    are still at home.
+  - **Troops: one round per unit type** — the board's medallion, how many
+    are still at home on it, and the unit's name under it.
   - **A tap sends one squad**: up to that type's `squadSize`, into the next
     free troop slot — six of anything. Tapped again, it sends another squad
     beside the first.
     - *200 Warriors, `squadSize` 50: the first tap puts 50 on the board and
       leaves 150; the second puts 50 more beside them and leaves 100.*
     - The last squad takes what is left, if it is less than `squadSize`.
-  - **Heroes: one tile per hero** — portrait and rank. A tap toggles it: in,
-    it wears a green check and takes the next hero slot; tapped again, it
-    leaves.
+  - **Heroes: one card per hero** — illustration, level and HP bar. A tap
+    toggles it: in, it wears a green check and takes the next hero slot;
+    tapped again, it leaves. A hero at 0 HP is greyed and refuses.
   - A tap that cannot place — no one at home, every slot full, a locked
     hero slot — does nothing and says why in one line.
   - **Quick deploy** fills the board with the strongest legal party, answering

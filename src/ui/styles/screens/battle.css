@@ -77,23 +77,86 @@ button.bt-cell { cursor: pointer; }
    pitch. */
 .bt-cell > .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
 
-/* A HERO OR VILLAIN SLOT: a square with rounded corners in a gilt frame, set
-   on a darker paper — the hero tiles' shape (the roster below), where a troop
-   slot is the round medallion. Filled or empty, locked or open. */
-.bt-group.is-heroes .bt-cell,
-.bt-group.is-heroes .bt-cell > .k-portrait,
-.bt-group.is-heroes .bt-cell .k-portrait-mask { border-radius: calc(var(--px) * 10); }
-.bt-group.is-heroes .bt-cell {
-  --slot-size: calc(var(--px) * 52);
+/* A HERO OR VILLAIN SLOT is a CARD, 2:3 (battleSheet.ts `heroCard`): the
+   illustration fills it and the card masks it, in a gilt frame, where a troop
+   slot is the round medallion. Filled or empty, locked or open. Ours carry an
+   HP bar along the foot. */
+.bt-card {
+  --card-w: calc(var(--px) * 54);
+  position: relative;
+  display: grid;
+  place-items: center;
   box-sizing: border-box;
+  width: var(--card-w);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  overflow: hidden;
   border: calc(var(--px) * 2) solid var(--gold-dark);
+  border-radius: calc(var(--px) * 8);
   background: var(--section-fill);
-  box-shadow: inset 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.7);
+  box-shadow: inset 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.7),
+    0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(60, 36, 16, 0.25);
+  font: inherit;
+  color: inherit;
 }
-.bt-group.is-heroes .bt-cell.is-empty {
+button.bt-card { cursor: pointer; }
+.bt-card.is-empty,
+.bt-card.is-locked {
   background: color-mix(in srgb, var(--gold) 14%, var(--parchment-shade));
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
 }
-.bt-group.is-heroes .bt-cell > .k-portrait { border: 0; }
+.bt-card.is-locked > .icon { --icon-size: calc(var(--px) * 22); }
+.bt-card.is-locked > .bt-price { bottom: calc(var(--px) * 3); }
+/* The art fills the card, anchored at the top so a full-length figure
+   shows its face; the frame's own inner glow sits over it. */
+.bt-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+.bt-card-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 26); }
+/* THE HP BAR: a dark groove along the card's foot, filled leaf-green —
+   clay-red once it is down to a third. */
+.bt-hp {
+  position: absolute;
+  left: calc(var(--px) * 4);
+  right: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 4);
+  height: calc(var(--px) * 6);
+  overflow: hidden;
+  border-radius: calc(var(--px) * 3);
+  background: rgba(40, 22, 10, 0.75);
+  box-shadow: 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.5);
+}
+.bt-hp-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(var(--leaf), var(--leaf-dark));
+}
+.bt-hp.is-low .bt-hp-fill { background: linear-gradient(#e0735a, var(--clay)); }
+/* The hero's level on its roster card, in the dark pill a count wears,
+   sat on the HP bar so the face stays clear. */
+.bt-card-level {
+  position: absolute;
+  bottom: calc(var(--px) * 12);
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 7);
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+}
+.bt-card.is-tile { --card-w: calc(var(--px) * 46); }
+.bt-card.is-picked { outline: calc(var(--px) * 2) solid var(--leaf-dark); outline-offset: calc(var(--px) * 1); }
+.bt-card.is-down .bt-card-art { filter: grayscale(0.9); opacity: 0.6; }
+
 /* An empty slot is the portrait's own ring, empty and sunk in. */
 .bt-cell.is-empty {
   border: calc(var(--px) * 2) solid var(--section-line);
@@ -101,13 +164,6 @@ button.bt-cell { cursor: pointer; }
   background: var(--parchment-shade);
   box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
 }
-.bt-cell.is-locked {
-  border: calc(var(--px) * 2) solid var(--section-line);
-  border-radius: 50%;
-  background: var(--parchment-shade);
-  gap: 0;
-}
-.bt-cell.is-locked > .icon { --icon-size: calc(var(--px) * 22); }
 /* The count, in the same small dark pill the villager's count wears. */
 .bt-count,
 .bt-price {
@@ -136,39 +192,6 @@ button.bt-cell { cursor: pointer; }
   flex-wrap: wrap;
   justify-content: center;
   gap: calc(var(--px) * 8);
-}
-.bt-tile.k-section {
-  position: relative;
-  width: calc(var(--px) * 52);
-  height: calc(var(--px) * 52);
-  padding: 0;
-  overflow: hidden;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-}
-.bt-tile > .k-portrait-art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  translate: none;
-  left: 0;
-  top: 0;
-  object-fit: cover;
-}
-.bt-tile-count {
-  position: absolute;
-  bottom: calc(var(--px) * 2);
-  left: 50%;
-  translate: -50% 0;
-  padding: 0 calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 8);
-  background: var(--wood-dark);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 11);
-  font-weight: var(--weight-title);
-  font-variant-numeric: tabular-nums;
 }
 /* A TROOP at home: the board's round medallion, its count on it and its
    name under it. */
@@ -199,10 +222,6 @@ button.bt-cell { cursor: pointer; }
 .bt-troop.is-out { filter: grayscale(0.9); opacity: 0.6; }
 .bt-troop.is-full { opacity: 0.8; }
 
-/* None at home: the tile is there — an absent card reads as a bug — and it
-   says so by fading, like a locked card. */
-.bt-tile.is-out { filter: grayscale(0.9); opacity: 0.6; }
-.bt-tile.is-full { opacity: 0.8; }
 .bt-tile-check {
   position: absolute;
   inset: 0;
@@ -211,7 +230,6 @@ button.bt-cell { cursor: pointer; }
   pointer-events: none;
 }
 .bt-tile-check > .icon { --icon-size: calc(var(--px) * 30); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
-.bt-tile.is-picked { outline: calc(var(--px) * 2) solid var(--leaf-dark); outline-offset: calc(var(--px) * -2); }
 
 /* ----------------------------------------------------------- the action */
 

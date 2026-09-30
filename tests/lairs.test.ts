@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import {
-  RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
+  PARTY, RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
   advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairFormation,
@@ -31,7 +31,8 @@ import { placementBlock } from '../src/sim/districts';
 import { workableCells } from '../src/sim/workers';
 import { reapCells } from '../src/sim/casting';
 import { formationPower } from '../src/sim/combat';
-import { attackLair, claimLair, previewLair } from '../src/sim/expeditions';
+import { attackLair, claimLair, partyBoard, partyOf, previewLair } from '../src/sim/expeditions';
+import { heroCanFight, heroHp, heroMaxHp, setHeroHp } from '../src/sim/heroHealth';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, getWallet, type GameState, type LairId } from '../src/sim/state';
 import {
@@ -457,6 +458,34 @@ describe('clearing the lair', () => {
     expect(beaten.army.length).toBeLessThan(armed);
   });
 
+  it('leaves its heroes hurt, and the wound mends on its own', () => {
+    const state = readyToFight();
+    const report = attackLair(state, map, ORCS, ['Warden'], company, T0);
+    const [warden] = report.heroes;
+    expect(warden!.hp).toBeLessThan(warden!.max);
+    expect(heroHp(state, 'Warden', T0)).toBe(warden!.hp);
+    // A share of the whole mends per hour, so half the clock is half the wound.
+    const half = T0 + PARTY.heroRecoverHours * 1_800_000;
+    const mid = heroHp(state, 'Warden', half);
+    expect(mid).toBeGreaterThan(warden!.hp);
+    expect(heroHp(state, 'Warden', T0 + PARTY.heroRecoverHours * 3_600_000)).toBe(warden!.max);
+    // …and the wound is kept across a save.
+    const back = deserialize(serialize(state, half), map, half)!;
+    expect(heroHp(back, 'Warden', half)).toBe(mid);
+  });
+
+  it('sends a hurt hero in with what it has left', () => {
+    const state = readyToFight();
+    setHeroHp(state, 'Warden', 10, T0);
+    const board = partyBoard(partyOf(state, company, ['Warden'], T0));
+    const hero = board.slots.find((s) => s.kind === 'hero')!;
+    expect(hero.hpPool).toBe(10);
+    expect(hero.hpUnit).toBe(heroMaxHp(state, 'Warden'));
+    setHeroHp(state, 'Warden', 0, T0);
+    expect(heroCanFight(state, 'Warden', T0)).toBe(false);
+    expect(attackLair(state, map, ORCS, ['Warden'], company, T0).result).toBe('HeroDown');
+  });
+
   it('costs the supplies and the fallen when it fails, and nothing else', () => {
     const state = readyToFight();
     reveal(state, [LAIRS.Drake.location]);
@@ -469,7 +498,9 @@ describe('clearing the lair', () => {
     expect(report.attack).toBeLessThan(report.power);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
     expect(lairIsCleared(state, 'Drake')).toBe(false);
-    expect(attackLair(state, map, 'Drake', ['Warden'], company).result).toBe('Repelled');
+    // The hero came home with nothing: it may go again once some HP is back.
+    expect(attackLair(state, map, 'Drake', ['Warden'], company).result).toBe('HeroDown');
+    expect(attackLair(state, map, 'Drake', ['Warden'], company, T0 + 3_600_000).result).toBe('Repelled');
   });
 
   it('refuses a lair nobody has found, and one already cleared', () => {

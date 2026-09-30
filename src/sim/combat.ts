@@ -86,6 +86,9 @@ const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
 export interface PartyHero {
   id: HeroId;
   level: number;
+  /** The HP it walks in with, when a past fight left it short. Absent =
+   *  full (sim/heroHealth.ts). */
+  hp?: number;
 }
 
 export interface Party {
