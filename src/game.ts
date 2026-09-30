@@ -136,6 +136,7 @@ import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
+import { lairBubbleAt } from './render/lairMap';
 import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
@@ -3884,7 +3885,10 @@ export class Game {
   }
 
   handleTap(sx: number, sy: number): void {
-    const cell = this.camera.screenToCell(sx, sy);
+    // A lair's warning bubble floats over other cells: a tap on it is a tap
+    // on the lair (Docs/proposals/lairs.md §6).
+    const bubbled = this.mode.kind === 'normal' ? lairBubbleAt(sx, sy) : null;
+    const cell = bubbled !== null ? LAIRS[bubbled].location : this.camera.screenToCell(sx, sy);
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {

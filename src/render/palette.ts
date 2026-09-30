@@ -35,14 +35,17 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 export const PALETTE = {
   // Cast targets read blue, so they can never be confused with a build spot.
   castTarget: '#8fb4ff',
-  // Site badges: the tag on an unclaimed landmark or an uncleared lair.
+  // Site badges: the tag on an unclaimed landmark.
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
   siteBadgeInk: '#3a2716',
-  // The same badge while a garrison is counting down in a lair: the minutes
-  // left, in the colour of the thing that is about to happen.
-  siteBadgeRaid: '#d8613f',
-  siteBadgeRaidInk: '#2a120c',
+  // THE GROUND A LAIR HOLDS (Docs/proposals/lairs.md §3): a warm dark red
+  // wash on every cell, a little stronger over the fog so it still reads
+  // there, and a red border round the union — solid on revealed ground,
+  // dashed where it crosses the fog, the way the reach is.
+  lairZoneTint: 'rgba(150, 30, 20, 0.28)',
+  lairZoneTintFog: 'rgba(170, 40, 25, 0.38)',
+  lairZoneBorder: '#b3402c',
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',

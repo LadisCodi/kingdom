@@ -6,6 +6,10 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
 import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
+import {
+  clearLairBubbles, compactCountdown, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
+} from './lairMap';
 import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
@@ -16,17 +20,17 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState,
+  type Coord, type GameState, type LairId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawCollectBubble } from './collectBubbleArt';
+import { drawCollectBubble, drawLairBubble } from './collectBubbleArt';
 import { readyToCollect } from '../sim/storage';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
-import { drawIcon, drawSprite, spriteAspect } from './sprites';
+import { drawIcon, drawSprite, spriteAspect, spriteInkTop } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
@@ -222,7 +226,7 @@ export function drawMap(
   };
 
   /** A small corner tag on a site: what it still wants from the player. */
-  const drawSiteBadge = (box: PlotBox, text: string, alarm = false): void => {
+  const drawSiteBadge = (box: PlotBox, text: string): void => {
     const r = Math.max(6, size * 0.13);
     // Off the diamond's RIGHT CORNER and raised: a badge pinned to the top of
     // a square used to sit on the tile, and a tile is now a flat lozenge with
@@ -232,12 +236,12 @@ export function drawMap(
     const by = c.y - box.h * 0.55 - r;
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
-    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaid : PALETTE.siteBadge;
+    ctx.fillStyle = PALETTE.siteBadge;
     ctx.fill();
     ctx.strokeStyle = PALETTE.siteBadgeEdge;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaidInk : PALETTE.siteBadgeInk;
+    ctx.fillStyle = PALETTE.siteBadgeInk;
     ctx.font = labelFont(r * 1.2, 11, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -715,34 +719,6 @@ export function drawMap(
           if (!claimed) drawSiteBadge(plot, '✦');
         }, { x: landmark.size, y: landmark.size });
       }
-      // A lair is drawn once it is FOUND and until it is cleared
-      // (Docs/proposals/lairs.md §2.1, §5): before that it is ordinary fog,
-      // after it ordinary ground.
-      const lair = standingLairAt(state, cell);
-      if (lair && lair.location.x === cx && lair.location.y === cy) {
-        const plot = lair.size === 1
-          ? box : camera.plotBox(cell, { x: lair.size, y: lair.size });
-        later(cell, (mark) => {
-          dimmed(dim, () => {
-            punched(key, plot, () => {
-              mark(artRect(plot,
-                stand(plot, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS));
-            });
-          });
-          // The tier alone: a bare digit reads at any zoom, and "T1" in a
-          // display face is one stroke away from an arrow. While a garrison is
-          // counting down it takes the badge instead — the minutes left, which
-          // is the only thing about this lair that is urgent
-          // (Docs/features/18-garrisons-and-raids.md §7).
-          const held = state.lairs[lair.id];
-          const raidIn = held && !held.cleared && held.nextRaidAt !== null
-            ? Math.max(0, Math.ceil((held.nextRaidAt - now) / 60_000)) : null;
-          if (raidIn !== null) drawSiteBadge(plot, String(raidIn), true);
-          else drawSiteBadge(plot, String(lair.tier));
-        }, { x: lair.size, y: lair.size });
-
-      }
-
       if (fog === 'Revealed') drawResourceState(cell, box);
 
       if (fog === 'Discovered') {
@@ -766,6 +742,44 @@ export function drawMap(
         }
       }
     }
+  }
+
+  // Pass 1.1: THE GROUND THE LAIRS HOLD (Docs/proposals/lairs.md §3), over
+  // every fog state and under everything that stands: a tint on each cell of
+  // the union of the standing zones, then a border round the union's outside
+  // — solid where the cell inside is revealed, dashed where it is fog, in the
+  // reach line's dash. Overlapping zones are one zone, one outline.
+  const zone = heldZone(state, map);
+  if (zone.cells.length > 0) {
+    ctx.save();
+    const clear: Coord[] = [];
+    const fogged: Coord[] = [];
+    for (const c of zone.cells) {
+      (fogState(state, map, c) === 'Revealed' ? clear : fogged).push(c);
+    }
+    for (const [cells, tint] of [
+      [clear, PALETTE.lairZoneTint], [fogged, PALETTE.lairZoneTintFog],
+    ] as const) {
+      if (cells.length === 0) continue;
+      ctx.fillStyle = tint;
+      ctx.beginPath();
+      for (const c of cells) diamondPath(ctx, cellRect(c));
+      ctx.fill();
+    }
+    ctx.strokeStyle = PALETTE.lairZoneBorder;
+    ctx.lineWidth = Math.max(1.5, size * 0.035);
+    ctx.lineCap = 'round';
+    for (const [cells, dashed] of [[clear, false], [fogged, true]] as const) {
+      if (cells.length === 0) continue;
+      ctx.setLineDash(dashed ? [Math.max(4, size * 0.18), Math.max(3, size * 0.12)] : []);
+      ctx.beginPath();
+      for (const c of cells) {
+        const box = cellRect(c);
+        for (const side of outerSides(c, zone.keys)) edgePath(ctx, box, side);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
@@ -815,6 +829,33 @@ export function drawMap(
         mark(art);
       }, def.size,
       { occludes: !NEVER_HIDES.has(district.definitionId) });
+  }
+
+  // THE LAIRS, once FOUND and until cleared (Docs/proposals/lairs.md §2.1,
+  // §5) — whatever the fog on their own plot, since a lair is found by
+  // revealing any cell of its zone. Queued here rather than in the floor loop,
+  // which skips Undiscovered cells, and depth-sorted with everything else.
+  // Under fog the model is dimmed as a feature would be; its bubble is not.
+  const lairArt = new Map<LairId, PlotBox>();
+  for (const id of LAIR_ORDER) {
+    const lair = standingLairAt(state, LAIRS[id].location);
+    if (!lair) continue;
+    const plot = camera.plotBox(lair.location, { x: lair.size, y: lair.size });
+    if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
+      || plot.y + plot.h < 0 || plot.y - plot.w * 1.5 > h) continue;
+    const fog = fogState(state, map, lair.location);
+    const dim = fog === 'Revealed' ? 1 : FOG_DIM;
+    const key = coordKey(lair.location);
+    later(lair.location, (mark) => {
+      dimmed(dim, () => {
+        punched(key, plot, () => {
+          const art = artRect(plot,
+            stand(plot, [lair.sprite], lair.glyph, undefined, FEATURE_PLOTS), FEATURE_PLOTS);
+          lairArt.set(id, art);
+          mark(art);
+        });
+      });
+    }, { x: lair.size, y: lair.size });
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
@@ -1163,6 +1204,21 @@ export function drawMap(
     // The art's box carries transparent headroom; a tenth of it down is the roof.
     drawCollectBubble(ctx, bubbles, district, art.x + art.w / 2, art.y + art.h * 0.12,
       Math.max(34, Math.min(88, plot.w * 0.4)), clock);
+  }
+
+  // Pass 4.5: THE WARNING BUBBLES, one over each standing lair's model, under
+  // fog or not (Docs/proposals/lairs.md §6): the creature, and the time to
+  // its next raid. Their rects are kept so a tap on one opens the lair.
+  clearLairBubbles();
+  for (const id of LAIR_ORDER) {
+    const held = state.lairs[id];
+    const art = lairArt.get(id);
+    if (!held || held.cleared || !art) { bubbles.forget(`lair:${id}`); continue; }
+    const top = art.y + art.h * spriteInkTop(LAIRS[id].sprite);
+    const countdown = held.nextRaidAt === null ? '–' : compactCountdown(held.nextRaidAt - now);
+    markLairBubble(id, drawLairBubble(ctx, bubbles, `lair:${id}`, LAIR_AVATAR[id], countdown,
+      labelFace(), art.x + art.w / 2, top + size * 0.1,
+      Math.max(28, Math.min(64, size * 0.62)), clock));
   }
 
   // Pass 5: floaters.
