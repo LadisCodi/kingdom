@@ -43,6 +43,8 @@ export type UiIconName =
   // `population` — a shield for attack, a padlock for defence and a crowd for
   // health — which is three wrong pictures in one row.
   | 'atk' | 'def' | 'hp'
+  // A side's total strength — the crossed swords on an army's header.
+  | 'power'
   // The upgrade popup's three (M25). `cross` is the REFUSAL beside a tick in
   // the requirements list — `close` is a knob that dismisses a sheet, and the
   // two must not share a picture. `arrowUp` is what a level does, drawn once
@@ -114,7 +116,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅', skull: '💀',
   pack: '🎴', cards: '🃏', vault: '🔐', crest: '🌾',
   // a hero's three numbers
-  atk: '🗡️', def: '🛡️', hp: '❤️',
+  atk: '🗡️', def: '🛡️', hp: '❤️', power: '⚔️',
   // the upgrade popup
   cross: '✗', arrowUp: '⬆', compass: '🧭', bed: '🛏️',
   // the fog

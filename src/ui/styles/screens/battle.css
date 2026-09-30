@@ -32,19 +32,15 @@
 
 /* ------------------------------------------------------------ the boards */
 
-.bt-army.k-section {
+/* The two boards are head panels (kit.css `.k-headpanel`): the enemy's plank
+   red, ours blue. A shortfall on paper only warms our number. */
+.bt-army .k-headpanel-body {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 6) calc(var(--px) * 12) calc(var(--px) * 8);
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 4) calc(var(--px) * 2) calc(var(--px) * 2);
 }
-/* The box's heading is the kit's section heading, set inside the box: the
-   enemy's in a muted red, ours in the confirm green. No panel of a colour of
-   its own — only the words change. */
-.bt-army > .bt-army-head { margin: 0 0 calc(var(--px) * 2); }
-.bt-army.is-enemy > .bt-army-head { color: var(--clay); }
-.bt-army.is-mine > .bt-army-head { color: var(--leaf-dark); }
-.bt-army.is-mine.is-short > .bt-army-head { color: var(--clay); }
+.bt-army.is-mine.is-short .k-headpanel-trail { color: #ffd0c0; }
 
 /* ONE LINE EACH: the six troop slots, then the hero slots. No labels — a
    hero slot is a gilt square where a troop slot is a round, so the two read

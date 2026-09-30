@@ -33,7 +33,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, iconEl, sectionHead, sheet } from './kit';
+import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
 
 /** Everything the screen needs that is not the player's own army. */
@@ -78,12 +78,16 @@ const slotGroup = (label: string, cells: HTMLElement[], slots: number, cls: stri
   return el('div', { class: `bt-group ${cls}`, role: 'group', 'aria-label': label }, ...cells);
 };
 
-/** A board in its inset box, headed like a section — `ENEMY · 60`. */
-const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[]): HTMLElement => {
-  const head = sectionHead(`${label} · ${power}`);
-  head.classList.add('bt-army-head');
-  return el('section', { class: `bt-army k-section ${cls}` }, head, ...groups);
-};
+/** A board in a head panel (kit `headPanel`): the enemy's plank red, ours
+ *  blue, the side's name on it and its total power anchored right — the
+ *  crossed swords and the number. */
+const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[]): HTMLElement =>
+  headPanel({
+    tone: cls.includes('is-enemy') ? 'red' : 'blue',
+    title: label,
+    trailing: [iconEl('power', { size: 'sm' }), String(power)],
+    cls: `bt-army ${cls}`,
+  }, ...groups);
 
 const heroFace = (heroId: HeroId): HTMLElement => {
   const def = HEROES[heroId];

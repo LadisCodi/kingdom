@@ -946,3 +946,55 @@
   [data-leaving] .k-panel > *,
   [data-leaving] .dc > * { animation-duration: 1ms; animation-delay: 0ms; }
 }
+
+/* THE HEAD PANEL (kit/surface.ts `headPanel`): a painted plank over a
+   parchment body, nine-sliced from assets/panel-head-<tone>.png (583×329).
+   The plank is the art's top 86 px and its inner rim runs to 100, so the top
+   slice is 100; the rounded corners and the rim fit in 44 each side and at
+   the bottom. Everything is sized off --hp-h, the plank's height on screen,
+   so the ratios of the art hold at any size. The header's content sits IN the
+   top border: pulled up by the border's own height. */
+.k-headpanel {
+  --hp-h: calc(var(--px) * 30);
+  --hp-k: calc(var(--hp-h) / 86);            /* one art pixel, on screen */
+  --hp-img: url('../assets/panel-head-wood.png');
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--hp-k) * 100) calc(var(--hp-k) * 44) calc(var(--hp-k) * 44);
+  border-image: var(--hp-img) 100 44 44 fill / calc(var(--hp-k) * 100) calc(var(--hp-k) * 44) calc(var(--hp-k) * 44) stretch;
+  padding: 0 calc(var(--px) * 2) 0;
+}
+.k-headpanel.is-red { --hp-img: url('../assets/panel-head-red.png'); }
+.k-headpanel.is-blue { --hp-img: url('../assets/panel-head-blue.png'); }
+.k-headpanel.is-green { --hp-img: url('../assets/panel-head-green.png'); }
+.k-headpanel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 8);
+  height: var(--hp-h);
+  /* Up into the top border, and out over the side borders to the plank's
+     own ends (the outline and rim are ~18 art px of the 44). */
+  margin: calc(var(--hp-k) * -100) calc(var(--hp-k) * -26) calc(var(--hp-k) * 14);
+  padding: calc(var(--hp-k) * 6) calc(var(--px) * 6) 0;
+  color: var(--ink-inverse);
+  font-weight: var(--weight-title);
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 14, 4, 0.7);
+}
+.k-headpanel-title {
+  font-size: calc(var(--px) * 15);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-headpanel-trail {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-size: calc(var(--px) * 16);
+  font-variant-numeric: tabular-nums;
+}
+.k-headpanel-trail > .icon { --icon-size: calc(var(--px) * 22); }
+.k-headpanel-body { min-width: 0; }

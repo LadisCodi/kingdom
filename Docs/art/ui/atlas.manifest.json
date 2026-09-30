@@ -223,6 +223,18 @@
     null
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-n1-power.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "power"
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [
@@ -345,6 +357,7 @@
    "hp",
    "padlock",
    "population",
+   "power",
    "workers"
   ]
  }
