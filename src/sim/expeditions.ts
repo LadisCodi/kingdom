@@ -38,6 +38,10 @@ import { canAfford, pay } from './wallet';
  */
 export const troopSlots = (): number => PARTY.troopSlots;
 
+/** Two rows of three (Docs/features/combat.md §3). A squad's row is its
+ *  unit's (`rowFor`), so a row fills up by type, not by the player's choice. */
+export const TROOPS_PER_ROW = 3;
+
 // ---------------------------------------------------------------- supplies
 
 /**
@@ -298,16 +302,28 @@ export function attackLair(
     };
   }
   const hoard = markLairCleared(state, lairId);
-  // The fight taught the party something whether or not the garrison was
-  // holding anything, and a tier-5 lair teaches more than the orcs'.
-  addHeroXp(state, LAIRS[lairId].tier);
-  // THE FIRST CLEAR, once per lair. `lairBlock` refuses a cleared lair, so
-  // this line runs once per lair for the life of the kingdom; Conquest,
-  // Vigils and Sanctified Ruins ride on the lump (sim/knowledge.ts).
-  const knowledge = firstClearLump(state);
+  const { heroXp, knowledge } = lairClearReward(state, lairId);
+  addHeroXp(state, heroXp);
   payKnowledge(state, knowledge);
   return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded };
 }
+
+/**
+ * What beating a lair pays on top of its hoard (Docs/proposals/lairs.md §5),
+ * for the card that shows it before the fight and the fight that pays it.
+ *
+ * Hero XP by tier: the fight taught the party something whether or not the
+ * garrison was holding anything, and a tier-5 lair teaches more than the
+ * orcs'. And the first-clear Knowledge lump — once per lair for the life of
+ * the kingdom, since `lairBlock` refuses a cleared one; Conquest, Vigils and
+ * Sanctified Ruins ride on it (sim/knowledge.ts).
+ */
+export const lairClearReward = (
+  state: GameState, lairId: LairId,
+): { heroXp: number; knowledge: number } => ({
+  heroXp: LAIRS[lairId].tier,
+  knowledge: firstClearLump(state),
+});
 
 /** What the lair sheet shows before the player commits: the threat is always
  *  visible on a lair, so this hides nothing. */
@@ -322,6 +338,11 @@ export interface LairPreview {
   supplies: Wallet;
   /** The first-clear Knowledge lump a win would pay, at today's prices. */
   knowledge: number;
+  /** Soldiers who would fall — the price the screen states before it is
+   *  paid (Docs/features/18-garrisons-and-raids.md §5). The resolver has no
+   *  randomness, so this is the fight's own answer, not a guess; the
+   *  infirmary's share of it comes back at a hall. 0 with no hero. */
+  fallen: number;
   /** True when the party already beats the lair ON PAPER. A shortfall warns,
    *  it never blocks — and the paper is an estimate now, so a party that
    *  reads short can still win the fight and one that reads long can lose it
@@ -341,6 +362,14 @@ export function previewLair(
   const theirs = lairBoard(state, lairId);
   const attack = partyPower(party);
   const power = boardPower(theirs);
+  // The same fight `attackLair` would run, on the same boards. Cheap — a
+  // board is nine slots and a fight a few hundred ticks — and it is what lets
+  // the screen say what the attack costs before the button is pressed.
+  let fallen = 0;
+  if (heroIds.length > 0) {
+    const ours = partyBoard(party);
+    fallen = lossesFrom(resolveBattle(ours, theirs), ours).reduce((n, l) => n + l.count, 0);
+  }
   return {
     lairId,
     threat: guard.threat,
@@ -350,6 +379,7 @@ export function previewLair(
     stats: partyStats(party),
     supplies: lairSupplyCost(state, lairId, heroIds),
     knowledge: firstClearLump(state),
+    fallen,
     enough: attack >= power,
   };
 }

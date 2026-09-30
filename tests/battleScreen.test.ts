@@ -11,6 +11,7 @@ import { PARTY, LAIRS, UNITS } from '../src/sim/data/definitions';
 import { heroSlotGemCost, heroSlots } from '../src/sim/heroes';
 import { armyCap } from '../src/sim/army';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
+import { attackLair } from '../src/sim/expeditions';
 import {
   addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0,
 } from './helpers';
@@ -37,17 +38,9 @@ function atTheLair(units: Partial<Record<UnitId, number>> = { Warrior: 30, Arche
 }
 
 describe('the troop slots', () => {
-  it('opens the card panel when a slot is tapped, and closes on the way out', () => {
+  it('closes on the way out — there is no panel over it any more', () => {
     const game = atTheLair();
-    expect(game.battlePicker).toBeNull();
-    game.openBattlePicker('troops');
-    expect(game.battlePicker).toBe('troops');
-    // Tapping outside — and the sheet's own way out — closes the PANEL and
-    // leaves the screen behind it standing.
-    game.dismiss();
-    expect(game.battlePicker).toBeNull();
     expect(game.openOverlay).toBe('lair');
-    // …and the second dismissal leaves the screen.
     game.dismiss();
     expect(game.openOverlay).toBeNull();
   });
@@ -55,7 +48,6 @@ describe('the troop slots', () => {
   it('fills the first free slot with as big a squad as the type allows', () => {
     const game = atTheLair({ Warrior: 12 });
     game.expeditionParty = [];
-    game.openBattlePicker('troops');
     const would = game.troopsAvailableFor('Warrior');
     game.assignTroop('Warrior');
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: would }]);
@@ -211,5 +203,62 @@ describe('what the screen adds up to', () => {
     game.expeditionParty = [{ unitId: 'Warrior', count: 30 }];
     game.doAttackLair();
     expect(game.lairFor(ORCS)!.cleared).toBe(true);
+  });
+});
+
+// The roster (Docs/proposals/lairs.md §6): one tile per type, a squad per
+// tap, into that unit's own row, three to a row.
+describe('the roster', () => {
+  it('sends another squad beside the first on a second tap, until none are left', () => {
+    const game = atTheLair({ Warrior: 30 });
+    game.expeditionParty = [];
+    const squad = UNITS.Warrior.squadSize;
+    game.assignTroop('Warrior');
+    game.assignTroop('Warrior');
+    const sent = game.expeditionParty.reduce((n, s) => n + s.count, 0);
+    expect(game.expeditionParty.every((s) => s.unitId === 'Warrior')).toBe(true);
+    expect(sent).toBeLessThanOrEqual(Math.min(30, 2 * squad));
+    expect(game.troopsLeftAtHome('Warrior')).toBe(30 - sent);
+  });
+
+  it('holds three squads a row: a fourth of the front row is refused', () => {
+    const game = atTheLair({ Warrior: 400, Lancer: 400 });
+    game.expeditionParty = [];
+    for (let i = 0; i < 3; i++) game.assignTroop(i % 2 === 0 ? 'Warrior' : 'Lancer');
+    expect(game.troopRefusal('Warrior')).toBe('The front row is full');
+    game.assignTroop('Warrior');
+    expect(game.expeditionParty).toHaveLength(3);
+  });
+
+  it('toggles a hero in and out with one tile', () => {
+    const game = atTheLair();
+    game.partyHeroes = [];
+    game.toggleHero('Warden');
+    expect(game.partyHeroes).toEqual(['Warden']);
+    game.toggleHero('Warden');
+    expect(game.partyHeroes).toEqual([]);
+  });
+
+  it('quick-deploys a hero and a board inside every rule a tap obeys', () => {
+    const game = atTheLair({ Warrior: 60, Archer: 60 });
+    game.expeditionParty = [];
+    game.partyHeroes = [];
+    game.quickDeploy();
+    expect(game.partyHeroes.length).toBeGreaterThan(0);
+    expect(game.expeditionParty.length).toBeGreaterThan(0);
+    for (const row of ['front', 'back'] as const) {
+      expect(game.expeditionParty.filter((s) =>
+        (s.unitId === 'Archer') === (row === 'back')).length).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('states the soldiers the fight will cost before it is paid', () => {
+    const game = atTheLair({ Warrior: 24 });
+    const preview = game.lairPreview()!;
+    const before = game.state.army.length;
+    const report = attackLair(game.state, map, game.lairId!, game.partyHeroes, game.expeditionParty);
+    const fell = report.losses.reduce((n, l) => n + l.count, 0);
+    expect(preview.fallen).toBe(fell);
+    expect(game.state.army.length).toBe(before - fell);
   });
 });

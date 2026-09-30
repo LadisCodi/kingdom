@@ -65,7 +65,7 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  attackLair, lairBlock, previewLair, troopSlots,
+  TROOPS_PER_ROW, attackLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
@@ -128,7 +128,7 @@ import {
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
 } from './sim/missions';
-import type { BattleLog } from './sim/battle';
+import { rowFor, type BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
@@ -311,7 +311,6 @@ export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
   /** Which card panel is open over the battle screen, if any. */
-  battlePicker: 'troops' | 'heroes' | null = null;
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
   lairId: LairId | null = null;
@@ -3022,20 +3021,9 @@ export class Game {
    *  proposing a small one — the sheet would open pre-filled AND pre-blocked,
    *  which reads as the game refusing its own suggestion. */
   private prefillParty(affinity: UnitId | 'Any'): void {
-    const roster = availableRoster(this.state);
-    const order = (Object.keys(roster) as UnitId[])
-      .filter((u) => roster[u] > 0)
-      .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
-    this.expeditionParty = [];
-    for (const unitId of order.slice(0, troopSlots())) {
-      // Everything of that type that is at home, up to a squad. The army cap
-      // bounds what the city OWNS (Docs/features/combat.md §14), so there is
-      // no second budget to spend here.
-      const count = Math.min(roster[unitId], UNITS[unitId].squadSize);
-      if (count <= 0) continue;
-      this.expeditionParty.push({ unitId, count });
-    }
+    this.fillTroops(affinity);
   }
+
 
   // ------------------------------------------------------------- the lair
 
@@ -3048,6 +3036,11 @@ export class Game {
 
   lairFor(lairId: LairId): LairView | null {
     return lairView(this.state, lairId);
+  }
+
+  /** What clearing it pays on top of the hoard — for the lair's card. */
+  lairReward(lairId: LairId): { heroXp: number; knowledge: number } {
+    return lairClearReward(this.state, lairId);
   }
 
   lairIsCleared(lairId: LairId): boolean {
@@ -3186,25 +3179,63 @@ export class Game {
       .reduce((sum, slot) => sum + slot.count, 0));
   }
 
-  /** Fill the first free troop slot with as big a squad of this type as the
-   *  roster and the cap allow. */
+  /**
+   * ONE TAP ON A TROOP TILE: one more squad of that type on the board — as
+   * big as `squadSize`, or everything of it left at home — into the next free
+   * slot of ITS OWN ROW (Docs/proposals/lairs.md §6). Tapped again, another
+   * squad beside the first. The row is the unit's, never the player's: melee
+   * and flankers stand in front, the ranged behind (combat.md §8), three to a
+   * row.
+   */
   assignTroop(unitId: UnitId): void {
-    if (this.expeditionParty.length >= this.troopSlotsOpen()) {
-      this.toast('Every troop slot is full — clear one first');
+    const refusal = this.troopRefusal(unitId);
+    if (refusal !== null) {
+      this.toast(refusal);
       return;
     }
-    const count = this.troopsAvailableFor(unitId);
-    if (count <= 0) {
-      this.toast(`No ${UNITS[unitId].name}s left to send`);
-      return;
-    }
-    this.expeditionParty.push({ unitId, count });
+    this.expeditionParty.push({ unitId, count: this.troopsAvailableFor(unitId) });
     playSfx('click');
-    // The panel stays up while there is another slot to fill, and gets out of
-    // the way the moment there is not: a list of cards over a full board is a
-    // panel asking a question the player has already answered.
-    if (this.expeditionParty.length >= this.troopSlotsOpen()) this.battlePicker = null;
     this.notify();
+  }
+
+  /** Why a tile would send nothing right now, in the words the toast uses —
+   *  or null when a tap would place a squad. */
+  troopRefusal(unitId: UnitId): string | null {
+    if (this.troopsAvailableFor(unitId) <= 0) return `No ${UNITS[unitId].name}s left to send`;
+    const row = rowFor(unitId);
+    if (this.expeditionParty.filter((s) => rowFor(s.unitId) === row).length >= TROOPS_PER_ROW) {
+      return `The ${row} row is full`;
+    }
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) return 'Every troop slot is full';
+    return null;
+  }
+
+  /**
+   * QUICK DEPLOY: the strongest legal party, answering the lair's creature
+   * first — every hero slot with the highest-level heroes, then squad after
+   * squad of the best-answering type that still has soldiers at home and
+   * room in its row, until the board or the army runs out.
+   */
+  quickDeploy(): void {
+    if (this.lairId === null) return;
+    this.partyHeroes = [...this.state.heroes.owned]
+      .sort((a, b) => heroLevel(this.state, b) - heroLevel(this.state, a))
+      .slice(0, heroSlots(this.state));
+    this.fillTroops(LAIRS[this.lairId].guard.threat);
+    playSfx('click');
+    this.notify();
+  }
+
+  /** Squad after squad, best answer first, inside every rule a tap obeys. */
+  private fillTroops(affinity: UnitId | 'Any'): void {
+    this.expeditionParty = [];
+    const order = (Object.keys(availableRoster(this.state)) as UnitId[])
+      .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
+    for (;;) {
+      const next = order.find((u) => this.troopRefusal(u) === null);
+      if (next === undefined) return;
+      this.expeditionParty.push({ unitId: next, count: this.troopsAvailableFor(next) });
+    }
   }
 
   clearTroopSlot(index: number): void {
@@ -3223,26 +3254,24 @@ export class Game {
     }
     this.partyHeroes.push(heroId);
     playSfx('click');
-    if (this.partyHeroes.length >= this.heroSlotsOpen()) this.battlePicker = null;
     this.notify();
+  }
+
+  heroLevelOf(heroId: HeroId): number {
+    return heroLevel(this.state, heroId);
+  }
+
+  /** ONE TAP ON A HERO TILE: in if it is out, out if it is in. */
+  toggleHero(heroId: HeroId): void {
+    const at = this.partyHeroes.indexOf(heroId);
+    if (at >= 0) this.clearHeroSlot(at);
+    else this.assignHero(heroId);
   }
 
   clearHeroSlot(index: number): void {
     if (index < 0 || index >= this.partyHeroes.length) return;
     this.partyHeroes.splice(index, 1);
     playSfx('click');
-    this.notify();
-  }
-
-  /** The picker panel over the battle screen: troops, heroes, or nothing. */
-  openBattlePicker(kind: 'troops' | 'heroes'): void {
-    this.battlePicker = kind;
-    playSfx('click');
-    this.notify();
-  }
-
-  closeBattlePicker(): void {
-    this.battlePicker = null;
     this.notify();
   }
 
@@ -3468,12 +3497,7 @@ export class Game {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
     }
-    // A card panel belongs to the screen that opened it, and it lives in its
-    // own mount — so leaving that screen has to close it here rather than
-    // letting it fall off with the sheet's DOM.
-    const leaving = this.openOverlay;
     this.openOverlay = name;
-    if (name !== leaving) this.battlePicker = null;
     if (name !== null) {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
@@ -3501,15 +3525,6 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
-    // A picker panel is a layer INSIDE the battle screen, so the first
-    // dismissal closes it and leaves the screen behind it standing — the same
-    // way tapping outside the panel does.
-    if (this.battlePicker !== null) {
-      this.battlePicker = null;
-      this.notify();
-      return;
-    }
-    this.battlePicker = null;
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;

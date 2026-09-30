@@ -41,7 +41,8 @@ import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { renderSiteCard } from './ui/siteCard';
+import { lairCardScreen, renderSiteCard } from './ui/siteCard';
+import { standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -54,7 +55,6 @@ import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
@@ -140,9 +140,6 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
   mountSeasonPill(game, document.getElementById('season')!);
-  // The battle screen's card panel. Its own mount, because the sheet it
-  // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
-  mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
@@ -251,6 +248,12 @@ async function boot(): Promise<void> {
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
+    } else if (site !== null && standingLairAt(game.state, site)) {
+      // A lair's card is a screen of its own, built once and ticked
+      // (siteCard.ts, `lairCardScreen`), in the district card's frame.
+      const lair = standingLairAt(game.state, site)!;
+      panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
+      frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
     } else if (site !== null) {
       // Keyed by cell, so tapping a different site is a real remount.
       panelSlot.show(`site:${site.x},${site.y}`, () => legacy(

@@ -1,4 +1,4 @@
-// The card for a map SITE — a landmark or a lair.
+// The card for a map SITE — a landmark, or a lair (`lairCardScreen`).
 //
 // These are what paid fog is FOR. A player who clears a distance-9 ring and
 // finds one more iron vein has learned that exploring is a treadmill; a player
@@ -8,17 +8,18 @@
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  FOG, LANDMARK_ART, MANA, type LandmarkDef, type LairDef,
+  FOG, LAIRS, LANDMARK_ART, MANA, type LandmarkDef,
 } from '../sim/data/definitions';
-import type { LairView } from '../sim/lairs';
+import type { LairView, RaidableId } from '../sim/lairs';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { Coord } from '../sim/state';
-import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
+import type { Coord, LairId } from '../sim/state';
+import { landmarkDefAt } from '../sim/sites';
 import { el, formatDuration } from './format';
-import { action, iconEl, panel, stat } from './kit';
+import { action, btn, closeKnob, iconEl, panel, sectionHead, stat, windowHead, type IconName } from './kit';
+import type { Screen } from './kit/host';
 
 /** The site art, at card size: the sprite if it exists, its glyph if not. */
 function art(sprite: string, glyph: string): HTMLElement {
@@ -81,69 +82,97 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
 }
 
 /**
- * The lair's garrison, above everything else the card has to say.
+ * THE LAIR'S CARD (Docs/proposals/lairs.md §6) — the district card's frame,
+ * and five things in it, top to bottom:
  *
- * While it stands, the garrison is the decision, and it is on a clock. So the band carries the creature, the countdown, how
- * many trips are left in them and what they are holding, and the only button
- * on the card is the one that goes at them
- * (Docs/features/18-garrisons-and-raids.md §7).
+ *   the name, on the plain title plank;
+ *   the painting of the creature at its worst, with its flavour line;
+ *   the countdown, said as the threat it is;
+ *   the reward — the hoard it carries, then Hero XP and Knowledge;
+ *   Attack, which opens the attack screen.
+ *
+ * Nothing else. The enemy's squads and power are the attack screen's, and a
+ * raid count is never shown anywhere. Built ONCE per lair; a tick rewrites
+ * the countdown's text and nothing else.
  */
-function lairBand(game: Game, def: LairDef, lair: LairView): HTMLElement {
-  const left = lair.nextRaidAt === null
-    ? null : Math.max(0, (lair.nextRaidAt - game.now()) / 1000);
-  const hoard = Object.entries(lair.hoard).filter(([, n]) => n > 0);
+export function lairCardScreen(game: Game, lairId: LairId): Screen {
+  const def = LAIRS[lairId];
+  const root = el('div', { class: 'dc lc' });
+  const frame = el('div', { class: 'k-frame', 'aria-hidden': 'true' });
+  const clock = el('b', { class: 'lc-clock-value' });
+  let signature: string | null = null;
 
-  const band = el('div', { class: 'site-lair' },
-    el('div', { class: 'site-lair-head' },
-      iconEl(lair.threat === 'Any' ? 'army' : lair.threat, { size: 'md' }),
-      el('div', {},
-        el('div', { class: 'site-lair-name' }, `${lair.creature} hold the way in`),
-        el('div', { class: 'site-lair-sub' }, left !== null
-          ? `They will attack your city in ${formatDuration(left)}`
-          : 'They are gone'))),
-  );
+  const build = (lair: LairView): void => {
+    const art = spriteUrl(`lair_art_${lairId.toLowerCase()}`);
+    const figure = el('div', { class: 'lc-art k-section' },
+      art ? spriteImgAt(art, 'lc-art-img') : el('div', { class: 'lc-art-glyph' }, def.glyph),
+      el('p', { class: 'lc-flavour' }, def.flavour));
 
-  if (hoard.length > 0) {
-    band.append(el('div', { class: 'site-lair-hoard' },
-      hoard.map(([c, n]) => `${n} ${c}`).join(', ')
-      + ' — cleared, it all comes back.'));
-  }
-  band.append(action({
-    label: 'Clear the lair',
-    kind: 'primary',
-    onClick: () => game.openLair(def.id),
-  }));
-  return band;
+    const timer = el('div', { class: 'lc-clock k-section' },
+      iconEl('hourglass', { size: 'lg' }),
+      el('div', { class: 'lc-clock-body' },
+        el('div', { class: 'lc-clock-label' }, 'They will attack your city in'),
+        clock));
+
+    // The hoard first: it is what the raids took, and clearing the lair is
+    // how it comes back — so it is the reward rather than a report.
+    const chips: HTMLElement[] = [];
+    for (const [c, n] of Object.entries(lair.hoard) as Array<[RaidableId, number]>) {
+      if (n <= 0) continue;
+      chips.push(rewardChip(c, String(n), lair.hoardFull[c] === true ? 'full' : undefined));
+    }
+    const reward = game.lairReward(lairId);
+    if (reward.heroXp > 0) chips.push(rewardChip('HeroXp', String(reward.heroXp)));
+    if (reward.knowledge > 0) chips.push(rewardChip('Knowledge', String(reward.knowledge)));
+
+    root.replaceChildren(frame,
+      windowHead(def.name, [closeKnob(() => game.dismiss(), `Close ${def.name}`)]),
+      figure,
+      timer,
+      sectionHead('Reward'),
+      el('div', { class: 'lc-reward' }, ...chips),
+      el('div', { class: 'lc-go' }, btn({
+        label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId),
+      })));
+  };
+
+  return {
+    root,
+    refresh: () => {
+      const lair = game.lairFor(lairId);
+      if (lair === null || lair.cleared) {
+        releaseSprites(root);
+        root.replaceChildren();
+        signature = null;
+        return;
+      }
+      // Rebuilt only when what it SAYS moves — the hoard; a tick in between
+      // touches the countdown's text alone.
+      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull);
+      if (now !== signature) {
+        signature = now;
+        releaseSprites(root);
+        build(lair);
+      }
+      const left = lair.nextRaidAt === null ? 0 : Math.max(0, (lair.nextRaidAt - game.now()) / 1000);
+      clock.textContent = formatDuration(left);
+    },
+  };
 }
 
-function lairCard(game: Game, def: LairDef): HTMLElement {
-  const body = el('div', { class: 'site' },
-    el('div', { class: 'site-head' },
-      art(def.sprite, def.glyph),
-      el('div', {},
-        el('div', { class: 'site-name' }, def.name),
-        el('div', { class: 'site-kind' }, `Tier ${def.tier} lair`))),
-    el('div', { class: 'site-desc' }, def.description),
-  );
-
-  // The garrison is the whole lair: while it stands it IS the card's
-  // decision, and once it has fallen there is nothing behind it
-  // (Docs/proposals/lairs.md §1).
-  const lair = game.lairFor(def.id);
-  if (lair !== null && !lair.cleared) {
-    body.append(lairBand(game, def, lair));
-  } else if (lair?.cleared === true) {
-    body.append(el('div', { class: 'site-note' },
-      iconEl('tick', { size: 'sm' }), 'Cleared. Nothing holds it now.'));
-  }
-  return panel(body);
+/** One tile of the reward row: the icon, the amount, and a word under it
+ *  when the lair carries all it can of that material. */
+function rewardChip(icon: IconName, value: string, tag?: string): HTMLElement {
+  return el('div', { class: 'lc-chip k-section' },
+    iconEl(icon, { size: 'lg' }),
+    el('b', { class: 'lc-chip-value' }, value),
+    ...(tag ? [el('span', { class: 'lc-chip-tag' }, tag)] : []));
 }
 
-/** Null when the cell holds no site — the caller then shows nothing. */
+/** Null when the cell holds no landmark — the caller then shows nothing. A
+ *  lair has a screen of its own (`lairCardScreen`). */
 export function renderSiteCard(game: Game, cell: Coord): HTMLElement | null {
   const landmark = landmarkDefAt(cell);
   if (landmark) return landmarkCard(game, landmark);
-  const lair = standingLairAt(game.state, cell);
-  if (lair) return lairCard(game, lair);
   return null;
 }

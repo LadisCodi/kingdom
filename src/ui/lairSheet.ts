@@ -1,70 +1,44 @@
-// The lair, on the battle screen (Docs/features/18-garrisons-and-raids.md §7).
+// The lair, on the attack screen (Docs/proposals/lairs.md §6).
 //
-// The board, the slots and the panels are `battleSheet.ts` — every fight in
-// the game uses them. What a lair adds is its CLOCK, and the clock is why the
-// player is here.
-//
-// So the dynamic band under the art is the countdown, the trips left in the
-// garrison and what it is holding, and the Rewards box is the hoard — every
-// unit of which comes home when the lair falls — with Hero XP and the lair's
-// first-clear Knowledge. There is nothing behind it (Docs/proposals/lairs.md).
+// The boards, the roster and the action box are `battleSheet.ts` — every
+// fight in the game uses them. What a lair adds is its creatures: the enemy's
+// squads wear the lair's faces rather than the player's own soldiers, one
+// creature per troop type, whatever lair they stand in.
 
 import { LAIRS } from '../sim/data/definitions';
 import type { Game } from '../game';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
+import type { UnitId } from '../sim/state';
 import { renderBattleSheet, type BattleView } from './battleSheet';
-import { el, formatDuration } from './format';
-import { iconEl } from './kit';
-import type { CurrencyId } from '../sim/state';
+import { unitBust } from './unitArt';
+
+/** The creature a squad of each type is, on the enemy's side of the board
+ *  (Docs/art/originals/lairs/LOG.md). */
+const CREATURE: Record<UnitId, string> = {
+  Warrior: 'creature_orc_avatar',
+  Lancer: 'creature_goblin_avatar',
+  Archer: 'creature_harpy_avatar',
+  Cavalry: 'creature_wolfrider_avatar',
+} as Record<UnitId, string>;
+
+const creatureFace = (unitId: UnitId): HTMLElement => {
+  const url = spriteUrl(CREATURE[unitId] ?? '');
+  return url ? spriteImgAt(url, 'k-portrait-art') : unitBust(unitId, 'k-portrait-art');
+};
 
 export function renderLairSheet(game: Game): HTMLElement {
   const lairId = game.lairId!;
-  const def = LAIRS[lairId];
-  const lair = game.lairFor(lairId);
   const preview = game.lairPreview()!;
-
-  const info: Array<Node | string> = [];
-  if (lair !== null && lair.nextRaidAt !== null) {
-    const left = Math.max(0, (lair.nextRaidAt - game.now()) / 1000);
-    info.push(el('div', { class: 'bt-info-line' },
-      iconEl('hourglass', { size: 'sm' }),
-      `They come for the city in ${formatDuration(left)}`));
-  }
-
-  const hoard = Object.entries(lair?.hoard ?? {}).filter(([, n]) => n > 0);
-  if (hoard.length > 0) {
-    info.push(el('div', { class: 'bt-info-line is-soft' },
-      'Cleared, every unit of what they took comes home.'));
-  }
-
   const view: BattleView = {
-    title: def.name,
-    subtitle: `${lair?.creature ?? 'A warband'} · tier ${def.tier}`,
-    sprite: def.sprite,
-    glyph: def.glyph,
-    info,
-    enemy: { squads: preview.enemy, power: preview.power, threat: preview.threat },
+    title: LAIRS[lairId].name,
+    enemy: { squads: preview.enemy, power: preview.power, portrait: creatureFace },
     attack: preview.attack,
     enough: preview.enough,
     supplies: preview.supplies,
-    // The hoard, Hero XP by tier, and the lair's first-clear Knowledge: a
-    // lair is cleared once, so this is everything it will ever pay.
-    rewards: [
-      ...hoard.map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
-      { icon: 'HeroXp' as CurrencyId, label: `+${def.tier}` },
-      { icon: 'Knowledge' as CurrencyId, label: `+${preview.knowledge}` },
-    ],
-    rewardNote: hoard.length > 0
-      ? 'Everything they took comes home with it.'
-      : 'Drive them out of their lair for good.',
-    actionLabel: 'Clear the lair',
-    // They fight back, and how badly is the fight's own answer — so
-    // this says what is at stake, not a number nothing can promise.
-    actionNote: 'Supplies are spent whether you win or lose, and so are '
-      + 'soldiers — they fight back. You can come back as many times '
-      + 'as you like.',
+    fallen: preview.fallen,
+    actionLabel: 'Attack',
     onFight: () => game.doAttackLair(),
     blocked: game.lairBlockText(),
   };
-
   return renderBattleSheet(game, view);
 }

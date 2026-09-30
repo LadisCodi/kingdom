@@ -601,23 +601,14 @@
 .dly-rung { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 .dly-row:has(button.dly-cell) .dly-rung { background: var(--gold); }
 
-/* ---- settings and mana (M9), the battle board (M10): parchment cards ---- */
+/* ---- settings and mana (M9): parchment cards ---- */
 .set-row,
-.mana-refills,
-.bt-head,
-.bt-army,
-.bt-rewards {
+.mana-refills {
   background:
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.bt-art,
-.bt-chip,
-.bt-count,
-.bt-price { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .k-switch:not(.is-on) { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
-.bt-slot.is-empty,
-.bt-slot.is-locked { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 
 /* ---- the site card and the placement bar (M11) ---- */
 .plc-bar {

@@ -137,7 +137,7 @@ const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0, hpMult: () => 1 };
 
 /** Squads go where their targeting puts them (§11 step 5): the ones that have
  *  to reach the enemy stand in front, the ones that shoot stand behind. */
-const rowFor = (unitId: UnitId): Row => (targetingFor(unitId) === 'ranged' ? 'back' : 'front');
+export const rowFor = (unitId: UnitId): Row => (targetingFor(unitId) === 'ranged' ? 'back' : 'front');
 
 /**
  * Assemble one side.
