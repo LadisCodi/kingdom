@@ -22,7 +22,8 @@ import {
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
-  colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
+  colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
+  type EdgePiece,
 } from './research/layout';
 import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
 import { el, formatExact } from './format';
@@ -167,35 +168,29 @@ export function renderResearchMenu(game: Game): HTMLElement {
 }
 
 /**
- * The connectors, under the cards: plain arrows drawn with a quill — thin
- * sepia ink, a slightly uneven stroke (an SVG displacement filter), a small
- * drawn arrowhead into the card that needs it.
+ * The connectors, under the cards: arrows drawn with a quill, assembled from
+ * four pieces of art (research.css) — a straight run repeated along its
+ * length, an elbow turned to face the way it bends, and a head. No filter and
+ * no canvas: a page is as costly as its handful of small images, which is
+ * what keeps a long book open on a phone.
  */
 function connectors(
   at: Map<string, { top: number; col: number; index: number }>,
   columnClear: (from: { col: number; index: number }, to: { index: number }) => boolean,
   height: number,
-): SVGSVGElement {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', String(PAGE_W));
-  svg.setAttribute('height', String(height));
-  svg.classList.add('tech-edges');
-  svg.innerHTML = `<defs>
-    <filter id="rb-quill" filterUnits="userSpaceOnUse" x="0" y="0" width="${PAGE_W}" height="${height}">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7"/>
-      <feDisplacementMap in="SourceGraphic" scale="1.6"/>
-    </filter>
-    <marker id="rb-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 1 1.5 L 8.5 5 L 1 8.5" class="tech-arrowhead"/>
-    </marker>
-  </defs>`;
-  const stroke = (d: string): void => {
-    const path = document.createElementNS(ns, 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('class', 'tech-edge');
-    path.setAttribute('marker-end', 'url(#rb-arrow)');
-    svg.append(path);
+): HTMLElement {
+  const layer = el('div', {
+    class: 'tech-edges', 'aria-hidden': 'true', style: `width:${PAGE_W}px;height:${height}px`,
+  });
+  // Arrows out of one card share their first run; ink laid twice reads darker.
+  const drawn = new Set<string>();
+  const draw = (points: Array<{ x: number; y: number }>): void => {
+    for (const piece of edgePieces(points)) {
+      const key = JSON.stringify(piece);
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+      layer.append(edgePiece(piece));
+    }
   };
   for (const [id, to] of at) {
     const def = TECHNOLOGIES[id as TechId];
@@ -204,16 +199,48 @@ function connectors(
       const from = at.get(req);
       if (from === undefined) continue;
       drew = true;
-      stroke(edgeD(edgePath(from, to, columnClear(from, to))));
+      draw(edgePath(from, to, columnClear(from, to)));
     }
     // A requirement with no end on this page — a stub in the gutter above the
     // card, so it does not look like it grows from nowhere.
     if (!drew && def.requires.length > 0) {
       const x = colLeft(to.col) + NODE_W / 2;
-      stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`);
+      draw([{ x, y: to.top - ROW_GAP / 2 }, { x, y: to.top }]);
     }
   }
-  return svg;
+  return layer;
+}
+
+/** Half a pixel of overlap at each end of a run, so a zoomed page shows no
+ *  seam where a run meets its elbow. */
+const SEAM = 0.5;
+
+function edgePiece(piece: EdgePiece): HTMLElement {
+  const band = EDGE_BAND / 2;
+  switch (piece.kind) {
+    case 'v':
+      return el('span', {
+        class: 'rb-edge is-v',
+        style: `left:${piece.x - band}px;top:${piece.y - SEAM}px;width:${EDGE_BAND}px;height:${piece.len + 2 * SEAM}px`,
+      });
+    case 'h':
+      return el('span', {
+        class: 'rb-edge is-h',
+        style: `left:${piece.x - SEAM}px;top:${piece.y - band}px;width:${piece.len + 2 * SEAM}px;height:${EDGE_BAND}px`,
+      });
+    case 'elbow': {
+      // The art joins top to right with the corner at (band, ELBOW_R) in its
+      // box; the other three turns are that, turned about the corner.
+      const size = ELBOW_R + band;
+      return el('span', {
+        class: `rb-edge is-elbow is-${piece.turn}`,
+        style: `left:${piece.x - band}px;top:${piece.y - ELBOW_R}px;width:${size}px;height:${size}px;`
+          + `transform-origin:${band}px ${ELBOW_R}px`,
+      });
+    }
+    case 'head':
+      return el('span', { class: 'rb-edge is-head', style: `left:${piece.x}px;top:${piece.y}px` });
+  }
 }
 
 /**
@@ -251,7 +278,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const ready = status === 'progress' && isTechFilled(state, id);
 
   const bar = progress(status === 'done' ? 'green' : 'blue');
-  bar.set(need === 0 ? 1 : poured / need, `${poured} / ${need}`);
+  bar.set(need === 0 ? 1 : poured / need, `${formatExact(poured)} / ${formatExact(need)}`);
   const node = el('button', {
     class: `tech-card k-section is-${status}${ready ? ' is-ready' : ''}`
       + (selected === id ? ' selected' : '')
@@ -260,8 +287,8 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     type: 'button',
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
   },
-  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-name' }, def.name),
+  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
   el('span', { class: 'tech-card-bar' },
     bar.root,
     ...(status === 'done' ? [iconEl('tick', { size: 'sm' })]
@@ -273,13 +300,13 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
 }
 
 /**
- * A technology, opened (M46): a loose research page — the same parchment as
- * the book, pinned — read top to bottom in three parts that are never
+ * A technology, opened (M46): a loose research page over the book, read top to bottom in three parts that are never
  * numbered on it:
  *
  *  1. what it is — its emblem and one plain sentence; the name is the heading;
  *  2. Knowledge — the bar, and three pours with the price on the button: Gems
- *     for every point still missing, +1, and as much as the bar allows;
+ *     for every point still missing, +1, and as much as the bar allows; once
+ *     it is full, a line saying so in their place;
  *  3. research — the Gold above the button, and the button.
  *
  * A technology whose requirements are not met shows part 1 and its
@@ -327,12 +354,14 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const pours = game.techPours(id);
     if (need > 0) {
       const bar = progress('blue');
-      bar.set(techPoured(state, id) / need, `${techPoured(state, id)} / ${need}`);
+      bar.set(techPoured(state, id) / need, `${formatExact(techPoured(state, id))} / ${formatExact(need)}`);
       page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
         el('div', { class: 'rb-knowledge' },
           bar.root,
-          // Once the Knowledge is in there is nothing left to pour.
-          ...(pours.missing === 0 ? [] : [el('div', { class: 'rb-pours' },
+          // Once the Knowledge is in there is nothing left to pour: a line in
+          // the buttons' place, as tall as they are, so the sheet keeps its size.
+          ...(pours.missing === 0 ? [el('div', { class: 'rb-filled' },
+            iconEl('tick'), el('span', {}, 'All its Knowledge is in — it is ready to research'))] : [el('div', { class: 'rb-pours' },
             btn({
               label: formatExact(pours.gems),
               icon: 'Gems',
@@ -348,7 +377,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
             }),
             btn({
-              label: `+${pours.most}`,
+              label: `+${formatExact(pours.most)}`,
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id),
@@ -376,9 +405,8 @@ function techSheet(game: Game, id: TechId): HTMLElement {
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 
-  // The pin and the way out sit on the page's edge, outside what scrolls.
+  // The way out sits in the page's corner, outside what scrolls.
   const scrim = el('div', { class: 'tech-modal' }, el('div', { class: 'rb-sheet-wrap' },
-    el('span', { class: 'rb-pin is-centre', 'aria-hidden': 'true' }),
     closeKnob(dismiss),
     page));
   // The scrim dismisses; the page does not, or every press inside it would

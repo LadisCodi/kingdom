@@ -65,8 +65,11 @@ const plural = (n: number, one: string): string =>
  *  noun is the tell that a line was assembled rather than written. */
 const one = (name: string): string => (isMass(name) ? name : `a ${name}`);
 
-/** `1,200`, not `1200` — the tracker's numbers are read at a glance. */
-const count = (n: number): string => n.toLocaleString('en-GB');
+/** `1,200`, not `1200` — the tracker's numbers are read at a glance. The
+ *  sim reads no locale, so this is the English grouping; the UI passes its
+ *  own formatter (`formatExact`), which writes the viewer's. */
+const groupEnglish = (n: number): string =>
+  String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /**
  * The line the tracker shows: an IMPERATIVE naming the goal and nothing else.
@@ -81,7 +84,7 @@ export function questLine(quest: {
   goalTarget: string | null;
   goalAmount: number;
   goalLevel: number | null;
-}): string {
+}, count: (n: number) => string = groupEnglish): string {
   const { goalTarget: target, goalAmount: n, goalLevel: level } = quest;
   switch (quest.goalType) {
     case 'BuildDistrict':

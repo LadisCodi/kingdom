@@ -838,3 +838,35 @@ for.
 - **What to know:** both came back true alpha without asking for a correction.
   The sheet's wide corner slices are what keep the curl from stretching when a
   locked technology's sheet is short.
+
+## B3 — the technology sheet, drawn whole
+
+- **Date:** 2026-09-29
+- **Conversation:** `6abbfd0e-ae5c-83eb-bbae-f1027593b113`, continued; the
+  M46 sheet cropped from the mockup attached as the reference.
+- **Why:** B2's nine-sliced leaf read worse than M46's. The sheet never needs
+  to change size, so it is asked for whole: empty, a small stack, the curl.
+- **Files:** `sheets/rb-sheet-raw.png` (1024×1536) → `src/ui/assets/rb-sheet.png`
+  (the alpha box, 640×913), drawn at its own ratio across the sheet's width —
+  359×512 on a 375pt phone, which fits the tallest technology's sheet exactly.
+- **What to know:** the prompt said "NOT for nine-slicing … EMPTY" and it came
+  back true alpha with nothing painted on it.
+
+## B4 — the connector kit
+
+- **Date:** 2026-09-29
+- **Conversation:** `6abc25a0-fb14-83ed-bb51-a1aa19135430`; the reference was
+  the old connectors rendered over `rb-page.png`.
+- **Why:** the connectors were an SVG displacement filter whose region was the
+  whole page, once per arrow — gigabytes of filter buffers at 3x, and iOS
+  killed the tab when the research book opened. They are now four pieces of
+  art any tree can be drawn from, whatever the editor does to it.
+- **Files:** `sheets/rb-edges-raw.png` (1254², a 2x2 sheet: vertical run,
+  horizontal run, elbow, arrowhead) → `src/ui/assets/rb-edge-v.png`,
+  `rb-edge-h.png` (seamless tiles, 8px bands), `rb-edge-elbow.png` (joins top
+  to right, turned in CSS for the other three bends), `rb-edge-head.png`,
+  all 3x. Cut by `sheets/rb-edges.mjs`, which measures the stroke (38px →
+  2px on the page) and the elbow's radius (→ `ELBOW_R`, 9px).
+- **What to know:** one prompt, no corrections; it came back true alpha with
+  the four pieces at one stroke width. Asking for straight legs of at least
+  150px on the elbow is what lets the script cut them flush at the radius.

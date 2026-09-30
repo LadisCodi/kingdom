@@ -23,9 +23,9 @@ import {
   harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
 } from '../sim/harmony';
 import {
-  districtCapacity, houseGoldPerMinute, houseTaxBonus,
+  districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
-import { isStoreFull, storageCapacity, storedTotal } from '../sim/storage';
+import { isStoreFull, storedTotal } from '../sim/storage';
 import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { nameFor, trainingSection } from './trainingSection';
@@ -41,8 +41,8 @@ import {
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { el, formatCount, formatDuration } from './format';
-import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, stat, windowHead } from './kit';
+import { el, formatDuration, formatExact, formatShort } from './format';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -108,19 +108,19 @@ const SOURCE_ICON: Record<string, IconName> = {
   MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
 };
 
-/** What a crew makes a minute, per coin: the rate one worker earns at this
+/** What a crew makes an hour, per coin: the rate one worker earns at this
  *  building — its haul and its swing included — times the crew. */
 function crewOutput(game: Game, district: District): Array<[CurrencyId, number]> {
   const def = DISTRICTS[district.definitionId];
-  const perMinute = new Map<CurrencyId, number>();
+  const perHour = new Map<CurrencyId, number>();
   for (const s of def.harvestSources) {
     const spec = HARVEST[s];
-    if (perMinute.has(spec.currencyId)) continue;
-    perMinute.set(spec.currencyId, district.assignedWorkers
+    if (perHour.has(spec.currencyId)) continue;
+    perHour.set(spec.currencyId, district.assignedWorkers
       * effectiveWorkerStrike(game.state, spec, district)
-      * (60_000 / workerStrikeMs(game.state, spec, district)));
+      * (3_600_000 / workerStrikeMs(game.state, spec, district)));
   }
-  return [...perMinute];
+  return [...perHour];
 }
 
 /**
@@ -162,7 +162,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     if (isDecoration(def)) {
       body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
         iconEl('harmony', { size: 'sm' }),
-        el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
+        el('span', {}, `Supplies ${formatExact(def.harmonySupply)} Harmony`),
         el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
     }
 
@@ -185,7 +185,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             : 'nothing demands it yet';
         body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
           iconEl('harmony', { size: 'sm' }),
-          el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
+          el('span', {}, `Harmony ${formatExact(supply)} supplied, ${formatExact(demand)} demanded`),
           el('span', { class: 'dc-army-note' }, note)));
       }
     }
@@ -202,11 +202,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             iconEl('Food', { size: 'sm' }),
             pips(left, spec.stock),
             el('span', {}, readyAt === null
-              ? `${left} Food left in it`
+              ? `${formatExact(left)} Food left in it`
               : `regrowing — ${formatDuration((readyAt - t) / 1000)}`)),
           el('div', { class: 'dc-tapline' },
             iconEl('showme', { size: 'sm' }),
-            `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, t)} Food`));
+            `Tap the plot for +${formatExact(tapYieldAt(game.state, game.map, district.location, t))} Food`));
       };
       body.append(sectionHead('Crops'), part(() => {
         const t = game.now();
@@ -219,65 +219,17 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       }, plot));
     }
 
-    // A house is people and the rent they pay, so show both as such.
+    // A house's residents and rent are its stat tiles (Beds 2/2, Gold +3.6k/h);
+    // the body only says what its neighbours do to it.
     if (districtCapacity(game.state, district) > 0) {
-      const capacity = districtCapacity(game.state, district);
-      const residents = game.residentsIn(district);
-      const perMinute = houseGoldPerMinute(game.state, district);
       const adjacency = districtAdjacency(game.state, district);
-
-      body.append(sectionHead('Residents'), el('div', { class: 'dc-homes' },
-        iconEl('population', { size: 'sm' }),
-        pips(residents, capacity),
-        el('span', {}, `${residents} of ${capacity} homes filled`)));
-
-      if (residents > 0) {
-        const bonus = houseTaxBonus(district);
-        body.append(el('div', { class: 'dc-drip' },
-          stat('Gold', Number.isInteger(perMinute) ? String(perMinute) : perMinute.toFixed(1),
-            'per minute'),
-          // What the house's own level is worth, said where the rent is read
-          // rather than only on the upgrade button.
-          ...(bonus > 0
-            ? [el('span', { class: 'dc-army-note' },
-              `+${Math.round(bonus * 100)}% rent from level ${district.level}`)]
-            : [])));
-      }
       // Adjacency as a verdict rather than a signed number.
       if (adjacency !== 0) {
         body.append(el('div', { class: `dc-badge ${adjacency < 0 ? 'is-bad' : 'is-good'}` },
           adjacency < 0
-            ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
-            : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
+            ? `Crowded ${formatAdjacency(adjacency * 60)}/h — houses too close together`
+            : `Cosy neighbourhood ${formatAdjacency(adjacency * 60)}/h`));
       }
-      if (residents === 0) {
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          'Nobody lives here yet — train villagers at the Townhall'));
-      }
-    }
-
-    // THE STORE (03-economy.md §3.2): what this building has made and the
-    // player has not collected. A tap on the building collects it once it is
-    // ready; the card says how full it is, and collects whatever is there.
-    if (storageCapacity(district) > 0) {
-      body.append(part(() => JSON.stringify([district.stored ?? {}, storageCapacity(district)]), () => {
-        const cap = storageCapacity(district);
-        const held = storedTotal(district);
-        const full = isStoreFull(district);
-        const main = (Object.entries(district.stored ?? {}) as Array<[CurrencyId, number]>)
-          .sort((a, b) => b[1] - a[1])[0]?.[0]
-          ?? (def.harvestSources.length > 0 ? HARVEST[def.harvestSources[0]].currencyId : 'Gold');
-        return el('div', { class: 'dc-live' },
-          sectionHead('Store'),
-          el('div', { class: `dc-homes${full ? ' is-bad' : ''}` },
-            iconEl(main, { size: 'sm' }),
-            el('span', {}, `${formatCount(held)} of ${formatCount(cap)}`
-              + (full ? ' — full, work has stopped' : ''))),
-          ...(held > 0
-            ? [btn({ label: 'Collect', kind: 'primary', onClick: () => game.collectFromCard(district) })]
-            : []));
-      }));
     }
 
     // The army headroom moved to the HEADER's plaque (`hudSlot`), where the
@@ -401,26 +353,42 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   // A worker building leads with what its crew makes (the resource is the
-  // tile's word: *Food +45 /min*) and what it has to work (*Fields 3*); the
-  // popup-only figures stay off the card.
-  const figures = [
-    ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && district.state === 'Built'
+  // tile's word: *Food +2.7k/h*) and what it has to work (*Fields 3*); a
+  // house leads with its rent (*Gold +1.8k/h*) — its level's rent bonus is
+  // already in that figure — and its Beds read residents/beds (*2/2*). The
+  // Storage tile reads what the store holds against what it can (*Storage
+  // 120/8.6k*) — a tap on the building collects it, so the card has no
+  // Collect of its own. The popup-only figures stay off the card.
+  const built = district.state === 'Built';
+  const figures: Array<{ icon: IconName; label: string; short: string; value: string; bad?: boolean }> = [
+    ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && built
       ? [
         ...crewOutput(game, district).map(([c, n]) => ({
-          icon: c as IconName, label: `${c} a minute`, short: c, value: `+${Math.round(n)} /min`,
+          icon: c as IconName, label: `${c} an hour`, short: c, value: `+${formatShort(n)}/h`,
         })),
         // What there is to work, per source (the Quarry has three).
         ...def.harvestSources.map((src) => {
           const cells = game.workableCellsOf(district);
           const n = cells.filter((c) => harvestSourceAt(game.state, c) === src).length;
-          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: String(n) };
+          return { icon: SOURCE_ICON[src], label: `${SOURCE_WORD[src]} in range`, short: SOURCE_WORD[src], value: formatExact(n) };
         }),
       ]
       : []),
-    ...statsAt(game, district, district.level).filter((f) => f.onCard !== false),
+    ...(districtCapacity(game.state, district) > 0 && built
+      ? [{
+        icon: 'Gold' as IconName, label: 'Gold an hour', short: 'Gold',
+        value: `+${formatShort(houseGoldPerMinute(game.state, district) * 60)}/h`,
+      }]
+      : []),
+    ...statsAt(game, district, district.level).filter((f) => f.onCard !== false).map((f) =>
+      (f.key === 'store' && built
+        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(district) }
+        : f.key === 'homes' && built
+          ? { ...f, value: `${formatShort(game.residentsIn(district))}/${formatShort(districtCapacity(game.state, district))}` }
+          : f)),
   ];
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
-    ...figures.map((f) => el('div', { class: 'dc-stat k-section', title: f.label, 'aria-label': `${f.label} ${f.value}` },
+    ...figures.map((f) => el('div', { class: `dc-stat k-section${f.bad ? ' is-bad' : ''}`, title: f.label, 'aria-label': `${f.label} ${f.value}` },
       iconEl(f.icon, { size: 'lg' }),
       el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
         el('div', { class: 'dc-stat-label' }, f.short),

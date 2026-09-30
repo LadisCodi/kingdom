@@ -203,7 +203,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       plaqueIcon.replaceChildren(iconEl(SLOT_ICON[slot.kind]));
       // Workers is a plain count — the villagers free to assign; the rest
       // read as a share of their ceiling.
-      plaqueValue.textContent = slot.kind === 'workers' ? String(slot.value) : `${slot.value}/${slot.max}`;
+      plaqueValue.textContent = slot.kind === 'workers' ? formatCount(slot.value) : `${formatCount(slot.value)}/${formatCount(slot.max)}`;
       plaque.setAttribute('aria-label', slot.kind === 'workers'
         ? `${SLOT_LABEL[slot.kind]} ${slot.value}`
         : `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);
@@ -247,6 +247,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     }
     [...segments.children].forEach((seg, i) => seg.classList.toggle('is-lit', i < held));
     knowTab.classList.toggle('is-full', held >= k.cap);
+    knowTab.classList.toggle('is-kept', game.keepsKnowledgeTab());
     knowNext.textContent = k.full ? 'Full' : (k.nextIn ?? '');
     knowFull.textContent = k.fullIn ?? '';
     knowTurning = !k.full && k.fullIn !== null && k.nextIn !== null;

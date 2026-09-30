@@ -53,6 +53,22 @@ describe('the 2:1 isometric projection', () => {
   });
 });
 
+describe('centring', () => {
+  it('centres a whole footprint on the screen, not its corner cell', () => {
+    const c = iso(800, 600);
+    c.zoom = 1.3;
+    c.centerOnCell({ x: 3, y: 5 }, { x: 2, y: 2 });
+    const b = c.plotBox({ x: 3, y: 5 }, { x: 2, y: 2 });
+    expect(b.x + b.w / 2).toBeCloseTo(400, 6);
+    expect(b.y + b.h / 2).toBeCloseTo(300, 6);
+    // A single cell is the default span, as before.
+    c.centerOnCell({ x: 3, y: 5 });
+    const one = c.cellToScreen({ x: 3, y: 5 });
+    expect(one.x + one.w / 2).toBeCloseTo(400, 6);
+    expect(one.y + one.h / 2).toBeCloseTo(300, 6);
+  });
+});
+
 describe('picking', () => {
   it('round-trips the centre of a cell back to that cell', () => {
     const c = iso();

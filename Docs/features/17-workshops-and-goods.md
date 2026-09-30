@@ -38,10 +38,10 @@
 
 | Workshop | Makes | Footprint | Unlock | Count cap |
 |---|---|---|---|---|
-| **Carpenter** | Planks | 1×1 | `Engineering` | 1 at TH4, 2 at TH8 |
-| **Mason's Yard** | Cut Stone | 1×1 | `Engineering` | 1 at TH4, 2 at TH8 |
-| **Smelter** | Iron | 1×1 | `Mining` | 1 at TH4, 2 at TH8 |
-| **Rune Carver** | Runestone | 1×1 | `Attunement II` | 1 at TH4, 2 at TH8 |
+| **Carpenter** | Planks | 2×2 | `Engineering` | 1 at TH4, 2 at TH8 |
+| **Mason's Yard** | Cut Stone | 2×2 | `Engineering` | 1 at TH4, 2 at TH8 |
+| **Smelter** | Iron | 2×2 | `Mining` | 1 at TH4, 2 at TH8 |
+| **Rune Carver** | Runestone | 2×2 | `Attunement II` | 1 at TH4, 2 at TH8 |
 
 - Max level **10**. Fog ring as any building: reveal 1, discover 2. Movable.
 - A tap opens the queue. It does not hurry the work and costs no Mana.

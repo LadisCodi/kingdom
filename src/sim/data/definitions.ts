@@ -489,11 +489,17 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
 
 // ----------------------------------------------------------------- districts
 
+/** The Build menu's three tabs, in their order on the menu. */
+export const BUILD_TABS = ['Economy', 'Military', 'Decoration'] as const;
+export type BuildTab = typeof BUILD_TABS[number];
+
 export interface DistrictDef {
   id: DistrictId;
   name: string;
   /** The build card's one line (src/ui/buildPromise.ts). */
   promise: string;
+  /** The Build menu tab it is listed under. */
+  buildTab: BuildTab;
   description: string;
   buildable: boolean;
   glyph: string; // placeholder art (fallback when no sprite image is present)

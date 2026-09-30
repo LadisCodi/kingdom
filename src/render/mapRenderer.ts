@@ -33,12 +33,14 @@ import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
+import { formatCount, formatDuration } from '../ui/format';
+import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -46,7 +48,6 @@ export interface MarkerLayer {
   validCells: Array<{ cell: Coord; label: string }>; // valid placement cells
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
-  claimedCells: Coord[]; // cells claimed by the inspected building's workers
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
   yieldCells: Array<{
@@ -56,10 +57,16 @@ export interface MarkerLayer {
   previewGlyph: string | null;
   previewSprite: string | null;
   previewSize: { x: number; y: number } | null; // footprint of the previewed building
+  /** The grid steps the ghost can take — one green arrow each, on the ground
+   *  beside the footprint, pointing that way. */
+  previewSteps: Coord[];
   /** The district currently being MOVED. It is drawn faint at its old address
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
+  /** The building whose card is open: it pulses white, so the player can
+   *  tell which one the card is about. */
+  inspectedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
@@ -78,8 +85,23 @@ export interface MarkerLayer {
  * comes down the marker layer, where it is computed once against the sim's
  * own clock.
  */
+/** The move arrows' bob, 0 → 1 → 0 over a second and a quarter; flat under
+ *  reduced motion. */
+const ARROW_CYCLE_MS = 1250;
+const reducedMotion = typeof matchMedia === 'function'
+  ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+const moveArrowBob = (): number => (reducedMotion?.matches
+  ? 0
+  : 0.5 - 0.5 * Math.cos((performance.now() % ARROW_CYCLE_MS) / ARROW_CYCLE_MS * Math.PI * 2));
+
 const SPELL_CYCLE_MS = 6000;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
+
+/** THE SELECTED BUILDING'S PULSE: 0 → 1 → 0 once every 1.4 s, on the same
+ *  wall clock as the spells and for the same reason. */
+const SELECTED_PULSE_MS = 1400;
+const selectedPulse = (): number =>
+  0.5 - 0.5 * Math.cos((2 * Math.PI * (performance.now() % SELECTED_PULSE_MS)) / SELECTED_PULSE_MS);
 
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
@@ -153,6 +175,55 @@ export function drawMap(
   const mid = (b: PlotBox) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
   /** The bottom corner of a plot's ground diamond — where art STANDS. */
   const base = (b: PlotBox) => ({ x: b.x + b.w / 2, y: b.y + b.h });
+
+  /**
+   * THE GHOST'S MOVE ARROWS (Docs/art/ui-menus-redesign.md §5.6): one green
+   * arrow per grid step the ghost can take, lying flat on the ground just
+   * past the middle of that side of its footprint and pointing along the
+   * grid's axis — so on screen they run diagonally, parallel to the
+   * diamond's edges. They bob gently outward along their axis.
+   */
+  const drawMoveArrows = (cell: Coord, fp: { x: number; y: number }, steps: Coord[]) => {
+    if (steps.length === 0) return;
+    const origin = mid(cellRect(cell));
+    const stepOf = (d: Coord) => {
+      const m = mid(cellRect({ x: cell.x + d.x, y: cell.y + d.y }));
+      return { x: m.x - origin.x, y: m.y - origin.y };
+    };
+    const c = mid(camera.plotBox(cell, fp));
+    const bob = moveArrowBob();
+    for (const d of steps) {
+      const v = stepOf(d);
+      // The other axis, for the arrow's width: on the ground, not the screen.
+      const w = stepOf(d.x !== 0 ? { x: 0, y: 1 } : { x: 1, y: 0 });
+      const half = (d.x !== 0 ? fp.x : fp.y) / 2;
+      const along = half + 0.3 + bob * 0.12;
+      const at = (u: number, k: number) => ({
+        x: c.x + v.x * (along + u) + w.x * k,
+        y: c.y + v.y * (along + u) + w.y * k,
+      });
+      // Tail to tip in cells: a short shaft and a broad head.
+      const pts = [
+        at(0, -0.11), at(0.26, -0.11), at(0.26, -0.26), at(0.55, 0),
+        at(0.26, 0.26), at(0.26, 0.11), at(0, 0.11),
+      ];
+      ctx.save();
+      ctx.beginPath();
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.globalAlpha = 0.92;
+      const g = ctx.createLinearGradient(c.x, c.y - th * 0.3, c.x, c.y + th * 0.3);
+      g.addColorStop(0, PALETTE.moveArrowLight);
+      g.addColorStop(1, PALETTE.moveArrow);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(1.5, size * 0.025);
+      ctx.strokeStyle = PALETTE.moveArrowRim;
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
 
   /**
    * A prop standing on a plot: the first of `keys` whose art exists, drawn
@@ -352,6 +423,15 @@ export function drawMap(
     keys.push(def.sprite);
     let drewExhaustedPlot = false;
     let tall = 0;
+    // Its card is open: a small white pulse — the art a touch brighter and a
+    // soft white glow around its edge — breathing while the card stays up.
+    const inspected = !lifted && district.uniqueId === markers.inspectedDistrictId;
+    if (inspected) {
+      const p = selectedPulse();
+      ctx.save();
+      ctx.filter = `brightness(${(1 + 0.18 * p).toFixed(3)}) `
+        + `drop-shadow(0 0 ${(size * 0.06).toFixed(1)}px rgba(255, 255, 255, ${(0.35 + 0.55 * p).toFixed(3)}))`;
+    }
     punched(coordKey(district.location), box, () => {
       tall = stand(box, keys, def.glyph, (draw) => {
         const drew = flip(draw);
@@ -360,6 +440,7 @@ export function drawMap(
         return drew;
       });
     });
+    if (inspected) ctx.restore();
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.
@@ -391,7 +472,7 @@ export function drawMap(
       // how many you have are one glance instead of two. It also buys the
       // header back the width the widget was costing on a phone.
       if (district.definitionId === 'Townhall') {
-        drawPill(c.x, roof - 2, `${state.city.population}/${maxPopulation(state)}`,
+        drawPill(c.x, roof - 2, `${formatCount(state.city.population)}/${formatCount(maxPopulation(state))}`,
           { icon: 'population' });
         const inLine = unitInTraining(state, district.uniqueId);
         if (inLine) {
@@ -804,33 +885,30 @@ export function drawMap(
     ctx.restore();
   }
 
-  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
-  // along the last ring the player may pay for, drawn over the fog and
-  // across undiscovered ground too, so the extent of what the capital allows
-  // is read off the map before a tap is refused. Nothing is drawn when the
-  // reach holds the whole province.
-  //
-  // The sim answers in N/S/E/W on its square grid; `edgePath` rotates each
-  // one onto the diamond (src/render/iso.ts).
+  // Pass 1.1c: THE WORK AREA the markers carry (a selected building's range,
+  // a placement's, a spell's targets), over the floor and under
+  // everything that stands on it — trees and buildings stand in front of
+  // the line (render/areaOverlays.ts).
+  drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
+    performance.now());
+  // Where a building may go (or a spell may land): ONE region in the work
+  // area's line, not a diamond per cell (render/areaOverlays.ts); its
+  // labels, if any, are Pass 3's.
+  drawAreaLine(ctx, markers.validCells
+    .filter(({ cell }) => fogState(state, map, cell) !== 'Undiscovered')
+    .map(({ cell }) => cell), cellRect, size);
+
+  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A line of white
+  // dots along the last ring the player may pay for, with a soft shadow on
+  // the far side, drawn over the fog and across undiscovered ground too, so
+  // the extent of what the capital allows is read off the map before a tap
+  // is refused. Nothing is drawn when the reach holds the whole province.
   {
     const visible: Coord[] = [];
     for (let cy = view.y0; cy <= view.y1; cy++) {
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
-    const border = reachBorder(state, map, visible);
-    if (border.length > 0) {
-      ctx.save();
-      ctx.strokeStyle = PALETTE.reachBorder;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([Math.max(4, size * 0.18), Math.max(3, size * 0.12)]);
-      ctx.beginPath();
-      for (const { cell, sides } of border) {
-        const box = cellRect(cell);
-        for (const side of sides) edgePath(ctx, box, side);
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
+    drawReach(ctx, reachBorder(state, map, visible), cellRect, size);
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and
@@ -941,7 +1019,7 @@ export function drawMap(
     ctx.font = labelFont(size * 0.15, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, c.x, c.y + 5);
+    ctx.fillText(item.startedAt === null ? 'queued' : formatDuration(remaining), c.x, c.y + 5);
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.
@@ -1077,27 +1155,10 @@ export function drawMap(
     ctx.restore();
   }
 
-  // Pass 3: markers.
-  // Working area: one translucent white region with a crisp outline — border
-  // segments are drawn only on edges that face a cell outside the area.
-  if (markers.influenceCells.length > 0) {
-    const inArea = new Set(markers.influenceCells.map(coordKey));
-    ctx.fillStyle = PALETTE.influenceFill;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) diamondPath(ctx, cellRect(cell));
-    ctx.fill();
-    ctx.strokeStyle = PALETTE.influenceBorder;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) outline(cellRect(cell), cell, inArea);
-    ctx.stroke();
-  }
+  // Pass 3: markers. (The work area is Pass 1.1c: it lies under what stands.)
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const b = cellRect(cell);
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 3);
     if (label) {
       const c = mid(b);
       ctx.fillStyle = markers.validColor;
@@ -1107,25 +1168,27 @@ export function drawMap(
       ctx.fillText(label, c.x, c.y);
     }
   }
-  for (const cell of markers.claimedCells) {
-    ctx.strokeStyle = PALETTE.workedTile;
-    ctx.lineWidth = 3;
-    strokeDiamond(ctx, cellRect(cell), 4);
-  }
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
-    ctx.globalAlpha = 0.6;
-    // The ghost stands on the plot it would occupy, so what the player is
-    // judging is the footprint and not a rectangle floating over it.
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 2);
+    // No footprint diamond: the ghost's rim and its move arrows are what
+    // tell it apart, and a square round its feet was one outline too many.
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
-    stand(b, sprite ? [`${sprite}_l1`, sprite] : [], markers.previewGlyph);
+    const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    // A solid rim round the ghost, opaque under the translucent building,
+    // so it stands out from the grass and the roofs around it.
     ctx.globalAlpha = 1;
+    const foot = base(b);
+    const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostOutline, rim));
+    ctx.globalAlpha = 0.6;
+    stand(b, keys, markers.previewGlyph);
+    ctx.globalAlpha = 1;
+    drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
   }
-  if (markers.selected) {
+  // A placement's or a move's target is the ghost itself; only a spell's
+  // target keeps the outline.
+  if (markers.selected && !markers.previewCell) {
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     strokeDiamond(ctx, camera.plotBox(markers.selected, markers.selectedSize ?? { x: 1, y: 1 }), 2);
@@ -1236,7 +1299,7 @@ export function drawMap(
   // building with something in its store (render/collectBubbles.ts).
   const clock = performance.now();
   for (const district of state.city.districts) {
-    if (!readyToCollect(district)) { bubbles.forget(district.uniqueId); continue; }
+    if (!readyToCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
     const art = artOf.get(district.uniqueId);
     if (!art) continue;
     const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);

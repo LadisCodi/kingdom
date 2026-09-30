@@ -23,13 +23,13 @@
 
 | State | Shows |
 |---|---|
-| Below the ceiling | what is happening, the crew as pips, and one priced button |
-| **At** the ceiling | the same, and **no button** |
+| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot |
+| **At** the ceiling | the same, and **no hire** |
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player
   to the positioned ghost.
-- The sheet says a job can be finished to free a builder; it does not sell the
-  Gem rush.
+- A job that ends while the sheet is open — on its own or by Finish — turns
+  its builder's row into a Build for the positioned ghost.
 
 ## 3. The price
 
@@ -63,7 +63,6 @@
 - A waiting line, and any promotion or reordering logic (§1).
 - A `buildQueueCapacity` dial alongside the builder count.
 - A free trial of a builder.
-- Rushing offered inline in the offer sheet.
 - A store card for builders ([`14-monetization.md`](14-monetization.md) §2).
 - Cancelling a build, and the refund that went with it (§1).
 

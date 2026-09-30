@@ -53,6 +53,7 @@ Four things about the composer, each learned the expensive way:
 | Asset | Footprint | Projection | Notes |
 |---|---|---|---|
 | `townhall_l1` | 2×2 | 1.99:1 | the first probe; two passes — the first came back at 1.57:1 on a turf block |
+| the military halls, the Sanctum and the workshops, all tiers | 2×2 | as their 1×1 cut | re-cut from the same masters with `norm_iso.py <master> 2 2`: a 1×1 plot drew them as models beside the Townhall |
 
 **Not yet in `src/render/assets/`.** The renderer is still top-down until lane A
 lands ([`../../plans/the-4x-build.md`](../../plans/the-4x-build.md) §2), and an

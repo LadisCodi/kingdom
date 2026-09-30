@@ -7,7 +7,7 @@ import { newGame } from '../src/sim/newGame';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import {
-  PAYER_PROFILES, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile, formatUsd,
+  PAYER_PROFILES, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthIndex, monthResetsAt, monthlyBudgetCents, priceCents,
 } from '../src/sim/store';
 import { seasonAt } from '../src/sim/collection';
@@ -45,12 +45,6 @@ describe('the payer profile', () => {
   it('has no budget to report until it exists', () => {
     expect(budgetRemainingCents(blank(), T0)).toBeNull();
     expect(buySku(blank(), 'GemsPouch', T0)).toBe('NoProfile');
-  });
-
-  it('prints dollars the way a store does', () => {
-    expect(formatUsd(199)).toBe('$1.99');
-    expect(formatUsd(5000)).toBe('$50.00');
-    expect(formatUsd(200_000)).toBe('$2,000.00');
   });
 });
 

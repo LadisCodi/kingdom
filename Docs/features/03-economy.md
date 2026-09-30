@@ -183,11 +183,14 @@ running. Research already worked this way.
 
 **Collecting.**
 
-- A store is **ready** once it holds `storage.collectFraction` (0.002, about a
-  minute of a full building) of its capacity, or is full.
+- A store is **ready** once it holds `storage.collectSeconds` (30) of what the
+  building makes now — a house's rent, a crew at its main source — or is full.
+- A building making nothing (no residents, no crew) is ready with anything in it.
 - A tap on a building whose store is ready moves the **whole store** to the
   wallet. It is **free** — no Mana — and does nothing else.
 - A tap on a building that is not ready opens its card, as always.
+- The card has no Collect: its **Storage** tile reads what the store holds
+  against its capacity (*120/8.6k*), in clay when full.
 - Holding the pointer on a ready building collects once.
 - Collecting is where a `collect` event (quests, missions) and a first
   discovery of a currency are recorded — never when rent accrues or a haul
@@ -285,7 +288,7 @@ and research**.
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
 | Store capacity per level | about 8 h of the building at level 1, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
-| Ready to collect | 0.002 of capacity — about a minute | `storage.collectFraction` |
+| Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
 | Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |

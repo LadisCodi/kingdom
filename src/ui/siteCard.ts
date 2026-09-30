@@ -17,7 +17,7 @@ import { manaCap } from '../sim/mana';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Coord, LairId } from '../sim/state';
 import { landmarkDefAt } from '../sim/sites';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { action, btn, closeKnob, iconEl, panel, sectionHead, stat, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
 
@@ -44,7 +44,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     // (which is also a bigger reward every time an ad refills it), and a
     // lantern held up over the map around it.
     el('div', { class: 'site-gift' },
-      stat('Mana', `+${MANA.landmarkCap}`, 'to your pool, for good'),
+      stat('Mana', `+${formatExact(MANA.landmarkCap)}`, 'to your pool, for good'),
       // `showme` is the "look over there" glyph the quest pill already uses,
       // and looking is exactly what a claim buys here — not owning.
       stat('showme', `${FOG.claimDiscoverRadius * 2 + 1}×${FOG.claimDiscoverRadius * 2 + 1}`,
@@ -56,8 +56,8 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
       iconEl('tick', { size: 'sm' }),
       // Spelled out against the running total, because the value of a claim
       // is what it made the ceiling, not the number on the tin.
-      `Holding ${MANA.landmarkCap} more Mana. `
-      + `Your pool: ${manaCap(game.state)}.`));
+      `Holding ${formatExact(MANA.landmarkCap)} more Mana. `
+      + `Your pool: ${formatExact(manaCap(game.state))}.`));
     return panel(body);
   }
 
@@ -66,7 +66,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   // thing. Relic upkeep is gone, so the old "how many relics you can wear"
   // framing would be describing a rule that no longer exists.
   body.append(el('div', { class: 'site-note' },
-    `Claiming it holds ${MANA.landmarkCap} more Mana, for good — a longer run of `
+    `Claiming it holds ${formatExact(MANA.landmarkCap)} more Mana, for good — a longer run of `
     + 'taps, and more from every refill. It also lifts the fog for '
     + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
     + 'though clearing it is still yours to pay for.'));
@@ -129,11 +129,11 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
     const chips: HTMLElement[] = [];
     for (const [c, n] of Object.entries(lair.hoard) as Array<[RaidableId, number]>) {
       if (n <= 0) continue;
-      chips.push(rewardChip(c, String(n), lair.hoardFull[c] === true ? 'full' : undefined));
+      chips.push(rewardChip(c, formatExact(n), lair.hoardFull[c] === true ? 'full' : undefined));
     }
     const reward = game.lairReward(lairId);
-    if (reward.heroXp > 0) chips.push(rewardChip('HeroXp', String(reward.heroXp)));
-    if (reward.knowledge > 0) chips.push(rewardChip('Knowledge', String(reward.knowledge)));
+    if (reward.heroXp > 0) chips.push(rewardChip('HeroXp', formatExact(reward.heroXp)));
+    if (reward.knowledge > 0) chips.push(rewardChip('Knowledge', formatExact(reward.knowledge)));
 
     root.replaceChildren(frame,
       windowHead(def.name, [closeKnob(() => game.dismiss(), `Close ${def.name}`)]),

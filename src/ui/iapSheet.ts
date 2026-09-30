@@ -11,8 +11,8 @@
 import type { Game } from '../game';
 import { STORE } from '../sim/data/definitions';
 import type { StoreSkuId } from '../sim/state';
-import { formatUsd, priceCents } from '../sim/store';
-import { el } from './format';
+import { priceCents } from '../sim/store';
+import { el, formatExact, formatUsd } from './format';
 import { btn, iconEl, sheet } from './kit';
 
 export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
@@ -41,7 +41,7 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
         // A SKU that grants no Gems on purchase says what it DOES instead:
         // "0 Gems" would be a true sentence and a wrong one.
         el('div', { class: 'iap-grant' },
-          sku.gems > 0 ? `${sku.gems} Gems` : sku.description))),
+          sku.gems > 0 ? `${formatExact(sku.gems)} Gems` : sku.description))),
     ...(grants.length === 0 ? [] : [el('div', { class: 'iap-grants' },
       ...grants.map((line) => el('div', { class: 'iap-grant-line' },
         iconEl('tick', { size: 'sm' }), el('span', {}, line))))]),

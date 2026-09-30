@@ -15,7 +15,7 @@ import {
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
-import { advance, type AdvanceResult } from './commands';
+import { advance, settleFootprints, type AdvanceResult } from './commands';
 import { withoutTallies } from './events';
 import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
@@ -1436,6 +1436,9 @@ export function deserialize(
   // than live; everything else in `advance()` is untouched by the flag, so
   // invariant 1 still holds.
   const report = withoutTallies(state, () => advance(state, map, now));
+  // A footprint may have grown in the data since this city was built: put
+  // every building back on ground it may stand on (commands.ts).
+  settleFootprints(state, map, now);
   onCatchUp?.({
     elapsedMs: Math.max(0, now - lastSaved),
     storesFull: state.city.districts.some(isStoreFull),

@@ -17,7 +17,7 @@
 
 import { CURRENCIES } from '../../sim/data/definitions';
 import type { CurrencyId, DistrictId, GoodId, UnitId, Wallet } from '../../sim/state';
-import { el } from '../format';
+import { el, formatExact } from '../format';
 import { ATLAS_CELLS } from './atlas.generated';
 
 /** Names that are not currencies or districts.
@@ -183,7 +183,7 @@ export const currencyIcon = (c: CurrencyId, opts: IconOpts = {}): HTMLElement =>
 /** "20 <wood>" as nodes — the amount, then its icon. */
 export function amountEls(amount: number, c: CurrencyId, opts: IconOpts = {}): DocumentFragment {
   const frag = document.createDocumentFragment();
-  frag.append(String(amount), currencyIcon(c, { size: 'sm', ...opts }));
+  frag.append(formatExact(amount), currencyIcon(c, { size: 'sm', ...opts }));
   return frag;
 }
 

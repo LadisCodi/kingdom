@@ -57,6 +57,7 @@ import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
+import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
 import { legacy, ScreenSlot } from './ui/kit/host';
@@ -76,6 +77,7 @@ async function boot(): Promise<void> {
   }
   if (dev === 'data') {
     const { mountEditor } = await import('./editor/data/mount');
+    dismissBootScreen();
     mountEditor();
     return;
   }
@@ -247,7 +249,8 @@ async function boot(): Promise<void> {
     if (game.mode.kind === 'placing' || game.mode.kind === 'moving') {
       // One key for both: the bar is the same element, and re-keying it would
       // tear the panel down between placing and moving for no visible reason.
-      panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
+      // The window carries its own close (placementPanel.ts), so no legacy knob.
+      panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
     } else if (site !== null && standingLairAt(game.state, site)) {
@@ -337,6 +340,7 @@ async function boot(): Promise<void> {
     (sx, sy) => game.handleHold(sx, sy),
     (sx, sy) => game.grabGhost(sx, sy),
     (sx, sy) => game.dragGhostTo(sx, sy),
+    (held) => game.holdGhost(held),
   );
 
   // ------------------------------------------------------- the single tick
@@ -374,6 +378,7 @@ async function boot(): Promise<void> {
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
+  void revealWhenReady();
 
   // ?dev=kit — the UI-kit gallery, in place of the game. Mounted before the
   // time-warp bar so it takes the whole screen.
@@ -580,4 +585,9 @@ async function boot(): Promise<void> {
   refreshScreens();
 }
 
-void boot();
+// Whatever goes wrong, the loading screen must not be what the player is
+// left looking at.
+boot().catch((err) => {
+  dismissBootScreen();
+  throw err;
+});

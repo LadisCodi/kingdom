@@ -31,7 +31,7 @@ import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
 import type { UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
@@ -66,7 +66,7 @@ export interface BattleView {
 const squadCell = (face: HTMLElement, count: number): HTMLElement =>
   el('span', { class: 'bt-cell is-filled' },
     el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, face)),
-    el('span', { class: 'bt-count' }, `×${count}`));
+    el('span', { class: 'bt-count' }, `×${formatExact(count)}`));
 
 const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
 const emptyCard = (): HTMLElement => el('span', { class: 'bt-card is-empty', 'aria-hidden': 'true' });
@@ -86,7 +86,7 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
   headPanel({
     tone: cls.includes('is-enemy') ? 'red' : 'blue',
     title: label,
-    trailing: [iconEl('power', { size: 'sm' }), String(power)],
+    trailing: [iconEl('power', { size: 'sm' }), formatExact(power)],
     cls: `bt-army ${cls}`,
   }, ...groups);
 
@@ -127,7 +127,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
       },
       el('span', { class: 'k-portrait' },
         el('span', { class: 'k-portrait-mask' }, unitBust(slot.unitId, 'k-portrait-art'))),
-      el('span', { class: 'bt-count' }, `×${slot.count}`));
+      el('span', { class: 'bt-count' }, `×${formatExact(slot.count)}`));
       cell.addEventListener('click', () => game.clearTroopSlot(index));
       return cell;
     });
@@ -153,7 +153,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
       },
       iconEl('padlock', { size: 'md' }),
       ...(next ? [el('span', { class: 'bt-price' },
-        iconEl('Gems', { size: 'sm' }), String(game.heroSlotOffer().cost))] : []));
+        iconEl('Gems', { size: 'sm' }), formatExact(game.heroSlotOffer().cost))] : []));
       cell.addEventListener('click', () => game.doBuyHeroSlot());
       heroes.push(cell);
     }
@@ -179,7 +179,7 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
   },
   el('span', { class: 'bt-cell is-filled' },
     el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, unitBust(unitId, 'k-portrait-art'))),
-    el('span', { class: 'bt-count' }, String(left))),
+    el('span', { class: 'bt-count' }, formatExact(left))),
   el('span', { class: 'bt-troop-name' }, UNITS[unitId].name));
   tile.addEventListener('click', () => game.assignTroop(unitId));
   return tile;
@@ -192,7 +192,7 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
   const price = el('div', { class: 'bt-go-price' },
     ...Object.entries(view.supplies).map(([c, n]) =>
       el('span', { class: `bt-go-chip${game.walletValue(c as never) < (n as number) ? ' is-short' : ''}` },
-        iconEl(c as never), el('b', {}, String(n)))));
+        iconEl(c as never), el('b', {}, formatExact(n as number)))));
   const hint = view.blocked
     ?? (view.fallen === 0 ? 'No soldiers lost' : `Expected losses: ~${view.fallen} soldier${view.fallen === 1 ? '' : 's'}`);
   return el('div', { class: 'bt-go k-section' },

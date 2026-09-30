@@ -10,10 +10,10 @@
 import atlasUrl from './characters/atlas.png?url';
 import { CHARACTERS, CHAR_HEIGHT, type CharFrame } from './characters/atlas.generated';
 import { FRAME_MS } from './cast';
+import { loadImage } from './imageLoad';
 
-const atlas = { img: new Image(), ready: false };
-atlas.img.onload = () => { atlas.ready = true; };
-atlas.img.src = atlasUrl;
+// Every villager draws from it, so it is requested as soon as this loads.
+const atlas = loadImage(atlasUrl);
 
 /** The frame `anim` of `character` shows at time `t`, or null when the atlas
  *  has no such animation. Cadence is per animation (`FRAME_MS`). */

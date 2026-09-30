@@ -16,11 +16,11 @@ import {
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier,
 } from './sim/data/definitions';
-import { formatCount, formatDuration, formatExact } from './ui/format';
+import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
-  buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
+  buildDurationForCell, canMoveDistrict, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
   requiredPopulation,
 } from './sim/districts';
@@ -114,7 +114,7 @@ import {
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
-  type Wallet,
+  type QueueItem, type Wallet,
 } from './sim/state';
 import {
   anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
@@ -336,6 +336,12 @@ export const BATTLE_RESULT_DELAY_MS = 2000;
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
+  /** A finger is on the ghost and carrying it: its move arrows hide, because
+   *  the finger is already saying which way it goes. */
+  ghostHeld = false;
+  /** What the builder sheet was raised for — the build on the ghost, or an
+   *  upgrade — so a builder freed while it is open offers that exact job. */
+  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string } = { kind: 'build' };
   /** Which card panel is open over the battle screen, if any. */
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
@@ -589,7 +595,7 @@ export class Game {
     for (const d of result.deposits) this.collectBubbles.bump(d.cell);
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
-      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(result.trainedPopulation)}`, 'population');
     }
     // A quiet splash when a fishing boat sets out (one per tick, max).
     let splashed = false;
@@ -628,7 +634,7 @@ export class Game {
     const raided = result.raids.filter((r) => Object.keys(r.took).length > 0);
     if (raided.length === 1) {
       const raid = raided[0];
-      const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
+      const took = Object.entries(raid.took).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
       this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
     } else if (raided.length > 1) {
       this.toast(`${raided.length} raids on the city while you were away`);
@@ -645,7 +651,7 @@ export class Game {
         icon: '\u{1F5D3}',
         name: opened.name,
         desc: closed.cards > 0
-          ? `${closed.cards} cards melted down for ${formatExact(closed.gold)} gold. `
+          ? `${formatExact(closed.cards)} cards melted down for ${formatExact(closed.gold)} gold. `
             + 'A fresh album, and your relics keep every level.'
           : 'A fresh album, and your relics keep every level.',
         tone: 'gold',
@@ -751,7 +757,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+          this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
         }
         this.notify();
         return true;
@@ -765,7 +771,7 @@ export class Game {
         // A building with something in its store: the tap COLLECTS, free, and
         // does nothing else. The next tap, with the store empty, opens it
         // (Docs/features/03-economy.md §3.2).
-        if (district && district.state === 'Built' && readyToCollect(district)) {
+        if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
           this.collectStoreOf(district);
           this.notify();
           return true;
@@ -814,12 +820,6 @@ export class Game {
         return true;
       },
     });
-  }
-
-  /** The card's Collect button: the same collect a tap on the building makes. */
-  collectFromCard(district: District): void {
-    this.collectStoreOf(district);
-    this.notify();
   }
 
   /** Empty a building's store into the purse, with the tap's own feedback:
@@ -904,7 +904,7 @@ export class Game {
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
-      this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
+      this.floaters.add(cell, `+${formatExact(units)}`, HARVEST[source].currencyId);
       this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
@@ -949,7 +949,7 @@ export class Game {
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && readyToCollect(district)) {
+    if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
       this.collectStoreOf(district);
       this.notify();
       return true;
@@ -981,7 +981,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, `\u2212${charged}`, 'Gold');
+      this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
     }
     this.notify();
     return true;
@@ -989,22 +989,71 @@ export class Game {
 
   // ------------------------------------------------------------ placement mode
 
+  /**
+   * Where a ghost appears: the legal cell closest to the Townhall that the
+   * player can actually SEE. The closest cell is often right behind the
+   * Townhall, whose art stands over it — the ghost then appeared under the
+   * roof. So the cells are walked nearest first and the first one whose
+   * ground is not hidden behind a building is taken; only if every one is
+   * hidden does the nearest win anyway.
+   */
+  defaultPlacementCell(definitionId: DistrictId): Coord | null {
+    const size = DISTRICTS[definitionId].size;
+    const cells = validPlacementCells(this.state, this.map, definitionId)
+      .map((c) => ({ c, d: townhallDistance(this.map, c) }))
+      .sort((a, b) => a.d - b.d);
+    if (cells.length === 0) return null;
+    return (cells.find(({ c }) => !this.hiddenBehindBuilding(c, size)) ?? cells[0]).c;
+  }
+
+  /**
+   * Is a footprint at `cell` mostly covered by a building's art standing in
+   * front of it? Worked on the projected plane (zoom does not matter): a
+   * plot's ground diamond has a box (sx + sy) half-tiles wide and half as
+   * tall, and a building's art rises from the box's bottom to about 0.85 of
+   * its width above it (the Townhall's is 0.75, a house's 0.88).
+   */
+  private hiddenBehindBuilding(cell: Coord, size: { x: number; y: number }): boolean {
+    const HALF_W = 64;
+    const HALF_H = 32;
+    const ART_RISE = 0.85;
+    const box = (c: Coord, s: { x: number; y: number }) => {
+      const cx = (c.x + s.x / 2 - (c.y + s.y / 2)) * HALF_W;
+      const cy = (c.x + s.x / 2 + (c.y + s.y / 2)) * HALF_H;
+      const w = (s.x + s.y) * HALF_W;
+      const h = (s.x + s.y) * HALF_H;
+      return { x0: cx - w / 2, x1: cx + w / 2, y0: cy - h / 2, y1: cy + h / 2, w };
+    };
+    const ground = box(cell, size);
+    const area = (ground.x1 - ground.x0) * (ground.y1 - ground.y0);
+    const depth = cell.x + cell.y + size.x + size.y;
+    return this.state.city.districts.some((d) => {
+      const s = DISTRICTS[d.definitionId].size;
+      // Only a building IN FRONT hides it: nearer the viewer, deeper on screen.
+      if (d.location.x + d.location.y + s.x + s.y <= depth) return false;
+      const b = box(d.location, s);
+      const art = { x0: b.x0, x1: b.x1, y0: b.y1 - b.w * ART_RISE, y1: b.y1 };
+      const ox = Math.min(ground.x1, art.x1) - Math.max(ground.x0, art.x0);
+      const oy = Math.min(ground.y1, art.y1) - Math.max(ground.y0, art.y0);
+      return ox > 0 && oy > 0 && (ox * oy) / area > 0.25;
+    });
+  }
+
+  /** What a build card quotes: the wait at the cell its ghost would appear
+   *  on, so the card and the placement bar say the same number. */
+  buildCardDuration(definitionId: DistrictId): number {
+    const cell = this.defaultPlacementCell(definitionId) ?? townhall(this.state)?.location;
+    return cell ? buildDurationForCell(this.state, definitionId, cell, this.map) : 0;
+  }
+
   startPlacement(definitionId: DistrictId): void {
-    const valid = validPlacementCells(this.state, this.map, definitionId);
     // Auto-select the legal cell closest to the Townhall; center the camera on it.
-    let selected: Coord | null = null;
-    let best = Infinity;
-    for (const c of valid) {
-      const d = townhallDistance(this.map, c);
-      if (d < best) {
-        best = d;
-        selected = c;
-      }
-    }
+    const selected = this.defaultPlacementCell(definitionId);
+    this.ghostHeld = false;
     this.mode = { kind: 'placing', definitionId, selected };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected);
+    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size);
     this.notify();
   }
 
@@ -1032,6 +1081,9 @@ export class Game {
     };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
+    // The ghost is out where the building stands: bring it into view, as
+    // placement does for a new one.
+    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
     this.notify();
   }
 
@@ -1131,7 +1183,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
+      this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
     }
     if (report.activeId === 'Reap' && target) {
       this.floaters.add(target, `${report.taps} taps, free`);
@@ -1140,7 +1192,7 @@ export class Game {
       this.floaters.add(target, `${report.affected.length} crews hurried`);
     }
     if (report.activeId === 'Tithe' && target) {
-      this.floaters.add(target, `+${Math.round(report.goldSaved)}`, 'Gold');
+      this.floaters.add(target, `+${formatExact(Math.round(report.goldSaved))}`, 'Gold');
     }
     if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
@@ -1651,7 +1703,7 @@ export class Game {
       playSfx('upgradeBought');
       this.toast(`${many.bought} × ${tier} — open them in the Collection`);
     } else {
-      this.toast(`${vaultCost(tier) * count} stars for ten — not yet`);
+      this.toast(`${formatExact(vaultCost(tier) * count)} stars for ten — not yet`);
     }
     this.notify();
   }
@@ -1840,7 +1892,7 @@ export class Game {
   doBuyFromVault(tier: VaultTier): void {
     const result = buyFromVault(this.state, tier);
     if (result === 'Opened') playSfx('upgradeBought');
-    else this.toast(`${vaultCost(tier)} stars for a ${tier} pack — not yet`);
+    else this.toast(`${formatExact(vaultCost(tier))} stars for a ${tier} pack — not yet`);
     this.notify();
   }
 
@@ -1855,7 +1907,7 @@ export class Game {
     const result = refillManaWithGems(this.state, this.now());
     if (result === 'Refilled') {
       playSfx('gemSpend');
-      this.floaters.add(townhall(this.state).location, `+${manaCap(this.state)}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(manaCap(this.state))}`, 'Mana');
     }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     if (result === 'NoneLeft') this.toast('No more Gem refills today');
@@ -1962,6 +2014,12 @@ export class Game {
     return { gold: knowledgeGoldPrice(this.state, count), gems: knowledgeGemPrice(count) };
   }
 
+  /** Whether the open menu spends Knowledge, so its tab under the plank stays
+   *  down rather than stepping aside with every other menu. */
+  keepsKnowledgeTab(): boolean {
+    return this.openOverlay === 'research' || this.openOverlay === 'knowledge';
+  }
+
   /** The Knowledge sheet: the bar, and buying points with Gold or Gems. */
   openKnowledge(): void {
     this.setOverlay('knowledge');
@@ -1980,7 +2038,7 @@ export class Game {
   /** A number rising off the Knowledge tab. Nothing on the map is its source,
    *  so it floats from the Townhall like Mana's. */
   private floatKnowledge(amount: number): void {
-    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${amount}` : `${amount}`, 'Knowledge');
+    this.floaters.add(townhall(this.state).location, amount > 0 ? `+${formatExact(amount)}` : formatExact(amount), 'Knowledge');
   }
 
   // ------------------------------------------------------------- ad offers
@@ -2219,7 +2277,7 @@ export class Game {
   private announceChest(haul: Wallet): void {
     playSfx('quest');
     const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
-      .map(([c, n]) => `+${n} ${c}`);
+      .map(([c, n]) => `+${formatExact(n)} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
     this.reward(haul);
@@ -2303,7 +2361,7 @@ export class Game {
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
-      this.floaters.add(townhall(this.state).location, `+${reward}`, 'Mana');
+      this.floaters.add(townhall(this.state).location, `+${formatExact(reward)}`, 'Mana');
     }
     this.adWatchStartedAt = null;
     this.setOverlay(null);
@@ -2317,9 +2375,12 @@ export class Game {
     if (result === 'Started') {
       playSfx('buildPlaced');
       this.mode = { kind: 'normal' };
+      // Confirmed from a free builder's row: the sheet was only in the way.
+      if (this.openOverlay === 'builder') this.openOverlay = null;
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
     } else if (result === 'NoBuilderFree') {
+      this.builderAsk = { kind: 'build' };
       this.offerBuilder();
     } else {
       this.toast(this.refusalWords(result, definitionId, 1));
@@ -2340,11 +2401,11 @@ export class Game {
     }
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
-      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+      return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
     }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
-      return `Needs ${need} villagers — you have ${this.state.city.population}. Train more at the Townhall`;
+      return `Needs ${formatExact(need)} villagers — you have ${formatExact(this.state.city.population)}. Train more at the Townhall`;
     }
     return result;
   }
@@ -2392,6 +2453,43 @@ export class Game {
       ceiling: KINGDOM_DEF.maxBuilders,
       cost,
       affordable: this.walletValue('Gems') >= cost,
+    };
+  }
+
+  /** Every job the crew is on, in the order they were given — one row of
+   *  the builder sheet each. */
+  builderJobs(): Array<{ item: QueueItem; district: District; name: string; task: string }> {
+    return this.state.city.queue.flatMap((item) => {
+      const district = districtById(this.state, item.districtUniqueId);
+      if (!district) return [];
+      const task = item.kind === 'upgrade'
+        ? `Upgrading to Lv ${item.targetLevel ?? district.level + 1}`
+        : 'Building';
+      return [{ item, district, name: districtLabel(this.state, district), task }];
+    });
+  }
+
+  /**
+   * The job the builder sheet was raised for, as a free builder's row offers
+   * it: what it is, what it costs, and the press that starts it. Null when
+   * that job is gone — the ghost was put away, the building is at its top.
+   */
+  builderAskJob(): { verb: string; what: string; cost: Wallet; start: () => void } | null {
+    const ask = this.builderAsk;
+    if (ask.kind === 'build') {
+      if (this.mode.kind !== 'placing' || !this.mode.selected) return null;
+      const def = DISTRICTS[this.mode.definitionId];
+      return {
+        verb: 'Build', what: `Ready to build the ${def.name}`,
+        cost: nextBuildCost(this.state, def.id), start: () => this.confirmBuild(),
+      };
+    }
+    const d = districtById(this.state, ask.districtUniqueId);
+    if (!d || d.level >= DISTRICTS[d.definitionId].maxLevel) return null;
+    return {
+      verb: 'Upgrade', what: `Ready to upgrade the ${DISTRICTS[d.definitionId].name}`,
+      cost: upgradeCost(d.definitionId, d.ordinal, d.level),
+      start: () => { this.doUpgrade(d.uniqueId); },
     };
   }
 
@@ -2560,8 +2658,11 @@ export class Game {
     } else if (result === 'NoBuilderFree') {
       // An upgrade occupies a builder exactly as a build does, so it hits the
       // same wall and deserves the same offer rather than a bare refusal.
+      this.builderAsk = { kind: 'upgrade', districtUniqueId: districtId };
       this.offerBuilder();
-    } else if (result !== 'Started') {
+    } else if (result === 'Started') {
+      if (this.openOverlay === 'builder') this.openOverlay = null;
+    } else {
       const d = districtById(this.state, districtId);
       this.toast(d === undefined
         ? result
@@ -2639,7 +2740,6 @@ export class Game {
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
       case 'payerProfile': return 'payer';
-      case 'builder': return JSON.stringify(this.builderOffer());
       // `endsIn` is a string the season formats; when it changes, the sheet
       // should, and not before.
       case 'daily': return JSON.stringify(this.dailySeason());
@@ -2842,7 +2942,7 @@ export class Game {
       }
       this.setOverlay(null);
       this.inspectedDistrictId = district.uniqueId;
-      this.camera.centerOnCell(district.location);
+      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
       this.notify();
     };
     const built = (pred: (d: District) => boolean) =>
@@ -3054,7 +3154,7 @@ export class Game {
     const result = claimLandmark(this.state, this.map, cell);
     if (result === 'Claimed') {
       playSfx('upgradeBought');
-      this.floaters.add(cell, `+${manaProduction(this.state) - before}/h`, 'Mana');
+      this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
       this.queueBanner({
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
@@ -3676,7 +3776,7 @@ export class Game {
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${committedTroops(this.state)}/${armyCap(this.state)}) — build or upgrade a military building`);
+      this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
     this.notify();
   }
@@ -3762,7 +3862,7 @@ export class Game {
   }
 
   /** Under its cap, somewhere legal to put it, and affordable this second. */
-  private canBuildNow(id: DistrictId): boolean {
+  canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
     if (validPlacementCells(this.state, this.map, id).length === 0) return false;
@@ -3807,14 +3907,15 @@ export class Game {
       validCells: [],
       validColor: PALETTE.validTarget,
       influenceCells: [],
-      claimedCells: [],
       yieldCells: [],
       previewCell: null,
       previewGlyph: null,
       previewSprite: null,
       previewSize: null,
+      previewSteps: this.ghostSteps(),
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
+      inspectedDistrictId: this.inspectedDistrictId,
       hintCell: this.hintCell(),
       spellZones: this.spellZones(),
     };
@@ -3828,8 +3929,8 @@ export class Game {
           (cell) => ({ cell, label: '' }),
         );
       }
-      layer.selected = this.mode.selected;
-      layer.selectedSize = def.size;
+      // No footprint outline: the ghost's own rim and its move arrows say
+      // which building is out and where it stands.
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
@@ -3854,9 +3955,9 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
-        layer.influenceCells = cellsWithinRadiusOfRect(
+        layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
-        );
+        ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
             // What each captured cell HOLDS, so a Sawmill's radius shows which
@@ -3876,8 +3977,8 @@ export class Game {
           this.state, this.map, this.mode.definitionId, this.mode.districtUniqueId,
         ).map((cell) => ({ cell, label: '' }));
       }
-      layer.selected = this.mode.selected;
-      layer.selectedSize = def.size;
+      // No footprint outline: the ghost's own rim and its move arrows say
+      // which building is out and where it stands.
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
@@ -3898,10 +3999,10 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
-          layer.influenceCells = cellsWithinRadiusOfRect(
+          layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
             levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
-          );
+          ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
@@ -3940,7 +4041,7 @@ export class Game {
             activeRadius(this.state, this.mode.artifactId),
           ).map((cell) => ({
             cell,
-            label: String(divinationSaving(this.state, this.map, cell)),
+            label: formatCount(divinationSaving(this.state, this.map, cell)),
             icon: 'Gold' as const,
             tone: 'good' as const,
           }));
@@ -3954,14 +4055,12 @@ export class Game {
       }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
+      // No selection outline: the building pulses white while its card is
+      // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
-        layer.selected = district.location;
-        layer.selectedSize = DISTRICTS[district.definitionId].size;
         if (district.state === 'Built') {
-          layer.influenceCells = influenceCells(this.map, district);
-          layer.claimedCells = this.state.workers
-            .filter((w) => w.buildingId === district.uniqueId && w.claimedCell !== null)
-            .map((w) => w.claimedCell!);
+          layer.influenceCells = withFootprint(influenceCells(this.map, district),
+            district.location, DISTRICTS[district.definitionId].size);
         }
       }
     }
@@ -4115,6 +4214,46 @@ export class Game {
     this.notify();
   }
 
+  /** The finger is on the ghost (true) or has let go (false). */
+  holdGhost(held: boolean): void {
+    if (this.ghostHeld === held) return;
+    this.ghostHeld = held;
+    this.notify();
+  }
+
+  /**
+   * Which ways the ghost can step: one grid axis each, and only where the
+   * next cell that way is legal — so the arrows say where it can go, and
+   * their absence where it cannot.
+   */
+  ghostSteps(): Coord[] {
+    if (this.ghostHeld) return [];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return [];
+    const at = this.mode.selected;
+    if (!at) return [];
+    const { definitionId } = this.mode;
+    const movingId = this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined;
+    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) => {
+      const cell = { x: at.x + d.x, y: at.y + d.y };
+      return this.map.terrain.has(coordKey(cell))
+        && placementBlock(this.state, this.map, definitionId, cell, movingId) === null;
+    });
+  }
+
+  /**
+   * The placement window's close. A build goes back to the Build menu it
+   * came from — on the tab it was picked from — so the player can compare;
+   * a move goes back to the card it was started from.
+   */
+  closePlacement(): void {
+    const mode = this.mode;
+    this.mode = { kind: 'normal' };
+    this.ghostHeld = false;
+    if (mode.kind === 'placing') this.openOverlay = 'build';
+    else if (mode.kind === 'moving') this.inspectedDistrictId = mode.districtUniqueId;
+    this.notify();
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
@@ -4197,9 +4336,9 @@ export class Game {
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy
     // no research, so they stand down.
-    // Knowledge rides the plank here as well: its tab under the plank steps
-    // aside while any menu is open, like the Settings knob.
-    if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
+    // Knowledge is not on the plank: its tab hangs under it and stays down
+    // while a menu that spends it is open (`keepsKnowledgeTab`).
+    if (this.openOverlay === 'research') return ['Gold'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [
@@ -4311,7 +4450,7 @@ function providedYieldLabel(
   const spec = HARVEST[provides];
   const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel {
@@ -4322,7 +4461,7 @@ function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel
   // Toned against the authored stock, so richer and poorer ground read at a
   // glance rather than needing the player to remember the baseline.
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
-  return { label: String(held), icon: spec.currencyId, tone };
+  return { label: formatCount(held), icon: spec.currencyId, tone };
 }
 
 /** How hard a worker's strike punches the cell, against the player's 1. Enough
@@ -4350,7 +4489,7 @@ function resourceBanner(currency: CurrencyId): Banner {
   const desc = currency === 'Gold'
     ? 'Pays for everything'
     : def.goldValue !== null
-      ? `Sells for ${def.goldValue} ${icon('Gold')}`
+      ? `Sells for ${formatExact(def.goldValue)} ${icon('Gold')}`
       : '';
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
@@ -4410,6 +4549,17 @@ export function formatSigned(goldPerMinute: number): string {
 }
 
 /** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
+/** A building's range as the map DRAWS it: its rings AND the ground it
+ *  stands on. The sim's rings start at 1 — the footprint is not worked —
+ *  and drawn without it the area has a hole, outlined round the building. */
+function withFootprint(cells: Coord[], anchor: Coord, size: { x: number; y: number }): Coord[] {
+  const out = [...cells];
+  for (let dy = 0; dy < size.y; dy++) {
+    for (let dx = 0; dx < size.x; dx++) out.push({ x: anchor.x + dx, y: anchor.y + dy });
+  }
+  return out;
+}
+
 export const formatAdjacency = (goldPerMinute: number): string =>
   `${formatSigned(goldPerMinute)} 🪙`;
 
@@ -4595,7 +4745,7 @@ function relicEffectText(id: ArtifactId, value: number): string {
   // A relic's stats all share one op — the pair the Seal and the Sigil carry
   // move together by construction — so the first one says how to read it.
   const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
-  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${Math.round(value * 10) / 10}`;
+  if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${formatNumber(value, 1)}`;
   // The tiles under this sentence print the same number, so both read it from
   // one place rather than each rounding it their own way.
   const pct = relicPercent(value);

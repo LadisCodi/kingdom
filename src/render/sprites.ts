@@ -2,6 +2,13 @@
 // stem via Vite's import.meta.glob — adding art needs no code changes.
 // Until an image exists (and has finished loading) every call site falls
 // back to its emoji glyph, so art can land one file at a time.
+//
+// A sprite is requested the first time something asks for it, not when this
+// module loads: the first frame then fetches only what it shows, the loading
+// screen waits for exactly that (ui/bootScreen.ts), and `preloadAllSprites`
+// brings in the rest behind it.
+
+import { loadImage, preloadImages, type LoadedImage } from './imageLoad';
 
 const urls = import.meta.glob('./assets/*.png', {
   eager: true,
@@ -9,21 +16,20 @@ const urls = import.meta.glob('./assets/*.png', {
   import: 'default',
 }) as Record<string, string>;
 
-interface Entry {
-  img: HTMLImageElement;
-  ready: boolean;
+const spriteKeys = new Map<string, string>(); // key → url
+for (const [path, url] of Object.entries(urls)) {
+  spriteKeys.set(path.slice('./assets/'.length, -'.png'.length), url);
 }
 
-const sprites = new Map<string, Entry>();
-for (const [path, url] of Object.entries(urls)) {
-  const key = path.slice('./assets/'.length, -'.png'.length);
-  const entry: Entry = { img: new Image(), ready: false };
-  entry.img.onload = () => {
-    entry.ready = true;
-  };
-  entry.img.src = url;
-  sprites.set(key, entry);
+/** The sprite's image, requesting it on first use; undefined when there is
+ *  no such art. */
+function sprite(key: string): LoadedImage | undefined {
+  const url = spriteKeys.get(key);
+  return url === undefined ? undefined : loadImage(url);
 }
+
+/** Request every sprite not yet asked for, a few at a time. */
+export const preloadAllSprites = (): Promise<void> => preloadImages(spriteKeys.values());
 
 /** The URL Vite emitted for a sprite, for the DOM to use in an <img>.
  *  Null when there is no such art — the caller falls back to an icon. */
@@ -54,7 +60,7 @@ export function spriteImg(key: string, className = ''): HTMLImageElement | null 
  * table anywhere needs editing (Docs/art/art-direction.md §3.1).
  */
 export const spriteAspect = (key: string): number | null => {
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready || s.img.naturalWidth === 0) return null;
   return s.img.naturalHeight / s.img.naturalWidth;
 };
@@ -75,7 +81,7 @@ const inkTops = new Map<string, number>();
 export function spriteInkTop(key: string): number {
   const cached = inkTops.get(key);
   if (cached !== undefined) return cached;
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready || s.img.naturalWidth === 0) return 0; // ask again once it loads
   const w = Math.min(64, s.img.naturalWidth);
   const h = Math.max(1, Math.round((s.img.naturalHeight / s.img.naturalWidth) * w));
@@ -113,7 +119,7 @@ export function spriteSolidAt(key: string, u: number, v: number): boolean {
   if (u < 0 || u > 1 || v < 0 || v > 1) return false;
   let mask = solidMasks.get(key);
   if (mask === undefined) {
-    const s = sprites.get(key);
+    const s = sprite(key);
     if (!s?.ready || s.img.naturalWidth === 0) return false; // ask again once it loads
     const w = Math.min(64, s.img.naturalWidth);
     const h = Math.max(1, Math.round((s.img.naturalHeight / s.img.naturalWidth) * w));
@@ -150,11 +156,83 @@ export function drawSprite(
   w: number,
   h: number,
 ): boolean {
-  const s = sprites.get(key);
+  const s = sprite(key);
   if (!s?.ready) return false;
   ctx.drawImage(s.img, x, y, w, h);
   return true;
 }
+
+/** One solid-colour silhouette per sprite and colour, at the art's own size:
+ *  the ghost's outline is drawn from it every frame. */
+const silhouettes = new Map<string, HTMLCanvasElement>();
+
+/** The sprite's silhouette in one colour, cached per sprite and colour. */
+function silhouetteOf(key: string, color: string): HTMLCanvasElement | null {
+  const s = sprite(key);
+  if (!s?.ready) return null;
+  const id = `${key}|${color}`;
+  let sil = silhouettes.get(id);
+  if (!sil) {
+    sil = document.createElement('canvas');
+    sil.width = s.img.naturalWidth;
+    sil.height = s.img.naturalHeight;
+    const c = sil.getContext('2d')!;
+    c.drawImage(s.img, 0, 0);
+    c.globalCompositeOperation = 'source-in';
+    c.fillStyle = color;
+    c.fillRect(0, 0, sil.width, sil.height);
+    silhouettes.set(id, sil);
+  }
+  return sil;
+}
+
+/**
+ * An OUTLINE round sprite `key` filling (x, y, w, h): its silhouette in
+ * `color`, stamped `px` pixels out in eight directions. Drawn UNDER the
+ * sprite, so only the ring round its edge shows. False while the art is
+ * missing or loading.
+ */
+export function drawSpriteOutline(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  px: number,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  // The ring alone, on a scratch canvas: the eight stamps, then the
+  // silhouette itself cut back out — so a TRANSLUCENT sprite drawn over it
+  // shows the ground through its body, not a white fill.
+  const scale = ctx.getTransform().a || 1;
+  const pad = Math.ceil(px) + 1;
+  const cw = Math.ceil((w + pad * 2) * scale);
+  const ch = Math.ceil((h + pad * 2) * scale);
+  if (cw <= 0 || ch <= 0) return true;
+  ringCanvas ??= document.createElement('canvas');
+  if (ringCanvas.width < cw || ringCanvas.height < ch) {
+    ringCanvas.width = Math.max(ringCanvas.width, cw);
+    ringCanvas.height = Math.max(ringCanvas.height, ch);
+  }
+  const r = ringCanvas.getContext('2d')!;
+  r.setTransform(1, 0, 0, 1, 0, 0);
+  r.clearRect(0, 0, cw, ch);
+  r.setTransform(scale, 0, 0, scale, 0, 0);
+  const d = px * Math.SQRT1_2;
+  r.globalCompositeOperation = 'source-over';
+  for (const [ox, oy] of [[px, 0], [-px, 0], [0, px], [0, -px], [d, d], [-d, d], [d, -d], [-d, -d]]) {
+    r.drawImage(sil, pad + ox, pad + oy, w, h);
+  }
+  r.globalCompositeOperation = 'destination-out';
+  r.drawImage(sil, pad, pad, w, h);
+  r.globalCompositeOperation = 'source-over';
+  ctx.drawImage(ringCanvas, 0, 0, cw, ch, x - pad, y - pad, cw / scale, ch / scale);
+  return true;
+}
+let ringCanvas: HTMLCanvasElement | null = null;
 
 // ---------------------------------------------------------------- UI atlas
 
@@ -169,9 +247,8 @@ export function drawSprite(
 import atlasUrl from '../ui/assets/ui-atlas.png?url';
 import { ATLAS_CELL, ATLAS_COLS, ICON_INDEX } from '../ui/kit/atlas.generated';
 
-const atlas: Entry = { img: new Image(), ready: false };
-atlas.img.onload = () => { atlas.ready = true; };
-atlas.img.src = atlasUrl;
+// Every screen draws from it, so it is requested as soon as this loads.
+const atlas = loadImage(atlasUrl);
 
 /** Below this draw size the atlas's small variants read better — the same
  *  call the DOM makes with `size: 'sm'`. */

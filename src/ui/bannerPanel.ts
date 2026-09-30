@@ -21,7 +21,7 @@ import type { Game } from '../game';
 import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { btn } from './kit';
 
 export function bannerPanel(game: Game): HTMLElement {
@@ -80,7 +80,7 @@ function keyNote(game: Game, banner: BannerId): string {
   const name = def.key === 'GoldKey' ? 'gold keys' : 'silver keys';
   const left = def.freePerDay > 0 ? game.freePull(banner).left : 0;
   const free = left > 0 ? ` ${left} free call${left === 1 ? '' : 's'} left today.` : '';
-  return `You hold ${held} ${name}. More are ${def.keyGemCost} Gems each.${free}`;
+  return `You hold ${formatExact(held)} ${name}. More are ${formatExact(def.keyGemCost)} Gems each.${free}`;
 }
 
 /**

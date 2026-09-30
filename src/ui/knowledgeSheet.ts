@@ -17,13 +17,13 @@ import { btn, currencyIcon, iconEl, progress, sheet } from './kit';
 const offer = (count: number, button: HTMLElement): HTMLElement =>
   el('div', { class: 'k-section knowledge-offer' },
     el('div', { class: 'knowledge-offer-count' },
-      currencyIcon('Knowledge', { size: 'md' }), el('span', {}, String(count))),
+      currencyIcon('Knowledge', { size: 'md' }), el('span', {}, formatExact(count))),
     button);
 
 export function renderKnowledgeSheet(game: Game): HTMLElement {
   const k = game.knowledgeInfo();
   const bar = progress('blue');
-  bar.set(Math.min(1, k.value / k.cap), `${k.value} / ${k.cap}`);
+  bar.set(Math.min(1, k.value / k.cap), `${formatExact(k.value)} / ${formatExact(k.cap)}`);
 
   const buy = (count: number, till: 'Gold' | 'Gems'): HTMLElement => {
     const quote = game.knowledgeQuote(count);
@@ -45,12 +45,12 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
       iconEl('Knowledge', { size: 'lg' }),
       el('div', { class: 'mana-title' }, 'Knowledge'),
       el('div', { class: 'mana-hint' },
-        k.full ? (k.over ? `${k.value - k.cap} past the bar — nothing is dripping` : 'Full — nothing is dripping')
+        k.full ? (k.over ? `${formatExact(k.value - k.cap)} past the bar — nothing is dripping` : 'Full — nothing is dripping')
           : k.fullIn ?? '')),
     bar.root,
-    el('div', { class: 'mana-note' },
-      `${k.perHour === 1 ? 'One' : k.perHour} an hour while under ${k.cap}. `
-      + 'Landmarks, lairs and quests pay it in lumps, over the bar if they must.'),
+    // When the next point drips in. A full bar drips nothing, and the line
+    // stays, blank, so the sheet does not change size.
+    el('div', { class: 'mana-note' }, k.nextIn ?? '\u00a0'),
 
     el('div', { class: 'knowledge-offers' },
       buy(1, 'Gold'),

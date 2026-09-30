@@ -92,8 +92,8 @@ There is no cost curve: `instanceLinearGrowth` and
 `instanceExponentialGrowth` say how much dearer a LATER instance is
 (`Docs/features/05-city-and-districts.md` §3). Art tiers are files: a level
 draws the highest `<sprite>_l<n>.png` at or below it. `DistrictId` is the
-file's keys, and the build menu reads `buildable`, `produces` and
-`harmonySupply`, so a building made in the tool needs no code to exist.
+file's keys, and the build menu reads `buildable`, `buildTab`, `produces`
+and `harmonySupply`, so a building made in the tool needs no code to exist.
 Two kinds of content are authored on a BOARD rather than in fields, each in
 its own editor inside the tool. Map content — terrain, features, landmarks
 and lairs — is authored by coordinate, so it lives in
@@ -185,7 +185,8 @@ than the build is rejected rather than downgraded.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
-  video (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
+  video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
+  the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header — **which is the design, not a
   limitation**: a menu is opened over the game, so the purse stays readable.
   The nav bar is the exception that steps aside: it slides out of the frame
@@ -214,6 +215,12 @@ than the build is rejected rather than downgraded.
   piece is carved or embossed INTO it (the close X is a groove in red wood),
   and a pressed state is the same material pushed in. Ask "what is this made
   of?" before drawing or requesting any new UI art.
+- **Every number the UI prints goes through `src/ui/format.ts`**
+  (`formatExact`, `formatCount`, `formatShort`, `formatNumber`, `formatUsd`),
+  which writes it in the viewer's locale — *25,000* / *25.000*. Never
+  `String(n)` or `${n}` for a count the player reads, and never
+  `toLocaleString` / `Intl.NumberFormat` elsewhere (`tests/numberFormat.test.ts`);
+  the sim reads no locale. The suite pins `en-US` (`tests/setup.ts`).
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

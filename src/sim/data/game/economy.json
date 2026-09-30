@@ -5,7 +5,7 @@
     "workSeconds": 10
   },
   "storage": {
-    "collectFraction": 0.002
+    "collectSeconds": 30
   },
   "taxes": {
     "goldPerPopulationPerMinute": 30,

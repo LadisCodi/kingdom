@@ -1,77 +1,120 @@
-// "Every builder is busy" — the offer raised by a refused build.
+// The builder sheet (§5.6, M50–M51): raised by a build or an upgrade that
+// every builder is too busy for.
 //
-// THE REFUSAL IS THE OFFER, and that is the whole design (see
-// Docs/features/06-construction.md). There is no waiting line in this game: a build
-// either starts because a builder is free or it does not start at all. That
-// makes the refusal a real moment rather than an administrative one — the
-// player has already chosen the building and placed the ghost, so "you cannot
-// do this yet" is the only point at which a second builder means anything
-// concrete to them.
+// THE REFUSAL IS THE OFFER. There is no waiting line in this game: a job
+// starts because a builder is free, or not at all
+// (Docs/features/06-construction.md). So the sheet shows the crew — one row
+// per builder, up to the ceiling — and what each of them is doing, with the
+// time left and a Gem Finish that frees them now. The next empty place holds
+// Hire.
 //
-// It replaced a toast reading "Build queue is full", which was wrong twice
-// over: there is no queue, and a slip in the corner of the screen is not an
-// answer to a thing the player just tried to do.
-//
-// Two states, one sheet:
-//   * below the ceiling — what is happening, and one priced button;
-//   * AT the ceiling — what is happening, and no button, because there is
-//     nothing to sell. A store that offers what it cannot deliver is worse
-//     than one that says so.
+// It never closes on its own. A job that ends while it is open — by itself,
+// or by Finish — turns its builder's row FREE in place, and that row offers
+// the very job the sheet was raised for: Build the Sawmill, Upgrade the
+// Quarry. Spending Gems and spending the building's price stay two presses.
 
+import { DISTRICTS, KINGDOM_DEF } from '../sim/data/definitions';
+import { gemRushCost } from '../sim/commands';
+import { queueProgress, remainingSeconds } from '../sim/state';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el } from './format';
-import { btn, iconEl } from './kit';
+import { el, formatDuration, formatExact } from './format';
+import { btn, iconEl, progress } from './kit';
 import { sheet } from './kit/surface';
 
+const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
+const nth = (i: number): string => ORDINAL[i] ?? `${i + 1}th`;
+const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
 export function renderBuilderSheet(game: Game): HTMLElement {
-  const { builders, ceiling, cost, affordable } = game.builderOffer();
-  const atCeiling = builders >= ceiling;
+  const { builders, ceiling, cost: hireCost } = game.builderOffer();
+  const jobs = game.builderJobs();
+  const free = Math.max(0, builders - jobs.length);
+  const ask = game.builderAskJob();
   const close = () => game.setOverlay(null);
 
-  const body = el('div', { class: 'bld-offer' },
-    el('div', { class: 'bld-offer-line' },
-      el('span', { class: 'bld-offer-mark' }, iconEl('builders', { size: 'lg' })),
-      el('div', { class: 'bld-offer-copy' },
-        el('div', { class: 'bld-offer-head' }, builders === 1
-          ? 'Your builder is busy'
-          : `All ${builders} builders are busy`),
-        // Say what is actually true rather than "the queue is full": nothing
-        // is queued, and nothing will start on its own when this finishes.
-        el('div', { class: 'bld-offer-note' },
-          'Nothing waits in line — finish or rush a job to free one up.'))),
+  // ------------------------------------------------------------ the rows
+  const rows: HTMLElement[] = [];
 
-    // The crew, drawn. Filled pips are the builders owned, hollow ones the
-    // room left, so the ceiling is a fact the player can see rather than a
-    // sentence they have to be told twice.
-    el('div', { class: 'bld-offer-crew' },
-      ...Array.from({ length: ceiling }, (_, i) => el('span', {
-        class: `bld-offer-pip${i < builders ? ' is-on' : ''}`,
-      }, iconEl('builders', { size: 'sm' })))),
-  );
-
-  if (atCeiling) {
-    body.append(el('div', { class: 'bld-offer-note' },
-      `${ceiling} is as large as a crew gets.`));
-  } else {
-    body.append(el('div', { class: 'bld-offer-actions' },
-      btn({ label: 'Not now', kind: 'secondary', onClick: close }),
-      // `cost` + `have` is the kit's affordability contract: the term the
-      // player is short of turns clay and the button dies on its own, so this
-      // needs no disabledReason (controls.ts ActionOpts).
-      btn({
-        label: 'Hire a builder',
-        kind: 'gem',
-        onClick: () => game.doBuyBuilder(),
-        cost: { Gems: cost },
-        have: (c) => game.walletValue(c),
-      })));
-    // The clay price says the player cannot afford it; it does not say where
-    // Gems come from, and at this point in the game most players do not know.
-    if (!affordable) {
-      body.append(el('div', { class: 'bld-offer-note' },
-        'Gems come from the quest chain.'));
-    }
+  // A free builder — hired just now, or whose job just ended — offers the
+  // job the sheet was raised for. Listed first: it is the thing to press.
+  for (let i = 0; i < free; i++) {
+    rows.push(el('div', { class: 'crew-row k-section is-free' },
+      el('span', { class: 'crew-medal' }, iconEl('builders', { size: 'lg' })),
+      el('div', { class: 'crew-mid' },
+        el('div', { class: 'crew-free' }, 'Free'),
+        // Only the first free builder is offered the job; one job, one button.
+        el('div', { class: 'crew-task' }, i === 0 && ask !== null ? ask.what : 'Ready for the next job')),
+      ...(ask !== null && i === 0
+        ? [btn({
+            label: ask.verb,
+            kind: 'primary',
+            onClick: ask.start,
+            cost: ask.cost,
+            have: (c) => game.walletValue(c),
+          })]
+        : [])));
   }
 
-  return sheet({ title: 'Builders', onClose: close, centred: true }, body);
+  const t = game.now();
+  for (const { item, district, name, task } of jobs) {
+    const def = DISTRICTS[district.definitionId];
+    const art = spriteUrl(`${def.sprite}_l${Math.max(1, district.level)}`) ?? spriteUrl(`${def.sprite}_l1`);
+    const bar = progress('blue');
+    const left = remainingSeconds(item, t);
+    bar.run(queueProgress(item, t), left * 1000, formatDuration(left));
+    rows.push(el('div', { class: 'crew-row k-section' },
+      el('div', { class: 'crew-art' }, art ? spriteImgAt(art) : iconEl(def.id, { size: 'lg' })),
+      el('div', { class: 'crew-mid' },
+        el('div', { class: 'crew-name' }, name),
+        el('div', { class: 'crew-task' }, task),
+        bar.root),
+      btn({
+        label: 'Finish',
+        kind: 'gem',
+        onClick: () => game.doRush(item.uniqueId),
+        cost: { Gems: gemRushCost(item, t) },
+        have: (c) => game.walletValue(c),
+      })));
+  }
+
+  // The places still to hire, up to the ceiling: the next one holds the
+  // offer, the ones past it are only their socket.
+  for (let i = builders; i < ceiling; i++) {
+    const next = i === builders;
+    rows.push(el('div', { class: `crew-row k-section is-empty${next ? '' : ' is-far'}` },
+      el('span', { class: 'crew-socket' }, iconEl('builders', { size: 'lg' })),
+      el('div', { class: 'crew-mid' }, el('div', { class: 'crew-task' }, `A ${nth(i)} builder`)),
+      ...(next
+        ? [btn({
+            label: 'Hire',
+            kind: 'gem',
+            // The sheet stays: the new builder's row turns Free with the job.
+            onClick: () => game.doBuyBuilder({ closeSheet: false }),
+            cost: { Gems: hireCost },
+            have: (c) => game.walletValue(c),
+          })]
+        : [])));
+  }
+
+  // --------------------------------------------------------- the headline
+  const subject = ask?.what.replace(/^Ready to /, '') ?? 'it';
+  const head = free > 0
+    ? (free === 1 ? 'A builder is free' : `${formatExact(free)} builders are free`)
+    : builders === 1 ? 'Your builder is busy' : `All ${formatExact(builders)} builders are busy`;
+  const note = free > 0
+    ? `${cap(subject)} now, or keep it for later.`
+    : 'Nothing waits in line — finish a job to free a builder.';
+
+  return sheet({ title: 'Builders', onClose: close, centred: true },
+    el('div', { class: 'crew' },
+      el('div', { class: 'crew-top' },
+        el('div', { class: 'crew-illus', role: 'img', 'aria-label': 'Two builders' }),
+        el('div', { class: 'crew-copy' },
+          el('div', { class: 'crew-head' }, head),
+          el('div', { class: 'crew-note' }, note))),
+      el('div', { class: 'crew-rows' }, ...rows),
+      ...(builders >= ceiling
+        ? [el('div', { class: 'crew-ceiling' }, `${formatExact(KINGDOM_DEF.maxBuilders)} is as large as a crew gets.`)]
+        : [])));
 }

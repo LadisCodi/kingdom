@@ -25,7 +25,7 @@ import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
 import type { HeroId } from '../sim/state';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { iconEl } from './kit';
 
 /** How long between tiles. Long enough to read one, short enough that ten do
@@ -50,7 +50,7 @@ function prizeTile(prize: GachaPrize): HTMLElement {
   if (prize.kind === 'currency') {
     return el('div', { class: 'gr-tile is-currency' },
       iconEl(prize.currency, { size: 'lg' }),
-      el('span', { class: 'gr-count' }, String(prize.amount)));
+      el('span', { class: 'gr-count' }, formatExact(prize.amount)));
   }
   // A card pack, which a room pays and a call never does. It is not opened
   // here — the Collection is where a pack is turned over, so this tile says
@@ -100,7 +100,7 @@ function prizeTile(prize: GachaPrize): HTMLElement {
   return el('div', { class: `gr-tile is-fragment ${RARITY_CLASS[def.rarity]}` },
     portrait(prize.heroId, 'gr-art'),
     el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
-    el('span', { class: 'gr-count' }, String(prize.amount)));
+    el('span', { class: 'gr-count' }, formatExact(prize.amount)));
 }
 
 /** The hero interstitial — the whole screen, one face. */

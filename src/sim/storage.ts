@@ -11,7 +11,9 @@
 // What sits in a store is not the player's yet, which is why a raid takes
 // from here and never from the wallet (sim/lairs.ts).
 
-import { DISTRICTS, STORAGE, levelIndexed } from './data/definitions';
+import { DISTRICTS, HARVEST, STORAGE, levelIndexed } from './data/definitions';
+import { houseGoldPerMinute } from './population';
+import { effectiveWorkerStrike, workerStrikeMs } from './upgrades';
 import { recordResourceDiscovery } from './discovery';
 import { recordEvent } from './events';
 import {
@@ -48,20 +50,41 @@ export const isStoreFull = (district: District): boolean =>
 export const hasStored = (district: District): boolean => storedTotal(district) > 0;
 
 /**
+ * What the building makes a second right now, in units of its store: a
+ * house's rent, or its crew at its main source (the first it works — the
+ * coin its bubble and its Storage tile show). The card's *+720/h* over 3600.
+ * 0 for a building that is not making anything: no residents, no crew.
+ */
+export function productionPerSecond(state: GameState, district: District): number {
+  const def = DISTRICTS[district.definitionId];
+  if (def.populationCapacityPerLevel.length > 0) return houseGoldPerMinute(state, district) / 60;
+  if (def.harvestSources.length === 0 || district.assignedWorkers === 0) return 0;
+  const spec = HARVEST[def.harvestSources[0]];
+  return district.assignedWorkers * effectiveWorkerStrike(state, spec, district)
+    * (1000 / workerStrikeMs(state, spec, district));
+}
+
+/** Units the store must hold to be ready: `storage.collectSeconds` of what
+ *  the building makes now, one at least, never more than the whole store. */
+export function collectThreshold(state: GameState, district: District): number {
+  const need = Math.max(1, Math.ceil(productionPerSecond(state, district) * STORAGE.collectSeconds));
+  const cap = storageCapacity(district);
+  return cap === 0 ? need : Math.min(cap, need);
+}
+
+/**
  * READY TO COLLECT: its bubble shows, and a tap on it collects instead of
  * opening it. A house makes a coin a second, so "anything in it" would put
  * the bubble back the instant it was collected and the building's own menu
  * would be out of reach for good. It is ready once it holds
- * `storage.collectFraction` of its capacity — a capacity is authored as
- * eight to twelve hours of the building at full strength, so a fifth of a
- * percent is about a minute of it — or is full.
+ * `storage.collectSeconds` (30) of its current production, or is full — so
+ * for half a minute after a collect a tap opens the building. A building that
+ * makes nothing now is ready with anything in it.
  */
-export function readyToCollect(district: District): boolean {
+export function readyToCollect(state: GameState, district: District): boolean {
   const total = storedTotal(district);
   if (total <= 0) return false;
-  const cap = storageCapacity(district);
-  return cap === 0 || isStoreFull(district)
-    || total >= Math.max(1, Math.ceil(cap * STORAGE.collectFraction));
+  return isStoreFull(district) || total >= collectThreshold(state, district);
 }
 
 /** Put units in the store, uncapped — the caller decides what fits. */
