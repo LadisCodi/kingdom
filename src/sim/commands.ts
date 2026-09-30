@@ -40,7 +40,8 @@ import {
   type DepositEvent, type StrikeEvent,
 } from './workers';
 import {
-  addToWallet, builderCount, buildQueueCapacity, completesAt, districtById, getWallet,
+  addToWallet, builderCount, buildQueueCapacity, cellsOfRect, completesAt, districtById,
+  districtOccupies, getWallet,
   newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
   type QueueItem, type TechId, type UnitId,
@@ -200,6 +201,16 @@ export function moveDistrict(
   if (placementBlock(state, map, district.definitionId, cell, district.uniqueId) !== null) {
     return 'InvalidCell';
   }
+  relocateDistrict(state, map, district, cell, now);
+  return 'Moved';
+}
+
+/** Put `district` at `cell` and let everything that reads position follow —
+ *  the tax anchor, the crew, the fog ring, idle workers. The caller has
+ *  already decided the cell is legal. */
+function relocateDistrict(
+  state: GameState, map: MapData, district: District, cell: Coord, now: number,
+): boolean {
   const from = district.location;
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
@@ -216,7 +227,52 @@ export function moveDistrict(
   }
   // Its old neighbours may have cells free now, and its new ones may not.
   wakeIdleWorkersAt(state, now);
-  return 'Moved';
+  return true;
+}
+
+/**
+ * Put every building back on ground it may stand on.
+ *
+ * A footprint is DATA (`size` in buildings.json), so it can grow under a
+ * city that is already built: a Barracks placed on one cell becomes 2×2, and
+ * its three new cells may hold a neighbour, a tree or water. Run on load, it
+ * moves each building whose footprint is no longer legal where it stands to
+ * the nearest legal cell, the way a player's move does — crew, fog and the
+ * tax anchor follow it. The biggest go first, so
+ * a grown building steps off its neighbour before that neighbour is judged.
+ * A building with nowhere legal left is left where it is. Idempotent: on a
+ * city that fits, it moves nothing.
+ */
+export function settleFootprints(state: GameState, map: MapData, now: number): string[] {
+  const moved: string[] = [];
+  const area = (id: string) => DISTRICTS[id as keyof typeof DISTRICTS].size.x
+    * DISTRICTS[id as keyof typeof DISTRICTS].size.y;
+  const order = [...state.city.districts]
+    .filter(canMoveDistrict)
+    .sort((a, b) => area(b.definitionId) - area(a.definitionId));
+  // `placementBlock` asks who stands on a cell and takes the first answer, so
+  // on a cell two footprints share it can answer with the building being
+  // judged and call it free. Overlap is checked against EVERY other one.
+  const fitsAt = (d: typeof order[number], at: Coord): boolean =>
+    placementBlock(state, map, d.definitionId, at, d.uniqueId) === null
+    && !cellsOfRect(at, DISTRICTS[d.definitionId].size).some((c) => state.city.districts.some(
+      (o) => o.uniqueId !== d.uniqueId && districtOccupies(o, c)));
+  for (const d of order) {
+    if (fitsAt(d, d.location)) continue;
+    const from = d.location;
+    let best: Coord | null = null;
+    let bestD = Infinity;
+    for (const c of map.cells) {
+      const dist = (c.x - from.x) ** 2 + (c.y - from.y) ** 2;
+      if (dist >= bestD || !fitsAt(d, c)) continue;
+      bestD = dist;
+      best = c;
+    }
+    // Set, not `moveDistrict`: that one checks the destination with the same
+    // first-answer lookup. The move's consequences follow it by hand.
+    if (best !== null && relocateDistrict(state, map, d, best, now)) moved.push(d.uniqueId);
+  }
+  return moved;
 }
 
 export type UpgradeResult =

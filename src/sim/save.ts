@@ -16,7 +16,7 @@ import {
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
-import { advance, type AdvanceResult } from './commands';
+import { advance, settleFootprints, type AdvanceResult } from './commands';
 import { withoutTallies } from './events';
 import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
@@ -1402,6 +1402,9 @@ export function deserialize(
     // resolves one.
     report.scheduleEvents.push(...tail.scheduleEvents);
   }
+  // A footprint may have grown in the data since this city was built: put
+  // every building back on ground it may stand on (commands.ts).
+  settleFootprints(state, map, now);
   onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });
   return state;
 }

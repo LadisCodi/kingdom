@@ -40,15 +40,15 @@
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
-| **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
-| **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior |
-| **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
-| **Shooting Grounds** | 1×1 | Archery | 1 | **10** | army cap; trains Archer |
-| **Stables** | 1×1 | Cavalry | 1 | **10** | army cap; trains Cavalry |
-| **Carpenter** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
-| **Mason's Yard** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
-| **Smelter** | 1×1 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
-| **Rune Carver** | 1×1 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Sanctum** | 2×2 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
+| **Barracks** | 2×2 | Warrior | 1 | **10** | army cap; trains Warrior |
+| **Spear Hall** | 2×2 | Spears | 1 | **10** | army cap; trains Lancer |
+| **Shooting Grounds** | 2×2 | Archery | 1 | **10** | army cap; trains Archer |
+| **Stables** | 2×2 | Cavalry | 1 | **10** | army cap; trains Cavalry |
+| **Carpenter** | 2×2 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
+| **Mason's Yard** | 2×2 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
+| **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
+| **Rune Carver** | 2×2 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
 | **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |

@@ -110,8 +110,8 @@ describe('a rule names a stat, a magnitude, and either side by kind', () => {
 
   it('pays a group rule from any member, in either column', () => {
     const state = freshGame();
-    addBuilt(state, 'Barracks', { x: 4, y: 4 });
-    addBuilt(state, 'Stables', { x: 4, y: 5 }); // edge to edge
+    addBuilt(state, 'Barracks', { x: 4, y: 4 }); // 2×2: cells 4–5, 4–5
+    addBuilt(state, 'Stables', { x: 4, y: 6 }); // edge to edge
     const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
     const stables = state.city.districts.find((d) => d.definitionId === 'Stables')!;
     // One row — AnyHall beside AnyHall — read from both ends.
@@ -124,11 +124,12 @@ describe('a rule names a stat, a magnitude, and either side by kind', () => {
   it('clamps a fractional stat at ±25%, however many neighbours pile up', () => {
     const state = freshGame();
     // A hall ringed by four other halls would be −40% without the clamp.
+    // Every one 2×2: the hall at 4–5, 4–5 and one on each side of it.
     addBuilt(state, 'Barracks', { x: 4, y: 4 });
-    addBuilt(state, 'SpearHall', { x: 4, y: 3 });
-    addBuilt(state, 'ShootingGrounds', { x: 4, y: 5 });
-    addBuilt(state, 'Stables', { x: 3, y: 4 });
-    addBuilt(state, 'Sanctum', { x: 5, y: 4 }); // not a hall: no rule
+    addBuilt(state, 'SpearHall', { x: 4, y: 2 });
+    addBuilt(state, 'ShootingGrounds', { x: 4, y: 6 });
+    addBuilt(state, 'Stables', { x: 2, y: 4 });
+    addBuilt(state, 'Sanctum', { x: 6, y: 4 }); // not a hall: no rule
     const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
     expect(adjacencyMultiplier(state, barracks, 'trainTime')).toBeCloseTo(1 - ADJACENCY_CLAMP);
   });
@@ -151,8 +152,8 @@ describe('a rule on a TIMER is priced when the timer starts', () => {
     const state = freshGame();
     fund(state, { Gold: 100_000, Wood: 100_000, Stone: 100_000, Food: 100_000 });
     completeTech(state, 'Warrior'); // the unit, not the building
-    addBuilt(state, 'Barracks', { x: 4, y: 4 });
-    addBuilt(state, 'SpearHall', { x: 4, y: 5 });
+    addBuilt(state, 'Barracks', { x: 4, y: 4 }); // 2×2
+    addBuilt(state, 'SpearHall', { x: 4, y: 6 }); // edge to edge
     return state;
   };
 
@@ -193,8 +194,8 @@ describe('a rule on a TIMER is priced when the timer starts', () => {
     const alone = freshGame();
     addBuilt(alone, 'Carpenter', { x: 4, y: 4 });
     const beside = freshGame();
-    addBuilt(beside, 'Carpenter', { x: 4, y: 4 });
-    addBuilt(beside, 'Sawmill', { x: 4, y: 5 });
+    addBuilt(beside, 'Carpenter', { x: 4, y: 4 }); // 2×2
+    addBuilt(beside, 'Sawmill', { x: 4, y: 6 }); // edge to edge
     const shop = (s: GameState) => s.city.districts.find((d) => d.definitionId === 'Carpenter')!;
     expect(queuedWorkMs(beside, shop(beside), 'Planks'))
       .toBeLessThan(queuedWorkMs(alone, shop(alone), 'Planks'));
