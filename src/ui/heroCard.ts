@@ -42,13 +42,15 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
     'aria-label': opts.label ?? `${def.name}, level ${game.heroLevelOf(heroId)}`,
   },
   url ? spriteImgAt(url, 'hc-art') : el('span', { class: 'hc-art is-glyph' }, def.glyph),
-  el('span', { class: 'hc-type' }, iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
+  el('span', { class: 'hc-frame', 'aria-hidden': 'true' }),
+  el('span', { class: `hc-type is-${def.unitType}` },
+    iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
   ...(health.exhausted
     ? [restMarks(), el('span', { class: 'hc-foot' }, restLeft(health.restMs))]
     : [el('span', { class: 'hc-foot' },
-      el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`), stars)]),
+      stars, el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`))]),
   hpBar(health.hp, health.max),
-  ...(opts.picked ? [el('span', { class: 'hc-check' }, iconEl('tick', { size: 'md' }))] : []));
+  ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []));
   if (opts.onClick) card.addEventListener('click', opts.onClick);
   return card;
 }
