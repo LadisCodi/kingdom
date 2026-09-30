@@ -11,7 +11,7 @@ import { formatDuration } from '../src/ui/format';
 import { grantPack, seasonAt, seasonDef, PRIZE_BANNER } from '../src/sim/collection';
 import { ALBUMS, ALBUM_ORDER } from '../src/sim/data/seasons';
 import type { Game } from '../src/game';
-import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, HEROES, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
 import { townhallDistance } from '../src/sim/grid';
@@ -842,5 +842,64 @@ describe('reward fragments', () => {
     const game = freshPresenter();
     expect(game.rewardFragments('Gems', 2)).toBe(5); // nothing makes Gems
     expect(game.rewardFragments('Wood', 2)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// THE HERO PICKER (ui/heroPicker.ts): any screen asks for n slots and gets
+// the heroes chosen back, in slot order, or nothing on a close.
+describe('the hero picker', () => {
+  const withHeroes = (): Game => {
+    const state = freshGame();
+    for (const id of ['Scout', 'Bard', 'Cleric'] as const) grantHero(state, id);
+    return freshPresenter(state);
+  };
+
+  it('seats a tapped hero in the first free slot, and a second tap takes it out', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 2, onSelect: () => {} });
+    game.heroPickToggle('Scout');
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual(['Scout', 'Bard']);
+    game.heroPickToggle('Scout');
+    expect(game.heroPick!.slots).toEqual([null, 'Bard']);
+    game.heroPickToggle('Cleric');
+    expect(game.heroPick!.slots).toEqual(['Cleric', 'Bard']);
+  });
+
+  it('refuses a hero with every slot full, and an exhausted one', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 1, selected: ['Scout'], onSelect: () => {} });
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual(['Scout']);
+    game.heroPickClearSlot(0);
+    game.state.heroes.hurt.Bard = { missing: 0.5, at: game.now(), exhausted: true };
+    game.heroPickToggle('Bard');
+    expect(game.heroPick!.slots).toEqual([null]);
+  });
+
+  it('hands the choice back on Select and nothing on a close, returning to the screen behind', () => {
+    const game = withHeroes();
+    game.setOverlay('lair');
+    let got: string[] | null = null;
+    game.openHeroPicker({ slots: 3, selected: ['Scout'], onSelect: (h) => { got = h; } });
+    expect(game.openOverlay).toBe('heroPicker');
+    game.heroPickCancel();
+    expect(got).toBeNull();
+    expect(game.openOverlay).toBe('lair');
+
+    game.openHeroPicker({ slots: 3, selected: ['Scout'], onSelect: (h) => { got = h; } });
+    game.heroPickToggle('Cleric');
+    game.heroPickConfirm();
+    expect(got).toEqual(['Scout', 'Cleric']);
+    expect(game.openOverlay).toBe('lair');
+  });
+
+  it('filters by the type a hero fights as', () => {
+    const game = withHeroes();
+    game.openHeroPicker({ slots: 1, onSelect: () => {} });
+    const all = game.heroPickList();
+    const type = HEROES[all[0]!].unitType;
+    game.heroPickFilter(type);
+    expect(game.heroPickList().every((h) => HEROES[h].unitType === type)).toBe(true);
   });
 });

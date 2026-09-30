@@ -36,6 +36,7 @@
 @import './screens/mana.css';
 @import './screens/lairs.css';
 @import './screens/battle.css';
+@import './screens/heroPicker.css';
 @import './screens/battlefield.css';
 /* Last, and deliberately: it overrides the portrait rules of every screen
    above for the heroes whose art has been repainted. */

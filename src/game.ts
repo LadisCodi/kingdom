@@ -171,7 +171,29 @@ export type OverlayName =
   // button (Docs/art/ui-menus-redesign.md §7.27).
   | 'upgrade'
   // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
-  | 'knowledge';
+  | 'knowledge'
+  // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
+  | 'heroPicker';
+
+/** How the hero picker orders the heroes it offers. */
+export type HeroPickSort = 'level' | 'rarity';
+
+/**
+ * AN OPEN HERO PICKER (ui/heroPicker.ts): what it was asked for and what the
+ * player has chosen so far. Any screen can open one — it hands over how many
+ * slots it wants and what to do with the answer, and the picker hands the
+ * screen back when it closes.
+ */
+export interface HeroPick {
+  title: string;
+  /** One per slot asked for, in slot order; null = free. */
+  slots: Array<HeroId | null>;
+  /** The overlay to return to when the picker closes, either way. */
+  returnTo: OverlayName | null;
+  onSelect: (heroes: HeroId[]) => void;
+  filter: UnitId | 'All';
+  sort: HeroPickSort;
+}
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
  *  each one into a sentence — nothing is greyed out without a reason. */
@@ -325,6 +347,8 @@ export class Game {
   /** The heroes the player has put in the hero slots, in slot order — one
    *  per slot, at most `heroSlots(state)` of them. */
   partyHeroes: HeroId[] = [];
+  /** The hero picker, while it is open (`openHeroPicker`). */
+  heroPick: HeroPick | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -2591,6 +2615,15 @@ export class Game {
   overlaySignature(name: OverlayName): string | null {
     switch (name) {
       case 'heroes': return this.heroesSignature();
+      // The picker moves with the choice and with a resting hero's minute.
+      case 'heroPicker': return JSON.stringify([
+        this.heroPick && { ...this.heroPick, onSelect: undefined },
+        this.state.heroes,
+        this.state.heroes.owned.map((h) => {
+          const { hp, restMs } = this.heroHealthOf(h);
+          return [hp, Math.ceil(restMs / 60_000)];
+        }),
+      ]);
       // The attack screen moves when the party, the purse, the army or a
       // hero's health does — and a resting hero's Zs are an animation a
       // rebuild every second would restart before it ever finished.
@@ -3307,6 +3340,119 @@ export class Game {
     this.notify();
   }
 
+  // ------------------------------------------------------------ hero picker
+
+  /**
+   * OPEN THE HERO PICKER over whatever is open: `slots` slots, pre-filled
+   * with `selected`, and `onSelect` called with the heroes chosen when the
+   * player presses Select. Closing it any other way changes nothing. Either
+   * way the screen that opened it comes back.
+   */
+  openHeroPicker(opts: {
+    slots: number; selected?: readonly HeroId[]; title?: string;
+    onSelect: (heroes: HeroId[]) => void;
+  }): void {
+    const slots: Array<HeroId | null> = Array.from({ length: Math.max(1, opts.slots) },
+      (_, i) => opts.selected?.[i] ?? null);
+    this.heroPick = {
+      title: opts.title ?? 'Choose heroes',
+      slots,
+      returnTo: this.openOverlay,
+      onSelect: opts.onSelect,
+      filter: 'All',
+      sort: 'level',
+    };
+    playSfx('click');
+    this.setOverlay('heroPicker');
+  }
+
+  /** The heroes the picker offers — every one the kingdom owns, filtered by
+   *  type and ordered, best first. */
+  heroPickList(): HeroId[] {
+    const pick = this.heroPick;
+    if (pick === null) return [];
+    const rank = { Common: 0, Rare: 1, Legendary: 2 } as const;
+    return this.state.heroes.owned
+      .filter((h) => pick.filter === 'All' || HEROES[h].unitType === pick.filter)
+      .sort((a, b) => (pick.sort === 'rarity'
+        ? rank[HEROES[b].rarity] - rank[HEROES[a].rarity] || heroLevel(this.state, b) - heroLevel(this.state, a)
+        : heroLevel(this.state, b) - heroLevel(this.state, a) || rank[HEROES[b].rarity] - rank[HEROES[a].rarity]));
+  }
+
+  /** A TAP ON A HERO IN THE LIST: out of its slot if it is in one; else into
+   *  the first free slot — or an error sound, when there is none or it is
+   *  exhausted. */
+  heroPickToggle(heroId: HeroId): void {
+    const pick = this.heroPick;
+    if (pick === null) return;
+    const at = pick.slots.indexOf(heroId);
+    if (at >= 0) {
+      pick.slots[at] = null;
+      playSfx('click');
+    } else if (!heroCanFight(this.state, heroId, this.now())) {
+      playSfx('error');
+      this.toast(`${HEROES[heroId].name} is exhausted — they rest until their HP is full`);
+    } else {
+      const free = pick.slots.indexOf(null);
+      if (free < 0) {
+        playSfx('error');
+      } else {
+        pick.slots[free] = heroId;
+        playSfx('click');
+      }
+    }
+    this.notify();
+  }
+
+  /** A tap on a filled slot empties it. */
+  heroPickClearSlot(index: number): void {
+    const pick = this.heroPick;
+    if (pick === null || pick.slots[index] == null) return;
+    pick.slots[index] = null;
+    playSfx('click');
+    this.notify();
+  }
+
+  heroPickFilter(filter: UnitId | 'All'): void {
+    if (this.heroPick === null) return;
+    this.heroPick.filter = filter;
+    playSfx('click');
+    this.notify();
+  }
+
+  heroPickCycleSort(): void {
+    if (this.heroPick === null) return;
+    this.heroPick.sort = this.heroPick.sort === 'level' ? 'rarity' : 'level';
+    playSfx('click');
+    this.notify();
+  }
+
+  /** SELECT: the chosen heroes, in slot order, go back to whoever asked. */
+  heroPickConfirm(): void {
+    const pick = this.heroPick;
+    if (pick === null) return;
+    this.heroPick = null;
+    this.setOverlay(pick.returnTo);
+    pick.onSelect(pick.slots.filter((h): h is HeroId => h !== null));
+    this.notify();
+  }
+
+  /** The window's close: nothing changes, and the screen behind comes back. */
+  heroPickCancel(): void {
+    const pick = this.heroPick;
+    this.heroPick = null;
+    this.setOverlay(pick?.returnTo ?? null);
+  }
+
+  /** The party's hero slots open the picker, and its answer is the party. */
+  pickPartyHeroes(): void {
+    this.openHeroPicker({
+      slots: this.heroSlotsOpen(),
+      selected: this.partyHeroes,
+      onSelect: (heroes) => { this.partyHeroes = heroes; },
+    });
+  }
+
   heroLevelOf(heroId: HeroId): number {
     return heroLevel(this.state, heroId);
   }
@@ -3572,6 +3718,8 @@ export class Game {
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
+    // Anything else taking the screen closes a picker without an answer.
+    if (name !== 'heroPicker') this.heroPick = null;
     if (name !== 'collection') this.vaultOpen = false;
     if (name !== 'collection') {
       this.openRelicId = null;
@@ -3597,6 +3745,7 @@ export class Game {
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     this.pendingSku = null;
+    this.heroPick = null;
     this.notify();
   }
 

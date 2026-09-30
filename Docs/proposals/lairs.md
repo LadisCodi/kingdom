@@ -217,16 +217,15 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
     - *200 Warriors, `squadSize` 50: the first tap puts 50 on the board and
       leaves 150; the second puts 50 more beside them and leaves 100.*
     - The last squad takes what is left, if it is less than `squadSize`.
-  - **Heroes: one card per hero** — illustration, level and HP bar. A tap
-    toggles it: in, it wears a green check and takes the next hero slot;
-    tapped again, it leaves. An exhausted hero (10-heroes.md §2.8) is shown
-    asleep — darkened, Zs rising, its rest's countdown — and refuses.
+  - **Heroes are not in the roster.** A tap on any open hero slot of your
+    board opens the **hero picker** ([`../features/10-heroes.md`](../features/10-heroes.md) §8.4)
+    for all of them; its Select is the party's heroes.
   - A tap that cannot place — no one at home, every slot full, a locked
     hero slot — does nothing and says why in one line.
   - **Quick deploy** fills the board with the strongest legal party, answering
     the lair's creature first.
-- A tap on a filled slot of **your board** empties it: a squad goes back home,
-  a hero leaves.
+- A tap on a filled troop slot of **your board** empties it: the squad goes
+  back home. A tap on a hero slot opens the picker.
 - The board above only shows the party; it takes no input of its own beyond
   that.
 - **On victory** the lair's model, bubble and zone fade from the map when the

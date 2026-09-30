@@ -29,12 +29,12 @@
 
 import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { HeroId, UnitId, Wallet } from '../sim/state';
+import type { UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, headPanel, hpBar, iconEl, restLeft, restMarks, sectionHead, sheet } from './kit';
+import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
+import { emptyHeroSlot, heroCard } from './heroCard';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
@@ -90,26 +90,9 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
     cls: `bt-army ${cls}`,
   }, ...groups);
 
-/** A hero's illustration, filling its card and masked by it. */
-const heroArt = (heroId: HeroId): HTMLElement => {
-  const def = HEROES[heroId];
-  const url = spriteUrl(def.sprite);
-  return url ? spriteImgAt(url, 'bt-card-art') : el('span', { class: 'bt-card-art is-glyph' }, def.glyph);
-};
-
-/** The hero's HP as it stands, on the kit's small bar hung over the foot of
- *  its card: what past fights took and has not yet mended
- *  (sim/heroHealth.ts). */
-function heroHpBar(game: Game, heroId: HeroId): HTMLElement {
-  const { hp, max } = game.heroHealthOf(heroId);
-  const bar = hpBar(hp, max);
-  bar.classList.add('bt-hp');
-  return bar;
-}
-
 /** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
  *  they get more room and a shape of their own beside the troops' rounds. */
-const heroCard = (cls: string, ...children: HTMLElement[]): HTMLElement =>
+const cardSlot = (cls: string, ...children: HTMLElement[]): HTMLElement =>
   el('span', { class: `bt-card ${cls}` }, ...children);
 
 // ------------------------------------------------------------- the enemy
@@ -130,7 +113,7 @@ function enemyBoard(view: BattleView): HTMLElement {
  *  has is the fight's business. */
 const squadlessCell = (face: HTMLElement): HTMLElement => {
   face.classList.add('bt-card-art');
-  return heroCard('is-filled is-villain', face);
+  return cardSlot('is-filled is-villain', face);
 };
 
 // -------------------------------------------------------------- your board
@@ -153,15 +136,14 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
   const open = game.heroSlotsOpen();
   for (let i = 0; i < game.heroSlotCeiling(); i++) {
     const heroId = game.partyHeroes[i];
+    // An open slot, filled or not, opens the hero picker for all of them.
     if (heroId !== undefined) {
-      const cell = el('button', {
-        class: 'bt-card is-filled is-mine', type: 'button',
-        'aria-label': `Leave ${HEROES[heroId].name} behind`,
-      }, heroArt(heroId), heroHpBar(game, heroId));
-      cell.addEventListener('click', () => game.clearHeroSlot(i));
-      heroes.push(cell);
+      heroes.push(heroCard(game, heroId, {
+        small: true, onClick: () => game.pickPartyHeroes(),
+        label: `Choose heroes — ${HEROES[heroId].name} leads`,
+      }));
     } else if (i < open) {
-      heroes.push(emptyCard());
+      heroes.push(emptyHeroSlot({ small: true, onClick: () => game.pickPartyHeroes(), label: 'Choose heroes' }));
     } else {
       // Only the NEXT slot carries a price: the ladder climbs, so printing
       // this one's Gems on every locked slot would quote the wrong number.
@@ -203,29 +185,6 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
   return tile;
 }
 
-function heroTile(game: Game, heroId: HeroId): HTMLElement {
-  const picked = game.partyHeroes.includes(heroId);
-  const health = game.heroHealthOf(heroId);
-  const down = health.exhausted;
-  const def = HEROES[heroId];
-  const tile = el('button', {
-    class: `bt-card is-filled is-tile${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`,
-    type: 'button',
-    'aria-label': down ? `${def.name} is exhausted` : picked ? `Leave ${def.name} behind` : `Take ${def.name}`,
-    'aria-pressed': picked ? 'true' : 'false',
-  },
-  heroArt(heroId),
-  // Exhausted, it sleeps it off (10-heroes.md §2.8): the Zs rise off it and
-  // the pill says how long is left, where its level sits otherwise.
-  ...(down
-    ? [restMarks(), el('span', { class: 'bt-card-level' }, restLeft(health.restMs))]
-    : [el('span', { class: 'bt-card-level' }, `Lv ${game.heroLevelOf(heroId)}`)]),
-  heroHpBar(game, heroId),
-  ...(picked ? [el('span', { class: 'bt-tile-check' }, iconEl('tick', { size: 'md' }))] : []));
-  tile.addEventListener('click', () => game.toggleHero(heroId));
-  return tile;
-}
-
 // -------------------------------------------------------------- the action
 
 function actionBox(game: Game, view: BattleView): HTMLElement {
@@ -259,9 +218,6 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     partyBoard(game, view),
     sectionHead('Troops'),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
-    sectionHead('Heroes'),
-    el('div', { class: 'bt-roster is-heroes' },
-      ...game.state.heroes.owned.map((h) => heroTile(game, h))),
     actionBox(game, view),
   );
   // TALL: the two boards, the roster and the button are all read together,

@@ -120,37 +120,9 @@ button.bt-card { cursor: pointer; }
   border-radius: calc(var(--px) * 6);
 }
 .bt-card-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 26); }
-/* The hero's level on its roster card, in the dark pill a count wears,
-   sat on the HP bar so the face stays clear. */
-.bt-card-level {
-  position: absolute;
-  bottom: calc(var(--px) * 7);
-  left: 50%;
-  translate: -50% 0;
-  white-space: nowrap;
-  padding: 0 calc(var(--px) * 5);
-  border-radius: calc(var(--px) * 7);
-  background: var(--wood-dark);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 11);
-  font-weight: var(--weight-title);
-}
-.bt-card.is-tile { --card-w: calc(var(--px) * 46); }
-.bt-card.is-picked { outline: calc(var(--px) * 2) solid var(--leaf-dark); outline-offset: calc(var(--px) * 1); }
-/* EXHAUSTED: darkened, not greyed — still yours, only asleep — with the Zs
-   off its top-right and its rest's countdown where the level sat. */
-.bt-card.is-down .bt-card-art { filter: brightness(0.5) saturate(0.7); }
-.bt-card.is-down { cursor: default; }
-.bt-card.is-down .k-zzz { --zzz-size: calc(var(--px) * 11); top: calc(var(--px) * 2); right: calc(var(--px) * -2); }
-.bt-card-level > .k-rest-left { padding: 0; background: none; font-size: inherit; }
-/* The HP bar hangs over the card's bottom edge. */
-.bt-hp {
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--px) * 2);
-  right: calc(var(--px) * 2);
-  bottom: calc(var(--px) * -5);
-}
+/* Our hero slots are the picker's own cards (heroCard.ts), at the board's
+   card width, so the party reads as the popup that fills it. */
+.bt-group.is-heroes .hc.is-small { --hc-w: var(--card-w, calc(var(--px) * 54)); }
 
 /* An empty slot is the portrait's own ring, empty and sunk in. */
 .bt-cell.is-empty {
@@ -217,14 +189,6 @@ button.bt-card { cursor: pointer; }
 .bt-troop.is-out { filter: grayscale(0.9); opacity: 0.6; }
 .bt-troop.is-full { opacity: 0.8; }
 
-.bt-tile-check {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.bt-tile-check > .icon { --icon-size: calc(var(--px) * 30); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
 
 /* ----------------------------------------------------------- the action */
 

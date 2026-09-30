@@ -2,6 +2,7 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+import { renderHeroPicker } from './ui/heroPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
@@ -174,6 +175,7 @@ async function boot(): Promise<void> {
     collection: renderCollectionSheet,
     heroes: renderHeroesSheet,
     lair: renderLairSheet,
+    heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     builder: renderBuilderSheet,

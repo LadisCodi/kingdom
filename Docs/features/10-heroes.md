@@ -468,6 +468,34 @@ the rewarded video.
   GROWN; the party sheet is where one is SENT, and neither does the other's
   job.
 
+### 8.4 The hero picker
+
+One popup for every place the game asks for heroes. Whoever opens it passes
+how many slots it wants (1…n) and what to do with the answer.
+
+- **The hero card** it is built from — the one card a hero is wherever it is
+  offered or seated, 2:3:
+  - the illustration filling it, on its **rarity's colour**;
+  - the unit type's icon, top left;
+  - its level and its ascension stars at the foot;
+  - its HP bar, hung over the bottom edge;
+  - a green check, top right, when it holds a slot;
+  - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
+  - No name: the illustration is enough.
+- **Top**: the filter bar — `All`, then one tab per unit type heroes fight
+  as — and the sort (level ↔ rarity).
+- **Middle, scrolling**: every hero the kingdom owns, three cards to a row,
+  under a text heading.
+- **Bottom, fixed**: the slots asked for, in a green head panel `Party n/m`;
+  an empty one is a sunk slot with a faint +.
+- **Select** hands the heroes back, in slot order. The window's close leaves
+  without an answer. Either way the screen that opened it comes back.
+- **Taps**:
+  - a hero in the list goes into the first free slot, or out of the slot it
+    holds;
+  - a filled slot empties;
+  - no free slot, or an exhausted hero: an error sound, nothing moves.
+
 ## 9. Dials, in the order to reach for them
 
 | Dial | Value | Key |
