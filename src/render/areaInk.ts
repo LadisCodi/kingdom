@@ -1,26 +1,24 @@
-// THE INK OVERLAYS: a building's work area and the Townhall's reach, drawn as
-// a mapmaker's ink laid OVER the view (mockup:
-// Docs/art/mockups/area-overlays/area-overlays-c2.png).
+// THE AREA AND THE REACH, drawn as UI laid OVER the view.
 //
-// They are UI, not ground, so they are assembled in SCREEN space: a stroke is
-// laid flat along each edge of the area's diamonds, never squashed onto the
-// ground the way terrain art is, and a dot stays round whatever the slope.
-// The renderer draws them after the floor and before anything that stands,
-// so trees and buildings stand in front of the line.
+// A building's work area (mockup:
+// Docs/art/mockups/area-overlays/area-simple-2-two-tone.png) is a two-tone
+// line — a warm-white core inside an intense blue outline, its corners
+// rounded — and a light sky-blue glow inside it, strongest against the line
+// and gone a third of a tile in, breathing slowly. Blue, because a gold
+// tint on the grass did not read. All of it is vector: no art.
 //
-// Five pieces, cut from one ChatGPT sheet by
-// Docs/art/originals/area-overlays/cut_ink.py:
+// The Townhall's reach is a red-brown ink dash-and-dot, laid from two pieces
+// cut by Docs/art/originals/area-overlays/cut_ink.py:
 //
-//   * overlay_ink_line   — a long horizontal nib stroke; each edge takes a
-//                          slice of it, so neighbouring edges are not copies;
-//   * overlay_ink_knot   — a blot on every corner, where two strokes turn;
-//   * overlay_parchment  — the wash over the area's tiles, tiled seamlessly;
 //   * overlay_reach_dash — one edge of the reach: its dash, dot centre to dot
 //                          centre, so a run of edges repeats with no seam;
 //   * overlay_reach_dot  — the dot on every vertex of the reach, which is
 //                          what keeps the pattern whole around a corner.
 //
-// Until the pieces have loaded, both fall back to plain vector lines.
+// Both are assembled in SCREEN space — a line is laid flat along each edge
+// of the diamonds, never squashed onto the ground the way terrain art is —
+// and the renderer draws them after the floor and before anything that
+// stands, so trees and buildings stand in front of them.
 
 import type { PlotBox } from './camera';
 import { corners as diamondCorners, edge } from './iso';
@@ -91,19 +89,6 @@ function areaEdges(
   return out;
 }
 
-/** The vertices where the border TURNS — both slopes meet there. */
-function turns(edges: readonly InkEdge[]): Point[] {
-  const at = new Map<string, { p: Point; slopes: number }>();
-  for (const e of edges) {
-    for (const [k, p] of [[e.va, e.a], [e.vb, e.b]] as Array<[string, Point]>) {
-      const v = at.get(k) ?? { p, slopes: 0 };
-      v.slopes |= 1 << e.slope;
-      at.set(k, v);
-    }
-  }
-  return [...at.values()].filter((v) => v.slopes === 3).map((v) => v.p);
-}
-
 /** Every vertex the border passes through, once. */
 function vertices(edges: readonly InkEdge[]): Point[] {
   const at = new Map<string, Point>();
@@ -132,25 +117,15 @@ function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, p: Point, w
   ctx.drawImage(img, p[0] - w / 2, p[1] - h / 2, w, h);
 }
 
-let parchment: { img: HTMLImageElement; pattern: CanvasPattern } | null = null;
-function parchmentPattern(ctx: CanvasRenderingContext2D, img: HTMLImageElement): CanvasPattern | null {
-  if (parchment?.img !== img) {
-    const pattern = ctx.createPattern(img, 'repeat');
-    if (!pattern) return null;
-    parchment = { img, pattern };
-  }
-  return parchment.pattern;
-}
-
 /**
  * THE GLOW: along every outside edge, a band laid across its own tile — a
  * parallelogram on the ground's diagonal, so a straight run of edges gives
  * one seamless band — shaded from the tint on the edge to nothing inside.
  * The gradient runs perpendicular to the edge ON SCREEN, which is what makes
  * it even along the edge. Where two bands meet at a corner they add up, and
- * the corner glows a little brighter, as a painted border would.
+ * the corner glows a little brighter.
  */
-function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[]): void {
+function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], alpha: number): void {
   for (const e of edges) {
     const v: Point = [e.across[0] * GLOW_DEPTH, e.across[1] * GLOW_DEPTH];
     const dx = e.b[0] - e.a[0];
@@ -163,8 +138,8 @@ function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[]): void {
     let depth = v[0] * nx + v[1] * ny;
     if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
     const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
-    g.addColorStop(0, `rgba(${GLOW_RGB}, ${GLOW_ALPHA})`);
-    g.addColorStop(0.45, `rgba(${GLOW_RGB}, ${GLOW_ALPHA * 0.35})`);
+    g.addColorStop(0, `rgba(${GLOW_RGB}, ${alpha.toFixed(3)})`);
+    g.addColorStop(0.4, `rgba(${GLOW_RGB}, ${(alpha * 0.4).toFixed(3)})`);
     g.addColorStop(1, `rgba(${GLOW_RGB}, 0)`);
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -178,80 +153,96 @@ function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[]): void {
 }
 
 /** How the overlays are sized: `unit` is a cell's worth of pixels. */
-const LINE_PX = 0.075;   // the area's stroke, as a fraction of a cell
-const KNOT_PX = 1.3;     // a corner's joint, in strokes: it closes the turn, it is not a dot
-/** The wash: a warm golden tint over the tiles — the grass must read
- *  through it, tinted, never bleached — and the parchment's grain on top. */
-const WASH_TINT = 'rgba(232, 204, 110, 0.2)';
-/** The glow inside the edge: the tint at `GLOW_ALPHA` on the line, gone
- *  `GLOW_DEPTH` of a cell in — strongest at the border, faint inside. */
-const GLOW_RGB = '224, 180, 76';
-const GLOW_ALPHA = 0.85;
-const GLOW_DEPTH = 0.6;
-const GRAIN_ALPHA = 0.5;
-const PARCHMENT_CELLS = 1.6; // one parchment tile spans this many cells
+const LINE_PX = 0.085;   // the area's line, outline included, as a fraction of a cell
+const CORE_PX = 0.045;   // its warm-white core
+const ROUND_PX = 0.14;   // the radius a corner of the line is rounded to
+const OUTLINE = '#1d63d8';
+const CORE = '#fff8e6';
+/** The glow: sky blue, `GLOW_ALPHA` against the line and gone `GLOW_DEPTH`
+ *  of a cell in, breathing between `BREATH_LOW` and full once a period. */
+const GLOW_RGB = '125, 205, 255';
+const GLOW_ALPHA = 0.8;
+const GLOW_DEPTH = 0.34;
+const BREATH_MS = 2600;
+const BREATH_LOW = 0.45;
 const DASH_PX = 0.07;    // the reach's dash, thickness as a fraction of a cell
 const DOT_DASHES = 1.5;  // the reach's dot, across, in dash thicknesses
 
-/** A building's work area (or any AREA the markers carry): the parchment
- *  wash over its tiles, the ink stroke round its edge, a knot on each turn. */
-export function drawAreaInk(
+/** The border as closed loops. `areaEdges` walks every cell clockwise, so
+ *  each edge ends where the next one along the border begins. */
+function loops(edges: readonly InkEdge[]): InkEdge[][] {
+  const from = new Map<string, InkEdge[]>();
+  for (const e of edges) from.set(e.va, [...(from.get(e.va) ?? []), e]);
+  const used = new Set<InkEdge>();
+  const out: InkEdge[][] = [];
+  for (const start of edges) {
+    if (used.has(start)) continue;
+    const loop: InkEdge[] = [];
+    let cur: InkEdge | undefined = start;
+    while (cur && !used.has(cur)) {
+      used.add(cur);
+      loop.push(cur);
+      cur = from.get(cur.vb)?.find((n) => !used.has(n));
+    }
+    out.push(loop);
+  }
+  return out;
+}
+
+const midpoint = (e: InkEdge): Point => [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2];
+
+/** Trace the border with its corners rounded: from each edge's midpoint to
+ *  the next, bending through the vertex between them. A straight run's
+ *  vertex is on the line already, and arcTo draws it straight. */
+function borderPath(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], r: number): void {
+  ctx.beginPath();
+  for (const loop of loops(edges)) {
+    const closed = loop[loop.length - 1].vb === loop[0].va;
+    if (!closed) {
+      ctx.moveTo(...loop[0].a);
+      for (const e of loop) ctx.lineTo(...e.b);
+      continue;
+    }
+    ctx.moveTo(...midpoint(loop[0]));
+    for (let i = 0; i < loop.length; i++) {
+      const next = loop[(i + 1) % loop.length];
+      ctx.arcTo(loop[i].b[0], loop[i].b[1], ...midpoint(next), r);
+    }
+    ctx.closePath();
+  }
+}
+
+/** A building's work area (or any AREA the markers carry): the breathing
+ *  glow inside its edge, then the two-tone line round it. `now` is the
+ *  wall clock the breath runs on (performance.now(), never the sim's). */
+export function drawArea(
   ctx: CanvasRenderingContext2D, cells: readonly Coord[],
-  cellRect: (c: Coord) => PlotBox, diamondPath: (b: PlotBox) => void, unit: number,
-  fallback: { fill: string; stroke: string },
+  cellRect: (c: Coord) => PlotBox, diamondPath: (b: PlotBox) => void, unit: number, now: number,
 ): void {
   if (cells.length === 0) return;
   const edges = areaEdges(cells, cellRect);
-  const line = spriteImage('overlay_ink_line');
-  const knot = spriteImage('overlay_ink_knot');
-  const wash = spriteImage('overlay_parchment');
+  const breath = BREATH_LOW + (1 - BREATH_LOW)
+    * (0.5 - 0.5 * Math.cos((2 * Math.PI * (now % BREATH_MS)) / BREATH_MS));
 
   ctx.save();
   ctx.beginPath();
   for (const cell of cells) diamondPath(cellRect(cell));
-  const pattern = wash ? parchmentPattern(ctx, wash) : null;
-  if (pattern) {
-    ctx.fillStyle = WASH_TINT;
-    ctx.fill();
-    ctx.clip();
-    glow(ctx, edges);
-    ctx.beginPath(); // the bands took the path; the grain wants the area again
-    for (const cell of cells) diamondPath(cellRect(cell));
-    // Multiplied, the pale paper adds its grain and never lightens.
-    const k = (unit * PARCHMENT_CELLS) / wash!.naturalWidth;
-    pattern.setTransform(new DOMMatrix().scale(k));
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = GRAIN_ALPHA;
-    ctx.fillStyle = pattern;
-    ctx.fill();
-  } else {
-    ctx.fillStyle = fallback.fill;
-    ctx.fill();
-  }
+  ctx.clip();
+  glow(ctx, edges, GLOW_ALPHA * breath);
   ctx.restore();
 
-  const stroke = Math.max(2, unit * LINE_PX);
-  if (!line || !knot) {
-    ctx.save();
-    ctx.strokeStyle = fallback.stroke;
-    ctx.lineWidth = stroke;
-    ctx.beginPath();
-    for (const e of edges) { ctx.moveTo(...e.a); ctx.lineTo(...e.b); }
-    ctx.stroke();
-    ctx.restore();
-    return;
-  }
-  // The strip carries a margin above and below its stroke (the sheet's
-  // stroke is 22 of its 28 rows), so it is drawn that much taller.
-  const height = stroke * (line.naturalHeight / 22);
-  const scale = line.naturalHeight / height; // source pixels per screen pixel
-  for (const e of edges) {
-    const len = Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]) + stroke;
-    const sw = Math.min(line.naturalWidth, len * scale);
-    const sx = (e.seed % 1000) / 1000 * (line.naturalWidth - sw);
-    lay(ctx, line, sx, sw, e.a, e.b, height, stroke / 2);
-  }
-  for (const p of turns(edges)) stamp(ctx, knot, p, stroke * KNOT_PX);
+  const width = Math.max(4, unit * LINE_PX);
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  borderPath(ctx, edges, Math.max(2, unit * ROUND_PX));
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = width;
+  ctx.stroke();
+  ctx.strokeStyle = CORE;
+  ctx.lineWidth = Math.max(2, Math.min(width - 2, unit * CORE_PX));
+  ctx.stroke();
+  ctx.restore();
 }
 
 /** The Townhall's reach: a dash along every edge of the border and a dot

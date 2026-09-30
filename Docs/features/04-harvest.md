@@ -268,11 +268,11 @@ Quests:
 
 - A worker building works cells **of its type** within Chebyshev
   `radius(level)`. Revealed cells only.
-- The area is drawn while the building is selected or placed: a sepia ink line
-  round its edge with a knot on each corner, over a parchment wash that glows
-  strongest along the edge and fades towards the inside, laid
-  over the floor and under what stands on it (mockup
-  `../art/mockups/area-overlays/area-overlays-c2.png`).
+- The area is drawn while the building is selected or placed: a warm-white
+  line with an intense blue outline and rounded corners, and a light sky-blue
+  glow inside it that is strongest against the line, gone a third of a tile
+  in, and breathes slowly. It lies over the floor and under what stands on it
+  (mockup `../art/mockups/area-overlays/area-simple-2-two-tone.png`).
 - **One worker per cell, globally.** `tryDispatch` takes the nearest unclaimed
   cell.
 - A worker whose cell exhausts releases the claim and walks to another.

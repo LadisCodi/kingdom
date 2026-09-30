@@ -35,7 +35,7 @@ import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
-import { drawAreaInk, drawReachInk } from './areaInk';
+import { drawArea, drawReachInk } from './areaInk';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -786,11 +786,11 @@ export function drawMap(
   }
 
   // Pass 1.1: THE WORK AREA the markers carry (a selected building's range,
-  // a placement's, a spell's targets), in ink over the floor and under
+  // a placement's, a spell's targets), over the floor and under
   // everything that stands on it — trees and buildings stand in front of
   // the line (render/areaInk.ts).
-  drawAreaInk(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
-    { fill: PALETTE.influenceFill, stroke: PALETTE.influenceBorder });
+  drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
+    performance.now());
 
   // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dash-and-dot
   // ink line along the last ring the player may pay for, drawn over the fog
