@@ -25,7 +25,7 @@ import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
@@ -1089,7 +1089,15 @@ export function drawMap(
     strokeDiamond(ctx, b, 2);
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
-    stand(b, sprite ? [`${sprite}_l1`, sprite] : [], markers.previewGlyph);
+    const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    // A solid rim round the ghost, opaque under the translucent building,
+    // so it stands out from the grass and the roofs around it.
+    ctx.globalAlpha = 1;
+    const foot = base(b);
+    const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostOutline, rim));
+    ctx.globalAlpha = 0.6;
+    stand(b, keys, markers.previewGlyph);
     ctx.globalAlpha = 1;
     drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
   }
