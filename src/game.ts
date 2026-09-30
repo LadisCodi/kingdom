@@ -3748,7 +3748,6 @@ export class Game {
       validCells: [],
       validColor: PALETTE.validTarget,
       influenceCells: [],
-      claimedCells: [],
       yieldCells: [],
       previewCell: null,
       previewGlyph: null,
@@ -3901,9 +3900,6 @@ export class Game {
         layer.selectedSize = DISTRICTS[district.definitionId].size;
         if (district.state === 'Built') {
           layer.influenceCells = influenceCells(this.map, district);
-          layer.claimedCells = this.state.workers
-            .filter((w) => w.buildingId === district.uniqueId && w.claimedCell !== null)
-            .map((w) => w.claimedCell!);
         }
       }
     }

@@ -43,7 +43,6 @@ export interface MarkerLayer {
   validCells: Array<{ cell: Coord; label: string }>; // valid placement cells
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
-  claimedCells: Coord[]; // cells claimed by the inspected building's workers
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
   yieldCells: Array<{
@@ -1021,11 +1020,6 @@ export function drawMap(
       ctx.textBaseline = 'middle';
       ctx.fillText(label, c.x, c.y);
     }
-  }
-  for (const cell of markers.claimedCells) {
-    ctx.strokeStyle = PALETTE.workedTile;
-    ctx.lineWidth = 3;
-    strokeDiamond(ctx, cellRect(cell), 4);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });

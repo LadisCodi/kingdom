@@ -48,7 +48,6 @@ export const PALETTE = {
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
-  workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceFill: 'rgba(255, 255, 255, 0.16)',
   influenceBorder: 'rgba(255, 255, 255, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing
