@@ -3795,9 +3795,9 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
-        layer.influenceCells = cellsWithinRadiusOfRect(
+        layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
-        );
+        ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
             // What each captured cell HOLDS, so a Sawmill's radius shows which
@@ -3839,10 +3839,10 @@ export class Game {
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
-          layer.influenceCells = cellsWithinRadiusOfRect(
+          layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
             levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
-          );
+          ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
@@ -3899,7 +3899,8 @@ export class Game {
       // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
         if (district.state === 'Built') {
-          layer.influenceCells = influenceCells(this.map, district);
+          layer.influenceCells = withFootprint(influenceCells(this.map, district),
+            district.location, DISTRICTS[district.definitionId].size);
         }
       }
     }
@@ -4342,6 +4343,17 @@ export function formatSigned(goldPerMinute: number): string {
 }
 
 /** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
+/** A building's range as the map DRAWS it: its rings AND the ground it
+ *  stands on. The sim's rings start at 1 — the footprint is not worked —
+ *  and drawn without it the area has a hole, outlined round the building. */
+function withFootprint(cells: Coord[], anchor: Coord, size: { x: number; y: number }): Coord[] {
+  const out = [...cells];
+  for (let dy = 0; dy < size.y; dy++) {
+    for (let dx = 0; dx < size.x; dx++) out.push({ x: anchor.x + dx, y: anchor.y + dy });
+  }
+  return out;
+}
+
 export const formatAdjacency = (goldPerMinute: number): string =>
   `${formatSigned(goldPerMinute)} 🪙`;
 
