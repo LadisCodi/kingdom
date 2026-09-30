@@ -1037,12 +1037,21 @@ window over the dimmed placement screen:
 
 - Header plank *Builders* and its close knob — the only way out; there is no
   *Not now*.
-- *All n builders are busy*, and under it *Nothing waits in line — finish or
-  rush a job to free one up.*
-- The crew as gold medallions, one per builder owned, and an empty socket for
-  each one still to hire up to the ceiling.
-- Below the ceiling: one priced gem button, *Hire a builder*, the Gems above
-  the slab. At the ceiling: no button, and *4 is as large as a crew gets.*
+- Top row: an illustration of two builders, a man and a woman, on its tile;
+  beside it *All n builders are busy* and *Nothing waits in line — finish a
+  job to free a builder.*
+- The crew: a 2×2 grid of slots, one per builder up to the ceiling.
+  - **Busy** — the district card's under-construction widget: the building's
+    sprite, its name and what is being done (*Building*, *Upgrading to Lv 3*),
+    the blue bar with the time left inside it, and under it the priced gem
+    **Finish**.
+  - **Empty, the next to hire** — a dashed socket holding the priced gem
+    **Hire a builder**.
+  - **Empty, further up** — the dashed socket alone.
+- At the ceiling there is no empty slot, and the grid ends with *4 is as
+  large as a crew gets.*
+- Finishing a job frees its builder and closes the sheet, back on the
+  positioned ghost: Build now starts.
 
 **Moving** uses the same screen: no price and no time, and the button reads
 *Move here*.
