@@ -1040,15 +1040,14 @@ window over the dimmed placement screen:
 - Top row: an illustration of two builders, a man and a woman, on its tile;
   beside it *All n builders are busy* and *Nothing waits in line — finish a
   job to free a builder.*
-- The crew: a 2×2 grid of slots, one per builder up to the ceiling.
-  - **Busy** — the district card's under-construction widget: the building's
-    sprite, its name and what is being done (*Building*, *Upgrading to Lv 3*),
-    the blue bar with the time left inside it, and under it the priced gem
-    **Finish**.
-  - **Empty, the next to hire** — a dashed socket holding the priced gem
-    **Hire a builder**.
-  - **Empty, further up** — the dashed socket alone.
-- At the ceiling there is no empty slot, and the grid ends with *4 is as
+- The crew: a vertical list, one row per builder up to the ceiling.
+  - **Busy** — the building's sprite; its name and what is being done
+    (*Housing #5 · Building*, *Quarry · Upgrading to Lv 3*) over the blue bar
+    with the time left inside it; the priced gem **Finish** at the right.
+  - **Empty, the next to hire** — a dashed socket with a builder's
+    silhouette, *A third builder*, and the priced gem **Hire a builder**.
+  - **Empty, further up** — the socket and its name alone, faded.
+- At the ceiling there is no empty row, and the list ends with *4 is as
   large as a crew gets.*
 - Finishing a job frees its builder and closes the sheet, back on the
   positioned ghost: Build now starts.
