@@ -55,10 +55,11 @@ export function renderHeroPicker(game: Game): HTMLElement {
     })));
 
   const filled = pick.slots.filter((h) => h !== null).length;
+  // The slots are the list's own cards, at the list's own size.
   const slots = pick.slots.map((h, i) => (h === null
-    ? emptyHeroSlot({ small: true })
+    ? emptyHeroSlot()
     : heroCard(game, h, {
-      small: true, onClick: () => game.heroPickClearSlot(i),
+      onClick: () => game.heroPickClearSlot(i),
       label: `Take ${HEROES[h].name} out of the party`,
     })));
 

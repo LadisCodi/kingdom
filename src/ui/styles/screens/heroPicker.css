@@ -19,9 +19,9 @@
   padding: 0;
   border: calc(var(--px) * 2) solid var(--gold-dark);
   border-radius: calc(var(--px) * 8);
-  background:
-    radial-gradient(120% 80% at 50% 30%, color-mix(in srgb, var(--hc-bg) 70%, #fff) 0%, var(--hc-bg) 55%,
-      color-mix(in srgb, var(--hc-bg) 70%, #000) 100%);
+  /* The card's face is painted per rarity (assets/hero-card-*.png): a
+     backdrop lit from the upper middle, the illustration standing on it. */
+  background: var(--hc-bg) var(--hc-face) center / 100% 100% no-repeat;
   box-shadow: inset 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.7),
     0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(60, 36, 16, 0.25);
   font: inherit;
@@ -29,9 +29,9 @@
   text-align: left;
 }
 button.hc { cursor: pointer; }
-.hc.is-common { --hc-bg: var(--rarity-common); }
-.hc.is-rare { --hc-bg: var(--rarity-rare); }
-.hc.is-legendary { --hc-bg: var(--rarity-legendary); }
+.hc.is-common { --hc-bg: var(--rarity-common); --hc-face: url('../../assets/hero-card-common.png'); }
+.hc.is-rare { --hc-bg: var(--rarity-rare); --hc-face: url('../../assets/hero-card-rare.png'); }
+.hc.is-legendary { --hc-bg: var(--rarity-legendary); --hc-face: url('../../assets/hero-card-legendary.png'); }
 .hc-art {
   position: absolute;
   inset: 0;
@@ -45,15 +45,16 @@ button.hc { cursor: pointer; }
 /* What it fights as: the unit's icon on a small dark plate, top left. */
 .hc-type {
   position: absolute;
-  top: calc(var(--px) * 3);
-  left: calc(var(--px) * 3);
+  top: calc(var(--px) * 4);
+  left: calc(var(--px) * 4);
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  border-radius: calc(var(--px) * 5);
-  background: rgba(40, 22, 10, 0.7);
-  box-shadow: 0 0 0 calc(var(--px) * 1) rgba(255, 236, 170, 0.5);
+  width: calc(var(--px) * 26);
+  height: calc(var(--px) * 26);
+  /* A dark plate in a brass rim (assets/hero-type-plate.png), so the
+     coloured symbol reads on any art. */
+  background: url('../../assets/hero-type-plate.png') center / 100% 100% no-repeat;
+  z-index: 1;
 }
 /* Level and stars on a dark band at the foot, over the art. */
 .hc-foot {
@@ -102,7 +103,7 @@ button.hc { cursor: pointer; }
 .hc.is-resting .hc-foot { background: none; }
 /* A small card: a slot on a crowded board. */
 .hc.is-small { --hc-w: calc(var(--px) * 64); }
-.hc.is-small .hc-type { width: calc(var(--px) * 16); height: calc(var(--px) * 16); }
+.hc.is-small .hc-type { top: calc(var(--px) * 3); left: calc(var(--px) * 3); width: calc(var(--px) * 18); height: calc(var(--px) * 18); }
 .hc.is-small .hc-type > .icon { --icon-size: calc(var(--px) * 12); }
 .hc.is-small .hc-stars .icon { --icon-size: calc(var(--px) * 8); }
 .hc.is-small .hc-level { font-size: calc(var(--px) * 11); }
@@ -123,10 +124,16 @@ button.hc { cursor: pointer; }
 
 /* ---------------------------------------------------------- the picker -- */
 
-/* The list scrolls on its own; the filter bar above it and the party and
-   Select under it stay put. */
+/* The whole height of the screen, however few heroes there are: the list
+   scrolls on its own, and the filter bar above it and the party and Select
+   under it stay put. */
+#overlay .k-sheet.is-picker { height: 100%; }
 .k-sheet.is-picker > .k-panel > .k-sheet-body { overflow: hidden; }
 .hp {
+  /* ONE CARD WIDTH for the list and the party, from the screen's width (a
+     container query), so a hero is the same size in both: a third of it,
+     less the gaps and the list's gutter and scrollbar. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 8);
@@ -156,7 +163,7 @@ button.hc { cursor: pointer; }
 .hp-sort .k-btn-label { display: inline-flex; align-items: center; gap: calc(var(--px) * 4); }
 .hp-sort-caret { font-size: calc(var(--px) * 12); }
 /* The card's type plate carries the symbol a size up from the icon's own. */
-.hc-type > .icon { --icon-size: calc(var(--px) * 16); }
+.hc-type > .icon { --icon-size: calc(var(--px) * 18); }
 .hp-list {
   flex: 1;
   min-height: 0;
@@ -164,14 +171,22 @@ button.hc { cursor: pointer; }
   padding: 0 calc(var(--px) * 4) calc(var(--px) * 10);
 }
 .hp-list > .k-section-head { margin: 0 0 calc(var(--px) * 8); }
+.hp-list,
+.hp-party { --hp-card-w: calc((100cqw - calc(var(--px) * 40) - calc(var(--px) * 20)) / 3); }
 .hp-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, var(--hp-card-w));
+  justify-content: center;
   gap: calc(var(--px) * 14) calc(var(--px) * 10);
   padding: calc(var(--px) * 6) calc(var(--px) * 4) calc(var(--px) * 4);
 }
 .hp-none { color: var(--ink-muted); text-align: center; }
 .hp-party .k-headpanel-body { padding: calc(var(--px) * 2) 0 calc(var(--px) * 8); }
-.hp-slots { display: flex; justify-content: center; gap: calc(var(--px) * 12); }
+.hp-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, var(--hp-card-w));
+  justify-content: center;
+  gap: calc(var(--px) * 10);
+}
 .hp-go { display: flex; justify-content: center; }
 .hp-go > .k-btn { min-width: 60%; }
