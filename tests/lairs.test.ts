@@ -498,9 +498,11 @@ describe('clearing the lair', () => {
     expect(report.attack).toBeLessThan(report.power);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
     expect(lairIsCleared(state, 'Drake')).toBe(false);
-    // The hero came home with nothing: it may go again once some HP is back.
+    // The hero fell: it is exhausted, and rests until its HP is whole again.
     expect(attackLair(state, map, 'Drake', ['Warden'], company).result).toBe('HeroDown');
-    expect(attackLair(state, map, 'Drake', ['Warden'], company, T0 + 3_600_000).result).toBe('Repelled');
+    const whole = T0 + PARTY.heroRecoverHours * 3_600_000;
+    expect(attackLair(state, map, 'Drake', ['Warden'], company, whole - 60_000).result).toBe('HeroDown');
+    expect(attackLair(state, map, 'Drake', ['Warden'], company, whole).result).toBe('Repelled');
   });
 
   it('refuses a lair nobody has found, and one already cleared', () => {

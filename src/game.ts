@@ -3280,7 +3280,7 @@ export class Game {
   assignHero(heroId: HeroId): void {
     if (this.partyHeroes.includes(heroId)) return;
     if (!heroCanFight(this.state, heroId, this.now())) {
-      this.toast(`${HEROES[heroId].name} is still recovering`);
+      this.toast(`${HEROES[heroId].name} is exhausted — they rest until their HP is full`);
       return;
     }
     if (this.partyHeroes.length >= this.heroSlotsOpen()) {
@@ -4458,7 +4458,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
   NotEnoughSupplies: 'Not enough supplies to march',
-  HeroDown: 'A hero in the party has no HP left — let them recover',
+  HeroDown: 'A hero in the party is exhausted — they rest until their HP is full',
 };
 
 /** How well a unit type answers a lair's threat — used only to pre-fill a

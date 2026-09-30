@@ -219,7 +219,8 @@ hoardCap = raid.perDay × cityRate × takeSeconds(tier)
     - The last squad takes what is left, if it is less than `squadSize`.
   - **Heroes: one card per hero** — illustration, level and HP bar. A tap
     toggles it: in, it wears a green check and takes the next hero slot;
-    tapped again, it leaves. A hero at 0 HP is greyed and refuses.
+    tapped again, it leaves. An exhausted hero (10-heroes.md §2.8) is greyed
+    and refuses.
   - A tap that cannot place — no one at home, every slot full, a locked
     hero slot — does nothing and says why in one line.
   - **Quick deploy** fills the board with the strongest legal party, answering

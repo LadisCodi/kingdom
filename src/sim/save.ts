@@ -829,7 +829,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Fragments: state.heroes.fragments,
         HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
         Hurt: Object.fromEntries(Object.entries(state.heroes.hurt)
-          .map(([id, h]) => [id, { Missing: h!.missing, AtUtc: iso(h!.at) }])),
+          .map(([id, h]) => [id, { Missing: h!.missing, AtUtc: iso(h!.at), Exhausted: h!.exhausted === true }])),
       },
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
@@ -1242,8 +1242,10 @@ export function deserialize(
       // start, so an older save's count is simply not read.
       heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
       hurt: Object.fromEntries(Object.entries(
-        (heroesDto.Hurt ?? {}) as Record<string, { Missing: number; AtUtc: string }>,
-      ).map(([id, h]) => [id, { missing: h.Missing, at: ms(h.AtUtc) }])),
+        (heroesDto.Hurt ?? {}) as Record<string, { Missing: number; AtUtc: string; Exhausted?: boolean }>,
+      ).map(([id, h]) => [id, {
+        missing: h.Missing, at: ms(h.AtUtc), ...(h.Exhausted === true ? { exhausted: true } : {}),
+      }])),
     };
   }
 

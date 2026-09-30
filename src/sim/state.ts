@@ -538,9 +538,10 @@ export interface GameState {
      *  (Docs/features/10-heroes.md §3). */
     heroSlotsPurchased: number;
     /** What fights have taken from each hero and not yet given back: the
-     *  share of its HP missing at `at` (epoch ms), recovering on its own.
-     *  Absent = whole (sim/heroHealth.ts). */
-    hurt: Partial<Record<HeroId, { missing: number; at: number }>>;
+     *  share of its HP missing at `at` (epoch ms), recovering on its own,
+     *  and whether it fell — an exhausted hero rests until whole. Absent =
+     *  whole (sim/heroHealth.ts). */
+    hurt: Partial<Record<HeroId, { missing: number; at: number; exhausted?: boolean }>>;
   };
   /** Pull counters, per banner. Persisted because pity depends on them — and
    *  because the counter IS the rng key, which is what lets a hash beat a

@@ -34,14 +34,18 @@ export const heroHp = (state: GameState, id: HeroId, t: number): number =>
   // The epsilon keeps a share stored from whole points reading back as them.
   Math.floor(heroMaxHp(state, id) * heroHpShare(state, id, t) + 1e-9);
 
-/** A hero with no HP left cannot be sent anywhere until some comes back. */
+/** EXHAUSTED: a hero a fight took to 0 HP cannot be sent anywhere until
+ *  its bar is whole again — not merely until some of it is back. */
+export const heroExhausted = (state: GameState, id: HeroId, t: number): boolean =>
+  state.heroes.hurt[id]?.exhausted === true && heroHpShare(state, id, t) < 1;
+
 export const heroCanFight = (state: GameState, id: HeroId, t: number): boolean =>
-  heroHp(state, id, t) > 0;
+  !heroExhausted(state, id, t) && heroHp(state, id, t) > 0;
 
 /** Record what a fight left a hero with: `hp` of its max, as of `t`. */
 export function setHeroHp(state: GameState, id: HeroId, hp: number, t: number): void {
   const max = heroMaxHp(state, id);
   const missing = max <= 0 ? 0 : 1 - Math.max(0, Math.min(max, hp)) / max;
   if (missing <= 0) delete state.heroes.hurt[id];
-  else state.heroes.hurt[id] = { missing, at: t };
+  else state.heroes.hurt[id] = { missing, at: t, ...(hp <= 0 ? { exhausted: true } : {}) };
 }

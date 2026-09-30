@@ -171,7 +171,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   `party.heroRecoverHours` (8), so a hero at half is whole in 4 hours.
 - It is kept as a **share of the bar**, so a level gained while hurt raises
   the ceiling and keeps the same share missing.
-- **A hero at 0 HP cannot be sent** until some comes back. Quick deploy and
+- **A hero a fight takes to 0 HP is EXHAUSTED**: it cannot be sent anywhere
+  until its HP is full again — a whole `heroRecoverHours`. Quick deploy and
   the opening party leave it out.
 - The attack screen shows every hero's current HP as a bar along the foot of
   its card, in the party and in the roster.
