@@ -35,7 +35,7 @@ import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
-import { drawArea, drawAreaLine, drawReachInk } from './areaInk';
+import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -788,27 +788,27 @@ export function drawMap(
   // Pass 1.1: THE WORK AREA the markers carry (a selected building's range,
   // a placement's, a spell's targets), over the floor and under
   // everything that stands on it — trees and buildings stand in front of
-  // the line (render/areaInk.ts).
+  // the line (render/areaOverlays.ts).
   drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
     performance.now());
   // Where a building may go (or a spell may land): ONE region in the work
-  // area's line, not a diamond per cell (render/areaInk.ts); its
+  // area's line, not a diamond per cell (render/areaOverlays.ts); its
   // labels, if any, are Pass 3's.
   drawAreaLine(ctx, markers.validCells
     .filter(({ cell }) => fogState(state, map, cell) !== 'Undiscovered')
     .map(({ cell }) => cell), cellRect, size);
 
-  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dash-and-dot
-  // ink line along the last ring the player may pay for, drawn over the fog
-  // and across undiscovered ground too, so the extent of what the capital
-  // allows is read off the map before a tap is refused. Nothing is drawn
-  // when the reach holds the whole province.
+  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A line of white
+  // dots along the last ring the player may pay for, with a soft shadow on
+  // the far side, drawn over the fog and across undiscovered ground too, so
+  // the extent of what the capital allows is read off the map before a tap
+  // is refused. Nothing is drawn when the reach holds the whole province.
   {
     const visible: Coord[] = [];
     for (let cy = view.y0; cy <= view.y1; cy++) {
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
-    drawReachInk(ctx, reachBorder(state, map, visible), cellRect, size, PALETTE.reachBorder);
+    drawReach(ctx, reachBorder(state, map, visible), cellRect, size);
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and

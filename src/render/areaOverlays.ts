@@ -6,22 +6,17 @@
 // the line and fading most of a tile in, breathing slowly. Blue, because a
 // gold tint on the grass did not read. All of it is vector: no art.
 //
-// The Townhall's reach is a red-brown ink dash-and-dot, laid from two pieces
-// cut by Docs/art/originals/area-overlays/cut_ink.py:
+// The Townhall's reach (mockup:
+// Docs/art/mockups/area-overlays/reach-simple-2-dots-shadow.png) is a line
+// of white dots, each ringed in a thin dark outline, with a soft shadow on
+// the far side only — the side past the limit.
 //
-//   * overlay_reach_dash — one edge of the reach: its dash, dot centre to dot
-//                          centre, so a run of edges repeats with no seam;
-//   * overlay_reach_dot  — the dot on every vertex of the reach, which is
-//                          what keeps the pattern whole around a corner.
-//
-// Both are assembled in SCREEN space — a line is laid flat along each edge
-// of the diamonds, never squashed onto the ground the way terrain art is —
-// and the renderer draws them after the floor and before anything that
-// stands, so trees and buildings stand in front of them.
+// Both are drawn in SCREEN space — a dot stays round and a line even
+// whatever the slope — and the renderer draws them after the floor and
+// before anything that stands, so trees and buildings stand in front.
 
 import type { PlotBox } from './camera';
 import { corners as diamondCorners, edge } from './iso';
-import { spriteImage } from './sprites';
 import { coordKey, type Coord } from '../sim/state';
 
 type Side = 'N' | 'E' | 'S' | 'W';
@@ -29,7 +24,7 @@ type Point = [number, number];
 
 /** One edge of an area, in screen space, with the lattice corners it runs
  *  between (square-grid vertex keys, exact where floats are not). */
-interface InkEdge {
+interface BorderEdge {
   a: Point;
   b: Point;
   va: string;
@@ -59,7 +54,7 @@ const ACROSS: Record<Side, ['top' | 'right' | 'bottom' | 'left', 'top' | 'right'
   N: ['left', 'top'], E: ['top', 'right'], S: ['right', 'bottom'], W: ['bottom', 'left'],
 };
 
-function inkEdge(cell: Coord, side: Side, box: PlotBox): InkEdge {
+function borderEdge(cell: Coord, side: Side, box: PlotBox): BorderEdge {
   const [a, b] = edge(box, side);
   const c = diamondCorners(box);
   const [to, from] = ACROSS[side];
@@ -75,45 +70,24 @@ function inkEdge(cell: Coord, side: Side, box: PlotBox): InkEdge {
 /** Every edge of an area that faces a cell outside it. */
 function areaEdges(
   cells: readonly Coord[], cellRect: (c: Coord) => PlotBox,
-): InkEdge[] {
+): BorderEdge[] {
   const inside = new Set(cells.map(coordKey));
-  const out: InkEdge[] = [];
+  const out: BorderEdge[] = [];
   for (const cell of cells) {
     const box = cellRect(cell);
-    if (!inside.has(coordKey({ x: cell.x, y: cell.y - 1 }))) out.push(inkEdge(cell, 'N', box));
-    if (!inside.has(coordKey({ x: cell.x + 1, y: cell.y }))) out.push(inkEdge(cell, 'E', box));
-    if (!inside.has(coordKey({ x: cell.x, y: cell.y + 1 }))) out.push(inkEdge(cell, 'S', box));
-    if (!inside.has(coordKey({ x: cell.x - 1, y: cell.y }))) out.push(inkEdge(cell, 'W', box));
+    if (!inside.has(coordKey({ x: cell.x, y: cell.y - 1 }))) out.push(borderEdge(cell, 'N', box));
+    if (!inside.has(coordKey({ x: cell.x + 1, y: cell.y }))) out.push(borderEdge(cell, 'E', box));
+    if (!inside.has(coordKey({ x: cell.x, y: cell.y + 1 }))) out.push(borderEdge(cell, 'S', box));
+    if (!inside.has(coordKey({ x: cell.x - 1, y: cell.y }))) out.push(borderEdge(cell, 'W', box));
   }
   return out;
 }
 
 /** Every vertex the border passes through, once. */
-function vertices(edges: readonly InkEdge[]): Point[] {
+function vertices(edges: readonly BorderEdge[]): Point[] {
   const at = new Map<string, Point>();
   for (const e of edges) { at.set(e.va, e.a); at.set(e.vb, e.b); }
   return [...at.values()];
-}
-
-/** Lay `img` (or a slice of it, from `sx`, `sw` source pixels wide) flat
- *  along a→b, `height` tall and centred on the edge, `over` past each end. */
-function lay(
-  ctx: CanvasRenderingContext2D, img: HTMLImageElement,
-  sx: number, sw: number, a: Point, b: Point, height: number, over: number,
-): void {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const len = Math.hypot(dx, dy);
-  ctx.save();
-  ctx.translate(a[0], a[1]);
-  ctx.rotate(Math.atan2(dy, dx));
-  ctx.drawImage(img, sx, 0, sw, img.naturalHeight, -over, -height / 2, len + over * 2, height);
-  ctx.restore();
-}
-
-function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, p: Point, w: number): void {
-  const h = w * (img.naturalHeight / img.naturalWidth);
-  ctx.drawImage(img, p[0] - w / 2, p[1] - h / 2, w, h);
 }
 
 /**
@@ -124,7 +98,7 @@ function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, p: Point, w
  * it even along the edge. Where two bands meet at a corner they add up, and
  * the corner glows a little brighter.
  */
-function glow(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], alpha: number): void {
+function glow(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[], alpha: number): void {
   for (const e of edges) {
     const v: Point = [e.across[0] * GLOW_DEPTH, e.across[1] * GLOW_DEPTH];
     const dx = e.b[0] - e.a[0];
@@ -162,20 +136,26 @@ const GLOW_ALPHA = 0.7;
 const GLOW_DEPTH = 0.9;
 const BREATH_MS = 2600;
 const BREATH_LOW = 0.45;
-const DASH_PX = 0.07;    // the reach's dash, thickness as a fraction of a cell
-const DOT_DASHES = 1.5;  // the reach's dot, across, in dash thicknesses
+const DOT_PX = 0.075;    // the reach's dot, across, as a fraction of a cell
+const DOTS_PER_EDGE = 4; // one on the vertex, three between
+const DOT_RING = 'rgba(30, 24, 16, 0.75)';
+/** The shadow past the reach: this dark against the line, gone
+ *  `SHADE_DEPTH` of a cell out. */
+const SHADE_RGB = '8, 12, 18';
+const SHADE_ALPHA = 0.4;
+const SHADE_DEPTH = 0.34;
 
 /** The border as closed loops. `areaEdges` walks every cell clockwise, so
  *  each edge ends where the next one along the border begins. */
-function loops(edges: readonly InkEdge[]): InkEdge[][] {
-  const from = new Map<string, InkEdge[]>();
+function loops(edges: readonly BorderEdge[]): BorderEdge[][] {
+  const from = new Map<string, BorderEdge[]>();
   for (const e of edges) from.set(e.va, [...(from.get(e.va) ?? []), e]);
-  const used = new Set<InkEdge>();
-  const out: InkEdge[][] = [];
+  const used = new Set<BorderEdge>();
+  const out: BorderEdge[][] = [];
   for (const start of edges) {
     if (used.has(start)) continue;
-    const loop: InkEdge[] = [];
-    let cur: InkEdge | undefined = start;
+    const loop: BorderEdge[] = [];
+    let cur: BorderEdge | undefined = start;
     while (cur && !used.has(cur)) {
       used.add(cur);
       loop.push(cur);
@@ -186,12 +166,12 @@ function loops(edges: readonly InkEdge[]): InkEdge[][] {
   return out;
 }
 
-const midpoint = (e: InkEdge): Point => [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2];
+const midpoint = (e: BorderEdge): Point => [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2];
 
 /** Trace the border with its corners rounded: from each edge's midpoint to
  *  the next, bending through the vertex between them. A straight run's
  *  vertex is on the line already, and arcTo draws it straight. */
-function borderPath(ctx: CanvasRenderingContext2D, edges: readonly InkEdge[], r: number): void {
+function borderPath(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[], r: number): void {
   ctx.beginPath();
   for (const loop of loops(edges)) {
     const closed = loop[loop.length - 1].vb === loop[0].va;
@@ -256,36 +236,57 @@ export function drawAreaLine(
   ctx.restore();
 }
 
-/** The Townhall's reach: a dash along every edge of the border and a dot
- *  on every vertex of it, so the pattern runs unbroken round a turn. */
-export function drawReachInk(
+/** The Townhall's reach: the shadow on the far side of every border edge,
+ *  then a dot on every vertex and `DOTS_PER_EDGE - 1` between. */
+export function drawReach(
   ctx: CanvasRenderingContext2D, border: ReadonlyArray<{ cell: Coord; sides: readonly Side[] }>,
-  cellRect: (c: Coord) => PlotBox, unit: number, fallback: string,
+  cellRect: (c: Coord) => PlotBox, unit: number,
 ): void {
   if (border.length === 0) return;
-  const edges: InkEdge[] = [];
+  const edges: BorderEdge[] = [];
   for (const { cell, sides } of border) {
     const box = cellRect(cell);
-    for (const side of sides) edges.push(inkEdge(cell, side, box));
+    for (const side of sides) edges.push(borderEdge(cell, side, box));
   }
-  const dash = spriteImage('overlay_reach_dash');
-  const dot = spriteImage('overlay_reach_dot');
-  if (!dash || !dot) {
-    ctx.save();
-    ctx.strokeStyle = fallback;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([Math.max(4, unit * 0.18), Math.max(3, unit * 0.12)]);
+  // The shadow is the glow turned outward: the cell on the border is inside
+  // the reach, so its band is laid across the neighbour past the edge.
+  ctx.save();
+  for (const e of edges) {
+    const v: Point = [-e.across[0] * SHADE_DEPTH, -e.across[1] * SHADE_DEPTH];
+    const dx = e.b[0] - e.a[0];
+    const dy = e.b[1] - e.a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len;
+    let ny = dx / len;
+    let depth = v[0] * nx + v[1] * ny;
+    if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
+    const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
+    g.addColorStop(0, `rgba(${SHADE_RGB}, ${SHADE_ALPHA})`);
+    g.addColorStop(1, `rgba(${SHADE_RGB}, 0)`);
+    ctx.fillStyle = g;
     ctx.beginPath();
-    for (const e of edges) { ctx.moveTo(...e.a); ctx.lineTo(...e.b); }
-    ctx.stroke();
-    ctx.restore();
-    return;
+    ctx.moveTo(...e.a);
+    ctx.lineTo(...e.b);
+    ctx.lineTo(e.b[0] + v[0], e.b[1] + v[1]);
+    ctx.lineTo(e.a[0] + v[0], e.a[1] + v[1]);
+    ctx.closePath();
+    ctx.fill();
   }
-  // Sized by the cell, not by the edge: the dash fills its edge lengthwise
-  // and keeps a fixed thickness (the sheet's dash is 20 of its 48 rows, its
-  // dot 30 of its 50 columns).
-  const thick = Math.max(2, unit * DASH_PX);
-  for (const e of edges) lay(ctx, dash, 0, dash.naturalWidth, e.a, e.b, thick * (48 / 20), 0);
-  const dotW = thick * DOT_DASHES * (50 / 30);
-  for (const p of vertices(edges)) stamp(ctx, dot, p, dotW);
+
+  const r = Math.max(1.5, (unit * DOT_PX) / 2);
+  const dots: Point[] = vertices(edges);
+  for (const e of edges) {
+    for (let k = 1; k < DOTS_PER_EDGE; k++) {
+      const t = k / DOTS_PER_EDGE;
+      dots.push([e.a[0] + (e.b[0] - e.a[0]) * t, e.a[1] + (e.b[1] - e.a[1]) * t]);
+    }
+  }
+  ctx.beginPath();
+  for (const [x, y] of dots) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2); }
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = DOT_RING;
+  ctx.lineWidth = Math.max(1, r * 0.35);
+  ctx.stroke();
+  ctx.restore();
 }
