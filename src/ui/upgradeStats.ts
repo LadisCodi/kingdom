@@ -123,6 +123,8 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.taxBonusPerLevel.length > 0) {
     const rent = Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100);
     add('rent', 'Gold', 'Rent each', 'Rent', `+${rent}%`, rent, (d) => signed(d, `${Math.abs(d)}%`));
+    // The card's Gold /h already counts it in; the popup shows what a level adds.
+    out[out.length - 1].onCard = false;
   }
   // The Sanctum owns BOTH Mana numbers — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).

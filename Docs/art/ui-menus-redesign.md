@@ -487,7 +487,9 @@ wood of its sides touches the screen's edges.
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Rates are per hour: a producer's output and a house's rent
-  (*Gold +1.8k/h*). *Storage* reads held/capacity (*120/8.6k*), its value
+  (*Gold +1.8k/h*, the level's rent bonus counted in, so a house has no
+  Rent tile). A house's *Beds* reads residents/beds (*2/2*) and it has no
+  Residents section. *Storage* reads held/capacity (*120/8.6k*), its value
   in clay when the store is full; the card has no Collect button — a tap on
   the building collects. Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a

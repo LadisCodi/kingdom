@@ -219,28 +219,16 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       }, plot));
     }
 
-    // A house is people and the rent they pay, so show both as such.
+    // A house's residents and rent are its stat tiles (Beds 2/2, Gold +3.6k/h);
+    // the body only says what its neighbours do to it.
     if (districtCapacity(game.state, district) > 0) {
-      const capacity = districtCapacity(game.state, district);
-      const residents = game.residentsIn(district);
       const adjacency = districtAdjacency(game.state, district);
-
-      body.append(sectionHead('Residents'), el('div', { class: 'dc-homes' },
-        iconEl('population', { size: 'sm' }),
-        pips(residents, capacity),
-        el('span', {}, `${formatExact(residents)} of ${formatExact(capacity)} homes filled`)));
-
       // Adjacency as a verdict rather than a signed number.
       if (adjacency !== 0) {
         body.append(el('div', { class: `dc-badge ${adjacency < 0 ? 'is-bad' : 'is-good'}` },
           adjacency < 0
             ? `Crowded ${formatAdjacency(adjacency * 60)}/h — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency * 60)}/h`));
-      }
-      if (residents === 0) {
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          'Nobody lives here yet — train villagers at the Townhall'));
       }
     }
 
@@ -366,10 +354,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // three to a row; the next level's value belongs to the upgrade popup.
   // A worker building leads with what its crew makes (the resource is the
   // tile's word: *Food +2.7k/h*) and what it has to work (*Fields 3*); a
-  // house leads with its rent (*Gold +1.8k/h*). The Storage tile reads what
-  // the store holds against what it can (*Storage 120/8.6k*) — a tap on the
-  // building collects it, so the card has no Collect of its own. The
-  // popup-only figures stay off the card.
+  // house leads with its rent (*Gold +1.8k/h*) — its level's rent bonus is
+  // already in that figure — and its Beds read residents/beds (*2/2*). The
+  // Storage tile reads what the store holds against what it can (*Storage
+  // 120/8.6k*) — a tap on the building collects it, so the card has no
+  // Collect of its own. The popup-only figures stay off the card.
   const built = district.state === 'Built';
   const figures: Array<{ icon: IconName; label: string; short: string; value: string; bad?: boolean }> = [
     ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && built
@@ -394,7 +383,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...statsAt(game, district, district.level).filter((f) => f.onCard !== false).map((f) =>
       (f.key === 'store' && built
         ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(district) }
-        : f)),
+        : f.key === 'homes' && built
+          ? { ...f, value: `${formatShort(game.residentsIn(district))}/${formatShort(districtCapacity(game.state, district))}` }
+          : f)),
   ];
   const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
     ...figures.map((f) => el('div', { class: `dc-stat k-section${f.bad ? ' is-bad' : ''}`, title: f.label, 'aria-label': `${f.label} ${f.value}` },
