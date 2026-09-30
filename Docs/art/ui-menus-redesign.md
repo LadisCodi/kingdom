@@ -911,6 +911,8 @@ reachable by finding and tapping the Market building on the map.
 
 **Purpose.** Choose what to add to the kingdom.
 
+Reference: `mockups/m47-build-drawer.png`.
+
 **The flow.** Nav **Build** → Build menu → tap a card → Placement → **Build**
 → the map, with the building under construction.
 
