@@ -1,5 +1,9 @@
 # Hero portraits — generation log
 
+> **Superseded (2026-09-30).** The heroes are now drawn in the troops' flat
+> cartoon style: [`hero-illustrations.md`](hero-illustrations.md) is the live
+> prompt, cast and pipeline. This log and the 3D prompt below are history.
+
 > **Scope.** Provenance for the character illustrations in this folder, and the
 > prompt shape that produced them. The style question these answer is still
 > open in [`../art-direction.md`](../art-direction.md) ("Portraits — a new
