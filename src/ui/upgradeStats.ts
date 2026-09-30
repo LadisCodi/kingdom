@@ -86,6 +86,9 @@ export function statsAt(game: Game, district: District, level: number): Building
   }
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
+    // The map draws the range around the building while its card is open;
+    // the popup keeps the pair, since a level can widen it.
+    out[out.length - 1].onCard = false;
     add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
     // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
     out[out.length - 1].onCard = false;
