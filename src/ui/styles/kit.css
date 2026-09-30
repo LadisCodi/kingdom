@@ -974,10 +974,10 @@
   gap: calc(var(--px) * 8);
   box-sizing: border-box;
   height: var(--hp-h);
-  /* Over the paper's top edge and a little past its sides, as a plank
-     nailed across a page would be. The ends are borders, so the title and
-     the trail start inside the nails. */
-  margin: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1 - var(--px) * 4) calc(var(--px) * 4);
+  /* Over the paper's top edge, end to end, and never past the panel's own
+     box — a scrolling body would clip anything that pokes out. The ends are
+     borders, so the title and the trail start inside the nails. */
+  margin: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1) calc(var(--px) * 4);
   border-style: solid;
   border-color: transparent;
   border-width: 0 var(--hp-cap);
