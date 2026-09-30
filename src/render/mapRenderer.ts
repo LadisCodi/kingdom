@@ -25,7 +25,7 @@ import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, drawStandingTint, edgePath, fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
@@ -55,6 +55,9 @@ export interface MarkerLayer {
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
+  /** The district whose card is open: it pulses white on the map, so it is
+   *  told apart from its neighbours without an outline round its plot. */
+  pulseDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
@@ -81,6 +84,13 @@ const reducedMotion = typeof matchMedia === 'function'
 const moveArrowBob = (): number => (reducedMotion?.matches
   ? 0
   : 0.5 - 0.5 * Math.cos((performance.now() % ARROW_CYCLE_MS) / ARROW_CYCLE_MS * Math.PI * 2));
+
+/** The inspected building's pulse, 0 → 1 → 0 every 1.4 s; a steady half
+ *  under reduced motion. */
+const PULSE_CYCLE_MS = 1400;
+const selectionPulse = (): number => (reducedMotion?.matches
+  ? 0.5
+  : 0.5 - 0.5 * Math.cos((performance.now() % PULSE_CYCLE_MS) / PULSE_CYCLE_MS * Math.PI * 2));
 
 const SPELL_CYCLE_MS = 6000;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
@@ -401,7 +411,21 @@ export function drawMap(
     let tall = 0;
     punched(coordKey(district.location), box, () => {
       tall = stand(box, keys, def.glyph, (draw) => {
-        const drew = flip(draw);
+        const drew = flip(() => {
+          const d = draw();
+          // THE PULSE: a white wash over the building's own shape, breathing
+          // between nothing and a third, once every 1.4 s.
+          if (d > 0 && district.uniqueId === markers.pulseDistrictId) {
+            const key = keys.find((k) => spriteAspect(k) !== null);
+            if (key) {
+              const a = ctx.globalAlpha;
+              ctx.globalAlpha = a * selectionPulse() * 0.38;
+              drawStandingTint(ctx, key, foot.x, foot.y, box.w, '#ffffff');
+              ctx.globalAlpha = a;
+            }
+          }
+          return d;
+        });
         drewExhaustedPlot = drew > 0 && exhaustedPlot &&
           spriteAspect(`${def.sprite}_exhausted`) !== null;
         return drew;

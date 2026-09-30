@@ -3854,6 +3854,7 @@ export class Game {
       previewSteps: this.ghostSteps(),
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
+      pulseDistrictId: this.mode.kind === 'normal' ? this.inspectedDistrictId : null,
       hintCell: this.hintCell(),
       spellZones: this.spellZones(),
     };
@@ -3994,8 +3995,8 @@ export class Game {
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
-        layer.selected = district.location;
-        layer.selectedSize = DISTRICTS[district.definitionId].size;
+        // No outline round its plot: the building itself pulses white
+        // (pulseDistrictId), which says which one the card is about.
         if (district.state === 'Built') {
           layer.influenceCells = influenceCells(this.map, district);
           layer.claimedCells = this.state.workers

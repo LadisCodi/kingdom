@@ -121,6 +121,37 @@ export function drawSprite(
  *  the ghost's outline is drawn from it every frame. */
 const silhouettes = new Map<string, HTMLCanvasElement>();
 
+/** The sprite's silhouette in one colour, cached per sprite and colour. */
+function silhouetteOf(key: string, color: string): HTMLCanvasElement | null {
+  const s = sprites.get(key);
+  if (!s?.ready) return null;
+  const id = `${key}|${color}`;
+  let sil = silhouettes.get(id);
+  if (!sil) {
+    sil = document.createElement('canvas');
+    sil.width = s.img.naturalWidth;
+    sil.height = s.img.naturalHeight;
+    const c = sil.getContext('2d')!;
+    c.drawImage(s.img, 0, 0);
+    c.globalCompositeOperation = 'source-in';
+    c.fillStyle = color;
+    c.fillRect(0, 0, sil.width, sil.height);
+    silhouettes.set(id, sil);
+  }
+  return sil;
+}
+
+/** Sprite `key`'s silhouette in `color` filling (x, y, w, h) at the
+ *  context's current alpha — a wash laid OVER the drawn sprite. */
+export function drawSpriteTint(
+  ctx: CanvasRenderingContext2D, key: string, x: number, y: number, w: number, h: number, color: string,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  ctx.drawImage(sil, x, y, w, h);
+  return true;
+}
+
 /**
  * An OUTLINE round sprite `key` filling (x, y, w, h): its silhouette in
  * `color`, stamped `px` pixels out in eight directions. Drawn UNDER the
@@ -137,21 +168,8 @@ export function drawSpriteOutline(
   color: string,
   px: number,
 ): boolean {
-  const s = sprites.get(key);
-  if (!s?.ready) return false;
-  const id = `${key}|${color}`;
-  let sil = silhouettes.get(id);
-  if (!sil) {
-    sil = document.createElement('canvas');
-    sil.width = s.img.naturalWidth;
-    sil.height = s.img.naturalHeight;
-    const c = sil.getContext('2d')!;
-    c.drawImage(s.img, 0, 0);
-    c.globalCompositeOperation = 'source-in';
-    c.fillStyle = color;
-    c.fillRect(0, 0, sil.width, sil.height);
-    silhouettes.set(id, sil);
-  }
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
   // The ring alone, on a scratch canvas: the eight stamps, then the
   // silhouette itself cut back out — so a TRANSLUCENT sprite drawn over it
   // shows the ground through its body, not a white fill.
