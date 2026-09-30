@@ -3895,9 +3895,9 @@ export class Game {
       }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
+      // No selection outline: the building pulses white while its card is
+      // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
-        layer.selected = district.location;
-        layer.selectedSize = DISTRICTS[district.definitionId].size;
         if (district.state === 'Built') {
           layer.influenceCells = influenceCells(this.map, district);
         }
