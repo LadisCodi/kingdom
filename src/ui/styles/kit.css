@@ -959,10 +959,22 @@
   --hp-cap: calc(var(--hp-h) * 115 / 169);   /* one plank end, nail and all */
   --hp-edge: calc(var(--px) * 14);           /* the paper's rough edge */
   --hp-img: url('../assets/plank-wood.png');
+  position: relative;
   border: var(--hp-edge) solid transparent;
-  border-image: url('../assets/panel-paper.png') 48 fill / var(--hp-edge) round;
   padding: 0 calc(var(--px) * 2) 0;
   filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(70, 42, 18, 0.28));
+}
+/* The paper, a touch narrower than the plank, so its top corners tuck in
+   under the plank's rounded ends instead of peeking out beside them. Behind
+   the content: the filter above makes the panel its own stacking context. */
+.k-headpanel::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--hp-edge) * -1) calc(var(--hp-edge) * -1 + var(--px) * 5);
+  z-index: -1;
+  border: var(--hp-edge) solid transparent;
+  border-image: url('../assets/panel-paper.png') 48 fill / var(--hp-edge) round;
+  pointer-events: none;
 }
 .k-headpanel.is-red { --hp-img: url('../assets/plank-red.png'); }
 .k-headpanel.is-blue { --hp-img: url('../assets/plank-blue.png'); }
