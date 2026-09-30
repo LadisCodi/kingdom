@@ -238,6 +238,24 @@ export function drawArea(
   ctx.restore();
 }
 
+/** The same line round an area, without the glow: where a building may go
+ *  while it is being placed, drawn in the range's vocabulary so the two read
+ *  as one kind of mark — the glow is what says "this is its range". */
+export function drawAreaLine(
+  ctx: CanvasRenderingContext2D, cells: readonly Coord[],
+  cellRect: (c: Coord) => PlotBox, unit: number,
+): void {
+  if (cells.length === 0) return;
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  borderPath(ctx, areaEdges(cells, cellRect), Math.max(2, unit * ROUND_PX));
+  ctx.strokeStyle = LINE;
+  ctx.lineWidth = Math.max(2, unit * LINE_PX);
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** The Townhall's reach: a dash along every edge of the border and a dot
  *  on every vertex of it, so the pattern runs unbroken round a turn. */
 export function drawReachInk(

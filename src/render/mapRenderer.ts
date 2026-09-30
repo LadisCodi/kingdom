@@ -35,7 +35,7 @@ import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
-import { drawArea, drawReachInk } from './areaInk';
+import { drawArea, drawAreaLine, drawReachInk } from './areaInk';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -791,6 +791,12 @@ export function drawMap(
   // the line (render/areaInk.ts).
   drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
     performance.now());
+  // Where a building may go (or a spell may land): ONE region in the work
+  // area's line, not a diamond per cell (render/areaInk.ts); its
+  // labels, if any, are Pass 3's.
+  drawAreaLine(ctx, markers.validCells
+    .filter(({ cell }) => fogState(state, map, cell) !== 'Undiscovered')
+    .map(({ cell }) => cell), cellRect, size);
 
   // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dash-and-dot
   // ink line along the last ring the player may pay for, drawn over the fog
@@ -1009,9 +1015,6 @@ export function drawMap(
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const b = cellRect(cell);
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 3);
     if (label) {
       const c = mid(b);
       ctx.fillStyle = markers.validColor;
@@ -1024,17 +1027,16 @@ export function drawMap(
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
     ctx.globalAlpha = 0.6;
-    // The ghost stands on the plot it would occupy, so what the player is
-    // judging is the footprint and not a rectangle floating over it.
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 2);
+    // The ghost stands on the plot it would occupy, with no outline of its
+    // own: its range is drawn round it (Pass 1.1).
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
     stand(b, sprite ? [`${sprite}_l1`, sprite] : [], markers.previewGlyph);
     ctx.globalAlpha = 1;
   }
-  if (markers.selected) {
+  // A placement's or a move's target is the ghost itself; only a spell's
+  // target keeps the outline.
+  if (markers.selected && !markers.previewCell) {
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     strokeDiamond(ctx, camera.plotBox(markers.selected, markers.selectedSize ?? { x: 1, y: 1 }), 2);
