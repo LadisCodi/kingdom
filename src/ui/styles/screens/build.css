@@ -242,10 +242,6 @@
   .bld-card.is-refused, .bld-card.is-refused .k-chip.is-short { animation: none; }
 }
 
-/* The tab grows as research lands; this says where from. */
-.bld-more { background: var(--parchment); border-style: dashed; justify-content: center; }
-.bld-more .bld-art { opacity: 0.55; height: calc(var(--px) * 72); }
-
 /* Harmony over the decorations: supply of demand, and what it pays. */
 .bld-harmony {
   display: flex;

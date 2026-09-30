@@ -236,15 +236,13 @@ export function buildMenuSignature(game: Game): string {
     game.state.city.wallet, game.state.kingdom.wallet, game.state.player.wallet,
     game.state.city.goods,
     harmonySupply(game.state), harmonyDemand(game.state), harmonySurplusTier(game.state),
-    inTab(openTab).length - known.length,
     known.map((id) => [id, seenIds.has(id), cardFacts(game, id)]),
   ]);
 }
 
 export function renderBuildMenu(game: Game): HTMLElement {
   const seenIds = loadSeen(game);
-  const ids = inTab(openTab);
-  const known = ids.filter((id) => isKnown(game, id));
+  const known = inTab(openTab).filter((id) => isKnown(game, id));
 
   showingNew.clear();
   const cards = known.map((id) => {
@@ -252,19 +250,6 @@ export function renderBuildMenu(game: Game): HTMLElement {
     if (isNew) showingNew.add(id);
     return buildCard(game, id, isNew);
   });
-  // The tab grows as research lands; this says where from — only while
-  // there is still something in it to find.
-  if (known.length < ids.length) {
-    const more = el('button', { class: 'bld-card bld-more', type: 'button' },
-      el('div', { class: 'bld-art' }, iconEl('unknown', { size: 'lg' })),
-      el('div', { class: 'bld-name' }, 'More to discover'),
-      el('div', { class: 'bld-promise' }, 'Unlocked by research'));
-    more.addEventListener('click', () => {
-      commitSeen();
-      game.setOverlay('research');
-    });
-    cards.push(more);
-  }
 
   const row = sideScroll(el('div', { class: 'bld-row', 'data-keep-scroll': `bld-row-${openTab}` }, ...cards));
   const tab = openTab;
