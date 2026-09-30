@@ -15,7 +15,7 @@
 
 import { RUINS } from '../sim/data/definitions';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { iconEl } from './kit';
 
 export function mountRaidPill(game: Game, root: HTMLElement): void {
@@ -56,7 +56,7 @@ export function mountRaidPill(game: Game, root: HTMLElement): void {
       const entries = Object.entries(widget!.took)
         .filter(([, n]) => n > 0)
         .sort((a, b) => b[1] - a[1]);
-      const head = entries.slice(0, 2).map(([c, n]) => `${n} ${c}`).join(', ');
+      const head = entries.slice(0, 2).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
       const rest = entries.length - 2;
       const took = rest > 0 ? `${head} and ${rest} more` : head;
       tab.classList.add('is-hit');

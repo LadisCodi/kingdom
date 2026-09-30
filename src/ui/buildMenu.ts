@@ -19,7 +19,7 @@ import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '
 import { isTechComplete } from '../sim/research';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { costChips, iconEl, sheet } from './kit';
 import type { GoodId } from '../sim/state';
 import { PROMISE } from './buildPromise';
@@ -55,8 +55,8 @@ function harmonyHeader(game: Game): HTMLElement | null {
       : 'decorations supply it, levels 8 and up demand it';
   return el('div', { class: `bld-harmony${supply < demand ? ' is-short' : ''}` },
     iconEl('harmony', { size: 'sm' }),
-    el('b', {}, `${supply}`),
-    el('span', {}, `supplied of ${demand} demanded`),
+    el('b', {}, formatExact(supply)),
+    el('span', {}, `supplied of ${formatExact(demand)} demanded`),
     el('span', { class: 'bld-harmony-note' }, note),
   );
 }
@@ -84,7 +84,7 @@ function buildCard(game: Game, id: string): HTMLElement | null {
       ? `Needs Townhall level ${nextLevel}`
       : 'You have as many as the realm allows';
   } else if (short !== null) {
-    blocked = `Needs ${short.shortBy} more Harmony`;
+    blocked = `Needs ${formatExact(short.shortBy)} more Harmony`;
   }
 
   // Refined goods sit beside the currencies rather than among them — they are
@@ -123,10 +123,10 @@ function buildCard(game: Game, id: string): HTMLElement | null {
       costChips(cost, (c) => game.walletValue(c)),
       ...goods.map(([g, n]) => el('span',
         { class: `k-chip${getGood(game.state.city.goods, g) < n ? ' is-short' : ''}` },
-        iconEl(g, { size: 'sm' }), el('span', {}, String(n)))),
+        iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))),
       ...(def.harmonySupply > 0
         ? [el('span', { class: 'k-chip is-gain' },
-            iconEl('harmony', { size: 'sm' }), el('span', {}, `+${def.harmonySupply}`))]
+            iconEl('harmony', { size: 'sm' }), el('span', {}, `+${formatExact(def.harmonySupply)}`))]
         : [])),
   );
   if (blocked !== null) {

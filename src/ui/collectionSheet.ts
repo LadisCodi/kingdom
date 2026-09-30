@@ -110,7 +110,7 @@ function vaultKnob(game: Game): HTMLElement {
   },
     iconEl('vault', { size: 'lg' }),
     el('span', { class: 'col-vault-stars' },
-      iconEl('star', { size: 'sm' }), String(vault.stars)),
+      iconEl('star', { size: 'sm' }), formatExact(vault.stars)),
     vault.affordable ? ctaBadge(1, 'vault') : '');
   button.addEventListener('click', () => game.openVault());
   return button;
@@ -131,7 +131,7 @@ function vaultShelf(game: Game): HTMLElement {
     el('div', { class: 'col-chest-head' },
       el('span', { class: 'col-chest-name' }, row.tier.replace('Chest', ' chest')),
       el('span', { class: 'col-chest-cost' },
-        iconEl('star', { size: 'sm' }), String(row.cost))),
+        iconEl('star', { size: 'sm' }), formatExact(row.cost))),
     el('div', { class: 'col-chest-promise' }, row.promise),
     el('div', { class: 'col-chest-buttons' },
       btn({
@@ -140,7 +140,7 @@ function vaultShelf(game: Game): HTMLElement {
         onClick: () => game.doBuyFromVault(row.tier),
       }),
       btn({
-        label: `Open ten — ${row.cost * 10}`,
+        label: `Open ten — ${formatExact(row.cost * 10)}`,
         kind: 'secondary',
         onClick: () => game.doBuyFromVaultMany(row.tier),
       })),
@@ -148,7 +148,7 @@ function vaultShelf(game: Game): HTMLElement {
   return el('div', { class: 'col-vault-shelf' },
     el('div', { class: 'col-vault-line' },
       iconEl('star', { size: 'lg' }),
-      el('b', {}, String(stars)),
+      el('b', {}, formatExact(stars)),
       el('span', {}, 'from the duplicates you have opened')),
     ...rows);
 }
@@ -204,7 +204,7 @@ function claimSlab(game: Game, page: ReturnType<Game['albumPage']>): HTMLElement
       page.rewards.goldKeys > 0
         ? iconEl('GoldKey', { size: 'sm' })
         : iconEl('SilverKey', { size: 'sm' }),
-      el('span', {}, String(page.rewards.goldKeys + page.rewards.silverKeys))),
+      el('span', {}, formatExact(page.rewards.goldKeys + page.rewards.silverKeys))),
     ...(page.rewards.gems > 0
       ? [el('div', { class: 'col-chip' },
         iconEl('Gems', { size: 'sm' }),
@@ -485,7 +485,7 @@ export function renderCollectionSheet(game: Game): HTMLElement {
       onClick: () => game.doOpenPack(),
       kind: 'primary',
       finish: 'gem',
-      note: `${pack.cards} cards${info.packs > 1 ? ` · ${info.packs} waiting` : ''}`,
+      note: `${pack.cards} cards${info.packs > 1 ? ` · ${formatExact(info.packs)} waiting` : ''}`,
     }));
   }
   body.append(vaultKnob(game));

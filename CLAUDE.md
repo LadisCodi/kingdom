@@ -215,6 +215,12 @@ than the build is rejected rather than downgraded.
   piece is carved or embossed INTO it (the close X is a groove in red wood),
   and a pressed state is the same material pushed in. Ask "what is this made
   of?" before drawing or requesting any new UI art.
+- **Every number the UI prints goes through `src/ui/format.ts`**
+  (`formatExact`, `formatCount`, `formatShort`, `formatNumber`, `formatUsd`),
+  which writes it in the viewer's locale — *25,000* / *25.000*. Never
+  `String(n)` or `${n}` for a count the player reads, and never
+  `toLocaleString` / `Intl.NumberFormat` elsewhere (`tests/numberFormat.test.ts`);
+  the sim reads no locale. The suite pins `en-US` (`tests/setup.ts`).
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

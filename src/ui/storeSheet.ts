@@ -32,11 +32,10 @@
 
 import type { Game } from '../game';
 import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
-import { formatUsd } from '../sim/store';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
 import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
-import { el, formatExact } from './format';
+import { el, formatExact, formatUsd } from './format';
 import { btn, card, currencyIcon, iconEl, sheet } from './kit';
 
 export function renderStoreSheet(game: Game): HTMLElement {
@@ -69,7 +68,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     return card({
       art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': offer.key }),
       name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
-      desc: `One call on ${def.name.toLowerCase()}. You hold ${offer.held}.`,
+      desc: `One call on ${def.name.toLowerCase()}. You hold ${formatExact(offer.held)}.`,
     }, btn({
       label: 'Buy',
       kind: 'gem',
@@ -177,7 +176,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     // Art over count over price, as M5 stacks it.
     const pack = el('div', { class: 'store-pack' },
       art,
-      el('div', { class: 'store-pack-count' }, `${sku.gems} gems`),
+      el('div', { class: 'store-pack-count' }, `${formatExact(sku.gems)} gems`),
       btn({
         label: formatUsd(Math.round(sku.priceUsd * 100)),
         kind: 'primary',
@@ -198,7 +197,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     el('div', { class: 'store-section' },
       el('span', {}, 'Cards'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
     el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the ruins.'),
@@ -212,12 +211,12 @@ export function renderStoreSheet(game: Game): HTMLElement {
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     ...keys,
     el('div', { class: 'store-section' },
       el('span', {}, 'Builders'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        String(game.walletValue('Gems')))),
+        formatExact(game.walletValue('Gems')))),
     builders,
     el('div', { class: 'store-section' }, el('span', {}, 'Gems')),
     el('div', { class: 'store-packs' }, ...packs),

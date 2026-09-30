@@ -170,12 +170,6 @@
   margin: calc(var(--px) * 6) 0;
   font-family: var(--font-body);
 }
-/* The rent, and beside it what the house's own level adds to it. */
-.dc-drip {
-  display: flex; align-items: baseline; gap: calc(var(--px) * 6);
-  margin: calc(var(--px) * 4) 0;
-}
-.dc-drip .dc-army-note { font-size: var(--text-desc); font-weight: var(--weight-small); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
@@ -527,7 +521,8 @@
   height: calc(var(--px) * 58);
   display: flex;
   align-items: center;
-  gap: calc(var(--px) * 6);
+  /* Tight enough for the longest value a tile carries: a full store, *7.2k/7.2k*. */
+  gap: calc(var(--px) * 4);
   min-width: 0;
   /* Inside the 2-px outline: room for the icon, a name and a value. */
   padding: calc(var(--px) * 6) calc(var(--px) * 4);
@@ -550,10 +545,13 @@
   line-height: 1.2;
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* A full store: the building has stopped until it is collected. */
+.dc-stat.is-bad .dc-stat-value { color: var(--clay); }
 
 /* ---- under construction (M36, A)
  *

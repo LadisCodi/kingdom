@@ -14,7 +14,7 @@
 import { ARTIFACTS } from '../sim/data/definitions';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el } from './format';
+import { el, formatExact } from './format';
 import { btn, iconEl } from './kit';
 
 export function renderCastPanel(game: Game): HTMLElement {
@@ -32,7 +32,7 @@ export function renderCastPanel(game: Game): HTMLElement {
       ? el('span', { class: 'plc-verdict is-bad' }, 'No fog within reach here')
       : el('span', { class: 'plc-verdict is-good' },
         iconEl('Gold', { size: 'sm' }),
-        el('b', {}, String(info.saving)),
+        el('b', {}, formatExact(info.saving)),
         el('span', {}, 'Gold saved — the same Mana at any distance'));
   } else if (info.reap !== null) {
     // THE BUDGET IS THE DECISION and the area is only where it is spent, so
@@ -67,7 +67,7 @@ export function renderCastPanel(game: Game): HTMLElement {
     kind: 'primary',
     finish: 'gem',
     onClick: () => game.confirmCast(),
-    costExtra: [{ icon: 'Mana', amount: String(info.manaCost), short: !info.affordable }],
+    costExtra: [{ icon: 'Mana', amount: formatExact(info.manaCost), short: !info.affordable }],
     disabledReason: blockedBy,
   });
   const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });

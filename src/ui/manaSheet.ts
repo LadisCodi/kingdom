@@ -30,7 +30,7 @@
 // map afterwards.
 
 import type { Game, RefillBlock } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, sheet } from './kit';
 
 /** Why a route is dead, in words. Every state but `Ready` has one. */
@@ -68,7 +68,7 @@ export function renderManaSheet(game: Game): HTMLElement {
   const r = game.manaRefills();
 
   const bar = progress('blue');
-  bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
+  bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${formatExact(m.value)} / ${formatExact(m.cap)}`);
 
   // A full pool stops both tills with the same sentence, so it is said once.
   const gemsBlocked = printedRefusal(r.gems, r.boughtPerDay);
@@ -85,14 +85,14 @@ export function renderManaSheet(game: Game): HTMLElement {
       iconEl('Mana', { size: 'lg' }),
       el('div', { class: 'mana-title' }, 'Mana'),
       el('div', { class: 'mana-hint' }, m.over
-        ? `Overcharged — ${m.value - m.cap} past the ceiling`
+        ? `Overcharged — ${formatExact(m.value - m.cap)} past the ceiling`
         : m.value >= m.cap
           ? 'Full — anything more is spilling'
           : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
     bar.root,
     el('div', { class: 'mana-line' },
       el('span', {}, 'Drawn from the land'),
-      el('b', {}, `+${m.production}/h`)),
+      el('b', {}, `+${formatExact(m.production)}/h`)),
     el('div', { class: 'mana-note' },
       'Every tap is paid from the pool.'),
 
@@ -102,7 +102,7 @@ export function renderManaSheet(game: Game): HTMLElement {
         el('span', { class: 'mana-prize-copy' }, 'Refill now — a whole pool, on top of what you have'),
         el('span', { class: 'mana-prize-amount' },
           iconEl('Mana', { size: 'lg' }),
-          el('b', {}, `+${r.reward}`))),
+          el('b', {}, `+${formatExact(r.reward)}`))),
 
       // Side by side, equal widths: two prices for the same pool, and a
       // player choosing between them is comparing them. Gems on the left,

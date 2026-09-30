@@ -472,11 +472,11 @@ wood of its sides touches the screen's edges.
   - the red − knob, the villager's round portrait, *2 / 3* — the crew in
     title type, the most it can hold smaller and muted — and the green + knob;
   - nothing else: the card's stat band leads with what the crew MAKES
-    (*Food +45 /min*, the resource as the tile's word) and what there is to
+    (*Food +2.7k/h*, the resource as the tile's word) and what there is to
     work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,
-    *Iron*, *Gold*, *Shoals*). The crew size, haul and swing are the
-    upgrade popup's only — the stepper already shows the crew, and haul and
-    swing are counted in that output;
+    *Iron*, *Gold*, *Shoals*). The crew size, range, haul and swing are the
+    upgrade popup's only — the stepper already shows the crew, the map draws
+    the range, and haul and swing are counted in that output;
   - no tip: how many villagers a building's fields keep busy is the
     player's to see by watching them work;
   - the villagers still free to assign are the header's counter while the
@@ -486,9 +486,17 @@ wood of its sides touches the screen's edges.
   *Fields*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
-  popup's). Each is a `.k-section` of darker paper, 112 × 58 px (narrower
+  popup's). Rates are per hour: a producer's output and a house's rent
+  (*Gold +1.8k/h*, the level's rent bonus counted in, so a house has no
+  Rent tile). A house's *Beds* reads residents/beds (*2/2*) and it has no
+  Residents section. *Storage* reads held/capacity (*120/8.6k*), its value
+  in clay when the store is full; the card has no Collect button — a tap on
+  the building collects. Each is a `.k-section` of darker paper, 112 × 58 px (narrower
   only where three would not fit), 14 px apart; three to a row, centred, a
   fourth wrapping to a centred row of its own.
+- **The building on the map** pulses white while its card is open — its
+  art a touch brighter and a soft white glow around its edge, once every
+  1.4 s — so the card's building is told apart from its neighbours.
 - **Under construction** (a building being built or upgraded; reference
   `mockups/m36-construction-ab.png`, proposal A):
   - the head's Upgrade slot holds the gem Finish button with its price;
