@@ -35,6 +35,7 @@ import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
+import { drawAreaInk, drawReachInk } from './areaInk';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -785,33 +786,24 @@ export function drawMap(
     }
   }
 
-  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
-  // along the last ring the player may pay for, drawn over the fog and
-  // across undiscovered ground too, so the extent of what the capital allows
-  // is read off the map before a tap is refused. Nothing is drawn when the
-  // reach holds the whole province.
-  //
-  // The sim answers in N/S/E/W on its square grid; `edgePath` rotates each
-  // one onto the diamond (src/render/iso.ts).
+  // Pass 1.1: THE WORK AREA the markers carry (a selected building's range,
+  // a placement's, a spell's targets), in ink over the floor and under
+  // everything that stands on it — trees and buildings stand in front of
+  // the line (render/areaInk.ts).
+  drawAreaInk(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
+    { fill: PALETTE.influenceFill, stroke: PALETTE.influenceBorder });
+
+  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dash-and-dot
+  // ink line along the last ring the player may pay for, drawn over the fog
+  // and across undiscovered ground too, so the extent of what the capital
+  // allows is read off the map before a tap is refused. Nothing is drawn
+  // when the reach holds the whole province.
   {
     const visible: Coord[] = [];
     for (let cy = view.y0; cy <= view.y1; cy++) {
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
-    const border = reachBorder(state, map, visible);
-    if (border.length > 0) {
-      ctx.save();
-      ctx.strokeStyle = PALETTE.reachBorder;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([Math.max(4, size * 0.18), Math.max(3, size * 0.12)]);
-      ctx.beginPath();
-      for (const { cell, sides } of border) {
-        const box = cellRect(cell);
-        for (const side of sides) edgePath(ctx, box, side);
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
+    drawReachInk(ctx, reachBorder(state, map, visible), cellRect, size, PALETTE.reachBorder);
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and
@@ -1014,21 +1006,7 @@ export function drawMap(
     ctx.restore();
   }
 
-  // Pass 3: markers.
-  // Working area: one translucent white region with a crisp outline — border
-  // segments are drawn only on edges that face a cell outside the area.
-  if (markers.influenceCells.length > 0) {
-    const inArea = new Set(markers.influenceCells.map(coordKey));
-    ctx.fillStyle = PALETTE.influenceFill;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) diamondPath(ctx, cellRect(cell));
-    ctx.fill();
-    ctx.strokeStyle = PALETTE.influenceBorder;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (const cell of markers.influenceCells) outline(cellRect(cell), cell, inArea);
-    ctx.stroke();
-  }
+  // Pass 3: markers. (The work area is Pass 1.1: it lies under what stands.)
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const b = cellRect(cell);

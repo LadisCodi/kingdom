@@ -215,10 +215,11 @@ Respawn:
   refused tap costs nothing.
 - A Discovered cell past the reach stays visible under the scrim and draws like
   a cell the frontier has not reached.
-- **The reach is drawn**: a dashed line along the last ring the player may pay
-  for, over the fog and across undiscovered ground, so the border is read off
-  the map before a tap is refused. It disappears once the reach holds the
-  whole province.
+- **The reach is drawn**: a dash-and-dot line in red-brown ink along the last
+  ring the player may pay for, over the fog and across undiscovered ground, so
+  the border is read off the map before a tap is refused. One dash per tile
+  edge and a dot on every vertex; it is UI laid over the view, under what
+  stands on the ground. It disappears once the reach holds the whole province.
 
 ## 5. The price of a cell
 

@@ -99,6 +99,13 @@ export function spriteInkTop(key: string): number {
   return top;
 }
 
+/** The loaded image behind sprite `key`, for a caller that slices or
+ *  patterns it (render/areaInk.ts); null until it exists and has loaded. */
+export function spriteImage(key: string): HTMLImageElement | null {
+  const s = sprites.get(key);
+  return s?.ready && s.img.naturalWidth > 0 ? s.img : null;
+}
+
 /**
  * Draw sprite `key` filling (x, y, w, h). Returns false when the image is
  * missing or not yet loaded — the caller draws its glyph fallback instead.
