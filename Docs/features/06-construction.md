@@ -28,8 +28,8 @@
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player
   to the positioned ghost.
-- Finishing a job from the sheet frees its builder and returns to the
-  ghost.
+- A job that ends while the sheet is open — on its own or by Finish — turns
+  its builder's row into a Build for the positioned ghost.
 
 ## 3. The price
 

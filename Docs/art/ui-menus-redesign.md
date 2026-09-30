@@ -1032,7 +1032,7 @@ menu:
 | A builder is free | Paid, placement closes, the building stands in scaffolding with its timer and a builder walks to it; the map stays where it is |
 | Every builder is busy | The builder sheet opens over placement; dismissing it returns to the positioned ghost ([`../features/06-construction.md`](../features/06-construction.md) §2) |
 
-**The builder sheet** (reference: `mockups/m50-builder-sheet.png`) — a centred
+**The builder sheet** (references: `mockups/m50-builder-sheet.png`, and `m51-builder-free.png` for a free builder) — a centred
 window over the dimmed placement screen:
 
 - Header plank *Builders* and its close knob — the only way out; there is no
@@ -1046,11 +1046,18 @@ window over the dimmed placement screen:
     with the time left inside it; the priced gem **Finish** at the right.
   - **Empty, the next to hire** — a dashed socket with a builder's
     silhouette, *A third builder*, and the priced gem **Hire a builder**.
+  - **Free** — a builder whose job ended while the sheet is open, on its own
+    or by Finish: a gold builder medallion, *Free* in leaf and *Ready to
+    build the Sawmill*, and the priced primary **Build** — the placement
+    bar's own price. The row wears a thin leaf rim and a soft glow. Build
+    starts the build on the ghost's cell and closes the sheet.
   - **Empty, further up** — the socket and its name alone, faded.
+- With a free row the headline reads *A builder is free* and the line under
+  it *Build the Sawmill now, or keep it for later.*
 - At the ceiling there is no empty row, and the list ends with *4 is as
   large as a crew gets.*
-- Finishing a job frees its builder and closes the sheet, back on the
-  positioned ghost: Build now starts.
+- The sheet never closes on its own: a job that ends turns its row Free in
+  place. Closing it with a free builder returns to the positioned ghost.
 
 **Moving** uses the same screen: no price and no time, and the button reads
 *Move here*.
