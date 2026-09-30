@@ -39,7 +39,7 @@ const landmarkLine = (l) =>
 // A lair is WHERE and WHAT, and its guard: one fight, nothing behind it
 // (Docs/proposals/lairs.md §1).
 const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
-  `      "x": ${r.x}, "y": ${r.y}`,
+  `      "x": ${r.x}, "y": ${r.y}${r.size !== undefined ? `, "size": ${r.size}` : ''}`,
   `      "tier": ${r.tier}`,
   // The guard: one garrison, with a clock
   // (Docs/features/18-garrisons-and-raids.md §2).

@@ -30,24 +30,26 @@
 Authored **per lair**, in `?dev=data#map`:
 
 ```
-lair { tier, guard { threat, power, warningMinutes }, radius, flavour }
+lair { tier, size, guard { threat, power, warningMinutes }, radius, flavour }
 ```
 
 - `guard` is the gate's ([`18`](../features/18-garrisons-and-raids.md) §2)
   without `periodMinutes`: the raids after the first follow the daily
   schedule (§4). `threat` names the creature.
-- `radius` is the zone, in **Chebyshev** rings around the lair's cell.
+- `size` is the lair's footprint, **2×2** for every lair: the camp is a site
+  on the map, not a marker on one cell.
+- `radius` is the zone, in **Chebyshev** rings around the lair's footprint.
 - `flavour` is the card's line over its illustration (§6): two lines at most.
 - `tier` keys the `garrisons` entries that are not per site (take seconds,
   supplies) and the reward (§5).
 
 | Lair | Tier | Creature | `radius` | Zone |
 |---|---|---|---|---|
-| Hollow Barrow | I | Orcs | **1** | 3×3 |
-| Sunken Chapel | II | Harpies | **1** | 3×3 |
-| Drowned Ironworks | III | Goblins | **2** | 5×5 |
-| The Counting House | IV | Wolf riders | **2** | 5×5 |
-| Star Observatory | V | a Drake | **3** | 7×7 |
+| Orc Lair | I | Orcs | **1** | 4×4 |
+| Harpy Roost | II | Harpies | **1** | 4×4 |
+| Goblin Den | III | Goblins | **2** | 6×6 |
+| Wolf-rider Camp | IV | Wolf riders | **2** | 6×6 |
+| Drake's Lair | V | a Drake | **3** | 8×8 |
 
 - Placement is authored; the fog is unchanged
   ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4).

@@ -1671,27 +1671,27 @@
   ],
   "lairs": {
     "Orcs": {
-      "x": 5, "y": 1,
+      "x": 5, "y": 1, "size": 2,
       "tier": 1,
       "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30, "periodMinutes": 30 }
     },
     "Harpies": {
-      "x": -3, "y": 9,
+      "x": -3, "y": 9, "size": 2,
       "tier": 2,
       "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90, "periodMinutes": 90 }
     },
     "Goblins": {
-      "x": -15, "y": 20,
+      "x": -15, "y": 20, "size": 2,
       "tier": 3,
       "guard": { "threat": "Lancer", "power": 440, "warningMinutes": 120, "periodMinutes": 120 }
     },
     "WolfRiders": {
-      "x": 7, "y": -15,
+      "x": 7, "y": -15, "size": 2,
       "tier": 4,
       "guard": { "threat": "Cavalry", "power": 700, "warningMinutes": 180, "periodMinutes": 180 }
     },
     "Drake": {
-      "x": -15, "y": -15,
+      "x": -15, "y": -15, "size": 2,
       "tier": 5,
       "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240, "periodMinutes": 240 }
     }

@@ -69,7 +69,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
     // Gems come from, and at this point in the game most players do not know.
     if (!affordable) {
       body.append(el('div', { class: 'bld-offer-note' },
-        'Gems come from first clears of a lair, and from the quest chain.'));
+        'Gems come from the quest chain.'));
     }
   }
 
