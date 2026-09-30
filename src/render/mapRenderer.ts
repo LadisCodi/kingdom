@@ -1081,12 +1081,8 @@ export function drawMap(
   }
   if (markers.previewCell && markers.previewGlyph) {
     const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
-    ctx.globalAlpha = 0.6;
-    // The ghost stands on the plot it would occupy, so what the player is
-    // judging is the footprint and not a rectangle floating over it.
-    ctx.strokeStyle = markers.validColor;
-    ctx.lineWidth = 2;
-    strokeDiamond(ctx, b, 2);
+    // No footprint diamond: the ghost's rim and its move arrows are what
+    // tell it apart, and a square round its feet was one outline too many.
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
     const keys = sprite ? [`${sprite}_l1`, sprite] : [];

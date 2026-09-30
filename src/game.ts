@@ -1032,6 +1032,9 @@ export class Game {
     };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
+    // The ghost is out where the building stands: bring it into view, as
+    // placement does for a new one.
+    this.camera.centerOnCell(district.location);
     this.notify();
   }
 
@@ -3864,8 +3867,8 @@ export class Game {
           (cell) => ({ cell, label: '' }),
         );
       }
-      layer.selected = this.mode.selected;
-      layer.selectedSize = def.size;
+      // No footprint outline: the ghost's own rim and its move arrows say
+      // which building is out and where it stands.
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
@@ -3912,8 +3915,8 @@ export class Game {
           this.state, this.map, this.mode.definitionId, this.mode.districtUniqueId,
         ).map((cell) => ({ cell, label: '' }));
       }
-      layer.selected = this.mode.selected;
-      layer.selectedSize = def.size;
+      // No footprint outline: the ghost's own rim and its move arrows say
+      // which building is out and where it stands.
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
