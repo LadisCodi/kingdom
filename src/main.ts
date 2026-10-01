@@ -68,6 +68,7 @@ import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
 import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
+import { dragToScroll } from './ui/kit/scroll';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -162,6 +163,8 @@ async function boot(): Promise<void> {
   mountUnlockSplash(game, document.getElementById('unlock')!);
   // What is mounted, as classes on #ui, for the CSS that steps aside.
   mirrorMountFlags(document.getElementById('ui')!);
+  // A mouse drags every list and row the way a finger does (kit/scroll.ts).
+  dragToScroll(document.getElementById('ui')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
