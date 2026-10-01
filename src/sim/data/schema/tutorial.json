@@ -16,6 +16,11 @@
           "type": "int",
           "min": 0,
           "doc": "The breath between one introduction and the next. The First Morning does not wait for it."
+        },
+        "inputGraceSeconds": {
+          "type": "float",
+          "min": 0,
+          "doc": "A line that appears on its own takes no tap for this long, so a tap meant for the game never skips it."
         }
       }
     }

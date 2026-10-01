@@ -6,6 +6,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { giveBook } from '../src/sim/research';
+import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
+import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
 import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
@@ -83,6 +85,23 @@ describe('the scenes, against the game', () => {
     // And nothing else hands a book over.
     const gifts = SCENES.flatMap((s) => s.lines.filter((l) => l.gives).map(() => s.id));
     expect(gifts).toEqual(['firstLair']);
+  });
+
+  it('never strands the Sawmill lesson on a short purse: Isolde makes up the Wood', () => {
+    const scene = SCENES.find((s) => s.id === 'sawmill')!;
+    expect(scene.lines[0]).toMatchObject({ stocks: 'Sawmill', until: 'tap' });
+    const game = freshPresenter(firstGame());
+    const wallet = game.state.city.wallet;
+    const cost = nextBuildCost(game.state, 'Sawmill');
+    wallet.Wood = 0;
+    expect(buildShortfall(game.state, 'Sawmill')).toEqual(cost);
+    stockBuild(game.state, 'Sawmill');
+    expect(canAfford(wallet, cost)).toBe(true);
+    // Exactly the difference: nothing past the price, nothing when it is met.
+    expect(wallet.Wood).toBe(cost.Wood);
+    expect(buildShortfall(game.state, 'Sawmill')).toEqual({});
+    stockBuild(game.state, 'Sawmill');
+    expect(wallet.Wood).toBe(cost.Wood);
   });
 
   it('never locks a line to a target it does not point at', () => {
