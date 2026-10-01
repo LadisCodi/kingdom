@@ -84,8 +84,7 @@
 - **A blue magic glow** marks it: a control's own silhouette lit blue
   (`--magic-glow-*`, the one cold light in a warm palette); a map plot as its
   own diamond in the same glow. Small motes of that light drift slowly off
-  the target, and a dimmed screen's hole round a control is feathered, so the
-  glow fades into the dark.
+  the target. Nothing else on the screen is darkened.
 - The quest pill's hint wears the same hand and glow, so a player never learns
   two signs for one thing.
 - **The camera glides to a map target** (0.2 s, easing out, no overshoot)

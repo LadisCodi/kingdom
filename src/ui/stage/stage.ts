@@ -94,7 +94,6 @@ const PROGRESS: ReadonlySet<string> = new Set([
 
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
   // ------------------------------------------------------------ the pieces
-  const scrim = el('div', { class: 'stg-scrim' });
   // A CONTROL is highlighted by its own silhouette lit in a blue magic glow
   // (`.stg-glow` on the control itself); a MAP PLOT by the same glow drawn
   // as the plot's diamond — this ring.
@@ -146,7 +145,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       + `--delay:${(-Math.random() * 4).toFixed(2)}s`;
     sparks.append(mote);
   }
-  const layer = el('div', { class: 'stg' }, scrim, sparks, ring, arrow, box);
+  const layer = el('div', { class: 'stg' }, sparks, ring, arrow, box);
 
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
@@ -504,33 +503,19 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     glowing = node;
   };
 
-  const drawTarget = (r: Rect | null, lock: SceneLine['lock']): void => {
+  const drawTarget = (r: Rect | null): void => {
     const show = r !== null;
     const isCell = playing?.target?.kind === 'cell';
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
     ring.hidden = !show || !isCell;
     arrow.hidden = !show;
     sparks.hidden = !show;
-    scrim.classList.toggle('is-dim', lock === 'all' || lock === 'target');
-    scrim.classList.toggle('is-cut', show && lock === 'target');
     if (!show) return;
     const pad = playing?.target?.kind === 'cell' ? 0 : 6;
     Object.assign(ring.style, {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
     });
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
-    // The scrim's hole leaves room for the glow round a control, and its
-    // edge is feathered (stage.css), so the light fades into the dark.
-    const hole = isCell ? 0 : 22;
-    // The scrim's cut-out IS the scrim: a box round the target whose shadow
-    // darkens everything else. Without a cut it covers the frame.
-    if (lock === 'target') {
-      Object.assign(scrim.style, {
-        left: `${r.x - hole}px`, top: `${r.y - hole}px`, width: `${r.w + hole * 2}px`, height: `${r.h + hole * 2}px`,
-      });
-    } else {
-      Object.assign(scrim.style, { left: '', top: '', width: '', height: '' });
-    }
     // The arrow points DOWN at the target from above it, unless that would
     // leave the screen, then UP from below.
     const above = r.y > 70;
@@ -608,7 +593,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         } else {
           playing.missingSince = null;
         }
-        drawTarget(r, lockNow());
+        drawTarget(r);
         if (now - lastCheck > 100) {
           lastCheck = now;
           if (lineHolds(l)) next();

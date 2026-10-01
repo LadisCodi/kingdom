@@ -229,8 +229,7 @@ Each points at what it is about.
 | `all` | nothing but the dialogue |
 
 - **Panning and zooming the map are never locked.**
-- `target` and `all` draw a scrim — `target` with a cut-out round the
-  target — and the pointer bobs at the target.
+- No lock darkens the screen: the hand and the glow mark the target.
 - The lock is one gate on the map (`Game.tapGate`, asked by every tap, hold
   and ghost drag) and one capture filter on the frame for everything else.
 - **A lock never outlives its beat**, and releases itself after five

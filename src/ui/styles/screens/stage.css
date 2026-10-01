@@ -15,25 +15,6 @@
 }
 .stg { position: absolute; inset: 0; }
 
-/* ---- the scrim: a veil, or a veil with the target cut out of it ---- */
-.stg-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 200ms ease;
-}
-.stg-scrim.is-dim { opacity: 1; background: rgba(40, 22, 10, 0.42); }
-.stg-scrim.is-dim.is-cut {
-  inset: auto;
-  background: transparent;
-  border-radius: calc(var(--px) * 26);
-  /* A FEATHERED hole: the shadow's blur fades the dark in over the hole's
-     own edge, so the glow round the control melts into it instead of
-     stopping at a line. */
-  box-shadow: 0 0 calc(var(--px) * 22) 200vmax rgba(40, 22, 10, 0.42);
-}
-
 /* ---- the pointer: a gloved hand, and a blue magic glow ----
  * A CONTROL glows along its own silhouette (`.stg-glow`, on the control
  * itself, so the light follows whatever shape it has); a MAP PLOT glows as
