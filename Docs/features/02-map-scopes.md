@@ -143,18 +143,19 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 Each is playable without the ones after it.
 
-1. **Temporary provinces** as the event format ([`13-events.md`](13-events.md)).
-2. **The guild siege as the world's first place**: one hex, co-op, no board, no
-   PvP, no fog — the world map with a single entry, on the code path the full
-   scope will use.
-3. **The board proper**: axial coordinates, neighbours, distance, march time,
-   both zoom registers, client-side fog, the dispatch sheet
-   ([`19`](19-world-map.md) §1–§4).
-4. **Control**: outposts, connection, inactive hexes, improvements
-   ([`19`](19-world-map.md) §5–§7).
-5. **Contest**: attacks, conquest and denial, the Fortress, and server-side
-   resolution — a deterministic scoring pass, not a simulation.
-6. **The Dark Portal** ([`19`](19-world-map.md) §10).
+1. **The board proper**: axial coordinates, neighbours, distance, march time,
+   both zoom registers, client-side fog, explorers, the dispatch sheet
+   ([`19`](19-world-map.md) §1–§3).
+2. **Control**: outposts, connection, inactive hexes, improvements and their
+   stores ([`19`](19-world-map.md) §5, §7).
+3. **Contest**: armies, attacks, conquest and denial, the Fortress, resolved
+   on the server (§3.1; [`19`](19-world-map.md) §4, §6).
+4. **Dungeons** ([`19`](19-world-map.md) §8.1).
+5. **The Dark Portal** ([`19`](19-world-map.md) §10).
+6. **The guild siege**, with the social layer ([`15-social.md`](15-social.md) §6).
+
+**Temporary provinces** ([`13-events.md`](13-events.md)) are independent of
+the board and can come at any point.
 
 ## 8. Deliberately not in this design
 

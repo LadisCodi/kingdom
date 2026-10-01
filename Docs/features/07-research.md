@@ -11,7 +11,7 @@
 > era bars, the climbing bonuses (§1.2), the Knowledge bar (§3), pouring and
 > instant completion (§1) and buying Knowledge (§3.2). The shape is authored
 > in `?dev=data#tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
-> Designed, not built: contested-landmark lumps (§7) and guild investment (§8).
+> Designed, not built: world-map landmarks (§7) and guild investment (§8).
 
 ## 1. Technologies
 
@@ -475,8 +475,8 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 - **No tome is gated behind anything.** Every book is open, so a ruin being
   *discovered*, not cleared.
 - A **province landmark** pays 5 on claiming.
-- A **contested world-map landmark** ([`02-map-scopes.md`](02-map-scopes.md)
-  §4) pays a Knowledge lump when taken and nothing while held *(designed, not
+- A **world-map landmark** fills a store of Knowledge while its hex is held
+  and active ([`19-world-map.md`](19-world-map.md) §8) *(designed, not
   built)*.
 
 ## 8. Guild investment — designed, not built

@@ -17,7 +17,8 @@
 - **A pointy-top hex board, radius 5 from the centre: 91 hexes.**
 - **Six players a board.** A seventh player opens a new instance; for the
   prototype that is enough.
-- A player's starting hex is assigned at random from the free ones.
+- **A player joins the first board with a free city**, on its first free
+  corner, assigned at random.
 - Rings are roles, not decoration:
 
 | Ring | Hexes | Its job |
@@ -220,13 +221,15 @@ Two plays out of one button:
 ## 7. Improvements
 
 Built only on a hex the player already controls, and only after the Outpost.
+**Each is opened by its own Atlas card**; *Cartography* opens the first
+explorer and the Outpost.
 
 | Improvement | Needs | Gives |
 |---|---|---|
 | **Outpost** | — | takes the hex, and opens the rest of this table |
-| **Sawmill** | a Forest | Wood, into its store |
-| **Farm** | a hex with no feature | Food, into its store |
-| **Quarry** | a Mountain | Stone, into its store |
+| **Logging Camp** | a Forest | Wood, into its store |
+| **Homestead** | a hex with no feature | Food, into its store |
+| **Stone Pit** | a Mountain | Stone, into its store |
 | **Fortress** | — | garrisoned by an army; covers this hex and its six neighbours (§6.1) |
 
 - **Improvements are what Gold buys out here.** They are the world's Gold sink,
@@ -252,11 +255,12 @@ held, some are destinations.
 
 | Feature | What it does |
 |---|---|
-| **Forest** | opens the Sawmill |
-| **Fertile land** | a Farm here yields extra Food |
-| **Game** | a Farm here yields extra Food |
+| **Forest** | opens the Logging Camp |
+| **Fertile land** | a Homestead here yields extra Food |
+| **Game** | a Homestead here yields extra Food |
 | **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). **Outer ring only** |
 | **Sanctuary** | raises max Mana while the hex is held and active. **Outer ring only** |
+| **Landmark** | fills a store of Knowledge while the hex is held and active, collected with a tap like an improvement's (§7.1). **Corridors only** (rings 2–3) |
 
 ### 8.1 Dungeons
 
@@ -289,7 +293,8 @@ Contents are rolled at board creation, under rules:
 - **The inner ring is not rolled — it is authored by hand**, so all six hexes
   are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
   (one of them Fertile land), 2 Mountain.
-- Dungeons and Sanctuaries appear **only on the outer ring**.
+- Dungeons and Sanctuaries appear **only on the outer ring**; landmarks only
+  on the corridors.
 
 ## 10. The Dark Portal
 
@@ -347,7 +352,7 @@ The outer scope feeds the inner one.
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
 | **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
 | **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |
-| **Knowledge lumps**, from taken landmarks | research ([`07-research.md`](07-research.md) §7) |
+| **Knowledge**, from held landmarks' stores | research ([`07-research.md`](07-research.md) §7) |
 
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
