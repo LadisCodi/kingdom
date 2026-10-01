@@ -3,7 +3,7 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingLairAt } from '../sim/sites';
@@ -12,7 +12,7 @@ import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
   clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
 } from './lairMap';
-import { lineRemainingSeconds, trainingProgress, unitInTraining } from '../sim/army';
+import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
@@ -22,7 +22,7 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type FeatureId, type GameState, type LairId,
+  type Coord, type FeatureId, type GameState, type LairId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -43,7 +43,7 @@ import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cas
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
-import { drawTroughBar, drawWorkingHammer } from './constructionArt';
+import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -1094,10 +1094,19 @@ export function drawMap(
     const barH = Math.max(20, Math.min(28, size * 0.22));
     const barW = Math.max(barH * 4, b.w * 0.6);
     const building = state.city.queue.some((q) => q.districtUniqueId === district.uniqueId);
+    // The portrait rides the bar's left end, so the bar steps right by half
+    // of it and the pair stays centred on the plot.
+    const d = barH * 1.7;
+    const x = c.x - barW / 2 + d * 0.3;
     const y = c.y - barH / 2 + (building ? barH * 1.15 : 0);
-    drawTroughBar(ctx, c.x - barW / 2, y, barW, barH, trainingProgress(state, district.uniqueId, now),
+    drawTroughBar(ctx, x, y, barW, barH, trainingProgress(state, district.uniqueId, now),
       formatDuration(Math.ceil(lineRemainingSeconds(state, district.uniqueId, now))),
       labelFont(barH * 0.6, 12, true), 'green');
+    const line = lineFor(state, district.uniqueId);
+    const trainee = line[0].trainee;
+    const bust = `${trainee === 'Villager' ? 'unit_villager' : UNITS[trainee as UnitId].sprite}_avatar`;
+    drawTraineeBadge(ctx, x, y + barH / 2, d, bust,
+      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true));
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.
