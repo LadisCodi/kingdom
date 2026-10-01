@@ -17,6 +17,7 @@ import {
   HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
+import { playSfx } from '../../audio/sfx';
 import { spriteUrl } from '../../render/sprites';
 import type { Coord } from '../../sim/state';
 import type { Game } from '../../game';
@@ -40,6 +41,10 @@ interface Playing {
 }
 
 const sceneKey = (id: string): string => `scene:${id}`;
+
+/** A typing tick every this many letters: at 40 a second, about thirteen a
+ *  second — a patter, not a buzz. */
+const TICK_EVERY = 3;
 
 /** Conditions that record how far the kingdom has got, and so can tell a
  *  scene where to resume. The rest (a sheet open, a control on screen, taps
@@ -372,8 +377,18 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       if (l !== null) {
         // Type the line.
         if (playing.typed < l.text.length) {
+          const before = Math.floor(playing.typed);
           playing.typed = Math.min(l.text.length, playing.typed + HELP.typeCharsPerSecond * dt);
-          text.textContent = l.text.slice(0, Math.floor(playing.typed));
+          const shown = Math.floor(playing.typed);
+          text.textContent = l.text.slice(0, shown);
+          // A soft knock every third letter as the line types — never on a
+          // space, never two at once, and none for a line finished by a tap.
+          for (let i = before; i < shown; i++) {
+            if (i % TICK_EVERY === 0 && l.text[i].trim() !== '') {
+              playSfx('textTick', { group: 'textTick', limit: 1 });
+              break;
+            }
+          }
         }
         more.hidden = !(l.until === 'tap' && playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is

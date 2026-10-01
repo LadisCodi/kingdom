@@ -27,7 +27,8 @@
   its own.
 - **`auto`**: when a line points at something, the box takes the half of the
   screen the target is not in.
-- **The text types itself** at 40 characters a second. A tap finishes the
+- **The text types itself** at 40 characters a second, with a soft wooden
+  knock every third letter (`textTick`, never on a space). A tap finishes the
   line; the next tap moves on. A small arrow at the box's corner says a tap
   will move on.
 - **A line waiting on the game** (a beat, [`23-tutorials.md`](23-tutorials.md)
