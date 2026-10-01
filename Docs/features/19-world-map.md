@@ -181,6 +181,8 @@ accident.**
   that needs them awake.
 - **Defence is pre-positioned, never reactive:** what defends a hex is what was
   garrisoned there before the attack (§6.1).
+- **A hex no Fortress covers has no defence.** An enemy army that arrives
+  takes it or denies it without a fight.
 
 Two plays out of one button:
 
@@ -196,10 +198,22 @@ Two plays out of one button:
 
 ### 6.1 The Fortress
 
-- A **Fortress** stations troops on a hex. They defend that hex **and every hex
-  adjacent to it**: while they stand, no enemy takes any of them.
-- The Fortress itself can be attacked directly, with its troops as the
-  defenders. **That is how a blockade is broken** — from the front.
+- **A Fortress is garrisoned by an army.** The army marches to it and stays,
+  holding its army slot and its heroes, until it is recalled.
+- The garrison **covers its own hex and the six around it**.
+- **An attack on a covered hex is fought against the garrison**, the
+  defender's real party with its heroes' current HP:
+  - the attacker wins → the garrison falls and the attacker takes or denies
+    the hex it attacked; the Fortress stays, empty;
+  - the garrison wins, or the fight times out → the attacker marches home
+    with its survivors.
+- A hex covered by more than one garrison needs **every one beaten**, one
+  after another on the same arrival; the army carries its losses from one
+  fight into the next.
+- A garrison defends whether its hex is active or not.
+- Both sides' casualties are charged as in any fight
+  ([`combat.md`](combat.md) §4); a fallen garrison's heroes go home
+  exhausted.
 
 ## 7. Improvements
 
@@ -211,7 +225,7 @@ Built only on a hex the player already controls, and only after the Outpost.
 | **Sawmill** | a Forest | Wood to the main city, hourly |
 | **Farm** | a hex with no feature | Food to the main city, hourly |
 | **Quarry** | a Mountain | Stone to the main city, hourly |
-| **Fortress** | — | stations troops; defends this hex and its six neighbours (§6.1) |
+| **Fortress** | — | garrisoned by an army; covers this hex and its six neighbours (§6.1) |
 
 - **Improvements are what Gold buys out here.** They are the world's Gold sink,
   which is why the march is free.
