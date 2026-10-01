@@ -113,6 +113,10 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'wounded': return woundedCount(state) > 0;
     case 'heroes': return state.heroes.owned.length >= Math.max(1, c.amount);
     case 'population': return state.city.population >= Math.max(1, c.amount);
+    // A villager called: one in training, or already `amount` of them home.
+    case 'training':
+      return state.city.population >= Math.max(1, c.amount)
+        || state.city.trainingQueue.some((i) => i.trainee === 'Villager');
     case 'revealed': return Object.keys(state.fog.revealed).length >= Math.max(1, c.amount);
     // A feature out of the dark: any cell carrying it, discovered or revealed.
     case 'featureSeen':

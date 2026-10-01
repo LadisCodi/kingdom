@@ -88,7 +88,7 @@ const TAP_SLOP_PX = 10;
  *  since the line began) are moments, not progress. */
 const PROGRESS: ReadonlySet<string> = new Set([
   'questReached', 'questComplete', 'questClaimed', 'questProgress', 'techDone', 'techFilled',
-  'placed', 'built', 'population', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
+  'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
   'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
 ]);
 

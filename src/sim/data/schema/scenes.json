@@ -33,6 +33,7 @@
         "wounded",
         "heroes",
         "population",
+        "training",
         "revealed"
       ],
       "doc": "What starts the scene, the first time it holds."
@@ -102,6 +103,7 @@
               "wounded",
               "heroes",
               "population",
+              "training",
               "revealed"
             ],
             "doc": "What moves the line on; tap is a tap on the box."

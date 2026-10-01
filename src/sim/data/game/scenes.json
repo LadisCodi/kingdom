@@ -385,15 +385,28 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Train one. They’ll need that roof — and a moment to arrive.",
+        "text": "Train one. They’ll need that roof — and a little Food for the road.",
         "box": "auto",
         "point": "ui:card:train",
+        "lock": "none",
+        "until": "training",
+        "untilTarget": "",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "They’re on their way! Wait for them to arrive — or spend a few Gems, and they’re here at once.",
+        "box": "auto",
+        "point": "ui:card:finish-training",
         "lock": "none",
         "until": "population",
         "untilTarget": "",
         "untilAmount": 1,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "villager",

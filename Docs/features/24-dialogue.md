@@ -105,6 +105,7 @@ which one a line waits on is data.
 | `techDone` · `techFilled` | that technology is researched · holds all its Knowledge |
 | `placing` · `placed` · `built` | placing one · one is placed · `amount` finished (`AnyWorkshop` for any) |
 | `revealed` · `population` · `heroes` | `amount` cells revealed · villagers · heroes |
+| `training` | a villager is in training, or `amount` villagers live |
 | `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen — drawn, not merely in the page |
 | `taps` | `amount` taps on the ground since the line began |
 | `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |

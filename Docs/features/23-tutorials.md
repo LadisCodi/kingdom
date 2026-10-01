@@ -77,7 +77,8 @@ praises each thing put right, and wears the face that goes with it
 | 5.2 | `Rations` | *Berries enough to feed a household! Tap the scroll.* | the quest pill | the pill | claimed |
 | 6.0 | `FirstVillager` | *The House is still going up. No family moves in under scaffolding.* (skipped if it stands) | the House | none | the House is finished |
 | 6.1 | `FirstVillager` | *A roof and a pantry — now we need people. The Townhall trains villagers. Open it.* | the Townhall | the Townhall | its card is open |
-| 6.2 | `FirstVillager` | *Train one. They'll need that roof — and a moment to arrive.* | **Train** | none | a villager arrives |
+| 6.2 | `FirstVillager` | *Train one. They'll need that roof — and a little Food for the road.* | **Train** | none | a villager is in training |
+| 6.2b | `FirstVillager` | *They're on their way! Wait for them to arrive — or spend a few Gems, and they're here at once.* | **Finish** | none | a villager arrives |
 | 6.3 | `FirstVillager` | **Villager** (right): *A roof, a hearth and a monarch! I'll pay my rent on time, Your Majesty.* | — | all | tap |
 | 6.3b | `FirstVillager` | *Close the Townhall — the scroll is waiting behind it.* (skipped if it is closed) | the card's close knob | the knob | the scroll is on screen |
 | 6.4 | `FirstVillager` | *Oakville has its first citizen! You've earned this — tap the scroll.* | the quest pill | the pill | claimed |
