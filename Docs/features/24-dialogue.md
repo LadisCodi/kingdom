@@ -29,7 +29,10 @@
   screen the target is not in.
 - **The text types itself** at 40 characters a second, with a soft wooden
   knock every third letter (`textTick`, never on a space). A tap finishes the
-  line; the next tap moves on. A small arrow at the box's corner says a tap
+  line; the next tap moves on.
+- **A line that waits for a tap takes one anywhere on the screen** — the
+  box, the map, a menu — and keeps it: the tap reaches nothing behind it.
+  Panning the map is not a tap. A small arrow at the box's corner says a tap
   will move on.
 - **A line waiting on the game** (a beat, [`23-tutorials.md`](23-tutorials.md)
   §3) shows no arrow; the box shrinks to its text and stays out of the way.

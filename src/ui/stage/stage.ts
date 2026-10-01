@@ -46,6 +46,9 @@ const sceneKey = (id: string): string => `scene:${id}`;
  *  second — a patter, not a buzz. */
 const TICK_EVERY = 3;
 
+/** How far a press may travel and still be a tap rather than a pan. */
+const TAP_SLOP_PX = 10;
+
 /** Conditions that record how far the kingdom has got, and so can tell a
  *  scene where to resume. The rest (a sheet open, a control on screen, taps
  *  since the line began) are moments, not progress. */
@@ -213,13 +216,20 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   // ------------------------------------------------------------ taps
-  box.addEventListener('click', () => {
+  /** A tap on the box finishes the line typing, then moves a tap line on. */
+  const tapLine = (): void => {
     if (playing === null) return;
     const l = line();
     if (l === null) return;
     if (playing.typed < l.text.length) { playing.typed = l.text.length; text.textContent = l.text; return; }
     if (l.until === 'tap') next();
-  });
+  };
+  box.addEventListener('click', tapLine);
+
+  /** A line that waits for a tap takes one ANYWHERE on the screen, as a
+   *  visual novel does — and keeps it: the tap moves the dialogue on and
+   *  reaches nothing behind it. Panning the map stays free. */
+  const waitsForTap = (): boolean => playing !== null && line()?.until === 'tap';
   skip.addEventListener('click', (e) => { e.stopPropagation(); end(); });
 
   // ------------------------------------------------------------ the lock
@@ -231,6 +241,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   /** THE ONE GATE ON THE MAP: which taps a line lets through. */
   game.tapGate = (cell: Coord | null, how: 'tap' | 'hold' | 'ghost'): boolean => {
+    if (waitsForTap()) return false; // the frame's click moves the line on
     const lock = lockNow();
     if (lock === 'none' || lock === 'map') return true;
     if (lock === 'all') return false;
@@ -243,7 +254,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // only on the box, the target, the map (whose taps `tapGate` sifts) or the
   // dev bar. Panning is never locked.
   const allowed = (node: Node | null): boolean => {
-    const lock = lockNow();
+    const lock = waitsForTap() ? 'all' : lockNow();
     if (lock === 'none') return true;
     if (node === null) return false;
     const elNode = node instanceof HTMLElement ? node : node.parentElement;
@@ -259,6 +270,18 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (lock === 'map' && elNode.closest('#panel') !== null) return true;
     return false;
   };
+  // Where the press began, so a pan of the map is never read as a tap.
+  let downAt: { x: number; y: number } | null = null;
+  frame.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; }, { capture: true });
+  frame.addEventListener('click', (e) => {
+    if (!waitsForTap()) return;
+    const node = e.target instanceof HTMLElement ? e.target : (e.target as Node | null)?.parentElement ?? null;
+    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar') !== null) return;
+    const moved = downAt === null ? 0 : Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+    if (moved < TAP_SLOP_PX) tapLine();
+    e.preventDefault();
+    e.stopPropagation();
+  }, { capture: true });
   for (const type of ['pointerdown', 'mousedown', 'click'] as const) {
     frame.addEventListener(type, (e) => {
       if (allowed(e.target as Node)) return;
