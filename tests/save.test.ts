@@ -648,6 +648,31 @@ describe('Pickaxes, moved to the second story (v72)', () => {
   });
 });
 
+// v73: a lair is found before the army is asked for (Docs/features/12-quests.md §2).
+describe('War drums, in front of Armed men (v73)', () => {
+  const v72 = (index: number) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.quests.progress = 3;
+    const save = serialize(state, T0);
+    save.SaveVersion = 72;
+    return save;
+  };
+  // v72's chain, as it stood: FurtherAfield 25, ArmedMen 26, Mustered 27.
+  it('puts a kingdom on Armed men on War drums first', () => {
+    const back = deserialize(v72(26), map, T0)!;
+    expect(QUESTS[back.quests.index].id).toBe('WarDrums');
+    expect(back.quests.progress).toBe(0);
+  });
+
+  it('moves a kingdom past it on by one, and leaves one before it alone', () => {
+    expect(QUESTS[deserialize(v72(27), map, T0)!.quests.index].id).toBe('Mustered');
+    const early = deserialize(v72(25), map, T0)!;
+    expect(QUESTS[early.quests.index].id).toBe('FurtherAfield');
+    expect(early.quests.progress).toBe(3);
+  });
+});
+
 // v69: the tree in five books. A researched card that was renamed or split
 // keeps what it bought (Docs/features/22-progression.md §9).
 describe('the tree in five books (v69)', () => {

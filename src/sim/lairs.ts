@@ -377,6 +377,12 @@ export function markLairCleared(state: GameState, lairId: LairId): Wallet {
   return hoard;
 }
 
+/** How many lairs the player has found — the `FindLairs` quest goal. A lair
+ *  is in `state.lairs` from the sweep that finds it (`armLairs`) on, cleared
+ *  or not, which is the same fact the Book of Warfare opens on. */
+export const foundLairCount = (state: GameState): number =>
+  LAIR_ORDER.filter((id) => state.lairs[id] !== undefined).length;
+
 /** How many lairs the player has beaten — the `ClearLairs` quest goal. */
 export const clearedLairCount = (state: GameState): number =>
   LAIR_ORDER.filter((id) => lairIsCleared(state, id)).length;

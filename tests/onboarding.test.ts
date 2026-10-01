@@ -275,12 +275,15 @@ describe('a player can actually play the onboarding', () => {
     expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
     clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
     finish('FurtherAfield');
-    // The Orcs' ground is the next ring out: the chain's next beat is the
-    // army, so a player who has not met them yet pushes on toward them.
+    // ---- step 27: war drums — the chain asks for a lair FOUND, because the
+    // army's book opens on nothing else, and a cell count can be met facing
+    // away from both lairs in reach ----
+    expect(activeQuest(state)!.id).toBe('WarDrums');
     while (Object.keys(state.lairs).length === 0) {
       clearNearest(1);
       tick(1);
     }
+    finish('WarDrums');
     expect(isTomeOpen(state, 'Warfare')).toBe(true);
     expect(isTomeOpen(state, 'Magic')).toBe(false);
     // The Warden has been the kingdom's all along, and steps up now.

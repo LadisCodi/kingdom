@@ -175,7 +175,7 @@ export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
   TrainArmy: null, ClaimLandmarks: 'landmarkKind',
-  OwnArtifacts: null, OwnHeroes: null, ClearLairs: null, CollectResource: 'currency',
+  OwnArtifacts: null, OwnHeroes: null, FindLairs: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
 

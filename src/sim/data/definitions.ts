@@ -448,7 +448,7 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
-  | 'ClaimLandmarks' | 'ClearLairs' | 'OwnArtifacts'
+  | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
@@ -2184,4 +2184,4 @@ export const GAME_VERSION = '0.1.0';
 // it reads as a veteran. A worker carries its strike's remainder
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
-export const SAVE_VERSION = 72;
+export const SAVE_VERSION = 73;

@@ -17,6 +17,7 @@
         "ClaimLandmarks",
         "OwnArtifacts",
         "OwnHeroes",
+        "FindLairs",
         "ClearLairs",
         "CollectResource",
         "CollectTaps",
