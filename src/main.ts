@@ -432,6 +432,9 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
+      // The founding too, so a warp past midnight is a second day (the
+      // daily chest waits for one).
+      game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       // The lairs' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
