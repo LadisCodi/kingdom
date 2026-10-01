@@ -46,6 +46,26 @@ const sceneKey = (id: string): string => `scene:${id}`;
  *  second — a patter, not a buzz. */
 const TICK_EVERY = 3;
 
+/** Scroll a control into its scroller when it sits clipped outside it — the
+ *  build menu's row, a long list. Only when clipped, so a visible control
+ *  never jitters. */
+function bringIntoView(key: string): void {
+  const node = uiNode(key);
+  if (node === null) return;
+  const r = node.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return;
+  for (let p = node.parentElement; p !== null; p = p.parentElement) {
+    const style = getComputedStyle(p);
+    const scrolls = /(auto|scroll)/.test(style.overflowX + style.overflowY);
+    if (!scrolls) continue;
+    const box = p.getBoundingClientRect();
+    if (r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom) {
+      node.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+    return;
+  }
+}
+
 /** How far a press may travel and still be a tap rather than a pan. */
 const TAP_SLOP_PX = 10;
 
@@ -416,7 +436,20 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         more.hidden = !(l.until === 'tap' && playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is
         // kept while it still fits.
+        const was = playing.target;
         playing.target = resolveTarget(game, l.point, playing.target);
+        // A map target that moved on — the forest just cleared, the next one
+        // pointed at — takes the camera with it, or the arrow points off the
+        // screen.
+        const moved = playing.target?.kind === 'cell' && was?.kind === 'cell'
+          && (was.cell.x !== playing.target.cell.x || was.cell.y !== playing.target.cell.y);
+        if (moved && playing.target?.kind === 'cell') {
+          game.camera.centerOnCell(playing.target.cell, playing.target.span);
+        }
+        // A control scrolled out of its row — the fourth card of the build
+        // menu — is brought into view, or the lock holds the player in front
+        // of something they cannot reach.
+        if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
         const r = playing.target === null ? null : targetRect(game, playing.target, frame);
         // A LOCK NEVER STRANDS THE PLAYER: a target missing for a while lets
         // the lock go, and the line reads as a hint.

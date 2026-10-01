@@ -41,7 +41,7 @@ import {
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { el, formatDuration, formatExact, formatShort } from './format';
+import { coach, el, formatDuration, formatExact, formatShort } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
@@ -358,7 +358,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...(canMoveDistrict(district)
       ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
       : []),
-    closeKnob(() => game.dismiss(), `Close ${name}`),
+    coach(closeKnob(() => game.dismiss(), `Close ${name}`), 'card:close'),
   ], `Lv ${district.level}`);
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup

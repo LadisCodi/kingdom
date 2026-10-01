@@ -2671,7 +2671,7 @@ export class Game {
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
-    else if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    else if (result === 'AtMax') this.toast(this.atMaxWords());
     this.notify();
   }
 
@@ -2847,6 +2847,15 @@ export class Game {
     if (this.state.tutorial.veteran) return false;
     return SCENES.some((s) =>
       (s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId);
+  }
+
+  /** Every bed is taken. A House already going up is the answer the player
+   *  has given; telling them to build one would send them to do it twice. */
+  private atMaxWords(): string {
+    const rising = this.state.city.districts.some((d) => d.state !== 'Built'
+      && DISTRICTS[d.definitionId].populationCapacityPerLevel.length > 0);
+    return rising ? 'The new House is still going up — wait for it to finish'
+      : 'Population at max — build more Housing';
   }
 
   private researchRefusalToast(refusal: ResearchRefusal, id: TechId): void {
@@ -3772,7 +3781,7 @@ export class Game {
     const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
-    if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);

@@ -198,9 +198,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Hold your finger down and the axe keeps swinging.",
-        "box": "top",
-        "point": "",
+        "text": "Hold your finger down and the axe keeps swinging. A felled stand grows back — move on to the next.",
+        "box": "auto",
+        "point": "feature:TreesRevealed",
         "lock": "none",
         "until": "questComplete",
         "untilTarget": "Timber",
@@ -210,7 +210,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Claim it — the Mana it pays is exactly what you just spent.",
+        "text": "Claim it — it pays back more Mana than you just spent.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -302,9 +302,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Villagers eat. Berry bushes give Food — tap them.",
+        "text": "Villagers eat. Berry bushes give Food — clear the fog off one, then tap it.",
         "box": "auto",
-        "point": "feature:BerryBushRevealed",
+        "point": "feature:BerryBush",
         "lock": "none",
         "until": "questComplete",
         "untilTarget": "Rations",
@@ -378,6 +378,18 @@
         "lock": "all",
         "until": "tap",
         "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Close the Townhall — the scroll is waiting behind it.",
+        "box": "middle",
+        "point": "ui:card:close",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "quest",
         "untilAmount": 0,
         "exit": false
       },

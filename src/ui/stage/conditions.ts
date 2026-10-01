@@ -79,7 +79,14 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     }
     case 'overlay': return game.openOverlay === c.target;
     case 'noOverlay': return game.openOverlay === null;
-    case 'ui': return document.querySelector(`[data-coach="${CSS.escape(c.target)}"]`) !== null;
+    // ON SCREEN, not merely in the document: the quest scroll stays in the
+    // DOM, hidden, while a card covers it.
+    case 'ui': {
+      const node = document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(c.target)}"]`);
+      if (node === null) return false;
+      const r = node.getBoundingClientRect();
+      return r.width > 0 || r.height > 0;
+    }
     case 'taps': return tally(state, 'taps') - c.tapsAtStart >= Math.max(1, c.amount);
     case 'lairFound':
       return c.target === '' ? Object.keys(state.lairs).length > 0
