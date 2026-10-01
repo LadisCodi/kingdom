@@ -401,8 +401,12 @@ minute. Each is in one of three states:
 | **In progress** | it can be worked on | full colour, the blue bar **poured / needed**; **full**, it glows gold — the one card asking to be finished |
 | **Done** | researched | the green bar, full, and a tick |
 
-- On open the page lands on the work: a full card, then one being poured
-  into, then one pourable, then the last one researched.
+- **Every book opens centred on its earliest card the kingdom may research
+  now** — its requirements met, whether or not it can pay yet — when the menu
+  opens and when a bookmark turns to another book; with none, on the last one
+  researched. A tutorial's pointer wins over it.
+- The page scrolls by dragging on a phone: nothing rebuilds it while a finger
+  is on it.
 
 ### 5.3 Cards
 

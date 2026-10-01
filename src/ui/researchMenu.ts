@@ -16,8 +16,8 @@
 import type { Game } from '../game';
 import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
-  canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled, isTechStarted,
-  isFoundTome, isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
+  canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled,
+  isFoundTome, isTomeOpen, researchRefusal, techCost, techKnowledgeCost, techPoured, techState,
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
@@ -40,6 +40,8 @@ let selected: TechId | null = null;
  *  (the host replaces it afterwards), on a fresh mount it is already gone. */
 let pageEl: HTMLElement | null = null;
 const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
+/** The book the page was last centred on: turning to another centres again. */
+let centredTome: TomeId | null = null;
 /** The zoom the tree was last drawn at (see the page below). */
 let lastZoom = 1;
 
@@ -166,25 +168,30 @@ export function renderResearchMenu(game: Game): HTMLElement {
     page);
   root.append(sheet, bookmarks(game));
 
-  // Where the eye should land. A hint wins outright; otherwise, on a FRESH
-  // mount only, the work: a card whose Knowledge is in, then one being
-  // poured into, then the last one researched. The scroll across a per-tick
-  // re-render is the host's job (data-keep-scroll).
+  // Where the eye should land. A hint wins outright; otherwise, whenever a
+  // book is OPENED — the menu mounting, or a bookmark turning to another —
+  // the earliest card on the page the kingdom may research now, short of
+  // its price or not; with none, the last one researched. The scroll across
+  // a per-tick re-render is the host's job (data-keep-scroll).
   const hint = game.uiHint();
   const hinted = hint?.startsWith('tech:')
     ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
   const shown = [...at.keys()] as TechId[];
-  const frontier = shown.find((id) => !isTechComplete(state, id) && isTechFilled(state, id)
-      && techState(state, id) === 'progress')
-    ?? shown.find((id) => isTechStarted(state, id))
-    ?? shown.find((id) => canStartTech(state, id))
+  const frontier = shown.find((id) => researchRefusal(state, id) === null)
     ?? [...shown].reverse().find((id) => isTechComplete(state, id))
     ?? null;
-  const focus = hinted !== null && at.has(hinted) ? hinted : fresh ? frontier : null;
-  const focusAt = focus === null ? undefined : at.get(focus);
-  if (focusAt !== undefined) {
+  const opened = fresh || centredTome !== activeTome;
+  centredTome = activeTome;
+  const focus = hinted !== null && at.has(hinted) ? hinted : opened ? frontier : null;
+  if (focus !== null && at.has(focus)) {
+    // Read off the card where it actually landed — under the chapter's title
+    // and at the page's zoom — rather than worked out from the layout.
     requestAnimationFrame(() => {
-      page.scrollTop = Math.max(0, (focusAt.top + NODE_H / 2) * lastZoom - page.clientHeight / 2);
+      const card = flow.querySelector<HTMLElement>(`[data-coach="tech:${focus}"]`);
+      if (card === null) return;
+      const c = card.getBoundingClientRect();
+      const p = page.getBoundingClientRect();
+      page.scrollTop = Math.max(0, page.scrollTop + (c.top + c.height / 2) - (p.top + p.height / 2));
     });
   }
 
