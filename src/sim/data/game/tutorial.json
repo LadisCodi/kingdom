@@ -8,6 +8,7 @@
     "untilQuest": "Attuned",
     "lockFailsafeSeconds": 5,
     "typeCharsPerSecond": 40,
-    "sceneGapSeconds": 20
+    "sceneGapSeconds": 20,
+    "inputGraceSeconds": 0.5
   }
 }

@@ -757,6 +757,20 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — a Sawmill wants more Wood than we hold. Here, I put some by for just this!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy",
+        "stocks": "Sawmill"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you.",
         "box": "auto",
         "point": "ui:nav:build",
