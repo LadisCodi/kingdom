@@ -28,7 +28,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  isTechComplete, techCost, techKnowledgeMissing,
+  isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -40,7 +40,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-24 on nothing but what the game gives them', () => {
+  it('runs steps 1-25 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -163,7 +163,8 @@ describe('a player can actually play the onboarding', () => {
     finish('TaxDay');
 
     // ---- steps 7-8: back out into the country ----
-    clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount);
+    // A TOTAL of cells cleared, not a count from the quest's start.
+    clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount - revealedCellCount(state));
     finish('Explorer');
 
     // ---- steps 9-12: farming, by hand and then not ----
@@ -204,7 +205,15 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- steps 16-17: a second House, and the villager it makes room for ----
+    // ---- step 16: a second villager, and the first House is full ----
+    expect(maxPopulation(state)).toBe(2);
+    while (state.city.population < 2) {
+      if (trainUnit(state, 'Villager', T0) !== 'Queued') tick(30);
+      tick(30);
+    }
+    finish('SecondVillager');
+
+    // ---- steps 17-18: a second House, and the villager it makes room for ----
     chop(Math.max(0, DISTRICTS.Housing.costPerLevel[0].cost.Wood! * 3 - wood()));
     build('Housing', { x: 0, y: -1 });
     finish('GrowingTown');
@@ -218,7 +227,7 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // ---- steps 18-20: the wood, automated — TH1 allows the one Sawmill ----
+    // ---- steps 19-21: the wood, automated — TH1 allows the one Sawmill ----
     research('Saws');
     finish('SawTeeth');
     chop(Math.max(0, DISTRICTS.Sawmill.costPerLevel[0].cost.Wood! - wood()));
@@ -232,23 +241,23 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
     finish('Crewed');
 
-    // ---- step 21: a proper capital — both TH1 caps are reached ----
+    // ---- step 22: a proper capital — both TH1 caps are reached ----
     chop(Math.max(0, DISTRICTS.Townhall.costPerLevel[1].cost.Wood! - wood()));
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tick(120);
     expect(townhall(state).level).toBe(2);
     finish('ProperCapital');
 
-    // ---- steps 22-24: the three cards after Saws ----
+    // ---- steps 23-25: the three cards after Saws ----
     // A requirement is the row above (2026-09-08), so the book puts Taxes,
     // Sawpits and Reforesting next. The chain asks for them in row order
     // rather than leaving the player to find out at the research sheet why
     // the card after them will not start.
-    research('Taxes01');
+    research('TradeRoutesI');
     finish('Levies');
     research('SawpitsI');
     finish('Sawpits');
-    research('Reforesting01');
+    research('ReforestingI');
     finish('Regrowth');
 
     // The player is now twenty-four beats in and has never been handed
@@ -259,6 +268,25 @@ describe('a player can actually play the onboarding', () => {
     // opening that drains the pool is an opening that stops dead in front of
     // a player who has not yet been shown what refills it.
     expect(mana(state)).toBeGreaterThan(0);
+
+    // ---- step 26: further afield — and the book of the army opens on the
+    // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
+    expect(isTomeOpen(state, 'Warfare'), 'Warfare opens on a lair, not on a quest').toBe(false);
+    expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
+    clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
+    finish('FurtherAfield');
+    // The Orcs' ground is the next ring out: the chain's next beat is the
+    // army, so a player who has not met them yet pushes on toward them.
+    while (Object.keys(state.lairs).length === 0) {
+      clearNearest(1);
+      tick(1);
+    }
+    expect(isTomeOpen(state, 'Warfare')).toBe(true);
+    expect(isTomeOpen(state, 'Magic')).toBe(false);
+    // The Warden has been the kingdom's all along, and steps up now.
+    expect(state.heroes.owned).toContain('Warden');
+    research('Warrior');
+    finish('ArmedMen');
   });
 
   // The rest of the chain is not playable in a unit test — it needs a Sawmill

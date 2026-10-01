@@ -33,7 +33,7 @@
 
 | Building | Footprint | Unlock | Count cap | Max level | Job |
 |---|---|---|---|---|---|
-| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; the map's origin |
+| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; makes Gold of its own into its store (10 a minute at L1); the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
 | **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
@@ -41,12 +41,13 @@
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
 | **Sanctum** | 2×2 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
+| **Tavern** | 2×1 | Hospitality | 1 | **5** (L2–5 by the Sagas) | hosts the banner; opens the Heroes tab and the Sagas; +10% Hero XP a level ([`22-progression.md`](22-progression.md) §6) |
 | **Barracks** | 2×2 | Warrior | 1 | **10** | army cap; trains Warrior |
 | **Spear Hall** | 2×2 | Spears | 1 | **10** | army cap; trains Lancer |
 | **Shooting Grounds** | 2×2 | Archery | 1 | **10** | army cap; trains Archer |
 | **Stables** | 2×2 | Cavalry | 1 | **10** | army cap; trains Cavalry |
-| **Carpenter** | 2×2 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
-| **Mason's Yard** | 2×2 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
+| **Carpenter** | 2×2 | Joinery | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
+| **Mason's Yard** | 2×2 | Stone Dressing | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
 | **Rune Carver** | 2×2 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
@@ -249,9 +250,10 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 
 - **Beds for the soldiers who came back hurt.** With no Infirmary built, every
   casualty of every fight is a death; with one, a tenth of them wait in its
-  beds instead — more once `Field Medicine` is researched or a medic hero
-  walks the field ([`combat.md`](combat.md) §4).
-- Opened by the **`Infirmary` technology in Civics**. One per city.
+  beds instead — more when a medic hero walks the field
+  ([`combat.md`](combat.md) §4). Warfare's `Beds` ladder adds a share of
+  beds.
+- Opened by the **`Infirmary` technology in Warfare**. One per city.
 - **Beds per level** — 30, 50, 75, 105, 140, 180, 225, 275, 330, 400 — is the
   whole of what a level buys, and the ward's ceiling: what does not fit dies.
 - Mending is **one order and one wait** for a whole ward of one type, on the

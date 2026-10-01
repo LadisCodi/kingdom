@@ -26,7 +26,8 @@
    answers are to collect and to go and clear the gate.
 5. **A raid takes from the buildings' stores, never from the wallet, and only
    materials** ([`03-economy.md`](03-economy.md) §3.2). What the player has
-   collected is safe: collecting is the defence. Gold, Food, Wood, Stone. Never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
+   collected is safe: collecting is the defence. Gold, Food, Wood, Stone. Never
+   the Townhall's own Gold — the city's floor — and never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
    or units.
 6. **A raid is priced in production, not in units**, capped by a fraction of
    what the stores hold, and **a garrison makes at most three trips**, then sits on what it

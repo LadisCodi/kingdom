@@ -8,6 +8,7 @@ import {
 } from '../src/sim/data/definitions';
 import { requiredPopulation, requiredTechForLevel } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
+import { lairZoneCells } from '../src/sim/lairZone';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -16,12 +17,13 @@ import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
 import { techCost, techKnowledgeCost } from '../src/sim/research';
+import { collectBuilding } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type Coord, type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, collectAll, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
 } from './helpers';
 
 
@@ -79,32 +81,33 @@ describe('the quest chain', () => {
                                                   //   leaving the player to find
                                                   //   them
       'FurtherAfield',                            // 25   the shrine and the orc lair
-                                                  //   come into view — and
-                                                  //   FINDING the orc lair starts
-                                                  //   its thirty minutes
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 29-31 something worth killing
-      'FirstSummon',                              // 32   a hero, who is mandatory
-      'DriveThemOut',                             // 33   THE FIRST FIGHT, on a
-                                                  //   clock the reveal started.
-                                                  //   It sits five beats after
-                                                  //   the discovery on purpose:
-                                                  //   anything between them is
-                                                  //   time the garrison spends
-                                                  //   raiding a city that cannot
-                                                  //   answer yet
-      'OldStones', 'Attuned',                     // 34-35 claim the shrine
-      'Mapmakers', 'Surveyors',                   // 36-37 exploration becomes a system
-      'Highlands', 'PutToSea',                    // 38-39 the terrain gates
-      'IntoTheDark',                              // 40   a standing guard: the
-                                                  //   depths behind the lair
-                                                  //   are retired, and the
-                                                  //   harpy roost is past the reach
+                                                  //   come into view — FINDING the
+                                                  //   Orcs opens the Book of
+                                                  //   Warfare and starts the clock
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 26-28 something worth killing
+      'MusterCompany',                            // 29   a company, led by the Warden
+      'DriveThemOut',                             // 30   THE FIRST FIGHT — and the
+                                                  //   first card pack
+      'OldStones', 'Attuned',                     // 31-32 the shrine the Orcs held:
+                                                  //   claiming it opens Magic
+      'Mapmakers', 'Surveyors',                   // 33-34 exploration becomes a system
+      'Watered', 'Fallow', 'MoreRoom',            // 35-37 the rows above Urban Planning
+      'SecondStory', 'Chisels', 'Stoneworks',     // 38-40 a storey, then stone
+      'Crafts', 'Knack', 'Hearth',                // 41-43 the rows above Hospitality
+      'OpenDoors', 'FirstSummon',                 // 44-45 THE TAVERN: Bess, the
+                                                  //   banner and the Sagas, and a
+                                                  //   first call that cannot miss
     );
 
-    // 40+: the rest of the city economy the tutorial defers, then the long game.
-    inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
-    expect(QUESTS.at(-1)).toMatchObject(
-      { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+    // Then the city the tutorial deferred, the Townhall ladder, and the world.
+    inOrder('FirstSummon', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
+      'Magistrate', 'Borough', 'SecondLair', 'TheWatchtower');
+    expect(QUESTS.at(-1)).toMatchObject({ id: 'DeeperStill', goalType: 'TrainArmy' });
+    // The first pack is the first quest-paid pack, and it is the first fight's.
+    expect(QUESTS.find((q) => q.rewardPack !== null)!.id).toBe('DriveThemOut');
+    // The Watchtower is asked for by KIND.
+    expect(QUESTS.find((q) => q.id === 'TheWatchtower'))
+      .toMatchObject({ goalType: 'ClaimLandmarks', goalTarget: 'Watchtower' });
   });
 
   // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
@@ -141,9 +144,16 @@ describe('the quest chain', () => {
     expect(isQuestComplete(state, sawpits)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
-    expect(questValue(state, summon)).toBe(1); // the starting hero
-    state.heroes.owned.push('Scout');
+    expect(questValue(state, summon)).toBe(1); // the Warden
+    state.heroes.owned.push('Cook', 'Scout');   // Bess, and the first call
     expect(isQuestComplete(state, summon)).toBe(true);
+
+    // A landmark goal may name a KIND: the Watchtower, and only it.
+    const tower = QUESTS.find((q) => q.id === 'TheWatchtower')!;
+    state.landmarks.claimed.ThornedShrine = true;
+    expect(questValue(state, tower)).toBe(0);
+    state.landmarks.claimed.NorthWatch = true;
+    expect(isQuestComplete(state, tower)).toBe(true);
   });
 
   it('gem rewards land in the PLAYER wallet', () => {
@@ -202,10 +212,11 @@ describe('the quest chain', () => {
     const state = freshGame();
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Explorer');
     fund(state, { Gold: 100 });
+    const before = questValue(state, activeQuest(state)!);
     let r: string = 'Paid';
     while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 1 }); // ungated grassland
     expect(r).toBe('Revealed');
-    expect(state.quests.progress).toBe(1);
+    expect(questValue(state, activeQuest(state)!)).toBe(before + 1);
   });
 
   it('claiming needs completion; a finished chain has no quest', () => {
@@ -228,7 +239,8 @@ describe('the quest chain', () => {
     // 2 offline minutes × 30 gold/min wait in the house, not in the quest…
     expect(restored.quests.progress).toBe(7);
     // …until the player taps it.
-    collectAll(restored, T0 + 120_000);
+    const home = restored.city.districts.find((d) => d.definitionId === 'Housing')!;
+    collectBuilding(restored, home.uniqueId, T0 + 120_000);
     expect(restored.quests.progress).toBe(7 + 60);
     expect(isQuestComplete(restored, activeQuest(restored)!)).toBe(true);
   });
@@ -303,7 +315,7 @@ describe('first-time discoveries', () => {
   // opening is short of, not coin. Only the tapping beats, and only early.
   it('pays Mana on a few opening beats and nowhere else', () => {
     const manaQuests = QUESTS.filter((q) => q.rewardMana > 0);
-    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand']);
+    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand', 'Rubble']);
     // A Mana reward replaces the Gold rather than sitting on top of it.
     for (const q of manaQuests) expect(q.reward.Gold ?? 0).toBe(0);
   });
@@ -320,7 +332,8 @@ describe('quests fund the research tree', () => {
     const state = freshGame();
     const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
     state.quests.index = explorer;
-    state.quests.progress = QUESTS[explorer].goalAmount;
+    // A total of cells cleared: open the map up to it.
+    for (const c of map.cells.slice(0, QUESTS[explorer].goalAmount)) state.fog.revealed[coordKey(c)] = true;
     expect(claimQuest(state)).toBe('Claimed');
     expect(getWallet(state.kingdom.wallet, 'Stardust'))
       .toBe(QUESTS[explorer].rewardStardust);
@@ -355,11 +368,16 @@ describe('quests fund the research tree', () => {
     // base drip is not counted — zero drip stays the worst case.
     let held = CURRENCIES.Knowledge.start;
     let asked = 0;
-    for (const q of QUESTS) {
+    for (const [i, q] of QUESTS.entries()) {
       if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
       if (q.goalType === 'CompleteTech') {
         const demand = need(q.goalTarget as TechId);
         expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
+          .toBeGreaterThanOrEqual(demand);
+        // And the quest just before pays it on its own, so a player who spent
+        // what was banked on cards of their own choosing is never stuck.
+        const before = i === 0 ? CURRENCIES.Knowledge.start : QUESTS[i - 1].rewardKnowledge;
+        expect(before, `the quest before ${q.id} pays ${before} of ${demand} Knowledge`)
           .toBeGreaterThanOrEqual(demand);
         if (demand > 0) asked++;
         held -= demand;
@@ -369,7 +387,7 @@ describe('quests fund the research tree', () => {
     }
     // The opening asks for nine cards, and the guarantee is worth nothing if a
     // re-scoped chain quietly stops covering most of them.
-    expect(asked).toBe(9);
+    expect(asked).toBe(10);
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
@@ -407,8 +425,14 @@ describe('quests fund the research tree', () => {
     // 12,375: and `MusterCompany` at 400 in front of it, because twenty orcs
     // in the doorway are a company's job and the chain pays for the company.
     // 12,175: the three Market beats leave with the Market (2026-09-09).
-    expect(chain).toBe(12_175);
-    expect(tree).toBe(494_680); // the same sum tests/fog.test.ts freezes, and why
+    // 15,925: the first-time experience (2026-10-01) — the chain walks the
+    // rows above Urban Planning and Hospitality, builds the Tavern, and runs
+    // on to the Watchtower (Docs/features/12-quests.md §2).
+    // 15,995: `SecondVillager` at 70 fills the first House before the chain
+    // asks for a second one.
+    // 16,035: `Picks` at 40 teaches Pickaxes before the Barracks wants Stone.
+    expect(chain).toBe(16_035);
+    expect(tree).toBe(435_600); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
@@ -421,7 +445,11 @@ describe('quests fund the research tree', () => {
     // Market and `Field Medicine` — now a ranked ladder, not a major
     // (2026-09-09) — have left the count since. `Hunting` joined it coming
     // back to era 1, and the first four cards stopped costing Gold.
-    expect(opening).toBe(1850);
+    // 5,900 once the tree became five books (2026-10-01): the found books'
+    // first rows and the planned Cartography count as era-1 majors too.
+    // 6,030 when the five opening cards took 20 to 30 Gold each.
+    // 6,055 with Pickaxes, the card that opens the mountains.
+    expect(opening).toBe(6055);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });
@@ -494,7 +522,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -561,16 +589,17 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     } finally { restore(); }
   });
 
-  it('the plain DiscoverCells goal still counts every reveal, feature or not', () => {
+  it('the plain DiscoverCells goal is a TOTAL: cells cleared before the quest count', () => {
     const state = freshGame();
+    const cleared = Object.keys(state.fog.revealed).length;
     const restore = activate(state, {
       id: 'test', name: 'test',
-      goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
+      goalType: 'DiscoverCells', goalTarget: null, goalAmount: cleared, goalLevel: null,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
     });
     try {
-      recordQuestEvent(state, { kind: 'reveal', feature: null });
-      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      // Everything in reach was cleared already: the quest is done on arrival,
+      // never a wall in front of a player with nothing left to reveal.
       expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
     } finally { restore(); }
   });
@@ -643,12 +672,21 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
     });
   });
 
+  it('the Orcs are found only once the Townhall is at level 2', () => {
+    // A lair is found when a cell of its zone is revealed: every one of them
+    // lies past the first Townhall's reach, and the lair itself inside the
+    // second's.
+    const nearestZone = Math.min(...lairZoneCells('Orcs').map((c) => townhallDistance(map, c)));
+    expect(nearestZone).toBeGreaterThan(reachAt(1));
+    expect(townhallDistance(map, LAIRS.Orcs.location)).toBeLessThanOrEqual(reachAt(2));
+  });
+
   it('the cells the chain asks the player to reveal fit inside each level\'s reach', () => {
     const levels = levelAtBeat();
     const seeded = Object.keys(freshGame().fog.revealed).length;
     let asked = seeded;
     QUESTS.forEach((q, i) => {
-      if (q.goalType === 'DiscoverCells') asked += q.goalAmount;
+      if (q.goalType === 'DiscoverCells') asked = Math.max(asked, q.goalAmount); // a total
       if (q.goalType === 'DiscoverFeature') asked += 1;
       expect(cellsWithin(reachAt(levels[i])),
         `by ${q.id} the chain has asked for ${asked} cells, at Townhall ${levels[i]}`)

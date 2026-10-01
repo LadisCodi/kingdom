@@ -49,8 +49,7 @@
 
 import { MANA, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
-import { isTechComplete } from './research';
-import { techFlat, techValue } from './techEffects';
+import { techMultiplier } from './techEffects';
 import {
   addToWallet, getWallet, type GameState,
 } from './state';
@@ -75,15 +74,10 @@ export function manaProduction(state: GameState): number {
       base += levelIndexed(MANA.sanctumPerHourPerLevel, d.level);
     }
   }
-  // Ley Taps: the one thing that lets a landmark touch the RATE, and it is a
-  // line the player researched rather than a property of the claim, so the
-  // "capacity not production" rule for sanctuaries still holds by default.
-  base += techFlat(state, 'manaPerClaimedLandmark') * claimedLandmarks(state);
-  return Math.max(0, resolve(state, 'manaRegen', base));
+  // Ley Taps: a share on the whole rate, so a rank is worth the same to a
+  // new kingdom and to one with ten Sanctum levels.
+  return Math.max(0, resolve(state, 'manaRegen', base * techMultiplier(state, 'manaRegen')));
 }
-
-const claimedLandmarks = (state: GameState): number =>
-  Object.keys(state.landmarks.claimed).filter((id) => state.landmarks.claimed[id] === true).length;
 
 
 /** What actually accrues, per hour. Nothing draws against it, so this is
@@ -109,15 +103,17 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = techValue(state, 'manaCap', MANA.baseCap)
-    + (isTechComplete(state, 'Meditation') ? MANA.meditationCap : 0);
+  let cap = MANA.baseCap;
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
       cap += levelIndexed(MANA.sanctumCapPerLevel, d.level);
     }
   }
-  return Math.max(0, Math.round(resolve(state, 'manaCap', cap)));
+  // Deep Wells and Meditation: a share of the WHOLE pool, landmarks and
+  // Sanctum included, so a rank never shrinks into the noise as the pool
+  // grows.
+  return Math.max(0, Math.round(resolve(state, 'manaCap', cap * techMultiplier(state, 'manaCap'))));
 }
 
 export const mana = (state: GameState): number => getWallet(state.city.wallet, 'Mana');

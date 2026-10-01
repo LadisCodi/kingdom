@@ -67,7 +67,7 @@ Buildability:
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Mountain** | Stone | 1 | 5 | 120 s | — |
+| **Mountain** | Stone | 1 | 5 | 120 s | Pickaxes |
 | **Iron mountain** | Stone | **5** | 5 | **300 s** | **Mining** |
 | **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Deep Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
@@ -79,16 +79,17 @@ Mountains:
 
 | | Pays | Opened by | Role |
 |---|---|---|---|
-| **Mountain** | Stone, 1 | — | the everyday building material |
+| **Mountain** | Stone, 1 | **Pickaxes** | the everyday building material |
 | **Iron mountain** | Stone, **5** | **Mining** | the same material, five times over |
 | **Gold mountain** | **Gold**, 3 | **Deep Mining** | the only Gold source on the map outside housing taxes |
 
 - A mountain blocks a footprint like any other feature. No placement rule of its
   own.
-- The bare peak is free to tap from the first second. The gate is on the
-  **metal**: Mining for iron, Deep Mining for gold. An iron mountain is visible
-  and refusing before Mining; a refused tap costs no Mana. Scaling Tools
-  ([`07-research.md`](07-research.md)) gates nothing on the map.
+- The bare peak answers a pick once **Pickaxes** is researched — taught in
+  the opening, just before the Barracks asks for Stone
+  ([`23-tutorials.md`](23-tutorials.md) §3.1). The metal is gated further:
+  Mining for iron, Deep Mining for gold. A gated mountain is visible and
+  refusing; a refused tap costs no Mana.
 - **The Quarry cuts Stone from every mountain in its area of influence, the way
   the Sawmill takes Wood from every forest in its own.** One building works all
   three mountains; a district's harvest source is a list. A district names a
@@ -223,6 +224,36 @@ Respawn:
   `../art/mockups/area-overlays/reach-simple-2-dots-shadow.png`). It
   disappears once the reach holds the whole province.
 
+### 4.1 Sighting
+
+A tall thing past the fog shows as a **silhouette** while a revealed cell
+lies close enough to it.
+
+| Thing | Sighted from | Setting |
+|---|---|---|
+| Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
+| Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
+| Watchtower | 4 | `fog.sight.watchtower` |
+| A lair not yet found | its own, past its ground: Orcs 2, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
+| Forests, berries, game, shoals | never | — |
+
+- **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
+  footprint. Discovered cells do not see.
+- A lair's sight reaches past its ground (`radius`), or it is 0 and never
+  sighted: every cell of its ground finds it (`src/sim/data/mapRules.ts`).
+- **A silhouette is the thing's own drawing as one flat, cold, faint shape**
+  over the dark: no name, no badge, no bubble.
+- It stops being a silhouette once any cell of it is Discovered — a lair once
+  it is found — and draws as itself.
+- **It ignores the Townhall's reach and the exploration gates.** Seeing what
+  cannot be reached yet is the point.
+- **It is not a discovery**: no banner, no quest progress, a lair is not found
+  and starts no raid clock.
+- A tap on a silhouette says *Something stands in the dark — clear the fog
+  towards it*, and costs nothing.
+- A scene may wait on it: the `sighted` condition
+  ([`24-dialogue.md`](24-dialogue.md) §5).
+
 ## 5. The price of a cell
 
 Authored per ring out to ring 14 — roughly ×2.5 a ring — with a ×1.37
@@ -246,9 +277,9 @@ fallback past ring 14. The province reaches ring 23.
   divined — the same count the era bars read
   ([`07-research.md`](07-research.md) §2.1). A fresh kingdom's 16 seeded cells
   already sit in the second step.
-- The order: ring price × count multiplier, then **Pitons** (−10%/level), then
-  the floor. A cell never costs less than `fog.minCost`, however deep the
-  discounts go. Nothing buys a tap back.
+- The order: ring price × count multiplier, then the floor. **No technology
+  discounts the fog** ([`07-research.md`](07-research.md) §1.2). A cell never
+  costs less than `fog.minCost`. Nothing buys a tap back.
 - Every ring price from 3 out is a multiple of five. A price five does not
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
@@ -264,7 +295,7 @@ fallback past ring 14. The province reaches ring 23.
 | Found in the fog | Count | Gives | Verb |
 |---|---|---|---|
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
-| **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | clear, then claim |
+| **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
 | **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
@@ -272,10 +303,34 @@ fallback past ring 14. The province reaches ring 23.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
   through the Discovered scrim once discovered.
+- **A site coming into view is announced once**, by a banner — unless a
+  scene introduces it ([`23-tutorials.md`](23-tutorials.md)), which then says
+  it instead. A resource is never announced: its coin lands on the plank.
 - **Every ruin opens with a gate.** Discovering it starts a counter; clear the
   gate before it raids, and the ruin's rooms are yours to take
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has
   no guard: it is claimed for its Gold.
+
+### 6.1 How the province opens
+
+The near map is laid out so the first Townhalls look one way at a time
+(`tests/provinceLayout.test.ts`):
+
+- **South first.** The Thorned Shrine (4 rings) is sighted from the first
+  ring; the only landmark in sight while the Townhall is at level 1.
+- **The Orcs** (5 rings, south) show from ring 3, as the player reaches the
+  shrine. Their ground starts at ring 4 and holds the shrine, so they are
+  found at Townhall 2 and cleared before it is claimed.
+- **The near mountains are the Harpies'.** Two 2×2 blocks, sighted from the
+  first ring to the north-east, lie on the Harpies' ground (radius 2). Their
+  camp is 6 rings out: past Townhall 2's reach, inside Townhall 3's.
+  Revealing a block finds them, so no big mountain is worked before they fall.
+- **One loose stone node** stands 2 rings from the Townhall, on no lair's
+  ground: the stone the opening has, and the reason to want more.
+- **The Harpies** show from ring 3 beyond their mountains: the camp that
+  holds the stone is in sight before the player can reach it.
+- The Watchtower (8 rings north) and the Fallen Stones (7 rings) are sighted
+  from ring 4, at Townhall 2.
 
 ### The landmark tiers
 
@@ -288,6 +343,12 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The far ring | **100,000** | 4 |
 
 - The nearest sanctuary is the cheapest; the far ring is the dearest.
+- **The Watchtower** (`NorthWatch`, 8 rings north, **10,000**) is a landmark
+  of its own kind: claimed like any other, it discovers **8** rings round it
+  rather than 5 and opens the world door and the Atlas
+  ([`22-progression.md`](22-progression.md) §5).
+- **A landmark inside a standing lair's ground cannot be claimed**
+  (`LairHeld`): the Thorned Shrine waits for the Orcs.
 
 ### The five ruins
 
@@ -334,6 +395,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 1 / 2 | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
@@ -357,6 +419,9 @@ Costs are **authored per sanctuary**, not derived from distance.
   part-lit or part-mined; it would read as a rendering fault, not as a state.
 - Footprints on iron and gold mountains, on forests, or on anything else that
   is a mass of small objects rather than one thing.
+- Line of sight: nothing hides a silhouette (§4.1).
+- A silhouette that says which ore or which landmark it is, or a banner when
+  one appears.
 
 **Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).

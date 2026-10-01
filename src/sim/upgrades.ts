@@ -15,22 +15,21 @@
 // an empty modifier stack are the bit-exact identity, so nothing changes until
 // something is researched or granted.
 //
-// Integer stats (workerYield) round ONCE, here at the boundary, because they
-// feed addToWallet directly and a fractional wallet would leak into quest
-// counters, the Market and every displayed number. Math.round rather than
-// floor: flooring makes a small multiplier useless at base-1 yields. The tap
-// is the exception — it owes a FRACTION on purpose, and `tapCarry` keeps the
-// remainder (see `tapDraw`).
+// A yield is a FRACTION on purpose, for the tap and the crew alike: the tree's
+// bonuses are percentages (+10% Wood from forests), and a percentage of a
+// one-unit chunk is a tenth of a unit. The remainder CARRIES — `tapCarry` for
+// the thumb, `Worker.strikeCarry` for each crew member — so a worker brings
+// home 1 on one trip and 2 on the next and the average is exact. Nothing
+// fractional ever reaches a wallet or a store.
 
 import {
   DISTRICTS, HARVEST, TAP, TAXES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
 import {
-  townhall, type Coord, type CurrencyId, type District, type DistrictId, type GameState,
+  type Coord, type CurrencyId, type District, type DistrictId, type GameState,
 } from './state';
 import { techMultiplier, techValue } from './techEffects';
-import { isTechComplete } from './research';
 import { resolve, resolveAt } from './modifiers';
 import { harmonySurplusMultiplier } from './harmony';
 
@@ -86,12 +85,13 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * `ABUNDANCE_LINES` table said with a list.
  */
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
-  // The relic's term is FLAT, and flat is right here: `unitsPerStrike` is
-  // authored per source and never grows, so a `+1` stays worth +100% on a
-  // Forest and +20% on an iron vein for ever. One number reaches the thumb
-  // (`tapDraw`) and the crew (`effectiveWorkerStrike`) from this one place.
-  return Math.max(0, resolve(state, 'harvestUnitsPerStrike', techValue(
-    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id })));
+  // The tree's term is a PERCENT (`harvestYield`, +10% a rank): the same
+  // share of a Forest's one unit and an iron vein's five. The relic's term is
+  // flat and rides on top. One number reaches the thumb (`tapDraw`) and the
+  // crew (`effectiveWorkerStrike`) from this one place — a fraction, which
+  // both of them carry.
+  return Math.max(0, resolve(state, 'harvestUnitsPerStrike',
+    spec.unitsPerStrike * techMultiplier(state, 'harvestYield', { harvest: spec.id })));
 }
 
 /**
@@ -133,18 +133,31 @@ const levelTerm = (
   return levelIndexed(list(DISTRICTS[building.definitionId]), building.level) ?? blank;
 };
 
-/** Units one worker strike deposits: the ground's abundance plus the global
- *  WorkerLoad, which is the one payroll-only dial and therefore the pressure
- *  generator — more units a strike empties a cell faster. `building` is the
- *  crew's own, and its late levels ADD units to the haul (a chunk is 1 to 5
- *  units, so a percentage of it would round away). */
+/** Units one worker strike deposits — a FRACTION, which the worker carries
+ *  (`Worker.strikeCarry`): the ground's abundance, the crew's own building's
+ *  late levels (which ADD units), and Worker Load (`crewYield`), the one
+ *  payroll-only dial and therefore the pressure generator — more units a
+ *  strike empties a cell faster. */
 export function effectiveWorkerStrike(
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number {
-  const base = techValue(state, 'workerStrikeUnits',
-    effectiveUnitsPerStrike(state, spec)
-    + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0));
-  return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
+  const base = (effectiveUnitsPerStrike(state, spec)
+    + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0))
+    * techMultiplier(state, 'crewYield');
+  return Math.max(0, resolve(state, 'workerYield', base, spec.currencyId));
+}
+
+/**
+ * What one strike actually takes out of the ground: the whole units of what
+ * it is owed, the remainder carried to the next strike. `carry` is the
+ * worker's own; the caller stores what comes back as `rest`.
+ */
+export function strikeDraw(
+  state: GameState, spec: HarvestSpec, building: District | null, carry: number,
+): { want: number; rest: number } {
+  const owed = effectiveWorkerStrike(state, spec, building) + carry;
+  const want = Math.floor(owed + 1e-9);
+  return { want, rest: Math.max(0, owed - want) };
 }
 
 /** Milliseconds between one worker's strikes on this kind of cell. A property
@@ -169,7 +182,7 @@ export const workerStrikeMs = (
 };
 
 /** Cooldown between AUTO-taps — the repeats a held pointer generates, ms
- *  (QuickHands buys it down; floor 0.1s).
+ *  (QuickHands is a SPEED it is divided by; floor 0.1s).
  *
  *  Deliberately asymmetric, and this is the whole design: a *manual* tap is
  *  never gated, so tapping fast stays a skill the player is rewarded for,
@@ -186,7 +199,8 @@ export const workerStrikeMs = (
  *  ahead of the crew (`04-harvest.md` §3.3). */
 export const effectiveAutoTapCooldownMs = (state: GameState): number =>
   Math.max(100, resolve(
-    state, 'autoTapCooldown', techValue(state, 'autoTapCooldown', TAP.collectCooldownSeconds) * 1000,
+    state, 'autoTapCooldown',
+    (TAP.collectCooldownSeconds * 1000) / Math.max(1, techMultiplier(state, 'autoTapSpeed')),
   ));
 
 /** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
@@ -201,9 +215,7 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
  *  no building want. */
 export const effectiveWorkerSpeed = (state: GameState, home: Coord | null = null): number =>
   Math.max(0.1, (home === null ? resolve : resolveAtHome(home))(state, 'workerSpeed',
-    WORKER.moveSpeedTilesPerSecond
-      * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
-      * techMultiplier(state, 'workerSpeed')));
+    WORKER.moveSpeedTilesPerSecond * techMultiplier(state, 'workerSpeed')));
 
 /** `resolveAt` curried on the place, so the line above reads as one choice
  *  between two resolvers rather than as a duplicated expression. */
@@ -212,21 +224,17 @@ const resolveAtHome = (home: Coord) =>
     resolveAt(state, stat, base, home);
 
 /**
- * Multiplier on build and upgrade time (Carpentry: −5%/rank).
+ * Multiplier on build and upgrade time.
  *
- * TWO HALVES, and they point opposite ways on purpose. The TREE authors a
- * discount (`buildTime`, −5% a rank) because a rank ladder is bounded and
- * cannot run past its own last rank. The MODIFIER STACK authors a SPEED
- * (`buildSpeed`, a multiplier at or above 1) because what feeds it — a relic,
- * a season, a legendary's boon — has no ceiling, and a discount would die at
- * 100% while a speed only ever approaches zero
- * (Docs/proposals/legendary-boons.md §2.1).
- *
- * Dividing is what makes that true: ×2 is half the wait, ×5 a fifth, and no
- * number of them reaches a build that takes no time.
+ * Both halves are SPEEDS the time is divided by: the tree's (`buildSpeed`,
+ * Carpentry, +10% a rank) and the modifier stack's (a relic, a season, a
+ * legendary's boon). A discount would die at 100%; a speed only ever
+ * approaches zero (Docs/proposals/legendary-boons.md §2.1). ×2 is half the
+ * wait, ×5 a fifth, and no number of them reaches a build that takes no time.
  */
 export const effectiveBuildTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)))
+  Math.max(0.25, resolve(state, 'buildTime', 1))
+    / Math.max(1, techMultiplier(state, 'buildSpeed'))
     / Math.max(1, resolve(state, 'buildSpeed', 1));
 
 /**
@@ -237,10 +245,10 @@ export const effectiveBuildTimeMultiplier = (state: GameState): number =>
  * at once. Absent is every roof, which is what the ladders in the tree today
  * do.
  *
- * The Harmony surplus and the Townhall's level ride at the **base stage**, the
- * way `marketSaleLevelMultiplier` does: a city kept beautiful past what its
- * buildings ask of it, and a capital that has grown, are standing facts about
- * the city, not modifiers with an expiry. The tax anchor is already settled
+ * The Harmony surplus rides at the **base stage**, the way
+ * `marketSaleLevelMultiplier` does: a city kept beautiful past what its
+ * buildings ask of it is a standing fact about the city, not a modifier with
+ * an expiry. The tax anchor is already settled
  * around every boundary batch and around a move, so a decoration or an
  * upgrade completing — each IS a build completion — reprices the partial
  * stretch without anything new (`population.ts`).
@@ -250,17 +258,7 @@ export const effectiveTaxRate = (state: GameState, district?: DistrictId): numbe
     state, 'taxRate',
     techValue(state, 'taxRate',
       TAXES.goldPerPopulationPerMinute
-        * harmonySurplusMultiplier(state)
-        * townhallTaxMultiplier(state),
+        * harmonySurplusMultiplier(state),
       district === undefined ? undefined : { district }),
   ));
 
-/**
- * What the Townhall's LEVEL does to every house's rent — the reason to raise
- * it once the count caps stop mattering. A total at each level, indexed from
- * level 1 (`taxes.townhall_multiplier_per_level`); an empty ladder is ×1.
- */
-export const townhallTaxMultiplier = (state: GameState): number => {
-  const ladder = TAXES.townhallMultiplierPerLevel;
-  return ladder.length === 0 ? 1 : levelIndexed(ladder, townhall(state).level);
-};

@@ -143,7 +143,7 @@ export interface TechTreeValidation {
  *  to know the set, and importing `definitions.ts` from here would be a cycle
  *  (it imports this). Typed against the union, so a typo is a compile error
  *  even though a missing tome is not. */
-export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic'];
+export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
 
 /**
  * A RANK LADDER is a naming convention, not a field and not a chain: a stem

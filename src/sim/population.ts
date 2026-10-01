@@ -76,20 +76,28 @@ export const houseTaxBonus = (district: District): number => {
  * whatever the levels standing in it.
  */
 export function houseGoldPerMinute(state: GameState, district: District): number {
+  const own = ownGoldPerMinute(district);
   const residents = residentsOf(state, district);
-  if (residents === 0) return 0;
-  return Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+  if (residents === 0) return own;
+  return own + Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
     * (1 + houseTaxBonus(district))
     + districtAdjacency(state, district));
 }
 
-/** City-wide tax income, gold per minute, over every built house. */
+/**
+ * The Gold a building makes BY ITSELF a minute, with nobody in it — the
+ * Townhall's own income (`buildings.goldPerMinutePerLevel`), so the city
+ * always has a source of Gold. A level fact; nothing scales it.
+ */
+export const ownGoldPerMinute = (district: District): number => {
+  const list = DISTRICTS[district.definitionId].goldPerMinutePerLevel;
+  return list.length === 0 ? 0 : levelIndexed(list, district.level);
+};
+
+/** City-wide Gold income a minute: every house's rent and the Townhall's own. */
 export function cityGoldPerMinute(state: GameState): number {
   let total = 0;
-  for (const d of state.city.districts) {
-    if (d.state !== 'Built' || districtCapacity(state, d) === 0) continue;
-    total += houseGoldPerMinute(state, d);
-  }
+  for (const d of rentPayers(state)) total += houseGoldPerMinute(state, d);
   return total;
 }
 
@@ -150,12 +158,15 @@ export const populationCost = (currentPopulation: number): number => {
  * player finally collects. That capacity is the only ceiling on what the
  * neighbourhood makes while the player is away.
  *
- * The Townhall collects nothing: Gold comes from each house.
+ * The Townhall pays the same way, into its own store, from Gold it makes by
+ * itself (`ownGoldPerMinute`).
  */
 
-/** The houses that pay rent right now: built, and with room for anyone. */
+/** What pays Gold into a store right now: built, and with room for anyone or
+ *  an income of its own. */
 const rentPayers = (state: GameState): District[] =>
-  state.city.districts.filter((d) => d.state === 'Built' && districtCapacity(state, d) > 0);
+  state.city.districts.filter((d) => d.state === 'Built'
+    && (districtCapacity(state, d) > 0 || ownGoldPerMinute(d) > 0));
 
 /**
  * A house's rate just changed at `t`: rescale its partial progress since the
@@ -205,7 +216,7 @@ function accrueRent(state: GameState, d: District, toTime: number): number {
   // from the last advance; one built inside it was stamped by the repricing.
   const anchor = d.rentAnchor ?? state.lastAdvance;
   const rate = houseGoldPerMinute(state, d);
-  const space = storageSpace(d);
+  const space = storageSpace(state, d);
   if (rate <= 0 || space <= 0) {
     // Nobody pays, or the house is full: no banking.
     d.rentAnchor = Math.max(anchor, toTime);

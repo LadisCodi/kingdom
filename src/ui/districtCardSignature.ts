@@ -32,8 +32,11 @@ export function districtCardSignature(game: Game, district: District): string {
   const wallet = (c: string) => game.walletValue(c as CurrencyId);
   const shorts = (cost: Record<string, number>) =>
     Object.entries(cost).map(([c, n]) => wallet(c) < n);
+  // The rent clock's anchor moves on every tick a store earns — or stands
+  // full — and the card draws the store, never the anchor.
+  const { rentAnchor: _anchor, ...drawn } = district;
   const parts: unknown[] = [
-    district,
+    drawn,
     queueItem?.uniqueId ?? null,
     queueItem === undefined ? null : queueItem.startedAt === null,
     game.uiHint(),

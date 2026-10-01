@@ -134,27 +134,26 @@ describe('one technology, one line', () => {
       stat: 'taxRate', op: 'percent', value: 5, target: { district: 'Housing' },
     })).toBe('+5% tax income from Housing');
     expect(effectSentence({
-      stat: 'harvestUnitsPerStrike', op: 'flat', value: 1, target: { harvest: 'Forest' },
-    })).toBe('+1 Wood per tap and delivery from a forest');
+      stat: 'harvestYield', op: 'percent', value: 10, target: { harvest: 'Forest' },
+    })).toBe('+10% Wood per tap and delivery from a forest');
     // Unaimed: the bracketed halves go, and the sentence still reads.
-    expect(effectSentence({ stat: 'harvestUnitsPerStrike', op: 'flat', value: 1 }))
-      .toBe('+1 per tap and delivery');
+    expect(effectSentence({ stat: 'harvestYield', op: 'percent', value: 10 }))
+      .toBe('+10% per tap and delivery');
     expect(effectSentence({
-      stat: 'unitAtk', op: 'flat', value: 1, target: { unitTag: 'Distance' },
-    })).toBe('+1 ATK to every Distance unit');
+      stat: 'unitAtk', op: 'percent', value: 10, target: { unitTag: 'Distance' },
+    })).toBe('+10% attack for every Distance unit');
     expect(effectSentence({ stat: 'knowledgeYield', op: 'percent', value: 5 }))
       .toBe('+5% on every lump of Knowledge');
-    expect(effectSentence({ stat: 'landmarkClaimKnowledge', op: 'flat', value: 3 }))
-      .toBe('+3 Knowledge for every landmark claimed');
-    expect(effectSentence({ stat: 'autoTapCooldown', op: 'flat', value: -0.05 }))
-      .toBe('−0.05s between auto-taps');
+    expect(effectSentence({ stat: 'landmarkKnowledge', op: 'percent', value: 20 }))
+      .toBe('+20% Knowledge from every landmark claimed');
+    expect(effectSentence({ stat: 'autoTapSpeed', op: 'percent', value: 15 }))
+      .toBe('+15% auto-tap speed while holding');
   });
 
-  // A value authored as a fraction is read to the player as a percentage,
-  // because "+0.05 ×" is not a thing anyone can price a research against.
-  it('reads a fraction as a percentage where the number is one', () => {
-    expect(effectSentence({ stat: 'haulLoss', op: 'flat', value: -0.03 }))
-      .toBe('−3% of the haul lost on a bad depth');
+  // A wait is moved by a SPEED, and the card says so: it climbs.
+  it('reads a speed as a climb', () => {
+    expect(effectSentence({ stat: 'buildSpeed', op: 'percent', value: 10 }))
+      .toBe('+10% build speed');
   });
 
   // The one kind that still writes its own line: its effect is code, so there

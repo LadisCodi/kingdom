@@ -1,0 +1,13 @@
+{
+  "help": {
+    "idleWiggleSeconds": 30,
+    "idleAdvisorSeconds": 60,
+    "advisorRestSeconds": 180,
+    "advisorShowSeconds": 10,
+    "pointerSeconds": 20,
+    "untilQuest": "Attuned",
+    "lockFailsafeSeconds": 5,
+    "typeCharsPerSecond": 40,
+    "sceneGapSeconds": 20
+  }
+}

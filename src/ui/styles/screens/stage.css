@@ -1,0 +1,318 @@
+/* THE STAGE (Docs/features/24-dialogue.md) — the advisor and the cast.
+ *
+ * Materials, as every sheet: the box is a sheet of parchment on a carved
+ * wooden board with organic edges (`.stg-frame`, one nine-sliced piece), the
+ * name is burnt into a small wooden plank on its top edge; the pointer is a
+ * gloved hand and a blue magic glow — the quest hint's own, so a player never
+ * learns two signs for one thing. */
+
+#stage:empty { display: none; }
+#stage {
+  position: absolute;
+  inset: 0;
+  z-index: 95; /* over the nav (10) and the battle (90), under the reveal (100) */
+  pointer-events: none;
+}
+.stg { position: absolute; inset: 0; }
+
+/* ---- the pointer: a gloved hand, and a blue magic glow ----
+ * A CONTROL glows along its own silhouette (`.stg-glow`, on the control
+ * itself, so the light follows whatever shape it has); a MAP PLOT glows as
+ * its own diamond (`.stg-ring`). The hand bobs over either. */
+.stg-ring {
+  position: absolute;
+  pointer-events: none;
+}
+.stg-ring[hidden], .stg-hand[hidden] { display: none; }
+.stg-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.stg-ring polygon { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.stg-ring .stg-ring-halo {
+  stroke: var(--magic-glow-outer);
+  stroke-width: calc(var(--px) * 10);
+  opacity: 0.55;
+  filter: blur(calc(var(--px) * 3));
+  animation: stg-halo 1.4s ease-in-out infinite;
+}
+.stg-ring .stg-ring-line { stroke: var(--magic-glow-inner); stroke-width: calc(var(--px) * 3); }
+@keyframes stg-halo { 50% { opacity: 0.95; stroke-width: calc(var(--px) * 14); } }
+
+.stg-glow {
+  filter: drop-shadow(0 0 calc(var(--px) * 2) var(--magic-glow-inner))
+    drop-shadow(0 0 calc(var(--px) * 8) var(--magic-glow-outer))
+    drop-shadow(0 0 calc(var(--px) * 16) var(--magic-glow-outer));
+  animation: stg-glow 1.4s ease-in-out infinite;
+}
+@keyframes stg-glow {
+  50% {
+    filter: drop-shadow(0 0 calc(var(--px) * 3) var(--magic-glow-inner))
+      drop-shadow(0 0 calc(var(--px) * 12) var(--magic-glow-outer))
+      drop-shadow(0 0 calc(var(--px) * 24) var(--magic-glow-outer));
+  }
+}
+
+.stg-hand {
+  position: absolute;
+  width: calc(var(--px) * 40);
+  height: auto;
+  margin-left: calc(var(--px) * -23); /* the fingertip (57% across), not the glove's middle */
+  translate: 0 -100%;
+  pointer-events: none;
+  animation: stg-bob 0.7s ease-in-out infinite alternate;
+}
+.stg-hand.is-below { width: calc(var(--px) * 48); translate: 0 0; margin-left: calc(var(--px) * -19); animation-name: stg-bob-up; }
+@keyframes stg-bob { to { transform: translateY(calc(var(--px) * -8)); } }
+@keyframes stg-bob-up { to { transform: translateY(calc(var(--px) * 8)); } }
+
+/* The motes: small blue-white sparks drifting slowly off the target, the
+   glow's own light — a soft core and a four-point twinkle, no glyph. */
+.stg-sparks { position: absolute; pointer-events: none; }
+.stg-sparks[hidden] { display: none; }
+.stg-spark {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: calc(var(--px) * 12 * var(--s));
+  height: calc(var(--px) * 12 * var(--s));
+  margin: calc(var(--px) * -6 * var(--s));
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 14%, rgba(200, 240, 255, 0.9) 26%,
+    rgba(60, 157, 255, 0.45) 44%, transparent 70%);
+  opacity: 0;
+  animation: stg-spark var(--t) ease-out var(--delay) infinite;
+}
+/* The twinkle: two hairline rays crossing the core, fading to their tips. */
+.stg-spark::before,
+.stg-spark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180%;
+  height: calc(var(--px) * 1.2);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(235, 250, 255, 0.95) 50%, transparent);
+}
+.stg-spark::after { rotate: 90deg; }
+@keyframes stg-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  18% { opacity: 1; }
+  70% { opacity: 0.8; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--px) * var(--dx)), calc(var(--px) * var(--dy))) scale(1) rotate(45deg);
+  }
+}
+
+/* ---- the box ---- */
+.stg .stg-box {
+  position: absolute;
+  left: calc(var(--px) * 12);
+  right: calc(var(--px) * 12);
+  bottom: calc(var(--nav-h) + var(--px) * 12);
+  max-width: calc(var(--px) * 420);
+  margin: 0 auto;
+  /* The text sits inside the frame's rim (`.stg-frame`, below). Never so
+     low that the frame's top and bottom slices crowd each other. */
+  padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 42);
+  /* ONE SIZE, always: room for three lines of text at the box's type, so
+     the box never grows or shrinks with what it says. A line too long for
+     it is set smaller (stage.ts `fitText`), never let out of the paper. */
+  height: calc(var(--px) * 140);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* THE PAPER UNDER THE PAPER: the frame's nine slices are drawn at
+     fractional sizes, and a hairline seam between two of them showed the
+     map through as a dark line. A sheet of the parchment's own colour
+     behind the frame, inside its wooden rim, makes any seam read as paper. */
+  background: linear-gradient(#f9e3b4, #f9e3b4) no-repeat;
+  background-origin: border-box;
+  background-position: calc(var(--px) * 18) calc(var(--px) * 26);
+  background-size: calc(100% - var(--px) * 36) calc(100% - var(--px) * 56);
+  /* Lifted off the map behind it: a shadow that follows the board's outline
+     — and the figures standing on it. */
+  filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 5) rgba(25, 12, 4, 0.55))
+    drop-shadow(0 0 calc(var(--px) * 1.5) rgba(25, 12, 4, 0.45));
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  animation: stg-box-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.stg .stg-box[data-place='top'] { bottom: auto; top: calc(var(--hud-h) + var(--px) * 10); }
+.stg .stg-box[data-place='middle'] { bottom: auto; top: 50%; translate: 0 -50%; }
+.stg-box.is-waiting { cursor: default; }
+/* The box clears the quest scroll while it is on the map, so a line about
+   the scroll never covers it. */
+#ui:has(> #quest:not([hidden]) .q-scroll) .stg .stg-box[data-place='bottom'] {
+  bottom: calc(var(--nav-h) + var(--px) * 104);
+}
+@keyframes stg-box-in { from { opacity: 0; transform: translateY(calc(var(--px) * 10)); } }
+
+/* THE FRAME: parchment laid on a carved wooden board, organic edges, the
+   corners (the rivets, the curled sheet) whole in their slices. Sliced at 100
+   of its 979×352 and drawn at 40, so the wood rim reads at phone size. A
+   child, not the box's own border, so the cast can stand BEHIND it. */
+.stg-frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: calc(var(--px) * 40) solid transparent;
+  border-image: url('../../assets/dialogue-frame.png') 100 fill / calc(var(--px) * 40) stretch;
+}
+
+.stg-name {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--px) * -6); /* riding just over the board's top rim */
+  left: calc(var(--px) * 22); /* the swallowtail hangs over the corner */
+  /* A CLOTH RIBBON in the speaker's colour (`--ribbon`, below): its folded
+     swallowtail ends whole in their slices (100 of its 504 across), the
+     front band stretched to the name. Drawn 32 tall, the band the upper
+     three quarters — the text sits on it. */
+  height: calc(var(--px) * 32);
+  box-sizing: border-box;
+  padding: calc(var(--px) * 3) calc(var(--px) * 2) 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 34);
+  border-image: var(--ribbon, url('../../assets/ribbon-blue.png')) 0 100 fill / 0 calc(var(--px) * 34) stretch;
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 15);
+  line-height: calc(var(--px) * 20);
+  white-space: nowrap;
+  color: #fff6e0;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 14, 4, 0.9), 0 0 calc(var(--px) * 2) rgba(30, 14, 4, 0.8);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(25, 12, 4, 0.45));
+}
+/* Each speaker's own colour. */
+.stg-name[data-speaker='advisor'] { --ribbon: url('../../assets/ribbon-blue.png'); }
+.stg-name[data-speaker='warden'] { --ribbon: url('../../assets/ribbon-green.png'); }
+.stg-name[data-speaker='cook'] { --ribbon: url('../../assets/ribbon-red.png'); }
+.stg-name[data-speaker='villager'] { --ribbon: url('../../assets/ribbon-brown.png'); }
+.stg-name[data-speaker='orcChief'] { --ribbon: url('../../assets/ribbon-crimson.png'); }
+.stg-name.is-right { left: auto; right: calc(var(--px) * 22); }
+.stg-text {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin: calc(var(--px) * 4) 0 0;
+  font-size: calc(var(--px) * 16);
+  line-height: 1.35;
+  color: var(--ink);
+}
+.stg-more {
+  position: absolute;
+  right: calc(var(--px) * 34); /* on the paper, clear of the rim */
+  bottom: calc(var(--px) * 24);
+  width: calc(var(--px) * 20);
+  height: auto;
+  pointer-events: none;
+  animation: stg-bob-up 0.6s ease-in-out infinite alternate;
+}
+.stg-more[hidden] { display: none; }
+
+/* ---- the cast: they stand on the box, and move with it ---- */
+.stg-box .stg-actor {
+  position: absolute;
+  z-index: -2; /* behind the frame: their feet go behind its top edge */
+  bottom: calc(100% - var(--px) * 26);
+  width: 44%;
+  max-width: calc(var(--px) * 190);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease, transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1), filter 200ms ease;
+}
+.stg-box .stg-actor.is-left { left: calc(var(--px) * -6); transform: translateX(-40%); }
+.stg-box .stg-actor.is-right { right: calc(var(--px) * -6); transform: translateX(40%); }
+.stg-box .stg-actor.is-in { opacity: 1; transform: none; }
+/* The other side is dimmed and set back a step. */
+.stg-box .stg-actor.is-in:not(.is-lit) { filter: brightness(0.6) saturate(0.8); transform: scale(0.94); }
+.stg-box .stg-actor:empty { display: none; }
+/* A full figure is cut at the waist by the box: only the top of it shows. */
+.stg-box .stg-portrait.is-figure { max-height: calc(var(--px) * 230); overflow: hidden; }
+/* A cast with no room above the box — it would stand off the top of the
+   screen, under the header — is not shown at all (stage.ts). */
+.stg .stg-box.no-cast .stg-actor { opacity: 0; }
+
+.stg-portrait.is-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 6) rgba(40, 22, 10, 0.45));
+}
+.stg-portrait.is-placeholder {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 38%, var(--parchment) 0 55%, var(--parchment-shade) 100%);
+}
+.stg-initial {
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 56);
+  color: var(--wood);
+  text-shadow: 0 calc(var(--px) * 1) 0 var(--ink-inverse), 0 calc(var(--px) * -1) 0 rgba(60, 36, 18, 0.35);
+}
+.stg-portrait.is-medallion {
+  width: calc(var(--px) * 110);
+  margin: 0 calc(var(--px) * 14);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--parchment);
+  box-shadow: 0 0 0 calc(var(--px) * 4) var(--gold-dark), 0 0 0 calc(var(--px) * 6) var(--wood-dark),
+    0 calc(var(--px) * 6) calc(var(--px) * 10) rgba(40, 22, 10, 0.4);
+}
+.stg-actor.is-right .stg-portrait.is-medallion { margin-left: auto; }
+.stg-portrait.is-medallion img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---- idle help: Isolde leans in from the left edge ---- */
+.stg-peek {
+  position: absolute;
+  z-index: 95;
+  left: 0;
+  bottom: calc(var(--nav-h) + var(--px) * 150);
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--px) * 4);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateX(-110%);
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.stg-peek.is-in { transform: translateX(calc(var(--px) * -22)); }
+.stg-peek-face { width: calc(var(--px) * 92); flex: none; }
+.stg-peek-face .stg-portrait.is-medallion { width: 100%; margin: 0; }
+.stg-peek-face .stg-portrait.is-figure { max-height: calc(var(--px) * 140); overflow: hidden; }
+.stg-peek-say {
+  margin-bottom: calc(var(--px) * 60);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
+  border-radius: calc(var(--px) * 12);
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 14);
+  color: var(--ink);
+  background: var(--parchment);
+  box-shadow: 0 0 0 calc(var(--px) * 3) var(--wood), 0 0 0 calc(var(--px) * 4) var(--wood-dark);
+  white-space: nowrap;
+}
+
+/* The quest pill's nudge: it wiggles when the player has been idle. */
+#quest.is-nudging > * { animation: stg-nudge 1.4s ease-in-out infinite; }
+@keyframes stg-nudge {
+  0%, 60%, 100% { rotate: 0deg; }
+  70% { rotate: -3deg; }
+  80% { rotate: 3deg; }
+  90% { rotate: -2deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stg-ring polygon, .stg-glow, .stg-hand, .stg-more, #quest.is-nudging > * { animation: none; }
+  .stg-sparks { display: none; }
+  .stg-actor, .stg-peek { transition: none; }
+}

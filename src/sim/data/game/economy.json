@@ -8,8 +8,7 @@
     "collectSeconds": 30
   },
   "taxes": {
-    "goldPerPopulationPerMinute": 30,
-    "townhallMultiplierPerLevel": [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25]
+    "goldPerPopulationPerMinute": 30
   },
   "mana": {
     "baseCap": 100,

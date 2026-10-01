@@ -248,4 +248,15 @@ describe('the presenter', () => {
     expect(game.openOverlay).toBe('store');
     expect(game.state.kingdom.builders).toBe(2);
   });
+
+  it('says nothing the purse already shows: a builder, keys', () => {
+    const game = freshPresenter();
+    game.state.player.wallet.Gems = 50_000;
+    const toasts: string[] = [];
+    game.onToast((m) => toasts.push(m));
+    game.doBuyBuilder({ closeSheet: false });
+    game.doBuyKeys('basic');
+    expect(game.state.kingdom.builders).toBe(2);
+    expect(toasts).toEqual([]);
+  });
 });

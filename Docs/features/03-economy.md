@@ -84,7 +84,6 @@
 - Residents are auto-assigned: houses fill in build order as population grows.
   The only effect is which house their rent is stored in.
 - Roofless villagers pay nothing; empty minutes are never banked.
-- The Townhall collects nothing: Gold comes from each house.
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
@@ -93,17 +92,16 @@
   **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
   +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
   minute.
-- **The Townhall's level multiplies every house's rent.**
-  `taxes.townhallMultiplierPerLevel` is a **total** at each level, indexed
-  from level 1: ×1 at 1, then +0.25 a level to ×3.25 at 10. It rides at the
-  base stage of the rate beside the Harmony surplus — a level fact, never a
-  modifier — so it reaches every resident's rent, and adjacency stays flat. It is the one number the Townhall's Level Up card
-  shows. What it moves in a month is the frontier, not the ladder: the
-  30-day harness reaches every Townhall level on the same day ±1 with or
-  without it, and claims 7 landmarks of 10 instead of 5, because the extra
-  Gold has one sink and that is the fog.
-- Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
-  Gold/min idle; the same city at Townhall 2 ≈ 150.
+- **The Townhall makes Gold of its own**, with nobody living in it, into
+  its own store (§3.2), the way a house does: `goldPerMinutePerLevel`, 10 a
+  minute at level 1 and 5,400 at 10. The city always has a source of Gold.
+  - A level fact; no technology, relic or Harmony scales it.
+  - **It is never raided** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+  - From level 2 it gives back about what the houses' rent would gain at the
+    population the level is reached with.
+- Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 130
+  Gold/min idle (120 rent + the Townhall's 10); the same city at Townhall 2
+  ≈ 180.
 
 ### 3.1 Adjacency
 
@@ -284,7 +282,7 @@ and research**.
 |---|---|---|
 | Tax rate | 30 Gold/pop/min | `taxes.goldPerPopulationPerMinute` |
 | House rent bonus per level | +0% then +25% a level, to +225% | `buildings.taxBonusPerLevel` |
-| Townhall rent multiplier per level | ×1 then +0.25 a level, to ×3.25 | `taxes.townhallMultiplierPerLevel` |
+| The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
 | Store capacity per level | about 8 h of the building at level 1, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
@@ -304,7 +302,7 @@ and research**.
 - A second purse for research.
 - Generators and vaults.
 - An offline cap: the stores are what bound an absence (§3.2).
-- A Townhall store: Gold comes from each house.
+- A Townhall level that multiplies the houses' rent: its Gold is its own.
 - A tap that pulls rent forward. Only the Tithe does it
   ([`09-relics.md`](09-relics.md) §2.1).
 - Silver.

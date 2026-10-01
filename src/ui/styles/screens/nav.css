@@ -133,3 +133,51 @@
 /* Reserve the corner so the knob can't sit on a legacy screen's first action
  * row. Goes away per screen as each grows a sheet with a plank of its own. */
 #panel:has(.legacy-close) { padding-right: calc(var(--px) * 64); }
+
+/* ------------------------------------------------------------ the doors ---
+ * A tab whose menu the kingdom has not reached yet (Docs/features/
+ * 22-progression.md §3): the plate stays, its mark is greyed and a brass
+ * padlock hangs over it. A tap shakes the lock; opening breaks it off. */
+#navbar.nav .nav-lock {
+  position: absolute;
+  top: calc(var(--rpx) * 26);
+  left: 50%;
+  translate: -50% 0;
+  display: none;
+  filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.6));
+  pointer-events: none;
+}
+#navbar.nav .nav-lock .icon { --icon-size: calc(var(--rpx) * 64); }
+#navbar.nav .nav-tab.is-locked .nav-lock { display: block; }
+#navbar.nav .nav-tab.is-locked > .icon,
+#navbar.nav .nav-tab.is-locked > .nav-label { filter: grayscale(1) brightness(0.72); opacity: 0.75; }
+#navbar.nav .nav-tab.is-locked:active {
+  border-image-source: url('../../assets/nav-tab.png');
+  padding: 0 0 calc(var(--rpx) * 10);
+}
+#navbar.nav .nav-tab.is-shaking .nav-lock { animation: nav-lock-shake 380ms ease-in-out; }
+#navbar.nav .nav-tab.is-unlocking .nav-lock {
+  display: block;
+  animation: nav-lock-break 900ms cubic-bezier(0.3, 0, 0.7, 1) forwards;
+}
+#navbar.nav .nav-tab.is-unlocking > .icon { animation: nav-mark-glow 900ms ease-out; }
+@keyframes nav-lock-shake {
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: -14deg; }
+  45% { rotate: 12deg; }
+  70% { rotate: -8deg; }
+}
+@keyframes nav-lock-break {
+  0% { translate: -50% 0; rotate: 0deg; opacity: 1; }
+  25% { translate: -50% calc(var(--rpx) * -10); rotate: -12deg; opacity: 1; }
+  100% { translate: -30% calc(var(--rpx) * 90); rotate: 40deg; opacity: 0; }
+}
+@keyframes nav-mark-glow {
+  0% { filter: brightness(1.8) drop-shadow(0 0 calc(var(--rpx) * 18) #ffe7a0); }
+  100% { filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(40, 22, 10, 0.45)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #navbar.nav .nav-tab.is-shaking .nav-lock,
+  #navbar.nav .nav-tab.is-unlocking .nav-lock,
+  #navbar.nav .nav-tab.is-unlocking > .icon { animation: none; }
+}

@@ -69,8 +69,6 @@ and the army cap; hero slots one free, the rest Gems
     upward.** A battlefield keeps most of what it takes; bringing more of it
     home is something the player builds towards rather than a rate they are
     given.
-    - **`Field Medicine I–III`** in Warfare, +5 points a rank
-      ([`tech-tree.md`](tech-tree.md) §3.4).
     - **A hero with the `WoundedRecovery` trait**, +15 to +40 points, the best
       in the party and never the sum ([`10-heroes.md`](10-heroes.md) §2.5).
     - Capped at **90%**: someone always stays out there.

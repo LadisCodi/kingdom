@@ -150,7 +150,7 @@ describe('the shipped tech tree', () => {
       .map((f) => readFileSync(new URL(f, dir), 'utf8'))
       .join('\n');
     const read = new Set([
-      ...sources.matchAll(/tech(?:Value|Flat|FlatAimed|Multiplier|Totals)\(\s*state,\s*'([A-Za-z]+)'/g),
+      ...sources.matchAll(/(?:tech(?:Value|Flat|FlatAimed|Multiplier|Totals)|pctByTag)\(\s*state,\s*'([A-Za-z]+)'/g),
     ].map((m) => m[1]));
     for (const stat of TECH_STAT_IDS) {
       // A RETIRED stat is one whose mechanic was cut: it stays declared so the
@@ -379,7 +379,7 @@ describe('what the rules refuse', () => {
     expect(messages(bonus).some((m) => m.includes('moves no number'))).toBe(true);
 
     const mechanic = clone();
-    mechanic.technologies.Roadworks.unlocks = [{ unit: 'Warrior' }];
+    mechanic.technologies.Tactics.unlocks = [{ unit: 'Warrior' }];
     expect(messages(mechanic).some((m) => m.includes('is a mechanic and also unlocks'))).toBe(true);
   });
 

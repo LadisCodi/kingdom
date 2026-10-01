@@ -19,6 +19,7 @@
 // whole `k`-millisecond chunks — the same trick as the tax and Mana anchors —
 // so one-call replay and stepped ticking agree exactly (invariant 1).
 
+import { techMultiplier } from './techEffects';
 import { adjacencyMultiplier } from './adjacency';
 import { DISTRICTS, GOODS, RUSH, levelIndexed } from './data/definitions';
 import { addGood, canAffordGoods, payGoods, refundGoods } from './goods';
@@ -89,7 +90,8 @@ const needMs = (item: WorkshopItem): number =>
  */
 export const queuedWorkMs = (state: GameState, d: District, good: GoodId): number =>
   Math.max(1000, Math.round(
-    GOODS[good].workSeconds * 1000 * adjacencyMultiplier(state, d, 'workTime'),
+    (GOODS[good].workSeconds * 1000 * adjacencyMultiplier(state, d, 'workTime'))
+      / Math.max(1, techMultiplier(state, 'workshopSpeed', { district: d.definitionId })),
   ));
 
 /**

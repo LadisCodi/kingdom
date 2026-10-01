@@ -43,6 +43,14 @@ describe('the rules the editor enforces', () => {
       .toContain('the Townhall cell (1,1) is Water, not Grassland');
   });
 
+  it('refuses a lair sight that does not reach past its ground', () => {
+    const d = clone();
+    d.lairs.Harpies.sight = d.lairs.Harpies.radius;
+    expect(validateRegionMap(d).errors.some((e) => /sight .* must reach past its radius/.test(e.message))).toBe(true);
+    d.lairs.Harpies.sight = 0; // never sighted is allowed
+    expect(validateRegionMap(d).errors).toEqual([]);
+  });
+
   it('refuses a site in the sea', () => {
     const d = clone();
     const sea = d.terrain.cells.find((c) => c.id === 'Water')!;

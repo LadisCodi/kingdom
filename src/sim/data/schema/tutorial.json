@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "fields": {
+    "help": {
+      "type": "object",
+      "fields": {
+        "idleWiggleSeconds": { "type": "int", "min": 1, "doc": "Idle this long and the quest pill wiggles." },
+        "idleAdvisorSeconds": { "type": "int", "min": 1, "doc": "Idle this long and Isolde leans in to offer a hint." },
+        "advisorRestSeconds": { "type": "int", "min": 0, "doc": "Once she has leaned in, she stays away this long." },
+        "advisorShowSeconds": { "type": "int", "min": 1, "doc": "How long she waits, leaning in, before she goes." },
+        "pointerSeconds": { "type": "int", "min": 1, "doc": "How long a hint points before it lets go." },
+        "untilQuest": { "type": "text", "doc": "Idle help stops once the chain is past this quest." },
+        "lockFailsafeSeconds": { "type": "int", "min": 1, "doc": "A lock whose target is missing this long lets go." },
+        "typeCharsPerSecond": { "type": "int", "min": 1, "doc": "How fast a line types itself." },
+        "sceneGapSeconds": {
+          "type": "int",
+          "min": 0,
+          "doc": "The breath between one introduction and the next. The First Morning does not wait for it."
+        }
+      }
+    }
+  }
+}

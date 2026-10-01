@@ -14,7 +14,7 @@ import {
   type StatDef, type TechStat,
 } from '../src/sim/data/techEffectRules';
 import {
-  techFlat, techFlatAimed, techMultiplier, techTotals, techValue,
+  techFlatAimed, techMultiplier, techTotals, techValue,
 } from '../src/sim/techEffects';
 import { effectiveTaxRate } from '../src/sim/upgrades';
 import type { GameState, TechId } from '../src/sim/state';
@@ -41,35 +41,37 @@ describe('the effect registry', () => {
   it('refuses an effect the game cannot carry out', () => {
     const bad = [
       { stat: 'nonsense' as never, op: 'flat' as const, value: 1 },
-      { stat: 'buildTime' as const, op: 'flat' as const, value: 1 },
-      { stat: 'typeDisadvantage' as const, op: 'percent' as const, value: 10 },
-      { stat: 'manaCap' as const, op: 'flat' as const, value: 0 },
+      { stat: 'buildSpeed' as const, op: 'flat' as const, value: 1 },
+      { stat: 'manaCap' as const, op: 'percent' as const, value: 0 },
       { stat: 'taxRate' as const, op: 'percent' as const, value: 2.5 },
-      { stat: 'manaCap' as const, op: 'flat' as const, value: 1, target: { harvest: 'Forest' as const } },
-      { stat: 'harvestUnitsPerStrike' as const, op: 'flat' as const, value: 1, target: { harvest: 'Coal' as never } },
+      { stat: 'manaCap' as const, op: 'percent' as const, value: 1, target: { harvest: 'Forest' as const } },
+      { stat: 'harvestYield' as const, op: 'percent' as const, value: 1, target: { harvest: 'Coal' as never } },
+      // EVERY BONUS CLIMBS: a shrinking number meets zero at some rank.
+      { stat: 'buildSpeed' as const, op: 'percent' as const, value: -5 },
+      { stat: 'harvestYield' as const, op: 'percent' as const, value: -10, target: { harvest: 'Forest' as const } },
       // A regrowth bonus on something that does not grow back. A berry bush
       // is CONSUMED and reappears on another tile, so its clock is
-      // `respawnSeconds` in another call site — aiming recovery at it would
+      // `respawnSeconds` in another call site — aiming regrowth at it would
       // be a rank the player pays for and nothing collects.
-      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Berries' as const } },
-      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Fish' as const } },
-      // Seconds of waiting take a percentage, not a flat second: the same
-      // second off a 60 s regrowth and a 300 s one are different mechanics.
-      { stat: 'harvestRecovery' as const, op: 'flat' as const, value: -10, target: { harvest: 'Forest' as const } },
+      { stat: 'regrowthSpeed' as const, op: 'percent' as const, value: 20, target: { harvest: 'Berries' as const } },
+      { stat: 'regrowthSpeed' as const, op: 'percent' as const, value: 20, target: { harvest: 'Fish' as const } },
+      // A speed takes a percentage, not a flat step.
+      { stat: 'regrowthSpeed' as const, op: 'flat' as const, value: 10, target: { harvest: 'Forest' as const } },
+      // A store on a building that has none.
+      { stat: 'storageCapacity' as const, op: 'percent' as const, value: 10, target: { district: 'Barracks' as const } },
     ];
     for (const effect of bad) {
       expect(effectProblems(effect), effectLabel(effect)).not.toEqual([]);
     }
     // …and accepts the shapes the tree actually uses.
     for (const good of [
-      { stat: 'buildTime' as const, op: 'percent' as const, value: -5 },
-      { stat: 'harvestUnitsPerStrike' as const, op: 'flat' as const, value: 1, target: { harvest: 'Crops' as const } },
-      { stat: 'unitDef' as const, op: 'flat' as const, value: 1, target: { unitTag: 'Melee' as const } },
-      // "Trees grow back 20% faster" — a NEGATIVE percent, because the number
-      // is seconds of waiting and less of it is the good news.
-      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Forest' as const } },
-      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -10, target: { harvest: 'Crops' as const } },
-      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -5 },
+      { stat: 'buildSpeed' as const, op: 'percent' as const, value: 10 },
+      { stat: 'harvestYield' as const, op: 'percent' as const, value: 10, target: { harvest: 'Crops' as const } },
+      { stat: 'unitDef' as const, op: 'percent' as const, value: 10, target: { unitTag: 'Melee' as const } },
+      { stat: 'regrowthSpeed' as const, op: 'percent' as const, value: 20, target: { harvest: 'Forest' as const } },
+      { stat: 'regrowthSpeed' as const, op: 'percent' as const, value: 5 },
+      { stat: 'populationCapacity' as const, op: 'flat' as const, value: 1 },
+      { stat: 'storageCapacity' as const, op: 'percent' as const, value: 10, target: { district: 'Sawmill' as const } },
     ]) {
       expect(effectProblems(good), effectLabel(good)).toEqual([]);
     }
@@ -80,24 +82,22 @@ describe('the effect registry', () => {
     // read as a bonus and collect nothing. Derived from the workbook, so a
     // designer who gives the berries a regrowth time makes them aimable by
     // doing that and nothing else.
-    // Read through StatDef: the registry is a narrow literal, so an entry
-    // that authors no `targetIds` has no such property to compare.
     const def = (stat: TechStat): StatDef => TECH_STATS[stat] as StatDef;
-    const recovers = def('harvestRecovery').targetIds!;
+    const recovers = def('regrowthSpeed').targetIds!;
     for (const [id, spec] of Object.entries(HARVEST)) {
       expect(recovers.includes(id), `${id} recovers in place: ${spec.recoverySeconds}s`)
         .toBe(spec.recoverySeconds > 0);
     }
     // Every other stat aims at every id of the kinds it accepts.
-    expect(def('harvestUnitsPerStrike').targetIds).toBeUndefined();
+    expect(def('harvestYield').targetIds).toBeUndefined();
   });
 
   it('keys a target by its KIND, so a coin and a mountain are not one scope', () => {
     // `ModifierScope` is a bare id union, where 'Stone' the currency and
     // 'Stone' the harvest source are the same scope. This layer must not
     // inherit that.
-    expect(effectKey('harvestUnitsPerStrike', { harvest: 'Stone' }))
-      .not.toBe(effectKey('harvestUnitsPerStrike', { district: 'Quarry' }));
+    expect(effectKey('harvestYield', { harvest: 'Stone' }))
+      .not.toBe(effectKey('storageCapacity', { district: 'Quarry' }));
     expect(effectKey('manaCap')).toBe('manaCap|*');
   });
 });
@@ -106,11 +106,11 @@ describe('the resolver', () => {
   it('sums what is complete, and only that', () => {
     const state = freshGame();
     const forest = { harvest: 'Forest' } as const;
-    expect(techFlat(state, 'harvestUnitsPerStrike', forest)).toBe(0);
+    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1);
     completeRanks(state, 'Sawpits', 2);
-    expect(techFlat(state, 'harvestUnitsPerStrike', forest)).toBe(2);
+    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + (0.1 + 0.1));
     completeRanks(state, 'Sawpits', 3);
-    expect(techFlat(state, 'harvestUnitsPerStrike', forest)).toBe(3);
+    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + (0.1 + 0.1 + 0.1));
   });
 
   // The trap the whole target vocabulary exists to avoid: an effect aimed at
@@ -118,41 +118,40 @@ describe('the resolver', () => {
   it('aims: Sawpits lifts the forest and nothing else', () => {
     const state = freshGame();
     completeRanks(state, 'Sawpits', 3);
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Forest' })).toBe(3);
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(0);
-    expect(techFlat(state, 'harvestUnitsPerStrike')).toBe(0); // nothing unaimed
+    expect(techMultiplier(state, 'harvestYield', { harvest: 'Forest' })).toBeGreaterThan(1);
+    expect(techMultiplier(state, 'harvestYield', { harvest: 'Crops' })).toBe(1);
+    expect(techMultiplier(state, 'harvestYield')).toBe(1); // nothing unaimed
   });
 
-  it('stacks every effect aimed at one cell, whatever card it rides on', () => {
-    // Scythes is gone (2026-09-08): Irrigation is the one ladder on Crops now,
-    // and its ranks are not all the same kind of bonus — rank I waters the
-    // plot (regrowth), ranks II and III thicken it (+1 a strike each). The
-    // resolver folds by (stat, target), so the two unit ranks sum and the
-    // recovery rank never leaks into the count.
+  it('keeps apart two stats aimed at one cell', () => {
+    // Irrigation thickens the plot (yield) and Crop Rotation hurries it back
+    // (regrowth): one cell, two numbers, and neither leaks into the other.
     const state = freshGame();
-    completeRanks(state, 'Irrigation', 1);
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(0);
-    expect(techMultiplier(state, 'harvestRecovery', { harvest: 'Crops' })).toBeLessThan(1);
-    completeRanks(state, 'Irrigation', 3);
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(2);
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Meat' })).toBe(0);
+    completeRanks(state, 'Irrigation', 2);
+    expect(techMultiplier(state, 'harvestYield', { harvest: 'Crops' })).toBeGreaterThan(1);
+    expect(techMultiplier(state, 'regrowthSpeed', { harvest: 'Crops' })).toBe(1);
+    completeRanks(state, 'CropRotation', 1);
+    expect(techMultiplier(state, 'regrowthSpeed', { harvest: 'Crops' })).toBeGreaterThan(1);
+    expect(techMultiplier(state, 'harvestYield', { harvest: 'Meat' })).toBe(1);
   });
 
   it('keeps an unaimed query clear of the aimed effects', () => {
     const state = maxed();
     // Warhorns is unaimed; Fletching aims at Distance. The Drill needs each
     // separately or combat pays the unaimed one once per tag a unit carries.
-    expect(techFlat(state, 'unitAtk')).toBe(3);
-    expect(techFlatAimed(state, 'unitAtk', { unitTag: 'Distance' })).toBe(3);
-    expect(techFlat(state, 'unitAtk', { unitTag: 'Distance' })).toBe(6); // both, on purpose
+    const warhorns = ladders.Warhorns.length * 0.05;
+    const fletching = ladders.Fletching.length * 0.1;
+    expect(techTotals(state, 'unitAtk').pct).toBeCloseTo(warhorns);
+    expect(techTotals(state, 'unitAtk', { unitTag: 'Distance' }).pct).toBeCloseTo(warhorns + fletching);
+    expect(techFlatAimed(state, 'unitAtk', { unitTag: 'Distance' })).toBe(0);
   });
 
   it('divides a percent per effect, which is what keeps it bit-exact', () => {
     const state = freshGame();
     completeRanks(state, 'Carpentry', 3);
-    expect(techTotals(state, 'buildTime').pct).toBe(3 * -0.05);
+    expect(techTotals(state, 'buildSpeed').pct).toBe(0.1 + 0.1 + 0.1);
     // …and NOT the value a single division would give.
-    expect(techTotals(state, 'buildTime').pct).not.toBe(-15 / 100);
+    expect(techTotals(state, 'buildSpeed').pct).not.toBe(30 / 100);
   });
 
   it('is the identity for a stat nothing authors', () => {

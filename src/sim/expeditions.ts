@@ -23,7 +23,7 @@ import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
-import { techFlat, techFlatAimed, techValue } from './techEffects';
+import { techMultiplier, techPctAimed, techTotals } from './techEffects';
 import type { GameState, HeroId, LairId, UnitId, Wallet } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -55,11 +55,9 @@ export function lairSupplyCost(
   // would otherwise stack to a free trip.
   const discount = heroIds.reduce((best, id) => (HEROES[id].trait === 'SupplyDiscount'
     ? Math.max(best, HEROES[id].traitValue) : best), 0);
-  // Rations stacks with the Quartermaster's trait the way a rank and a relic
-  // stack everywhere else: the trait is a discount, the line is a discount,
-  // and the modifier stack rides on the product.
-  const mult = Math.max(0, resolve(state, 'supplyCost',
-    (1 - discount) * techValue(state, 'supplyCost', 1)));
+  // The trait is a discount and the modifier stack rides on it. The tree
+  // never discounts.
+  const mult = Math.max(0, resolve(state, 'supplyCost', 1 - discount));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
     out[c as keyof Wallet] = Math.max(1, Math.round(n * mult));
@@ -90,23 +88,30 @@ export function lairSupplyCost(
  */
 export function drillOf(state: GameState): Drill {
   return {
-    atk: {
-      all: Math.round(resolve(state, 'unitAtk', techFlat(state, 'unitAtk'))),
-      Distance: techFlatAimed(state, 'unitAtk', { unitTag: 'Distance' }),
-    },
-    def: {
-      all: Math.round(resolve(state, 'unitDef', 0)),
-      Melee: techFlatAimed(state, 'unitDef', { unitTag: 'Melee' }),
-      Mounted: techFlatAimed(state, 'unitDef', { unitTag: 'Mounted' }),
-    },
+    // The modifier stack's half is FLAT (a relic's +2 ATK); the tree's is a
+    // PERCENT of the unit's own number, so a rank is worth the same share of
+    // a Warrior and of a Cavalry and never goes stale.
+    atk: { all: Math.round(resolve(state, 'unitAtk', 0)) },
+    def: { all: Math.round(resolve(state, 'unitDef', 0)) },
+    atkPct: pctByTag(state, 'unitAtk'),
+    defPct: pctByTag(state, 'unitDef'),
     disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
-      + techFlat(state, 'typeDisadvantage')
       + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
     // A MULTIPLIER, floored at the identity: nothing in the game may make the
     // kingdom's own troops frailer than the sheet says.
-    hpMult: Math.max(1, resolve(state, 'unitHp', 1)),
+    hpMult: Math.max(1, resolve(state, 'unitHp', techMultiplier(state, 'unitHp'))),
   };
 }
+
+/** The tree's percent on one stat, unaimed under `all` and aimed per tag —
+ *  exact-match, so a Cavalry reading `all` plus its two tags counts each
+ *  effect once (`techPctAimed`). */
+const pctByTag = (state: GameState, stat: 'unitAtk' | 'unitDef'): Drill['atkPct'] => ({
+  all: techTotals(state, stat).pct,
+  Melee: techPctAimed(state, stat, { unitTag: 'Melee' }),
+  Distance: techPctAimed(state, stat, { unitTag: 'Distance' }),
+  Mounted: techPctAimed(state, stat, { unitTag: 'Mounted' }),
+});
 
 /**
  * A Party as combat sees it, with the kingdom's drill attached and every hero
@@ -149,8 +154,10 @@ export function partyBoard(party: Party): Board {
     };
   });
   const bonus = {
-    dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags),
-    def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags),
+    dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags)
+      + UNITS[unitId].dmg * drillFlat(drill.atkPct ?? {}, UNITS[unitId].tags),
+    def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags)
+      + UNITS[unitId].def * drillFlat(drill.defPct ?? {}, UNITS[unitId].tags),
     hpMult: () => drill.hpMult,
   };
   return buildBoard(party.slots.filter((s) => s.count > 0) as SquadSpec[], fighters, bonus);

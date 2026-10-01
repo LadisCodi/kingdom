@@ -227,7 +227,7 @@ describe('pouring Knowledge', () => {
     const state = freshGame();
     openEveryEra(state);
     const a: TechId = 'Cavalry';
-    const b: TechId = 'Conquest';
+    const b: TechId = 'SecondSanctum';
     for (const req of [...TECHNOLOGIES[a].requires, ...TECHNOLOGIES[b].requires]) {
       completeTech(state, req);
     }
@@ -582,14 +582,12 @@ describe('planned technologies', () => {
   // when the book was laid out — with every requirement one row up, a card
   // that does nothing is a toll on the way to one that does, and the answer
   // for a Civics page with no room for a leaf was to drop them.
-  it('are exactly the fourteen the design lists, and no more', () => {
-    // `Field Medicine` left the list on 2026-09-09: it is a real three-rank
-    // ladder now, and what it moves is how much of a fight's dead is carried
-    // home alive (Docs/features/combat.md §4).
+  it('are exactly the seven the design lists, and no more', () => {
+    // The tree was rebuilt on 2026-10-01 (Docs/features/22-progression.md §9):
+    // a planned card is a promise of a mechanic still to come, one per book
+    // at most a couple, and the Atlas's Cartography is the world map's.
     expect(PLANNED.sort()).toEqual([
-      'FrugalRites', 'Invocation',
-      'LeyLines', 'LeyReading', 'LeyStorm', 'Lorekeeping', 'RitualCasting', 'Scouting',
-      'Scrying', 'Siegecraft', 'Standards', 'Vanguard', 'Veterancy', 'Wayshrines',
+      'Cartography', 'Invocation', 'LeyLines', 'LeyReading', 'LeyStorm', 'Rumours', 'Scouting',
     ].sort());
   });
 

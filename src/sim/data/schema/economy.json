@@ -19,13 +19,7 @@
         }
       }
     },
-    "taxes": {
-      "type": "object",
-      "fields": {
-        "goldPerPopulationPerMinute": { "type": "int" },
-        "townhallMultiplierPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "townhall": true } }
-      }
-    },
+    "taxes": { "type": "object", "fields": { "goldPerPopulationPerMinute": { "type": "int" } } },
     "mana": {
       "type": "object",
       "fields": {

@@ -101,11 +101,11 @@ const oneCellCost = (state: GameState, map: MapData, cell: Coord): number =>
       state,
       'revealCost',
       // Two things move what a cell costs: how much of the map is already
-      // revealed (countMultiplier, at the base stage) and Pitons, which
-      // discounts the result. Nothing buys the taps back: a cell is five
-      // presses at every ring.
-      revealCost(townhallDistance(map, cell)) * countMultiplier(state)
-        * Math.max(0, techValue(state, 'revealCost', 1)),
+      // revealed (countMultiplier, at the base stage). No technology
+      // discounts it: the tree makes the kingdom richer, never the fog
+      // cheaper. Nothing buys the taps back: a cell is five presses at
+      // every ring.
+      revealCost(townhallDistance(map, cell)) * countMultiplier(state),
     )),
   );
 

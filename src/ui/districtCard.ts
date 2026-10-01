@@ -41,7 +41,7 @@ import {
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { el, formatDuration, formatExact, formatShort } from './format';
+import { coach, el, formatDuration, formatExact, formatShort } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
@@ -157,6 +157,20 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     const workshop = workshopSection(game, district, live);
     if (workshop) body.append(sectionHead('Workshop'), workshop);
 
+    // THE TAVERN hosts the banner (Docs/features/22-progression.md §6): its
+    // card is the way to the heroes and to a call.
+    if (def.heroXpBonusPerLevel.length > 0) {
+      body.append(sectionHead('Heroes'), el('div', { class: 'dc-tavern' },
+        btn({
+          label: 'Heroes', kind: 'secondary', icon: 'helmet',
+          onClick: () => game.setOverlay('heroes'),
+        }),
+        el('span', { 'data-coach': 'card:call' }, btn({
+          label: 'Call', kind: 'gem', icon: 'star',
+          onClick: () => game.setOverlay('store'),
+        }))));
+    }
+
     // A decoration is ONE number, and this is it. It has no crew, no queue
     // and no tap, so without this line its card would be empty.
     if (isDecoration(def)) {
@@ -253,6 +267,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         label: 'Add a worker', disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
       });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
+      plus.dataset.coach = 'card:workers';
       body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
         minus,
         unitPortrait('Villager', 'dc-crew-face'),
@@ -343,7 +358,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...(canMoveDistrict(district)
       ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
       : []),
-    closeKnob(() => game.dismiss(), `Close ${name}`),
+    coach(closeKnob(() => game.dismiss(), `Close ${name}`), 'card:close'),
   ], `Lv ${district.level}`);
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
@@ -382,7 +397,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       : []),
     ...statsAt(game, district, district.level).filter((f) => f.onCard !== false).map((f) =>
       (f.key === 'store' && built
-        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(district) }
+        ? { ...f, value: `${formatShort(storedTotal(district))}/${formatShort(f.n)}`, bad: isStoreFull(game.state, district) }
         : f.key === 'homes' && built
           ? { ...f, value: `${formatShort(game.residentsIn(district))}/${formatShort(districtCapacity(game.state, district))}` }
           : f)),

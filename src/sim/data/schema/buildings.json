@@ -47,6 +47,12 @@
     "maxLevel": { "type": "int", "min": 1, "max": 20, "doc": "How many levels it has. Level 1 is the build." },
     "populationCapacityPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
     "taxBonusPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "goldPerMinutePerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 1 },
+      "length": { "sibling": "maxLevel", "upTo": true },
+      "doc": "Gold a minute it makes by itself, with nobody living in it, into its store, by level. Empty = it makes none of its own."
+    },
     "storageCapacityPerLevel": {
       "type": "list",
       "of": { "type": "int", "min": 1 },
@@ -77,6 +83,12 @@
     },
     "armyCapPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
     "bedsPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "heroXpBonusPerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 0 },
+      "length": { "sibling": "maxLevel", "upTo": true },
+      "doc": "Percent more Hero XP the kingdom earns while this stands, the TOTAL at each level. Only the Tavern has any."
+    },
     "costPerLevel": {
       "type": "list",
       "of": {

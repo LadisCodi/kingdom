@@ -21,7 +21,7 @@
 // removes the only pacing on party size.
 
 import { resolve } from './modifiers';
-import { techValue } from './techEffects';
+import { techMultiplier } from './techEffects';
 import {
   ARMY, DISTRICTS, HEROES, RUSH, TRAINING, UNITS, levelIndexed,
 } from './data/definitions';
@@ -84,8 +84,9 @@ export const committedTroops = (state: GameState): number =>
 export const infirmaries = (state: GameState): District[] => state.city.districts
   .filter((d) => d.state === 'Built' && DISTRICTS[d.definitionId].bedsPerLevel.length > 0);
 
-export const woundedCap = (state: GameState): number => infirmaries(state)
-  .reduce((beds, d) => beds + levelIndexed(DISTRICTS[d.definitionId].bedsPerLevel, d.level), 0);
+export const woundedCap = (state: GameState): number => Math.floor(infirmaries(state)
+  .reduce((beds, d) => beds + levelIndexed(DISTRICTS[d.definitionId].bedsPerLevel, d.level), 0)
+  * techMultiplier(state, 'infirmaryBeds'));
 
 /** Soldiers waiting to be put back together, of every type. */
 export const woundedCount = (state: GameState): number =>
@@ -108,8 +109,9 @@ export interface Casualties {
  * WHAT SHARE OF THE FALLEN IS CARRIED HOME (Docs/features/combat.md §4).
  *
  * Ten per cent of its own accord: a battlefield keeps most of what it takes,
- * and the rest is EARNED — `Field Medicine` in the Warfare tree, and the
- * heroes who walk the field afterwards. Which makes a medic hero worth
+ * and the rest is EARNED — the heroes who walk the field afterwards. (The
+ * tree raises the BEDS instead, `infirmaryBeds`: a share is bounded, and a
+ * bonus has to be able to climb for ever.) Which makes a medic hero worth
  * bringing exactly when a fight is going to be expensive, rather than being
  * a flat bonus nobody chooses against.
  *
@@ -117,13 +119,13 @@ export interface Casualties {
  */
 export const WOUNDED_SHARE_CAP = 0.9;
 
-export function woundedShareFor(state: GameState, heroIds: readonly HeroId[] = []): number {
+export function woundedShareFor(_state: GameState, heroIds: readonly HeroId[] = []): number {
   // The best medic in the party, not the sum of them, the way the
   // quartermaster's discount works (Docs/features/10-heroes.md §2.5): two
   // healers must not add up to a fight nobody dies in.
   const fromHeroes = heroIds.reduce((best, id) => (HEROES[id].trait === 'WoundedRecovery'
     ? Math.max(best, HEROES[id].traitValue) : best), 0);
-  const share = techValue(state, 'woundedShare', ARMY.woundedShare) + fromHeroes;
+  const share = ARMY.woundedShare + fromHeroes;
   return Math.min(WOUNDED_SHARE_CAP, Math.max(0, share));
 }
 
@@ -242,10 +244,10 @@ export function armyCap(state: GameState): number {
     if (d.state !== 'Built') continue;
     cap += levelIndexed(DISTRICTS[d.definitionId].armyCapPerLevel, d.level);
   }
-  // Colours adds to the cap the HALLS provide, so a kingdom with no hall still
-  // fields nothing: the line is a bigger banner, not a barracks of its own.
+  // Colours is a share of what the HALLS provide, so a kingdom with no hall
+  // still fields nothing: the line is a bigger banner, not a barracks.
   if (cap === 0) return 0;
-  return Math.max(0, Math.round(resolve(state, 'armyCap', techValue(state, 'armyCap', cap))));
+  return Math.max(0, Math.round(resolve(state, 'armyCap', cap * techMultiplier(state, 'armyCap'))));
 }
 
 /** The built building that trains `trainee`, if the player has one. A building
@@ -282,7 +284,12 @@ export const trainSeconds = (trainee: TrainableId): number =>
 export function trainSecondsAt(state: GameState, buildingId: string, trainee: TrainableId): number {
   const building = districtById(state, buildingId);
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
-  return Math.max(1, Math.round(trainSeconds(trainee) * mult));
+  // The tree's half is a SPEED the time is divided by, so a rank never meets
+  // a floor: Civics trains villagers, Warfare trains soldiers.
+  const speed = trainee === 'Villager'
+    ? techMultiplier(state, 'villagerTrainingSpeed')
+    : techMultiplier(state, 'recruitSpeed', { unit: trainee });
+  return Math.max(1, Math.round((trainSeconds(trainee) * mult) / Math.max(1, speed)));
 }
 
 /** Start one trainee's clock: the moment, and the duration that goes with it.
@@ -313,9 +320,8 @@ export const itemTrainSeconds = (item: TrainingItem): number =>
  *  yesterday's price. */
 export function trainCost(state: GameState, trainee: TrainableId): Record<string, number> {
   if (trainee !== 'Villager') {
-    // Muster Drill: −10%/rank on every coin of the recruit price, floor 1.
-    const mult = Math.max(0, resolve(state, 'recruitCost',
-      techValue(state, 'recruitCost', 1)));
+    // The tree never discounts; the modifier stack still may.
+    const mult = Math.max(0, resolve(state, 'recruitCost', 1));
     const out: Record<string, number> = {};
     for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
       out[c] = Math.max(1, Math.round((n as number) * mult));

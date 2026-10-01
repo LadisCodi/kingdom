@@ -10,9 +10,8 @@ import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
-import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
+import { cityGoldPerMinute, maxPopulation, ownGoldPerMinute } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
-import { townhallTaxMultiplier } from '../src/sim/upgrades';
 import { isTechComplete, researchRefusal } from '../src/sim/research';
 import { revealCostForCell, revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
@@ -254,14 +253,13 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // occupied house has exactly one crowding neighbour, and the rate per
     // villager is the sheet's 30 lifted by whatever tax rank the Market's
     // chain pulled in on the way (`Taxes I`, +5% at Housing — a requirement
-    // is the row above, and that card sits on it), and by the Townhall this
-    // run raised to 2 — ×1.25 on every roof (03-economy.md §3):
-    // (4 × 46.875 − 1) + (2 × 46.875 − 1) = 279.25/min.
+    // is the row above, and that card sits on it); and the Townhall this run
+    // raised to 2 makes Gold of its own into its own store (03-economy.md §3).
     const perVillager = TAXES.goldPerPopulationPerMinute
-      * townhallTaxMultiplier(state)
       * techMultiplier(state, 'taxRate', { district: 'Housing' })
       * (1 + DISTRICTS.Housing.taxBonusPerLevel[1]); // both occupied houses are L2
-    const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1);
+    const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1)
+      + ownGoldPerMinute(townhall(state));
     expect(perMinute).toBe(cityGoldPerMinute(state));
     expect(earned).toBeGreaterThanOrEqual(perMinute * 10 - 1);
     expect(earned).toBeLessThanOrEqual(perMinute * 10 + 1);
