@@ -538,10 +538,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');
       }
       neverFalls(push, id, 'taxBonusPerLevel', b.taxBonusPerLevel);
+      neverFalls(push, id, 'goldPerMinutePerLevel', b.goldPerMinutePerLevel);
       // What a building makes waits inside it for a tap, so anything that
       // makes Gold or harvests has a store — without one its production
       // would have no ceiling at all while the player is away.
-      const makes = list(b.populationCapacityPerLevel).length > 0 || list(b.harvestSources).length > 0;
+      const makes = list(b.populationCapacityPerLevel).length > 0 || list(b.harvestSources).length > 0
+        || list(b.goldPerMinutePerLevel).length > 0;
       const stores = list(b.storageCapacityPerLevel).length > 0;
       if (makes && !stores) push(id, ['storageCapacityPerLevel'], 'it makes Gold or harvests, so it needs a store');
       if (!makes && stores) push(id, ['storageCapacityPerLevel'], 'on a building that makes nothing to collect');

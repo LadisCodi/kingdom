@@ -31,7 +31,7 @@ import {
   firstClearLump, knowledgeHeld, knowledgeLump, landmarkClaimLump, territoryKnowledge,
 } from '../src/sim/knowledge';
 import {
-  addBuilt, bonusLadders, canGather, completeRanks, completeRequirements, completeTech, FOREST, freshGame, fund, ladders, map, openEveryEra, rankOf, stored, T0, tickAt,
+  addBuilt, bonusLadders, canGather, completeRanks, completeRequirements, completeTech, FOREST, freshGame, fund, ladders, map, openEveryEra, rankOf, T0, tickAt, rentStored,
 } from './helpers';
 
 
@@ -153,7 +153,7 @@ describe('effects reach the sim', () => {
     const perMinute = effectiveTaxRate(state, 'Housing');
     // The helper grants the rank without charging for it — the point under
     // test is the tax rate, not the price of the research.
-    expect(stored(state, 'Gold')).toBe(Math.floor(perMinute * 301 / 60));
+    expect(rentStored(state)).toBe(Math.floor(perMinute * 301 / 60));
   });
 });
 

@@ -585,6 +585,10 @@ export interface DistrictDef {
    *  levels. Empty = +0% everywhere, which is every building that houses
    *  nobody. A level fact, read at the base stage — never a modifier. */
   taxBonusPerLevel: readonly number[];
+  /** Gold a minute the building makes BY ITSELF, with nobody living in it,
+   *  into its store, by level — the Townhall's own income, so the city always
+   *  has a source of Gold. Empty = none of its own. */
+  goldPerMinutePerLevel: readonly number[];
   /** What it holds uncollected, in units, by level: a house's rent, a
    *  producer's hauls. Production stops while it is full; a tap empties it
    *  into the wallet (Docs/features/03-economy.md §3.2). Empty = it makes

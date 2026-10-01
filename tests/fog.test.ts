@@ -245,8 +245,10 @@ describe('exploring pays in ground, not in currency', () => {
     // 435,445: the tree was rebuilt in five books with climbing bonuses only
     // (2026-10-01, Docs/features/22-progression.md §9) — the discounts left,
     // the Sagas and the Atlas joined.
+    // 435,575: the five opening cards stopped being free — 20 to 30 Gold
+    // each, so "pay the Gold, and it is ours" is true from the first one.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(435_445);
+    expect(tree).toBe(435_575);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

@@ -14,10 +14,12 @@ import {
 } from '../src/sim/data/definitions';
 import { trainSeconds, trainSecondsAt, trainUnit, trainingCompletesAt } from '../src/sim/army';
 import { queueGood, queuedWorkMs } from '../src/sim/workshops';
-import { cityGoldPerMinute, houseGoldPerMinute } from '../src/sim/population';
+import { houseGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
 import type { DistrictId, GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, stored, T0, tickAt } from './helpers';
+import {
+  addBuilt, completeTech, freshGame, fund, map, T0, tickAt, rentStored, rentPerMinute,
+} from './helpers';
 
 const A = { x: 2, y: 0 };
 const B = { x: 2, y: 1 }; // adjacent to A
@@ -42,9 +44,9 @@ describe('housing adjacency', () => {
     state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
     // Each house: 2 × 30/min − 1 (one crowding neighbor) = 59.
     expect(houseGoldPerMinute(state, house(state, A))).toBe(59);
-    expect(cityGoldPerMinute(state)).toBe(118);
+    expect(rentPerMinute(state)).toBe(118);
     tickAt(state, T0 + 60_100); // a hair past the minute
-    expect(stored(state, 'Gold')).toBe(118); // vs 120 if built apart
+    expect(rentStored(state)).toBe(118); // vs 120 if built apart
   });
 
   it('crowding stacks per neighbor (and would clamp at 0, never negative)', () => {
@@ -54,9 +56,9 @@ describe('housing adjacency', () => {
     addBuilt(state, 'Housing', C);
     state.city.population = 6; // 2 residents each
     expect(houseGoldPerMinute(state, house(state, B))).toBe(58); // 60 − 2
-    expect(cityGoldPerMinute(state)).toBe(59 + 58 + 59);
+    expect(rentPerMinute(state)).toBe(59 + 58 + 59);
     state.city.population = 4; // A: 2, B: 2, C: 0 — houses fill in build order
-    expect(cityGoldPerMinute(state)).toBe(59 + 58); // empty C pays nothing
+    expect(rentPerMinute(state)).toBe(59 + 58); // empty C pays nothing
   });
 
   it('placement preview reports both directions: given to neighbors, received by the ghost', () => {

@@ -7,14 +7,14 @@
 // replay agrees with stepped ticking across a house filling up.
 import { describe, expect, it } from 'vitest';
 import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
-import { collectBuilding } from '../src/sim/commands';
+import { advance, collectBuilding } from '../src/sim/commands';
 import { tapCell } from '../src/sim/harvest';
 import { cityGoldPerMinute, houseGoldPerMinute, houseTaxBonus } from '../src/sim/population';
 import { lineFor, trainUnit } from '../src/sim/army';
 import { mana } from '../src/sim/mana';
 import { isStoreFull, storageCapacity, storedOf } from '../src/sim/storage';
 import { getWallet, townhall, type GameState } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map, stored, T0, tickAt } from './helpers';
+import { addBuilt, freshGame, fund, map, rentPerMinute, rentStored, T0, tickAt } from './helpers';
 
 const house = (state: GameState) =>
   state.city.districts.find((d) => d.definitionId === 'Housing')!;
@@ -31,11 +31,11 @@ describe('rent', () => {
     const wallet = getWallet(state.city.wallet, 'Gold');
     expect(TAXES.goldPerPopulationPerMinute).toBe(30);
     tickAt(state, T0 + 900);
-    expect(stored(state, 'Gold')).toBe(0);
+    expect(rentStored(state)).toBe(0);
     tickAt(state, T0 + 1000);
-    expect(stored(state, 'Gold')).toBe(1);
+    expect(rentStored(state)).toBe(1);
     tickAt(state, T0 + 60_000);
-    expect(stored(state, 'Gold')).toBe(60);
+    expect(rentStored(state)).toBe(60);
     // Made, not the player's: the wallet has not moved.
     expect(getWallet(state.city.wallet, 'Gold')).toBe(wallet);
   });
@@ -46,14 +46,14 @@ describe('rent', () => {
     const h = house(state);
     state.city.population = 2; // both in the L1 house, which pays the base
     expect(DISTRICTS.Housing.taxBonusPerLevel[0]).toBe(0);
-    expect(cityGoldPerMinute(state)).toBe(2 * TAXES.goldPerPopulationPerMinute);
+    expect(rentPerMinute(state)).toBe(2 * TAXES.goldPerPopulationPerMinute);
 
     // Level 2 buys room for four AND a better rent from each of them.
     h.level = 2;
     state.city.population = 4;
     expect(DISTRICTS.Housing.taxBonusPerLevel[1]).toBe(0.25);
     expect(houseTaxBonus(h)).toBe(0.25);
-    expect(cityGoldPerMinute(state)).toBe(4 * TAXES.goldPerPopulationPerMinute * 1.25);
+    expect(rentPerMinute(state)).toBe(4 * TAXES.goldPerPopulationPerMinute * 1.25);
 
     // And the accrual is that rate: 4 × 30 × 1.25 = 150 a minute.
     h.rentAnchor = T0;
@@ -65,12 +65,12 @@ describe('rent', () => {
     const state = freshGame();
     state.city.population = 3; // roofless — the Townhall houses nobody
     tickAt(state, T0 + 600_000);
-    expect(stored(state, 'Gold')).toBe(0);
+    expect(rentStored(state)).toBe(0);
     // Housing arrives late: rent starts from THEN, not retroactively —
     // 2 housed (an L1 house holds two) × 30/min = 60/min over 30 s.
     addBuilt(state, 'Housing', HOUSE);
     tickAt(state, T0 + 600_000 + 30_000);
-    expect(stored(state, 'Gold')).toBe(30);
+    expect(rentStored(state)).toBe(30);
   });
 
   it('a full house stops, and owes nothing for the time it was full', () => {
@@ -139,13 +139,15 @@ describe('collecting from a house', () => {
     expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable'); // no extraction
   });
 
-  it('the Townhall collects nothing: Gold comes from each house', () => {
+  it('the Townhall collects only its own Gold: the rent stays in each house', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     state.city.population = 2;
     tickAt(state, T0 + 60_000);
-    expect(collectBuilding(state, townhall(state).uniqueId, T0 + 60_000)).toEqual({});
-    expect(storageCapacity(state, townhall(state))).toBe(0);
+    expect(collectBuilding(state, townhall(state).uniqueId, T0 + 60_000))
+      .toEqual({ Gold: DISTRICTS.Townhall.goldPerMinutePerLevel[0] });
+    expect(storedOf(house(state), 'Gold')).toBe(60);
+    expect(storageCapacity(state, townhall(state))).toBeGreaterThan(0);
   });
 });
 
@@ -169,25 +171,34 @@ describe('a training queue cannot be hurried by hand', () => {
   });
 });
 
-// Docs/features/03-economy.md §3 — the Townhall's level multiplies every
-// house's rent. A level fact at the BASE stage, beside the Harmony surplus:
-// never a modifier, so it reaches the residents' rent and the house tap alike.
-describe("the Townhall's level multiplies the rent", () => {
-  it('is a ladder from ×1, one entry per Townhall level', () => {
-    const ladder = TAXES.townhallMultiplierPerLevel;
+// Docs/features/03-economy.md §3 — the Townhall makes Gold of its own, into
+// its own store, with nobody living in it: the city always has a source.
+describe('the Townhall makes Gold of its own', () => {
+  it('is a climbing ladder, one entry per Townhall level, with a store', () => {
+    const ladder = DISTRICTS.Townhall.goldPerMinutePerLevel;
     expect(ladder.length).toBe(DISTRICTS.Townhall.maxLevel);
-    expect(ladder[0]).toBe(1); // a fresh capital changes nothing
     for (let i = 1; i < ladder.length; i++) expect(ladder[i]).toBeGreaterThan(ladder[i - 1]);
+    expect(DISTRICTS.Townhall.storageCapacityPerLevel.length).toBe(DISTRICTS.Townhall.maxLevel);
   });
 
-  it('raises every house by the same factor, and only through the rate', () => {
+  it('fills its store with nobody housed, and one call equals stepped ticking', () => {
+    const once = freshGame();
+    const stepped = freshGame();
+    const perMinute = DISTRICTS.Townhall.goldPerMinutePerLevel[0];
+    advance(once, map, T0 + 10 * 60_000);
+    for (let m = 1; m <= 10; m++) advance(stepped, map, T0 + m * 60_000 - 7_000);
+    advance(stepped, map, T0 + 10 * 60_000);
+    expect(storedOf(townhall(once), 'Gold')).toBe(10 * perMinute);
+    expect(storedOf(townhall(stepped), 'Gold')).toBe(10 * perMinute);
+  });
+
+  it('leaves the houses\' rent alone: a bigger Townhall is its own income', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
-    addBuilt(state, 'Housing', HOUSE2);
-    state.city.population = 4;
+    state.city.population = 2;
     const at1 = cityGoldPerMinute(state);
     townhall(state).level = 2;
-    expect(cityGoldPerMinute(state)).toBeCloseTo(at1 * TAXES.townhallMultiplierPerLevel[1], 6);
-    expect(TAXES.townhallMultiplierPerLevel[1]).toBe(1.25);
+    const [l1, l2] = DISTRICTS.Townhall.goldPerMinutePerLevel;
+    expect(cityGoldPerMinute(state)).toBe(at1 - l1 + l2);
   });
 });

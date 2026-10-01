@@ -25,7 +25,9 @@ import { firstClearLump, knowledgePerHour, landmarkClaimLump } from '../src/sim/
 import {
   getWallet, townhall, type GameState, type UnitId,
 } from '../src/sim/state';
-import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, stored, T0 } from './helpers';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, T0, rentStored,
+} from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -408,7 +410,7 @@ describe('finishing a training line with gems', () => {
     expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
     expect(state.city.population).toBe(1);
     advance(state, map, T0 + 60_000);
-    expect(stored(state, 'Gold')).toBe(30); // a full minute of rent, in the house
+    expect(rentStored(state)).toBe(30); // a full minute of rent, in the house
   });
 });
 

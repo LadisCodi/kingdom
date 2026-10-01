@@ -61,7 +61,9 @@ export const hasStored = (district: District): boolean => storedTotal(district) 
  */
 export function productionPerSecond(state: GameState, district: District): number {
   const def = DISTRICTS[district.definitionId];
-  if (def.populationCapacityPerLevel.length > 0) return houseGoldPerMinute(state, district) / 60;
+  if (def.populationCapacityPerLevel.length > 0 || def.goldPerMinutePerLevel.length > 0) {
+    return houseGoldPerMinute(state, district) / 60;
+  }
   if (def.harvestSources.length === 0 || district.assignedWorkers === 0) return 0;
   const spec = HARVEST[def.harvestSources[0]];
   return district.assignedWorkers * effectiveWorkerStrike(state, spec, district)

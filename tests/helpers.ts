@@ -1,5 +1,6 @@
 import { advance, collectBuilding, researchTech } from '../src/sim/commands';
 import { cityStored } from '../src/sim/storage';
+import { cityGoldPerMinute, ownGoldPerMinute } from '../src/sim/population';
 import {
   pourKnowledge, techCost, techKnowledgeMissing, type ResearchResult,
 } from '../src/sim/research';
@@ -16,7 +17,7 @@ import {
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
-  addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type DistrictId, type GameState,
+  addToWallet, coordKey, getWallet, townhall, type Coord, type CurrencyId, type DistrictId, type GameState,
   type LairId, type TechId, type UnitId, type Wallet,
 } from '../src/sim/state';
 
@@ -176,6 +177,16 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
 
 /** What every building's store holds of one currency — made, not collected. */
 export const stored = (state: GameState, c: CurrencyId): number => cityStored(state, c);
+
+/** The RENT waiting in the stores: every store's Gold but the Townhall's,
+ *  which makes Gold of its own (Docs/features/03-economy.md §3). */
+export const rentStored = (state: GameState): number =>
+  state.city.districts.filter((d) => d.definitionId !== 'Townhall')
+    .reduce((n, d) => n + (d.stored?.Gold ?? 0), 0);
+
+/** The houses' rent a minute: the city's Gold income less the Townhall's own. */
+export const rentPerMinute = (state: GameState): number =>
+  cityGoldPerMinute(state) - ownGoldPerMinute(townhall(state));
 
 /** The player sweeps the city: every building's store into the wallet at `t`. */
 export const collectAll = (state: GameState, t: number): Wallet => {

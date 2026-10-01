@@ -16,12 +16,13 @@ import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
 import { techCost, techKnowledgeCost } from '../src/sim/research';
+import { collectBuilding } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type Coord, type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, collectAll, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
 } from './helpers';
 
 
@@ -236,7 +237,8 @@ describe('the quest chain', () => {
     // 2 offline minutes × 30 gold/min wait in the house, not in the quest…
     expect(restored.quests.progress).toBe(7);
     // …until the player taps it.
-    collectAll(restored, T0 + 120_000);
+    const home = restored.city.districts.find((d) => d.definitionId === 'Housing')!;
+    collectBuilding(restored, home.uniqueId, T0 + 120_000);
     expect(restored.quests.progress).toBe(7 + 60);
     expect(isQuestComplete(restored, activeQuest(restored)!)).toBe(true);
   });
@@ -426,7 +428,7 @@ describe('quests fund the research tree', () => {
     // 15,995: `SecondVillager` at 70 fills the first House before the chain
     // asks for a second one.
     expect(chain).toBe(15_995);
-    expect(tree).toBe(435_445); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(435_575); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
@@ -441,7 +443,8 @@ describe('quests fund the research tree', () => {
     // back to era 1, and the first four cards stopped costing Gold.
     // 5,900 once the tree became five books (2026-10-01): the found books'
     // first rows and the planned Cartography count as era-1 majors too.
-    expect(opening).toBe(5900);
+    // 6,030 when the five opening cards took 20 to 30 Gold each.
+    expect(opening).toBe(6030);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

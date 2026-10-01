@@ -18,7 +18,7 @@
 
 import { techMultiplier } from '../sim/techEffects';
 import {
-  DISTRICTS, FOG, HARVEST, MANA, TAXES, levelIndexed,
+  DISTRICTS, FOG, HARVEST, MANA, levelIndexed,
 } from '../sim/data/definitions';
 import { trainSecondsAt } from '../sim/army';
 import { requiredPopulation, requiredTechForLevel, requiredTownhallLevel } from '../sim/districts';
@@ -145,10 +145,10 @@ export function statsAt(game: Game, district: District, level: number): Building
     add('mana-rate', 'Mana', 'Mana /h', 'Rate', levelIndexed(MANA.sanctumPerHourPerLevel, level));
   }
   if (district.definitionId === 'Townhall') {
-    const ladder = TAXES.townhallMultiplierPerLevel;
-    if (ladder.length > 0) {
-      const mult = levelIndexed(ladder, level);
-      add('taxes', 'Gold', 'Gold income', 'Income', `×${mult}`, mult);
+    // Its own Gold, made with nobody living in it, into its own store.
+    if (def.goldPerMinutePerLevel.length > 0) {
+      const perHour = levelIndexed(def.goldPerMinutePerLevel, level) * 60;
+      add('taxes', 'Gold', 'Gold /h', 'Income', perHour);
     }
     const reach = FOG.reachPerTownhallLevel;
     if (reach.length > 0) {

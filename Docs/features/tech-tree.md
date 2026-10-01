@@ -37,11 +37,11 @@
 
 | Card | Opens / does | Price |
 |---|---|---|
-| **Forestry** | the Forest tap, the Berries tap | 0 G · 2 K |
-| **Agriculture** | the FarmLands | 0 G · 2 K |
-| **Farming** | the Farm | 0 G · 2 K |
-| **Hunting** | the Meat tap | 0 G · 2 K |
-| **Saws** | the Sawmill | 0 G · 2 K |
+| **Forestry** | the Forest tap, the Berries tap | 20 G · 2 K |
+| **Agriculture** | the FarmLands | 25 G · 2 K |
+| **Farming** | the Farm | 25 G · 2 K |
+| **Hunting** | the Meat tap | 30 G · 2 K |
+| **Saws** | the Sawmill | 30 G · 2 K |
 | **Urban Planning** | Housing L2 | 200 G · 2 K |
 | **Masonry** | the Quarry | 100 G · 2 K |
 
@@ -384,18 +384,18 @@
 
 | | Minor (a rank) | Major | 
 |---|---|---|
-| **Era 1** | 60–200 G · 1–2 K | 0–400 G · 2–3 K — the quest chain pays Civics' |
+| **Era 1** | 60–200 G · 1–2 K | 20–400 G · 2–3 K — the quest chain pays Civics' |
 | **Era 2** | 250–1,000 G · 2–4 K | 400–2,500 G · 2–8 K |
 | **Era 3** | 1,500–5,000 G · 8–14 K | 4,000–15,000 G · 10–25 K |
 | **Era 4** | — | the keystones, 30,000 G · 40 K |
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 20,645 | 110 |
+| 1 | 20,775 | 110 |
 | 2 | 69,300 | 233 |
 | 3 | 285,500 | 747 |
 | 4 | 60,000 | 80 |
-| **All** | **435,445** | **1,170** |
+| **All** | **435,575** | **1,170** |
 
 - The pace these prices set is [`22-progression.md`](22-progression.md) §8.
 - The quest chain funds the **opening** — every era-1 card it asks for — with

@@ -67,7 +67,7 @@
   poured like any other; the Gold is always the city's
   ([`14-monetization.md`](14-monetization.md) §1).
 - The tree has 163 cards: **Civics 74 · Warfare 41 · Magic 28 · Sagas 11 ·
-  Atlas 9**, totalling **435,445 Gold and 1,258 Knowledge**. Price bands per
+  Atlas 9**, totalling **435,575 Gold and 1,258 Knowledge**. Price bands per
   era are in [`tech-tree.md`](tech-tree.md) §7.
 
 ### 1.1 Majors and minors

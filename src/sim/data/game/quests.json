@@ -88,7 +88,7 @@
     "name": "Tax day",
     "goalType": "CollectResource",
     "goalTarget": "Gold",
-    "goalAmount": 30,
+    "goalAmount": 15,
     "goalLevel": null,
     "reward": { "Gold": 50 },
     "rewardGems": 0,

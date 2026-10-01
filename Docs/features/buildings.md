@@ -33,7 +33,7 @@
 
 | Building | Footprint | Unlock | Count cap | Max level | Job |
 |---|---|---|---|---|---|
-| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; the map's origin |
+| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; makes Gold of its own into its store (10 a minute at L1); the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
 | **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |

@@ -46,7 +46,8 @@ function crewedSawmill(): { state: GameState; mill: GameState['city']['districts
 describe('a store', () => {
   it('has a capacity by level on everything that makes Gold or harvests, and nothing else', () => {
     for (const def of Object.values(DISTRICTS)) {
-      const makes = def.populationCapacityPerLevel.length > 0 || def.harvestSources.length > 0;
+      const makes = def.populationCapacityPerLevel.length > 0 || def.harvestSources.length > 0
+        || def.goldPerMinutePerLevel.length > 0;
       expect(def.storageCapacityPerLevel.length > 0, def.id).toBe(makes);
     }
   });

@@ -13,9 +13,11 @@
 import { describe, expect, it } from 'vitest';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import { validPlacementCells } from '../src/sim/districts';
-import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
+import { maxPopulation } from '../src/sim/population';
 import { completesAt, getWallet, townhall, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, stored, T0 } from './helpers';
+import {
+  addBuilt, completeTech, freshGame, fund, map, T0, rentStored, rentPerMinute,
+} from './helpers';
 
 /** One L1 Housing plus the Townhall's bed is three; four villagers, so one is
  *  homeless until a second house, queued at T0, finishes. */
@@ -42,17 +44,17 @@ describe('the boundary loop', () => {
   it('applies a build at its completion instant, not at the end of the window', () => {
     const { state, doneAt } = onTheEdgeOfAHouse();
     state.city.population = homelessOne(state);
-    const before = cityGoldPerMinute(state);
-    const gold0 = stored(state, 'Gold');
+    const before = rentPerMinute(state);
+    const gold0 = rentStored(state);
 
     // The whole build plus 30s, in ONE call, spanning the completion.
     const secs = (doneAt - T0) / 1000;
     advance(state, map, doneAt + 30_000);
-    const after = cityGoldPerMinute(state);
+    const after = rentPerMinute(state);
     expect(after).toBeGreaterThan(before); // the homeless villager got a roof
 
     // The build at the old rate + 30s at the new one — NOT all at the old.
-    const earned = stored(state, 'Gold') - gold0;
+    const earned = rentStored(state) - gold0;
     const oldRateOnly = ((secs + 30) / 60) * before;
     const correct = (secs / 60) * before + (30 / 60) * after;
     expect(earned).toBeGreaterThan(oldRateOnly);

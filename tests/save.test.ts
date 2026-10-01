@@ -11,7 +11,7 @@ import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, stored, T0, tickAt,
+  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, rentStored, reveal, stored, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -71,7 +71,7 @@ describe('save round-trip', () => {
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = stored(state, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(stored(restored, 'Gold')).toBe(600); // 2 housed × 30/min × 10 min
+    expect(rentStored(restored)).toBe(600); // 2 housed × 30/min × 10 min
     expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold); // not the player's until collected
     expect(stored(restored, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });

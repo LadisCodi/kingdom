@@ -12,35 +12,35 @@
       "name": "Forestry", "glyph": "🪓", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 0, "knowledge": 2,
+      "gold": 20, "knowledge": 2,
       "unlocks": [{"harvest":"Forest"}, {"harvest":"Berries"}]
     },
     "Agriculture": {
       "name": "Agriculture", "glyph": "🌾", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 1, "col": 1,
       "requires": ["Forestry"],
-      "gold": 0, "knowledge": 2,
+      "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"FarmLands"}]
     },
     "Farming": {
       "name": "Farming", "glyph": "🚜", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 0,
       "requires": ["Agriculture"],
-      "gold": 0, "knowledge": 2,
+      "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"Farm"}]
     },
     "Hunting": {
       "name": "Hunting", "glyph": "🏹", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 1,
       "requires": ["Agriculture"],
-      "gold": 0, "knowledge": 2,
+      "gold": 30, "knowledge": 2,
       "unlocks": [{"harvest":"Meat"}]
     },
     "Saws": {
       "name": "Saws", "glyph": "🪚", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 2,
       "requires": ["Agriculture"],
-      "gold": 0, "knowledge": 2,
+      "gold": 30, "knowledge": 2,
       "unlocks": [{"district":"Sawmill"}]
     },
     "TradeRoutesI": {

@@ -47,6 +47,12 @@
     "maxLevel": { "type": "int", "min": 1, "max": 20, "doc": "How many levels it has. Level 1 is the build." },
     "populationCapacityPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
     "taxBonusPerLevel": { "type": "list", "of": { "type": "float" }, "length": { "sibling": "maxLevel", "upTo": true } },
+    "goldPerMinutePerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 1 },
+      "length": { "sibling": "maxLevel", "upTo": true },
+      "doc": "Gold a minute it makes by itself, with nobody living in it, into its store, by level. Empty = it makes none of its own."
+    },
     "storageCapacityPerLevel": {
       "type": "list",
       "of": { "type": "int", "min": 1 },
