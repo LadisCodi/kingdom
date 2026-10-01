@@ -1658,7 +1658,7 @@
     ]
   },
   "landmarks": [
-    { "id": "ThornedShrine", "kind": "Shrine", "x": 4, "y": 3, "claimCost": 2000 },
+    { "id": "ThornedShrine", "kind": "Shrine", "x": 5, "y": 3, "claimCost": 2000 },
     { "id": "WhisperingStones", "kind": "StandingStones", "x": -12, "y": 7, "claimCost": 25000 },
     { "id": "BrightLeyspring", "kind": "Leyspring", "x": -8, "y": 14, "claimCost": 25000 },
     { "id": "OldOakShrine", "kind": "Shrine", "x": 7, "y": 20, "claimCost": 25000 },
@@ -1672,7 +1672,7 @@
   ],
   "lairs": {
     "Orcs": {
-      "x": 5, "y": 1, "size": 2,
+      "x": 6, "y": 1, "size": 2,
       "tier": 1,
       "radius": 1,
       "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30 },

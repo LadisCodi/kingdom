@@ -8,6 +8,7 @@ import {
 } from '../src/sim/data/definitions';
 import { requiredPopulation, requiredTechForLevel } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
+import { lairZoneCells } from '../src/sim/lairZone';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -669,6 +670,15 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
           .toBeLessThanOrEqual(reachAt(levels[i]));
       }
     });
+  });
+
+  it('the Orcs are found only once the Townhall is at level 2', () => {
+    // A lair is found when a cell of its zone is revealed: every one of them
+    // lies past the first Townhall's reach, and the lair itself inside the
+    // second's.
+    const nearestZone = Math.min(...lairZoneCells('Orcs').map((c) => townhallDistance(map, c)));
+    expect(nearestZone).toBeGreaterThan(reachAt(1));
+    expect(townhallDistance(map, LAIRS.Orcs.location)).toBeLessThanOrEqual(reachAt(2));
   });
 
   it('the cells the chain asks the player to reveal fit inside each level\'s reach', () => {
