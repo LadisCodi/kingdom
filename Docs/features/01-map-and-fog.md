@@ -272,6 +272,9 @@ fallback past ring 14. The province reaches ring 23.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
   through the Discovered scrim once discovered.
+- **A site coming into view is announced once**, by a banner — unless a
+  scene introduces it ([`23-tutorials.md`](23-tutorials.md)), which then says
+  it instead. A resource is never announced: its coin lands on the plank.
 - **Every ruin opens with a gate.** Discovering it starts a counter; clear the
   gate before it raids, and the ruin's rooms are yours to take
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has

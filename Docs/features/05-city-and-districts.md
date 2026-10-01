@@ -64,7 +64,7 @@ Three arcs run past TH3:
   [`buildings.md`](buildings.md).
 - Per-level tech gates (`requiredTechPerLevel`): entry 0 is the technology
   needed to reach level 2.
-- A district card says *Research X required*; a research-complete banner says
+- A district card says *Research X required*; the technology's card says
   *Housing can now reach level 2*.
 
 ## 3. What a building costs

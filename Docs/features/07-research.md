@@ -434,8 +434,8 @@ technology's needs, whatever state it is in. It reads top to bottom in three par
    research*.
 3. **Research** — the upgrade popup's block: the Gold above a wide
    **Research** button, which is locked with *Assign all its Knowledge to
-   research it* under it until the bar is full. It researches on the press,
-   closes the sheet and raises the completion banner.
+   research it* under it until the bar is full. It researches on the press
+   and closes the sheet. **Nothing announces it**: the press is the news.
 
 - **A locked technology's sheet** is part 1 and its **requirements**, as the
   upgrade popup's rows — a met one ticked, a missing one pink with a cross,

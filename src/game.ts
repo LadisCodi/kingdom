@@ -97,9 +97,8 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, isTechComplete,
-  pourKnowledge, techKnowledgeMissing, techUnlocks, type ResearchRefusal,
+  pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
 } from './sim/research';
-import { describeTech } from './sim/techProse';
 import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
@@ -133,7 +132,7 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
+import { KINGDOM_DEF, QUESTS, SCENES, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -550,14 +549,14 @@ export class Game {
     this.packsSeen = packs;
     this.dealPayouts();
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
-    // so the banner component sees them on this very render.
+    // so the banner component sees them on this very render. A RESOURCE is
+    // never announced: its coin lands on the plank under the player's own
+    // tap. A SITE is, unless a scene introduces it — the advisor says it.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
-      if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
-      if (kind === 'site') {
-        const banner = siteBanner(id);
-        if (banner) this.queueBanner(banner);
-      }
+      if (kind !== 'site' || this.sceneIntroduces(id)) continue;
+      const banner = siteBanner(id);
+      if (banner) this.queueBanner(banner);
     }
     // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
     // again, and announced to whoever draws padlocks and plays scenes.
@@ -2844,38 +2843,13 @@ export class Game {
     this.notify();
   }
 
-  /** The banners a completed technology earns: the completion, then one
-   *  card per thing it unlocked. A minor RANK unlocks nothing and announces
-   *  nothing past the first card: its reward is the number on it. */
-  private announceResearch(id: TechId): void {
-    const tech = TECHNOLOGIES[id];
-    this.queueBanner({
-      title: 'Research complete!', icon: tech.glyph, name: tech.name,
-      desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
-    });
-    // Everything this tech just unlocked gets its own card, queued behind.
-    // A minor RANK unlocks nothing and announces nothing: its reward is the
-    // number in its own description, and a banner per rank would be noise.
-    for (const unlock of techUnlocks(id)) {
-      if (unlock.kind === 'district') {
-        const def = DISTRICTS[unlock.id];
-        this.queueBanner({
-          title: 'New building unlocked!', icon: def.glyph, name: def.name,
-          desc: def.description, sprite: `${def.sprite}_l1`,
-        });
-      } else if (unlock.kind === 'districtLevel') {
-        const def = DISTRICTS[unlock.id];
-        this.queueBanner({
-          title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
-          desc: `${def.name} can now reach level ${unlock.level}.`,
-        });
-      } else if (unlock.kind === 'unit') {
-        const unit = UNITS[unlock.id];
-        this.queueBanner({
-          title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
-        });
-      }
-    }
+  /** Whether a scene introduces this site the moment it is found — then the
+   *  advisor announces it and a banner would say it twice. A veteran plays no
+   *  scenes, so is told by the banner. */
+  private sceneIntroduces(siteId: string): boolean {
+    if (this.state.tutorial.veteran) return false;
+    return SCENES.some((s) =>
+      (s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId);
   }
 
   private researchRefusalToast(refusal: ResearchRefusal, id: TechId): void {
@@ -2900,7 +2874,7 @@ export class Game {
   /** Pay the Gold and complete a technology whose Knowledge is in. */
   doResearchTech(id: TechId): void {
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched') this.announceResearch(id);
+    if (result === 'Researched') playSfx('researchComplete');
     else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
@@ -3195,14 +3169,6 @@ export class Game {
     if (result === 'Claimed') {
       playSfx('upgradeBought');
       this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
-      this.queueBanner({
-        title: 'Landmark claimed!',
-        icon: LANDMARK_ART[def.kind].glyph,
-        name: LANDMARK_ART[def.kind].name,
-        desc: 'A deeper Mana pool, for good — and the fog lifts all around it.',
-        sprite: LANDMARK_ART[def.kind].sprite,
-        tone: 'sky',
-      });
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
     }
@@ -4532,17 +4498,6 @@ const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
   MountainGold: 'tapIron',
   Fish: 'tapFish',
 };
-
-/** The discovery card for a first-collected resource. */
-function resourceBanner(currency: CurrencyId): Banner {
-  const def = CURRENCIES[currency];
-  const desc = currency === 'Gold'
-    ? 'Pays for everything'
-    : def.goldValue !== null
-      ? `Sells for ${formatExact(def.goldValue)} ${icon('Gold')}`
-      : '';
-  return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
-}
 
 /**
  * The card for a landmark or lair coming into view for the first time.
