@@ -87,6 +87,7 @@
 | `lair:<id>` · `landmark:<id>` | that site |
 | `lair:` | the first lair found that still stands |
 | `quest` | the quest pill |
+| `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
@@ -100,6 +101,10 @@
   before the line appears; `auto` judges the target where the glide ends.
 - A target that moves (a scrolling list, a card rebuilt) is re-found every
   frame.
+- **A line that points at the nav bar is always preceded by one that walks
+  the player back to the map** — `back`, locked to it, until `mainScreen`
+  (`tests/stage.test.ts`). The nav bar steps aside for every sheet, card and
+  placement bar; on the map already, that line is passed at once.
 
 ## 5. Conditions
 
@@ -115,6 +120,7 @@ which one a line waits on is data.
 | `training` | a villager is in training, or `amount` villagers live |
 | `sighted` | a silhouette stands past the fog: anything, a `mountain` · `landmark` · `lair`, a kind of landmark, or one lair |
 | `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen — drawn, not merely in the page |
+| `mainScreen` | back on the map: no sheet, no card, no placing |
 | `taps` | `amount` taps on the ground since the line began |
 | `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |
 | `landmarkClaimed` · `landmarkSeen` | that landmark, kind or any claimed · that one out of the dark |
