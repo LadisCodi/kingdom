@@ -554,6 +554,7 @@ export const HELP = balance.help as {
   idleWiggleSeconds: number; idleAdvisorSeconds: number; advisorRestSeconds: number;
   advisorShowSeconds: number; pointerSeconds: number; untilQuest: string;
   lockFailsafeSeconds: number; typeCharsPerSecond: number; sceneGapSeconds: number;
+  inputGraceSeconds: number;
 };
 
 /** The full-screen splash a big unlock opens with (23-tutorials.md §4.6):

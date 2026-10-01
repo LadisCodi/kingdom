@@ -40,8 +40,11 @@
   long for it is set smaller until it fits, never let out of the paper, and
   no line is longer than 140 characters (`tests/stage.test.ts`).
 - **The text types itself** at 40 characters a second, with a soft wooden
-  knock every third letter (`textTick`, never on a space). A tap finishes the
-  line; the next tap moves on.
+  knock every third letter (`textTick`, never on a space). A tap while it
+  types finishes the line and nothing else; the next tap moves on.
+- **A line that appears on its own** — a scene starting, a beat met — takes
+  no input for its first 0.5 s (`help.inputGraceSeconds`), so a tap meant
+  for the game never skips it.
 - **A line that waits for a tap takes one anywhere on the screen** — the
   box, the map, a menu — and keeps it: the tap reaches nothing behind it.
   Panning the map is not a tap. A golden **quill** at the box's corner says

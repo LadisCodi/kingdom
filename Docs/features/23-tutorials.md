@@ -299,6 +299,7 @@ A big opening is named full-screen before anyone talks about it.
 | Idle wiggle · idle advisor · her rest · how long she waits | 30 s · 60 s · 3 min · 10 s | `?dev=data` › Tutorial help (`help.*`) |
 | How long a pointer (and the quest hint) waits | 20 s | `help.pointerSeconds` |
 | How fast a line types | 40 characters a second | `help.typeCharsPerSecond` |
+| How long a line that appears on its own takes no input | 0.5 s | `help.inputGraceSeconds` |
 | When idle help stops | quest `Attuned` | `help.untilQuest` |
 | The lock's failsafe | 5 s | `help.lockFailsafeSeconds` |
 | The breath between two introductions | 20 s | `help.sceneGapSeconds` |

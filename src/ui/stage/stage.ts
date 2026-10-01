@@ -152,6 +152,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
   let gapUntil = 0;
+  /** A line that appeared on its own — a scene starting, a beat met — takes
+   *  no input until this: the tap the player had already begun, meant for
+   *  the game, never finishes or skips it. */
+  let graceUntil = 0;
+  const graced = (): void => { graceUntil = performance.now() + HELP.inputGraceSeconds * 1000; };
+  const inGrace = (): boolean => playing !== null && performance.now() < graceUntil;
   const onStage: Record<'left' | 'right', string | null> = { left: null, right: null };
 
   // ------------------------------------------------------------ the cast
@@ -306,6 +312,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       if (PROGRESS.has(l.until) && lineHolds(l)) resumeAt = i + 1;
     });
     root.replaceChildren(layer);
+    graced();
     begin(resumeAt);
   };
 
@@ -378,9 +385,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   // ------------------------------------------------------------ taps
-  /** A tap on the box finishes the line typing, then moves a tap line on. */
+  /** A tap on the box finishes the line typing, then moves a tap line on —
+   *  two taps, never one, so a line is never skipped unread. */
   const tapLine = (): void => {
-    if (playing === null) return;
+    if (playing === null || inGrace()) return;
     const l = line();
     if (l === null) return;
     if (playing.typed < l.text.length) { playing.typed = l.text.length; text.textContent = l.text; return; }
@@ -402,7 +410,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   /** THE ONE GATE ON THE MAP: which taps a line lets through. */
   game.tapGate = (cell: Coord | null, how: 'tap' | 'hold' | 'ghost'): boolean => {
-    if (waitsForTap()) return false; // the frame's click moves the line on
+    if (waitsForTap() || inGrace()) return false; // the frame's click moves the line on
     const lock = lockNow();
     if (lock === 'none' || lock === 'map') return true;
     if (lock === 'all') return false;
@@ -415,7 +423,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // only on the box, the target, the map (whose taps `tapGate` sifts) or the
   // dev bar. Panning is never locked.
   const allowed = (node: Node | null): boolean => {
-    const lock = waitsForTap() ? 'all' : lockNow();
+    const lock = waitsForTap() || inGrace() ? 'all' : lockNow();
     if (lock === 'none') return true;
     if (node === null) return false;
     const elNode = node instanceof HTMLElement ? node : node.parentElement;
@@ -636,7 +644,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         fitCast();
         if (now - lastCheck > 100) {
           lastCheck = now;
-          if (lineHolds(l)) next();
+          if (lineHolds(l)) { graced(); next(); }
         }
       }
     }
