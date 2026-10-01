@@ -172,19 +172,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "The scroll has something for that. Tap it.",
-        "box": "middle",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "Woodcraft",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },

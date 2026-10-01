@@ -64,7 +64,6 @@ praises each thing put right, and wears the face that goes with it
 | 2.4 | `Woodcraft` | *…then pay the Gold, and the craft is ours at once.* | **Research** | the button | Forestry is done |
 | 2.5 | `Woodcraft` | *Listen — axes in the woods already! Knowledge comes back by itself, a point an hour, up to ten. Spend it before the bar fills.* | the Knowledge tab | all | tap |
 | 2.6 | `Woodcraft` | *Close the book. Let's put that craft to work.* | the close knob | the knob | the book is shut |
-| 2.7 | `Woodcraft` | *The scroll has something for that. Tap it.* | the quest pill | the pill | claimed |
 | 3.1 | `Timber` | *Show them how it's done: tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.* | the nearest forest | the map | three taps |
 | 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging. When a stand is felled, move on — it grows back.* | the nearest forest with wood left | none | the quest completes |
 | 3.3 | `Timber` | *Wood for the kingdom! Claim it — the scroll pays back more Mana than you spent.* | the quest pill | the pill | claimed |

@@ -485,6 +485,8 @@ export interface QuestDef {
   /** A card pack handed over on the claim, or null. The first one is how the
    *  collection is met (Docs/features/22-progression.md §7). */
   rewardPack: PackTier | null;
+  /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
+  autoClaim: boolean;
 }
 
 /** The chain, in sheet order — one quest active at a time. */

@@ -363,6 +363,20 @@ describe('the banner queue', () => {
     expect(drain(game)).toEqual([]);
   });
 
+  it('claims a self-claiming quest the moment it is done', () => {
+    const state = firstGame();
+    const game = freshPresenter(state);
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'Woodcraft');
+    expect(QUESTS[state.quests.index].autoClaim).toBe(true);
+    fund(state, { Gold: 99_999, Knowledge: 10 });
+    const gold = state.city.wallet.Gold ?? 0;
+    pourKnowledge(state, 'Forestry');
+    game.doResearchTech('Forestry');
+    expect(game.questInfo()?.quest.id).toBe('Timber');
+    // Paid on the way: the research's price out, the quest's reward in.
+    expect(state.city.wallet.Gold).toBe(gold - 20 + (QUESTS.find((q) => q.id === 'Woodcraft')!.reward.Gold ?? 0));
+  });
+
   it('announces no claim, nor the first coin of a resource', () => {
     const state = freshGame();
     const game = freshPresenter(state);

@@ -483,6 +483,8 @@ export class Game {
    * drag asks it first. Absent = everything goes through.
    */
   tapGate: ((cell: Coord | null, how: 'tap' | 'hold' | 'ghost') => boolean) | null = null;
+  /** Inside an automatic claim — so the claim's own notify does not start another. */
+  private autoClaiming = false;
 
   /** Is this door of the UI open (Docs/features/22-progression.md §3)? */
   doorOpen(door: DoorId): boolean {
@@ -562,6 +564,14 @@ export class Game {
     for (const door of freshlyOpenDoors(this.state)) {
       markDoorSeen(this.state, door);
       this.doorsJustOpened.push(door);
+    }
+    // A quest that CLAIMS ITSELF does so the moment it is done: the player is
+    // already reaching for its next step (Docs/features/12-quests.md §1).
+    const done = this.questInfo();
+    if (done?.complete === true && done.quest.autoClaim && !this.autoClaiming) {
+      this.autoClaiming = true;
+      try { this.doClaimQuest(); } finally { this.autoClaiming = false; }
+      return;
     }
     // The moment the active quest's goal is met, ding — before any claim.
     const questDone = this.questInfo()?.complete ?? false;
