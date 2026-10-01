@@ -442,15 +442,27 @@ describe('what the rules refuse', () => {
   // saves it and the game leaves the card out (`definitions.ts`). What the
   // editor does when it takes a card off the page is exactly this: the slot
   // goes, and so does every requirement at either end of it.
+  it('refuses a card above the last row that nothing below requires', () => {
+    const d = clone();
+    // Masonry is the only card that needs Pickaxes: cut the edge.
+    d.technologies.Masonry.requires = (d.technologies.Masonry.requires ?? []).filter((r) => r !== 'Pickaxes');
+    expect(validateTechTree(d).errors.map((e) => e.message))
+      .toContainEqual(expect.stringMatching(/^Pickaxes leads nowhere/));
+  });
+
   it('a tree with a card in the holding pen still saves', () => {
     const d = clone();
     // A LEAF — nothing requires it — so taking it off the page leaves nothing
-    // waiting on nowhere, which is what `unplace` arranges for in the editor.
-    // Found rather than named: which cards are leaves moves with the page.
-    const needed = new Set(Object.values(d.technologies)
-      .flatMap((n) => n.requires ?? []));
+    // waiting on nowhere, which is what `unplace` arranges for in the editor;
+    // and one whose every parent leads somewhere else too, so none of them is
+    // left a dead end. Found rather than named: the leaves move with the page.
+    const needed = new Map<string, number>();
+    for (const n of Object.values(d.technologies)) {
+      for (const r of n.requires ?? []) needed.set(r, (needed.get(r) ?? 0) + 1);
+    }
     const id = Object.keys(d.technologies)
-      .find((k) => d.technologies[k].tome !== undefined && !needed.has(k));
+      .find((k) => d.technologies[k].tome !== undefined && !needed.has(k)
+        && (d.technologies[k].requires ?? []).every((r) => (needed.get(r) ?? 0) > 1));
     expect(id, 'the fixture needs a placed leaf').toBeDefined();
     const leaf = d.technologies[id!];
     delete leaf.tome;

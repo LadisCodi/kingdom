@@ -127,7 +127,7 @@ Beats, as the First Morning's, each on its quest.
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
 | | | *Let's raise one!* | **Build** | the tab | the build menu is open |
 | | | *Choose the Farm.* | the Farm card | the card | placing |
-| | | *A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.* | the crop plots | the map and the panel | placed |
+| | | *A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.* | **Build** — the ghost starts beside the plots, where it works the most | the map and the panel | placed |
 | | | *A Farm for Oakville! The townsfolk are grateful already — accept their gift.* | the quest pill | the pill | claimed |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
 | | | *The Farm stands — and nobody works it. Oh dear. Open it, Your Majesty.* | the Farm | the Farm | its card is open |
@@ -168,7 +168,7 @@ last line, as a hint.
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
 | `fullHouse` | quest `GrowingTown` reached | Isolde | *That House is full — two to a roof, and no room for anyone else. Another House, and the town can grow.* | the House |
-| `townhall2` | quest `ProperCapital` reached | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
+| `townhall2` | the Townhall reaches level 2 (quest `ProperCapital` complete) | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
 | `eras` | 43 cells revealed — Civics chapter II | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |

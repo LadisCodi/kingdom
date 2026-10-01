@@ -21,8 +21,8 @@ import { addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourA
 // mainland rocks and the northern iron went elsewhere. They are named and
 // commented rather than inlined so the next redraw is a diff of this block
 // instead of a hunt through the file.
-const NEAR_ROCKS = { x: 2, y: -2 }; // the one loose Mountain, held by no lair
-const QUARRY_CELL = { x: 2, y: -3 }; // clear Grassland beside it, inside radius 2
+const NEAR_ROCKS = { x: -2, y: -2 }; // the one loose Mountain, held by no lair
+const QUARRY_CELL = { x: -2, y: -3 }; // clear Grassland beside it, inside radius 2
 const COVE_WATER = { x: -6, y: 1 }; // the nearest open water, west
 const SHOAL = { x: -8, y: 2 }; // authored FishShoal, 2 cells off the pier
 // Docks anchor: a 2x1 pier wants exactly one wet cell, and the ANCHOR is the
