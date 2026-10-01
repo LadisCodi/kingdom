@@ -877,9 +877,16 @@ export class Game {
         // Resource cells (Forest, built Crops): cooldown-gated collect tap.
         const source = harvestSourceAt(this.state, cell);
         if (source !== null && this.state.fog.revealed[coordKey(cell)]) {
+          // A built crop plot is a district too. While it holds Food its tap
+          // is the harvest and nothing else; once it is empty there is
+          // nothing to reap, so the tap opens its card — the way to Move it.
+          if (district && isExhausted(this.state, this.map, cell, this.now())) {
+            this.inspectedDistrictId = district.uniqueId;
+            this.notify();
+            return true;
+          }
           this.collectAt(cell);
-          // A crop plot is also a district — inspecting it stays useful.
-          this.inspectedDistrictId = district?.uniqueId ?? null;
+          this.inspectedDistrictId = null;
           this.notify();
           return true;
         }
