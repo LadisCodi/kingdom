@@ -25,7 +25,7 @@ import {
   colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
   type EdgePiece,
 } from './research/layout';
-import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, priceLine, progress, sectionHead } from './kit';
 import { el, formatExact } from './format';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
@@ -392,9 +392,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const note = filled ? null : 'Assign all its Knowledge to research it';
     page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
       el('div', { class: 'up-buy k-section' },
-        el('div', { class: 'up-price' },
-          ...(gold > 0 ? [el('span', { class: `up-price-chip${shortGold ? ' is-short' : ''}` },
-            iconEl('Gold'), el('b', {}, formatExact(gold)))] : [])),
+        priceLine(gold > 0 ? [{ icon: 'Gold', amount: formatExact(gold), short: shortGold }] : []),
         btn({
           label: 'Research',
           kind: 'primary',

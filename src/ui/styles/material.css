@@ -552,15 +552,6 @@
 .store-banner-art,
 .store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
-/* ---- the heroes' roster (M6): parchment tiles ---- */
-.hero-tile {
-  background:
-    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
-.hero-purse,
-.hero-tile-foot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-
 /* ---- the collection (M19, M21, M22): parchment, and wood for the ring ---- */
 .col-relic-frame,
 .col-chip,
@@ -680,25 +671,12 @@
     rgba(24, 15, 8, 0.9);
 }
 
-/* ---- the hero's and the relic's cards (M17) ---- */
-.hero-stage {
-  background:
-    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
-    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
+/* ---- the relic's card (M17) ---- */
 .col-stage {
   background:
     radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.hero-statline > .k-stat,
-.hero-level {
-  background:
-    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
-
 /* ---- the party picker and its cards ---- */
 .bt-picker {
   border: calc(var(--px) * 12) solid transparent;
