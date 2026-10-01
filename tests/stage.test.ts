@@ -141,6 +141,14 @@ describe('the conditions read the kingdom', () => {
     expect(conditionHolds(game, args('sighted' as never, ''))).toBe(true);
   });
 
+  it('points a placing line at the confirm, never at the ground — the ghost already stands on the best spot', () => {
+    for (const scene of SCENES) {
+      for (const line of scene.lines) {
+        if (line.until === 'placed') expect(line.point, `${scene.id}: ${line.text}`).toBe('ui:place-confirm');
+      }
+    }
+  });
+
   it('never holds on a tap — a tap is the stage’s own event', () => {
     const game = freshPresenter(firstGame());
     expect(conditionHolds(game, args('tap' as never))).toBe(false);

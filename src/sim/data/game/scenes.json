@@ -563,7 +563,7 @@
         "side": "left",
         "text": "A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.",
         "box": "auto",
-        "point": "district:FarmLands",
+        "point": "ui:place-confirm",
         "lock": "map",
         "until": "placed",
         "untilTarget": "Farm",

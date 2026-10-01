@@ -127,7 +127,7 @@ Beats, as the First Morning's, each on its quest.
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
 | | | *Let's raise one!* | **Build** | the tab | the build menu is open |
 | | | *Choose the Farm.* | the Farm card | the card | placing |
-| | | *A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.* | the crop plots | the map and the panel | placed |
+| | | *A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.* | **Build** — the ghost starts beside the plots, where it works the most | the map and the panel | placed |
 | | | *A Farm for Oakville! The townsfolk are grateful already — accept their gift.* | the quest pill | the pill | claimed |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
 | | | *The Farm stands — and nobody works it. Oh dear. Open it, Your Majesty.* | the Farm | the Farm | its card is open |
