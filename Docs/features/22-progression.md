@@ -34,7 +34,7 @@
 | When | What the player meets | Opened by |
 |---|---|---|
 | **Minute 0–10** · the First Morning | fog, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, building, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
-| **Session 1** | farms, workers, the Sawmill, Townhall 2, the daily chest | the quest chain |
+| **Session 1** | farms, workers, the Sawmill, Townhall 2 | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing the Orcs' ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 30 cells revealed |
@@ -55,7 +55,7 @@
 | **Store** (nav) | always open | — |
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to see beyond the province* |
 | **Knowledge** tab | Research opens | absent |
-| **Daily chest** pill | the First Morning ends (quest `TaxDay` claimed) | absent |
+| **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
 | **Season** pill | as today — a card or a pack held | absent |
 | **The Book of Civics** | always open | — |
 | **The Book of Warfare** | the first lair is **discovered** | a padlocked bookmark — *Find a lair* |

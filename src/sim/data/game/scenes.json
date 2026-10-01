@@ -454,9 +454,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Lost? Tap the scroll and I’ll point the way. And come back each day — there is a gift waiting.",
+        "text": "Lost? Tap the scroll and I’ll point the way. And come back tomorrow — I’ll have a gift for you.",
         "box": "middle",
-        "point": "ui:daily",
+        "point": "quest",
         "lock": "all",
         "until": "tap",
         "untilTarget": "",
@@ -919,6 +919,28 @@
         "text": "A bigger Townhall lets us pay for fog further out — the dotted line is how far. It also lets the city hold more.",
         "box": "auto",
         "point": "district:Townhall",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "daily",
+    "trigger": "doorOpen",
+    "triggerTarget": "daily",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and nothing is lost: the next gift simply waits.",
+        "box": "auto",
+        "point": "ui:daily",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

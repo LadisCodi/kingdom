@@ -869,6 +869,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.tutorial': {
         Veteran: state.tutorial.veteran,
         Seen: Object.keys(state.tutorial.seen),
+        StartedAtUtc: iso(state.tutorial.startedAt),
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1274,12 +1275,16 @@ export function deserialize(
   // A save with no tutorial module was made before the doors existed, so its
   // kingdom walked in through none of them: every door opens and every scene
   // counts as played. Additive — no migrator (v69).
-  const tutorialDto = modules['kingdom.tutorial'] as { Veteran?: boolean; Seen?: string[] } | undefined;
+  const tutorialDto = modules['kingdom.tutorial'] as
+    { Veteran?: boolean; Seen?: string[]; StartedAtUtc?: string } | undefined;
+  // A kingdom with no founding date is read as founded long ago: its first
+  // day is over. Additive (v71).
   state.tutorial = tutorialDto === undefined
-    ? { veteran: true, seen: {} }
+    ? { veteran: true, seen: {}, startedAt: 0 }
     : {
       veteran: tutorialDto.Veteran === true,
       seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
+      startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
     };
 
   const questsDto = modules['kingdom.quests'];

@@ -136,7 +136,7 @@ describe('the tutorial in the save', () => {
     const state = firstGame();
     state.tutorial.seen.intro = true;
     const back = deserialize(serialize(state, T0), map, T0)!;
-    expect(back.tutorial).toEqual({ veteran: false, seen: { intro: true } });
+    expect(back.tutorial).toEqual({ veteran: false, seen: { intro: true }, startedAt: state.tutorial.startedAt });
   });
 });
 
@@ -155,10 +155,16 @@ describe('the doors of the UI', () => {
     expect(isDoorOpen(state, 'build')).toBe(false);
     state.quests.index = QUESTS.findIndex((q) => q.id === 'ARoof');
     expect(isDoorOpen(state, 'build')).toBe(true);
-    // The daily chest waits for the First Morning's last claim.
+    // The daily chest waits for the First Morning's last claim AND for the
+    // next day: the first day is for the city.
     expect(isDoorOpen(state, 'daily')).toBe(false);
     state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
-    expect(isDoorOpen(state, 'daily')).toBe(true);
+    expect(isDoorOpen(state, 'daily')).toBe(false);
+    const midnight = Math.ceil((state.tutorial.startedAt + 1) / 86_400_000) * 86_400_000;
+    state.lastAdvance = midnight - 1;
+    expect(isDoorOpen(state, 'daily'), 'still the first day').toBe(false);
+    state.lastAdvance = midnight;
+    expect(isDoorOpen(state, 'daily'), 'the next day').toBe(true);
   });
 
   it('never shuts a door once it has opened', () => {

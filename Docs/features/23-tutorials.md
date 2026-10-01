@@ -79,7 +79,7 @@ left unless a line says otherwise.
 | 7.1 | `TaxDay` | *Housed villagers pay rent into the House's store. When the bubble shows, tap it — collecting is always free.* | the House | none | the quest completes |
 | 7.1b | `TaxDay` | (the claim) | the quest pill | the pill | claimed |
 | 7.2 | `TaxDay` | *That is the heart of it: clear the fog, gather, build, grow. The scroll will always hold your next task.* | the quest pill | all | tap |
-| 7.3 | `TaxDay` | *Lost? Tap the scroll and I'll point the way. And come back each day — there is a gift waiting.* | the daily chest (it appears) | all | tap — **the First Morning ends** |
+| 7.3 | `TaxDay` | *Lost? Tap the scroll and I'll point the way. And come back tomorrow — I'll have a gift for you.* | the quest pill | all | tap — **the First Morning ends** |
 
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.
@@ -191,7 +191,7 @@ Each points at what it is about.
 | `wounded` | the first soldier comes home wounded | *Wounded, not lost. The Infirmary patches them up for a fraction of a new recruit.* |
 | `workshops` | the first workshop is finished | *A workshop turns raw goods into refined ones. The highest building levels ask for them.* |
 | `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony, and grand buildings ask for it.* |
-| `daily` | the daily chest opens | *One gift a day you visit. Miss a day and nothing is lost — the next gift simply waits.* |
+| `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and nothing is lost: the next gift simply waits.* |
 
 ## 5. Help when stuck
 

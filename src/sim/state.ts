@@ -735,8 +735,10 @@ export interface GameState {
    *
    * `veteran` is a kingdom from before the doors existed: every door is open
    * and every scene counts as played (Docs/features/22-progression.md §1).
+   * `startedAt` is when the kingdom was founded — the first day's doors read
+   * it (the daily chest waits for the next day).
    */
-  tutorial: { veteran: boolean; seen: Record<string, true> };
+  tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];
