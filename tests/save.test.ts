@@ -11,7 +11,7 @@ import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, rentStored, reveal, stored, T0, tickAt,
+  addBuilt, firstGame, completeTech, FOREST, freshGame, fund, map, rankOf, rentStored, reveal, stored, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -342,8 +342,9 @@ describe('save versions', () => {
     save.SaveVersion = 24;
     const restored = deserialize(save, map, T0)!;
     for (const tome of TOME_ORDER) expect(isTomeOpen(restored, tome), tome).toBe(true);
-    // Exactly what the save held, and not one id more.
-    expect(restored.research.completed).toEqual(['Forestry', 'Warrior']);
+    // Exactly what the save held, and only the one card v70 hands a kingdom
+    // that never had the tutorial: Pickaxes, so its mountains still answer.
+    expect(restored.research.completed).toEqual(['Forestry', 'Warrior', 'Pickaxes']);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {
@@ -497,7 +498,7 @@ describe('research without a clock (v61)', () => {
     const { save } = v60(['Agriculture'], 0);
     expect(migrate(save)).toBe(true);
     const research = (save.Modules as any)['kingdom.research'];
-    expect(research.Completed).toEqual(['Forestry', 'Agriculture']);
+    expect(research.Completed).toEqual(['Forestry', 'Agriculture', 'Pickaxes']); // + v70's
     expect(research.Active).toBeUndefined();
     expect(research.SlotsPurchased).toBeUndefined();
     expect(research.Poured).toEqual({});
@@ -583,7 +584,35 @@ describe('the Market, retired', () => {
     expect(back.city.queue).toHaveLength(1);
     expect(back.city.queue[0].uniqueId).toBe('q_house');
     expect(back.city.queue[0].kind).toBe('upgrade');
-    expect(back.research.completed).toEqual(['Forestry']);
+    expect(back.research.completed).toEqual(['Forestry', 'Pickaxes']); // + v70's
+  });
+});
+
+// v70: stone is taught (Docs/features/22-progression.md §4).
+describe('Pickaxes, taught (v70)', () => {
+  const v69 = (index: number, veteran: boolean) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.tutorial.veteran = veteran;
+    const save = serialize(state, T0);
+    save.SaveVersion = 69;
+    return save;
+  };
+
+  it('hands the card to a kingdom past where it is taught, and moves its chain on', () => {
+    const back = deserialize(v69(30, false), map, T0)!;
+    expect(back.research.completed).toContain('Pickaxes');
+    expect(back.quests.index).toBe(32);
+  });
+
+  it('leaves a kingdom before it to learn it from the chain', () => {
+    const back = deserialize(v69(10, false), map, T0)!;
+    expect(back.research.completed).not.toContain('Pickaxes');
+    expect(back.quests.index).toBe(10);
+  });
+
+  it('hands it to a veteran wherever the chain stands', () => {
+    expect(deserialize(v69(5, true), map, T0)!.research.completed).toContain('Pickaxes');
   });
 });
 

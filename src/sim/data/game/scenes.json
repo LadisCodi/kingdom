@@ -802,6 +802,110 @@
     ]
   },
   {
+    "id": "picks",
+    "trigger": "questReached",
+    "triggerTarget": "Picks",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Barracks is built of stone, and our people cannot cut it yet. The Book of Civics can teach them.",
+        "box": "middle",
+        "point": "ui:nav:research",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "research",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pickaxes. It opens the mountains to us.",
+        "box": "bottom",
+        "point": "ui:tech:Pickaxes",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "techsheet:Pickaxes",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pour in its Knowledge…",
+        "box": "top",
+        "point": "ui:tech-pour",
+        "lock": "target",
+        "until": "techFilled",
+        "untilTarget": "Pickaxes",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "…and research it.",
+        "box": "top",
+        "point": "ui:tech-research",
+        "lock": "target",
+        "until": "techDone",
+        "untilTarget": "Pickaxes",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Close the book, and let’s find some rock.",
+        "box": "middle",
+        "point": "ui:close",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "rubble",
+    "trigger": "questReached",
+    "triggerTarget": "Rubble",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Tap a mountain. Every swing of the pick brings home Stone — and spends a Mana, like the axe. Clear the fog off one if you must.",
+        "box": "auto",
+        "point": "feature:Mountain",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A task done is a reward waiting. Tap the scroll.",
+        "box": "middle",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
     "id": "townhall2",
     "trigger": "questReached",
     "triggerTarget": "ProperCapital",

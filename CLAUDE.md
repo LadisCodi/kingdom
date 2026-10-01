@@ -145,7 +145,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 
 ## Saves
 
-`SAVE_VERSION` is 69; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 70; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.

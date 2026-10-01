@@ -314,7 +314,7 @@ describe('first-time discoveries', () => {
   // opening is short of, not coin. Only the tapping beats, and only early.
   it('pays Mana on a few opening beats and nowhere else', () => {
     const manaQuests = QUESTS.filter((q) => q.rewardMana > 0);
-    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand']);
+    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand', 'Rubble']);
     // A Mana reward replaces the Gold rather than sitting on top of it.
     for (const q of manaQuests) expect(q.reward.Gold ?? 0).toBe(0);
   });
@@ -386,7 +386,7 @@ describe('quests fund the research tree', () => {
     }
     // The opening asks for nine cards, and the guarantee is worth nothing if a
     // re-scoped chain quietly stops covering most of them.
-    expect(asked).toBe(9);
+    expect(asked).toBe(10);
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
@@ -429,8 +429,9 @@ describe('quests fund the research tree', () => {
     // on to the Watchtower (Docs/features/12-quests.md §2).
     // 15,995: `SecondVillager` at 70 fills the first House before the chain
     // asks for a second one.
-    expect(chain).toBe(15_995);
-    expect(tree).toBe(435_575); // the same sum tests/fog.test.ts freezes, and why
+    // 16,035: `Picks` at 40 teaches Pickaxes before the Barracks wants Stone.
+    expect(chain).toBe(16_035);
+    expect(tree).toBe(435_600); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
@@ -446,7 +447,8 @@ describe('quests fund the research tree', () => {
     // 5,900 once the tree became five books (2026-10-01): the found books'
     // first rows and the planned Cartography count as era-1 majors too.
     // 6,030 when the five opening cards took 20 to 30 Gold each.
-    expect(opening).toBe(6030);
+    // 6,055 with Pickaxes, the card that opens the mountains.
+    expect(opening).toBe(6055);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

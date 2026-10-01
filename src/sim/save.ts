@@ -651,7 +651,30 @@ const MIGRATIONS: readonly Migration[] = [
       research.Poured = poured;
     },
   },
+  {
+    // v70: STONE IS TAUGHT (Docs/features/22-progression.md §4). Tapping a
+    // mountain waits on `Pickaxes`, and two quests — research it, gather 20
+    // Stone — sit in front of `Mustered`, the first thing that costs Stone.
+    // A kingdom already past that point, or one that never had the
+    // tutorial, keeps tapping stone: it is handed the card. A chain position
+    // at or past the new quests moves on by the two of them.
+    to: 70,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      const tutorial = modules['kingdom.tutorial'] as { Veteran?: boolean } | undefined;
+      const index = quests?.Index ?? 0;
+      const past = index >= PICKS_AT_V70;
+      if (quests !== undefined && past) quests.Index = index + 2;
+      if (past || tutorial === undefined || tutorial.Veteran === true) {
+        const research = (modules['kingdom.research'] ??= { Completed: [] }) as { Completed?: string[] };
+        research.Completed = [...new Set([...(research.Completed ?? []), 'Pickaxes'])];
+      }
+    },
+  },
 ];
+
+/** Where `Picks` entered the chain in v70, frozen as history. */
+const PICKS_AT_V70 = 27;
 
 /** The technologies the v69 tree renamed or split, frozen as history. */
 const TECH_RENAMES_V69: Record<string, string[]> = {

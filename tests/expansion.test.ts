@@ -45,9 +45,9 @@ describe('stone line (Masonry → Quarry)', () => {
     expect(placementBlock(state, map, 'Quarry', QUARRY_CELL)).toBe('NeedsResearch');
     completeTech(state, 'Masonry');
     expect(placementBlock(state, map, 'Quarry', COVE_WATER)).toBe('NeedsLand'); // no sea quarries
-    // Masonry opens the SHED; the bare peak answered a pick already — the
-    // tome tree parks Scaling Tools in Magic era 2, far too late to gate
-    // era-1 Stone — and the METAL is what the later rungs open.
+    // Masonry opens the SHED; Pickaxes opens the bare peak to a pick, and to
+    // the shed's crew — and the METAL is what the later rungs open.
+    completeTech(state, 'Pickaxes');
     // Read the yield BEFORE the tap: it is capped by what the cell still
     // holds, so asking afterwards asks about a smaller depot.
     const perTap = tapYieldAt(state, map, NEAR_ROCKS, T0);

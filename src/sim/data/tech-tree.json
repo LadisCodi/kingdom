@@ -22,6 +22,13 @@
       "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"FarmLands"}]
     },
+    "Pickaxes": {
+      "name": "Pickaxes", "glyph": "⛏️", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 1, "col": 2,
+      "requires": ["Forestry"],
+      "gold": 25, "knowledge": 2,
+      "unlocks": [{"harvest":"Stone"}]
+    },
     "Farming": {
       "name": "Farming", "glyph": "🚜", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 0,

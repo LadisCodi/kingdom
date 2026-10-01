@@ -33,12 +33,13 @@
 
 ## 2. Civics
 
-### 2.1 Era 1 — 18 cards · 28 K · 1,475 Gold
+### 2.1 Era 1 — 19 cards · 30 K · 1,630 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
 | **Forestry** | the Forest tap, the Berries tap | 20 G · 2 K |
 | **Agriculture** | the FarmLands | 25 G · 2 K |
+| **Pickaxes** | the Stone tap | 25 G · 2 K |
 | **Farming** | the Farm | 25 G · 2 K |
 | **Hunting** | the Meat tap | 30 G · 2 K |
 | **Saws** | the Sawmill | 30 G · 2 K |
@@ -391,11 +392,11 @@
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 20,775 | 110 |
+| 1 | 20,800 | 112 |
 | 2 | 69,300 | 233 |
 | 3 | 285,500 | 747 |
 | 4 | 60,000 | 80 |
-| **All** | **435,575** | **1,170** |
+| **All** | **435,600** | **1,172** |
 
 - The pace these prices set is [`22-progression.md`](22-progression.md) §8.
 - The quest chain funds the **opening** — every era-1 card it asks for — with

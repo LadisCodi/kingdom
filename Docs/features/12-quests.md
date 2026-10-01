@@ -12,8 +12,8 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **64 quests**, paying 15,995 Gold, 100 Mana, 750 Gems, 140 Stardust,
-  **35 Knowledge across fifteen of them** (§2.1) and **one card pack**.
+- **66 quests**, paying 16,035 Gold, 100 Mana, 750 Gems, 140 Stardust,
+  **37 Knowledge across sixteen of them** (§2.1) and **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
 
@@ -77,13 +77,13 @@
 | **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
 | **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
 | **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
-| **26–31** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 55 cells cleared find the Orcs; Warrior, the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
-| **32–35** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
-| **36–41** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
-| **42–46** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
-| **47–53** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **54–60** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
-| **61–64** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
+| **26–33** · the Orcs | `FurtherAfield` · `ArmedMen` · `Picks` · `Rubble` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 55 cells cleared find the Orcs; Warrior, **Pickaxes and 20 Stone** (the Barracks is built of it), the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **34–37** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
+| **38–43** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
+| **44–48** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
+| **49–55** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **56–62** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
+| **63–66** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
@@ -101,8 +101,8 @@
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **fifteen quests pay Knowledge**,
-  placed so that every card the chain demands up to `Attuned` — quest 33,
+  Quest 1 pays Forestry's 2 outright, and **sixteen quests pay Knowledge**,
+  placed so that every card the chain demands up to `Attuned` — quest 35,
   Consecration — is affordable **with no drip at all**, prerequisites included.
   **The quest just before each of those research quests pays its card's
   Knowledge by itself**, so a player who spent what was banked on cards of
@@ -113,7 +113,7 @@
   ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
   asserted for the opening and **only** the opening (`tests/quests.test.ts`);
   the cut is by chain position, not by era — `MoreRoom` asks for an era-1
-  card at quest 38, past it.
+  card at quest 40, past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
   `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
@@ -133,7 +133,7 @@
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 41).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 43).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 

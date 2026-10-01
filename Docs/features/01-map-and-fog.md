@@ -67,7 +67,7 @@ Buildability:
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Mountain** | Stone | 1 | 5 | 120 s | — |
+| **Mountain** | Stone | 1 | 5 | 120 s | Pickaxes |
 | **Iron mountain** | Stone | **5** | 5 | **300 s** | **Mining** |
 | **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Deep Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
@@ -79,16 +79,17 @@ Mountains:
 
 | | Pays | Opened by | Role |
 |---|---|---|---|
-| **Mountain** | Stone, 1 | — | the everyday building material |
+| **Mountain** | Stone, 1 | **Pickaxes** | the everyday building material |
 | **Iron mountain** | Stone, **5** | **Mining** | the same material, five times over |
 | **Gold mountain** | **Gold**, 3 | **Deep Mining** | the only Gold source on the map outside housing taxes |
 
 - A mountain blocks a footprint like any other feature. No placement rule of its
   own.
-- The bare peak is free to tap from the first second. The gate is on the
-  **metal**: Mining for iron, Deep Mining for gold. An iron mountain is visible
-  and refusing before Mining; a refused tap costs no Mana. Scaling Tools
-  ([`07-research.md`](07-research.md)) gates nothing on the map.
+- The bare peak answers a pick once **Pickaxes** is researched — taught in
+  the opening, just before the Barracks asks for Stone
+  ([`23-tutorials.md`](23-tutorials.md) §3.1). The metal is gated further:
+  Mining for iron, Deep Mining for gold. A gated mountain is visible and
+  refusing; a refused tap costs no Mana.
 - **The Quarry cuts Stone from every mountain in its area of influence, the way
   the Sawmill takes Wood from every forest in its own.** One building works all
   three mountains; a district's harvest source is a list. A district names a

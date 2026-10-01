@@ -248,7 +248,8 @@ describe('exploring pays in ground, not in currency', () => {
     // 435,575: the five opening cards stopped being free — 20 to 30 Gold
     // each, so "pay the Gold, and it is ours" is true from the first one.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(435_575);
+    // 435,600: Pickaxes, 25 Gold, gates the Stone tap.
+    expect(tree).toBe(435_600);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

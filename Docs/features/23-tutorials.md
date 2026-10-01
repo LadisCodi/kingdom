@@ -15,8 +15,9 @@
 1. **The quest chain teaches; the advisor speaks.** A beat never asks for
    anything the active quest does not.
 2. **Scripted stretches**: the First Morning, quests 1–7, about ten
-   minutes, and two short **lessons** — the Farm and the Sawmill (§3.1),
-   the first buildings that work for the player. They are the only places
+   minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
+   first buildings that work for the player, and Stone, when the Barracks
+   first asks for it. They are the only places
    input is locked; a lesson can be skipped.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
@@ -123,6 +124,13 @@ Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
 | | | *The Sawmill is up. Tap it.* | the Sawmill | the Sawmill | its card is open |
 | | | *Send it woodcutters — the scroll wants three villagers at work, the Farm's included.* | the card's **+** | none | the quest completes |
 | | | *Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.* | the Sawmill | all | tap |
+
+| `picks` | `Picks` | *A Barracks is built of stone, and our people cannot cut it yet. The Book of Civics can teach them.* | **Research** | the tab | the book is open |
+| | | *Pickaxes. It opens the mountains to us.* | the Pickaxes card | the card | its sheet is open |
+| | | *Pour in its Knowledge…* · *…and research it.* | **+N** · **Research** | the button | filled · done |
+| | | *Close the book, and let's find some rock.* | the close knob | the knob | the book is shut |
+| `rubble` | `Rubble` | *Tap a mountain. Every swing of the pick brings home Stone — and spends a Mana, like the axe. Clear the fog off one if you must.* | the nearest mountain, fogged or not | none | the quest completes |
+| | | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
 
 - **A worker building's ghost starts where it would work the most** — the
   Farm beside the plots, the Sawmill in the thickest trees — the nearest of
