@@ -234,13 +234,13 @@ lies close enough to it.
 | Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
 | Watchtower | 4 | `fog.sight.watchtower` |
-| A lair not yet found | 2 | `fog.sight.lair` |
+| A lair not yet found | its own, past its ground: Orcs 2, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
   footprint. Discovered cells do not see.
-- A lair whose ground reaches as far as its sight is found before it can be
-  sighted: the Harpies (radius 2) appear only when found.
+- A lair's sight reaches past its ground (`radius`), or it is 0 and never
+  sighted: every cell of its ground finds it (`src/sim/data/mapRules.ts`).
 - **A silhouette is the thing's own drawing as one flat, cold, faint shape**
   over the dark: no name, no badge, no bubble.
 - It stops being a silhouette once any cell of it is Discovered — a lair once
@@ -317,8 +317,7 @@ The near map is laid out so the first Townhalls look one way at a time
 (`tests/provinceLayout.test.ts`):
 
 - **South first.** The Thorned Shrine (4 rings) is sighted from the first
-  ring; nothing else but the Orcs is in sight while the Townhall is at
-  level 1.
+  ring; the only landmark in sight while the Townhall is at level 1.
 - **The Orcs** (5 rings, south) show from ring 3, as the player reaches the
   shrine. Their ground starts at ring 4 and holds the shrine, so they are
   found at Townhall 2 and cleared before it is claimed.
@@ -328,6 +327,8 @@ The near map is laid out so the first Townhalls look one way at a time
   Revealing a block finds them, so no big mountain is worked before they fall.
 - **One loose stone node** stands 2 rings from the Townhall, on no lair's
   ground: the stone the opening has, and the reason to want more.
+- **The Harpies** show from ring 3 beyond their mountains: the camp that
+  holds the stone is in sight before the player can reach it.
 - The Watchtower (8 rings north) and the Fallen Stones (7 rings) are sighted
   from ring 4, at Townhall 2.
 

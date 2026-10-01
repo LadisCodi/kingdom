@@ -1496,6 +1496,10 @@ export interface LairDef {
   /** How far its zone reaches past its footprint, in Chebyshev rings: no
    *  tap, no build, no harvest inside (Docs/proposals/lairs.md §3). */
   radius: number;
+  /** How far it is SIGHTED past the fog while not yet found: a silhouette
+   *  while a revealed cell lies within this many cells of its footprint
+   *  (Docs/features/01-map-and-fog.md §4.1). 0 = never; else past `radius`. */
+  sight: number;
   /** The card's line over its painting (§6). */
   flavour: string;
   /** The garrison that holds it (Docs/features/18-garrisons-and-raids.md). */
@@ -1541,7 +1545,7 @@ const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph'
 };
 
 const lairBalance = regionMap.lairs as Record<LairId, {
-  x: number; y: number; size?: number; tier: number; radius: number; flavour: string;
+  x: number; y: number; size?: number; tier: number; radius: number; sight: number; flavour: string;
   guard: { threat: string; power: number; warningMinutes: number };
 }>;
 
@@ -1562,6 +1566,7 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
       size: b.size ?? 1,
       tier: b.tier,
       radius: b.radius,
+      sight: b.sight,
       flavour: b.flavour,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];

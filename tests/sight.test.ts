@@ -60,13 +60,18 @@ describe('sighting', () => {
 
   it('is not a discovery: a sighted lair is not found, and starts no raid clock', () => {
     const lair = LAIRS.Orcs;
-    expect(FOG.sight.lair).toBeGreaterThan(lair.radius);
     const state = freshGame();
     // Clear of its zone, inside its sight.
-    reveal(state, [westOf(lair.location, FOG.sight.lair)]);
+    reveal(state, [westOf(lair.location, lair.sight)]);
     advance(state, map, T0 + 1000);
     expect(sightedAt(state, map, lair.location)?.kind).toBe('lair');
     expect(state.lairs.Orcs).toBeUndefined();
+  });
+
+  it('sees every lair past its own ground, so its silhouette can show', () => {
+    for (const lair of Object.values(LAIRS)) {
+      if (lair.sight > 0) expect(lair.sight, lair.id).toBeGreaterThan(lair.radius);
+    }
   });
 
   it('drops a thing once it is in plain view', () => {

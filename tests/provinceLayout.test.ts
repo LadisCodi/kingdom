@@ -41,12 +41,14 @@ describe('the province opens to the south', () => {
     expect(sightedAt(freshGame(), map, nearestLandmark.location)?.id).toBe(nearestLandmark.id);
   });
 
-  it('shows nothing but the first landmark and the Orcs while the Townhall is at level 1 — both south', () => {
+  it('shows one landmark while the Townhall is at level 1 — the first, south — and the two camps', () => {
     const state = revealedTo(reachAt(1));
-    const sites = sightedThings(state, map).filter((t) => t.kind !== 'mountain');
-    expect(sites.map((t) => t.id).sort()).toEqual([nearestLandmark.id, 'Orcs'].sort());
+    const seen = sightedThings(state, map);
+    const landmarks = seen.filter((t) => t.kind === 'landmark');
+    expect(landmarks.map((t) => t.id)).toEqual([nearestLandmark.id]);
     // South on screen is +x +y.
-    for (const t of sites) expect(t.anchor.x + t.anchor.y).toBeGreaterThan(0);
+    expect(landmarks[0].anchor.x + landmarks[0].anchor.y).toBeGreaterThan(0);
+    expect(seen.filter((t) => t.kind === 'lair').map((t) => t.id).sort()).toEqual(['Harpies', 'Orcs']);
   });
 
   it('shows the Orcs from the last ring the first Townhall reaches, not before', () => {
@@ -63,6 +65,11 @@ describe('the near mountains are the Harpies’', () => {
   it('puts the Harpies past the second Townhall’s reach and inside the third’s', () => {
     expect(lairDistance('Harpies')).toBeGreaterThan(reachAt(2));
     expect(lairDistance('Harpies')).toBeLessThanOrEqual(reachAt(3));
+  });
+
+  it('shows the Harpies from the last ring the first Townhall reaches, not before', () => {
+    expect(sightedAt(revealedTo(reachAt(1) - 1), map, LAIRS.Harpies.location)).toBeUndefined();
+    expect(sightedAt(revealedTo(reachAt(1)), map, LAIRS.Harpies.location)?.id).toBe('Harpies');
   });
 
   it('holds every big mountain the second Townhall reaches', () => {

@@ -45,9 +45,7 @@ const candidatesFor = (() => {
     }
     for (const id of LAIR_ORDER) {
       const lair = LAIRS[id];
-      if (FOG.sight.lair > 0) {
-        out.push({ kind: 'lair', id, anchor: lair.location, size: lair.size, range: FOG.sight.lair });
-      }
+      if (lair.sight > 0) out.push({ kind: 'lair', id, anchor: lair.location, size: lair.size, range: lair.sight });
     }
     memo.set(map, out);
     return out;

@@ -1674,6 +1674,7 @@
       "x": 6, "y": 6, "size": 2,
       "tier": 1,
       "radius": 1,
+      "sight": 2,
       "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30 },
       "flavour": "They burn what they cannot carry. Every night the war drums draw closer to the town."
     },
@@ -1681,6 +1682,7 @@
       "x": 4, "y": -7, "size": 2,
       "tier": 2,
       "radius": 2,
+      "sight": 3,
       "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90 },
       "flavour": "Anything that shines is theirs by morning. The market has learned to trade in the dark."
     },
@@ -1688,6 +1690,7 @@
       "x": -15, "y": 20, "size": 2,
       "tier": 3,
       "radius": 2,
+      "sight": 3,
       "guard": { "threat": "Lancer", "power": 440, "warningMinutes": 120 },
       "flavour": "They tunnel under the yards and come up where the tools are. Nothing heavy is safe."
     },
@@ -1695,6 +1698,7 @@
       "x": 7, "y": -15, "size": 2,
       "tier": 4,
       "radius": 2,
+      "sight": 3,
       "guard": { "threat": "Cavalry", "power": 700, "warningMinutes": 180 },
       "flavour": "They ride in at dawn, take the flocks and are gone before the dust settles."
     },
@@ -1702,6 +1706,7 @@
       "x": -15, "y": -15, "size": 2,
       "tier": 5,
       "radius": 3,
+      "sight": 4,
       "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240 },
       "flavour": "It sleeps on a hill of gold and wakes hungry for more. The treasury is its larder."
     }

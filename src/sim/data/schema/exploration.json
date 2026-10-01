@@ -22,7 +22,7 @@
         "countGrowth": { "type": "float" },
         "sight": {
           "type": "object",
-          "doc": "How far a tall thing is SIGHTED past the fog: a dim silhouette while a revealed cell lies within this many cells of it.",
+          "doc": "How far a tall thing is SIGHTED past the fog: a dim silhouette while a revealed cell lies within this many cells of it. A lair's own is on the lair, in the map.",
           "fields": {
             "mountainBySize": {
               "type": "list",
@@ -31,8 +31,7 @@
               "doc": "A mountain's sight by its block: 1×1, 2×2, 3×3. 0 is never sighted."
             },
             "landmark": { "type": "int", "min": 0, "doc": "A shrine, a ring of stones, a leyspring." },
-            "watchtower": { "type": "int", "min": 0, "doc": "The Watchtower: a tower, seen from further." },
-            "lair": { "type": "int", "min": 0, "doc": "A lair not yet found: its smoke and banners." }
+            "watchtower": { "type": "int", "min": 0, "doc": "The Watchtower: a tower, seen from further." }
           }
         }
       }
