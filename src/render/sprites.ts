@@ -158,7 +158,159 @@ export function drawSprite(
 ): boolean {
   const s = sprite(key);
   if (!s?.ready) return false;
-  ctx.drawImage(s.img, x, y, w, h);
+  const look = looks.get(ctx);
+  ctx.drawImage((look && lookOf(key, s.img, look)) || s.img, x, y, w, h);
+  return true;
+}
+
+// ----------------------------------------------------------- baked looks
+//
+// `ctx.filter` re-filters every draw it is set for, every frame, and it is
+// the dearest thing a frame can ask for: on the map it cost a fifth of the
+// frame for ten draws. A look that only depends on the sprite is therefore
+// baked ONCE, into a copy of it, and the copy is what is drawn.
+
+/** What a sprite looks like through the fog: CSS `brightness() saturate()`. */
+export interface SpriteLook {
+  brightness: number;
+  saturate: number;
+}
+
+/** The look each context is drawing sprites in, while one is set. */
+const looks = new WeakMap<CanvasRenderingContext2D, SpriteLook>();
+
+/** A baked copy is never wider than this: the largest art (a 3×3 mountain)
+ *  is half again as wide, and a dimmed copy of it at full size is six
+ *  megabytes for a thing seen through fog. */
+const MAX_BAKE_W = 1024;
+
+/**
+ * Draw every sprite `draw` draws in `look` — what `ctx.filter =
+ * 'brightness(b) saturate(s)'` did, from a copy baked once per sprite and
+ * look. Glyph fallbacks are not dimmed; they are a placeholder for art.
+ */
+export function withSpriteLook(ctx: CanvasRenderingContext2D, look: SpriteLook, draw: () => void): void {
+  const prev = looks.get(ctx);
+  looks.set(ctx, look);
+  try {
+    draw();
+  } finally {
+    if (prev === undefined) looks.delete(ctx);
+    else looks.set(ctx, prev);
+  }
+}
+
+const baked = new Map<string, HTMLCanvasElement | null>();
+
+/** A scratch copy of `img`, at most MAX_BAKE_W wide. */
+function bakeCanvas(img: HTMLImageElement): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } {
+  const scale = Math.min(1, MAX_BAKE_W / img.naturalWidth);
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(img, 0, 0, c.width, c.height);
+  return { c, g };
+}
+
+/**
+ * The sprite in `look`, baked by hand rather than through `ctx.filter`, so
+ * it comes out the same on an engine whose canvas has no filters: the CSS
+ * saturate matrix, then the brightness multiply, in sRGB as the filter
+ * functions are. Null when the pixels cannot be read.
+ */
+function lookOf(key: string, img: HTMLImageElement, look: SpriteLook): HTMLCanvasElement | null {
+  const id = `${key}|${look.brightness}|${look.saturate}`;
+  const known = baked.get(id);
+  if (known !== undefined) return known;
+  let out: HTMLCanvasElement | null = null;
+  try {
+    const { c, g } = bakeCanvas(img);
+    const px = g.getImageData(0, 0, c.width, c.height);
+    const d = px.data;
+    const s = look.saturate;
+    const b = look.brightness;
+    const m = [
+      0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s,
+      0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s,
+      0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s,
+    ].map((v) => v * b);
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i];
+      const gr = d[i + 1];
+      const bl = d[i + 2];
+      d[i] = m[0] * r + m[1] * gr + m[2] * bl;
+      d[i + 1] = m[3] * r + m[4] * gr + m[5] * bl;
+      d[i + 2] = m[6] * r + m[7] * gr + m[8] * bl;
+    }
+    g.putImageData(px, 0, 0);
+    out = c;
+  } catch {
+    out = null; // unreadable: drawn as it is
+  }
+  baked.set(id, out);
+  return out;
+}
+
+/** A soft glow the shape of a sprite, and how far it spills past it. */
+interface Glow { c: HTMLCanvasElement; pad: number }
+const glows = new Map<string, Glow | null>();
+
+/**
+ * The sprite's shape in `color`, blurred by `radius` baked pixels — the
+ * shadow half of CSS `drop-shadow(0 0 radius color)`. Made with the canvas
+ * shadow, drawn far off the canvas so only its shadow lands, which every
+ * engine has.
+ */
+function glowOf(key: string, img: HTMLImageElement, radius: number, color: string): Glow | null {
+  const id = `${key}|${radius}|${color}`;
+  const known = glows.get(id);
+  if (known !== undefined) return known;
+  const scale = Math.min(1, MAX_BAKE_W / img.naturalWidth);
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+  // A blur of r is a Gaussian of deviation r / 2; three deviations is all of it.
+  const pad = Math.ceil(radius * 1.5) + 1;
+  const c = document.createElement('canvas');
+  c.width = w + pad * 2;
+  c.height = h + pad * 2;
+  const g = c.getContext('2d')!;
+  const off = c.width + w;
+  g.shadowColor = color;
+  g.shadowBlur = radius;
+  g.shadowOffsetX = off;
+  g.drawImage(img, pad - off, pad, w, h);
+  const glow = { c, pad };
+  glows.set(id, glow);
+  return glow;
+}
+
+/**
+ * A glow round sprite `key` filling (x, y, w, h), `radius` screen px soft —
+ * drawn UNDER the sprite, at whatever `globalAlpha` the caller set. The
+ * baked radius is rounded to a whole pixel of the copy, so a zoom does not
+ * re-bake it. False while the art is missing or loading.
+ */
+export function drawSpriteGlow(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radius: number,
+  color: string,
+): boolean {
+  const s = sprite(key);
+  if (!s?.ready || s.img.naturalWidth === 0 || w <= 0) return false;
+  const bakeW = Math.max(1, Math.round(s.img.naturalWidth * Math.min(1, MAX_BAKE_W / s.img.naturalWidth)));
+  const k = w / bakeW; // screen px per baked px
+  const glow = glowOf(key, s.img, Math.max(1, Math.round(radius / k)), color);
+  if (!glow) return false;
+  const pad = glow.pad * k;
+  ctx.drawImage(glow.c, x - pad, y - pad, w + pad * 2, h + pad * 2);
   return true;
 }
 
