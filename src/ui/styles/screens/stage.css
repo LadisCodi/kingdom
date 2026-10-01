@@ -27,8 +27,11 @@
 .stg-scrim.is-dim.is-cut {
   inset: auto;
   background: transparent;
-  border-radius: calc(var(--px) * 14);
-  box-shadow: 0 0 0 200vmax rgba(40, 22, 10, 0.42);
+  border-radius: calc(var(--px) * 26);
+  /* A FEATHERED hole: the shadow's blur fades the dark in over the hole's
+     own edge, so the glow round the control melts into it instead of
+     stopping at a line. */
+  box-shadow: 0 0 calc(var(--px) * 22) 200vmax rgba(40, 22, 10, 0.42);
 }
 
 /* ---- the pointer: a gloved hand, and a blue magic glow ----
@@ -78,6 +81,47 @@
 .stg-hand.is-below { width: calc(var(--px) * 48); translate: 0 0; margin-left: calc(var(--px) * -19); animation-name: stg-bob-up; }
 @keyframes stg-bob { to { transform: translateY(calc(var(--px) * -8)); } }
 @keyframes stg-bob-up { to { transform: translateY(calc(var(--px) * 8)); } }
+
+/* The motes: small blue-white sparks drifting slowly off the target, the
+   glow's own light — a soft core and a four-point twinkle, no glyph. */
+.stg-sparks { position: absolute; pointer-events: none; }
+.stg-sparks[hidden] { display: none; }
+.stg-spark {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: calc(var(--px) * 12 * var(--s));
+  height: calc(var(--px) * 12 * var(--s));
+  margin: calc(var(--px) * -6 * var(--s));
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 14%, rgba(200, 240, 255, 0.9) 26%,
+    rgba(60, 157, 255, 0.45) 44%, transparent 70%);
+  opacity: 0;
+  animation: stg-spark var(--t) ease-out var(--delay) infinite;
+}
+/* The twinkle: two hairline rays crossing the core, fading to their tips. */
+.stg-spark::before,
+.stg-spark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180%;
+  height: calc(var(--px) * 1.2);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(235, 250, 255, 0.95) 50%, transparent);
+}
+.stg-spark::after { rotate: 90deg; }
+@keyframes stg-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  18% { opacity: 1; }
+  70% { opacity: 0.8; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--px) * var(--dx)), calc(var(--px) * var(--dy))) scale(1) rotate(45deg);
+  }
+}
 
 /* ---- the box ---- */
 .stg .stg-box {
@@ -283,5 +327,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stg-ring polygon, .stg-glow, .stg-hand, .stg-more, #quest.is-nudging > * { animation: none; }
+  .stg-sparks { display: none; }
   .stg-actor, .stg-peek { transition: none; }
 }

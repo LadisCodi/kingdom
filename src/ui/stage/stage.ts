@@ -69,6 +69,9 @@ function bringIntoView(key: string): void {
   }
 }
 
+/** How many magic motes drift off a highlighted target. */
+const SPARKS = 14;
+
 /** How long a map target may sit out of sight, the player's hands off the
  *  screen, before the camera brings it back. */
 const REFOCUS_MS = 1500;
@@ -118,7 +121,28 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     el('span', { class: 'stg-peek-face' }), el('span', { class: 'stg-peek-say' }, 'Need a hand?'));
   // The cast stands ON the box (24-dialogue.md §1), so they are its
   // children and rise and fall with it wherever it sits.
-  const layer = el('div', { class: 'stg' }, scrim, ring, arrow, box);
+  // Magic motes drifting out from the highlighted target, slowly, the glow's
+  // own light coming off it. Each carries its own start, drift, size and
+  // timing, so the drift never reads as a loop.
+  const sparks = el('div', { class: 'stg-sparks', 'aria-hidden': 'true' });
+  for (let i = 0; i < SPARKS; i++) {
+    // A start on the target's outline: one of its four sides, anywhere along it.
+    const side = i % 4;
+    const along = Math.random() * 100;
+    const [sx, sy] = side === 0 ? [along, 0] : side === 1 ? [100, along] : side === 2 ? [along, 100] : [0, along];
+    // Outward from that side, and always a little upward: light rises.
+    const out = 14 + Math.random() * 22;
+    const [dx, dy] = side === 0 ? [(Math.random() - 0.5) * 16, -out]
+      : side === 1 ? [out, -6 - Math.random() * 14]
+        : side === 2 ? [(Math.random() - 0.5) * 16, out * 0.4 - 12]
+          : [-out, -6 - Math.random() * 14];
+    const mote = el('span', { class: 'stg-spark' });
+    mote.style.cssText = `--sx:${sx}%;--sy:${sy}%;--dx:${dx.toFixed(1)};--dy:${dy.toFixed(1)};`
+      + `--s:${(0.6 + Math.random() * 0.7).toFixed(2)};--t:${(2.4 + Math.random() * 2).toFixed(2)}s;`
+      + `--delay:${(-Math.random() * 4).toFixed(2)}s`;
+    sparks.append(mote);
+  }
+  const layer = el('div', { class: 'stg' }, scrim, sparks, ring, arrow, box);
 
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
@@ -434,6 +458,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
     ring.hidden = !show || !isCell;
     arrow.hidden = !show;
+    sparks.hidden = !show;
     scrim.classList.toggle('is-dim', lock === 'all' || lock === 'target');
     scrim.classList.toggle('is-cut', show && lock === 'target');
     if (!show) return;
@@ -441,11 +466,15 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     Object.assign(ring.style, {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
     });
+    Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    // The scrim's hole leaves room for the glow round a control, and its
+    // edge is feathered (stage.css), so the light fades into the dark.
+    const hole = isCell ? 0 : 22;
     // The scrim's cut-out IS the scrim: a box round the target whose shadow
     // darkens everything else. Without a cut it covers the frame.
     if (lock === 'target') {
       Object.assign(scrim.style, {
-        left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
+        left: `${r.x - hole}px`, top: `${r.y - hole}px`, width: `${r.w + hole * 2}px`, height: `${r.h + hole * 2}px`,
       });
     } else {
       Object.assign(scrim.style, { left: '', top: '', width: '', height: '' });
