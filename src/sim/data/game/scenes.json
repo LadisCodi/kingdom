@@ -212,7 +212,20 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Wood for the kingdom! Claim it — the scroll pays back more Mana than you spent.",
+        "text": "Every tree you felled drew a drop of Mana from the blue gauge. Don’t fret — the well fills again on its own, hour by hour.",
+        "box": "auto",
+        "point": "ui:mana",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Wood for the kingdom! Claim it — the scroll pours some Mana back, though the well would refill in time anyway.",
         "box": "middle",
         "point": "quest",
         "lock": "target",

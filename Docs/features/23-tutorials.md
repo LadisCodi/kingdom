@@ -66,7 +66,8 @@ praises each thing put right, and wears the face that goes with it
 | 2.6 | `Woodcraft` | *Close the book. Let's put that craft to work.* | the close knob | the knob | the book is shut |
 | 3.1 | `Timber` | *Show them how it's done: tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.* | the nearest forest | the map | three taps |
 | 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging. When a stand is felled, move on — it grows back.* | the nearest forest with wood left | none | the quest completes |
-| 3.3 | `Timber` | *Wood for the kingdom! Claim it — the scroll pays back more Mana than you spent.* | the quest pill | the pill | claimed |
+| 3.3 | `Timber` | *Every tree you felled drew a drop of Mana from the blue gauge. Don't fret — the well fills again on its own, hour by hour.* | the Mana gauge | everything | a tap |
+| 3.4 | `Timber` | *Wood for the kingdom! Claim it — the scroll pours some Mana back, though the well would refill in time anyway.* | the quest pill | the pill | claimed |
 | 4.1 | `ARoof` | *Wood, at last — and not one roof to sleep under. No one will settle here like this. Let's build a House.* | **Build** (its padlock breaks) | the tab | the build menu is open |
 | 4.2 | `ARoof` | *Buildings are paid for up front. Pick the House.* | the Housing card | the card | placing |
 | 4.3 | `ARoof` | *Anywhere on cleared ground. Drag it where you like, then confirm.* | the confirm button | the map and the panel | placed |
