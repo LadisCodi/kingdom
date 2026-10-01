@@ -104,10 +104,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     class: 'stg-more', 'aria-hidden': 'true', draggable: 'false', alt: '', src: spriteUrl('tutorial_quill') ?? '',
   });
   const skip = el('button', { class: 'stg-skip', type: 'button' }, 'Skip');
-  // The window's own frame layer (material.css `.k-frame`): parchment in a
-  // carved wooden ring, the same object every sheet is.
-  const box = el('div', { class: 'k-panel stg-box', role: 'dialog', 'aria-live': 'polite' },
-    el('div', { class: 'k-frame', 'aria-hidden': 'true' }), left, right, name, text, more, skip);
+  // Parchment on a carved wooden board, one nine-sliced piece of art
+  // (stage.css), lifted off the map by its own shadow.
+  const box = el('div', { class: 'stg-box', role: 'dialog', 'aria-live': 'polite' },
+    el('div', { class: 'stg-frame', 'aria-hidden': 'true' }), left, right, name, text, more, skip);
   const peek = el('button', { class: 'stg-peek', type: 'button' },
     el('span', { class: 'stg-peek-face' }), el('span', { class: 'stg-peek-say' }, 'Need a hand?'));
   // The cast stands ON the box (24-dialogue.md §1), so they are its

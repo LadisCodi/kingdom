@@ -21,8 +21,10 @@
 
 ## 2. The box
 
-- Parchment in a carved wooden frame, the name on a wooden plank on its top
-  edge on the speaker's side — the same materials as every sheet.
+- **A sheet of parchment on a carved wooden board**, one nine-sliced piece of
+  art with organic edges — worn wood, a deckled sheet with one corner curled,
+  brass rivets — and a soft shadow that lifts it off the map behind. The name
+  sits on a wooden plank on its top edge, on the speaker's side.
 - **Three places**: `bottom` (the default), `top`, `middle`. A line may set
   its own.
 - **`auto`**: when a line points at something, the box takes the half of the

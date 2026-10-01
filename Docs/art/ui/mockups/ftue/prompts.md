@@ -106,3 +106,23 @@ Attach `ftue-m3-pieces.png`.
 > 3. The GOLDEN QUILL from the reference's bottom row, alone, without the little rays beside it.
 >
 > Clean dark-brown outline, soft volume, each icon about 80% of its third. Do not draw grid lines, cell borders, labels, captions, text, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+## P3 — the dialogue frame, for nine-slicing
+
+Attach `ref-frame.png` (left: the approved dialogue box from M2; right: the
+research book's page, the organic edge to match).
+
+> CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY a reference. Left: the dialogue box we approved for our mobile game. Right: a page already in the game whose ORGANIC, worn, wavy edge is the quality we want — no ruler-straight lines anywhere.
+>
+> Draw ONE empty dialogue-box FRAME for nine-slicing, wide and low (about 2.6 times as wide as it is tall), filling the canvas with a 40 px empty margin:
+> - A BASE of warm carved WOOD: a thick board whose outline is organic — gently uneven, softly rounded corners of different radii, a few small notches and bumps where the wood was worn, visible grain, lit from the top left. Small brass rivets only in the four corners.
+> - ON TOP of the wood, a sheet of yellowed PARCHMENT, slightly smaller so a rim of wood shows all around: its edge deckled and wavy like the reference page, one corner a little lifted or curled, never a straight line.
+> - The parchment's middle is plain, empty and evenly lit, for text to be written on later.
+> - NINE-SLICE RULES: put all the character (the corner shapes, the rivets, the curl) INSIDE the four corners; along each side, between the corners, keep the wood rim and the paper edge uniform in thickness and pattern so they can be stretched without showing it. No text, no name plate, no buttons, no quill.
+>
+> Same style and materials as the reference: hand-painted mobile-game UI, saturated warm colours, clean dark-brown outline. Do not draw grid lines, labels, captions, text, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+**P3 result.** `../../sheets/dialogue-frame-raw.png` (2022×778, true alpha on
+the first try) → `src/ui/assets/dialogue-frame.png` (the alpha box, halved,
+979×352), nine-sliced at 100 and drawn 40px (`.stg-frame`, stage.css). The
+shadow is CSS (`filter: drop-shadow` on the box), not art.

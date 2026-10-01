@@ -1,9 +1,10 @@
 /* THE STAGE (Docs/features/24-dialogue.md) — the advisor and the cast.
  *
- * Materials, as every sheet: the box is parchment in a carved wooden frame
- * (the kit's `.k-panel`), the name is burnt into a small wooden plank on its
- * top edge, the pointer is the hint's own gold arrow and double ring, so a
- * player never learns two signs for one thing. */
+ * Materials, as every sheet: the box is a sheet of parchment on a carved
+ * wooden board with organic edges (`.stg-frame`, one nine-sliced piece), the
+ * name is burnt into a small wooden plank on its top edge; the pointer is a
+ * gloved hand and a blue magic glow — the quest hint's own, so a player never
+ * learns two signs for one thing. */
 
 #stage:empty { display: none; }
 #stage {
@@ -86,7 +87,12 @@
   bottom: calc(var(--nav-h) + var(--px) * 12);
   max-width: calc(var(--px) * 420);
   margin: 0 auto;
-  padding: calc(var(--rpx) * 58) calc(var(--rpx) * 56) calc(var(--rpx) * 48);
+  /* The text sits inside the frame's rim (`.stg-frame`, below). */
+  padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 30);
+  /* Lifted off the map behind it: a shadow that follows the board's outline
+     — and the figures standing on it. */
+  filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 5) rgba(25, 12, 4, 0.55))
+    drop-shadow(0 0 calc(var(--px) * 1.5) rgba(25, 12, 4, 0.45));
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
@@ -102,11 +108,24 @@
 }
 @keyframes stg-box-in { from { opacity: 0; transform: translateY(calc(var(--px) * 10)); } }
 
+/* THE FRAME: parchment laid on a carved wooden board, organic edges, the
+   corners (the rivets, the curled sheet) whole in their slices. Sliced at 100
+   of its 979×352 and drawn at 40, so the wood rim reads at phone size. A
+   child, not the box's own border, so the cast can stand BEHIND it. */
+.stg-frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: calc(var(--px) * 40) solid transparent;
+  border-image: url('../../assets/dialogue-frame.png') 100 fill / calc(var(--px) * 40) stretch;
+}
+
 .stg-name {
   position: absolute;
   z-index: 1;
   top: calc(var(--px) * -14);
-  left: calc(var(--px) * 18);
+  left: calc(var(--px) * 40); /* clear of the corner's rivet */
   padding: calc(var(--px) * 3) calc(var(--px) * 14);
   border-radius: calc(var(--px) * 6);
   font-family: var(--font-body);
@@ -117,7 +136,7 @@
   background: linear-gradient(var(--wood-light), var(--wood));
   box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 calc(var(--px) * 1) 0 rgba(255, 240, 210, 0.4);
 }
-.stg-name.is-right { left: auto; right: calc(var(--px) * 18); }
+.stg-name.is-right { left: auto; right: calc(var(--px) * 40); }
 .stg-text {
   margin: calc(var(--px) * 4) 0 0;
   min-height: calc(var(--px) * 44);
@@ -128,8 +147,8 @@
 .stg-box.is-waiting .stg-text { min-height: 0; }
 .stg-more {
   position: absolute;
-  right: calc(var(--px) * 10);
-  bottom: calc(var(--px) * 6);
+  right: calc(var(--px) * 22);
+  bottom: calc(var(--px) * 18);
   width: calc(var(--px) * 18);
   height: auto;
   pointer-events: none;
@@ -139,7 +158,7 @@
 .stg-skip {
   position: absolute;
   top: calc(var(--px) * -16);
-  right: calc(var(--px) * 12);
+  right: calc(var(--px) * 44); /* left of the curled corner */
   padding: calc(var(--px) * 2) calc(var(--px) * 10);
   border: 0;
   border-radius: calc(var(--px) * 12);
@@ -151,7 +170,7 @@
   cursor: pointer;
 }
 .stg-skip[hidden] { display: none; }
-.stg-name.is-right ~ .stg-skip { right: auto; left: calc(var(--px) * 12); }
+.stg-name.is-right ~ .stg-skip { right: auto; left: calc(var(--px) * 40); }
 
 /* ---- the cast: they stand on the box, and move with it ---- */
 .stg-box .stg-actor {
