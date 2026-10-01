@@ -147,3 +147,22 @@ stray red specks between the ribbons, dropped by cutting each one on its own
 row band) → `src/ui/assets/ribbon-{blue,green,red,brown,crimson}.png`
 (halved, 504×93), sliced at 0 100 — the swallowtails whole, the front band
 stretched to the name — and drawn 32 tall (`.stg-name`, stage.css).
+
+## P5 — Isolde's expressions
+
+Attach `src/render/assets/portrait_advisor.png` (Isolde at rest, as shipped).
+
+> CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the reference — Isolde, a character already in our game, at rest. Redraw her THREE times, side by side, each in her own third of a 3:2 landscape canvas, with a clear 40 px empty band between them.
+>
+> She must be the SAME character each time: identical style (flat 2D cartoon, bold dark-brown outline, cel shading), the same clothes, ledger, keys, quill and glasses, the same SIZE — her head and her feet at the same height in all three, standing on the same line. Her FACE and her POSE change with the mood, each pose readable at a glance:
+>
+> 1. HAPPY — a wide, warm smile and her eyes closed in two happy arcs, pleased and proud of the work the player has done; the ledger hugged to her chest with both hands, a slight satisfied lean.
+> 2. WORRIED — eyebrows raised and drawn together, a small tight frown, eyes glancing aside; one hand at her chin or her mouth, the ledger clutched close with the other, shoulders drawn in: a threat on the horizon.
+> 3. SURPRISED — eyes wide open behind her glasses, eyebrows high, mouth a small round "oh"; leaning back, one hand raised open at shoulder height, the ledger held out to the side, almost slipping: an unexpected discovery. Keep the raised hand below the top of her hair.
+>
+> Every hand, prop and foot entirely inside her own third. Do not draw grid lines, labels, captions, text, shadows, ground or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+**P5 result.** `../../../originals/hero-sheets/isolde-moods.png` (1536×1024,
+true alpha) → `src/render/assets/portrait_advisor_{happy,worried,surprised}.png`,
+each fit to the heroes' 706 tall in a 512×768 frame and placed by the centre
+of its FEET, not its box, so a raised hand never shifts the body.

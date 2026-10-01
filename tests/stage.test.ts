@@ -79,6 +79,19 @@ describe('the scenes, against the game', () => {
   });
 });
 
+describe('the faces', () => {
+  it('draws every expression a line asks for — none falls back to rest unnoticed', () => {
+    const art = new Set(readdirSync('src/render/assets').map((f) => f.replace(/\.png$/, '')));
+    for (const scene of SCENES) {
+      for (const line of scene.lines) {
+        if (line.expression === '') continue;
+        const key = `${SPEAKERS[line.speaker].portrait}_${line.expression}`;
+        expect(art.has(key), `${scene.id}: ${key}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('the conditions read the kingdom', () => {
   const args = (kind: never, target = '', amount = 0) => ({ kind, target, amount, tapsAtStart: 0 });
 

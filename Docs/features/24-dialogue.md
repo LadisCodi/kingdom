@@ -53,6 +53,7 @@
 | `lock` | `none` · `target` · `map` · `all` ([`23-tutorials.md`](23-tutorials.md) §6) |
 | `until` · `untilTarget` · `untilAmount` | the condition that moves the line on — `tap` for a tap on the box |
 | `exit` | the speaker leaves after this line |
+| `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and
   two flags: `skippable` — an introduction, which waits a breath after the
@@ -114,6 +115,11 @@ which one a line waits on is data.
 | `villager` | **a villager** | the first settler | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
 
+- **Isolde has four faces** — at rest, happy (eyes closed, a wide smile, the
+  ledger hugged), worried (a hand at her chin), surprised (leaning back, a
+  hand raised) — each its own pose, aligned on her feet so a change of face
+  never moves her. Claims and praise are happy; threats and shortfalls
+  worried; what the fog gives up surprised.
 - **Every speaker is a full figure**: it stands on the box, cut at the waist
   by it. The figures share the heroes' style and frame (512×768); the
   tutorial's own three are cut from one sheet
@@ -132,7 +138,7 @@ which one a line waits on is data.
 
 ## 8. Deliberately not in this design
 
-- Portrait expressions, lip flaps or voice.
+- Lip flaps, voice, or an expression for a speaker who has no art for it.
 - More than one character per side, or a third slot.
 - Choices, branching, or a line that changes the game.
 - A Skip button: a tap anywhere moves a line on, so a scene is over in a few taps.

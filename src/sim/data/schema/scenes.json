@@ -108,7 +108,12 @@
           },
           "untilTarget": { "type": "text", "doc": "What the condition names, where it names anything." },
           "untilAmount": { "type": "int", "min": 0, "doc": "How many, where the condition counts." },
-          "exit": { "type": "bool", "doc": "The speaker leaves the stage after this line." }
+          "exit": { "type": "bool", "doc": "The speaker leaves the stage after this line." },
+          "expression": {
+            "type": "text",
+            "options": ["", "happy", "worried", "surprised"],
+            "doc": "The speaker's face on this line; empty is at rest. Drawn from <portrait>_<expression> where that art exists."
+          }
         }
       }
     }

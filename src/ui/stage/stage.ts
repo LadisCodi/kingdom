@@ -119,9 +119,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const onStage: Record<'left' | 'right', string | null> = { left: null, right: null };
 
   // ------------------------------------------------------------ the cast
-  const portrait = (speaker: string): HTMLElement => {
+  /** The speaker's picture in a mood: `<portrait>_<expression>` where that
+   *  art exists, the speaker's own picture otherwise. */
+  const pictureOf = (speaker: string, expression: string): string | null => {
     const def = SPEAKERS[speaker];
-    const url = def ? spriteUrl(def.portrait) : null;
+    if (!def) return null;
+    return (expression !== '' ? spriteUrl(`${def.portrait}_${expression}`) : null) ?? spriteUrl(def.portrait);
+  };
+
+  const portrait = (speaker: string, expression: string): HTMLElement => {
+    const def = SPEAKERS[speaker];
+    const url = pictureOf(speaker, expression);
     const frameKind = def?.frame ?? 'figure';
     // A missing picture is a parchment medallion with the speaker's initial
     // pressed into it — a placeholder that says so, never an emoji.
@@ -133,16 +141,22 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       el('img', { src: url, alt: def?.name ?? speaker, draggable: 'false' }));
   };
 
-  /** Put `speaker` on `side`, sliding in if they were not already there. */
-  const cast = (side: 'left' | 'right', speaker: string): void => {
+  /** Put `speaker` on `side`, sliding in if they were not already there — or,
+   *  already there, simply changing face: a new expression swaps the picture
+   *  in place, it does not make an entrance. */
+  const cast = (side: 'left' | 'right', speaker: string, expression: string): void => {
     const slot = side === 'left' ? left : right;
     if (onStage[side] !== speaker) {
       onStage[side] = speaker;
-      slot.replaceChildren(portrait(speaker));
+      slot.replaceChildren(portrait(speaker, expression));
       slot.classList.remove('is-in');
       void slot.offsetWidth; // restart the entrance
       slot.classList.add('is-in');
+      return;
     }
+    const img = slot.querySelector('img');
+    const url = pictureOf(speaker, expression);
+    if (img !== null && url !== null && img.getAttribute('src') !== url) img.setAttribute('src', url);
   };
   const leave = (side: 'left' | 'right'): void => {
     onStage[side] = null;
@@ -181,7 +195,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (playing.target?.kind === 'cell') {
       game.camera.centerOnCell(playing.target.cell, playing.target.span);
     }
-    cast(l.side, l.speaker);
+    cast(l.side, l.speaker, l.expression);
     const other = l.side === 'left' ? 'right' : 'left';
     left.classList.toggle('is-lit', l.side === 'left');
     right.classList.toggle('is-lit', l.side === 'right');
@@ -373,7 +387,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       peekUntil = now + HELP.advisorShowSeconds * 1000;
       advisorRestUntil = now + HELP.advisorRestSeconds * 1000;
       const face = peek.querySelector('.stg-peek-face')!;
-      face.replaceChildren(portrait('advisor'));
+      face.replaceChildren(portrait('advisor', ''));
       if (!peek.isConnected) frame.append(peek);
       peek.classList.add('is-in');
     }
