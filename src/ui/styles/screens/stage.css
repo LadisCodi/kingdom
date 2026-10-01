@@ -231,12 +231,11 @@
 /* The other side is dimmed and set back a step. */
 .stg-box .stg-actor.is-in:not(.is-lit) { filter: brightness(0.6) saturate(0.8); transform: scale(0.94); }
 .stg-box .stg-actor:empty { display: none; }
-/* A box at the top of the screen has the cast hanging BELOW it: there is no
-   room above the plank for anyone to stand. */
-.stg-box[data-place='top'] .stg-actor { bottom: auto; top: calc(100% - var(--px) * 18); z-index: -2; }
-.stg-box[data-place='top'] .stg-portrait.is-figure { max-height: calc(var(--px) * 150); overflow: hidden; }
 /* A full figure is cut at the waist by the box: only the top of it shows. */
 .stg-box .stg-portrait.is-figure { max-height: calc(var(--px) * 230); overflow: hidden; }
+/* A cast with no room above the box — it would stand off the top of the
+   screen, under the header — is not shown at all (stage.ts). */
+.stg .stg-box.no-cast .stg-actor { opacity: 0; }
 
 .stg-portrait.is-figure img {
   display: block;

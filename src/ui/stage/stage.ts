@@ -312,6 +312,19 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     return top;
   };
 
+  /** The cast stands on the box; where that would put a figure above the
+   *  header — off the screen — it is not shown. Read while the box is still,
+   *  so a move or an entrance does not flicker it. */
+  const fitCast = (now = false): void => {
+    if (!now && box.getAnimations().length > 0) return;
+    const actors = [left, right].filter((a) => a.childElementCount > 0);
+    if (actors.length === 0) return;
+    const header = document.getElementById('header');
+    const limit = header?.getBoundingClientRect().bottom ?? frame.getBoundingClientRect().top;
+    const top = box.getBoundingClientRect().top + Math.min(...actors.map((a) => a.offsetTop));
+    box.classList.toggle('no-cast', top < limit);
+  };
+
   /** Where the box sits: its own place, or away from the target. */
   const place = (l: SceneLine): void => {
     let where = l.box;
@@ -333,6 +346,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     box.dataset.place = where;
     layer.dataset.place = where;
     boxShown = true;
+    fitCast(true);
     if (from !== null) {
       const to = box.getBoundingClientRect();
       box.animate([
@@ -594,6 +608,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           playing.missingSince = null;
         }
         drawTarget(r);
+        fitCast();
         if (now - lastCheck > 100) {
           lastCheck = now;
           if (lineHolds(l)) next();

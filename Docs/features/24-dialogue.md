@@ -16,6 +16,8 @@
 - **The speaker is lit; the other side is dimmed** to 60% and set back a
   step.
 - The characters stand on the box's top edge, so they rise and fall with it.
+  Where a figure would stand above the header — always with the box at the
+  `top` — it is not shown.
 - The stage sits above the nav bar and below the battle playback's results,
   the reveal and the rewarded video.
 
