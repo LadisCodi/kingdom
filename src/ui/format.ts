@@ -35,6 +35,16 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * A countdown read at a glance, on a widget that must not change width every
+ * second: seconds only in the last minute, whole minutes (rounded up) below an
+ * hour, and `formatDuration`'s two units above.
+ */
+export function formatCountdown(seconds: number): string {
+  if (seconds < 60) return formatDuration(seconds);
+  return formatDuration(Math.ceil(seconds / 60) * 60);
+}
+
+/**
  * THE VIEWER'S LOCALE decides how a number is written: *25,000* and *4.99* in
  * London, *25.000* and *4,99* in Madrid. Every number the UI prints goes
  * through the helpers below, which are the only place that asks — a bare

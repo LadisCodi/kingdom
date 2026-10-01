@@ -307,8 +307,10 @@ async function boot(): Promise<void> {
           needsKnob ? () => game.dismiss() : undefined,
           OVERLAY_SIGNATURES[overlay],
         );
-        // Its row of cards is browsed by dragging while the purse fills.
-        return overlay === 'build' ? holdWhileScrolling(screen) : screen;
+        // Browsed by dragging while the purse fills — the Build menu's row of
+        // cards, the research book's page: a rebuild under a finger replaces
+        // the scroller, and a phone drops the drag with it.
+        return overlay === 'build' || overlay === 'research' ? holdWhileScrolling(screen) : screen;
       });
     }
     else overlaySlot.clear();
