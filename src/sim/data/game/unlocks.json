@@ -1,0 +1,65 @@
+{
+  "build": {
+    "kind": "door",
+    "target": "build",
+    "title": "Build",
+    "icon": "unlock_build",
+    "text": "Raise houses, farms and workshops on the land you have cleared. Every building works for the kingdom, and grows with every level."
+  },
+  "research": {
+    "kind": "door",
+    "target": "research",
+    "title": "Research",
+    "icon": "unlock_research",
+    "text": "The royal library is open. Spend Knowledge on technologies to unlock new buildings and make the kingdom thrive."
+  },
+  "heroes": {
+    "kind": "door",
+    "target": "heroes",
+    "title": "Heroes",
+    "icon": "unlock_heroes",
+    "text": "Heroes lead your troops into battle. Call them at the Tavern, level them up and send them against the lairs around your kingdom."
+  },
+  "bookSagas": {
+    "kind": "book",
+    "target": "Sagas",
+    "title": "The Sagas",
+    "icon": "unlock_book_sagas",
+    "text": "A book found at the Tavern. Its technologies are about heroes, and the Tavern that hosts them."
+  },
+  "relics": {
+    "kind": "door",
+    "target": "relics",
+    "title": "Relics",
+    "icon": "unlock_relics",
+    "text": "Cards come in packs. Complete a page of the album and the kingdom earns a relic, a gift that grows every season."
+  },
+  "bookWarfare": {
+    "kind": "book",
+    "target": "Warfare",
+    "title": "Book of Warfare",
+    "icon": "unlock_book_warfare",
+    "text": "A new book of research. Its technologies raise the army, and arm it against the lairs."
+  },
+  "bookMagic": {
+    "kind": "book",
+    "target": "Magic",
+    "title": "Book of Magic",
+    "icon": "unlock_book_magic",
+    "text": "A new book of research. Its technologies deepen the Mana well, and open the Sanctum, the water and the heights."
+  },
+  "world": {
+    "kind": "door",
+    "target": "world",
+    "title": "The World",
+    "icon": "unlock_world",
+    "text": "Beyond the mountains lie other kingdoms. From the Watchtower you can see the roads that lead to them."
+  },
+  "bookAtlas": {
+    "kind": "book",
+    "target": "Atlas",
+    "title": "The Atlas",
+    "icon": "unlock_book_atlas",
+    "text": "A book found at the Watchtower. Its technologies sharpen sight, claim landmarks and reach for the world beyond."
+  }
+}

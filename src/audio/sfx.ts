@@ -50,6 +50,7 @@ import tapStone2 from './sounds/tap_stone_02.ogg?url';
 import tapStone3 from './sounds/tap_stone_03.ogg?url';
 import textTick1 from './sounds/text_tick_01.ogg?url';
 import textTick2 from './sounds/text_tick_02.ogg?url';
+import unlockUrl from './sounds/unlock_splash.ogg?url';
 
 export type SfxName =
   | 'pop' | 'tooltip' | 'click' | 'discovery' | 'quest' | 'research'
@@ -71,7 +72,9 @@ export type SfxName =
   | 'hit' | 'death'
   // A line of dialogue typing itself (ui/stage/stage.ts): Click Tap Knock
   // Subtle, light and dark — a soft knock on the box's wood.
-  | 'textTick';
+  | 'textTick'
+  // A door or a book opening, full-screen (ui/unlockSplash.ts).
+  | 'unlock';
 
 interface SoundSpec {
   /** One or more takes — a random one plays each time (organic repeats). */
@@ -133,6 +136,9 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   // Fish taps reuse the boat splash, pitched up — a lighter plip.
   tapFish: { urls: one(boatSplashUrl), volume: 0.4, jitter: 0.08, rate: 1.2 },
   textTick: { urls: [textTick1, textTick2], volume: 0.3, jitter: 0.1 },
+  // The unlock splash: Fairy Magical 05, a five-second stinger. Mastered
+  // about 10 dB hotter than `discovery`, so it plays well under it.
+  unlock: { urls: one(unlockUrl), volume: 0.3, jitter: 0 },
 };
 
 let ctx: AudioContext | null = null;

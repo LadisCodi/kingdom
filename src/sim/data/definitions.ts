@@ -553,6 +553,20 @@ export const HELP = balance.help as {
   lockFailsafeSeconds: number; typeCharsPerSecond: number; sceneGapSeconds: number;
 };
 
+/** The full-screen splash a big unlock opens with (23-tutorials.md §4.6):
+ *  a door of the UI or a book of research. `target` is a `DoorId` or a
+ *  `TomeId` by `kind` (checked by `dataRules.ts`). */
+export interface UnlockDef {
+  kind: 'door' | 'book';
+  target: string;
+  title: string;
+  text: string;
+  icon: string;
+}
+
+/** Every unlock splash, by id, in the order two that open at once are shown. */
+export const UNLOCKS = balance.unlocks as unknown as Record<string, UnlockDef>;
+
 // ----------------------------------------------------------------- districts
 
 /** The Build menu's three tabs, in their order on the menu. */

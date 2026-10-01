@@ -264,3 +264,23 @@ export const isFoundTome = (tome: TomeId): boolean => tome === 'Sagas' || tome =
 
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
+
+/** A book's key in `tutorial.seen`: it has been announced open. */
+export const bookKey = (tome: TomeId): string => `book:${tome}`;
+
+/**
+ * Books that have opened and that nobody has announced yet — the twin of
+ * `freshlyOpenDoors` (sim/doors.ts). Recording them is the caller's
+ * (`markBookSeen`), so a book is announced once. A veteran kingdom has every
+ * book open and none to announce.
+ */
+export const freshlyOpenBooks = (state: GameState): TomeId[] => {
+  if (state.tutorial.veteran) return [];
+  return (Object.keys(TOMES) as TomeId[]).filter((tome) =>
+    state.tutorial.seen[bookKey(tome)] !== true && TOME_OPENS[tome](state));
+};
+
+/** Remember that a book has been announced open. */
+export function markBookSeen(state: GameState, tome: TomeId): void {
+  state.tutorial.seen[bookKey(tome)] = true;
+}

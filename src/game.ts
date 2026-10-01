@@ -97,8 +97,8 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, researchActionableCount, eraShortfall, isTechComplete,
-  pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
+  anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
+  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
 } from './sim/research';
 import {
   effectiveAutoTapCooldownMs,
@@ -133,7 +133,7 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { KINGDOM_DEF, QUESTS, SCENES, type QuestDef } from './sim/data/definitions';
+import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -481,6 +481,10 @@ export class Game {
   /** Doors that opened since the stage last drained them — the padlock
    *  breaking, and the introduction that goes with it. Transient. */
   doorsJustOpened: DoorId[] = [];
+  /** Unlock splashes waiting to be shown, by `UNLOCKS` id, the one on screen
+   *  first (Docs/features/23-tutorials.md §4.6). Transient: the door or book
+   *  is recorded seen the moment it opens, so a reload never replays one. */
+  unlockQueue: string[] = [];
 
   /**
    * THE TUTORIAL'S GATE ON THE MAP (Docs/features/23-tutorials.md §6): the
@@ -566,9 +570,18 @@ export class Game {
     }
     // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
     // again, and announced to whoever draws padlocks and plays scenes.
-    for (const door of freshlyOpenDoors(this.state)) {
+    const doors = freshlyOpenDoors(this.state);
+    for (const door of doors) {
       markDoorSeen(this.state, door);
       this.doorsJustOpened.push(door);
+    }
+    // …and so is a BOOK. Either may have a splash, shown in `UNLOCKS` order
+    // so the Tavern's Heroes come before the book it brings.
+    const books = freshlyOpenBooks(this.state);
+    for (const book of books) markBookSeen(this.state, book);
+    for (const [id, u] of Object.entries(UNLOCKS)) {
+      const opened = u.kind === 'door' ? (doors as string[]).includes(u.target) : (books as string[]).includes(u.target);
+      if (opened) this.unlockQueue.push(id);
     }
     // A quest that CLAIMS ITSELF does so the moment it is done: the player is
     // already reaching for its next step (Docs/features/12-quests.md §1).
@@ -2838,6 +2851,22 @@ export class Game {
       this.state.heroes.owned
         .map((h) => Math.ceil(this.heroHealthOf(h).restMs / 60_000)).join(','),
     ].join('|');
+  }
+
+  /** The unlock splash to show now, or null: never over a fight, a reveal
+   *  or a video, and never before the player has a profile. A scene waits
+   *  for it (ui/stage/stage.ts). */
+  unlockOnScreen(): string | null {
+    if (this.unlockQueue.length === 0) return null;
+    if (this.state.player.payer === null) return null;
+    if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
+    return this.unlockQueue[0];
+  }
+
+  /** The player has read the splash on screen. */
+  dismissUnlock(): void {
+    this.unlockQueue.shift();
+    this.notify();
   }
 
   /** The player has read it — and whatever was waiting behind it is dealt

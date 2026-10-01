@@ -69,8 +69,9 @@
   shows its line, which says what opens it and not what it is; it never
   opens anything.
 - **A door opening is an event**: the padlock breaks off with a short
-  animation and the introduction for that door plays
-  ([`23-tutorials.md`](23-tutorials.md) §4).
+  animation, its splash names it, and the introduction for that door plays
+  ([`23-tutorials.md`](23-tutorials.md) §4, §4.6). A book opening is
+  announced the same way.
 - The general books show their bookmark padlocked; a found book has no
   bookmark until it is found — a book the player has never heard of is not a
   promise.
