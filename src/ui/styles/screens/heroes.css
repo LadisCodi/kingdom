@@ -1,390 +1,220 @@
-/* The Heroes roster and the card behind each tile.
+/* The Heroes roster and the card behind each hero (ui/heroesSheet.ts).
  *
- * The grid is the screen. A relic list can be rows because there are five of
- * them; thirty-two heroes, most of them not owned, only read as a COLLECTION
- * when they are portraits side by side — the gaps are the content, and a row
- * per hero would need thirty-two scrolls to show them.
+ * THE ROSTER is the hero picker's window and layout (heroPicker.css: the
+ * filter bar, the list, the cards, the button under them) with one line of
+ * its own — how many are found.
  *
- * Rarity is the tile's background rather than a badge on it, so the ladder is
- * legible at arm's length with no label read. */
+ * THE CARD (mockup hero-detail-A) is built from the kit — the window, the
+ * section heads, the parchment tiles (.k-section), the price line, the
+ * progress bar and the buttons. What is this screen's own is the stage and
+ * the layout. */
 
-.hero { display: flex; flex-direction: column; gap: calc(var(--px) * 14); }
-/* A bare sheet has no plank to sit under, so the card starts at the top of
-   the panel and the portrait is the first thing on screen. */
-.k-sheet.is-bare .hero { gap: calc(var(--px) * 12); }
+/* ------------------------------------------------------------- the roster - */
 
-/* --------------------------------------------------------------- the purse */
-
-/* Stardust has no coin on the plank and this screen spends it, so the amount
-   reads here. One line, not a panel: the roster is what the player came for. */
-.hero-purse {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 14);
-  min-height: calc(var(--px) * 24);
-  padding: 1px calc(var(--px) * 12);
-  border-radius: var(--radius-sm);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.08);
+.hp-found {
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  text-align: center;
 }
-.hero-purse-found { font-size: calc(var(--px) * 14); font-weight: var(--weight-strong); color: var(--ink); }
+.hp--roster > .hp-list { padding-top: 0; }
 
-/* ---------------------------------------------------------------- the grid */
+/* -------------------------------------------------------------- the card -- */
 
-.hero-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: calc(var(--px) * 6);
-}
-/* A narrow frame drops to two rather than squeezing three portraits into
-   thumbnails nobody can tell apart. */
-@container frame (max-width: 340px) {
-  .hero-grid { grid-template-columns: repeat(2, 1fr); }
+.k-sheet.is-centred:has(.hd) { max-width: calc(var(--px) * 380); max-height: 94%; }
+.hd { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.hd > .k-section-head { margin: calc(var(--px) * 6) 0 0; }
+.hd-subtitle {
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  text-align: center;
 }
 
-.hero-tile {
+/* THE STAGE: the hero on its rarity's painted vault (hero-stage-*.jpg), in
+   the hero card's gilt frame, the rarity's ribbon top-left, the type's
+   banner top-right, and an arrow each side hanging over the frame's edge. */
+.hd-stage {
+  --stage-w: calc(var(--px) * 336);
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  aspect-ratio: 3 / 4;
-  padding: 0;
-  overflow: hidden;
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius);
-  /* The rarity is a thin ring INSIDE the wood, on a parchment tile (M6):
-     the collection is parchment cards, and the ladder still reads. */
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), 0 var(--lip) 0 var(--wood-dark);
-  cursor: pointer;
-  transition: transform var(--motion-snap) steps(1);
-  background: var(--parchment-shade);
+  align-self: center;
+  width: var(--stage-w);
+  aspect-ratio: 4 / 3;
+  margin-inline: calc(var(--px) * 14);
 }
-.hero-tile:hover { filter: brightness(1.06); }
-.hero-tile:active { transform: translateY(var(--lip)); box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent); }
-
-.hero-tile.is-common { --tile: transparent; }
-.hero-tile.is-rare { --tile: var(--rarity-rare); }
-.hero-tile.is-legendary { --tile: var(--rarity-legendary); }
-/* An unfound hero keeps its rarity nowhere: a locked tile that still glowed
-   gold would advertise a Legendary the player has no way to act on. Warm
-   stone, the same treatment every other gated thing gets. */
-.hero-tile.is-locked { --tile: transparent; }
-
-/* The portrait fills the tile and is CONTAINED, never cropped: the sheet is
-   mixed (128² for some, 42×74 for others) and a cover would behead half the
-   roster. The BOX is fixed to the tile and `object-fit` does the fitting.
-   Sizing the image itself instead — auto width against a max — lets a 128²
-   sprite overflow the inset box and get clipped by the tile, which is the bug
-   this shape avoids: every portrait letterboxes inside the same rectangle,
-   so a tall hero and a square one line up across a row. */
-.hero-art {
+.hd-stage::before {
+  content: '';
   position: absolute;
-  top: calc(var(--px) * 8);
-  left: calc(var(--px) * 4);
-  right: calc(var(--px) * 4);
-  bottom: calc(var(--px) * 30);
-  width: calc(100% - calc(var(--px) * 8));
-  height: calc(100% - calc(var(--px) * 38));
+  inset: calc(var(--stage-w) * 0.022);
+  border-radius: calc(var(--stage-w) * 0.03);
+  background: var(--stage-bg) center / cover no-repeat;
+}
+.hd-stage.is-common { --stage-bg: url('../../assets/hero-stage-common.jpg'); }
+.hd-stage.is-rare { --stage-bg: url('../../assets/hero-stage-rare.jpg'); }
+.hd-stage.is-legendary { --stage-bg: url('../../assets/hero-stage-legendary.jpg'); }
+/* Not found yet: the vault turns to warm stone and the hero to a silhouette,
+   as on its card. */
+.hd-stage.is-missing::before { filter: grayscale(1) sepia(0.6) brightness(0.75); }
+.hd-stage.is-missing .hd-art { filter: brightness(0) opacity(0.55); }
+
+.hd-art {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--stage-w) * 0.04);
+  translate: -50% 0;
+  height: 92%;
+  width: auto;
+  max-width: 70%;
   object-fit: contain;
   object-position: center bottom;
-  image-rendering: pixelated;
 }
-/* An unfound hero is a sepia silhouette on the parchment (M6): the shape
-   says who, the tone says not yet. */
-.hero-art.is-locked { filter: brightness(0.4) sepia(1) saturate(1.6) contrast(0.9); opacity: 0.55; }
-/* No hero is without art today; this is the path that keeps a missing sheet
-   from drawing a stretched box. */
-.hero-art--glyph {
+.hd-art.is-glyph { display: grid; place-items: center; width: 50%; font-size: calc(var(--stage-w) * 0.2); }
+/* The hero card's gilt frame, nine-sliced the same way (heroPicker.css). */
+.hd-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--stage-w) * 0.045);
+  border-image: url('../../assets/hero-card-frame.png') 50 / calc(var(--stage-w) * 0.045) stretch;
+}
+
+/* The rarity, as a cloth ribbon (hero-rarity-*.png) pinned over the frame's
+   top-left corner; the word is the game's, set on the cloth. */
+.hd-rarity {
+  position: absolute;
+  top: calc(var(--px) * -4);
+  left: calc(var(--px) * -8);
+  z-index: 1;
   display: grid;
   place-items: center;
-  font-size: calc(var(--px) * 40);
-  line-height: 1;
-}
-
-/* WHAT IT FIGHTS AS, as a word rather than a mark. One pill, one rule, both
-   screens: the four unit icons are four similar silhouettes at 16px, and the
-   card was saying it twice — icon and name side by side. */
-.hero-type {
-  padding: 1px calc(var(--px) * 8);
-  border-radius: calc(var(--px) * 999);
-  background: rgba(59, 36, 18, 0.6);
+  width: calc(var(--px) * 108);
+  aspect-ratio: 384 / 160;
+  padding: 0 calc(var(--px) * 14) calc(var(--px) * 3) calc(var(--px) * 16);
+  box-sizing: border-box;
+  background: var(--ribbon) center / 100% 100% no-repeat;
   color: var(--ink-inverse);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.5;
-  white-space: nowrap;
+  font-size: var(--text-body);
+  font-weight: var(--weight-title);
+  --ribbon-ink: rgba(30, 14, 40, 0.75);
+  text-shadow: 0 calc(var(--px) * 1) 0 var(--ribbon-ink), 0 0 calc(var(--px) * 2) var(--ribbon-ink);
 }
-.hero-type.is-tile {
+.hd-rarity.is-common { --ribbon: url('../../assets/hero-rarity-common.png'); }
+.hd-rarity.is-rare { --ribbon: url('../../assets/hero-rarity-rare.png'); }
+.hd-rarity.is-legendary { --ribbon: url('../../assets/hero-rarity-legendary.png'); }
+
+/* What it fights as: the card's type banner, larger, with the word under
+   the symbol, hanging from the frame's top-right corner. */
+.hd-type {
   position: absolute;
-  top: calc(var(--px) * 6);
-  left: calc(var(--px) * -2);
-  padding: 0 calc(var(--px) * 12) 0 calc(var(--px) * 8);
-  border-radius: 0 calc(var(--px) * 3) calc(var(--px) * 3) 0;
-  font-size: calc(var(--px) * 13);
-  font-weight: var(--weight-strong);
-  line-height: 1.5;
-  color: var(--ink-inverse);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  background: var(--ribbon, var(--wood));
-  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.35);
-  /* A ribbon: square at the left where it is pinned, a swallowtail at the right. */
-  clip-path: polygon(0 0, 100% 0, calc(100% - calc(var(--px) * 6)) 50%, 100% 100%, 0 100%);
-}
-/* The ribbon takes the class's colour: which of the four it fights as is the
-   one fact a roster is scanned for (M6). */
-.hero-tile.is-Warrior .hero-type.is-tile { --ribbon: #b8452f; }
-.hero-tile.is-Lancer .hero-type.is-tile { --ribbon: #2f6fb3; }
-.hero-tile.is-Archer .hero-type.is-tile { --ribbon: #4f8f2f; }
-.hero-tile.is-Cavalry .hero-type.is-tile { --ribbon: #7a4a26; }
-
-.hero-tile-foot {
-  position: relative;
+  top: calc(var(--stage-w) * 0.012);
+  right: calc(var(--stage-w) * 0.05);
+  z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: calc(var(--px) * 2);
-  margin: 0 calc(var(--px) * 4) calc(var(--px) * 4);
-  padding: 0 calc(var(--px) * 6);
-  min-height: calc(var(--px) * 20);
-  border-radius: calc(var(--px) * 6);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
-  background: var(--parchment);
-  color: var(--ink);
+  justify-content: center;
+  gap: 0;
+  width: calc(var(--px) * 66);
+  aspect-ratio: 146 / 161;
+  padding-bottom: calc(var(--px) * 12);
+  box-sizing: border-box;
+  background: var(--hc-banner) center / 100% 100% no-repeat;
+  color: var(--ink-inverse);
   font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-strong);
-  line-height: 1.4;
-}
-.hero-tile-foot.is-frag { justify-content: center; gap: calc(var(--px) * 4); }
-.hero-tile-level { font-family: var(--font-body); white-space: nowrap; }
-
-/* EXHAUSTED: the hero is asleep (kit `restMarks`) — darkened, never the
-   unfound silhouette, since it is still the player's. The foot becomes the
-   rest's countdown over the HP bar. */
-.hero-tile.is-resting .hero-art { filter: brightness(0.5) saturate(0.7); }
-.hero-tile.is-resting > .k-zzz { --zzz-size: calc(var(--px) * 20); top: calc(var(--px) * 18); right: calc(var(--px) * 2); }
-.hero-tile-foot.is-rest {
-  flex-direction: column;
-  justify-content: center;
-  gap: calc(var(--px) * 3);
-  padding: calc(var(--px) * 2) calc(var(--px) * 4) calc(var(--px) * 4);
-  border: 0;
-  background: none;
-}
-.hero-tile-foot.is-rest > .k-hp { align-self: stretch; }
-/* An owned hero's bar, just over its foot. */
-.hero-tile-hp {
-  position: absolute;
-  left: calc(var(--px) * 8);
-  right: calc(var(--px) * 8);
-  bottom: calc(var(--px) * 28);
-}
-
-/* The call-to-action orb: this card has something to press right now — the
-   roster's whole job is pointing at the one tile worth opening. The tile
-   clips its art, so the orb sits just inside its corner. */
-.hero-tile > .k-cta { top: calc(var(--px) * 4); right: calc(var(--px) * 4); }
-
-/* ------------------------------------------------------------- the stars -- */
-
-.hero-stars { display: inline-flex; gap: 1px; align-items: center; }
-.hero-stars .icon.is-locked { opacity: 0.35; }
-/* The card's row. Ascension is the ladder the player is chasing and a row of
-   16px pips said so in a whisper; these are the loudest thing under the art. */
-.hero-stars.is-big { gap: calc(var(--px) * 2); }
-.hero-stars.is-big .icon { --icon-size: calc(var(--px) * 34); }
-/* An unearned star is a DERIVED cell in the atlas now, not a CSS filter, so
-   the silhouette is pixel-identical to an earned one and the row cannot
-   shift as a hero ascends. The drop shadow is kept off it — a star that is
-   not there casts nothing. */
-.hero-stars.is-big .icon:not(.is-locked) {
-  filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(24, 15, 8, 0.55));
-}
-.hero-stars.is-big .icon.is-locked { opacity: 0.6; }
-@container frame (max-width: 380px) {
-  .hero-stars.is-big .icon { --icon-size: calc(var(--px) * 26); }
-}
-
-/* ------------------------------------------------------------- the detail - */
-
-/* The stage: portrait on its rarity, with the two arrows that step the
-   roster and the way back riding in its corner. Comparing two heroes is most
-   of what the card is for, and none of that chrome may cost a row. */
-.hero-stage {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 6);
-  min-height: calc(var(--px) * 220);
-  /* The bottom padding is the band the foot rides in. The stars overlap the
-     art rather than clearing it, so it is deliberately less than the foot is
-     tall. */
-  padding: calc(var(--px) * 12) calc(var(--px) * 8) calc(var(--px) * 34);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius);
-  /* A parchment vignette with a soft wash of the rarity's colour (M17), and
-     the rarity ringed inside the wood like the roster's tiles. */
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3);
-  background:
-    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
-    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
-    var(--parchment);
-}
-.hero-stage.is-common { --wash: rgba(95, 143, 168, 0.18); }
-.hero-stage.is-rare { --wash: rgba(138, 107, 196, 0.2); }
-.hero-stage.is-legendary { --wash: rgba(217, 154, 43, 0.22); }
-.hero-stage.is-common { --tile: var(--rarity-common); }
-.hero-stage.is-rare { --tile: var(--rarity-rare); }
-.hero-stage.is-legendary { --tile: var(--rarity-legendary); }
-
-.hero-stage .hero-art {
-  position: static;
-  inset: auto;
-  width: 60%;
-  height: calc(var(--px) * 170);
-  object-position: center;
-}
-
-/* Below the portrait and slightly OVER it. The stars belong to the hero, not
-   to a row under the hero, and the overlap is what says so. */
-.hero-stage-foot {
-  position: absolute;
-  left: calc(var(--px) * 10);
-  right: calc(var(--px) * 10);
-  bottom: calc(var(--px) * 6);
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 8);
-  pointer-events: none;
-}
-.hero-stage-foot > * { pointer-events: auto; }
-/* The stars take the space the button does not, and centre in it — so the
-   two can never collide, at any frame width. */
-.hero-stage-foot .hero-stars { flex: 1; min-width: 0; justify-content: center; }
-
-/* Bottom-right, inside the frame, carrying both prices. */
-.hero-ascend {
-  flex: 0 0 auto;
-  min-height: 0;
-  padding: calc(var(--px) * 4) calc(var(--px) * 10);
-}
-.hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
-
-/* On the portrait, not above it — a row of its own cost a band of the screen
-   to say one word. The cross sits right, where every sheet in the game puts
-   one; the type pill takes the corner it left. */
-/* The window's carved close (kit closeKnob), on the stage's corner rather than
-   the frame's: the card's own way back to the roster. */
-.k-close.hero-close {
-  top: calc(var(--px) * 8);
-  right: calc(var(--px) * 8);
-  z-index: 2;
-}
-.hero-stage > .hero-type {
-  position: absolute;
-  top: calc(var(--px) * 8);
-  left: calc(var(--px) * 10);
-  z-index: 2;
-}
-
-/* Under the back knob, at the foot of the stage: the corner it used to sit in
-   belongs to the way out now. */
-.hero-rarity {
-  position: absolute;
-  top: calc(var(--px) * 12);
-  right: calc(var(--px) * 60); /* beside the way out, as M17 places it */
-  padding: calc(var(--px) * 2) calc(var(--px) * 8);
-  border-radius: var(--radius-sm);
-  background: rgba(59, 36, 18, 0.6);
-  color: var(--ink-inverse);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  letter-spacing: 0.04em;
-}
-/* No plank above it, so the name is the card's title and carries the weight. */
-.hero-title { text-align: center; }
-.hero-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
-.hero-subtitle { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
-
-/* THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card: one
-   decision, one place to look. Ascension went the other way, onto the
-   portrait beside its stars, so each ladder sits with the thing it moves. */
-.hero-level {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 12);
-  margin-top: auto;
-  padding: calc(var(--px) * 8) calc(var(--px) * 12);
-  border-radius: var(--radius-sm);
-  background: var(--parchment-shade);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-}
-.hero-level-read {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--px) * 6);
-  flex: 1;
-  min-width: 0;
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-}
-.hero-level-read b {
-  font-family: var(--font-display); font-weight: var(--font-display-weight);
-  font-size: var(--text-title);
+  font-weight: var(--weight-title);
   line-height: 1;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.6);
 }
-.hero-level-label, .hero-level-cap { color: var(--ink-muted); }
-.hero-level .k-btn { flex: 0 0 auto; }
+.hd-type.is-Warrior { --hc-banner: url('../../assets/hero-banner-warrior.png'); }
+.hd-type.is-Lancer { --hc-banner: url('../../assets/hero-banner-lancer.png'); }
+.hd-type.is-Archer { --hc-banner: url('../../assets/hero-banner-archer.png'); }
+.hd-type.is-Cavalry { --hc-banner: url('../../assets/hero-banner-cavalry.png'); }
+.hd-type > .icon {
+  --icon-size: calc(var(--px) * 26);
+  filter: brightness(0) invert(1) drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.55));
+}
 
-/* At the ceiling the button is gone and this stands where it was, pointing
-   at the Ascend on the portrait. Not a disabled button with a caption: a
-   disabled button still offers a press, and the press is not the answer. */
-.hero-level.is-capped { background: var(--parchment); }
-.hero-level-block {
+/* The arrows: the game's round wood knob, half over the frame's edge. */
+.hd-stage > .k-knob {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  translate: 0 -50%;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  min-height: calc(var(--px) * 44);
+  font-size: calc(var(--px) * 26);
+  font-weight: var(--weight-title);
+}
+.hd-stage > .hd-prev { left: calc(var(--px) * -18); }
+.hd-stage > .hd-next { right: calc(var(--px) * -18); }
+
+/* A SECTION'S TRAY: what it reads on the left, its price over its button on
+   the right — the upgrade popup's buying block, split in two. */
+.hd-tray.k-section {
   display: flex;
   align-items: center;
-  gap: calc(var(--px) * 6);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  color: var(--ink-muted);
-  text-align: right;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 64);
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
 }
-
-/* Three parchment tiles sharing the row, the icon over the number (M17). */
-.hero-statline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--px) * 8); }
-.hero-statline > .k-stat {
+.hd-tray > :first-child { flex: 1; min-width: 0; }
+.hd-buy {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 2);
-  min-height: calc(var(--px) * 64);
-  padding: calc(var(--px) * 6) calc(var(--px) * 4);
-  border-radius: var(--radius-sm);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
-  background: var(--parchment-shade);
+  gap: calc(var(--px) * 4);
 }
-.hero-statline > .k-stat > .icon { --icon-size: calc(var(--px) * 26); }
-
-.hero-passive {
+.hd-buy > .k-btn:not(.k-knob) { min-width: calc(var(--px) * 136); }
+.hd-buy > .k-price { gap: calc(var(--px) * 12); }
+.hd-note {
+  flex: 0 0 auto;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: calc(var(--px) * 6);
+  max-width: 50%;
+  color: var(--ink-muted);
   font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  line-height: 1.35;
-}
-/* THE BOON, on the six Legendaries that carry one. Gold ink and a rule above
-   it: it is a different KIND of sentence from the trait — that one moves a
-   party, this one moves the kingdom — and the card has to say so without a
-   label saying it. */
-.hero-passive.is-boon {
-  margin-top: calc(var(--px) * 2);
-  padding-top: calc(var(--px) * 6);
-  border-top: calc(var(--px) * 2) solid var(--gold-dark);
-  color: var(--wood-dark);
   font-weight: var(--weight-strong);
 }
-.hero-note { font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); line-height: 1.35; }
+
+/* The ascension: the five stars, big — the ladder the player is chasing. */
+.hd-stars { display: flex; justify-content: center; gap: calc(var(--px) * 2); }
+.hd-stars .icon { --icon-size: calc(var(--px) * 32); }
+.hd-stars .icon.is-locked { opacity: 0.6; }
+.hd-ascend.is-max .hd-stars .icon { --icon-size: calc(var(--px) * 36); }
+
+/* The stats: three parchment tiles, icon then label over value. */
+.hd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--px) * 6); }
+.hd-stat.k-section {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+}
+.hd-stat > .icon { --icon-size: calc(var(--px) * 32); flex: none; }
+.hd-stat-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+.hd-stat-label { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
+.hd-stat-value { font-size: var(--text-title); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
+
+/* The passive, and the boon under it on the six that have one. */
+.hd-passive.k-section {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  min-height: calc(var(--px) * 46);
+  padding: calc(var(--px) * 6) calc(var(--px) * 12);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+}
+.hd-passive > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
+.hd-passive.is-boon { border-color: var(--gold-dark); }
+
+/* The level (or the fragments), as words over the game's green bar. */
+.hd-read { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.hd-read-line { color: var(--ink-muted); font-size: var(--text-body); font-weight: var(--weight-strong); }
+.hd-read-line > b { color: var(--ink); font-size: var(--text-title); font-weight: var(--weight-title); }
+.hd-read > .k-trough { --bar-h: calc(var(--px) * 18); }

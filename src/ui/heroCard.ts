@@ -1,6 +1,6 @@
 // A HERO AS A CARD, 2:3 — the one shape a hero takes wherever a screen offers
-// it or seats it: the hero picker's list and slots, and the attack screen's
-// hero slots.
+// it or seats it: the roster, the hero picker's list and slots, and the
+// attack screen's hero slots.
 //
 // The card carries everything a choice turns on and nothing else:
 //   the illustration, filling the card on its RARITY's colour;
@@ -9,24 +9,32 @@
 //   its HP, on the small bar hung over the bottom edge;
 //   and, exhausted, the Zs and how long the rest has left.
 // No name: the face is the name.
+//
+// A hero NOT FOUND yet is the same card on warm stone: the figure a dark
+// silhouette, and the fragments it has against the ten that recruit it in
+// place of the level — a signpost, not a locked box.
 
-import { COLLECTION, HEROES } from '../sim/data/definitions';
+import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { heroUnlockCost } from '../sim/heroes';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { HeroId } from '../sim/state';
-import type { Game } from '../game';
-import { el } from './format';
-import { hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
+import type { HeroId, UnitId } from '../sim/state';
+import type { Game, HeroPickSort } from '../game';
+import { el, formatExact } from './format';
+import { ctaBadge, hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
 
 export interface HeroCardOpts {
   /** It is in a slot — the green check at the top right. */
   picked?: boolean;
   /** Smaller: a slot on a crowded board. */
   small?: boolean;
+  /** Something can be done with this hero right now — the green orb. */
+  cta?: boolean;
   onClick?: () => void;
   label?: string;
 }
 
 export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): HTMLElement {
+  if (!game.state.heroes.owned.includes(heroId)) return missingCard(game, heroId, opts);
   const def = HEROES[heroId];
   const health = game.heroHealthOf(heroId);
   const tier = game.state.heroes.tiers[heroId] ?? 1;
@@ -50,9 +58,69 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
     : [el('span', { class: 'hc-foot' },
       stars, el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`))]),
   hpOf(health.hp, health.max, opts.small === true),
-  ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []));
+  ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []),
+  ...(opts.cta ? [ctaBadge(1, `hero:${heroId}`)] : []));
   if (opts.onClick) card.addEventListener('click', opts.onClick);
   return card;
+}
+
+/** A hero not found yet: stone, a silhouette, its fragments. */
+function missingCard(game: Game, heroId: HeroId, opts: HeroCardOpts): HTMLElement {
+  const def = HEROES[heroId];
+  const url = spriteUrl(def.sprite);
+  const have = game.state.heroes.fragments[heroId] ?? 0;
+  const need = heroUnlockCost();
+  const card = el(opts.onClick ? 'button' : 'span', {
+    class: `hc is-missing${opts.small ? ' is-small' : ''}`,
+    ...(opts.onClick ? { type: 'button' } : {}),
+    'aria-label': opts.label ?? `${def.name}, not found, ${have} of ${need} fragments`,
+  },
+  url ? spriteImgAt(url, 'hc-art') : el('span', { class: 'hc-art is-glyph' }, def.glyph),
+  el('span', { class: 'hc-frame', 'aria-hidden': 'true' }),
+  el('span', { class: `hc-type is-${def.unitType}` },
+    iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
+  el('span', { class: 'hc-foot' },
+    el('span', { class: `hc-level hc-frag${have >= need ? ' is-ready' : ''}` },
+      iconEl('fragment', { size: 'sm' }), `${formatExact(have)} / ${formatExact(need)}`)),
+  ...(opts.cta ? [ctaBadge(1, `hero:${heroId}`)] : []));
+  if (opts.onClick) card.addEventListener('click', opts.onClick);
+  return card;
+}
+
+/** The unit types heroes fight as, in roster order — the filter's tabs. */
+const heroTypes = (): UnitId[] => [...new Set(HERO_ORDER.map((h) => HEROES[h].unitType))];
+
+/**
+ * THE FILTER BAR over a list of heroes — All, one tab per unit type, and the
+ * sort — shared by the roster and the picker. The game's wooden buttons; the
+ * filter that is on stays pushed in (material.css `is-pressed`).
+ */
+export function heroFilterBar(opts: {
+  filter: UnitId | 'All';
+  sort: HeroPickSort;
+  onFilter: (filter: UnitId | 'All') => void;
+  onSort: () => void;
+}): HTMLElement {
+  const tab = (filter: UnitId | 'All'): HTMLElement => {
+    const on = opts.filter === filter;
+    const b = el('button', {
+      class: `k-btn k-btn--secondary is-paint hp-tab${on ? ' is-pressed' : ''}`, type: 'button',
+      'aria-pressed': on ? 'true' : 'false',
+      'aria-label': filter === 'All' ? 'All heroes' : `${filter} heroes`,
+    }, el('span', { class: 'k-btn-label' },
+      filter === 'All' ? 'All' : iconEl(unitTypeIcon(filter), { size: 'sm' })));
+    b.addEventListener('click', () => opts.onFilter(filter));
+    return b;
+  };
+  const sort = el('button', {
+    class: 'k-btn k-btn--secondary is-paint hp-sort', type: 'button', 'aria-label': 'Sort heroes',
+  }, el('span', { class: 'k-btn-label' },
+    opts.sort === 'level' ? 'Lv' : 'Rarity', el('span', { class: 'hp-sort-caret', 'aria-hidden': 'true' }, '▾')));
+  sort.addEventListener('click', opts.onSort);
+  return el('div', { class: 'hp-bar' },
+    el('div', { class: 'hp-tabs', role: 'group', 'aria-label': 'Filter by type' },
+      tab('All'), ...heroTypes().map(tab)),
+    sort);
 }
 
 /**

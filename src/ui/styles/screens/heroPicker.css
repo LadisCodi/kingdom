@@ -152,6 +152,21 @@ button.hc { cursor: pointer; }
 .hc.is-resting .hc-art,
 .hc.is-resting::before { filter: brightness(0.5) saturate(0.7); }
 .hc.is-resting > .k-zzz { --zzz-size: calc(var(--hc-w) * 0.13); top: calc(var(--hc-w) * 0.06); right: calc(var(--hc-w) * 0.02); }
+/* Not found yet: warm stone in place of the rarity's face, the figure a
+   dark silhouette, the fragments where the level was. */
+.hc.is-missing { --hc-bg: #8a6a48; --hc-face: none; }
+.hc.is-missing::before {
+  background:
+    radial-gradient(90% 70% at 50% 35%, rgba(255, 236, 200, 0.18), transparent 70%),
+    var(--hc-bg);
+}
+.hc.is-missing .hc-art { filter: brightness(0) opacity(0.5); }
+.hc-frag { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--hc-w) * 0.03); }
+.hc-frag > .icon { --icon-size: calc(var(--hc-w) * 0.13); }
+.hc-frag.is-ready { color: #9be36a; }
+.hc.is-missing .hc-foot { bottom: calc(var(--hc-w) * 0.12); }
+/* Something to do with it: the green orb over the top-right corner. */
+.hc > .k-cta { top: calc(var(--hc-w) * -0.04); right: calc(var(--hc-w) * -0.04); z-index: 2; }
 /* A small card: a slot on a crowded board. */
 .hc.is-small { --hc-w: calc(var(--px) * 64); }
 .hc.is-small .hc-foot { bottom: calc(var(--hc-w) * 0.09); }

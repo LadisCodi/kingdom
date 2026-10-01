@@ -358,65 +358,44 @@ Each of these is data, not code:
 
 ### 8.1 The roster
 
-- **A grid of portraits, three across.** Thirty-two heroes, most of them not
-  owned, only read as a collection when the gaps are visible; a list of rows
-  cannot show them.
-- **Rarity is the tile's background**, blue → violet → gold, so the ladder
-  reads with no label. An unfound hero loses its rarity for warm stone: a
-  locked tile that still glowed gold would advertise a Legendary the player
-  cannot act on.
-- A tile carries the portrait, its **unit type** top-left, its **level** and
-  its **ascension stars** along the foot.
-- **The type is a pill with the word in it, no icon** — on the tile and on the
-  card alike. The four unit marks are four similar silhouettes at 16px, and
-  the card was saying it twice, icon and name side by side.
-- **An unfound hero shows its fragment count** against the ten that recruit
-  them, not a padlock — a silhouette with progress on it is something to want.
-- **A green mark** on any tile that can take a level or an ascension right
-  now. It is the roster's whole job: point at the one card worth opening.
-- **Owned first, then the gaps**, both in roster order. No sort control.
+- **The hero picker's window without the party** (§8.4): the same filter
+  bar (All, one tab per unit type, the sort by level or rarity), the same
+  cards three to a row, scrolling on their own.
+- **Owned first**, in the picker's order, **then the heroes not found yet**,
+  in roster order — both under the type filter.
+- A card carries the portrait on its **rarity's face** (blue → violet →
+  gold), its **unit type** on a banner top-left, its **level** and
+  **ascension stars** at the foot, and its **HP**.
+- **An unfound hero is the same card on warm stone**: a dark silhouette, and
+  its **fragments** against the ten that recruit them in place of the level.
+- **A green orb** on any card that can take a level, an ascension or a
+  recruit right now.
+- One line over the grid: how many of the roster are found.
+- One button under it: **Call for aid**, into the banner.
 - **The two purses this screen spends from ride on the game's own plank while
-  it is open** — Hero XP and Stardust, in place of the city coins, which buy
-  nothing here. A swap rather than an addition: the plank is the tightest row
-  in the game, and this is the same move the plaque under it already makes.
-  It also gives a refused Train something to shake.
-- One line above the grid: how many of the roster are found. One button below
-  it: **Call for aid**, into the banner.
+  it is open** — Hero XP and Stardust, in place of the city coins.
 
 ### 8.2 The card
 
-- Opened by tapping a tile. **The card has no header**: the portrait and the
-  name below it are the title, and a plank repeating the name above them would
-  spend a band of the screen saying it twice.
-- Portrait on its rarity, with the **rarity** at the foot, the **type pill**
-  top-left and **a close in the top-right corner**, where every sheet in the
-  game puts one. An arrow each side steps to the next hero, which is most of
-  what the card is for.
-- **All of that chrome rides on the portrait**, never in a row of its own.
-  Every pixel above the fold belongs to the art.
-- **Each ladder sits with the thing it moves.** The **ascension stars** ride
-  on the portrait's lower edge, overlapping it, at the size the chase
-  deserves; **Ascend** is a button in the frame's bottom-right corner, showing
-  the Stardust toll and the fragment count it also asks for.
-- Name and title, then the stat block and the passive.
-- **The level and its button are one widget at the foot of the card.** They
-  were a number in one box and a button four rows below it, which is two
-  places to look for one decision.
-- **At the ascension's ceiling the button is gone**, and the widget says
-  *Ascend them to go further* in its place. Not a disabled button with a
-  caption: a disabled button still offers a press, and the press is not the
-  answer — the Ascend on the portrait is.
-- **An unowned hero gets the same card**, stats and passive and all. What the
-  player is deciding is whether to chase this one, and that is a question
-  about its type, its numbers and what it does — a fragment bar alone is a
-  progress meter for a thing it never described.
-- The foot widget is the one part that differs, and only in what it reads and
-  what its button does: **fragments of ten**, and **Call for aid** into the
-  banner, which becomes **Recruit** the moment ten have piled up. One button,
-  whichever door is open.
-- **The card is centred, not anchored to the bottom.** A drawer is something
-  you pull up over a screen you are still working with; the card is the whole
-  of what the player is doing.
+- Opened by tapping a card; a **centred window** with the hero's **name on
+  its plank** and the close that goes back to the roster.
+- The **title** under the plank, then **the stage**: the hero on its rarity's
+  painted vault, in the card's gilt frame, the **rarity** on a cloth ribbon
+  top-left, the **unit type** on its banner top-right, and an **arrow each
+  side** that steps to the previous or next hero.
+- Then one section each, under a section head:
+  - **Ascension** — the five stars, and **Ascend** with its Stardust toll
+    and fragment count over it. At the top tier, *Fully ascended*.
+  - **Stats** — Attack, Defense and HP, a tile each.
+  - **Passive** — the trait, and the boon under it on the six that have one.
+  - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
+    Hero XP price over it. At the ascension's ceiling the button is gone and
+    the tray says *Ascend them to go further*; at the last level, *At the
+    ceiling*.
+- **An unowned hero gets the same card**, stats and passive and all, without
+  Ascension, on a stone stage with a silhouette. **Fragments** takes the
+  Level section's place — *Fragments n of 10* over the bar — with **Call for
+  aid** into the banner, which becomes **Recruit** once ten have piled up.
 
 ### 8.3 The reveal
 

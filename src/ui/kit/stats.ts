@@ -112,6 +112,22 @@ export function stat(icon: IconName, value: string, unit?: string): HTMLElement 
   return el('span', { class: 'k-stat' }, ...parts);
 }
 
+/** One term of a PRICE LINE: what it costs in one thing, red when short. */
+export interface PriceTerm { icon: IconName; amount: string; short?: boolean }
+
+/**
+ * THE PRICE LINE over a window's button (mockup M35): each term as a large
+ * icon and its amount, in a centred row, any term the player is short of in
+ * clay. `trailing` is for what is not a price but reads beside it — the
+ * upgrade's build time.
+ */
+export function priceLine(terms: readonly PriceTerm[], ...trailing: Node[]): HTMLElement {
+  return el('div', { class: 'k-price' },
+    ...terms.map((t) => el('span', { class: `k-price-term${t.short ? ' is-short' : ''}` },
+      iconEl(t.icon), el('b', {}, t.amount))),
+    ...trailing);
+}
+
 /** Countable progress, for totals small enough to read at a glance. */
 export function pips(filled: number, total: number): HTMLElement {
   const row = el('span', { class: 'k-pips' });

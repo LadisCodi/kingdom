@@ -10,7 +10,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
@@ -395,6 +395,10 @@ export class Game {
    *  On the presenter rather than in the view for the reason `lairId`
    *  is: it survives the per-tick rebuild, and it is node-testable. */
   openHeroId: HeroId | null = null;
+  /** The roster's type filter and sort — the picker's two controls, kept
+   *  here for the reason `openHeroId` is. */
+  heroesFilter: UnitId | 'All' = 'All';
+  heroesSort: HeroPickSort = 'level';
   /** The relic whose card is open on the Reliquary screen, or null for the
    *  grid. Same shape and same reason as `openHeroId`: the two screens are
    *  one pattern — a collection, and one piece of it opened. */
@@ -2760,6 +2764,8 @@ export class Game {
   heroesSignature(): string {
     return [
       this.openHeroId ?? '-',
+      this.heroesFilter,
+      this.heroesSort,
       JSON.stringify(this.state.heroes),
       // Both purses the screen spends from: XP buys a level, Stardust tolls
       // an ascension.
@@ -3466,17 +3472,44 @@ export class Game {
     this.setOverlay('heroPicker');
   }
 
+  /** The heroes the kingdom owns, filtered by type and ordered best first —
+   *  the one ordering the picker and the roster share. */
+  private ownedHeroesBy(filter: UnitId | 'All', sort: HeroPickSort): HeroId[] {
+    const rank = { Common: 0, Rare: 1, Legendary: 2 } as const;
+    return this.state.heroes.owned
+      .filter((h) => filter === 'All' || HEROES[h].unitType === filter)
+      .sort((a, b) => (sort === 'rarity'
+        ? rank[HEROES[b].rarity] - rank[HEROES[a].rarity] || heroLevel(this.state, b) - heroLevel(this.state, a)
+        : heroLevel(this.state, b) - heroLevel(this.state, a) || rank[HEROES[b].rarity] - rank[HEROES[a].rarity]));
+  }
+
   /** The heroes the picker offers — every one the kingdom owns, filtered by
    *  type and ordered, best first. */
   heroPickList(): HeroId[] {
     const pick = this.heroPick;
     if (pick === null) return [];
-    const rank = { Common: 0, Rare: 1, Legendary: 2 } as const;
-    return this.state.heroes.owned
-      .filter((h) => pick.filter === 'All' || HEROES[h].unitType === pick.filter)
-      .sort((a, b) => (pick.sort === 'rarity'
-        ? rank[HEROES[b].rarity] - rank[HEROES[a].rarity] || heroLevel(this.state, b) - heroLevel(this.state, a)
-        : heroLevel(this.state, b) - heroLevel(this.state, a) || rank[HEROES[b].rarity] - rank[HEROES[a].rarity]));
+    return this.ownedHeroesBy(pick.filter, pick.sort);
+  }
+
+  /** THE ROSTER'S ORDER: the owned heroes as the picker orders them, then the
+   *  ones not found yet, in roster order — both under the same type filter. */
+  heroesList(): HeroId[] {
+    const owned = this.ownedHeroesBy(this.heroesFilter, this.heroesSort);
+    const missing = HERO_ORDER.filter((h) => !this.state.heroes.owned.includes(h)
+      && (this.heroesFilter === 'All' || HEROES[h].unitType === this.heroesFilter));
+    return [...owned, ...missing];
+  }
+
+  heroesSetFilter(filter: UnitId | 'All'): void {
+    this.heroesFilter = filter;
+    playSfx('click');
+    this.notify();
+  }
+
+  heroesCycleSort(): void {
+    this.heroesSort = this.heroesSort === 'level' ? 'rarity' : 'level';
+    playSfx('click');
+    this.notify();
   }
 
   /** A TAP ON A HERO IN THE LIST: out of its slot if it is in one; else into
