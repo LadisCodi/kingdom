@@ -1,0 +1,147 @@
+/* THE UNLOCK SPLASH (ui/unlockSplash.ts, Docs/features/23-tutorials.md §4.6).
+ *
+ * No window, no frame: the splash floats on a dark veil over the whole game,
+ * which stays faintly visible behind it — the thing just opened is the only
+ * lit thing on screen. The icon is the heroes' own flat cartoon; the light
+ * behind it is light, not a material, so it is the one soft gradient here. */
+
+.unl-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 10);
+  padding: 0 calc(var(--px) * 28) calc(var(--px) * 48);
+  background: rgba(16, 10, 5, 0.82);
+  text-align: center;
+  outline: none;
+  animation: unl-veil 250ms ease-out both;
+}
+.unl-screen.is-ready { cursor: pointer; }
+@keyframes unl-veil { from { opacity: 0; } }
+
+/* A line of dialogue on screen steps out of the way while the splash is up,
+   and is there again, where it was, when the splash is read: the parchment
+   box is the brightest thing in the game and would read through the veil. */
+#ui:has(> #unlock:not(:empty)) > #stage { visibility: hidden; }
+
+/* ---------------------------------------------------------------- the burst */
+
+.unl-burst {
+  position: relative;
+  width: calc(var(--px) * 168);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin-bottom: calc(var(--px) * 18);
+}
+
+/* A warm bloom the icon sits in. */
+.unl-glow {
+  position: absolute;
+  inset: -35%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 205, 96, 0.55), rgba(242, 178, 51, 0.18) 55%, transparent);
+  animation: unl-fade 600ms ease-out 100ms both;
+}
+
+/* The sunburst: long thin rays and shorter ones between them, each fading
+   out at its tip, turning slowly the two ways so the light never reads as a
+   wheel. A ray is a slice of a conic gradient; a radial mask fades its end. */
+.unl-rays {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: unl-fade 600ms ease-out 100ms both, unl-spin 40s linear infinite;
+}
+.unl-rays.is-long {
+  inset: -62%;
+  background: repeating-conic-gradient(from 0deg,
+    rgba(255, 214, 120, 0.5) 0deg 4deg, transparent 4deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, #000 18%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 18%, transparent 100%);
+}
+.unl-rays.is-short {
+  inset: -38%;
+  background: repeating-conic-gradient(from 15deg,
+    rgba(255, 226, 150, 0.42) 0deg 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, #000 25%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 25%, transparent 100%);
+  animation-direction: normal, reverse;
+  animation-duration: 600ms, 60s;
+}
+@keyframes unl-spin { to { transform: rotate(360deg); } }
+@keyframes unl-fade { from { opacity: 0; } }
+
+.unl-icon {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 6) rgba(0, 0, 0, 0.45));
+  animation: unl-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms both;
+}
+@keyframes unl-pop {
+  from { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------- the words */
+
+/* The name: the title face at the title size (tests/fonts.test.ts), cream
+   with a dark outline so it reads over the light behind it. */
+.unl-title {
+  margin: 0;
+  color: var(--ink-inverse);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  line-height: 1.15;
+  text-shadow:
+    0 calc(var(--px) * 2) 0 var(--wood-dark),
+    calc(var(--px) * 1.5) 0 0 var(--wood-dark), calc(var(--px) * -1.5) 0 0 var(--wood-dark),
+    0 calc(var(--px) * -1.5) 0 var(--wood-dark),
+    0 0 calc(var(--px) * 12) rgba(0, 0, 0, 0.6);
+  animation: unl-rise 400ms ease-out 350ms both;
+}
+
+.unl-text {
+  margin: 0;
+  max-width: calc(var(--px) * 300);
+  color: var(--parchment);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: 1.4;
+  text-shadow: 0 1px calc(var(--px) * 3) rgba(0, 0, 0, 0.7);
+  animation: unl-rise 400ms ease-out 450ms both;
+}
+@keyframes unl-rise { from { opacity: 0; transform: translateY(calc(var(--px) * 10)); } }
+
+/* The way out: quiet, low on the screen, and only once the splash has been
+   on screen long enough to be read (ENTRANCE_MS + PROMPT_DELAY_MS). */
+.unl-prompt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + var(--px) * 20);
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 400ms ease-out;
+}
+.unl-screen.is-ready .unl-prompt {
+  visibility: visible;
+  opacity: 0.8;
+  animation: unl-breathe 1.8s ease-in-out 400ms infinite;
+}
+@keyframes unl-breathe { 50% { opacity: 0.4; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .unl-screen, .unl-glow, .unl-rays, .unl-icon, .unl-title, .unl-text { animation: none; }
+  .unl-screen.is-ready .unl-prompt { animation: none; }
+}

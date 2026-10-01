@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "fields": {
+    "kind": {
+      "type": "text",
+      "options": ["door", "book"],
+      "doc": "What opening shows it: a door of the UI (Docs/features/22-progression.md §3) or a book of research (§4)."
+    },
+    "target": {
+      "type": "text",
+      "doc": "Which door or book. A door: research, build, heroes, relics, store, world, knowledge, daily, banner. A book: Civics, Warfare, Magic, Sagas, Atlas."
+    },
+    "title": { "type": "text", "maxLength": 24, "doc": "The name under the icon." },
+    "text": {
+      "type": "text",
+      "maxLength": 160,
+      "doc": "One short paragraph: what it is and what the player does with it. Four lines at most."
+    },
+    "icon": { "type": "text", "doc": "Art file stem in src/render/assets, drawn large over the turning rays." }
+  }
+}

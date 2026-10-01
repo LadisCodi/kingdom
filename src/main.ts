@@ -53,7 +53,8 @@ import { renderLairSheet } from './ui/lairSheet';
 import { renderWorldSheet } from './ui/worldSheet';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
-import { SCENES } from './sim/data/definitions';
+import { mountUnlockSplash } from './ui/unlockSplash';
+import { SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
@@ -157,6 +158,7 @@ async function boot(): Promise<void> {
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
+  mountUnlockSplash(game, document.getElementById('unlock')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
@@ -597,6 +599,11 @@ async function boot(): Promise<void> {
       button('🎬 replay scenes', () => {
         for (const k of Object.keys(game.state.tutorial.seen)) if (k.startsWith('scene:')) delete game.state.tutorial.seen[k];
         game.state.tutorial.veteran = false;
+        runTick();
+      }),
+      // Every unlock splash, one after another, to review them.
+      button('✨ unlocks', () => {
+        game.unlockQueue.push(...Object.keys(UNLOCKS));
         runTick();
       }),
       button('🗑 reset save', resetSave));

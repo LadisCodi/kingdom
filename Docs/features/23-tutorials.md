@@ -202,6 +202,26 @@ Each points at what it is about.
 | `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony, and our grandest buildings ask for it.* |
 | `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and the next gift simply waits.* |
 
+### 4.6 The unlock splash
+
+A big opening is named full-screen before anyone talks about it.
+
+- **What has one:** the doors Build, Research, Heroes, Relics and the world,
+  and the books Warfare, Magic, Sagas and Atlas. Nothing else.
+- **What it shows:** a dark veil over the whole game, the thing's icon on a
+  slowly turning golden burst, its name, and one paragraph.
+- **The way out:** *Tap to continue* appears two seconds after the entrance
+  has played; a tap before it does nothing.
+- **When:** the moment the door or book opens, once. It waits for a fight,
+  the reveal or a video to end. Two that open at once show one after the
+  other, in list order — Heroes before the Sagas, the world before the
+  Atlas.
+- **Then the scene:** an introduction about the same thing waits for the
+  splash to be read. A line already on screen hides under it and is there
+  again after.
+- The icons are drawn in the heroes' flat cartoon
+  (`Docs/art/ui/mockups/unlock-splash-prompts.md`).
+
 ## 5. Help when stuck
 
 - **The quest pill is the help button.** A tap on an unfinished quest flies to
@@ -241,6 +261,7 @@ Each points at what it is about.
 
 - The scenes played, by id. The beat of the First Morning is not saved: it
   is derived from the quests on load (§3).
+- The doors and the books already announced open, so a splash shows once.
 - A save from before this design is read as having played every scene.
 
 ## 8. Dials, in the order to reach for them
@@ -255,6 +276,7 @@ Each points at what it is about.
 | When idle help stops | quest `Attuned` | `help.untilQuest` |
 | The lock's failsafe | 5 s | `help.lockFailsafeSeconds` |
 | The breath between two introductions | 20 s | `help.sceneGapSeconds` |
+| Which openings have a splash, in what order, and what each says and shows | §4.6 | `?dev=data` › Unlock splashes |
 
 ## 9. Deliberately not in this design
 
@@ -265,6 +287,7 @@ Each points at what it is about.
 - A pointer that appears without being asked after the First Morning.
 - Voice, and an animated portrait beyond entering, leaving and dimming.
 - A scene over the battle playback, the reveal or the rewarded video.
+- A splash for a building, a building level or a mechanic a technology opens: the tree's card already names it.
 - Re-playing a scene from the settings.
 
 **Open questions:** **OQ-117**.

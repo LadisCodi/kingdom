@@ -76,6 +76,9 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },
   { id: 'speakers', label: 'Speakers', domain: 'Progression', view: 'table', noun: 'speaker', source: 'speakers' },
   { id: 'tutorial', label: 'Tutorial help', domain: 'Progression', view: 'form', noun: 'setting', groups: ['help'] },
+  // The splash a big unlock opens with (Docs/features/23-tutorials.md §4.6):
+  // when two open at once, list order is the order they are shown in.
+  { id: 'unlocks', label: 'Unlock splashes', domain: 'Progression', view: 'table', noun: 'unlock', source: 'unlocks' },
 
   { id: 'store', label: 'Store', domain: 'Store', view: 'table', noun: 'product', source: 'store' },
   { id: 'packs', label: 'Card packs', domain: 'Store', view: 'table', noun: 'pack', source: 'packs' },
@@ -478,6 +481,15 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {
+  unlocks: (doc, push) => {
+    const targets: Record<string, readonly string[]> = { door: SCENE_TARGETS.doorOpen(doc), book: SCENE_TARGETS.bookOpen(doc) };
+    for (const [id, raw] of Object.entries((doc.unlocks ?? {}) as Record<string, Record<string, unknown>>)) {
+      const ids = targets[String(raw.kind)];
+      if (ids !== undefined && !ids.includes(String(raw.target))) {
+        push(id, ['target'], `"${raw.target}" is not a ${raw.kind}`);
+      }
+    }
+  },
   scenes: (doc, push) => {
     const seen = new Set<string>();
     const check = (entry: string, path: Array<string | number>, kind: unknown, target: unknown) => {

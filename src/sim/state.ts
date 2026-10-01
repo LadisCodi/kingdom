@@ -730,8 +730,10 @@ export interface GameState {
   discoveries: Record<string, true>;
   /**
    * The tutorial's memory (Docs/features/23-tutorials.md §7): which scenes
-   * have played, by id. The sim never reads `seen` — the stage does — but it
-   * lives in the save so a reset resets it and a second device agrees.
+   * have played (`scene:<id>`), and which doors and books have been
+   * announced open (`door:<id>`, `book:<tome>`). The sim never reads `seen`
+   * for a rule — the presenter and the stage do — but it lives in the save
+   * so a reset resets it and a second device agrees.
    *
    * `veteran` is a kingdom from before the doors existed: every door is open
    * and every scene counts as played (Docs/features/22-progression.md §1).

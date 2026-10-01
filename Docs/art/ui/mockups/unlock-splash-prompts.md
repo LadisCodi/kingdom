@@ -70,4 +70,4 @@ One icon alone, centred on a square canvas, filling about 75% of it — THE WORL
 ## Cutting
 
 `Docs/art/ui/unlock/cut.sh` cuts the three sheets in `Docs/art/ui/unlock/`
-into `src/ui/assets/unlock-<id>.png`, 512×512.
+into `src/render/assets/unlock_<id>.png`, 512×512.

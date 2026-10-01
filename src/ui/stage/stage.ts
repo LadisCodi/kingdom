@@ -399,7 +399,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (node === null) return false;
     const elNode = node instanceof HTMLElement ? node : node.parentElement;
     if (elNode === null) return false;
-    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar') !== null) return true;
+    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar, #unlock') !== null) return true;
     if (elNode.tagName === 'CANVAS') return true;
     const t = playing!.target;
     if (lock !== 'all' && t?.kind === 'ui') {
@@ -416,7 +416,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   frame.addEventListener('click', (e) => {
     if (!waitsForTap()) return;
     const node = e.target instanceof HTMLElement ? e.target : (e.target as Node | null)?.parentElement ?? null;
-    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar') !== null) return;
+    // An unlock splash over a line takes its own tap (ui/unlockSplash.ts).
+    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar, #unlock') !== null) return;
     const moved = downAt === null ? 0 : Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
     if (moved < TAP_SLOP_PX) tapLine();
     e.preventDefault();
@@ -431,11 +432,14 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   }
 
   // ------------------------------------------------------------ the director
-  /** May a scene start now? Never over a fight, a reveal or a video; over a
-   *  sheet only when the scene says so. */
+  /** May a scene start now? Never over a fight, a reveal or a video, nor
+   *  before an unlock splash waiting to be shown — the splash names the
+   *  thing, the scene then talks about it; over a sheet only when the scene
+   *  says so. */
   const canStart = (scene: SceneDef): boolean => {
     if (game.state.player.payer === null) return false;
     if (game.battle !== null || game.gachaReveal !== null || game.adWatch() !== null) return false;
+    if (game.unlockQueue.length > 0) return false;
     if (!scene.anywhere && game.hasOpenSheet()) return false;
     // The First Morning runs beat to beat; every introduction after it waits
     // for a breath, so the fog giving up three things at once is three
