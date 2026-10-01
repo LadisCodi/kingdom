@@ -7,13 +7,9 @@
 > **Status: built 2026-09-14**, all six, less the one call site the world map
 > owes. Every number here is a first pass (**OQ-96**).
 >
-> **The Scout's boon is declared and not yet collected.** It moves the world
-> map's cell-exploration timer
-> ([`../features/19-world-map.md`](../features/19-world-map.md)), which is
-> designed and unbuilt; `worldRevealSpeed` is in the stack, the hero carries
-> it, and the timer reads it the day it exists. This is a prototype and a
-> pending wire is acceptable; `tests/heroBoons.test.ts` names it so it cannot
-> be forgotten.
+> **The Scout's boon divides an explorer's march time**
+> ([`../features/19-world-map.md`](../features/19-world-map.md) §3.1); the
+> world board has no screen yet to send one from.
 >
 > **It contradicts one line of the current design on purpose.**
 > [`../features/10-heroes.md`](../features/10-heroes.md) §2.1 says *"rarity is
@@ -133,7 +129,7 @@ so it takes one boon and the kingdom takes five.
 | **The Pharaoh** | economy | `buildSpeed` | **×1.20** — the builders work a fifth faster | `upgrades.ts#effectiveBuildTimeMultiplier` |
 | **The Elven Princess** | economy | `manaRegen` | **×1.25** Mana a minute | `mana.ts#manaProduction` |
 | **The Necromancer** | research | `researchSpeed` | **×1.25** — research runs a quarter faster | `upgrades.ts#effectiveResearchTimeMultiplier` |
-| **The Scout** | exploration | `worldRevealSpeed` | **×1.25** — a world-map cell is scouted faster | the world map's reveal timer — **pending** |
+| **The Scout** | exploration | `worldRevealSpeed` | **×1.25** — a world-map cell is scouted faster | an explorer's march time |
 | **The Vampire Lord** | exploration | `heroXp` | **×1.25** Hero XP out of every room | `heroes.ts#addHeroXp` |
 | **The Golden Dragon** | combat | `unitHp` | **×1.10** health on every unit | `expeditions.ts#drillOf`, and `battle.ts#buildBoard` |
 
@@ -191,8 +187,8 @@ so it takes one boon and the kingdom takes five.
 - `unitHp` — a global multiplier on the `Drill`, which reaches `partyStats`
   (the estimate) **and** `buildBoard` (the resolver), so the launch screen and
   the fight agree.
-- `worldRevealSpeed` — declared, in the stack, and read by nothing until the
-  world map's timer exists.
+- `worldRevealSpeed` — divides an explorer's march time
+  (`sim/world/explorers.ts#marchMsPerHex`).
 
 ## 5. Dials, in the order to reach for them
 

@@ -22,6 +22,7 @@ import { effectiveBuildTimeMultiplier } from '../src/sim/upgrades';
 import { firstClearLump, knowledgeLump } from '../src/sim/knowledge';
 import { manaProduction } from '../src/sim/mana';
 import { drillOf } from '../src/sim/expeditions';
+import { marchMsPerHex } from '../src/sim/world/explorers';
 import { buildBoard } from '../src/sim/battle';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshGame, map, T0 } from './helpers';
@@ -202,16 +203,11 @@ describe('each boon reaches the number it names', () => {
     expect(buffed.slots[0]!.hpPool).toBeGreaterThan(plain.slots[0]!.hpPool);
   });
 
-  // THE ONE THAT IS NOT COLLECTED YET, and it is named rather than forgotten:
-  // the world map is designed and unbuilt, so the Scout's boon is declared and
-  // waits for the timer that reads it. Delete this test when it lands.
-  it('the Scout — waits on the world map, deliberately', () => {
+  it('the Scout — an explorer marches faster', () => {
     expect(HEROES.Scout.boon!.stat).toBe('worldRevealSpeed');
     const state = freshGame();
+    const before = marchMsPerHex(state);
     own(state, 'Scout');
-    // It is in the stack and ready; nothing resolves it yet.
-    expect(state.modifiers.some((m) => m.stat === 'worldRevealSpeed')).toBe(true);
-    expect(resolve(state, 'worldRevealSpeed', 1))
-      .toBeCloseTo(HEROES.Scout.boon!.value, 6);
+    expect(marchMsPerHex(state)).toBe(Math.round(before / HEROES.Scout.boon!.value));
   });
 });

@@ -417,6 +417,37 @@ export interface Mission {
   claimed: boolean;
 }
 
+/**
+ * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
+ *
+ * Everything a trip will ever do is priced when it leaves: its path, its
+ * pace and how far it sees. What it has revealed at any moment is derived
+ * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
+ * with one boundary — the moment it is home.
+ */
+export interface ExplorerTrip {
+  id: string;
+  /** The hex it was sent to, as a board index. */
+  target: number;
+  /** Board indices from the city (first) to the target (last). */
+  path: number[];
+  departedAt: number;
+  /** Milliseconds a step takes, out and back. */
+  msPerHex: number;
+  /** Hexes it reveals round each hex of its path. */
+  radius: number;
+}
+
+export interface WorldState {
+  /** Which board, and which of its six cities is the player's. */
+  board: { id: string; seed: number; seat: number };
+  /** The hexes revealed and folded in: three uint32 words over the board's
+   *  91 indices. The city and the Portal are always revealed and never
+   *  stored; a march under way is derived, not stored. */
+  revealed: number[];
+  explorers: ExplorerTrip[];
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -741,6 +772,14 @@ export interface GameState {
    * it (the daily chest waits for the next day).
    */
   tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
+  /**
+   * The world board as the player's own save knows it
+   * (Docs/features/02-map-scopes.md §3, §6): which board and seat, the fog,
+   * and the explorers out on it. World CONTROL is not here — it is server
+   * state — and neither is the board's contents, which are a pure function
+   * of its seed (sim/world/board.ts).
+   */
+  world: WorldState;
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];

@@ -122,7 +122,6 @@ Every one of the 221 sprites in `src/render/assets/` and the 606 frames in
 > **Branch `feat/world-board`. Spec: [`../features/19-world-map.md`](../features/19-world-map.md),
 > authority in [`../features/02-map-scopes.md`](../features/02-map-scopes.md) §3.**
 
-Greenfield: nothing of this exists but the `worldRevealSpeed` modifier stat.
 **Keep it in `src/sim/world/` and `src/render/world/`** so it never meets lane A.
 Step 1 — the board, fog and explorers — is planned in
 [`world-board.md`](world-board.md).

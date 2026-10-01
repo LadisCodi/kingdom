@@ -420,6 +420,7 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | `buildSpeed` | Civics | build and upgrade times are divided by it |
 | `crewYield` | Civics | multiplies a worker delivery; the fraction carries |
 | `discoverRadius` | Atlas | whole rings, added |
+| `explorerSlots` | Atlas | whole explorers, added to Cartography's |
 | `harvestYield` | Civics | multiplies the chunk a tap and a strike take; the fraction carries |
 | `heroXp` | Sagas | multiplies the number |
 | `infirmaryBeds` | Warfare | multiplies the number |
@@ -441,6 +442,7 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | `villagerTrainingSpeed` | Civics | a villager’s training time is divided by it |
 | `workerSpeed` | Civics | multiplies the number |
 | `workshopSpeed` | Civics | a workshop item’s work time is divided by it |
+| `worldRevealRadius` | Atlas | whole hexes round an explorer's path, added, capped at 2 |
 
 ## 9. Planned cards
 

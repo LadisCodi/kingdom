@@ -541,10 +541,10 @@ how many slots it wants (1…n) and what to do with the answer.
   `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
   call site consults either, so those heroes have no off-board effect at all.
   **OQ-95.**
-- **The Scout's boon has no call site.** `worldRevealSpeed` is declared and in
-  the stack; the world map's cell-exploration timer that reads it is designed
-  and unbuilt ([`19-world-map.md`](19-world-map.md)). Accepted for the
-  prototype, and named in `tests/heroBoons.test.ts`. **OQ-96.**
+- **The Scout's boon has no screen yet.** `worldRevealSpeed` divides an
+  explorer's march time ([`19-world-map.md`](19-world-map.md) §3.1), and the
+  world board has no screen to send one from. Whether ×1.25 is worth a
+  Legendary is **OQ-96**.
 - **Rate-up is untested.** The timeline still carries a banner payload and the
   activation query exists, but the two banners are permanent entries, so nothing
   exercises a scheduled one. The season hero

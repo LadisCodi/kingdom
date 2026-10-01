@@ -48,6 +48,7 @@ import {
   type QueueItem, type TechId, type UnitId, type Wallet,
 } from './state';
 import { collectStore } from './storage';
+import { nextExplorerReturn, returnExplorers, type ExplorerHome } from './world/explorers';
 
 // ------------------------------------------------------------------ building
 
@@ -538,12 +539,15 @@ export interface AdvanceResult {
    *  into Gold, the stars are gone and a new season is open
    *  (Docs/features/09-relics.md §3). */
   seasonClosed: SeasonClose | null;
+  /** Explorers that came home from the world board, and what they revealed. */
+  explorersHome: ExplorerHome[];
 }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
   trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
+  explorersHome: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -598,6 +602,9 @@ function applyDueAt(
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
     out.goodsMade.push(...completeWorkshopItems(state, t));
+    // An explorer home is a TIMER: its march resolves at its absolute time,
+    // and its whole reveal folds into the fog here (sim/world/explorers.ts).
+    out.explorersHome.push(...returnExplorers(state, t));
   });
 }
 
@@ -635,6 +642,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   // clients never disagree about when the season ends.
   consider(seasonEndsAt(state.collection.season));
   consider(nextWorkshopCompletion(state, after));
+  consider(nextExplorerReturn(state, after));
   return t;
 }
 

@@ -2219,4 +2219,7 @@ export const GAME_VERSION = '0.1.0';
 // it reads as a veteran. A worker carries its strike's remainder
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
-export const SAVE_VERSION = 74;
+// v75: the world board. `kingdom.world` (the board and seat, the fog bitset,
+// the explorers out) is additive: a save without it derives its board and
+// seat from its own seed and starts with nothing revealed. No migrator.
+export const SAVE_VERSION = 75;

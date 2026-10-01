@@ -7,10 +7,11 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: designed, not built.** What exists is the door to it — the
-> Watchtower, the Atlas and a preview sheet of the board
-> ([`22-progression.md`](22-progression.md) §5) — and the
-> `worldRevealSpeed` and `worldImprovementYield` stats, read by nothing yet.
+> **Status: the board, the fog and the explorers are built in the sim**
+> (§1–§3, §9; [`../plans/world-board.md`](../plans/world-board.md) stages
+> 1–3), with no screen yet: the world door still opens the preview sheet
+> ([`22-progression.md`](22-progression.md) §5). Everything else is designed,
+> not built.
 
 ## 1. The board
 
