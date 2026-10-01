@@ -25,6 +25,7 @@ import type { Coord } from '../../sim/state';
 import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
+import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
 import { resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
@@ -215,10 +216,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   });
 
   /** A line that `gives` a book hands it over as it is read — the book's
-   *  unlock splash then follows the line (23-tutorials.md §4.6). */
+   *  unlock splash then follows the line (23-tutorials.md §4.6). One that
+   *  `stocks` a building makes up what the wallet lacks for it. */
   const hand = (l: SceneLine): void => {
     if (l.gives) giveBook(game.state, l.gives);
+    if (l.stocks) { stockBuild(game.state, l.stocks); game.notify(); }
   };
+
+  /** A line that `stocks` a building has nothing to say while the wallet can
+   *  already pay for one. */
+  const needless = (l: SceneLine): boolean =>
+    !!l.stocks && Object.keys(buildShortfall(game.state, l.stocks)).length === 0;
 
   /** Begin line `index` of the playing scene — or end the scene. */
   const begin = (index: number): void => {
@@ -230,6 +238,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       const l = playing.scene.lines[index];
       playing.index = index;
       playing.tapsAtStart = tally(game.state, 'taps');
+      if (needless(l)) { index += 1; continue; }
       if (l.until === 'tap' || !lineHolds(l)) break;
       hand(l);
       index += 1;

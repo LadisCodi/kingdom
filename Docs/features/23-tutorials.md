@@ -137,7 +137,8 @@ Beats, as the First Morning's, each on its quest.
 | | | *Here — Saws! It teaches us to build a Sawmill.* | the Saws card | the card | its sheet is open |
 | | | *Pour in our Knowledge…* · *…and a little Gold for the blades. There!* | **+N** · **Research** | the button | filled · done |
 | | | *Let's close the book and raise it.* | the close knob | the knob | the book is shut |
-| `sawmill` | `TheSawmill` | *A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you.* | **Build** | the tab | the build menu is open |
+| `sawmill` | `TheSawmill` | *Oh — a Sawmill wants more Wood than we hold. Here, I put some by for just this!* (only while the Wood is short; she makes up the difference) | nothing | all | tap |
+| | | *A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you.* | **Build** | the tab | the build menu is open |
 | | | *Choose the Sawmill.* | the Sawmill card | the card | placing |
 | | | *Like the Farm, it only works what's in its reach. Set it where the most trees stand inside the outline, then build.* | the confirm button | the map and the panel | placed |
 | | | *Another builder at work! The townsfolk have noticed — accept their thanks.* | the quest pill | the pill | claimed |

@@ -123,6 +123,11 @@
             "nullable": true,
             "options": ["Warfare"],
             "doc": "A book the speaker hands the player as the line is read. Only a book that opens on a gift (sim/research.ts TOME_OPENS) — today, Warfare."
+          },
+          "stocks": {
+            "type": "text",
+            "nullable": true,
+            "doc": "A building the speaker makes up the price of. The line plays only while the player cannot pay for one more of it, and as it is read hands over what is missing."
           }
         }
       }

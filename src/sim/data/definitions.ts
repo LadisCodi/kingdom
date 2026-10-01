@@ -526,6 +526,10 @@ export interface SceneLine {
   /** A book the speaker hands the player as this line is read; absent or
    *  null hands nothing (Docs/features/24-dialogue.md §3). */
   gives?: TomeId | null;
+  /** A building the speaker makes up the price of: the line plays only while
+   *  the wallet cannot pay for one more of it, and as it is read hands over
+   *  what is missing. Absent or null: an ordinary line. */
+  stocks?: DistrictId | null;
 }
 
 export interface SceneDef {
