@@ -18,11 +18,6 @@ import type { TerrainId } from '../sim/state';
 export const TILE_W = 128;
 export const TILE_H = 64;
 
-// The MAP EDITOR paints data by coordinate, not a world, so it keeps a flat
-// square grid (`Camera`'s 'flat' projection). A diamond is the right way to
-// look at a kingdom and the wrong way to fill in a spreadsheet of terrain.
-export const FLAT_TILE = 72;
-
 export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Grassland: '#4a7c3f',
   Plains: '#8f9a4b',

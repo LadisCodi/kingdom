@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Camera } from '../src/render/camera';
-import { FLAT_TILE, TILE_H, TILE_W } from '../src/render/palette';
+import { TILE_H, TILE_W } from '../src/render/palette';
 
 const canvas = (w = 800, h = 600) =>
   ({ clientWidth: w, clientHeight: h }) as unknown as HTMLCanvasElement;
 
 const iso = (w = 800, h = 600) => new Camera(canvas(w, h));
-const flat = () => new Camera(canvas(), 'flat');
 
 describe('the 2:1 isometric projection', () => {
   it('draws every cell as a diamond exactly twice as wide as it is tall', () => {
@@ -118,26 +117,5 @@ describe('picking', () => {
     const after = c.screenToCellExact(210, 480);
     expect(after.x).toBeCloseTo(before.x, 8);
     expect(after.y).toBeCloseTo(before.y, 8);
-  });
-});
-
-describe("the map editor's flat camera", () => {
-  it('keeps square cells, because it paints data and not a world', () => {
-    const c = flat();
-    const box = c.cellToScreen({ x: 2, y: 5 });
-    expect(box.w).toBe(FLAT_TILE);
-    expect(box.h).toBe(FLAT_TILE);
-  });
-
-  it('lays a footprint out as a plain rectangle', () => {
-    const box = flat().plotBox({ x: 0, y: 0 }, { x: 2, y: 1 });
-    expect(box.w).toBe(2 * FLAT_TILE);
-    expect(box.h).toBe(1 * FLAT_TILE);
-  });
-
-  it('round-trips a cell centre the same way the iso camera does', () => {
-    const c = flat();
-    const b = c.cellToScreen({ x: -4, y: 11 });
-    expect(c.screenToCell(b.x + b.w / 2, b.y + b.h / 2)).toEqual({ x: -4, y: 11 });
   });
 });
