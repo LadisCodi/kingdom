@@ -1,17 +1,31 @@
 // The editor's view of the map.
 //
-// Deliberately the game's own sprites and the game's own camera: the whole
-// point of painting instead of typing letters into a spreadsheet is seeing
-// what the player will see, so anything that renders differently here than in
-// the game is a bug in this file. What is added on top — distances, ring
-// bands, warnings — is strictly overlay, drawn above the world and toggled
-// off by default so the base view stays honest.
+// Deliberately the game's own sprites, the game's own isometric camera and
+// the game's own drawing rules: the ground is the terrain's square of
+// material laid on its diamond with the same per-cell variant and the same
+// fringes where two terrains meet (src/render/terrain.ts), and everything
+// that stands — features, landmarks, lairs, the Townhall — is drawn with its
+// feet on its plot's bottom corner and painted back to front, exactly as
+// src/render/mapRenderer.ts does. The whole point of painting instead of
+// typing letters into a spreadsheet is seeing what the player will see, so
+// anything that renders differently here than in the game is a bug in this
+// file.
+//
+// What is added on top — the grid, distances, ring bands, warnings, site
+// outlines — is strictly overlay, drawn as diamonds over the world and
+// toggleable, so the base view stays honest. The one thing deliberately not
+// reproduced is the fog: the editor shows the province revealed, since a
+// cell you cannot see is a cell you cannot paint.
 
-import { Camera } from '../render/camera';
-import { PALETTE, TERRAIN_COLORS, FLAT_TILE } from '../render/palette';
-import { drawSprite } from '../render/sprites';
+import type { Camera, PlotBox } from '../render/camera';
+import {
+  diamondPath, drawGround, drawStanding, FEATURE_PLOTS, fillDiamond, strokeDiamond,
+} from '../render/iso';
+import { PALETTE, TERRAIN_COLORS } from '../render/palette';
+import { drawTerrainFringes, terrainKey, variantKey } from '../render/terrain';
 import { DISTRICTS, FEATURES, LANDMARK_ART, LAIRS } from '../sim/data/definitions';
 import { TOWNHALL_FOOTPRINT } from '../sim/data/mapRules';
+import { footprintAt } from '../sim/grid';
 import { coordKey, type Coord, type LandmarkKind, type LairId } from '../sim/state';
 import type { MapDoc } from './doc';
 
@@ -37,6 +51,26 @@ const RING_HUES = [180, 150, 110, 80, 55, 35, 20, 5, 340, 315, 290];
 const ringColor = (d: number, alpha: number): string =>
   `hsla(${RING_HUES[Math.min(d, RING_HUES.length - 1)]}, 70%, 50%, ${alpha})`;
 
+/** Void: where there is no cell at all. Darker than the game's undiscovered
+ *  fog on purpose — fog is ground you have not paid for, void is no ground. */
+const VOID = '#0b0e13';
+
+/** One thing that stands on the ground, queued for the back-to-front pass. */
+interface Standing {
+  depth: number;
+  tie: number;
+  draw: () => void;
+}
+
+/** A site's label, hung over its art once everything is drawn. */
+interface SiteLabel {
+  plot: PlotBox;
+  tall: number;
+  text: string;
+  selected: boolean;
+  tint: string;
+}
+
 export function drawEditor(
   canvas: HTMLCanvasElement,
   camera: Camera,
@@ -54,193 +88,247 @@ export function drawEditor(
   }
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#0b0e13';
+  // Smoothing on, as in the game: the art is authored at twice the size it
+  // is drawn at, and nearest neighbour on a downscale is aliasing.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = VOID;
   ctx.fillRect(0, 0, w, h);
 
-  const size = FLAT_TILE * camera.zoom; // the editor's camera is 'flat'
   const map = doc.map;
-  const topLeft = camera.screenToCell(0, 0);
-  const bottomRight = camera.screenToCell(w, h);
+  const unit = camera.unit;
+  // Margin of two: a tree's canvas is two plots wide, and a hall's art rises
+  // well above its plot, so a cell just off-screen still draws into it.
+  const vis = camera.visibleCells(2);
+  const box = (cell: Coord) => camera.cellToScreen(cell);
+  const base = (b: PlotBox) => ({ x: b.x + b.w / 2, y: b.y + b.h });
 
   // Void grid, so the empty space you can paint into reads as canvas rather
-  // than as the end of the world.
+  // than as the end of the world. Batched into one path.
   if (overlays.grid) {
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let x = topLeft.x; x <= bottomRight.x + 1; x++) {
-      const sx = Math.round(camera.cellToScreen({ x, y: 0 }).x) + 0.5;
-      ctx.moveTo(sx, 0); ctx.lineTo(sx, h);
-    }
-    for (let y = topLeft.y; y <= bottomRight.y + 1; y++) {
-      const sy = Math.round(camera.cellToScreen({ x: 0, y }).y) + 0.5;
-      ctx.moveTo(0, sy); ctx.lineTo(w, sy);
+    for (let y = vis.y0; y <= vis.y1; y++) {
+      for (let x = vis.x0; x <= vis.x1; x++) {
+        if (!map.terrain.has(coordKey({ x, y }))) diamondPath(ctx, box({ x, y }));
+      }
     }
     ctx.stroke();
   }
 
-  // --------------------------------------------------------------- world
-  const warned = overlays.warnings ? warnedCells(doc) : null;
-
-  for (let y = topLeft.y; y <= bottomRight.y; y++) {
-    for (let x = topLeft.x; x <= bottomRight.x; x++) {
+  // ----------------------------------------------------------- the floor
+  for (let y = vis.y0; y <= vis.y1; y++) {
+    for (let x = vis.x0; x <= vis.x1; x++) {
       const cell = { x, y };
       const key = coordKey(cell);
       const terrain = map.terrain.get(key);
       if (terrain === undefined) continue;
-      const { x: sx, y: sy } = camera.cellToScreen(cell);
-
-      if (!drawSprite(ctx, `terrain_${terrain.toLowerCase()}`, sx, sy, size, size)) {
+      const b = box(cell);
+      if (!drawGround(ctx, terrainKey(terrain, cell), b)) {
         ctx.fillStyle = TERRAIN_COLORS[terrain];
-        ctx.fillRect(sx, sy, size, size);
+        fillDiamond(ctx, b);
       }
-
+      drawTerrainFringes(ctx, map, cell, terrain, b);
       if (overlays.rings) {
         ctx.fillStyle = ringColor(map.distanceFromTownhall.get(key) ?? 0, 0.4);
-        ctx.fillRect(sx, sy, size, size);
+        fillDiamond(ctx, b);
       }
+    }
+  }
 
+  // The grid is a DIAMOND per cell, one batched path, over the floor and
+  // under everything that stands — the game's own scaffolding line.
+  if (overlays.grid) {
+    ctx.strokeStyle = PALETTE.gridLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let y = vis.y0; y <= vis.y1; y++) {
+      for (let x = vis.x0; x <= vis.x1; x++) {
+        if (map.terrain.has(coordKey({ x, y }))) diamondPath(ctx, box({ x, y }), 0.5);
+      }
+    }
+    ctx.stroke();
+  }
+
+  // ------------------------------------------------- what stands on it
+  //
+  // The painter's algorithm, with the game's depth: the centre of a thing's
+  // footprint, x + y through the middle of it, larger sums nearer.
+  const standing: Standing[] = [];
+  const later = (cell: Coord, span: number, draw: () => void) => {
+    standing.push({ depth: cell.x + cell.y + span, tie: cell.x + span, draw });
+  };
+  /** The first of `keys` that has art, standing on `plot`; the glyph in the
+   *  same place while none has landed. Returns how tall it drew. */
+  const stand = (plot: PlotBox, keys: string[], fallback: string, plots: number): number => {
+    const foot = base(plot);
+    for (const k of keys) {
+      const tall = drawStanding(ctx, k, foot.x, foot.y, plot.w, plots);
+      if (tall > 0) return tall;
+    }
+    glyph(ctx, fallback, plot.x, foot.y - plot.w, plot.w);
+    return plot.w;
+  };
+
+  const townhall = new Set(TOWNHALL_FOOTPRINT.map(coordKey));
+  for (let y = vis.y0; y <= vis.y1; y++) {
+    for (let x = vis.x0; x <= vis.x1; x++) {
+      const cell = { x, y };
+      const key = coordKey(cell);
       const feature = map.initialFeatures.get(key);
-      if (feature !== undefined) {
-        if (!drawSprite(ctx, FEATURES[feature].sprite, sx, sy, size, size)) {
-          glyph(ctx, FEATURES[feature].glyph, sx, sy, size);
-        }
-      }
-
-      if (warned?.has(key)) {
-        ctx.fillStyle = 'rgba(255, 70, 70, 0.35)';
-        ctx.fillRect(sx, sy, size, size);
-        hatch(ctx, sx, sy, size, 'rgba(255,120,120,0.8)');
-      }
-
-      if (overlays.grid) {
-        ctx.strokeStyle = PALETTE.gridLine;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(Math.round(sx) + 0.5, Math.round(sy) + 0.5, size, size);
-      }
+      if (feature === undefined || townhall.has(key)) continue;
+      // A feature that spans cells is ONE THING, drawn once from its anchor
+      // over its whole block, asking for the drawing made for that size.
+      const { anchor, size } = footprintAt(map, cell);
+      if (anchor.x !== x || anchor.y !== y) continue;
+      const def = FEATURES[feature];
+      const plot = camera.plotBox(anchor, { x: size, y: size });
+      const keys = size === 1
+        ? [variantKey(def.sprite, cell)]
+        : [`${def.sprite}_${size}x${size}`, variantKey(def.sprite, cell)];
+      later(anchor, size, () => { stand(plot, keys, def.glyph, FEATURE_PLOTS); });
     }
   }
 
-  // ------------------------------------------------------------ Townhall
-  // Not editable and not optional, but the single most important thing to see
-  // while painting: every fog price on the map is a distance from this.
+  // The Townhall: not editable and not optional, but the single most
+  // important thing to see while painting — every fog price on the map is a
+  // distance from it. Drawn as the game opens on it, at level 1.
   {
-    const anchor = camera.cellToScreen({ x: 0, y: 0 });
-    const span = DISTRICTS.Townhall.size;
-    if (!drawSprite(ctx, 'townhall_l1', anchor.x, anchor.y, size * span.x, size * span.y)) {
-      ctx.fillStyle = 'rgba(220,180,90,0.8)';
-      ctx.fillRect(anchor.x, anchor.y, size * span.x, size * span.y);
-    }
-    ctx.strokeStyle = '#ffd970';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(anchor.x, anchor.y, size * span.x, size * span.y);
+    const def = DISTRICTS.Townhall;
+    const plot = camera.plotBox({ x: 0, y: 0 }, def.size);
+    later({ x: 0, y: 0 }, (def.size.x + def.size.y) / 2, () => {
+      stand(plot, [`${def.sprite}_l1`, def.sprite], def.glyph, 1);
+    });
   }
 
-  // --------------------------------------------------------------- sites
+  const labels: SiteLabel[] = [];
+  const site = (
+    at: { x: number; y: number; size?: number }, sprite: string, fallback: string,
+    text: string, selected: boolean, tint: string,
+  ) => {
+    const n = at.size ?? 1;
+    const plot = camera.plotBox(at, { x: n, y: n });
+    later(at, n, () => {
+      const tall = sprite ? stand(plot, [sprite], fallback, FEATURE_PLOTS) : stand(plot, [], fallback, 1);
+      labels.push({ plot, tall, text, selected, tint });
+    });
+  };
   if (overlays.sites) {
     for (const l of doc.landmarks) {
       const art = LANDMARK_ART[l.kind as LandmarkKind];
       const picked = view.selected?.kind === 'landmark' && view.selected.id === l.id;
-      drawSite(ctx, camera, l, size, art?.sprite ?? '', art?.glyph ?? '❔', l.id, picked,
-        '#8fe08f');
+      site(l, art?.sprite ?? '', art?.glyph ?? '❔', l.id, picked, '#8fe08f');
     }
     for (const [id, r] of Object.entries(doc.lairs)) {
       const art = LAIRS[id as LairId];
       const picked = view.selected?.kind === 'lair' && view.selected.id === id;
-      drawSite(ctx, camera, r, size, art?.sprite ?? '', art?.glyph ?? '❔',
-        `${id} · T${r.tier}`, picked, '#c79bff');
+      site(r, art?.sprite ?? '', art?.glyph ?? '❔', `${id} · T${r.tier}`, picked, '#c79bff');
     }
+  }
+
+  standing.sort((a, b) => a.depth - b.depth || a.tie - b.tie);
+  for (const item of standing) item.draw();
+
+  // ------------------------------------------------------------ overlays
+  //
+  // Everything from here on is the TOOL talking, drawn over the world.
+
+  // Problems: over the art, not under it — a shrine standing in the sea is
+  // exactly the case where the art would hide the cell that is wrong.
+  if (overlays.warnings) {
+    for (const key of warnedCells(doc)) {
+      const [x, y] = key.split(',').map(Number) as [number, number];
+      const b = box({ x, y });
+      ctx.fillStyle = 'rgba(255, 70, 70, 0.35)';
+      fillDiamond(ctx, b);
+      hatch(ctx, b, 'rgba(255,120,120,0.8)');
+    }
+  }
+
+  // Townhall footprint, outlined on its ground.
+  ctx.strokeStyle = '#ffd970';
+  ctx.lineWidth = 2;
+  strokeDiamond(ctx, camera.plotBox({ x: 0, y: 0 }, DISTRICTS.Townhall.size), 1);
+
+  // Sites: their footprint outlined on the ground, and a label over the art.
+  for (const l of labels) {
+    ctx.strokeStyle = l.selected ? '#ffffff' : l.tint;
+    ctx.lineWidth = l.selected ? 3 : 2;
+    strokeDiamond(ctx, l.plot, 1.5);
+  }
+  for (const l of labels) {
+    if (!l.selected && unit < 46) continue; // labels would just be noise
+    const foot = base(l.plot);
+    ctx.font = `${Math.max(9, Math.round(unit * 0.17))}px ui-sans-serif, system-ui, sans-serif`;
+    const width = ctx.measureText(l.text).width + 8;
+    const top = foot.y - l.tall - 4;
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.fillRect(foot.x - width / 2, top - 15, width, 15);
+    ctx.fillStyle = l.selected ? '#ffffff' : l.tint;
+    ctx.textAlign = 'center';
+    ctx.fillText(l.text, foot.x, top - 4);
+    ctx.textAlign = 'start';
   }
 
   // ------------------------------------------------------------ distance
   // Two numbers per cell only make sense when they can be read; below that
   // zoom the ring bands carry the same information as colour.
-  if (overlays.distance && size >= 34) {
+  if (overlays.distance && camera.tileW >= 80) {
     ctx.textAlign = 'center';
-    for (let y = topLeft.y; y <= bottomRight.y; y++) {
-      for (let x = topLeft.x; x <= bottomRight.x; x++) {
+    ctx.textBaseline = 'middle';
+    ctx.font = `${Math.max(9, Math.round(unit * 0.16))}px ui-monospace, monospace`;
+    for (let y = vis.y0; y <= vis.y1; y++) {
+      for (let x = vis.x0; x <= vis.x1; x++) {
         const key = coordKey({ x, y });
         if (!map.terrain.has(key)) continue;
         const d = map.distanceFromTownhall.get(key) ?? 0;
-        const { x: sx, y: sy } = camera.cellToScreen({ x, y });
+        const b = box({ x, y });
+        const cx = b.x + b.w / 2;
+        const cy = b.y + b.h / 2;
+        const text = `${d} · ${doc.costAt({ x, y })}g`;
+        const tw = ctx.measureText(text).width + 6;
         ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(sx + 1, sy + size - 17, size - 2, 16);
-        ctx.font = `${Math.max(9, Math.round(size * 0.16))}px ui-monospace, monospace`;
-        ctx.fillStyle = d === 0 && !isTownhall(x, y) ? '#ff9a9a' : '#e7eef7';
-        ctx.fillText(`${d} · ${doc.costAt({ x, y })}g`, sx + size / 2, sy + size - 5);
+        ctx.fillRect(cx - tw / 2, cy - 8, tw, 16);
+        ctx.fillStyle = d === 0 && !townhall.has(key) ? '#ff9a9a' : '#e7eef7';
+        ctx.fillText(text, cx, cy + 1);
       }
     }
     ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
   }
 
   // ------------------------------------------------------------- cursor
-  for (const cell of view.preview) {
-    const { x: sx, y: sy } = camera.cellToScreen(cell);
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(Math.round(sx) + 1, Math.round(sy) + 1, size - 2, size - 2);
-  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 2;
+  for (const cell of view.preview) strokeDiamond(ctx, box(cell), 1.5);
   if (view.hover) {
-    const { x: sx, y: sy } = camera.cellToScreen(view.hover);
     ctx.strokeStyle = '#ffe27a';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(Math.round(sx) + 1, Math.round(sy) + 1, size - 2, size - 2);
+    strokeDiamond(ctx, box(view.hover), 1.5);
   }
-}
-
-function drawSite(
-  ctx: CanvasRenderingContext2D,
-  camera: Camera,
-  at: { x: number; y: number },
-  size: number,
-  sprite: string,
-  fallback: string,
-  label: string,
-  selected: boolean,
-  tint: string,
-): void {
-  const { x: sx, y: sy } = camera.cellToScreen(at);
-  if (!drawSprite(ctx, sprite, sx, sy, size, size)) glyph(ctx, fallback, sx, sy, size);
-
-  ctx.strokeStyle = selected ? '#ffffff' : tint;
-  ctx.lineWidth = selected ? 3 : 2;
-  ctx.strokeRect(Math.round(sx) + 1, Math.round(sy) + 1, size - 2, size - 2);
-
-  if (!selected && size < 46) return; // labels would just be noise
-  const font = `${Math.max(9, Math.round(size * 0.17))}px ui-sans-serif, system-ui, sans-serif`;
-  ctx.font = font;
-  const width = ctx.measureText(label).width + 8;
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
-  ctx.fillRect(sx + size / 2 - width / 2, sy - 17, width, 15);
-  ctx.fillStyle = selected ? '#ffffff' : tint;
-  ctx.textAlign = 'center';
-  ctx.fillText(label, sx + size / 2, sy - 6);
-  ctx.textAlign = 'start';
 }
 
 const glyph = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) => {
-  ctx.font = `${Math.round(size * 0.6)}px serif`;
+  ctx.font = `${Math.round(size * 0.45)}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + size / 2, y + size / 2);
+  ctx.fillText(text, x + size / 2, y + size * 0.75);
   ctx.textAlign = 'start';
   ctx.textBaseline = 'alphabetic';
 };
 
-function hatch(
-  ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string,
-): void {
+/** Diagonal hatching clipped to a cell's diamond. */
+function hatch(ctx: CanvasRenderingContext2D, b: PlotBox, color: string): void {
   ctx.save();
   ctx.beginPath();
-  ctx.rect(x, y, size, size);
+  diamondPath(ctx, b);
   ctx.clip();
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let i = -size; i < size; i += 8) {
-    ctx.moveTo(x + i, y);
-    ctx.lineTo(x + i + size, y + size);
+  for (let i = -b.h; i < b.w; i += 8) {
+    ctx.moveTo(b.x + i, b.y);
+    ctx.lineTo(b.x + i + b.h, b.y + b.h);
   }
   ctx.stroke();
   ctx.restore();

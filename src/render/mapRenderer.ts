@@ -33,7 +33,8 @@ import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, FEATURE_PLOTS, fillDiamond,
+  strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
@@ -488,19 +489,6 @@ export function drawMap(
     if (lifted) ctx.globalAlpha = 1;
     return tall;
   };
-
-  /**
-   * HOW WIDE A FEATURE'S CANVAS IS, in plots.
-   *
-   * A building is drawn exactly to its plot, so its art is one plot across.
-   * A feature is not: a stand of trees spreads half a tile past its own
-   * ground and overlaps its neighbours, which is what makes a wood read as a
-   * wood rather than as a row of separate tiles — and a boar covers a
-   * fraction of a tile. Both have to fit the same canvas, so the canvas is
-   * TWO plots wide and the thing sits somewhere inside it
-   * (Docs/art/features/props.json says where).
-   */
-  const FEATURE_PLOTS = 2;
 
   // ------------------------------------------------------------ THE FLOOR
   //
