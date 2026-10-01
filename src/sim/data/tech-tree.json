@@ -24,8 +24,8 @@
     },
     "Pickaxes": {
       "name": "Pickaxes", "glyph": "⛏️", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 1, "col": 2,
-      "requires": ["Forestry"],
+      "tome": "Civics", "era": 1, "row": 6, "col": 2,
+      "requires": ["ReforestingI"],
       "gold": 25, "knowledge": 2,
       "unlocks": [{"harvest":"Stone"}]
     },
@@ -53,7 +53,7 @@
     "TradeRoutesI": {
       "name": "Trade Routes I", "glyph": "💰", "kind": "bonus",
       "tome": "Civics", "era": 1, "row": 3, "col": 1,
-      "requires": ["Farming", "Saws"],
+      "requires": ["Farming", "Hunting", "Saws"],
       "gold": 100, "knowledge": 2,
       "effects": [
         {"stat":"taxRate","op":"percent","value":5}
@@ -105,7 +105,7 @@
     "Masonry": {
       "name": "Masonry", "glyph": "🧱", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 7, "col": 1,
-      "requires": ["UrbanPlanning"],
+      "requires": ["UrbanPlanning", "Pickaxes"],
       "gold": 100, "knowledge": 2,
       "unlocks": [{"district":"Quarry"}]
     },
@@ -207,7 +207,7 @@
     "Mining": {
       "name": "Mining", "glyph": "⚒️", "kind": "unlock",
       "tome": "Civics", "era": 2, "row": 11, "col": 2,
-      "requires": ["Bureaucracy"],
+      "requires": ["Bureaucracy", "SchoolingI"],
       "gold": 2500, "knowledge": 6,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}]
     },
@@ -393,7 +393,7 @@
     "GuildHallsI": {
       "name": "Guild Halls I", "glyph": "⚙️", "kind": "bonus",
       "tome": "Civics", "era": 3, "row": 20, "col": 1,
-      "requires": ["Joinery", "StoneDressing"],
+      "requires": ["Joinery", "Aqueducts", "StoneDressing"],
       "gold": 3000, "knowledge": 8,
       "effects": [
         {"stat":"workshopSpeed","op":"percent","value":10}
@@ -1125,7 +1125,7 @@
     "LeyTapsIII": {
       "name": "Ley Taps III", "glyph": "🌀", "kind": "bonus",
       "tome": "Magic", "era": 2, "row": 6, "col": 0,
-      "requires": ["DeepWellsIII"],
+      "requires": ["DeepWellsIII", "ScriptoriumIV"],
       "gold": 800, "knowledge": 4,
       "effects": [
         {"stat":"manaRegen","op":"percent","value":10}

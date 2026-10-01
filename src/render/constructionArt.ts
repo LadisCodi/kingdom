@@ -1,12 +1,15 @@
-// A building being built, on the map: the card's working hammer
-// (district.css `.dc-hammer`) flying over it, and the kit's glass bar
-// (kit.css `.k-trough`, blue, as the card wears it) with the time inside.
+// A building at work, on the map: the card's working hammer
+// (district.css `.dc-hammer`) flying over it while it is built, and the kit's
+// glass bar (kit.css `.k-trough`) with the time inside — blue for a build,
+// green for a training line, as their cards wear them.
 
 import barBaseUrl from '../ui/assets/bar-base.png?url';
 import barBorderUrl from '../ui/assets/bar-border.png?url';
-import barFillUrl from '../ui/assets/bar-fill-blue.png?url';
+import barFillBlueUrl from '../ui/assets/bar-fill-blue.png?url';
+import barFillGreenUrl from '../ui/assets/bar-fill-green.png?url';
 import hammerUrl from '../ui/assets/art-hammer.png?url';
 import { loadImage } from './imageLoad';
+import { drawSprite } from './sprites';
 
 const reducedMotion = (): boolean =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -34,10 +37,10 @@ function draw3(
  */
 export function drawTroughBar(
   ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-  fraction: number, text: string, font: string,
+  fraction: number, text: string, font: string, tone: 'blue' | 'green' = 'blue',
 ): void {
   const base = loadImage(barBaseUrl);
-  const fill = loadImage(barFillUrl);
+  const fill = loadImage(tone === 'green' ? barFillGreenUrl : barFillBlueUrl);
   const border = loadImage(barBorderUrl);
   if (!base.ready || !fill.ready || !border.ready) return;
   const tx = x + h * 0.0625;
@@ -71,6 +74,59 @@ export function drawTroughBar(
   ctx.shadowColor = 'transparent';
   ctx.fillStyle = '#fff8ea';
   ctx.fillText(text, cx, cy);
+  ctx.restore();
+}
+
+// ------------------------------------------------------------ the trainee
+
+/**
+ * The one in training, as the training card's queue shows it (kit.css
+ * `.k-portrait`, district.css `.tr-count`): a round paper portrait with the
+ * bust clipped inside it, a touch larger than the circle, and the count on a
+ * dark pill at its foot — only when there is more than one.
+ */
+export function drawTraineeBadge(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, d: number,
+  bust: string, count: number, font: string,
+): void {
+  const r = d / 2;
+  const line = Math.max(1.5, d * 0.045);
+  ctx.save();
+  ctx.shadowColor = 'rgba(40, 22, 10, 0.45)';
+  ctx.shadowBlur = d * 0.08;
+  ctx.shadowOffsetY = d * 0.04;
+  ctx.fillStyle = '#f0d9ae';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - line / 2, 0, Math.PI * 2);
+  ctx.clip();
+  const art = d * 1.28;
+  drawSprite(ctx, bust, cx - art / 2, cy - art / 2, art, art);
+  ctx.restore();
+  ctx.lineWidth = line;
+  ctx.strokeStyle = '#cfa874';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - line / 2, 0, Math.PI * 2);
+  ctx.stroke();
+  if (count <= 1) return;
+  ctx.save();
+  ctx.font = font;
+  const text = `x${count}`;
+  const h = d * 0.36;
+  const w = ctx.measureText(text).width + h * 0.6;
+  const y = cy + r - h * 0.55;
+  ctx.fillStyle = 'rgba(40, 24, 12, 0.85)';
+  ctx.beginPath();
+  ctx.roundRect(cx - w / 2, y, w, h, h * 0.35);
+  ctx.fill();
+  ctx.fillStyle = '#fff8ea';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, cx, y + h / 2 + h * 0.04);
   ctx.restore();
 }
 

@@ -21,7 +21,7 @@ import { collectBuilding } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
-  type Coord, type FeatureId, type GameState, type TechId } from '../src/sim/state';
+  type Coord, type FeatureId, type GameState, type LairId, type TechId } from '../src/sim/state';
 import {
   addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
 } from './helpers';
@@ -669,7 +669,10 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
       if (q.goalType === 'ClearLairs') {
         // The Nth-nearest lair, not the nearest: "clear two" asks for the
         // second one to be in reach as well.
-        const rings = Object.values(LAIRS).map((r) => townhallDistance(map, r.location))
+        // A lair is fought once FOUND, and it is found by revealing a cell of
+        // its ground: it is the ground that has to be in reach.
+        const rings = (Object.keys(LAIRS) as LairId[])
+          .map((id) => Math.min(...lairZoneCells(id).map((c) => townhallDistance(map, c))))
           .sort((a, b) => a - b);
         expect(rings[q.goalAmount - 1], `${q.id} asks for ${q.goalAmount} at Townhall ${levels[i]}`)
           .toBeLessThanOrEqual(reachAt(levels[i]));
@@ -679,11 +682,10 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
 
   it('the Orcs are found only once the Townhall is at level 2', () => {
     // A lair is found when a cell of its zone is revealed: every one of them
-    // lies past the first Townhall's reach, and the lair itself inside the
-    // second's.
+    // lies past the first Townhall's reach, and the nearest inside the second's.
     const nearestZone = Math.min(...lairZoneCells('Orcs').map((c) => townhallDistance(map, c)));
     expect(nearestZone).toBeGreaterThan(reachAt(1));
-    expect(townhallDistance(map, LAIRS.Orcs.location)).toBeLessThanOrEqual(reachAt(2));
+    expect(nearestZone).toBeLessThanOrEqual(reachAt(2));
   });
 
   it('the cells the chain asks the player to reveal fit inside each level\'s reach', () => {

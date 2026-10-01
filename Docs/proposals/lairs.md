@@ -48,7 +48,7 @@ lair { tier, size, guard { threat, power, warningMinutes }, radius, flavour }
 
 | Lair | Tier | Creature | `radius` | Zone |
 |---|---|---|---|---|
-| Orc Lair | I | Orcs | **1** | 4×4 |
+| Orc Lair | I | Orcs | **2** | 6×6 |
 | Harpy Roost | II | Harpies | **2** | 6×6 |
 | Goblin Den | III | Goblins | **2** | 6×6 |
 | Wolf-rider Camp | IV | Wolf riders | **2** | 6×6 |

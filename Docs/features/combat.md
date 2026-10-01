@@ -302,6 +302,10 @@ The cap limits **total troops owned**, not party size.
   number; the board is the fight's.
 - Training is queued at the building the player pressed TRAIN on, takes time,
   and is boostable there.
+- **A building with someone in training shows it on the map**: the green
+  glass bar its card wears, filled for the one in training now, holding the
+  time left for the WHOLE line — and on its left end, the trainee's round
+  portrait with the line's count (from two up), as the card's queue shows it.
 - The Townhall level does not affect the cap.
 
 ## 15. Landmarks

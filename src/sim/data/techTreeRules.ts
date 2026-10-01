@@ -553,6 +553,28 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
+  // ---- nothing leads nowhere ------------------------------------------
+  // Every card above a book's last row is needed by one on the row below it,
+  // so every research ends up on the way down the page — a dead end is a
+  // card the player can skip for good, and a page that reads as a tree
+  // should not have twigs. A `planned` card is the exception: nothing that
+  // works may wait on a no-op, so it leads nowhere until it is built.
+  const lastRow = new Map<string, number>();
+  for (const node of onPage.values()) {
+    lastRow.set(node.tome, Math.max(lastRow.get(node.tome) ?? node.row, node.row));
+  }
+  const needed = new Set<string>();
+  for (const node of onPage.values()) for (const req of node.requires ?? []) needed.add(req);
+  for (const [id, node] of onPage) {
+    if (node.planned !== true && node.row < (lastRow.get(node.tome) ?? node.row) && !needed.has(id)) {
+      errors.push({
+        message: `${id} leads nowhere — a card on the row below has to require it, `
+          + 'or it belongs on the book\'s last row',
+        tech: id,
+      });
+    }
+  }
+
   // ---- the page reads downward: an era never sits above the one before --
   const lowestOf = new Map<string, number>();
   const highestOf = new Map<string, number>();
