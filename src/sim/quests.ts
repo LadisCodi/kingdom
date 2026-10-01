@@ -9,7 +9,7 @@ import {
   LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { clearedLairCount } from './lairs';
+import { clearedLairCount, foundLairCount } from './lairs';
 import { grantPack } from './collection';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
@@ -88,6 +88,8 @@ export function questValue(state: GameState, quest: QuestDef): number {
       // A target is a landmark KIND — "claim the Watchtower" — and none is any.
       return LANDMARKS.filter((l) => state.landmarks.claimed[l.id] === true
         && (quest.goalTarget === null || l.kind === quest.goalTarget)).length;
+    case 'FindLairs':
+      return foundLairCount(state);
     case 'ClearLairs':
       return clearedLairCount(state);
     case 'OwnArtifacts':

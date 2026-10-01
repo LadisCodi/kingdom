@@ -175,9 +175,21 @@ last line, as a hint.
 
 ### 4.2 The Orcs
 
+**`firstLair` — the Book of Warfare is handed over.** The first lair found,
+Orcs or Harpies, plays this before the lair's own scene. Its lines are beats.
+
+| Isolde says | Points at | Lock | Moves on |
+|---|---|---|---|
+| *Your Majesty — a camp, out past the fog! Whoever they are, they've seen our smoke too. Tap it… carefully.* | the lair | the lair | its card is open |
+| *Raiders! See that clock? When it runs out, they rob our stores — and nothing near their camp can be worked while it stands.* | the lair's card | all | tap |
+| *Axes won't do. But — wait! I have a book for this. The Book of Warfare. I never dared open it… here, it's yours now.* | — | all | tap — **she gives the book**: it opens, and its splash follows (§4.6) |
+
+- **The Book of Warfare opens on her gift and nothing else** — not on the
+  lair. A veteran kingdom has every book open.
+
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `orcs` | the Orcs are discovered | **Grukk** (right), Isolde, **the Warden** (right) | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Isolde:** *Orcs! Oh no, no — while their camp stands they'll raid our stores, and nothing near it can be worked.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *The Book of Warfare is open now. I've never dared read it — but it starts with a Barracks. Let's begin there.* | the raid widget |
+| `orcs` | the Orcs are discovered | **Grukk** (right), **the Warden** (right), Isolde | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *Soldiers it is! The Book of Warfare starts with a Barracks — let's read it together.* | Research |
 | `raid` | the first raid lands | Isolde | *They've robbed our stores! Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.* | the lair |
 | `battle` | the first attack sheet opens | the Warden | *Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it'll go before we march.* | the attack button |
 | `victory` | the first lair is cleared | the Warden, Isolde | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* | the lair |
@@ -272,6 +284,7 @@ A big opening is named full-screen before anyone talks about it.
 
 ## 7. What the save keeps
 
+- The books a line has handed over (`gift:<book>`).
 - The scenes played, by id. The beat of the First Morning is not saved: it
   is derived from the quests on load (§3).
 - The doors and the books already announced open, so a splash shows once.

@@ -1097,6 +1097,56 @@
     ]
   },
   {
+    "id": "firstLair",
+    "trigger": "lairFound",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Your Majesty — a camp, out past the fog! Whoever they are, they’ve seen our smoke too. Tap it… carefully.",
+        "box": "auto",
+        "point": "lair:",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "lair-card",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Raiders! See that clock? When it runs out, they rob our stores — and nothing near their camp can be worked while it stands.",
+        "box": "auto",
+        "point": "ui:lair-card",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Axes won’t do. But — wait! I have a book for this. The Book of Warfare. I never dared open it… here, it’s yours now.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea",
+        "gives": "Warfare"
+      }
+    ]
+  },
+  {
     "id": "orcs",
     "trigger": "lairFound",
     "triggerTarget": "Orcs",
@@ -1118,19 +1168,6 @@
         "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Orcs! Oh no, no — while their camp stands they’ll raid our stores, and nothing near it can be worked.",
-        "box": "auto",
-        "point": "lair:Orcs",
-        "lock": "none",
-        "until": "tap",
-        "untilTarget": "",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "worried"
-      },
-      {
         "speaker": "warden",
         "side": "right",
         "text": "Warden of the Guard, Your Majesty. Give me soldiers and I’ll drive them out.",
@@ -1146,7 +1183,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Book of Warfare is open now. I’ve never dared read it — but it starts with a Barracks. Let’s begin there.",
+        "text": "Soldiers it is! The Book of Warfare starts with a Barracks — let’s read it together.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "none",

@@ -41,8 +41,13 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
+| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
+- **`FindLairs` counts lairs found**, cleared or not — a lair is found when a
+  cell of its zone is revealed. The Book of Warfare opens on the first, so the
+  chain asks for it before any military research.
+  - The hint points at the dark cell nearest the ground of the nearest lair
+    not yet found.
 - **`ClaimLandmarks` may name a landmark kind** — *Claim the Watchtower* — and
   names none for any landmark.
 
@@ -81,13 +86,13 @@
 | **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
 | **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
 | **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
-| **26–31** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — find the Orcs; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
-| **32–35** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
-| **36–43** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
-| **44–48** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
-| **49–55** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **56–62** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
-| **63–66** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
+| **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
+| **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
+| **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
+| **50–56** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **57–63** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
+| **64–67** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before

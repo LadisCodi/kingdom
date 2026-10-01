@@ -130,6 +130,8 @@ export function questLine(quest: {
         : n === 1
           ? `Claim the ${LANDMARK_ART[target as LandmarkKind]?.name ?? target}.`
           : `Claim ${count(n)} ${plural(n, LANDMARK_ART[target as LandmarkKind]?.name ?? target)}.`;
+    case 'FindLairs':
+      return `Find ${count(n)} ${plural(n, 'lair')}.`;
     case 'ClearLairs':
       return `Clear ${count(n)} ${plural(n, 'lair')}.`;
     case 'OwnArtifacts':

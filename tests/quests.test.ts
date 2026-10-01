@@ -3,11 +3,12 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, FOG, KNOWLEDGE, LANDMARKS, QUESTS, LAIRS, TECHNOLOGIES, TECH_ORDER,
+  DISTRICTS, ERA_UNLOCK_CELLS, FOG, KNOWLEDGE, LANDMARKS, QUESTS, LAIRS, LAIR_ORDER, TECHNOLOGIES, TECH_ORDER,
   levelIndexed, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
 import { requiredPopulation, requiredTechForLevel } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
+import { armLairs } from '../src/sim/lairs';
 import { lairZoneCells } from '../src/sim/lairZone';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -80,10 +81,12 @@ describe('the quest chain', () => {
                                                   //   walks the rows rather than
                                                   //   leaving the player to find
                                                   //   them
-      'FurtherAfield',                            // 25   the shrine and the orc lair
-                                                  //   come into view — FINDING the
-                                                  //   Orcs opens the Book of
-                                                  //   Warfare and starts the clock
+      'FurtherAfield',                            // 25   the shrine comes into view
+      'WarDrums',                                 // 26   FIND a lair: the first one
+                                                  //   found opens the Book of
+                                                  //   Warfare and starts the clock,
+                                                  //   and a cell count can be met
+                                                  //   facing away from both
       'ArmedMen', 'Mustered', 'FirstSoldier',     // 26-28 something worth killing
       'MusterCompany',                            // 29   a company, led by the Warden
       'DriveThemOut',                             // 30   THE FIRST FIGHT — and the
@@ -436,7 +439,9 @@ describe('quests fund the research tree', () => {
     // 15,995: `SecondVillager` at 70 fills the first House before the chain
     // asks for a second one.
     // 16,035: `Picks` at 40 teaches Pickaxes before the Barracks wants Stone.
-    expect(chain).toBe(16_035);
+    // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
+    // the chain asks for the book that only a found lair opens.
+    expect(chain).toBe(16_215);
     expect(tree).toBe(568_885); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
@@ -596,6 +601,24 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     } finally { restore(); }
   });
 
+  it('FindLairs counts a lair once a cell of its ground is revealed, and is a TOTAL', () => {
+    const state = freshGame();
+    const quest: QuestDef = {
+      id: 'test', name: 'test',
+      goalType: 'FindLairs', goalTarget: null, goalAmount: 1, goalLevel: null,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
+    };
+    const restore = activate(state, quest);
+    try {
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(false);
+      // Found the way the sim finds one: a zone cell revealed, then the sweep.
+      state.fog.revealed[coordKey(lairZoneCells('Orcs')[0])] = true;
+      armLairs(state, T0);
+      expect(questValue(state, quest)).toBe(1);
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
   it('the plain DiscoverCells goal is a TOTAL: cells cleared before the quest count', () => {
     const state = freshGame();
     const cleared = Object.keys(state.fog.revealed).length;
@@ -666,6 +689,15 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
     QUESTS.forEach((q, i) => {
       if (q.goalType === 'ClaimLandmarks') {
         expect(nearestSite(LANDMARKS.map((l) => l.location)), `${q.id} at Townhall ${levels[i]}`)
+          .toBeLessThanOrEqual(reachAt(levels[i]));
+      }
+      if (q.goalType === 'FindLairs') {
+        // A lair is found by revealing any cell of its ZONE, so it is the
+        // Nth-nearest zone that has to be payable.
+        const rings = LAIR_ORDER.map((id) =>
+          Math.min(...lairZoneCells(id).map((c) => townhallDistance(map, c))))
+          .sort((a, b) => a - b);
+        expect(rings[q.goalAmount - 1], `${q.id} asks for ${q.goalAmount} at Townhall ${levels[i]}`)
           .toBeLessThanOrEqual(reachAt(levels[i]));
       }
       if (q.goalType === 'ClearLairs') {

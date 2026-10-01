@@ -112,7 +112,9 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
       return { kind: 'cell', cell: d.location, span: DISTRICTS[d.definitionId].size };
     }
     case 'lair': {
-      const lair = LAIRS[id as LairId];
+      // `lair:` alone is the first lair found that still stands — what a
+      // scene on `lairFound` with no target is about.
+      const lair = LAIRS[(id === '' ? firstStandingLair(game) : id) as LairId];
       return lair === undefined ? null
         : { kind: 'cell', cell: lair.location, span: { x: lair.size, y: lair.size } };
     }
@@ -122,6 +124,14 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
     }
     default: return null;
   }
+}
+
+/** The lair found first, of those not cleared — by when its clock started. */
+function firstStandingLair(game: Game): LairId | '' {
+  const found = Object.entries(game.state.lairs)
+    .filter(([, l]) => l !== undefined && !l.cleared)
+    .sort(([, a], [, b]) => a!.armedAt - b!.armedAt);
+  return (found[0]?.[0] ?? '') as LairId | '';
 }
 
 /** The DOM node a UI target names, if it is on screen. */

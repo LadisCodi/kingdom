@@ -28,7 +28,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
+  giveBook, isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -274,16 +274,23 @@ describe('a player can actually play the onboarding', () => {
 
     // ---- step 26: further afield — and the book of the army opens on the
     // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
-    expect(isTomeOpen(state, 'Warfare'), 'Warfare opens on a lair, not on a quest').toBe(false);
+    expect(isTomeOpen(state, 'Warfare'), 'Warfare is handed over, not opened by a quest').toBe(false);
     expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
     clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
     finish('FurtherAfield');
-    // The Orcs' ground is the next ring out: the chain's next beat is the
-    // army, so a player who has not met them yet pushes on toward them.
+    // ---- step 27: war drums — the chain asks for a lair FOUND, because the
+    // army's book opens on nothing else, and a cell count can be met facing
+    // away from both lairs in reach ----
+    expect(activeQuest(state)!.id).toBe('WarDrums');
     while (Object.keys(state.lairs).length === 0) {
       clearNearest(1);
       tick(1);
     }
+    finish('WarDrums');
+    // The book is Isolde's to give: the `firstLair` scene hands it over once
+    // the camp's card has been opened (Docs/features/23-tutorials.md §4.2).
+    expect(isTomeOpen(state, 'Warfare')).toBe(false);
+    giveBook(state, 'Warfare');
     expect(isTomeOpen(state, 'Warfare')).toBe(true);
     expect(isTomeOpen(state, 'Magic')).toBe(false);
     // The Warden has been the kingdom's all along, and steps up now.
