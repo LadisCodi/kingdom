@@ -42,7 +42,8 @@ export const knowledgePerHour = (): number => KNOWLEDGE.basePerHour;
 
 /** A whole-millisecond period, so the anchor only ever moves by integer
  *  multiples of it and one-call replay and stepped ticking agree to the bit. */
-const msPerPoint = (): number => Math.max(1, Math.round(3_600_000 / knowledgePerHour()));
+/** How long one point takes to drip in. */
+export const msPerPoint = (): number => Math.max(1, Math.round(3_600_000 / knowledgePerHour()));
 
 /** Pay Knowledge into the kingdom, over the cap if it must. */
 export function payKnowledge(state: GameState, amount: number): number {

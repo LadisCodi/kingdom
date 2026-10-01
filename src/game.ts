@@ -16,7 +16,7 @@ import {
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
-import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
+import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -83,7 +83,7 @@ import {
 } from './sim/mana';
 import {
   buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice, knowledgeHeld,
-  knowledgePerHour, msToFullKnowledge, msToNextKnowledge, type KnowledgeTill,
+  knowledgePerHour, msPerPoint, msToFullKnowledge, msToNextKnowledge, type KnowledgeTill,
 } from './sim/knowledge';
 import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
@@ -2071,6 +2071,8 @@ export class Game {
   knowledgeInfo(): {
     value: number; cap: number; full: boolean; over: boolean; perHour: number;
     nextIn: string | null; fullIn: string | null;
+    /** How far the next point has dripped in, 0…1 — the cell it rises in. */
+    nextFraction: number;
   } {
     const now = this.now();
     const value = knowledgeHeld(this.state);
@@ -2083,9 +2085,10 @@ export class Game {
       full: value >= cap,
       over: value > cap,
       perHour: knowledgePerHour(),
-      nextIn: nextMs === null ? null : `+1 in ${formatDuration(Math.ceil(nextMs / 1000))}`,
+      nextIn: nextMs === null ? null : `+1 in ${formatCountdown(Math.ceil(nextMs / 1000))}`,
+      nextFraction: nextMs === null ? 0 : Math.min(1, Math.max(0, 1 - nextMs / msPerPoint())),
       fullIn: fullMs === null || fullMs === 0 ? null
-        : `Full in ${formatDuration(Math.ceil(fullMs / 1000))}`,
+        : `Full in ${formatCountdown(Math.ceil(fullMs / 1000))}`,
     };
   }
 
