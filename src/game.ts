@@ -2272,8 +2272,8 @@ export class Game {
    *  waiting, or a Royal chest still on the table (§3.4). */
   dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
     const now = this.now();
-    // The chest arrives when the First Morning ends
-    // (Docs/features/22-progression.md §3).
+    // The chest arrives the day after the kingdom's first, once the First
+    // Morning is over (Docs/features/22-progression.md §3).
     if (!this.doorOpen('daily')) return null;
     if (!chestSheetOpen(this.state, now)) return null;
     const ready = chestAvailable(this.state, now);
