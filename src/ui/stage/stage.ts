@@ -303,13 +303,24 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   let boxShown = false;
 
   /** Where the box's top edge falls when it sits at the bottom. */
-  const bottomBoxTop = (): number => {
+  /** Would the box at the BOTTOM — or anyone standing on it — cover `r`?
+   *  Read off the layout (offsets, not rects), so a box mid-move or a
+   *  figure mid-entrance is judged where it will settle. */
+  const bottomCovers = (r: Rect): boolean => {
     const was = box.dataset.place;
     box.dataset.place = 'bottom';
     const f = frame.getBoundingClientRect();
-    const top = box.getBoundingClientRect().top - f.top;
+    const l = layer.getBoundingClientRect();
+    const b: Rect = {
+      x: l.left - f.left + box.offsetLeft, y: l.top - f.top + box.offsetTop,
+      w: box.offsetWidth, h: box.offsetHeight,
+    };
+    const parts: Rect[] = [b, ...[left, right].filter((a) => a.childElementCount > 0).map((a) => ({
+      x: b.x + a.offsetLeft, y: b.y + a.offsetTop, w: a.offsetWidth, h: a.offsetHeight,
+    }))];
     box.dataset.place = was ?? '';
-    return top;
+    // Touching is not covering: the box sits just above the quest scroll.
+    return parts.some((p) => r.x < p.x + p.w && p.x < r.x + r.w && r.y < p.y + p.h && p.y < r.y + r.h);
   };
 
   /** The cast stands on the box; where that would put a figure above the
@@ -329,16 +340,16 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const place = (l: SceneLine): void => {
     let where = l.box;
     if (where === 'auto') {
-      // BOTTOM, where the cast stands on it — unless the box would sit on
-      // the very thing the line points at. Only then the top, where the cast
-      // has to hang below it.
+      // BOTTOM, where the cast stands on it — unless the box, or someone
+      // standing on it, would cover the very thing the line points at. Only
+      // then the top, where there is no room for the cast.
       let r = playing?.target ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
       if (r !== null && playing?.target?.kind === 'cell') {
         r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
       }
-      where = r !== null && r.y + r.h > bottomBoxTop() - 8 ? 'top' : 'bottom';
+      where = r !== null && bottomCovers(r) ? 'top' : 'bottom';
     }
     // A box already on screen MOVES to its new place — quickly, overshooting
     // a touch and settling back — rather than jumping there.

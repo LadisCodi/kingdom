@@ -29,10 +29,11 @@
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
   Warden green, Bess red, the villager brown, Grukk crimson.
-- **Three places**: `bottom` (the default), `top`, `middle`. A line may set
-  its own.
+- **Three places**: `bottom`, `top`, `middle`, or `auto`. Every authored
+  line is `auto`.
 - **`auto`**: the bottom, where the cast stands on the box — unless the box
-  there would cover what the line points at; only then the top.
+  there, or anyone standing on it, would cover what the line points at; only
+  then the top.
 - **A box already on screen moves** to a new place in 0.32 s with a slight
   overshoot (OutBack), rather than jumping there.
 - **One size, always**: three lines of text at the box's type. A line too
@@ -120,7 +121,7 @@ which one a line waits on is data.
 
 | Id | Name | Who | Art | Frame |
 |---|---|---|---|---|
-| `advisor` | **Isolde** | the Royal Advisor — warm, dry, unflappable; she keeps the maps and the ledgers. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
+| `advisor` | **Isolde** | the Royal Advisor — the royal librarian, advising because everyone else fled the fog: cheerful, a little nervous, unsure of herself, with a book for most things. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
 | `warden` | **the Warden** | captain of the guard; joins at the first lair | `hero_warden` | full figure |
 | `cook` | **Bess** | runs the Tavern; joins when it opens | `hero_cook` | full figure |
 | `villager` | **a villager** | the first settler | `portrait_villager` | full figure |

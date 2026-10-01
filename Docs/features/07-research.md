@@ -181,18 +181,18 @@ A `bonus` names its effects, and each is four fields:
 | Band | Cells revealed | Civics | Warfare | Magic |
 |---|---|---|---|---|
 | era 1 | 0 — the top of the page | ✓ | ✓ | ✓ |
-| era 2 | 30 | ✓ | ✓ | ✓ |
+| era 2 | **43** in Civics — ring 2 and a quarter of ring 3; 30 in Warfare and Magic | ✓ | ✓ | ✓ |
 | era 3 | 100 | ✓ (sealed) | ✓ | ✓ |
 | era 4 | 220 | — | ✓ (sealed) | ✓ (sealed) |
 
-- A fresh kingdom opens with 16 cells revealed, so era 2 is about fifteen
-  paid reveals away, and the quest chain asks for more than that before it
+- A fresh kingdom opens with 16 cells revealed, so Civics era 2 is about
+  twenty-seven paid reveals away, and the quest chain asks for more than that before it
   points at an era-2 technology (`tests/quests.test.ts`).
 - The count is **paid reveals only** (`revealedCellCount`): a cell a building
   merely *discovered* has been seen, not opened, and the same count is what
   the `DiscoverCells` quest goal follows.
 - The Townhall's reach bounds the count ([`01-map-and-fog.md`](01-map-and-fog.md)
-  §4): 30 cells fit inside level 1's reach, 100 inside level 2's, 220 inside
+  §4): 43 cells fit inside level 1's reach, 100 inside level 2's, 220 inside
   level 4's. `tests/quests.test.ts` asserts that every era the chain and the
   Townhall's own gates ask for fits the reach at that beat.
 - The gate is a state condition, not a timer: no boundary source, nothing to
@@ -498,7 +498,7 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 | What opens a book | §2 | `sim/research.ts` `TOME_OPENS` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
-| How many bands a book has, and what each asks for | 3 · 4 · 4 · 2 · 2 bands; 0 · 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
+| How many bands a book has, and what each asks for | 3 · 4 · 4 · 2 · 2 bands; 0 · 43 (Civics) or 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | A spell's Mana cost | per spell | a `spells` collection *(designed)* |
 

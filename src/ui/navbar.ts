@@ -85,6 +85,8 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       }
       button.classList.toggle('is-locked', locked);
       button.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      // Its name is hidden with its mark, so a reader hears only that it is shut.
+      button.setAttribute('aria-label', locked ? 'Locked' : def.label);
       // The orb shows when the screen behind the tab has
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started

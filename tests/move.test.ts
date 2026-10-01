@@ -63,16 +63,17 @@ describe('what may be moved', () => {
     reveal(state, [FAR_CELL]);
     const house = houseAt(state, HOUSE_CELL);
     house.state = 'UnderConstruction';
-    const before = Object.keys(state.fog.revealed).length;
+    const seen = () => Object.keys(state.fog.revealed).length + Object.keys(state.fog.discovered).length;
+    const before = seen();
     expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
-    expect(Object.keys(state.fog.revealed).length).toBe(before);
+    expect(seen()).toBe(before);
 
     // And the guard is what does it: the same move, finished, pushes the ring
     // out at the new address.
     house.state = 'Built';
     expect(moveDistrict(state, map, house.uniqueId, HOUSE_CELL, T0)).toBe('Moved');
     expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
-    expect(Object.keys(state.fog.revealed).length).toBeGreaterThan(before);
+    expect(seen()).toBeGreaterThan(before);
   });
 });
 
@@ -180,10 +181,13 @@ describe('moving costs nothing and takes nothing', () => {
     const state = freshGame();
     const house = houseAt(state, HOUSE_CELL);
     reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
-    const frontier = { x: 3, y: 1 };
-    expect(state.fog.revealed[coordKey(frontier)]).toBeUndefined();
+    // Two cells out from the new address: inside its discover ring, outside
+    // the Townhall's.
+    const frontier = { x: 4, y: 1 };
+    expect(state.fog.discovered[coordKey(frontier)]).toBeUndefined();
     moveDistrict(state, map, house.uniqueId, NEIGHBOUR_CELL, T0);
-    expect(state.fog.revealed[coordKey(frontier)]).toBe(true);
+    expect(state.fog.discovered[coordKey(frontier)]).toBe(true);
+    expect(state.fog.revealed[coordKey(frontier)]).toBeUndefined();
   });
 });
 

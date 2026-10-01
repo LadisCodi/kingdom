@@ -387,7 +387,12 @@ describe('quests fund the research tree', () => {
     }
     // The opening asks for nine cards, and the guarantee is worth nothing if a
     // re-scoped chain quietly stops covering most of them.
-    expect(asked).toBe(10);
+    expect(asked).toBe(9);
+  });
+
+  it('pays the Knowledge for Pickaxes in the quest before it — its lesson comes later', () => {
+    const at = QUESTS.findIndex((q) => q.id === 'Picks');
+    expect(QUESTS[at - 1].rewardKnowledge).toBeGreaterThanOrEqual(techKnowledgeCost('Pickaxes'));
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {

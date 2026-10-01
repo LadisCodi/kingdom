@@ -141,10 +141,15 @@ describe('the tutorial in the save', () => {
 });
 
 describe('the doors of the UI', () => {
-  it('shuts every door but the Store on a new kingdom', () => {
+  it('shuts every door on a new kingdom', () => {
     const state = firstGame();
-    const doors = ['research', 'build', 'heroes', 'relics', 'world', 'knowledge', 'daily', 'banner'] as const;
+    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'] as const;
     for (const d of doors) expect(isDoorOpen(state, d), d).toBe(false);
+  });
+
+  it('opens the Store with the second Townhall', () => {
+    const state = firstGame();
+    townhall(state).level = 2;
     expect(isDoorOpen(state, 'store')).toBe(true);
   });
 

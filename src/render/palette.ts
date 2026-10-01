@@ -51,6 +51,8 @@ export const PALETTE = {
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
+  /** The white a fog cell flashes when a tap on it takes. */
+  fogFlash: '#ffffff',
   /** A thing sighted past the fog: one flat cold shape, faint over the dark. */
   sighted: '#8796ad',
   sightedAlpha: 0.28,

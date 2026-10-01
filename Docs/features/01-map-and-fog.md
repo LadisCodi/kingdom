@@ -85,8 +85,8 @@ Mountains:
 
 - A mountain blocks a footprint like any other feature. No placement rule of its
   own.
-- The bare peak answers a pick once **Pickaxes** is researched — taught in
-  the opening, just before the Barracks asks for Stone
+- The bare peak answers a pick once **Pickaxes** is researched — taught
+  just before the first upgrade that costs Stone, the House's second story
   ([`23-tutorials.md`](23-tutorials.md) §3.1). The metal is gated further:
   Mining for iron, Deep Mining for gold. A gated mountain is visible and
   refusing; a refused tap costs no Mana.
@@ -202,8 +202,10 @@ Respawn:
   ground already revealed.
 - A feature with a footprint (§3.1) is discovered when any one of its cells is,
   and revealed all at once.
-- Every district has a `fogRevealRadius` (1) and a larger `fogDiscoverRadius`
-  (2): finishing a build reveals a ring and discovers a wider one.
+- Every district has a `fogRevealRadius` and a `fogDiscoverRadius`. A finished
+  building reveals its own ground and discovers a ring round it (2, 1 for the
+  military halls); **only the Townhall reveals a ring** (1) — the rest of the
+  map is paid for (`tests/fog.test.ts`).
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
@@ -284,6 +286,8 @@ fallback past ring 14. The province reaches ring 23.
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
+- **Every tap that takes flashes the cell white**, the last one too as it
+  clears — every cell of a block at once. A refused tap does not flash.
 - At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
   the outer third of it is most of that; the count multiplier only raises it.
   It is the largest Gold sink in the game by three orders of magnitude. What
@@ -396,7 +400,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
-| A building's reveal / discover radius | 1 / 2 | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
+| A building's reveal / discover radius | 0 / 2 (the Townhall 1 / 2) | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `harvest` |

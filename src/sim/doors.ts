@@ -13,7 +13,7 @@ import { QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
 import { ownGoldPerMinute } from './population';
 import { readyToCollect } from './storage';
-import type { District, GameState } from './state';
+import { townhall, type District, type GameState } from './state';
 
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
@@ -56,23 +56,25 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   relics: (state) => state.collection.packs.length > 0
     || Object.values(state.collection.cards ?? {}).some((page) => (page ?? []).some((n) => n > 0))
     || state.collection.completed.length > 0,
-  store: () => true,
+  // The market waits for a capital worth trading with.
+  store: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
   // The first day is for the city: the chest waits for the morning's work
   // AND for the player to come back another day.
   daily: (state) => questClaimed(state, 'TaxDay') && laterDay(state),
 };
 
-/** What a padlocked door says when tapped: the one thing that opens it. */
+/** What a padlocked door says when tapped: the one thing that opens it —
+ *  and not what is behind it, which the padlock keeps a surprise. */
 export const DOOR_HINT: Record<DoorId, string> = {
-  research: 'Finish your first task to open the books.',
-  knowledge: 'Knowledge comes with the books.',
-  build: 'Gather some Wood first.',
-  heroes: 'Build a Tavern to call heroes.',
-  banner: 'Build a Tavern to call heroes.',
-  relics: 'Clear a lair to find your first cards.',
-  store: '',
-  world: 'Claim the Watchtower to see beyond the province.',
+  research: 'Finish your first task to open this.',
+  knowledge: 'Finish your first task to open this.',
+  build: 'Gather some Wood to open this.',
+  heroes: 'Build a Tavern to open this.',
+  banner: 'Build a Tavern to open this.',
+  relics: 'Clear a lair to open this.',
+  store: 'Raise the Townhall to level 2 to open this.',
+  world: 'Claim the Watchtower to open this.',
   daily: 'Come back tomorrow — a gift will be waiting.',
 };
 

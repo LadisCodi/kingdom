@@ -1,7 +1,7 @@
 {
   "_note": "Every technology in the game: its name, what KIND it is and what it unlocks or moves, its price and clock, and its slot on its tome page with what it needs before it — plus each book's BANDS and what each one asks for in revealed cells. What a card SAYS is generated from its unlocks or effects (src/sim/techProse.ts); only a mechanic, whose effect is code, carries a written description. Authored in ?dev=tree (Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, and the districts, units and harvest sources no longer name their own gate. Ordered by tome, then down the page, then left to right.",
   "eras": {
-    "Civics": [0, 30, 100],
+    "Civics": [0, 43, 100],
     "Warfare": [0, 30, 100, 220],
     "Magic": [0, 30, 100, 220],
     "Sagas": [0, 100],

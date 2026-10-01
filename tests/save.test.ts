@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
+import { HARVEST, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import { CARDS_PER_ALBUM } from '../src/sim/data/seasons';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
@@ -602,7 +602,8 @@ describe('Pickaxes, taught (v70)', () => {
   it('hands the card to a kingdom past where it is taught, and moves its chain on', () => {
     const back = deserialize(v69(30, false), map, T0)!;
     expect(back.research.completed).toContain('Pickaxes');
-    expect(back.quests.index).toBe(32);
+    // v69's 30 was the orc fight (v70 made it 32), wherever v72 put it since.
+    expect(QUESTS[back.quests.index].id).toBe('DriveThemOut');
   });
 
   it('leaves a kingdom before it to learn it from the chain', () => {
@@ -613,6 +614,37 @@ describe('Pickaxes, taught (v70)', () => {
 
   it('hands it to a veteran wherever the chain stands', () => {
     expect(deserialize(v69(5, true), map, T0)!.research.completed).toContain('Pickaxes');
+  });
+});
+
+// v72: stone is taught where it is first wanted (Docs/features/22-progression.md §4).
+describe('Pickaxes, moved to the second story (v72)', () => {
+  const v71 = (index: number) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.quests.progress = 7;
+    const save = serialize(state, T0);
+    save.SaveVersion = 71;
+    return save;
+  };
+  // v71's chain, as it stood: Picks 27, Rubble 28, Mustered 29 … MoreRoom 39, SecondStory 40.
+  it('closes the chain up over the two quests that moved', () => {
+    const back = deserialize(v71(29), map, T0)!;
+    expect(QUESTS[back.quests.index].id).toBe('Mustered');
+    expect(back.quests.progress).toBe(0);
+    expect(QUESTS[deserialize(v71(39), map, T0)!.quests.index].id).toBe('MoreRoom');
+  });
+
+  it('sends a kingdom on a moved quest on to the one that followed it', () => {
+    expect(QUESTS[deserialize(v71(27), map, T0)!.quests.index].id).toBe('Mustered');
+    expect(QUESTS[deserialize(v71(28), map, T0)!.quests.index].id).toBe('Mustered');
+  });
+
+  it('leaves the chain before and after the move where it was', () => {
+    const early = deserialize(v71(10), map, T0)!;
+    expect(early.quests.index).toBe(10);
+    expect(early.quests.progress).toBe(7);
+    expect(QUESTS[deserialize(v71(40), map, T0)!.quests.index].id).toBe('SecondStory');
   });
 });
 
