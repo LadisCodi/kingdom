@@ -881,7 +881,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The orcs won’t wait, and a Barracks is built of stone — which nobody here can cut. But I know a chapter that can!",
+        "text": "A second story wants stone, and nobody here knows how to cut it. But I’m sure I know a chapter that can teach them!",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "target",
@@ -1077,7 +1077,7 @@
     "id": "eras",
     "trigger": "revealed",
     "triggerTarget": "",
-    "triggerAmount": 30,
+    "triggerAmount": 43,
     "anywhere": false,
     "skippable": true,
     "lines": [

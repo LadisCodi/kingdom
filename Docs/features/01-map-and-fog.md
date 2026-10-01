@@ -85,8 +85,8 @@ Mountains:
 
 - A mountain blocks a footprint like any other feature. No placement rule of its
   own.
-- The bare peak answers a pick once **Pickaxes** is researched — taught in
-  the opening, just before the Barracks asks for Stone
+- The bare peak answers a pick once **Pickaxes** is researched — taught
+  just before the first upgrade that costs Stone, the House's second story
   ([`23-tutorials.md`](23-tutorials.md) §3.1). The metal is gated further:
   Mining for iron, Deep Mining for gold. A gated mountain is visible and
   refusing; a refused tap costs no Mana.

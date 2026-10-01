@@ -671,10 +671,32 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v72: STONE IS TAUGHT WHERE IT IS FIRST WANTED. `Picks` and `Rubble`
+    // move from in front of the Barracks (now built of Wood) to in front of
+    // `SecondStory`, the first upgrade that costs Stone. The quests between
+    // close up by the two; a kingdom on one of the two moved quests goes on
+    // to the one that followed them, and meets them again later.
+    to: 72,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      const to = index >= PICKS_FROM_V71 + 2 && index < SECOND_STORY_AT_V71 ? index - 2
+        : index >= PICKS_FROM_V71 && index < PICKS_FROM_V71 + 2 ? PICKS_FROM_V71 : index;
+      // A counter belongs to the quest it was counting for.
+      if (to !== index) Object.assign(quests, { Index: to, Progress: 0 });
+    },
+  },
 ];
 
 /** Where `Picks` entered the chain in v70, frozen as history. */
 const PICKS_AT_V70 = 27;
+
+/** Where v72 took `Picks` and `Rubble` from, and the first quest it put them
+ *  in front of (`SecondStory`), as v71 numbered the chain. */
+const PICKS_FROM_V71 = 27;
+const SECOND_STORY_AT_V71 = 40;
 
 /** The technologies the v69 tree renamed or split, frozen as history. */
 const TECH_RENAMES_V69: Record<string, string[]> = {

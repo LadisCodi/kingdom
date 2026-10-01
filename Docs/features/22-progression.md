@@ -37,7 +37,7 @@
 | **Session 1** | farms, workers, the Sawmill, Townhall 2 | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing the Orcs' ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
-| **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 30 cells revealed |
+| **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 43 cells revealed |
 | **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
 | **Day 2–3** | Townhall 3, Mining, the Harpies | the chain; the fog |
 | **Day 4–6** | Townhall 4, era 3, workshops and refined goods | Magistracy; 100 cells revealed |
@@ -202,7 +202,7 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
 | Dial | Value | Where |
 |---|---|---|
 | What each card costs | §8.2 | `?dev=data#tree` |
-| What each band asks for in revealed cells | 0 · 30 · 100 · 220 | `?dev=data#tree` |
+| What each band asks for in revealed cells | 0 · 43 (Civics) or 30 · 100 · 220 | `?dev=data#tree` |
 | The Watchtower's place and price | (0, −8) · 10,000 Gold | `?dev=data#map` |
 | The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |

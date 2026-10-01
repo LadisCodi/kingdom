@@ -25,7 +25,7 @@
 
 | Book | Opens on | Remit | Bands (cells revealed) | Cards |
 |---|---|---|---|---|
-| **Civics** | from the first minute | the city and its purse | 0 · 30 · 100 | 74 |
+| **Civics** | from the first minute | the city and its purse | 0 · 43 · 100 | 74 |
 | **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 30 · 100 · 220 | 41 |
 | **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
 | **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |

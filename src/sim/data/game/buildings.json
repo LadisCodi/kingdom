@@ -516,7 +516,7 @@
     "bedsPerLevel": [],
     "heroXpBonusPerLevel": [],
     "costPerLevel": [
-      { "cost": { "Wood": 60, "Stone": 20 }, "goods": {} },
+      { "cost": { "Wood": 80 }, "goods": {} },
       { "cost": { "Wood": 180, "Stone": 60 }, "goods": {} },
       { "cost": { "Wood": 324, "Stone": 108 }, "goods": {} },
       { "cost": { "Wood": 583, "Stone": 194 }, "goods": {} },

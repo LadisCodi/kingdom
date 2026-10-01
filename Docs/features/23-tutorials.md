@@ -16,8 +16,8 @@
    anything the active quest does not.
 2. **Scripted stretches**: the First Morning, quests 1–7, about ten
    minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
-   first buildings that work for the player, and Stone, when the Barracks
-   first asks for it. They are the only places
+   first buildings that work for the player, and Stone, when the House's
+   second story first asks for it. They are the only places
    input is locked.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
@@ -146,7 +146,7 @@ Beats, as the First Morning's, each on its quest.
 | | | *Send it woodcutters. The townsfolk hope to see three villagers at work — the Farm's count too.* | the card's **+** | none | the quest completes |
 | | | *Food and Wood come in by themselves now, even while you're away. A real town, Your Majesty! I— I'm a little proud.* | the Sawmill | all | tap |
 
-| `picks` | `Picks` | *The orcs won't wait, and a Barracks is built of stone — which nobody here can cut. But I know a chapter that can!* | **Research** | the tab | the book is open |
+| `picks` | `Picks` | *A second story wants stone, and nobody here knows how to cut it. But I'm sure I know a chapter that can teach them!* | **Research** | the tab | the book is open |
 | | | *Pickaxes. It opens the mountains to us.* | the Pickaxes card | the card | its sheet is open |
 | | | *Pour in our Knowledge…* · *…and a little Gold for the iron. Done!* | **+N** · **Research** | the button | filled · done |
 | | | *Let's close the book and go and find some rock.* | the close knob | the knob | the book is shut |
@@ -171,7 +171,7 @@ last line, as a hint.
 | `townhall2` | quest `ProperCapital` reached | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
-| `eras` | 30 cells revealed | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |
+| `eras` | 43 cells revealed — Civics chapter II | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |
 
 ### 4.2 The Orcs
 
