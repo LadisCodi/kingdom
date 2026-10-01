@@ -1336,6 +1336,29 @@
     ]
   },
   {
+    "id": "towerSighted",
+    "trigger": "sighted",
+    "triggerTarget": "Watchtower",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "See that shape on the northern hills? Something tall stands out there, past the dark. Clear the fog towards it and we’ll know.",
+        "box": "auto",
+        "point": "landmark:NorthWatch",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
     "id": "watchtowerSeen",
     "trigger": "landmarkSeen",
     "triggerTarget": "NorthWatch",

@@ -19,7 +19,22 @@
         },
         "reachPerTownhallLevel": { "type": "list", "of": { "type": "int" }, "length": { "townhall": true } },
         "countStep": { "type": "int" },
-        "countGrowth": { "type": "float" }
+        "countGrowth": { "type": "float" },
+        "sight": {
+          "type": "object",
+          "doc": "How far a tall thing is SIGHTED past the fog: a dim silhouette while a revealed cell lies within this many cells of it.",
+          "fields": {
+            "mountainBySize": {
+              "type": "list",
+              "of": { "type": "int", "min": 0 },
+              "length": { "exact": 3 },
+              "doc": "A mountain's sight by its block: 1×1, 2×2, 3×3. 0 is never sighted."
+            },
+            "landmark": { "type": "int", "min": 0, "doc": "A shrine, a ring of stones, a leyspring." },
+            "watchtower": { "type": "int", "min": 0, "doc": "The Watchtower: a tower, seen from further." },
+            "lair": { "type": "int", "min": 0, "doc": "A lair not yet found: its smoke and banners." }
+          }
+        }
       }
     },
     "knowledge": {

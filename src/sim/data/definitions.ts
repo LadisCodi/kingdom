@@ -506,7 +506,7 @@ export type SceneCondition =
   | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
-  | 'population' | 'training' | 'revealed' | 'featureSeen';
+  | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted';
 
 export interface SceneLine {
   speaker: string;

@@ -56,6 +56,9 @@ export const PALETTE = {
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
+  /** A thing sighted past the fog: one flat cold shape, faint over the dark. */
+  sighted: '#8796ad',
+  sightedAlpha: 0.28,
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing

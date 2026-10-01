@@ -224,6 +224,34 @@ Respawn:
   `../art/mockups/area-overlays/reach-simple-2-dots-shadow.png`). It
   disappears once the reach holds the whole province.
 
+### 4.1 Sighting
+
+A tall thing past the fog shows as a **silhouette** while a revealed cell
+lies close enough to it.
+
+| Thing | Sighted from | Setting |
+|---|---|---|
+| Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
+| Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
+| Watchtower | 5 | `fog.sight.watchtower` |
+| A lair not yet found | 3 | `fog.sight.lair` |
+| Forests, berries, game, shoals | never | — |
+
+- **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
+  footprint. Discovered cells do not see.
+- **A silhouette is the thing's own drawing as one flat, cold, faint shape**
+  over the dark: no name, no badge, no bubble.
+- It stops being a silhouette once any cell of it is Discovered — a lair once
+  it is found — and draws as itself.
+- **It ignores the Townhall's reach and the exploration gates.** Seeing what
+  cannot be reached yet is the point.
+- **It is not a discovery**: no banner, no quest progress, a lair is not found
+  and starts no raid clock.
+- A tap on a silhouette says *Something stands in the dark — clear the fog
+  towards it*, and costs nothing.
+- A scene may wait on it: the `sighted` condition
+  ([`24-dialogue.md`](24-dialogue.md) §5).
+
 ## 5. The price of a cell
 
 Authored per ring out to ring 14 — roughly ×2.5 a ring — with a ×1.37
@@ -344,6 +372,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 1 / 2 | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
@@ -367,6 +396,9 @@ Costs are **authored per sanctuary**, not derived from distance.
   part-lit or part-mined; it would read as a rendering fault, not as a state.
 - Footprints on iron and gold mountains, on forests, or on anything else that
   is a mass of small objects rather than one thing.
+- Line of sight: nothing hides a silhouette (§4.1).
+- A silhouette that says which ore or which landmark it is, or a banner when
+  one appears.
 
 **Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).

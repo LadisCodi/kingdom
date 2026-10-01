@@ -15,6 +15,7 @@ import { mana } from '../../sim/mana';
 import { isQuestComplete, questValue } from '../../sim/quests';
 import { isTechComplete, isTechFilled, isTomeOpen } from '../../sim/research';
 import { fogState } from '../../sim/fog';
+import { sightedThings } from '../../sim/sight';
 import { woundedCount } from '../../sim/army';
 import {
   buildQueueCapacity, type LairId, type TechId, type TomeId,
@@ -118,6 +119,12 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
       return state.city.population >= Math.max(1, c.amount)
         || state.city.trainingQueue.some((i) => i.trainee === 'Villager');
     case 'revealed': return Object.keys(state.fog.revealed).length >= Math.max(1, c.amount);
+    // A silhouette past the fog (01-map-and-fog.md §4.1): anything, a kind
+    // of thing, a kind of landmark, or one lair.
+    case 'sighted':
+      return sightedThings(state, game.map).some((t) => c.target === '' || t.kind === c.target
+        || t.id === c.target
+        || (t.kind === 'landmark' && LANDMARKS.find((l) => l.id === t.id)?.kind === c.target));
     // A feature out of the dark: any cell carrying it, discovered or revealed.
     case 'featureSeen':
       return Object.entries(state.features).some(([key, id]) => id === c.target

@@ -106,6 +106,7 @@ which one a line waits on is data.
 | `placing` · `placed` · `built` | placing one · one is placed · `amount` finished (`AnyWorkshop` for any) |
 | `revealed` · `population` · `heroes` | `amount` cells revealed · villagers · heroes |
 | `training` | a villager is in training, or `amount` villagers live |
+| `sighted` | a silhouette stands past the fog: anything, a `mountain` · `landmark` · `lair`, a kind of landmark, or one lair |
 | `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen — drawn, not merely in the page |
 | `taps` | `amount` taps on the ground since the line began |
 | `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |

@@ -176,6 +176,7 @@ last line, as a hint.
 |---|---|---|---|---|
 | `magic` | the first landmark is claimed | Isolde | *Feel that? Old stones still hum with power — our Mana pool is deeper already. The Book of Magic is open.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Bess:** *And me? I'm not bad with a ladle in a scrap, either.* · **Isolde:** *The Tavern hosts the banner — your first call is on the house. And a new book: the Sagas.* | Heroes |
+| `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) | Isolde | *See that shape on the northern hills? Something tall stands out there, past the dark. Clear the fog towards it and we'll know.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower, north. From its top you could see past the mountains — to whoever else is out there.* | the Watchtower |
 | `world` | the Watchtower is claimed | Isolde | *Other kingdoms, Your Majesty. Other banners. The roads out are being scouted — and the Atlas will help us read them.* | the world knob |
 

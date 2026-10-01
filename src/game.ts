@@ -89,6 +89,7 @@ import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
   watchedRefillsLeft,
 } from './sim/manaRefill';
+import { sightedAt } from './sim/sight';
 import { landmarkDefAt, standingLairAt } from './sim/sites';
 import { lairHolding } from './sim/lairZone';
 import {
@@ -775,7 +776,14 @@ export class Game {
       handle: (cell) => {
         if (this.openOverlay !== null) return false;
         const fog = fogState(this.state, this.map, cell);
-        if (fog === 'Undiscovered') return true; // swallowed
+        if (fog === 'Undiscovered') {
+          // A silhouette past the fog (01-map-and-fog.md §4.1) answers with
+          // the way to it; the plain dark swallows the tap.
+          if (sightedAt(this.state, this.map, cell) !== undefined) {
+            this.toast('Something stands in the dark — clear the fog towards it');
+          }
+          return true;
+        }
         if (fog !== 'Discovered') return false;
         // Read BEFORE the tap: a tap charges a fifth of the cell's price now,
         // not one Gold, so the floater has to be told what it cost.

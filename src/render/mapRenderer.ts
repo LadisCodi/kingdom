@@ -3,8 +3,9 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS,
 } from '../sim/data/definitions';
+import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingLairAt } from '../sim/sites';
 import { lairZoneCells } from '../sim/lairZone';
 import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
@@ -21,7 +22,7 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState, type LairId,
+  type Coord, type FeatureId, type GameState, type LairId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -665,6 +666,54 @@ export function drawMap(
    * CLIPPED to what is actually in front, so a villager whose legs are
    * behind a wall gets an outline on the legs and stays themselves above it.
    */
+  /**
+   * A THING SIGHTED PAST THE FOG (01-map-and-fog.md §4.1): its own drawing
+   * as one flat, cold, faint shape over the dark — there, and nothing more
+   * about it. The shape is stamped on a small offscreen canvas and filled
+   * with one colour, which no filter does. Returns where it landed.
+   */
+  let sightCanvas: HTMLCanvasElement | null = null;
+  const silhouette = (plot: PlotBox, keys: string[]): PlotBox | null => {
+    const key = keys.find((k) => spriteAspect(k) !== null);
+    if (key === undefined) return null;
+    const foot = base(plot);
+    const cw = plot.w * FEATURE_PLOTS;
+    const ch = cw * spriteAspect(key)!;
+    if (cw < 1 || ch < 1) return null;
+    sightCanvas ??= document.createElement('canvas');
+    const gc = sightCanvas;
+    if (gc.width < cw * dpr || gc.height < ch * dpr) {
+      gc.width = Math.ceil(cw * dpr);
+      gc.height = Math.ceil(ch * dpr);
+    }
+    const g = gc.getContext('2d')!;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, gc.width, gc.height);
+    const tall = drawStanding(g, key, cw / 2, ch, plot.w, FEATURE_PLOTS);
+    if (tall <= 0) return null;
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = PALETTE.sighted;
+    g.fillRect(0, 0, cw, ch);
+    g.globalCompositeOperation = 'source-over';
+    ctx.save();
+    ctx.globalAlpha = PALETTE.sightedAlpha;
+    ctx.drawImage(gc, 0, 0, Math.ceil(cw * dpr), Math.ceil(ch * dpr), foot.x - cw / 2, foot.y - ch, cw, ch);
+    ctx.restore();
+    return artRect(plot, tall, FEATURE_PLOTS);
+  };
+
+  /** The drawings a sighted thing would be drawn with in plain view. */
+  const sightKeys = (t: Sighted): string[] => {
+    if (t.kind === 'lair') return [LAIRS[t.id as LairId].sprite];
+    if (t.kind === 'landmark') {
+      const l = LANDMARKS.find((x) => x.id === t.id);
+      return l === undefined ? [] : [LANDMARK_ART[l.kind].sprite];
+    }
+    const stem = FEATURES[t.id as FeatureId].sprite;
+    return t.size === 1 ? [variantKey(stem, t.anchor)]
+      : [`${stem}_${t.size}x${t.size}`, variantKey(stem, t.anchor)];
+  };
+
   const RIM = 1.6;
   const RING: ReadonlyArray<readonly [number, number]> = [
     [1, 0], [-1, 0], [0, 1], [0, -1],
@@ -979,6 +1028,20 @@ export function drawMap(
       ctx.restore();
       drawDust(ctx, plot, t, id);
     }, { x: lair.size, y: lair.size });
+  }
+
+  // SIGHTED: the tall things past the fog a revealed cell is close enough to
+  // see (01-map-and-fog.md §4.1), in the same depth order as everything.
+  for (const t of sightedThings(state, map)) {
+    const span = { x: t.size, y: t.size };
+    const plot = camera.plotBox(t.anchor, span);
+    if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
+      || plot.y + plot.h < 0 || plot.y - plot.w * 2 > h) continue;
+    const keys = sightKeys(t);
+    later(t.anchor, (mark) => {
+      const art = silhouette(plot, keys);
+      if (art !== null) mark(art);
+    }, span);
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.

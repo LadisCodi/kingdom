@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
-import { LAIRS } from '../src/sim/data/definitions';
+import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
 
 /** Every `data-coach` key the UI source writes: literals, and the prefix of
  *  every templated one (`tech:${id}` → `tech:`). */
@@ -129,6 +129,16 @@ describe('the conditions read the kingdom', () => {
     expect(conditionHolds(game, args('built' as never, 'Tavern', 1))).toBe(true);
     expect(conditionHolds(game, args('doorOpen' as never, 'heroes'))).toBe(true);
     expect(conditionHolds(game, args('built' as never, 'AnyWorkshop', 1))).toBe(false);
+  });
+
+  it('sees what stands past the fog, by kind, landmark kind or lair', () => {
+    const game = freshPresenter(firstGame());
+    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+    expect(conditionHolds(game, args('sighted' as never, 'Watchtower'))).toBe(false);
+    reveal(game.state, [{ x: tower.location.x, y: tower.location.y + FOG.sight.watchtower }]);
+    expect(conditionHolds(game, args('sighted' as never, 'Watchtower'))).toBe(true);
+    expect(conditionHolds(game, args('sighted' as never, 'landmark'))).toBe(true);
+    expect(conditionHolds(game, args('sighted' as never, ''))).toBe(true);
   });
 
   it('never holds on a tap — a tap is the stage’s own event', () => {
