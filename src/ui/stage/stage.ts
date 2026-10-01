@@ -19,6 +19,7 @@ import {
 import { tally } from '../../sim/events';
 import { playSfx } from '../../audio/sfx';
 import { spriteUrl } from '../../render/sprites';
+import { CAMERA_GLIDE_MS } from '../../render/camera';
 import type { Coord } from '../../sim/state';
 import type { Game } from '../../game';
 import { el } from '../format';
@@ -68,6 +69,9 @@ function bringIntoView(key: string): void {
     return;
   }
 }
+
+/** How long the box takes to move to a new place on screen. */
+const BOX_MOVE_MS = 320;
 
 /** How many magic motes drift off a highlighted target. */
 const SPARKS = 14;
@@ -224,7 +228,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     playing.target = resolveTarget(game, l.point, null);
     // The camera flies to a map target before the line appears.
     if (playing.target?.kind === 'cell') {
-      game.camera.centerOnCell(playing.target.cell, playing.target.span);
+      game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
     }
     cast(l.side, l.speaker, l.expression);
     const other = l.side === 'left' ? 'right' : 'left';
@@ -269,6 +273,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (playing !== null) game.state.tutorial.seen[sceneKey(playing.scene.id)] = true;
     gapUntil = performance.now() + HELP.sceneGapSeconds * 1000;
     playing = null;
+    boxShown = false;
     glow(null);
     leave('left');
     leave('right');
@@ -295,6 +300,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     begin(resumeAt);
   };
 
+  /** The box has been placed in this scene, so a new place is a move. */
+  let boxShown = false;
+
   /** Where the box's top edge falls when it sits at the bottom. */
   const bottomBoxTop = (): number => {
     const was = box.dataset.place;
@@ -312,11 +320,27 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       // BOTTOM, where the cast stands on it — unless the box would sit on
       // the very thing the line points at. Only then the top, where the cast
       // has to hang below it.
-      const r = playing?.target ? targetRect(game, playing.target, frame) : null;
+      let r = playing?.target ? targetRect(game, playing.target, frame) : null;
+      // A map target is being flown to the middle of the screen: judge it
+      // where it is going, not where the glide has it now.
+      if (r !== null && playing?.target?.kind === 'cell') {
+        r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
+      }
       where = r !== null && r.y + r.h > bottomBoxTop() - 8 ? 'top' : 'bottom';
     }
+    // A box already on screen MOVES to its new place — quickly, overshooting
+    // a touch and settling back — rather than jumping there.
+    const from = boxShown && box.dataset.place !== where ? box.getBoundingClientRect() : null;
     box.dataset.place = where;
     layer.dataset.place = where;
+    boxShown = true;
+    if (from !== null) {
+      const to = box.getBoundingClientRect();
+      box.animate([
+        { transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)` },
+        { transform: 'translate(0, 0)' },
+      ], { duration: BOX_MOVE_MS, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+    }
   };
 
   // ------------------------------------------------------------ taps
@@ -556,7 +580,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         const moved = playing.target?.kind === 'cell' && was?.kind === 'cell'
           && (was.cell.x !== playing.target.cell.x || was.cell.y !== playing.target.cell.y);
         if (moved && playing.target?.kind === 'cell') {
-          game.camera.centerOnCell(playing.target.cell, playing.target.span);
+          game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
         }
         // A control scrolled out of its row — the fourth card of the build
         // menu — is brought into view, or the lock holds the player in front
@@ -570,7 +594,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         if (playing.target?.kind === 'cell' && r !== null && outOfSight(r)) {
           playing.hiddenSince ??= now;
           if (now - playing.hiddenSince > REFOCUS_MS && now - lastActivity > REFOCUS_MS) {
-            game.camera.centerOnCell(playing.target.cell, playing.target.span);
+            game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
             playing.hiddenSince = null;
           }
         } else {

@@ -133,7 +133,7 @@ import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, SCENES, type QuestDef } from './sim/data/definitions';
-import { Camera } from './render/camera';
+import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -1101,7 +1101,7 @@ export class Game {
     this.mode = { kind: 'placing', definitionId, selected };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size);
+    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -1131,7 +1131,7 @@ export class Game {
     this.inspectedDistrictId = null;
     // The ghost is out where the building stands: bring it into view, as
     // placement does for a new one.
-    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
+    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -1210,7 +1210,7 @@ export class Game {
     this.openRelicId = null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
-    if (selected) this.camera.centerOnCell(selected);
+    if (selected) this.camera.centerOnCell(selected, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -2958,7 +2958,7 @@ export class Game {
       if (!cell) return;
       this.setOverlay(null);
       this.inspectedDistrictId = null;
-      this.camera.centerOnCell(cell);
+      this.camera.centerOnCell(cell, undefined, CAMERA_GLIDE_MS);
       this.setCellHint(cell); // arrow on the map until tapped (or timeout)
       this.notify();
     };
@@ -2969,7 +2969,7 @@ export class Game {
       }
       this.setOverlay(null);
       this.inspectedDistrictId = district.uniqueId;
-      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
+      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
       this.notify();
     };
     const built = (pred: (d: District) => boolean) =>
@@ -3064,7 +3064,7 @@ export class Game {
         if (claimable) {
           this.setOverlay(null);
           this.inspectedSite = claimable.location;
-          this.camera.centerOnCell(claimable.location);
+          this.camera.centerOnCell(claimable.location, undefined, CAMERA_GLIDE_MS);
           this.notify();
         } else {
           centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
@@ -3230,7 +3230,7 @@ export class Game {
     this.setOverlay(null);
     this.inspectedSite = LAIRS[lairId].location;
     this.inspectedDistrictId = null;
-    this.camera.centerOnCell(LAIRS[lairId].location);
+    this.camera.centerOnCell(LAIRS[lairId].location, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -4440,7 +4440,7 @@ export class Game {
     const hall = townhall(this.state);
     this.setOverlay(null);
     this.inspectedDistrictId = hall.uniqueId;
-    this.camera.centerOnCell(hall.location);
+    this.camera.centerOnCell(hall.location, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 

@@ -95,7 +95,7 @@ praises each thing put right, and wears the face that goes with it
   a building) — never on a moment like a sheet being shut.
 - **A lock releases itself** if its target is missing for five seconds; the
   beat then shows as a hint. Nothing can strand the player.
-- The camera flies to a map target before the beat's line appears, again
+- The camera glides (0.2 s) to a map target before the beat's line appears, again
   when the target moves on (a cleared forest, the next one pointed at), and
   again when it has been out of sight — panned away, or under the box — for
   1.5 s with the player's hands off the screen.

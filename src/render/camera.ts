@@ -25,6 +25,10 @@ export interface PlotBox {
   h: number; // height
 }
 
+/** How long the camera takes to glide to a place it is sent to: quick,
+ *  but long enough to read as travel rather than a cut. */
+export const CAMERA_GLIDE_MS = 200;
+
 export class Camera {
   x = 0; // projected-plane coords of the viewport centre
   y = 0;
@@ -133,11 +137,43 @@ export class Camera {
 
   /** Centre the view on a plot — a cell, or a building's whole footprint
    *  when `span` is given, so a 2×2 hall is centred on its middle rather
-   *  than on its corner cell. */
-  centerOnCell(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }): void {
+   *  than on its corner cell. `ms` glides there instead of jumping
+   *  (`glideTo`); 0 is at once. */
+  centerOnCell(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }, ms = 0): void {
     const p = this.project(cell.x + span.x / 2, cell.y + span.y / 2);
-    this.x = p.x;
-    this.y = p.y;
+    this.glideTo(p.x, p.y, ms);
+  }
+
+  /** The glide under way, if any: from where, to where, since when. */
+  private glide: { fx: number; fy: number; tx: number; ty: number; t0: number; ms: number } | null = null;
+
+  /**
+   * Move the view's centre to (x, y) in projected-plane coords — at once, or
+   * over `ms` with an ease-out (fast, then settling, no overshoot), so a
+   * jump across the map reads as travel. A pan or a zoom by the player
+   * cancels it: their hand wins.
+   */
+  glideTo(x: number, y: number, ms = 0): void {
+    if (ms <= 0 || typeof requestAnimationFrame !== 'function') {
+      this.glide = null;
+      this.x = x;
+      this.y = y;
+      return;
+    }
+    const start = this.glide === null;
+    this.glide = { fx: this.x, fy: this.y, tx: x, ty: y, t0: performance.now(), ms };
+    if (!start) return; // the running loop picks the new leg up
+    const step = (now: number): void => {
+      const g = this.glide;
+      if (g === null) return;
+      const k = Math.min(1, (now - g.t0) / g.ms);
+      const e = 1 - (1 - k) ** 3; // ease-out cubic
+      this.x = g.fx + (g.tx - g.fx) * e;
+      this.y = g.fy + (g.ty - g.fy) * e;
+      if (k < 1) requestAnimationFrame(step);
+      else this.glide = null;
+    };
+    requestAnimationFrame(step);
   }
 
   /**
@@ -147,21 +183,24 @@ export class Camera {
    * it described; the building now moves into the sky the card leaves.
    * `size` is the footprint in cells, anchored top-left at `cell`.
    */
-  centerFootprintWithin(cell: Coord, size: { x: number; y: number }, top: number, bottom: number): void {
+  centerFootprintWithin(
+    cell: Coord, size: { x: number; y: number }, top: number, bottom: number, ms = 0,
+  ): void {
     const h = this.canvas.clientHeight;
     const bandMid = (Math.max(0, top) + Math.min(h, bottom)) / 2;
     const p = this.project(cell.x + size.x / 2, cell.y + size.y / 2);
     // toScreen: sy = (p.y - this.y) * zoom + h / 2  →  solve for this.y.
-    this.x = p.x;
-    this.y = p.y - (bandMid - h / 2) / this.zoom;
+    this.glideTo(p.x, p.y - (bandMid - h / 2) / this.zoom, ms);
   }
 
   panByScreen(dx: number, dy: number): void {
+    this.glide = null;
     this.x -= dx / this.zoom;
     this.y -= dy / this.zoom;
   }
 
   zoomBy(factor: number): void {
+    this.glide = null;
     this.zoom = Math.min(2.5, Math.max(0.4, this.zoom * factor));
   }
 

@@ -8,7 +8,7 @@ import './ui/styles/index.css'; // the kit: imported second, so its rules win ti
 import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { startMusic } from './audio/music';
 import { Game, type OverlayName } from './game';
-import { Camera } from './render/camera';
+import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
@@ -250,7 +250,7 @@ async function boot(): Promise<void> {
     // top among the slot's children — not the slot's own.
     const tops = [...panelRoot.children].map((c) => c.getBoundingClientRect().top - canvasTop);
     const bottom = tops.length > 0 ? Math.min(...tops) : canvas.clientHeight;
-    camera.centerFootprintWithin(cell, size, top, bottom);
+    camera.centerFootprintWithin(cell, size, top, bottom, CAMERA_GLIDE_MS);
   };
 
   const refreshScreens = () => {

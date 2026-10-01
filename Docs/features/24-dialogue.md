@@ -31,6 +31,8 @@
   its own.
 - **`auto`**: the bottom, where the cast stands on the box — unless the box
   there would cover what the line points at; only then the top.
+- **A box already on screen moves** to a new place in 0.32 s with a slight
+  overshoot (OutBack), rather than jumping there.
 - **One size, always**: three lines of text at the box's type. A line too
   long for it is set smaller until it fits, never let out of the paper, and
   no line is longer than 140 characters (`tests/stage.test.ts`).
@@ -86,7 +88,8 @@
   glow fades into the dark.
 - The quest pill's hint wears the same hand and glow, so a player never learns
   two signs for one thing.
-- **The camera flies to a map target** before the line appears.
+- **The camera glides to a map target** (0.2 s, easing out, no overshoot)
+  before the line appears; `auto` judges the target where the glide ends.
 - A target that moves (a scrolling list, a card rebuilt) is re-found every
   frame.
 
