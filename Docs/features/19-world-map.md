@@ -222,9 +222,9 @@ Built only on a hex the player already controls, and only after the Outpost.
 | Improvement | Needs | Gives |
 |---|---|---|
 | **Outpost** | — | takes the hex, and opens the rest of this table |
-| **Sawmill** | a Forest | Wood to the main city, hourly |
-| **Farm** | a hex with no feature | Food to the main city, hourly |
-| **Quarry** | a Mountain | Stone to the main city, hourly |
+| **Sawmill** | a Forest | Wood, into its store |
+| **Farm** | a hex with no feature | Food, into its store |
+| **Quarry** | a Mountain | Stone, into its store |
 | **Fortress** | — | garrisoned by an army; covers this hex and its six neighbours (§6.1) |
 
 - **Improvements are what Gold buys out here.** They are the world's Gold sink,
@@ -232,6 +232,16 @@ Built only on a hex the player already controls, and only after the Outpost.
 - **The inner ring pays +200%** to improvements standing on it. Permanent,
   independent of whether the Portal is open, and **only while the hex is
   active**.
+
+### 7.1 Stores
+
+- **A producing improvement fills a store of its own**, as a province building
+  does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
+- **A tap on its hex collects the store into the city's wallet**, free.
+- **Yield and store size are authored amounts per improvement level.**
+- An inactive hex's store stops filling and can still be collected.
+- **The store goes with the hex.** A conquest hands it to the conqueror; a
+  denial empties it. Collecting is the defence.
 
 ## 8. Features
 
@@ -331,7 +341,7 @@ The outer scope feeds the inner one.
 
 | The world pays | Which lands in |
 |---|---|
-| **Wood, Food and Stone**, hourly, from improvements | the city's own purse |
+| **Wood, Food and Stone**, collected from improvements' stores (§7.1) | the city's own purse |
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
 | **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
 | **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |

@@ -82,8 +82,9 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 - There is no offline cap. An absence is replayed whole by the same advance
   the live tick runs.
-- **Production is bounded by its own ceiling**: each building's store, the
-  Mana pool, the Knowledge bar, the workshop and training queues
+- **Production is bounded by its own ceiling**: each building's store, each
+  world improvement's store, the Mana pool, the Knowledge bar, the workshop
+  and training queues
   ([`03-economy.md`](03-economy.md) §3.2).
 - **Timers resolve in full**: the build queue, a gate's raid, event windows,
   **and every world-map march**.
@@ -105,7 +106,8 @@ One tactile loop and one planning loop, across two or three visits a day.
 - Design rule, technical boundary and marketing line at once: **province private
   and client-authoritative, world shared and server-authoritative.**
 - **An outpost is a claim, not a building.** If the hex falls, the player keeps
-  everything it already produced.
+  everything they already collected from it; what sits in its stores goes
+  with the hex ([`19`](19-world-map.md) §7.1).
 
 ## 6. The save shape
 
