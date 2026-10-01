@@ -5,6 +5,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
+import { giveBook } from '../src/sim/research';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
 import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
@@ -70,6 +71,20 @@ describe('the scenes, against the game', () => {
     }
   });
 
+  it('hands over the Book of Warfare at the first lair found, after its card is opened', () => {
+    const scene = SCENES.find((s) => s.id === 'firstLair')!;
+    expect(scene).toMatchObject({ trigger: 'lairFound', triggerTarget: '' });
+    // Before every scene a particular lair starts, so it is the one that plays.
+    for (const lair of ['orcs', 'harpies']) {
+      expect(SCENES.indexOf(scene), lair).toBeLessThan(SCENES.findIndex((s) => s.id === lair));
+    }
+    expect(scene.lines[0]).toMatchObject({ point: 'lair:', lock: 'target', until: 'ui', untilTarget: 'lair-card' });
+    expect(scene.lines.at(-1)!.gives).toBe('Warfare');
+    // And nothing else hands a book over.
+    const gifts = SCENES.flatMap((s) => s.lines.filter((l) => l.gives).map(() => s.id));
+    expect(gifts).toEqual(['firstLair']);
+  });
+
   it('never locks a line to a target it does not point at', () => {
     for (const scene of SCENES) {
       for (const line of scene.lines) {
@@ -123,6 +138,9 @@ describe('the conditions read the kingdom', () => {
     reveal(game.state, [LAIRS.Orcs.location]);
     game.tick();
     expect(conditionHolds(game, args('lairFound' as never, 'Orcs'))).toBe(true);
+    // Found is not given: the book waits for Isolde's line.
+    expect(conditionHolds(game, args('bookOpen' as never, 'Warfare'))).toBe(false);
+    giveBook(game.state, 'Warfare');
     expect(conditionHolds(game, args('bookOpen' as never, 'Warfare'))).toBe(true);
     expect(conditionHolds(game, args('built' as never, 'Tavern', 1))).toBe(false);
     addBuilt(game.state, 'Tavern', { x: 3, y: 1 });

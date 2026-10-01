@@ -35,7 +35,7 @@
 |---|---|---|
 | **Minute 0–10** · the First Morning | fog, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, building, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
 | **Session 1** | farms, workers, the Sawmill, Townhall 2 | the quest chain |
-| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing the Orcs' ground |
+| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing a lair's ground; Isolde hands over the book |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 43 cells revealed |
 | **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
@@ -58,7 +58,7 @@
 | **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
 | **Season** pill | as today — a card or a pack held | absent |
 | **The Book of Civics** | always open | — |
-| **The Book of Warfare** | the first lair is **discovered** | a padlocked bookmark — *Find a lair* |
+| **The Book of Warfare** | Isolde **hands it over**, once the first lair is discovered and its card opened (`firstLair`, [`23-tutorials.md`](23-tutorials.md) §4.2) | a padlocked bookmark — *Find a lair* |
 | **The Book of Magic** | the first landmark is **claimed** | a padlocked bookmark — *Claim a landmark* |
 | **The Sagas** (found) | a **Tavern** stands | not on the shelf |
 | **The Atlas** (found) | the **Watchtower** is claimed | not on the shelf |
@@ -81,7 +81,7 @@
 | Book | Kind | Opens when | Remit |
 |---|---|---|---|
 | **Civics** | general | from the first minute | the city and its purse |
-| **Warfare** | general | the first lair is discovered | the army, and the lairs it clears |
+| **Warfare** | general | Isolde hands it over at the first lair discovered | the army, and the lairs it clears |
 | **Magic** | general | the first landmark is claimed | Mana, Knowledge, the Sanctum, the water and the heights |
 | **Sagas** | found | a Tavern stands | heroes, and the Tavern that hosts them |
 | **Atlas** | found | the Watchtower is claimed | sight, landmarks, and the world beyond |
@@ -100,7 +100,7 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the Book of Warfare opens; the raid clock starts | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
 | **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 5 Knowledge; **the Book of Magic opens** |
 | **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 5 Knowledge |
 

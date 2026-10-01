@@ -12,7 +12,7 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, STORE,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
@@ -91,7 +91,7 @@ import {
 } from './sim/manaRefill';
 import { sightedAt } from './sim/sight';
 import { landmarkDefAt, standingLairAt } from './sim/sites';
-import { lairHolding } from './sim/lairZone';
+import { lairHolding, lairZoneCells } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
@@ -3123,6 +3123,31 @@ export class Game {
         } else {
           centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         }
+        break;
+      }
+      case 'FindLairs': {
+        // Toward the nearest lair not yet found: the dark cell closest to its
+        // ground. "Clear 55 cells" can be met facing away from every lair,
+        // which is why this goal exists, so the arrow has to give the heading.
+        const zones = LAIR_ORDER
+          .filter((id) => this.state.lairs[id] === undefined)
+          .map((id) => lairZoneCells(id).filter((c) => this.map.terrain.has(coordKey(c))))
+          .filter((zone) => zone.length > 0)
+          .sort((a, b) =>
+            Math.min(...a.map((c) => townhallDistance(this.map, c)))
+            - Math.min(...b.map((c) => townhallDistance(this.map, c))));
+        const zone = zones[0];
+        let target: Coord | null = null;
+        if (zone) {
+          let bestD = Infinity;
+          for (const c of this.map.cells) {
+            if (fogState(this.state, this.map, c) !== 'Discovered') continue;
+            const d = Math.min(...zone.map((z) =>
+              Math.max(Math.abs(z.x - c.x), Math.abs(z.y - c.y))));
+            if (d < bestD) { bestD = d; target = c; }
+          }
+        }
+        centerCell(target ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
       }
       case 'ClearLairs': {

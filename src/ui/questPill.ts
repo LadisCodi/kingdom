@@ -52,6 +52,7 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'TrainArmy': case 'ClearLairs': return 'army';
     case 'CollectTaps': return 'showme';
     case 'DiscoverCells': return 'tile';
+    case 'FindLairs': return 'compass';
     case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
     case 'OwnArtifacts': return 'relics';

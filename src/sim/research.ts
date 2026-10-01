@@ -244,8 +244,10 @@ export function techState(state: GameState, id: TechId): TechState {
  */
 export const TOME_OPENS: Record<TomeId, (state: GameState) => boolean> = {
   Civics: () => true,
-  // The first lair DISCOVERED: the army is what answers it.
-  Warfare: (state) => Object.keys(state.lairs).length > 0,
+  // HANDED OVER, not found: Isolde gives it to the player once the first
+  // lair has been found and looked at (scene `firstLair`,
+  // Docs/features/23-tutorials.md §4.2).
+  Warfare: (state) => state.tutorial.seen[giftKey('Warfare')] === true,
   // The first landmark CLAIMED: the old stones are where magic is felt.
   Magic: (state) => Object.values(state.landmarks.claimed).some((c) => c === true),
   // Found: a Tavern standing.
@@ -264,6 +266,16 @@ export const isFoundTome = (tome: TomeId): boolean => tome === 'Sagas' || tome =
 
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
+
+/** A book's key in `tutorial.seen` once someone has HANDED it to the player —
+ *  a scene line that `gives` it. A book that opens on a gift opens on this. */
+export const giftKey = (tome: TomeId): string => `gift:${tome}`;
+
+/** Record that a book has been handed over. The stage calls it as the line
+ *  that gives it is read; the sim only ever reads the record. */
+export function giveBook(state: GameState, tome: TomeId): void {
+  state.tutorial.seen[giftKey(tome)] = true;
+}
 
 /** A book's key in `tutorial.seen`: it has been announced open. */
 export const bookKey = (tome: TomeId): string => `book:${tome}`;

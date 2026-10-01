@@ -688,7 +688,37 @@ const MIGRATIONS: readonly Migration[] = [
       if (to !== index) Object.assign(quests, { Index: to, Progress: 0 });
     },
   },
+  {
+    // v73: A LAIR IS FOUND BEFORE THE ARMY IS ASKED FOR. `WarDrums` (find a
+    // lair) enters the chain in front of `ArmedMen`, because the Book of
+    // Warfare opens on nothing else. A kingdom past it moves on by one; one
+    // ON `ArmedMen` stays at its index, which is now `WarDrums` — done on
+    // arrival if it has found a lair, and the missing step if it has not.
+    to: 73,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      if (index > WAR_DRUMS_AT_V73) Object.assign(quests, { Index: index + 1 });
+      else if (index === WAR_DRUMS_AT_V73) Object.assign(quests, { Progress: 0 });
+    },
+  },
+  {
+    // v74: THE BOOK OF WARFARE IS HANDED OVER. It opens on Isolde giving it
+    // (`gift:Warfare`), no longer on a lair found. A kingdom that has found
+    // one was already reading it, so it is recorded as given.
+    to: 74,
+    migrate: (modules) => {
+      const lairs = modules['kingdom.lairs'] as { Lairs?: unknown[] } | undefined;
+      const tutorial = modules['kingdom.tutorial'] as { Seen?: string[] } | undefined;
+      if (tutorial === undefined || (lairs?.Lairs ?? []).length === 0) return;
+      tutorial.Seen = [...new Set([...(tutorial.Seen ?? []), 'gift:Warfare'])];
+    },
+  },
 ];
+
+/** Where `WarDrums` entered the chain in v73, frozen as history. */
+const WAR_DRUMS_AT_V73 = 26;
 
 /** Where `Picks` entered the chain in v70, frozen as history. */
 const PICKS_AT_V70 = 27;
