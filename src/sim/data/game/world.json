@@ -1,0 +1,30 @@
+{
+  "world": {
+    "marchSecondsPerHex": 600,
+    "explorerRevealRadius": 1,
+    "revealRadiusMax": 2,
+    "cartographyExplorers": 1,
+    "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"]
+  },
+  "worldGen": {
+    "innerRing": [
+      { "terrain": "Grassland", "features": ["Forest"] },
+      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Grassland", "features": ["FertileLand"] },
+      { "terrain": "Grassland", "features": ["Forest"] },
+      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Plains", "features": [] }
+    ],
+    "terrainWeights": {
+      "corridor": { "Grassland": 4, "Plains": 3, "Desert": 1, "Mountain": 2 },
+      "home": { "Grassland": 5, "Plains": 3, "Desert": 1, "Mountain": 2 },
+      "outer": { "Grassland": 3, "Plains": 2, "Desert": 2, "Mountain": 3 }
+    },
+    "featureChance": {
+      "corridor": { "Forest": 0.35, "FertileLand": 0.1, "Game": 0.1, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0.12 },
+      "home": { "Forest": 0.4, "FertileLand": 0.12, "Game": 0.12, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 },
+      "outer": { "Forest": 0.3, "FertileLand": 0.05, "Game": 0.1, "Dungeon": 0.12, "Sanctuary": 0.08, "Landmark": 0 }
+    },
+    "maxFeaturesPerHex": 2
+  }
+}

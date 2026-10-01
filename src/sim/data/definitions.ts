@@ -17,6 +17,7 @@ import {
 import type { TechEffect } from './techEffectRules';
 import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
+import type { RolledRole, WorldFeature, WorldTerrain } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
@@ -1980,6 +1981,34 @@ export const garrisonForTier = (tier: number): GarrisonDef =>
  *  window, and the fraction of the stores one may take
  *  (Docs/proposals/lairs.md §4). */
 export const RAID = balance.raid;
+
+// ------------------------------------------------------------ the world board
+
+/** Marches and explorers on the shared board (Docs/features/19-world-map.md
+ *  §3–§4). */
+export interface WorldDef {
+  marchSecondsPerHex: number;
+  explorerRevealRadius: number;
+  revealRadiusMax: number;
+  cartographyExplorers: number;
+  /** Who holds the five other cities until the board comes from the server. */
+  rivals: readonly string[];
+}
+
+export interface WorldHexDef { terrain: WorldTerrain; features: readonly WorldFeature[] }
+
+/** How a board is rolled (19 §9). */
+export interface WorldGenDef {
+  /** East first, on round in HEX_DIRS order. */
+  innerRing: readonly WorldHexDef[];
+  terrainWeights: Record<RolledRole, Partial<Record<WorldTerrain, number>>>;
+  featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
+  maxFeaturesPerHex: number;
+}
+
+export const WORLD: WorldDef = balance.world;
+export const WORLD_GEN = balance.worldGen as WorldGenDef;
+
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;

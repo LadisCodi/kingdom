@@ -15,6 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
+import { WORLD_FEATURES, WORLD_TERRAINS } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -48,6 +49,9 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
   { id: 'garrisons', label: 'Garrisons', domain: 'World', view: 'table', noun: 'garrison', source: 'garrisons' },
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
+  // The shared hex board (Docs/features/19-world-map.md): marches, explorers
+  // and how a board is rolled.
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -107,7 +111,9 @@ export type RefKind =
   /** A kind of landmark — Shrine, Watchtower… (sim/state.ts LandmarkKind). */
   | 'landmarkKind'
   /** Someone who speaks on the stage (`speakers`). */
-  | 'speaker';
+  | 'speaker'
+  /** A world hex's terrain, and what it may hold (sim/world/types.ts). */
+  | 'worldTerrain' | 'worldFeature';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -164,6 +170,8 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
   landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
+  worldTerrain: WORLD_TERRAINS,
+  worldFeature: WORLD_FEATURES,
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -636,6 +644,29 @@ export const RULES: Readonly<Record<string, Rule>> = {
     rings.forEach((r, i) => {
       if (i > 0 && num(r.distance) <= num(rings[i - 1].distance)) push(null, ['fog', 'rings', i, 'distance'], 'distances must be ascending');
     });
+  },
+  world: (doc, push) => {
+    const gen = (doc.worldGen ?? {}) as Record<string, unknown>;
+    const chances = (gen.featureChance ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    // Where each kind of place may stand (19-world-map.md §9).
+    const only: Record<string, string> = { Dungeon: 'outer', Sanctuary: 'outer', Landmark: 'corridor' };
+    for (const [role, row] of Object.entries(chances)) {
+      for (const [feature, home] of Object.entries(only)) {
+        if (role !== home && num(row?.[feature]) > 0) {
+          push(null, ['worldGen', 'featureChance', role, feature], `a ${feature} only stands on the ${home} ring`);
+        }
+      }
+    }
+    const weights = (gen.terrainWeights ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    for (const [role, row] of Object.entries(weights)) {
+      if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
+        push(null, ['worldGen', 'terrainWeights', role], 'every weight is 0 — a hex here could roll no terrain');
+      }
+    }
+    const world = (doc.world ?? {}) as Record<string, unknown>;
+    if (num(world.explorerRevealRadius) > num(world.revealRadiusMax)) {
+      push(null, ['world', 'explorerRevealRadius'], 'is past revealRadiusMax');
+    }
   },
   economy: (doc, push) => {
     const tiers = list((doc.harmony as Record<string, unknown> | undefined)?.surplusTiers) as Array<Record<string, unknown>>;

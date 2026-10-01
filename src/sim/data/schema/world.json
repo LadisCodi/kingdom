@@ -1,0 +1,106 @@
+{
+  "type": "object",
+  "fields": {
+    "world": {
+      "type": "object",
+      "doc": "The world board: how a march is timed and what an explorer sees (Docs/features/19-world-map.md §3–§4).",
+      "fields": {
+        "marchSecondsPerHex": {
+          "type": "int",
+          "min": 1,
+          "doc": "Seconds a march takes per hex, out or back. Linear in hexes; an explorer divides it by worldRevealSpeed."
+        },
+        "explorerRevealRadius": {
+          "type": "int",
+          "min": 1,
+          "max": 2,
+          "doc": "Hexes round every hex of its path that a marching explorer reveals, before the tree."
+        },
+        "revealRadiusMax": {
+          "type": "int",
+          "min": 1,
+          "max": 2,
+          "doc": "The most a reveal radius can reach, however the tree raises it."
+        },
+        "cartographyExplorers": {
+          "type": "int",
+          "min": 0,
+          "doc": "Explorer slots Cartography opens. The Atlas ladder adds to it."
+        },
+        "rivals": {
+          "type": "list",
+          "of": { "type": "text" },
+          "length": { "exact": 5 },
+          "doc": "Who holds the five other cities until the board comes from the server."
+        }
+      }
+    },
+    "worldGen": {
+      "type": "object",
+      "doc": "How a board is rolled (19 §9): one wedge, turned six times; the inner ring authored.",
+      "fields": {
+        "innerRing": {
+          "type": "list",
+          "length": { "exact": 6 },
+          "doc": "The six hexes round the Portal, east first and on round the compass. Authored, never rolled or turned.",
+          "of": {
+            "type": "object",
+            "fields": {
+              "terrain": { "type": "text", "ref": "worldTerrain" },
+              "features": { "type": "list", "of": { "type": "text", "ref": "worldFeature" } }
+            }
+          }
+        },
+        "terrainWeights": {
+          "type": "object",
+          "doc": "The odds of each terrain, by the ring a hex is on. Relative weights.",
+          "fields": {
+            "corridor": { "type": "map", "keysRef": "worldTerrain", "of": { "type": "float", "min": 0 }, "doc": "Rings 2–3." },
+            "home": {
+              "type": "map",
+              "keysRef": "worldTerrain",
+              "of": { "type": "float", "min": 0 },
+              "doc": "Ring 4, round the cities. A city hex itself is always Grassland."
+            },
+            "outer": {
+              "type": "map",
+              "keysRef": "worldTerrain",
+              "of": { "type": "float", "min": 0 },
+              "doc": "Ring 5, the rim."
+            }
+          }
+        },
+        "featureChance": {
+          "type": "object",
+          "doc": "The chance a hex rolls each feature, by its ring. Dungeons and Sanctuaries only on the outer ring; landmarks only on the corridors.",
+          "fields": {
+            "corridor": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Rings 2–3."
+            },
+            "home": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Ring 4."
+            },
+            "outer": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Ring 5."
+            }
+          }
+        },
+        "maxFeaturesPerHex": {
+          "type": "int",
+          "min": 0,
+          "max": 3,
+          "doc": "A rolled hex keeps at most this many features, in the order they are listed."
+        }
+      }
+    }
+  }
+}

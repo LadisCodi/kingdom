@@ -1,0 +1,26 @@
+// What a world hex can be made of (Docs/features/19-world-map.md §2, §8).
+//
+// Unions in code, like the province's `FeatureId`: a new terrain or feature
+// is code, because something has to draw it and something has to read it.
+// The data editor names them through `STATIC_IDS` (dataRules.ts).
+
+export const WORLD_TERRAINS = ['Grassland', 'Plains', 'Desert', 'Mountain'] as const;
+export type WorldTerrain = typeof WORLD_TERRAINS[number];
+
+/** In the order a hex rolls them — and keeps them, when a hex holds more
+ *  than `maxFeaturesPerHex` would allow. */
+export const WORLD_FEATURES = ['Forest', 'FertileLand', 'Game', 'Dungeon', 'Sanctuary', 'Landmark'] as const;
+export type WorldFeature = typeof WORLD_FEATURES[number];
+
+/**
+ * A hex's job, by its ring (19 §1): the Portal at the centre, the inner ring,
+ * the corridors (rings 2–3), the home ring the cities stand on (4) and the
+ * outer ring at the rim (5).
+ */
+export const HEX_ROLES = ['portal', 'inner', 'corridor', 'home', 'outer'] as const;
+export type HexRole = typeof HEX_ROLES[number];
+
+/** The roles a hex's contents are ROLLED for; the Portal is empty and the
+ *  inner ring is authored. */
+export const ROLLED_ROLES = ['corridor', 'home', 'outer'] as const;
+export type RolledRole = typeof ROLLED_ROLES[number];
