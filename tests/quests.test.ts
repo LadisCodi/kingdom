@@ -442,7 +442,7 @@ describe('quests fund the research tree', () => {
     // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
     // the chain asks for the book that only a found lair opens.
     expect(chain).toBe(16_215);
-    expect(tree).toBe(435_600); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(568_885); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
@@ -459,7 +459,9 @@ describe('quests fund the research tree', () => {
     // first rows and the planned Cartography count as era-1 majors too.
     // 6,030 when the five opening cards took 20 to 30 Gold each.
     // 6,055 with Pickaxes, the card that opens the mountains.
-    expect(opening).toBe(6055);
+    // 6,705 when the Warfare book was rebuilt (2026-10-01): its era-1
+    // majors are Warrior and the Infirmary now, at 500 and 800.
+    expect(opening).toBe(6705);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

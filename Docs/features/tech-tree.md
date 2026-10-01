@@ -26,7 +26,7 @@
 | Book | Opens on | Remit | Bands (cells revealed) | Cards |
 |---|---|---|---|---|
 | **Civics** | from the first minute | the city and its purse | 0 · 43 · 100 | 74 |
-| **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 30 · 100 · 220 | 41 |
+| **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
 | **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
 | **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |
 | **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 9 |
@@ -159,69 +159,68 @@
 
 ## 3. Warfare
 
-### 3.1 Era 1 — 8 cards · 13 K · 1,040 Gold
+### 3.1 Era 1 — 6 cards · 11 K · 4,200 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
-| **Spears** | the SpearHall, the Lancer | 150 G · 2 K |
-| **Warrior** | the Barracks, the Warrior | 100 G · 2 K |
-| **Infirmary** | the Infirmary | 400 G · 3 K |
+| **Warrior** | the Barracks, the Warrior | 500 G · 2 K |
+| **Infirmary** | the Infirmary | 800 G · 3 K |
 
 | Rank | Moves | Price |
 |---|---|---|
-| Colours I | +10% army cap | 60 G · 1 K |
-| Drill Yards I | +15% soldier training speed | 60 G · 1 K |
-| Shield Wall I | +10% defence, Melee units | 60 G · 1 K |
-| Warhorns I | +5% attack, every unit | 60 G · 1 K |
-| Bounties I | +20% Knowledge per lair cleared | 150 G · 2 K |
+| Drill Yards I | +15% soldier training speed | 550 G · 1 K |
+| Shield Wall I | +10% defence, Melee units | 550 G · 1 K |
+| Warhorns I | +5% attack, every unit | 900 G · 2 K |
+| Beds I | +20% Infirmary beds | 900 G · 2 K |
 
-### 3.2 Era 2 — 14 cards · 50 K · 12,275 Gold
+### 3.2 Era 2 — 8 cards · 28 K · 13,400 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
-| **Warband II** | Barracks L4, SpearHall L4, ShootingGrounds L4, Stables L4 | 800 G · 3 K |
-| **Archery** | the ShootingGrounds, the Archer | 1,000 G · 4 K |
-| **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 2,125 G · 6 K |
-| **Scouting** | Eyes ahead — a lair shows its threat before you launch. *(planned)* | 2,500 G · 6 K |
+| **Archery** | the ShootingGrounds, the Archer | 1,200 G · 4 K |
+| **Spears** | the SpearHall, the Lancer | 1,800 G · 4 K |
+| **Warband II** | Barracks L4, SpearHall L4, ShootingGrounds L4, Stables L4 | 2,500 G · 5 K |
 
 | Rank | Moves | Price |
 |---|---|---|
-| Colours II | +10% army cap | 525 G · 2 K |
-| Beds I | +20% Infirmary beds | 300 G · 2 K |
-| Shield Wall II | +10% defence, Melee units | 525 G · 3 K |
-| Bounties II | +20% Knowledge per lair cleared | 525 G · 3 K |
-| Vigour I | +5% health, every unit | 525 G · 3 K |
-| Fletching I | +10% attack, Distance units | 525 G · 3 K |
-| Drill Yards II | +15% soldier training speed | 525 G · 3 K |
-| Warhorns II | +5% attack, every unit | 800 G · 4 K |
-| Beds II | +20% Infirmary beds | 800 G · 4 K |
-| Colours III | +10% army cap | 800 G · 4 K |
+| Colours I | +10% army cap | 1,300 G · 3 K |
+| Fletching I | +10% attack, Distance units | 1,300 G · 3 K |
+| Bounties I | +20% Knowledge per lair cleared | 1,300 G · 3 K |
+| Vigour I | +5% health, every unit | 2,000 G · 3 K |
+| Shield Wall II | +10% defence, Melee units | 2,000 G · 3 K |
 
-### 3.3 Era 3 — 18 cards · 190 K · 66,000 Gold
+### 3.3 Era 3 — 25 cards · 254 K · 195,000 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
-| **Warband III** | Barracks L5, SpearHall L5, ShootingGrounds L5, Stables L5 | 5,000 G · 15 K |
-| **Cavalry** | the Stables, the Cavalry | 6,000 G · 15 K |
+| **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 3,000 G · 6 K |
+| **Cavalry** | the Stables, the Cavalry | 4,000 G · 15 K |
+| **Warband III** | Barracks L5, SpearHall L5, ShootingGrounds L5, Stables L5 | 7,000 G · 15 K |
 
 | Rank | Moves | Price |
 |---|---|---|
-| Vigour II | +5% health, every unit | 3,000 G · 8 K |
-| Fletching II | +10% attack, Distance units | 3,000 G · 8 K |
-| Shield Wall III | +10% defence, Melee units | 3,250 G · 10 K |
-| Bounties III | +20% Knowledge per lair cleared | 3,250 G · 10 K |
-| Drill Yards III | +15% soldier training speed | 3,250 G · 10 K |
-| Barding I | +10% defence, Mounted units | 1,500 G · 8 K |
-| Fletching III | +10% attack, Distance units | 3,250 G · 10 K |
-| Warhorns III | +5% attack, every unit | 3,250 G · 10 K |
-| Barding II | +10% defence, Mounted units | 3,250 G · 10 K |
-| Colours IV | +10% army cap | 3,250 G · 10 K |
-| Vigour III | +5% health, every unit | 3,250 G · 10 K |
-| Bounties IV | +20% Knowledge per lair cleared | 3,250 G · 10 K |
-| Beds III | +20% Infirmary beds | 3,250 G · 10 K |
-| Warhorns IV | +5% attack, every unit | 5,000 G · 12 K |
-| Barding III | +10% defence, Mounted units | 5,000 G · 12 K |
-| Colours V | +10% army cap | 5,000 G · 12 K |
+| Drill Yards II | +15% soldier training speed | 3,000 G · 6 K |
+| Fletching II | +10% attack, Distance units | 3,000 G · 6 K |
+| Barding I | +10% defence, Mounted units | 4,500 G · 7 K |
+| Warhorns II | +5% attack, every unit | 4,500 G · 7 K |
+| Barding II | +10% defence, Mounted units | 5,000 G · 8 K |
+| Colours II | +10% army cap | 5,000 G · 8 K |
+| Vigour II | +5% health, every unit | 7,500 G · 10 K |
+| Beds II | +20% Infirmary beds | 7,500 G · 10 K |
+| Bounties II | +20% Knowledge per lair cleared | 7,500 G · 10 K |
+| Shield Wall III | +10% defence, Melee units | 8,000 G · 10 K |
+| Drill Yards III | +15% soldier training speed | 8,000 G · 10 K |
+| Fletching III | +10% attack, Distance units | 8,000 G · 10 K |
+| Colours III | +10% army cap | 9,000 G · 11 K |
+| Warhorns III | +5% attack, every unit | 10,000 G · 11 K |
+| Bounties III | +20% Knowledge per lair cleared | 10,000 G · 11 K |
+| Barding III | +10% defence, Mounted units | 10,000 G · 11 K |
+| Vigour III | +5% health, every unit | 11,000 G · 12 K |
+| Beds III | +20% Infirmary beds | 11,000 G · 12 K |
+| Colours IV | +10% army cap | 11,000 G · 12 K |
+| Warhorns IV | +5% attack, every unit | 12,500 G · 12 K |
+| Bounties IV | +20% Knowledge per lair cleared | 12,500 G · 12 K |
+| Colours V | +10% army cap | 12,500 G · 12 K |
 
 ### 3.4 Era 4 — 1 cards · 40 K · 30,000 Gold
 
@@ -234,15 +233,21 @@
 | Ladder | Per rank | Ranks by era |
 |---|---|---|
 | **Barding** | +10% defence, Mounted units | — / — / I·II·III / — |
-| **Beds** | +20% Infirmary beds | — / I·II / III / — |
-| **Bounties** | +20% Knowledge per lair cleared | I / II / III·IV / — |
-| **Colours** | +10% army cap | I / II·III / IV·V / — |
-| **Drill Yards** | +15% soldier training speed | I / II / III / — |
+| **Beds** | +20% Infirmary beds | I / — / II·III / — |
+| **Bounties** | +20% Knowledge per lair cleared | — / I / II·III·IV / — |
+| **Colours** | +10% army cap | — / I / II·III·IV·V / — |
+| **Drill Yards** | +15% soldier training speed | I / — / II·III / — |
 | **Fletching** | +10% attack, Distance units | — / I / II·III / — |
 | **Shield Wall** | +10% defence, Melee units | I / II / III / — |
 | **Vigour** | +5% health, every unit | — / I / II·III / — |
-| **Warhorns** | +5% attack, every unit | I / II / III·IV / — |
+| **Warhorns** | +5% attack, every unit | I / — / II·III·IV / — |
 
+- **The page is a run of funnels**: each unlock on the middle column forks
+  into two or three small bonuses, which merge into the next unlock. Nothing
+  leads nowhere. The unlocks come in this order: Warrior, Infirmary, Archery,
+  Spears, Warband II, Cavalry, Warband III, Warband IV.
+- **Every card costs 500 Gold or more**, and no card costs less than one on a
+  row above it (`tests/techTree.test.ts`).
 
 ## 4. Magic
 
@@ -386,17 +391,18 @@
 | | Minor (a rank) | Major | 
 |---|---|---|
 | **Era 1** | 60–200 G · 1–2 K | 20–400 G · 2–3 K — the quest chain pays Civics' |
+| **Warfare** | 550–12,500 G, climbing down the page | 500 G (Warrior) to 7,000 G (Warband III) |
 | **Era 2** | 250–1,000 G · 2–4 K | 400–2,500 G · 2–8 K |
 | **Era 3** | 1,500–5,000 G · 8–14 K | 4,000–15,000 G · 10–25 K |
 | **Era 4** | — | the keystones, 30,000 G · 40 K |
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 20,800 | 112 |
-| 2 | 69,300 | 233 |
-| 3 | 285,500 | 747 |
+| 1 | 23,960 | 110 |
+| 2 | 70,425 | 211 |
+| 3 | 414,500 | 811 |
 | 4 | 60,000 | 80 |
-| **All** | **435,600** | **1,172** |
+| **All** | **568,885** | **1,212** |
 
 - The pace these prices set is [`22-progression.md`](22-progression.md) §8.
 - The quest chain funds the **opening** — every era-1 card it asks for — with
@@ -442,7 +448,6 @@ On the page, researchable, and doing nothing yet — each a promise of a mechani
 
 | Card | Book | The promise |
 |---|---|---|
-| **Scouting** | Warfare | Eyes ahead — a lair shows its threat before you launch. |
 | **Invocation** | Magic | Spoken twice — a relic’s active gains a second charge. |
 | **Ley Reading** | Magic | Reading the lines — a landmark shows what it grants before you pay. |
 | **Ley Lines** | Magic | The land’s own current — a district beside the Sanctum produces a tenth more. |

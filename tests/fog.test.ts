@@ -250,7 +250,9 @@ describe('exploring pays in ground, not in currency', () => {
     // each, so "pay the Gold, and it is ours" is true from the first one.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     // 435,600: Pickaxes, 25 Gold, gates the Stone tap.
-    expect(tree).toBe(435_600);
+    // 568,885: the Warfare book rebuilt in funnels (2026-10-01) — every card
+    // 500 Gold and up, climbing down the page; Scouting left it.
+    expect(tree).toBe(568_885);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree
