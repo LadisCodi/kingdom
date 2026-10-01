@@ -87,8 +87,19 @@
   bottom: calc(var(--nav-h) + var(--px) * 12);
   max-width: calc(var(--px) * 420);
   margin: 0 auto;
-  /* The text sits inside the frame's rim (`.stg-frame`, below). */
+  /* The text sits inside the frame's rim (`.stg-frame`, below). Never so
+     low that the frame's top and bottom slices crowd each other. */
   padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 42);
+  min-height: calc(var(--px) * 104);
+  box-sizing: border-box;
+  /* THE PAPER UNDER THE PAPER: the frame's nine slices are drawn at
+     fractional sizes, and a hairline seam between two of them showed the
+     map through as a dark line. A sheet of the parchment's own colour
+     behind the frame, inside its wooden rim, makes any seam read as paper. */
+  background: linear-gradient(#f9e3b4, #f9e3b4) no-repeat;
+  background-origin: border-box;
+  background-position: calc(var(--px) * 18) calc(var(--px) * 26);
+  background-size: calc(100% - var(--px) * 36) calc(100% - var(--px) * 56);
   /* Lifted off the map behind it: a shadow that follows the board's outline
      — and the figures standing on it. */
   filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 5) rgba(25, 12, 4, 0.55))
