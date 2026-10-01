@@ -23,14 +23,17 @@
   *Townhall at level 2*, *10 Wood in stock*). Work done before activation
   counts; the quest completes on activation.
 - **Relative** goals count events from activation only (*collect 30 Gold*,
-  *reveal 6 cells*). They hook the sim's collect, tap, reveal and sale paths.
+  *find 4 forests*). They hook the sim's collect, tap and reveal paths.
+- **`DiscoverCells` is a total** — *clear the fog from 32 tiles in all*, the
+  same count the book bands read. A player who cleared everything in reach
+  before the quest arrived is never stuck behind it.
 - A `collect` counts when units reach the wallet — a tap on the ground, or
   collecting a building's store ([`03-economy.md`](03-economy.md) §3.2) —
   never when rent accrues or a haul lands.
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ClearLairs · OwnArtifacts · OwnHeroes | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature |
+| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
 - **`ClaimLandmarks` may name a landmark kind** — *Claim the Watchtower* — and
   names none for any landmark.
@@ -46,8 +49,9 @@
 - **The tracker holds 44 characters**, and that is the whole budget: it is the
   only place a quest's line is ever shown. Written copy ran to 105 and was
   read cut off mid-word; the generated lines top out at 30.
-- **`DiscoverFeature`** is a `DiscoverCells` that counts only cells carrying a
-  given feature.
+- **`DiscoverFeature`** counts the reveals that uncover a given feature,
+  from activation — at the reveal, because a finite feature (a berry bush)
+  leaves the map when it is used up.
   - The hint points at a dark cell that has the feature; with none in sight it
     points at the nearest frontier cell.
   - The feature is carried on the reveal event, not looked up later, so
@@ -66,15 +70,15 @@
 | # | Quests | The beat | Opens |
 |---|---|---|---|
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells, Forestry, 25 Wood, a House, Food, a villager, rent | Research, Knowledge, Build, the daily chest |
-| **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | eight cells, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
+| **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
 | **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
 | **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
-| **26–31** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | fifteen cells find the Orcs; Warrior, the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
-| **32–35** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, twenty and twenty-five cells | **Magic** |
+| **26–31** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 55 cells cleared find the Orcs; Warrior, the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **32–35** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
 | **36–41** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
 | **42–46** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
 | **47–53** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **54–60** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, twenty cells, Magistracy, twelve villagers, **Townhall 4** | |
+| **54–60** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
 | **61–64** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **A requirement is the row above**, so the chain walks the rows it needs

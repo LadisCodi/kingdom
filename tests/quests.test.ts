@@ -211,10 +211,11 @@ describe('the quest chain', () => {
     const state = freshGame();
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Explorer');
     fund(state, { Gold: 100 });
+    const before = questValue(state, activeQuest(state)!);
     let r: string = 'Paid';
     while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 1 }); // ungated grassland
     expect(r).toBe('Revealed');
-    expect(state.quests.progress).toBe(1);
+    expect(questValue(state, activeQuest(state)!)).toBe(before + 1);
   });
 
   it('claiming needs completion; a finished chain has no quest', () => {
@@ -330,7 +331,8 @@ describe('quests fund the research tree', () => {
     const state = freshGame();
     const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
     state.quests.index = explorer;
-    state.quests.progress = QUESTS[explorer].goalAmount;
+    // A total of cells cleared: open the map up to it.
+    for (const c of map.cells.slice(0, QUESTS[explorer].goalAmount)) state.fog.revealed[coordKey(c)] = true;
     expect(claimQuest(state)).toBe('Claimed');
     expect(getWallet(state.kingdom.wallet, 'Stardust'))
       .toBe(QUESTS[explorer].rewardStardust);
@@ -584,16 +586,17 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     } finally { restore(); }
   });
 
-  it('the plain DiscoverCells goal still counts every reveal, feature or not', () => {
+  it('the plain DiscoverCells goal is a TOTAL: cells cleared before the quest count', () => {
     const state = freshGame();
+    const cleared = Object.keys(state.fog.revealed).length;
     const restore = activate(state, {
       id: 'test', name: 'test',
-      goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
+      goalType: 'DiscoverCells', goalTarget: null, goalAmount: cleared, goalLevel: null,
       reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null,
     });
     try {
-      recordQuestEvent(state, { kind: 'reveal', feature: null });
-      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      // Everything in reach was cleared already: the quest is done on arrival,
+      // never a wall in front of a player with nothing left to reveal.
       expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
     } finally { restore(); }
   });
@@ -671,7 +674,7 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
     const seeded = Object.keys(freshGame().fog.revealed).length;
     let asked = seeded;
     QUESTS.forEach((q, i) => {
-      if (q.goalType === 'DiscoverCells') asked += q.goalAmount;
+      if (q.goalType === 'DiscoverCells') asked = Math.max(asked, q.goalAmount); // a total
       if (q.goalType === 'DiscoverFeature') asked += 1;
       expect(cellsWithin(reachAt(levels[i])),
         `by ${q.id} the chain has asked for ${asked} cells, at Townhall ${levels[i]}`)

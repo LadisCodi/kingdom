@@ -98,7 +98,7 @@ export const requirementsMet = (state: GameState, id: TechId): boolean =>
  *
  * Paid reveals only — the cells a building merely *discovered* are ones the
  * player has seen, not ones they have opened, and the era bar is priced in
- * the second thing. It is the same count the `DiscoverCells` quest goal
+ * the second thing. It is the same TOTAL the `DiscoverCells` quest goal
  * follows, so the two never disagree about what exploring means.
  */
 export const revealedCellCount = (state: GameState): number =>

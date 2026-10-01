@@ -13,6 +13,7 @@ import { clearedLairCount } from './lairs';
 import { grantPack } from './collection';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
+import { revealedCellCount } from './research';
 import {
   addToWallet, getWallet,
   type CurrencyId, type GameState,
@@ -45,9 +46,9 @@ export function recordQuestEvent(state: GameState, event: SimEvent): void {
     case 'CollectTaps':
       if (event.kind === 'tap') state.quests.progress += 1;
       break;
-    case 'DiscoverCells':
-      if (event.kind === 'reveal') state.quests.progress += 1;
-      break;
+    // Counted at the reveal, because the reveal is the only moment that
+    // knows the feature: a berry bush is finite, and a total read off the map
+    // would un-complete the quest when the bush is eaten.
     case 'DiscoverFeature':
       if (event.kind === 'reveal' && event.feature === quest.goalTarget) {
         state.quests.progress += 1;
@@ -93,6 +94,10 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return ownedArtifacts(state).length;
     case 'OwnHeroes':
       return state.heroes.owned.length;
+    // A TOTAL, not a count from the quest's start: a player who opened every
+    // cell in reach before the quest arrived must not be stuck behind it.
+    case 'DiscoverCells':
+      return revealedCellCount(state);
     default:
       return 0;
   }

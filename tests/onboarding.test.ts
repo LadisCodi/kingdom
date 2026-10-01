@@ -28,7 +28,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  isTechComplete, isTomeOpen, techCost, techKnowledgeMissing,
+  isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -163,7 +163,8 @@ describe('a player can actually play the onboarding', () => {
     finish('TaxDay');
 
     // ---- steps 7-8: back out into the country ----
-    clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount);
+    // A TOTAL of cells cleared, not a count from the quest's start.
+    clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount - revealedCellCount(state));
     finish('Explorer');
 
     // ---- steps 9-12: farming, by hand and then not ----
@@ -272,7 +273,7 @@ describe('a player can actually play the onboarding', () => {
     // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
     expect(isTomeOpen(state, 'Warfare'), 'Warfare opens on a lair, not on a quest').toBe(false);
     expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
-    clearNearest(15);
+    clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
     finish('FurtherAfield');
     // The Orcs' ground is the next ring out: the chain's next beat is the
     // army, so a player who has not met them yet pushes on toward them.

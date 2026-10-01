@@ -453,7 +453,7 @@ export type QuestGoalType =
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
   new Set([
-    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
+    'CollectResource', 'CollectTaps', 'DiscoverFeature',
   ]);
 
 export interface QuestDef {

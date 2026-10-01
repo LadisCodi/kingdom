@@ -119,7 +119,7 @@ export function questLine(quest: {
     case 'CollectTaps':
       return `Tap ${count(n)} times.`;
     case 'DiscoverCells':
-      return `Clear ${count(n)} ${plural(n, 'tile')} of fog.`;
+      return `Clear the fog from ${count(n)} ${plural(n, 'tile')} in all.`;
     case 'DiscoverFeature':
       return target === null
         ? `Find ${count(n)} ${plural(n, 'thing')}.`
