@@ -98,7 +98,7 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 5 rings east of the Townhall; its ground lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the Book of Warfare opens; the raid clock starts | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Orcs** (lair, tier 1) | 5 rings south of the Townhall; its ground lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the Book of Warfare opens; the raid clock starts | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
 | **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 5 Knowledge; **the Book of Magic opens** |
 | **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 5 Knowledge |
 

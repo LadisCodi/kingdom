@@ -59,13 +59,14 @@ describe('sighting', () => {
   });
 
   it('is not a discovery: a sighted lair is not found, and starts no raid clock', () => {
-    const lair = LAIRS.Harpies;
+    const lair = LAIRS.Orcs;
+    expect(FOG.sight.lair).toBeGreaterThan(lair.radius);
     const state = freshGame();
-    // Clear of its zone (radius 1), inside its sight.
+    // Clear of its zone, inside its sight.
     reveal(state, [westOf(lair.location, FOG.sight.lair)]);
     advance(state, map, T0 + 1000);
     expect(sightedAt(state, map, lair.location)?.kind).toBe('lair');
-    expect(state.lairs.Harpies).toBeUndefined();
+    expect(state.lairs.Orcs).toBeUndefined();
   });
 
   it('drops a thing once it is in plain view', () => {

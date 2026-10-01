@@ -233,12 +233,14 @@ lies close enough to it.
 |---|---|---|
 | Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
-| Watchtower | 5 | `fog.sight.watchtower` |
-| A lair not yet found | 3 | `fog.sight.lair` |
+| Watchtower | 4 | `fog.sight.watchtower` |
+| A lair not yet found | 2 | `fog.sight.lair` |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
   footprint. Discovered cells do not see.
+- A lair whose ground reaches as far as its sight is found before it can be
+  sighted: the Harpies (radius 2) appear only when found.
 - **A silhouette is the thing's own drawing as one flat, cold, faint shape**
   over the dark: no name, no badge, no bubble.
 - It stops being a silhouette once any cell of it is Discovered — a lair once
@@ -308,6 +310,26 @@ fallback past ring 14. The province reaches ring 23.
   gate before it raids, and the ruin's rooms are yours to take
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has
   no guard: it is claimed for its Gold.
+
+### 6.1 How the province opens
+
+The near map is laid out so the first Townhalls look one way at a time
+(`tests/provinceLayout.test.ts`):
+
+- **South first.** The Thorned Shrine (4 rings) is sighted from the first
+  ring; nothing else but the Orcs is in sight while the Townhall is at
+  level 1.
+- **The Orcs** (5 rings, south) show from ring 3, as the player reaches the
+  shrine. Their ground starts at ring 4 and holds the shrine, so they are
+  found at Townhall 2 and cleared before it is claimed.
+- **The near mountains are the Harpies'.** Two 2×2 blocks, sighted from the
+  first ring to the north-east, lie on the Harpies' ground (radius 2). Their
+  camp is 6 rings out: past Townhall 2's reach, inside Townhall 3's.
+  Revealing a block finds them, so no big mountain is worked before they fall.
+- **One loose stone node** stands 2 rings from the Townhall, on no lair's
+  ground: the stone the opening has, and the reason to want more.
+- The Watchtower (8 rings north) and the Fallen Stones (7 rings) are sighted
+  from ring 4, at Townhall 2.
 
 ### The landmark tiers
 

@@ -189,7 +189,7 @@ last line, as a hint.
 | `ironSeen` | the first iron mountain | *Iron in that rock. The Quarry cannot cut it until we learn Mining — and then it pays five times a bare peak.* |
 | `goldSeen` | the first gold mountain | *Gold in the mountain! Deep Mining, one day, and the Quarry will dig coin out of it.* |
 | `fishSeen` | the first shoal | *Fish in the shallows. The Docks will net them, once we have learned to build on the water.* |
-| `harpies` | the Harpies are discovered | *Harpies — anything that shines is theirs by morning. They are archers on the wing: send riders, if we have them.* |
+| `harpies` | the Harpies are discovered | *Harpies, roosting over our mountains! While they stand, not one stone up there is ours. Archers on the wing — send riders, if we have them.* |
 
 Each points at what it is about.
 
