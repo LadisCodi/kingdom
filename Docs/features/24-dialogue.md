@@ -29,10 +29,11 @@
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
   Warden green, Bess red, the villager brown, Grukk crimson.
-- **Three places**: `bottom` (the default), `top`, `middle`. A line may set
-  its own.
+- **Three places**: `bottom`, `top`, `middle`, or `auto`. Every authored
+  line is `auto`.
 - **`auto`**: the bottom, where the cast stands on the box — unless the box
-  there would cover what the line points at; only then the top.
+  there, or anyone standing on it, would cover what the line points at; only
+  then the top.
 - **A box already on screen moves** to a new place in 0.32 s with a slight
   overshoot (OutBack), rather than jumping there.
 - **One size, always**: three lines of text at the box's type. A line too
