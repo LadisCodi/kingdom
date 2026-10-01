@@ -35,7 +35,7 @@ import type { CurrencyId, DistrictId } from '../sim/state';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';
-import { iconEl, progress, currencyIcon, setCta, type IconName } from './kit';
+import { iconEl, progress, currencyIcon, type IconName } from './kit';
 
 /** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
  *  icon — the coin it collects, the building it raises, the book it reads —
@@ -192,8 +192,8 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // The reward is the payout, so it arrives with the payout — and then it
     // is all the scroll shows (quest.css swaps .q-run for .q-done).
     scroll.classList.toggle('is-complete', complete);
-    // The kit's orb, on the words, so it fades with them when the scroll rolls.
-    setCta(content, complete ? 1 : 0);
+    // No CTA orb: a complete scroll already says so — its reward and its
+    // Claim button are the whole of its face.
     // The card is one control that does two things; a screen reader has to be
     // told which, because the styling is all a sighted player gets.
     scroll.setAttribute(
