@@ -363,11 +363,16 @@ describe('quests fund the research tree', () => {
     // base drip is not counted — zero drip stays the worst case.
     let held = CURRENCIES.Knowledge.start;
     let asked = 0;
-    for (const q of QUESTS) {
+    for (const [i, q] of QUESTS.entries()) {
       if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
       if (q.goalType === 'CompleteTech') {
         const demand = need(q.goalTarget as TechId);
         expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
+          .toBeGreaterThanOrEqual(demand);
+        // And the quest just before pays it on its own, so a player who spent
+        // what was banked on cards of their own choosing is never stuck.
+        const before = i === 0 ? CURRENCIES.Knowledge.start : QUESTS[i - 1].rewardKnowledge;
+        expect(before, `the quest before ${q.id} pays ${before} of ${demand} Knowledge`)
           .toBeGreaterThanOrEqual(demand);
         if (demand > 0) asked++;
         held -= demand;

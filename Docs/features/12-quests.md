@@ -13,7 +13,7 @@
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
 - **64 quests**, paying 15,995 Gold, 100 Mana, 750 Gems, 140 Stardust,
-  **29 Knowledge across twelve of them** (§2.1) and **one card pack**.
+  **35 Knowledge across fifteen of them** (§2.1) and **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
 
@@ -93,9 +93,12 @@
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **twelve quests pay Knowledge**,
+  Quest 1 pays Forestry's 2 outright, and **fifteen quests pay Knowledge**,
   placed so that every card the chain demands up to `Attuned` — quest 33,
   Consecration — is affordable **with no drip at all**, prerequisites included.
+  **The quest just before each of those research quests pays its card's
+  Knowledge by itself**, so a player who spent what was banked on cards of
+  their own is never stuck.
   A grant handed over at the title screen taught the player nothing about
   where the clock comes from; a reward on the quest before the research does.
 - **Past `Attuned` the chain stops paying and the clock takes over**

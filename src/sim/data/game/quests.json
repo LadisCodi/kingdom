@@ -163,7 +163,7 @@
     "reward": { "Gold": 40 },
     "rewardGems": 0,
     "rewardStardust": 0,
-    "rewardKnowledge": 0,
+    "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardPack": null
   },
@@ -247,7 +247,7 @@
     "reward": { "Gold": 90 },
     "rewardGems": 0,
     "rewardStardust": 0,
-    "rewardKnowledge": 0,
+    "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardPack": null
   },
@@ -331,7 +331,7 @@
     "reward": { "Gold": 90 },
     "rewardGems": 0,
     "rewardStardust": 0,
-    "rewardKnowledge": 0,
+    "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardPack": null
   },
