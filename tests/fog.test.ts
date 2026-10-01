@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, FOG, LANDMARKS, LAIRS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   countMultiplier, explorationGate, explorationReach, fogState, isPayable, isReachable,
@@ -460,19 +460,27 @@ describe('a site announces itself when it comes into view', () => {
     if (unseen) expect(state.discoveries[siteDiscoveryKey(unseen.id)]).toBeUndefined();
   });
 
-  it("fires when a building's fog radius lands near one", () => {
+  it("fires when a building's discover ring lands on one", () => {
     const state = newGame(map, T0);
-    const lair = Object.values(LAIRS).reduce((a, b) =>
-      townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
+    // A landmark still in the dark, with open ground two cells above it.
+    const site = LANDMARKS.find((l) => fogState(state, map, l.location) === 'Undiscovered'
+      && map.terrain.has(coordKey({ x: l.location.x, y: l.location.y - 2 })))!;
     state.pendingDiscoveries = [];
 
-    // A Sawmill dropped beside the lair: its own radii do the revealing.
-    addBuilt(state, 'Sawmill', { x: lair.location.x, y: lair.location.y - 2 });
+    // A Sawmill dropped two cells off: its discover ring does the seeing.
+    addBuilt(state, 'Sawmill', { x: site.location.x, y: site.location.y - 2 });
     revealAroundDistrict(state, map,
       state.city.districts.find((d) => d.definitionId === 'Sawmill')!);
 
-    expect(fogState(state, map, lair.location)).not.toBe('Undiscovered');
-    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(lair.id));
+    expect(fogState(state, map, site.location)).toBe('Discovered');
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(site.id));
+  });
+
+  it('reveals nothing past a building but its own ground — only the Townhall clears a ring', () => {
+    for (const [id, def] of Object.entries(DISTRICTS)) {
+      if (id === 'Townhall') expect(def.fogRevealRadius).toBeGreaterThan(0);
+      else expect(def.fogRevealRadius, id).toBe(0);
+    }
   });
 });
 
@@ -550,7 +558,7 @@ describe('the Townhall is the reach', () => {
     expect(revealTap(state, map, sea)).toBe('OutOfReach');
   });
 
-  it('a building sees and reveals past the reach — only the player\'s tap is refused', () => {
+  it('a building sees past the reach — only the player\'s tap is refused', () => {
     const state = newGame(map, NOW);
     const reach = explorationReach(state);
     // A house on the last ring inside the reach: its own radius lands outside.
@@ -561,8 +569,8 @@ describe('the Townhall is the reach', () => {
     const house = state.city.districts[state.city.districts.length - 1];
     revealAroundDistrict(state, map, house);
     const outside = map.cells.filter((c) => townhallDistance(map, c) > reach
-      && state.fog.revealed[coordKey(c)] === true);
-    expect(outside.length, 'the house revealed nothing past the reach').toBeGreaterThan(0);
+      && state.fog.discovered[coordKey(c)] === true);
+    expect(outside.length, 'the house saw nothing past the reach').toBeGreaterThan(0);
   });
 
   it('draws its border along the last ring, facing the ring beyond, and none at the top', () => {
