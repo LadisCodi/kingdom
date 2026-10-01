@@ -78,6 +78,25 @@ One tactile loop and one planning loop, across two or three visits a day.
   explored* — it becomes server-authoritative state. **That is a deliberate
   decision, never a drift.**
 
+### 3.1 Armies on the server
+
+- **An army is server state from the moment it leaves.** Sending one takes
+  its troops off the roster and marks its heroes busy in the save; the server
+  holds the army until it is home.
+- **Every army fight is resolved on the server**, with the same resolver
+  ([`combat.md`](combat.md)): attacks, garrisons, dungeon rooms and Portal
+  floors.
+- **A march is resolved when the board is read.** Before answering any read
+  or action on a board, the server resolves every march that has arrived, in
+  order of arrival time, ties broken by hash. The outcome never depends on
+  when anyone looks.
+- **What comes home is a server effect**: the survivors, the heroes' wounds,
+  and every reward, collect and battle report. Effects are drained at load,
+  before the offline advance ([`15-social.md`](15-social.md) §1.2).
+- **The server trusts the party the client sends**: its troops, levels and
+  bonuses are not validated (prototype, as [`15-social.md`](15-social.md)
+  §1.1).
+
 ## 4. Absences are replayed in full
 
 - There is no offline cap. An absence is replayed whole by the same advance
@@ -86,8 +105,8 @@ One tactile loop and one planning loop, across two or three visits a day.
   world improvement's store, the Mana pool, the Knowledge bar, the workshop
   and training queues
   ([`03-economy.md`](03-economy.md) §3.2).
-- **Timers resolve in full**: the build queue, a gate's raid, event windows,
-  **and every world-map march**.
+- **Timers resolve in full**: the build queue, a lair's raid, event windows
+  and an explorer's march. An army's march is resolved on the server (§3.1).
 - An army sent before a twelve-hour absence has arrived on return.
 - Anything new that is time-based and produces names its ceiling in its doc.
 
