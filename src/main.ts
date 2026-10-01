@@ -11,6 +11,7 @@ import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
+import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
@@ -395,8 +396,22 @@ async function boot(): Promise<void> {
   window.addEventListener('pagehide', () => saveManager.save(game.state, game.now(), true));
 
   // ------------------------------------------------------------ render loop
-  const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+  // Paced (render/framePacer.ts): the display's rate while the map is being
+  // touched or the camera is moving, slower while it is only being looked at.
+  let lastDraw = -Infinity;
+  let lastActive = -Infinity;
+  let lastView = '';
+  const touched = () => { lastActive = performance.now(); };
+  for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
+    window.addEventListener(type, touched, { capture: true, passive: true });
+  }
+  const frame = (t: number) => {
+    const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
+    if (view !== lastView) { lastView = view; lastActive = t; }
+    if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+      lastDraw = t;
+      drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+    }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
