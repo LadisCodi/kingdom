@@ -350,7 +350,9 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of districtCells(district)) {
     if (map.terrain.has(coordKey(cell))) state.fog.revealed[coordKey(cell)] = true;
   }
-  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
+  const reveal = def.fogRevealRadiusPerLevel.length === 0 ? def.fogRevealRadius
+    : levelIndexed(def.fogRevealRadiusPerLevel, district.level);
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, reveal)) {
     state.fog.revealed[coordKey(cell)] = true;
   }
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size,

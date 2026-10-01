@@ -379,7 +379,7 @@
     "name": "Further afield",
     "goalType": "DiscoverCells",
     "goalTarget": null,
-    "goalAmount": 55,
+    "goalAmount": 75,
     "goalLevel": null,
     "reward": { "Gold": 150 },
     "rewardGems": 0,

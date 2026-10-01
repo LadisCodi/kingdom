@@ -204,8 +204,9 @@ Respawn:
   and revealed all at once.
 - Every district has a `fogRevealRadius` and a `fogDiscoverRadius`. A finished
   building reveals its own ground and discovers a ring round it (2, 1 for the
-  military halls); **only the Townhall reveals a ring** (1) — the rest of the
-  map is paid for (`tests/fog.test.ts`).
+  military halls); **only the Townhall reveals a ring** — 1, and **3 from
+  level 2**, landing the moment that upgrade does — the rest of the map is
+  paid for (`fogRevealRadiusPerLevel`, `tests/fog.test.ts`).
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
@@ -403,7 +404,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
-| A building's reveal / discover radius | 0 / 2 (the Townhall 1 / 2) | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
+| A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `harvest` |

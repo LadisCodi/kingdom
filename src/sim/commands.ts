@@ -396,6 +396,8 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
   } else {
     district.level = item.targetLevel ?? district.level + 1;
+    // A level may reveal further (the Townhall's does): its ring lands now.
+    revealAroundDistrict(state, map, district);
     recordEvent(state, {
       kind: 'districtLevel', district: district.definitionId, level: district.level,
     });

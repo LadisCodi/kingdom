@@ -60,6 +60,12 @@
       "doc": "What it holds uncollected, in units, by level. Required on anything that makes Gold or harvests; empty on everything else."
     },
     "fogRevealRadius": { "type": "int", "min": 0 },
+    "fogRevealRadiusPerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 0 },
+      "length": { "sibling": "maxLevel", "upTo": true, "orEmpty": true },
+      "doc": "The reveal radius by level, the last holding for the levels past it; an upgrade reveals its ring. Empty: fogRevealRadius at every level."
+    },
     "fogDiscoverRadius": { "type": "int", "min": 0 },
     "maxWorkersPerLevel": { "type": "list", "of": { "type": "int" }, "length": { "sibling": "maxLevel", "upTo": true } },
     "maxCountPerTownhallLevel": {

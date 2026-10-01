@@ -8,6 +8,7 @@ import {
   revealAroundDistrict, revealCost, revealCostForCell, revealTap, revealTapCost,
   revealTapsDone,
 } from '../src/sim/fog';
+import { advance } from '../src/sim/commands';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { siteDiscoveryKey } from '../src/sim/discovery';
@@ -474,6 +475,21 @@ describe('a site announces itself when it comes into view', () => {
 
     expect(fogState(state, map, site.location)).toBe('Discovered');
     expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(site.id));
+  });
+
+  it('clears two rings more when the Townhall reaches level 2, the moment the upgrade lands', () => {
+    const state = newGame(map, T0);
+    const th = townhall(state);
+    const ring = (r: number) => map.cells.filter((c) => townhallDistance(map, c) === r);
+    expect(ring(3).some((c) => state.fog.revealed[coordKey(c)] === true)).toBe(false);
+    state.city.queue.push({
+      uniqueId: 'q_th2', kind: 'upgrade', districtUniqueId: th.uniqueId, targetLevel: 2,
+      durationSeconds: 60, startedAt: T0,
+    });
+    advance(state, map, T0 + 61_000);
+    expect(th.level).toBe(2);
+    expect(ring(3).every((c) => state.fog.revealed[coordKey(c)] === true)).toBe(true);
+    expect(ring(4).some((c) => state.fog.revealed[coordKey(c)] === true)).toBe(false);
   });
 
   it('reveals nothing past a building but its own ground — only the Townhall clears a ring', () => {
