@@ -1678,7 +1678,6 @@ export class Game {
       const result = placeWildcard(this.state, { album, slot }, rarity);
       if (result.placed) {
         playSfx('upgradeBought');
-        this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
         if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
       } else if (result.reason === 'GoldSlot') {
         this.toast('No wildcard covers a gold card — it is earned or sent');
@@ -2312,9 +2311,6 @@ export class Game {
    *  thirteen-round trip through the pill. */
   private announceChest(haul: Wallet): void {
     playSfx('quest');
-    const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
-      .map(([c, n]) => `+${formatExact(n)} ${c}`);
-    this.toast(parts.join(' · '));
     this.notify();
     this.reward(haul);
   }
@@ -2456,8 +2452,6 @@ export class Game {
   doBuyKeys(banner: BannerId, count = 1): void {
     if (buyKeys(this.state, banner, count) === 'Purchased') {
       playSfx('gemSpend');
-      const kind = BANNERS[banner].key === 'GoldKey' ? 'gold' : 'silver';
-      this.toast(`+${count} ${kind} key${count === 1 ? '' : 's'}`);
     } else {
       this.shake(['Gems']);
     }
@@ -2536,7 +2530,6 @@ export class Game {
       // The refused-build offer closes on purchase — the player was placing
       // something. The store stays open: they came to shop.
       if (opts.closeSheet !== false) this.setOverlay(null);
-      this.toast('A builder joins your kingdom');
     } else if (result === 'NotEnoughGems') {
       this.shake(['Gems']);
     }
@@ -2645,16 +2638,15 @@ export class Game {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
-      this.toast(id === 'RoyalChest'
-        ? 'The Royal chest is yours for the season'
-        : id === 'SeasonPass'
-          ? 'The season pass is yours — every level you have reached is open'
-        : bundleOf(id) !== null
-          // A bundle is opened in the Collection, like every pack that falls:
-          // the store hands over the things, it does not turn them over.
-          ? `${STORE[id].name} — open it in the Collection`
-          : 'Gems added to your purse');
+      // Only what the player cannot see from where they land is said. A
+      // bundle is opened in the Collection, like every pack that falls: the
+      // store hands over the things, it does not turn them over.
+      if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
+      else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
       this.setOverlay(back);
+      if (result === 'Purchased' && id !== 'RoyalChest' && id !== 'SeasonPass' && bundleOf(id) === null) {
+        this.reward({ Gems: STORE[id].gems });
+      }
     } else if (result === 'SeasonClosing') {
       // The season turned over while the confirmation was open. Nothing was
       // charged; say why rather than shake a purse that is not the problem.
@@ -3744,7 +3736,6 @@ export class Game {
     const result = healWounded(this.state, unitId, count, this.now(), at);
     if (result === 'Queued') {
       playSfx('unitTrained');
-      this.toast(`${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'} on the mend`);
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(healCost(this.state, unitId, count)) as CurrencyId[]);
     } else if (result === 'ArmyAtCapacity') {
