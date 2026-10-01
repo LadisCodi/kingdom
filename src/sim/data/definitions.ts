@@ -523,6 +523,9 @@ export interface SceneLine {
   /** The speaker's face on this line — `<portrait>_<expression>` art; empty
    *  is at rest (24-dialogue.md §6). */
   expression: '' | 'happy' | 'worried' | 'surprised' | 'idea';
+  /** A book the speaker hands the player as this line is read; absent or
+   *  null hands nothing (Docs/features/24-dialogue.md §3). */
+  gives?: TomeId | null;
 }
 
 export interface SceneDef {
@@ -2187,4 +2190,4 @@ export const GAME_VERSION = '0.1.0';
 // it reads as a veteran. A worker carries its strike's remainder
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
-export const SAVE_VERSION = 73;
+export const SAVE_VERSION = 74;

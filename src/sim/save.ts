@@ -703,6 +703,18 @@ const MIGRATIONS: readonly Migration[] = [
       else if (index === WAR_DRUMS_AT_V73) Object.assign(quests, { Progress: 0 });
     },
   },
+  {
+    // v74: THE BOOK OF WARFARE IS HANDED OVER. It opens on Isolde giving it
+    // (`gift:Warfare`), no longer on a lair found. A kingdom that has found
+    // one was already reading it, so it is recorded as given.
+    to: 74,
+    migrate: (modules) => {
+      const lairs = modules['kingdom.lairs'] as { Lairs?: unknown[] } | undefined;
+      const tutorial = modules['kingdom.tutorial'] as { Seen?: string[] } | undefined;
+      if (tutorial === undefined || (lairs?.Lairs ?? []).length === 0) return;
+      tutorial.Seen = [...new Set([...(tutorial.Seen ?? []), 'gift:Warfare'])];
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */

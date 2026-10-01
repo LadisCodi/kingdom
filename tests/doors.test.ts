@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { FOG, LANDMARKS, LAIRS, QUESTS } from '../src/sim/data/definitions';
 import { advance } from '../src/sim/commands';
 import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
-import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
+import { giveBook, isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
 import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
 import { claimQuest } from '../src/sim/quests';
@@ -27,11 +27,14 @@ describe('the books open on the world', () => {
     expect(researchRefusal(state, 'Warrior')).toBe('TomeClosed');
   });
 
-  it('opens Warfare on the first lair FOUND', () => {
+  it('opens Warfare when Isolde HANDS it over, not on the lair alone', () => {
     const state = firstGame();
     reveal(state, [LAIRS.Orcs.location]);
     advance(state, map, T0 + 1000);
     expect(Object.keys(state.lairs)).toContain('Orcs');
+    expect(isTomeOpen(state, 'Warfare')).toBe(false);
+    // The `firstLair` scene's last line (ui/stage/stage.ts).
+    giveBook(state, 'Warfare');
     expect(isTomeOpen(state, 'Warfare')).toBe(true);
     expect(isTomeOpen(state, 'Magic')).toBe(false);
   });

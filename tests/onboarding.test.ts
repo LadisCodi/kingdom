@@ -28,7 +28,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
+  giveBook, isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -274,7 +274,7 @@ describe('a player can actually play the onboarding', () => {
 
     // ---- step 26: further afield — and the book of the army opens on the
     // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
-    expect(isTomeOpen(state, 'Warfare'), 'Warfare opens on a lair, not on a quest').toBe(false);
+    expect(isTomeOpen(state, 'Warfare'), 'Warfare is handed over, not opened by a quest').toBe(false);
     expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
     clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
     finish('FurtherAfield');
@@ -287,6 +287,10 @@ describe('a player can actually play the onboarding', () => {
       tick(1);
     }
     finish('WarDrums');
+    // The book is Isolde's to give: the `firstLair` scene hands it over once
+    // the camp's card has been opened (Docs/features/23-tutorials.md §4.2).
+    expect(isTomeOpen(state, 'Warfare')).toBe(false);
+    giveBook(state, 'Warfare');
     expect(isTomeOpen(state, 'Warfare')).toBe(true);
     expect(isTomeOpen(state, 'Magic')).toBe(false);
     // The Warden has been the kingdom's all along, and steps up now.

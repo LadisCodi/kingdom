@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
+import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
+import { HARVEST, LAIRS, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import { CARDS_PER_ALBUM } from '../src/sim/data/seasons';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
@@ -670,6 +670,28 @@ describe('War drums, in front of Armed men (v73)', () => {
     const early = deserialize(v72(25), map, T0)!;
     expect(QUESTS[early.quests.index].id).toBe('FurtherAfield');
     expect(early.quests.progress).toBe(3);
+  });
+});
+
+// v74: the Book of Warfare is handed over (Docs/features/23-tutorials.md §4.2).
+describe('the Book of Warfare, handed over (v74)', () => {
+  const v73 = (found: boolean) => {
+    const state = firstGame();
+    if (found) {
+      reveal(state, [LAIRS.Orcs.location]);
+      advance(state, map, T0 + 1000);
+    }
+    const save = serialize(state, T0 + 1000);
+    save.SaveVersion = 73;
+    return save;
+  };
+
+  it('keeps the book open for a kingdom that had found a lair', () => {
+    expect(isTomeOpen(deserialize(v73(true), map, T0 + 1000)!, 'Warfare')).toBe(true);
+  });
+
+  it('leaves it for Isolde to give to one that had not', () => {
+    expect(isTomeOpen(deserialize(v73(false), map, T0 + 1000)!, 'Warfare')).toBe(false);
   });
 });
 

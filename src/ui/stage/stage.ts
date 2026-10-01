@@ -7,7 +7,8 @@
 // First Morning — a lock on every tap but the one the line asks for.
 //
 // It is UI. The sim never reads a scene; the save only remembers which ones
-// have played (`state.tutorial.seen['scene:<id>']`).
+// have played (`state.tutorial.seen['scene:<id>']`) and which books a line
+// has handed over (`gift:<book>`, sim/research.ts `giveBook`).
 //
 // One mount, `#stage`, above the nav and the battle playback and below the
 // reveal and the rewarded video (style.css). Built once and mutated: a
@@ -23,6 +24,7 @@ import { CAMERA_GLIDE_MS } from '../../render/camera';
 import type { Coord } from '../../sim/state';
 import type { Game } from '../../game';
 import { el } from '../format';
+import { giveBook } from '../../sim/research';
 import { conditionHolds } from './conditions';
 import { resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
@@ -206,6 +208,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     kind: l.until, target: l.untilTarget, amount: l.untilAmount, tapsAtStart: playing!.tapsAtStart,
   });
 
+  /** A line that `gives` a book hands it over as it is read — the book's
+   *  unlock splash then follows the line (23-tutorials.md §4.6). */
+  const hand = (l: SceneLine): void => {
+    if (l.gives) giveBook(game.state, l.gives);
+  };
+
   /** Begin line `index` of the playing scene — or end the scene. */
   const begin = (index: number): void => {
     if (playing === null) return;
@@ -217,6 +225,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       playing.index = index;
       playing.tapsAtStart = tally(game.state, 'taps');
       if (l.until === 'tap' || !lineHolds(l)) break;
+      hand(l);
       index += 1;
     }
     if (index >= playing.scene.lines.length) { end(); return; }
@@ -264,6 +273,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const next = (): void => {
     if (playing === null) return;
     const l = line();
+    if (l) hand(l);
     if (l?.exit) leave(l.side);
     begin(playing.index + 1);
   };

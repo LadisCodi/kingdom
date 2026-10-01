@@ -65,7 +65,7 @@
           },
           "point": {
             "type": "text",
-            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id>, landmark:<id>, quest — or empty."
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, quest — or empty."
           },
           "lock": {
             "type": "text",
@@ -117,6 +117,12 @@
             "type": "text",
             "options": ["", "happy", "worried", "surprised", "idea"],
             "doc": "The speaker's face on this line; empty is at rest. Drawn from <portrait>_<expression> where that art exists."
+          },
+          "gives": {
+            "type": "text",
+            "nullable": true,
+            "options": ["Warfare"],
+            "doc": "A book the speaker hands the player as the line is read. Only a book that opens on a gift (sim/research.ts TOME_OPENS) — today, Warfare."
           }
         }
       }

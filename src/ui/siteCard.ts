@@ -98,7 +98,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
  */
 export function lairCardScreen(game: Game, lairId: LairId): Screen {
   const def = LAIRS[lairId];
-  const root = el('div', { class: 'dc lc' });
+  const root = el('div', { class: 'dc lc', 'data-coach': 'lair-card' });
   const frame = el('div', { class: 'k-frame', 'aria-hidden': 'true' });
   const clock = el('b', { class: 'lc-clock-value' });
   let signature: string | null = null;
