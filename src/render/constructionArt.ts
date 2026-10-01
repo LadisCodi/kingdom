@@ -1,10 +1,12 @@
-// A building being built, on the map: the card's working hammer
-// (district.css `.dc-hammer`) flying over it, and the kit's glass bar
-// (kit.css `.k-trough`, blue, as the card wears it) with the time inside.
+// A building at work, on the map: the card's working hammer
+// (district.css `.dc-hammer`) flying over it while it is built, and the kit's
+// glass bar (kit.css `.k-trough`) with the time inside — blue for a build,
+// green for a training line, as their cards wear them.
 
 import barBaseUrl from '../ui/assets/bar-base.png?url';
 import barBorderUrl from '../ui/assets/bar-border.png?url';
-import barFillUrl from '../ui/assets/bar-fill-blue.png?url';
+import barFillBlueUrl from '../ui/assets/bar-fill-blue.png?url';
+import barFillGreenUrl from '../ui/assets/bar-fill-green.png?url';
 import hammerUrl from '../ui/assets/art-hammer.png?url';
 import { loadImage } from './imageLoad';
 
@@ -34,10 +36,10 @@ function draw3(
  */
 export function drawTroughBar(
   ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-  fraction: number, text: string, font: string,
+  fraction: number, text: string, font: string, tone: 'blue' | 'green' = 'blue',
 ): void {
   const base = loadImage(barBaseUrl);
-  const fill = loadImage(barFillUrl);
+  const fill = loadImage(tone === 'green' ? barFillGreenUrl : barFillBlueUrl);
   const border = loadImage(barBorderUrl);
   if (!base.ready || !fill.ready || !border.ready) return;
   const tx = x + h * 0.0625;
