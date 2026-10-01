@@ -181,7 +181,7 @@ A `bonus` names its effects, and each is four fields:
 | Band | Cells revealed | Civics | Warfare | Magic |
 |---|---|---|---|---|
 | era 1 | 0 — the top of the page | ✓ | ✓ | ✓ |
-| era 2 | **43** in Civics — ring 2 and a quarter of ring 3; 30 in Warfare and Magic | ✓ | ✓ | ✓ |
+| era 2 | **43** in Civics — ring 2 and a quarter of ring 3; **85** in Warfare, past where it opens; 30 in Magic | ✓ | ✓ | ✓ |
 | era 3 | 100 | ✓ (sealed) | ✓ | ✓ |
 | era 4 | 220 | — | ✓ (sealed) | ✓ (sealed) |
 

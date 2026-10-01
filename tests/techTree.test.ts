@@ -21,6 +21,32 @@ import { COLS, pageRows } from '../src/ui/research/layout';
 const doc = treeDoc as unknown as TechTreeDoc;
 const clone = (): TechTreeDoc => structuredClone(doc);
 
+describe('the Warfare book', () => {
+  const nodes = Object.entries(doc.technologies)
+    .filter(([, n]) => n.tome === 'Warfare')
+    .sort(([, a], [, b]) => (a.row! - b.row!) || (a.col! - b.col!));
+
+  it('costs 500 Gold and up, never cheaper than a card on a row above', () => {
+    let floor = 500;
+    let row = -1;
+    let rowMax = 0;
+    for (const [id, n] of nodes) {
+      if (n.row !== row) { floor = Math.max(floor, rowMax); row = n.row!; rowMax = 0; }
+      expect(n.gold ?? 0, id).toBeGreaterThanOrEqual(floor);
+      rowMax = Math.max(rowMax, n.gold ?? 0);
+    }
+  });
+
+  it('opens its units and halls one at a time, soldiers before the first new arm', () => {
+    const unlocks = nodes.filter(([, n]) => n.kind === 'unlock').map(([id]) => id);
+    expect(unlocks).toEqual(['Warrior', 'Infirmary', 'Archery', 'Spears', 'WarbandII', 'Cavalry', 'WarbandIII']);
+    // Every unlock but the first sits alone on its row: the funnel's neck.
+    for (const [id, n] of nodes.filter(([, x]) => x.kind === 'unlock')) {
+      expect(nodes.filter(([, x]) => x.row === n.row).length, id).toBe(1);
+    }
+  });
+});
+
 describe('the shipped tech tree', () => {
   it('has no errors', () => {
     expect(validateTechTree(doc).errors.map((e) => e.message)).toEqual([]);
