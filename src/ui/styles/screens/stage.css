@@ -124,7 +124,7 @@
 .stg-name {
   position: absolute;
   z-index: 1;
-  top: calc(var(--px) * -22);
+  top: calc(var(--px) * -13); /* riding just over the board's top rim */
   left: calc(var(--px) * 22); /* the swallowtail hangs over the corner */
   /* A CLOTH RIBBON in the speaker's colour (`--ribbon`, below): its folded
      swallowtail ends whole in their slices (100 of its 504 across), the
