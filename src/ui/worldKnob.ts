@@ -1,11 +1,13 @@
 // The door to the world (Docs/features/22-progression.md §3, §5): a round
-// wooden knob with the compass carved into it, on the right-edge column. It
-// is there from the first minute, padlocked, so the player knows the province
-// is not the whole game; claiming the Watchtower breaks the lock.
+// wooden knob with the compass carved into it, bottom right, just above the
+// nav. It appears, padlocked, the moment the Watchtower is sighted — the
+// promise arrives with the place that keeps it — and claiming the Watchtower
+// breaks the lock.
 //
 // Built once and mutated, like the ad tab beside it (`adOfferPill.ts`).
 
 import type { Game } from '../game';
+import { watchtowerSighted } from '../sim/landmarks';
 import { el } from './format';
 import { iconEl } from './kit';
 
@@ -26,8 +28,8 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
 
   let wasLocked: boolean | null = null;
   const refresh = (): void => {
-    root.hidden = game.hasOpenSheet();
     const locked = !game.doorOpen('world');
+    root.hidden = game.hasOpenSheet() || (locked && !watchtowerSighted(game.state));
     if (wasLocked === true && !locked) {
       knob.classList.add('is-unlocking');
       window.setTimeout(() => knob.classList.remove('is-unlocking'), 900);

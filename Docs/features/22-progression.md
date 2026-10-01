@@ -53,7 +53,7 @@
 | **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to call heroes* |
 | **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to find your first cards* |
 | **Store** (nav) | always open | — |
-| **The world** (map knob, right edge) | the **Watchtower** is claimed | padlocked — *Claim the Watchtower to see beyond the province* |
+| **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to see beyond the province* |
 | **Knowledge** tab | Research opens | absent |
 | **Daily chest** pill | the First Morning ends (quest `TaxDay` claimed) | absent |
 | **Season** pill | as today — a card or a pack held | absent |

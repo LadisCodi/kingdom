@@ -46,9 +46,16 @@
 }
 .world-soon { font-weight: var(--weight-title); color: var(--wood-dark); }
 
-/* THE DOOR — a round wooden knob on the right-edge column, the compass carved
- * into it; padlocked in brass until the Watchtower is claimed. */
-#worldknob { margin-right: calc(var(--px) * 8); }
+/* THE DOOR — a round wooden knob, the compass carved into it, bottom right
+ * just above the nav, level with the quest scroll's foot; padlocked in brass
+ * until the Watchtower is claimed. Above the map, below the district card (6)
+ * and every menu (7), which hide it outright. */
+#worldknob {
+  position: absolute;
+  right: calc(var(--rpx) * 25);
+  bottom: calc(var(--nav-h) + var(--rpx) * 20);
+  z-index: 3;
+}
 #worldknob[hidden] { display: none; }
 .world-knob.k-knob {
   width: calc(var(--px) * 56);

@@ -115,5 +115,10 @@ export const claimedLandmarkCount = (state: GameState): number =>
 export const watchtowerClaimed = (state: GameState): boolean =>
   LANDMARKS.some((l) => l.kind === 'Watchtower' && state.landmarks.claimed[l.id] === true);
 
+/** Has a Watchtower come out of the dark — sighted once, remembered for good
+ *  (`discoveries`, sim/discovery.ts)? */
+export const watchtowerSighted = (state: GameState): boolean =>
+  LANDMARKS.some((l) => l.kind === 'Watchtower' && state.discoveries[`site:${l.id}`] === true);
+
 /** Every landmark cell, for the renderer. */
 export const landmarkCells = allLandmarkCells;
