@@ -73,7 +73,7 @@ export function mountUnlockSplash(game: Game, root: HTMLElement): void {
 
     root.replaceChildren(screen);
     screen.focus({ preventScroll: true });
-    playSfx('discovery');
+    playSfx('unlock');
   };
 
   const refresh = (): void => {
