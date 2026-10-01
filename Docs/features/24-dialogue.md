@@ -120,7 +120,7 @@ which one a line waits on is data.
 
 | Id | Name | Who | Art | Frame |
 |---|---|---|---|---|
-| `advisor` | **Isolde** | the Royal Advisor — warm, dry, unflappable; she keeps the maps and the ledgers. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
+| `advisor` | **Isolde** | the Royal Advisor — the royal librarian, advising because everyone else fled the fog: cheerful, a little nervous, unsure of herself, with a book for most things. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
 | `warden` | **the Warden** | captain of the guard; joins at the first lair | `hero_warden` | full figure |
 | `cook` | **Bess** | runs the Tavern; joins when it opens | `hero_cook` | full figure |
 | `villager` | **a villager** | the first settler | `portrait_villager` | full figure |
