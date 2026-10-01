@@ -243,13 +243,26 @@ held, some are destinations.
 | **Forest** | opens the Sawmill |
 | **Fertile land** | a Farm here yields extra Food |
 | **Game** | a Farm here yields extra Food |
-| **Dungeon** | held by enemies. Cleared, it takes expeditions — and it is where the **rare spellbooks** are ([`07-research.md`](07-research.md)). **Outer ring only** |
+| **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). **Outer ring only** |
 | **Sanctuary** | raises max Mana while the hex is held and active. **Outer ring only** |
 
-> **The province's ruins pay the basic books; the outer ring's dungeons pay the
-> rare ones.** A player who never contests the board still has a complete route
-> through research — the world widens what a kingdom can become, it never
-> monopolises it.
+### 8.1 Dungeons
+
+- **A dungeon is depths of rooms** — the depth and room design of
+  [`11-expeditions.md`](11-expeditions.md): numbered depths, one fight a room,
+  a boss at the end of each depth.
+- **Progress is per player.** Every player clears every room once, for
+  themselves; one player's clear takes nothing from another's.
+- A dungeon hex is never owned and needs no adjacency: any army can march to
+  it.
+- **An army camps at the dungeon.** From the dungeon's sheet the player
+  attacks its rooms one at a time; each fight resolves at once.
+  - The camped army's losses and its heroes' wounds carry from room to room.
+  - Recalling it marches it home, to be reinforced and sent again.
+- **Depth N+1 opens when depth N's boss falls.** Nothing else gates a depth.
+- **The boss of Depth 1 pays the dungeon's found book**
+  ([`22-progression.md`](22-progression.md) §4). Every room pays the room
+  rewards of [`11-expeditions.md`](11-expeditions.md) §7.
 
 ## 9. Generation
 
@@ -305,9 +318,9 @@ finishing instantly.
 
 ### 10.4 What it pays
 
-- **By depth** — an immediate reward for clearing each floor. This is the main
-  line, and it makes diving worth it for a player with no interest in the
-  ranking.
+- **By depth** — an immediate reward for clearing each floor: **Knowledge,
+  Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
+  This is the main line.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
 - **By final rank** — Top 1 / Top 2–3 / Top 4–6.
@@ -320,8 +333,8 @@ The outer scope feeds the inner one.
 |---|---|
 | **Wood, Food and Stone**, hourly, from improvements | the city's own purse |
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
-| **Rare spellbooks**, from outer-ring dungeons | [`07-research.md`](07-research.md) |
-| **Star card packs** — a gold card guaranteed | the collection's two hardest albums ([`09-relics.md`](09-relics.md) §6) |
+| **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
+| **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |
 | **Knowledge lumps**, from taken landmarks | research ([`07-research.md`](07-research.md) §7) |
 
 - The loop: **the world pays the province, the province arms the army, the army
