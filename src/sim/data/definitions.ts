@@ -448,12 +448,12 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
-  | 'ClaimLandmarks' | 'ClearLairs' | 'OwnArtifacts'
+  | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
   new Set([
-    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
+    'CollectResource', 'CollectTaps', 'DiscoverFeature',
   ]);
 
 export interface QuestDef {
@@ -482,10 +482,93 @@ export interface QuestDef {
   /** The research clock, seeded by the chain before the first landmark drips
    *  (07-research.md §3). */
   rewardKnowledge: number;
+  /** A card pack handed over on the claim, or null. The first one is how the
+   *  collection is met (Docs/features/22-progression.md §7). */
+  rewardPack: PackTier | null;
+  /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
+  autoClaim: boolean;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
 export const QUESTS = balance.quests as unknown as QuestDef[];
+
+// ------------------------------------------------------------- the stage
+//
+// The first-time experience's scenes, speakers and help timings
+// (Docs/features/23-tutorials.md, 24-dialogue.md). Data the SIM never reads:
+// the stage is UI. They live here beside the quests they walk through so the
+// tool, the tests and the stage read one definition.
+
+/** What starts a scene, or moves a line on. The kinds are code
+ *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
+export type SceneCondition =
+  | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
+  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
+  | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
+  | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
+  | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted';
+
+export interface SceneLine {
+  speaker: string;
+  side: 'left' | 'right';
+  text: string;
+  box: 'bottom' | 'top' | 'middle' | 'auto';
+  /** What the pointer shows; empty = nothing (24-dialogue.md §4). */
+  point: string;
+  lock: 'none' | 'target' | 'map' | 'all';
+  until: SceneCondition;
+  untilTarget: string;
+  untilAmount: number;
+  exit: boolean;
+  /** The speaker's face on this line — `<portrait>_<expression>` art; empty
+   *  is at rest (24-dialogue.md §6). */
+  expression: '' | 'happy' | 'worried' | 'surprised' | 'idea';
+  /** A book the speaker hands the player as this line is read; absent or
+   *  null hands nothing (Docs/features/24-dialogue.md §3). */
+  gives?: TomeId | null;
+}
+
+export interface SceneDef {
+  id: string;
+  trigger: Exclude<SceneCondition, 'tap'>;
+  triggerTarget: string;
+  triggerAmount: number;
+  /** May start over a sheet the player opened. */
+  anywhere: boolean;
+  skippable: boolean;
+  lines: SceneLine[];
+}
+
+export interface SpeakerDef {
+  name: string;
+  title: string;
+  portrait: string;
+  frame: 'figure' | 'medallion';
+}
+
+/** Every scene, in the order the stage considers them. */
+export const SCENES = balance.scenes as unknown as SceneDef[];
+export const SPEAKERS = balance.speakers as unknown as Record<string, SpeakerDef>;
+/** The help's timings (23-tutorials.md §5, §8). */
+export const HELP = balance.help as {
+  idleWiggleSeconds: number; idleAdvisorSeconds: number; advisorRestSeconds: number;
+  advisorShowSeconds: number; pointerSeconds: number; untilQuest: string;
+  lockFailsafeSeconds: number; typeCharsPerSecond: number; sceneGapSeconds: number;
+};
+
+/** The full-screen splash a big unlock opens with (23-tutorials.md §4.6):
+ *  a door of the UI or a book of research. `target` is a `DoorId` or a
+ *  `TomeId` by `kind` (checked by `dataRules.ts`). */
+export interface UnlockDef {
+  kind: 'door' | 'book';
+  target: string;
+  title: string;
+  text: string;
+  icon: string;
+}
+
+/** Every unlock splash, by id, in the order two that open at once are shown. */
+export const UNLOCKS = balance.unlocks as unknown as Record<string, UnlockDef>;
 
 // ----------------------------------------------------------------- districts
 
@@ -511,6 +594,9 @@ export interface DistrictDef {
   size: { x: number; y: number };
   /** Fog fully revealed this far around the footprint (at seed / build completion). */
   fogRevealRadius: number;
+  /** The same, by level — the last value holding past it; an upgrade
+   *  reveals its new ring. Empty: `fogRevealRadius` at every level. */
+  fogRevealRadiusPerLevel: readonly number[];
   /** Fog turned Discovered (payable frontier) this far around the footprint. */
   fogDiscoverRadius: number;
   /** Technology that must be completed before this district can be built. */
@@ -524,6 +610,10 @@ export interface DistrictDef {
    *  levels. Empty = +0% everywhere, which is every building that houses
    *  nobody. A level fact, read at the base stage — never a modifier. */
   taxBonusPerLevel: readonly number[];
+  /** Gold a minute the building makes BY ITSELF, with nobody living in it,
+   *  into its store, by level — the Townhall's own income, so the city always
+   *  has a source of Gold. Empty = none of its own. */
+  goldPerMinutePerLevel: readonly number[];
   /** What it holds uncollected, in units, by level: a house's rent, a
    *  producer's hauls. Production stops while it is full; a tap empties it
    *  into the wallet (Docs/features/03-economy.md §3.2). Empty = it makes
@@ -584,6 +674,9 @@ export interface DistrictDef {
    *  turns a casualty into a bill instead of a loss
    *  (Docs/features/combat.md §4). */
   bedsPerLevel: readonly number[];
+  /** Percent more Hero XP the kingdom earns while this stands — the TOTAL at
+   *  each level. Only the Tavern has any (Docs/features/22-progression.md §6). */
+  heroXpBonusPerLevel: readonly number[];
   /** Everything this building can turn out; empty = it trains nothing. A list
    *  rather than one id, so a hall can offer a choice — and so the Townhall
    *  can offer the Villager on the same footing. Army size is a
@@ -783,13 +876,12 @@ export interface TomeDef {
 }
 
 /**
- * The shelf, in reading order.
+ * The shelf, in reading order: the three general books, then the found ones.
  *
- * All three are open from the first minute. A book used to be opened by a
- * granted cover page — Civics with the kingdom, Magic on the first paid
- * reveal, Warfare on the first lair in sight — and the card existed only to
- * be the marker. What paces a book is its era bars, which ask for revealed
- * cells, so the marker was doing nothing the bars were not.
+ * Civics is open from the first minute; every other book opens on a fact
+ * about the world, never on a research (`sim/research.ts#TOME_OPENS`,
+ * Docs/features/22-progression.md §4). What paces an open book is its era
+ * bars, which ask for revealed cells.
  */
 export const TOMES: Record<TomeId, TomeDef> = {
   Civics: {
@@ -802,7 +894,15 @@ export const TOMES: Record<TomeId, TomeDef> = {
   },
   Warfare: {
     id: 'Warfare', name: 'Warfare', glyph: '🚩',
-    blurb: 'The army, and what it goes into the ground for.',
+    blurb: 'The army, and the lairs it clears.',
+  },
+  Sagas: {
+    id: 'Sagas', name: 'Sagas', glyph: '📖',
+    blurb: 'Heroes, and the Tavern that hosts them.',
+  },
+  Atlas: {
+    id: 'Atlas', name: 'Atlas', glyph: '🧭',
+    blurb: 'Sight, landmarks, and the world beyond the province.',
   },
 };
 
@@ -1092,6 +1192,7 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
   Shrine: { name: 'Shrine', glyph: '⛩️', sprite: 'landmark_shrine' },
   StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
   Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
+  Watchtower: { name: 'Watchtower', glyph: '🗼', sprite: 'landmark_watchtower' },
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
@@ -1415,6 +1516,10 @@ export interface LairDef {
   /** How far its zone reaches past its footprint, in Chebyshev rings: no
    *  tap, no build, no harvest inside (Docs/proposals/lairs.md §3). */
   radius: number;
+  /** How far it is SIGHTED past the fog while not yet found: a silhouette
+   *  while a revealed cell lies within this many cells of its footprint
+   *  (Docs/features/01-map-and-fog.md §4.1). 0 = never; else past `radius`. */
+  sight: number;
   /** The card's line over its painting (§6). */
   flavour: string;
   /** The garrison that holds it (Docs/features/18-garrisons-and-raids.md). */
@@ -1460,7 +1565,7 @@ const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph'
 };
 
 const lairBalance = regionMap.lairs as Record<LairId, {
-  x: number; y: number; size?: number; tier: number; radius: number; flavour: string;
+  x: number; y: number; size?: number; tier: number; radius: number; sight: number; flavour: string;
   guard: { threat: string; power: number; warningMinutes: number };
 }>;
 
@@ -1481,6 +1586,7 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
       size: b.size ?? 1,
       tier: b.tier,
       radius: b.radius,
+      sight: b.sight,
       flavour: b.flavour,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
@@ -2079,4 +2185,9 @@ export const GAME_VERSION = '0.1.0';
 // v64: ruins and gates are lairs. `kingdom.gates` becomes `kingdom.lairs`,
 // `RuinID` becomes `LairID`, and every persisted place id becomes its
 // creature's (HollowBarrow → Orcs, …), discovery keys included.
-export const SAVE_VERSION = 68;
+// v69: the first-time experience. `kingdom.tutorial` (the scenes played, and
+// `Veteran` for a kingdom from before the doors) is additive: a save without
+// it reads as a veteran. A worker carries its strike's remainder
+// (`StrikeCarry`), additive too. The tree in five books renamed and split a
+// few cards: the migrator carries a researched one to its successors.
+export const SAVE_VERSION = 74;

@@ -14,10 +14,10 @@
 //    one of three states — locked (greyscale), in progress, done.
 
 import type { Game } from '../game';
-import { ERA_COUNT, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
+import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
-  canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled, isTechStarted,
-  isTomeOpen, techCost, techKnowledgeCost, techPoured, techState,
+  canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled,
+  isFoundTome, isTomeOpen, researchRefusal, techCost, techKnowledgeCost, techPoured, techState,
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
@@ -25,8 +25,8 @@ import {
   colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
   type EdgePiece,
 } from './research/layout';
-import { btn, closeKnob, ctaBadge, iconEl, progress, sectionHead } from './kit';
-import { el, formatExact } from './format';
+import { btn, closeKnob, ctaBadge, iconEl, priceLine, progress, sectionHead } from './kit';
+import { el, formatExact, coach } from './format';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
  *  like the selection below. */
@@ -40,13 +40,25 @@ let selected: TechId | null = null;
  *  (the host replaces it afterwards), on a fresh mount it is already gone. */
 let pageEl: HTMLElement | null = null;
 const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
+/** The book the page was last centred on: turning to another centres again. */
+let centredTome: TomeId | null = null;
 /** The zoom the tree was last drawn at (see the page below). */
 let lastZoom = 1;
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 /** A book's emblem, stamped on its bookmark. */
-const TOME_MARK: Record<string, string> = { Civics: 'research', Warfare: 'army', Magic: 'Mana' };
+const TOME_MARK: Record<string, string> = {
+  Civics: 'research', Warfare: 'army', Magic: 'Mana', Sagas: 'helmet', Atlas: 'compass',
+};
+
+/** What opens a shut general book, on its padlocked bookmark
+ *  (Docs/features/22-progression.md §3). A found book has no bookmark until
+ *  it is found. */
+const TOME_HINT: Partial<Record<TomeId, string>> = {
+  Warfare: 'Find a lair to open the Book of Warfare.',
+  Magic: 'Claim a landmark to open the Book of Magic.',
+};
 
 /**
  * The bookmarks: one ribbon per open book, hanging from the page's bottom
@@ -55,13 +67,28 @@ const TOME_MARK: Record<string, string> = { Civics: 'research', Warfare: 'army',
  */
 function bookmarks(game: Game): HTMLElement {
   const row = el('div', { class: 'rb-marks' });
-  for (const id of TOME_ORDER.filter((t) => isTomeOpen(game.state, t))) {
+  for (const id of TOME_ORDER) {
+    const open = isTomeOpen(game.state, id);
+    // A found book is not on the shelf until it is found.
+    if (!open && isFoundTome(id)) continue;
+    if (!open) {
+      // A shut general book: its ribbon hangs, greyed, with a padlock; a tap
+      // says what opens it (Docs/features/22-progression.md §3).
+      const mark = el('button', {
+        class: 'rb-mark is-locked', type: 'button', 'data-tome': id,
+        'aria-label': `${TOMES[id].name} — shut`, 'data-coach': `tome:${id}`,
+      }, iconEl('padlock'));
+      mark.addEventListener('click', () => game.toast(TOME_HINT[id] ?? 'This book is shut.'));
+      row.append(mark);
+      continue;
+    }
     const mark = el('button', {
       class: `rb-mark${id === activeTome ? ' is-open' : ''}`,
       type: 'button',
       'data-tome': id,
       'aria-label': TOMES[id].name,
       'aria-pressed': id === activeTome ? 'true' : 'false',
+      'data-coach': `tome:${id}`,
     }, iconEl((TOME_MARK[id] ?? 'research') as never));
     mark.addEventListener('click', () => {
       if (activeTome === id) return;
@@ -133,7 +160,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     flow.style.zoom = String(lastZoom);
   });
 
-  const close = closeKnob(() => game.dismiss(), 'Close Research');
+  const close = coach(closeKnob(() => game.dismiss(), 'Close Research'), 'close');
   const sheet = el('div', { class: 'rb-stack' },
     // Two pins at the top corners; the way out sits over the right one.
     el('span', { class: 'rb-pin is-left', 'aria-hidden': 'true' }),
@@ -141,25 +168,30 @@ export function renderResearchMenu(game: Game): HTMLElement {
     page);
   root.append(sheet, bookmarks(game));
 
-  // Where the eye should land. A hint wins outright; otherwise, on a FRESH
-  // mount only, the work: a card whose Knowledge is in, then one being
-  // poured into, then the last one researched. The scroll across a per-tick
-  // re-render is the host's job (data-keep-scroll).
+  // Where the eye should land. A hint wins outright; otherwise, whenever a
+  // book is OPENED — the menu mounting, or a bookmark turning to another —
+  // the earliest card on the page the kingdom may research now, short of
+  // its price or not; with none, the last one researched. The scroll across
+  // a per-tick re-render is the host's job (data-keep-scroll).
   const hint = game.uiHint();
   const hinted = hint?.startsWith('tech:')
     ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
   const shown = [...at.keys()] as TechId[];
-  const frontier = shown.find((id) => !isTechComplete(state, id) && isTechFilled(state, id)
-      && techState(state, id) === 'progress')
-    ?? shown.find((id) => isTechStarted(state, id))
-    ?? shown.find((id) => canStartTech(state, id))
+  const frontier = shown.find((id) => researchRefusal(state, id) === null)
     ?? [...shown].reverse().find((id) => isTechComplete(state, id))
     ?? null;
-  const focus = hinted !== null && at.has(hinted) ? hinted : fresh ? frontier : null;
-  const focusAt = focus === null ? undefined : at.get(focus);
-  if (focusAt !== undefined) {
+  const opened = fresh || centredTome !== activeTome;
+  centredTome = activeTome;
+  const focus = hinted !== null && at.has(hinted) ? hinted : opened ? frontier : null;
+  if (focus !== null && at.has(focus)) {
+    // Read off the card where it actually landed — under the chapter's title
+    // and at the page's zoom — rather than worked out from the layout.
     requestAnimationFrame(() => {
-      page.scrollTop = Math.max(0, (focusAt.top + NODE_H / 2) * lastZoom - page.clientHeight / 2);
+      const card = flow.querySelector<HTMLElement>(`[data-coach="tech:${focus}"]`);
+      if (card === null) return;
+      const c = card.getBoundingClientRect();
+      const p = page.getBoundingClientRect();
+      page.scrollTop = Math.max(0, page.scrollTop + (c.top + c.height / 2) - (p.top + p.height / 2));
     });
   }
 
@@ -245,13 +277,13 @@ function edgePiece(piece: EdgePiece): HTMLElement {
 
 /**
  * A chapter heading where the next band begins, and — while the band is shut —
- * what the world still owes before it opens. The book's last band says it is
- * sealed.
+ * what the world still owes before it opens. Every band says it, the last
+ * one included: a two-band found book's second chapter is content, not a
+ * wall (Docs/features/22-progression.md §4).
  */
 function chapter(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
   const open = eraUnlocked(state, tome, era);
   const short = eraShortfall(state, tome, era);
-  const sealed = era >= ERA_COUNT[tome];
   return el('div', {
     class: `rb-chapter${open ? ' is-open' : ''}`,
     style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
@@ -259,7 +291,7 @@ function chapter(state: GameState, tome: TomeId, era: number, top: number): HTML
   el('span', { class: 'rb-chapter-name' }, `Chapter ${ROMAN[era] ?? era}`),
   open ? el('span', { class: 'rb-chapter-gate' }, '')
     : el('span', { class: 'rb-chapter-gate' },
-      sealed ? 'Sealed' : `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
+      `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
 }
 
 /**
@@ -286,6 +318,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
       + (def.planned ? ' planned' : ''),
     type: 'button',
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
+    'data-coach': `tech:${id}`,
   },
   el('span', { class: 'tech-card-name' }, def.name),
   el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
@@ -319,7 +352,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
   const dismiss = (): void => { selected = null; game.notify(); };
   const status = techState(state, id);
 
-  const page = el('div', { class: 'rb-sheet', 'data-keep-scroll': 'tech-info' },
+  const page = el('div', { class: 'rb-sheet', 'data-keep-scroll': 'tech-info', 'data-coach': `techsheet:${id}` },
     el('h2', { class: 'rb-sheet-title' }, def.name),
     el('div', { class: 'rb-rule', 'aria-hidden': 'true' }));
 
@@ -376,13 +409,13 @@ function techSheet(game: Game, id: TechId): HTMLElement {
               onClick: () => game.doPourTech(id, 1),
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
             }),
-            btn({
+            coach(btn({
               label: `+${formatExact(pours.most)}`,
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id),
               disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
-            }))])));
+            }), 'tech-pour'))])));
     }
 
     // ---- 3. research — the upgrade popup's block: the price above, the button
@@ -392,16 +425,14 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const note = filled ? null : 'Assign all its Knowledge to research it';
     page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
       el('div', { class: 'up-buy k-section' },
-        el('div', { class: 'up-price' },
-          ...(gold > 0 ? [el('span', { class: `up-price-chip${shortGold ? ' is-short' : ''}` },
-            iconEl('Gold'), el('b', {}, formatExact(gold)))] : [])),
-        btn({
+        priceLine(gold > 0 ? [{ icon: 'Gold', amount: formatExact(gold), short: shortGold }] : []),
+        coach(btn({
           label: 'Research',
           kind: 'primary',
           icon: filled ? undefined : 'padlock',
           onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
           disabledReason: !filled ? note! : shortGold ? 'Not enough Gold' : undefined,
-        }),
+        }), 'tech-research'),
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }
 

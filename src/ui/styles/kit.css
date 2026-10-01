@@ -1103,3 +1103,19 @@
 }
 .k-headpanel-trail > .icon { --icon-size: calc(var(--px) * 22); }
 .k-headpanel-body { min-width: 0; }
+
+/* ---------------------------------------------------------- price line */
+/* What a window's button spends, in a row over it (kit `priceLine`, M35). */
+.k-price {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--px) * 18);
+  font-size: var(--text-body);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+}
+.k-price-term { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.k-price-term > .icon { --icon-size: calc(var(--px) * 28); }
+.k-price-term.is-short { color: var(--clay); }

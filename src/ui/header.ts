@@ -53,12 +53,14 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const plank = el('div', { class: 'hud-plank' });
   const coins = el('div', { class: 'hud-coins' });
   const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
-  const plaque = el('button', { class: 'hud-plaque', type: 'button' });
+  const plaque = el('button', { class: 'hud-plaque', type: 'button', 'data-coach': 'builders' });
 
   // THE KNOWLEDGE TAB (M33). Straight on the painted wood: the book, the
   // number, ten segments and a caption under them; the + opens the sheet,
   // and so does the rest of the tab.
-  const knowTab = el('button', { class: 'hud-know', type: 'button', 'aria-label': 'Knowledge' });
+  const knowTab = el('button', {
+    class: 'hud-know', type: 'button', 'aria-label': 'Knowledge', 'data-coach': 'knowledge',
+  });
   const knowValue = el('b', { class: 'hud-know-value' }, '0');
   const segments = el('span', { class: 'hud-know-segs', 'aria-hidden': 'true' });
   const knowNext = el('span', { class: 'hud-know-next' });
@@ -77,7 +79,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // ONE gauge. Never "+6/h base −4/h upkeep = +2/h" — that
   // breakdown is the reliquary's job, on tap, where the player asked for it.
   const manaGauge = el('button', {
-    class: 'hud-slot hud-mana', type: 'button', 'aria-label': 'Mana',
+    class: 'hud-slot hud-mana', type: 'button', 'aria-label': 'Mana', 'data-coach': 'mana',
   });
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
@@ -245,8 +247,17 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     if (segments.childElementCount !== k.cap) {
       segments.replaceChildren(...Array.from({ length: k.cap }, () => el('i', {})));
     }
-    [...segments.children].forEach((seg, i) => seg.classList.toggle('is-lit', i < held));
+    // Each cell is a phial (hud.css): full for a point held, rising for the
+    // one dripping in now, its level a straight line, empty past it.
+    [...segments.children].forEach((seg, i) => {
+      const fill = i < held ? 1 : i === held && !k.full ? k.nextFraction : 0;
+      seg.classList.toggle('is-lit', i < held);
+      (seg as HTMLElement).style.setProperty('--fill', fill.toFixed(3));
+    });
     knowTab.classList.toggle('is-full', held >= k.cap);
+    // A readout with nothing to read yet is absent: the bar comes with the
+    // books (Docs/features/22-progression.md §3).
+    knowTab.hidden = !game.doorOpen('knowledge');
     knowTab.classList.toggle('is-kept', game.keepsKnowledgeTab());
     knowNext.textContent = k.full ? 'Full' : (k.nextIn ?? '');
     knowFull.textContent = k.fullIn ?? '';

@@ -189,7 +189,7 @@
 .tech-card.is-locked { filter: grayscale(1); opacity: 0.8; }
 .tech-card.is-locked:hover { filter: grayscale(1) brightness(1.04); }
 .tech-card.selected { outline: 2px solid var(--gold-dark); outline-offset: 1px; }
-.tech-card.hinted { box-shadow: 0 0 0 3px var(--gold), 0 0 14px var(--gold); }
+
 .tech-card.planned { border-style: dashed; }
 .tech-card > .k-cta { position: absolute; top: -7px; right: -7px; }
 
@@ -237,6 +237,12 @@
 .rb-mark[data-tome='Civics'] { --tome: #efe2bd; }
 .rb-mark[data-tome='Warfare'] { --tome: #c2493b; }
 .rb-mark[data-tome='Magic'] { --tome: #3d67bf; }
+.rb-mark[data-tome='Sagas'] { --tome: #d9912f; }
+.rb-mark[data-tome='Atlas'] { --tome: #4f9a6a; }
+/* A shut general book (Docs/features/22-progression.md §3): the ribbon in
+   the gated warm fill, a padlock where its emblem would be. */
+.rb-mark.is-locked { --tome: var(--locked); cursor: default; }
+.rb-mark.is-locked > .icon { opacity: 0.85; }
 .rb-mark:not(.is-open) { filter: brightness(0.9); }
 
 /* -------------------------------------------------------------- the sheet --- */

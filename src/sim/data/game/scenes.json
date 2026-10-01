@@ -1,0 +1,1651 @@
+[
+  {
+    "id": "intro",
+    "trigger": "questReached",
+    "triggerTarget": "FirstSteps",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh! Your Majesty — you came! Welcome home to Oakville. Well… to what the fog has left of it.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "I’m Isolde. I kept the royal library — but everyone else fled the fog, so… I’m your Royal Advisor now. I’ll do my very best!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The fog swallowed everything past the Townhall — our forests, our fields, our people’s work. The books say it can be pushed back. I hope.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Those trees in the fog are ours! A few coins and a little patience clear a patch — tap it, Your Majesty. Five times, I’ve read.",
+        "box": "auto",
+        "point": "feature:TreesFog",
+        "lock": "target",
+        "until": "questProgress",
+        "untilTarget": "FirstSteps",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Timber! Oh, it worked! Three more stands, and our axes will have work again.",
+        "box": "auto",
+        "point": "feature:TreesFog",
+        "lock": "map",
+        "until": "questComplete",
+        "untilTarget": "FirstSteps",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The townsfolk saw you win the woods back — they’ve gathered a gift! Go on, accept it. They’d be ever so pleased.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "FirstSteps",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "morningBook",
+    "trigger": "questReached",
+    "triggerTarget": "Woodcraft",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Trees at last — and, um, nobody left who remembers how to fell them. But I have a book for that! I have a book for most things.",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "research",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Each page is a craft our people can learn. This one’s Forestry — chapter one. My favourite!",
+        "box": "auto",
+        "point": "ui:tech:Forestry",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "techsheet:Forestry",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Learning takes Knowledge, and ours is right here. Pour it in…",
+        "box": "auto",
+        "point": "ui:tech-pour",
+        "lock": "target",
+        "until": "techFilled",
+        "untilTarget": "Forestry",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "…then a little Gold for the tools, and the craft is ours. Just like that!",
+        "box": "auto",
+        "point": "ui:tech-research",
+        "lock": "target",
+        "until": "techDone",
+        "untilTarget": "Forestry",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Listen — axes in the woods already! And I keep studying: a point of Knowledge an hour, up to ten. Best spend it before then.",
+        "box": "auto",
+        "point": "ui:knowledge",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the book and go and watch them work. I’ll — I’ll mark the page.",
+        "box": "auto",
+        "point": "ui:close",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
+    "id": "morningAxe",
+    "trigger": "questReached",
+    "triggerTarget": "Timber",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Shall we show them how it’s done? Tap a tree. Each swing draws a drop of Mana — the kingdom’s magic, in that blue well up there.",
+        "box": "auto",
+        "point": "feature:TreesRevealed",
+        "lock": "map",
+        "until": "taps",
+        "untilTarget": "",
+        "untilAmount": 3,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Hold your finger down and the axe keeps swinging! When a stand is bare, move on — it grows back. Trees are patient like that.",
+        "box": "auto",
+        "point": "feature:TreesRevealed",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Timber",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — the well is lower. Every swing drew a drop. Don’t fret! It fills itself again, slowly, hour by hour. I checked twice.",
+        "box": "auto",
+        "point": "ui:mana",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Wood for the kingdom! The woodfolk have sent their thanks — accept it, and the well gets a little of its magic back.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Timber",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "morningRoof",
+    "trigger": "questReached",
+    "triggerTarget": "ARoof",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Wood at last — and not one roof to sleep under. Nobody will settle here like this. A House! We need a House.",
+        "box": "auto",
+        "point": "ui:nav:build",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "build",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Builders want their wood up front — it says so in the guild charter. Choose the House.",
+        "box": "auto",
+        "point": "ui:build:Housing",
+        "lock": "target",
+        "until": "placing",
+        "untilTarget": "Housing",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Anywhere on the cleared ground. Drag it wherever feels right, then confirm. I’d pick somewhere sunny.",
+        "box": "auto",
+        "point": "ui:place-confirm",
+        "lock": "map",
+        "until": "placed",
+        "untilTarget": "Housing",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Hear that? Hammers! And builders keep at it while you’re away — they don’t need watching. Unlike me.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Our first roof! The townsfolk want to thank you for it — please, accept their gift.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "ARoof",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "morningFood",
+    "trigger": "questReached",
+    "triggerTarget": "Rations",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A roof is a start — but people eat, and our pantry is… a shelf. Berry bushes would do. Clear the fog off one, then pick it.",
+        "box": "auto",
+        "point": "feature:BerryBush",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Rations",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Berries enough for a whole household! The townsfolk have something for you — do accept it.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Rations",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "morningVillager",
+    "trigger": "questReached",
+    "triggerTarget": "FirstVillager",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The House is still going up. No family moves in under scaffolding — I asked.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Housing",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A roof, a pantry… now we need people! The Townhall calls settlers in from the roads. Open it, Your Majesty.",
+        "box": "auto",
+        "point": "district:Townhall",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "card:train",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Call one! They’ll need that roof — and a little Food for the road.",
+        "box": "auto",
+        "point": "ui:card:train",
+        "lock": "none",
+        "until": "training",
+        "untilTarget": "",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "They’re on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!",
+        "box": "auto",
+        "point": "ui:card:finish-training",
+        "lock": "none",
+        "until": "population",
+        "untilTarget": "",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "villager",
+        "side": "right",
+        "text": "A roof, a hearth and a monarch! I’ll pay my rent on time, Your Majesty.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the Townhall — the townsfolk are waiting to thank you.",
+        "box": "auto",
+        "point": "ui:card:close",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "quest",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oakville has its first citizen! Oh, this calls for a celebration — they’ve brought you a gift. Accept it!",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "FirstVillager",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "morningRent",
+    "trigger": "questReached",
+    "triggerTarget": "TaxDay",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": false,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Our villager pays rent into the House. When the purse shows, gather it — it’s theirs to give, and it costs you nothing.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "TaxDay",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Gold in the coffers! And another gift from the townsfolk — they’re very generous today.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "TaxDay",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "That’s how a kingdom is kept, I think: clear the fog, gather, build, grow. The townsfolk will always have their next request.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Lost? Look at their request and I’ll point the way. And come back tomorrow — I’ll have a little something for you.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      }
+    ]
+  },
+  {
+    "id": "farm",
+    "trigger": "questReached",
+    "triggerTarget": "Farmhand",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.",
+        "box": "auto",
+        "point": "district:FarmLands",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s raise one!",
+        "box": "auto",
+        "point": "ui:nav:build",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "build",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Choose the Farm.",
+        "box": "auto",
+        "point": "ui:build:Farm",
+        "lock": "target",
+        "until": "placing",
+        "untilTarget": "Farm",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.",
+        "box": "auto",
+        "point": "ui:place-confirm",
+        "lock": "map",
+        "until": "placed",
+        "untilTarget": "Farm",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Farm for Oakville! The townsfolk are grateful already — accept their gift.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Farmhand",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "workers",
+    "trigger": "questReached",
+    "triggerTarget": "ToWork",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Farm is still going up. When it stands, it’ll need hands.",
+        "box": "auto",
+        "point": "district:Farm",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Farm",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Farm stands — and nobody works it. Oh dear. Open it, Your Majesty.",
+        "box": "auto",
+        "point": "district:Farm",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "card:workers",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Send a villager! They’ll walk to a plot in reach, reap it and carry the crop home. More hands, more trips.",
+        "box": "auto",
+        "point": "ui:card:workers",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "ToWork",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Look at them go! The harvest piles up in the Farm’s barn — gather it when it’s ready. A full barn stops the work.",
+        "box": "auto",
+        "point": "district:Farm",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "fullHouse",
+    "trigger": "questReached",
+    "triggerTarget": "GrowingTown",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "That House is full — two to a roof, and no room for anyone else. Another House, and the town can grow.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "saws",
+    "trigger": "questReached",
+    "triggerTarget": "SawTeeth",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Farm reaps by itself… so why not the forest? I’m sure there’s a chapter on it. Let me find it!",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "research",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Here — Saws! It teaches us to build a Sawmill.",
+        "box": "auto",
+        "point": "ui:tech:Saws",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "techsheet:Saws",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pour in our Knowledge…",
+        "box": "auto",
+        "point": "ui:tech-pour",
+        "lock": "target",
+        "until": "techFilled",
+        "untilTarget": "Saws",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "…and a little Gold for the blades. There!",
+        "box": "auto",
+        "point": "ui:tech-research",
+        "lock": "target",
+        "until": "techDone",
+        "untilTarget": "Saws",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the book and raise it.",
+        "box": "auto",
+        "point": "ui:close",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
+    "id": "sawmill",
+    "trigger": "questReached",
+    "triggerTarget": "TheSawmill",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you.",
+        "box": "auto",
+        "point": "ui:nav:build",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "build",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Choose the Sawmill.",
+        "box": "auto",
+        "point": "ui:build:Sawmill",
+        "lock": "target",
+        "until": "placing",
+        "untilTarget": "Sawmill",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Like the Farm, it only works what’s in its reach. Set it where the most trees stand inside the outline, then build.",
+        "box": "auto",
+        "point": "ui:place-confirm",
+        "lock": "map",
+        "until": "placed",
+        "untilTarget": "Sawmill",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Another builder at work! The townsfolk have noticed — accept their thanks.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "TheSawmill",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "sawmillCrew",
+    "trigger": "questReached",
+    "triggerTarget": "Crewed",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Sawmill is still going up. When it stands, it’ll need hands.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Sawmill",
+        "untilAmount": 1,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Sawmill stands idle — saws, and nobody to swing them. Open it.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "card:workers",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Send it woodcutters. The townsfolk hope to see three villagers at work — the Farm’s count too.",
+        "box": "auto",
+        "point": "ui:card:workers",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Crewed",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Food and Wood come in by themselves now, even while you’re away. A real town, Your Majesty! I— I’m a little proud.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "picks",
+    "trigger": "questReached",
+    "triggerTarget": "Picks",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A second story wants stone, and nobody here knows how to cut it. But I’m sure I know a chapter that can teach them!",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "research",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pickaxes. It opens the mountains to us.",
+        "box": "auto",
+        "point": "ui:tech:Pickaxes",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "techsheet:Pickaxes",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pour in our Knowledge…",
+        "box": "auto",
+        "point": "ui:tech-pour",
+        "lock": "target",
+        "until": "techFilled",
+        "untilTarget": "Pickaxes",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "…and a little Gold for the iron. Done!",
+        "box": "auto",
+        "point": "ui:tech-research",
+        "lock": "target",
+        "until": "techDone",
+        "untilTarget": "Pickaxes",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the book and go and find some rock.",
+        "box": "auto",
+        "point": "ui:close",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
+    "id": "rubble",
+    "trigger": "questReached",
+    "triggerTarget": "Rubble",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Tap a mountain — clear its fog first, if need be. Every swing brings home Stone, and draws a drop from the well, like the axe.",
+        "box": "auto",
+        "point": "feature:Mountain",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Stone enough for walls! The masons have sent a gift — accept it.",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "townhall2",
+    "trigger": "questComplete",
+    "triggerTarget": "ProperCapital",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.",
+        "box": "auto",
+        "point": "district:Townhall",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "daily",
+    "trigger": "doorOpen",
+    "triggerTarget": "daily",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Welcome back, Your Majesty! I saved you a gift — one for every day you visit. Miss a day and it simply waits for you.",
+        "box": "auto",
+        "point": "ui:daily",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "builders",
+    "trigger": "overlay",
+    "triggerTarget": "builder",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "manaEmpty",
+    "trigger": "manaEmpty",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.",
+        "box": "auto",
+        "point": "ui:mana",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "eras",
+    "trigger": "revealed",
+    "triggerTarget": "",
+    "triggerAmount": 43,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "You’ve seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "firstLair",
+    "trigger": "lairFound",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Your Majesty — a camp, out past the fog! Whoever they are, they’ve seen our smoke too. Tap it… carefully.",
+        "box": "auto",
+        "point": "lair:",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "lair-card",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Raiders! See that clock? When it runs out, they rob our stores — and nothing near their camp can be worked while it stands.",
+        "box": "auto",
+        "point": "ui:lair-card",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Axes won’t do. But — wait! I have a book for this. The Book of Warfare. I never dared open it… here, it’s yours now.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea",
+        "gives": "Warfare"
+      }
+    ]
+  },
+  {
+    "id": "orcs",
+    "trigger": "lairFound",
+    "triggerTarget": "Orcs",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "orcChief",
+        "side": "right",
+        "text": "Grrr. Your town smells of bread and gold. We come for both.",
+        "box": "auto",
+        "point": "lair:Orcs",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "warden",
+        "side": "right",
+        "text": "Warden of the Guard, Your Majesty. Give me soldiers and I’ll drive them out.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Soldiers it is! The Book of Warfare starts with a Barracks — let’s read it together.",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      }
+    ]
+  },
+  {
+    "id": "raid",
+    "trigger": "raided",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "They’ve robbed our stores! Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.",
+        "box": "auto",
+        "point": "lair:Orcs",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "battle",
+    "trigger": "overlay",
+    "triggerTarget": "lair",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "warden",
+        "side": "right",
+        "text": "Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it’ll go before we march.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
+    "id": "victory",
+    "trigger": "lairDefeated",
+    "triggerTarget": "Orcs",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "warden",
+        "side": "right",
+        "text": "They’re scattered! And look what they left behind.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.",
+        "box": "auto",
+        "point": "lair:Orcs",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "relics",
+    "trigger": "doorOpen",
+    "triggerTarget": "relics",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.",
+        "box": "auto",
+        "point": "ui:nav:collection",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "magic",
+    "trigger": "landmarkClaimed",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Do you feel that? The old stones hum — the well runs deeper already. And the Book of Magic is open! I’ve waited years for this.",
+        "box": "auto",
+        "point": "ui:nav:research",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "tavern",
+    "trigger": "built",
+    "triggerTarget": "Tavern",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "cook",
+        "side": "right",
+        "text": "Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "cook",
+        "side": "right",
+        "text": "And me? I’m not bad with a ladle in a scrap, either.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Tavern flies the banner — your first call is on the house. And a new book, the Sagas! Heroes, legends… my favourite shelf.",
+        "box": "auto",
+        "point": "ui:nav:heroes",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "towerSighted",
+    "trigger": "sighted",
+    "triggerTarget": "Watchtower",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we’ll know. I hope it’s friendly.",
+        "box": "auto",
+        "point": "landmark:NorthWatch",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "watchtowerSeen",
+    "trigger": "landmarkSeen",
+    "triggerTarget": "NorthWatch",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I’d love to sketch it.",
+        "box": "auto",
+        "point": "landmark:NorthWatch",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "world",
+    "trigger": "doorOpen",
+    "triggerTarget": "world",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Other kingdoms, Your Majesty. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.",
+        "box": "auto",
+        "point": "ui:world",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "shrineSeen",
+    "trigger": "landmarkSeen",
+    "triggerTarget": "ThornedShrine",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Old stones, still standing — a shrine! Claimed, it deepens our well for good. Though not while the Orcs squat beside it.",
+        "box": "auto",
+        "point": "landmark:ThornedShrine",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "huntSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "WildAnimals",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Game in the woods! A tap brings home three times what a bush does — once Hunting teaches us how.",
+        "box": "auto",
+        "point": "feature:WildAnimals",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "ironSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "MountainIron",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Iron in that rock! The Quarry can’t cut it until we learn Mining — and then it’s worth five bare peaks.",
+        "box": "auto",
+        "point": "feature:MountainIron",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "goldSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "MountainGold",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Gold in the mountain! With Deep Mining, one day, the Quarry will dig coin right out of it.",
+        "box": "auto",
+        "point": "feature:MountainGold",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "fishSeen",
+    "trigger": "featureSeen",
+    "triggerTarget": "FishShoal",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Fish in the shallows! The Docks will net them, once we learn to build on the water. I can’t swim, so… boats.",
+        "box": "auto",
+        "point": "feature:FishShoal",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "harpies",
+    "trigger": "lairFound",
+    "triggerTarget": "Harpies",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Harpies, roosting over our mountains! While they stand, not one stone up there is ours. Archers on the wing — riders, I think?",
+        "box": "auto",
+        "point": "lair:Harpies",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "wounded",
+    "trigger": "wounded",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Our soldiers came home wounded — but not lost, thank goodness. The Infirmary patches them up for less than a new recruit.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "workshops",
+    "trigger": "built",
+    "triggerTarget": "AnyWorkshop",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A workshop! It turns raw goods into fine ones — and our grandest buildings will ask for them.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      }
+    ]
+  },
+  {
+    "id": "harmony",
+    "trigger": "techDone",
+    "triggerTarget": "Gardening",
+    "triggerAmount": 0,
+    "anywhere": true,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A beautiful city is a willing one. Decorations lend Harmony — and our grandest buildings ask for it.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      }
+    ]
+  }
+]

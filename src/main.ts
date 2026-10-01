@@ -8,7 +8,7 @@ import './ui/styles/index.css'; // the kit: imported second, so its rules win ti
 import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { startMusic } from './audio/music';
 import { Game, type OverlayName } from './game';
-import { Camera } from './render/camera';
+import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
@@ -50,6 +50,12 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
+import { renderWorldSheet } from './ui/worldSheet';
+import { mountWorldKnob } from './ui/worldKnob';
+import { mountStage } from './ui/stage/stage';
+import { mountUnlockSplash } from './ui/unlockSplash';
+import { SCENES, UNLOCKS } from './sim/data/definitions';
+import { activeQuest, claimQuest } from './sim/quests';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -148,6 +154,11 @@ async function boot(): Promise<void> {
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountWorldKnob(game, document.getElementById('worldknob')!);
+  // The tutorial's stage: the First Morning, the introductions and the help
+  // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
+  mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
+  mountUnlockSplash(game, document.getElementById('unlock')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
@@ -180,6 +191,7 @@ async function boot(): Promise<void> {
     heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
+    world: renderWorldSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     pass: renderPassSheet,
@@ -240,7 +252,7 @@ async function boot(): Promise<void> {
     // top among the slot's children — not the slot's own.
     const tops = [...panelRoot.children].map((c) => c.getBoundingClientRect().top - canvasTop);
     const bottom = tops.length > 0 ? Math.min(...tops) : canvas.clientHeight;
-    camera.centerFootprintWithin(cell, size, top, bottom);
+    camera.centerFootprintWithin(cell, size, top, bottom, CAMERA_GLIDE_MS);
   };
 
   const refreshScreens = () => {
@@ -286,7 +298,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
+        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -295,8 +307,10 @@ async function boot(): Promise<void> {
           needsKnob ? () => game.dismiss() : undefined,
           OVERLAY_SIGNATURES[overlay],
         );
-        // Its row of cards is browsed by dragging while the purse fills.
-        return overlay === 'build' ? holdWhileScrolling(screen) : screen;
+        // Browsed by dragging while the purse fills — the Build menu's row of
+        // cards, the research book's page: a rebuild under a finger replaces
+        // the scroller, and a phone drops the drag with it.
+        return overlay === 'build' || overlay === 'research' ? holdWhileScrolling(screen) : screen;
       });
     }
     else overlaySlot.clear();
@@ -422,6 +436,9 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
+      // The founding too, so a warp past midnight is a second day (the
+      // daily chest waits for one).
+      game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       // The lairs' counters, so the warp demos a raid landing during an
       // absence the way it demos the rest of it.
@@ -566,6 +583,31 @@ async function boot(): Promise<void> {
       button('🗂 data', () => { location.href = `${location.pathname}?dev=data`; }),
       button('🗺 map', () => { location.href = `${location.pathname}?dev=data#map`; }),
       button('🌳 tree', () => { location.href = `${location.pathname}?dev=data#tree`; }),
+      // THE FIRST-TIME EXPERIENCE, for reviewing it (Docs/features/23-tutorials.md):
+      // skip the First Morning, finish the active quest, or play every scene
+      // again from where the kingdom stands.
+      button('⏭ quest', () => {
+        const q = activeQuest(game.state);
+        if (q === null) return;
+        // An absolute goal is met by state; a relative one by its counter.
+        game.state.quests.progress = Math.max(game.state.quests.progress, q.goalAmount);
+        if (claimQuest(game.state) !== 'Claimed') game.toast(`${q.name} needs its goal met first`);
+        runTick();
+      }),
+      button('🌅 skip morning', () => {
+        for (const s of SCENES) if (s.id === 'intro' || s.id.startsWith('morning')) game.state.tutorial.seen[`scene:${s.id}`] = true;
+        runTick();
+      }),
+      button('🎬 replay scenes', () => {
+        for (const k of Object.keys(game.state.tutorial.seen)) if (k.startsWith('scene:')) delete game.state.tutorial.seen[k];
+        game.state.tutorial.veteran = false;
+        runTick();
+      }),
+      // Every unlock splash, one after another, to review them.
+      button('✨ unlocks', () => {
+        game.unlockQueue.push(...Object.keys(UNLOCKS));
+        runTick();
+      }),
       button('🗑 reset save', resetSave));
     // A tab that shows and hides the grid, so the tools stay one tap away
     // without covering the map. Whether it is open survives a reload.

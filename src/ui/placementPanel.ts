@@ -21,7 +21,7 @@ import { getGood } from '../sim/goods';
 import type { GoodId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration, formatExact } from './format';
+import { coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, windowHead } from './kit';
 import { PROMISE } from './buildPromise';
 
@@ -53,7 +53,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     amount: formatExact(n),
     short: getGood(game.state.city.goods, id) < n,
   }));
-  const confirm = btn({
+  const confirm = coach(btn({
     // One verb on a labelled button: the destination is the ghost's cell.
     label: moving ? 'Move' : 'Build',
     kind: 'primary',
@@ -64,7 +64,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
       have: (c) => game.walletValue(c),
     }),
     disabledReason: blockedBy,
-  });
+  }), 'place-confirm');
 
   const header = windowHead(title, [
     closeKnob(() => game.closePlacement(), `Close ${title}`),

@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "fields": {
+    "name": { "type": "text", "doc": "On the plank over the box." },
+    "title": { "type": "text", "doc": "Who they are, in a few words." },
+    "portrait": {
+      "type": "text",
+      "doc": "Art file stem in src/render/assets. Missing art draws a parchment silhouette."
+    },
+    "frame": {
+      "type": "text",
+      "options": ["figure", "medallion"],
+      "doc": "A full figure stands on the box; a medallion is a round avatar in a brass ring."
+    }
+  }
+}

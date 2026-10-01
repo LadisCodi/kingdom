@@ -18,11 +18,6 @@ import type { TerrainId } from '../sim/state';
 export const TILE_W = 128;
 export const TILE_H = 64;
 
-// The MAP EDITOR paints data by coordinate, not a world, so it keeps a flat
-// square grid (`Camera`'s 'flat' projection). A diamond is the right way to
-// look at a kingdom and the wrong way to fill in a spreadsheet of terrain.
-export const FLAT_TILE = 72;
-
 export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Grassland: '#4a7c3f',
   Plains: '#8f9a4b',
@@ -56,6 +51,11 @@ export const PALETTE = {
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
+  /** The white a fog cell flashes when a tap on it takes. */
+  fogFlash: '#ffffff',
+  /** A thing sighted past the fog: one flat cold shape, faint over the dark. */
+  sighted: '#8796ad',
+  sightedAlpha: 0.28,
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing

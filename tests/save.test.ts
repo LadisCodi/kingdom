@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
+import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
+import { HARVEST, LAIRS, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import { CARDS_PER_ALBUM } from '../src/sim/data/seasons';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
@@ -11,7 +11,7 @@ import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, stored, T0, tickAt,
+  addBuilt, firstGame, completeTech, FOREST, freshGame, fund, map, rankOf, rentStored, reveal, stored, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -71,7 +71,7 @@ describe('save round-trip', () => {
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = stored(state, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(stored(restored, 'Gold')).toBe(600); // 2 housed × 30/min × 10 min
+    expect(rentStored(restored)).toBe(600); // 2 housed × 30/min × 10 min
     expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold); // not the player's until collected
     expect(stored(restored, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
@@ -117,7 +117,7 @@ describe('save round-trip', () => {
     const shorter = deserialize(mk(), map, T0 + 30_000 + 72 * 3_600_000)!;
     expect(stored(longer, 'Wood')).toBe(stored(shorter, 'Wood'));
     expect(stored(longer, 'Gold')).toBe(stored(shorter, 'Gold'));
-    expect(longer.city.districts.filter(isStoreFull).length).toBeGreaterThan(0);
+    expect(longer.city.districts.filter((d) => isStoreFull(longer, d)).length).toBeGreaterThan(0);
     // The queued Housing finished.
     expect(longer.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
     // A crew by a full store waits at the door rather than walking.
@@ -309,12 +309,14 @@ describe('save versions', () => {
     const save = serialize(state, T0);
     const research = (save.Modules['kingdom.research'] as any);
     research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
+    // Resonance left the tree in 2026-10 (it was a discount); the migrator
+    // still turns it into ranks, and the loader drops what the tree lacks.
     save.SaveVersion = 23;
 
     const restored = deserialize(save, map, T0)!;
     expect(restored).not.toBeNull();
     expect(rankOf(restored, 'TapPower')).toBe(3);
-    expect(rankOf(restored, 'Resonance')).toBe(1);
+    expect(restored.research.completed.some((id) => id.startsWith('Resonance'))).toBe(false);
     // Exactly the ranks paid for, and not one more.
     expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
     expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
@@ -340,8 +342,9 @@ describe('save versions', () => {
     save.SaveVersion = 24;
     const restored = deserialize(save, map, T0)!;
     for (const tome of TOME_ORDER) expect(isTomeOpen(restored, tome), tome).toBe(true);
-    // Exactly what the save held, and not one id more.
-    expect(restored.research.completed).toEqual(['Forestry', 'Warrior']);
+    // Exactly what the save held, and only the one card v70 hands a kingdom
+    // that never had the tutorial: Pickaxes, so its mountains still answer.
+    expect(restored.research.completed).toEqual(['Forestry', 'Warrior', 'Pickaxes']);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {
@@ -495,7 +498,7 @@ describe('research without a clock (v61)', () => {
     const { save } = v60(['Agriculture'], 0);
     expect(migrate(save)).toBe(true);
     const research = (save.Modules as any)['kingdom.research'];
-    expect(research.Completed).toEqual(['Forestry', 'Agriculture']);
+    expect(research.Completed).toEqual(['Forestry', 'Agriculture', 'Pickaxes']); // + v70's
     expect(research.Active).toBeUndefined();
     expect(research.SlotsPurchased).toBeUndefined();
     expect(research.Poured).toEqual({});
@@ -514,10 +517,10 @@ describe('research without a clock (v61)', () => {
 
   it('round-trips what is poured and how much Knowledge Gold has bought', () => {
     const state = freshGame();
-    state.research.poured = { Agriculture: 1, Taxes01: 2 };
+    state.research.poured = { Agriculture: 1, TradeRoutesI: 2 };
     state.kingdom.knowledgeBoughtWithGold = 7;
     const back = deserialize(serialize(state, T0), map, T0)!;
-    expect(back.research.poured).toEqual({ Agriculture: 1, Taxes01: 2 });
+    expect(back.research.poured).toEqual({ Agriculture: 1, TradeRoutesI: 2 });
     expect(back.kingdom.knowledgeBoughtWithGold).toBe(7);
   });
 });
@@ -581,6 +584,133 @@ describe('the Market, retired', () => {
     expect(back.city.queue).toHaveLength(1);
     expect(back.city.queue[0].uniqueId).toBe('q_house');
     expect(back.city.queue[0].kind).toBe('upgrade');
-    expect(back.research.completed).toEqual(['Forestry']);
+    expect(back.research.completed).toEqual(['Forestry', 'Pickaxes']); // + v70's
+  });
+});
+
+// v70: stone is taught (Docs/features/22-progression.md §4).
+describe('Pickaxes, taught (v70)', () => {
+  const v69 = (index: number, veteran: boolean) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.tutorial.veteran = veteran;
+    const save = serialize(state, T0);
+    save.SaveVersion = 69;
+    return save;
+  };
+
+  it('hands the card to a kingdom past where it is taught, and moves its chain on', () => {
+    const back = deserialize(v69(30, false), map, T0)!;
+    expect(back.research.completed).toContain('Pickaxes');
+    // v69's 30 was the orc fight (v70 made it 32), wherever v72 put it since.
+    expect(QUESTS[back.quests.index].id).toBe('DriveThemOut');
+  });
+
+  it('leaves a kingdom before it to learn it from the chain', () => {
+    const back = deserialize(v69(10, false), map, T0)!;
+    expect(back.research.completed).not.toContain('Pickaxes');
+    expect(back.quests.index).toBe(10);
+  });
+
+  it('hands it to a veteran wherever the chain stands', () => {
+    expect(deserialize(v69(5, true), map, T0)!.research.completed).toContain('Pickaxes');
+  });
+});
+
+// v72: stone is taught where it is first wanted (Docs/features/22-progression.md §4).
+describe('Pickaxes, moved to the second story (v72)', () => {
+  const v71 = (index: number) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.quests.progress = 7;
+    const save = serialize(state, T0);
+    save.SaveVersion = 71;
+    return save;
+  };
+  // v71's chain, as it stood: Picks 27, Rubble 28, Mustered 29 … MoreRoom 39, SecondStory 40.
+  it('closes the chain up over the two quests that moved', () => {
+    const back = deserialize(v71(29), map, T0)!;
+    expect(QUESTS[back.quests.index].id).toBe('Mustered');
+    expect(back.quests.progress).toBe(0);
+    expect(QUESTS[deserialize(v71(39), map, T0)!.quests.index].id).toBe('MoreRoom');
+  });
+
+  it('sends a kingdom on a moved quest on to the one that followed it', () => {
+    expect(QUESTS[deserialize(v71(27), map, T0)!.quests.index].id).toBe('Mustered');
+    expect(QUESTS[deserialize(v71(28), map, T0)!.quests.index].id).toBe('Mustered');
+  });
+
+  it('leaves the chain before and after the move where it was', () => {
+    const early = deserialize(v71(10), map, T0)!;
+    expect(early.quests.index).toBe(10);
+    expect(early.quests.progress).toBe(7);
+    expect(QUESTS[deserialize(v71(40), map, T0)!.quests.index].id).toBe('SecondStory');
+  });
+});
+
+// v73: a lair is found before the army is asked for (Docs/features/12-quests.md §2).
+describe('War drums, in front of Armed men (v73)', () => {
+  const v72 = (index: number) => {
+    const state = firstGame();
+    state.quests.index = index;
+    state.quests.progress = 3;
+    const save = serialize(state, T0);
+    save.SaveVersion = 72;
+    return save;
+  };
+  // v72's chain, as it stood: FurtherAfield 25, ArmedMen 26, Mustered 27.
+  it('puts a kingdom on Armed men on War drums first', () => {
+    const back = deserialize(v72(26), map, T0)!;
+    expect(QUESTS[back.quests.index].id).toBe('WarDrums');
+    expect(back.quests.progress).toBe(0);
+  });
+
+  it('moves a kingdom past it on by one, and leaves one before it alone', () => {
+    expect(QUESTS[deserialize(v72(27), map, T0)!.quests.index].id).toBe('Mustered');
+    const early = deserialize(v72(25), map, T0)!;
+    expect(QUESTS[early.quests.index].id).toBe('FurtherAfield');
+    expect(early.quests.progress).toBe(3);
+  });
+});
+
+// v74: the Book of Warfare is handed over (Docs/features/23-tutorials.md §4.2).
+describe('the Book of Warfare, handed over (v74)', () => {
+  const v73 = (found: boolean) => {
+    const state = firstGame();
+    if (found) {
+      reveal(state, [LAIRS.Orcs.location]);
+      advance(state, map, T0 + 1000);
+    }
+    const save = serialize(state, T0 + 1000);
+    save.SaveVersion = 73;
+    return save;
+  };
+
+  it('keeps the book open for a kingdom that had found a lair', () => {
+    expect(isTomeOpen(deserialize(v73(true), map, T0 + 1000)!, 'Warfare')).toBe(true);
+  });
+
+  it('leaves it for Isolde to give to one that had not', () => {
+    expect(isTomeOpen(deserialize(v73(false), map, T0 + 1000)!, 'Warfare')).toBe(false);
+  });
+});
+
+// v69: the tree in five books. A researched card that was renamed or split
+// keeps what it bought (Docs/features/22-progression.md §9).
+describe('the tree in five books (v69)', () => {
+  it('turns a renamed card into its successor, and a split one into all its parts', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules as any)['kingdom.research'];
+    research.Completed = ['Forestry', 'Taxes01', 'Engineering', 'VigilsI', 'PitonsI'];
+    research.Poured = { Reforesting01: 1, DrillmasterII: 2 };
+    save.SaveVersion = 68;
+    const back = deserialize(save, map, T0)!;
+    expect(back.research.completed).toEqual(expect.arrayContaining([
+      'Forestry', 'TradeRoutesI', 'Joinery', 'StoneDressing', 'TimberFraming', 'QuarryHoists', 'BountiesI',
+    ]));
+    // A discount with no successor is gone, as any card the tree dropped is.
+    expect(back.research.completed).not.toContain('PitonsI');
+    expect(back.research.poured).toEqual({ ReforestingI: 1, TalesII: 2 });
   });
 });

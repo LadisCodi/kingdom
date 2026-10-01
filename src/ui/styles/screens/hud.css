@@ -198,6 +198,7 @@
    it steps aside while a menu is open, like the Settings knob — except a
    menu that spends Knowledge (research, the Knowledge sheet). It has to
    clear the Daily chest pill at 375px, so every width here is budgeted. */
+.hud-know[hidden] { display: none; }
 .hud-know {
   position: absolute;
   top: calc(100% - var(--rpx) * 12);
@@ -231,10 +232,10 @@
 .hud-know-frame {
   display: inline-flex;
   align-items: center;
-  gap: calc(var(--rpx) * 5);
-  height: calc(var(--rpx) * 62);
+  gap: calc(var(--rpx) * 4);
+  height: calc(var(--rpx) * 72);
   /* Straight on the painted wood — no dark slot round it. */
-  padding: 0 calc(var(--rpx) * 8);
+  padding: 0 calc(var(--rpx) * 6);
   font-family: var(--font-body);
   font-weight: var(--weight-title);
   font-variant-numeric: tabular-nums;
@@ -244,37 +245,68 @@
 }
 /* The book at the plank's own icon size, with nothing behind it. */
 .hud-know-frame > .icon {
-  --icon-size: calc(var(--rpx) * 66);
+  --icon-size: calc(var(--rpx) * 62);
   flex: none;
   margin-left: calc(var(--rpx) * -10);
   filter: drop-shadow(0 calc(var(--rpx) * 2) 0 rgba(30, 16, 6, 0.55));
 }
 .hud-know-value { font-size: var(--slot-text); font-weight: inherit; text-align: center; }
-.hud-know-gauge { display: grid; gap: calc(var(--rpx) * 5); justify-items: center; }
-/* Ten narrow tall segments, packed tight — a battery meter, as Elvenar's. */
-.hud-know-segs { display: flex; gap: calc(var(--rpx) * 3); }
+.hud-know-gauge { display: grid; gap: calc(var(--rpx) * 3); justify-items: center; }
+/* THE GAUGE (mockup M54): the kit's glass bar made of ten phials. A copper
+   capsule (know-frame.png, three-sliced so its middle stretches) holds a row
+   of glass wells; each well is drawn empty, and its liquid (know-cell-full)
+   rises over it to `--fill` (header.ts) — 1 for a point held, the fraction
+   of the next for the one dripping in, its level a straight line. */
+.hud-know-segs {
+  --cell-w: calc(var(--rpx) * 12);
+  --cell-h: calc(var(--rpx) * 22);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rpx) * 1);
+  padding: calc(var(--rpx) * 6) calc(var(--rpx) * 9);
+  /* 723×113, its round ends 60 px each, drawn the height of the row. */
+  border-image: url('../../assets/know-frame.png') 0 60 fill / 0 calc(var(--rpx) * 18) stretch;
+}
 .hud-know-segs > i {
-  width: calc(var(--rpx) * 9);
-  height: calc(var(--rpx) * 28);
-  border-radius: calc(var(--rpx) * 3);
-  background: rgba(20, 10, 4, 0.75);
-  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(0, 0, 0, 0.4);
+  position: relative;
+  flex: none;
+  width: var(--cell-w);
+  height: var(--cell-h);
+  background: url('../../assets/know-cell-empty.png') center / 100% 100% no-repeat;
 }
-.hud-know-segs > i.is-lit {
-  background: linear-gradient(180deg, #8ee6e8, #2fa5b8 60%, #1f7e92);
-  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(255, 255, 255, 0.35);
-}
-.hud-know.is-full .hud-know-segs > i.is-lit {
-  box-shadow: inset 0 calc(var(--rpx) * 2) 0 rgba(255, 255, 255, 0.45), 0 0 calc(var(--rpx) * 8) rgba(142, 230, 232, 0.8);
+.hud-know-segs > i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/know-cell-full.png') center / 100% 100% no-repeat;
+  clip-path: inset(calc((1 - var(--fill, 0)) * 100%) 0 0 0);
+  transition: clip-path 600ms ease-out;
 }
 /* The caption: the next point and the whole bar share one place and take
    turns (header.ts), the way the Mana readout does. */
-.hud-know-caption { display: grid; justify-items: center; font-size: calc(var(--rpx) * 19); letter-spacing: -0.01em; }
+.hud-know-caption {
+  display: grid;
+  justify-items: center;
+  /* As wide as the gauge, and allowed past it: a longer line (Full in 9h 37m)
+     spills into the gaps rather than widening the tab, which has to clear
+     the daily pill at 375px (daily.css). */
+  width: 0;
+  min-width: 100%;
+  font-size: calc(var(--rpx) * 26);
+  letter-spacing: -0.01em;
+}
 .hud-know-caption > * { grid-area: 1 / 1; white-space: nowrap; transition: opacity 300ms ease; }
 .hud-know-full { opacity: 0; }
 .hud-know-caption.is-full-turn > .hud-know-next { opacity: 0; }
 .hud-know-caption.is-full-turn > .hud-know-full { opacity: 1; }
-.hud-know > .hud-plus { margin-right: 0; width: calc(var(--rpx) * 46); height: calc(var(--rpx) * 46); }
+/* Level with the gauge, not the middle of the tab: the caption's row below
+   is left clear for a long line (Full in 9h 37m) to spill into. */
+.hud-know > .hud-plus {
+  margin-right: 0;
+  width: calc(var(--rpx) * 46);
+  height: calc(var(--rpx) * 46);
+  translate: 0 calc(var(--rpx) * -14);
+}
 .hud-know:active > .hud-plus { background-image: url('../../assets/hud-plus-down.png'); }
 /* A menu that spends Knowledge keeps it down (`is-kept`). */
 #ui:has(> #overlay:not(:empty)) .hud-know:not(.is-kept) {

@@ -3,15 +3,16 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
 } from '../sim/data/definitions';
+import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingLairAt } from '../sim/sites';
 import { lairZoneCells } from '../sim/lairZone';
 import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
   clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
 } from './lairMap';
-import { trainingProgress, unitInTraining } from '../sim/army';
+import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
@@ -21,19 +22,20 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState, type LairId,
+  type Coord, type FeatureId, type GameState, type LairId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
 import { drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
-import { readyToCollect } from '../sim/storage';
+import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import { drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, drawStandingOutline, edgePath, FEATURE_PLOTS, fillDiamond,
+  strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
@@ -41,6 +43,7 @@ import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cas
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
+import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -445,10 +448,15 @@ export function drawMap(
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.
     const roof = foot.y - tall;
+    // Being built or upgraded, by a builder at work: the card's hammer
+    // works it here too, over the upper half of its art.
+    if (state.city.queue.some((q) => q.districtUniqueId === district.uniqueId && q.startedAt !== null)) {
+      const hw = Math.min(box.w, size * 1.6);
+      drawWorkingHammer(ctx, district.uniqueId, c.x - hw / 2, roof + (foot.y - roof) * 0.15, hw, clockNow);
+    }
     if (district.state === 'UnderConstruction') {
       ctx.fillStyle = PALETTE.constructionHatch;
       fillDiamond(ctx, box);
-      drawGlyph(ctx, '🚧', c.x - box.w / 2, roof - size * 0.4, box.w, size * 0.3, size * 0.5);
     } else {
       if (district.level > 1) {
         ctx.fillStyle = PALETTE.label;
@@ -474,11 +482,6 @@ export function drawMap(
       if (district.definitionId === 'Townhall') {
         drawPill(c.x, roof - 2, `${formatCount(state.city.population)}/${formatCount(maxPopulation(state))}`,
           { icon: 'population' });
-        const inLine = unitInTraining(state, district.uniqueId);
-        if (inLine) {
-          drawBar(ctx, c.x - box.w * 0.24, c.y + box.h * 0.2, box.w * 0.48, 4,
-            trainingProgress(state, district.uniqueId, now), PALETTE.progressFill);
-        }
       }
       // Needs-workers warning.
       if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
@@ -488,19 +491,6 @@ export function drawMap(
     if (lifted) ctx.globalAlpha = 1;
     return tall;
   };
-
-  /**
-   * HOW WIDE A FEATURE'S CANVAS IS, in plots.
-   *
-   * A building is drawn exactly to its plot, so its art is one plot across.
-   * A feature is not: a stand of trees spreads half a tile past its own
-   * ground and overlaps its neighbours, which is what makes a wood read as a
-   * wood rather than as a row of separate tiles — and a boar covers a
-   * fraction of a tile. Both have to fit the same canvas, so the canvas is
-   * TWO plots wide and the thing sits somewhere inside it
-   * (Docs/art/features/props.json says where).
-   */
-  const FEATURE_PLOTS = 2;
 
   // ------------------------------------------------------------ THE FLOOR
   //
@@ -659,6 +649,54 @@ export function drawMap(
    * CLIPPED to what is actually in front, so a villager whose legs are
    * behind a wall gets an outline on the legs and stays themselves above it.
    */
+  /**
+   * A THING SIGHTED PAST THE FOG (01-map-and-fog.md §4.1): its own drawing
+   * as one flat, cold, faint shape over the dark — there, and nothing more
+   * about it. The shape is stamped on a small offscreen canvas and filled
+   * with one colour, which no filter does. Returns where it landed.
+   */
+  let sightCanvas: HTMLCanvasElement | null = null;
+  const silhouette = (plot: PlotBox, keys: string[]): PlotBox | null => {
+    const key = keys.find((k) => spriteAspect(k) !== null);
+    if (key === undefined) return null;
+    const foot = base(plot);
+    const cw = plot.w * FEATURE_PLOTS;
+    const ch = cw * spriteAspect(key)!;
+    if (cw < 1 || ch < 1) return null;
+    sightCanvas ??= document.createElement('canvas');
+    const gc = sightCanvas;
+    if (gc.width < cw * dpr || gc.height < ch * dpr) {
+      gc.width = Math.ceil(cw * dpr);
+      gc.height = Math.ceil(ch * dpr);
+    }
+    const g = gc.getContext('2d')!;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, gc.width, gc.height);
+    const tall = drawStanding(g, key, cw / 2, ch, plot.w, FEATURE_PLOTS);
+    if (tall <= 0) return null;
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = PALETTE.sighted;
+    g.fillRect(0, 0, cw, ch);
+    g.globalCompositeOperation = 'source-over';
+    ctx.save();
+    ctx.globalAlpha = PALETTE.sightedAlpha;
+    ctx.drawImage(gc, 0, 0, Math.ceil(cw * dpr), Math.ceil(ch * dpr), foot.x - cw / 2, foot.y - ch, cw, ch);
+    ctx.restore();
+    return artRect(plot, tall, FEATURE_PLOTS);
+  };
+
+  /** The drawings a sighted thing would be drawn with in plain view. */
+  const sightKeys = (t: Sighted): string[] => {
+    if (t.kind === 'lair') return [LAIRS[t.id as LairId].sprite];
+    if (t.kind === 'landmark') {
+      const l = LANDMARKS.find((x) => x.id === t.id);
+      return l === undefined ? [] : [LANDMARK_ART[l.kind].sprite];
+    }
+    const stem = FEATURES[t.id as FeatureId].sprite;
+    return t.size === 1 ? [variantKey(stem, t.anchor)]
+      : [`${stem}_${t.size}x${t.size}`, variantKey(stem, t.anchor)];
+  };
+
   const RIM = 1.6;
   const RING: ReadonlyArray<readonly [number, number]> = [
     [1, 0], [-1, 0], [0, 1], [0, -1],
@@ -828,6 +866,16 @@ export function drawMap(
             taps / FOG.tapsToReveal, PALETTE.progressFill);
         }
       }
+      // A tap on the fog flashes the cell white, the last one too as it
+      // clears (Game.flashFog).
+      const flash = tapFx.sample(`fog:${key}`)?.flash ?? 0;
+      if (flash > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = flash * 0.75;
+        ctx.fillStyle = PALETTE.fogFlash;
+        fillDiamond(ctx, box);
+        ctx.restore();
+      }
     }
   }
 
@@ -975,6 +1023,20 @@ export function drawMap(
     }, { x: lair.size, y: lair.size });
   }
 
+  // SIGHTED: the tall things past the fog a revealed cell is close enough to
+  // see (01-map-and-fog.md §4.1), in the same depth order as everything.
+  for (const t of sightedThings(state, map)) {
+    const span = { x: t.size, y: t.size };
+    const plot = camera.plotBox(t.anchor, span);
+    if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
+      || plot.y + plot.h < 0 || plot.y - plot.w * 2 > h) continue;
+    const keys = sightKeys(t);
+    later(t.anchor, (mark) => {
+      const art = silhouette(plot, keys);
+      if (art !== null) mark(art);
+    }, span);
+  }
+
   // The people go in the same list, so a villager behind a hall is behind it.
   queueVillagers();
   queueWorkers();
@@ -1013,13 +1075,38 @@ export function drawMap(
     const progress = queueProgress(item, now);
     const remaining = Math.ceil(remainingSeconds(item, now));
     // On the plot, not over the scaffolding: the bar belongs to the ground
-    // being worked, and the art above it is allowed to be any height.
-    drawBar(ctx, c.x - b.w * 0.3, c.y - 3, b.w * 0.6, 6, progress, PALETTE.progressFill);
-    ctx.fillStyle = PALETTE.label;
-    ctx.font = labelFont(size * 0.15, 12);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : formatDuration(remaining), c.x, c.y + 5);
+    // being worked, and the art above it is allowed to be any height. The
+    // kit's glass bar, blue as the card wears it, with the time inside.
+    const barH = Math.max(20, Math.min(28, size * 0.22));
+    const barW = Math.max(barH * 4, b.w * 0.6);
+    drawTroughBar(ctx, c.x - barW / 2, c.y - barH / 2, barW, barH, progress,
+      item.startedAt === null ? 'queued' : formatDuration(remaining), labelFont(barH * 0.6, 12, true));
+  }
+
+  // Pass 2b: TRAINING, on every building with someone in its line — the
+  // kit's bar, green as the training card wears it: the fill is the one in
+  // training now, the time is the WHOLE line's. Under a construction bar if
+  // the building also has one.
+  for (const district of state.city.districts) {
+    if (district.state !== 'Built' || !unitInTraining(state, district.uniqueId)) continue;
+    const b = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);
+    const c = mid(b);
+    const barH = Math.max(20, Math.min(28, size * 0.22));
+    const barW = Math.max(barH * 4, b.w * 0.6);
+    const building = state.city.queue.some((q) => q.districtUniqueId === district.uniqueId);
+    // The portrait rides the bar's left end, so the bar steps right by half
+    // of it and the pair stays centred on the plot.
+    const d = barH * 1.7;
+    const x = c.x - barW / 2 + d * 0.3;
+    const y = c.y - barH / 2 + (building ? barH * 1.15 : 0);
+    drawTroughBar(ctx, x, y, barW, barH, trainingProgress(state, district.uniqueId, now),
+      formatDuration(Math.ceil(lineRemainingSeconds(state, district.uniqueId, now))),
+      labelFont(barH * 0.6, 12, true), 'green');
+    const line = lineFor(state, district.uniqueId);
+    const trainee = line[0].trainee;
+    const bust = `${trainee === 'Villager' ? 'unit_villager' : UNITS[trainee as UnitId].sprite}_avatar`;
+    drawTraineeBadge(ctx, x, y + barH / 2, d, bust,
+      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true));
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.
@@ -1224,15 +1311,39 @@ export function drawMap(
 
 
 
-  // Pass 3.8: the quest-hint arrow — a bouncing 👇 over the hinted cell.
+  // Pass 3.8: the quest hint — the tutorial's own sign (Docs/features/
+  // 24-dialogue.md §4): the plot's diamond lit in the blue magic glow, and
+  // the gloved hand bobbing over it. One sign for "here" across the map and
+  // the menus, and never an emoji.
   if (markers.hintCell) {
     const b = cellRect(markers.hintCell);
     const c = mid(b);
     const bob = Math.sin(now / 140) * size * 0.07;
-    ctx.strokeStyle = PALETTE.selected;
+    const pulse = 0.5 + 0.5 * Math.sin(now / 220);
+    ctx.save();
+    ctx.shadowColor = '#3c9dff';
+    ctx.shadowBlur = 10 + pulse * 10;
+    ctx.strokeStyle = '#c8f0ff';
     ctx.lineWidth = 3;
     strokeDiamond(ctx, b, 3);
-    drawGlyph(ctx, '👇', c.x - size / 2, c.y - size * 1.1 + bob, size, size * 0.5);
+    ctx.restore();
+    const handH = size * 0.5;
+    const handW = handH / (spriteAspect('tutorial_hand_down') ?? 1.22);
+    const tipY = c.y - size * 0.12 + bob;
+    // The fingertip sits a little right of the glove's middle.
+    if (!drawSprite(ctx, 'tutorial_hand_down', c.x - handW * 0.57, tipY - handH, handW, handH)) {
+      const half = size * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(c.x, tipY);
+      ctx.lineTo(c.x - half, tipY - half * 1.4);
+      ctx.lineTo(c.x + half, tipY - half * 1.4);
+      ctx.closePath();
+      ctx.fillStyle = '#f2b233';
+      ctx.strokeStyle = '#5c3a1e';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
   function queueWorkers(): void {
@@ -1299,12 +1410,12 @@ export function drawMap(
   // building with something in its store (render/collectBubbles.ts).
   const clock = performance.now();
   for (const district of state.city.districts) {
-    if (!readyToCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
+    if (!showsCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
     const art = artOf.get(district.uniqueId);
     if (!art) continue;
     const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);
     // The art's box carries transparent headroom; a tenth of it down is the roof.
-    drawCollectBubble(ctx, bubbles, district, art.x + art.w / 2, art.y + art.h * 0.12,
+    drawCollectBubble(ctx, bubbles, state, district, art.x + art.w / 2, art.y + art.h * 0.12,
       Math.max(34, Math.min(88, plot.w * 0.4)), clock);
   }
 

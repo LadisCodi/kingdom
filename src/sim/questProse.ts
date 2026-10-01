@@ -24,9 +24,9 @@
 // It lives here rather than in `sim/data/` for the reason `techProse.ts` does:
 // it needs display names, and `definitions.ts` may not import it back.
 
-import { CURRENCIES, DISTRICTS, FEATURES, TECHNOLOGIES } from './data/definitions';
+import { CURRENCIES, DISTRICTS, FEATURES, LANDMARK_ART, TECHNOLOGIES } from './data/definitions';
 import type { QuestDef, QuestGoalType } from './data/definitions';
-import type { CurrencyId, DistrictId, FeatureId, TechId } from './state';
+import type { CurrencyId, DistrictId, FeatureId, LandmarkKind, TechId } from './state';
 
 /** An id the DATA holds as a bare string, in the words a player reads. The
  *  fallback is the id itself: a quest naming something that no longer exists
@@ -119,13 +119,19 @@ export function questLine(quest: {
     case 'CollectTaps':
       return `Tap ${count(n)} times.`;
     case 'DiscoverCells':
-      return `Clear ${count(n)} ${plural(n, 'tile')} of fog.`;
+      return `Clear the fog from ${count(n)} ${plural(n, 'tile')} in all.`;
     case 'DiscoverFeature':
       return target === null
         ? `Find ${count(n)} ${plural(n, 'thing')}.`
         : `Find ${count(n)} ${plural(n, featureName(target))}.`;
     case 'ClaimLandmarks':
-      return `Claim ${count(n)} ${plural(n, 'landmark')}.`;
+      return target === null
+        ? `Claim ${count(n)} ${plural(n, 'landmark')}.`
+        : n === 1
+          ? `Claim the ${LANDMARK_ART[target as LandmarkKind]?.name ?? target}.`
+          : `Claim ${count(n)} ${plural(n, LANDMARK_ART[target as LandmarkKind]?.name ?? target)}.`;
+    case 'FindLairs':
+      return `Find ${count(n)} ${plural(n, 'lair')}.`;
     case 'ClearLairs':
       return `Clear ${count(n)} ${plural(n, 'lair')}.`;
     case 'OwnArtifacts':

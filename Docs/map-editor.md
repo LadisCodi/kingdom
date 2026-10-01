@@ -107,6 +107,19 @@ collection of the data editor ([`plans/data-editor.md`](plans/data-editor.md)).
 it — the game frames itself to a 9:16 phone, which is the wrong shape for
 looking at a region.
 
+The board is drawn **as the game draws it**:
+
+- the game's isometric camera — every cell a 2:1 diamond, picked through the
+  same projection a tap uses;
+- the ground's per-cell variants and the fringes where two terrains meet;
+- features, landmarks, lairs and the Townhall (level 1) standing on their
+  plots with the game's sprites, painted back to front, multi-cell blocks
+  drawn once over the whole block;
+- **no fog**: the province is shown revealed, so every cell can be painted.
+
+Everything the tool adds — grid, distances, ring bands, problems, site
+outlines and labels — is an overlay drawn over that view.
+
 | Tool | Key | |
 |---|---|---|
 | Brush | `B` | drag to paint; painting into void **creates** cells, which is how the world grows |

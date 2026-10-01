@@ -6,12 +6,14 @@
 
 import { ownedArtifacts } from './artifacts';
 import {
-  QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
+  LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { clearedLairCount } from './lairs';
+import { clearedLairCount, foundLairCount } from './lairs';
+import { grantPack } from './collection';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
+import { revealedCellCount } from './research';
 import {
   addToWallet, getWallet,
   type CurrencyId, type GameState,
@@ -44,9 +46,9 @@ export function recordQuestEvent(state: GameState, event: SimEvent): void {
     case 'CollectTaps':
       if (event.kind === 'tap') state.quests.progress += 1;
       break;
-    case 'DiscoverCells':
-      if (event.kind === 'reveal') state.quests.progress += 1;
-      break;
+    // Counted at the reveal, because the reveal is the only moment that
+    // knows the feature: a berry bush is finite, and a total read off the map
+    // would un-complete the quest when the bush is eaten.
     case 'DiscoverFeature':
       if (event.kind === 'reveal' && event.feature === quest.goalTarget) {
         state.quests.progress += 1;
@@ -61,9 +63,11 @@ export function recordQuestEvent(state: GameState, event: SimEvent): void {
 export function questValue(state: GameState, quest: QuestDef): number {
   if (RELATIVE_QUEST_TYPES.has(quest.goalType)) return state.quests.progress;
   switch (quest.goalType) {
+    // Counted the moment the build STARTS: a build cannot be cancelled, so
+    // the building is the player's from then, and waiting for the scaffold
+    // only slows the chain down.
     case 'BuildDistrict':
-      return state.city.districts.filter(
-        (d) => d.definitionId === quest.goalTarget && d.state === 'Built').length;
+      return state.city.districts.filter((d) => d.definitionId === quest.goalTarget).length;
     case 'UpgradeDistrict':
       return state.city.districts.filter(
         (d) => d.definitionId === quest.goalTarget && d.state === 'Built' &&
@@ -81,7 +85,11 @@ export function questValue(state: GameState, quest: QuestDef): number {
     case 'TrainArmy':
       return state.army.length;
     case 'ClaimLandmarks':
-      return Object.keys(state.landmarks.claimed).length;
+      // A target is a landmark KIND — "claim the Watchtower" — and none is any.
+      return LANDMARKS.filter((l) => state.landmarks.claimed[l.id] === true
+        && (quest.goalTarget === null || l.kind === quest.goalTarget)).length;
+    case 'FindLairs':
+      return foundLairCount(state);
     case 'ClearLairs':
       return clearedLairCount(state);
     case 'OwnArtifacts':
@@ -90,6 +98,10 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return ownedArtifacts(state).length;
     case 'OwnHeroes':
       return state.heroes.owned.length;
+    // A TOTAL, not a count from the quest's start: a player who opened every
+    // cell in reach before the quest arrived must not be stuck behind it.
+    case 'DiscoverCells':
+      return revealedCellCount(state);
     default:
       return 0;
   }
@@ -132,6 +144,10 @@ export function claimQuest(state: GameState): ClaimResult {
   // Knowledge too, as a lump. The chain seeds enough for every technology it
   // asks for — tests/quests.test.ts walks it and holds that promise.
   if (quest.rewardKnowledge > 0) payKnowledge(state, knowledgeLump(state, quest.rewardKnowledge));
+  // A pack waits in the pile the collection opens from, like every other.
+  if (quest.rewardPack !== null && quest.rewardPack !== undefined) {
+    grantPack(state, quest.rewardPack, 'quest');
+  }
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

@@ -23,7 +23,8 @@ echo "  master $(magick identify -format '%wx%h' "$master")  corner $corner"
 [ "$corner" = "srgba(0,0,0,0)" ] || { echo "  FAIL: the background is not transparent"; exit 1; }
 scale=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].scale ?? 1))")
 plots=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].canvasPlots ?? 2))")
-"$here/norm_prop.sh" "$master" "$here/$id.png" "$scale" "$plots" "$fp"
+seat=$(node -e "process.stdout.write(String(require('$here/props.json')['$id'].seat ?? 'ground'))")
+"$here/norm_prop.sh" "$master" "$here/$id.png" "$scale" "$plots" "$fp" "$seat"
 # A field has to tile, so its soil is checked against the camera it claims.
 # An `if`, not `[ ... ] && ...`: as the last line of a `set -e` script that
 # idiom exits 1 for every asset that is NOT a field, which is most of them.

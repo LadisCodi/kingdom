@@ -46,7 +46,8 @@ function crewedSawmill(): { state: GameState; mill: GameState['city']['districts
 describe('a store', () => {
   it('has a capacity by level on everything that makes Gold or harvests, and nothing else', () => {
     for (const def of Object.values(DISTRICTS)) {
-      const makes = def.populationCapacityPerLevel.length > 0 || def.harvestSources.length > 0;
+      const makes = def.populationCapacityPerLevel.length > 0 || def.harvestSources.length > 0
+        || def.goldPerMinutePerLevel.length > 0;
       expect(def.storageCapacityPerLevel.length > 0, def.id).toBe(makes);
     }
   });
@@ -74,7 +75,7 @@ describe('a store', () => {
 
   it('a full store keeps the crew at the door, and a haul on its way still lands whole', () => {
     const { state, mill, start } = crewedSawmill();
-    const cap = storageCapacity(mill);
+    const cap = storageCapacity(state, mill);
     // One short of full: the load being struck now tips it over.
     mill.stored = { Wood: cap - 1 };
     tickAt(state, start + MOVE_MS + STRIKE_MS + 100);
@@ -84,7 +85,7 @@ describe('a store', () => {
     expect(load).toBeGreaterThan(0);
     tickAt(state, start + CYCLE_MS + 100);
     expect(storedOf(mill, 'Wood')).toBe(cap - 1 + load); // nothing destroyed
-    expect(isStoreFull(mill)).toBe(true);
+    expect(isStoreFull(state, mill)).toBe(true);
     // …and nobody sets out again while it is full.
     expect(w.activity).toBe('Idle');
     expect(w.claimedCell).toBeNull();
@@ -96,14 +97,14 @@ describe('a store', () => {
 
   it('collecting empties it into the wallet and sets the crew going from the tap', () => {
     const { state, mill, start } = crewedSawmill();
-    mill.stored = { Wood: storageCapacity(mill) };
+    mill.stored = { Wood: storageCapacity(state, mill) };
     tickAt(state, start + 60_000);
     expect(state.workers[0].activity).toBe('Idle');
     const wood = getWallet(state.city.wallet, 'Wood');
     const tap = start + 60_000 + 400;
     const moved = collectBuilding(state, mill.uniqueId, tap);
     // At least the capacity: the load already out when it filled landed too.
-    expect(moved.Wood).toBeGreaterThanOrEqual(storageCapacity(mill));
+    expect(moved.Wood).toBeGreaterThanOrEqual(storageCapacity(state, mill));
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wood + moved.Wood!);
     expect(storedTotal(mill)).toBe(0);
     // The crew goes out from the tap, not from when the store filled.
@@ -124,7 +125,7 @@ describe('a store', () => {
 
   it('a raid takes from the stores, and a crew waiting by a full one goes out again', () => {
     const { state, mill, start } = crewedSawmill();
-    mill.stored = { Wood: storageCapacity(mill) };
+    mill.stored = { Wood: storageCapacity(state, mill) };
     tickAt(state, start + 60_000);
     expect(state.workers[0].activity).toBe('Idle');
     const wallet = getWallet(state.city.wallet, 'Wood');
@@ -135,7 +136,7 @@ describe('a store', () => {
     const took = result.raids[0]?.took.Wood ?? 0;
     expect(took).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wallet);
-    expect(isStoreFull(mill)).toBe(false);
+    expect(isStoreFull(state, mill)).toBe(false);
     expect(state.workers[0].activity).not.toBe('Idle');
   });
 });

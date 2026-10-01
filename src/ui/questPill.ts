@@ -35,7 +35,7 @@ import type { CurrencyId, DistrictId } from '../sim/state';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';
-import { iconEl, progress, currencyIcon, setCta, type IconName } from './kit';
+import { iconEl, progress, currencyIcon, type IconName } from './kit';
 
 /** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
  *  icon — the coin it collects, the building it raises, the book it reads —
@@ -52,6 +52,7 @@ const goalIcon = (quest: QuestDef): IconName => {
     case 'TrainArmy': case 'ClearLairs': return 'army';
     case 'CollectTaps': return 'showme';
     case 'DiscoverCells': return 'tile';
+    case 'FindLairs': return 'compass';
     case 'DiscoverFeature': return 'showme';
     case 'ClaimLandmarks': return 'Mana';
     case 'OwnArtifacts': return 'relics';
@@ -120,7 +121,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       el('div', { class: 'q-text' }, name, desc),
       el('div', { class: 'q-foot' }, slot, bar.root)),
     el('div', { class: 'q-done' }, reward, claim));
-  const scroll = el('button', { class: 'q-scroll', type: 'button' }, base, content);
+  const scroll = el('button', { class: 'q-scroll', type: 'button', 'data-coach': 'quest' }, base, content);
 
   // Nothing to tap while the scroll is rolling or unrolling.
   let busy = false;
@@ -192,8 +193,8 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // The reward is the payout, so it arrives with the payout — and then it
     // is all the scroll shows (quest.css swaps .q-run for .q-done).
     scroll.classList.toggle('is-complete', complete);
-    // The kit's orb, on the words, so it fades with them when the scroll rolls.
-    setCta(content, complete ? 1 : 0);
+    // No CTA orb: a complete scroll already says so — its reward and its
+    // Claim button are the whole of its face.
     // The card is one control that does two things; a screen reader has to be
     // told which, because the styling is all a sighted player gets.
     scroll.setAttribute(

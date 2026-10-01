@@ -18,7 +18,7 @@
 // written parses and loads.
 
 import { Camera } from '../render/camera';
-import { FLAT_TILE } from '../render/palette';
+import { TILE_H, TILE_W } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
   FEATURES, LANDMARK_ART, LAIRS, UNIT_ORDER,
@@ -64,7 +64,10 @@ const el = <K extends keyof HTMLElementTagNameMap>(
 };
 
 interface Session {
-  cam: { x: number; y: number; zoom: number };
+  /** `projection` names the plane `x`/`y` are in: a session saved by the
+   *  old square-grid editor has none, and its camera is refitted rather than
+   *  read in the wrong plane. */
+  cam: { x: number; y: number; zoom: number; projection?: 'iso' };
   tool: Tool;
   siteMode: SiteMode;
   brush: Brush;
@@ -112,12 +115,14 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
     status);
   host.append(root);
 
-  // The editor paints DATA by coordinate, so it keeps the FLAT square grid.
-  // A diamond is the right way to look at a kingdom and the wrong way to fill
-  // in a table of terrain (src/render/camera.ts).
-  const camera = new Camera(canvas, 'flat');
-  if (saved) { camera.x = saved.cam.x; camera.y = saved.cam.y; camera.zoom = saved.cam.zoom; }
-  else fitToWorld(camera, canvas, doc);
+  // The game's own isometric camera: the editor draws the province exactly
+  // as the player will see it, and picks cells through the same projection
+  // the game taps through (src/render/camera.ts).
+  const camera = new Camera(canvas);
+  camera.minZoom = 0.15;
+  if (saved?.cam.projection === 'iso') {
+    camera.x = saved.cam.x; camera.y = saved.cam.y; camera.zoom = saved.cam.zoom;
+  } else fitToWorld(camera, canvas, doc);
 
   // ------------------------------------------------------------ gestures
   let panning = false;
@@ -614,6 +619,9 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
     // (Docs/proposals/lairs.md §3).
     card.append(field('size', numberInput(r.size ?? 1, (v) => patch({ size: v }))));
     card.append(field('radius', numberInput(r.radius, (v) => patch({ radius: v }))));
+    // How far its silhouette shows past the fog before it is found
+    // (Docs/features/01-map-and-fog.md §4.1): past its radius, or 0.
+    card.append(field('sight', numberInput(r.sight, (v) => patch({ sight: v }))));
     card.append(field('flavour', textInput(r.flavour, (v) => patch({ flavour: v }))));
     // The guard: one garrison, and the warning before its first raid; every
     // raid after it follows the daily schedule (§4.1). The creature is
@@ -731,7 +739,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   // -------------------------------------------------------------- session
   function writeSession(): void {
     const session: Session = {
-      cam: { x: camera.x, y: camera.y, zoom: camera.zoom },
+      cam: { x: camera.x, y: camera.y, zoom: camera.zoom, projection: 'iso' },
       tool, siteMode, brush, brushSize, overlays,
     };
     try { sessionStorage.setItem('kingdom.mapEditor', JSON.stringify(session)); } catch { /* private mode */ }
@@ -816,7 +824,10 @@ function fitToWorld(camera: Camera, canvas: HTMLCanvasElement, doc: MapDoc): voi
   camera.centerOnCell({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
   const w = canvas.clientWidth || 900;
   const h = canvas.clientHeight || 700;
-  const fit = Math.min(w / ((b.x1 - b.x0 + 2) * FLAT_TILE), h / ((b.y1 - b.y0 + 2) * FLAT_TILE));
+  // An isometric box of cells is a diamond (x + y) half-tiles across and
+  // down, whatever its shape.
+  const across = b.x1 - b.x0 + 1 + (b.y1 - b.y0 + 1) + 1;
+  const fit = Math.min(w / (across * TILE_W / 2), h / (across * TILE_H / 2));
   camera.zoom = 1;
   camera.zoomBy(fit); // through zoomBy, so the camera's own clamps still apply
 }

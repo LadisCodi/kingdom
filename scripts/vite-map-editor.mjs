@@ -44,6 +44,9 @@ const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   // How far its ground reaches past its own footprint
   // (Docs/proposals/lairs.md §3).
   `      "radius": ${r.radius}`,
+  // How far it is sighted past the fog before it is found
+  // (Docs/features/01-map-and-fog.md §4.1).
+  `      "sight": ${r.sight}`,
   // The guard: one garrison, and the warning before its first raid.
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
     + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes} }`,

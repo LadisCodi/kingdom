@@ -11,7 +11,7 @@
 import { lairHolding } from './lairZone';
 import { DISTRICTS, HARVEST, levelIndexed, type HarvestSpec } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
-import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
+import { effectiveWorkerSpeed, strikeDraw, workerStrikeMs } from './upgrades';
 import { drawFromCell, harvestSourceAt, harvestSpecAt, isExhausted, recoversForSpec } from './harvest';
 import { isStoreFull, storeInto } from './storage';
 import {
@@ -201,7 +201,7 @@ function tryDispatch(
   index: CrewIndex,
 ): void {
   // A full store keeps the crew at the door: there is nowhere to put a load.
-  const cell = isStoreFull(building) ? null : findClaimableCell(state, map, building, at, index, w);
+  const cell = isStoreFull(state, building) ? null : findClaimableCell(state, map, building, at, index, w);
   if (cell) {
     w.claimedCell = cell;
     setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell, building.location));
@@ -245,7 +245,7 @@ function nextEventAt(
   if (w.activity !== 'Idle') return w.stateUntil;
   // Blocked while the store is full; a collection or a raid wakes it
   // (`wakeIdleWorkersAt`).
-  if (isStoreFull(building)) return null;
+  if (isStoreFull(state, building)) return null;
   // Idle: wake when any unclaimed workable cell exists or recovers — never
   // before stateStartedAt (which completion/reveal events bump forward, so a
   // cell that appeared mid-absence isn't worked retroactively).
@@ -304,8 +304,9 @@ function step(
       // — not on arrival home. That is what stops the player and the worker
       // taking the same wood twice: a load in transit is already out of the
       // ground, and the cell shows a stump while it is still being carried.
-      w.carrying = drawFromCell(
-        state, map, cell, spec, effectiveWorkerStrike(state, spec, building), t);
+      const { want, rest } = strikeDraw(state, spec, building, w.strikeCarry ?? 0);
+      w.strikeCarry = rest;
+      w.carrying = want <= 0 ? 0 : drawFromCell(state, map, cell, spec, want, t);
       w.carriedSource = w.carrying > 0 ? source : null;
       if (w.carrying > 0) strikes.push({ cell, source });
       setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location, building.location));
@@ -327,7 +328,7 @@ function step(
       w.carriedSource = null;
       // Keep the claim while the cell still holds something and there is
       // room at home; otherwise migrate, or wait by the door.
-      if (w.claimedCell !== null && !isStoreFull(building) && !isExhausted(state, map, w.claimedCell, t)
+      if (w.claimedCell !== null && !isStoreFull(state, building) && !isExhausted(state, map, w.claimedCell, t)
         && worksHere(sources, state, w.claimedCell)) {
         setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell, building.location));
       } else {
@@ -386,6 +387,7 @@ export function addWorker(state: GameState, map: MapData, district: District, no
     activity: 'Idle',
     claimedCell: null,
     carrying: 0,
+    strikeCarry: 0,
     carriedSource: null,
     stateStartedAt: now,
     stateUntil: null,

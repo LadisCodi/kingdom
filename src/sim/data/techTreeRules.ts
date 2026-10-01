@@ -143,7 +143,7 @@ export interface TechTreeValidation {
  *  to know the set, and importing `definitions.ts` from here would be a cycle
  *  (it imports this). Typed against the union, so a typo is a compile error
  *  even though a missing tome is not. */
-export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic'];
+export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
 
 /**
  * A RANK LADDER is a naming convention, not a field and not a chain: a stem
@@ -550,6 +550,28 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
           tech: id,
         });
       }
+    }
+  }
+
+  // ---- nothing leads nowhere ------------------------------------------
+  // Every card above a book's last row is needed by one on the row below it,
+  // so every research ends up on the way down the page — a dead end is a
+  // card the player can skip for good, and a page that reads as a tree
+  // should not have twigs. A `planned` card is the exception: nothing that
+  // works may wait on a no-op, so it leads nowhere until it is built.
+  const lastRow = new Map<string, number>();
+  for (const node of onPage.values()) {
+    lastRow.set(node.tome, Math.max(lastRow.get(node.tome) ?? node.row, node.row));
+  }
+  const needed = new Set<string>();
+  for (const node of onPage.values()) for (const req of node.requires ?? []) needed.add(req);
+  for (const [id, node] of onPage) {
+    if (node.planned !== true && node.row < (lastRow.get(node.tome) ?? node.row) && !needed.has(id)) {
+      errors.push({
+        message: `${id} leads nowhere — a card on the row below has to require it, `
+          + 'or it belongs on the book\'s last row',
+        tech: id,
+      });
     }
   }
 

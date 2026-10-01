@@ -308,9 +308,10 @@ Quests:
 | **The thumb** | `TapPower` | seconds per tap | "I want it now" |
 | **The payroll** | `WorkerLoad`, **the building's own level** (§4), plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
-- The seven cell-scoped upgrades — Sawpits, Irrigation, Stonecutting, Big Nets,
-  Iron Picks, Butchery — raise the ground's abundance, so they lift the
-  tap and the worker alike.
+- The cell-scoped ladders — Sawpits, Irrigation, Stonecutting, Butchery,
+  Iron Picks, Gold Panning, Big Nets — are a **percentage** of the ground's
+  chunk (`harvestYield`), so they lift the tap and the worker alike; the
+  fraction a strike owes carries to the next one.
 - `WorkerLoad` and a producer's late level are the payroll-only dials: more
   units per strike empties cells faster, and neither reaches the tap.
 - Doubling `stock` and halving `recoverySeconds` both pay +29% rate. More stock

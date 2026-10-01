@@ -40,6 +40,7 @@ import {
 } from './helpers';
 
 const ORCS = 'Orcs' as const;
+const HARPIES = 'Harpies' as const;
 const MINUTE = 60_000;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -297,17 +298,19 @@ describe('one-call replay equals stepped ticking', () => {
 // ------------------------------------------------------------------ the zone
 
 describe('the zone', () => {
-  // (6, 0) is a mountain inside the orc lair's zone; (7, -1) is grass just
-  // outside it, a Quarry's reach from the mountain.
-  const MOUNTAIN = { x: 6, y: 0 };
+  // The Harpies hold the near 2×2 mountains: (3, -4) is one of them, inside
+  // the zone; (4, -3) is grass just outside it, a Quarry's reach away.
+  const HELD = HARPIES;
+  const MOUNTAIN = { x: 3, y: -4 };
+  const OUTSIDE = { x: 4, y: -3 };
   const inZone = (c: { x: number; y: number }) =>
-    lairZoneCells(ORCS).some((z) => z.x === c.x && z.y === c.y);
+    lairZoneCells(HELD).some((z) => z.x === c.x && z.y === c.y);
 
   it('is the footprint and `radius` rings around it', () => {
-    const { size, radius } = LAIRS[ORCS];
-    expect(lairZoneCells(ORCS)).toHaveLength((size + 2 * radius) ** 2);
+    const { size, radius } = LAIRS[HELD];
+    expect(lairZoneCells(HELD)).toHaveLength((size + 2 * radius) ** 2);
     expect(inZone(MOUNTAIN)).toBe(true);
-    expect(inZone({ x: 7, y: -1 })).toBe(false);
+    expect(inZone(OUTSIDE)).toBe(false);
   });
 
   it('holds nothing before the lair is found, and nothing after it falls', () => {
@@ -315,8 +318,8 @@ describe('the zone', () => {
     expect(lairHolding(state, MOUNTAIN)).toBeNull();
     reveal(state, [MOUNTAIN]);
     advance(state, map, T0);
-    expect(lairHolding(state, MOUNTAIN)).toBe(ORCS);
-    state.lairs[ORCS]!.cleared = true;
+    expect(lairHolding(state, MOUNTAIN)).toBe(HELD);
+    state.lairs[HELD]!.cleared = true;
     expect(lairHolding(state, MOUNTAIN)).toBeNull();
   });
 
@@ -331,21 +334,21 @@ describe('the zone', () => {
 
   it('refuses a building placed or moved into it, and the lair\'s own cells until it falls', () => {
     const state = earningKingdom();
-    const lot = { x: 7, y: 3 }; // the zone's corner — (4, 3) is a shrine
-    reveal(state, [lot, LAIRS[ORCS].location]);
+    const lot = { x: 5, y: -4 }; // bare ground in the zone, between the two blocks
+    reveal(state, [lot, LAIRS[HELD].location]);
     advance(state, map, T0);
     expect(placementBlock(state, map, 'Housing', lot)).toBe('LairZone');
-    expect(cellHasSite(state, LAIRS[ORCS].location)).toBe(true);
-    state.lairs[ORCS]!.cleared = true;
+    expect(cellHasSite(state, LAIRS[HELD].location)).toBe(true);
+    state.lairs[HELD]!.cleared = true;
     // The ground is the city's again — whatever else a building has to ask.
     expect(placementBlock(state, map, 'Well', lot)).not.toBe('LairZone');
-    expect(cellHasSite(state, LAIRS[ORCS].location)).toBe(false);
-    expect(placementBlock(state, map, 'Well', LAIRS[ORCS].location)).not.toBe('HasSite');
+    expect(cellHasSite(state, LAIRS[HELD].location)).toBe(false);
+    expect(placementBlock(state, map, 'Well', LAIRS[HELD].location)).not.toBe('HasSite');
   });
 
   it('is never worked by a crew', () => {
     const state = earningKingdom();
-    addBuilt(state, 'Quarry', { x: 7, y: -1 });
+    addBuilt(state, 'Quarry', OUTSIDE);
     const quarry = state.city.districts[state.city.districts.length - 1];
     reveal(state, [MOUNTAIN]);
     // Revealed and not yet swept: the lair has no clock, the mountain is work.

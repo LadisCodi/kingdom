@@ -34,6 +34,9 @@ export interface RegionMapDoc {
     /** How far its zone reaches past its footprint, in Chebyshev rings
      *  (Docs/proposals/lairs.md §3). */
     radius: number;
+    /** How far it is sighted past the fog before it is found
+     *  (Docs/features/01-map-and-fog.md §4.1). 0 = never. */
+    sight: number;
     /** The garrison that holds it, and the warning before its first raid. */
     guard: { threat: string; power: number; warningMinutes: number };
     /** The card's line over its painting, two lines at most (§6). */
@@ -69,6 +72,8 @@ const isCount = (v: unknown): boolean => typeof v === 'number' && Number.isInteg
 
 /** A zone of more than four rings is a quarter of the province. */
 export const MAX_LAIR_RADIUS = 4;
+/** The farthest a lair is sighted past the fog. */
+export const MAX_LAIR_SIGHT = 8;
 /** Two lines over the card's painting, in the sheet's body size. */
 export const MAX_FLAVOUR = 120;
 
@@ -211,6 +216,13 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     }
     if (!isCount(r.radius) || r.radius > MAX_LAIR_RADIUS) {
       err(`${what} needs a radius from 0 to ${MAX_LAIR_RADIUS}`, r);
+    }
+    // Every cell within its radius is its ground, and revealing one FINDS it:
+    // a sight no wider than that is a silhouette nobody could ever see.
+    if (!isCount(r.sight) || r.sight > MAX_LAIR_SIGHT) {
+      err(`${what} needs a sight from 0 to ${MAX_LAIR_SIGHT}`, r);
+    } else if (r.sight !== 0 && isCount(r.radius) && r.sight <= r.radius) {
+      err(`${what}'s sight (${r.sight}) must reach past its radius (${r.radius}), or be 0 for never`, r);
     }
     if (typeof r.flavour !== 'string' || r.flavour.trim() === '') {
       err(`${what} needs a flavour line for its card`, r);

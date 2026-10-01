@@ -1,23 +1,15 @@
 import type { Coord } from '../sim/state';
-import { FLAT_TILE, TILE_H, TILE_W } from './palette';
+import { TILE_H, TILE_W } from './palette';
 
 /**
- * How cell coordinates reach the screen.
- *
- * - `'iso'` — the GAME. A 2:1 isometric projection: every cell is a diamond
- *   twice as wide as it is tall, and a building rises out of it.
- * - `'flat'` — the MAP EDITOR. A plain square grid. The editor paints DATA
- *   by coordinate, so a square that lines up with the axes is the right thing
- *   to click on; the game renders a WORLD, so it gets the diamond.
- *
- * Both are the same maths with a different pair of basis vectors, which is
- * why there is one camera and not two.
+ * How cell coordinates reach the screen: a 2:1 isometric projection, every
+ * cell a diamond twice as wide as it is tall, a building rising out of it.
+ * The game and the map editor share it, so the editor shows the province
+ * exactly as the player will see it.
  */
-export type Projection = 'iso' | 'flat';
 
-/** A plot's ground shape on screen: the bounding box of its diamond (iso) or
- *  of its rectangle (flat), which is all any caller needs to place art,
- *  outlines and labels. */
+/** A plot's ground shape on screen: the bounding box of its diamond, which
+ *  is all any caller needs to place art, outlines and labels. */
 export interface PlotBox {
   x: number; // left edge of the bounding box
   y: number; // top edge
@@ -25,15 +17,20 @@ export interface PlotBox {
   h: number; // height
 }
 
+/** How long the camera takes to glide to a place it is sent to: quick,
+ *  but long enough to read as travel rather than a cut. */
+export const CAMERA_GLIDE_MS = 200;
+
 export class Camera {
   x = 0; // projected-plane coords of the viewport centre
   y = 0;
   zoom = 1;
+  /** How far out the wheel may go. The game's phone frame never needs to see
+   *  past a few rings; the map editor sets it lower to frame the whole
+   *  province. */
+  minZoom = 0.4;
 
-  constructor(
-    private canvas: HTMLCanvasElement,
-    readonly projection: Projection = 'iso',
-  ) {}
+  constructor(private canvas: HTMLCanvasElement) {}
 
   get dpr(): number {
     return window.devicePixelRatio || 1;
@@ -41,11 +38,11 @@ export class Camera {
 
   /** A cell's ground diamond on screen: `tileW` across, `tileH` down. */
   get tileW(): number {
-    return (this.projection === 'iso' ? TILE_W : FLAT_TILE) * this.zoom;
+    return TILE_W * this.zoom;
   }
 
   get tileH(): number {
-    return (this.projection === 'iso' ? TILE_H : FLAT_TILE) * this.zoom;
+    return TILE_H * this.zoom;
   }
 
   /**
@@ -64,9 +61,6 @@ export class Camera {
   /** A point in CELL space (fractional is fine) to the projected plane, at
    *  zoom 1 and before the camera is subtracted. */
   private project(cx: number, cy: number): { x: number; y: number } {
-    if (this.projection === 'flat') {
-      return { x: cx * FLAT_TILE, y: cy * FLAT_TILE };
-    }
     // The 2:1 isometric pair: one step in +x goes right and down, one step in
     // +y goes left and down, each by half a tile.
     return { x: (cx - cy) * (TILE_W / 2), y: (cx + cy) * (TILE_H / 2) };
@@ -74,9 +68,6 @@ export class Camera {
 
   /** The inverse of `project`, back to fractional cell space. */
   private unproject(px: number, py: number): { x: number; y: number } {
-    if (this.projection === 'flat') {
-      return { x: px / FLAT_TILE, y: py / FLAT_TILE };
-    }
     const u = px / TILE_W; // (cx - cy) / 2
     const v = py / TILE_H; // (cx + cy) / 2
     return { x: v + u, y: v - u };
@@ -103,12 +94,8 @@ export class Camera {
   plotBox(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }): PlotBox {
     const mid = this.project(cell.x + span.x / 2, cell.y + span.y / 2);
     const centre = this.toScreen(mid.x, mid.y);
-    const w = this.projection === 'iso'
-      ? (span.x + span.y) * (TILE_W / 2) * this.zoom
-      : span.x * FLAT_TILE * this.zoom;
-    const h = this.projection === 'iso'
-      ? (span.x + span.y) * (TILE_H / 2) * this.zoom
-      : span.y * FLAT_TILE * this.zoom;
+    const w = (span.x + span.y) * (TILE_W / 2) * this.zoom;
+    const h = (span.x + span.y) * (TILE_H / 2) * this.zoom;
     return { x: centre.x - w / 2, y: centre.y - h / 2, w, h };
   }
 
@@ -133,11 +120,43 @@ export class Camera {
 
   /** Centre the view on a plot — a cell, or a building's whole footprint
    *  when `span` is given, so a 2×2 hall is centred on its middle rather
-   *  than on its corner cell. */
-  centerOnCell(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }): void {
+   *  than on its corner cell. `ms` glides there instead of jumping
+   *  (`glideTo`); 0 is at once. */
+  centerOnCell(cell: Coord, span: { x: number; y: number } = { x: 1, y: 1 }, ms = 0): void {
     const p = this.project(cell.x + span.x / 2, cell.y + span.y / 2);
-    this.x = p.x;
-    this.y = p.y;
+    this.glideTo(p.x, p.y, ms);
+  }
+
+  /** The glide under way, if any: from where, to where, since when. */
+  private glide: { fx: number; fy: number; tx: number; ty: number; t0: number; ms: number } | null = null;
+
+  /**
+   * Move the view's centre to (x, y) in projected-plane coords — at once, or
+   * over `ms` with an ease-out (fast, then settling, no overshoot), so a
+   * jump across the map reads as travel. A pan or a zoom by the player
+   * cancels it: their hand wins.
+   */
+  glideTo(x: number, y: number, ms = 0): void {
+    if (ms <= 0 || typeof requestAnimationFrame !== 'function') {
+      this.glide = null;
+      this.x = x;
+      this.y = y;
+      return;
+    }
+    const start = this.glide === null;
+    this.glide = { fx: this.x, fy: this.y, tx: x, ty: y, t0: performance.now(), ms };
+    if (!start) return; // the running loop picks the new leg up
+    const step = (now: number): void => {
+      const g = this.glide;
+      if (g === null) return;
+      const k = Math.min(1, (now - g.t0) / g.ms);
+      const e = 1 - (1 - k) ** 3; // ease-out cubic
+      this.x = g.fx + (g.tx - g.fx) * e;
+      this.y = g.fy + (g.ty - g.fy) * e;
+      if (k < 1) requestAnimationFrame(step);
+      else this.glide = null;
+    };
+    requestAnimationFrame(step);
   }
 
   /**
@@ -147,22 +166,25 @@ export class Camera {
    * it described; the building now moves into the sky the card leaves.
    * `size` is the footprint in cells, anchored top-left at `cell`.
    */
-  centerFootprintWithin(cell: Coord, size: { x: number; y: number }, top: number, bottom: number): void {
+  centerFootprintWithin(
+    cell: Coord, size: { x: number; y: number }, top: number, bottom: number, ms = 0,
+  ): void {
     const h = this.canvas.clientHeight;
     const bandMid = (Math.max(0, top) + Math.min(h, bottom)) / 2;
     const p = this.project(cell.x + size.x / 2, cell.y + size.y / 2);
     // toScreen: sy = (p.y - this.y) * zoom + h / 2  →  solve for this.y.
-    this.x = p.x;
-    this.y = p.y - (bandMid - h / 2) / this.zoom;
+    this.glideTo(p.x, p.y - (bandMid - h / 2) / this.zoom, ms);
   }
 
   panByScreen(dx: number, dy: number): void {
+    this.glide = null;
     this.x -= dx / this.zoom;
     this.y -= dy / this.zoom;
   }
 
   zoomBy(factor: number): void {
-    this.zoom = Math.min(2.5, Math.max(0.4, this.zoom * factor));
+    this.glide = null;
+    this.zoom = Math.min(2.5, Math.max(this.minZoom, this.zoom * factor));
   }
 
   /** Zoom keeping the world point under (sx, sy) pinned to (sx, sy). Lives

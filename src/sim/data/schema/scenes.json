@@ -1,0 +1,131 @@
+{
+  "type": "object",
+  "fields": {
+    "id": { "type": "text" },
+    "trigger": {
+      "type": "text",
+      "options": [
+        "always",
+        "featureSeen",
+        "questReached",
+        "questComplete",
+        "questClaimed",
+        "questProgress",
+        "techDone",
+        "techFilled",
+        "placing",
+        "placed",
+        "built",
+        "overlay",
+        "noOverlay",
+        "ui",
+        "taps",
+        "lairFound",
+        "lairDefeated",
+        "lairCleared",
+        "landmarkClaimed",
+        "landmarkSeen",
+        "bookOpen",
+        "doorOpen",
+        "manaEmpty",
+        "buildersBusy",
+        "raided",
+        "wounded",
+        "heroes",
+        "population",
+        "training",
+        "revealed",
+        "sighted"
+      ],
+      "doc": "What starts the scene, the first time it holds."
+    },
+    "triggerTarget": { "type": "text", "doc": "What the trigger names, where it names anything." },
+    "triggerAmount": { "type": "int", "min": 0 },
+    "anywhere": { "type": "bool", "doc": "May start over a sheet the player has open. Off: waits for the map." },
+    "skippable": {
+      "type": "bool",
+      "doc": "An introduction, not a beat of the First Morning: it waits a breath after the last scene before it starts. The First Morning runs beat to beat."
+    },
+    "lines": {
+      "type": "list",
+      "of": {
+        "type": "object",
+        "fields": {
+          "speaker": { "type": "text", "ref": "speaker", "doc": "Who says it." },
+          "side": {
+            "type": "text",
+            "options": ["left", "right"],
+            "doc": "Which side of the stage the speaker stands on."
+          },
+          "text": { "type": "text", "doc": "What is said. The box holds about three lines on a phone." },
+          "box": {
+            "type": "text",
+            "options": ["bottom", "top", "middle", "auto"],
+            "doc": "Where the box sits; auto takes the half of the screen the pointer is not in."
+          },
+          "point": {
+            "type": "text",
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, quest — or empty."
+          },
+          "lock": {
+            "type": "text",
+            "options": ["none", "target", "map", "all"],
+            "doc": "What taps reach while the line is up (Docs/features/23-tutorials.md §6)."
+          },
+          "until": {
+            "type": "text",
+            "options": [
+              "tap",
+              "always",
+              "featureSeen",
+              "questReached",
+              "questComplete",
+              "questClaimed",
+              "questProgress",
+              "techDone",
+              "techFilled",
+              "placing",
+              "placed",
+              "built",
+              "overlay",
+              "noOverlay",
+              "ui",
+              "taps",
+              "lairFound",
+              "lairDefeated",
+              "lairCleared",
+              "landmarkClaimed",
+              "landmarkSeen",
+              "bookOpen",
+              "doorOpen",
+              "manaEmpty",
+              "buildersBusy",
+              "raided",
+              "wounded",
+              "heroes",
+              "population",
+              "training",
+              "revealed",
+              "sighted"
+            ],
+            "doc": "What moves the line on; tap is a tap on the box."
+          },
+          "untilTarget": { "type": "text", "doc": "What the condition names, where it names anything." },
+          "untilAmount": { "type": "int", "min": 0, "doc": "How many, where the condition counts." },
+          "exit": { "type": "bool", "doc": "The speaker leaves the stage after this line." },
+          "expression": {
+            "type": "text",
+            "options": ["", "happy", "worried", "surprised", "idea"],
+            "doc": "The speaker's face on this line; empty is at rest. Drawn from <portrait>_<expression> where that art exists."
+          },
+          "gives": {
+            "type": "text",
+            "nullable": true,
+            "options": ["Warfare"],
+            "doc": "A book the speaker hands the player as the line is read. Only a book that opens on a gift (sim/research.ts TOME_OPENS) — today, Warfare."
+          }
+        }
+      }
+    }
+  }
+}

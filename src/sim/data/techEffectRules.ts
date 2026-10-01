@@ -57,9 +57,9 @@ export interface TechEffect {
   stat: TechStat;
   op: TechEffectOp;
   /**
-   * SIGNED, exactly as `AdjacencyRule.magnitude` is: a reduction is negative
-   * and a penalty is negative, so every call site adds or multiplies and none
-   * subtracts. `-22` on a percent stat is −22%.
+   * POSITIVE, always: every stat climbs, and a wait is moved by a speed the
+   * call site divides by, so no rank ever needs a minus sign
+   * (`effectProblems` refuses one).
    */
   value: number;
   /** Absent = global: it moves that stat for every subject. */
@@ -154,7 +154,23 @@ const RECOVERING_SOURCES: readonly string[] = Object.entries(balance.harvest)
   .filter(([, h]) => (h as { recoverySeconds: number }).recoverySeconds > 0)
   .map(([id]) => id);
 
+/** Districts that have a store at all — a percent of no store is nothing. */
+const STORING_DISTRICTS: readonly string[] = Object.entries(balance.districts)
+  .filter(([, d]) => ((d as { storageCapacityPerLevel?: number[] }).storageCapacityPerLevel ?? []).length > 0)
+  .map(([id]) => id);
+
+/** Districts that run a workshop queue. */
+const WORKSHOP_DISTRICTS: readonly string[] = Object.entries(balance.districts)
+  .filter(([, d]) => (d as { produces?: string | null }).produces != null)
+  .map(([id]) => id);
+
 export const TECH_STATS = {
+  // EVERY STAT HERE CLIMBS. A technology never makes a number smaller: a wait
+  // is owned as a TIME and moved as a SPEED the call site divides by, a yield
+  // is a percentage of what the ground gives, and nothing is ever discounted
+  // (Docs/features/22-progression.md §9). So a bonus can stack without end
+  // and never meet a floor — the failure a −5% ladder has at rank twenty.
+  //
   // ---- the thumb and the crew
   tapWorkSeconds: {
     what: 'seconds of work one tap is worth',
@@ -162,32 +178,29 @@ export const TECH_STATS = {
     says: { percent: '{v} out of every tap' },
     reads: 'upgrades.ts#tapWorkSeconds',
   },
-  autoTapCooldown: {
-    what: 'seconds between auto-taps while a finger is held',
-    ops: ['flat', 'percent'], targets: ['global'], unit: 's',
-    says: { flat: '{v}s between auto-taps', percent: '{v} on the auto-tap wait' },
+  autoTapSpeed: {
+    what: 'how fast a held finger repeats its tap — the cooldown is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} auto-tap speed while holding' },
     reads: 'upgrades.ts#effectiveAutoTapCooldownMs',
   },
-  harvestUnitsPerStrike: {
-    what: 'units one extraction takes out of a KIND OF CELL — the tap and the crew alike',
-    ops: ['flat', 'percent'], targets: ['global', 'harvest'], unit: 'units',
-    says: {
-      flat: '{v}[ {resource}] per tap and delivery[ from {target}]',
-      percent: '{v}[ {resource}] per tap and delivery[ from {target}]',
-    },
+  harvestYield: {
+    what: 'the share more one extraction takes out of a KIND OF CELL — the tap and the crew alike; fractions carry',
+    ops: ['percent'], targets: ['global', 'harvest'], unit: '×',
+    says: { percent: '{v}[ {resource}] per tap and delivery[ from {target}]' },
     reads: 'upgrades.ts#effectiveUnitsPerStrike',
   },
-  harvestRecovery: {
-    what: 'the seconds a drained cell stays a stump before it grows back',
-    ops: ['percent'], targets: ['global', 'harvest'], unit: 's',
-    says: { percent: '{v} time before[ {target}] grows back' },
+  regrowthSpeed: {
+    what: 'how fast a drained cell grows back — its recovery time is divided by it',
+    ops: ['percent'], targets: ['global', 'harvest'], unit: '×',
+    says: { percent: '{v} regrowth speed[ for {target}]' },
     targetIds: RECOVERING_SOURCES,
     reads: 'harvest.ts#effectiveRecoveryMs',
   },
-  workerStrikeUnits: {
-    what: 'units one WORKER delivery carries, on top of the cell’s own',
-    ops: ['flat', 'percent'], targets: ['global'], unit: 'units',
-    says: { flat: '{v} on every worker delivery', percent: '{v} on every worker delivery' },
+  crewYield: {
+    what: 'the share more every WORKER delivery carries — never the tap; fractions carry',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} on every worker delivery' },
     reads: 'upgrades.ts#effectiveWorkerStrike',
   },
   workerSpeed: {
@@ -197,54 +210,56 @@ export const TECH_STATS = {
     reads: 'upgrades.ts#effectiveWorkerSpeed',
   },
   // ---- the city
-  buildTime: {
-    what: 'the multiplier on seconds to raise or upgrade a building',
+  buildSpeed: {
+    what: 'how fast the builders work — build and upgrade times are divided by it',
     ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} time to build and upgrade' },
+    says: { percent: '{v} build speed' },
     reads: 'upgrades.ts#effectiveBuildTimeMultiplier',
+  },
+  storageCapacity: {
+    what: 'units a building’s store holds before the building stops',
+    ops: ['percent'], targets: ['global', 'district'], unit: '×',
+    says: { percent: '{v} storage[ in {target}]' },
+    targetIds: STORING_DISTRICTS,
+    reads: 'storage.ts#storageCapacity',
   },
   taxRate: {
     what: 'Gold a housed villager pays a minute',
-    ops: ['percent', 'flat'], targets: ['global', 'district'], unit: 'gold/min',
-    says: {
-      percent: '{v} tax income[ from {target}]',
-      flat: '{v} Gold a minute per villager[ in {target}]',
-    },
+    ops: ['percent'], targets: ['global', 'district'], unit: 'gold/min',
+    says: { percent: '{v} tax income[ from {target}]' },
     reads: 'upgrades.ts#effectiveTaxRate',
   },
   populationCapacity: {
-    what: 'beds a district provides',
-    ops: ['flat', 'percent'], targets: ['global', 'district'], unit: 'beds',
-    says: { flat: '{v} bed space[ at {target}]', percent: '{v} bed space[ at {target}]' },
+    what: 'beds a district provides — whole villagers, so flat',
+    ops: ['flat'], targets: ['global', 'district'], unit: 'beds',
+    says: { flat: '{v} bed space[ at {target}]' },
     reads: 'population.ts#districtCapacity',
+  },
+  villagerTrainingSpeed: {
+    what: 'how fast the Townhall trains a villager — the time is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} villager training speed' },
+    reads: 'army.ts#trainSecondsAt',
+  },
+  workshopSpeed: {
+    what: 'how fast a workshop turns out its good — the work time is divided by it',
+    ops: ['percent'], targets: ['global', 'district'], unit: '×',
+    says: { percent: '{v} workshop speed[ at {target}]' },
+    targetIds: WORKSHOP_DISTRICTS,
+    reads: 'workshops.ts#queuedWorkMs',
   },
   // ---- magic and the clock
   manaCap: {
-    what: 'the ceiling of the Mana pool',
-    ops: ['flat', 'percent'], targets: ['global'], unit: 'mana',
-    says: {
-      flat: '{v} to the Mana the kingdom holds',
-      percent: '{v} to the Mana the kingdom holds',
-    },
+    what: 'the ceiling of the Mana pool, after every landmark and Sanctum level',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} to the Mana the kingdom holds' },
     reads: 'mana.ts#manaCap',
   },
-  manaPerClaimedLandmark: {
-    what: 'Mana an hour from EVERY claimed landmark',
-    ops: ['flat'], targets: ['global'], unit: 'mana/h',
-    says: { flat: '{v} Mana an hour per claimed landmark' },
+  manaRegen: {
+    what: 'Mana an hour, from every source',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Mana regeneration' },
     reads: 'mana.ts#manaProduction',
-  },
-  landmarkClaimKnowledge: {
-    what: 'Knowledge a landmark pays when it is claimed, paid back at once for every landmark held',
-    ops: ['flat'], targets: ['global'], unit: 'knowledge',
-    says: { flat: '{v} Knowledge for every landmark claimed' },
-    reads: 'knowledge.ts#landmarkClaimLump',
-  },
-  firstClearKnowledge: {
-    what: 'Knowledge a lair pays when it is first cleared, paid back at once for every lair cleared',
-    ops: ['flat'], targets: ['global'], unit: 'knowledge',
-    says: { flat: '{v} Knowledge for every lair cleared' },
-    reads: 'knowledge.ts#firstClearLump',
   },
   knowledgeYield: {
     what: 'the multiplier on every lump of Knowledge — never the drip, never a purchase',
@@ -252,112 +267,74 @@ export const TECH_STATS = {
     says: { percent: '{v} on every lump of Knowledge' },
     reads: 'knowledge.ts#knowledgeLump',
   },
-  activeCost: {
-    what: 'the Mana a relic’s ability costs to cast',
-    ops: ['percent'], targets: ['global'], unit: 'mana',
-    says: { percent: '{v} Mana to cast a relic' },
-    reads: 'casting.ts#castCost',
+  landmarkKnowledge: {
+    what: 'the share more Knowledge a landmark pays when it is claimed, paid back at once for every landmark held',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Knowledge from every landmark claimed' },
+    reads: 'knowledge.ts#landmarkClaimLump',
+  },
+  lairKnowledge: {
+    what: 'the share more Knowledge a lair pays when it is cleared, paid back at once for every lair cleared',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Knowledge from every lair cleared' },
+    reads: 'knowledge.ts#firstClearLump',
   },
   // ---- the fog
-  revealCost: {
-    what: 'the Gold one cell of fog costs to clear',
-    ops: ['percent'], targets: ['global'], unit: 'gold',
-    says: { percent: '{v} Gold to clear a cell of fog' },
-    reads: 'fog.ts#revealCostForCell',
-  },
   discoverRadius: {
-    what: 'how far a building sees into the fog — never how far it REVEALS',
+    what: 'how far a building sees into the fog — whole cells, so flat; never how far it REVEALS',
     ops: ['flat'], targets: ['global', 'district'], unit: 'tiles',
     says: { flat: '{v} sight into the fog for every[ {target}] building' },
     reads: 'fog.ts#effectiveDiscoverRadius',
   },
-  claimCost: {
-    what: 'the Gold a landmark costs to claim',
-    ops: ['percent'], targets: ['global'], unit: 'gold',
-    says: { percent: '{v} Gold to claim a landmark' },
-    reads: 'landmarks.ts#landmarkClaimCost',
-  },
   // ---- the army
   armyCap: {
     what: 'the army power the halls can field',
-    ops: ['flat', 'percent'], targets: ['global'], unit: 'power',
-    says: {
-      flat: '{v} soldiers the halls can hold',
-      percent: '{v} soldiers the halls can hold',
-    },
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} soldiers the halls can hold' },
     reads: 'army.ts#armyCap',
   },
-  recruitCost: {
-    what: 'the multiplier on what a unit costs to recruit',
+  recruitSpeed: {
+    what: 'how fast a hall trains a soldier — the time is divided by it',
     ops: ['percent'], targets: ['global', 'unit'], unit: '×',
-    says: { percent: '{v} on recruit costs[ for the {target}]' },
-    reads: 'army.ts#trainCost',
+    says: { percent: '{v} training speed[ for the {target}]' },
+    reads: 'army.ts#trainSecondsAt',
   },
   unitAtk: {
-    what: 'flat ATK on a unit',
-    ops: ['flat'], targets: ['global', 'unitTag'], unit: 'atk',
-    says: { flat: '{v} ATK to every[ {target}] unit' },
+    what: 'the share more a unit hits for',
+    ops: ['percent'], targets: ['global', 'unitTag'], unit: '×',
+    says: { percent: '{v} attack for every[ {target}] unit' },
     reads: 'expeditions.ts#drillOf',
   },
   unitDef: {
-    what: 'flat DEF on a unit',
-    ops: ['flat'], targets: ['global', 'unitTag'], unit: 'def',
-    says: { flat: '{v} DEF to every[ {target}] unit' },
+    what: 'the share more a unit shrugs off',
+    ops: ['percent'], targets: ['global', 'unitTag'], unit: '×',
+    says: { percent: '{v} defence for every[ {target}] unit' },
     reads: 'expeditions.ts#drillOf',
   },
-  typeDisadvantage: {
-    what: 'how much of a bad matchup’s penalty is taken off — never past neutral',
-    ops: ['flat'], targets: ['global'], unit: '×',
-    says: { flat: '{pct} off a bad matchup’s penalty' },
+  unitHp: {
+    what: 'the share more health every unit fields with',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} health for every unit' },
     reads: 'expeditions.ts#drillOf',
   },
-  // ---- the delve
-  supplyCost: {
-    what: 'the multiplier on what a lair attack costs in supplies',
+  infirmaryBeds: {
+    what: 'the wounded the Infirmary can hold',
     ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} to what an expedition costs' },
-    reads: 'expeditions.ts#lairSupplyCost',
+    says: { percent: '{v} beds in the Infirmary' },
+    reads: 'army.ts#woundedCap',
   },
-  delveSpeed: {
-    what: 'the multiplier on how long one depth takes to resolve',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} time to resolve a depth' },
-    reads: 'expeditions.ts#depthMs',
-    retired: 'A depth is no longer a wait: a room is one fight, resolved the '
-      + 'instant it is entered (Docs/features/11-expeditions.md §5), so there '
-      + 'is no clock left to speed up. Pathfinders is inert until it is '
-      + 're-pointed.',
-  },
-  haulLoss: {
-    what: 'the fraction of the haul a failed depth loses',
-    ops: ['flat'], targets: ['global'], unit: '×',
-    says: { flat: '{pct} of the haul lost on a bad depth' },
-    reads: 'expeditions.ts#effectiveHaulLoss',
-    retired: 'A room pays the moment it falls, so there is no haul to carry '
-      + 'home and nothing to lose on a bad one (§5). Bearers is inert until '
-      + 'it is re-pointed.',
-  },
-  woundedShare: {
-    what: 'how much of what falls in a fight is carried home alive instead of buried',
-    ops: ['flat'], targets: ['global'], unit: '×',
-    says: { flat: '{pct} of the fallen carried home alive' },
-    reads: 'army.ts#woundedShareFor',
-  },
+  // ---- the heroes
   heroXp: {
-    what: 'the multiplier on the XP a delve pays a hero',
-    ops: ['percent'], targets: ['global'], unit: 'xp',
-    says: { percent: '{v} XP a hero brings back' },
+    what: 'the multiplier on every grant of Hero XP',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Hero XP' },
     reads: 'heroes.ts#addHeroXp',
   },
-  stardustYield: {
-    what: 'the multiplier on the Stardust a depth pays',
-    ops: ['percent'], targets: ['global'], unit: 'stardust',
-    says: { percent: '{v} Stardust out of a lair' },
-    reads: 'expeditions.ts#depthHaul',
-    retired: 'The rooms were the only thing that paid Stardust out of a lair, '
-      + 'and they were retired with the depths: a lair is one fight. Prospecting '
-      + 'and the Wanderer\u2019s Compass passive are inert until they are '
-      + 're-pointed (Docs/open-questions.md OQ-113).',
+  summonStardust: {
+    what: 'the multiplier on the Stardust every call on a banner pays',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Stardust from every call' },
+    reads: 'heroes.ts#pullStardust',
   },
 } as const satisfies Record<string, StatDef>;
 
@@ -377,7 +354,7 @@ export const TARGET_IDS: Record<TargetKind, readonly string[]> = {
   unit: Object.keys(balance.units),
   unitTag: UNIT_TAGS,
   harvest: Object.keys(balance.harvest),
-  tome: ['Civics', 'Warfare', 'Magic'],
+  tome: ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
 };
 
 /** Which kind of target this is, or null when it is malformed. */
@@ -442,6 +419,11 @@ export function effectProblems(effect: TechEffect): string[] {
   }
   if (!Number.isFinite(effect.value) || effect.value === 0) {
     out.push(`moves ${effect.stat} by ${effect.value}`);
+  } else if (effect.value < 0) {
+    // A bonus only ever climbs (Docs/features/22-progression.md §9): a
+    // shrinking number meets zero at some rank, and a stack of them breaks.
+    out.push(`moves ${effect.stat} by ${effect.value} — a bonus only ever climbs; `
+      + 'make the wait a speed, or the cost a yield');
   }
   if (effect.op === 'percent' && !Number.isInteger(effect.value)) {
     out.push(`moves ${effect.stat} by ${effect.value}% — a percent is authored in whole points`);

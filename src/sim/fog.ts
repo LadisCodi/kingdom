@@ -101,11 +101,11 @@ const oneCellCost = (state: GameState, map: MapData, cell: Coord): number =>
       state,
       'revealCost',
       // Two things move what a cell costs: how much of the map is already
-      // revealed (countMultiplier, at the base stage) and Pitons, which
-      // discounts the result. Nothing buys the taps back: a cell is five
-      // presses at every ring.
-      revealCost(townhallDistance(map, cell)) * countMultiplier(state)
-        * Math.max(0, techValue(state, 'revealCost', 1)),
+      // revealed (countMultiplier, at the base stage). No technology
+      // discounts it: the tree makes the kingdom richer, never the fog
+      // cheaper. Nothing buys the taps back: a cell is five presses at
+      // every ring.
+      revealCost(townhallDistance(map, cell)) * countMultiplier(state),
     )),
   );
 
@@ -350,7 +350,9 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of districtCells(district)) {
     if (map.terrain.has(coordKey(cell))) state.fog.revealed[coordKey(cell)] = true;
   }
-  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
+  const reveal = def.fogRevealRadiusPerLevel.length === 0 ? def.fogRevealRadius
+    : levelIndexed(def.fogRevealRadiusPerLevel, district.level);
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, reveal)) {
     state.fog.revealed[coordKey(cell)] = true;
   }
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size,

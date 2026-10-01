@@ -78,6 +78,7 @@ interface WorkerDto {
   Activity: string;
   ClaimedCell: Coord | null;
   Carrying?: number;
+  StrikeCarry?: number;
   CarriedSource?: string | null;
   StateStartedAt: string;
   StateUntil: string | null;
@@ -628,7 +629,115 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v69: THE TREE IN FIVE BOOKS (Docs/features/22-progression.md §9). A few
+    // cards were renamed or split, and a researched one keeps what it
+    // bought: `Engineering` becomes the four cards it split into, a renamed
+    // rank becomes its successor. Cards with no successor (the discounts,
+    // the inert delve ladders) fall to the loader's filter as before.
+    // Poured Knowledge follows its card where it has one.
+    to: 69,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; Poured?: Record<string, number> } | undefined;
+      if (research === undefined) return;
+      const next = (id: string): string[] => TECH_RENAMES_V69[id] ?? [id];
+      research.Completed = [...new Set((research.Completed ?? []).flatMap(next))];
+      const poured: Record<string, number> = {};
+      for (const [id, n] of Object.entries(research.Poured ?? {})) {
+        const to = next(id)[0];
+        poured[to] = (poured[to] ?? 0) + n;
+      }
+      research.Poured = poured;
+    },
+  },
+  {
+    // v70: STONE IS TAUGHT (Docs/features/22-progression.md §4). Tapping a
+    // mountain waits on `Pickaxes`, and two quests — research it, gather 20
+    // Stone — sit in front of `Mustered`, the first thing that costs Stone.
+    // A kingdom already past that point, or one that never had the
+    // tutorial, keeps tapping stone: it is handed the card. A chain position
+    // at or past the new quests moves on by the two of them.
+    to: 70,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      const tutorial = modules['kingdom.tutorial'] as { Veteran?: boolean } | undefined;
+      const index = quests?.Index ?? 0;
+      const past = index >= PICKS_AT_V70;
+      if (quests !== undefined && past) quests.Index = index + 2;
+      if (past || tutorial === undefined || tutorial.Veteran === true) {
+        const research = (modules['kingdom.research'] ??= { Completed: [] }) as { Completed?: string[] };
+        research.Completed = [...new Set([...(research.Completed ?? []), 'Pickaxes'])];
+      }
+    },
+  },
+  {
+    // v72: STONE IS TAUGHT WHERE IT IS FIRST WANTED. `Picks` and `Rubble`
+    // move from in front of the Barracks (now built of Wood) to in front of
+    // `SecondStory`, the first upgrade that costs Stone. The quests between
+    // close up by the two; a kingdom on one of the two moved quests goes on
+    // to the one that followed them, and meets them again later.
+    to: 72,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      const to = index >= PICKS_FROM_V71 + 2 && index < SECOND_STORY_AT_V71 ? index - 2
+        : index >= PICKS_FROM_V71 && index < PICKS_FROM_V71 + 2 ? PICKS_FROM_V71 : index;
+      // A counter belongs to the quest it was counting for.
+      if (to !== index) Object.assign(quests, { Index: to, Progress: 0 });
+    },
+  },
+  {
+    // v73: A LAIR IS FOUND BEFORE THE ARMY IS ASKED FOR. `WarDrums` (find a
+    // lair) enters the chain in front of `ArmedMen`, because the Book of
+    // Warfare opens on nothing else. A kingdom past it moves on by one; one
+    // ON `ArmedMen` stays at its index, which is now `WarDrums` — done on
+    // arrival if it has found a lair, and the missing step if it has not.
+    to: 73,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      if (index > WAR_DRUMS_AT_V73) Object.assign(quests, { Index: index + 1 });
+      else if (index === WAR_DRUMS_AT_V73) Object.assign(quests, { Progress: 0 });
+    },
+  },
+  {
+    // v74: THE BOOK OF WARFARE IS HANDED OVER. It opens on Isolde giving it
+    // (`gift:Warfare`), no longer on a lair found. A kingdom that has found
+    // one was already reading it, so it is recorded as given.
+    to: 74,
+    migrate: (modules) => {
+      const lairs = modules['kingdom.lairs'] as { Lairs?: unknown[] } | undefined;
+      const tutorial = modules['kingdom.tutorial'] as { Seen?: string[] } | undefined;
+      if (tutorial === undefined || (lairs?.Lairs ?? []).length === 0) return;
+      tutorial.Seen = [...new Set([...(tutorial.Seen ?? []), 'gift:Warfare'])];
+    },
+  },
 ];
+
+/** Where `WarDrums` entered the chain in v73, frozen as history. */
+const WAR_DRUMS_AT_V73 = 26;
+
+/** Where `Picks` entered the chain in v70, frozen as history. */
+const PICKS_AT_V70 = 27;
+
+/** Where v72 took `Picks` and `Rubble` from, and the first quest it put them
+ *  in front of (`SecondStory`), as v71 numbered the chain. */
+const PICKS_FROM_V71 = 27;
+const SECOND_STORY_AT_V71 = 40;
+
+/** The technologies the v69 tree renamed or split, frozen as history. */
+const TECH_RENAMES_V69: Record<string, string[]> = {
+  Taxes01: ['TradeRoutesI'],
+  Reforesting01: ['ReforestingI'],
+  Sickles01: ['CropRotationI'],
+  Engineering: ['Joinery', 'StoneDressing', 'TimberFraming', 'QuarryHoists'],
+  VigilsI: ['BountiesI'], VigilsII: ['BountiesII'], VigilsIII: ['BountiesIII'],
+  DrillmasterI: ['TalesI'], DrillmasterII: ['TalesII'], DrillmasterIII: ['TalesIII'],
+  FieldMedicineI: ['BedsI'], FieldMedicineII: ['BedsII'], FieldMedicineIII: ['BedsIII'],
+};
 
 /** The v63 place ids of the five lairs, and the creature each one became. */
 const LAIR_RENAMES: Record<string, LairId> = {
@@ -788,6 +897,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Activity: w.activity,
           ClaimedCell: w.claimedCell,
           Carrying: w.carrying,
+          StrikeCarry: w.strikeCarry,
           CarriedSource: w.carriedSource,
           StateStartedAt: iso(w.stateStartedAt),
           StateUntil: isoOrNull(w.stateUntil),
@@ -807,6 +917,11 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.tallies': { Counts: state.tallies },
       'kingdom.discoveries': {
         Keys: Object.keys(state.discoveries),
+      },
+      'kingdom.tutorial': {
+        Veteran: state.tutorial.veteran,
+        Seen: Object.keys(state.tutorial.seen),
+        StartedAtUtc: iso(state.tutorial.startedAt),
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1172,6 +1287,7 @@ export function deserialize(
         activity: w.Activity as Worker['activity'],
         claimedCell: w.ClaimedCell,
         carrying: w.Carrying ?? 0,
+        strikeCarry: w.StrikeCarry ?? 0,
         carriedSource: (w.CarriedSource ?? null) as Worker['carriedSource'],
         stateStartedAt: ms(w.StateStartedAt),
         stateUntil: msOrNull(w.StateUntil),
@@ -1207,6 +1323,21 @@ export function deserialize(
     state.discoveries = {};
     for (const key of discoveriesDto.Keys as string[]) state.discoveries[key] = true;
   }
+
+  // A save with no tutorial module was made before the doors existed, so its
+  // kingdom walked in through none of them: every door opens and every scene
+  // counts as played. Additive — no migrator (v69).
+  const tutorialDto = modules['kingdom.tutorial'] as
+    { Veteran?: boolean; Seen?: string[]; StartedAtUtc?: string } | undefined;
+  // A kingdom with no founding date is read as founded long ago: its first
+  // day is over. Additive (v71).
+  state.tutorial = tutorialDto === undefined
+    ? { veteran: true, seen: {}, startedAt: 0 }
+    : {
+      veteran: tutorialDto.Veteran === true,
+      seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
+      startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
+    };
 
   const questsDto = modules['kingdom.quests'];
   if (questsDto) {
@@ -1441,7 +1572,7 @@ export function deserialize(
   settleFootprints(state, map, now);
   onCatchUp?.({
     elapsedMs: Math.max(0, now - lastSaved),
-    storesFull: state.city.districts.some(isStoreFull),
+    storesFull: state.city.districts.some((d) => isStoreFull(state, d)),
     result: report,
   });
   return state;

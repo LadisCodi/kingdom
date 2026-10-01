@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, FOG, LANDMARKS, LAIRS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   countMultiplier, explorationGate, explorationReach, fogState, isPayable, isReachable,
@@ -8,6 +8,7 @@ import {
   revealAroundDistrict, revealCost, revealCostForCell, revealTap, revealTapCost,
   revealTapsDone,
 } from '../src/sim/fog';
+import { advance } from '../src/sim/commands';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { siteDiscoveryKey } from '../src/sim/discovery';
@@ -242,8 +243,14 @@ describe('exploring pays in ground, not in currency', () => {
     // and `Hunting` came back to era 1 with them, off 1,500 Gold.
     // 494,680: Scriveners I–III left the tree with the research slots they
     // raised (07-research.md §1 — research takes no time), off 9,750 Gold.
+    // 435,445: the tree was rebuilt in five books with climbing bonuses only
+    // (2026-10-01, Docs/features/22-progression.md §9) — the discounts left,
+    // the Sagas and the Atlas joined.
+    // 435,575: the five opening cards stopped being free — 20 to 30 Gold
+    // each, so "pay the Gold, and it is ours" is true from the first one.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(494_680);
+    // 435,600: Pickaxes, 25 Gold, gates the Stone tap.
+    expect(tree).toBe(435_600);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree
@@ -454,19 +461,42 @@ describe('a site announces itself when it comes into view', () => {
     if (unseen) expect(state.discoveries[siteDiscoveryKey(unseen.id)]).toBeUndefined();
   });
 
-  it("fires when a building's fog radius lands near one", () => {
+  it("fires when a building's discover ring lands on one", () => {
     const state = newGame(map, T0);
-    const lair = Object.values(LAIRS).reduce((a, b) =>
-      townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
+    // A landmark still in the dark, with open ground two cells above it.
+    const site = LANDMARKS.find((l) => fogState(state, map, l.location) === 'Undiscovered'
+      && map.terrain.has(coordKey({ x: l.location.x, y: l.location.y - 2 })))!;
     state.pendingDiscoveries = [];
 
-    // A Sawmill dropped beside the lair: its own radii do the revealing.
-    addBuilt(state, 'Sawmill', { x: lair.location.x, y: lair.location.y - 2 });
+    // A Sawmill dropped two cells off: its discover ring does the seeing.
+    addBuilt(state, 'Sawmill', { x: site.location.x, y: site.location.y - 2 });
     revealAroundDistrict(state, map,
       state.city.districts.find((d) => d.definitionId === 'Sawmill')!);
 
-    expect(fogState(state, map, lair.location)).not.toBe('Undiscovered');
-    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(lair.id));
+    expect(fogState(state, map, site.location)).toBe('Discovered');
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(site.id));
+  });
+
+  it('clears two rings more when the Townhall reaches level 2, the moment the upgrade lands', () => {
+    const state = newGame(map, T0);
+    const th = townhall(state);
+    const ring = (r: number) => map.cells.filter((c) => townhallDistance(map, c) === r);
+    expect(ring(3).some((c) => state.fog.revealed[coordKey(c)] === true)).toBe(false);
+    state.city.queue.push({
+      uniqueId: 'q_th2', kind: 'upgrade', districtUniqueId: th.uniqueId, targetLevel: 2,
+      durationSeconds: 60, startedAt: T0,
+    });
+    advance(state, map, T0 + 61_000);
+    expect(th.level).toBe(2);
+    expect(ring(3).every((c) => state.fog.revealed[coordKey(c)] === true)).toBe(true);
+    expect(ring(4).some((c) => state.fog.revealed[coordKey(c)] === true)).toBe(false);
+  });
+
+  it('reveals nothing past a building but its own ground — only the Townhall clears a ring', () => {
+    for (const [id, def] of Object.entries(DISTRICTS)) {
+      if (id === 'Townhall') expect(def.fogRevealRadius).toBeGreaterThan(0);
+      else expect(def.fogRevealRadius, id).toBe(0);
+    }
   });
 });
 
@@ -544,7 +574,7 @@ describe('the Townhall is the reach', () => {
     expect(revealTap(state, map, sea)).toBe('OutOfReach');
   });
 
-  it('a building sees and reveals past the reach — only the player\'s tap is refused', () => {
+  it('a building sees past the reach — only the player\'s tap is refused', () => {
     const state = newGame(map, NOW);
     const reach = explorationReach(state);
     // A house on the last ring inside the reach: its own radius lands outside.
@@ -555,8 +585,8 @@ describe('the Townhall is the reach', () => {
     const house = state.city.districts[state.city.districts.length - 1];
     revealAroundDistrict(state, map, house);
     const outside = map.cells.filter((c) => townhallDistance(map, c) > reach
-      && state.fog.revealed[coordKey(c)] === true);
-    expect(outside.length, 'the house revealed nothing past the reach').toBeGreaterThan(0);
+      && state.fog.discovered[coordKey(c)] === true);
+    expect(outside.length, 'the house saw nothing past the reach').toBeGreaterThan(0);
   });
 
   it('draws its border along the last ring, facing the ring beyond, and none at the top', () => {
@@ -635,14 +665,13 @@ describe('the map gets dearer as it is revealed', () => {
     expect(countMultiplier(withRevealed((k + 1) * step))).toBe(growth ** (k + 1));
   });
 
-  it('sits under the ring price, and Pitons discounts the multiplied price', () => {
+  it('sits under the ring price, and no technology discounts it', () => {
     const state = withRevealed(3 * step);
     const cell = { x: 0, y: -3 }; // ring 3, whichever cells were filled
     const d = townhallDistance(map, cell);
     expect(revealCostForCell(state, map, cell)).toBe(Math.round(revealCost(d) * growth ** 3));
-    state.research.completed.push('PitonsI');
-    expect(revealCostForCell(state, map, cell))
-      .toBe(Math.max(FOG.minCost, Math.round(revealCost(d) * growth ** 3 * 0.9)));
+    state.research.completed.push(...TECH_ORDER);
+    expect(revealCostForCell(state, map, cell)).toBe(Math.round(revealCost(d) * growth ** 3));
   });
 
   it('a cell half paid keeps its paid fifths and reprices the rest when the count steps', () => {

@@ -69,8 +69,6 @@ and the army cap; hero slots one free, the rest Gems
     upward.** A battlefield keeps most of what it takes; bringing more of it
     home is something the player builds towards rather than a rate they are
     given.
-    - **`Field Medicine I–III`** in Warfare, +5 points a rank
-      ([`tech-tree.md`](tech-tree.md) §3.4).
     - **A hero with the `WoundedRecovery` trait**, +15 to +40 points, the best
       in the party and never the sum ([`10-heroes.md`](10-heroes.md) §2.5).
     - Capped at **90%**: someone always stays out there.
@@ -304,6 +302,10 @@ The cap limits **total troops owned**, not party size.
   number; the board is the fight's.
 - Training is queued at the building the player pressed TRAIN on, takes time,
   and is boostable there.
+- **A building with someone in training shows it on the map**: the green
+  glass bar its card wears, filled for the one in training now, holding the
+  time left for the WHOLE line — and on its left end, the trainee's round
+  portrait with the line's count (from two up), as the card's queue shows it.
 - The Townhall level does not affect the cap.
 
 ## 15. Landmarks

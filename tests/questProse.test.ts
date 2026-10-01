@@ -8,7 +8,7 @@ const ALL_GOALS: readonly QuestGoalType[] = [
   'BuildDistrict', 'UpgradeDistrict', 'HoldResource', 'ReachPopulation',
   'CompleteTech', 'CompleteTechs', 'AssignWorkers', 'TrainArmy',
   'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
-  'ClaimLandmarks', 'ClearLairs',
+  'ClaimLandmarks', 'FindLairs', 'ClearLairs',
   'OwnArtifacts', 'OwnHeroes',
 ];
 

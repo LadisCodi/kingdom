@@ -193,7 +193,11 @@ export function renderStoreSheet(game: Game): HTMLElement {
 
   const body = el('div', { class: 'store' },
     el('div', { class: 'store-section' }, el('span', {}, 'Heroes')),
-    bannerPanel(game),
+    // The banner hangs in the Tavern; until one stands, its place in the
+    // store is padlocked (Docs/features/22-progression.md §3).
+    game.doorOpen('banner') ? bannerPanel(game)
+      : el('div', { class: 'store-banner-locked' }, iconEl('padlock'),
+        el('span', {}, 'Build a Tavern to call heroes.')),
     el('div', { class: 'store-section' },
       el('span', {}, 'Cards'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),

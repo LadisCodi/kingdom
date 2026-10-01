@@ -25,7 +25,7 @@ import { getWallet } from '../src/sim/state';
 import {
   HARVEST, LANDMARKS, LAIRS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { armyCap, trainCost, woundedShareFor } from '../src/sim/army';
+import { armyCap, trainCost, trainSecondsAt, woundedCap, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
@@ -39,7 +39,10 @@ import {
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds, workerStrikeMs,
 } from '../src/sim/upgrades';
-import { addHeroXp } from '../src/sim/heroes';
+import { addHeroXp, callStardust } from '../src/sim/heroes';
+import { effectiveRecoveryMs } from '../src/sim/harvest';
+import { storageCapacity } from '../src/sim/storage';
+import { queuedWorkMs } from '../src/sim/workshops';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import {
@@ -73,6 +76,7 @@ function probeState(): GameState {
   addBuilt(state, 'Quarry', { x: 7, y: 2 });
   addBuilt(state, 'Barracks', { x: 8, y: 2 });
   addBuilt(state, 'Sanctum', { x: 9, y: 2 });
+  addBuilt(state, 'Carpenter', { x: 10, y: 2 });
   state.city.population = 4;
   // Two landmarks held and one lair cleared, so the per-entity drips are not
   // multiplied by zero.
@@ -104,6 +108,7 @@ function probe(state: GameState): Record<string, number> {
     put(`workerStrike.${id}`, effectiveWorkerStrike(state, spec));
     put(`tapDraw.${id}`, tapDraw(state, spec, 0));
     put(`strikeMs.${id}`, workerStrikeMs(state, spec));
+    put(`recoveryMs.${id}`, effectiveRecoveryMs(state, spec, { x: 0, y: 0 }));
   }
   const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill') ?? null;
   put('workerStrike.Forest.sawmill', effectiveWorkerStrike(state, HARVEST.Forest, sawmill));
@@ -118,7 +123,19 @@ function probe(state: GameState): Record<string, number> {
   put('maxPopulation', maxPopulation(state));
   for (const d of state.city.districts) {
     put(`capacity.${d.definitionId}`, districtCapacity(state, d));
+    put(`store.${d.definitionId}`, storageCapacity(state, d));
   }
+  const th = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+  const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+  const carpenter = state.city.districts.find((d) => d.definitionId === 'Carpenter')!;
+  // Long enough that a 15% step does not round back to the same second.
+  put('trainSeconds.Villager', trainSecondsAt(state, th.uniqueId, 'Villager') * 1000);
+  for (const u of ['Warrior', 'Lancer', 'Archer', 'Cavalry'] as const) {
+    put(`trainMs.${u}`, trainSecondsAt(state, barracks.uniqueId, u));
+  }
+  put('workshopMs.Planks', queuedWorkMs(state, carpenter, 'Planks'));
+  put('woundedCap', woundedCap(state));
+  put('callStardust', callStardust(state, 'basic'));
 
   // The fog. Only the Gold: the taps are five at every ring and nothing in
   // the tree can buy one back.
@@ -157,6 +174,11 @@ function probe(state: GameState): Record<string, number> {
   put('drill.def.Melee', drill.def.Melee ?? 0);
   put('drill.def.Mounted', drill.def.Mounted ?? 0);
   put('drill.disadvantageOffset', drill.disadvantageOffset);
+  for (const tag of ['all', 'Melee', 'Distance', 'Mounted'] as const) {
+    put(`drill.atkPct.${tag}`, drill.atkPct?.[tag] ?? 0);
+    put(`drill.defPct.${tag}`, drill.defPct?.[tag] ?? 0);
+  }
+  put('drill.hpMult', drill.hpMult);
 
   // The hero, measured as the XP one delve pays. Read on a COPY: a probe must
   // not be the thing that changes the state it is measuring.
@@ -212,7 +234,7 @@ describe('every rank ladder in the tree', () => {
    * with the depths: `stardustYield` has no reader (Docs/open-questions.md
    * OQ-113).
    */
-  const RETIRED_RULES = ['Bearers', 'Pathfinders', 'Prospecting'];
+  const RETIRED_RULES: string[] = [];
 
   it('moves at least one number a player can see', () => {
     const moved = movements();

@@ -26,8 +26,7 @@ import { DELVE, KNOWLEDGE } from './data/definitions';
 import { clearedLairCount } from './lairs';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
-import { isTechComplete } from './research';
-import { techFlat, techValue } from './techEffects';
+import { techMultiplier, techValue } from './techEffects';
 import {
   addToWallet, getWallet, type GameState,
 } from './state';
@@ -43,7 +42,8 @@ export const knowledgePerHour = (): number => KNOWLEDGE.basePerHour;
 
 /** A whole-millisecond period, so the anchor only ever moves by integer
  *  multiples of it and one-call replay and stepped ticking agree to the bit. */
-const msPerPoint = (): number => Math.max(1, Math.round(3_600_000 / knowledgePerHour()));
+/** How long one point takes to drip in. */
+export const msPerPoint = (): number => Math.max(1, Math.round(3_600_000 / knowledgePerHour()));
 
 /** Pay Knowledge into the kingdom, over the cap if it must. */
 export function payKnowledge(state: GameState, amount: number): number {
@@ -100,18 +100,15 @@ export const knowledgeLump = (state: GameState, raw: number): number =>
   raw <= 0 ? 0 : Math.max(0, Math.round(
     resolve(state, 'knowledgeYield', techValue(state, 'knowledgeYield', raw))));
 
-/** What claiming one landmark pays: the lump, plus Wayposts. */
+/** What claiming one landmark pays: the lump, raised by the Atlas's
+ *  Wayposts — a percent of it, so every rank is the same share. */
 export const landmarkClaimLump = (state: GameState): number =>
-  knowledgeLump(state, KNOWLEDGE.landmarkClaimLump + techFlat(state, 'landmarkClaimKnowledge'));
+  knowledgeLump(state, KNOWLEDGE.landmarkClaimLump * techMultiplier(state, 'landmarkKnowledge'));
 
-/** What clearing one lair pays, once: the lump, Vigils and Conquest
- *  on top, and Sanctified Ruins doubling the whole of it. */
+/** What clearing one lair pays, once: the lump, raised by Warfare's
+ *  Bounties. */
 export const firstClearLump = (state: GameState): number =>
-  knowledgeLump(state,
-    (DELVE.firstClearKnowledge
-      + techFlat(state, 'firstClearKnowledge')
-      + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestFirstClearLump : 0))
-    * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1));
+  knowledgeLump(state, DELVE.firstClearKnowledge * techMultiplier(state, 'lairKnowledge'));
 
 const claimedLandmarks = (state: GameState): number =>
   Object.values(state.landmarks.claimed).filter((c) => c === true).length;

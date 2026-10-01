@@ -23,7 +23,7 @@ import { iconEl, setCta } from './kit';
 export function mountDailyPill(game: Game, root: HTMLElement): void {
   const day = el('span', { class: 'dly-pill-day' }, '');
   const pill = el('button', {
-    class: 'dly-pill', type: 'button', 'aria-label': 'Your daily chest is ready',
+    class: 'dly-pill', type: 'button', 'aria-label': 'Your daily chest is ready', 'data-coach': 'daily',
   },
     iconEl('chest', { size: 'lg' }),
     el('span', { class: 'dly-pill-body' },

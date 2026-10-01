@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 72 suites, keep them all green
+npm test             # vitest run — 79 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -140,10 +140,13 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
 | a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
+| an unlock splash = an `unlocks` entry: which door or book opens it, its title, its paragraph, its icon (`Docs/features/23-tutorials.md` §4.6); list order = the order two show in | a splash for something that is neither a door (`sim/doors.ts`) nor a book (`TOME_OPENS`) |
+| **a tutorial scene, a line, a speaker** — who says what, where the box sits, what it points at, what locks, what moves it on — at `?dev=data` › Scenes / Speakers / Tutorial help (`Docs/features/23-tutorials.md`, `24-dialogue.md`) | a new scene **condition kind** (`src/ui/stage/conditions.ts`), a new pointer target syntax (`targets.ts`) |
+| which quest opens a UI door is its position in the chain | **what opens a door** (`sim/doors.ts`) and **what opens a book** (`sim/research.ts` `TOME_OPENS`) |
 
 ## Saves
 
-`SAVE_VERSION` is 62; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 74; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -184,7 +187,7 @@ than the build is rejected rather than downgraded.
   `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
-  (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
+  (10) · **the battle playback (90)** · the stage (95) · the unlock splash (97) · the gacha reveal (100) · the rewarded
   video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
   the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header — **which is the design, not a
@@ -193,7 +196,7 @@ than the build is rejected rather than downgraded.
   while `#overlay` has content or the district card is open, and every menu
   carries its own way out.
   The ad screen lives at z 200 in its own mount for that reason, and the gacha
-  reveal at z 100 in its own for the same one; both carry
+  reveal at z 100 and the unlock splash at z 97 in their own for the same one; all carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every
   tap on the map.
 - **A building's price is a fact about that building, not about the city.**
