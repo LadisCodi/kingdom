@@ -64,7 +64,7 @@ describe('the scenes, against the game', () => {
       expect(scene.trigger).toBe('questReached');
       expect(opening.has(scene.triggerTarget), `${scene.id} rides on ${scene.triggerTarget}`).toBe(true);
     }
-    // Every other scene carries a Skip.
+    // Every other scene is an introduction, which waits a breath after the last.
     for (const scene of SCENES.filter((s) => !MORNING.includes(s))) {
       expect(scene.skippable, `${scene.id} cannot be skipped`).toBe(true);
     }

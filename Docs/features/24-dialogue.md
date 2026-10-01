@@ -40,8 +40,6 @@
   a tap will move on.
 - **A line waiting on the game** (a beat, [`23-tutorials.md`](23-tutorials.md)
   §3) shows no quill; the box shrinks to its text and stays out of the way.
-- **Skip**, a small knob on the plank, ends the scene — absent on the First
-  Morning.
 
 ## 3. A line
 
@@ -57,8 +55,9 @@
 | `exit` | the speaker leaves after this line |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and
-  two flags: `skippable`, and `anywhere` — may it start over a sheet the
-  player has open.
+  two flags: `skippable` — an introduction, which waits a breath after the
+  last scene, rather than a beat of the First Morning — and `anywhere` — may
+  it start over a sheet the player has open.
 - Scenes are considered **in list order**, one at a time.
 
 ## 4. The pointer
@@ -136,6 +135,7 @@ which one a line waits on is data.
 - Portrait expressions, lip flaps or voice.
 - More than one character per side, or a third slot.
 - Choices, branching, or a line that changes the game.
+- A Skip button: a tap anywhere moves a line on, so a scene is over in a few taps.
 - A dialogue log or a replay.
 - Rich text beyond a bold word.
 

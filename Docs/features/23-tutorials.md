@@ -18,7 +18,7 @@
    minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
    first buildings that work for the player, and Stone, when the Barracks
    first asks for it. They are the only places
-   input is locked; a lesson can be skipped.
+   input is locked.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
 4. **Help is asked for, or earned by being stuck.** After the First Morning
@@ -28,8 +28,8 @@
    gacha reveal, the rewarded video or a sheet the player opened — unless the
    sheet is what the scene is about. Scenes due at once queue in authored
    order, and an introduction waits a breath (20 s) after the last scene.
-7. **A scene can be skipped** — every one but the First Morning carries a
-   **Skip** knob.
+7. **A scene is never skipped, only tapped through**: a tap anywhere moves
+   a line on ([`24-dialogue.md`](24-dialogue.md) §2).
 
 ## 2. Three kinds of guidance
 
@@ -99,7 +99,7 @@ left unless a line says otherwise.
 
 ### 3.1 The lessons: buildings that work for you
 
-Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
+Beats, as the First Morning's, each on its quest.
 
 | Scene | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
@@ -138,8 +138,8 @@ Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
 
 ## 4. The introductions
 
-Each plays once, the first time its trigger is true. Lines are tapped through;
-**Skip** ends the scene. A scene that points at something does so after its
+Each plays once, the first time its trigger is true. Lines are tapped through.
+A scene that points at something does so after its
 last line, as a hint.
 
 ### 4.1 The village

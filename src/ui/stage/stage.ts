@@ -103,11 +103,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const more = el('img', {
     class: 'stg-more', 'aria-hidden': 'true', draggable: 'false', alt: '', src: spriteUrl('tutorial_quill') ?? '',
   });
-  const skip = el('button', { class: 'stg-skip', type: 'button' }, 'Skip');
   // Parchment on a carved wooden board, one nine-sliced piece of art
   // (stage.css), lifted off the map by its own shadow.
   const box = el('div', { class: 'stg-box', role: 'dialog', 'aria-live': 'polite' },
-    el('div', { class: 'stg-frame', 'aria-hidden': 'true' }), left, right, name, text, more, skip);
+    el('div', { class: 'stg-frame', 'aria-hidden': 'true' }), left, right, name, text, more);
   const peek = el('button', { class: 'stg-peek', type: 'button' },
     el('span', { class: 'stg-peek-face' }), el('span', { class: 'stg-peek-say' }, 'Need a hand?'));
   // The cast stands ON the box (24-dialogue.md §1), so they are its
@@ -195,7 +194,6 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     name.dataset.speaker = l.speaker;
     name.classList.toggle('is-right', l.side === 'right');
     text.textContent = '';
-    skip.hidden = !playing.scene.skippable;
     box.classList.toggle('is-waiting', l.until !== 'tap');
     place(l);
   };
@@ -263,7 +261,6 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  visual novel does — and keeps it: the tap moves the dialogue on and
    *  reaches nothing behind it. Panning the map stays free. */
   const waitsForTap = (): boolean => playing !== null && line()?.until === 'tap';
-  skip.addEventListener('click', (e) => { e.stopPropagation(); end(); });
 
   // ------------------------------------------------------------ the lock
   const lockNow = (): SceneLine['lock'] => {

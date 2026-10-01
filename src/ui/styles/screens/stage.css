@@ -124,7 +124,7 @@
 .stg-name {
   position: absolute;
   z-index: 1;
-  top: calc(var(--px) * -13); /* riding just over the board's top rim */
+  top: calc(var(--px) * -6); /* riding just over the board's top rim */
   left: calc(var(--px) * 22); /* the swallowtail hangs over the corner */
   /* A CLOTH RIBBON in the speaker's colour (`--ribbon`, below): its folded
      swallowtail ends whole in their slices (100 of its 504 across), the
@@ -171,22 +171,6 @@
   animation: stg-bob-up 0.6s ease-in-out infinite alternate;
 }
 .stg-more[hidden] { display: none; }
-.stg-skip {
-  position: absolute;
-  top: calc(var(--px) * -16);
-  right: calc(var(--px) * 44); /* left of the curled corner */
-  padding: calc(var(--px) * 2) calc(var(--px) * 10);
-  border: 0;
-  border-radius: calc(var(--px) * 12);
-  font: inherit;
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-title);
-  color: var(--ink-inverse);
-  background: var(--wood-dark);
-  cursor: pointer;
-}
-.stg-skip[hidden] { display: none; }
-.stg-name.is-right ~ .stg-skip { right: auto; left: calc(var(--px) * 40); }
 
 /* ---- the cast: they stand on the box, and move with it ---- */
 .stg-box .stg-actor {

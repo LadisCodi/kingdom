@@ -40,7 +40,10 @@
     "triggerTarget": { "type": "text", "doc": "What the trigger names, where it names anything." },
     "triggerAmount": { "type": "int", "min": 0 },
     "anywhere": { "type": "bool", "doc": "May start over a sheet the player has open. Off: waits for the map." },
-    "skippable": { "type": "bool", "doc": "Carries a Skip knob. The First Morning does not." },
+    "skippable": {
+      "type": "bool",
+      "doc": "An introduction, not a beat of the First Morning: it waits a breath after the last scene before it starts. The First Morning runs beat to beat."
+    },
     "lines": {
       "type": "list",
       "of": {
