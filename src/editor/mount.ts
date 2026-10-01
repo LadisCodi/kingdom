@@ -619,6 +619,9 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
     // (Docs/proposals/lairs.md §3).
     card.append(field('size', numberInput(r.size ?? 1, (v) => patch({ size: v }))));
     card.append(field('radius', numberInput(r.radius, (v) => patch({ radius: v }))));
+    // How far its silhouette shows past the fog before it is found
+    // (Docs/features/01-map-and-fog.md §4.1): past its radius, or 0.
+    card.append(field('sight', numberInput(r.sight, (v) => patch({ sight: v }))));
     card.append(field('flavour', textInput(r.flavour, (v) => patch({ flavour: v }))));
     // The guard: one garrison, and the warning before its first raid; every
     // raid after it follows the daily schedule (§4.1). The creature is

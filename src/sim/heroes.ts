@@ -28,9 +28,9 @@
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
 import { addModifier, resolve, type ModifierStat } from './modifiers';
-import { techValue } from './techEffects';
+import { techMultiplier, techValue } from './techEffects';
 import {
-  BANNERS, COLLECTION, HERO_ORDER, HEROES, PARTY, heroesOfRarity,
+  BANNERS, COLLECTION, DISTRICTS, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
   type BannerId, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
@@ -289,13 +289,32 @@ export function buyHeroSlot(state: GameState): BuyHeroSlotResult {
  * instead (Docs/features/10-heroes.md §4).
  */
 export function addHeroXp(state: GameState, amount: number): void {
-  // Drillmaster: +5%/rank, rounded once here so XP stays a whole number.
-  const paid = Math.round(resolve(state, 'heroXp', techValue(state, 'heroXp', amount)));
+  // The Sagas' Tales (+%/rank) and every Tavern level, rounded once here so
+  // XP stays a whole number.
+  const paid = Math.round(resolve(state, 'heroXp',
+    techValue(state, 'heroXp', amount) * tavernXpMultiplier(state)));
   addToWallet(state.kingdom.wallet, 'HeroXp', paid);
   recordResourceDiscovery(state, 'HeroXp');
 }
 
+/** What every standing Tavern does to Hero XP: its level's TOTAL percent,
+ *  summed over the Taverns (there is one). ×1 with none. */
+export function tavernXpMultiplier(state: GameState): number {
+  let pct = 0;
+  for (const d of state.city.districts) {
+    if (d.state !== 'Built') continue;
+    const list = DISTRICTS[d.definitionId].heroXpBonusPerLevel;
+    if (list.length > 0) pct += levelIndexed(list, d.level);
+  }
+  return 1 + pct / 100;
+}
+
 // ------------------------------------------------------------------ the pull
+
+/** The Stardust one call pays: the banner's, raised by the Sagas' Warm
+ *  Welcome (`summonStardust`). Whole units. */
+export const callStardust = (state: GameState, banner: BannerId): number =>
+  Math.round(BANNERS[banner].pullStardust * techMultiplier(state, 'summonStardust'));
 
 export const STANDARD_BANNER: BannerId = 'basic';
 
@@ -522,16 +541,22 @@ export function pull(
   if (bannerHeroes(state, banner).length === 0) return { ...miss, result: 'NothingToPull' };
 
   if (cost > 0) addToWallet(state.player.wallet, price.currency, -cost);
-  addToWallet(state.kingdom.wallet, 'Stardust', b.pullStardust);
+  const stardust = callStardust(state, banner);
+  addToWallet(state.kingdom.wallet, 'Stardust', stardust);
   recordResourceDiscovery(state, 'Stardust');
 
   const n = pullCount(state, banner);
+  // THE FIRST CALL CANNOT MISS (Docs/features/22-progression.md §6): the
+  // standard banner's first call is the free one, and a free call that pays
+  // Fragments is a tutorial that teaches the wrong lesson. Only the hit is
+  // forced; which hero is still the roll's.
+  const firstCall = banner === STANDARD_BANNER && n === 0;
   const pity = pityCount(state, banner);
   const legPity = legendaryPityCount(state, banner);
   state.gacha.pullCounts[banner] = n + 1;
 
   const roll = rand(state.seed, 'gacha', banner, n);
-  if (roll >= heroChanceAt(pity, banner)) {
+  if (!firstCall && roll >= heroChanceAt(pity, banner)) {
     // Never a dead pull: a miss still pays Fragments toward someone this
     // banner could have given you.
     state.gacha.pityCounters[banner] = pity + 1;
@@ -541,7 +566,7 @@ export function pull(
     state.heroes.fragments[target] = (state.heroes.fragments[target] ?? 0) + b.fragmentsPerMiss;
     return {
       result: 'Pulled', heroId: null, rarity: null, duplicate: false,
-      fragments: b.fragmentsPerMiss, fragmentsOf: target, stardust: b.pullStardust,
+      fragments: b.fragmentsPerMiss, fragmentsOf: target, stardust,
       guaranteed: false, guaranteedLegendary: false,
     };
   }
@@ -570,8 +595,8 @@ export function pull(
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
     fragmentsOf: outcome === 'Duplicate' ? heroId : null,
-    stardust: b.pullStardust,
-    guaranteed: pity >= b.hardPityAt - 1,
+    stardust,
+    guaranteed: firstCall || pity >= b.hardPityAt - 1,
     guaranteedLegendary: forced && rarity === 'Legendary',
   };
 }
@@ -608,14 +633,14 @@ export function callGuaranteed(
   state: GameState, banner: BannerId, heroId: HeroId,
 ): GuaranteedCall {
   const b = BANNERS[banner];
-  addToWallet(state.kingdom.wallet, 'Stardust', b.pullStardust);
+  addToWallet(state.kingdom.wallet, 'Stardust', callStardust(state, banner));
   recordResourceDiscovery(state, 'Stardust');
   const outcome = grantHero(state, heroId, b.duplicateFragments);
   return {
     heroId,
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
-    stardust: b.pullStardust,
+    stardust: callStardust(state, banner),
   };
 }
 

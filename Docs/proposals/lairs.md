@@ -39,6 +39,9 @@ lair { tier, size, guard { threat, power, warningMinutes }, radius, flavour }
 - `size` is the lair's footprint, **2×2** for every lair: the camp is a site
   on the map, not a marker on one cell.
 - `radius` is the zone, in **Chebyshev** rings around the lair's footprint.
+- `sight` is how far its silhouette shows past the fog before it is found
+  ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4.1):
+  past `radius`, or 0 for never.
 - `flavour` is the card's line over its illustration (§6): two lines at most.
 - `tier` keys the `garrisons` entries that are not per site (take seconds,
   supplies) and the reward (§5).
@@ -46,7 +49,7 @@ lair { tier, size, guard { threat, power, warningMinutes }, radius, flavour }
 | Lair | Tier | Creature | `radius` | Zone |
 |---|---|---|---|---|
 | Orc Lair | I | Orcs | **1** | 4×4 |
-| Harpy Roost | II | Harpies | **1** | 4×4 |
+| Harpy Roost | II | Harpies | **2** | 6×6 |
 | Goblin Den | III | Goblins | **2** | 6×6 |
 | Wolf-rider Camp | IV | Wolf riders | **2** | 6×6 |
 | Drake's Lair | V | a Drake | **3** | 8×8 |

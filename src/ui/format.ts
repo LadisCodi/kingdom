@@ -131,3 +131,11 @@ export function button(label: string, onClick: () => void, className = ''): HTML
   });
   return b;
 }
+
+/** Name a control for the tutorial's pointer (Docs/features/24-dialogue.md
+ *  §4): the stage finds it by `data-coach`. Returns the node, so it drops
+ *  into an el(...) call. */
+export function coach<T extends HTMLElement>(node: T, key: string): T {
+  node.dataset.coach = key;
+  return node;
+}

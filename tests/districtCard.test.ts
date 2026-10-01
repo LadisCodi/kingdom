@@ -8,12 +8,15 @@ import { districtCardSignature } from '../src/ui/districtCardSignature';
 import { enqueueBuild } from '../src/sim/commands';
 import { DISTRICTS } from '../src/sim/data/definitions';
 import { townhall } from '../src/sim/state';
+import { storageCapacity } from '../src/sim/storage';
 import { addBuilt, freshGame, freshPresenter, fund, map } from './helpers';
 
 describe('the district card signature', () => {
   it('holds still on a tick that changed nothing the card draws', () => {
     const game = freshPresenter();
     const th = townhall(game.state);
+    // Its own Gold would fill the store on the tick; a full store stands still.
+    th.stored = { Gold: storageCapacity(game.state, th) };
     const before = districtCardSignature(game, th);
     game.tick();
     expect(districtCardSignature(game, th)).toBe(before);
@@ -23,6 +26,7 @@ describe('the district card signature', () => {
     const game = freshPresenter();
     fund(game.state, { Food: 1000 });
     const th = townhall(game.state);
+    th.stored = { Gold: storageCapacity(game.state, th) };
     addBuilt(game.state, 'Housing', { x: 2, y: 0 });
     game.doTrain('Villager', th);
     const before = districtCardSignature(game, th);

@@ -10,13 +10,12 @@ import { HARVEST, TAXES } from '../src/sim/data/definitions';
 import {
   addModifier, isActive, resolve, type Modifier,
 } from '../src/sim/modifiers';
-import { cityGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
 import type { GameState } from '../src/sim/state';
 import {
   effectiveTaxRate, effectiveWorkerStrike, tapWorkSeconds,
 } from '../src/sim/upgrades';
-import { addBuilt, freshGame, map, stored, T0 } from './helpers';
+import { addBuilt, freshGame, map, stored, T0, rentStored, rentPerMinute } from './helpers';
 
 const mod = (over: Partial<Modifier> = {}): Modifier => ({
   id: 'mod_1',
@@ -106,7 +105,7 @@ describe('expiry', () => {
         }));
       }
       advance(state, map, T0 + 120_000);
-      return stored(state, 'Gold'); // rent lands in the house
+      return rentStored(state); // rent lands in the house
     };
     const plain = earn(false);          // 120s at 1x
     expect(plain).toBeGreaterThan(0);
@@ -167,10 +166,10 @@ describe('the effectiveX pipeline', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 3, y: 2 });
     state.city.population = 2;
-    const before = cityGoldPerMinute(state);
+    const before = rentPerMinute(state);
     expect(effectiveTaxRate(state)).toBe(TAXES.goldPerPopulationPerMinute);
     addModifier(state, mod({ id: 'ledger', stat: 'taxRate', op: 'mul', value: 1.2 }));
-    expect(cityGoldPerMinute(state)).toBeCloseTo(before * 1.2, 6);
+    expect(rentPerMinute(state)).toBeCloseTo(before * 1.2, 6);
   });
 });
 

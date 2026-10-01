@@ -14,15 +14,15 @@ import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { pourKnowledge, researchRefusal, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
-import { addAllTrainers, clearLair, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, stored, T0, tickAt } from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourAndResearch, reveal, stored, T0, tickAt } from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
 // when the province was redrawn — the western cove became grassland, the
 // mainland rocks and the northern iron went elsewhere. They are named and
 // commented rather than inlined so the next redraw is a diff of this block
 // instead of a hunt through the file.
-const NEAR_ROCKS = { x: 6, y: 0 }; // the nearest Mountain, at fog distance 5
-const QUARRY_CELL = { x: 5, y: 0 }; // clear Grassland beside it, inside radius 2
+const NEAR_ROCKS = { x: 2, y: -2 }; // the one loose Mountain, held by no lair
+const QUARRY_CELL = { x: 2, y: -3 }; // clear Grassland beside it, inside radius 2
 const COVE_WATER = { x: -6, y: 1 }; // the nearest open water, west
 const SHOAL = { x: -8, y: 2 }; // authored FishShoal, 2 cells off the pier
 // Docks anchor: a 2x1 pier wants exactly one wet cell, and the ANCHOR is the
@@ -35,19 +35,15 @@ const IRON_MOUNTAIN = { x: -7, y: -13 }; // MountainIron, deep in the northern f
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
     const state = freshGame();
-    // The nearest mountain is inside the orc lair's zone, which holds its
-    // ground until the orcs are driven out (Docs/proposals/lairs.md §3) —
-    // this is about the stone line, so they already have been.
-    clearLair(state, 'Orcs');
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
     reveal(state, [NEAR_ROCKS, QUARRY_CELL, COVE_WATER]);
     expect(placementBlock(state, map, 'Quarry', QUARRY_CELL)).toBe('NeedsResearch');
     completeTech(state, 'Masonry');
     expect(placementBlock(state, map, 'Quarry', COVE_WATER)).toBe('NeedsLand'); // no sea quarries
-    // Masonry opens the SHED; the bare peak answered a pick already — the
-    // tome tree parks Scaling Tools in Magic era 2, far too late to gate
-    // era-1 Stone — and the METAL is what the later rungs open.
+    // Masonry opens the SHED; Pickaxes opens the bare peak to a pick, and to
+    // the shed's crew — and the METAL is what the later rungs open.
+    completeTech(state, 'Pickaxes');
     // Read the yield BEFORE the tap: it is capped by what the cell still
     // holds, so asking afterwards asks about a smaller depot.
     const perTap = tapYieldAt(state, map, NEAR_ROCKS, T0);

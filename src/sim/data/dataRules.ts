@@ -71,6 +71,11 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
   { id: 'daily', label: 'Daily & missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['daily', 'missions'] },
   { id: 'collection', label: 'Card collection', domain: 'Progression', view: 'form', noun: 'setting', groups: ['collection'] },
+  // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
+  // list order is the order scenes are considered in, as the quest chain's is.
+  { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },
+  { id: 'speakers', label: 'Speakers', domain: 'Progression', view: 'table', noun: 'speaker', source: 'speakers' },
+  { id: 'tutorial', label: 'Tutorial help', domain: 'Progression', view: 'form', noun: 'setting', groups: ['help'] },
 
   { id: 'store', label: 'Store', domain: 'Store', view: 'table', noun: 'product', source: 'store' },
   { id: 'packs', label: 'Card packs', domain: 'Store', view: 'table', noun: 'pack', source: 'packs' },
@@ -95,13 +100,17 @@ export type RefKind =
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
   /** A character in the animated atlas (Docs/art/characters). */
-  | 'character';
+  | 'character'
+  /** A kind of landmark — Shrine, Watchtower… (sim/state.ts LandmarkKind). */
+  | 'landmarkKind'
+  /** Someone who speaks on the stage (`speakers`). */
+  | 'speaker';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
   building: 'buildings', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree',
+  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree', speaker: 'speakers',
 };
 
 /** A length rule for a list: exact, or tied to a sibling number. `orEmpty`
@@ -151,6 +160,7 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
+  landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -161,16 +171,19 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
-  TrainArmy: null, ClaimLandmarks: null,
+  TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
+
+/** Goal types whose target may be left empty, meaning "any". */
+export const QUEST_OPTIONAL_TARGET: ReadonlySet<string> = new Set(['ClaimLandmarks']);
 
 /** Where each ref kind's ids come from in the document. */
 const REF_SOURCE: Partial<Record<RefKind, string>> = {
   building: 'districts', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners',
+  terrain: 'terrain', store: 'store', banner: 'banners', speaker: 'speakers',
 };
 
 export type DataDoc = Record<string, unknown>;
@@ -396,7 +409,9 @@ function checkQuests(doc: DataDoc, push: Push): void {
     if (kind === undefined) return; // the enum check already said so
     const target = q.goalTarget ?? null;
     if (kind === null && target !== null) push(id, ['goalTarget'], `${q.goalType} takes no target`);
-    if (kind !== null && (target === null || !refIds(doc, kind).includes(String(target)))) {
+    // A target the goal may go without: "claim a landmark" reads as any.
+    const optional = QUEST_OPTIONAL_TARGET.has(String(q.goalType));
+    if (kind !== null && (target === null ? !optional : !refIds(doc, kind).includes(String(target)))) {
       push(id, ['goalTarget'], `"${target}" is not a ${kind}`);
     }
     if (q.goalType === 'UpgradeDistrict' && typeof q.goalLevel !== 'number') push(id, ['goalLevel'], 'UpgradeDistrict needs a level');
@@ -442,7 +457,51 @@ function neverFalls(push: Push, id: string, field: string, v: unknown): void {
  *  bonus is a flat amount and is not clamped). */
 export const ADJACENCY_CLAMP = 0.25;
 
+/** What a scene condition's target must name, by kind (Docs/features/24-dialogue.md §5). */
+const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
+  questReached: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
+  questComplete: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
+  questClaimed: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
+  questProgress: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
+  techDone: () => STATIC_IDS.tech ?? [],
+  techFilled: () => STATIC_IDS.tech ?? [],
+  placing: (doc) => Object.keys(doc.districts ?? {}),
+  placed: (doc) => Object.keys(doc.districts ?? {}),
+  built: (doc) => [...Object.keys(doc.districts ?? {}), 'AnyWorkshop'],
+  lairFound: () => ['', ...(STATIC_IDS.lair ?? [])],
+  lairDefeated: () => ['', ...(STATIC_IDS.lair ?? [])],
+  lairCleared: () => ['', ...(STATIC_IDS.lair ?? [])],
+  bookOpen: () => ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
+  featureSeen: () => STATIC_IDS.feature ?? [],
+  sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'],
+};
+
 export const RULES: Readonly<Record<string, Rule>> = {
+  scenes: (doc, push) => {
+    const seen = new Set<string>();
+    const check = (entry: string, path: Array<string | number>, kind: unknown, target: unknown) => {
+      const ids = SCENE_TARGETS[String(kind)];
+      if (ids === undefined) return;
+      if (!ids(doc).includes(String(target ?? ''))) push(entry, path, `${kind} names "${target}", which is not one`);
+    };
+    list(doc.scenes).forEach((raw, i) => {
+      const s = raw as Record<string, unknown>;
+      const entry = String(i);
+      if (seen.has(String(s.id))) push(entry, ['id'], `duplicate scene id "${s.id}"`);
+      seen.add(String(s.id));
+      check(entry, ['triggerTarget'], s.trigger, s.triggerTarget);
+      const lines = list(s.lines);
+      if (lines.length === 0) push(entry, ['lines'], 'a scene says at least one line');
+      lines.forEach((l, j) => {
+        const line = l as Record<string, unknown>;
+        check(entry, ['lines', j, 'untilTarget'], line.until, line.untilTarget);
+        if (line.lock !== 'none' && line.lock !== 'all' && String(line.point ?? '') === '') {
+          push(entry, ['lines', j, 'lock'], `locks to a target but points at nothing`);
+        }
+      });
+    });
+  },
   buildings: (doc, push) => {
     const lateFrom = num((doc.city as Record<string, unknown> | undefined)?.lateUpgradeFromLevel) || Infinity;
     // ONE TRAINEE PER BUILDING, ONE BUILDING PER TRAINEE: each unit has a hall
@@ -480,10 +539,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');
       }
       neverFalls(push, id, 'taxBonusPerLevel', b.taxBonusPerLevel);
+      neverFalls(push, id, 'goldPerMinutePerLevel', b.goldPerMinutePerLevel);
       // What a building makes waits inside it for a tap, so anything that
       // makes Gold or harvests has a store — without one its production
       // would have no ceiling at all while the player is away.
-      const makes = list(b.populationCapacityPerLevel).length > 0 || list(b.harvestSources).length > 0;
+      const makes = list(b.populationCapacityPerLevel).length > 0 || list(b.harvestSources).length > 0
+        || list(b.goldPerMinutePerLevel).length > 0;
       const stores = list(b.storageCapacityPerLevel).length > 0;
       if (makes && !stores) push(id, ['storageCapacityPerLevel'], 'it makes Gold or harvests, so it needs a store');
       if (!makes && stores) push(id, ['storageCapacityPerLevel'], 'on a building that makes nothing to collect');

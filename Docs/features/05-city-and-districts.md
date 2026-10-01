@@ -13,10 +13,11 @@
 - The Townhall level gates **how many of each district the city may own** and
   **how high each may level**. It is the only gate that moves all of them at
   once.
-- It also **multiplies every house's rent**: ×1 at level 1, +0.25 a level, to
-  ×3.25 at 10 (`taxes.townhallMultiplierPerLevel`,
-  [`03-economy.md`](03-economy.md) §3). This is the number its Level Up card
-  shows — the count caps are gates, not a stat a player reads.
+- It also **makes Gold of its own** into its own store, with nobody living in
+  it: 10 Gold a minute at level 1, rising to 5,400 at 10
+  (`buildings.goldPerMinutePerLevel`, [`03-economy.md`](03-economy.md) §3).
+  This is the number its Level Up card shows — the count caps are gates, not
+  a stat a player reads.
 
 | | TH1 | TH2 | TH3 | TH4 |
 |---|---|---|---|---|
@@ -64,7 +65,7 @@ Three arcs run past TH3:
   [`buildings.md`](buildings.md).
 - Per-level tech gates (`requiredTechPerLevel`): entry 0 is the technology
   needed to reach level 2.
-- A district card says *Research X required*; a research-complete banner says
+- A district card says *Research X required*; the technology's card says
   *Housing can now reach level 2*.
 
 ## 3. What a building costs
@@ -249,7 +250,7 @@ What follows the building:
 | Dial | Where |
 |---|---|
 | Count caps per Townhall level | `buildings.maxCountPerTownhallLevel` |
-| Townhall rent multiplier per level | `taxes.townhallMultiplierPerLevel` — ×1 then +0.25 a level ([`03-economy.md`](03-economy.md) §3) |
+| The Townhall's own Gold per level | `buildings` › Townhall › `goldPerMinutePerLevel` ([`03-economy.md`](03-economy.md) §3) |
 | How far the fog can be paid for, per Townhall level | `fog.reachPerTownhallLevel` — [`01-map-and-fog.md`](01-map-and-fog.md) §4 |
 | What every level costs, build included — currencies and goods alike | `buildings` › `costPerLevel` — §3 |
 | How much dearer a later instance is | `buildings.instanceLinearGrowth`, `instanceExponentialGrowth` — §3.1 |

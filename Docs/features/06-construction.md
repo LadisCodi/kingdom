@@ -11,6 +11,9 @@
   refused.
 - Jobs in flight = builder count.
 - An upgrade occupies a builder exactly as a build does.
+- **A job at work shows on the map** as it does on the card: the working
+  hammer flies over the building, and the blue glass bar on its plot holds
+  the time left.
 - **A build cannot be cancelled.** It is paid for when it starts, and a
   building put in the wrong place is moved rather than undone
   ([`05-city-and-districts.md`](05-city-and-districts.md) §4.2) — which is why

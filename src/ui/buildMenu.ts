@@ -148,6 +148,7 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
     class: `bld-card${blocked !== null ? ' is-locked' : ''}${hinted ? ' hinted' : ''}`,
     type: 'button',
     'data-id': id,
+    'data-coach': `build:${id}`,
   },
     el('div', { class: 'bld-art' }, art ? spriteImgAt(art) : iconEl(id, { size: 'lg' })),
     // The ordinal it WOULD be: the price on this card is that instance's

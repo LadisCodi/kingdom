@@ -42,17 +42,20 @@
   "berry_bush": {
     "name": "A BERRY BUSH",
     "what": "two rounded shrubs of dense dark-green leaves, thick with small bright berries — deep blue and red — with a few berries fallen at their feet. Plump and inviting; the bushes are low, well under the height of a person",
-    "scale": 0.35
+    "scale": 0.65,
+    "seat": "centre"
   },
   "wild_animals": {
     "name": "WILD GAME",
     "what": "two or three wild boar standing on the ground, brown and bristly, compact and rounded in the game's style, with small tusks and alert ears. A few tufts of grass around their feet. They are gameplay-scale animals, not a portrait: calm, side-on, going about their business",
-    "scale": 0.27
+    "scale": 0.55,
+    "seat": "centre"
   },
   "fish_shoal": {
     "name": "A FISH SHOAL",
     "what": "a shoal of small silver-blue fish just under the surface of clear water, their shapes softened by the water above them, with a ring of gentle ripples and a few bubbles breaking the surface over them. NO water tile underneath — only the ripples and the fish themselves, as they will be laid over the game's own water",
-    "scale": 0.95
+    "scale": 0.95,
+    "seat": "centre"
   },
   "landmark_shrine": {
     "name": "A WAYSIDE SHRINE",

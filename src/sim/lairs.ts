@@ -40,12 +40,12 @@ import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
 import { recordSiteDiscovery } from './discovery';
 import { lairIsFound } from './lairZone';
 import { rand } from './rng';
-import { cityGoldPerMinute } from './population';
+import { cityGoldPerMinute, ownGoldPerMinute } from './population';
 import { cityGatherPerSecond } from './upgrades';
-import { cityStored, storedOf, takeFromStore } from './storage';
+import { storedOf, takeFromStore } from './storage';
 import {
-  addToWallet,
-  type GameState, type LairState, type LairId, type Wallet,
+  addToWallet, townhall,
+  type District, type GameState, type LairState, type LairId, type Wallet,
 } from './state';
 
 /** What a raid can take. Materials only — never Gems, Mana, Knowledge,
@@ -172,8 +172,19 @@ export function setUtcOffset(state: GameState, minutes: number, t: number): void
  */
 export function cityRatePerSecond(state: GameState, currency: RaidableId): number {
   const gathered = cityGatherPerSecond(state, currency);
-  return currency === 'Gold' ? gathered + cityGoldPerMinute(state) / 60 : gathered;
+  if (currency !== 'Gold') return gathered;
+  return gathered + (cityGoldPerMinute(state) - ownGoldPerMinute(townhall(state))) / 60;
 }
+
+/**
+ * The stores a raid can reach. **The Townhall's own Gold is never raided**: it
+ * is the city's floor, the one source of Gold a standing lair cannot shut off
+ * (Docs/features/18-garrisons-and-raids.md §4).
+ */
+const raidable = (d: District): boolean => ownGoldPerMinute(d) === 0;
+
+const raidableStored = (state: GameState, c: RaidableId): number =>
+  state.city.districts.reduce((n, d) => n + (raidable(d) ? storedOf(d, c) : 0), 0);
 
 /**
  * What one raid on this lair would take right now.
@@ -189,7 +200,7 @@ export function raidTake(state: GameState, lairId: LairId): Wallet {
   for (const c of RAIDABLE) {
     const produced = cityRatePerSecond(state, c) * seconds;
     if (produced <= 0) continue; // they take from what you MAKE
-    const stored = cityStored(state, c);
+    const stored = raidableStored(state, c);
     const take = Math.floor(Math.min(produced, stored * RAID.takeFractionMax));
     if (take > 0) took[c] = take;
   }
@@ -259,12 +270,12 @@ export function advanceRaids(state: GameState, t: number): RaidEvent[] {
  * so the same raid takes the same units from the same buildings in replay.
  */
 function takeFromStores(state: GameState, c: RaidableId, amount: number): number {
-  const total = cityStored(state, c);
+  const total = raidableStored(state, c);
   if (total <= 0 || amount <= 0) return 0;
   let left = Math.min(amount, total);
   for (const d of state.city.districts) {
     if (left <= 0) break;
-    const here = storedOf(d, c);
+    const here = raidable(d) ? storedOf(d, c) : 0;
     if (here <= 0) continue;
     left -= takeFromStore(d, c, Math.min(left, Math.ceil((amount * here) / total)));
   }

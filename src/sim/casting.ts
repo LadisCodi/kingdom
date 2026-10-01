@@ -29,7 +29,6 @@ import {
 } from './state';
 import { pullHouseForward, residentsOf } from './population';
 import { artifactLevel, ownsArtifact } from './artifacts';
-import { techValue } from './techEffects';
 
 export type CastBlock =
   | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget'
@@ -143,7 +142,7 @@ export function castBlock(
 export function castCost(state: GameState, id: ArtifactId): number {
   const active = ARTIFACTS[id].active;
   if (active === null) return 0;
-  const bought = active.manaCost * Math.max(0, techValue(state, 'activeCost', 1));
+  const bought = active.manaCost * Math.max(0, 1);
   return Math.max(0, Math.round(resolve(state, 'activeCost', bought)));
 }
 

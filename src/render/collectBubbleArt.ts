@@ -1,6 +1,6 @@
 // Drawing the collect bubble (./collectBubbles.ts has the why).
 
-import type { CurrencyId, District } from '../sim/state';
+import type { CurrencyId, District, GameState } from '../sim/state';
 import { isStoreFull } from '../sim/storage';
 import type { CollectBubbles } from './collectBubbles';
 import { drawIcon, drawSprite } from './sprites';
@@ -37,6 +37,7 @@ const phaseOf = (id: string): number => {
 export function drawCollectBubble(
   ctx: CanvasRenderingContext2D,
   bubbles: CollectBubbles,
+  state: GameState,
   district: District,
   tipX: number,
   tipY: number,
@@ -91,7 +92,7 @@ export function drawCollectBubble(
   ctx.shadowColor = 'transparent';
   ctx.lineWidth = line;
   ctx.lineJoin = 'round';
-  ctx.strokeStyle = isStoreFull(district) ? RIM_FULL : RIM;
+  ctx.strokeStyle = isStoreFull(state, district) ? RIM_FULL : RIM;
   ctx.stroke();
   const icon = Math.round(Math.min(w, h) * 0.7);
   drawIcon(ctx, currency, -icon / 2, y + (h - icon) / 2, icon);

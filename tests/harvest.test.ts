@@ -317,11 +317,11 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
-      // One landform, two depths of skill. A bare peak answers a pick from
-      // the first second — Scaling Tools sits in the Magic tome now, far too
-      // late to hold era-1 Stone — Mining gets the iron out of it and Deep
-      // Mining reaches the gold. One building works all three: the ladder is
-      // in the research, not in the buildings.
+      // One landform, three depths of skill. Pickaxes opens the bare peak —
+      // taught in the opening, just before the Barracks asks for Stone —
+      // Mining gets the iron out of it and Deep Mining reaches the gold. One
+      // building works all three: the ladder is in the research.
+      Stone: 'Pickaxes',
       MountainIron: 'Mining',
       MountainGold: 'DeepMining',
     });
@@ -430,6 +430,7 @@ describe('an iron mountain does not answer a pick until Mining', () => {
     expect(peak).not.toBeNull();
     const state = freshGame();
     reveal(state, [peak!]);
+    completeTech(state, 'Pickaxes');
 
     const spec = HARVEST.Stone;
     for (let i = 0; i < spec.stock; i++) {

@@ -711,3 +711,6 @@
   .dc-hammer { animation: none; rotate: -20deg; }
   .dc-spark { animation: none; }
 }
+
+/* The Tavern's two doors: the roster and a call. */
+.dc-tavern { display: flex; gap: calc(var(--px) * 10); justify-content: center; }

@@ -16,8 +16,9 @@
 // a stat's gain is always the difference of what the two levels show, and
 // adding one to a building adds it to both screens at once.
 
+import { techMultiplier } from '../sim/techEffects';
 import {
-  DISTRICTS, FOG, HARVEST, MANA, TAXES, levelIndexed,
+  DISTRICTS, FOG, HARVEST, MANA, levelIndexed,
 } from '../sim/data/definitions';
 import { trainSecondsAt } from '../sim/army';
 import { requiredPopulation, requiredTechForLevel, requiredTownhallLevel } from '../sim/districts';
@@ -109,7 +110,9 @@ export function statsAt(game: Game, district: District, level: number): Building
   // What it holds uncollected (03-economy.md §3.2), in the coin it makes: a
   // level buys a bigger store, and a bigger store is a longer absence.
   if (def.storageCapacityPerLevel.length > 0) {
-    const cap = levelIndexed(def.storageCapacityPerLevel, level);
+    // After the tree's Granaries, so the card's *120/150* is the real ceiling.
+    const cap = Math.floor(levelIndexed(def.storageCapacityPerLevel, level)
+      * techMultiplier(game.state, 'storageCapacity', { district: def.id }));
     const coin = (def.harvestSources.length > 0
       ? HARVEST[def.harvestSources[0]].currencyId : 'Gold') as IconName;
     add('store', coin, 'Storage', 'Storage', formatExact(cap), cap,
@@ -120,6 +123,12 @@ export function statsAt(game: Game, district: District, level: number): Building
   }
   if (def.bedsPerLevel.length > 0) {
     add('beds', 'hp', 'Beds', 'Beds', levelIndexed(def.bedsPerLevel, level));
+  }
+  // The Tavern's whole ladder: a share more Hero XP, the TOTAL at the level.
+  if (def.heroXpBonusPerLevel.length > 0) {
+    const xp = levelIndexed(def.heroXpBonusPerLevel, level);
+    add('heroXp', 'HeroXp', 'Hero XP', 'Hero XP', `+${formatExact(xp)}%`, xp,
+      (d) => signed(d, `${formatExact(Math.abs(d))}%`));
   }
   // A level buys a house MORE ROOM and BETTER RENT, and the second half is
   // the reason to keep upgrading a house that is already full.
@@ -136,10 +145,10 @@ export function statsAt(game: Game, district: District, level: number): Building
     add('mana-rate', 'Mana', 'Mana /h', 'Rate', levelIndexed(MANA.sanctumPerHourPerLevel, level));
   }
   if (district.definitionId === 'Townhall') {
-    const ladder = TAXES.townhallMultiplierPerLevel;
-    if (ladder.length > 0) {
-      const mult = levelIndexed(ladder, level);
-      add('taxes', 'Gold', 'Gold income', 'Income', `×${mult}`, mult);
+    // Its own Gold, made with nobody living in it, into its own store.
+    if (def.goldPerMinutePerLevel.length > 0) {
+      const perHour = levelIndexed(def.goldPerMinutePerLevel, level) * 60;
+      add('taxes', 'Gold', 'Gold /h', 'Income', perHour);
     }
     const reach = FOG.reachPerTownhallLevel;
     if (reach.length > 0) {

@@ -11,6 +11,7 @@
 // thumb reach.
 
 import type { Game, OverlayName } from '../game';
+import type { DoorId } from '../sim/doors';
 import { el } from './format';
 import { iconEl, setCta, type IconName } from './kit';
 
@@ -39,12 +40,12 @@ import { iconEl, setCta, type IconName } from './kit';
 // destination: a player goes there to look at what their relics DO and to
 // close the page that levels one. Naming the tab after the currency rather
 // than after the thing it buys made the relics a screen behind a screen.
-const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
-  { name: 'store', label: 'Store', icon: 'shop' },
-  { name: 'collection', label: 'Relics', icon: 'relics' },
-  { name: 'heroes', label: 'Heroes', icon: 'helmet' },
-  { name: 'research', label: 'Research', icon: 'research' },
-  { name: 'build', label: 'Build', icon: 'build' },
+const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName; door: DoorId }> = [
+  { name: 'store', label: 'Store', icon: 'shop', door: 'store' },
+  { name: 'collection', label: 'Relics', icon: 'relics', door: 'relics' },
+  { name: 'heroes', label: 'Heroes', icon: 'helmet', door: 'heroes' },
+  { name: 'research', label: 'Research', icon: 'research', door: 'research' },
+  { name: 'build', label: 'Build', icon: 'build', door: 'build' },
 ];
 
 export function mountNavbar(game: Game, root: HTMLElement): void {
@@ -52,12 +53,21 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const tabs = TABS.map((t) => {
     const button = el(
       'button',
-      { class: 'nav-tab', type: 'button' },
+      { class: 'nav-tab', type: 'button', 'data-coach': `nav:${t.name}` },
       iconEl(t.icon, { size: 'md' }),
       el('span', { class: 'nav-label' }, t.label),
+      // A shut door wears a brass padlock over its mark
+      // (Docs/features/22-progression.md §3); it breaks off when it opens.
+      el('span', { class: 'nav-lock', 'aria-hidden': 'true' }, iconEl('padlock', { size: 'sm' })),
     );
-    // The bar is only on screen over the map, so a tap opens its menu.
+    // The bar is only on screen over the map, so a tap opens its menu — or,
+    // behind a padlock, shakes it and says what opens it (setOverlay's gate).
     button.addEventListener('click', () => {
+      if (!game.doorOpen(t.door)) {
+        button.classList.remove('is-shaking');
+        void button.offsetWidth; // restart the shake
+        button.classList.add('is-shaking');
+      }
       game.setOverlay(game.openOverlay === t.name ? null : t.name);
     });
     return { def: t, button };
@@ -67,13 +77,22 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const refresh = () => {
     for (const { def, button } of tabs) {
       button.classList.toggle('is-active', game.openOverlay === def.name);
+      const locked = !game.doorOpen(def.door);
+      // The padlock breaks the moment the door opens: a class for one beat.
+      if (button.classList.contains('is-locked') && !locked) {
+        button.classList.add('is-unlocking');
+        window.setTimeout(() => button.classList.remove('is-unlocking'), 900);
+      }
+      button.classList.toggle('is-locked', locked);
+      button.setAttribute('aria-disabled', locked ? 'true' : 'false');
       // The orb shows when the screen behind the tab has
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started
       // this second.
-      const count = def.name === 'build' ? game.buildCtaCount()
-        : def.name === 'research' ? game.researchCtaCount()
-          : 0;
+      const count = locked ? 0
+        : def.name === 'build' ? game.buildCtaCount()
+          : def.name === 'research' ? game.researchCtaCount()
+            : 0;
       // The kit's orb, with the count on it past one (kit/cta.ts).
       setCta(button, count);
     }

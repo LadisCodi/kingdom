@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
@@ -14,8 +15,7 @@ import {
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type FaceId, type PackTier,
-} from './sim/data/definitions';
+  type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -89,6 +89,7 @@ import {
   boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
   watchedRefillsLeft,
 } from './sim/manaRefill';
+import { sightedAt } from './sim/sight';
 import { landmarkDefAt, standingLairAt } from './sim/sites';
 import { lairHolding } from './sim/lairZone';
 import {
@@ -97,9 +98,8 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, isTechComplete,
-  pourKnowledge, techKnowledgeMissing, techUnlocks, type ResearchRefusal,
+  pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
 } from './sim/research';
-import { describeTech } from './sim/techProse';
 import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
@@ -133,12 +133,11 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
-import { Camera } from './render/camera';
+import { KINGDOM_DEF, QUESTS, SCENES, type QuestDef } from './sim/data/definitions';
+import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
-import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
@@ -173,7 +172,17 @@ export type OverlayName =
   // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
-  | 'heroPicker';
+  | 'heroPicker'
+  // The world beyond the province — a preview until the board is built
+  // (Docs/features/22-progression.md §5).
+  | 'world';
+
+/** Which door an overlay stands behind (Docs/features/22-progression.md §3).
+ *  An overlay not named here is never padlocked. */
+const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
+  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
+  world: 'world', knowledge: 'knowledge', daily: 'daily',
+};
 
 /** How the hero picker orders the heroes it offers. */
 export type HeroPickSort = 'level' | 'rarity';
@@ -206,7 +215,9 @@ export type Hint =
   | { kind: 'ui'; key: string; until: number }
   | { kind: 'cell'; cell: Coord; until: number };
 
-const HINT_MS = 8000;
+/** How long a hint points before it lets go (`tutorial` › `help.pointerSeconds`,
+ *  Docs/features/23-tutorials.md §5). */
+const HINT_MS = HELP.pointerSeconds * 1000;
 
 /** A queued top-of-screen notification card (shown one at a time, 5s each). */
 export interface Banner {
@@ -467,6 +478,23 @@ export class Game {
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private rewardListeners: Array<(haul: Wallet, from?: { x: number; y: number }, tap?: boolean) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
+  /** Doors that opened since the stage last drained them — the padlock
+   *  breaking, and the introduction that goes with it. Transient. */
+  doorsJustOpened: DoorId[] = [];
+
+  /**
+   * THE TUTORIAL'S GATE ON THE MAP (Docs/features/23-tutorials.md §6): the
+   * stage sets it while a line holds a lock, and every tap, hold and ghost
+   * drag asks it first. Absent = everything goes through.
+   */
+  tapGate: ((cell: Coord | null, how: 'tap' | 'hold' | 'ghost') => boolean) | null = null;
+  /** Inside an automatic claim — so the claim's own notify does not start another. */
+  private autoClaiming = false;
+
+  /** Is this door of the UI open (Docs/features/22-progression.md §3)? */
+  doorOpen(door: DoorId): boolean {
+    return isDoorOpen(this.state, door);
+  }
 
   constructor(
     public state: GameState,
@@ -527,14 +555,28 @@ export class Game {
     this.packsSeen = packs;
     this.dealPayouts();
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
-    // so the banner component sees them on this very render.
+    // so the banner component sees them on this very render. A RESOURCE is
+    // never announced: its coin lands on the plank under the player's own
+    // tap. A SITE is, unless a scene introduces it — the advisor says it.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
-      if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
-      if (kind === 'site') {
-        const banner = siteBanner(id);
-        if (banner) this.queueBanner(banner);
-      }
+      if (kind !== 'site' || this.sceneIntroduces(id)) continue;
+      const banner = siteBanner(id);
+      if (banner) this.queueBanner(banner);
+    }
+    // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
+    // again, and announced to whoever draws padlocks and plays scenes.
+    for (const door of freshlyOpenDoors(this.state)) {
+      markDoorSeen(this.state, door);
+      this.doorsJustOpened.push(door);
+    }
+    // A quest that CLAIMS ITSELF does so the moment it is done: the player is
+    // already reaching for its next step (Docs/features/12-quests.md §1).
+    const done = this.questInfo();
+    if (done?.complete === true && done.quest.autoClaim && !this.autoClaiming) {
+      this.autoClaiming = true;
+      try { this.doClaimQuest(); } finally { this.autoClaiming = false; }
+      return;
     }
     // The moment the active quest's goal is met, ding — before any claim.
     const questDone = this.questInfo()?.complete ?? false;
@@ -734,7 +776,14 @@ export class Game {
       handle: (cell) => {
         if (this.openOverlay !== null) return false;
         const fog = fogState(this.state, this.map, cell);
-        if (fog === 'Undiscovered') return true; // swallowed
+        if (fog === 'Undiscovered') {
+          // A silhouette past the fog (01-map-and-fog.md §4.1) answers with
+          // the way to it; the plain dark swallows the tap.
+          if (sightedAt(this.state, this.map, cell) !== undefined) {
+            this.toast('Something stands in the dark — clear the fog towards it');
+          }
+          return true;
+        }
         if (fog !== 'Discovered') return false;
         // Read BEFORE the tap: a tap charges a fifth of the cell's price now,
         // not one Gold, so the floater has to be told what it cost.
@@ -775,7 +824,7 @@ export class Game {
         // A building with something in its store: the tap COLLECTS, free, and
         // does nothing else. The next tap, with the store empty, opens it
         // (Docs/features/03-economy.md §3.2).
-        if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+        if (district && district.state === 'Built' && showsCollect(this.state, district)) {
           this.collectStoreOf(district);
           this.notify();
           return true;
@@ -950,10 +999,11 @@ export class Game {
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
+    if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+    if (district && district.state === 'Built' && showsCollect(this.state, district)) {
       this.collectStoreOf(district);
       this.notify();
       return true;
@@ -1000,12 +1050,18 @@ export class Game {
    * roof. So the cells are walked nearest first and the first one whose
    * ground is not hidden behind a building is taken; only if every one is
    * hidden does the nearest win anyway.
+   *
+   * A building that sends workers out starts where it would WORK THE MOST —
+   * a Farm beside the crop plots — and the nearest of those.
    */
   defaultPlacementCell(definitionId: DistrictId): Coord | null {
     const size = DISTRICTS[definitionId].size;
+    const works = DISTRICTS[definitionId].harvestSources.length > 0;
     const cells = validPlacementCells(this.state, this.map, definitionId)
-      .map((c) => ({ c, d: townhallDistance(this.map, c) }))
-      .sort((a, b) => a.d - b.d);
+      .map((c) => ({
+        c, d: townhallDistance(this.map, c), n: works ? this.capturedCells(definitionId, c).length : 0,
+      }))
+      .sort((a, b) => b.n - a.n || a.d - b.d);
     if (cells.length === 0) return null;
     return (cells.find(({ c }) => !this.hiddenBehindBuilding(c, size)) ?? cells[0]).c;
   }
@@ -1057,7 +1113,7 @@ export class Game {
     this.mode = { kind: 'placing', definitionId, selected };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size);
+    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -1087,7 +1143,7 @@ export class Game {
     this.inspectedDistrictId = null;
     // The ghost is out where the building stands: bring it into view, as
     // placement does for a new one.
-    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
+    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -1166,7 +1222,7 @@ export class Game {
     this.openRelicId = null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
-    if (selected) this.camera.centerOnCell(selected);
+    if (selected) this.camera.centerOnCell(selected, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -1649,7 +1705,6 @@ export class Game {
       const result = placeWildcard(this.state, { album, slot }, rarity);
       if (result.placed) {
         playSfx('upgradeBought');
-        this.toast(`${card.name} — filled with a ${rarity}★ wildcard`);
         if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
       } else if (result.reason === 'GoldSlot') {
         this.toast('No wildcard covers a gold card — it is earned or sent');
@@ -2239,6 +2294,9 @@ export class Game {
    *  waiting, or a Royal chest still on the table (§3.4). */
   dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
     const now = this.now();
+    // The chest arrives the day after the kingdom's first, once the First
+    // Morning is over (Docs/features/22-progression.md §3).
+    if (!this.doorOpen('daily')) return null;
     if (!chestSheetOpen(this.state, now)) return null;
     const ready = chestAvailable(this.state, now);
     const pending = anyRoyalPending(this.state, now);
@@ -2280,9 +2338,6 @@ export class Game {
    *  thirteen-round trip through the pill. */
   private announceChest(haul: Wallet): void {
     playSfx('quest');
-    const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
-      .map(([c, n]) => `+${formatExact(n)} ${c}`);
-    this.toast(parts.join(' · '));
     this.notify();
     this.reward(haul);
   }
@@ -2424,8 +2479,6 @@ export class Game {
   doBuyKeys(banner: BannerId, count = 1): void {
     if (buyKeys(this.state, banner, count) === 'Purchased') {
       playSfx('gemSpend');
-      const kind = BANNERS[banner].key === 'GoldKey' ? 'gold' : 'silver';
-      this.toast(`+${count} ${kind} key${count === 1 ? '' : 's'}`);
     } else {
       this.shake(['Gems']);
     }
@@ -2504,7 +2557,6 @@ export class Game {
       // The refused-build offer closes on purchase — the player was placing
       // something. The store stays open: they came to shop.
       if (opts.closeSheet !== false) this.setOverlay(null);
-      this.toast('A builder joins your kingdom');
     } else if (result === 'NotEnoughGems') {
       this.shake(['Gems']);
     }
@@ -2613,16 +2665,15 @@ export class Game {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
-      this.toast(id === 'RoyalChest'
-        ? 'The Royal chest is yours for the season'
-        : id === 'SeasonPass'
-          ? 'The season pass is yours — every level you have reached is open'
-        : bundleOf(id) !== null
-          // A bundle is opened in the Collection, like every pack that falls:
-          // the store hands over the things, it does not turn them over.
-          ? `${STORE[id].name} — open it in the Collection`
-          : 'Gems added to your purse');
+      // Only what the player cannot see from where they land is said. A
+      // bundle is opened in the Collection, like every pack that falls: the
+      // store hands over the things, it does not turn them over.
+      if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
+      else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
       this.setOverlay(back);
+      if (result === 'Purchased' && id !== 'RoyalChest' && id !== 'SeasonPass' && bundleOf(id) === null) {
+        this.reward({ Gems: STORE[id].gems });
+      }
     } else if (result === 'SeasonClosing') {
       // The season turned over while the confirmation was open. Nothing was
       // charged; say why rather than shake a purse that is not the problem.
@@ -2642,7 +2693,7 @@ export class Game {
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
-    else if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    else if (result === 'AtMax') this.toast(this.atMaxWords());
     this.notify();
   }
 
@@ -2813,38 +2864,22 @@ export class Game {
     this.notify();
   }
 
-  /** The banners a completed technology earns: the completion, then one
-   *  card per thing it unlocked. A minor RANK unlocks nothing and announces
-   *  nothing past the first card: its reward is the number on it. */
-  private announceResearch(id: TechId): void {
-    const tech = TECHNOLOGIES[id];
-    this.queueBanner({
-      title: 'Research complete!', icon: tech.glyph, name: tech.name,
-      desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
-    });
-    // Everything this tech just unlocked gets its own card, queued behind.
-    // A minor RANK unlocks nothing and announces nothing: its reward is the
-    // number in its own description, and a banner per rank would be noise.
-    for (const unlock of techUnlocks(id)) {
-      if (unlock.kind === 'district') {
-        const def = DISTRICTS[unlock.id];
-        this.queueBanner({
-          title: 'New building unlocked!', icon: def.glyph, name: def.name,
-          desc: def.description, sprite: `${def.sprite}_l1`,
-        });
-      } else if (unlock.kind === 'districtLevel') {
-        const def = DISTRICTS[unlock.id];
-        this.queueBanner({
-          title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
-          desc: `${def.name} can now reach level ${unlock.level}.`,
-        });
-      } else if (unlock.kind === 'unit') {
-        const unit = UNITS[unlock.id];
-        this.queueBanner({
-          title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
-        });
-      }
-    }
+  /** Whether a scene introduces this site the moment it is found — then the
+   *  advisor announces it and a banner would say it twice. A veteran plays no
+   *  scenes, so is told by the banner. */
+  private sceneIntroduces(siteId: string): boolean {
+    if (this.state.tutorial.veteran) return false;
+    return SCENES.some((s) =>
+      (s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId);
+  }
+
+  /** Every bed is taken. A House already going up is the answer the player
+   *  has given; telling them to build one would send them to do it twice. */
+  private atMaxWords(): string {
+    const rising = this.state.city.districts.some((d) => d.state !== 'Built'
+      && DISTRICTS[d.definitionId].populationCapacityPerLevel.length > 0);
+    return rising ? 'The new House is still going up — wait for it to finish'
+      : 'Population at max — build more Housing';
   }
 
   private researchRefusalToast(refusal: ResearchRefusal, id: TechId): void {
@@ -2869,7 +2904,7 @@ export class Game {
   /** Pay the Gold and complete a technology whose Knowledge is in. */
   doResearchTech(id: TechId): void {
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched') this.announceResearch(id);
+    if (result === 'Researched') playSfx('researchComplete');
     else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
@@ -2937,7 +2972,7 @@ export class Game {
       if (!cell) return;
       this.setOverlay(null);
       this.inspectedDistrictId = null;
-      this.camera.centerOnCell(cell);
+      this.camera.centerOnCell(cell, undefined, CAMERA_GLIDE_MS);
       this.setCellHint(cell); // arrow on the map until tapped (or timeout)
       this.notify();
     };
@@ -2948,7 +2983,7 @@ export class Game {
       }
       this.setOverlay(null);
       this.inspectedDistrictId = district.uniqueId;
-      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size);
+      this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
       this.notify();
     };
     const built = (pred: (d: District) => boolean) =>
@@ -3033,14 +3068,17 @@ export class Game {
       case 'ClaimLandmarks': {
         // The nearest landmark that is visible and unclaimed; failing that,
         // the nearest frontier cell — because the answer is "explore".
+        // A goal naming a KIND (the Watchtower) points at that kind only.
+        const kind = quest.goalTarget;
         const claimable = visibleLandmarks(this.state, this.map)
-          .filter((l) => this.state.landmarks.claimed[l.id] !== true)
+          .filter((l) => this.state.landmarks.claimed[l.id] !== true
+            && (kind === null || l.kind === kind))
           .sort((a, b) =>
             townhallDistance(this.map, a.location) - townhallDistance(this.map, b.location))[0];
         if (claimable) {
           this.setOverlay(null);
           this.inspectedSite = claimable.location;
-          this.camera.centerOnCell(claimable.location);
+          this.camera.centerOnCell(claimable.location, undefined, CAMERA_GLIDE_MS);
           this.notify();
         } else {
           centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
@@ -3161,14 +3199,6 @@ export class Game {
     if (result === 'Claimed') {
       playSfx('upgradeBought');
       this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
-      this.queueBanner({
-        title: 'Landmark claimed!',
-        icon: LANDMARK_ART[def.kind].glyph,
-        name: LANDMARK_ART[def.kind].name,
-        desc: 'A deeper Mana pool, for good — and the fog lifts all around it.',
-        sprite: LANDMARK_ART[def.kind].sprite,
-        tone: 'sky',
-      });
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
     }
@@ -3214,7 +3244,7 @@ export class Game {
     this.setOverlay(null);
     this.inspectedSite = LAIRS[lairId].location;
     this.inspectedDistrictId = null;
-    this.camera.centerOnCell(LAIRS[lairId].location);
+    this.camera.centerOnCell(LAIRS[lairId].location, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -3771,7 +3801,6 @@ export class Game {
     const result = healWounded(this.state, unitId, count, this.now(), at);
     if (result === 'Queued') {
       playSfx('unitTrained');
-      this.toast(`${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'} on the mend`);
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(healCost(this.state, unitId, count)) as CurrencyId[]);
     } else if (result === 'ArmyAtCapacity') {
@@ -3803,7 +3832,7 @@ export class Game {
     const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
-    if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
@@ -3842,6 +3871,14 @@ export class Game {
     if (this.state.player.payer === null && name !== 'payerProfile') {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
+    }
+    // A padlocked door says what opens it and opens nothing
+    // (Docs/features/22-progression.md §3).
+    const door = name === null ? undefined : OVERLAY_DOOR[name];
+    if (door !== undefined && !isDoorOpen(this.state, door)) {
+      this.toast(DOOR_HINT[door]);
+      this.notify();
+      return;
     }
     this.openOverlay = name;
     if (name !== null) {
@@ -4219,6 +4256,7 @@ export class Game {
   grabGhost(sx: number, sy: number): boolean {
     const ghost = this.ghostFootprint();
     if (ghost === null) return false;
+    if (this.tapGate !== null && !this.tapGate(null, 'ghost')) return false;
     const cell = this.camera.screenToCell(sx, sy);
     return cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
       && cell.y >= ghost.cell.y && cell.y < ghost.cell.y + ghost.size.y;
@@ -4305,6 +4343,7 @@ export class Game {
       }
       return;
     }
+    if (this.tapGate !== null && !this.tapGate(cell, 'tap')) return;
     this.tapChain.dispatch(cell);
   }
 
@@ -4442,7 +4481,7 @@ export class Game {
     const hall = townhall(this.state);
     this.setOverlay(null);
     this.inspectedDistrictId = hall.uniqueId;
-    this.camera.centerOnCell(hall.location);
+    this.camera.centerOnCell(hall.location, undefined, CAMERA_GLIDE_MS);
     this.notify();
   }
 
@@ -4515,17 +4554,6 @@ const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
   MountainGold: 'tapIron',
   Fish: 'tapFish',
 };
-
-/** The discovery card for a first-collected resource. */
-function resourceBanner(currency: CurrencyId): Banner {
-  const def = CURRENCIES[currency];
-  const desc = currency === 'Gold'
-    ? 'Pays for everything'
-    : def.goldValue !== null
-      ? `Sells for ${formatExact(def.goldValue)} ${icon('Gold')}`
-      : '';
-  return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
-}
 
 /**
  * The card for a landmark or lair coming into view for the first time.

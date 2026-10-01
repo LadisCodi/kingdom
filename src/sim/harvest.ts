@@ -12,7 +12,7 @@ import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { footprintAt, neighbors, type MapData } from './grid';
 import { resolve, resolveAt } from './modifiers';
-import { techValue } from './techEffects';
+import { techMultiplier } from './techEffects';
 import { pick } from './rng';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
@@ -127,17 +127,17 @@ const cellState = (
  * keeps one-call replay identical to stepped ticking: both stamp at the same
  * instant, so both read the same tree.
  *
- * `harvestRecovery` is aimed at the SOURCE, so "trees grow back 20% faster"
- * is one effect on `{ harvest: 'Forest' }` and leaves the crops alone. A
- * faster regrowth is a NEGATIVE percent: the number here is seconds of
- * waiting, and less of it is the good news.
+ * `regrowthSpeed` is aimed at the SOURCE, so "trees grow back 20% faster"
+ * is one effect on `{ harvest: 'Forest' }` and leaves the crops alone. It is
+ * a SPEED the wait is divided by, so a rank only ever climbs and no stack of
+ * them reaches a cell that grows back in no time.
  */
 export const effectiveRecoveryMs = (
   state: GameState, spec: HarvestSpec, at: Coord,
 ): number =>
   Math.max(1000, Math.round(
-    resolve(state, 'cellRecovery',
-      techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))
+    resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)
+    / Math.max(1, techMultiplier(state, 'regrowthSpeed', { harvest: spec.id }))
     // AT THE CELL, because the Dowsing Rod's zone is a place. It is read once,
     // when the cell exhausts, so a zone only ever reaches the cells that empty
     // INSIDE it — which is exactly what the active's instant refill arranges,

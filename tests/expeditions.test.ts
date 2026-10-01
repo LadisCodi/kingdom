@@ -25,7 +25,9 @@ import { firstClearLump, knowledgePerHour, landmarkClaimLump } from '../src/sim/
 import {
   getWallet, townhall, type GameState, type UnitId,
 } from '../src/sim/state';
-import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, stored, T0 } from './helpers';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, T0, rentStored,
+} from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -147,8 +149,9 @@ describe('the army cap is a city decision', () => {
 describe('training takes time now', () => {
   it('each building runs its own line, in true chronological order', () => {
     const state = readyToDelve({});
-    completeTech(state, 'Warrior');
-    completeTech(state, 'Archery');
+    // Pushed by id, not through the chain helper: the chain above Archery
+    // carries Drill Yards, which would speed the very clocks under test.
+    state.research.completed.push('Warrior', 'Archery');
     // NAMED halls: the Barracks turns out Archers too, so without saying where,
     // all three would join one line and the parallelism this test is about
     // would quietly stop existing.
@@ -215,7 +218,7 @@ describe('training takes time now', () => {
 
 // What a lair attack costs (Docs/proposals/lairs.md §5): the tier's
 // `garrisons` supplies, discounted by the best Quartermaster in the party and
-// by the Rations line, and never below 1 of anything it asks for.
+// and never below 1 of anything it asks for. The tree discounts nothing.
 describe('the supplies a lair asks for', () => {
   const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 
@@ -236,17 +239,6 @@ describe('the supplies a lair asks for', () => {
     const both = lairSupplyCost(state, id, ['Quartermaster', 'Scout']);
     expect(both).toEqual(lairSupplyCost(state, id, ['Scout']));
     expect(both.Gold).toBe(Math.round(base.Gold! * 0.6));
-  });
-
-  it('stack Rations on top of the quartermaster', () => {
-    const state = readyToDelve();
-    const id = 'Drake';
-    const before = lairSupplyCost(state, id, ['Quartermaster']).Gold!;
-    completeTech(state, 'RationsI');
-    const after = lairSupplyCost(state, id, ['Quartermaster']).Gold!;
-    expect(after).toBeLessThan(before);
-    // The trait and the line multiply: 25% off, then Rations I's 5% off that.
-    expect(after).toBe(Math.round(lairSupplies(id).Gold! * ((1 - 0.25) * 0.95)));
   });
 
   it('is what the attempt charges, and what the preview shows', () => {
@@ -418,7 +410,7 @@ describe('finishing a training line with gems', () => {
     expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
     expect(state.city.population).toBe(1);
     advance(state, map, T0 + 60_000);
-    expect(stored(state, 'Gold')).toBe(30); // a full minute of rent, in the house
+    expect(rentStored(state)).toBe(30); // a full minute of rent, in the house
   });
 });
 

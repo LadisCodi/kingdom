@@ -29,10 +29,9 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * lands, leaving the name here fails.
  */
 const AWAITING_ART: readonly string[] = [
-  // Empty again since 2026-09-11: the collection's four marks
-  // (Docs/art/ui-menus-redesign.md §7.26, sheet C2) landed with the screens
-  // they belong to. A name goes back on this list only while a sheet for it
-  // is being generated.
+  // The Tavern (Docs/features/22-progression.md §6): its card icon and its
+  // locked variant wait on the building's sheet.
+  'Tavern',
 ];
 
 const pending = new Set(AWAITING_ART);

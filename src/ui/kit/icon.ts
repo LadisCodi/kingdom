@@ -99,7 +99,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   Planks: '🪵', CutStone: '🧱', Runestone: '🔯',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
-  Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯',
+  Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯', Tavern: '🍺',
   Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
   Infirmary: '⛑️',
   Carpenter: '🔨', MasonsYard: '🧱', Smelter: '🔥', RuneCarver: '🔯',

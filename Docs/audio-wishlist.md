@@ -13,7 +13,7 @@ the ambience files use the provided `ambiance_*` spelling. Still open:
 
 Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 · `discovery` (default banner chime) · `quest_claimed` · `research_started`
-· `music-harp-peaceful-loop`.
+· `music-harp-peaceful-loop` · `text_tick_01`/`_02` (dialogue typing).
 
 ## Tier 1 — core feedback (silent moments players notice)
 

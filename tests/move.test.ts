@@ -17,12 +17,12 @@ import {
 } from './helpers';
 
 // Real grassland from the authored map. The Townhall spans (0,0)-(1,1), so
-// all three of these touch it or each other; (5,5) is open ground well clear
+// all three of these touch it or each other; (-3,5) is open ground well clear
 // of everything, which is what makes it useful as "nowhere near a neighbour".
 const HOUSE_CELL: Coord = { x: 2, y: 0 };
 const NEIGHBOUR_CELL: Coord = { x: 2, y: 1 };
 const AWAY_CELL: Coord = { x: 0, y: 2 }; // touches the Townhall, not (2,1)
-const FAR_CELL: Coord = { x: 5, y: 5 };
+const FAR_CELL: Coord = { x: -3, y: 5 };
 
 const houseAt = (state: ReturnType<typeof freshGame>, cell: Coord) => {
   addBuilt(state, 'Housing', cell);

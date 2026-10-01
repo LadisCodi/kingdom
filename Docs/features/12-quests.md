@@ -12,8 +12,10 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **53 quests**, paying 12,175 Gold, 100 Mana, 750 Gems, 158 Stardust and
-  **27 Knowledge across eleven of them** (§2.1).
+- **66 quests**, paying 16,035 Gold, 100 Mana, 750 Gems, 140 Stardust,
+  **37 Knowledge across sixteen of them** (§2.1) and **one card pack**.
+- A reward may carry a **card pack** (`rewardPack`); the first fight's is the
+  kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
 
 ### 1.1 Goal types
 
@@ -21,14 +23,28 @@
   *Townhall at level 2*, *10 Wood in stock*). Work done before activation
   counts; the quest completes on activation.
 - **Relative** goals count events from activation only (*collect 30 Gold*,
-  *reveal 6 cells*). They hook the sim's collect, tap, reveal and sale paths.
+  *find 4 forests*). They hook the sim's collect, tap and reveal paths.
+- **A quest may claim itself** (`autoClaim`) the moment it is done, its
+  reward paid as a tap would: for a quest whose next step the player is
+  already reaching for. `Woodcraft` does — the player wants the axe, not the
+  scroll, and the First Morning has shown the scroll already.
+- **`BuildDistrict` counts a building the moment its build starts.** A build
+  cannot be cancelled, so it is the player's from then; the quest does not
+  wait for the scaffold. What needs the building *standing* — its workers, a
+  villager's roof — waits for it on its own.
+- **`DiscoverCells` is a total** — *clear the fog from 32 tiles in all*, the
+  same count the book bands read. A player who cleared everything in reach
+  before the quest arrived is never stuck behind it.
 - A `collect` counts when units reach the wallet — a tap on the ground, or
   collecting a building's store ([`03-economy.md`](03-economy.md) §3.2) —
   never when rent accrues or a haul lands.
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · **ClearGarrisons** *(designed)* · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature |
+| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
+
+- **`ClaimLandmarks` may name a landmark kind** — *Claim the Watchtower* — and
+  names none for any landmark.
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
   quest is an entry.
@@ -41,48 +57,43 @@
 - **The tracker holds 44 characters**, and that is the whole budget: it is the
   only place a quest's line is ever shown. Written copy ran to 105 and was
   read cut off mid-word; the generated lines top out at 30.
-- **`DiscoverFeature`** is a `DiscoverCells` that counts only cells carrying a
-  given feature.
+- **`DiscoverFeature`** counts the reveals that uncover a given feature,
+  from activation — at the reveal, because a finite feature (a berry bush)
+  leaves the map when it is used up.
   - The hint points at a dark cell that has the feature; with none in sight it
     points at the nearest frontier cell.
   - The feature is carried on the reveal event, not looked up later, so
     draining the feature afterwards cannot un-complete the quest.
 - Beats overlap: the 25 Wood quest 3 chops is the Wood quests 4 and 10 spend.
 
-## 2. The onboarding — quests 1–41
+## 2. The chain, act by act
 
-- **Quest number is beat number.** The arc is asserted beat by beat in a test.
+- **Quest number is beat number.** The arc is asserted beat by beat in
+  `tests/quests.test.ts`, and the opening is **played** through the real sim
+  in `tests/onboarding.test.ts`.
+- The First Morning's scripted beats ride on quests 1–7
+  ([`23-tutorials.md`](23-tutorials.md) §3); the doors each act opens are
+  [`22-progression.md`](22-progression.md) §3.
 
-| # | Quest | The beat |
-|---|---|---|
-| **1** | `FirstSteps` | Reveal four **forest** cells — every forest reachable from the opening block. |
-| **2–3** | `Woodcraft` · `Timber` | Research **Forestry** (a 3-second research), then chop 25 Wood. |
-| **4–6** | `ARoof` · `Rations` · `FirstVillager` | A House → Food from the berries → the first villager. |
-| **7** | `TaxDay` | Collect rent. |
-| **8** | `Explorer` | Reveal eight cells, in any direction. |
-| **9–15** | `Fields` → `ToWork` | **Agriculture** (crop plots) → two plots → tap them → Wood for a Farm → **Farming** (the Farm, one row down) → a Farm → **assign a worker**. |
-| **16–17** | `GrowingTown` · `Neighbors` | A second House, a third villager. |
-| **18–20** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** TH1 allows the one Sawmill. |
-| **21** | `ProperCapital` | **Townhall 2.** TH1 caps the city at 2 Houses and 1 Sawmill; quests 16 and 19 reach both caps. |
-| **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts after Saws. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
-| **25** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
-| **26–28** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 39. |
-| **29** | `FirstSummon` | **Summon at the banner. The first call is free.** |
-| **30** | `MusterCompany` | **Twenty-four soldiers.** One is a guard; a company is what takes a gate. Pays 400 Gold — the beat is priced to cover most of the muster. |
-| **31** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** Twenty orcs, on the surface, in view: the company just mustered wins it at any matchup. The first fight is guaranteed by authoring, not by the hero's own stats. Pays Gold. |
-| **32–33** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
-| **34–35** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
-| **36–37** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
-| **38** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 31. |
+| # | Quests | The beat | Opens |
+|---|---|---|---|
+| **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells, Forestry, 25 Wood, a House, Food, a villager, rent | Research, Knowledge, Build, the daily chest |
+| **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
+| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
+| **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
+| **26–33** · the Orcs | `FurtherAfield` · `ArmedMen` · `Picks` · `Rubble` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 55 cells cleared find the Orcs; Warrior, **Pickaxes and 20 Stone** (the Barracks is built of it), the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **34–37** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
+| **38–43** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
+| **44–48** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
+| **49–55** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **56–62** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
+| **63–66** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
-- **Quests 42–56:** the Quarry, Urban Planning, Townhall 3 and Mining, then
-  Attunement, the Sanctum, a warband, the first full ruin clear, attuning a
-  relic, four landmarks, depth five, and three relics held at once. **The two
-  relic beats are stale**: nothing is attuned any more, and a relic arrives
-  from an album on the season's clock ([`09-relics.md`](09-relics.md)) —
-  **OQ-91**.
-- `OldStones` moving after the fight moves its Knowledge lump with it; the
-  chain test still has to find `Mapmakers` affordable with zero drip.
+- **A requirement is the row above**, so the chain walks the rows it needs
+  (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
+  Hospitality) rather than pointing past cards the player cannot start.
+- **Every lair and landmark the chain names is inside the Townhall's reach**
+  when it asks (`tests/quests.test.ts`): the Harpies wait for Townhall 4.
 
 ### 2.1 The opening economy
 
@@ -94,18 +105,19 @@
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **eleven quests pay Knowledge**,
-  placed so that every card the chain demands up to `Attuned` — quest 33, the
-  Sanctum — is affordable **with no drip at all**, prerequisites included.
+  Quest 1 pays Forestry's 2 outright, and **sixteen quests pay Knowledge**,
+  placed so that every card the chain demands up to `Attuned` — quest 35,
+  Consecration — is affordable **with no drip at all**, prerequisites included.
+  **The quest just before each of those research quests pays its card's
+  Knowledge by itself**, so a player who spent what was banked on cards of
+  their own is never stuck.
   A grant handed over at the title screen taught the player nothing about
   where the clock comes from; a reward on the quest before the research does.
 - **Past `Attuned` the chain stops paying and the clock takes over**
-  ([`07-research.md`](07-research.md) §3). A player at `Highlands` holds
-  territory that drips, so the research the back half asks for is a wait
-  rather than a wall, and the wait is content by then. The zero-drip
-  guarantee is asserted for the opening and **only** the opening
-  (`tests/quests.test.ts`); the cut is by chain position, not by era —
-  `MoreRoom` asks for an era-1 card at quest 40, well past it.
+  ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
+  asserted for the opening and **only** the opening (`tests/quests.test.ts`);
+  the cut is by chain position, not by era — `MoreRoom` asks for an era-1
+  card at quest 40, past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
   `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
@@ -117,29 +129,29 @@
   cells, **asserted at the dearest frontier the player could pick**.
 - Forest cells refuse work until Forestry is researched; the refusal names
   Forestry.
-- A pull costs 1,000 Gems. The first call on the standard banner is free,
-  tracked on the pity counter.
+- The first call on the standard banner is free, **and it is always a hero**
+  ([`22-progression.md`](22-progression.md) §6).
 - The three research beats at 22–24 (`Levies` · `Sawpits` · `Regrowth`) pay
   80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 39).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 43).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
 ### 2.2 Gems and Stardust
 
-- **Gem rewards sit in four quests** — 18, 40, 48 and 55 —
-  150 + 150 + 250 + 200 = 750.
+- **Gem rewards sit in four quests** — `ProperCapital`, `GrandCapital`,
+  `Borough` and `SecondLair` — 150 + 250 + 200 + 150 = 750.
 - With the 500 grant and 2,500 from five ruin first-clears: **3,750 by play**,
   which reaches the second builder (2,500) and a pull
   ([`14-monetization.md`](14-monetization.md) §2.2). Later rungs come from the
   daily chest (~one a month) or a wallet.
-- A player who stops at quest 40 holds 800 Gems — a Mana refill.
-- **Stardust appears on exactly four goal types** — `ClearRuins`, `ReachDepth`,
-  `OwnArtifacts`, `OwnHeroes`. Every other quest pays Gold.
+- **Stardust is paid only past the first summon** — `FirstSummon`,
+  `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
+  hero ladder it buys is open.
 
 ## 3. The daily chest
 
@@ -343,4 +355,4 @@ and the thing you press are the same object.
   finishing work already started, never a fresh hand of work
   ([`14-monetization.md`](14-monetization.md) §1).
 
-**Open questions:** OQ-16, OQ-17, OQ-47, OQ-53, OQ-91.
+**Open questions:** OQ-16, OQ-17, OQ-47, OQ-53.

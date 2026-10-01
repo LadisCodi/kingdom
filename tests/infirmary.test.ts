@@ -16,7 +16,7 @@ import { advance } from '../src/sim/commands';
 import { ARMY, DISTRICTS, HEROES, UNITS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  getWallet, type GameState, type HeroId, type TechId, type UnitId,
+  getWallet, type GameState, type HeroId, type UnitId,
 } from '../src/sim/state';
 import {
   addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openEveryEra, T0,
@@ -244,9 +244,10 @@ describe('the ward is a building, not a rule', () => {
   });
 });
 
-// CLAIM: a tenth of the fallen is the FLOOR, and everything above it is bought
-// — `Field Medicine` in Warfare, and a hero who walks the field afterwards
-// (Docs/features/combat.md §4).
+// CLAIM: a tenth of the fallen is the FLOOR, and everything above it is a hero
+// who walks the field afterwards (Docs/features/combat.md §4). The tree raises
+// the BEDS instead (`Beds`, tests/upgrades.test.ts): a share is bounded, and a
+// bonus has to be able to climb for ever.
 describe('how much of the fallen is carried home', () => {
   /** The medics, and the best one of them. */
   const MEDIC: HeroId = 'Pharao';   // the biggest WoundedRecovery in the book
@@ -255,18 +256,6 @@ describe('how much of the fallen is carried home', () => {
   it('starts at a tenth, with nothing researched and nobody leading', () => {
     expect(woundedShareFor(freshGame())).toBe(ARMY.woundedShare);
     expect(ARMY.woundedShare).toBe(0.1);
-  });
-
-  it('every Field Medicine rank adds to it', () => {
-    const state = freshGame();
-    openEveryEra(state);
-    let last = woundedShareFor(state);
-    for (const id of ['FieldMedicineI', 'FieldMedicineII', 'FieldMedicineIII'] as TechId[]) {
-      completeTech(state, id);
-      const now = woundedShareFor(state);
-      expect(now, id).toBeGreaterThan(last);
-      last = now;
-    }
   });
 
   // The party-trait rule (Docs/features/10-heroes.md §2.5): the best medic in
@@ -281,10 +270,9 @@ describe('how much of the fallen is carried home', () => {
     expect(HEROES[MEDIC].trait).toBe('WoundedRecovery');
   });
 
-  it('a hero and the ranks stack, and the whole thing is capped short of one', () => {
+  it('a hero adds to it, and the whole thing is capped short of one', () => {
     const state = freshGame();
     openEveryEra(state);
-    completeTech(state, 'FieldMedicineIII');
     expect(woundedShareFor(state, [MEDIC])).toBeGreaterThan(woundedShareFor(state));
     // Nothing the game can research or recruit empties a battlefield.
     expect(woundedShareFor(state, [MEDIC])).toBeLessThanOrEqual(WOUNDED_SHARE_CAP);

@@ -61,7 +61,9 @@ export type HarvestSourceId =
   | 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Fish'
   | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
-export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
+/** A landmark's kind decides its art and name — and, for the Watchtower, a
+ *  door: claiming it opens the world (Docs/features/22-progression.md §5). */
+export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring' | 'Watchtower';
 export type LairId =
   | 'Orcs' | 'Harpies' | 'Goblins' | 'WolfRiders' | 'Drake';
 export type ArtifactId =
@@ -76,9 +78,11 @@ export type HeroId =
   'Witch' | 'Druid' | 'IceLancer' | 'HolyWarrior' | 'SavageWarrior' | 'Spymaster' |
   'ElectricArcher' | 'GoldenDragon' | 'VampireLord' | 'Necromancer' | 'Pharao' |
   'ElvenPrincess';
-/** The three tomes. The shelf is the layout: one bounded page per book,
- *  each paced by eras (Docs/features/07-research.md §2). */
-export type TomeId = 'Civics' | 'Warfare' | 'Magic';
+/** The books: three general ones and two found ones. The shelf is the
+ *  layout: one bounded page per book, each paced by eras
+ *  (Docs/features/07-research.md §2); what opens each is
+ *  `sim/research.ts#TOME_OPENS`. */
+export type TomeId = 'Civics' | 'Warfare' | 'Magic' | 'Sagas' | 'Atlas';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
@@ -253,6 +257,11 @@ export interface Worker {
    *  worker gets home the cell is bare, and the Food it is carrying still has
    *  to land somewhere. */
   carriedSource: HarvestSourceId | null;
+  /** The fraction of a unit the last strike was owed and could not take —
+   *  the tree's yields are percentages, so a strike owes 1.1 units, takes 1
+   *  and keeps 0.1 for the next. Always in [0, 1). Its own, so two workers
+   *  on one cell never share a remainder. */
+  strikeCarry: number;
   stateStartedAt: number; // epoch ms — for render interpolation
   stateUntil: number | null; // event time; null while Idle
 }
@@ -719,6 +728,17 @@ export interface GameState {
   replaying: boolean;
   /** First-time discoveries already announced (keys like 'resource:Wood'). */
   discoveries: Record<string, true>;
+  /**
+   * The tutorial's memory (Docs/features/23-tutorials.md §7): which scenes
+   * have played, by id. The sim never reads `seen` — the stage does — but it
+   * lives in the save so a reset resets it and a second device agrees.
+   *
+   * `veteran` is a kingdom from before the doors existed: every door is open
+   * and every scene counts as played (Docs/features/22-progression.md §1).
+   * `startedAt` is when the kingdom was founded — the first day's doors read
+   * it (the daily chest waits for the next day).
+   */
+  tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];

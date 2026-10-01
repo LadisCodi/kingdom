@@ -198,6 +198,7 @@
    it steps aside while a menu is open, like the Settings knob — except a
    menu that spends Knowledge (research, the Knowledge sheet). It has to
    clear the Daily chest pill at 375px, so every width here is budgeted. */
+.hud-know[hidden] { display: none; }
 .hud-know {
   position: absolute;
   top: calc(100% - var(--rpx) * 12);

@@ -1,5 +1,6 @@
 import { advance, collectBuilding, researchTech } from '../src/sim/commands';
 import { cityStored } from '../src/sim/storage';
+import { cityGoldPerMinute, ownGoldPerMinute } from '../src/sim/population';
 import {
   pourKnowledge, techCost, techKnowledgeMissing, type ResearchResult,
 } from '../src/sim/research';
@@ -16,7 +17,7 @@ import {
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
 import {
-  addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type DistrictId, type GameState,
+  addToWallet, coordKey, getWallet, townhall, type Coord, type CurrencyId, type DistrictId, type GameState,
   type LairId, type TechId, type UnitId, type Wallet,
 } from '../src/sim/state';
 
@@ -33,6 +34,18 @@ export const T0 = Date.parse('2026-08-20T12:00:00Z');
 export const TEST_SEED = 0x5eed;
 
 export const freshGame = (): GameState => {
+  const state = firstGame();
+  // EVERY DOOR OPEN. Most of the suite is about a system, not about when the
+  // kingdom first meets it, so a test game is a veteran's: every book open,
+  // every scene played (Docs/features/22-progression.md §1). The doors
+  // themselves — and the chain that walks through them — use `firstGame`.
+  state.tutorial.veteran = true;
+  return state;
+};
+
+/** A kingdom exactly as a new player meets it: every door but Civics shut,
+ *  no scene played. What the onboarding and the doors are tested on. */
+export const firstGame = (): GameState => {
   const state = newGame(map, T0);
   state.seed = TEST_SEED;
   // A payer profile, so the presenter does not hold every test behind the
@@ -164,6 +177,16 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
 
 /** What every building's store holds of one currency — made, not collected. */
 export const stored = (state: GameState, c: CurrencyId): number => cityStored(state, c);
+
+/** The RENT waiting in the stores: every store's Gold but the Townhall's,
+ *  which makes Gold of its own (Docs/features/03-economy.md §3). */
+export const rentStored = (state: GameState): number =>
+  state.city.districts.filter((d) => d.definitionId !== 'Townhall')
+    .reduce((n, d) => n + (d.stored?.Gold ?? 0), 0);
+
+/** The houses' rent a minute: the city's Gold income less the Townhall's own. */
+export const rentPerMinute = (state: GameState): number =>
+  cityGoldPerMinute(state) - ownGoldPerMinute(townhall(state));
 
 /** The player sweeps the city: every building's store into the wallet at `t`. */
 export const collectAll = (state: GameState, t: number): Wallet => {

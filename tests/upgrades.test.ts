@@ -3,34 +3,35 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
+  ARMY, DELVE, DISTRICTS, HARVEST, KNOWLEDGE, LANDMARKS, TECHNOLOGIES,
   TECH_ORDER, WORKER, levelIndexed,
 } from '../src/sim/data/definitions';
-import { grantArtifactLevel } from '../src/sim/artifacts';
-import { castCost } from '../src/sim/casting';
-import { effectiveDiscoverRadius, revealCostForCell, revealTapCost } from '../src/sim/fog';
-import { collectTap } from '../src/sim/harvest';
+import { effectiveDiscoverRadius } from '../src/sim/fog';
+import { collectTap, effectiveRecoveryMs } from '../src/sim/harvest';
 import { getWallet } from '../src/sim/state';
 import { researchTech } from '../src/sim/commands';
 import { canStartTech, pourKnowledge, techKnowledgeCost } from '../src/sim/research';
 import {
   effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
-  effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
-  tapWorkSeconds,
+  effectiveTaxRate, effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike,
+  strikeDraw, tapDraw, tapWorkSeconds,
 } from '../src/sim/upgrades';
+import { storageCapacity } from '../src/sim/storage';
+import { queuedWorkMs } from '../src/sim/workshops';
+import { callStardust } from '../src/sim/heroes';
+import { TECH_STATS } from '../src/sim/data/techEffectRules';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
-import { armyCap, trainCost } from '../src/sim/army';
-import { drillOf, lairSupplyCost, partyBoard, partyOf } from '../src/sim/expeditions';
+import { armyCap, trainSecondsAt, woundedCap } from '../src/sim/army';
+import { drillOf, partyBoard, partyOf } from '../src/sim/expeditions';
 import { partyStats, typeMultiplier } from '../src/sim/combat';
 import type { GameState, TechId } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
-import { landmarkClaimCost } from '../src/sim/landmarks';
 import { manaCap, manaProduction } from '../src/sim/mana';
 import {
   firstClearLump, knowledgeHeld, knowledgeLump, landmarkClaimLump, territoryKnowledge,
 } from '../src/sim/knowledge';
 import {
-  addBuilt, bonusLadders, canGather, completeRanks, completeRequirements, completeTech, FOREST, freshGame, fund, ladders, map, openEveryEra, rankOf, stored, T0, tickAt,
+  addBuilt, bonusLadders, canGather, completeRanks, completeRequirements, completeTech, FOREST, freshGame, fund, ladders, map, openEveryEra, rankOf, T0, tickAt, rentStored,
 } from './helpers';
 
 
@@ -65,6 +66,8 @@ describe('researching a rank', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Knowledge: 500 });
     for (const ladder of bonusLadders) {
+      // A book's first row is its roots: those start with nothing done.
+      if (TECHNOLOGIES[ladders[ladder][0]].requires.length === 0) continue;
       expect(research(state, ladders[ladder][0]),
         `${ladder} I researches with nothing researched`).not.toBe('Researched');
     }
@@ -94,33 +97,32 @@ describe('effects reach the sim', () => {
     fund(state, { Gold: 100_000 });
     canGather(state);
     const bare = tapWorkSeconds(state);
-    completeRanks(state, 'TapPower', 5); // +20% a rank
-    expect(tapWorkSeconds(state)).toBeCloseTo(bare * 2, 6);
+    completeRanks(state, 'TapPower', 4); // +20% a rank
+    expect(tapWorkSeconds(state)).toBeCloseTo(bare * 1.8, 6);
 
-    // A Forest strike is 10 s, so a doubled thumb owes 2 Wood a tap — and on
-    // ground where it owes a fraction the remainder rides in `tapCarry`
-    // until it adds up, which is what makes a percentage upgrade honest.
+    // A Forest strike is 10 s, so the thumb owes 1.8 Wood a tap — it takes
+    // one and the remainder rides in `tapCarry` until it adds up, which is
+    // what makes a percentage upgrade honest.
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood'))
       .toBe(Math.floor(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike));
   });
 
-  // QuickHands shortens the gap between AUTO-taps only. A deliberate tap has
-  // no cooldown to shave, so the line is a convenience — it narrows the gap
-  // toward manual tapping without ever closing it.
-  it('QuickHands shortens the auto-tap cooldown, and nothing else', () => {
+  // QuickHands is a SPEED on the gap between AUTO-taps: the cooldown is
+  // divided by it, so it only ever climbs and never reaches zero.
+  it('QuickHands speeds the auto-tap, and nothing else', () => {
     const state = freshGame();
     fund(state, { Gold: 100000 });
     completeTech(state, 'Forestry');
     expect(effectiveAutoTapCooldownMs(state)).toBe(500);
 
-    completeRanks(state, 'QuickHands', 1); // -0.05s
-    expect(effectiveAutoTapCooldownMs(state)).toBe(450);
+    completeRanks(state, 'QuickHands', 1); // +15%
+    expect(effectiveAutoTapCooldownMs(state)).toBeCloseTo(500 / 1.15);
 
     completeRanks(state, 'QuickHands', ladders.QuickHands.length);
     expect(rankOf(state, 'QuickHands')).toBe(ladders.QuickHands.length);
-    // 0.5 - 5x0.05 = 0.25s: still slower than a determined tapper.
-    expect(effectiveAutoTapCooldownMs(state)).toBe(250);
+    expect(effectiveAutoTapCooldownMs(state))
+      .toBeCloseTo(500 / (1 + 0.15 * ladders.QuickHands.length));
   });
 
   it('QuickHands never lets a hold out-pace a manual tap', () => {
@@ -128,13 +130,14 @@ describe('effects reach the sim', () => {
     fund(state, { Gold: 100000 });
     canGather(state);
     completeRanks(state, 'QuickHands', ladders.QuickHands.length);
+    const wait = effectiveAutoTapCooldownMs(state);
 
     // Manual taps ignore the cooldown entirely, finished ladder or not.
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     // A held repeat still waits, just less than it used to.
     expect(collectTap(state, map, FOREST, T0 + 2, true)).toBe('OnCooldown');
-    expect(collectTap(state, map, FOREST, T0 + 1 + 250, true)).toBe('Harvested');
+    expect(collectTap(state, map, FOREST, T0 + 1 + Math.ceil(wait), true)).toBe('Harvested');
   });
 
   it('TradeRoutes boosts the passive tax rate', () => {
@@ -144,31 +147,23 @@ describe('effects reach the sim', () => {
     fund(state, { Gold: 1000 });
     completeRequirements(state, 'TradeRoutesI');
     const bare = effectiveTaxRate(state);
-    completeRanks(state, 'TradeRoutes', 1); // +10%
-    expect(effectiveTaxRate(state)).toBeCloseTo(bare * 1.1);
+    completeRanks(state, 'TradeRoutes', 1); // +5%
+    expect(effectiveTaxRate(state)).toBeCloseTo(bare * 1.05);
     tickAt(state, T0 + 301_000); // ~5 minutes of it
-    // Against the rate the HOUSES actually pay, not the unaimed one: an aimed
-    // bonus (Taxes I sits on Housing) reaches the collection and not the bare
-    // query, and which technologies sit above the ladder is the designer's to
-    // move — so the expectation is read off the city rather than written down.
     const perMinute = effectiveTaxRate(state, 'Housing');
     // The helper grants the rank without charging for it — the point under
     // test is the tax rate, not the price of the research.
-    expect(stored(state, 'Gold')).toBe(Math.floor(perMinute * 301 / 60));
+    expect(rentStored(state)).toBe(Math.floor(perMinute * 301 / 60));
   });
 });
 
-// The minor lines added 2026-09-02, one per big technology that had none.
-//
 // The only thing worth asserting about a line is that it REACHES the sim: a
-// definition with no consumer is a price tag on nothing, and that is the
-// failure mode this whole file exists to catch (see `withWardenBonus`, which
-// shipped inert for weeks). So each of these researches a rank and measures
-// the number the player actually experiences, never the effect table.
+// definition with no consumer is a price tag on nothing. So each of these
+// researches a rank and measures the number the player actually experiences,
+// never the effect table.
 describe('every ladder reaches the number it claims to', () => {
   // A rank missing from the tree is invisible IN THE GAME while still being
-  // purchasable by id — which is exactly what happened to Surveying, with a
-  // quest pointing the player at a node that was never drawn.
+  // purchasable by id.
   it('shows every authored rank somewhere in the tree', () => {
     for (const ladder of bonusLadders) {
       const ranks = ladders[ladder];
@@ -179,101 +174,99 @@ describe('every ladder reaches the number it claims to', () => {
     }
   });
 
-  // The seven cell-scoped upgrades are ABUNDANCE OF THE GROUND, so they lift
-  // the thumb and the crew alike — both draw the same depot, and that is the
-  // change that unifies the two feelings (04-harvest.md §7).
-  it('Butchery makes wild game richer for hand AND crew, and nothing else', () => {
-    const state = freshGame();
-    const meatTap = tapDraw(state, HARVEST.Meat, 0);
-    const meatCrew = effectiveWorkerStrike(state, HARVEST.Meat);
-    const woodTap = tapDraw(state, HARVEST.Forest, 0);
-    completeRanks(state, 'Butchery', 2);
-    expect(tapDraw(state, HARVEST.Meat, 0)).toBeGreaterThan(meatTap);
-    expect(effectiveWorkerStrike(state, HARVEST.Meat)).toBe(meatCrew + 2);
-    expect(tapDraw(state, HARVEST.Forest, 0)).toBe(woodTap); // scoped
+  // EVERY BONUS CLIMBS (Docs/features/22-progression.md §9): no rank shrinks a
+  // number, and no rank discounts anything.
+  it('never shrinks a number and never discounts a price', () => {
+    for (const id of TECH_ORDER) {
+      for (const e of TECHNOLOGIES[id].effects) {
+        expect(e.value, `${id} moves ${e.stat} by ${e.value}`).toBeGreaterThan(0);
+        expect(e.stat, `${id} discounts`).not.toMatch(/Cost$/);
+      }
+    }
+    for (const stat of Object.keys(TECH_STATS)) expect(stat).not.toMatch(/Cost$|Time$/);
   });
 
-  it('Irrigation enriches crops from its second rank; the first only waters them', () => {
-    // Scythes is gone (2026-09-08) and Irrigation is the one ladder on Crops.
-    // Rank I moves REGROWTH, not the haul — a worker's strike is untouched by
-    // it — and ranks II and III add a unit each.
-    const state = freshGame();
-    const base = effectiveWorkerStrike(state, HARVEST.Crops);
-    completeRanks(state, 'Irrigation', 1);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base);
-    completeRanks(state, 'Irrigation', 3);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 2);
-  });
+  // The yield ladders are ABUNDANCE OF THE GROUND, so they lift the thumb and
+  // the crew alike — both draw the same depot — and each is a PERCENT of that
+  // ground's own chunk, so a rank is worth the same share early and late.
+  const YIELD_LADDERS: Array<[string, keyof typeof HARVEST]> = [
+    ['Sawpits', 'Forest'], ['Irrigation', 'Crops'], ['Stonecutting', 'Stone'],
+    ['Butchery', 'Meat'], ['IronPicks', 'MountainIron'], ['GoldPanning', 'MountainGold'],
+    ['BigNets', 'Fish'],
+  ];
+  for (const [ladder, source] of YIELD_LADDERS) {
+    it(`${ladder} is a share more ${source} for hand AND crew, and nothing else`, () => {
+      const state = freshGame();
+      const other = source === 'Forest' ? HARVEST.Crops : HARVEST.Forest;
+      const chunk = effectiveUnitsPerStrike(state, HARVEST[source]);
+      const crew = effectiveWorkerStrike(state, HARVEST[source]);
+      const elsewhere = effectiveUnitsPerStrike(state, other);
+      const ranks = ladders[ladder].length;
+      completeRanks(state, ladder, ranks); // +10% a rank
+      expect(effectiveUnitsPerStrike(state, HARVEST[source])).toBeCloseTo(chunk * (1 + 0.1 * ranks));
+      expect(effectiveWorkerStrike(state, HARVEST[source])).toBeCloseTo(crew * (1 + 0.1 * ranks));
+      expect(effectiveUnitsPerStrike(state, other)).toBe(elsewhere); // scoped
+    });
+  }
 
   it('WorkerLoad is the one payroll-only dial — the crew, never the thumb', () => {
     const state = freshGame();
     const wood = effectiveWorkerStrike(state, HARVEST.Forest);
     const byHand = tapDraw(state, HARVEST.Forest, 0);
     completeRanks(state, 'WorkerLoad', 2);
-    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(wood + 2);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBeCloseTo(wood * 1.2);
     expect(tapDraw(state, HARVEST.Forest, 0)).toBe(byHand);
   });
 
-  it('Sawpits enriches the forest for the crew, and stays out of the fields', () => {
+  // A percentage of a one-unit chunk is a fraction, and the crew CARRIES it:
+  // a strike takes whole units and keeps the rest, so ten strikes at 1.1
+  // bring home eleven.
+  it('a crew carries the fraction a yield bonus owes it, and the average is exact', () => {
     const state = freshGame();
-    const wood = effectiveWorkerStrike(state, HARVEST.Forest);
-    const crops = effectiveWorkerStrike(state, HARVEST.Crops);
-    completeRanks(state, 'Sawpits', 2);
-    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(wood + 2);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(crops);
+    completeRanks(state, 'Sawpits', 1); // 1.1 a strike
+    let carry = 0;
+    let home = 0;
+    for (let i = 0; i < 10; i++) {
+      const { want, rest } = strikeDraw(state, HARVEST.Forest, null, carry);
+      expect(rest).toBeGreaterThanOrEqual(0);
+      expect(rest).toBeLessThan(1);
+      home += want;
+      carry = rest;
+    }
+    expect(home).toBe(11);
   });
 
   it('TapPower buys DURATION, so it never mints and never goes stale', () => {
     const state = freshGame();
     const seconds = tapWorkSeconds(state);
-    completeRanks(state, 'TapPower', 5); // +20% a rank
-    expect(tapWorkSeconds(state)).toBeCloseTo(seconds * 2, 6);
-    // And the units follow from the ground's own rate, not from a flat bonus.
+    completeRanks(state, 'TapPower', 4); // +20% a rank
+    expect(tapWorkSeconds(state)).toBeCloseTo(seconds * 1.8, 6);
     expect(tapDraw(state, HARVEST.Forest, 0))
       .toBeCloseTo(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike, 6);
   });
 
-  // Pitons is the only thing left that moves the fog: a cell is five taps at
-  // every ring, so the Gold is the whole of the price and a discount is the
-  // whole of the relief.
-  it('Pitons discounts the Gold a cell costs, and the cell is still five taps', () => {
+  // Regrowth is a SPEED: the stump's wait is divided by it.
+  it('Reforesting and Crop Rotation speed their own regrowth, and nothing else', () => {
     const state = freshGame();
-    const cell = { x: 4, y: 1 };
-    const full = revealCostForCell(state, map, cell);
-
-    completeRanks(state, 'Pitons', 2); // −20%
-    const discounted = revealCostForCell(state, map, cell);
-    expect(discounted).toBe(Math.max(FOG.minCost, Math.round(full * 0.8)));
-
-    // The five slices of the discounted price still add up to it exactly.
-    const charges = Array.from({ length: FOG.tapsToReveal },
-      (_, i) => revealTapCost(discounted, i));
-    expect(charges.reduce((a, b) => a + b, 0)).toBe(discounted);
+    const at = { x: 0, y: 0 };
+    const forest = effectiveRecoveryMs(state, HARVEST.Forest, at);
+    const crops = effectiveRecoveryMs(state, HARVEST.Crops, at);
+    completeRanks(state, 'Reforesting', 2); // +20%
+    expect(effectiveRecoveryMs(state, HARVEST.Forest, at)).toBe(Math.round(forest / 1.2));
+    expect(effectiveRecoveryMs(state, HARVEST.Crops, at)).toBe(crops);
+    completeRanks(state, 'CropRotation', 1);
+    expect(effectiveRecoveryMs(state, HARVEST.Crops, at)).toBe(Math.round(crops / 1.1));
   });
 
-  it('Pitons can never make a cell free', () => {
+  it('Granaries hold more in every store', () => {
     const state = freshGame();
-    completeRanks(state, 'Pitons', 99); // far past max, as a modifier stack might
-    expect(revealCostForCell(state, map, { x: 3, y: 1 }))
-      .toBeGreaterThanOrEqual(FOG.minCost);
+    addBuilt(state, 'Sawmill', { x: 3, y: 1 });
+    const mill = state.city.districts.at(-1)!;
+    const cap = storageCapacity(state, mill);
+    expect(cap).toBeGreaterThan(0);
+    completeRanks(state, 'Granaries', 2); // +20%
+    expect(storageCapacity(state, mill)).toBe(Math.floor(cap * 1.2));
   });
-
-  it('Resonance buys down what a relic costs to cast', () => {
-    const state = freshGame();
-    grantArtifactLevel(state, 'VerdantSeal');
-    const full = castCost(state, 'VerdantSeal');
-    expect(full).toBeGreaterThan(0);
-    completeRanks(state, 'Resonance', 2); // −40%
-    expect(castCost(state, 'VerdantSeal')).toBe(Math.round(full * 0.6));
-  });
-
-  // A LADDER IS NOT A SHAPE. There is deliberately nothing here asserting
-  // that rank I hangs off a major or that rank II follows rank I: a numeral
-  // is a promise to the player that the bonus goes further down the book, and
-  // carries no mechanism at all. Every rank is an ordinary card gated by the
-  // row above it, wherever the designer puts it. What a ladder still owes is
-  // its NUMERALS running I…n (`techTreeRules.ts`) and every rank reaching the
-  // sim, which the cases below and `ladderEffects.test.ts` cover.
 
   // Every line hangs off a major technology, and rank I is unreachable before
   // it. A line rooted at nothing would float free of the tree entirely.
@@ -282,77 +275,108 @@ describe('every ladder reaches the number it claims to', () => {
     fund(state, { Gold: 1_000_000 });
     for (const ladder of bonusLadders) {
       const first = ladders[ladder][0];
+      // A book's first row is its roots: those start with nothing done.
+      if (TECHNOLOGIES[first].requires.length === 0) continue;
       expect(canStartTech(state, first), `${ladder} I starts with no research`).toBe(false);
     }
   });
 });
 
-// The era-2/3 hooks (Docs/features/tech-tree.md §6.2), first batch: Civics and
-// Magic. Same discipline as above — a line is asserted where the PLAYER meets
-// the number, never on the effect table.
-describe('the era-2/3 lines reach their numbers', () => {
-  it('Carpentry shortens a build and an upgrade, and the floor holds', () => {
+describe('the city lines reach their numbers', () => {
+  it('Carpentry speeds a build and an upgrade, and never reaches an instant one', () => {
     const state = freshGame();
     const build = buildDuration(state, 'Housing', 0, 2);
     const up = upgradeDuration(state, 'Farm', 1);
-    completeRanks(state, 'Carpentry', 2); // −10%
-    // The multiplier is applied to the raw product BEFORE the single rounding,
-    // so compare against a window rather than re-rounding a rounded number.
+    completeRanks(state, 'Carpentry', 2); // +20% speed
     const within = (got: number, want: number) => {
       expect(got).toBeGreaterThanOrEqual(Math.floor(want));
       expect(got).toBeLessThanOrEqual(Math.ceil(want));
     };
-    within(buildDuration(state, 'Housing', 0, 2), build * 0.9);
-    within(upgradeDuration(state, 'Farm', 1), up * 0.9);
-    expect(effectiveBuildTimeMultiplier(state)).toBeCloseTo(0.9);
+    within(buildDuration(state, 'Housing', 0, 2), build / 1.2);
+    within(upgradeDuration(state, 'Farm', 1), up / 1.2);
+    expect(effectiveBuildTimeMultiplier(state)).toBeCloseTo(1 / 1.2);
+    completeRanks(state, 'Carpentry', ladders.Carpentry.length);
+    expect(effectiveBuildTimeMultiplier(state)).toBeGreaterThan(0);
   });
 
   it('Cartage speeds the walk, and the nominal gather rate with it', () => {
     const state = freshGame();
     expect(effectiveWorkerSpeed(state)).toBe(WORKER.moveSpeedTilesPerSecond);
-    completeRanks(state, 'Cartage', 3); // +15%
-    expect(effectiveWorkerSpeed(state)).toBeCloseTo(WORKER.moveSpeedTilesPerSecond * 1.15);
+    completeRanks(state, 'Cartage', 3); // +30%
+    expect(effectiveWorkerSpeed(state)).toBeCloseTo(WORKER.moveSpeedTilesPerSecond * 1.3);
   });
 
-  it('Deep Wells raises the Mana ceiling, and only the ceiling', () => {
+  it('Schooling trains villagers faster, and soldiers not at all', () => {
     const state = freshGame();
+    const th = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    addBuilt(state, 'Barracks', { x: 3, y: 1 });
+    const barracks = state.city.districts.at(-1)!;
+    const villager = trainSecondsAt(state, th.uniqueId, 'Villager');
+    const warrior = trainSecondsAt(state, barracks.uniqueId, 'Warrior');
+    completeRanks(state, 'Schooling', 2); // +40%
+    expect(trainSecondsAt(state, th.uniqueId, 'Villager')).toBe(Math.max(1, Math.round(villager / 1.4)));
+    expect(trainSecondsAt(state, barracks.uniqueId, 'Warrior')).toBe(warrior);
+  });
+
+  it('Guild Halls speed every workshop', () => {
+    const state = freshGame();
+    addBuilt(state, 'Carpenter', { x: 3, y: 1 });
+    const shop = state.city.districts.at(-1)!;
+    const need = queuedWorkMs(state, shop, 'Planks');
+    completeRanks(state, 'GuildHalls', 2); // +20%
+    expect(queuedWorkMs(state, shop, 'Planks')).toBe(Math.max(1000, Math.round(need / 1.2)));
+  });
+});
+
+describe('the Magic lines reach their numbers', () => {
+  it('Deep Wells raises the whole Mana ceiling, and only the ceiling', () => {
+    const state = freshGame();
+    state.landmarks.claimed[LANDMARKS[0].id] = true;
     const cap = manaCap(state);
     const rate = manaProduction(state);
-    completeRanks(state, 'DeepWells', 3); // +30
-    expect(manaCap(state)).toBe(cap + 30);
+    completeRanks(state, 'DeepWells', 3); // +30%, landmarks included
+    expect(manaCap(state)).toBe(Math.round(cap * 1.3));
     expect(manaProduction(state)).toBe(rate);
   });
 
-  it('Ley Taps lets a claimed landmark touch the RATE — and only a claimed one', () => {
+  it('Ley Taps raises the rate, and only the rate', () => {
     const state = freshGame();
     const base = manaProduction(state);
-    completeRanks(state, 'LeyTaps', 2); // +2/h per landmark
-    expect(manaProduction(state), 'no landmark, no effect').toBe(base);
-    state.landmarks.claimed[LANDMARKS[0].id] = true;
-    expect(manaProduction(state)).toBe(base + 2);
+    const cap = manaCap(state);
+    completeRanks(state, 'LeyTaps', 2); // +20%
+    expect(manaProduction(state)).toBeCloseTo(base * 1.2);
+    expect(manaCap(state)).toBe(cap);
   });
 
-  // Knowledge from the ground is LUMPS now (07-research.md §3): Wayposts
-  // raise what a landmark claim pays, Vigils what a first clear pays.
-  it('Wayposts and Vigils each raise their own lump of Knowledge', () => {
+  it('Meditation is a fifth more Mana', () => {
     const state = freshGame();
-    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump);
-    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
-    completeRanks(state, 'Wayposts', 1); // +3 a claim
-    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump + 3);
-    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
-    completeRanks(state, 'Vigils', 2); // +5 a clear, a rank
-    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge + 10);
-    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump + 3);
+    const cap = manaCap(state);
+    completeTech(state, 'Meditation');
+    expect(manaCap(state)).toBe(Math.round(cap * 1.2));
   });
 
   it('Scriptorium is a percentage on every lump, rounded', () => {
     const state = freshGame();
     expect(knowledgeLump(state, 100)).toBe(100);
-    completeRanks(state, 'Scriptorium', 2); // +10%
-    expect(knowledgeLump(state, 100)).toBe(110);
-    expect(knowledgeLump(state, 15)).toBe(Math.round(15 * 1.1));
+    completeRanks(state, 'Scriptorium', 2); // +20%
+    expect(knowledgeLump(state, 100)).toBe(120);
+    expect(knowledgeLump(state, 15)).toBe(Math.round(15 * 1.2));
     expect(knowledgeLump(state, 0)).toBe(0);
+  });
+});
+
+// Knowledge from the ground is LUMPS (07-research.md §3): Wayposts (the
+// Atlas) raise what a landmark claim pays, Bounties (Warfare) what a lair pays.
+describe('the lump lines reach their numbers', () => {
+  it('Wayposts and Bounties each raise their own lump of Knowledge', () => {
+    const state = freshGame();
+    expect(landmarkClaimLump(state)).toBe(KNOWLEDGE.landmarkClaimLump);
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
+    completeRanks(state, 'Wayposts', 1); // +20% a claim
+    expect(landmarkClaimLump(state)).toBe(Math.round(KNOWLEDGE.landmarkClaimLump * 1.2));
+    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge);
+    completeRanks(state, 'Bounties', 2); // +40% a clear
+    expect(firstClearLump(state)).toBe(Math.round(DELVE.firstClearKnowledge * 1.4));
   });
 
   // Researching a lump raise late must never cost what researching it early
@@ -379,11 +403,13 @@ describe('the era-2/3 lines reach their numbers', () => {
     };
 
     it('Wayposts pays its raise for each landmark already claimed', () => {
-      expect(payback('WaypostsI')).toBe(2 * 3);
+      expect(payback('WaypostsI')).toBe(2 * (Math.round(KNOWLEDGE.landmarkClaimLump * 1.2)
+        - KNOWLEDGE.landmarkClaimLump));
     });
 
-    it('Vigils pays its raise for each lair already cleared', () => {
-      expect(payback('VigilsI')).toBe(5);
+    it('Bounties pays its raise for each lair already cleared', () => {
+      expect(payback('BountiesI')).toBe(Math.round(DELVE.firstClearKnowledge * 1.2)
+        - DELVE.firstClearKnowledge);
     });
 
     it('Scriptorium pays its percentage on the lumps already earned', () => {
@@ -408,125 +434,118 @@ describe('the era-2/3 lines reach their numbers', () => {
       expect(knowledgeHeld(state)).toBe(10 - techKnowledgeCost('WaypostsI'));
     });
   });
-
-  it('Pilgrimage discounts a claim, and never makes one free', () => {
-    const state = freshGame();
-    const def = LANDMARKS[0];
-    const full = landmarkClaimCost(state, def);
-    completeRanks(state, 'Pilgrimage', 3); // −15%
-    expect(landmarkClaimCost(state, def)).toBe(Math.round(full * 0.85));
-    expect(landmarkClaimCost(state, def)).toBeGreaterThan(0);
-  });
 });
 
-// Second batch: Warfare. Same discipline.
 describe('the Warfare lines reach their numbers', () => {
-  it('Colours adds to what the halls can field, and nothing to a kingdom with no hall', () => {
+  it('Colours is a share of what the halls can field, and nothing to a kingdom with no hall', () => {
     const state = freshGame();
-    completeRanks(state, 'Colours', 3); // +6
+    completeRanks(state, 'Colours', 3); // +30%
     expect(armyCap(state), 'a banner is not a barracks').toBe(0);
     addBuilt(state, 'Barracks', { x: 3, y: 1 });
     const halls = levelIndexed(DISTRICTS.Barracks.armyCapPerLevel, 1);
-    expect(armyCap(state)).toBe(halls + 6);
+    expect(armyCap(state)).toBe(Math.round(halls * 1.3));
   });
 
-  it('Muster Drill discounts every coin of a recruit, floor 1', () => {
+  it('Drill Yards train soldiers faster, and villagers not at all', () => {
     const state = freshGame();
-    const full = trainCost(state, 'Warrior');
-    completeRanks(state, 'MusterDrill', 2); // −20%
-    const cut = trainCost(state, 'Warrior');
-    for (const c of Object.keys(full)) {
-      expect(cut[c]).toBe(Math.max(1, Math.round(full[c] * 0.8)));
-    }
-    // A villager is priced by population, not by the drill.
-    expect(trainCost(state, 'Villager')).toEqual(trainCost(freshGame(), 'Villager'));
+    const th = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    addBuilt(state, 'Barracks', { x: 3, y: 1 });
+    const barracks = state.city.districts.at(-1)!;
+    const warrior = trainSecondsAt(state, barracks.uniqueId, 'Warrior');
+    const villager = trainSecondsAt(state, th.uniqueId, 'Villager');
+    completeRanks(state, 'DrillYards', 2); // +30%
+    expect(trainSecondsAt(state, barracks.uniqueId, 'Warrior')).toBe(Math.max(1, Math.round(warrior / 1.3)));
+    expect(trainSecondsAt(state, th.uniqueId, 'Villager')).toBe(villager);
   });
 
-  it('Rations cuts the provisioning, and stacks with the Quartermaster', () => {
+  it('Beds are a share more room in the Infirmary', () => {
     const state = freshGame();
-    const full = lairSupplyCost(state, 'Drake', []);
-    completeRanks(state, 'Rations', 2); // −10%
-    const cut = lairSupplyCost(state, 'Drake', []);
-    for (const c of Object.keys(full) as Array<keyof typeof full>) {
-      expect(cut[c]).toBe(Math.max(1, Math.round(full[c]! * 0.9)));
-    }
-  });
-
-  // `Bearers` and `Salvage` bought back part of a failed delve's haul, and
-  // `Pathfinders` hurried a depth's clock. The room model has neither: a
-  // failed room grants nothing and deducts nothing, and a room resolves the
-  // instant it is entered (Docs/features/11-expeditions.md §5). The cards are
-  // still in the tree and move nothing — recorded as H8, and listed in
-  // tests/ladderEffects.test.ts so the debt cannot be forgotten.
-
-
-  it('Drillmaster pays a hero more XP for the same delve', () => {
-    const state = freshGame();
-    addHeroXp(state, 20);
-    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(20);
-    completeRanks(state, 'Drillmaster', 2); // +10%
-    addHeroXp(state, 20);
-    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(42);
+    addBuilt(state, 'Infirmary', { x: 3, y: 1 });
+    const beds = woundedCap(state);
+    expect(beds).toBeGreaterThan(0);
+    completeRanks(state, 'Beds', 2); // +40%
+    expect(woundedCap(state)).toBe(Math.floor(beds * 1.4));
   });
 });
 
-// Third batch: the combat lines. combat.ts is pure, so these are carried in on
-// the Party as a Drill — asserted through the numbers a fight is decided by.
+describe('the Sagas lines reach their numbers', () => {
+  it('Tales pays a hero more XP for the same grant', () => {
+    const state = freshGame();
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(20);
+    completeRanks(state, 'Tales', 2); // +20%
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(44);
+  });
+
+  it('the Tavern adds its own share, by level', () => {
+    const state = freshGame();
+    addBuilt(state, 'Tavern', { x: 3, y: 1 });
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(22); // +10% at L1
+  });
+
+  it('Warm Welcome pays more Stardust on every call', () => {
+    const state = freshGame();
+    const base = callStardust(state, 'basic');
+    completeRanks(state, 'WarmWelcome', 2); // +20%
+    expect(callStardust(state, 'basic')).toBe(Math.round(base * 1.2));
+  });
+});
+
+// The combat lines: combat.ts is pure, so these are carried in on the Party
+// as a Drill — asserted through the numbers a fight is decided by. Every one
+// is a PERCENT of the unit's own number.
 describe('the combat lines reach the fight', () => {
   const melee = (state: GameState) =>
-    partyStats(partyOf(state, [{ unitId: 'Warrior', count: 2 }]));
+    partyStats(partyOf(state, [{ unitId: 'Warrior', count: 20 }]));
   const ranged = (state: GameState) =>
-    partyStats(partyOf(state, [{ unitId: 'Archer', count: 2 }]));
+    partyStats(partyOf(state, [{ unitId: 'Archer', count: 20 }]));
 
   it('Shield Wall hardens Melee and leaves Distance alone', () => {
     const state = freshGame();
     const m0 = melee(state).def; const r0 = ranged(state).def;
-    completeRanks(state, 'ShieldWall', 2); // +2 DEF each
-    expect(melee(state).def).toBe(m0 + 4);
+    completeRanks(state, 'ShieldWall', 2); // +20% DEF
+    expect(melee(state).def).toBeGreaterThan(m0);
     expect(ranged(state).def).toBe(r0);
   });
 
   it('Fletching sharpens Distance and leaves Melee alone', () => {
     const state = freshGame();
     const m0 = melee(state).atk; const r0 = ranged(state).atk;
-    completeRanks(state, 'Fletching', 1);
-    expect(ranged(state).atk).toBe(r0 + 2);
+    completeRanks(state, 'Fletching', 1); // +10%
+    expect(ranged(state).atk).toBeGreaterThan(r0);
     expect(melee(state).atk).toBe(m0);
   });
 
   it('Barding armours Mounted — Cavalry is Mounted AND Melee, so it takes both', () => {
     const state = freshGame();
-    const cav = () => partyStats(partyOf(state, [{ unitId: 'Cavalry', count: 1 }])).def;
+    const cav = () => partyStats(partyOf(state, [{ unitId: 'Cavalry', count: 20 }])).def;
     const c0 = cav();
     completeRanks(state, 'Barding', 1);
+    const c1 = cav();
+    expect(c1).toBeGreaterThan(c0);
     completeRanks(state, 'ShieldWall', 1);
-    expect(cav()).toBe(c0 + 2);
+    expect(cav()).toBeGreaterThan(c1);
   });
 
   it('Warhorns lifts every unit, and reaches the swing itself', () => {
-    // The drill is resolved into the BOARD now, so a rank shows up where it
-    // matters: on what a squad hits for (Docs/features/combat.md §7).
     const state = freshGame();
     const slots = [{ unitId: 'Warrior' as const, count: 3 }];
     const before = partyBoard(partyOf(state, slots)).slots[0]!.dmg;
-    completeRanks(state, 'Warhorns', 2); // +2 damage each
-    expect(partyBoard(partyOf(state, slots)).slots[0]!.dmg).toBe(before + 2);
+    completeRanks(state, 'Warhorns', 4); // +20%
+    expect(partyBoard(partyOf(state, slots)).slots[0]!.dmg).toBeGreaterThan(before);
   });
 
-  it('Manoeuvre softens a bad matchup, and never past neutral', () => {
+  it('Vigour is a share more health for every unit', () => {
     const state = freshGame();
-    const bad = ARMY.typeDisadvantage;
-    expect(typeMultiplier('Warrior', 'Archer')).toBe(bad); // shields lose to arrows
-    completeRanks(state, 'Manoeuvre', 3); // +6%
-    const drill = drillOf(state);
-    expect(typeMultiplier('Warrior', 'Archer', drill.disadvantageOffset)).toBeCloseTo(bad + 0.06);
-    expect(typeMultiplier('Warrior', 'Archer', 5)).toBe(1); // capped at neutral
-    // The good matchup is untouched: Manoeuvre is about not wasting a trip.
-    expect(typeMultiplier('Archer', 'Warrior', drill.disadvantageOffset)).toBe(ARMY.typeAdvantage);
+    const hp = melee(state).hp;
+    completeRanks(state, 'Vigour', 2); // +10%
+    expect(melee(state).hp).toBeGreaterThan(hp);
   });
 });
 
-// Fourth: Farsight, the one hook with a DISCRETE effect at completion.
+// Farsight, the one hook with a DISCRETE effect at completion.
 describe('Farsight reaches the fog', () => {
   const ready = () => {
     const s = freshGame();
@@ -548,8 +567,6 @@ describe('Farsight reaches the fog', () => {
       .toBeGreaterThan(before);
   });
 
-  // The sweep belongs to the research COMMAND: marking the rank done by hand
-  // widens the radius but discovers nothing until something is placed.
   it('re-discovers at completion, not later', () => {
     const viaCommand = ready();
     research(viaCommand, 'FarsightI');
@@ -561,12 +578,8 @@ describe('Farsight reaches the fog', () => {
   });
 });
 
-// The era-2/3 MAJORS that work against dials the game already had.
-describe('the era-2/3 majors that are live', () => {
+describe('the majors that are live', () => {
   it('Aqueducts lets Housing reach level 3 with a third tier of beds', () => {
-    // Housing reaches 10 now; Aqueducts still owns the third tier, and it is
-    // the last technology on the ladder — every level above it is bought with
-    // goods and a Townhall level instead (Docs/plans/builder-30-days.md §4).
     expect(requiredTechForLevel('Housing', 3)).toBe('Aqueducts');
     expect(requiredTechForLevel('Housing', 4)).toBe(null);
     expect(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 3))
@@ -580,13 +593,13 @@ describe('the era-2/3 majors that are live', () => {
     expect(maxDistrictCount(state, DISTRICTS.Sanctum)).toBe(sanctum + 1);
   });
 
-  it('Roadworks is a quarter faster, and stacks with Cartage', () => {
+  it('Roadworks is a quarter faster, and adds to Cartage', () => {
     const state = freshGame();
     const base = effectiveWorkerSpeed(state);
-    completeTech(state, 'Roadworks');
+    state.research.completed.push('Roadworks');
     expect(effectiveWorkerSpeed(state)).toBeCloseTo(base * 1.25);
     completeRanks(state, 'Cartage', 1);
-    expect(effectiveWorkerSpeed(state)).toBeCloseTo(base * 1.25 * 1.05);
+    expect(effectiveWorkerSpeed(state)).toBeCloseTo(base * 1.35);
   });
 
   it('Tactics takes a tenth off a bad matchup, through the Drill', () => {
@@ -597,32 +610,10 @@ describe('the era-2/3 majors that are live', () => {
       .toBeCloseTo(ARMY.typeDisadvantage + 0.10);
   });
 
-
-  it('Meditation raises the ceiling by the authored step', () => {
-    const state = freshGame();
-    const cap = manaCap(state);
-    completeTech(state, 'Meditation');
-    expect(manaCap(state)).toBe(cap + MANA.meditationCap);
-  });
-
-  // Both raise the first-clear lump. Pushed by id, not through the chain
-  // helper, so no other rank that moves a lump comes along with them.
-  it('Conquest and Sanctified Ruins both raise the first-clear lump, and compose', () => {
-    const state = freshGame();
-    const base = DELVE.firstClearKnowledge;
-    expect(firstClearLump(state)).toBe(base);
-    state.research.completed.push('Conquest');
-    expect(firstClearLump(state)).toBe(base + KNOWLEDGE.conquestFirstClearLump);
-    state.research.completed.push('SanctifiedRuins');
-    expect(firstClearLump(state)).toBe((base + KNOWLEDGE.conquestFirstClearLump) * 2);
-    // Sanctified doubles Vigils too — the whole of it.
-    completeRanks(state, 'Vigils', 1);
-    expect(firstClearLump(state)).toBe((base + KNOWLEDGE.conquestFirstClearLump + 5) * 2);
-  });
-
-  it('Sanctified Ruins alone doubles the lump', () => {
-    const state = freshGame();
-    state.research.completed.push('SanctifiedRuins');
-    expect(firstClearLump(state)).toBe(DELVE.firstClearKnowledge * 2);
+  it('the Tavern is opened by Hospitality, and its levels by the Sagas', () => {
+    expect(DISTRICTS.Tavern.requiredTech).toBe('Hospitality');
+    for (const level of [2, 3, 4, 5]) {
+      expect(TECHNOLOGIES[requiredTechForLevel('Tavern', level)!].tome).toBe('Sagas');
+    }
   });
 });
