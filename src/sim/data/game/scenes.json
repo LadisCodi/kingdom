@@ -18,7 +18,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       },
       {
         "speaker": "advisor",
@@ -36,7 +36,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The fog swallowed everything past the Townhall. But fog, like most things in this kingdom, can be bought back.",
+        "text": "The fog swallowed everything past the Townhall — our forests, our fields, our people's work. We must win it back.",
         "box": "bottom",
         "point": "",
         "lock": "all",
@@ -49,7 +49,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "See the trees in the dark? Tap that patch. Five taps clear a cell, and every tap costs a pinch of Gold.",
+        "text": "Those trees in the dark are ours to reclaim. Tap that patch: five taps clear a cell, and each costs a pinch of Gold.",
         "box": "auto",
         "point": "feature:TreesFog",
         "lock": "target",
@@ -57,12 +57,12 @@
         "untilTarget": "FirstSteps",
         "untilAmount": 1,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Timber! Clear three more forest cells — the scroll keeps count.",
+        "text": "Timber! The forest remembers us. Three more stands, and our axes will have work again.",
         "box": "auto",
         "point": "feature:TreesFog",
         "lock": "map",
@@ -75,7 +75,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Splendid work, Your Majesty! The scroll has a reward for you — tap it.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -98,7 +98,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Our woodcutters have forgotten their craft. The Book of Civics will remind them.",
+        "text": "Trees at last — and no one left who remembers how to fell them. The Book of Civics will remind us.",
         "box": "middle",
         "point": "ui:nav:research",
         "lock": "target",
@@ -106,12 +106,12 @@
         "untilTarget": "research",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Every card in the book is a technology. This one teaches us to fell trees.",
+        "text": "Every card in the book is something our people can learn. This one is Forestry.",
         "box": "bottom",
         "point": "ui:tech:Forestry",
         "lock": "target",
@@ -119,12 +119,12 @@
         "untilTarget": "techsheet:Forestry",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Research runs on Knowledge. Pour it in…",
+        "text": "Learning runs on Knowledge. Pour ours in…",
         "box": "top",
         "point": "ui:tech-pour",
         "lock": "target",
@@ -137,7 +137,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "…then pay the Gold, and it is ours at once.",
+        "text": "…then pay the Gold, and the craft is ours at once.",
         "box": "top",
         "point": "ui:tech-research",
         "lock": "target",
@@ -145,12 +145,12 @@
         "untilTarget": "Forestry",
         "untilAmount": 0,
         "exit": false,
-        "expression": "happy"
+        "expression": ""
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Knowledge refills by itself — a point an hour, up to ten. Pour it in before the bar is full, or the drip stops.",
+        "text": "Listen — axes in the woods already! Knowledge comes back by itself, a point an hour, up to ten. Spend it before the bar fills.",
         "box": "middle",
         "point": "ui:knowledge",
         "lock": "all",
@@ -158,12 +158,12 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Close the book and let’s put it to use.",
+        "text": "Close the book. Let’s put that craft to work.",
         "box": "middle",
         "point": "ui:close",
         "lock": "target",
@@ -176,7 +176,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "And the scroll has a reward for that. Tap it.",
+        "text": "The scroll has something for that. Tap it.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -184,7 +184,7 @@
         "untilTarget": "Woodcraft",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       }
     ]
   },
@@ -199,7 +199,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.",
+        "text": "Show them how it’s done: tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.",
         "box": "auto",
         "point": "feature:TreesRevealed",
         "lock": "map",
@@ -212,7 +212,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Hold your finger down and the axe keeps swinging. A felled stand grows back — move on to the next.",
+        "text": "Hold your finger down and the axe keeps swinging. When a stand is felled, move on — it grows back.",
         "box": "auto",
         "point": "feature:TreesRevealed",
         "lock": "none",
@@ -225,7 +225,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Claim it — it pays back more Mana than you just spent.",
+        "text": "Wood for the kingdom! Claim it — the scroll pays back more Mana than you spent.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -248,7 +248,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Nobody settles in a town without roofs. Let’s build a House.",
+        "text": "Wood, at last — and not one roof to sleep under. No one will settle here like this. Let’s build a House.",
         "box": "middle",
         "point": "ui:nav:build",
         "lock": "target",
@@ -256,7 +256,7 @@
         "untilTarget": "build",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
@@ -274,7 +274,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Anywhere on cleared ground. Drag it if you like, then confirm.",
+        "text": "Anywhere on cleared ground. Drag it where you like, then confirm.",
         "box": "top",
         "point": "ui:place-confirm",
         "lock": "map",
@@ -287,7 +287,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A builder is on it. Buildings keep rising while you are away.",
+        "text": "Hear that? Hammers! A builder is on it, and buildings keep rising while you are away.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "all",
@@ -300,7 +300,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Our first roof! The scroll has a reward waiting — tap it.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -323,7 +323,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Villagers eat. Berry bushes give Food — clear the fog off one, then tap it.",
+        "text": "A roof is a start, but villagers eat. We must find them food — berry bushes would do. Clear the fog off one, then tap it.",
         "box": "auto",
         "point": "feature:BerryBush",
         "lock": "none",
@@ -331,12 +331,12 @@
         "untilTarget": "Rations",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Berries enough to feed a household! Tap the scroll.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -359,7 +359,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The House is still going up — a villager needs it standing.",
+        "text": "The House is still going up. No family moves in under scaffolding.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "none",
@@ -372,7 +372,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Townhall trains villagers. Open it.",
+        "text": "A roof and a pantry — now we need people. The Townhall trains villagers. Open it.",
         "box": "auto",
         "point": "district:Townhall",
         "lock": "target",
@@ -380,7 +380,7 @@
         "untilTarget": "card:train",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
@@ -424,7 +424,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Oakville has its first citizen! You’ve earned this — tap the scroll.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -447,7 +447,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Housed villagers pay rent into the House’s store. When the bubble shows, tap it — collecting is always free.",
+        "text": "Our villager pays rent into the House’s store. When the bubble shows, tap it — collecting never costs a thing.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "none",
@@ -455,12 +455,12 @@
         "untilTarget": "TaxDay",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Gold in the coffers! Tap the scroll.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -473,7 +473,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "That is the heart of it: clear the fog, gather, build, grow. The scroll will always hold your next task.",
+        "text": "That is how a kingdom is kept, Your Majesty: clear the fog, gather, build, grow. The scroll will always hold the next task.",
         "box": "middle",
         "point": "",
         "lock": "all",
@@ -509,7 +509,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Every tap on those plots costs Mana. A Farm sends villagers to reap them for you — all day, and all night while you are away.",
+        "text": "Reaping every plot by hand will wear us thin — and each tap costs Mana. A Farm sends villagers to do it for you, day and night.",
         "box": "auto",
         "point": "district:FarmLands",
         "lock": "all",
@@ -517,7 +517,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
@@ -561,7 +561,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A builder is on it — and the scroll counts it already. Claim it.",
+        "text": "A Farm for Oakville! The scroll counts it already — claim it.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -597,7 +597,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Farm is up, and nobody works it yet. Tap it.",
+        "text": "The Farm stands — and nobody works it. Tap it.",
         "box": "auto",
         "point": "district:Farm",
         "lock": "target",
@@ -605,7 +605,7 @@
         "untilTarget": "card:workers",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
@@ -618,12 +618,12 @@
         "untilTarget": "ToWork",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The harvest waits in the Farm’s store. When its bubble shows, tap the Farm to bring it in — a full store stops the work.",
+        "text": "Look at them go! The harvest waits in the Farm’s store: tap the Farm when its bubble shows. A full store stops the work.",
         "box": "top",
         "point": "district:Farm",
         "lock": "all",
@@ -631,7 +631,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       }
     ]
   },
@@ -646,7 +646,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "That House is full — two to a roof. Build another, and the town can grow.",
+        "text": "That House is full — two to a roof, and no room for anyone else. Build another, and the town can grow.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "none",
@@ -654,7 +654,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "worried"
       }
     ]
   },
@@ -669,7 +669,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Farm reaps on its own. The forest could too — the Book of Civics knows how.",
+        "text": "The Farm reaps on its own. Why not the forest too? The Book of Civics knows how.",
         "box": "middle",
         "point": "ui:nav:research",
         "lock": "target",
@@ -744,7 +744,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A Sawmill sends woodcutters into the trees around it — Wood without a single tap.",
+        "text": "A Sawmill sends woodcutters into the trees around it — Wood without a single tap from you.",
         "box": "middle",
         "point": "ui:nav:build",
         "lock": "target",
@@ -783,7 +783,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A builder is on it — and the scroll counts it already. Claim it.",
+        "text": "Another builder at work! The scroll counts it already — claim it.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -819,7 +819,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Sawmill is up. Tap it.",
+        "text": "The Sawmill stands idle — saws, and no one to swing them. Tap it.",
         "box": "auto",
         "point": "district:Sawmill",
         "lock": "target",
@@ -827,12 +827,12 @@
         "untilTarget": "card:workers",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "worried"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Send it woodcutters — the scroll wants three villagers at work, the Farm’s included.",
+        "text": "Send it woodcutters. The scroll wants three villagers at work, the Farm’s included.",
         "box": "top",
         "point": "ui:card:workers",
         "lock": "none",
@@ -845,7 +845,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.",
+        "text": "Food and Wood now come in on their own, even while you are away. You have the makings of a real town, Your Majesty.",
         "box": "top",
         "point": "district:Sawmill",
         "lock": "all",
@@ -868,7 +868,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A Barracks is built of stone, and our people cannot cut it yet. The Book of Civics can teach them.",
+        "text": "The orcs won’t wait, and a Barracks is built of stone — which our people cannot cut. The Book of Civics can teach them.",
         "box": "middle",
         "point": "ui:nav:research",
         "lock": "target",
@@ -889,7 +889,7 @@
         "untilTarget": "techsheet:Pickaxes",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
@@ -951,12 +951,12 @@
         "untilTarget": "Rubble",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A task done is a reward waiting. Tap the scroll.",
+        "text": "Stone enough for walls! Tap the scroll.",
         "box": "middle",
         "point": "quest",
         "lock": "target",
@@ -979,7 +979,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A bigger Townhall lets us pay for fog further out — the dotted line is how far. It also lets the city hold more.",
+        "text": "A grander Townhall, Your Majesty! We can clear fog further out now — the dotted line is how far — and the city can hold more.",
         "box": "auto",
         "point": "district:Townhall",
         "lock": "none",
@@ -987,7 +987,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       }
     ]
   },
@@ -1048,7 +1048,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Out of Mana. It refills on its own, about a pool a night — or a short message from our patrons refills it now.",
+        "text": "We’re out of Mana, Your Majesty. It refills on its own, about a pool a night — or a word from our patrons refills it now.",
         "box": "middle",
         "point": "ui:mana",
         "lock": "none",
@@ -1071,7 +1071,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The deeper pages of the books only open to a monarch who has seen more of the land. You just have — Chapter II is open.",
+        "text": "You’ve seen more of the land than any monarch in years — and the books have noticed. Chapter II is open!",
         "box": "middle",
         "point": "ui:nav:research",
         "lock": "none",
@@ -1133,7 +1133,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Book of Warfare is open to us now. Start with the Barracks.",
+        "text": "The Book of Warfare is open to us now. We’ll need soldiers — start with the Barracks.",
         "box": "middle",
         "point": "ui:nav:research",
         "lock": "none",
@@ -1141,7 +1141,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       }
     ]
   },
@@ -1156,7 +1156,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "They hit the stores — never the treasury. Collect often and they find less. Clear the camp and we get every coin back.",
+        "text": "They’ve robbed our stores! Never the treasury, at least. Collect often and they find less — clear the camp to win it all back.",
         "box": "auto",
         "point": "lair:Orcs",
         "lock": "none",
@@ -1215,7 +1215,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Claim the camp — whatever they took comes back, and the ground is ours again.",
+        "text": "Oakville is safe! Claim the camp — whatever they took comes back, and the ground is ours again.",
         "box": "auto",
         "point": "lair:Orcs",
         "lock": "none",
@@ -1246,7 +1246,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "surprised"
       }
     ]
   },
@@ -1517,7 +1517,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Wounded, not lost. The Infirmary patches them up for a fraction of a new recruit.",
+        "text": "Our soldiers came home wounded — but not lost. The Infirmary patches them up for a fraction of a new recruit.",
         "box": "middle",
         "point": "",
         "lock": "none",
@@ -1540,7 +1540,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A workshop turns raw goods into refined ones. The highest building levels ask for them.",
+        "text": "A workshop! It turns raw goods into refined ones — and our grandest buildings will ask for them.",
         "box": "middle",
         "point": "",
         "lock": "none",
@@ -1548,7 +1548,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       }
     ]
   },
@@ -1563,7 +1563,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A beautiful city is a willing one. Decorations lend Harmony, and grand buildings ask for it.",
+        "text": "A beautiful city is a willing one. Decorations lend Harmony, and our grandest buildings ask for it.",
         "box": "middle",
         "point": "",
         "lock": "none",
@@ -1571,7 +1571,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "idea"
       }
     ]
   }

@@ -45,40 +45,45 @@ Played on the real kingdom, from the first frame after the payer profile. The
 camera starts on the Townhall. **Isolde**, the Royal Advisor, speaks from the
 left unless a line says otherwise.
 
+**Isolde tells the kingdom's story, not the interface's**: she says what the
+kingdom lacks — a roof, food, people — and asks the player to put it right,
+praises each thing put right, and wears the face that goes with it
+([`24-dialogue.md`](24-dialogue.md) §6).
+
 | # | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
 | 0.1 | — | *Your Majesty! Welcome home to Oakville — or to what the fog has left of it.* | — | all | tap |
 | 0.2 | — | *I am Isolde, your Royal Advisor. I keep the maps, the ledgers and, on good days, the peace.* | — | all | tap |
-| 0.3 | — | *The fog swallowed everything past the Townhall. But fog, like most things in this kingdom, can be bought back.* | — | all | tap |
-| 1.1 | `FirstSteps` | *See the trees in the dark? Tap that patch. Five taps clear a cell, and every tap costs a pinch of Gold.* | the nearest fogged forest | that cell | the cell is revealed |
-| 1.2 | `FirstSteps` | *Timber! Clear three more forest cells — the scroll keeps count.* | the next fogged forest | the map | the quest completes |
-| 1.3 | `FirstSteps` | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
-| 2.1 | `Woodcraft` | *Our woodcutters have forgotten their craft. The Book of Civics will remind them.* | **Research** (its padlock breaks) | the tab | the book is open |
-| 2.2 | `Woodcraft` | *Every card in the book is a technology. This one teaches us to fell trees.* | the Forestry card | the card | its sheet is open |
-| 2.3 | `Woodcraft` | *Research runs on Knowledge. Pour it in…* | **+N** | the button | the Knowledge is in |
-| 2.4 | `Woodcraft` | *…then pay the Gold, and it is ours at once.* | **Research** | the button | Forestry is done |
-| 2.5 | `Woodcraft` | *Knowledge refills by itself — a point an hour, up to ten. Pour it in before the bar is full, or the drip stops.* | the Knowledge tab | all | tap |
-| 2.6 | `Woodcraft` | *Close the book and let's put it to use.* | the close knob | the knob | the book is shut |
-| 2.7 | `Woodcraft` | *And the scroll has a reward for that. Tap it.* | the quest pill | the pill | claimed |
-| 3.1 | `Timber` | *Tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.* | the nearest forest | the map | three taps |
-| 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging. A felled stand grows back — move on to the next.* | the nearest forest with wood left | none | the quest completes |
-| 3.3 | `Timber` | *Claim it — it pays back more Mana than you just spent.* | the quest pill | the pill | claimed |
-| 4.1 | `ARoof` | *Nobody settles in a town without roofs. Let's build a House.* | **Build** (its padlock breaks) | the tab | the build menu is open |
+| 0.3 | — | *The fog swallowed everything past the Townhall — our forests, our fields, our people's work. We must win it back.* | — | all | tap |
+| 1.1 | `FirstSteps` | *Those trees in the dark are ours to reclaim. Tap that patch: five taps clear a cell, and each costs a pinch of Gold.* | the nearest fogged forest | that cell | the cell is revealed |
+| 1.2 | `FirstSteps` | *Timber! The forest remembers us. Three more stands, and our axes will have work again.* | the next fogged forest | the map | the quest completes |
+| 1.3 | `FirstSteps` | *Splendid work, Your Majesty! The scroll has a reward for you — tap it.* | the quest pill | the pill | claimed |
+| 2.1 | `Woodcraft` | *Trees at last — and no one left who remembers how to fell them. The Book of Civics will remind us.* | **Research** (its padlock breaks) | the tab | the book is open |
+| 2.2 | `Woodcraft` | *Every card in the book is something our people can learn. This one is Forestry.* | the Forestry card | the card | its sheet is open |
+| 2.3 | `Woodcraft` | *Learning runs on Knowledge. Pour ours in…* | **+N** | the button | the Knowledge is in |
+| 2.4 | `Woodcraft` | *…then pay the Gold, and the craft is ours at once.* | **Research** | the button | Forestry is done |
+| 2.5 | `Woodcraft` | *Listen — axes in the woods already! Knowledge comes back by itself, a point an hour, up to ten. Spend it before the bar fills.* | the Knowledge tab | all | tap |
+| 2.6 | `Woodcraft` | *Close the book. Let's put that craft to work.* | the close knob | the knob | the book is shut |
+| 2.7 | `Woodcraft` | *The scroll has something for that. Tap it.* | the quest pill | the pill | claimed |
+| 3.1 | `Timber` | *Show them how it's done: tap a tree. Every tap on the ground spends one Mana — the blue gauge up top.* | the nearest forest | the map | three taps |
+| 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging. When a stand is felled, move on — it grows back.* | the nearest forest with wood left | none | the quest completes |
+| 3.3 | `Timber` | *Wood for the kingdom! Claim it — the scroll pays back more Mana than you spent.* | the quest pill | the pill | claimed |
+| 4.1 | `ARoof` | *Wood, at last — and not one roof to sleep under. No one will settle here like this. Let's build a House.* | **Build** (its padlock breaks) | the tab | the build menu is open |
 | 4.2 | `ARoof` | *Buildings are paid for up front. Pick the House.* | the Housing card | the card | placing |
-| 4.3 | `ARoof` | *Anywhere on cleared ground. Drag it if you like, then confirm.* | the confirm button | the map and the panel | placed |
-| 4.4 | `ARoof` | *A builder is on it. Buildings keep rising while you are away.* | the construction | all | tap |
-| 4.5 | `ARoof` | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
-| 5.1 | `Rations` | *Villagers eat. Berry bushes give Food — clear the fog off one, then tap it.* | the nearest berries, fogged or not | none | the quest completes |
-| 5.2 | `Rations` | (the claim, as 4.5) | the quest pill | the pill | claimed |
-| 6.0 | `FirstVillager` | *The House is still going up — a villager needs it standing.* (skipped if it stands) | the House | none | the House is finished |
-| 6.1 | `FirstVillager` | *The Townhall trains villagers. Open it.* | the Townhall | the Townhall | its card is open |
+| 4.3 | `ARoof` | *Anywhere on cleared ground. Drag it where you like, then confirm.* | the confirm button | the map and the panel | placed |
+| 4.4 | `ARoof` | *Hear that? Hammers! A builder is on it, and buildings keep rising while you are away.* | the construction | all | tap |
+| 4.5 | `ARoof` | *Our first roof! The scroll has a reward waiting — tap it.* | the quest pill | the pill | claimed |
+| 5.1 | `Rations` | *A roof is a start, but villagers eat. We must find them food — berry bushes would do. Clear the fog off one, then tap it.* | the nearest berries, fogged or not | none | the quest completes |
+| 5.2 | `Rations` | *Berries enough to feed a household! Tap the scroll.* | the quest pill | the pill | claimed |
+| 6.0 | `FirstVillager` | *The House is still going up. No family moves in under scaffolding.* (skipped if it stands) | the House | none | the House is finished |
+| 6.1 | `FirstVillager` | *A roof and a pantry — now we need people. The Townhall trains villagers. Open it.* | the Townhall | the Townhall | its card is open |
 | 6.2 | `FirstVillager` | *Train one. They'll need that roof — and a moment to arrive.* | **Train** | none | a villager arrives |
 | 6.3 | `FirstVillager` | **Villager** (right): *A roof, a hearth and a monarch! I'll pay my rent on time, Your Majesty.* | — | all | tap |
 | 6.3b | `FirstVillager` | *Close the Townhall — the scroll is waiting behind it.* (skipped if it is closed) | the card's close knob | the knob | the scroll is on screen |
-| 6.4 | `FirstVillager` | (the claim) | the quest pill | the pill | claimed |
-| 7.1 | `TaxDay` | *Housed villagers pay rent into the House's store. When the bubble shows, tap it — collecting is always free.* | the House | none | the quest completes |
-| 7.1b | `TaxDay` | (the claim) | the quest pill | the pill | claimed |
-| 7.2 | `TaxDay` | *That is the heart of it: clear the fog, gather, build, grow. The scroll will always hold your next task.* | the quest pill | all | tap |
+| 6.4 | `FirstVillager` | *Oakville has its first citizen! You've earned this — tap the scroll.* | the quest pill | the pill | claimed |
+| 7.1 | `TaxDay` | *Our villager pays rent into the House's store. When the bubble shows, tap it — collecting never costs a thing.* | the House | none | the quest completes |
+| 7.1b | `TaxDay` | *Gold in the coffers! Tap the scroll.* | the quest pill | the pill | claimed |
+| 7.2 | `TaxDay` | *That is how a kingdom is kept, Your Majesty: clear the fog, gather, build, grow. The scroll will always hold the next task.* | the quest pill | all | tap |
 | 7.3 | `TaxDay` | *Lost? Tap the scroll and I'll point the way. And come back tomorrow — I'll have a gift for you.* | the quest pill | all | tap — **the First Morning ends** |
 
 - **A beat checks its condition when it starts**, so a beat already met is
@@ -105,34 +110,34 @@ Beats, as the First Morning's, each on its quest.
 
 | Scene | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
-| `farm` | `Farmhand` | *Every tap on those plots costs Mana. A Farm sends villagers to reap them for you — all day, and all night while you are away.* | the crop plots | all | tap |
+| `farm` | `Farmhand` | *Reaping every plot by hand will wear us thin — and each tap costs Mana. A Farm sends villagers to do it for you, day and night.* | the crop plots | all | tap |
 | | | *Let's build one.* | **Build** | the tab | the build menu is open |
 | | | *Pick the Farm.* | the Farm card | the card | placing |
 | | | *A Farm reaches one step round itself, corners too. Set it beside the plots — each one in reach shows what it holds — then Build.* | the crop plots | the map and the panel | placed |
-| | | *A builder is on it — and the scroll counts it already. Claim it.* | the quest pill | the pill | claimed |
+| | | *A Farm for Oakville! The scroll counts it already — claim it.* | the quest pill | the pill | claimed |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it will need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
-| | | *The Farm is up, and nobody works it yet. Tap it.* | the Farm | the Farm | its card is open |
+| | | *The Farm stands — and nobody works it. Tap it.* | the Farm | the Farm | its card is open |
 | | | *Send a villager. They walk to a plot in reach, reap it and carry the crop home — more hands, more trips.* | the card's **+** | none | the quest completes |
-| | | *The harvest waits in the Farm's store. When its bubble shows, tap the Farm to bring it in — a full store stops the work.* | the Farm | all | tap |
-| `saws` | `SawTeeth` | *The Farm reaps on its own. The forest could too — the Book of Civics knows how.* | **Research** | the tab | the book is open |
+| | | *Look at them go! The harvest waits in the Farm's store: tap the Farm when its bubble shows. A full store stops the work.* | the Farm | all | tap |
+| `saws` | `SawTeeth` | *The Farm reaps on its own. Why not the forest too? The Book of Civics knows how.* | **Research** | the tab | the book is open |
 | | | *Saws. It teaches us to build a Sawmill.* | the Saws card | the card | its sheet is open |
 | | | *Pour in its Knowledge…* · *…and research it.* | **+N** · **Research** | the button | filled · done |
 | | | *Close the book, and let's build it.* | the close knob | the knob | the book is shut |
-| `sawmill` | `TheSawmill` | *A Sawmill sends woodcutters into the trees around it — Wood without a single tap.* | **Build** | the tab | the build menu is open |
+| `sawmill` | `TheSawmill` | *A Sawmill sends woodcutters into the trees around it — Wood without a single tap from you.* | **Build** | the tab | the build menu is open |
 | | | *Pick the Sawmill.* | the Sawmill card | the card | placing |
 | | | *Like the Farm, it works only what is in its reach. Set it where the most trees stand inside the outline, then Build.* | the confirm button | the map and the panel | placed |
-| | | *A builder is on it — and the scroll counts it already. Claim it.* | the quest pill | the pill | claimed |
+| | | *Another builder at work! The scroll counts it already — claim it.* | the quest pill | the pill | claimed |
 | `sawmillCrew` | `Crewed` | *The Sawmill is still going up. When it stands, it will need hands.* (skipped if it stands) | the Sawmill | none | the Sawmill is finished |
-| | | *The Sawmill is up. Tap it.* | the Sawmill | the Sawmill | its card is open |
-| | | *Send it woodcutters — the scroll wants three villagers at work, the Farm's included.* | the card's **+** | none | the quest completes |
-| | | *Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.* | the Sawmill | all | tap |
+| | | *The Sawmill stands idle — saws, and no one to swing them. Tap it.* | the Sawmill | the Sawmill | its card is open |
+| | | *Send it woodcutters. The scroll wants three villagers at work, the Farm's included.* | the card's **+** | none | the quest completes |
+| | | *Food and Wood now come in on their own, even while you are away. You have the makings of a real town, Your Majesty.* | the Sawmill | all | tap |
 
-| `picks` | `Picks` | *A Barracks is built of stone, and our people cannot cut it yet. The Book of Civics can teach them.* | **Research** | the tab | the book is open |
+| `picks` | `Picks` | *The orcs won't wait, and a Barracks is built of stone — which our people cannot cut. The Book of Civics can teach them.* | **Research** | the tab | the book is open |
 | | | *Pickaxes. It opens the mountains to us.* | the Pickaxes card | the card | its sheet is open |
 | | | *Pour in its Knowledge…* · *…and research it.* | **+N** · **Research** | the button | filled · done |
 | | | *Close the book, and let's find some rock.* | the close knob | the knob | the book is shut |
 | `rubble` | `Rubble` | *Tap a mountain. Every swing of the pick brings home Stone — and spends a Mana, like the axe. Clear the fog off one if you must.* | the nearest mountain, fogged or not | none | the quest completes |
-| | | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
+| | | *Stone enough for walls! Tap the scroll.* | the quest pill | the pill | claimed |
 
 - **A worker building's ghost starts where it would work the most** — the
   Farm beside the plots, the Sawmill in the thickest trees — the nearest of
@@ -148,20 +153,20 @@ last line, as a hint.
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `fullHouse` | quest `GrowingTown` reached | Isolde | *That House is full — two to a roof. Build another, and the town can grow.* | the House |
-| `townhall2` | quest `ProperCapital` reached | Isolde | *A bigger Townhall lets us pay for fog further out — the dotted line is how far. It also lets the city hold more.* | the Townhall |
+| `fullHouse` | quest `GrowingTown` reached | Isolde | *That House is full — two to a roof, and no room for anyone else. Build another, and the town can grow.* | the House |
+| `townhall2` | quest `ProperCapital` reached | Isolde | *A grander Townhall, Your Majesty! We can clear fog further out now — the dotted line is how far — and the city can hold more.* | the Townhall |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy. Wait for one to finish — or hire another hand, and two things rise at once.* | — |
-| `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *Out of Mana. It refills on its own, about a pool a night — or a short message from our patrons refills it now.* | the Mana gauge |
-| `eras` | 30 cells revealed | Isolde | *The deeper pages of the books only open to a monarch who has seen more of the land. You just have — Chapter II is open.* | Research |
+| `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *We're out of Mana, Your Majesty. It refills on its own, about a pool a night — or a word from our patrons refills it now.* | the Mana gauge |
+| `eras` | 30 cells revealed | Isolde | *You've seen more of the land than any monarch in years — and the books have noticed. Chapter II is open!* | Research |
 
 ### 4.2 The Orcs
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `orcs` | the Orcs are discovered | **Grukk** (right), Isolde, **the Warden** (right) | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Isolde:** *Orcs! While their camp stands they'll raid our stores — and nothing near it can be worked.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *The Book of Warfare is open to us now. Start with the Barracks.* | the raid widget |
-| `raid` | the first raid lands | Isolde | *They hit the stores — never the treasury. Collect often and they find less. Clear the camp and we get every coin back.* | the lair |
+| `orcs` | the Orcs are discovered | **Grukk** (right), Isolde, **the Warden** (right) | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Isolde:** *Orcs! While their camp stands they'll raid our stores — and nothing near it can be worked.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *The Book of Warfare is open to us now. We'll need soldiers — start with the Barracks.* | the raid widget |
+| `raid` | the first raid lands | Isolde | *They've robbed our stores! Never the treasury, at least. Collect often and they find less — clear the camp to win it all back.* | the lair |
 | `battle` | the first attack sheet opens | the Warden | *Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it'll go before we march.* | the attack button |
-| `victory` | the first lair is cleared | the Warden, Isolde | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Claim the camp — whatever they took comes back, and the ground is ours again.* | the lair |
+| `victory` | the first lair is cleared | the Warden, Isolde | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Claim the camp — whatever they took comes back, and the ground is ours again.* | the lair |
 | `relics` | Relics opens | Isolde | *Cards! Collect a page of them and the kingdom earns a relic — a gift that keeps growing every season.* | Relics |
 
 ### 4.3 Magic, heroes, the world
@@ -190,9 +195,9 @@ Each points at what it is about.
 
 | Scene | Trigger | Says (Isolde) |
 |---|---|---|
-| `wounded` | the first soldier comes home wounded | *Wounded, not lost. The Infirmary patches them up for a fraction of a new recruit.* |
-| `workshops` | the first workshop is finished | *A workshop turns raw goods into refined ones. The highest building levels ask for them.* |
-| `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony, and grand buildings ask for it.* |
+| `wounded` | the first soldier comes home wounded | *Our soldiers came home wounded — but not lost. The Infirmary patches them up for a fraction of a new recruit.* |
+| `workshops` | the first workshop is finished | *A workshop! It turns raw goods into refined ones — and our grandest buildings will ask for them.* |
+| `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony, and our grandest buildings ask for it.* |
 | `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and nothing is lost: the next gift simply waits.* |
 
 ## 5. Help when stuck
