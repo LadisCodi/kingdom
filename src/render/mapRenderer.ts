@@ -871,6 +871,16 @@ export function drawMap(
             taps / FOG.tapsToReveal, PALETTE.progressFill);
         }
       }
+      // A tap on the fog flashes the cell white, the last one too as it
+      // clears (Game.flashFog).
+      const flash = tapFx.sample(`fog:${key}`)?.flash ?? 0;
+      if (flash > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = flash * 0.75;
+        ctx.fillStyle = PALETTE.fogFlash;
+        fillDiamond(ctx, box);
+        ctx.restore();
+      }
     }
   }
 

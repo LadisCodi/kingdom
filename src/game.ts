@@ -28,7 +28,7 @@ import {
   explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
 } from './sim/fog';
 import {
-  cellsWithinRadius, cellsWithinRadiusOfRect, townhallDistance, type MapData,
+  cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
 import { activeZones, type Modifier } from './sim/modifiers';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
@@ -597,6 +597,12 @@ export class Game {
     playSfx('error'); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
   }
+  /** A tap on the fog that took: the cell flashes white — every cell of a
+   *  block, since one tap works them all (mapRenderer draws `fog:<cell>`). */
+  private flashFog(cell: Coord): void {
+    for (const c of footprintCells(this.map, cell)) this.tapFx.add(`fog:${coordKey(c)}`);
+  }
+
   toast(msg: string): void {
     for (const fn of this.toastListeners) fn(msg);
   }
@@ -789,6 +795,7 @@ export class Game {
         // not one Gold, so the floater has to be told what it cost.
         const charged = nextRevealTapCost(this.state, this.map, cell);
         const result = revealTap(this.state, this.map, cell);
+        if (result === 'Paid' || result === 'Revealed') this.flashFog(cell);
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'NotReachable') {
           // Say the rule, not just "no". A player who has been told once that
@@ -1028,6 +1035,7 @@ export class Game {
     const charged = nextRevealTapCost(this.state, this.map, cell);
     const result = revealTap(this.state, this.map, cell);
     if (result !== 'Paid' && result !== 'Revealed') return false;
+    this.flashFog(cell);
     this.state.lastCollectTapAt = now;
     if (result === 'Revealed') {
       wakeIdleWorkersAt(this.state, now);

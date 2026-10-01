@@ -286,6 +286,8 @@ fallback past ring 14. The province reaches ring 23.
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
+- **Every tap that takes flashes the cell white**, the last one too as it
+  clears — every cell of a block at once. A refused tap does not flash.
 - At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
   the outer third of it is most of that; the count multiplier only raises it.
   It is the largest Gold sink in the game by three orders of magnitude. What
