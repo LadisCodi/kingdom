@@ -25,7 +25,7 @@
 /* A line of dialogue on screen steps out of the way while the splash is up,
    and is there again, where it was, when the splash is read: the parchment
    box is the brightest thing in the game and would read through the veil. */
-#ui:has(> #unlock:not(:empty)) > #stage { visibility: hidden; }
+#ui.has-unlock > #stage { visibility: hidden; }
 
 /* ---------------------------------------------------------------- the burst */
 

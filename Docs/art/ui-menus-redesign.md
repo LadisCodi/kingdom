@@ -1619,9 +1619,10 @@ than a currency, and they go in the button like everything else, reading
   child resolves `inset` against `#overlay`'s padding box, which includes the
   padding, so `.research-screen` sets its own `top` and `bottom`.
 - **The settings knob hides while any menu is open**, like the nav bar: it is
-  the affordance for the map. Both are keyed on
-  `#ui:has(> #overlay:not(:empty))`, so they cannot drift from what is on
-  screen.
+  the affordance for the map. Both are keyed on `#ui.has-menu`, which an
+  observer sets while `#overlay` has content (`ui/mountFlags.ts` — WebKit
+  does not reliably invalidate `:has(:empty)`), so they cannot drift from
+  what is on screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
 `#overlay` at all — see `Docs/features/08-magic.md` §6.

@@ -2,7 +2,7 @@
   "_note": "Every technology in the game: its name, what KIND it is and what it unlocks or moves, its price and clock, and its slot on its tome page with what it needs before it — plus each book's BANDS and what each one asks for in revealed cells. What a card SAYS is generated from its unlocks or effects (src/sim/techProse.ts); only a mechanic, whose effect is code, carries a written description. Authored in ?dev=tree (Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, and the districts, units and harvest sources no longer name their own gate. Ordered by tome, then down the page, then left to right.",
   "eras": {
     "Civics": [0, 43, 100],
-    "Warfare": [0, 30, 100, 220],
+    "Warfare": [0, 85, 100, 220],
     "Magic": [0, 30, 100, 220],
     "Sagas": [0, 100],
     "Atlas": [0, 220]
@@ -639,32 +639,32 @@
     },
     "Spears": {
       "name": "Spears", "glyph": "🔱", "kind": "unlock",
-      "tome": "Warfare", "era": 1, "row": 0, "col": 0,
-      "requires": [],
-      "gold": 150, "knowledge": 2,
+      "tome": "Warfare", "era": 2, "row": 6, "col": 1,
+      "requires": ["ColoursI", "FletchingI", "BountiesI"],
+      "gold": 1800, "knowledge": 4,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
     "Warrior": {
       "name": "Warrior", "glyph": "⚔️", "kind": "unlock",
-      "tome": "Warfare", "era": 1, "row": 0, "col": 2,
+      "tome": "Warfare", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 100, "knowledge": 2,
+      "gold": 500, "knowledge": 2,
       "unlocks": [{"district":"Barracks"}, {"unit":"Warrior"}]
     },
     "ColoursI": {
       "name": "Colours I", "glyph": "🚩", "kind": "bonus",
-      "tome": "Warfare", "era": 1, "row": 1, "col": 0,
-      "requires": ["Spears"],
-      "gold": 60, "knowledge": 1,
+      "tome": "Warfare", "era": 2, "row": 5, "col": 0,
+      "requires": ["Archery"],
+      "gold": 1300, "knowledge": 3,
       "effects": [
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
     "DrillYardsI": {
       "name": "Drill Yards I", "glyph": "🥁", "kind": "bonus",
-      "tome": "Warfare", "era": 1, "row": 1, "col": 1,
+      "tome": "Warfare", "era": 1, "row": 1, "col": 0,
       "requires": ["Warrior"],
-      "gold": 60, "knowledge": 1,
+      "gold": 550, "knowledge": 1,
       "effects": [
         {"stat":"recruitSpeed","op":"percent","value":15}
       ]
@@ -673,16 +673,16 @@
       "name": "Shield Wall I", "glyph": "🛡️", "kind": "bonus",
       "tome": "Warfare", "era": 1, "row": 1, "col": 2,
       "requires": ["Warrior"],
-      "gold": 60, "knowledge": 1,
+      "gold": 550, "knowledge": 1,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Melee"}}
       ]
     },
     "WarhornsI": {
       "name": "Warhorns I", "glyph": "📯", "kind": "bonus",
-      "tome": "Warfare", "era": 1, "row": 2, "col": 0,
-      "requires": ["ColoursI"],
-      "gold": 60, "knowledge": 1,
+      "tome": "Warfare", "era": 1, "row": 3, "col": 0,
+      "requires": ["Infirmary"],
+      "gold": 900, "knowledge": 2,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":5}
       ]
@@ -690,49 +690,49 @@
     "Infirmary": {
       "name": "Infirmary", "glyph": "🩹", "kind": "unlock",
       "tome": "Warfare", "era": 1, "row": 2, "col": 1,
-      "requires": ["DrillYardsI"],
-      "gold": 400, "knowledge": 3,
+      "requires": ["DrillYardsI", "ShieldWallI"],
+      "gold": 800, "knowledge": 3,
       "unlocks": [{"district":"Infirmary"}]
     },
     "BountiesI": {
       "name": "Bounties I", "glyph": "💀", "kind": "bonus",
-      "tome": "Warfare", "era": 1, "row": 2, "col": 2,
-      "requires": ["ShieldWallI"],
-      "gold": 150, "knowledge": 2,
+      "tome": "Warfare", "era": 2, "row": 5, "col": 2,
+      "requires": ["Archery"],
+      "gold": 1300, "knowledge": 3,
       "effects": [
         {"stat":"lairKnowledge","op":"percent","value":20}
       ]
     },
     "ColoursII": {
       "name": "Colours II", "glyph": "🚩", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 3, "col": 0,
-      "requires": ["WarhornsI"],
-      "gold": 525, "knowledge": 2,
+      "tome": "Warfare", "era": 3, "row": 12, "col": 2,
+      "requires": ["WarhornsII"],
+      "gold": 5000, "knowledge": 8,
       "effects": [
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
     "WarbandII": {
       "name": "Warband II", "glyph": "🎖️", "kind": "unlock",
-      "tome": "Warfare", "era": 2, "row": 3, "col": 1,
-      "requires": ["WarhornsI", "Infirmary"],
-      "gold": 800, "knowledge": 3,
+      "tome": "Warfare", "era": 2, "row": 8, "col": 1,
+      "requires": ["VigourI", "ShieldWallII"],
+      "gold": 2500, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Barracks","level":4}}, {"districtLevel":{"id":"SpearHall","level":4}}, {"districtLevel":{"id":"ShootingGrounds","level":4}}, {"districtLevel":{"id":"Stables","level":4}}]
     },
     "BedsI": {
       "name": "Beds I", "glyph": "🛏️", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 3, "col": 2,
-      "requires": ["BountiesI"],
-      "gold": 300, "knowledge": 2,
+      "tome": "Warfare", "era": 1, "row": 3, "col": 2,
+      "requires": ["Infirmary"],
+      "gold": 900, "knowledge": 2,
       "effects": [
         {"stat":"infirmaryBeds","op":"percent","value":20}
       ]
     },
     "ShieldWallII": {
       "name": "Shield Wall II", "glyph": "🛡️", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 4, "col": 0,
-      "requires": ["ColoursII"],
-      "gold": 525, "knowledge": 3,
+      "tome": "Warfare", "era": 2, "row": 7, "col": 2,
+      "requires": ["Spears"],
+      "gold": 2000, "knowledge": 3,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Melee"}}
       ]
@@ -740,24 +740,24 @@
     "Archery": {
       "name": "Archery", "glyph": "🎯", "kind": "unlock",
       "tome": "Warfare", "era": 2, "row": 4, "col": 1,
-      "requires": ["WarbandII"],
-      "gold": 1000, "knowledge": 4,
+      "requires": ["WarhornsI", "BedsI"],
+      "gold": 1200, "knowledge": 4,
       "unlocks": [{"district":"ShootingGrounds"}, {"unit":"Archer"}]
     },
     "BountiesII": {
       "name": "Bounties II", "glyph": "💀", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 4, "col": 2,
-      "requires": ["BedsI"],
-      "gold": 525, "knowledge": 3,
+      "tome": "Warfare", "era": 3, "row": 14, "col": 2,
+      "requires": ["WarbandIII"],
+      "gold": 7500, "knowledge": 10,
       "effects": [
         {"stat":"lairKnowledge","op":"percent","value":20}
       ]
     },
     "VigourI": {
       "name": "Vigour I", "glyph": "❤️", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 5, "col": 0,
-      "requires": ["ShieldWallII"],
-      "gold": 525, "knowledge": 3,
+      "tome": "Warfare", "era": 2, "row": 7, "col": 0,
+      "requires": ["Spears"],
+      "gold": 2000, "knowledge": 3,
       "effects": [
         {"stat":"unitHp","op":"percent","value":5}
       ]
@@ -765,217 +765,209 @@
     "Tactics": {
       "name": "Tactics", "glyph": "🗺️", "kind": "mechanic",
       "description": "Reading the ground — a bad matchup costs a tenth less.",
-      "tome": "Warfare", "era": 2, "row": 5, "col": 1,
-      "requires": ["Archery"],
-      "gold": 2125, "knowledge": 6
+      "tome": "Warfare", "era": 3, "row": 9, "col": 1,
+      "requires": ["WarbandII"],
+      "gold": 3000, "knowledge": 6
     },
     "FletchingI": {
       "name": "Fletching I", "glyph": "🏹", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 5, "col": 2,
-      "requires": ["Archery", "BountiesII"],
-      "gold": 525, "knowledge": 3,
+      "tome": "Warfare", "era": 2, "row": 5, "col": 1,
+      "requires": ["Archery"],
+      "gold": 1300, "knowledge": 3,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
       ]
     },
     "DrillYardsII": {
       "name": "Drill Yards II", "glyph": "🥁", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 6, "col": 0,
-      "requires": ["VigourI"],
-      "gold": 525, "knowledge": 3,
+      "tome": "Warfare", "era": 3, "row": 9, "col": 0,
+      "requires": ["WarbandII"],
+      "gold": 3000, "knowledge": 6,
       "effects": [
         {"stat":"recruitSpeed","op":"percent","value":15}
       ]
     },
     "WarhornsII": {
       "name": "Warhorns II", "glyph": "📯", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 6, "col": 1,
-      "requires": ["Tactics"],
-      "gold": 800, "knowledge": 4,
+      "tome": "Warfare", "era": 3, "row": 11, "col": 2,
+      "requires": ["Cavalry"],
+      "gold": 4500, "knowledge": 7,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":5}
       ]
     },
-    "Scouting": {
-      "name": "Scouting", "glyph": "🔍", "kind": "mechanic",
-      "description": "Eyes ahead — a lair shows its threat before you launch.",
-      "tome": "Warfare", "era": 2, "row": 6, "col": 2,
-      "requires": ["FletchingI"],
-      "gold": 2500, "knowledge": 6,
-      "planned": true
-    },
     "BedsII": {
       "name": "Beds II", "glyph": "🛏️", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 7, "col": 0,
-      "requires": ["DrillYardsII"],
-      "gold": 800, "knowledge": 4,
+      "tome": "Warfare", "era": 3, "row": 14, "col": 1,
+      "requires": ["WarbandIII"],
+      "gold": 7500, "knowledge": 10,
       "effects": [
         {"stat":"infirmaryBeds","op":"percent","value":20}
       ]
     },
     "ColoursIII": {
       "name": "Colours III", "glyph": "🚩", "kind": "bonus",
-      "tome": "Warfare", "era": 2, "row": 7, "col": 1,
-      "requires": ["WarhornsII"],
-      "gold": 800, "knowledge": 4,
+      "tome": "Warfare", "era": 3, "row": 16, "col": 1,
+      "requires": ["ShieldWallIII", "DrillYardsIII", "FletchingIII"],
+      "gold": 9000, "knowledge": 11,
       "effects": [
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
     "VigourII": {
       "name": "Vigour II", "glyph": "❤️", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 8, "col": 0,
-      "requires": ["BedsII"],
-      "gold": 3000, "knowledge": 8,
+      "tome": "Warfare", "era": 3, "row": 14, "col": 0,
+      "requires": ["WarbandIII"],
+      "gold": 7500, "knowledge": 10,
       "effects": [
         {"stat":"unitHp","op":"percent","value":5}
       ]
     },
     "WarbandIII": {
       "name": "Warband III", "glyph": "🎖️", "kind": "unlock",
-      "tome": "Warfare", "era": 3, "row": 8, "col": 1,
-      "requires": ["ColoursIII"],
-      "gold": 5000, "knowledge": 15,
+      "tome": "Warfare", "era": 3, "row": 13, "col": 1,
+      "requires": ["BardingII", "ColoursII"],
+      "gold": 7000, "knowledge": 15,
       "unlocks": [{"districtLevel":{"id":"Barracks","level":5}}, {"districtLevel":{"id":"SpearHall","level":5}}, {"districtLevel":{"id":"ShootingGrounds","level":5}}, {"districtLevel":{"id":"Stables","level":5}}]
     },
     "FletchingII": {
       "name": "Fletching II", "glyph": "🏹", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 8, "col": 2,
-      "requires": ["ColoursIII"],
-      "gold": 3000, "knowledge": 8,
+      "tome": "Warfare", "era": 3, "row": 9, "col": 2,
+      "requires": ["WarbandII"],
+      "gold": 3000, "knowledge": 6,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
       ]
     },
     "ShieldWallIII": {
       "name": "Shield Wall III", "glyph": "🛡️", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 9, "col": 0,
+      "tome": "Warfare", "era": 3, "row": 15, "col": 0,
       "requires": ["VigourII"],
-      "gold": 3250, "knowledge": 10,
+      "gold": 8000, "knowledge": 10,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Melee"}}
       ]
     },
     "Cavalry": {
       "name": "Cavalry", "glyph": "🐎", "kind": "unlock",
-      "tome": "Warfare", "era": 3, "row": 9, "col": 1,
-      "requires": ["WarbandIII"],
-      "gold": 6000, "knowledge": 15,
+      "tome": "Warfare", "era": 3, "row": 10, "col": 1,
+      "requires": ["DrillYardsII", "Tactics", "FletchingII"],
+      "gold": 4000, "knowledge": 15,
       "unlocks": [{"district":"Stables"}, {"unit":"Cavalry"}]
     },
     "BountiesIII": {
       "name": "Bounties III", "glyph": "💀", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 9, "col": 2,
-      "requires": ["FletchingII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 17, "col": 1,
+      "requires": ["ColoursIII"],
+      "gold": 10000, "knowledge": 11,
       "effects": [
         {"stat":"lairKnowledge","op":"percent","value":20}
       ]
     },
     "DrillYardsIII": {
       "name": "Drill Yards III", "glyph": "🥁", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 10, "col": 0,
-      "requires": ["ShieldWallIII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 15, "col": 1,
+      "requires": ["BedsII"],
+      "gold": 8000, "knowledge": 10,
       "effects": [
         {"stat":"recruitSpeed","op":"percent","value":15}
       ]
     },
     "BardingI": {
       "name": "Barding I", "glyph": "🐴", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 10, "col": 1,
+      "tome": "Warfare", "era": 3, "row": 11, "col": 0,
       "requires": ["Cavalry"],
-      "gold": 1500, "knowledge": 8,
+      "gold": 4500, "knowledge": 7,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Mounted"}}
       ]
     },
     "FletchingIII": {
       "name": "Fletching III", "glyph": "🏹", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 10, "col": 2,
-      "requires": ["BountiesIII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 15, "col": 2,
+      "requires": ["BountiesII"],
+      "gold": 8000, "knowledge": 10,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
       ]
     },
     "WarhornsIII": {
       "name": "Warhorns III", "glyph": "📯", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 11, "col": 0,
-      "requires": ["DrillYardsIII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 17, "col": 0,
+      "requires": ["ColoursIII"],
+      "gold": 10000, "knowledge": 11,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":5}
       ]
     },
     "BardingII": {
       "name": "Barding II", "glyph": "🐴", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 11, "col": 1,
+      "tome": "Warfare", "era": 3, "row": 12, "col": 0,
       "requires": ["BardingI"],
-      "gold": 3250, "knowledge": 10,
+      "gold": 5000, "knowledge": 8,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Mounted"}}
       ]
     },
     "ColoursIV": {
       "name": "Colours IV", "glyph": "🚩", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 11, "col": 2,
-      "requires": ["FletchingIII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 18, "col": 2,
+      "requires": ["BardingIII"],
+      "gold": 11000, "knowledge": 12,
       "effects": [
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
     "VigourIII": {
       "name": "Vigour III", "glyph": "❤️", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 12, "col": 0,
+      "tome": "Warfare", "era": 3, "row": 18, "col": 0,
       "requires": ["WarhornsIII"],
-      "gold": 3250, "knowledge": 10,
+      "gold": 11000, "knowledge": 12,
       "effects": [
         {"stat":"unitHp","op":"percent","value":5}
       ]
     },
     "BountiesIV": {
       "name": "Bounties IV", "glyph": "💀", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 12, "col": 1,
-      "requires": ["BardingII"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 19, "col": 1,
+      "requires": ["BedsIII"],
+      "gold": 12500, "knowledge": 12,
       "effects": [
         {"stat":"lairKnowledge","op":"percent","value":20}
       ]
     },
     "BedsIII": {
       "name": "Beds III", "glyph": "🛏️", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 12, "col": 2,
-      "requires": ["ColoursIV"],
-      "gold": 3250, "knowledge": 10,
+      "tome": "Warfare", "era": 3, "row": 18, "col": 1,
+      "requires": ["BountiesIII"],
+      "gold": 11000, "knowledge": 12,
       "effects": [
         {"stat":"infirmaryBeds","op":"percent","value":20}
       ]
     },
     "WarhornsIV": {
       "name": "Warhorns IV", "glyph": "📯", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 13, "col": 0,
+      "tome": "Warfare", "era": 3, "row": 19, "col": 0,
       "requires": ["VigourIII"],
-      "gold": 5000, "knowledge": 12,
+      "gold": 12500, "knowledge": 12,
       "effects": [
         {"stat":"unitAtk","op":"percent","value":5}
       ]
     },
     "BardingIII": {
       "name": "Barding III", "glyph": "🐴", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 13, "col": 1,
-      "requires": ["BountiesIV"],
-      "gold": 5000, "knowledge": 12,
+      "tome": "Warfare", "era": 3, "row": 17, "col": 2,
+      "requires": ["ColoursIII"],
+      "gold": 10000, "knowledge": 11,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Mounted"}}
       ]
     },
     "ColoursV": {
       "name": "Colours V", "glyph": "🚩", "kind": "bonus",
-      "tome": "Warfare", "era": 3, "row": 13, "col": 2,
-      "requires": ["BedsIII"],
-      "gold": 5000, "knowledge": 12,
+      "tome": "Warfare", "era": 3, "row": 19, "col": 2,
+      "requires": ["ColoursIV"],
+      "gold": 12500, "knowledge": 12,
       "effects": [
         {"stat":"armyCap","op":"percent","value":10}
       ]
@@ -983,8 +975,8 @@
     "WarbandIV": {
       "name": "Warband IV", "glyph": "🏰", "kind": "mechanic",
       "description": "Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.",
-      "tome": "Warfare", "era": 4, "row": 14, "col": 1,
-      "requires": ["WarhornsIV", "BardingIII", "ColoursV"],
+      "tome": "Warfare", "era": 4, "row": 20, "col": 1,
+      "requires": ["WarhornsIV", "BountiesIV", "ColoursV"],
       "gold": 30000, "knowledge": 40
     },
     "Consecration": {

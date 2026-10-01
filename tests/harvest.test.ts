@@ -356,11 +356,24 @@ describe('tapping a crop plot', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(before);
   });
 
-  it('still opens the plot card, so inspecting it stays useful', () => {
+  it('harvests without opening a card', () => {
+    const { game } = withPlot();
+    game.handleTap(...screenAt(game, plot));
+    expect(game.inspectedDistrictId).toBeNull();
+  });
+
+  it('opens the card once it is empty, so it can be moved', () => {
     const { state, game } = withPlot();
+    while (!isExhausted(state, map, plot, game.now())) {
+      expect(tapCell(state, map, plot, game.now())).toBe('Harvested');
+    }
+    const food = getWallet(state.city.wallet, 'Food');
+    const before = mana(state);
     game.handleTap(...screenAt(game, plot));
     const district = state.city.districts.find((d) => d.definitionId === 'FarmLands')!;
     expect(game.inspectedDistrictId).toBe(district.uniqueId);
+    expect(getWallet(state.city.wallet, 'Food')).toBe(food);
+    expect(mana(state)).toBe(before);
   });
 
   it('spends Mana like every other collect tap', () => {

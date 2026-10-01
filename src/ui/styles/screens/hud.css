@@ -188,7 +188,7 @@
 .hud-knob:active { background-image: url('../../assets/hud-knob-down.png'); }
 .hud-knob:active .icon { transform: translateY(calc(var(--rpx) * 3)); }
 .hud-knob.is-active { filter: brightness(1.12) saturate(1.2); }
-#ui:has(> #overlay:not(:empty)) .hud-knob { display: none; }
+#ui.has-menu .hud-knob { display: none; }
 
 /* THE KNOWLEDGE TAB (M33, Docs/art/ui-menus-redesign.md §5.1): a painted
    wooden tab with a gold rim, hanging from behind the plank's middle,
@@ -309,13 +309,13 @@
 }
 .hud-know:active > .hud-plus { background-image: url('../../assets/hud-plus-down.png'); }
 /* A menu that spends Knowledge keeps it down (`is-kept`). */
-#ui:has(> #overlay:not(:empty)) .hud-know:not(.is-kept) {
+#ui.has-menu .hud-know:not(.is-kept) {
   transform: translate(-50%, calc(-100% - var(--rpx) * 12));
   visibility: hidden;
   transition: transform 220ms ease-in, visibility 0s linear 220ms;
 }
 @media (prefers-reduced-motion: reduce) {
-  .hud-know, #ui:has(> #overlay:not(:empty)) .hud-know { transition: none; }
+  .hud-know, #ui.has-menu .hud-know { transition: none; }
 }
 
 /* The one contextual plaque, hanging under the plank. */
