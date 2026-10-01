@@ -53,7 +53,7 @@
 | `lock` | `none` · `target` · `map` · `all` ([`23-tutorials.md`](23-tutorials.md) §6) |
 | `until` · `untilTarget` · `untilAmount` | the condition that moves the line on — `tap` for a tap on the box |
 | `exit` | the speaker leaves after this line |
-| `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
+| `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` · `idea` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and
   two flags: `skippable` — an introduction, which waits a breath after the
@@ -115,11 +115,12 @@ which one a line waits on is data.
 | `villager` | **a villager** | the first settler | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
 
-- **Isolde has four faces** — at rest, happy (eyes closed, a wide smile, the
+- **Isolde has five faces** — at rest, happy (eyes closed, a wide smile, the
   ledger hugged), worried (a hand at her chin), surprised (leaning back, a
-  hand raised) — each its own pose, aligned on her feet so a change of face
+  hand raised), an idea (index finger up, a knowing smile) — each its own pose, aligned on her feet so a change of face
   never moves her. Claims and praise are happy; threats and shortfalls
-  worried; what the fog gives up surprised.
+  worried; what the fog gives up surprised; a new building or book to try,
+  an idea.
 - **Every speaker is a full figure**: it stands on the box, cut at the waist
   by it. The figures share the heroes' style and frame (512×768); the
   tutorial's own three are cut from one sheet

@@ -111,7 +111,7 @@
           "exit": { "type": "bool", "doc": "The speaker leaves the stage after this line." },
           "expression": {
             "type": "text",
-            "options": ["", "happy", "worried", "surprised"],
+            "options": ["", "happy", "worried", "surprised", "idea"],
             "doc": "The speaker's face on this line; empty is at rest. Drawn from <portrait>_<expression> where that art exists."
           }
         }

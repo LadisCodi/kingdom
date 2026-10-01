@@ -520,7 +520,7 @@ export interface SceneLine {
   exit: boolean;
   /** The speaker's face on this line — `<portrait>_<expression>` art; empty
    *  is at rest (24-dialogue.md §6). */
-  expression: '' | 'happy' | 'worried' | 'surprised';
+  expression: '' | 'happy' | 'worried' | 'surprised' | 'idea';
 }
 
 export interface SceneDef {

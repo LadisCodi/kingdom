@@ -166,3 +166,19 @@ Attach `src/render/assets/portrait_advisor.png` (Isolde at rest, as shipped).
 true alpha) → `src/render/assets/portrait_advisor_{happy,worried,surprised}.png`,
 each fit to the heroes' 706 tall in a 512×768 frame and placed by the centre
 of its FEET, not its box, so a raised hand never shifts the body.
+
+## P6 — Isolde has an idea
+
+Attach `ref-isolde.png` (at rest, and surprised — a mood with its own pose).
+
+> CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the reference — Isolde, a character already in our game, at rest (left) and surprised (right). Draw her ONCE more, alone, in a 2:3 portrait canvas, with a NEW mood: I'VE HAD AN IDEA.
+>
+> The SAME character: identical style (flat 2D cartoon, bold dark-brown outline, cel shading), the same clothes, ledger, keys, quill and glasses, the same SIZE and proportions as the reference, standing, full body, feet at the bottom like the reference.
+>
+> HAD AN IDEA — eyes bright and slightly narrowed with a clever, knowing half smile, one eyebrow raised; her INDEX FINGER raised beside her face, pointing up, the "aha!" gesture; the ledger tucked under her other arm; a small glint on one lens of her glasses. Keep the raised hand below the top of her hair.
+>
+> Do not draw grid lines, labels, captions, text, shadows, ground, light bulbs or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+**P6 result.** `../../../originals/hero-sheets/isolde-idea.png` (1024×1536,
+true alpha) → `src/render/assets/portrait_advisor_idea.png`, cut the same way
+as P5.
