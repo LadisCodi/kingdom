@@ -1,7 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
-import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, type DoorId } from './sim/doors';
+import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
@@ -137,7 +137,6 @@ import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
-import { readyToCollect } from './sim/storage';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
@@ -803,7 +802,7 @@ export class Game {
         // A building with something in its store: the tap COLLECTS, free, and
         // does nothing else. The next tap, with the store empty, opens it
         // (Docs/features/03-economy.md §3.2).
-        if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+        if (district && district.state === 'Built' && showsCollect(this.state, district)) {
           this.collectStoreOf(district);
           this.notify();
           return true;
@@ -982,7 +981,7 @@ export class Game {
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
     const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && readyToCollect(this.state, district)) {
+    if (district && district.state === 'Built' && showsCollect(this.state, district)) {
       this.collectStoreOf(district);
       this.notify();
       return true;

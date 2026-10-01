@@ -10,7 +10,8 @@ import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
 import { claimQuest } from '../src/sim/quests';
 import { deserialize, serialize } from '../src/sim/save';
-import { freshlyOpenDoors, isDoorOpen, markDoorSeen } from '../src/sim/doors';
+import { freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect } from '../src/sim/doors';
+import { townhall } from '../src/sim/state';
 import { coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
 
@@ -177,5 +178,22 @@ describe('the doors of the UI', () => {
     state.tutorial.veteran = true;
     expect(isDoorOpen(state, 'heroes')).toBe(true);
     expect(freshlyOpenDoors(state)).toEqual([]);
+  });
+});
+
+describe('the Townhall through the First Morning', () => {
+  it('keeps its Gold quiet until the morning ends, while the Gold piles up', () => {
+    const state = firstGame();
+    advance(state, map, T0 + 10 * 60_000);
+    const th = townhall(state);
+    expect(th.stored?.Gold ?? 0).toBeGreaterThan(0);
+    expect(showsCollect(state, th)).toBe(false);
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
+    expect(showsCollect(state, th)).toBe(true);
+    // A veteran never had a morning.
+    const old = firstGame();
+    old.tutorial.veteran = true;
+    advance(old, map, T0 + 10 * 60_000);
+    expect(showsCollect(old, townhall(old))).toBe(true);
   });
 });

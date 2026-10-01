@@ -27,7 +27,7 @@ import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
 import { drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
-import { readyToCollect } from '../sim/storage';
+import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
@@ -1312,7 +1312,7 @@ export function drawMap(
   // building with something in its store (render/collectBubbles.ts).
   const clock = performance.now();
   for (const district of state.city.districts) {
-    if (!readyToCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
+    if (!showsCollect(state, district)) { bubbles.forget(district.uniqueId); continue; }
     const art = artOf.get(district.uniqueId);
     if (!art) continue;
     const plot = camera.plotBox(district.location, DISTRICTS[district.definitionId].size);

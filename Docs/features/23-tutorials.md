@@ -80,6 +80,9 @@ left unless a line says otherwise.
 
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.
+- **The Townhall's own Gold stays quiet through the First Morning**: no
+  bubble, and a tap opens it rather than collecting. Its Gold piles up and
+  shows once `TaxDay` is claimed.
 - **A scene resumes where the kingdom is**: after a reload it picks up after
   the last line whose PROGRESS condition already holds (a quest, a research,
   a building) — never on a moment like a sheet being shut.

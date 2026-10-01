@@ -11,7 +11,9 @@
 
 import { QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
-import type { GameState } from './state';
+import { ownGoldPerMinute } from './population';
+import { readyToCollect } from './storage';
+import type { District, GameState } from './state';
 
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
@@ -86,3 +88,19 @@ export const freshlyOpenDoors = (state: GameState): DoorId[] => {
 export function markDoorSeen(state: GameState, door: DoorId): void {
   state.tutorial.seen[doorKey(door)] = true;
 }
+
+/** The First Morning is still being played: a new kingdom before `TaxDay`
+ *  is claimed (Docs/features/23-tutorials.md §3). */
+export const firstMorningOn = (state: GameState): boolean =>
+  !state.tutorial.veteran && !questClaimed(state, 'TaxDay');
+
+/**
+ * Does this building show it is ready to collect — its bubble, and a tap that
+ * collects rather than opens it? Its store's own rule (`readyToCollect`),
+ * except that **the Townhall's own Gold stays quiet through the First
+ * Morning**: one thing on screen asks for the player's attention at a time,
+ * and a tap on the Townhall there is the beat that opens it. Its Gold still
+ * piles up, and shows the moment the morning ends.
+ */
+export const showsCollect = (state: GameState, district: District): boolean =>
+  readyToCollect(state, district) && !(ownGoldPerMinute(district) > 0 && firstMorningOn(state));
