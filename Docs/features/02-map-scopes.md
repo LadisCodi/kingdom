@@ -57,7 +57,7 @@ only what it is structurally:
 
 | | Province | World |
 |---|---|---|
-| The gesture | tap a cell, 1 Mana | send an army, and it marches |
+| The gesture | tap a cell, 1 Mana | send an explorer or an army, and it marches |
 | Resolves | now | over the march |
 | Frequency | high, tactile | low, planning |
 | It ends | yes — the fog is finite | no |
@@ -111,8 +111,8 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 - **The save says which scope a thing is in.**
 - World control is not in the save at all — it is server state (§3). What the
-  save carries for the world is the player's **fog bitset** and their armies'
-  whereabouts.
+  save carries for the world is the player's **fog bitset** and their
+  explorers' whereabouts. Armies are server state.
 - The guild siege lives on the world board ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
   **is not an early item**; the save shape is the one artefact that cannot

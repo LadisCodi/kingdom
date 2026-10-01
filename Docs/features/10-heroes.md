@@ -159,9 +159,11 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **At least one hero is mandatory** in every fight: gates, rooms, bosses.
   There is no fight without a hero and no hero-only fight.
-- A hero is never *busy*. Fights resolve on entry
-  ([`11-expeditions.md`](11-expeditions.md) §5); what limits leading every
-  fight with the same hero is its HP (§2.8).
+- In the province a hero is never *busy*. Fights resolve on entry; what
+  limits leading every fight with the same hero is its HP (§2.8).
+- **On the world map a hero in an army is busy** for the army's whole march
+  and the action at the end of it
+  ([`19-world-map.md`](19-world-map.md) §4).
 
 ### 2.8 Wounds carry over
 

@@ -84,41 +84,44 @@
   which is what keeps it client-authoritative and in the player's own save
   ([`02-map-scopes.md`](02-map-scopes.md) §3).
 
-### 3.1 Exploring costs an army
+### 3.1 Explorers
 
-- **You explore by sending an army, and it marches.** There is no button that
-  buys fog: a hex is revealed because something of yours went and looked.
-- An army reveals **its own hex and the six around it** at every hex it passes
-  through — so a march opens a corridor, not a dot. The radius is a progression
-  axis and upgrades to 2.
-- **Marching costs time, scaling with distance** (§4). It costs **no Gold**:
-  Gold's sink out here is building (§6), and charging for the march as well
-  would be charging twice for one decision.
-- Exploring, claiming, attacking, defending a corridor and diving the Portal
-  all draw on the same armies. **Choosing to explore is choosing not to do the
-  other four** (§4).
-- The march timer divides by `worldRevealSpeed` from the modifier stack — a
-  multiplier, never a subtracted discount.
-- The board is small and opens quickly by design. **Discovery is not the
-  bottleneck here; the army is.**
+- **You explore by sending an explorer to a hex.** It marches there, reveals,
+  and marches home. There is no button that buys fog.
+- **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
+  first; a rank ladder in the Atlas gives more. No training, no cost per use.
+- **An explorer never fights and can never be stopped, attacked or lost.** It
+  lives in the player's own save, like the fog it reveals.
+- Anything of yours that marches — an explorer or an army — reveals **its own
+  hex and the six around it** at every hex it passes through. The radius
+  upgrades to 2.
+- **A march costs time, linear in hexes** (§4), and no Gold.
+- An explorer's march time divides by `worldRevealSpeed`.
 
-## 4. The army is the bottleneck
+## 4. Armies
 
-> **This is the balancing lever for the whole board.**
+> **How many armies a player has is the balancing lever for the whole board.**
 
-- One bag of troops does everything: takes neutral ground, attacks a rival,
-  garrisons a corridor, collects free hexes, and dives the Portal.
-- An army is **occupied for the whole march and the action at the end of it**,
-  and troops lost take time to replace.
-- **When the board feels wrong — too much conflict, too little, the Portal
-  eating every army — the numbers to move are how many armies a player has and
-  how long casualties take to replace.** Not the +200%, not the march times.
-- Marching is a **timer**: an army sent before a twelve-hour absence has
-  arrived on return
-  ([`02-map-scopes.md`](02-map-scopes.md) §4).
-- March time is **linear in hexes** — *Y hexes cost X·Y*. The board is ten hexes
-  across at its widest; superlinear scaling exists to stop large maps
-  collapsing and there is no large map here.
+- **An army is a party sent out**: the same party a lair attack fields — at
+  least one hero and up to six squads ([`combat.md`](combat.md) §3) — composed
+  on the same screen.
+- Armies take neutral ground, attack a rival, garrison a Fortress and dive the
+  Portal.
+- **An army is busy for its whole march and the action at the end of it**:
+  - its troops leave the roster and cannot fight a lair;
+  - **its heroes are busy** and cannot lead another party
+    ([`10-heroes.md`](10-heroes.md) §2.7);
+  - it comes home with its survivors and its heroes' wounds; casualties are
+    charged as in any fight ([`combat.md`](combat.md) §4).
+- **Army slots:**
+  - every player has **one** from the moment the world opens;
+  - the **War Camp** — a new building, one per city, opened by an Atlas card —
+    adds **one per level**.
+- How many armies can march at once is also bounded by heroes free to lead
+  them.
+- A march is a **timer**: an army sent before a twelve-hour absence has
+  arrived on return ([`02-map-scopes.md`](02-map-scopes.md) §4).
+- March time is **linear in hexes** — *Y hexes cost X·Y*.
 
 ## 5. Control, claiming and connection
 
@@ -314,9 +317,10 @@ The outer scope feeds the inner one.
 
 | Dial | Moves | Reach for it when |
 |---|---|---|
-| **Armies per player** | everything — conflict, exploring, the Portal | the board feels too quiet or too violent |
+| **Army slots** (1, +1 per War Camp level) | everything — conflict, the Portal | the board feels too quiet or too violent |
 | **Casualty replacement time** | how often a player can act at all | attacks are too cheap to repeat |
 | **March time per hex** | the tempo of the whole scope | the board resolves too fast or feels like waiting |
+| **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
 | **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
