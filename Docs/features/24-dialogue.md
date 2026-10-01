@@ -23,8 +23,10 @@
 
 - **A sheet of parchment on a carved wooden board**, one nine-sliced piece of
   art with organic edges — worn wood, a deckled sheet with one corner curled,
-  brass rivets — and a soft shadow that lifts it off the map behind. The name
-  sits on a wooden plank on its top edge, on the speaker's side.
+  brass rivets — and a soft shadow that lifts it off the map behind.
+- **The name is on a cloth ribbon** with swallowtail ends, on the box's top
+  edge on the speaker's side, in the speaker's own colour: Isolde blue, the
+  Warden green, Bess red, the villager brown, Grukk crimson.
 - **Three places**: `bottom` (the default), `top`, `middle`. A line may set
   its own.
 - **`auto`**: when a line points at something, the box takes the half of the

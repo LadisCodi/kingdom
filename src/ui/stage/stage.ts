@@ -191,6 +191,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (onStage[other] !== null) (other === 'left' ? left : right).classList.remove('is-lit');
     const speaker = SPEAKERS[l.speaker];
     name.textContent = speaker?.name ?? l.speaker;
+    // Each speaker's ribbon has its own colour (stage.css).
+    name.dataset.speaker = l.speaker;
     name.classList.toggle('is-right', l.side === 'right');
     text.textContent = '';
     skip.hidden = !playing.scene.skippable;

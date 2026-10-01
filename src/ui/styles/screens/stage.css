@@ -88,7 +88,7 @@
   max-width: calc(var(--px) * 420);
   margin: 0 auto;
   /* The text sits inside the frame's rim (`.stg-frame`, below). */
-  padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 30);
+  padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 42);
   /* Lifted off the map behind it: a shadow that follows the board's outline
      — and the figures standing on it. */
   filter: drop-shadow(0 calc(var(--px) * 4) calc(var(--px) * 5) rgba(25, 12, 4, 0.55))
@@ -124,19 +124,35 @@
 .stg-name {
   position: absolute;
   z-index: 1;
-  top: calc(var(--px) * -14);
-  left: calc(var(--px) * 40); /* clear of the corner's rivet */
-  padding: calc(var(--px) * 3) calc(var(--px) * 14);
-  border-radius: calc(var(--px) * 6);
+  top: calc(var(--px) * -22);
+  left: calc(var(--px) * 22); /* the swallowtail hangs over the corner */
+  /* A CLOTH RIBBON in the speaker's colour (`--ribbon`, below): its folded
+     swallowtail ends whole in their slices (100 of its 504 across), the
+     front band stretched to the name. Drawn 32 tall, the band the upper
+     three quarters — the text sits on it. */
+  height: calc(var(--px) * 32);
+  box-sizing: border-box;
+  padding: calc(var(--px) * 3) calc(var(--px) * 2) 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 34);
+  border-image: var(--ribbon, url('../../assets/ribbon-blue.png')) 0 100 fill / 0 calc(var(--px) * 34) stretch;
   font-family: var(--font-body);
   font-weight: var(--weight-title);
   font-size: calc(var(--px) * 15);
-  color: var(--ink-inverse);
-  text-shadow: 0 calc(var(--px) * 1) 0 var(--wood-dark);
-  background: linear-gradient(var(--wood-light), var(--wood));
-  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), inset 0 calc(var(--px) * 1) 0 rgba(255, 240, 210, 0.4);
+  line-height: calc(var(--px) * 20);
+  white-space: nowrap;
+  color: #fff6e0;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 14, 4, 0.9), 0 0 calc(var(--px) * 2) rgba(30, 14, 4, 0.8);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(25, 12, 4, 0.45));
 }
-.stg-name.is-right { left: auto; right: calc(var(--px) * 40); }
+/* Each speaker's own colour. */
+.stg-name[data-speaker='advisor'] { --ribbon: url('../../assets/ribbon-blue.png'); }
+.stg-name[data-speaker='warden'] { --ribbon: url('../../assets/ribbon-green.png'); }
+.stg-name[data-speaker='cook'] { --ribbon: url('../../assets/ribbon-red.png'); }
+.stg-name[data-speaker='villager'] { --ribbon: url('../../assets/ribbon-brown.png'); }
+.stg-name[data-speaker='orcChief'] { --ribbon: url('../../assets/ribbon-crimson.png'); }
+.stg-name.is-right { left: auto; right: calc(var(--px) * 22); }
 .stg-text {
   margin: calc(var(--px) * 4) 0 0;
   min-height: calc(var(--px) * 44);
@@ -147,9 +163,9 @@
 .stg-box.is-waiting .stg-text { min-height: 0; }
 .stg-more {
   position: absolute;
-  right: calc(var(--px) * 22);
-  bottom: calc(var(--px) * 18);
-  width: calc(var(--px) * 18);
+  right: calc(var(--px) * 34); /* on the paper, clear of the rim */
+  bottom: calc(var(--px) * 24);
+  width: calc(var(--px) * 20);
   height: auto;
   pointer-events: none;
   animation: stg-bob-up 0.6s ease-in-out infinite alternate;

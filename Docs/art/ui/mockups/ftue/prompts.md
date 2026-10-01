@@ -126,3 +126,24 @@ research book's page, the organic edge to match).
 the first try) → `src/ui/assets/dialogue-frame.png` (the alpha box, halved,
 979×352), nine-sliced at 100 and drawn 40px (`.stg-frame`, stage.css). The
 shadow is CSS (`filter: drop-shadow` on the box), not art.
+
+## P4 — the speaker's name ribbon
+
+Attach `../../sheets/dialogue-frame-raw.png` (the frame it sits on) and
+`ref-ui.png` (the materials).
+
+> CREATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references. The first is the dialogue frame of our mobile game; the second shows the rest of our UI. Match their style exactly: hand-painted game UI, warm saturated colours, clean dark-brown outline, lit from the top left, organic shapes, nothing flat or plastic.
+>
+> Draw a NAME RIBBON for that dialogue box: a short horizontal CLOTH RIBBON, like a banner of folded fabric, that sits on the frame's top edge with a character's name written on it later. Its two ends fold back behind it and finish in SWALLOWTAIL cuts, slightly lower than the middle; a thin GOLD embroidered trim runs along its top and bottom edges; the cloth has soft folds and a gentle sheen. EMPTY — no text, no letters.
+>
+> The SAME ribbon five times, stacked one above the other with a clear 60 px empty band between them, identical in shape and size, each about 4.5 times as wide as it is tall: 1. ROYAL BLUE; 2. FOREST GREEN; 3. WARM RED; 4. EARTHY BROWN; 5. DARK CRIMSON. The gold trim stays gold on all five.
+>
+> NINE-SLICE RULES: keep all the character (the folds, the swallowtails) in the two ENDS; the middle stretch between them must be plain and uniform so it can be stretched to fit any name.
+>
+> Do not draw grid lines, labels, captions, text, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+**P4 result.** `../../sheets/name-ribbons-raw.png` (1122×1402, true alpha;
+stray red specks between the ribbons, dropped by cutting each one on its own
+row band) → `src/ui/assets/ribbon-{blue,green,red,brown,crimson}.png`
+(halved, 504×93), sliced at 0 100 — the swallowtails whole, the front band
+stretched to the name — and drawn 32 tall (`.stg-name`, stage.css).
