@@ -41,6 +41,7 @@ import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cas
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
+import { drawTroughBar, drawWorkingHammer } from './constructionArt';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -445,10 +446,15 @@ export function drawMap(
     // building is, is an art decision — so it is read back off the art that
     // was actually drawn rather than guessed from the footprint.
     const roof = foot.y - tall;
+    // Being built or upgraded, by a builder at work: the card's hammer
+    // works it here too, over the upper half of its art.
+    if (state.city.queue.some((q) => q.districtUniqueId === district.uniqueId && q.startedAt !== null)) {
+      const hw = Math.min(box.w, size * 1.6);
+      drawWorkingHammer(ctx, district.uniqueId, c.x - hw / 2, roof + (foot.y - roof) * 0.15, hw, clockNow);
+    }
     if (district.state === 'UnderConstruction') {
       ctx.fillStyle = PALETTE.constructionHatch;
       fillDiamond(ctx, box);
-      drawGlyph(ctx, '🚧', c.x - box.w / 2, roof - size * 0.4, box.w, size * 0.3, size * 0.5);
     } else {
       if (district.level > 1) {
         ctx.fillStyle = PALETTE.label;
@@ -1013,13 +1019,12 @@ export function drawMap(
     const progress = queueProgress(item, now);
     const remaining = Math.ceil(remainingSeconds(item, now));
     // On the plot, not over the scaffolding: the bar belongs to the ground
-    // being worked, and the art above it is allowed to be any height.
-    drawBar(ctx, c.x - b.w * 0.3, c.y - 3, b.w * 0.6, 6, progress, PALETTE.progressFill);
-    ctx.fillStyle = PALETTE.label;
-    ctx.font = labelFont(size * 0.15, 12);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : formatDuration(remaining), c.x, c.y + 5);
+    // being worked, and the art above it is allowed to be any height. The
+    // kit's glass bar, blue as the card wears it, with the time inside.
+    const barH = Math.max(20, Math.min(28, size * 0.22));
+    const barW = Math.max(barH * 4, b.w * 0.6);
+    drawTroughBar(ctx, c.x - barW / 2, c.y - barH / 2, barW, barH, progress,
+      item.startedAt === null ? 'queued' : formatDuration(remaining), labelFont(barH * 0.6, 12, true));
   }
 
   // Pass 3a: SPELLS STANDING ON THE GROUND.
