@@ -1029,12 +1029,18 @@ export class Game {
    * roof. So the cells are walked nearest first and the first one whose
    * ground is not hidden behind a building is taken; only if every one is
    * hidden does the nearest win anyway.
+   *
+   * A building that sends workers out starts where it would WORK THE MOST —
+   * a Farm beside the crop plots — and the nearest of those.
    */
   defaultPlacementCell(definitionId: DistrictId): Coord | null {
     const size = DISTRICTS[definitionId].size;
+    const works = DISTRICTS[definitionId].harvestSources.length > 0;
     const cells = validPlacementCells(this.state, this.map, definitionId)
-      .map((c) => ({ c, d: townhallDistance(this.map, c) }))
-      .sort((a, b) => a.d - b.d);
+      .map((c) => ({
+        c, d: townhallDistance(this.map, c), n: works ? this.capturedCells(definitionId, c).length : 0,
+      }))
+      .sort((a, b) => b.n - a.n || a.d - b.d);
     if (cells.length === 0) return null;
     return (cells.find(({ c }) => !this.hiddenBehindBuilding(c, size)) ?? cells[0]).c;
   }

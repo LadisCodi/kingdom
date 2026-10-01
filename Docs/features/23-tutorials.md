@@ -14,8 +14,10 @@
 
 1. **The quest chain teaches; the advisor speaks.** A beat never asks for
    anything the active quest does not.
-2. **One scripted stretch**: the First Morning, quests 1–7, about ten
-   minutes. It is the only place input is locked.
+2. **Scripted stretches**: the First Morning, quests 1–7, about ten
+   minutes, and two short **lessons** — the Farm and the Sawmill (§3.1),
+   the first buildings that work for the player. They are the only places
+   input is locked; a lesson can be skipped.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
 4. **Help is asked for, or earned by being stuck.** After the First Morning
@@ -85,6 +87,36 @@ left unless a line says otherwise.
   beat then shows as a hint. Nothing can strand the player.
 - The camera flies to a map target before the beat's line appears.
 
+### 3.1 The lessons: buildings that work for you
+
+Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
+
+| Scene | Quest | Isolde says | Points at | Lock | Moves on |
+|---|---|---|---|---|---|
+| `farm` | `Farmhand` | *Every tap on those plots costs Mana. A Farm sends villagers to reap them for you — all day, and all night while you are away.* | the crop plots | all | tap |
+| | | *Let's build one.* | **Build** | the tab | the build menu is open |
+| | | *Pick the Farm.* | the Farm card | the card | placing |
+| | | *A Farm reaches one step round itself, corners too. Set it beside the plots — each one in reach shows what it holds — then Build.* | the crop plots | the map and the panel | placed |
+| | | *A builder is on it. When it stands, it will need hands.* | the construction | all | tap |
+| `workers` | `ToWork` | *The Farm is up, and nobody works it yet. Tap it.* | the Farm | the Farm | its card is open |
+| | | *Send a villager. They walk to a plot in reach, reap it and carry the crop home — more hands, more trips.* | the card's **+** | none | the quest completes |
+| | | *The harvest waits in the Farm's store. When its bubble shows, tap the Farm to bring it in — a full store stops the work.* | the Farm | all | tap |
+| `saws` | `SawTeeth` | *The Farm reaps on its own. The forest could too — the Book of Civics knows how.* | **Research** | the tab | the book is open |
+| | | *Saws. It teaches us to build a Sawmill.* | the Saws card | the card | its sheet is open |
+| | | *Pour in its Knowledge…* · *…and research it.* | **+N** · **Research** | the button | filled · done |
+| | | *Close the book, and let's build it.* | the close knob | the knob | the book is shut |
+| `sawmill` | `TheSawmill` | *A Sawmill sends woodcutters into the trees around it — Wood without a single tap.* | **Build** | the tab | the build menu is open |
+| | | *Pick the Sawmill.* | the Sawmill card | the card | placing |
+| | | *Like the Farm, it works only what is in its reach. Set it where the most trees stand inside the outline, then Build.* | the confirm button | the map and the panel | placed |
+| | | *A builder is on it. When it stands, it will need hands too.* | the construction | all | tap |
+| `sawmillCrew` | `Crewed` | *The Sawmill is up. Tap it.* | the Sawmill | the Sawmill | its card is open |
+| | | *Send it woodcutters — the scroll wants three villagers at work, the Farm's included.* | the card's **+** | none | the quest completes |
+| | | *Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.* | the Sawmill | all | tap |
+
+- **A worker building's ghost starts where it would work the most** — the
+  Farm beside the plots, the Sawmill in the thickest trees — the nearest of
+  those to the Townhall.
+
 ## 4. The introductions
 
 Each plays once, the first time its trigger is true. Lines are tapped through;
@@ -95,9 +127,9 @@ last line, as a hint.
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `workers` | quest `ToWork` reached | Isolde | *A Farm sends workers out to the plots around it. Give it a hand or two — they walk, harvest and carry home to the Farm's store.* | the Farm's workers |
+| `fullHouse` | quest `GrowingTown` reached | Isolde | *That House is full — two to a roof. Build another, and the town can grow.* | the House |
 | `townhall2` | quest `ProperCapital` reached | Isolde | *A bigger Townhall lets us pay for fog further out — the dotted line is how far. It also lets the city hold more.* | the Townhall |
-| `builders` | every builder busy, for the first time | Isolde | *Every builder is busy. Wait, or hire another hand — the builder's hut takes Gems.* | the builder plaque |
+| `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy. Wait for one to finish — or hire another hand, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *Out of Mana. It refills on its own, about a pool a night — or a short message from our patrons refills it now.* | the Mana gauge |
 | `eras` | 30 cells revealed | Isolde | *The deeper pages of the books only open to a monarch who has seen more of the land. You just have — Chapter II is open.* | Research |
 

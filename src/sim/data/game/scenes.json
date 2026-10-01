@@ -442,6 +442,76 @@
     ]
   },
   {
+    "id": "farm",
+    "trigger": "questReached",
+    "triggerTarget": "Farmhand",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Every tap on those plots costs Mana. A Farm sends villagers to reap them for you — all day, and all night while you are away.",
+        "box": "auto",
+        "point": "district:FarmLands",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s build one.",
+        "box": "middle",
+        "point": "ui:nav:build",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "build",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pick the Farm.",
+        "box": "top",
+        "point": "ui:build:Farm",
+        "lock": "target",
+        "until": "placing",
+        "untilTarget": "Farm",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Farm reaches one step round itself, corners too. Set it beside the plots — each one in reach shows what it holds — then Build.",
+        "box": "top",
+        "point": "district:FarmLands",
+        "lock": "map",
+        "until": "placed",
+        "untilTarget": "Farm",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A builder is on it. When it stands, it will need hands.",
+        "box": "auto",
+        "point": "district:Farm",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
     "id": "workers",
     "trigger": "questReached",
     "triggerTarget": "ToWork",
@@ -452,10 +522,230 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A Farm sends workers out to the plots around it. Give it a hand or two — they walk, harvest and carry home to the Farm’s store.",
+        "text": "The Farm is up, and nobody works it yet. Tap it.",
         "box": "auto",
         "point": "district:Farm",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "card:workers",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Send a villager. They walk to a plot in reach, reap it and carry the crop home — more hands, more trips.",
+        "box": "top",
+        "point": "ui:card:workers",
         "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "ToWork",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The harvest waits in the Farm’s store. When its bubble shows, tap the Farm to bring it in — a full store stops the work.",
+        "box": "top",
+        "point": "district:Farm",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "fullHouse",
+    "trigger": "questReached",
+    "triggerTarget": "GrowingTown",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "That House is full — two to a roof. Build another, and the town can grow.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "saws",
+    "trigger": "questReached",
+    "triggerTarget": "SawTeeth",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Farm reaps on its own. The forest could too — the Book of Civics knows how.",
+        "box": "middle",
+        "point": "ui:nav:research",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "research",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Saws. It teaches us to build a Sawmill.",
+        "box": "bottom",
+        "point": "ui:tech:Saws",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "techsheet:Saws",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pour in its Knowledge…",
+        "box": "top",
+        "point": "ui:tech-pour",
+        "lock": "target",
+        "until": "techFilled",
+        "untilTarget": "Saws",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "…and research it.",
+        "box": "top",
+        "point": "ui:tech-research",
+        "lock": "target",
+        "until": "techDone",
+        "untilTarget": "Saws",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Close the book, and let’s build it.",
+        "box": "middle",
+        "point": "ui:close",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "sawmill",
+    "trigger": "questReached",
+    "triggerTarget": "TheSawmill",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A Sawmill sends woodcutters into the trees around it — Wood without a single tap.",
+        "box": "middle",
+        "point": "ui:nav:build",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "build",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Pick the Sawmill.",
+        "box": "top",
+        "point": "ui:build:Sawmill",
+        "lock": "target",
+        "until": "placing",
+        "untilTarget": "Sawmill",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Like the Farm, it works only what is in its reach. Set it where the most trees stand inside the outline, then Build.",
+        "box": "top",
+        "point": "ui:place-confirm",
+        "lock": "map",
+        "until": "placed",
+        "untilTarget": "Sawmill",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A builder is on it. When it stands, it will need hands too.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false
+      }
+    ]
+  },
+  {
+    "id": "sawmillCrew",
+    "trigger": "questReached",
+    "triggerTarget": "Crewed",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Sawmill is up. Tap it.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "card:workers",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Send it woodcutters — the scroll wants three villagers at work, the Farm’s included.",
+        "box": "top",
+        "point": "ui:card:workers",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Crewed",
+        "untilAmount": 0,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.",
+        "box": "top",
+        "point": "district:Sawmill",
+        "lock": "all",
         "until": "tap",
         "untilTarget": "",
         "untilAmount": 0,
@@ -487,8 +777,8 @@
   },
   {
     "id": "builders",
-    "trigger": "buildersBusy",
-    "triggerTarget": "",
+    "trigger": "overlay",
+    "triggerTarget": "builder",
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
@@ -496,9 +786,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Every builder is busy. Wait, or hire another hand — the builder’s hut takes Gems.",
-        "box": "middle",
-        "point": "ui:builders",
+        "text": "Every builder is busy. Wait for one to finish — or hire another hand, and two things rise at once.",
+        "box": "top",
+        "point": "",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
