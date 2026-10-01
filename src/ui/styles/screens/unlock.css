@@ -59,14 +59,14 @@
 .unl-rays.is-long {
   inset: -62%;
   background: repeating-conic-gradient(from 0deg,
-    rgba(255, 214, 120, 0.5) 0deg 4deg, transparent 4deg 30deg);
+    rgba(255, 214, 120, 0.5) 0deg 9deg, transparent 10.5deg 20deg);
   -webkit-mask: radial-gradient(closest-side, #000 18%, transparent 100%);
   mask: radial-gradient(closest-side, #000 18%, transparent 100%);
 }
 .unl-rays.is-short {
   inset: -38%;
-  background: repeating-conic-gradient(from 15deg,
-    rgba(255, 226, 150, 0.42) 0deg 6deg, transparent 6deg 30deg);
+  background: repeating-conic-gradient(from 10.5deg,
+    rgba(255, 226, 150, 0.42) 0deg 7deg, transparent 8.5deg 20deg);
   -webkit-mask: radial-gradient(closest-side, #000 25%, transparent 100%);
   mask: radial-gradient(closest-side, #000 25%, transparent 100%);
   animation-direction: normal, reverse;
