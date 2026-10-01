@@ -65,6 +65,7 @@ import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
+import { mirrorMountFlags } from './ui/mountFlags';
 import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 
@@ -159,6 +160,8 @@ async function boot(): Promise<void> {
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
   mountUnlockSplash(game, document.getElementById('unlock')!);
+  // What is mounted, as classes on #ui, for the CSS that steps aside.
+  mirrorMountFlags(document.getElementById('ui')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
