@@ -109,9 +109,10 @@
   opens before the book of magic.
 - The Watchtower is claimed like any landmark. Its kind is what makes it a
   door; its price is authored in the map editor.
-- **The world door opens a preview** until the world map is built: a sheet
-  showing the province as one hex among its neighbours, the other kingdoms
-  in fog, and *The roads beyond the mountains are being scouted.*
+- **The world door opens the world board**
+  ([`19-world-map.md`](19-world-map.md)): the knob takes the player out to
+  the board and, wearing the castle, back home. Cartography, in the Atlas the
+  same claim opens, sends the first explorer.
 
 ## 6. The Tavern and the heroes
 
@@ -222,7 +223,7 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
   Morning is played on the save.
 - Heroes before the first lair; a random first free call.
 - A Tavern that sells calls. The banner sells them; the Tavern hosts it.
-- The world map itself — the door opens a preview until it is built
-  (**OQ-114**).
+- Claiming, contesting or the Portal on the world board — the door opens
+  onto exploring only until those are built (**OQ-114**).
 
 **Open questions:** **OQ-114**, **OQ-115**, **OQ-116**.

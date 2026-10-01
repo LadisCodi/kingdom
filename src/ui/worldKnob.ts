@@ -2,7 +2,8 @@
 // wooden knob with the compass carved into it, bottom right, just above the
 // nav. It appears, padlocked, the moment the Watchtower is sighted — the
 // promise arrives with the place that keeps it — and claiming the Watchtower
-// breaks the lock.
+// breaks the lock. Out on the world board it wears the castle and takes the
+// player home.
 //
 // Built once and mutated, like the ad tab beside it (`adOfferPill.ts`).
 
@@ -15,14 +16,19 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
   const lock = el('span', { class: 'world-knob-lock', 'aria-hidden': 'true' }, iconEl('padlock', { size: 'sm' }));
   const knob = el('button', {
     class: 'k-knob world-knob', type: 'button', 'aria-label': 'The world', 'data-coach': 'world',
-  }, iconEl('compass', { size: 'md' }), lock);
+  }, el('span', { class: 'world-knob-out' }, iconEl('compass', { size: 'md' })),
+  el('span', { class: 'world-knob-home' }, iconEl('Townhall', { size: 'md' })), lock);
   knob.addEventListener('click', () => {
+    if (game.scene === 'world') {
+      game.leaveWorld();
+      return;
+    }
     if (!game.doorOpen('world')) {
       knob.classList.remove('is-shaking');
       void knob.offsetWidth;
       knob.classList.add('is-shaking');
     }
-    game.setOverlay('world');
+    game.enterWorld();
   });
   root.replaceChildren(knob);
 
@@ -36,6 +42,9 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
     }
     wasLocked = locked;
     knob.classList.toggle('is-locked', locked);
+    const away = game.scene === 'world';
+    knob.classList.toggle('is-away', away);
+    knob.setAttribute('aria-label', away ? 'Back to the city' : 'The world');
   };
   game.onChange(refresh);
   refresh();

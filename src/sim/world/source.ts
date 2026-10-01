@@ -18,7 +18,7 @@ export interface Seat {
   /** The city hex's board index. */
   index: number;
   /** The player's own, or a rival's name. */
-  owner: { you: true } | { you: false; name: string };
+  owner: { you: true } | { you: false; name: string; rival: number };
 }
 
 export interface WorldSource {
@@ -53,7 +53,7 @@ export function localWorld(ref: BoardRef): WorldSource {
       index,
       owner: seat === ref.seat
         ? { you: true }
-        : { you: false, name: WORLD.rivals[rival++ % WORLD.rivals.length] ?? `Rival ${seat + 1}` },
+        : { you: false, name: WORLD.rivals[rival % WORLD.rivals.length] ?? `Rival ${seat + 1}`, rival: rival++ },
     });
   });
   return {

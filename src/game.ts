@@ -135,6 +135,10 @@ import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
+import { HexCamera } from './render/world/hexCamera';
+import { dispatchExplorer, homeIndex } from './sim/world/explorers';
+import { hexAt, hexIndex } from './sim/world/hex';
+import { localWorld, type WorldSource } from './sim/world/source';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -173,8 +177,8 @@ export type OverlayName =
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
   | 'heroPicker'
-  // The world beyond the province — a preview until the board is built
-  // (Docs/features/22-progression.md §5).
+  // A hex of the world board, and what can be done there — the dispatch
+  // sheet (Docs/features/19-world-map.md §1.2).
   | 'world';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
@@ -651,6 +655,12 @@ export class Game {
     // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
     setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
+    // An explorer home says what it found; the board already shows where.
+    for (const home of result.explorersHome) {
+      this.toast(home.revealed > 0
+        ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map`
+        : 'Your explorer is home — nothing new out there');
+    }
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -3957,6 +3967,9 @@ export class Game {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    // Building happens on the province: the Build menu takes the player home.
+    if (name === 'build' && this.scene === 'world') this.scene = 'province';
+    if (name !== 'world') this.selectedHex = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
@@ -3982,6 +3995,7 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
+    this.selectedHex = null;
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
@@ -4395,6 +4409,83 @@ export class Game {
     if (mode.kind === 'placing') this.openOverlay = 'build';
     else if (mode.kind === 'moving') this.inspectedDistrictId = mode.districtUniqueId;
     this.notify();
+  }
+
+  // ------------------------------------------------------- the world board
+
+  /** Which board is on screen. Not saved: a reload opens on the province. */
+  scene: 'province' | 'world' = 'province';
+  /** The world hex the dispatch sheet is about. */
+  selectedHex: number | null = null;
+  /** The world's camera, handed over by main once the canvas exists. */
+  worldCamera: HexCamera | null = null;
+
+  /** Where the board comes from (sim/world/source.ts). */
+  worldSource(): WorldSource {
+    return localWorld(this.state.world.board);
+  }
+
+  /** Go out to the world board — behind the Watchtower's door. */
+  enterWorld(): void {
+    if (!isDoorOpen(this.state, 'world')) {
+      this.toast(DOOR_HINT.world);
+      this.notify();
+      return;
+    }
+    this.dismiss();
+    this.scene = 'world';
+    this.worldCamera?.fitBoard();
+    this.notify();
+  }
+
+  /** Back to the province. */
+  leaveWorld(): void {
+    if (this.openOverlay === 'world') this.openOverlay = null;
+    this.selectedHex = null;
+    this.scene = 'province';
+    this.notify();
+  }
+
+  /** A tap on the world board: a hex opens its sheet; off the board closes
+   *  it. The hexagon is the tap target, never the icons on it (19 §1.2). */
+  handleWorldTap(sx: number, sy: number): void {
+    if (this.worldCamera === null) return;
+    const index = hexIndex(this.worldCamera.screenToHex(sx, sy));
+    if (index < 0) {
+      this.dismiss();
+      return;
+    }
+    this.selectedHex = index;
+    this.setOverlay('world');
+  }
+
+  /** Bring a hex into view. */
+  showHex(index: number): void {
+    this.worldCamera?.centerOnHex(hexAt(index));
+    this.notify();
+  }
+
+  /** Send an explorer to the hex the sheet is about. */
+  doSendExplorer(): void {
+    const target = this.selectedHex;
+    if (target === null) return;
+    const result = dispatchExplorer(this.state, target, this.now());
+    if (result.kind === 'Sent') {
+      playSfx('click');
+      this.dismiss();
+      return;
+    }
+    if (result.kind === 'NoExplorerFree') {
+      this.toast(`Every explorer is out — one is back in ${formatCountdown((result.nextFreeAt - this.now()) / 1000)}`);
+    } else if (result.kind === 'NoCartography') {
+      this.toast('Research Cartography in the Atlas to send an explorer');
+    }
+    this.notify();
+  }
+
+  /** The player's own city on the board. */
+  homeHex(): number {
+    return homeIndex(this.state);
   }
 
   handleTap(sx: number, sy: number): void {

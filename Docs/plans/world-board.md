@@ -6,8 +6,7 @@
 > [`the-4x-build.md`](the-4x-build.md) (C1, C2, C3, C6, plus explorers).
 > What the board IS stays in [`../features/19-world-map.md`](../features/19-world-map.md).
 >
-> **Status: stages 1–3 built 2026-10-01** (the sim, headless); stages 4–5
-> next. Branch `feat/world-map`.
+> **Status: built 2026-10-01**, stages 1–5. Branch `feat/world-map`.
 > Mockups: [`../art/ui/mockups/`](../art/ui/mockups) m55–m59.
 
 ## 0. Decisions this plan rests on

@@ -7,11 +7,11 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: the board, the fog and the explorers are built in the sim**
-> (§1–§3, §9; [`../plans/world-board.md`](../plans/world-board.md) stages
-> 1–3), with no screen yet: the world door still opens the preview sheet
-> ([`22-progression.md`](22-progression.md) §5). Everything else is designed,
-> not built.
+> **Status: the board, the fog and the explorers are built** (§1–§3, §9;
+> [`../plans/world-board.md`](../plans/world-board.md)): the world door
+> opens the board, a tap on a hex opens its sheet, and Explore sends an
+> explorer. The hex art is the province's, arranged on a hex, until hex art
+> exists. Everything from §4 on is designed, not built.
 
 ## 1. The board
 

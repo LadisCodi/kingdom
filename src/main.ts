@@ -50,7 +50,10 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
-import { renderWorldSheet } from './ui/worldSheet';
+import { renderDispatchSheet } from './ui/world/dispatchSheet';
+import { mountExplorerChip } from './ui/world/explorerChip';
+import { HexCamera } from './render/world/hexCamera';
+import { drawWorld } from './render/world/boardRenderer';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
@@ -124,6 +127,11 @@ async function boot(): Promise<void> {
   // Center on the middle of the Townhall's 2x2 footprint (fractional cell).
   camera.centerOnCell({ x: TOWNHALL_ORIGIN.x + 0.5, y: TOWNHALL_ORIGIN.y + 0.5 });
   const game = new Game(state, map, camera);
+  // The world board's own canvas and camera (Docs/features/19-world-map.md):
+  // a second scene, drawn instead of the province while the player is out.
+  const worldCanvas = document.getElementById('world') as HTMLCanvasElement;
+  const worldCamera = new HexCamera(worldCanvas);
+  game.worldCamera = worldCamera;
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
 
@@ -156,6 +164,7 @@ async function boot(): Promise<void> {
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
+  mountExplorerChip(game, document.getElementById('worldchip')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -194,7 +203,7 @@ async function boot(): Promise<void> {
     heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
-    world: renderWorldSheet,
+    world: renderDispatchSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     pass: renderPassSheet,
@@ -330,6 +339,12 @@ async function boot(): Promise<void> {
   if (game.state.player.payer === null) game.setOverlay('payerProfile');
 
   game.onChange(refreshScreens);
+  // Which board is on screen, as a class the CSS swaps the canvases and the
+  // province's pills on.
+  const appRoot = document.getElementById('app')!;
+  const syncScene = () => appRoot.classList.toggle('in-world', game.scene === 'world');
+  game.onChange(syncScene);
+  syncScene();
 
   // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
   // sheets: a legacy full-screen menu has no "beside" to tap. #overlay is
@@ -364,6 +379,15 @@ async function boot(): Promise<void> {
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
   );
+  // The world board takes the same gestures: a drag pans, a pinch or the
+  // wheel zooms, a tap picks a hex. Nothing there is held or dragged.
+  wireInput(
+    worldCanvas, worldCamera,
+    (sx, sy) => game.handleWorldTap(sx, sy),
+    () => false,
+    () => false,
+    () => {},
+  );
 
   // ------------------------------------------------------- the single tick
   // The ambience bed follows the camera: waves over water, wind over snow.
@@ -396,7 +420,13 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------ render loop
   const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+    if (game.scene === 'world') {
+      drawWorld(worldCanvas, worldCamera, {
+        state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
+      });
+    } else {
+      drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+    }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
