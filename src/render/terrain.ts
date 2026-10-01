@@ -122,6 +122,9 @@ export function terrainKey(terrain: TerrainId, cell: Coord): string {
  * four sides, no mirroring — the basis is rotated. The art is lit flat
  * because of it: light coming from one direction in the source would arrive
  * from four different directions on screen.
+ *
+ * False when a fringe that has art has not loaded yet, so a cached floor
+ * knows to draw itself again.
  */
 export function drawTerrainFringes(
   ctx: CanvasRenderingContext2D,
@@ -129,12 +132,14 @@ export function drawTerrainFringes(
   cell: Coord,
   terrain: TerrainId,
   box: PlotBox,
-): void {
+): boolean {
+  let all = true;
   for (const { side, dx, dy } of SIDES) {
     const other = map.terrain.get(coordKey({ x: cell.x + dx, y: cell.y + dy }));
     if (!other || other === terrain || LAYER[other] <= LAYER[terrain]) continue;
     const key = `terrain_${other.toLowerCase()}_edge`;
     if (spriteUrl(key) === null) continue;
-    onDiamond(ctx, box, side, () => { drawSprite(ctx, key, 0, 0, 1, 1); });
+    onDiamond(ctx, box, side, () => { if (!drawSprite(ctx, key, 0, 0, 1, 1)) all = false; });
   }
+  return all;
 }
