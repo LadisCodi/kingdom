@@ -1,6 +1,6 @@
 /* Hero and troop portraits.
  *
- * Every selector that draws a hero — `.hero-art` on the roster and the card,
+ * Every selector that draws a hero — `.hc-art` on the roster's cards, `.hd-art` on the hero's window,
  * `.bt-portrait` and `.bt-card-portrait` in battle, `.exp-portrait` on the
  * expedition sheet, the gacha reveal and the banner — sets
  * `image-rendering: pixelated`, which is right for the pixel art those

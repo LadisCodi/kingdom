@@ -14,38 +14,15 @@
 // out of the slot it holds. A tap on a filled slot empties it. No free slot,
 // or an exhausted hero: an error sound, and nothing moves.
 
-import { HERO_ORDER, HEROES } from '../sim/data/definitions';
-import type { UnitId } from '../sim/state';
+import { HEROES } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, headPanel, iconEl, sectionHead, sheet, unitTypeIcon } from './kit';
-import { emptyHeroSlot, heroCard } from './heroCard';
-
-/** The unit types heroes fight as, in roster order — the filter's tabs. */
-const heroTypes = (): UnitId[] => [...new Set(HERO_ORDER.map((h) => HEROES[h].unitType))];
+import { btn, headPanel, sectionHead, sheet } from './kit';
+import { emptyHeroSlot, heroCard, heroFilterBar } from './heroCard';
 
 export function renderHeroPicker(game: Game): HTMLElement {
   const pick = game.heroPick;
   if (pick === null) return el('div', {});
-
-  const tab = (filter: UnitId | 'All'): HTMLElement => {
-    const on = pick.filter === filter;
-    // The game's wooden button; the filter that is on stays pushed in —
-    // the pressed art, latched (material.css `is-pressed`).
-    const b = el('button', {
-      class: `k-btn k-btn--secondary is-paint hp-tab${on ? ' is-pressed' : ''}`, type: 'button',
-      'aria-pressed': on ? 'true' : 'false',
-      'aria-label': filter === 'All' ? 'All heroes' : `${filter} heroes`,
-    }, el('span', { class: 'k-btn-label' },
-      filter === 'All' ? 'All' : iconEl(unitTypeIcon(filter), { size: 'sm' })));
-    b.addEventListener('click', () => game.heroPickFilter(filter));
-    return b;
-  };
-  const sort = el('button', {
-    class: 'k-btn k-btn--secondary is-paint hp-sort', type: 'button', 'aria-label': 'Sort heroes',
-  }, el('span', { class: 'k-btn-label' },
-    pick.sort === 'level' ? 'Lv' : 'Rarity', el('span', { class: 'hp-sort-caret', 'aria-hidden': 'true' }, '▾')));
-  sort.addEventListener('click', () => game.heroPickCycleSort());
 
   const list = game.heroPickList();
   const grid = el('div', { class: 'hp-grid' },
@@ -64,10 +41,12 @@ export function renderHeroPicker(game: Game): HTMLElement {
     })));
 
   const body = el('div', { class: 'hp' },
-    el('div', { class: 'hp-bar' },
-      el('div', { class: 'hp-tabs', role: 'group', 'aria-label': 'Filter by type' },
-        tab('All'), ...heroTypes().map(tab)),
-      sort),
+    heroFilterBar({
+      filter: pick.filter,
+      sort: pick.sort,
+      onFilter: (f) => game.heroPickFilter(f),
+      onSort: () => game.heroPickCycleSort(),
+    }),
     el('div', { class: 'hp-list', 'data-keep-scroll': 'hero-picker' },
       sectionHead('Heroes'),
       list.length > 0 ? grid : el('p', { class: 'hp-none' }, 'No heroes of that type yet')),

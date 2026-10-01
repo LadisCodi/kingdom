@@ -22,7 +22,7 @@ import { getGood } from '../sim/goods';
 import type { District, GoodId } from '../sim/state';
 import { buildingPortrait } from './districtCard';
 import { el, formatDuration, formatExact } from './format';
-import { btn, iconEl, sectionHead, sheet } from './kit';
+import { btn, iconEl, priceLine, sectionHead, sheet, type IconName } from './kit';
 import { requirements, statChanges } from './upgradeStats';
 
 /** The building at a level, with the level on its plaque. */
@@ -60,16 +60,16 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   // not wallet rows), then the build time.
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
   const goods = Object.entries(upgradeGoodsCost(district.definitionId, next)) as Array<[GoodId, number]>;
-  const priceChip = (icon: string, amount: number, short: boolean) =>
-    el('span', { class: `up-price-chip${short ? ' is-short' : ''}` },
-      iconEl(icon as never), el('b', {}, formatExact(amount)));
-  const price = el('div', { class: 'up-price' },
-    ...Object.entries(cost).map(([c, n]) =>
-      priceChip(c, n as number, game.walletValue(c as never) < (n as number))),
-    ...goods.map(([id, n]) => priceChip(id, n, getGood(game.state.city.goods, id) < n)),
-    el('span', { class: 'up-price-time' },
-      iconEl('hourglass'),
-      formatDuration(upgradeDuration(game.state, district.definitionId, district.level))));
+  const price = priceLine([
+    ...Object.entries(cost).map(([c, n]) => ({
+      icon: c as IconName, amount: formatExact(n as number), short: game.walletValue(c as never) < (n as number),
+    })),
+    ...goods.map(([id, n]) => ({
+      icon: id as IconName, amount: formatExact(n), short: getGood(game.state.city.goods, id) < n,
+    })),
+  ], el('span', { class: 'up-price-time' },
+    iconEl('hourglass'),
+    formatDuration(upgradeDuration(game.state, district.definitionId, district.level))));
 
   // The sim's own check decides the button, so the popup can never offer a
   // press the command would refuse; the requirements decide its words.
