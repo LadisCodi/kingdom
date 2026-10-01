@@ -48,12 +48,12 @@
 
 | Door | Opens when | While shut |
 |---|---|---|
-| **Research** (nav) | the quest `Woodcraft` is reached | padlocked — *Finish your first task* |
-| **Build** (nav) | the quest `ARoof` is reached | padlocked — *Gather some Wood first* |
-| **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to call heroes* |
-| **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to find your first cards* |
-| **Store** (nav) | always open | — |
-| **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to see beyond the province* |
+| **Research** (nav) | the quest `Woodcraft` is reached | padlocked — *Finish your first task to open this* |
+| **Build** (nav) | the quest `ARoof` is reached | padlocked — *Gather some Wood to open this* |
+| **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to open this* |
+| **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to open this* |
+| **Store** (nav), and the Gems on the plank | the Townhall reaches **level 2** | padlocked — *Raise the Townhall to level 2 to open this* |
+| **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
 | **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
 | **Season** pill | as today — a card or a pack held | absent |
@@ -64,9 +64,10 @@
 | **The Atlas** (found) | the **Watchtower** is claimed | not on the shelf |
 | **The banner** (in the Store and the Tavern) | a Tavern stands | padlocked in the Store |
 
-- A padlocked door is drawn in its place, greyed, with a brass padlock over
-  its icon. A tap shakes the padlock and shows its line in a tooltip; it
-  never opens anything.
+- A padlocked tab is its empty plate and a brass padlock — **no icon, no
+  name**: what is behind it stays a surprise. A tap shakes the padlock and
+  shows its line, which says what opens it and not what it is; it never
+  opens anything.
 - **A door opening is an event**: the padlock breaks off with a short
   animation and the introduction for that door plays
   ([`23-tutorials.md`](23-tutorials.md) §4).

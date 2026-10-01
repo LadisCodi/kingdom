@@ -181,7 +181,7 @@ export type OverlayName =
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', knowledge: 'knowledge', daily: 'daily',
+  world: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
 };
 
 /** How the hero picker orders the heroes it offers. */

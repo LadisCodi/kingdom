@@ -136,21 +136,23 @@
 
 /* ------------------------------------------------------------ the doors ---
  * A tab whose menu the kingdom has not reached yet (Docs/features/
- * 22-progression.md §3): the plate stays, its mark is greyed and a brass
- * padlock hangs over it. A tap shakes the lock; opening breaks it off. */
+ * 22-progression.md §3): the plate stays, empty but for a brass padlock —
+ * no mark, no name. A tap shakes the lock; opening breaks it off. */
 #navbar.nav .nav-lock {
   position: absolute;
-  top: calc(var(--rpx) * 26);
+  top: 50%;
   left: 50%;
-  translate: -50% 0;
+  translate: -50% -50%;
   display: none;
   filter: drop-shadow(0 calc(var(--rpx) * 3) 0 rgba(40, 22, 10, 0.6));
   pointer-events: none;
 }
 #navbar.nav .nav-lock .icon { --icon-size: calc(var(--rpx) * 64); }
 #navbar.nav .nav-tab.is-locked .nav-lock { display: block; }
+/* What is behind a shut door stays a surprise: no mark, no name — the
+   padlock alone, in the middle of the plate. */
 #navbar.nav .nav-tab.is-locked > .icon,
-#navbar.nav .nav-tab.is-locked > .nav-label { filter: grayscale(1) brightness(0.72); opacity: 0.75; }
+#navbar.nav .nav-tab.is-locked > .nav-label { visibility: hidden; }
 #navbar.nav .nav-tab.is-locked:active {
   border-image-source: url('../../assets/nav-tab.png');
   padding: 0 0 calc(var(--rpx) * 10);
@@ -168,9 +170,9 @@
   70% { rotate: -8deg; }
 }
 @keyframes nav-lock-break {
-  0% { translate: -50% 0; rotate: 0deg; opacity: 1; }
-  25% { translate: -50% calc(var(--rpx) * -10); rotate: -12deg; opacity: 1; }
-  100% { translate: -30% calc(var(--rpx) * 90); rotate: 40deg; opacity: 0; }
+  0% { translate: -50% -50%; rotate: 0deg; opacity: 1; }
+  25% { translate: -50% calc(-50% - var(--rpx) * 10); rotate: -12deg; opacity: 1; }
+  100% { translate: -30% calc(-50% + var(--rpx) * 90); rotate: 40deg; opacity: 0; }
 }
 @keyframes nav-mark-glow {
   0% { filter: brightness(1.8) drop-shadow(0 0 calc(var(--rpx) * 18) #ffe7a0); }
