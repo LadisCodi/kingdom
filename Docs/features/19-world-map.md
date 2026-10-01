@@ -7,8 +7,10 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: designed, not built.** Nothing of this exists in code but the
-> `worldRevealSpeed` modifier stat.
+> **Status: designed, not built.** What exists is the door to it — the
+> Watchtower, the Atlas and a preview sheet of the board
+> ([`22-progression.md`](22-progression.md) §5) — and the
+> `worldRevealSpeed` and `worldImprovementYield` stats, read by nothing yet.
 
 ## 1. The board
 
@@ -20,16 +22,16 @@
 
 | Ring | Hexes | Its job |
 |---|---|---|
-| **0 — the centre** | 1 | The Dark Portal. Never owned, never built on, never fogged (§9) |
-| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to improvements built on it** (§6.3) |
-| **2 — the corridors** | 12 | The ground between a city and the centre. Nothing special, and unavoidable |
-| **3 — the home ring** | 18 | The six city hexes, equidistant, and the ground between them |
-| **4 — the outer ring** | 24 | Dungeons, Sanctuaries and the rare books. Poor in production, rich in what production cannot buy |
+| **0 — the centre** | 1 | The Dark Portal. Never owned, never built on, never fogged (§10) |
+| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to improvements built on it** (§7) |
+| **2–3 — the corridors** | 30 | The ground between a city and the centre. Nothing special, and unavoidable |
+| **4 — the home ring** | 24 | The six city hexes, on its corners, and the ground between them |
+| **5 — the outer ring** | 30 | Dungeons and Sanctuaries. Poor in production, rich in what production cannot buy |
 
-- From a city on ring 3 the centre is **three hexes away**: two corridor hexes
-  on ring 2, then one on ring 1.
-- **The inner ring is the best ground and the worst to hold** — it is one hex
-  from all five rivals and hangs off an exposed corridor.
+- A city is **four hexes** from the centre and four from each neighbouring
+  city.
+- An inner-ring hex is three hexes from its nearest city and at most five from
+  any.
 - **The board is small on purpose.** There is nowhere to hide, every hex has a
   job, and conflict is a property of the geometry rather than a rule.
 
