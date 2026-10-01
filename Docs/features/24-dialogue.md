@@ -68,7 +68,7 @@
 | `ui:<key>` | a control on screen — a nav tab, a card, a button (the keys are listed in `src/ui/stage/targets.ts`) |
 | `cell:<x>,<y>` | one map cell |
 | `feature:<id>` | the nearest cell with that feature out of the dark |
-| `feature:<id>Fog` | the nearest fogged one the player can pay for — to be bought |
+| `feature:<id>Fog` | the nearest fogged one the player can pay for — to be bought; with none payable, the frontier cell that leads towards the nearest one |
 | `feature:<id>Revealed` | the nearest revealed one that is not spent — to be tapped |
 | `district:<id>` | the nearest building of that kind |
 | `lair:<id>` · `landmark:<id>` | that site |

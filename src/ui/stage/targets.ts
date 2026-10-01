@@ -63,6 +63,29 @@ function stillGood(game: Game, point: string, cell: Coord): boolean {
 }
 
 /**
+ * `feature:<id>Fog` with nothing of that kind payable — every one in sight
+ * already cleared, the next still deep in the dark: point at the frontier
+ * cell the player can pay for that leads TOWARDS the nearest one, so the
+ * hand always shows the next tap rather than nothing.
+ */
+function towards(game: Game, point: string): Coord | null {
+  if (!point.endsWith('Fog')) return null;
+  const id = point.slice('feature:'.length, -'Fog'.length);
+  const goal = nearest(game, (c) => featureAt(game, c) === id
+    && game.state.fog.revealed[coordKey(c)] !== true);
+  if (goal === null) return null;
+  let best: Coord | null = null;
+  let bestD = Infinity;
+  for (const c of game.map.cells) {
+    if (fogState(game.state, game.map, c) !== 'Discovered' || !isPayable(game.state, game.map, c)
+      || explorationGate(game.map, c) !== null) continue;
+    const d = Math.max(Math.abs(c.x - goal.x), Math.abs(c.y - goal.y));
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
+/**
  * Resolve a line's `point` into a target. `previous` is what it resolved to a
  * moment ago, kept while it still qualifies. Null = nothing to point at (an
  * empty point, or nothing on the map that fits yet).
@@ -79,7 +102,7 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
       return { kind: 'cell', cell: { x, y }, span: ONE };
     }
     case 'feature': {
-      const cell = nearest(game, (c) => stillGood(game, point, c));
+      const cell = nearest(game, (c) => stillGood(game, point, c)) ?? towards(game, point);
       return cell === null ? null : { kind: 'cell', cell, span: ONE };
     }
     case 'district': {

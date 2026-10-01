@@ -34,6 +34,9 @@ interface Playing {
   /** Characters typed so far. */
   typed: number;
   target: Target | null;
+  /** Since when a map target has been out of sight (off the screen, or
+   *  under the box), to bring the camera back to it. */
+  hiddenSince?: number | null;
   /** When the lock's target went missing, for the failsafe. */
   missingSince: number | null;
   /** The failsafe fired: the lock has let go for the rest of this line. */
@@ -65,6 +68,10 @@ function bringIntoView(key: string): void {
     return;
   }
 }
+
+/** How long a map target may sit out of sight, the player's hands off the
+ *  screen, before the camera brings it back. */
+const REFOCUS_MS = 1500;
 
 /** How far a press may travel and still be a tap rather than a pan. */
 const TAP_SLOP_PX = 10;
@@ -400,6 +407,18 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // ------------------------------------------------------------ the frame
   let lastCheck = 0;
   let lastFrame = performance.now();
+  /** Is a map target off the screen, or hidden under the box? */
+  const outOfSight = (r: Rect): boolean => {
+    const cx = r.x + r.w / 2;
+    const cy = r.y + r.h / 2;
+    if (cx < 0 || cy < 0 || cx > frame.clientWidth || cy > frame.clientHeight) return true;
+    const f = frame.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const bx = b.left - f.left;
+    const by = b.top - f.top;
+    return cx > bx && cx < bx + b.width && cy > by && cy < by + b.height;
+  };
+
   /** The control wearing the glow, so it can be taken off again. */
   let glowing: HTMLElement | null = null;
   const glow = (node: HTMLElement | null): void => {
@@ -487,6 +506,19 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         // of something they cannot reach.
         if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
         const r = playing.target === null ? null : targetRect(game, playing.target, frame);
+        // A MAP TARGET OUT OF SIGHT is brought back: the player tapped another
+        // forest than the one pointed at, or panned away, and the hand is
+        // pointing at nothing they can see. Once the hands are off the
+        // screen for a moment — never mid-pan.
+        if (playing.target?.kind === 'cell' && r !== null && outOfSight(r)) {
+          playing.hiddenSince ??= now;
+          if (now - playing.hiddenSince > REFOCUS_MS && now - lastActivity > REFOCUS_MS) {
+            game.camera.centerOnCell(playing.target.cell, playing.target.span);
+            playing.hiddenSince = null;
+          }
+        } else {
+          playing.hiddenSince = null;
+        }
         // A LOCK NEVER STRANDS THE PLAYER: a target missing for a while lets
         // the lock go, and the line reads as a hint.
         if ((l.lock === 'target' || l.lock === 'map') && r === null && l.point !== '') {
