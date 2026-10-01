@@ -69,6 +69,7 @@ left unless a line says otherwise.
 | 4.5 | `ARoof` | *A task done is a reward waiting. Tap the scroll.* | the quest pill | the pill | claimed |
 | 5.1 | `Rations` | *Villagers eat. Berry bushes give Food — tap them.* | the nearest berries | none | the quest completes |
 | 5.2 | `Rations` | (the claim, as 4.5) | the quest pill | the pill | claimed |
+| 6.0 | `FirstVillager` | *The House is still going up — a villager needs it standing.* (skipped if it stands) | the House | none | the House is finished |
 | 6.1 | `FirstVillager` | *The Townhall trains villagers. Open it.* | the Townhall | the Townhall | its card is open |
 | 6.2 | `FirstVillager` | *Train one. They'll need that roof — and a moment to arrive.* | **Train** | none | a villager arrives |
 | 6.3 | `FirstVillager` | **Villager** (right): *A roof, a hearth and a monarch! I'll pay my rent on time, Your Majesty.* | — | all | tap |
@@ -100,8 +101,9 @@ Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
 | | | *Let's build one.* | **Build** | the tab | the build menu is open |
 | | | *Pick the Farm.* | the Farm card | the card | placing |
 | | | *A Farm reaches one step round itself, corners too. Set it beside the plots — each one in reach shows what it holds — then Build.* | the crop plots | the map and the panel | placed |
-| | | *A builder is on it. When it stands, it will need hands.* | the construction | all | tap |
-| `workers` | `ToWork` | *The Farm is up, and nobody works it yet. Tap it.* | the Farm | the Farm | its card is open |
+| | | *A builder is on it — and the scroll counts it already. Claim it.* | the quest pill | the pill | claimed |
+| `workers` | `ToWork` | *The Farm is still going up. When it stands, it will need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
+| | | *The Farm is up, and nobody works it yet. Tap it.* | the Farm | the Farm | its card is open |
 | | | *Send a villager. They walk to a plot in reach, reap it and carry the crop home — more hands, more trips.* | the card's **+** | none | the quest completes |
 | | | *The harvest waits in the Farm's store. When its bubble shows, tap the Farm to bring it in — a full store stops the work.* | the Farm | all | tap |
 | `saws` | `SawTeeth` | *The Farm reaps on its own. The forest could too — the Book of Civics knows how.* | **Research** | the tab | the book is open |
@@ -111,8 +113,9 @@ Beats, as the First Morning's, each on its quest. Every scene carries **Skip**.
 | `sawmill` | `TheSawmill` | *A Sawmill sends woodcutters into the trees around it — Wood without a single tap.* | **Build** | the tab | the build menu is open |
 | | | *Pick the Sawmill.* | the Sawmill card | the card | placing |
 | | | *Like the Farm, it works only what is in its reach. Set it where the most trees stand inside the outline, then Build.* | the confirm button | the map and the panel | placed |
-| | | *A builder is on it. When it stands, it will need hands too.* | the construction | all | tap |
-| `sawmillCrew` | `Crewed` | *The Sawmill is up. Tap it.* | the Sawmill | the Sawmill | its card is open |
+| | | *A builder is on it — and the scroll counts it already. Claim it.* | the quest pill | the pill | claimed |
+| `sawmillCrew` | `Crewed` | *The Sawmill is still going up. When it stands, it will need hands.* (skipped if it stands) | the Sawmill | none | the Sawmill is finished |
+| | | *The Sawmill is up. Tap it.* | the Sawmill | the Sawmill | its card is open |
 | | | *Send it woodcutters — the scroll wants three villagers at work, the Farm's included.* | the card's **+** | none | the quest completes |
 | | | *Food and Wood now come in on their own, even while you are away. Collect the stores before they fill.* | the Sawmill | all | tap |
 

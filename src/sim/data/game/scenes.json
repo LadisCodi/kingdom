@@ -336,6 +336,18 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "The House is still going up — a villager needs it standing.",
+        "box": "auto",
+        "point": "district:Housing",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Housing",
+        "untilAmount": 1,
+        "exit": false
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "The Townhall trains villagers. Open it.",
         "box": "auto",
         "point": "district:Townhall",
@@ -500,12 +512,12 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A builder is on it. When it stands, it will need hands.",
-        "box": "auto",
-        "point": "district:Farm",
-        "lock": "all",
-        "until": "tap",
-        "untilTarget": "",
+        "text": "A builder is on it — and the scroll counts it already. Claim it.",
+        "box": "middle",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Farmhand",
         "untilAmount": 0,
         "exit": false
       }
@@ -519,6 +531,18 @@
     "anywhere": false,
     "skippable": true,
     "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Farm is still going up. When it stands, it will need hands.",
+        "box": "auto",
+        "point": "district:Farm",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Farm",
+        "untilAmount": 1,
+        "exit": false
+      },
       {
         "speaker": "advisor",
         "side": "left",
@@ -696,12 +720,12 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A builder is on it. When it stands, it will need hands too.",
-        "box": "auto",
-        "point": "district:Sawmill",
-        "lock": "all",
-        "until": "tap",
-        "untilTarget": "",
+        "text": "A builder is on it — and the scroll counts it already. Claim it.",
+        "box": "middle",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "TheSawmill",
         "untilAmount": 0,
         "exit": false
       }
@@ -715,6 +739,18 @@
     "anywhere": false,
     "skippable": true,
     "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The Sawmill is still going up. When it stands, it will need hands.",
+        "box": "auto",
+        "point": "district:Sawmill",
+        "lock": "none",
+        "until": "built",
+        "untilTarget": "Sawmill",
+        "untilAmount": 1,
+        "exit": false
+      },
       {
         "speaker": "advisor",
         "side": "left",

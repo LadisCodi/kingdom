@@ -63,9 +63,11 @@ export function recordQuestEvent(state: GameState, event: SimEvent): void {
 export function questValue(state: GameState, quest: QuestDef): number {
   if (RELATIVE_QUEST_TYPES.has(quest.goalType)) return state.quests.progress;
   switch (quest.goalType) {
+    // Counted the moment the build STARTS: a build cannot be cancelled, so
+    // the building is the player's from then, and waiting for the scaffold
+    // only slows the chain down.
     case 'BuildDistrict':
-      return state.city.districts.filter(
-        (d) => d.definitionId === quest.goalTarget && d.state === 'Built').length;
+      return state.city.districts.filter((d) => d.definitionId === quest.goalTarget).length;
     case 'UpgradeDistrict':
       return state.city.districts.filter(
         (d) => d.definitionId === quest.goalTarget && d.state === 'Built' &&

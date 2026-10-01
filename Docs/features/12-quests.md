@@ -24,6 +24,10 @@
   counts; the quest completes on activation.
 - **Relative** goals count events from activation only (*collect 30 Gold*,
   *find 4 forests*). They hook the sim's collect, tap and reveal paths.
+- **`BuildDistrict` counts a building the moment its build starts.** A build
+  cannot be cancelled, so it is the player's from then; the quest does not
+  wait for the scaffold. What needs the building *standing* — its workers, a
+  villager's roof — waits for it on its own.
 - **`DiscoverCells` is a total** — *clear the fog from 32 tiles in all*, the
   same count the book bands read. A player who cleared everything in reach
   before the quest arrived is never stuck behind it.
