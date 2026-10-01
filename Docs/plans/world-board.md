@@ -17,14 +17,18 @@
   every hex of the path reached by `t`. **One boundary per trip, at
   `returnsAt`**: it folds the trip's reveal into the bitset and frees the
   slot. An absence of any length adds at most `explorerSlots` boundaries.
+  **The reveal starts at the first hex past the city**: a dispatch reveals
+  nothing at once.
 - **The board is generated, behind a source.** `generateBoard(seed, WORLD_GEN)`
-  is pure and follows 19 §9, with the inner ring authored in data. It sits
+  is pure and follows 19 §9: **one wedge rolled and turned six times**, the
+  inner ring authored in data. It sits
   behind a `WorldSource` (`board()`, `seats()`, `controlOf(hex)`), so a server
   board later swaps the source, not the callers. **The save keeps only
   `{ id, seed, seat }`**, never the contents.
 - **Only Revealed is stored**: 91 bits as `number[3]` (uint32, `>>> 0`). The
   city hex and the Portal are always revealed and never stored. **Sensed is
-  derived**: not revealed and next to a revealed hex.
+  derived**: not revealed and next to a hex the player revealed (the Portal
+  senses nothing).
 - **Cartography stays a `mechanic`** (it opens the Outpost in step 2 too).
   Slots = Cartography's 1 + a new flat tech stat `explorerSlots` (the Atlas
   ladder). Reveal radius = 1 + a new stat `worldRevealRadius`, capped at 2.
@@ -59,13 +63,16 @@
   (a new id is code).
 - `src/sim/world/board.ts`: `Board`, `BoardHex { role, terrain, features, seat }`,
   `SEATS` = the six corners of ring 4, `roleOf`.
-- `src/sim/world/generate.ts`: every roll is `rand(seed, 'worldHex', index, …)`;
-  seats are empty Grassland; a fix-up pass guarantees each seat a
-  Grassland+Forest and an empty Grassland neighbour and no Dungeon beside it.
+- `src/sim/world/generate.ts`: rolls one wedge (a seat's 15 hexes of rings
+  1–5, minus its inner-ring hex) with `rand(seed, 'worldWedge', i, …)` and
+  turns it six times; the seat is empty Grassland; a fix-up pass on the wedge
+  guarantees a Grassland+Forest and an empty Grassland neighbour and no
+  Dungeon beside the seat.
 - `src/sim/world/source.ts`: `localWorld`; step 1's `controlOf` knows only
   the six seats. **No sim code reads another player's control.**
 - `tests/worldBoard.test.ts`: role counts, seat distances, same seed same
-  board, the §9 guarantees over ~500 seeds.
+  board, the six wedges identical under rotation, the §9 guarantees over
+  ~500 seeds.
 
 ## 3. State, explorers and the save — headless, tested
 
@@ -142,15 +149,8 @@
 
 ## 8. Open points
 
-- **Does an explorer reveal round the city the moment it leaves**, or from
-  its first step on? (Counting from the first step keeps a dispatch from
-  revealing anything at once.)
-- **Sensed = next to a revealed hex** is a proposal; it makes the inner ring
-  Sensed for everyone, since the Portal is always revealed.
 - **A server seat that differs from the local one** invalidates the fog:
   rotate the bitset by the board's 60° symmetry, or reset it.
 - **Retuning `worldGen` reshuffles every local board**; the fog survives
   because it indexes hexes. Acceptable until the server freezes the board.
-- **Fair seats**: generating one 60° wedge and rotating it is an option §9
-  does not ask for.
 - The province's era gates count revealed cells; **world hexes never count**.

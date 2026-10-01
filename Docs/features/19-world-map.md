@@ -83,6 +83,8 @@
 | **Unknown** | opaque rolling mist, the whole hex hidden | Undiscovered |
 
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**
+- **A hex is Sensed when it is next to a hex you revealed.** The Portal,
+  revealed for everyone, senses nothing.
 - **Fog is information, not permission.** It never blocks movement or an action,
   which is what keeps it client-authoritative and in the player's own save
   ([`02-map-scopes.md`](02-map-scopes.md) §3).
@@ -96,8 +98,8 @@
 - **An explorer never fights and can never be stopped, attacked or lost.** It
   lives in the player's own save, like the fog it reveals.
 - Anything of yours that marches — an explorer or an army — reveals **its own
-  hex and the six around it** at every hex it passes through. The radius
-  upgrades to 2.
+  hex and the six around it** on reaching each hex of its path, from the first
+  hex past the city; leaving reveals nothing. The radius upgrades to 2.
 - **A march costs time, linear in hexes** (§4), and no Gold.
 - An explorer's march time divides by `worldRevealSpeed`.
 
@@ -284,14 +286,18 @@ held, some are destinations.
 
 Contents are rolled at board creation, under rules:
 
+- **One 60° wedge is rolled and turned six times**, so every seat has the same
+  ground round it. A wedge is a seat's 15 hexes of rings 1–5; the inner ring
+  is the exception (below).
+
 - A hex designated for a player start is always **Grassland with no feature**.
 - Every player has **at least one Grassland + Forest** hex adjacent to their
   city.
 - Every player has **at least one Grassland with no feature** adjacent to their
   city.
 - **No dungeon** is adjacent to a player's city.
-- **The inner ring is not rolled — it is authored by hand**, so all six hexes
-  are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
+- **The inner ring is not rolled and not turned — it is authored by hand**, so
+  all six hexes are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
   (one of them Fertile land), 2 Mountain.
 - Dungeons and Sanctuaries appear **only on the outer ring**; landmarks only
   on the corridors.
