@@ -210,6 +210,20 @@
     "rewardPack": null
   },
   {
+    "id": "SecondVillager",
+    "name": "Second villager",
+    "goalType": "ReachPopulation",
+    "goalTarget": null,
+    "goalAmount": 2,
+    "goalLevel": null,
+    "reward": { "Gold": 70 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardPack": null
+  },
+  {
     "id": "GrowingTown",
     "name": "Growing town",
     "goalType": "BuildDistrict",

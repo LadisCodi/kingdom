@@ -418,7 +418,9 @@ describe('quests fund the research tree', () => {
     // 15,925: the first-time experience (2026-10-01) — the chain walks the
     // rows above Urban Planning and Hospitality, builds the Tavern, and runs
     // on to the Watchtower (Docs/features/12-quests.md §2).
-    expect(chain).toBe(15_925);
+    // 15,995: `SecondVillager` at 70 fills the first House before the chain
+    // asks for a second one.
+    expect(chain).toBe(15_995);
     expect(tree).toBe(435_445); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The

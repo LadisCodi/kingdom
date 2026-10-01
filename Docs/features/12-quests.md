@@ -12,7 +12,7 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **63 quests**, paying 15,925 Gold, 100 Mana, 750 Gems, 140 Stardust,
+- **64 quests**, paying 15,995 Gold, 100 Mana, 750 Gems, 140 Stardust,
   **29 Knowledge across twelve of them** (§2.1) and **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
@@ -67,15 +67,15 @@
 |---|---|---|---|
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells, Forestry, 25 Wood, a House, Food, a villager, rent | Research, Knowledge, Build, the daily chest |
 | **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | eight cells, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
-| **16–21** · the village | `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
-| **22–24** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
-| **25–30** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | fifteen cells find the Orcs; Warrior, the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
-| **31–34** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, twenty and twenty-five cells | **Magic** |
-| **35–40** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
-| **41–45** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
-| **46–52** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **53–59** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, twenty cells, Magistracy, twelve villagers, **Townhall 4** | |
-| **60–63** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
+| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
+| **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
+| **26–31** · the Orcs | `FurtherAfield` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | fifteen cells find the Orcs; Warrior, the Barracks, a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **32–35** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, twenty and twenty-five cells | **Magic** |
+| **36–41** · stone | `Watered` · `Fallow` · `MoreRoom` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning, Housing L2, Masonry, the Quarry | |
+| **42–46** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
+| **47–53** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **54–60** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, twenty cells, Magistracy, twelve villagers, **Townhall 4** | |
+| **61–64** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
@@ -94,7 +94,7 @@
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
   Quest 1 pays Forestry's 2 outright, and **twelve quests pay Knowledge**,
-  placed so that every card the chain demands up to `Attuned` — quest 32,
+  placed so that every card the chain demands up to `Attuned` — quest 33,
   Consecration — is affordable **with no drip at all**, prerequisites included.
   A grant handed over at the title screen taught the player nothing about
   where the clock comes from; a reward on the quest before the research does.
@@ -102,7 +102,7 @@
   ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
   asserted for the opening and **only** the opening (`tests/quests.test.ts`);
   the cut is by chain position, not by era — `MoreRoom` asks for an era-1
-  card at quest 37, past it.
+  card at quest 38, past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
   `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
@@ -122,7 +122,7 @@
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 40).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 41).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
