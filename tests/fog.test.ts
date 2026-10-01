@@ -252,7 +252,9 @@ describe('exploring pays in ground, not in currency', () => {
     // 435,600: Pickaxes, 25 Gold, gates the Stone tap.
     // 568,885: the Warfare book rebuilt in funnels (2026-10-01) — every card
     // 500 Gold and up, climbing down the page; Scouting left it.
-    expect(tree).toBe(568_885);
+    // 583,385: the world board's explorers — Scouts I–II and Pathfinding
+    // joined the Atlas under Cartography.
+    expect(tree).toBe(583_385);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

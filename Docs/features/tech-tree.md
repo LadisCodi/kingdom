@@ -29,7 +29,7 @@
 | **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
 | **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
 | **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |
-| **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 9 |
+| **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 12 |
 
 ## 2. Civics
 
@@ -356,11 +356,11 @@
 
 ## 6. Atlas
 
-### 6.1 Era 1 — 7 cards · 38 K · 12,600 Gold
+### 6.1 Era 1 — 9 cards · 53 K · 19,100 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
-| **Cartography** | The first explorer — march out onto the world map. *(planned)* | 2,000 G · 6 K |
+| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G · 6 K |
 
 | Rank | Moves | Price |
 |---|---|---|
@@ -370,9 +370,14 @@
 | Wayposts II | +20% Knowledge per landmark claimed | 1,500 G · 5 K |
 | Farsight III | +1 sight into the fog | 3,000 G · 8 K |
 | Wayposts III | +20% Knowledge per landmark claimed | 3,000 G · 8 K |
+| Scouts I | +1 explorer out at once | 2,500 G · 6 K |
+| Scouts II | +1 explorer out at once | 4,000 G · 9 K |
 
-### 6.2 Era 2 — 2 cards · 30 K · 12,000 Gold
+### 6.2 Era 2 — 3 cards · 48 K · 20,000 Gold
 
+| Card | Opens / does | Price |
+|---|---|---|
+| **Pathfinding** | +1 hex an explorer sees round its path | 8,000 G · 18 K |
 
 | Rank | Moves | Price |
 |---|---|---|
@@ -385,6 +390,7 @@
 |---|---|---|
 | **Farsight** | +1 sight into the fog | I·II·III / IV |
 | **Wayposts** | +20% Knowledge per landmark claimed | I·II·III / IV |
+| **Scouts** | +1 explorer out at once | I·II |
 
 ## 7. Prices, in bands
 
@@ -455,7 +461,6 @@ On the page, researchable, and doing nothing yet — each a promise of a mechani
 | **Ley Lines** | Magic | The land’s own current — a district beside the Sanctum produces a tenth more. |
 | **Ley Storm** | Magic | Once a day — a kingdom-wide surge of production for a while. |
 | **Rumours** | Sagas | Word at the bar — a daily job for the party, paid in production. |
-| **Cartography** | Atlas | The first explorer — march out onto the world map. |
 
 ## 10. Dials, in the order to reach for them
 

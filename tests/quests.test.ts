@@ -442,7 +442,7 @@ describe('quests fund the research tree', () => {
     // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
     // the chain asks for the book that only a found lair opens.
     expect(chain).toBe(16_215);
-    expect(tree).toBe(568_885); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(583_385); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.

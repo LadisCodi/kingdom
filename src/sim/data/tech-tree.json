@@ -1312,11 +1312,10 @@
     },
     "Cartography": {
       "name": "Cartography", "glyph": "🗺️", "kind": "mechanic",
-      "description": "The first explorer — march out onto the world map.",
+      "description": "The first explorer — send it out to reveal the world map.",
       "tome": "Atlas", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 2000, "knowledge": 6,
-      "planned": true
+      "gold": 2000, "knowledge": 6
     },
     "WaypostsI": {
       "name": "Wayposts I", "glyph": "🪧", "kind": "bonus",
@@ -1370,6 +1369,33 @@
       "gold": 6000, "knowledge": 15,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
+      ]
+    },
+    "ScoutsI": {
+      "name": "Scouts I", "glyph": "🧭", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 1, "col": 1,
+      "requires": ["Cartography"],
+      "gold": 2500, "knowledge": 6,
+      "effects": [
+        {"stat":"explorerSlots","op":"flat","value":1}
+      ]
+    },
+    "ScoutsII": {
+      "name": "Scouts II", "glyph": "🧭", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 2, "col": 1,
+      "requires": ["ScoutsI"],
+      "gold": 4000, "knowledge": 9,
+      "effects": [
+        {"stat":"explorerSlots","op":"flat","value":1}
+      ]
+    },
+    "Pathfinding": {
+      "name": "Pathfinding", "glyph": "🥾", "kind": "bonus",
+      "tome": "Atlas", "era": 2, "row": 3, "col": 1,
+      "requires": ["ScoutsII"],
+      "gold": 8000, "knowledge": 18,
+      "effects": [
+        {"stat":"worldRevealRadius","op":"flat","value":1}
       ]
     },
     "WaypostsIV": {
