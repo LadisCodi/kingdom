@@ -206,6 +206,9 @@ ungated until it is placed again.
   prerequisite is the card directly before this one, so the page can be read a
   line at a time
 - a band that starts at or above the one before it
+- **a card that leads nowhere**: above its book's last row, and required by no
+  card on the row below — every research is on the way down the page. A
+  `planned` card is exempt, since nothing that works may wait on it
 - a negative or fractional price; anything free at all, since nothing is
   granted any more
 - a book with no bands, or more than eight; a band asking for fewer cells than

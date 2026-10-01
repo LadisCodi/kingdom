@@ -1560,8 +1560,8 @@
       { "x": 0, "y": -4, "id": "Trees" },
       { "x": 3, "y": -4, "id": "Mountain" },
       { "x": 4, "y": -4, "id": "Mountain" },
+      { "x": -2, "y": -2, "id": "Mountain" },
       { "x": -1, "y": -2, "id": "WildAnimals" },
-      { "x": 2, "y": -2, "id": "Mountain" },
       { "x": 3, "y": -2, "id": "Trees" },
       { "x": 9, "y": -2, "id": "Trees" },
       { "x": 12, "y": -2, "id": "FishShoal" },
@@ -1597,7 +1597,6 @@
       { "x": -2, "y": 6, "id": "Trees" },
       { "x": 4, "y": 6, "id": "WildAnimals" },
       { "x": -8, "y": 7, "id": "Trees" },
-      { "x": 8, "y": 7, "id": "Trees" },
       { "x": 9, "y": 7, "id": "Trees" },
       { "x": -7, "y": 8, "id": "Trees" },
       { "x": -6, "y": 8, "id": "Trees" },
@@ -1671,10 +1670,10 @@
   ],
   "lairs": {
     "Orcs": {
-      "x": 6, "y": 6, "size": 2,
+      "x": 7, "y": 7, "size": 2,
       "tier": 1,
-      "radius": 1,
-      "sight": 2,
+      "radius": 2,
+      "sight": 3,
       "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30 },
       "flavour": "They burn what they cannot carry. Every night the war drums draw closer to the town."
     },

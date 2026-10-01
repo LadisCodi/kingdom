@@ -591,6 +591,9 @@ export interface DistrictDef {
   size: { x: number; y: number };
   /** Fog fully revealed this far around the footprint (at seed / build completion). */
   fogRevealRadius: number;
+  /** The same, by level — the last value holding past it; an upgrade
+   *  reveals its new ring. Empty: `fogRevealRadius` at every level. */
+  fogRevealRadiusPerLevel: readonly number[];
   /** Fog turned Discovered (payable frontier) this far around the footprint. */
   fogDiscoverRadius: number;
   /** Technology that must be completed before this district can be built. */

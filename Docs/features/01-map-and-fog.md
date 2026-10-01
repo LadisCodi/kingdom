@@ -204,8 +204,9 @@ Respawn:
   and revealed all at once.
 - Every district has a `fogRevealRadius` and a `fogDiscoverRadius`. A finished
   building reveals its own ground and discovers a ring round it (2, 1 for the
-  military halls); **only the Townhall reveals a ring** (1) — the rest of the
-  map is paid for (`tests/fog.test.ts`).
+  military halls); **only the Townhall reveals a ring** — 1, and **3 from
+  level 2**, landing the moment that upgrade does — the rest of the map is
+  paid for (`fogRevealRadiusPerLevel`, `tests/fog.test.ts`).
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
@@ -236,7 +237,7 @@ lies close enough to it.
 | Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
 | Watchtower | 4 | `fog.sight.watchtower` |
-| A lair not yet found | its own, past its ground: Orcs 2, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
+| A lair not yet found | its own, past its ground: Orcs 3, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
@@ -322,15 +323,18 @@ The near map is laid out so the first Townhalls look one way at a time
 
 - **South first.** The Thorned Shrine (4 rings) is sighted from the first
   ring; the only landmark in sight while the Townhall is at level 1.
-- **The Orcs** (5 rings, south) show from ring 3, as the player reaches the
-  shrine. Their ground starts at ring 4 and holds the shrine, so they are
-  found at Townhall 2 and cleared before it is claimed.
+- **The Orcs** (6 rings, south, past the shrine) show from ring 3, as the
+  player reaches the shrine. Their ground (radius 2) starts at ring 4 and
+  holds the shrine, so they are found at Townhall 2 and cleared before it is
+  claimed. A lair is fought once found, so it is its ground, not its camp,
+  that the chain needs in reach.
 - **The near mountains are the Harpies'.** Two 2×2 blocks, sighted from the
   first ring to the north-east, lie on the Harpies' ground (radius 2). Their
   camp is 6 rings out: past Townhall 2's reach, inside Townhall 3's.
   Revealing a block finds them, so no big mountain is worked before they fall.
-- **One loose stone node** stands 2 rings from the Townhall, on no lair's
-  ground: the stone the opening has, and the reason to want more.
+- **One loose stone node** stands 2 rings from the Townhall, to the north,
+  on no lair's ground: the stone the opening has, and the reason to want
+  more.
 - **The Harpies** show from ring 3 beyond their mountains: the camp that
   holds the stone is in sight before the player can reach it.
 - The Watchtower (8 rings north) and the Fallen Stones (7 rings) are sighted
@@ -400,7 +404,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
-| A building's reveal / discover radius | 0 / 2 (the Townhall 1 / 2) | `buildings` › `fogRevealRadius`, `fogDiscoverRadius` |
+| A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
 | A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `harvest` |

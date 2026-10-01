@@ -253,6 +253,9 @@ describe('a player can actually play the onboarding', () => {
     // Sawpits and Reforesting next. The chain asks for them in row order
     // rather than leaving the player to find out at the research sheet why
     // the card after them will not start.
+    // Trade Routes stands on the three cards above it — Hunting among them,
+    // which no quest asks for by name: the player meets it on the card.
+    research('Hunting');
     research('TradeRoutesI');
     finish('Levies');
     research('SawpitsI');
