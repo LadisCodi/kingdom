@@ -102,6 +102,11 @@
   --clay: #d4553e; /* can't afford, destructive */
   --sky: #4fa3c7; /* in progress, research, information */
   --locked: #cbba96; /* gated — warm, never grey */
+  /* The tutorial's highlight: a blue magic glow along a control's own
+     silhouette (stage.css) — the one cold light in a warm palette, so it is
+     never mistaken for a reward. */
+  --magic-glow-inner: #c8f0ff;
+  --magic-glow-outer: #3c9dff;
   /* A SECTION of a menu (kit .k-section): flat, a shade darker than the
    * window's paper, in a 2-px flat outline — no bevel, no texture. */
   --section-fill: #f0d9ae;

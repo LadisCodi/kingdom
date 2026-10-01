@@ -32,10 +32,10 @@
   line; the next tap moves on.
 - **A line that waits for a tap takes one anywhere on the screen** — the
   box, the map, a menu — and keeps it: the tap reaches nothing behind it.
-  Panning the map is not a tap. A small arrow at the box's corner says a tap
-  will move on.
+  Panning the map is not a tap. A golden **quill** at the box's corner says
+  a tap will move on.
 - **A line waiting on the game** (a beat, [`23-tutorials.md`](23-tutorials.md)
-  §3) shows no arrow; the box shrinks to its text and stays out of the way.
+  §3) shows no quill; the box shrinks to its text and stays out of the way.
 - **Skip**, a small knob on the plank, ends the scene — absent on the First
   Morning.
 
@@ -70,8 +70,13 @@
 | `lair:<id>` · `landmark:<id>` | that site |
 | `quest` | the quest pill |
 
-- A gold arrow bobbing over the target, and a ring round it — the hint's
-  own ring, so a player never learns two signs for one thing.
+- **A gloved hand** (white glove, brass cuff) bobbing over the target,
+  pointing down at it — or up from below, at the top of the screen.
+- **A blue magic glow** marks it: a control's own silhouette lit blue
+  (`--magic-glow-*`, the one cold light in a warm palette); a map plot as its
+  own diamond in the same glow.
+- The quest pill's hint wears the same hand and glow, so a player never learns
+  two signs for one thing.
 - **The camera flies to a map target** before the line appears.
 - A target that moves (a scrolling list, a card rebuilt) is re-found every
   frame.
@@ -100,22 +105,19 @@ which one a line waits on is data.
 
 | Id | Name | Who | Art | Frame |
 |---|---|---|---|---|
-| `advisor` | **Isolde** | the Royal Advisor — warm, dry, unflappable; she keeps the maps and the ledgers | `portrait_advisor` | full figure |
+| `advisor` | **Isolde** | the Royal Advisor — warm, dry, unflappable; she keeps the maps and the ledgers. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
 | `warden` | **the Warden** | captain of the guard; joins at the first lair | `hero_warden` | full figure |
 | `cook` | **Bess** | runs the Tavern; joins when it opens | `hero_cook` | full figure |
-| `villager` | **a villager** | the first settler | `unit_villager_avatar` | medallion |
-| `orcChief` | **Grukk** | the Orcs' warchief | `creature_orc_avatar` | medallion |
+| `villager` | **a villager** | the first settler | `portrait_villager` | full figure |
+| `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
 
-- A **full figure** stands on the box, cut at the waist by it. A
-  **medallion** is a round avatar in a brass ring on the box's corner.
-- A missing picture draws as a **parchment medallion** with the speaker's
-  initial pressed into it, never an emoji.
-- **Wanted art:** `portrait_advisor` — Isolde, standing, three-quarter,
-  facing right, in the hero illustrations' style
-  ([`../art/portraits/prompt-template.md`](../art/portraits/prompt-template.md)):
-  a woman in her forties, auburn hair in a practical braid, royal-blue coat
-  over a parchment-coloured dress, a ledger under one arm, reading
-  spectacles on a chain, a brass key ring at her belt.
+- **Every speaker is a full figure**: it stands on the box, cut at the waist
+  by it. The figures share the heroes' style and frame (512×768); the
+  tutorial's own three are cut from one sheet
+  ([`../art/ui/mockups/ftue/prompts.md`](../art/ui/mockups/ftue/prompts.md) P1).
+- A **medallion** — a round avatar in a brass ring — is still drawn for a
+  speaker whose `frame` says so, and a missing picture draws as a parchment
+  medallion with the speaker's initial pressed into it, never an emoji.
 
 ## 7. Where it lives
 

@@ -1224,28 +1224,39 @@ export function drawMap(
 
 
 
-  // Pass 3.8: the quest-hint arrow — the stage's own gold arrow, drawn,
-  // bobbing over the hinted cell (Docs/features/24-dialogue.md §4): one
-  // sign for "here" across the map and the menus, and never an emoji.
+  // Pass 3.8: the quest hint — the tutorial's own sign (Docs/features/
+  // 24-dialogue.md §4): the plot's diamond lit in the blue magic glow, and
+  // the gloved hand bobbing over it. One sign for "here" across the map and
+  // the menus, and never an emoji.
   if (markers.hintCell) {
     const b = cellRect(markers.hintCell);
     const c = mid(b);
     const bob = Math.sin(now / 140) * size * 0.07;
-    ctx.strokeStyle = PALETTE.selected;
+    const pulse = 0.5 + 0.5 * Math.sin(now / 220);
+    ctx.save();
+    ctx.shadowColor = '#3c9dff';
+    ctx.shadowBlur = 10 + pulse * 10;
+    ctx.strokeStyle = '#c8f0ff';
     ctx.lineWidth = 3;
     strokeDiamond(ctx, b, 3);
-    const tipY = c.y - size * 0.35 + bob;
-    const half = size * 0.22;
-    ctx.beginPath();
-    ctx.moveTo(c.x, tipY);
-    ctx.lineTo(c.x - half, tipY - half * 1.4);
-    ctx.lineTo(c.x + half, tipY - half * 1.4);
-    ctx.closePath();
-    ctx.fillStyle = '#f2b233';
-    ctx.strokeStyle = '#5c3a1e';
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
+    ctx.restore();
+    const handH = size * 0.5;
+    const handW = handH / (spriteAspect('tutorial_hand_down') ?? 1.22);
+    const tipY = c.y - size * 0.12 + bob;
+    // The fingertip sits a little right of the glove's middle.
+    if (!drawSprite(ctx, 'tutorial_hand_down', c.x - handW * 0.57, tipY - handH, handW, handH)) {
+      const half = size * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(c.x, tipY);
+      ctx.lineTo(c.x - half, tipY - half * 1.4);
+      ctx.lineTo(c.x + half, tipY - half * 1.4);
+      ctx.closePath();
+      ctx.fillStyle = '#f2b233';
+      ctx.strokeStyle = '#5c3a1e';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
   function queueWorkers(): void {

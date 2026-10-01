@@ -189,7 +189,7 @@
 .tech-card.is-locked { filter: grayscale(1); opacity: 0.8; }
 .tech-card.is-locked:hover { filter: grayscale(1) brightness(1.04); }
 .tech-card.selected { outline: 2px solid var(--gold-dark); outline-offset: 1px; }
-.tech-card.hinted { box-shadow: 0 0 0 3px var(--gold), 0 0 14px var(--gold); }
+
 .tech-card.planned { border-style: dashed; }
 .tech-card > .k-cta { position: absolute; top: -7px; right: -7px; }
 

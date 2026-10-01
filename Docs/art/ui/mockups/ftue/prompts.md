@@ -65,3 +65,44 @@ Attach `ref-ui.png`.
 > 3. FILA INFERIOR — LAS PIEZAS DEL CUADRO DE DIÁLOGO, sin texto dentro: el marco de madera tallada con el pergamino vacío dentro; la placa de nombre de madera, vacía; el pomo de madera «Skip»; el indicador de «toca para continuar» (pluma o flecha de latón); y un medallón redondo de latón con un retrato dentro, para los personajes secundarios.
 >
 > Sin sombras proyectadas sobre el fondo. Sin más texto que «Skip».
+
+## Decisions on the mockups (2026-10-01)
+
+- **Isolde has dark hair** and wears **round, thin-framed glasses** — a
+  scholar's look, and nothing like the Warden's red braids.
+- The **quill** is the "tap to continue" mark.
+- **Every speaker is a full figure**, the secondary ones too — no medallions.
+- The **blue magic highlight is drawn in code** (a glow that follows the
+  control's own silhouette), not as art: it has to fit any control.
+
+## P1 — the cast, final (English, the hero sheets' wording)
+
+Attach `ref-heroes.png` and `ftue-m1-cast.png`.
+
+> CREATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references. The first is hero art already shipped in this game — match that style exactly: it is LOCKED; do not drift. The second is the approved design of the three characters below — keep the VILLAGER and GRUKK exactly as drawn there; ISOLDE changes as described.
+>
+> === STYLE ===
+> Flat 2D cartoon illustration for a cozy medieval-fantasy mobile strategy game, NOT 3D, NOT Pixar, NOT a render, NOT anime. Bold, clean dark-brown outlines on every shape, uniform in weight. Flat colour with simple cel shading: one shadow tone and one small highlight per material, no gradients, no textures, no ambient occlusion. Big simple readable shapes, friendly slightly chunky proportions — large head, big hands and boots. Small simple eyes, expressive faces. Warm saturated palette, steel grey for metal, gold accents. Lit from the top left. Draw as if shown 200 px tall: nothing thinner than the outline.
+>
+> === COMPOSITION ===
+> One landscape image, 3:2, three characters side by side, each in its own third of the canvas, full body, standing, facing the viewer with a touch of 3/4. Isolde and the villager about 75% of the canvas height, Grukk about 85%. Both hands and both feet visible; every prop entirely inside its third. Nothing crosses into a neighbouring third: keep a clear 40 px empty band between figures.
+>
+> === THE THREE CHARACTERS ===
+> 1. ISOLDE, the Royal Advisor — a human woman in her forties, slender and upright, taller than a dwarf by far. DARK hair, almost black, pinned up in a neat scholar's bun with two loose strands. ROUND glasses with a THIN gold wire frame, worn on her nose. Warm, dry, unflappable: a knowing half smile. Royal-blue long coat with gold trim over a parchment-coloured dress, a leather ledger held against her chest, a brass key ring at her belt, a quill tucked behind one ear. She keeps the kingdom's maps and ledgers — she must read as clever and kind.
+> 2. THE VILLAGER — exactly as in the second reference: young, eager, straw hat with a leaf, linen shirt, brown vest, red neckerchief, patched trousers, a red bundle on a stick, waving.
+> 3. GRUKK, the Orc warchief — exactly as in the second reference: big green orc, black braided hair and beard, tusks, fur-trimmed leather armour with studs and a boar-head medallion, a huge axe on his shoulder, a storybook bully's scowl.
+>
+> Do not draw grid lines, cell borders, labels, captions, names, text, shadows, ground, pedestal or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+## P2 — the pointing hand and the quill
+
+Attach `ftue-m3-pieces.png`.
+
+> CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the approved design — redraw its pieces exactly, same style, same materials, same colours.
+>
+> One square image with three game UI icons in a row, each in its own third, with a clear 60 px empty band between them:
+> 1. The WHITE CARTOON GLOVE with the BRASS CUFF from the reference, POINTING STRAIGHT DOWN with the index finger — exactly the first hand of the reference's top row.
+> 2. The SAME glove POINTING STRAIGHT UP — exactly the third hand of the reference's top row.
+> 3. The GOLDEN QUILL from the reference's bottom row, alone, without the little rays beside it.
+>
+> Clean dark-brown outline, soft volume, each icon about 80% of its third. Do not draw grid lines, cell borders, labels, captions, text, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

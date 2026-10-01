@@ -20,13 +20,13 @@
   "villager": {
     "name": "A villager",
     "title": "Your first settler",
-    "portrait": "unit_villager_avatar",
-    "frame": "medallion"
+    "portrait": "portrait_villager",
+    "frame": "figure"
   },
   "orcChief": {
     "name": "Grukk",
     "title": "Orc warchief",
-    "portrait": "creature_orc_avatar",
-    "frame": "medallion"
+    "portrait": "portrait_grukk",
+    "frame": "figure"
   }
 }

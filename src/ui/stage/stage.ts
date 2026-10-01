@@ -81,18 +81,28 @@ const PROGRESS: ReadonlySet<string> = new Set([
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
   // ------------------------------------------------------------ the pieces
   const scrim = el('div', { class: 'stg-scrim' });
-  // The ring is the hint's double ring round a control, and — round a map
-  // plot — the same two strokes drawn as the plot's own diamond.
+  // A CONTROL is highlighted by its own silhouette lit in a blue magic glow
+  // (`.stg-glow` on the control itself); a MAP PLOT by the same glow drawn
+  // as the plot's diamond — this ring.
   const ring = el('div', { class: 'stg-ring' });
   ring.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon class="stg-ring-dark" points="50,3 97,50 50,97 3,50"/>'
-    + '<polygon class="stg-ring-gold" points="50,3 97,50 50,97 3,50"/></svg>';
-  const arrow = el('div', { class: 'stg-arrow', 'aria-hidden': 'true' });
+    + '<polygon class="stg-ring-halo" points="50,3 97,50 50,97 3,50"/>'
+    + '<polygon class="stg-ring-line" points="50,3 97,50 50,97 3,50"/></svg>';
+  // The pointer: a gloved hand, pointing down at the target from above it —
+  // or up from below.
+  const handDown = spriteUrl('tutorial_hand_down');
+  const handUp = spriteUrl('tutorial_hand_up');
+  const arrow = el('img', {
+    class: 'stg-hand', 'aria-hidden': 'true', draggable: 'false', alt: '', src: handDown ?? '',
+  });
   const left = el('div', { class: 'stg-actor is-left' });
   const right = el('div', { class: 'stg-actor is-right' });
   const name = el('div', { class: 'stg-name' });
   const text = el('p', { class: 'stg-text' });
-  const more = el('span', { class: 'stg-more', 'aria-hidden': 'true' });
+  // The quill that says a tap moves the line on.
+  const more = el('img', {
+    class: 'stg-more', 'aria-hidden': 'true', draggable: 'false', alt: '', src: spriteUrl('tutorial_quill') ?? '',
+  });
   const skip = el('button', { class: 'stg-skip', type: 'button' }, 'Skip');
   // The window's own frame layer (material.css `.k-frame`): parchment in a
   // carved wooden ring, the same object every sheet is.
@@ -199,6 +209,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (playing !== null) game.state.tutorial.seen[sceneKey(playing.scene.id)] = true;
     gapUntil = performance.now() + HELP.sceneGapSeconds * 1000;
     playing = null;
+    glow(null);
     leave('left');
     leave('right');
     root.replaceChildren();
@@ -376,11 +387,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // ------------------------------------------------------------ the frame
   let lastCheck = 0;
   let lastFrame = performance.now();
+  /** The control wearing the glow, so it can be taken off again. */
+  let glowing: HTMLElement | null = null;
+  const glow = (node: HTMLElement | null): void => {
+    if (node === glowing) return;
+    glowing?.classList.remove('stg-glow');
+    node?.classList.add('stg-glow');
+    glowing = node;
+  };
+
   const drawTarget = (r: Rect | null, lock: SceneLine['lock']): void => {
     const show = r !== null;
-    ring.hidden = !show;
+    const isCell = playing?.target?.kind === 'cell';
+    glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
+    ring.hidden = !show || !isCell;
     arrow.hidden = !show;
-    ring.classList.toggle('is-cell', playing?.target?.kind === 'cell');
     scrim.classList.toggle('is-dim', lock === 'all' || lock === 'target');
     scrim.classList.toggle('is-cut', show && lock === 'target');
     if (!show) return;
@@ -401,6 +422,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // leave the screen, then UP from below.
     const above = r.y > 70;
     arrow.classList.toggle('is-below', !above);
+    const src = above ? handDown : handUp;
+    if (src !== null && arrow.getAttribute('src') !== src) arrow.setAttribute('src', src);
     Object.assign(arrow.style, {
       left: `${r.x + r.w / 2}px`, top: above ? `${r.y - 8}px` : `${r.y + r.h + 8}px`,
     });

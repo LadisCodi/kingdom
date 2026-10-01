@@ -30,43 +30,52 @@
   box-shadow: 0 0 0 200vmax rgba(40, 22, 10, 0.42);
 }
 
-/* ---- the pointer: the hint's ring and arrow ---- */
+/* ---- the pointer: a gloved hand, and a blue magic glow ----
+ * A CONTROL glows along its own silhouette (`.stg-glow`, on the control
+ * itself, so the light follows whatever shape it has); a MAP PLOT glows as
+ * its own diamond (`.stg-ring`). The hand bobs over either. */
 .stg-ring {
   position: absolute;
   pointer-events: none;
-  border-radius: calc(var(--px) * 14);
-  box-shadow: 0 0 0 calc(var(--px) * 3) var(--wood-dark), 0 0 0 calc(var(--px) * 6) var(--gold);
-  animation: stg-ring 1.2s ease-in-out infinite;
 }
-.stg-ring[hidden], .stg-arrow[hidden] { display: none; }
-.stg-ring > svg { display: none; position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.stg-ring.is-cell { border-radius: 0; box-shadow: none; animation: none; }
-.stg-ring.is-cell > svg { display: block; }
+.stg-ring[hidden], .stg-hand[hidden] { display: none; }
+.stg-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .stg-ring polygon { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-.stg-ring .stg-ring-dark { stroke: var(--wood-dark); stroke-width: calc(var(--px) * 9); }
-.stg-ring .stg-ring-gold { stroke: var(--gold); stroke-width: calc(var(--px) * 4); animation: stg-ring-glow 1.2s ease-in-out infinite; }
-@keyframes stg-ring-glow { 50% { stroke-width: calc(var(--px) * 6); } }
-@keyframes stg-ring { 50% { box-shadow: 0 0 0 calc(var(--px) * 3) var(--wood-dark), 0 0 0 calc(var(--px) * 9) var(--gold); } }
-.stg-arrow {
+.stg-ring .stg-ring-halo {
+  stroke: var(--magic-glow-outer);
+  stroke-width: calc(var(--px) * 10);
+  opacity: 0.55;
+  filter: blur(calc(var(--px) * 3));
+  animation: stg-halo 1.4s ease-in-out infinite;
+}
+.stg-ring .stg-ring-line { stroke: var(--magic-glow-inner); stroke-width: calc(var(--px) * 3); }
+@keyframes stg-halo { 50% { opacity: 0.95; stroke-width: calc(var(--px) * 14); } }
+
+.stg-glow {
+  filter: drop-shadow(0 0 calc(var(--px) * 2) var(--magic-glow-inner))
+    drop-shadow(0 0 calc(var(--px) * 8) var(--magic-glow-outer))
+    drop-shadow(0 0 calc(var(--px) * 16) var(--magic-glow-outer));
+  animation: stg-glow 1.4s ease-in-out infinite;
+}
+@keyframes stg-glow {
+  50% {
+    filter: drop-shadow(0 0 calc(var(--px) * 3) var(--magic-glow-inner))
+      drop-shadow(0 0 calc(var(--px) * 12) var(--magic-glow-outer))
+      drop-shadow(0 0 calc(var(--px) * 24) var(--magic-glow-outer));
+  }
+}
+
+.stg-hand {
   position: absolute;
-  width: 0;
-  height: 0;
-  margin-left: calc(var(--px) * -14);
+  width: calc(var(--px) * 40);
+  height: auto;
+  margin-left: calc(var(--px) * -23); /* the fingertip (57% across), not the glove's middle */
   translate: 0 -100%;
   pointer-events: none;
-  border-left: calc(var(--px) * 14) solid transparent;
-  border-right: calc(var(--px) * 14) solid transparent;
-  border-top: calc(var(--px) * 20) solid var(--gold);
-  filter: drop-shadow(0 calc(var(--px) * 2) 0 var(--gold-dark)) drop-shadow(0 0 calc(var(--px) * 2) var(--wood-dark));
   animation: stg-bob 0.7s ease-in-out infinite alternate;
 }
-.stg-arrow.is-below {
-  translate: 0 0;
-  border-top: 0;
-  border-bottom: calc(var(--px) * 20) solid var(--gold);
-}
+.stg-hand.is-below { width: calc(var(--px) * 48); translate: 0 0; margin-left: calc(var(--px) * -19); animation-name: stg-bob-up; }
 @keyframes stg-bob { to { transform: translateY(calc(var(--px) * -8)); } }
-.stg-arrow.is-below { animation-name: stg-bob-up; }
 @keyframes stg-bob-up { to { transform: translateY(calc(var(--px) * 8)); } }
 
 /* ---- the box ---- */
@@ -119,13 +128,11 @@
 .stg-box.is-waiting .stg-text { min-height: 0; }
 .stg-more {
   position: absolute;
-  right: calc(var(--px) * 12);
-  bottom: calc(var(--px) * 8);
-  width: 0;
-  height: 0;
-  border-left: calc(var(--px) * 7) solid transparent;
-  border-right: calc(var(--px) * 7) solid transparent;
-  border-top: calc(var(--px) * 9) solid var(--wood);
+  right: calc(var(--px) * 10);
+  bottom: calc(var(--px) * 6);
+  width: calc(var(--px) * 18);
+  height: auto;
+  pointer-events: none;
   animation: stg-bob-up 0.6s ease-in-out infinite alternate;
 }
 .stg-more[hidden] { display: none; }
@@ -245,6 +252,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stg-ring, .stg-arrow, .stg-more, #quest.is-nudging > * { animation: none; }
+  .stg-ring polygon, .stg-glow, .stg-hand, .stg-more, #quest.is-nudging > * { animation: none; }
   .stg-actor, .stg-peek { transition: none; }
 }
