@@ -68,7 +68,8 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-line' }, 'Another kingdom. A city can never be attacked.'));
   } else if (index !== home && fog === 'Revealed') {
     const holds = [TERRAIN_NAME[bh.terrain ?? 'Grassland'], ...bh.features.map((f) => FEATURE_NAME[f])];
-    lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
+    // Bare ground is already its own title; say what it holds only past that.
+    if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
   } else if (fog === 'Sensed') {
     lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Send an explorer to see what is there.'));
   } else if (fog === 'Unknown') {
