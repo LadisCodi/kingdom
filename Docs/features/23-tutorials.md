@@ -168,7 +168,7 @@ last line, as a hint.
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
 | `fullHouse` | quest `GrowingTown` reached | Isolde | *That House is full — two to a roof, and no room for anyone else. Another House, and the town can grow.* | the House |
-| `townhall2` | quest `ProperCapital` reached | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
+| `townhall2` | the Townhall reaches level 2 (quest `ProperCapital` complete) | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
 | `eras` | 43 cells revealed — Civics chapter II | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |

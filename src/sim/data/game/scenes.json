@@ -983,7 +983,7 @@
   },
   {
     "id": "townhall2",
-    "trigger": "questReached",
+    "trigger": "questComplete",
     "triggerTarget": "ProperCapital",
     "triggerAmount": 0,
     "anywhere": false,
