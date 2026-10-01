@@ -28,6 +28,12 @@ CANVAS_PLOTS=${4:-2}
 # is twice as wide as a 1x1's, so its canvas has to be twice as wide too or
 # the game would be upscaling it.
 FOOTPRINT=${5:-1}
+# WHERE IT SITS on its diamond: `ground` (the default) puts its feet on the
+# bottom corner, as a tree or a peak stands; `centre` lifts a LOW thing — a
+# bush, a few boar — so its ink is centred on the diamond, the way the eye
+# reads "on this tile". Baked in as transparent rows under the ink, so the
+# renderer keeps its one rule.
+SEAT=${6:-ground}
 W=$((2 * 128 * CANVAS_PLOTS * FOOTPRINT))
 inkw=$(awk -v s="$scale" -v w="$W" -v p="$CANVAS_PLOTS" 'BEGIN{ printf "%d", w*s/p }')
 # `scale` stays relative to the thing's OWN plot, so 1.55 means the same
@@ -39,6 +45,15 @@ tall=$(awk -v w="$w" -v h="$h" -v s="$scale" 'BEGIN{ printf "%.2f", (h/w)*s }')
 echo "  ink ${w}x${h}  scale ${scale}  -> ${tall} plots tall, ${scale} wide"
 awk -v s="$scale" -v p="$CANVAS_PLOTS" 'BEGIN{ if (s > p) { print "  FAIL: scale " s " does not fit a " p "-plot canvas"; exit 1 } }' 
 
+inkh=$(awk -v w="$w" -v h="$h" -v iw="$inkw" 'BEGIN{ printf "%d", h*iw/w }')
+pad=0
+if [ "$SEAT" = centre ]; then
+  # The diamond is half as tall as it is wide; its centre is a quarter of a
+  # plot's width above the bottom corner.
+  half=$((2 * 128 * FOOTPRINT / 4))
+  pad=$(awk -v c="$half" -v ih="$inkh" 'BEGIN{ p = c - ih / 2; printf "%d", (p > 0 ? p : 0) }')
+fi
 magick "$src" -trim +repage -filter Lanczos -resize "${inkw}x" \
-  -background none -gravity South -extent "${W}x" -strip "$out"
+  -background none -gravity South -extent "${W}x" \
+  -gravity North -extent "${W}x$((inkh + pad))" -strip "$out"
 echo "  wrote $out  $(magick identify -format '%wx%h' "$out")"
