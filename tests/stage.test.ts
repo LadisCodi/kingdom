@@ -79,6 +79,18 @@ describe('the scenes, against the game', () => {
   });
 });
 
+describe('the box', () => {
+  // The box is one fixed size — three lines at its type (stage.css); a line
+  // past that is set smaller to fit, and this keeps "smaller" a rare thing.
+  it('holds every line within the box\'s budget', () => {
+    for (const scene of SCENES) {
+      for (const line of scene.lines) {
+        expect(line.text.length, `${scene.id}: "${line.text}"`).toBeLessThanOrEqual(140);
+      }
+    }
+  });
+});
+
 describe('the faces', () => {
   it('draws every expression a line asks for — none falls back to rest unnoticed', () => {
     const art = new Set(readdirSync('src/render/assets').map((f) => f.replace(/\.png$/, '')));

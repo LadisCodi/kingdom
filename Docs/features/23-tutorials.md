@@ -198,7 +198,7 @@ Each points at what it is about.
 | `wounded` | the first soldier comes home wounded | *Our soldiers came home wounded — but not lost. The Infirmary patches them up for a fraction of a new recruit.* |
 | `workshops` | the first workshop is finished | *A workshop! It turns raw goods into refined ones — and our grandest buildings will ask for them.* |
 | `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony, and our grandest buildings ask for it.* |
-| `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and nothing is lost: the next gift simply waits.* |
+| `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! One gift for every day you visit — the chest is yours. Miss a day and the next gift simply waits.* |
 
 ## 5. Help when stuck
 

@@ -238,9 +238,24 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // Each speaker's ribbon has its own colour (stage.css).
     name.dataset.speaker = l.speaker;
     name.classList.toggle('is-right', l.side === 'right');
-    text.textContent = '';
     box.classList.toggle('is-waiting', l.until !== 'tap');
     place(l);
+    fitText(l.text);
+    text.textContent = '';
+  };
+
+  /** Set the line at the box's type, or smaller until the WHOLE line fits the
+   *  box's fixed height — measured on the full text before it types, so the
+   *  size never changes mid-line. */
+  const fitText = (full: string): void => {
+    text.style.fontSize = '';
+    text.textContent = full;
+    let size = parseFloat(getComputedStyle(text).fontSize);
+    const floor = size * 0.7;
+    while (text.scrollHeight > text.clientHeight + 1 && size > floor) {
+      size -= 0.5;
+      text.style.fontSize = `${size}px`;
+    }
   };
 
   const next = (): void => {
@@ -280,12 +295,25 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     begin(resumeAt);
   };
 
+  /** Where the box's top edge falls when it sits at the bottom. */
+  const bottomBoxTop = (): number => {
+    const was = box.dataset.place;
+    box.dataset.place = 'bottom';
+    const f = frame.getBoundingClientRect();
+    const top = box.getBoundingClientRect().top - f.top;
+    box.dataset.place = was ?? '';
+    return top;
+  };
+
   /** Where the box sits: its own place, or away from the target. */
   const place = (l: SceneLine): void => {
     let where = l.box;
     if (where === 'auto') {
+      // BOTTOM, where the cast stands on it — unless the box would sit on
+      // the very thing the line points at. Only then the top, where the cast
+      // has to hang below it.
       const r = playing?.target ? targetRect(game, playing.target, frame) : null;
-      where = r !== null && r.y + r.h / 2 > frame.clientHeight / 2 ? 'top' : 'bottom';
+      where = r !== null && r.y + r.h > bottomBoxTop() - 8 ? 'top' : 'bottom';
     }
     box.dataset.place = where;
     layer.dataset.place = where;

@@ -29,8 +29,11 @@
   Warden green, Bess red, the villager brown, Grukk crimson.
 - **Three places**: `bottom` (the default), `top`, `middle`. A line may set
   its own.
-- **`auto`**: when a line points at something, the box takes the half of the
-  screen the target is not in.
+- **`auto`**: the bottom, where the cast stands on the box — unless the box
+  there would cover what the line points at; only then the top.
+- **One size, always**: three lines of text at the box's type. A line too
+  long for it is set smaller until it fits, never let out of the paper, and
+  no line is longer than 140 characters (`tests/stage.test.ts`).
 - **The text types itself** at 40 characters a second, with a soft wooden
   knock every third letter (`textTick`, never on a space). A tap finishes the
   line; the next tap moves on.
@@ -39,7 +42,7 @@
   Panning the map is not a tap. A golden **quill** at the box's corner says
   a tap will move on.
 - **A line waiting on the game** (a beat, [`23-tutorials.md`](23-tutorials.md)
-  §3) shows no quill; the box shrinks to its text and stays out of the way.
+  §3) shows no quill.
 
 ## 3. A line
 

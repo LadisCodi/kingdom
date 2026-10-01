@@ -134,8 +134,13 @@
   /* The text sits inside the frame's rim (`.stg-frame`, below). Never so
      low that the frame's top and bottom slices crowd each other. */
   padding: calc(var(--px) * 30) calc(var(--px) * 34) calc(var(--px) * 42);
-  min-height: calc(var(--px) * 104);
+  /* ONE SIZE, always: room for three lines of text at the box's type, so
+     the box never grows or shrinks with what it says. A line too long for
+     it is set smaller (stage.ts `fitText`), never let out of the paper. */
+  height: calc(var(--px) * 140);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   /* THE PAPER UNDER THE PAPER: the frame's nine slices are drawn at
      fractional sizes, and a hairline seam between two of them showed the
      map through as a dark line. A sheet of the parchment's own colour
@@ -209,13 +214,14 @@
 .stg-name[data-speaker='orcChief'] { --ribbon: url('../../assets/ribbon-crimson.png'); }
 .stg-name.is-right { left: auto; right: calc(var(--px) * 22); }
 .stg-text {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   margin: calc(var(--px) * 4) 0 0;
-  min-height: calc(var(--px) * 44);
   font-size: calc(var(--px) * 16);
   line-height: 1.35;
   color: var(--ink);
 }
-.stg-box.is-waiting .stg-text { min-height: 0; }
 .stg-more {
   position: absolute;
   right: calc(var(--px) * 34); /* on the paper, clear of the rim */
