@@ -42,8 +42,8 @@ import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { lairCardScreen, renderSiteCard } from './ui/siteCard';
-import { standingLairAt } from './sim/sites';
+import { lairCardScreen, landmarkCardScreen } from './ui/siteCard';
+import { landmarkDefAt, standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -275,13 +275,13 @@ async function boot(): Promise<void> {
       const lair = standingLairAt(game.state, site)!;
       panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
       frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
-    } else if (site !== null) {
-      // Keyed by cell, so tapping a different site is a real remount.
-      panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
-        () => renderSiteCard(game, site) ?? el('div'),
-        () => game.dismiss(),
-      ));
-      frameOnMap(`site:${site.x},${site.y}`, site, { x: 1, y: 1 });
+    } else if (site !== null && landmarkDefAt(site)) {
+      // A landmark's card, in the same frame as a lair's (siteCard.ts,
+      // `landmarkCardScreen`). Keyed by cell, so tapping a different site is
+      // a real remount.
+      const landmark = landmarkDefAt(site)!;
+      panelSlot.show(`site:${site.x},${site.y}`, () => landmarkCardScreen(game, landmark));
+      frameOnMap(`site:${site.x},${site.y}`, landmark.location, { x: landmark.size, y: landmark.size });
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
       // Built once per building and mutated on the tick (districtCard.ts):
