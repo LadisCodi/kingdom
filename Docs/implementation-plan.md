@@ -873,22 +873,19 @@ and coming back tomorrow is the stores and the Mana well filled overnight.
   re-run the 30-day harness: the opening loses the chest's daily Mana.
 - **Size:** half a day.
 
-### Step 14 · The fantasy signals — **designed 2026-10-02**
+### Step 14 · The fantasy signals — **BUILT 2026-10-02**
 
-**The playtest's signs, in the log**, so a session can be read without an
+**The playtest's signs, in the save**, so a session can be read without an
 observer ([`playtest.md`](playtest.md) §5).
 
-- Five events beside the store's funnel
-  ([`14-monetization.md`](features/14-monetization.md) §4): a chest
-  discovered and picked up, a silhouette sighted and its cell discovered, a
-  paid reveal no active quest asked for, the Survey opened / claimed /
-  bought, and the first tap of a session after an absence.
-- Each carries the funnel's context — Townhall level, minutes played, day
-  index — and the time since the paired event where there is one.
-- **Until the pipeline exists the save is the log**, as for the store.
-- **Blocked on:** Steps 10 and 12 for the chest, silhouette and Survey
-  signals; the other two can land now.
-- **Size:** half a day.
+- Counts on the tallies, under `signal:*`: `treasurePlaced`,
+  `treasurePicked`, `revealUnasked`, `surveyOpened`, `surveyClaimed`. The
+  Survey bought is the store's own purchase record.
+- Times in the `kingdom.signals` module: when each silhouette was first
+  sighted, when each site was discovered, the summed wait of the treasures
+  picked up, and the first tap of each of the last thirty sessions.
+- **Not yet:** a pipeline. Until it exists the save is the log, as for the
+  store.
 
 ## 5. Deliberately after everything above
 

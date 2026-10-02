@@ -20,7 +20,9 @@ import { HARVEST, TREASURE } from './data/definitions';
 import { cityGoldPerSecond } from './collection';
 import { explorationGate, fogState, isPayable } from './fog';
 import { footprintCells, neighbors, type MapData } from './grid';
+import { recordEvent } from './events';
 import { payKnowledge } from './knowledge';
+import { activeQuest } from './quests';
 import { rand } from './rng';
 import { cellHasSite } from './sites';
 import { isTechComplete } from './research';
@@ -90,6 +92,13 @@ function coinFor(state: GameState, n: number): CurrencyId {
  */
 export function onPaidReveal(state: GameState, map: MapData, revealed: readonly Coord[], fresh: readonly Coord[]): void {
   state.fog.paidReveals += revealed.length;
+  // A playtest signal: fog paid for with no quest asking for it — exploring
+  // for its own sake (Docs/playtest.md §5).
+  const asked = activeQuest(state)?.goalType;
+  if (asked !== 'DiscoverCells' && asked !== 'DiscoverFeature' && asked !== 'FindLairs'
+    && asked !== 'ClaimLandmarks') {
+    recordEvent(state, { kind: 'signal', key: 'revealUnasked' });
+  }
   if (!treasureDue(state)) return;
   const byKey = (cells: Iterable<Coord>) => [...new Map([...cells].map((c) => [coordKey(c), c])).entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
@@ -105,8 +114,9 @@ export function onPaidReveal(state: GameState, map: MapData, revealed: readonly 
   if (candidates.length === 0) return;
   const n = state.fog.treasuresPlaced;
   const at = candidates[Math.floor(rand(state.seed, 'treasure', n, 'cell') * candidates.length)];
-  state.fog.treasures[coordKey(at)] = { n, coin: coinFor(state, n) };
+  state.fog.treasures[coordKey(at)] = { n, coin: coinFor(state, n), at: state.lastAdvance };
   state.fog.treasuresPlaced = n + 1;
+  recordEvent(state, { kind: 'signal', key: 'treasurePlaced' });
 }
 
 /** The neighbours of a block that are Undiscovered right now — read BEFORE a
@@ -118,7 +128,7 @@ export function undiscoveredAround(state: GameState, map: MapData, block: readon
 }
 
 /** What the treasure on this cell would pay if it were picked up now. */
-export function treasureReward(state: GameState, treasure: { n: number; coin: CurrencyId }): Wallet {
+export function treasureReward(state: GameState, treasure: { n: number; coin: CurrencyId; at?: number }): Wallet {
   const { n, coin } = treasure;
   if (n === 0) return { [TREASURE.firstCoin]: TREASURE.firstAmount };
   if (coin === 'Knowledge') return { Knowledge: TREASURE.knowledge };
@@ -144,5 +154,7 @@ export function pickUpTreasure(state: GameState, map: MapData, cell: Coord): Pic
     else addToWallet(state.city.wallet, coin, amount);
   }
   delete state.fog.treasures[key];
+  state.signals.treasureWaitMs += Math.max(0, state.lastAdvance - treasure.at);
+  recordEvent(state, { kind: 'signal', key: 'treasurePicked' });
   return { kind: 'PickedUp', reward };
 }

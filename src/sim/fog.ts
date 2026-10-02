@@ -12,6 +12,7 @@ import { techValue } from './techEffects';
 import { recordEvent } from './events';
 import { isTechComplete, revealedCellCount } from './research';
 import { onPaidReveal, undiscoveredAround } from './treasures';
+import { sightedThings } from './sight';
 import {
   addToWallet, coordKey, districtCells, getWallet, townhall,
   type Coord, type District, type GameState, type TechId,
@@ -345,6 +346,8 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
   for (const id of LAIR_ORDER) {
     if (lairIsFound(state, id)) recordSiteDiscovery(state, id);
   }
+  // A playtest signal: when each silhouette was first seen (Docs/playtest.md §5).
+  for (const t of sightedThings(state, map)) state.signals.sightedAt[t.id] ??= state.lastAdvance;
   // An abandoned building is named when it is DISCOVERED: sighted, it is only
   // the silhouette of a ruin, and what it was is the find
   // (Docs/features/01-map-and-fog.md §6.3).

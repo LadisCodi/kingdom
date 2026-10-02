@@ -73,7 +73,8 @@ The numbers give leads, not verdicts.
 ## 5. Signals the log carries
 
 Beside the store's funnel ([`features/14-monetization.md`](features/14-monetization.md)
-§4), for §2's signs to be read without an observer:
+§4), for §2's signs to be read without an observer. The save carries them:
+counts under `signal:*` on the tallies, times in `kingdom.signals`.
 
 | Signal | Read as |
 |---|---|

@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { recordEvent } from './sim/events';
 import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
@@ -790,6 +791,7 @@ export class Game {
         if (!lair && fogState(this.state, this.map, cell) !== 'Revealed') return false;
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
+        this.noteFirstTap('site');
         playSfx('click');
         this.notify();
         return true;
@@ -807,6 +809,7 @@ export class Game {
         if (treasureAt(this.state, cell) === undefined) return false;
         const picked = pickUpTreasure(this.state, this.map, cell);
         if (picked.kind !== 'PickedUp') return false;
+        this.noteFirstTap('treasure');
         this.tapFeedback(cell, 'pop');
         const entries = (Object.entries(picked.reward) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
         for (const [c, n] of entries) this.floaters.add(cell, `+${formatCount(n)}`, c);
@@ -836,7 +839,7 @@ export class Game {
         // not one Gold, so the floater has to be told what it cost.
         const charged = nextRevealTapCost(this.state, this.map, cell);
         const result = revealTap(this.state, this.map, cell);
-        if (result === 'Paid' || result === 'Revealed') this.flashFog(cell);
+        if (result === 'Paid' || result === 'Revealed') { this.flashFog(cell); this.noteFirstTap('reveal'); }
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'NotReachable') {
           // Say the rule, not just "no". A player who has been told once that
@@ -930,10 +933,27 @@ export class Game {
     });
   }
 
+  /** Has this session's first tap been noted yet (Docs/playtest.md §5)? */
+  private firstTapNoted = false;
+
+  /**
+   * A PLAYTEST SIGNAL: what the first tap of a session was on — a store, the
+   * fog, a treasure, a site, a menu — which is what brought the player back.
+   * The last thirty sessions are kept.
+   */
+  private noteFirstTap(kind: string): void {
+    if (this.firstTapNoted) return;
+    this.firstTapNoted = true;
+    const taps = this.state.signals.returnTaps;
+    taps.push({ at: this.state.lastAdvance, kind });
+    if (taps.length > 30) taps.splice(0, taps.length - 30);
+  }
+
   /** Empty a building's store into the purse, with the tap's own feedback:
    *  the punch on the building, a floater per currency, and the haul flying
    *  to the header. */
   private collectStoreOf(district: District): void {
+    this.noteFirstTap('store');
     const moved = collectBuilding(this.state, district.uniqueId, this.now());
     const entries = (Object.entries(moved) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
     if (entries.length === 0) return;
@@ -3969,6 +3989,8 @@ export class Game {
     // A padlocked door says what opens it and opens nothing
     // (Docs/features/22-progression.md §3).
     const door = name === null ? undefined : OVERLAY_DOOR[name];
+    if (name !== null && name !== 'welcome' && name !== 'payerProfile') this.noteFirstTap(`menu:${name}`);
+    if (name === 'survey') recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
     if (door !== undefined && !isDoorOpen(this.state, door)) {
       this.toast(DOOR_HINT[door]);
       this.notify();

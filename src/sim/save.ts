@@ -878,6 +878,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Coord: parseCoordKey(k),
           N: t.n,
           Coin: t.coin,
+          AtUtc: iso(t.at),
         })),
       },
       'kingdom.features': {
@@ -940,6 +941,14 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.abandoned': {
         Repaired: Object.keys(state.abandoned.repaired),
+      },
+      // The playtest's signs (Docs/playtest.md §5): the times; the counts are
+      // the tallies'.
+      'kingdom.signals': {
+        SightedAt: Object.fromEntries(Object.entries(state.signals.sightedAt).map(([id, t]) => [id, iso(t)])),
+        DiscoveredAt: Object.fromEntries(Object.entries(state.signals.discoveredAt).map(([id, t]) => [id, iso(t)])),
+        TreasureWaitMs: state.signals.treasureWaitMs,
+        ReturnTaps: state.signals.returnTaps.map((r) => ({ AtUtc: iso(r.at), Kind: r.kind })),
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1252,8 +1261,10 @@ export function deserialize(
       treasuresPlaced: fogDto.TreasuresPlaced ?? 0,
       treasures: {},
     };
-    for (const t of (fogDto.Treasures ?? []) as { Coord: Coord; N: number; Coin: CurrencyId }[]) {
-      state.fog.treasures[coordKey(t.Coord)] = { n: t.N ?? 0, coin: t.Coin };
+    for (const t of (fogDto.Treasures ?? []) as { Coord: Coord; N: number; Coin: CurrencyId; AtUtc?: string }[]) {
+      state.fog.treasures[coordKey(t.Coord)] = {
+        n: t.N ?? 0, coin: t.Coin, at: t.AtUtc === undefined ? lastSaved : ms(t.AtUtc),
+      };
     }
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
@@ -1360,6 +1371,18 @@ export function deserialize(
       seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
       startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
     };
+
+  // Additive (v79): a kingdom from before the signals starts them empty.
+  const signalsDto = modules['kingdom.signals'] as {
+    SightedAt?: Record<string, string>; DiscoveredAt?: Record<string, string>;
+    TreasureWaitMs?: number; ReturnTaps?: Array<{ AtUtc: string; Kind: string }>;
+  } | undefined;
+  state.signals = {
+    sightedAt: Object.fromEntries(Object.entries(signalsDto?.SightedAt ?? {}).map(([id, t]) => [id, ms(t)])),
+    discoveredAt: Object.fromEntries(Object.entries(signalsDto?.DiscoveredAt ?? {}).map(([id, t]) => [id, ms(t)])),
+    treasureWaitMs: signalsDto?.TreasureWaitMs ?? 0,
+    returnTaps: (signalsDto?.ReturnTaps ?? []).map((r) => ({ at: ms(r.AtUtc), kind: r.Kind })),
+  };
 
   // Additive (v77). A kingdom from before the abandoned buildings may have
   // built where one now stands: that one never appears — it reads as already

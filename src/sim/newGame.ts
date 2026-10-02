@@ -92,6 +92,7 @@ export function newGame(map: MapData, now: number): GameState {
     // A new kingdom meets every door shut and every scene unplayed.
     tutorial: { veteran: false, seen: {}, startedAt: now },
     abandoned: { repaired: {} },
+    signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [] },
     pendingDiscoveries: [],
     seed: newSeed(),
     nextId: 1,

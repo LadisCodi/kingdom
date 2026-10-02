@@ -14,6 +14,7 @@
 
 import { SURVEY } from './data/definitions';
 import { cityGoldPerSecond, grantPack } from './collection';
+import { recordEvent } from './events';
 import { payKnowledge } from './knowledge';
 import { revealedCellCount } from './research';
 import { addToWallet, type GameState, type Wallet } from './state';
@@ -102,6 +103,7 @@ export function claimSurveyCell(state: GameState, level: number, track: 'free' |
   const list = track === 'free' ? state.kingdom.survey.claimedFree : state.kingdom.survey.claimedPaid;
   if (list.includes(level)) return 'AlreadyClaimed';
   pay(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level));
+  recordEvent(state, { kind: 'signal', key: 'surveyClaimed' });
   list.push(level);
   list.sort((a, b) => a - b);
   return 'Claimed';

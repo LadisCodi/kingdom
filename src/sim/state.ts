@@ -501,7 +501,7 @@ export interface GameState {
     treasuresPlaced: number;
     /** coordKey → a treasure waiting on that cell, Discovered or Revealed.
      *  Picked up, it leaves the record. */
-    treasures: Record<string, { n: number; coin: CurrencyId }>;
+    treasures: Record<string, { n: number; coin: CurrencyId; at: number }>;
   };
   features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
   /** Respawning features: current cell → its map-authored ORIGIN + respawn
@@ -736,6 +736,23 @@ export interface GameState {
   /** The abandoned buildings whose repair has started, by id — from then on
    *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
   abandoned: { repaired: Record<string, true> };
+  /**
+   * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
+   * save; nothing in the game reads them. Counts live on `tallies` under
+   * `signal:*`; what is here is WHEN — times are the sim's `lastAdvance`,
+   * never a clock.
+   */
+  signals: {
+    /** When each sighted thing was first sighted, by id. */
+    sightedAt: Record<string, number>;
+    /** When each site was first discovered, by id. */
+    discoveredAt: Record<string, number>;
+    /** How long the treasures picked up had waited since they were placed,
+     *  summed: divided by `signal:treasurePicked`, the average. */
+    treasureWaitMs: number;
+    /** The first tap of each of the last sessions, and what it was on. */
+    returnTaps: Array<{ at: number; kind: string }>;
+  };
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];

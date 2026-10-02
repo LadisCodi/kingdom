@@ -2247,4 +2247,5 @@ export const GAME_VERSION = '0.1.0';
 // `kingdom.fogOfWar`), additive.
 // v77: the abandoned buildings (`kingdom.abandoned`), additive.
 // v78: the Survey (`kingdom.kingdoms.Survey`), additive.
-export const SAVE_VERSION = 78;
+// v79: the playtest's signals (`kingdom.signals`, a treasure's `AtUtc`), additive.
+export const SAVE_VERSION = 79;
