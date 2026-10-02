@@ -169,6 +169,8 @@ Every one of these is a treatment of the same asset, never a second asset.
 
 ### 8.1 The fog: a sea of clouds
 
+*Built 2026-10-02 but for the wisps (Docs/implementation-plan.md Step 11).*
+
 The fog that swallowed the kingdom is a bright sea of clouds lying on the
 province under the midday sun. Target:
 [`mockups/fog/sea-of-clouds.png`](mockups/fog/sea-of-clouds.png).

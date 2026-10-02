@@ -781,7 +781,18 @@ abandoned and repaired.
   opening's four first — House, plot, Farm, Sawmill; the closed chest, and the treasure's sack, crate and pot.
 - **Size:** two to three days of code, plus the art.
 
-### Step 11 · The sea of clouds — **look locked 2026-10-02**
+### Step 11 · The sea of clouds — **BUILT 2026-10-02, but for the wisps**
+
+- **Built:** the bank (`fog_cloud`, three variants) and its wall (`fog_wall`,
+  two) on every cell the fog hides and past the map's edge, flattened,
+  jittered by the cell's hash and swaying on the spot; the payable veil (the
+  ground drained with a `saturation` composite, then a pale sheen thinned a
+  fifth per tap); the cushion (`fog_cloud_cushion`) over a cell the player
+  cannot buy yet, a site left in view; props paled rather than darkened;
+  silhouettes in the cloud-shadow tone. Measured at ~100 fps at the closest
+  and the furthest zoom, without the cached layer.
+- **Not yet:** the curling wisps of a tear and of a reveal, and the colour
+  flooding back — the white flash is a cream puff of the cloud's tone for now.
 
 **The fog drawn as the fiction says it is**: a sunlit sea of clouds in place
 of the dark fog of war.

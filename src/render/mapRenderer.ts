@@ -511,19 +511,69 @@ export function drawMap(
    * every standing thing to AFTER the whole floor, and the trees came out
    * lit like noon on ground the player has not paid for.
    *
-   * So a fogged cell dims its own prop. The number is what the scrim actually
-   * does: `fogDiscovered` is 55% of near-black over the ground, and a cell
-   * the player cannot buy yet takes it twice.
+   * So a fogged cell pales its own prop, the way the veil pales its ground:
+   * the colour drains and the light lifts (Docs/art/art-direction.md §8.1).
+   * The lower the number, the deeper in the mist — a cell the player cannot
+   * buy yet takes it twice.
    */
   const FOG_DIM = 0.45;
-  /** A chest in the fog is dimmed far less than the ground it sits on. */
+  /** A chest in the fog is paled far less than the ground it sits on. */
   const TREASURE_DIM = 0.85;
   const dimmed = (dim: number, draw: () => void): void => {
     if (dim >= 1) { draw(); return; }
     ctx.save();
-    ctx.filter = `brightness(${dim.toFixed(3)}) saturate(0.75)`;
+    ctx.filter = `saturate(${(0.15 + 0.7 * dim).toFixed(3)}) brightness(${(1 + 0.18 * (1 - dim)).toFixed(3)})`;
     draw();
     ctx.restore();
+  };
+
+  /**
+   * A CLOUD OF THE BANK on a cell the fog still hides — or on no cell at all,
+   * past the map's edge (art-direction.md §8.1). A cell that touches ground
+   * the player can see takes the WALL, the bank rising where it meets the
+   * mist. Each drifts on the spot, a few pixels on a loop of its own, and
+   * never across its cell.
+   */
+  /** How many cells wide a cloud of the bank is drawn. */
+  const CLOUD_SPAN = 1.7;
+  /** How flat the bank lies, and how far the wall rises. */
+  const CLOUD_SQUASH = 0.55;
+  const CLOUD_WALL_SQUASH = 0.85;
+  /** How far below its cell's front corner a cloud's foot sits, in cell
+   *  heights — so it covers its own ground rather than standing on it. */
+  const CLOUD_SINK = 0.35;
+
+  /** A site on this cell stays in view through the cushion. */
+  const cellHasSiteForView = (cell: Coord): boolean =>
+    landmarkDefAt(cell) !== undefined || standingAbandonedAt(state, cell) !== undefined
+    || standingLairAt(state, cell) !== undefined;
+
+  const queueCloud = (cell: Coord): void => {
+    const box = cellRect(cell);
+    if (box.x + box.w * 1.5 < 0 || box.x - box.w * 0.5 > w || box.y + box.h * 2 < 0 || box.y - box.h > h) return;
+    const wall = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].some((d) => {
+      const n = { x: cell.x + d.x, y: cell.y + d.y };
+      return map.terrain.has(coordKey(n)) && fogState(state, map, n) !== 'Undiscovered';
+    });
+    const key = variantKey(wall ? 'fog_wall' : 'fog_cloud', cell);
+    const aspect = spriteAspect(key);
+    if (aspect === null) return;
+    const phase = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
+    const sway = Math.sin(clockNow / 3200 + (phase % 628) / 100) * size * 0.012;
+    // Wider than its cell, so neighbours knit into one bank, and FLATTENED:
+    // the bank lies on the province, and only the wall rises — about a cell
+    // high — where it meets the mist (art-direction.md §8.1).
+    // A little of each cloud's size and seat is its own, by the cell's hash,
+    // so a field of them reads as a bank rather than as wallpaper.
+    const jitter = (n: number): number => ((phase >>> n) % 1000) / 1000 - 0.5;
+    const cw = box.w * CLOUD_SPAN * (1 + 0.22 * jitter(3));
+    const ch = cw * aspect * (wall ? CLOUD_WALL_SQUASH : CLOUD_SQUASH) * (1 + 0.3 * jitter(13));
+    const foot = base(box);
+    const dx = box.w * 0.18 * jitter(7);
+    const dy = box.h * 0.25 * jitter(19);
+    later(cell, () => {
+      drawSprite(ctx, key, foot.x - cw / 2 + sway + dx, foot.y + box.h * CLOUD_SINK - ch + dy, cw, ch);
+    });
   };
 
   interface Standing {
@@ -757,9 +807,10 @@ export function drawMap(
       const cell = { x: cx, y: cy };
       const key = coordKey(cell);
       const terrain = map.terrain.get(key);
-      if (!terrain) continue;
+      // Past the map's edge, and under the fog, is the cloud bank.
+      if (!terrain) { queueCloud(cell); continue; }
       const fog = fogState(state, map, cell);
-      if (fog === 'Undiscovered') continue; // opaque background already drawn
+      if (fog === 'Undiscovered') { queueCloud(cell); continue; }
       const box = cellRect(cell);
 
       // The ground: one of the terrain's drawings, picked by a hash of the
@@ -883,19 +934,37 @@ export function drawMap(
       if (fog === 'Revealed') drawResourceState(cell, box);
 
       if (fog === 'Discovered') {
+        // THE MIST (art-direction.md §8.1). The ground loses its colour, then
+        // a pale veil lies on it — thinner with every tap that takes, torn a
+        // fifth at a time.
+        const taps = state.fog.progress[key] ?? 0;
+        const thin = 1 - 0.6 * (taps / FOG.tapsToReveal);
+        ctx.save();
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.globalAlpha = PALETTE.fogDrain * thin;
+        ctx.fillStyle = '#808080';
+        fillDiamond(ctx, box);
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = thin;
         ctx.fillStyle = PALETTE.fogDiscovered;
         fillDiamond(ctx, box);
+        ctx.restore();
         // A cell you can see but cannot buy yet — not touching cleared
-        // ground, or past the Townhall's reach — sits under a second layer,
-        // so the payable frontier reads as a border rather than as every
-        // pale tile on screen. Both rules are spatial, so they should be
-        // visible spatially — a toast on a refused tap is the fallback, not
-        // the teacher.
-        if (!isPayable(state, map, cell)) fillDiamond(ctx, box);
+        // ground, or past the Townhall's reach — lies under a cushion of
+        // cloud, so the payable frontier reads as a border rather than as
+        // every pale tile on screen. Both rules are spatial, so they should
+        // be visible spatially — a toast on a refused tap is the fallback,
+        // not the teacher. The cushion stands over what is on the cell, so
+        // only the tips of tall things clear it; a site is left in view.
+        if (!isPayable(state, map, cell)) {
+          ctx.fillStyle = PALETTE.fogCushion;
+          fillDiamond(ctx, box);
+          if (!cellHasSiteForView(cell)) later(cell, () => { stand(box, ['fog_cloud_cushion'], ''); });
+        }
         // Reveal progress only — the total cost is deliberately not shown.
         // Five taps at every ring, so the bar fills in the same five steps
         // wherever the player is standing.
-        const taps = state.fog.progress[key] ?? 0;
         if (taps > 0) {
           const c = mid(box);
           drawBar(ctx, c.x - size * 0.35, c.y + th * 0.06, size * 0.7, 5,
