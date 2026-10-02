@@ -59,7 +59,9 @@ export function renderBuilderSheet(game: Game): HTMLElement {
   const t = game.now();
   for (const { item, district, name, task } of jobs) {
     const def = DISTRICTS[district.definitionId];
-    const art = spriteUrl(`${def.sprite}_l${Math.max(1, district.level)}`) ?? spriteUrl(`${def.sprite}_l1`);
+    // The highest art tier at or below its level, walked down as the map does.
+    let art: string | null = null;
+    for (let l = Math.max(1, district.level); art === null && l >= 1; l--) art = spriteUrl(`${def.sprite}_l${l}`);
     const bar = progress('blue');
     const left = remainingSeconds(item, t);
     bar.run(queueProgress(item, t), left * 1000, formatDuration(left));

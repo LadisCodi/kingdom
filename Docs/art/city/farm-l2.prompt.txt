@@ -5,13 +5,12 @@ Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look 
 This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game—not marketing key art.
 
 === NEW SCENE ===
-A single WINDMILL, alone, centred — level 4 of the Farm, the building whose crew works the crop plots nearby.
+A single MILL, alone, centred — level 2 of the Farm, the building whose crew works the crop plots nearby.
 
 THE FARM IS A WINDMILL. Its silhouette must read at a glance as a mill with four big sails, like the Mill of Age of Empires II — distinct from every other building in the game. The four sails form an X that faces the viewer at an angle and stays INSIDE the plot's width: the sail tips never pass the plot's left and right corners, so the mill is taller than it is wide. The sails are still, not blurred.
 The second attached image shows the farm BARNS this mill replaces, at levels 2, 4 and 8 from left to right: match their materials, palette, finish and the matching rung of their ladder of grandness, but the building is now a windmill.
-The THIRD attached image is this same mill at level 2: yours is the same mill grown richer and taller from it — same canvas sails, cream stone, warm timber and blue tiles.
 
-A round TOWER MILL of cream stone, two storeys tall, with a BLUE conical cap and four large sails of timber lattice and cream canvas on a sturdy hub. At its foot a lean-to timber granary with a blue tiled roof, open doors, stacked grain sacks, round hay bales and a small handcart. A short timber rail fence on one side. Grander and taller than a simple mill house: prosperous, well kept.
+A compact timber-framed mill house on cream stone footings, with a steep BLUE tiled roof. Mounted high on its front gable, a large wooden hub carries four big lattice sails covered in cream canvas. Wide double doors stand open, with two round hay bales and three grain sacks beside them, and a small wooden handcart. Same cream stone, warm timber and blue tiles as the reference — the first proper building after the wooden camp.
 
 === NO GROUND — THIS IS CRITICAL ===
 Draw the BUILDING ONLY. Do NOT draw any ground underneath it.

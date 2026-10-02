@@ -5,14 +5,20 @@ Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look 
 This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game—not marketing key art.
 
 === NEW SCENE ===
-A single small FARM BARN, alone, centred — the building whose crew works the crop plots nearby.
+A single small WOODEN POST MILL, alone, centred — level 1 of the Farm, the building whose crew works the crop plots nearby.
 
-A compact barn of cream stone below and warm timber boards above, with a steep BLUE tiled roof and wide double barn doors standing open. Two round hay bales and a small wooden handcart beside it. A short fence of timber rails on one side. No fields and no crops — only the barn and its yard.
+THIS IS LEVEL 1 — A CAMP, NOT YET A BUILDING. It is made ONLY OF WOOD: rough round logs, split planks, poles, stakes, bark shingles and a little rope, in warm honey-brown and sun-bleached timber tones. NO stone anywhere, NO cream plaster, NO blue roof tiles, NO glass windows, NO chimney of stone, NO banners, no paint. Simple, low, humble and makeshift — the first night's shelter of settlers who just arrived. The second attached image shows the NEXT level of this building (cream stone, blue tiles): yours must look clearly poorer, smaller and earlier than it, so that upgrading to it is a dramatic change. Keep the same game style, chunky readable shapes and saturation as the reference — humble is not drab.
+
+
+
+THE FARM IS A WINDMILL. Its silhouette must read at a glance as a mill with four big sails, like the Mill of Age of Empires II — distinct from every other building in the game. The four sails form an X that faces the viewer at an angle and stays INSIDE the plot's width: the sail tips never pass the plot's left and right corners, so the mill is taller than it is wide. The sails are still, not blurred.
+
+A small square box of rough planks raised on a squat timber trestle of crossed beams, with a plank roof and a short ladder to its door. Four simple sails of bare wooden lattice slats — no cloth — on a wooden hub. Two burlap grain sacks at the foot of the ladder and a short rail fence of poles. Small, rickety-looking but sound, and unmistakably a windmill.
 
 === NO GROUND — THIS IS CRITICAL ===
 Draw the BUILDING ONLY. Do NOT draw any ground underneath it.
 There must be NO grass, NO soil, NO turf plate, NO raised earth block, NO rocky base, NO island, NO platform and NO terrain of any kind. The game supplies the ground from its own separate terrain tiles; this asset is only what STANDS on that ground.
-The low stone wall, the bushes and the short earth path are part of the building and stay — but they sit directly on nothing, with full transparency beneath and around them.
+The building's own fences, stacks and props are part of the building and stay — but they sit directly on nothing, with full transparency beneath and around them.
 Below the building's footprint there is transparency, not soil. Nothing is cut away and nothing hangs in mid-air: simply do not draw a ground plate at all.
 
 === CAMERA — THIS IS CRITICAL ===
@@ -34,7 +40,7 @@ The single building, centred, with comfortable empty breathing room on all four 
 Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
 The building, its low wall, its bushes and its short path must be the ONLY opaque pixels in the file. Every pixel outside them must be fully transparent, alpha = 0.
 The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
-The building's own cast shadow may stay, softly faded into full transparency.
+No cast shadow and no drop shadow: the game draws its own.
 
 === LOCKED VISUAL STYLE ===
 Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
@@ -62,3 +68,5 @@ No checkerboard pattern painted into the image. No opaque background of any colo
 
 Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.
 Above all: NO GROUND PLATE, and the 2:1 camera ratio exactly.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
