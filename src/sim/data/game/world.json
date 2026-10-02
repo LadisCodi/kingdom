@@ -103,5 +103,21 @@
     "stardust": 2,
     "knowledge": 0.25,
     "bossRewardMultiplier": 3
+  },
+  "worldPortal": {
+    "openWeekday": 5,
+    "openDays": 3,
+    "floors": 40,
+    "attemptsPerDay": 3,
+    "powerStart": 400,
+    "powerGrowth": 1.1,
+    "rewardBase": 1.5,
+    "rewardGrowth": 1.08,
+    "roseEvery": 5,
+    "goldenEvery": 10,
+    "milestoneEvery": 10,
+    "milestoneGems": 100,
+    "rankGems": [300, 150, 150, 50, 50, 50],
+    "botFloorChance": 0.6
   }
 }

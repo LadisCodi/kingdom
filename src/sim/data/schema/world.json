@@ -240,6 +240,53 @@
         },
         "bossRewardMultiplier": { "type": "float", "min": 1, "doc": "A boss pays this many times a room." }
       }
+    },
+    "worldPortal": {
+      "type": "object",
+      "doc": "The Dark Portal: a weekly depth ladder on the centre hex (Docs/features/19-world-map.md §10).",
+      "fields": {
+        "openWeekday": {
+          "type": "int",
+          "min": 0,
+          "max": 6,
+          "doc": "The UTC weekday it opens on, 0 = Sunday. Always the same one."
+        },
+        "openDays": { "type": "int", "min": 1, "max": 6, "doc": "Days it stays open; it is shut the rest of the week." },
+        "floors": { "type": "int", "min": 1, "doc": "How deep it goes." },
+        "attemptsPerDay": {
+          "type": "int",
+          "min": 1,
+          "doc": "Floors a player may clear a UTC day. A failed fight spends nothing."
+        },
+        "powerStart": { "type": "int", "min": 1, "doc": "What the first floor fields." },
+        "powerGrowth": { "type": "float", "min": 1, "doc": "Each floor fields this many times the one above." },
+        "rewardBase": {
+          "type": "float",
+          "min": 0,
+          "doc": "The reward scale of the first floor, on the dungeon room formula."
+        },
+        "rewardGrowth": { "type": "float", "min": 1, "doc": "Each floor pays this many times the one above." },
+        "roseEvery": { "type": "int", "min": 1, "doc": "A Rose pack on every floor this many deep." },
+        "goldenEvery": { "type": "int", "min": 1, "doc": "A Golden pack instead on every floor this many deep." },
+        "milestoneEvery": {
+          "type": "int",
+          "min": 1,
+          "doc": "A milestone every this many floors, for the first player to it each event."
+        },
+        "milestoneGems": { "type": "int", "min": 0, "doc": "What a milestone pays its first." },
+        "rankGems": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "length": { "exact": 6 },
+          "doc": "What each final place pays, first to sixth."
+        },
+        "botFloorChance": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The chance a stand-in rival clears a floor with each move while it is open."
+        }
+      }
     }
   }
 }

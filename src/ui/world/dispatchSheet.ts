@@ -13,8 +13,8 @@ import {
 } from '../../sim/world/explorers';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { WORLD_BUILD, WORLD_DUNGEON } from '../../sim/data/definitions';
-import { nextRoom, roomPower } from '../../worldServer/core';
+import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, sheet, stat } from '../kit';
@@ -94,11 +94,30 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   return lines;
 }
 
-const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve' } as const;
+const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend' } as const;
 const ARMY_INFO = {
   attack: 'Send an army', claim: 'Send an army to take it', garrison: 'Station an army here',
   delve: 'An army camps here and fights room by room',
+  portal: 'An army goes down, a floor at a time',
 } as const;
+
+/** The Portal: shut with its countdown, or open with the player's floor,
+ *  the clears left today and the ranking. */
+function portalLines(game: Game, bh: BoardHex): HTMLElement[] {
+  if (bh.role !== 'portal') return [];
+  const p = game.worldSource().portal();
+  if (p === null) return [];
+  const now = game.now();
+  if (!p.open) return [el('p', { class: 'wd-line' }, `Shut · opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)];
+  const lines = [
+    el('p', { class: 'wd-line' }, `Open · closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`),
+    el('p', { class: 'wd-line' }, `Your floor ${formatCount(p.floor)} of ${formatCount(WORLD_PORTAL.floors)} · ${formatCount(p.attemptsLeft)} ${p.attemptsLeft === 1 ? 'clear' : 'clears'} left today`),
+  ];
+  p.ranking.slice(0, 6).forEach((r, i) => {
+    lines.push(el('p', { class: 'wd-where' }, `${formatCount(i + 1)}. ${seatName(game, r.seat).replace(/'s$/, '')} — floor ${formatCount(r.floor)}`));
+  });
+  return lines;
+}
 
 /** How far the player has gone in a dungeon. */
 function dungeonLines(game: Game, bh: BoardHex): HTMLElement[] {
@@ -137,6 +156,17 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           info: ARMY_INFO[a.purpose],
           onClick: () => game.openArmy(bh.index, a.purpose),
         });
+      case 'descend': {
+        const p = game.worldSource().portal();
+        const floor = (p?.floor ?? 0) + 1;
+        return action({
+          label: 'Descend', kind: 'destructive',
+          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power`,
+          disabledReason: p === null || !p.open ? 'The Portal is shut'
+            : p.attemptsLeft === 0 ? 'No clears left today' : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+          onClick: () => void game.doDescendPortal(a.army),
+        });
+      }
       case 'delve': {
         const cleared = game.worldSource().delved(bh.index);
         const room = nextRoom(cleared);
@@ -181,7 +211,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   lines.push(el('p', { class: 'wd-where' }, where));
 
   if (bh.role === 'portal') {
-    lines.push(el('p', { class: 'wd-line' }, 'Shut. Nobody holds it, and nobody ever will.'));
+    lines.push(el('p', { class: 'wd-line' }, 'Nobody holds it, and nobody ever will.'));
   } else if (control !== null && !control.owner.you && fog !== 'Unknown') {
     lines.push(el('p', { class: 'wd-line' }, 'Another kingdom. A city can never be attacked.'));
   } else if (index !== home && fog === 'Revealed') {
@@ -194,7 +224,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
 
-  lines.push(...controlLines(game, bh, fog), ...dungeonLines(game, bh));
+  lines.push(...controlLines(game, bh, fog), ...dungeonLines(game, bh), ...portalLines(game, bh));
   if (game.actingSeat !== null) {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }

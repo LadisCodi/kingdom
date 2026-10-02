@@ -14,7 +14,8 @@
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6). Five stand-in rivals claim, build, man a Fortress and now and
 > then attack on their own. The hex art is the province's, arranged on a
-> hex. Dungeons (§8.1) are built; the Portal (§10) is designed, not built.
+> hex. Dungeons (§8.1) and the Dark Portal (§10) are built too: the Portal
+> opens on Fridays (UTC) for three days, its numbers in `worldPortal`.
 
 ## 1. The board
 

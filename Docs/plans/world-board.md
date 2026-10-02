@@ -7,8 +7,9 @@
 > What the board IS stays in [`../features/19-world-map.md`](../features/19-world-map.md).
 >
 > **Status: built 2026-10-01**, stages 1–5. Branch `feat/world-map`.
-> Step 2 (control) followed on 2026-10-02 against a local stand-in for the
-> world server: `src/worldServer/` (§9).
+> Steps 2–6 of the build order (control, contest, dungeons, the Portal)
+> followed on 2026-10-02 against a local stand-in for the world server:
+> `src/worldServer/` (§9). The guild siege waits for the social layer.
 > Mockups: [`../art/ui/mockups/`](../art/ui/mockups) m55–m59.
 
 ## 0. Decisions this plan rests on

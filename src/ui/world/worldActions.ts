@@ -14,7 +14,9 @@ export type HexAction =
   | { kind: 'claim'; gold: number; seconds: number }
   /** An army: to attack a rival's ground, to take ground nobody holds, or to
    *  man the player's own Fortress (19 §4–§6). */
-  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' }
+  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' }
+  /** Go down the Portal's next floor, with the army in it. */
+  | { kind: 'descend'; army: string }
   | { kind: 'recall'; army: string }
   /** Fight the next room of a dungeon, with the army camped there. */
   | { kind: 'delve'; army: string }
@@ -43,6 +45,13 @@ const collectable = (h: HexControl): { material: number; knowledge: number } => 
 /** What `seat` can do on this hex now, in the order the sheet shows it. */
 export function hexActions(source: WorldSource, seat: number, bh: BoardHex): HexAction[] {
   const h = source.hexOf(bh.index);
+  // The Dark Portal: any army may go down while it is open (19 §10.3).
+  if (bh.role === 'portal') {
+    const portal = source.portal();
+    const mine = source.armies().find((a) => a.owner === seat && a.purpose === 'portal' && a.phase !== 'home');
+    if (mine !== undefined) return mine.phase === 'camp' ? [{ kind: 'descend', army: mine.id }, { kind: 'recall', army: mine.id }] : [{ kind: 'recall', army: mine.id }];
+    return portal?.open ? [{ kind: 'army', purpose: 'portal' }] : [];
+  }
   // A dungeon: never held, open to any army (19 §8.1).
   if (bh.features.includes('Dungeon')) {
     const mine = source.armies().find((a) => a.owner === seat && a.target === bh.index && a.purpose === 'delve' && a.phase !== 'home');
@@ -54,7 +63,7 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex): Hex
     return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
   }
   if (h === null) {
-    const neverHeld = bh.role === 'portal' || bh.features.includes('Dungeon') || bh.seat !== null;
+    const neverHeld = bh.features.includes('Dungeon') || bh.seat !== null;
     if (neverHeld || !touches(source, seat, bh.index)) return [];
     return [{ kind: 'claim', gold: outpostGold(hexesHeldBy(source, seat)), seconds: WORLD_BUILD.outpost.buildSeconds }];
   }

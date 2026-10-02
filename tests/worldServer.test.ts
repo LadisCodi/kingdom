@@ -2,13 +2,14 @@
 // the chain back to the city, improvements and their stores, and the
 // stand-in rivals — resolved the same however often the board is read.
 import { describe, expect, it } from 'vitest';
-import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON } from '../src/sim/data/definitions';
+import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
 import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
 import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
-  build, claim, claimRefusal, collect, delveRoom, drainEffects, nextRoom, roomPower, roomReward, emptyWorld, fittingImprovements, improvementRate, join,
+  build, claim, claimRefusal, collect, delveRoom, descendPortal, drainEffects, portalClosesAt, portalEvent,
+  portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, fittingImprovements, improvementRate, join,
   outpostGold, recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storesAt,
 } from '../src/worldServer/core';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -326,5 +327,52 @@ describe('dungeons', () => {
     expect(roomPower(0, WORLD_DUNGEON.roomsPerDepth)).toBeGreaterThan(roomPower(0, WORLD_DUNGEON.roomsPerDepth - 1));
     expect(roomReward(1, 1).gold).toBeGreaterThan(roomReward(0, 1).gold);
     expect(roomReward(0, 1).knowledge).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('the Dark Portal', () => {
+  const DAY = 24 * HOUR;
+  const leader = (power: number, key: string) => {
+    const plan = generateEnemy({ seed: 3, parts: ['diver', key], budget: power, affinity: 'Any' });
+    return buildBoard(plan.squads, [...plan.fighters, villainFighter(Object.keys(VILLAINS)[0] as VillainId)]);
+  };
+
+  it('opens on the same weekday for three days, and is shut the other four', () => {
+    const k = portalEvent(T0);
+    const opens = portalOpensAt(k + 1);
+    expect(new Date(opens).getUTCDay()).toBe(WORLD_PORTAL.openWeekday);
+    expect(portalOpen(opens - 1)).toBe(false);
+    expect(portalOpen(opens)).toBe(true);
+    expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY - 1)).toBe(true);
+    expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY)).toBe(false);
+    expect(portalClosesAt(k + 1) - portalOpensAt(k + 1)).toBe(WORLD_PORTAL.openDays * DAY);
+  });
+
+  it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {
+    const { b, seat } = quietBoard();
+    const opens = portalOpensAt(portalEvent(T0) + 1);
+    const STEP = WORLD.marchSecondsPerHex * 1000;
+    expect(sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's'), msPerHex: STEP }, T0))
+      .toEqual({ ok: false, why: 'Shut' });
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's'), msPerHex: STEP }, opens);
+    if (!r.ok) throw new Error(r.why);
+    const there = opens + 4 * STEP;
+    resolveTo(b, there);
+    expect(b.armies[0].phase).toBe('camp');
+    for (let i = 0; i < WORLD_PORTAL.attemptsPerDay; i++) {
+      const f = descendPortal(b, seat, r.army, there + i);
+      expect(f.ok && f.won).toBe(true);
+    }
+    expect(descendPortal(b, seat, r.army, there + 10)).toEqual({ ok: false, why: 'NoAttempts' });
+    expect(snapshotOf(b, seat, there + 10).portal.floor).toBe(WORLD_PORTAL.attemptsPerDay);
+    // A new UTC day brings the clears back.
+    const nextDay = (Math.floor(there / DAY) + 1) * DAY + 1;
+    expect(descendPortal(b, seat, r.army, nextDay).ok).toBe(true);
+    drainEffects(b, seat);
+    // The close: the ranking pays, and the diver walks home.
+    resolveTo(b, portalClosesAt(portalEvent(opens)));
+    const owed = drainEffects(b, seat);
+    expect(owed.some((e) => e.kind === 'loot' && (e.gems ?? 0) > 0)).toBe(true);
+    expect(b.armies[0]?.phase ?? 'home').toBe('home');
   });
 });

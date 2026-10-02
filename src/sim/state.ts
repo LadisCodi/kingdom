@@ -466,7 +466,7 @@ export interface WorldArmyOut {
   heroes: HeroId[];
   troops: Array<{ unitId: UnitId; count: number }>;
   target: number;
-  purpose: 'attack' | 'claim' | 'garrison' | 'delve';
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
 }
 
 export interface WorldBuild {

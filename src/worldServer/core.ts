@@ -16,15 +16,17 @@ import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
-import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, type WorldImprovementDef } from '../sim/data/definitions';
+import {
+  WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL, type WorldImprovementDef,
+} from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
 import { SEAT_INDICES, type Board, type BoardHex } from '../sim/world/board';
-import { boardNeighbors, hexAt, hexIndex, hexLine, isBoardIndex } from '../sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, hexLine, isBoardIndex } from '../sim/world/hex';
 import { boardOf } from '../sim/world/source';
 import { WORLD_IMPROVEMENTS, type WorldImprovement } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, Refusal, SendResult,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SendResult,
   ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot,
 } from './types';
 
@@ -172,6 +174,9 @@ function nextEvent(b: ServerBoard, after: number): number {
   }
   for (const s of b.seats) consider(s?.bot ? s.nextMoveAt : null);
   for (const a of b.armies) consider(a.at);
+  // The Portal's close pays the ranking and sends its divers home.
+  const k = portalEvent(after);
+  consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
   return next;
 }
 
@@ -186,6 +191,7 @@ function applyDue(b: ServerBoard, t: number): void {
     }
   }
   recomputeChains(b, t);
+  closePortal(b, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
     .sort((x, y) => x.at! - y.at! || (x.id < y.id ? -1 : 1));
@@ -340,6 +346,13 @@ const coveringGarrisons = (b: ServerBoard, index: number, holder: number): Serve
 
 function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
   const h = b.hexes[a.target];
+  if (a.purpose === 'portal') {
+    if (a.target === PORTAL_INDEX && portalOpen(t)) {
+      a.phase = 'camp';
+      a.at = null;
+    } else turnHome(a, t);
+    return;
+  }
   if (a.purpose === 'delve') {
     if (isDungeon(b, a.target)) {
       a.phase = 'camp';
@@ -412,6 +425,11 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
 export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, index: number, t: number): Refusal | null {
   if (!isBoardIndex(index)) return 'NoSuchHex';
   const h = b.hexes[index];
+  if (purpose === 'portal') {
+    if (index !== PORTAL_INDEX) return 'NothingThere';
+    if (!portalOpen(t)) return 'Shut';
+    return b.armies.some((a) => a.owner === seat && a.purpose === 'portal' && a.phase !== 'home') ? 'Busy' : null;
+  }
   if (purpose === 'delve') {
     if (!isDungeon(b, index)) return 'NothingThere';
     return b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'delve' && a.phase !== 'home')
@@ -541,6 +559,122 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   return { ok: true, won, log, ...next, snapshot: snapshotOf(b, seat, t) };
 }
 
+// ------------------------------------------------------------ the Portal
+
+/** The UTC day of `t`. */
+const dayOf = (t: number): number => Math.floor(t / DAY);
+
+/** Days from the epoch (a Thursday) to the first opening weekday. */
+const FIRST_OPEN_DAY = ((WORLD_PORTAL.openWeekday - 4) % 7 + 7) % 7;
+
+/** Which weekly opening `t` falls in (or after): openings are counted from
+ *  the first opening weekday after the epoch, so every board agrees. */
+export const portalEvent = (t: number): number => Math.floor((dayOf(t) - FIRST_OPEN_DAY) / 7);
+export const portalOpensAt = (k: number): number => (FIRST_OPEN_DAY + 7 * k) * DAY;
+export const portalClosesAt = (k: number): number => portalOpensAt(k) + WORLD_PORTAL.openDays * DAY;
+export const portalOpen = (t: number): boolean => t >= portalOpensAt(portalEvent(t)) && t < portalClosesAt(portalEvent(t));
+
+export const freshPortal = (t: number): ServerBoard['portal'] => ({
+  event: portalEvent(t), floors: {}, attempts: {}, milestones: {}, closed: portalEvent(t) - 1,
+});
+
+/** The Portal's state for the opening `t` is in; a stale one is wiped. */
+function portalOf(b: ServerBoard, t: number): ServerBoard['portal'] {
+  const k = portalEvent(t);
+  if (b.portal.event !== k) b.portal = { ...freshPortal(t), closed: b.portal.closed };
+  return b.portal;
+}
+
+const rankingOf = (p: ServerBoard['portal']): Array<{ seat: number; floor: number }> =>
+  Object.entries(p.floors)
+    .map(([seat, f]) => ({ seat: Number(seat), floor: f.floor, at: f.at }))
+    .filter((r) => r.floor > 0)
+    .sort((x, y) => y.floor - x.floor || x.at - y.at || x.seat - y.seat)
+    .map(({ seat, floor }) => ({ seat, floor }));
+
+/** At an opening's close: the final ranking pays, and every diver walks
+ *  home. Once per opening. */
+function closePortal(b: ServerBoard, t: number): void {
+  const k = portalEvent(t);
+  const justClosed = t >= portalClosesAt(k) ? k : k - 1;
+  if (b.portal.closed >= justClosed) return;
+  if (b.portal.event === justClosed) {
+    rankingOf(b.portal).forEach((r, place) => {
+      const gems = WORLD_PORTAL.rankGems[place] ?? 0;
+      if (gems > 0) owe(b, r.seat, { kind: 'loot', at: t, gold: 0, knowledge: 0, heroXp: 0, stardust: 0, gems });
+      report(b, r.seat, t, `The Portal closed — you placed ${place + 1} of ${rankingOf(b.portal).length}, at floor ${r.floor}`, place < 3);
+    });
+  }
+  b.portal.closed = justClosed;
+  for (const a of b.armies) if (a.purpose === 'portal' && a.phase === 'camp') turnHome(a, t, 0);
+}
+
+/** What a floor fields. */
+export const floorPower = (floor: number): number =>
+  Math.round(WORLD_PORTAL.powerStart * WORLD_PORTAL.powerGrowth ** (floor - 1));
+
+/** What a floor pays: the dungeon room formula on the Portal's own scale,
+ *  and a pack on the floors that carry one. */
+export function floorReward(floor: number): { gold: number; knowledge: number; heroXp: number; stardust: number; pack?: 'Rose' | 'Golden' } {
+  const scale = WORLD_PORTAL.rewardBase * WORLD_PORTAL.rewardGrowth ** (floor - 1);
+  const d = WORLD_DUNGEON;
+  const pack = floor % WORLD_PORTAL.goldenEvery === 0 ? 'Golden' : floor % WORLD_PORTAL.roseEvery === 0 ? 'Rose' : undefined;
+  return {
+    gold: Math.round(d.gold * scale), knowledge: Math.max(1, Math.round(d.knowledge * scale)),
+    heroXp: Math.round(d.heroXp * scale), stardust: Math.round(d.stardust * scale),
+    ...(pack ? { pack } : {}),
+  };
+}
+
+const attemptsUsed = (p: ServerBoard['portal'], seat: number, t: number): number =>
+  p.attempts[seat]?.day === dayOf(t) ? p.attempts[seat].used : 0;
+
+/** Go down the next floor with the army in the Portal. Floors are taken one
+ *  at a time; a clear spends an attempt, a failure spends nothing. */
+export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: number): DelveResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat || a.phase !== 'camp' || a.purpose !== 'portal') return { ok: false, why: 'NoArmy' };
+  if (!portalOpen(t)) return { ok: false, why: 'Shut' };
+  const p = portalOf(b, t);
+  if (attemptsUsed(p, seat, t) >= WORLD_PORTAL.attemptsPerDay) return { ok: false, why: 'NoAttempts' };
+  const floor = (p.floors[seat]?.floor ?? 0) + 1;
+  if (floor > WORLD_PORTAL.floors) return { ok: false, why: 'NothingThere' };
+  const plan = generateEnemy({ seed: b.seed, parts: ['portal', p.event, floor], budget: floorPower(floor), affinity: 'Any' });
+  const log = resolveBattle(a.board, buildBoard(plan.squads, plan.fighters));
+  const after = boardAfter(log, a.board, 'ours');
+  a.board = after.board;
+  addFallen(a.fallen, after.fallen);
+  const won = log.winner === 'ours';
+  if (won) {
+    p.floors[seat] = { floor, at: t };
+    p.attempts[seat] = { day: dayOf(t), used: attemptsUsed(p, seat, t) + 1 };
+    let gems = 0;
+    if (floor % WORLD_PORTAL.milestoneEvery === 0 && p.milestones[floor] === undefined) {
+      p.milestones[floor] = seat;
+      gems = WORLD_PORTAL.milestoneGems;
+      report(b, seat, t, `First to floor ${floor} of the Portal`, true);
+    }
+    owe(b, seat, { kind: 'loot', at: t, ...floorReward(floor), ...(gems > 0 ? { gems } : {}) });
+  }
+  if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
+  return { ok: true, won, log, depth: 0, room: floor, boss: false, snapshot: snapshotOf(b, seat, t) };
+}
+
+function portalView(b: ServerBoard, seat: number, t: number): PortalView {
+  const k = portalEvent(t);
+  const open = portalOpen(t);
+  const p = b.portal.event === k ? b.portal : null;
+  return {
+    open,
+    opensAt: open ? portalOpensAt(k) : portalOpensAt(t >= portalClosesAt(k) ? k + 1 : k),
+    closesAt: open ? portalClosesAt(k) : portalClosesAt(t >= portalClosesAt(k) ? k + 1 : k),
+    floor: p?.floors[seat]?.floor ?? 0,
+    attemptsLeft: Math.max(0, WORLD_PORTAL.attemptsPerDay - (p === null ? 0 : attemptsUsed(p, seat, t))),
+    ranking: p === null ? [] : rankingOf(p),
+  };
+}
+
 /** What the server owes a seat, handed over once. */
 export function drainEffects(b: ServerBoard, seat: number): WorldEffect[] {
   const out = b.effects[seat] ?? [];
@@ -624,6 +758,12 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
       startWork(b, i, h.improvement!.kind, t);
     }
   }
+  // While the Portal is open, a rival goes down a floor now and then.
+  if (portalOpen(t) && rand(b.seed, 'botPortal', seat, s.moves) < WORLD_PORTAL.botFloorChance) {
+    const p = portalOf(b, t);
+    const now = p.floors[seat]?.floor ?? 0;
+    if (now < WORLD_PORTAL.floors) p.floors[seat] = { floor: now + 1, at: t };
+  }
   s.moves += 1;
   s.nextMoveAt = t + Math.round(WORLD_BOTS.actEveryHours * HOUR * (0.5 + rand(b.seed, 'botNext', seat, s.moves)));
 }
@@ -668,6 +808,7 @@ export function join(
     effects: {},
     nextId: 1,
     delves: {},
+    portal: freshPortal(t),
   };
   w.boards.push(b);
   return { board: b, seat };
@@ -705,6 +846,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
+    portal: portalView(b, seat, t),
     effects: [],
   };
 }

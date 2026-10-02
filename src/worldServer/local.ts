@@ -12,7 +12,8 @@ import type { Board } from '../sim/battle';
 import type { HeroId } from '../sim/state';
 import type { WorldImprovement } from '../sim/world/types';
 import {
-  build, claim, collect, delveRoom, drainEffects, emptyWorld, join, recall, resolveTo, sendArmy, snapshotOf,
+  build, claim, collect, delveRoom, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
+  sendArmy, snapshotOf,
 } from './core';
 import type {
   ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SendResult, ServerBoard, ServerWorld,
@@ -33,6 +34,7 @@ export interface WorldServerApi {
   ): Promise<SendResult>;
   recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
   delveRoom(armyId: string, now: number): Promise<DelveResult>;
+  descendPortal(armyId: string, now: number): Promise<DelveResult>;
 }
 
 /** Where the local server keeps its state: localStorage in the game, a map
@@ -66,6 +68,7 @@ export class LocalWorldServer implements WorldServerApi {
       b.effects ??= {};
       b.nextId ??= 1;
       b.delves ??= {};
+      b.portal ??= freshPortal(b.resolvedTo);
       for (const h of Object.values(b.hexes)) h.garrison ??= null;
     }
   }
@@ -145,5 +148,9 @@ export class LocalWorldServer implements WorldServerApi {
 
   async delveRoom(armyId: string, now: number): Promise<DelveResult> {
     return this.run(undefined, (b, seat) => delveRoom(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async descendPortal(armyId: string, now: number): Promise<DelveResult> {
+    return this.run(undefined, (b, seat) => descendPortal(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
   }
 }

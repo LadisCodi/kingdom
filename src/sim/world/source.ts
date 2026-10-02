@@ -48,13 +48,25 @@ export interface WorldSource {
   armies(): readonly ArmyControl[];
   /** Rooms the player has cleared in the dungeon on a hex. */
   delved(index: number): number;
+  /** The Dark Portal as the server last described it, or null. */
+  portal(): PortalControl | null;
+}
+
+/** The Dark Portal as the board shows it (worldServer/types.ts `PortalView`). */
+export interface PortalControl {
+  open: boolean;
+  opensAt: number;
+  closesAt: number;
+  floor: number;
+  attemptsLeft: number;
+  ranking: ReadonlyArray<{ seat: number; floor: number }>;
 }
 
 /** An army as the board shows it (worldServer/types.ts `ArmyView`). */
 export interface ArmyControl {
   id: string;
   owner: number;
-  purpose: 'attack' | 'claim' | 'garrison' | 'delve';
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
   phase: 'out' | 'garrison' | 'camp' | 'home';
   target: number;
 }
@@ -93,6 +105,7 @@ export function localWorld(ref: BoardRef): WorldSource {
     hexOf: () => null,
     armies: () => [],
     delved: () => 0,
+    portal: () => null,
   };
 }
 
@@ -104,6 +117,7 @@ export function snapshotWorld(snap: {
   hexes: ReadonlyArray<HexControl & { index: number }>;
   armies?: readonly ArmyControl[];
   delves?: Readonly<Record<number, number>>;
+  portal?: PortalControl;
 }): WorldSource {
   let rival = 0;
   const seats: Seat[] = snap.seats.map((s) => ({
@@ -124,5 +138,6 @@ export function snapshotWorld(snap: {
     hexOf: (index) => hexes.get(index) ?? null,
     armies: () => snap.armies ?? [],
     delved: (index) => snap.delves?.[index] ?? 0,
+    portal: () => snap.portal ?? null,
   };
 }

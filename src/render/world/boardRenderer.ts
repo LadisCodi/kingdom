@@ -16,7 +16,7 @@ import type { BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, fogStateOf, homeIndex, returnsAt, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
-import { hexAt, type Hex } from '../../sim/world/hex';
+import { PORTAL_INDEX, hexAt, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
@@ -133,6 +133,16 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
 
   if (frame.selected !== null) {
     drawBorder(ctx, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4);
+  }
+
+  // The Portal's appointment, over its hex: when it opens, or how long it
+  // has left (19 §10.1).
+  const portal = source.portal();
+  if (portal !== null) {
+    const c = camera.hexToScreen(hexAt(PORTAL_INDEX));
+    const left = Math.max(0, ((portal.open ? portal.closesAt : portal.opensAt) - now) / 1000);
+    drawPill(ctx, camera, c.x, c.y - camera.hexRadius * 0.75,
+      portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
   }
 
   for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now);

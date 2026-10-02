@@ -39,7 +39,7 @@ export interface ServerHex {
 export type ArmyPhase = 'out' | 'garrison' | 'camp' | 'home';
 
 /** What an army was sent to do (19 §4, §5.1, §6, §8.1). */
-export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve';
+export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
 
 /** An army out on the board — server state from the moment it leaves
  *  (02-map-scopes.md §3.1). */
@@ -77,7 +77,24 @@ export type WorldEffect =
   }
   | { kind: 'report'; at: number; text: string; good: boolean }
   /** What a cleared dungeon room paid (11-expeditions.md §7). */
-  | { kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number };
+  | {
+    kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number;
+    gems?: number; pack?: 'Rose' | 'Golden';
+  };
+
+/** The Dark Portal on one board (19 §10). */
+export interface PortalState {
+  /** The weekly opening these floors belong to; a stale one reads as empty. */
+  event: number;
+  /** How deep each seat has gone this opening, and when it got there. */
+  floors: Record<number, { floor: number; at: number }>;
+  /** Floors each seat cleared on a UTC day — only a clear spends one. */
+  attempts: Record<number, { day: number; used: number }>;
+  /** Who reached each milestone floor first this opening. */
+  milestones: Record<number, number>;
+  /** The last opening whose close has been paid out. */
+  closed: number;
+}
 
 export interface ServerSeat {
   playerId: string;
@@ -110,6 +127,7 @@ export interface ServerBoard {
   /** Rooms each seat has cleared in each dungeon, by hex index: progress is
    *  per player (19 §8.1). */
   delves: Record<number, Record<number, number>>;
+  portal: PortalState;
 }
 
 export interface ServerWorld {
@@ -153,6 +171,18 @@ export interface ArmyView {
 
 export interface SeatView { seat: number; name: string; you: boolean; bot: boolean }
 
+export interface PortalView {
+  open: boolean;
+  /** When it next opens, or when it closes if it is open. */
+  opensAt: number;
+  closesAt: number;
+  /** The player's deepest floor this opening, and clears left today. */
+  floor: number;
+  attemptsLeft: number;
+  /** Every seat that has gone down, deepest first, earliest first. */
+  ranking: Array<{ seat: number; floor: number }>;
+}
+
 /** Everything a player is told about their board at one moment. */
 export interface WorldSnapshot {
   board: BoardRef;
@@ -162,6 +192,8 @@ export interface WorldSnapshot {
   armies: ArmyView[];
   /** Rooms the player has cleared in each dungeon, by hex index. */
   delves: Record<number, number>;
+  /** The Dark Portal as the player sees it. */
+  portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
 }
@@ -170,7 +202,7 @@ export interface WorldSnapshot {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround';
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

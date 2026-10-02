@@ -2056,6 +2056,26 @@ export interface WorldDungeonDef {
 
 export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;
 
+/** The Dark Portal's week and its ladder (19 §10). */
+export interface WorldPortalDef {
+  openWeekday: number;
+  openDays: number;
+  floors: number;
+  attemptsPerDay: number;
+  powerStart: number;
+  powerGrowth: number;
+  rewardBase: number;
+  rewardGrowth: number;
+  roseEvery: number;
+  goldenEvery: number;
+  milestoneEvery: number;
+  milestoneGems: number;
+  rankGems: readonly number[];
+  botFloorChance: number;
+}
+
+export const WORLD_PORTAL: WorldPortalDef = balance.worldPortal;
+
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
   actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;

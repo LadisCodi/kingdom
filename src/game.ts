@@ -45,7 +45,7 @@ import {
   bundleGemValue, bundleOf, bundlesForSale, cardCount,
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
-  buyFromVaultMany, canClaimAlbum, claimAlbum,
+  buyFromVaultMany, canClaimAlbum, claimAlbum, grantPack,
   wildcardCovers, wildcardOffers, wildcardsHeld,
   PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
   type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
@@ -4497,7 +4497,9 @@ export class Game {
         addToWallet(this.state.kingdom.wallet, 'Knowledge', e.knowledge);
         addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
         addHeroXp(this.state, e.heroXp);
-        this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp });
+        if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
+        if (e.pack) grantPack(this.state, e.pack, 'portal');
+        this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
       } else this.toast(e.text);
     }
     this.worldView = snap;
@@ -4519,6 +4521,7 @@ export class Game {
       NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
       Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
       OwnGround: 'That ground is yours already',
+      Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
     };
     return LINES[why];
   }
@@ -4657,6 +4660,20 @@ export class Game {
       subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
       prizes: [],
     });
+    this.notify();
+  }
+
+  /** Go down the Portal's next floor, and watch the fight. */
+  async doDescendPortal(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.descendPortal(armyId, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [] });
     this.notify();
   }
 
