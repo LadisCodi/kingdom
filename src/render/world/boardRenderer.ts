@@ -463,6 +463,62 @@ function drawBorder(
 
 // -------------------------------------------------------------- explorers
 
+/** Footprints along a walked path. */
+function drawFootprints(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number; y: number }>, unit: number): void {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 252, 240, 0.9)';
+  const dot = Math.max(1.5, unit * 0.025);
+  for (let i = 1; i < pts.length; i++) {
+    const p = pts[i - 1], q = pts[i];
+    const len = Math.hypot(q.x - p.x, q.y - p.y);
+    for (let d = dot * 4; d < len; d += dot * 5) {
+      ctx.beginPath();
+      ctx.arc(p.x + ((q.x - p.x) * d) / len, p.y + ((q.y - p.y) * d) / len, dot, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+/** The way still to go: a dashed line, dark-edged so it reads on grass and
+ *  on mist alike, and a ring on the hex it ends at. */
+function drawRoute(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number; y: number }>, unit: number): void {
+  if (pts.length < 2) return;
+  const width = Math.max(2, unit * 0.028);
+  const end = pts[pts.length - 1];
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  };
+  ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(46, 28, 14, 0.45)';
+  ctx.lineWidth = width + 2.5;
+  path();
+  ctx.stroke();
+  ctx.setLineDash([width * 3, width * 2.2]);
+  ctx.strokeStyle = 'rgba(255, 246, 220, 0.95)';
+  ctx.lineWidth = width;
+  path();
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const ring = Math.max(6, unit * 0.13);
+  ctx.strokeStyle = 'rgba(46, 28, 14, 0.5)';
+  ctx.lineWidth = width + 2.5;
+  ctx.beginPath();
+  ctx.arc(end.x, end.y, ring, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(255, 246, 220, 0.95)';
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.arc(end.x, end.y, ring, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** Where a trip is at `now`: between step `step` and the next of its path,
  *  `f` of the way, and whether it is still on its way out. */
 function tripPosition(
@@ -486,23 +542,25 @@ function drawExplorer(
   const y = a.y + (b.y - a.y) * pos.f;
   const unit = camera.hexWidth;
 
-  // The trail: footprints from the city along the path to where it stands.
-  ctx.save();
-  ctx.fillStyle = 'rgba(255, 252, 240, 0.9)';
-  const pts: Array<{ x: number; y: number }> = [];
-  for (let k = 0; k <= pos.step; k++) pts.push(camera.hexToScreen(hexAt(trip.path[k])));
-  pts.push({ x, y });
-  const dot = Math.max(1.5, unit * 0.025);
-  for (let i = 1; i < pts.length; i++) {
-    const p = pts[i - 1], q = pts[i];
-    const len = Math.hypot(q.x - p.x, q.y - p.y);
-    for (let d = dot * 4; d < len; d += dot * 5) {
-      ctx.beginPath();
-      ctx.arc(p.x + ((q.x - p.x) * d) / len, p.y + ((q.y - p.y) * d) / len, dot, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  // Behind it, footprints along the hexes it has walked; ahead, a line along
+  // the hexes it will walk, to the hex it is going to — or, on the way back,
+  // to the city — ringed where it ends.
+  const at = (k: number) => camera.hexToScreen(hexAt(trip.path[k]));
+  const here = { x, y };
+  const last = trip.path.length - 1;
+  const walked: Array<{ x: number; y: number }> = [];
+  const ahead: Array<{ x: number; y: number }> = [here];
+  if (pos.outbound) {
+    for (let k = 0; k <= pos.step; k++) walked.push(at(k));
+    walked.push(here);
+    for (let k = pos.step + 1; k <= last; k++) ahead.push(at(k));
+  } else {
+    for (let k = last; k > pos.step; k--) walked.push(at(k));
+    walked.push(here);
+    for (let k = pos.step; k >= 0; k--) ahead.push(at(k));
   }
-  ctx.restore();
+  drawFootprints(ctx, walked, unit);
+  drawRoute(ctx, ahead, unit);
 
   // The scout, gameplay-sized: a figure on the board, not a portrait.
   const fw = Math.max(18, unit * 0.32);
