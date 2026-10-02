@@ -636,10 +636,10 @@
 
 /* -------------------------------------------------------- §11.1 the pill */
 
-/* Under the daily chest's pill, and wider — the two read as a pair, which is
-   the whole of the placement argument (ui/seasonPill.ts). */
+/* In the left column of pills, under the quest scroll (ui/seasonPill.ts). */
 #season { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
 #season[hidden] { display: none; }
+/* The Survey's widget: survey.css. */
 
 .sea-pill {
   display: flex;
@@ -660,8 +660,7 @@
 .sea-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.9; }
 
 .sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
-/* Body, not the title face — the daily pill beside it sets its title the same
-   way, and the two have to read as a pair. */
+/* Body, not the title face: a pill is read at a glance, not announced. */
 .sea-pill-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.1; }
 /* A trough with the count printed ON it, as M20 draws it. */
 .sea-pill-trough {

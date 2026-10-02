@@ -47,7 +47,9 @@ export function heroRestEndsAt(state: GameState, id: HeroId, t: number): number 
 }
 
 export const heroCanFight = (state: GameState, id: HeroId, t: number): boolean =>
-  !heroExhausted(state, id, t) && heroHp(state, id, t) > 0;
+  !heroExhausted(state, id, t) && heroHp(state, id, t) > 0
+  // A hero out with an army on the world board is busy until it is home.
+  && !state.world.armies.some((a) => a.heroes.includes(id));
 
 /** Record what a fight left a hero with: `hp` of its max, as of `t`. */
 export function setHeroHp(state: GameState, id: HeroId, hp: number, t: number): void {

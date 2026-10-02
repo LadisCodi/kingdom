@@ -197,7 +197,7 @@
    knob. Absolute, so it never changes the header's height, and
    it steps aside while a menu is open, like the Settings knob — except a
    menu that spends Knowledge (research, the Knowledge sheet). It has to
-   clear the Daily chest pill at 375px, so every width here is budgeted. */
+   clear the pills beside it at 375px, so every width here is budgeted. */
 .hud-know[hidden] { display: none; }
 .hud-know {
   position: absolute;
@@ -289,7 +289,7 @@
   justify-items: center;
   /* As wide as the gauge, and allowed past it: a longer line (Full in 9h 37m)
      spills into the gaps rather than widening the tab, which has to clear
-     the daily pill at 375px (daily.css). */
+     the season pill at 375px. */
   width: 0;
   min-width: 100%;
   font-size: calc(var(--rpx) * 26);

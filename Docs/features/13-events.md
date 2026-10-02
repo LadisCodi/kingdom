@@ -62,7 +62,6 @@ Six parts. Every authored event is a skin on them.
 | Claiming a **landmark**, clearing a **ruin** depth | |
 | Clearing a ruin's **gate** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
 | **Taps** | low rate |
-| The **daily chest** | one lump a day |
 | A **rewarded video** | capped; the third ad placement |
 
 ### 2.3 The minigame: a fog island

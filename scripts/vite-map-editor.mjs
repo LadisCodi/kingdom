@@ -54,12 +54,20 @@ const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   `      "flavour": ${JSON.stringify(r.flavour)}`,
 ].join(',\n') + '\n    }';
 
+// An abandoned building is WHERE, WHICH building, and how far its ruin is seen
+// (Docs/features/01-map-and-fog.md §6.3).
+const abandonedLine = (a) =>
+  `    { "id": ${JSON.stringify(a.id)}, "district": ${JSON.stringify(a.district)}, `
+  + `"x": ${a.x}, "y": ${a.y}, "sight": ${a.sight}`
+  + `${a.name !== undefined ? `, "name": ${JSON.stringify(a.name)}` : ''} }`;
+
 export function serialiseRegionMap(doc) {
   const text = '{\n' + [
     section('terrain', doc.terrain.cells),
     section('features', doc.features.cells),
     `  "landmarks": [\n${doc.landmarks.map(landmarkLine).join(',\n')}\n  ]`,
     `  "lairs": {\n${Object.entries(doc.lairs).map(([id, r]) => lairLines(id, r)).join(',\n')}\n  }`,
+    `  "abandoned": [\n${(doc.abandoned ?? []).map(abandonedLine).join(',\n')}\n  ]`,
   ].join(',\n') + '\n}\n';
   // Hand-rolled formatting earns a parse check before it reaches the repo.
   JSON.parse(text);

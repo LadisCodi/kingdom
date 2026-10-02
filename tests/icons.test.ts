@@ -32,6 +32,9 @@ const AWAITING_ART: readonly string[] = [
   // The Tavern (Docs/features/22-progression.md §6): its card icon and its
   // locked variant wait on the building's sheet.
   'Tavern',
+  // The War Camp (Docs/features/19-world-map.md §4): its card icon and its
+  // locked variant wait on the world board's art pass.
+  'WarCamp',
 ];
 
 const pending = new Set(AWAITING_ART);

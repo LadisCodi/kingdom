@@ -7,9 +7,9 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
-import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from '../sim/sites';
 import { lairZoneCells } from '../sim/lairZone';
-import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
+import { ABANDONED, LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
   clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
 } from './lairMap';
@@ -23,7 +23,7 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
+  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -442,8 +442,8 @@ export function drawMap(
       return drew;
     };
     // Levelled art comes in TIERS, not one piece per level: a building draws
-    // the highest `_l<n>` it owns at or below its level, so `_l1`, `_l4` and
-    // `_l8` dress all ten levels with three drawings. Walking down is also
+    // the highest `_l<n>` it owns at or below its level, so `_l1`, `_l2`,
+    // `_l3`, `_l4` and `_l8` dress all ten levels with five drawings. Walking down is also
     // what stops a level with no art of its own from falling past the base
     // sprite to the emoji.
     const keys: string[] = [];
@@ -543,17 +543,106 @@ export function drawMap(
    * every standing thing to AFTER the whole floor, and the trees came out
    * lit like noon on ground the player has not paid for.
    *
-   * So a fogged cell dims its own prop. The number is what the scrim actually
-   * does: `fogDiscovered` is 55% of near-black over the ground, and a cell
-   * the player cannot buy yet takes it twice.
+   * So a fogged cell pales its own prop, the way the veil pales its ground:
+   * the colour drains and the light lifts (Docs/art/art-direction.md §8.1).
+   * The lower the number, the deeper in the mist — a cell the player cannot
+   * buy yet takes it twice.
    */
   const FOG_DIM = 0.45;
+  /** A chest in the fog is paled far less than the ground it sits on. */
+  const TREASURE_DIM = 0.85;
   // From a copy of the art baked once per sprite (sprites.ts
   // `withSpriteLook`), never `ctx.filter`: a frame at the fog's edge has a
   // wood's worth of trees in it.
   const dimmed = (dim: number, draw: () => void): void => {
     if (dim >= 1) { draw(); return; }
-    withSpriteLook(ctx, { brightness: dim, saturate: 0.75 }, draw);
+    withSpriteLook(ctx, { brightness: 1 + 0.18 * (1 - dim), saturate: 0.15 + 0.7 * dim }, draw);
+  };
+
+  /**
+   * A CLOUD OF THE BANK on a cell the fog still hides — or on no cell at all,
+   * past the map's edge (art-direction.md §8.1). A cell that touches ground
+   * the player can see takes the WALL, the bank rising where it meets the
+   * mist. Each drifts on the spot, a few pixels on a loop of its own, and
+   * never across its cell.
+   */
+  /** How many cells wide a cloud of the bank is drawn. */
+  const CLOUD_SPAN = 1.7;
+  /** How flat the bank lies, and how far the wall rises. */
+  const CLOUD_SQUASH = 0.55;
+  const CLOUD_WALL_SQUASH = 0.85;
+  /** How far below its cell's front corner a cloud's foot sits, in cell
+   *  heights — so it covers its own ground rather than standing on it. */
+  const CLOUD_SINK = 0.35;
+  /** The patch of mist on a cell the player can pay for: how wide, how flat,
+   *  and how thick before the first tap — it thins with every tap. */
+  const PATCH_SPAN = 1.25;
+  const PATCH_SQUASH = 0.45;
+  const PATCH_ALPHA = 0.45;
+
+  /**
+   * THE GROUND THE PLAYER CAN SEE, on screen: no cloud of the bank covers it.
+   * A cloud is wider than its cell and rises toward the back, so one standing
+   * in front of seen ground would hide it; a cloud near any is clipped to the
+   * frame less those cells (evenodd: the frame, and every seen diamond as a
+   * hole in it). A cushion lies on Discovered ground by design, so it is kept
+   * off the Revealed alone. Filled in by the floor pass below, read when the
+   * clouds are drawn.
+   */
+  const seenOnScreen = new Set<string>();
+  const clearOfBank = new Path2D();
+  const clearOfCushion = new Path2D();
+  clearOfBank.rect(-w, -h, w * 3, h * 3);
+  clearOfCushion.rect(-w, -h, w * 3, h * 3);
+  const nearSeen = (cell: Coord): boolean => {
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        if (seenOnScreen.has(coordKey({ x: cell.x + dx, y: cell.y + dy }))) return true;
+      }
+    }
+    return false;
+  };
+  const clippedTo = (clear: Path2D, cell: Coord, draw: () => void): void => {
+    if (!nearSeen(cell)) { draw(); return; }
+    ctx.save();
+    ctx.clip(clear, 'evenodd');
+    draw();
+    ctx.restore();
+  };
+
+  /** A site on this cell stays in view through the cushion. */
+  const cellHasSiteForView = (cell: Coord): boolean =>
+    landmarkDefAt(cell) !== undefined || standingAbandonedAt(state, cell) !== undefined
+    || standingLairAt(state, cell) !== undefined;
+
+  const queueCloud = (cell: Coord): void => {
+    const box = cellRect(cell);
+    if (box.x + box.w * 1.5 < 0 || box.x - box.w * 0.5 > w || box.y + box.h * 2 < 0 || box.y - box.h > h) return;
+    const wall = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].some((d) => {
+      const n = { x: cell.x + d.x, y: cell.y + d.y };
+      return map.terrain.has(coordKey(n)) && fogState(state, map, n) !== 'Undiscovered';
+    });
+    const key = variantKey(wall ? 'fog_wall' : 'fog_cloud', cell);
+    const aspect = spriteAspect(key);
+    if (aspect === null) return;
+    const phase = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
+    const sway = Math.sin(clockNow / 3200 + (phase % 628) / 100) * size * 0.012;
+    // Wider than its cell, so neighbours knit into one bank, and FLATTENED:
+    // the bank lies on the province, and only the wall rises — about a cell
+    // high — where it meets the mist (art-direction.md §8.1).
+    // A little of each cloud's size and seat is its own, by the cell's hash,
+    // so a field of them reads as a bank rather than as wallpaper.
+    const jitter = (n: number): number => ((phase >>> n) % 1000) / 1000 - 0.5;
+    const cw = box.w * CLOUD_SPAN * (1 + 0.22 * jitter(3));
+    const ch = cw * aspect * (wall ? CLOUD_WALL_SQUASH : CLOUD_SQUASH) * (1 + 0.3 * jitter(13));
+    const foot = base(box);
+    const dx = box.w * 0.18 * jitter(7);
+    const dy = box.h * 0.25 * jitter(19);
+    // Half a row back: a cloud is wider than its cell, and one level with a
+    // building or a tree beside it would otherwise spill over its art.
+    later(cell, () => clippedTo(clearOfBank, cell, () => {
+      drawSprite(ctx, key, foot.x - cw / 2 + sway + dx, foot.y + box.h * CLOUD_SINK - ch + dy, cw, ch);
+    }), undefined, { depthBias: -0.5 });
   };
 
   interface Standing {
@@ -627,10 +716,12 @@ export function drawMap(
     cell: Coord, draw: (mark: (r: PlotBox) => void) => void, span = { x: 1, y: 1 },
     extra: {
       rect?: PlotBox; ghost?: (clip: PlotBox[]) => void; occludes?: boolean;
+      /** Added to the depth: below 0 sorts it behind its row. */
+      depthBias?: number;
     } = {},
   ): void => {
     standing.push({
-      depth: (cell.x + span.x / 2) + (cell.y + span.y / 2),
+      depth: (cell.x + span.x / 2) + (cell.y + span.y / 2) + (extra.depthBias ?? 0),
       tie: cell.x + span.x,
       draw,
       rect: extra.rect ?? camera.plotBox(cell, { x: span.x || 1, y: span.y || 1 }),
@@ -680,11 +771,11 @@ export function drawMap(
    * with one colour, which no filter does. Returns where it landed.
    */
   let sightCanvas: HTMLCanvasElement | null = null;
-  const silhouette = (plot: PlotBox, keys: string[]): PlotBox | null => {
+  const silhouette = (plot: PlotBox, keys: string[], plots = FEATURE_PLOTS): PlotBox | null => {
     const key = keys.find((k) => spriteAspect(k) !== null);
     if (key === undefined) return null;
     const foot = base(plot);
-    const cw = plot.w * FEATURE_PLOTS;
+    const cw = plot.w * plots;
     const ch = cw * spriteAspect(key)!;
     if (cw < 1 || ch < 1) return null;
     sightCanvas ??= document.createElement('canvas');
@@ -696,7 +787,7 @@ export function drawMap(
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, gc.width, gc.height);
-    const tall = drawStanding(g, key, cw / 2, ch, plot.w, FEATURE_PLOTS);
+    const tall = drawStanding(g, key, cw / 2, ch, plot.w, plots);
     if (tall <= 0) return null;
     g.globalCompositeOperation = 'source-in';
     g.fillStyle = PALETTE.sighted;
@@ -706,12 +797,16 @@ export function drawMap(
     ctx.globalAlpha = PALETTE.sightedAlpha;
     ctx.drawImage(gc, 0, 0, Math.ceil(cw * dpr), Math.ceil(ch * dpr), foot.x - cw / 2, foot.y - ch, cw, ch);
     ctx.restore();
-    return artRect(plot, tall, FEATURE_PLOTS);
+    return artRect(plot, tall, plots);
   };
 
   /** The drawings a sighted thing would be drawn with in plain view. */
   const sightKeys = (t: Sighted): string[] => {
     if (t.kind === 'lair') return [LAIRS[t.id as LairId].sprite];
+    if (t.kind === 'abandoned') {
+      const a = ABANDONED.find((x) => x.id === t.id);
+      return a === undefined ? [] : ruinKeys(a.districtId);
+    }
     if (t.kind === 'landmark') {
       const l = LANDMARKS.find((x) => x.id === t.id);
       return l === undefined ? [] : [LANDMARK_ART[l.kind].sprite];
@@ -791,12 +886,18 @@ export function drawMap(
       const cell = { x: cx, y: cy };
       const key = coordKey(cell);
       const terrain = map.terrain.get(key);
-      if (!terrain) continue;
+      // Past the map's edge, and under the fog, is the cloud bank.
+      if (!terrain) { queueCloud(cell); continue; }
       const fog = fogState(state, map, cell);
-      if (fog === 'Undiscovered') continue; // opaque background already drawn
+      if (fog === 'Undiscovered') { queueCloud(cell); continue; }
       const payable = fog === 'Discovered' && isPayable(state, map, cell);
-      floor.push({ cell, key, terrain, fog, payable, box: cellRect(cell) });
-      const code = fog === 'Revealed' ? 1 : payable ? 2 : 3;
+      const taps = fog === 'Discovered' ? state.fog.progress[key] ?? 0 : 0;
+      const box = cellRect(cell);
+      floor.push({ cell, key, terrain, fog, payable, taps, box });
+      seenOnScreen.add(key);
+      diamondPath(clearOfBank, box);
+      if (fog === 'Revealed') diamondPath(clearOfCushion, box);
+      const code = fog === 'Revealed' ? 1 : (payable ? 2 : 3) + 4 * taps;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
       floorSig = Math.imul(floorSig ^ code, 16777619);
     }
@@ -870,9 +971,64 @@ export function drawMap(
         if (!claimed) drawSiteBadge(plot, '✦');
       }, { x: landmark.size, y: landmark.size });
     }
+    // A treasure (01-map-and-fog.md §6.2): a closed chest while the cell is
+    // fog — a thing to go and get, so it stands out of the scrim more than
+    // the ground under it — and, once revealed, what it holds, waiting for
+    // the tap that picks it up.
+    const treasure = state.fog.treasures[key];
+    if (treasure !== undefined) {
+      const keys = fog === 'Revealed'
+        ? [`treasure_${treasure.coin.toLowerCase()}`, 'treasure_closed']
+        : ['treasure_closed'];
+      later(cell, () => dimmed(fog === 'Revealed' ? 1 : TREASURE_DIM, () => {
+        punched(key, box, () => { stand(box, keys, ''); });
+      }));
+    }
+
+    // An abandoned building (01-map-and-fog.md §6.3): its ruin, drawn as a
+    // building is — one plot across, feet on the plot's bottom corner — and
+    // dimmed by the fog like anything standing in it.
+    const ruin = standingAbandonedAt(state, cell);
+    if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
+      const size = DISTRICTS[ruin.districtId].size;
+      const plot = size.x === 1 && size.y === 1 ? box : camera.plotBox(cell, size);
+      later(cell, (mark) => {
+        dimmed(dim, () => {
+          punched(key, plot, () => {
+            mark(artRect(plot, stand(plot, ruinKeys(ruin.districtId), ''), 1));
+          });
+        });
+      }, size);
+    }
+
     if (fog === 'Revealed') drawResourceState(cell, box);
 
     if (fog === 'Discovered') {
+      // A cell you can see but cannot buy yet lies under a cushion of cloud
+      // (the floor's veil, drawFloor). The cushion stands over what is on
+      // the cell, so only the tips of tall things clear it; a site is left
+      // in view.
+      if (!payable && !cellHasSiteForView(cell)) later(cell, () => clippedTo(clearOfCushion, cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
+      // A cell the player can pay for keeps a thin patch of mist over what is
+      // on it, so it reads as part of the bank and still shows its contents.
+      if (payable) {
+        const patchKey = variantKey('fog_cloud', cell);
+        const aspect = spriteAspect(patchKey);
+        if (aspect !== null) {
+          const thin = 1 - 0.6 * ((state.fog.progress[key] ?? 0) / FOG.tapsToReveal);
+          const phase = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
+          const sway = Math.sin(clockNow / 3600 + (phase % 628) / 100) * size * 0.01;
+          const pw = box.w * PATCH_SPAN;
+          const ph = pw * aspect * PATCH_SQUASH;
+          const foot = base(box);
+          later(cell, () => clippedTo(clearOfCushion, cell, () => {
+            ctx.save();
+            ctx.globalAlpha *= PATCH_ALPHA * thin;
+            drawSprite(ctx, patchKey, foot.x - pw / 2 + sway, foot.y + box.h * 0.1 - ph, pw, ph);
+            ctx.restore();
+          }));
+        }
+      }
       // Reveal progress only — the total cost is deliberately not shown.
       // Five taps at every ring, so the bar fills in the same five steps
       // wherever the player is standing.
@@ -1047,10 +1203,14 @@ export function drawMap(
     if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
       || plot.y + plot.h < 0 || plot.y - plot.w * 2 > h) continue;
     const keys = sightKeys(t);
+    // A ruin is building art: one plot across, where a feature's is two.
+    const plots = t.kind === 'abandoned' ? 1 : FEATURE_PLOTS;
+    // A row forward: the clouds of the cells just in front rise about a cell,
+    // and a ruin, one plot tall, would sink out of sight behind them.
     later(t.anchor, (mark) => {
-      const art = silhouette(plot, keys);
+      const art = silhouette(plot, keys, plots);
       if (art !== null) mark(art);
-    }, span);
+    }, span, { depthBias: 1 });
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
@@ -1492,8 +1652,10 @@ interface FloorCell {
   key: string;
   terrain: TerrainId;
   fog: 'Revealed' | 'Discovered';
-  /** Discovered and buyable now — one scrim instead of two. */
+  /** Discovered and buyable now — no cushion over the veil. */
   payable: boolean;
+  /** Taps already paid into it — the veil thins with each. */
+  taps: number;
   box: PlotBox;
 }
 
@@ -1543,7 +1705,7 @@ function drawFloor(
     g.fillStyle = PALETTE.fogUndiscovered;
     g.fillRect(0, 0, w, h);
     let complete = true;
-    for (const { cell, terrain, fog, payable, box } of cells) {
+    for (const { cell, terrain, fog, payable, taps, box } of cells) {
       // The ground: one of the terrain's drawings, picked by a hash of the
       // cell so a field of it does not weave (src/render/terrain.ts), then
       // the fringe of any neighbour that creeps over it. Flat colour while
@@ -1568,15 +1730,31 @@ function drawFloor(
         strokeDiamond(g, box, 0.5);
       }
       if (fog === 'Discovered') {
+        // THE MIST (art-direction.md §8.1). The ground loses its colour, then
+        // a pale veil lies on it — thinner with every tap that takes, torn a
+        // fifth at a time.
+        const thin = 1 - 0.6 * (taps / FOG.tapsToReveal);
+        g.save();
+        g.globalCompositeOperation = 'saturation';
+        g.globalAlpha = PALETTE.fogDrain * thin;
+        g.fillStyle = '#808080';
+        fillDiamond(g, box);
+        g.restore();
+        g.save();
+        g.globalAlpha = thin;
         g.fillStyle = PALETTE.fogDiscovered;
         fillDiamond(g, box);
+        g.restore();
         // A cell you can see but cannot buy yet — not touching cleared
-        // ground, or past the Townhall's reach — sits under a second layer,
-        // so the payable frontier reads as a border rather than as every
-        // pale tile on screen. Both rules are spatial, so they should be
-        // visible spatially — a toast on a refused tap is the fallback, not
-        // the teacher.
-        if (!payable) fillDiamond(g, box);
+        // ground, or past the Townhall's reach — lies under a cushion, so
+        // the payable frontier reads as a border rather than as every pale
+        // tile on screen. Both rules are spatial, so they should be visible
+        // spatially — a toast on a refused tap is the fallback, not the
+        // teacher.
+        if (!payable) {
+          g.fillStyle = PALETTE.fogCushion;
+          fillDiamond(g, box);
+        }
       }
     }
     floor.view = view;
@@ -1633,6 +1811,13 @@ function unitTransform(
   ctx.translate(-cx, -cy);
   draw();
   ctx.restore();
+}
+
+/** The drawings an abandoned building's ruin may use: its own ruin, then its
+ *  level-1 art while that has not landed (Docs/features/01-map-and-fog.md §6.3). */
+function ruinKeys(districtId: DistrictId): string[] {
+  const sprite = DISTRICTS[districtId].sprite;
+  return [`${sprite}_ruin`, `${sprite}_l1`, sprite];
 }
 
 function drawGlyph(

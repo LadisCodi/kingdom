@@ -6,16 +6,17 @@
 // A sighting is not a discovery: it announces nothing, finds no lair, moves
 // no quest. The renderer draws it; the stage may talk about it.
 
-import { FOG, LAIRS, LAIR_ORDER, LANDMARKS } from './data/definitions';
+import { ABANDONED, DISTRICTS, FOG, LAIRS, LAIR_ORDER, LANDMARKS } from './data/definitions';
 import { fogState } from './fog';
 import { footprintAt, type MapData } from './grid';
 import { coordKey, parseCoordKey, type Coord, type FeatureId, type GameState } from './state';
 
-export type SightedKind = 'mountain' | 'landmark' | 'lair';
+export type SightedKind = 'mountain' | 'landmark' | 'lair' | 'abandoned';
 
 export interface Sighted {
   kind: SightedKind;
-  /** The landmark's or lair's id; a mountain's feature id. */
+  /** The landmark's, lair's or abandoned building's id; a mountain's
+   *  feature id. */
   id: string;
   anchor: Coord;
   size: number;
@@ -47,6 +48,12 @@ const candidatesFor = (() => {
       const lair = LAIRS[id];
       if (lair.sight > 0) out.push({ kind: 'lair', id, anchor: lair.location, size: lair.size, range: lair.sight });
     }
+    // An abandoned building is sighted as the silhouette of its RUIN
+    // (§6.3): something stands there, not what.
+    for (const a of ABANDONED) {
+      const size = DISTRICTS[a.districtId].size;
+      if (a.sight > 0) out.push({ kind: 'abandoned', id: a.id, anchor: a.location, size: Math.max(size.x, size.y), range: a.sight });
+    }
     memo.set(map, out);
     return out;
   };
@@ -67,6 +74,8 @@ function inView(state: GameState, map: MapData, t: Sighted): boolean {
   // A lair is drawn once FOUND (a cell of its zone revealed), whatever the
   // fog on its own plot; a cleared one is gone.
   if (t.kind === 'lair') return state.lairs[t.id as keyof typeof LAIRS] !== undefined;
+  // A repaired one is a building, drawn as itself.
+  if (t.kind === 'abandoned' && state.abandoned.repaired[t.id] === true) return true;
   for (let y = t.anchor.y; y < t.anchor.y + t.size; y++) {
     for (let x = t.anchor.x; x < t.anchor.x + t.size; x++) {
       if (fogState(state, map, { x, y }) !== 'Undiscovered') return true;

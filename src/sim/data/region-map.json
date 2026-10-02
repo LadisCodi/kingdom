@@ -1709,5 +1709,12 @@
       "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240 },
       "flavour": "It sleeps on a hill of gold and wakes hungry for more. The treasury is its larder."
     }
-  }
+  },
+  "abandoned": [
+    { "id": "OldHouse", "district": "Housing", "x": 4, "y": -1, "sight": 3, "name": "The Millers' house" },
+    { "id": "OldFarm", "district": "Farm", "x": -3, "y": 1, "sight": 3, "name": "The old farm" },
+    { "id": "OldPlotNorth", "district": "FarmLands", "x": -3, "y": 0, "sight": 3, "name": "An old crop plot" },
+    { "id": "OldPlotSouth", "district": "FarmLands", "x": -3, "y": 2, "sight": 3, "name": "An old crop plot" },
+    { "id": "OldSawmill", "district": "Sawmill", "x": 1, "y": 4, "sight": 3, "name": "The old sawmill" }
+  ]
 }

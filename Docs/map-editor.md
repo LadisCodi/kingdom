@@ -53,7 +53,14 @@ ruins     { <RuinId>: {x, y, tier, difficulty, baseDepthSeconds,
                        depthGrowth, maxDepth, supplies, affinity, artifact,
                        guard} }
 guard     { threat, power, warningMinutes, periodMinutes }   on every ruin
+abandoned [{id, district, x, y, sight, name?}]   buildings the fog swallowed
 ```
+
+*(An abandoned building is a building from `buildings`, its anchor and its
+`sight` — [`features/01-map-and-fog.md`](features/01-map-and-fog.md) §6.3. The
+validator holds its ground to a site's rules, its id to the sites' one
+namespace, and its count to the Townhall cap at the level whose reach first
+covers it.)*
 
 *(`guard` is the garrison that holds the ruin's door and the clock discovering
 it starts — [`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
@@ -136,7 +143,8 @@ tool has to answer out loud:
 |---|---|---|
 | **Select & move** | selects a site and opens its inspector; drag moves it | the default |
 | **Place landmark** | drops a new landmark on any cell | `N` also does this from any tool, wherever the pointer is |
-| **Erase landmark** | deletes the landmark under the cursor | `Delete` also does this to the selected one |
+| **Place abandoned** | drops a new abandoned building — an old House seen from 3 rings — on any cell | pick the building, its name and its sight in the inspector |
+| **Erase** | deletes the landmark or abandoned building under the cursor | `Delete` also does this to the selected one |
 
 The cursor changes per mode, and Place and Erase each carry a one-line note
 saying what you are about to get: a new landmark arrives as an unnamed `Shrine`

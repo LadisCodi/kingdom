@@ -29,10 +29,11 @@
   "knowledge": {
     "basePerHour": 1,
     "cap": 10,
-    "landmarkClaimLump": 5,
+    "landmarkClaimLump": 3,
     "conquestFirstClearLump": 15,
     "goldPriceBase": 100,
-    "gemsPerPoint": 10
+    "goldPriceExponent": 2,
+    "gemsPerPoint": 270
   },
   "raid": {
     "takeFractionMax": 0.5,
@@ -41,6 +42,15 @@
     "windowEndHour": 23
   },
   "delve": {
-    "firstClearKnowledge": 15
+    "firstClearKnowledge": 3
+  },
+  "treasure": {
+    "everyReveals": 5,
+    "workSeconds": 120,
+    "floor": { "Gold": 10, "Food": 5, "Wood": 5, "Stone": 5 },
+    "weights": { "Gold": 3, "Food": 3, "Wood": 3, "Stone": 2, "Knowledge": 1 },
+    "knowledge": 1,
+    "firstCoin": "Gold",
+    "firstAmount": 20
   }
 }

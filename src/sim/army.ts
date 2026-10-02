@@ -48,7 +48,10 @@ import { recordEvent } from './events';
  * held two Warriors, and every number a player saw on this system was a
  * single digit in a game about fielding companies.
  */
-export const armySize = (state: GameState): number => state.army.length;
+/** Soldiers the kingdom owns: at home, and out on the world board — an army
+ *  away still holds its places in the halls. */
+export const armySize = (state: GameState): number =>
+  state.army.length + state.world.armies.reduce((sum, a) => sum + a.troops.reduce((s, t) => s + t.count, 0), 0);
 
 /** Units already paid for but not yet delivered still count against the cap —
  *  otherwise the queue is a way to exceed it. A heal is a whole batch in one

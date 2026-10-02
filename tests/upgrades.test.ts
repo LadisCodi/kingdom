@@ -412,8 +412,12 @@ describe('the lump lines reach their numbers', () => {
         - DELVE.firstClearKnowledge);
     });
 
+    // Each lump is rounded as it was paid, so the payback is what a claim
+    // made now would pay more: a 3-lump takes no point from the first +10%,
+    // and one from the second.
     it('Scriptorium pays its percentage on the lumps already earned', () => {
-      expect(payback('ScriptoriumI')).toBeGreaterThan(0);
+      expect(payback('ScriptoriumI')).toBe(0);
+      expect(payback('ScriptoriumII')).toBeGreaterThan(0);
     });
 
     it('pays nothing back when the research is refused', () => {

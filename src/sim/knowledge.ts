@@ -9,8 +9,8 @@
 //    quest. Every lump passes through `knowledgeLump`, which is where
 //    Scriptorium and the `knowledgeYield` stack scale it. A lump always lands
 //    in full, over the cap if it must.
-//  * GOLD — the nth point ever bought with Gold costs n × `goldPriceBase`, and
-//    the count never resets.
+//  * GOLD — the nth point ever bought with Gold costs `goldPriceBase` ×
+//    n^`goldPriceExponent`, and the count never resets.
 //  * GEMS — a fixed price a point.
 //
 // THE CAP STOPS THE DRIP, NOT THE CLOCK. Over the cap the anchor keeps moving
@@ -130,12 +130,15 @@ export const territoryKnowledge = (state: GameState): number =>
 // --------------------------------------------------------------- buying it
 
 /** Gold for the next `count` points: the nth point ever bought costs
- *  n × base, and the count never resets. */
+ *  base × n^exponent, and the count never resets. */
 export function knowledgeGoldPrice(state: GameState, count: number): number {
   if (count <= 0) return 0;
   const n = state.kingdom.knowledgeBoughtWithGold;
-  // base × ((n+1) + … + (n+count))
-  return KNOWLEDGE.goldPriceBase * (count * (2 * n + count + 1)) / 2;
+  let price = 0;
+  for (let i = n + 1; i <= n + count; i++) {
+    price += Math.round(KNOWLEDGE.goldPriceBase * i ** KNOWLEDGE.goldPriceExponent);
+  }
+  return price;
 }
 
 /** Gems for `count` points. Never rises. */

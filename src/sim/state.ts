@@ -87,12 +87,12 @@ export type TomeId = 'Civics' | 'Warfare' | 'Magic' | 'Sagas' | 'Atlas';
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
   | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
-  /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
-   *  chest's Royal track for the season (sim/daily.ts). */
-  | 'RoyalChest'
-  /** The season pass's paid column, for one season — the Royal chest's shape
-   *  applied to the other two-track ladder (sim/pass.ts). */
+  /** The season pass's paid column, for one season: it grants nothing on
+   *  purchase and opens the levels already reached (sim/pass.ts). */
   | 'SeasonPass'
+  /** The Survey's paid column, once for the whole province: the same shape
+   *  (sim/survey.ts). */
+  | 'Survey'
   /** The collection's three bundles: star packs and wildcards for money
    *  rather than for Gems (Docs/features/09-relics.md §6.1). */
   | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
@@ -378,7 +378,7 @@ export type MissionKind =
  * what to do next by what it pays. A reward decided at CLAIM time would be a
  * surprise, and a surprise cannot be chosen between.
  *
- * Mana is a FRACTION OF THE POOL rather than an amount, the daily chest's rule:
+ * Mana is a FRACTION OF THE POOL rather than an amount, the ad reward's rule:
  * a reward priced in the player's own production is worth the same fraction of
  * an afternoon at every stage of the game.
  */
@@ -417,6 +417,70 @@ export interface Mission {
   claimed: boolean;
 }
 
+/**
+ * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
+ *
+ * Everything a trip will ever do is priced when it leaves: its path, its
+ * pace and how far it sees. What it has revealed at any moment is derived
+ * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
+ * with one boundary — the moment it is home.
+ */
+/** What can stand on a held world hex (sim/world/types.ts). */
+export type WorldImprovementId = 'LoggingCamp' | 'Homestead' | 'StonePit' | 'Fortress';
+
+export interface ExplorerTrip {
+  id: string;
+  /** The hex it was sent to, as a board index. */
+  target: number;
+  /** Board indices from the city (first) to the target (last). */
+  path: number[];
+  departedAt: number;
+  /** Milliseconds to leave each hex of the path, priced when it set out:
+   *  out, every hex but the last; home, every hex but the city. */
+  stepMs: number[];
+  /** Milliseconds it works at the target before the hex is revealed. */
+  workMs: number;
+  /** Hexes it reveals round its target. */
+  radius: number;
+}
+
+export interface WorldState {
+  /** Which board, and which of its six cities is the player's. */
+  board: { id: string; seed: number; seat: number };
+  /** The hexes revealed and folded in: three uint32 words over the board's
+   *  91 indices. The city and the Portal are always revealed and never
+   *  stored; a march under way is derived, not stored. */
+  revealed: number[];
+  explorers: ExplorerTrip[];
+  /** Builders out on the world board: what each is raising and when it is
+   *  done. The server holds the hex; this is the builder's half, so a
+   *  province build and a world build share the one crew. */
+  builds: WorldBuild[];
+  /** Sanctuaries held and on the chain, as the server last said — each
+   *  raises the Mana ceiling (Docs/features/19-world-map.md §8). */
+  sanctuaries: number;
+  /** The player's armies out on the board: the client's half — who went and
+   *  with what. The army itself is server state (02-map-scopes.md §3.1). */
+  armies: WorldArmyOut[];
+}
+
+export interface WorldArmyOut {
+  id: string;
+  heroes: HeroId[];
+  troops: Array<{ unitId: UnitId; count: number }>;
+  target: number;
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+}
+
+export interface WorldBuild {
+  /** The board hex, by index. */
+  index: number;
+  /** An Outpost, or an improvement's level. */
+  what: 'Outpost' | WorldImprovementId;
+  level: number;
+  finishesAt: number;
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -440,33 +504,10 @@ export interface GameState {
      *  the player's local day (Docs/proposals/lairs.md §4.1), and the sim has
      *  no clock of its own to find out where that day is. */
     utcOffsetMinutes: number;
-    /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
-     *  it survives a region reset — a habit is a property of the player, not
-     *  of the city they happen to be playing. See sim/daily.ts. */
-    daily: {
-      /** The `seasonIndex` `rung` belongs to. A stale one reads as rung 0,
-       *  so a season turns over with nothing scheduled and nothing to reset. */
-      season: number;
-      /** Rungs claimed INSIDE that season — days played, not days elapsed. */
-      rung: number;
-      /** `dayIndex` of the last claim, or null if none — stamped rather than
-       *  incremented, so a second claim in one day is impossible however the
-       *  clock moves, including backwards. */
-      lastClaimedDay: number | null;
-      /** The `seasonIndex` the Royal chest was bought for, or null. A
-       *  comparison rather than a flag, so nothing has to clear it when the
-       *  season turns. */
-      royalSeason: number | null;
-      /** Which Royal cells have been taken this season, by rung. The paid
-       *  track is claimed CELL BY CELL and out of order — buying the chest on
-       *  rung 9 leaves nine of them waiting — so this cannot be a count.
-       *  Belongs to `season`: a stale one reads as empty. */
-      royalClaimed: number[];
-    };
     /**
-     * THE SEASON PASS (sim/pass.ts). Kingdom-scoped for the daily chest's
-     * reason verbatim: a habit is a property of the player, not of the city
-     * they happen to be playing. NOT on `state.collection`, which is wiped
+     * THE SEASON PASS (sim/pass.ts). Kingdom-scoped, like Knowledge: a habit
+     * is a property of the player, not of the city they happen to be
+     * playing. NOT on `state.collection`, which is wiped
      * whole at the close.
      */
     pass: {
@@ -496,6 +537,14 @@ export interface GameState {
        *  an empty quota, the same pull rule as `season`. */
       week: number;
     };
+    /** THE SURVEY (sim/survey.ts): one ladder over the whole province. Its
+     *  level is derived from the cells revealed; what is stored is what has
+     *  been taken, and whether the paid column is bought. It never resets. */
+    survey: {
+      claimedFree: number[];
+      claimedPaid: number[];
+      owned: boolean;
+    };
   };
   player: {
     wallet: Wallet;
@@ -509,6 +558,14 @@ export interface GameState {
      *  to a revealed cell are ALSO Discovered — that part stays derived.) */
     discovered: Record<string, true>;
     progress: Record<string, number>; // coordKey → taps spent so far, 1..4
+    /** Cells the player has paid to reveal, ever — the treasures' clock
+     *  (sim/treasures.ts). A building's ground or a claim does not count. */
+    paidReveals: number;
+    /** How many treasures the fog has placed, ever: the next one's ordinal. */
+    treasuresPlaced: number;
+    /** coordKey → a treasure waiting on that cell, Discovered or Revealed.
+     *  Picked up, it leaves the record. */
+    treasures: Record<string, { n: number; coin: CurrencyId; at: number }>;
   };
   features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
   /** Respawning features: current cell → its map-authored ORIGIN + respawn
@@ -737,10 +794,37 @@ export interface GameState {
    *
    * `veteran` is a kingdom from before the doors existed: every door is open
    * and every scene counts as played (Docs/features/22-progression.md §1).
-   * `startedAt` is when the kingdom was founded — the first day's doors read
-   * it (the daily chest waits for the next day).
+   * `startedAt` is when the kingdom was founded.
    */
   tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
+  /** The abandoned buildings whose repair has started, by id — from then on
+   *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
+  abandoned: { repaired: Record<string, true> };
+  /**
+   * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
+   * save; nothing in the game reads them. Counts live on `tallies` under
+   * `signal:*`; what is here is WHEN — times are the sim's `lastAdvance`,
+   * never a clock.
+   */
+  signals: {
+    /** When each sighted thing was first sighted, by id. */
+    sightedAt: Record<string, number>;
+    /** When each site was first discovered, by id. */
+    discoveredAt: Record<string, number>;
+    /** How long the treasures picked up had waited since they were placed,
+     *  summed: divided by `signal:treasurePicked`, the average. */
+    treasureWaitMs: number;
+    /** The first tap of each of the last sessions, and what it was on. */
+    returnTaps: Array<{ at: number; kind: string }>;
+  };
+  /**
+   * The world board as the player's own save knows it
+   * (Docs/features/02-map-scopes.md §3, §6): which board and seat, the fog,
+   * and the explorers out on it. World CONTROL is not here — it is server
+   * state — and neither is the board's contents, which are a pure function
+   * of its seed (sim/world/board.ts).
+   */
+  world: WorldState;
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];
@@ -831,3 +915,7 @@ export const builderCount = (state: GameState): number => Math.max(1, state.king
  * constant (1) and neither read the builders.
  */
 export const buildQueueCapacity = (state: GameState): number => builderCount(state);
+
+/** Builders at work: on the city's queue, and out on the world board. */
+export const busyBuilders = (state: GameState): number =>
+  state.city.queue.length + state.world.builds.length;

@@ -185,7 +185,7 @@ describe('the presenter', () => {
     expect(game.pendingSku).toBeNull();
   });
 
-  // A card bundle grants no Gems, so it takes the Royal chest's route: its own
+  // A card bundle grants no Gems, so it takes the season pass's route: its own
   // command, which still spends the budget through `buySku`. The confirmation
   // is still the only place a purchase completes.
   it('buys a card bundle through the same confirmation, and grants the hand', () => {

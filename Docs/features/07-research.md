@@ -11,7 +11,7 @@
 > era bars, the climbing bonuses (§1.2), the Knowledge bar (§3), pouring and
 > instant completion (§1) and buying Knowledge (§3.2). The shape is authored
 > in `?dev=data#tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
-> Designed, not built: contested-landmark lumps (§7) and guild investment (§8).
+> Designed, not built: world-map landmarks (§7) and guild investment (§8).
 
 ## 1. Technologies
 
@@ -291,8 +291,8 @@ A `bonus` names its effects, and each is four fields:
 | Source | Pays | Key |
 |---|---|---|
 | the **drip** | 1/h while under 10 | `knowledge.basePerHour` · `knowledge.cap` |
-| claiming a **landmark** | 5, once | `knowledge.landmarkClaimLump` |
-| a ruin's **first clear** | 15, once | `delve.firstClearKnowledge` |
+| claiming a **landmark** | 3, once | `knowledge.landmarkClaimLump` |
+| a ruin's **first clear** | 3, once | `delve.firstClearKnowledge` |
 | every **ruin room** | at least 1, rising with depth, tier and room ([`11-expeditions.md`](11-expeditions.md) §7.1) — 1,156 across the 186 rooms | `ruins.knowledgeCoef` (0.25) |
 | `Wayposts I–IV` (Atlas) | +20% on every landmark claim, per rank | a `bonus` ladder |
 | `Bounties I–IV` (Warfare) | +20% on every lair cleared, per rank | a `bonus` ladder |
@@ -300,12 +300,14 @@ A `bonus` names its effects, and each is four fields:
 | `knowledgeYield` modifier | × on every lump while it runs | the `insight` delve boon (×3) |
 | the **quest chain** | 29 across twelve quests | `quests` › `rewardKnowledge` |
 | **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
-| **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.gemsPerPoint` |
+| **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` · `knowledge.gemsPerPoint` |
 
 - The drip pays **at most 24 a day**, and only to a player who pours before
   the bar is full.
-- A fully held province — eleven landmarks, five lairs — pays **130** in lumps
-  before any ladder, **about 300** with every ladder above.
+- A fully held province — eleven landmarks, five lairs — pays **48** in lumps
+  before any ladder, **about 130** with every ladder above.
+- A lump is rounded as it is paid, so a +10% rank adds nothing to a lump of 3
+  on its own; the second rank adds a point.
 - The drip (at most 24 a day) is the steady source; the lumps and the chain
   are the spikes. The pace they set is [`22-progression.md`](22-progression.md) §8.
 - The clock banks whole units against an anchor, the same shape as taxes and
@@ -337,16 +339,20 @@ A `bonus` names its effects, and each is four fields:
 - **Gold: every point costs more than the last, for ever.**
 
 ```
-the nth point ever bought with Gold costs  n × knowledge.goldPriceBase
+the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledge.goldPriceExponent
 ```
+
+  - At 100 × n²: the 1st point 100, the 5th 2,500, the 10th 10,000, the
+    20th 40,000.
 
   - The count is the kingdom's and **never resets** —
     not daily, not at a season, not at a province reset.
   - Buying several at once costs the sum of their prices, shown as one number.
   - Gold is the city's purse: a point bought is fog, a building or a Wonder
     level not bought.
-- **Gems: a fixed price per point**, `knowledge.gemsPerPoint`. It never
-  rises.
+- **Gems: a fixed price per point**, `knowledge.gemsPerPoint` (270). It
+  never rises: 10 points cost 2,700, a little more than the $4.99 pack's
+  2,500 Gems.
 - Buying never needs a free anything: there is nothing to occupy.
 
 ## 4. Knowledge and Stardust
@@ -471,12 +477,12 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 
 ## 7. Ruins and landmarks
 
-- A **cleared ruin** pays 15 Knowledge on its first clear (§3).
+- A **cleared ruin** pays 3 Knowledge on its first clear (§3).
 - **No tome is gated behind anything.** Every book is open, so a ruin being
   *discovered*, not cleared.
 - A **province landmark** pays 5 on claiming.
-- A **contested world-map landmark** ([`02-map-scopes.md`](02-map-scopes.md)
-  §4) pays a Knowledge lump when taken and nothing while held *(designed, not
+- A **world-map landmark** fills a store of Knowledge while its hex is held
+  and active ([`19-world-map.md`](19-world-map.md) §8) *(designed, not
   built)*.
 
 ## 8. Guild investment — designed, not built
@@ -495,10 +501,10 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 |---|---|---|
 | Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
 | **The bar** | 1/h up to 10 | `knowledge.basePerHour` · `knowledge.cap` |
-| **Gold price of a point** | base × n, never reset — **OQ-105** | `knowledge.goldPriceBase` |
-| **Gem price of a point** | fixed — **OQ-105** | `knowledge.gemsPerPoint` |
-| Landmark claim lump · per `Wayposts` rank | 5 · +20% | `knowledge.landmarkClaimLump` · `tech-tree.json` |
-| First-clear lump · per `Bounties` rank | 15 · +20% | `delve.firstClearKnowledge` · `tech-tree.json` |
+| **Gold price of a point** | 100 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
+| **Gem price of a point** | 270, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| Landmark claim lump · per `Wayposts` rank | 3 · +20% | `knowledge.landmarkClaimLump` · `tech-tree.json` |
+| First-clear lump · per `Bounties` rank | 3 · +20% | `delve.firstClearKnowledge` · `tech-tree.json` |
 | Chain Knowledge | 29 total | `quests` › `rewardKnowledge` |
 | What opens a book | §2 | `sim/research.ts` `TOME_OPENS` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |

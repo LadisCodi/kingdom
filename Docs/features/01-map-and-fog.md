@@ -4,8 +4,10 @@
 > reveal, and what the fog holds. The *scopes* the map splits into are
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
-> **Status: built.** The map is authored in the `?dev=map` editor
-> ([`../map-editor.md`](../map-editor.md)) and stored in
+> **Status: built** — the treasures, the abandoned buildings and the sea of
+> clouds the fog is drawn as (§4.2, §6.2, §6.3) since 2026-10-02, but for the
+> wisps of a tear and a reveal (Docs/implementation-plan.md Step 11). The map is authored in the
+> `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
 
 ## 1. The grid
@@ -195,7 +197,7 @@ Respawn:
 | State | Meaning |
 |---|---|
 | **Undiscovered** | not drawn |
-| **Discovered** | drawn under a scrim; terrain and feature visible; may be paid to clear |
+| **Discovered** | drawn under mist (§4.2); terrain and feature visible, a treasure as a closed chest, an abandoned building as its ruin (§6.2, §6.3); may be paid to clear |
 | **Revealed** | yours: buildable, tappable, workable |
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
@@ -217,7 +219,7 @@ Respawn:
 - A building's fog radii and a claim's discover ring ignore the reach, the way
   they ignore Sailing. Only the player's tap and a Divination are refused, and a
   refused tap costs nothing.
-- A Discovered cell past the reach stays visible under the scrim and draws like
+- A Discovered cell past the reach stays visible under the mist and draws like
   a cell the frontier has not reached.
 - **The reach is drawn**: a line of white dots, each ringed in a thin dark
   outline, along the last ring the player may pay for, with a soft shadow on
@@ -238,14 +240,15 @@ lies close enough to it.
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
 | Watchtower | 4 | `fog.sight.watchtower` |
 | A lair not yet found | its own, past its ground: Orcs 3, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
+| An abandoned building (§6.3), as its ruin | its own: the opening's 3 | `sight` on the building, in the map editor |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
   footprint. Discovered cells do not see.
 - A lair's sight reaches past its ground (`radius`), or it is 0 and never
   sighted: every cell of its ground finds it (`src/sim/data/mapRules.ts`).
-- **A silhouette is the thing's own drawing as one flat, cold, faint shape**
-  over the dark: no name, no badge, no bubble.
+- **A silhouette is the thing's own drawing as one flat, pale shape** rising
+  out of the cloud tops: no name, no badge, no bubble.
 - It stops being a silhouette once any cell of it is Discovered — a lair once
   it is found — and draws as itself.
 - **It ignores the Townhall's reach and the exploration gates.** Seeing what
@@ -256,6 +259,24 @@ lies close enough to it.
   towards it*, and costs nothing.
 - A scene may wait on it: the `sighted` condition
   ([`24-dialogue.md`](24-dialogue.md) §5).
+
+### 4.2 How the fog is drawn
+
+**A sunlit sea of clouds**, not darkness
+([`../art/art-direction.md`](../art/art-direction.md) §8.1, target
+[`../art/mockups/fog/sea-of-clouds.png`](../art/mockups/fog/sea-of-clouds.png)):
+
+| State | Drawn as |
+|---|---|
+| Revealed | full colour |
+| Discovered, payable | a thin veil of mist, the ground seen through it, desaturated |
+| Discovered, not payable | a low cushion of cloud, almost opaque; only tall things' tips show |
+| Undiscovered | the cloud bank, rising into a wall where it meets the mist |
+
+- The fog thickens step by step away from the cleared ground, so the cells a
+  tap can buy read at a glance.
+- Every fogged cell carries its own mist, so the grid reads cell by cell.
+- A tap tears the mist; a reveal blows it away and the colour comes back.
 
 ## 5. The price of a cell
 
@@ -287,8 +308,9 @@ fallback past ring 14. The province reaches ring 23.
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
-- **Every tap that takes flashes the cell white**, the last one too as it
-  clears — every cell of a block at once. A refused tap does not flash.
+- **Every tap that takes tears a fifth of the cell's mist away**, the last
+  one blowing it off — every cell of a block at once (§4.2). A refused tap
+  tears nothing.
 - At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
   the outer third of it is most of that; the count multiplier only raises it.
   It is the largest Gold sink in the game by three orders of magnitude. What
@@ -302,12 +324,14 @@ fallback past ring 14. The province reaches ring 23.
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
 | **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
 | **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
+| **Treasures** | one every five cells revealed | a coin, once (§6.2) | reveal its cell, tap to pick up |
+| **Abandoned buildings** | authored | a building, once repaired (§6.3) | repair |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
-  through the Discovered scrim once discovered.
+  through the Discovered mist once discovered.
 - **A site coming into view is announced once**, by a banner — unless a
   scene introduces it ([`23-tutorials.md`](23-tutorials.md)), which then says
   it instead. A resource is never announced: its coin lands on the plank.
@@ -375,11 +399,92 @@ Costs are **authored per sanctuary**, not derived from distance.
 - Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
   [`combat.md`](combat.md).
 
+### 6.2 Treasures
+
+What the people who fled left on the ground, found at a steady pace in
+whatever direction the player explores.
+
+- **One is due every `treasure.everyReveals` cells the player pays to
+  reveal**, the first on the very first. A cell revealed by a building or a
+  claim does not count.
+- **It lands in a cell that reveal discovered** — one of the neighbours that
+  just turned Discovered, bare ground before a feature, chosen by
+  `rand(seed, n)` for the kingdom's n-th treasure. The cell must be one the player can pay for now: inside the
+  reach, dry unless Sailing is known, and not under a site, an abandoned
+  building or a feature that spans cells.
+- **No newly discovered cell qualifies?** It takes another Discovered
+  neighbour of the cell just revealed; failing that, it waits for the next
+  paid reveal. One reveal places one treasure at most.
+- **Discovered, it shows as a closed chest** under the mist: the player sees
+  something to go and get, not what is in it.
+- **Revealing its cell opens it**: its coin rises out of the chest under a
+  glint. **A tap picks it up, free** — no Mana, as a store is collected free.
+  On a cell with a feature the first tap picks up the treasure and the next
+  harvests; a forest still closed by Forestry gives its treasure.
+- **A treasure is one coin the plank already shows**: Gold, Food, Wood, or
+  Stone once Stone is on the plank, by `treasure.weights`, rolled for the
+  n-th treasure; rarely Knowledge, which lands over the bar's cap like a
+  lump.
+- **It pays `treasure.workSeconds` of the kingdom's production of its coin**,
+  floored at `treasure.floor`, priced when it is picked up. Knowledge pays a
+  fixed `treasure.knowledge`. **The first is fixed** — `treasure.first`, 20
+  Gold — for the First Morning ([`23-tutorials.md`](23-tutorials.md) §3).
+- It waits for ever, discovered or revealed. Workers never take it; placing
+  a building on its cell picks it up.
+
+### 6.3 Abandoned buildings
+
+The village the fog swallowed: buildings standing in ruin where the fog took
+them, to be found and repaired.
+
+- **Authored in the map editor**: a building from `buildings`, its cell, its
+  `sight` and the name its card and banner carry, the same for every kingdom.
+- **Every building has its own ruined drawing** of its level 1
+  (`<sprite>_ruin.png`).
+- **It is found the way a landmark is**:
+
+| Fog | Shows |
+|---|---|
+| Undiscovered, out of sight | nothing |
+| Undiscovered, in sight (§4.1) | **the silhouette of its ruin** — something stands there, not what |
+| Discovered | its ruin under the mist, and a banner names it (*An abandoned Sawmill!*) unless a scene says it instead |
+| Revealed | its ruin, and a tap opens its card |
+
+- A footprint is revealed all at once, priced as a feature's (§3.1).
+- **Its card** says what the building is and what it does, and offers
+  **Repair**.
+- **Repairing it is building it at level 1, where it stands**: the level-1
+  cost at the next ordinal, a builder and the level-1 time
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §3,
+  [`06-construction.md`](06-construction.md) §1). It is refused as a build is
+  — no builder free, the count cap reached, a coin short.
+- **No technology is asked.** The technology that unlocks a building opens
+  building more of it; its levels stay gated as for any other.
+- **While abandoned it only takes up its cells**: no production, store, crew,
+  area, adjacency or Harmony, no place in the count cap, and it cannot be
+  moved.
+- **Once the repair starts it is that building**: stamped with its ordinal,
+  under construction, then finished at level 1, revealing and discovering its
+  ground and in every way one the player built.
+- **The opening's**, inside the first Townhall's reach, each in sight of the
+  starting ground:
+
+| Building | Where |
+|---|---|
+| **the old House** | ring 3, past the first forest |
+| **two old plots** (FarmLands) | by the berries |
+| **the old Farm** | beside the old plots, working both |
+| **the old Sawmill** | ring 3, in the thickest trees |
+
+- **Every abandoned building can be repaired at the Townhall level whose reach
+  first covers it**: the count cap at that level leaves room for every
+  abandoned one of its kind inside that reach (`mapRules.ts`).
+
 ## 7. Where the map is authored
 
 - **`?dev=data` is the source of truth for every number; the map editor is the
   source of truth for the map.**
-- Terrain, features, landmarks and ruins live in
+- Terrain, features, landmarks, ruins and abandoned buildings live in
   `src/sim/data/region-map.json`, painted in `?dev=map`
   ([`../map-editor.md`](../map-editor.md)).
 - What a legal map is lives in one module, `mapRules.ts`, checked by the
@@ -403,6 +508,11 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| How often a treasure is due | every 5 cells revealed | `treasure.everyReveals` |
+| What a treasure pays | 120 s of the kingdom's production, floored at 10 Gold · 5 Food · 5 Wood · 5 Stone | `treasure.workSeconds`, `treasure.floor` |
+| Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
+| The first treasure | 20 Gold | `treasure.first` |
+| Where the abandoned buildings stand | §6.3 | the map editor |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
@@ -430,6 +540,10 @@ Costs are **authored per sanctuary**, not derived from distance.
 - Line of sight: nothing hides a silhouette (§4.1).
 - A silhouette that says which ore or which landmark it is, or a banner when
   one appears.
+- A treasure placed by the map, or one the player cannot pay to reach.
+- A treasure that expires, or one a worker picks up.
+- An abandoned building above level 1, or one repaired for less than a build.
+- A generic ruin: an abandoned building is always seen as the building it is.
 
-**Open questions:** OQ-49, OQ-50, OQ-92 in
+**Open questions:** OQ-49, OQ-50, OQ-92, OQ-120 in
 [`../open-questions.md`](../open-questions.md).

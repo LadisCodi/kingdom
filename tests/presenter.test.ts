@@ -388,7 +388,7 @@ describe('the banner queue', () => {
     game.doClaimLandmark(tower.location);
     expect(state.landmarks.claimed[tower.id]).toBe(true);
     // Its wider sight may bring OTHER sites into view; those are news.
-    const sightings = new Set(['A place of power!', 'Lair sighted!']);
+    const sightings = new Set(['A place of power!', 'Lair sighted!', 'An abandoned building!']);
     expect(drain(game).filter((t) => !sightings.has(t))).toEqual([]);
     state.pendingDiscoveries.push('resource:Wood');
     game.notify();
@@ -831,7 +831,7 @@ describe('the heroes screen signature', () => {
 describe('the overlay signatures', () => {
   it('hold still on a tick that changed nothing they draw', () => {
     const game = freshPresenter();
-    for (const name of ['daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
+    for (const name of ['iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
       const before = game.overlaySignature(name);
       expect(before, name).not.toBeNull();
       game.tick();

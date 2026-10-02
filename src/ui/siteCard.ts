@@ -1,4 +1,5 @@
-// The card for a map SITE — a landmark, or a lair (`lairCardScreen`).
+// The card for a map SITE — a landmark, an abandoned building, or a lair
+// (`lairCardScreen`).
 //
 // These are what paid fog is FOR. A player who clears a distance-9 ring and
 // finds one more iron vein has learned that exploring is a treadmill; a player
@@ -8,8 +9,9 @@
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  FOG, LAIRS, LANDMARK_ART, MANA, type LandmarkDef,
+  DISTRICTS, FOG, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
 } from '../sim/data/definitions';
+import { nextBuildCost } from '../sim/districts';
 import type { LairView, RaidableId } from '../sim/lairs';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
@@ -103,6 +105,35 @@ function giftChip(icon: IconName, value: string, caption: string): HTMLElement {
   return el('div', { class: 'lc-chip lm-chip k-section' },
     el('div', { class: 'lm-chip-line' }, iconEl(icon, { size: 'lg' }), el('b', { class: 'lc-chip-value' }, value)),
     el('span', { class: 'lm-chip-caption' }, caption));
+}
+
+/**
+ * AN ABANDONED BUILDING'S CARD (Docs/features/01-map-and-fog.md §6.3) — the
+ * landmark card's frame and tiles: the name on the plank, its ruin on a
+ * tile, what it does once it stands again, and Repair — a build at level 1,
+ * where it stands, at the price of the next one of its kind.
+ */
+export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement {
+  const def = DISTRICTS[site.districtId];
+  const url = spriteUrl(`${def.sprite}_ruin`);
+  return el('div', { class: 'dc lc lm' },
+    el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+    windowHead(site.name, [closeKnob(() => game.dismiss(), `Close ${site.name}`)]),
+    el('div', { class: 'lm-art k-section' },
+      url ? spriteImgAt(url, 'lm-art-img is-ruin') : el('div', { class: 'lc-art-glyph' }, def.glyph),
+      el('p', { class: 'lm-status' }, 'Abandoned')),
+    el('p', { class: 'lm-note' }, def.promise),
+    el('p', { class: 'lm-note' },
+      'Left to the fog when its people fled. Repair it and it is yours, '
+      + 'exactly as if you had built it.'),
+    // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
+    el('div', { class: 'lc-go', 'data-coach': 'repair' }, btn({
+      label: 'Repair',
+      kind: 'primary',
+      onClick: () => game.doRepairAbandoned(site.location),
+      cost: nextBuildCost(game.state, site.districtId),
+      have: (c) => game.walletValue(c),
+    })));
 }
 
 /**

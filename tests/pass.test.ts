@@ -249,7 +249,7 @@ describe('a mission pays twice', () => {
     state.city.wallet.Mana = manaCap(state);
     expect(claimMission(state, m.uniqueId, T0)).toBe('Claimed');
     // Clamping to a ceiling the player is already at would pay nothing and
-    // read as broken — the daily chest's rung makes the same argument.
+    // read as broken — the ad reward makes the same argument.
     expect(getWallet(state.city.wallet, 'Mana'))
       .toBe(manaCap(state) + Math.round(manaCap(state) * MISSIONS.rewardManaFraction));
   });

@@ -66,7 +66,11 @@ export function questValue(state: GameState, quest: QuestDef): number {
     // Counted the moment the build STARTS: a build cannot be cancelled, so
     // the building is the player's from then, and waiting for the scaffold
     // only slows the chain down.
+    // RepairDistrict asks for the ruin and counts as a build: a building of
+    // its kind however it came, so one raised elsewhere never strands it
+    // (Docs/features/01-map-and-fog.md §6.3).
     case 'BuildDistrict':
+    case 'RepairDistrict':
       return state.city.districts.filter((d) => d.definitionId === quest.goalTarget).length;
     case 'UpgradeDistrict':
       return state.city.districts.filter(

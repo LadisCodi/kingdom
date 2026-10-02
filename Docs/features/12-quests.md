@@ -1,8 +1,7 @@
-# 12 · Quests, onboarding and the daily habit
+# 12 · Quests and onboarding
 
-> **Scope.** The single quest chain, the first-user experience it authors, and
-> the **daily chest** — a 20-day season of 14 rungs with a free track and a
-> paid one.
+> **Scope.** The single quest chain and the first-user experience it
+> authors.
 >
 > **Status: built.**
 
@@ -32,6 +31,10 @@
   cannot be cancelled, so it is the player's from then; the quest does not
   wait for the scaffold. What needs the building *standing* — its workers, a
   villager's roof — waits for it on its own.
+- **`RepairDistrict` asks for an abandoned building** — *repair the old
+  farm* — and counts as `BuildDistrict` does: a building of its kind,
+  however it came. Its 🔍 points at the ruin
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3).
 - **`DiscoverCells` is a total** — *clear the fog from 32 tiles in all*, the
   same count the book bands read. A player who cleared everything in reach
   before the quest arrived is never stuck behind it.
@@ -41,7 +44,7 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
+| BuildDistrict · RepairDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
 - **`FindLairs` counts lairs found**, cleared or not — a lair is found when a
   cell of its zone is revealed. The Book of Warfare opens on the first, so the
@@ -82,10 +85,10 @@
 
 | # | Quests | The beat | Opens |
 |---|---|---|---|
-| **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells, Forestry, 25 Wood, a House, Food, a villager, rent | Research, Knowledge, Build, the daily chest |
-| **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
-| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
-| **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
+| **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge |
+| **8–13** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, a worker | |
+| **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build** |
+| **20–25** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
 | **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
 | **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
@@ -94,6 +97,11 @@
 | **57–63** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
 | **64–67** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
+- **The fog's buildings come first, the player's own after.** The House, the
+  plots, the Farm and the Sawmill of the opening are abandoned ones, found
+  and repaired ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3); the
+  technology that unlocks each comes after Townhall 2 and opens building
+  more. A repair counts for a goal that asks for that building.
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
   Hospitality) rather than pointing past cards the player cannot start.
@@ -110,7 +118,7 @@
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **sixteen quests pay Knowledge**,
+  Quest 1 pays Forestry's 2 outright, and **eighteen quests pay Knowledge**,
   placed so that every card the chain demands up to `Attuned` — quest 35,
   Consecration — is affordable **with no drip at all**, prerequisites included.
   **The quest just before each of those research quests pays its card's
@@ -128,6 +136,9 @@
   opening is short of, not coin: a reward that buys taps arrives exactly where
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
+- Quest 1's first reveal sets the first treasure beside it, **20 Gold**
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2); revealing its cell is one
+  more cell, and `ARoof` asks for another, the old House's.
 - Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
   — the first four cards are priced in Knowledge alone — and 2 Knowledge,
   which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the
@@ -153,200 +164,31 @@
 - With the 500 grant and 2,500 from five ruin first-clears: **3,750 by play**,
   which reaches the second builder (2,500) and a pull
   ([`14-monetization.md`](14-monetization.md) §2.2). Later rungs come from the
-  daily chest (~one a month) or a wallet.
+  season pass's free column ([`20-season-pass.md`](20-season-pass.md) §2) or a
+  wallet.
 - **Stardust is paid only past the first summon** — `FirstSummon`,
   `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
   hero ladder it buys is open.
 
-## 3. The daily chest
-
-> **Status: built.**
-
-### 3.1 The season
-
-- The chest is a **season**: **14 rungs** inside a **20-day window**.
-- **A rung is a day PLAYED, not a day passed.** Rung 1 the first day the game
-  is opened inside the window, rung 2 the second, whatever the gap. 14 rungs in
-  20 days leaves **six missable days**.
-- **A rung reached is paid and never retracted.** What expires is the chance to
-  earn more ([`13-events.md`](13-events.md) §2.6).
-- **Seasons are back-to-back and global**, derived from the instant:
-  `floor(t / 20 days)`. No gap day, no per-player anchor, nothing to schedule.
-- At the turn of a season the rung count returns to 0 and unclaimed rungs are
-  gone. Nothing else carries over.
-- **The window is the one deadline in the game.** It is deliberate: the Royal
-  chest is a season product and a season needs an end.
-
-### 3.2 The two tracks
-
-One ladder, two columns ([`13-events.md`](13-events.md) §2.4, OQ-20), and
-**every cell is its own button**. Tapping the day's free cell is what takes
-the day and advances the ladder; each Royal cell is a separate tap. The reward
-and the thing you press are the same object.
-
-| Rung | Free | Royal |
-|---|---|---|
-| 1 | Mana ~⅓ | 500 Gems |
-| 2 | Mana ~⅓ | 500 Gems + a gold key |
-| 3 | Mana ~½ + **200 Gems** | 800 Gems + Hero XP |
-| 4 | Mana ~⅓ | 800 Gems + a gold key |
-| 5 | Mana ~½ | 1,000 Gems |
-| 6 | Mana ~⅓ + **400 Gems** | 1,000 Gems + a gold key + Hero XP |
-| **7 · half marker** | **a full pool** | **3,000 Gems + two gold keys** |
-| 8 | Mana ~⅓ | 1,200 Gems |
-| 9 | Mana ~½ + **600 Gems** | 1,200 Gems + a gold key + Hero XP |
-| 10 | Mana ~⅓ | 1,500 Gems |
-| 11 | Mana ~½ | 1,500 Gems + a gold key |
-| 12 | Mana ~⅓ + **800 Gems** | 2,000 Gems + Hero XP |
-| 13 | Mana ~½ | 2,000 Gems + a gold key |
-| **14 · season marker** | **a full pool + 1,000 Gems** | **8,000 Gems + two gold keys + Hero XP** |
-
-- **The free column is Mana**, with Gems on five rungs — **3,000 a season**,
-  the recurring F2P Gem faucet, ~4,500 a month. That pays a free player three
-  gold keys or a builder and change every month.
-- Mana is a **fraction of the cap**, never an absolute, and lands **on top of
-  the cap** like the ad reward.
-- **Hero XP is priced in hours of the city's own XP trickle**, with an authored
-  floor — the same rule as a tap's `workSeconds`. An absolute XP number goes
-  stale by era three. The floor is **20,000 a grant**, so a city with no ruin
-  income still takes **100,000 XP** out of a season and one that is clearing
-  rooms takes more.
-- Gems and gold keys are absolute: neither has a production rate to be a
-  fraction of.
-- The Royal column pays a season of **25,000 Gems, ten gold keys and five XP
-  grants**. Counted at the pass's own rate — a gold key at its shop price of
-  1,500 Gems, Hero XP at **10 XP a Gem** — that is **50,000 Gems of value, the
-  $99.99 pack, for $9.99**.
-- **Half of it is deliberately not Gems.** A pass that paid 50,000 Gems would
-  end the six Gem packs, and the packs are how the store measures intent
-  ([`14-monetization.md`](14-monetization.md) §2.2). Keys and XP are the other
-  half, and XP is the part no amount of Gems buys anywhere else in the game.
-  That is the product.
-
-### 3.2.1 Taking a rung
-
-- **The free cell of the day's rung is the claim.** One a day, in order, and it
-  is what moves the ladder.
-- **A Royal cell is claimable once its rung has been climbed**, the chest is
-  owned, and it has not been taken. No daily limit: as many as are open.
-- **Royal cells are taken in any order and at any pace** inside the window.
-- Three states, and they are the whole read of the sheet: **waiting** (lit and
-  pulsing), **taken** (lit, with a tick — a day you took is something you
-  have), **locked** (dimmed but fully legible, so the price shows exactly what
-  it buys on the rows already climbed).
-- The sheet stays open after a tap. Thirteen more cells are on it.
-
-### 3.3 The Royal chest
-
-- **$9.99, one season.** A real-money SKU against the simulated budget
-  ([`14-monetization.md`](14-monetization.md) §3), never a Gem price
-  (OQ-25).
-- **The buy button is the Royal column's header**, carrying the price. Bought,
-  the header becomes the column's name and the padlocks go.
-- **Buying OPENS every rung already climbed this season.** It grants nothing
-  on the spot: what it hands over is a column of cells to tap. There is no
-  reward for buying early and nothing lost by buying late.
-- **It does not carry to the next season.** A season is the unit.
-- Sold **only here**. The store lists no card for it: the column beside the
-  free one is what explains the price.
-
-### 3.4 The pill and the sheet
-
-- **The chest is a pill, not a modal, and it never opens itself.**
-- The pill **glows** while a rung is claimable, or while any Royal cell is
-  waiting to be taken.
-- With every rung claimed and the Royal chest unbought, **the pill stays,
-  unlit, until the season closes** — the purchase has to stay reachable
-  (§3.3). With everything claimed and the chest bought, it sleeps until the
-  next season.
-- The sheet carries **the season countdown** at its head. It is the deadline,
-  so it is stated.
-- Rungs behind the player are shown **lit, not greyed**. Locked Royal cells
-  carry a padlock.
-
-### 3.5 Rollover
-
-- **The day rolls over at 00:00 UTC**, and so does the season boundary.
-- **A missed day is never paid retroactively.** One claim a day, no backlog.
-- `lastClaimedDay` is stamped, not incremented, so a second claim in one day is
-  impossible however the clock moves — including backwards.
-- Nothing here is a boundary source in `advance()`: a daily timer would propose
-  a boundary a day across a long absence for no simulation benefit, and
-  claiming is always a live player command.
-
-### 3.6 Where it lives
-
-- `sim/daily.ts`: `seasonIndex(t) = floor(t / seasonMs())` beside `dayIndex`,
-  both derived from the instant and neither ever written. `freeReward` and
-  `royalReward` are separate functions; `claimDailyChest` pays the first
-  always and the second only when the season is bought.
-- `state.kingdom.daily` is
-  `{ season, rung, lastClaimedDay, royalSeason, royalClaimed }`.
-  `royalSeason` is the season index the chest was bought for, so "is it
-  bought" is a comparison and never a flag anything has to clear.
-- **A stale `season` READS as rung 0** — `rungsClaimed` reports it without
-  writing, so a season turns over with nothing ticked and nothing reset.
-- `claimFreeRung` takes the day; `claimRoyalRung(rung)` takes one Royal cell.
-  `royalClaimed` is a list of rung numbers, not a count, because the cells are
-  taken out of order.
-- `buyRoyalChest` spends the budget through `buySku('RoyalChest')`, so the
-  purchase log, the refusal counter and the monthly allowance see it exactly
-  as they see a Gem pack. It pays nothing — it stamps `royalSeason`, and the
-  cells become claimable. The SKU's `gems` is 0.
-- **Reads never write.** `normalise` is the one place that brings a stale
-  season onto the current one, and only a claim or a purchase calls it.
-- The store's pack grid reads `GEM_PACK_ORDER`, not `STORE_ORDER`, which is
-  what keeps a non-pack SKU off the shelf.
-- **Not** a boundary source in `advance()` (§3.5).
-- `SAVE_VERSION` 35, with a migrator that drops the old `LadderStep`.
-- Settings: `daily.seasonDays`, `daily.gems`, `daily.premiumGems`,
-  `daily.premiumGoldKeys`, `daily.premiumXpHours`,
-  `daily.premiumXpFloor`, and `collection.xpTricklePerTierDepth` for the
-  XP rate.
-
-## 4. Dials, in the order to reach for them
+## 3. Dials, in the order to reach for them
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | a 20-day window | `daily.seasonDays` |
-| Ladder length | 14 rungs — **the length of the reward lists**, not its own dial | `daily.manaFractions` |
-| Mana ladder | fractions of the cap, a full pool at 7 and 14 | `daily.manaFractions` |
-| Free Gems (the recurring F2P faucet) | 200 / 400 / 600 / 800 / 1,000 — **3,000 a season** | `daily.gems` |
-| Royal Gems | **25,000** a season | `daily.premiumGems` |
-| Royal Hero XP | 12 hours of the XP trickle, floored at **20,000** a grant — five grants | `daily.premiumXpHours`, `daily.premiumXpFloor`, `collection.xpTricklePerTierDepth` |
-| Royal gold keys | **ten** a season | `daily.premiumGoldKeys` |
-| The Royal chest's price | **$9.99** for 50,000 Gems of value | `store` |
 | The chain | list order is chain order | `quests` |
 
-## 5. Acceptance
+## 4. Acceptance
 
-- A player who opens the game on day 15 of a season **has a rung waiting** and
-  is not behind.
-- A two-week absence loses the season, not the account: the next season opens
-  at rung 1 with nothing owed.
-- Buying the Royal chest on rung 9 lights nine Royal cells at once, and every
-  one of them can be taken that same minute.
-- A player who claims all 14 rungs on day 16 can still buy the Royal chest on
-  day 19, and cannot on day 21.
 - The opening is played through the real sim with **nothing granted** and
   reaches the end of the authored chain without a dead end.
 - `ClearGarrisons` is the one goal type added since the chain was written,
   and it pays Gold only.
 
-## 6. Deliberately not in this design
+## 5. Deliberately not in this design
 
-- **A streak that can be lost.** A rung reached is paid; the window is what
-  ends.
-- **A streak-repair SKU**, and no way to buy back a missed day.
-- **A Gold rung.** The free column is Mana and Gems; Gold is not the scarce
-  coin by the time a season matters.
-- A chest that opens itself.
-- A second Royal purchase inside one season, and a Royal chest that carries
-  over into the next.
-- **A claim-all button**, and a single button that pays both tracks. The day is
-  taken by pressing the day.
-- A daily limit on Royal cells. The free cell is one a day; the paid column is
-  not rationed twice.
+- **A login ladder.** Coming back tomorrow is the stores and the Mana well
+  filled overnight; the ladders pay for playing and for exploring
+  ([`20-season-pass.md`](20-season-pass.md),
+  [`25-the-survey.md`](25-the-survey.md)).
 - A second quest chain. Branching quests.
 - **Generated orders ON THIS BOARD.** A recurring generated ask exists — it is
   the season pass's mission board ([`20-season-pass.md`](20-season-pass.md)

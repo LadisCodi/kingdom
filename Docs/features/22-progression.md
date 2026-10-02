@@ -33,8 +33,9 @@
 
 | When | What the player meets | Opened by |
 |---|---|---|
-| **Minute 0–10** · the First Morning | fog, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, building, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
-| **Session 1** | farms, workers, the Sawmill, Townhall 2 | the quest chain |
+| **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
+| **Session 1** | silhouettes in the fog; the old plots, the old Farm and workers; **the Build tab** and a second House; the old Sawmill; Townhall 2 | the quest chain |
+| **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing a lair's ground; Isolde hands over the book |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 43 cells revealed |
@@ -49,13 +50,13 @@
 | Door | Opens when | While shut |
 |---|---|---|
 | **Research** (nav) | the quest `Woodcraft` is reached | padlocked — *Finish your first task to open this* |
-| **Build** (nav) | the quest `ARoof` is reached | padlocked — *Gather some Wood to open this* |
+| **Build** (nav) | the quest `GrowingTown` is reached — the first building the fog did not keep | padlocked — *Settle a second villager to open this* |
 | **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to open this* |
 | **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to open this* |
 | **Store** (nav), and the Gems on the plank | the Townhall reaches **level 2** | padlocked — *Raise the Townhall to level 2 to open this* |
+| **Survey** pill ([`25-the-survey.md`](25-the-survey.md)) | the Townhall reaches **level 2**, with the Store | absent |
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
-| **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
 | **Season** pill | as today — a card or a pack held | absent |
 | **The Book of Civics** | always open | — |
 | **The Book of Warfare** | Isolde **hands it over**, once the first lair is discovered and its card opened (`firstLair`, [`23-tutorials.md`](23-tutorials.md) §4.2) | a padlocked bookmark — *Find a lair* |
@@ -100,18 +101,19 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
-| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 5 Knowledge; **the Book of Magic opens** |
-| **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 5 Knowledge |
+| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 3 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 3 Knowledge; **the Book of Magic opens** |
+| **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 3 Knowledge |
 
 - **A landmark inside a standing lair's ground cannot be claimed.** The
   Thorned Shrine waits for the Orcs to fall, so the book of the army always
   opens before the book of magic.
 - The Watchtower is claimed like any landmark. Its kind is what makes it a
   door; its price is authored in the map editor.
-- **The world door opens a preview** until the world map is built: a sheet
-  showing the province as one hex among its neighbours, the other kingdoms
-  in fog, and *The roads beyond the mountains are being scouted.*
+- **The world door opens the world board**
+  ([`19-world-map.md`](19-world-map.md)): the knob takes the player out to
+  the board and, wearing the castle, back home. Cartography, in the Atlas the
+  same claim opens, sends the first explorer.
 
 ## 6. The Tavern and the heroes
 
@@ -208,7 +210,7 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
 | The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |
 | Hero XP per Tavern level | +10% | `buildings` › `Tavern` › `heroXpBonusPerLevel` |
-| Which quest opens Research and Build | `Woodcraft` · `ARoof` | `sim/unlocks.ts` |
+| Which quest opens Research and Build | `Woodcraft` · `GrowingTown` | `sim/unlocks.ts` |
 | What opens a book | §4 | `sim/research.ts` `TOME_OPENS` |
 
 ## 11. Deliberately not in this design
@@ -222,7 +224,7 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
   Morning is played on the save.
 - Heroes before the first lair; a random first free call.
 - A Tavern that sells calls. The banner sells them; the Tavern hosts it.
-- The world map itself — the door opens a preview until it is built
-  (**OQ-114**).
+- Claiming, contesting or the Portal on the world board — the door opens
+  onto exploring only until those are built (**OQ-114**).
 
 **Open questions:** **OQ-114**, **OQ-115**, **OQ-116**.

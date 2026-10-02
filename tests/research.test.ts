@@ -582,12 +582,12 @@ describe('planned technologies', () => {
   // when the book was laid out — with every requirement one row up, a card
   // that does nothing is a toll on the way to one that does, and the answer
   // for a Civics page with no room for a leaf was to drop them.
-  it('are exactly the six the design lists, and no more', () => {
+  it('are exactly the five the design lists, and no more', () => {
     // The tree was rebuilt on 2026-10-01 (Docs/features/22-progression.md §9):
     // a planned card is a promise of a mechanic still to come, one per book
-    // at most a couple, and the Atlas's Cartography is the world map's.
+    // at most a couple. Cartography left the list with the world board.
     expect(PLANNED.sort()).toEqual([
-      'Cartography', 'Invocation', 'LeyLines', 'LeyReading', 'LeyStorm', 'Rumours',
+      'Invocation', 'LeyLines', 'LeyReading', 'LeyStorm', 'Rumours',
     ].sort());
   });
 

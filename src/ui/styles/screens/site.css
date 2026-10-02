@@ -135,6 +135,15 @@
   height: calc(100% - var(--px) * 20);
   object-fit: contain;
 }
+/* A ruin is map art: its canvas carries the headroom a building of its kind
+   would rise into, so it stands on the tile's floor, twice as tall, and the
+   empty sky goes out of the top. */
+.lm-art-img.is-ruin {
+  top: auto;
+  bottom: calc(var(--px) * 6);
+  height: 180%;
+  object-position: center bottom;
+}
 /* Whether it is yours: the reward chip's "full" tag, in the tile's corner. */
 .lm-status {
   position: absolute;

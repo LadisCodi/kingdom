@@ -13,8 +13,8 @@
   - In the province a tap on the ground is a small spell that hurries
     production. A tap on a building is free: it collects the building's store
     ([`03-economy.md`](03-economy.md) §3.2).
-  - On the world map it bends an expedition, reveals what a node holds, or
-    shortens a march.
+  - On the world map Mana costs nothing; a held Sanctuary raises the cap
+    ([`19-world-map.md`](19-world-map.md) §8).
 - Mana is capped, and Mana over the cap is lost. (Knowledge is capped too,
   but only its drip stops — [`07-research.md`](07-research.md) §3.)
 - Mana is city-scoped.
@@ -119,8 +119,8 @@ Two routes pay it, and they share nothing but the prize.
 
 - One counter per route. Spending the videos never closes the ladder, and
   buying pools never costs a video — so the day's ceiling is **ten refills**.
-- Both reset at **00:00 UTC**, for the reason [`12-quests.md`](12-quests.md) §4
-  gives for the chest: the sim may not read a clock it was not handed.
+- Both reset at **00:00 UTC**: the sim may not read a clock it was not
+  handed, so the day is the instant's, never the viewer's.
 - Both roll **lazily**, on the next read, so nothing happens at midnight and a
   session left open across it resolves correctly.
 

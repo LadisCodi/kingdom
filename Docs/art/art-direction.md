@@ -36,7 +36,7 @@ nearest-neighbour ever again.**
 
 | | **The city** | **The world board** |
 |---|---|---|
-| Camera | **isometric 2:1** (§3) | **flat, top-down** |
+| Camera | **isometric 2:1** (§3) | **a slight tilt** (§7.1) |
 | The unit | a square cell, drawn as a diamond | a pointy-top hexagon |
 | What it is for | *a diorama you look into* | *a map you read* |
 | Palette | the same | the same |
@@ -44,10 +44,9 @@ nearest-neighbour ever again.**
 - **One palette, one terrain set, one light.** The two scales differ in camera,
   never in colour: a single set of terrain art serves both, and the money saved
   is a second terrain set never made (closes OQ-66).
-- The world board is flat because its job is **counting** — hexes, distance,
-  borders, ownership ([`../features/19-world-map.md`](../features/19-world-map.md)
-  §1.2). An isometric hex board makes distance harder to read, which is the
-  hexagon's only job.
+- The world board's tilt is slight: rows stay straight and every hex is the
+  same size, so hexes, distance, borders and ownership still count at a glance
+  ([`../features/19-world-map.md`](../features/19-world-map.md) §1.2).
 - What carries continuity between them is the palette, the light and the
   silhouettes — not the camera.
 
@@ -132,7 +131,7 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 
 ## 7. The hex board
 
-- **Pointy-top hexagons, flat camera.**
+- **Pointy-top hexagons, a slight tilt** (§7.1).
 - Two zoom registers ([`../features/19-world-map.md`](../features/19-world-map.md)
   §1.2), one asset set serving both:
 
@@ -143,12 +142,31 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 
 - **Author at the tactical size and downscale.** A hex asset is **256 px wide ×
   296 px tall** (pointy-top: height = width × 2/√3), generated at 2×.
-- **A hex holds 0…N features**, so its art is a base terrain plate plus
-  composable props — never one baked illustration per combination.
+- **A hex is a terrain plate plus one sprite for its combination** of
+  terrain and features — a forested mountain is one drawing, not a mountain
+  beside some trees. Generation only makes the combinations that have art
+  ([`../plans/world-hex-art.md`](../plans/world-hex-art.md) §1–§2).
+- **An improvement's art includes the feature it works** (the Logging Camp
+  among its trees); what it does not work stays drawn behind it.
 - **Three or four content elements read comfortably on a tactical hex.** Past
   that, the hex is overloaded and something must be dropped or merged.
 - Ownership reads as a **border colour on the hex edge**, never as a tint over
   the ground — a tinted hex fights the terrain it is meant to identify.
+
+### 7.1 The tilt
+
+- **The ground is squashed to 72 % top to bottom** — the board seen from a
+  little south of overhead. No vanishing point: a far hex is as big as a near
+  one.
+- **Only the ground tilts.** Terrain plates, hex edges, borders, rims and
+  route rings are squashed; castles, trees, mountains, buildings and figures
+  stand upright, their foot on the squashed ground.
+- **A tile has thickness**: a side 16 % of the hex's radius deep under its two
+  lower edges, the right face in shade. Packed earth under revealed and sensed
+  ground, grey under the mist.
+- The row in front hides that side, so it shows only along the near rim of the
+  board, and where explored ground meets the mist.
+- **Hex art is still authored flat** (256 × 296) and squashed when drawn.
 
 ## 8. States the map has to show
 
@@ -156,16 +174,62 @@ Every one of these is a treatment of the same asset, never a second asset.
 
 | State | Treatment |
 |---|---|
-| **Undiscovered** | opaque rolling mist; the hex or cell is not there |
-| **Discovered / Sensed** | dimmed, desaturated, half-veiled; silhouettes show through |
+| **Undiscovered** | the cloud bank (§8.1); the hex or cell is not there |
+| **Discovered / Sensed** | under low mist, desaturated (§8.1); silhouettes rise out of the clouds |
 | **Revealed** | full colour, the default |
 | **Exhausted** (a harvest cell) | the same tile, spent — stumps, bare soil, still clearly the same place |
 | **Under construction** | scaffold and a pit, at the building's own footprint |
 | **Selected / valid target** | a warm rim on the diamond's edge, never a fill |
 | **Inactive** (a world hex off the chain) | greyed toward the Sensed treatment, buildings intact |
 
-- **Unexplored ground is darker, simpler and less saturated — and still the same
-  stylized world.** It is never a flat grey void.
+- **Unexplored ground is under a sunlit sea of clouds — and still the same
+  stylized world.** It is never dark, and never a flat grey void.
+
+### 8.1 The fog: a sea of clouds
+
+*Built 2026-10-02 but for the wisps (Docs/implementation-plan.md Step 11).*
+
+The fog that swallowed the kingdom is a bright sea of clouds lying on the
+province under the midday sun. Target:
+[`mockups/fog/sea-of-clouds.png`](mockups/fog/sea-of-clouds.png).
+
+| Fog state ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4) | Drawn as |
+|---|---|
+| **Revealed** | full colour — the only coloured ground on screen |
+| **Discovered, payable** | a thin see-through veil, ankle-high: terrain desaturated with a pale sheen, tree crowns standing out of it almost whole |
+| **Discovered, not payable** | a low cushion of cloud, almost opaque: terrain hidden, only the tips of tall things poking out |
+| **Undiscovered** | the cloud bank: sculpted cumulus filling everything, rising into a rounded wall about a cell high where it meets the mist, the wall's shadow on the cells in front of it |
+
+- **The clouds are a stylized material**, like the tree canopies: chunky,
+  softly bevelled, three flat tones and a clean edge — never photographic,
+  wispy, grey or gloomy.
+
+| Tone | Value |
+|---|---|
+| Cloud top, sunlit | `#EAE2EB` |
+| Cloud mid | `#BCC2F7` |
+| Cloud shadow, the wall's shadow | `#ABB5F3` |
+| The not-payable cushion | `#DFD8EB` |
+
+- **One cushion a cell.** Every fogged cell carries its own mist on its own
+  diamond, dipping a little at the edges, so the grid reads from the dips and
+  no line is drawn.
+- **Density is height.** The veil, then the cushion, then the wall: the fog
+  rises step by step away from the cleared ground.
+- **A sighted thing rises out of the cloud tops**
+  ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4.1) as a
+  flat, pale shape in the cloud-shadow tone, hazy at its foot: something
+  stands there, not what.
+- **A treasure's chest and an abandoned building's ruin** show through the
+  veil as themselves, desaturated with the ground.
+- **A tap tears the cushion**: each of the five takes a fifth of the mist off
+  the cell, torn from the middle, with curling wisps lifting away.
+- **A reveal blows it away**: the last wisps lift and fade in under a second,
+  and the colour floods back into the cell from its centre.
+- **The bank drifts**, slowly and on the spot, a few pixels on a loop of
+  several seconds; no cloud ever crosses a cell's boundary.
+- **What is drawn over the fog stays over it**: the reach line, the lair's
+  ground, the progress bar of a tap.
 
 ## 9. The pipeline
 
@@ -218,6 +282,8 @@ Every one of these is a treatment of the same asset, never a second asset.
 | **Headroom per footprint** (§3.1) | how much a building towers | buildings hide each other, or look squat |
 | **Villager height** (48 px) | whether the city reads as a city | people vanish, or dominate |
 | **Hex width** (256 px authored) | how much a hex can hold | content stops fitting at the tactical size |
+| **Board tilt** (72 %) | how much depth the board has | the board reads flat, or distance stops reading |
+| **Tile thickness** (16 % of the radius) | how solid a tile feels | the rim looks like a wall, or not at all |
 | **Terrain busyness** | how much the ground competes | the map feels noisy and nothing pops |
 
 ## 11. Deliberately not in this design
@@ -229,9 +295,12 @@ Every one of these is a treatment of the same asset, never a second asset.
 - **The "manage from afar" 80° camera** that showed the top face of everything.
   That was a rule for pixel tiles and it dies with them.
 - **A second palette for the world board** (§2).
-- **An isometric hex board** (§2).
+- **A dark fog of war**, and weather: no cloud moves across the map, and the
+  fog has no night.
+- **Perspective on the hex board** — a vanishing point, far hexes smaller
+  (§7.1).
 - **Visible grid lines** on the city ground (§4).
-- **Baked hex illustrations** per feature combination (§7).
+- **Loose props laid out side by side** on a hex (§7).
 - **Chrome.** It is specified elsewhere and this document does not touch it.
 
 ---

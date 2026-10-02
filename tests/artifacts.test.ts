@@ -565,7 +565,7 @@ describe('a pack', () => {
 
   it('gives two sources the same ordinal different hands', () => {
     const a = grantPack(state, 'Green', 'room');
-    const b = grantPack(state, 'Green', 'daily');
+    const b = grantPack(state, 'Green', 'quest');
     expect(a.id).not.toBe(b.id);
     expect(packCards(state.seed, a)).not.toBe(packCards(state.seed, b));
   });
@@ -913,7 +913,7 @@ describe('a card bundle', () => {
       expect(bundleOf(id)).not.toBeNull();
     }
     for (const id of GEM_PACK_ORDER) expect(bundleOf(id)).toBeNull();
-    expect(bundleOf('RoyalChest')).toBeNull();
+    expect(bundleOf('SeasonPass')).toBeNull();
   });
 
   it('spends the monthly budget, logs the purchase, and grants no Gems', () => {

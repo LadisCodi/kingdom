@@ -62,19 +62,21 @@ describe('the quest chain', () => {
       'Timber', 'ARoof',                          // 3-4  chop, then a roof
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
-      'TaxDay', 'Explorer',                       // 7    rent pays for more fog
-      'Fields', 'FirstPlot', 'ByHand',            // 9-11 farming, by hand
-      'Lumber', 'Tillage', 'Farmhand', 'ToWork',  // 12-15 and then not by hand —
-                                                  //   the Farm is one research
-                                                  //   under the plots, and the
-                                                  //   chain asks for it
-      'GrowingTown', 'Neighbors',                 // 16-17 a House FIRST, then the
+      'TaxDay', 'Explorer',                       // 7-8  rent pays for more fog
+      'FirstPlot', 'ByHand',                      // 9-10 the old plots, repaired,
+                                                  //   and reaped by hand
+      'Lumber', 'Farmhand', 'ToWork',             // 11-13 and then not by hand —
+                                                  //   the old Farm beside them
+      'GrowingTown', 'Neighbors',                 // 15-16 the first House the fog
+                                                  //   did not keep, then the
                                                   //   citizen it makes room for
-      'SawTeeth', 'TheSawmill', 'Crewed',         // 18-20 automate the wood — TH1
-                                                  //   allows the one Sawmill
-      'ProperCapital',                            // 21   the Townhall, now that
+      'TheSawmill', 'Crewed',                     // 17-18 the old Sawmill: the wood,
+                                                  //   automated
+      'ProperCapital',                            // 19   the Townhall, now that
                                                   //   both its caps are reached
-      'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
+      'Fields', 'Tillage', 'SawTeeth',            // 20-22 the technologies of what
+                                                  //   the fog kept: building MORE
+      'Levies', 'Sawpits', 'Regrowth',            // 23-25 the three cards the book
                                                   //   puts after Saws — a
                                                   //   requirement is the row above
                                                   //   (2026-09-08), so the chain
@@ -442,7 +444,7 @@ describe('quests fund the research tree', () => {
     // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
     // the chain asks for the book that only a found lair opens.
     expect(chain).toBe(16_215);
-    expect(tree).toBe(568_885); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(592_385); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.

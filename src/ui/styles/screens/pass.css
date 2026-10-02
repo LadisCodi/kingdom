@@ -3,8 +3,7 @@
  * Docs/features/20-season-pass.md §6, drawn from
  * Docs/art/ui/mockups/m27-season-pass.png.
  *
- * It borrows `daily.css`'s ladder wholesale — the same two columns on the same
- * rows, the same rule that a cell is lit when it can be taken and legible when
+ * Its ladder is two columns on the same rows, the same rule that a cell is lit when it can be taken and legible when
  * it cannot, the same argument that a free player has to be able to read the
  * paid column as the ladder they are already climbing. What is new above it is
  * the BOARD, and the board is on top because it is the thing the player does.
@@ -53,7 +52,7 @@
   line-height: 1.35;
 }
 
-/* ---- the clock. One per screen, the daily chest's rule: the season really
+/* ---- the clock. One per screen: the season really
    does end, and it is a fact rather than a threat, so it sits in ink.
 
    A THIN LINE, not the framed parchment strip the chest uses. There it is the
@@ -272,7 +271,7 @@
   box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold), 0 0 calc(var(--px) * 6) rgba(242, 178, 51, 0.7);
 }
 
-/* The green tick, pressed on like the daily ladder's wax seal. */
+/* The green tick, pressed on like a wax seal. */
 .pss-task > .icon {
   flex: none;
   --icon-size: calc(var(--px) * 16);
@@ -318,7 +317,7 @@
 .pss-claim:active { border-image-source: url('../../assets/btn-green-down.png'); padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--px) * 6); }
 .pss-claim:focus-visible { outline: calc(var(--px) * 3) solid var(--ink); outline-offset: calc(var(--px) * 2); }
 /* It wears the kit's orb, because it is the only thing on the board that can
-   be pressed — the daily cell's rule applied to a row. */
+   be pressed — a ladder cell's rule applied to a row. */
 .pss-claim { position: relative; }
 
 /* ---- the ladder. One grid template for the heads and every row, declared

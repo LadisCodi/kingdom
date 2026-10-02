@@ -19,6 +19,7 @@ import {
   ARTIFACT_RADIUS_STEPS, type ArtifactActiveId,
 } from './data/definitions';
 import { isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
+import { onPaidReveal, undiscoveredAround } from './treasures';
 import { cellsWithinRadius, type MapData } from './grid';
 import { effectiveStock, harvestSourceAt, harvestSpecAt, tapCell } from './harvest';
 import { mana, payMana } from './mana';
@@ -466,7 +467,11 @@ export function cast(
       // what the player holds rather than appearing as islands. Cells are
       // already ordered nearest-first, and the Townhall's reach still gates
       // each one: the spell buys the GOLD, never the ladder.
-      for (const c of surveyCells(state, map, target!, activeRadius(state, id))) {
+      // The player cast it, so the cells count towards the treasures — read
+      // what was undiscovered first, as a tap does (sim/treasures.ts).
+      const cells = surveyCells(state, map, target!, activeRadius(state, id));
+      const fresh = undiscoveredAround(state, map, cells);
+      for (const c of cells) {
         const key = coordKey(c);
         report.goldSaved += revealCostForCell(state, map, c) - revealPaidSoFar(state, map, c);
         delete state.fog.progress[key];
@@ -474,6 +479,7 @@ export function cast(
         state.fog.revealed[key] = true;
         report.affected.push(c);
       }
+      if (cells.length > 0) onPaidReveal(state, map, cells, fresh);
       break;
     }
   }

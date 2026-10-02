@@ -15,7 +15,7 @@ import {
   watchedRefillsLeft,
 } from '../src/sim/manaRefill';
 import { deserialize, serialize } from '../src/sim/save';
-import { dayIndex } from '../src/sim/daily';
+import { dayIndex } from '../src/sim/day';
 import { getWallet, type GameState } from '../src/sim/state';
 import { freshGame, freshPresenter, map, T0 } from './helpers';
 

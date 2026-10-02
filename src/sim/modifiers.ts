@@ -66,7 +66,7 @@ export type ModifierStat =
   | 'buildSpeed'      // how fast the builders work
   | 'recoverySpeed'   // how fast a cell refills in place
   | 'workerStrikeSpeed' // how fast a worker swings
-  | 'worldRevealSpeed' // how fast a world-map cell is scouted — NOT READ YET
+  | 'worldRevealSpeed' // how fast an explorer marches (sim/world/explorers.ts)
   | 'unitHp'          // multiplies every unit's HP, on the board and in the estimate
   // THE GROUND. Both are FLAT on a base the workbook authors and never grows,
   // so flat cannot go stale here the way it does on a rate. The Verdant Seal

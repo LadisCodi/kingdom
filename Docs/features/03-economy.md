@@ -25,11 +25,11 @@
 | **Mana** | time, capped | every tap on the ground · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
-| **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
-| **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
-| **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
+| **Hero XP** | dungeons · the Survey's paid column | hero levels, on any hero | kingdom | no — reads on the roster |
+| **Cards** | packs — every room, every boss, the event, the pass, the Survey, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
+| **Gems** | quests, first clears, the season pass and the Survey (both columns), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
-| **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, a free call's ad, the season pass or the Survey | one call on the golden banner | player | no — a price on a button |
 
 - Eleven wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a
@@ -155,17 +155,18 @@ running. Research already worked this way.
 - Capacity is per building, per level, in units: `buildings` ›
   `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
   Stone and Gold in one store.
-- Capacity is authored as about **8 h** of the building at full strength at
-  level 1, rising to about **12 h** at level 10 (OQ-107). Nothing but the
+- Capacity is authored as about **4 h** of the building at full strength at
+  levels 1–5, rising to about **12 h** at level 10 (OQ-107). Nothing but the
   building's level raises it (OQ-108).
 
-| Building | Level 1 | Level 10 |
-|---|---|---|
-| Housing | 29,000 Gold | 4,600,000 |
-| Farm | 8,600 | 250,000 |
-| Sawmill | 7,200 | 170,000 |
-| Quarry | 3,100 | 100,000 |
-| Docks | 6,200 | 120,000 |
+| Building | Level 1 | Level 5 | Level 10 |
+|---|---|---|---|
+| Townhall | 2,400 Gold | 250,000 | 2,600,000 |
+| Housing | 15,000 Gold | 350,000 | 4,600,000 |
+| Farm | 4,300 | 14,000 | 250,000 |
+| Sawmill | 3,600 | 11,000 | 170,000 |
+| Quarry | 1,600 | 5,500 | 100,000 |
+| Docks | 3,100 | 12,000 | 120,000 |
 
 - A data rule requires a store on anything that makes Gold or harvests, and
   forbids one on anything else.
@@ -227,7 +228,7 @@ absence is replayed, and each building stops when its store is full
 - Villagers complete sequentially at `training.seconds` = 20 s each.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first six (`5, 20, 100, 300, 500, 1000`), then `×1.05`
+- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.05`
   per villager beyond — the Townhall's levels ask for villagers
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1), so the curve
   has to let a city reach seventy of them in a month.
@@ -285,7 +286,7 @@ and research**.
 | The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
-| Store capacity per level | about 8 h of the building at level 1, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Store capacity per level | about 4 h of the building at levels 1–5, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |

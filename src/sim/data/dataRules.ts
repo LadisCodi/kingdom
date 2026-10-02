@@ -15,6 +15,8 @@
 // module.
 
 import techTree from './tech-tree.json';
+import regionMap from './region-map.json';
+import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -47,7 +49,10 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'terrain', label: 'Terrain', domain: 'World', view: 'table', noun: 'terrain', source: 'terrain' },
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
   { id: 'garrisons', label: 'Garrisons', domain: 'World', view: 'table', noun: 'garrison', source: 'garrisons' },
-  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
+  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
+  // The shared hex board (Docs/features/19-world-map.md): marches, explorers
+  // and how a board is rolled.
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -69,7 +74,8 @@ export const COLLECTIONS: readonly CollectionDef[] = [
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
-  { id: 'daily', label: 'Daily & missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['daily', 'missions'] },
+  { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
+  { id: 'missions', label: 'Missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['missions'] },
   { id: 'collection', label: 'Card collection', domain: 'Progression', view: 'form', noun: 'setting', groups: ['collection'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
@@ -107,7 +113,9 @@ export type RefKind =
   /** A kind of landmark — Shrine, Watchtower… (sim/state.ts LandmarkKind). */
   | 'landmarkKind'
   /** Someone who speaks on the stage (`speakers`). */
-  | 'speaker';
+  | 'speaker'
+  /** A world hex's terrain, and what it may hold (sim/world/types.ts). */
+  | 'worldTerrain' | 'worldFeature' | 'worldImprovement';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -164,6 +172,9 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
   landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
+  worldTerrain: WORLD_TERRAINS,
+  worldFeature: WORLD_FEATURES,
+  worldImprovement: WORLD_IMPROVEMENTS,
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -172,7 +183,7 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 /** Quest goal types and what their target names; null = takes none. Mirrors
  *  the importer's QUEST_GOAL_TYPES. */
 export const QUEST_GOALS: Record<string, RefKind | null> = {
-  BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
+  BuildDistrict: 'building', RepairDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
   TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, FindLairs: null, ClearLairs: null, CollectResource: 'currency',
@@ -460,6 +471,10 @@ function neverFalls(push: Push, id: string, field: string, v: unknown): void {
  *  bonus is a flat amount and is not clamped). */
 export const ADJACENCY_CLAMP = 0.25;
 
+/** The abandoned buildings authored in the map (Docs/features/01-map-and-fog.md §6.3). */
+const ABANDONED_IDS: readonly string[] = ((regionMap as { abandoned?: Array<{ id: string }> }).abandoned ?? [])
+  .map((a) => a.id);
+
 /** What a scene condition's target must name, by kind (Docs/features/24-dialogue.md §5). */
 const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   questReached: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
@@ -477,7 +492,10 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   bookOpen: () => ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
-  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'],
+  abandonedRevealed: () => ABANDONED_IDS,
+  siteOpen: () => ABANDONED_IDS,
+  repairing: () => ABANDONED_IDS,
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {
@@ -637,6 +655,80 @@ export const RULES: Readonly<Record<string, Rule>> = {
     rings.forEach((r, i) => {
       if (i > 0 && num(r.distance) <= num(rings[i - 1].distance)) push(null, ['fog', 'rings', i, 'distance'], 'distances must be ascending');
     });
+  },
+  world: (doc, push) => {
+    const gen = (doc.worldGen ?? {}) as Record<string, unknown>;
+    const chances = (gen.featureChance ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    // Where each kind of place may stand (19-world-map.md §9).
+    const only: Record<string, string> = { Dungeon: 'outer', Sanctuary: 'outer', Landmark: 'corridor' };
+    for (const [role, row] of Object.entries(chances)) {
+      for (const [feature, home] of Object.entries(only)) {
+        if (role !== home && num(row?.[feature]) > 0) {
+          push(null, ['worldGen', 'featureChance', role, feature], `a ${feature} only stands on the ${home} ring`);
+        }
+      }
+    }
+    // Where each feature may roll, and what it never shares a hex with
+    // (Docs/plans/world-hex-art.md §1).
+    const rules = (gen.featureRules ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    const excludes = (f: string) => list(rules[f]?.excludes) as string[];
+    for (const f of WORLD_FEATURES) {
+      if (rules[f] === undefined) { push(null, ['worldGen', 'featureRules', f], 'is missing — every feature says where it rolls'); continue; }
+      if (list(rules[f]!.terrains).length === 0) push(null, ['worldGen', 'featureRules', f, 'terrains'], 'names no terrain — it could never roll');
+      for (const other of excludes(f)) {
+        if (other === f) push(null, ['worldGen', 'featureRules', f, 'excludes'], 'cannot exclude itself');
+        else if (!excludes(other).includes(f)) push(null, ['worldGen', 'featureRules', other, 'excludes'], `${f} excludes ${other}, so ${other} must exclude ${f}`);
+      }
+    }
+    // Sites placed, not rolled: on the outer ring, as many as it has room for.
+    const placed = (gen.placedPerWedge ?? {}) as Record<string, unknown>;
+    let placedTotal = 0;
+    for (const [f, n] of Object.entries(placed)) {
+      if (num(n) <= 0) continue;
+      placedTotal += num(n);
+      if (!PLACED_SITES.includes(f as never)) push(null, ['worldGen', 'placedPerWedge', f], `only ${PLACED_SITES.join(' and ')} are placed`);
+      for (const [role, row] of Object.entries(chances)) {
+        if (num(row?.[f]) > 0) push(null, ['worldGen', 'featureChance', role, f], `a ${f} is placed (placedPerWedge), not rolled — its chance is 0`);
+      }
+    }
+    if (placedTotal > OUTER_SITE_ROOM) {
+      push(null, ['worldGen', 'placedPerWedge'], `${placedTotal} sites, but a wedge's outer ring has room for ${OUTER_SITE_ROOM} away from the city`);
+    }
+    list(gen.innerRing).forEach((h, i) => {
+      const hex = (h ?? {}) as Record<string, unknown>;
+      const held = list(hex.features) as string[];
+      held.forEach((f, n) => {
+        const rule = rules[f];
+        if (rule === undefined) return;
+        if (!list(rule.terrains).includes(hex.terrain)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never stands on ${String(hex.terrain)}`);
+        for (const other of held.slice(0, n)) {
+          if (excludes(f).includes(other)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never shares a hex with ${other}`);
+        }
+      });
+    });
+    const weights = (gen.terrainWeights ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    for (const [role, row] of Object.entries(weights)) {
+      if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
+        push(null, ['worldGen', 'terrainWeights', role], 'every weight is 0 — a hex here could roll no terrain');
+      }
+    }
+    const build = (doc.worldBuild ?? {}) as Record<string, unknown>;
+    const improvements = (build.improvements ?? {}) as Record<string, Record<string, unknown>>;
+    for (const id of WORLD_IMPROVEMENTS) {
+      const def = improvements[id];
+      if (def === undefined) { push(null, ['worldBuild', 'improvements', id], 'is missing — every improvement needs its ladder'); continue; }
+      const levels = list(def.levels) as Array<Record<string, unknown>>;
+      if (levels.length === 0) push(null, ['worldBuild', 'improvements', id, 'levels'], 'has no level 1');
+      const makes = def.produces !== '' && def.produces !== undefined;
+      levels.forEach((l, i) => {
+        if (makes && (num(l.perHour) <= 0 || num(l.store) <= 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'makes nothing, or has nowhere to put it');
+        if (!makes && (num(l.perHour) > 0 || num(l.store) > 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'fills a store with nothing');
+      });
+    }
+    const world = (doc.world ?? {}) as Record<string, unknown>;
+    if (num(world.explorerRevealRadius) > num(world.revealRadiusMax)) {
+      push(null, ['world', 'explorerRevealRadius'], 'is past revealRadiusMax');
+    }
   },
   economy: (doc, push) => {
     const tiers = list((doc.harmony as Record<string, unknown> | undefined)?.surplusTiers) as Array<Record<string, unknown>>;

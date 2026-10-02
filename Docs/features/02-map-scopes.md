@@ -57,7 +57,7 @@ only what it is structurally:
 
 | | Province | World |
 |---|---|---|
-| The gesture | tap a cell, 1 Mana | send an army, and it marches |
+| The gesture | tap a cell, 1 Mana | send an explorer or an army, and it marches |
 | Resolves | now | over the march |
 | Frequency | high, tactile | low, planning |
 | It ends | yes — the fog is finite | no |
@@ -70,23 +70,41 @@ One tactile loop and one planning loop, across two or three visits a day.
   observe it, and nothing another player does can reach it.
 - **World control is server-authoritative.** Who holds a hex, and what is built
   on it, is contested state and cannot live in a save.
-- **World fog is client-authoritative**, and lives in the player's own save: a
-  small bitset over 91 hexes. It falls on the client side **because it decides
-  nothing** — fog is information, never permission, and never blocks a move or
-  an action.
-- If fog is ever made to gate something — *you cannot attack what you have not
-  explored* — it becomes server-authoritative state. **That is a deliberate
-  decision, never a drift.**
+- **World fog gates actions**: a hex must be Revealed before it is claimed,
+  built on or sent an army ([`19-world-map.md`](19-world-map.md) §3).
+- **So world fog is server-authoritative** — the server checks it. Until the
+  real server exists the fog lives in the player's save (a bitset over 91
+  hexes) and the client applies the rule; the local stand-in trusts it.
+
+### 3.1 Armies on the server
+
+- **An army is server state from the moment it leaves.** Sending one takes
+  its troops off the roster and marks its heroes busy in the save; the server
+  holds the army until it is home.
+- **Every army fight is resolved on the server**, with the same resolver
+  ([`combat.md`](combat.md)): attacks, garrisons, dungeon rooms and Portal
+  floors.
+- **A march is resolved when the board is read.** Before answering any read
+  or action on a board, the server resolves every march that has arrived, in
+  order of arrival time, ties broken by hash. The outcome never depends on
+  when anyone looks.
+- **What comes home is a server effect**: the survivors, the heroes' wounds,
+  and every reward, collect and battle report. Effects are drained at load,
+  before the offline advance ([`15-social.md`](15-social.md) §1.2).
+- **The server trusts the party the client sends**: its troops, levels and
+  bonuses are not validated (prototype, as [`15-social.md`](15-social.md)
+  §1.1).
 
 ## 4. Absences are replayed in full
 
 - There is no offline cap. An absence is replayed whole by the same advance
   the live tick runs.
-- **Production is bounded by its own ceiling**: each building's store, the
-  Mana pool, the Knowledge bar, the workshop and training queues
+- **Production is bounded by its own ceiling**: each building's store, each
+  world improvement's store, the Mana pool, the Knowledge bar, the workshop
+  and training queues
   ([`03-economy.md`](03-economy.md) §3.2).
-- **Timers resolve in full**: the build queue, a gate's raid, event windows,
-  **and every world-map march**.
+- **Timers resolve in full**: the build queue, a lair's raid, event windows
+  and an explorer's march. An army's march is resolved on the server (§3.1).
 - An army sent before a twelve-hour absence has arrived on return.
 - Anything new that is time-based and produces names its ceiling in its doc.
 
@@ -105,14 +123,15 @@ One tactile loop and one planning loop, across two or three visits a day.
 - Design rule, technical boundary and marketing line at once: **province private
   and client-authoritative, world shared and server-authoritative.**
 - **An outpost is a claim, not a building.** If the hex falls, the player keeps
-  everything it already produced.
+  everything they already collected from it; what sits in its stores goes
+  with the hex ([`19`](19-world-map.md) §7.1).
 
 ## 6. The save shape
 
 - **The save says which scope a thing is in.**
 - World control is not in the save at all — it is server state (§3). What the
-  save carries for the world is the player's **fog bitset** and their armies'
-  whereabouts.
+  save carries for the world is the player's **fog bitset** and their
+  explorers' whereabouts. Armies are server state.
 - The guild siege lives on the world board ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
   **is not an early item**; the save shape is the one artefact that cannot
@@ -122,23 +141,23 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 Each is playable without the ones after it.
 
-1. **Temporary provinces** as the event format ([`13-events.md`](13-events.md)).
-2. **The guild siege as the world's first place**: one hex, co-op, no board, no
-   PvP, no fog — the world map with a single entry, on the code path the full
-   scope will use.
-3. **The board proper**: axial coordinates, neighbours, distance, march time,
-   both zoom registers, client-side fog, the dispatch sheet
-   ([`19`](19-world-map.md) §1–§4).
-4. **Control**: outposts, connection, inactive hexes, improvements
-   ([`19`](19-world-map.md) §5–§7).
-5. **Contest**: attacks, conquest and denial, the Fortress, and server-side
-   resolution — a deterministic scoring pass, not a simulation.
-6. **The Dark Portal** ([`19`](19-world-map.md) §10).
+1. **The board proper**: axial coordinates, neighbours, distance, march time,
+   both zoom registers, client-side fog, explorers, the dispatch sheet
+   ([`19`](19-world-map.md) §1–§3).
+2. **Control**: outposts, connection, inactive hexes, improvements and their
+   stores ([`19`](19-world-map.md) §5, §7).
+3. **Contest**: armies, attacks, conquest and denial, the Fortress, resolved
+   on the server (§3.1; [`19`](19-world-map.md) §4, §6).
+4. **Dungeons** ([`19`](19-world-map.md) §8.1).
+5. **The Dark Portal** ([`19`](19-world-map.md) §10).
+6. **The guild siege**, with the social layer ([`15-social.md`](15-social.md) §6).
+
+**Temporary provinces** ([`13-events.md`](13-events.md)) are independent of
+the board and can come at any point.
 
 ## 8. Deliberately not in this design
 
 - A procedural province generator.
-- Server-authoritative world fog (§3).
 - A hexagon that opens a map of its own (§1.3).
 - Cities on the world board.
 - Raiding a player's city (§5).

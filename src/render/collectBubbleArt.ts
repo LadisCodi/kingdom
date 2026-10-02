@@ -56,6 +56,8 @@ export function drawCollectBubble(
   const w = width;
   const h = width * 0.92;
   const tail = width * 0.2;
+  // Its whole reach, the bob's top included.
+  bubbles.place(district.uniqueId, { x: tipX - w / 2, y: tipY - width * 1.26 - hop, w, h: width * 1.26 }, clock);
   const r = width * 0.22;
   const line = Math.max(1.5, width * 0.05);
 

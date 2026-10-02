@@ -89,7 +89,7 @@ describe('the scenes, against the game', () => {
 
   it('never strands the Sawmill lesson on a short purse: Isolde makes up the Wood', () => {
     const scene = SCENES.find((s) => s.id === 'sawmill')!;
-    expect(scene.lines[0]).toMatchObject({ stocks: 'Sawmill', until: 'tap' });
+    expect(scene.lines.find((l) => l.stocks === 'Sawmill')).toMatchObject({ until: 'tap' });
     const game = freshPresenter(firstGame());
     const wallet = game.state.city.wallet;
     const cost = nextBuildCost(game.state, 'Sawmill');

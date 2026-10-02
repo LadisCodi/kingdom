@@ -36,7 +36,7 @@
   level before can hold, so the answer is always roofs, Food and the training
   line. The card says the number and where the city stands: *Needs 12
   villagers · you have 9*.
-- Villagers are priced `5, 20, 100, 300, 500, 1000` Food then **×1.05** each
+- Villagers are priced `5, 20, 45, 100, 250, 500, 1000` Food then **×1.05** each
   ([`03-economy.md`](03-economy.md) §5), so a hundred of them is a month of
   Food rather than a lifetime.
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
@@ -174,6 +174,9 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 - **Layout is guided, never policed.** Adjacency pays or charges for a
   neighbour ([`03-economy.md`](03-economy.md) §3.1), so a placement can be
   better or worse and none is illegal.
+- **An abandoned building is placed by the map**, not the player: repairing
+  it builds it at level 1 where it stands, at the next ordinal and without
+  its unlock technology ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3).
 
 ### 4.1 The placement ghost
 

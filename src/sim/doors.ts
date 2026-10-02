@@ -9,7 +9,7 @@
 // Relics. A veteran kingdom (a save from before the doors) has every door
 // open. The BOOKS are the sim's own doors, decided in `research.ts`.
 
-import { QUESTS } from './data/definitions';
+import { ABANDONED, QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
 import { ownGoldPerMinute } from './population';
 import { readyToCollect } from './storage';
@@ -18,7 +18,7 @@ import { townhall, type District, type GameState } from './state';
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
   | 'research' | 'build' | 'heroes' | 'relics' | 'store' | 'world'
-  | 'knowledge' | 'daily' | 'banner';
+  | 'knowledge' | 'banner' | 'survey';
 
 /** Has the chain reached this quest — is it active, or past? */
 const questReached = (state: GameState, id: string): boolean => {
@@ -35,22 +35,20 @@ const questClaimed = (state: GameState, id: string): boolean => {
 const tavernStands = (state: GameState): boolean => state.city.districts.some(
   (d) => d.definitionId === 'Tavern' && d.state === 'Built');
 
-const DAY_MS = 86_400_000;
-
-/** Has the kingdom's clock reached a later LOCAL day than the one it was
- *  founded on? Read off `lastAdvance`, never a clock. */
-const laterDay = (state: GameState): boolean => {
-  const offset = state.kingdom.utcOffsetMinutes * 60_000;
-  const day = (t: number) => Math.floor((t + offset) / DAY_MS);
-  return day(state.lastAdvance) > day(state.tutorial.startedAt);
-};
+/** Is this district one of the fog's, repaired rather than built? */
+const wasAbandoned = (state: GameState, d: District): boolean =>
+  ABANDONED.some((a) => state.abandoned.repaired[a.id] === true
+    && a.location.x === d.location.x && a.location.y === d.location.y && a.districtId === d.definitionId);
 
 /** What opens each door, as a fact about the kingdom. */
 const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   research: (state) => questReached(state, 'Woodcraft') || state.research.completed.length > 0,
   knowledge: (state) => questReached(state, 'Woodcraft') || state.research.completed.length > 0,
-  build: (state) => questReached(state, 'ARoof')
-    || state.city.districts.some((d) => d.definitionId !== 'Townhall'),
+  // The first building the fog did not keep: the opening's House, plots,
+  // Farm and Sawmill are found and repaired, so a repaired one opens nothing
+  // (Docs/features/22-progression.md §3).
+  build: (state) => questReached(state, 'GrowingTown')
+    || state.city.districts.some((d) => d.definitionId !== 'Townhall' && !wasAbandoned(state, d)),
   heroes: tavernStands,
   banner: tavernStands,
   relics: (state) => state.collection.packs.length > 0
@@ -58,10 +56,10 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
     || state.collection.completed.length > 0,
   // The market waits for a capital worth trading with.
   store: (state) => townhall(state).level >= 2,
+  // The Survey opens with the Store: what the column sells is sold there
+  // (Docs/features/25-the-survey.md §5).
+  survey: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
-  // The first day is for the city: the chest waits for the morning's work
-  // AND for the player to come back another day.
-  daily: (state) => questClaimed(state, 'TaxDay') && laterDay(state),
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —
@@ -69,13 +67,13 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
 export const DOOR_HINT: Record<DoorId, string> = {
   research: 'Finish your first task to open this.',
   knowledge: 'Finish your first task to open this.',
-  build: 'Gather some Wood to open this.',
+  build: 'Settle a second villager to open this.',
   heroes: 'Build a Tavern to open this.',
   banner: 'Build a Tavern to open this.',
   relics: 'Clear a lair to open this.',
   store: 'Raise the Townhall to level 2 to open this.',
+  survey: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
-  daily: 'Come back tomorrow — a gift will be waiting.',
 };
 
 /** The door's key in `tutorial.seen`. */

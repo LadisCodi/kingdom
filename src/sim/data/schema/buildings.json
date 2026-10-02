@@ -95,6 +95,12 @@
       "length": { "sibling": "maxLevel", "upTo": true },
       "doc": "Percent more Hero XP the kingdom earns while this stands, the TOTAL at each level. Only the Tavern has any."
     },
+    "armySlotsPerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 0 },
+      "length": { "sibling": "maxLevel", "upTo": true, "orEmpty": true },
+      "doc": "Armies more the kingdom can have out on the world board while this stands, the TOTAL at each level. Only the War Camp has any."
+    },
     "costPerLevel": {
       "type": "list",
       "of": {

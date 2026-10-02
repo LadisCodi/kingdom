@@ -7,7 +7,7 @@
 // odometer reading it started from.
 
 import {
-  DISTRICTS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
+  ABANDONED, DISTRICTS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
 } from '../../sim/data/definitions';
 import { isDoorOpen, type DoorId } from '../../sim/doors';
 import { tally } from '../../sim/events';
@@ -18,7 +18,7 @@ import { fogState } from '../../sim/fog';
 import { sightedThings } from '../../sim/sight';
 import { woundedCount } from '../../sim/army';
 import {
-  buildQueueCapacity, type LairId, type TechId, type TomeId,
+  buildQueueCapacity, busyBuilders, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
 import type { Game } from '../../game';
 
@@ -35,6 +35,10 @@ const WORKSHOPS: readonly string[] = Object.entries(DISTRICTS)
   .filter(([, d]) => d.produces !== null).map(([id]) => id);
 
 const questIndex = (id: string): number => QUESTS.findIndex((q) => q.id === id);
+
+/** Treasures picked up, ever: every one placed that is no longer on the map. */
+const treasuresPicked = (state: Game['state']): number =>
+  state.fog.treasuresPlaced - Object.keys(state.fog.treasures).length;
 
 /** Is `kind(target, amount)` true right now? `tap` never is: a tap is the
  *  stage's own event. */
@@ -70,8 +74,11 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
         && (isTechComplete(state, c.target as TechId) || isTechFilled(state, c.target as TechId));
     case 'placing':
       return game.mode.kind === 'placing' && game.mode.definitionId === c.target;
+    // At least `amount` of it (one when 0): the opening's second House must
+    // not be met by the first, repaired from the fog.
     case 'placed':
-      return state.city.districts.some((d) => d.definitionId === c.target);
+      return state.city.districts.filter((d) => d.definitionId === c.target).length
+        >= Math.max(1, c.amount);
     case 'built': {
       const matches = (id: string): boolean => (c.target === 'AnyWorkshop'
         ? WORKSHOPS.includes(id) : id === c.target);
@@ -111,7 +118,7 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'bookOpen': return isTomeOpen(state, c.target as TomeId);
     case 'doorOpen': return isDoorOpen(state, c.target as DoorId);
     case 'manaEmpty': return mana(state) < 1;
-    case 'buildersBusy': return state.city.queue.length >= buildQueueCapacity(state);
+    case 'buildersBusy': return busyBuilders(state) >= buildQueueCapacity(state);
     case 'raided':
       return Object.values(state.lairs).some((l) => Object.values(l!.hoard).some((n) => (n ?? 0) > 0));
     case 'wounded': return woundedCount(state) > 0;
@@ -132,6 +139,28 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'featureSeen':
       return Object.entries(state.features).some(([key, id]) => id === c.target
         && (state.fog.discovered[key] === true || state.fog.revealed[key] === true));
+    // The fog's treasures (01-map-and-fog.md §6.2): one standing on revealed
+    // ground, or `amount` picked up, ever.
+    case 'treasureRevealed':
+      return treasuresPicked(state) > 0 || Object.keys(state.fog.treasures)
+        .some((key) => state.fog.revealed[key] === true);
+    case 'treasurePicked': return treasuresPicked(state) >= Math.max(1, c.amount);
+    // An abandoned building (§6.3): its ground revealed, its card open, its
+    // repair started. A repaired one has answered all three.
+    case 'abandonedRevealed': {
+      const a = ABANDONED.find((x) => x.id === c.target);
+      if (a === undefined) return false;
+      if (state.abandoned.repaired[a.id] === true) return true;
+      return fogState(state, game.map, a.location) === 'Revealed';
+    }
+    case 'siteOpen': {
+      const a = ABANDONED.find((x) => x.id === c.target);
+      if (a === undefined) return false;
+      if (state.abandoned.repaired[a.id] === true) return true;
+      const open = game.inspectedSite;
+      return open !== null && open.x === a.location.x && open.y === a.location.y;
+    }
+    case 'repairing': return state.abandoned.repaired[c.target] === true;
     default: return false;
   }
 }

@@ -15,11 +15,11 @@ placement preview uses `<sprite>_l1`.
 
 | File | Replaces | Notes |
 |---|---|---|
-| `townhall_l1..l3.png` | 🏛️ | campfire camp → hall → hilltop town |
-| `housing_l1..l3.png` | 🏠 | hut → two cottages → hamlet cluster |
-| `farm_l1..l3.png` | 🌾 | tilled patch → barn → farmstead |
+| `townhall_l1/l2/l3/l4/l8.png` | 🏛️ | wooden camp → fieldstone hall → stone hall → castle |
+| `housing_l1/l2/l3/l4/l8.png` | 🏠 | log hut → thatched cottage → cottage → townhouse |
+| `farm_l1/l2/l3/l4/l8.png` | 🌾 | a windmill: wooden post mill → smock mill → mill house → tower mill → great mill |
 | `farmlands.png` (+ `_exhausted`) | 🟩 / 🥀 | flat full-bleed field tile, no levels |
-| `sawmill_l1..l3.png` | 🪚 | logging camp → saw hut → mill |
+| `sawmill_l1/l2/l3/l4/l8.png` | 🪚 | woodcutters' camp → saw pit shed → saw shed → mill |
 | `market_l1..l3.png` | 🏪 | stall → two stalls → market square |
 | `quarry_l1..l3.png` | ⛏️ | stone pit → quarry → terraced quarry |
 | `docks_l1..l3.png` | ⚓ | **256×128** (2×1 pier, land end LEFT; mirrored in code when the coast faces the other way) |

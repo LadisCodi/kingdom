@@ -10,7 +10,9 @@
 - There is no waiting line. A build starts if a builder is free; otherwise it is
   refused.
 - Jobs in flight = builder count.
-- An upgrade occupies a builder exactly as a build does.
+- An upgrade, or the repair of an abandoned building
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3), occupies a builder exactly
+  as a build does.
 - **A job at work shows on the map** as it does on the card: the working
   hammer flies over the building, and the blue glass bar on its plot holds
   the time left.

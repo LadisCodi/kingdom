@@ -27,7 +27,7 @@ import { DISTRICTS, FEATURES, LANDMARK_ART, LAIRS } from '../sim/data/definition
 import { TOWNHALL_FOOTPRINT } from '../sim/data/mapRules';
 import { footprintAt } from '../sim/grid';
 import { coordKey, type Coord, type LandmarkKind, type LairId } from '../sim/state';
-import type { MapDoc } from './doc';
+import type { MapDoc, SiteKind } from './doc';
 
 export interface Overlays {
   grid: boolean;
@@ -43,7 +43,7 @@ export interface ViewState {
   /** Cells the current gesture would touch (brush footprint or rect drag). */
   preview: ReadonlyArray<Coord>;
   /** The selected site, drawn with a ring and always labelled. */
-  selected: { kind: 'landmark' | 'lair'; id: string } | null;
+  selected: { kind: SiteKind; id: string } | null;
 }
 
 const RING_HUES = [180, 150, 110, 80, 55, 35, 20, 5, 340, 315, 290];
@@ -205,12 +205,12 @@ export function drawEditor(
   const labels: SiteLabel[] = [];
   const site = (
     at: { x: number; y: number; size?: number }, sprite: string, fallback: string,
-    text: string, selected: boolean, tint: string,
+    text: string, selected: boolean, tint: string, plots = FEATURE_PLOTS,
   ) => {
     const n = at.size ?? 1;
     const plot = camera.plotBox(at, { x: n, y: n });
     later(at, n, () => {
-      const tall = sprite ? stand(plot, [sprite], fallback, FEATURE_PLOTS) : stand(plot, [], fallback, 1);
+      const tall = sprite ? stand(plot, [sprite], fallback, plots) : stand(plot, [], fallback, 1);
       labels.push({ plot, tall, text, selected, tint });
     });
   };
@@ -224,6 +224,14 @@ export function drawEditor(
       const art = LAIRS[id as LairId];
       const picked = view.selected?.kind === 'lair' && view.selected.id === id;
       site(r, art?.sprite ?? '', art?.glyph ?? '❔', `${id} · T${r.tier}`, picked, '#c79bff');
+    }
+    // An abandoned building, as its ruin: building art, one plot across
+    // (Docs/features/01-map-and-fog.md §6.3).
+    for (const a of doc.abandoned) {
+      const def = DISTRICTS[a.district as keyof typeof DISTRICTS];
+      const picked = view.selected?.kind === 'abandoned' && view.selected.id === a.id;
+      const size = def ? Math.max(def.size.x, def.size.y) : 1;
+      site({ ...a, size }, def ? `${def.sprite}_ruin` : '', def?.glyph ?? '❔', `${a.id} · ruin`, picked, '#e8c27a', 1);
     }
   }
 

@@ -1,0 +1,327 @@
+/* The Royal Survey: the full-screen ledger (ui/surveySheet.ts) and its widget
+ * on the map (ui/surveyPill.ts).
+ *
+ * Docs/features/25-the-survey.md, drawn from
+ * Docs/art/ui/mockups/m62-royal-survey.png and m63-survey-widget.png.
+ *
+ * Built from the kit's own pieces — the window frame and its title band, the
+ * wax seals, the vertical rope, plank-wood, plate-parchment, the gold trough,
+ * the green button, the badge orb — and five of its own, cut by
+ * Docs/art/ui/survey/cut.sh: the compass medallion, the grand prize's chest,
+ * plank-gold and plate-gold (their twins' exact sizes, so the same slices),
+ * and the strip of surveyor's map. */
+
+/* ------------------------------------------------------------ the frame */
+
+/* THE WHOLE FRAME between the header and the foot, and the whole width on
+   the narrowest phone (the iPhone X), as the attack screen takes it
+   (battle.css): #overlay pads itself by the header, and the nav steps aside
+   for a sheet, so 100% hides nothing. */
+.k-sheet.is-tall.is-survey { height: 100%; max-height: 100%; }
+#overlay .k-sheet.is-survey {
+  --rs-w: min(calc(100% + var(--px) * 32), calc(var(--rpx) * 1125));
+  width: var(--rs-w);
+  margin-left: calc((100% - var(--rs-w)) / 2);
+  margin-right: calc((100% - var(--rs-w)) / 2);
+}
+/* Nothing scrolls but the ladder. */
+.k-sheet.is-survey > .k-panel > .k-sheet-body { overflow-y: hidden; }
+.k-sheet.is-tall > .k-panel > .k-sheet-body > .rs { flex: 1 1 0; }
+
+.rs {
+  --rs-spine: calc(var(--px) * 56);     /* the rope's column, a seal wide */
+  --rs-gap: calc(var(--px) * 8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rs-gap);
+  min-height: 0;
+}
+
+/* The compass, set into the title band's left end, standing proud of it. */
+.k-sheet.is-survey .k-head { position: relative; }
+.rs-compass {
+  position: absolute;
+  left: calc(var(--rpx) * -8);
+  top: 50%;
+  width: calc(var(--head-h) * 1.15);
+  height: calc(var(--head-h) * 1.15);
+  transform: translateY(-50%);
+  background: url('../../assets/survey-compass.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.35));
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------ the seals */
+
+/* A wax seal with its number pressed in: the kit's four seals are the four
+   states of a level. */
+.rs-seal {
+  --seal: calc(var(--px) * 40);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--seal);
+  height: var(--seal);
+  background: url('../../assets/seal-plain.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1.5) rgba(40, 22, 10, 0.35));
+}
+.rs-seal > b {
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--seal) * 0.42);
+  line-height: 1;
+  color: var(--ink-inverse);
+  -webkit-text-stroke: calc(var(--px) * 0.6) rgba(40, 22, 10, 0.9);
+  paint-order: stroke fill;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.6);
+}
+.rs-seal.is-active { background-image: url('../../assets/seal-active.png'); }
+.rs-seal.is-reached { background-image: url('../../assets/seal-available.png'); }
+.rs-seal.is-done { background-image: url('../../assets/seal-done.png'); }
+/* Cream wax: the number is pressed in, in ink. */
+.rs-seal.is-ahead > b { color: var(--ink); -webkit-text-stroke: 0; text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 248, 230, 0.7); }
+.rs-seal.is-big { --seal: calc(var(--px) * 56); }
+
+/* ------------------------------------------------------ the province's count */
+
+/* On a strip of surveyor's map, under a wash so the ink reads. */
+.rs-band {
+  flex: none;
+  padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 10);
+  background:
+    linear-gradient(rgba(246, 232, 200, 0.35), rgba(246, 232, 200, 0.35)),
+    url('../../assets/survey-map.jpg') center / cover;
+  box-shadow:
+    inset 0 0 0 calc(var(--px) * 2) rgba(92, 58, 30, 0.3),
+    inset 0 calc(var(--px) * 2) calc(var(--px) * 6) rgba(60, 36, 18, 0.25);
+}
+.rs-band-row { display: flex; align-items: center; gap: calc(var(--px) * 8); }
+.rs-band-row > .k-trough { flex: 1 1 auto; min-width: 0; }
+.rs-band-line {
+  margin: calc(var(--px) * 4) 0 0;
+  text-align: center;
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+}
+
+/* --------------------------------------------------------- the column heads */
+
+.rs-heads {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rs-spine) minmax(0, 1fr);
+  align-items: center;
+}
+.rs-heads > .rs-plank.is-gold { grid-column: 3; }
+/* A plank, three-sliced like the head panel's (kit.css): its nails live in
+   the ends, only the plain middle stretches. */
+.rs-plank {
+  --pl-h: calc(var(--px) * 52);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 5);
+  height: var(--pl-h);
+  padding: 0 calc(var(--pl-h) * 0.3);
+  border-image: url('../../assets/plank-wood.png') 0 115 fill / 0 calc(var(--pl-h) * 115 / 170) stretch;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.3));
+  color: var(--ink-inverse);
+}
+.rs-plank-title {
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: var(--text-body);
+  line-height: 1.05;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
+}
+.rs-plank.is-gold {
+  --pl-h: calc(var(--px) * 60);
+  justify-content: flex-start;
+  padding: 0 calc(var(--px) * 6) 0 calc(var(--px) * 14);
+  border-image-source: url('../../assets/plank-gold.png');
+  color: var(--ink);
+}
+.rs-plank.is-gold .rs-plank-title { flex: 1 1 auto; min-width: 0; font-size: var(--text-desc); text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 240, 200, 0.6); }
+.rs-plank.is-gold > .icon { --icon-size: calc(var(--px) * 20); flex: none; }
+/* Buy, with the price on its face: compact, so it fits the plank. */
+.rs-buy.k-btn {
+  flex: none;
+  min-width: 0;
+  min-height: calc(var(--px) * 44);
+  margin-bottom: 0;
+  padding: calc(var(--px) * 3) calc(var(--px) * 8);
+  flex-direction: column;
+  gap: calc(var(--px) * 1);
+  line-height: 1;
+}
+/* The kit floors a label's width so slabs in a row match; this one sits
+   alone on a plank that has to keep room for its title. */
+.rs-plank .rs-buy.k-btn:not(.k-knob) > .k-btn-label { min-width: 0; font-size: var(--text-desc); }
+.rs-price { font-size: var(--text-desc); font-weight: var(--weight-title); }
+
+/* --------------------------------------------------------------- the ladder */
+
+/* A rope down the middle, threading one seal a level. LOCAL, so the rope
+   scrolls with the rows it threads. */
+.rs-ladder {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 2) 0 calc(var(--px) * 8);
+  background: url('../../assets/deco-rope-v.png') center top / calc(var(--px) * 12) calc(var(--px) * 50) repeat-y;
+  background-attachment: local;
+}
+.rs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rs-spine) minmax(0, 1fr);
+  align-items: center;
+}
+.rs-spine { display: grid; place-items: center; }
+
+/* A TILE is a plate: parchment in a nailed frame, the paid one gilded. It
+   holds at most two rewards side by side and never spills. */
+.rs-tile {
+  position: relative;
+  box-sizing: border-box;
+  min-height: calc(var(--px) * 62);
+  display: grid;
+  place-items: center;
+  padding: 0 calc(var(--px) * 4);
+  border: calc(var(--rpx) * 34) solid transparent;
+  border-image: url('../../assets/plate-parchment.png') 64 fill / calc(var(--rpx) * 34) round;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+}
+.rs-tile.is-paid { border-image-source: url('../../assets/plate-gold.png'); }
+button.rs-tile { cursor: pointer; }
+button.rs-tile:active { transform: translateY(calc(var(--px) * 2)); }
+.rs-tile-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+  min-width: 0;
+}
+.rs-prize { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); min-width: 0; }
+/* As big as the header plank's coins, proud of the line (kit.css, the price
+   rule): a reward is read at a glance. */
+.rs-prize > .icon { --icon-size: calc(var(--rpx) * 76); margin: calc(var(--rpx) * -10) 0; }
+.rs-prize > b { font-size: var(--text-body); font-weight: var(--weight-strong); }
+.rs-pack { width: calc(var(--rpx) * 84); height: calc(var(--rpx) * 84); object-fit: contain; margin: calc(var(--rpx) * -12) 0; }
+.rs-mark {
+  position: absolute;
+  right: calc(var(--px) * -6);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+}
+.rs-mark > .icon { --icon-size: calc(var(--px) * 22); }
+/* The padlock sits on the frame's top corner, clear of the rewards. */
+.rs-tile.is-locked:not(.is-taken) > .rs-mark { top: calc(var(--rpx) * -26); right: calc(var(--rpx) * -26); transform: none; }
+.rs-tile.is-locked > .rs-mark > .icon { --icon-size: calc(var(--px) * 18); }
+.rs-tile.is-taken .rs-mark > .icon { --icon-size: calc(var(--px) * 30); }
+
+/* READY: a warm gold rim, and the kit's orb on the corner. */
+.rs-tile.is-ready {
+  filter:
+    drop-shadow(0 0 calc(var(--px) * 3) rgba(255, 196, 64, 0.95))
+    drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 170, 30, 0.6));
+}
+.rs-tile.is-ready > .k-cta { top: calc(var(--rpx) * -30); right: calc(var(--rpx) * -30); }
+/* TAKEN: dimmed, the tick stamped on it. AHEAD: faded. */
+.rs-tile.is-taken > .rs-tile-face { opacity: 0.5; }
+.rs-tile.is-ahead { opacity: 0.62; filter: saturate(0.7); }
+.rs-row.is-here .rs-seal { --seal: calc(var(--px) * 46); }
+
+/* ---------------------------------------------------------- the grand prize */
+
+/* Pinned at the foot: a gilded plate across the whole width, the red ribbon
+   naming the level, the chest, and the level's two tiles. */
+.rs-grand {
+  flex: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--px) * 72) 1fr 1fr;
+  gap: calc(var(--px) * 6);
+  align-items: center;
+  margin-top: calc(var(--px) * 10);
+  padding: calc(var(--px) * 10) 0 0;
+  border: calc(var(--rpx) * 34) solid transparent;
+  border-image: url('../../assets/plate-gold.png') 64 fill / calc(var(--rpx) * 34) round;
+}
+.rs-grand-ribbon {
+  position: absolute;
+  top: calc(var(--rpx) * -70);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: calc(var(--px) * 5) calc(var(--px) * 32) calc(var(--px) * 8);
+  background: url('../../assets/ribbon-red.png') center / 100% 100% no-repeat;
+  color: var(--ink-inverse);
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: var(--text-body);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
+}
+.rs-grand-chest {
+  width: calc(var(--px) * 72);
+  height: calc(var(--px) * 72);
+  background: url('../../assets/survey-chest.png') center / contain no-repeat;
+}
+.rs-grand > .rs-tile { min-height: calc(var(--px) * 58); }
+
+/* ----------------------------------------------------- the widget on the map */
+
+/* Under the Knowledge tab, never beside it: the tab hangs from the plank's
+   centre, so a widget wide enough to read starts where the tab ends. */
+#survey { padding: calc(var(--px) * 30) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
+#survey[hidden] { display: none; }
+
+.svw {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  min-width: calc(var(--px) * 170);
+  padding: 0 calc(var(--px) * 2) 0 calc(var(--px) * 36);
+  border: calc(var(--rpx) * 30) solid transparent;
+  border-image: url('../../assets/plate-parchment.png') 64 fill / calc(var(--rpx) * 30) round;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.35));
+}
+.svw:active { transform: translateY(calc(var(--px) * 2)); }
+.svw.is-ready {
+  filter:
+    drop-shadow(0 0 calc(var(--px) * 3) rgba(255, 196, 64, 0.95))
+    drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 170, 30, 0.55));
+}
+/* The compass hangs off the card's left edge, the badge on its rim. */
+.svw-compass {
+  position: absolute;
+  left: calc(var(--px) * -10);
+  top: 50%;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  transform: translateY(-50%);
+  background: url('../../assets/survey-compass.png') center / contain no-repeat;
+}
+.svw-compass > .k-cta { top: calc(var(--px) * -6); right: calc(var(--px) * -6); }
+.svw-body { display: flex; flex-direction: column; gap: calc(var(--px) * 2); min-width: 0; flex: 1 1 auto; }
+.svw-name { font-family: var(--font-body); font-weight: var(--weight-title); font-size: var(--text-body); line-height: 1.05; }
+.svw-line { display: flex; align-items: center; gap: calc(var(--px) * 4); }
+.svw-line > .k-trough { flex: 1 1 auto; min-width: calc(var(--px) * 80); }
+.svw-line > .rs-seal { --seal: calc(var(--px) * 30); margin: calc(var(--px) * -6) 0; }
