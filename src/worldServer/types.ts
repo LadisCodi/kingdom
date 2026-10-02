@@ -125,10 +125,29 @@ export interface ServerBoard {
   effects: Record<number, WorldEffect[]>;
   /** The counter army ids are made from. */
   nextId: number;
-  /** Rooms each seat has cleared in each dungeon, by hex index: progress is
-   *  per player (19 §8.1). */
+  /** Rooms each seat has cleared in each dungeon, by hex index. Each player
+   *  delves for themselves, and all of it is wiped when the dungeon closes
+   *  (19 §8.1). */
   delves: Record<number, Record<number, number>>;
+  /** One dungeon per sixth of the board, where it is now. Missing on a board
+   *  stored before dungeons moved: it is read from the generated board. */
+  dungeons?: ServerDungeon[];
   portal: PortalState;
+}
+
+/** A sixth's dungeon (19 §8.1): standing on a hex, or closed and coming
+ *  back. */
+export interface ServerDungeon {
+  /** The sixth of the board it belongs to, and stays in. */
+  wedge: number;
+  /** How many times it has closed — the key of its next rolls. */
+  n: number;
+  /** The hex it stands on; null while it is gone. */
+  index: number | null;
+  /** When it comes back; null while it stands. */
+  returnsAt: number | null;
+  /** The hex it last stood on, which it never comes back to. */
+  left?: number;
 }
 
 export interface ServerWorld {
@@ -193,6 +212,8 @@ export interface WorldSnapshot {
   armies: ArmyView[];
   /** Rooms the player has cleared in each dungeon, by hex index. */
   delves: Record<number, number>;
+  /** The hexes a dungeon stands on now. */
+  dungeons: number[];
   /** The Dark Portal as the player sees it. */
   portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */

@@ -69,10 +69,9 @@ export const improvementTier = (level: number): string => (level >= 5 ? 'l5' : l
  *  null for bare ground. */
 export function comboOf(terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
   const has = (f: WorldFeature) => features.includes(f);
-  if (terrain === 'Mountain') {
-    if (has('Dungeon')) return 'MountainDungeon';
-    return has('Forest') ? 'MountainForest' : 'Mountain';
-  }
+  // A dungeon's art carries its own rock, whatever ground it came back on.
+  if (has('Dungeon')) return 'MountainDungeon';
+  if (terrain === 'Mountain') return has('Forest') ? 'MountainForest' : 'Mountain';
   if (has('Sanctuary')) return 'Sanctuary';
   if (has('Landmark')) return 'Landmark';
   if (has('Forest')) return 'Forest';

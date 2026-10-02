@@ -8,7 +8,7 @@
 // player's own seat, which is in the save.
 
 import { WORLD, WORLD_GEN } from '../data/definitions';
-import { generateBoard, SEAT_INDICES, type Board } from './board';
+import { generateBoard, SEAT_INDICES, withDungeons, type Board } from './board';
 import type { WorldImprovement } from './types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -117,6 +117,8 @@ export function snapshotWorld(snap: {
   hexes: ReadonlyArray<HexControl & { index: number }>;
   armies?: readonly ArmyControl[];
   delves?: Readonly<Record<number, number>>;
+  /** Where the dungeons stand now; the generated board's when not told. */
+  dungeons?: readonly number[];
   portal?: PortalControl;
 }): WorldSource {
   let rival = 0;
@@ -127,7 +129,7 @@ export function snapshotWorld(snap: {
   }));
   const hexes = new Map(snap.hexes.map((h) => [h.index, h]));
   return {
-    board: () => boardOf(snap.board),
+    board: () => (snap.dungeons === undefined ? boardOf(snap.board) : withDungeons(boardOf(snap.board), snap.dungeons)),
     seats: () => seats,
     controlOf: (index) => {
       const city = seats.find((s) => s.index === index);

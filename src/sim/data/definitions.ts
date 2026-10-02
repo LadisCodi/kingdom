@@ -2075,6 +2075,11 @@ export interface WorldDungeonDef {
   stardust: number;
   knowledge: number;
   bossRewardMultiplier: number;
+  /** Closing a dungeon pays its last boss again, this many times over. */
+  closeRewardMultiplier: number;
+  /** A closed dungeon comes back after a roll between these many hours. */
+  returnHoursMin: number;
+  returnHoursMax: number;
 }
 
 export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;

@@ -311,8 +311,20 @@ held, some are destinations.
 - **A dungeon is depths of rooms** — the depth and room design of
   [`11-expeditions.md`](11-expeditions.md): numbered depths, one fight a room,
   a boss at the end of each depth.
-- **Progress is per player.** Every player clears every room once, for
-  themselves; one player's clear takes nothing from another's.
+- **Each player delves for themselves**: their own progress, room by room.
+- **But closing it is a race.** The first player to beat a dungeon's last boss
+  closes it for everyone:
+  - they are paid that boss again, `closeRewardMultiplier` (2) times over;
+  - every army camped there walks home, and everyone's progress in it is gone;
+  - the others are told who closed it.
+- **A closed dungeon comes back** after a roll between `returnHoursMin` and
+  `returnHoursMax` (12–24 h), in its own sixth of the board:
+  - on rings 3–5, on a hex nobody holds and no other site stands on;
+  - never beside a city, never where it last stood;
+  - it covers what the ground holds while it stands; gone, the ground is as
+    it was;
+  - it is a new dungeon: every player starts it from the top.
+- Where every dungeon stands is server state.
 - A dungeon hex is never owned and needs no adjacency: any army can march to
   it.
 - **An army camps at the dungeon.** From the dungeon's sheet the player
@@ -357,7 +369,7 @@ Contents are rolled at board creation, under rules:
 | **Forest** | Grassland, Plains, Mountain | Fertile land, Game, any site |
 | **Fertile land** | Grassland, Plains | Forest, any site |
 | **Game** | Grassland, Plains, Desert | Forest, any site |
-| **Dungeon** | Mountain | every other feature |
+| **Dungeon** | any terrain (its art carries its own rock) | every other feature |
 | **Sanctuary** | Grassland, Plains | every other feature |
 | **Landmark** | Grassland, Plains, Desert | every other feature |
 
@@ -444,6 +456,7 @@ The outer scope feeds the inner one.
 | **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
+| **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
 | **Reveal radius** (1, upgrading to 2) | how fast the board opens | exploring becomes the bottleneck |
 

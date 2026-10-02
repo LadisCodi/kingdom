@@ -79,6 +79,38 @@ function wedgeOf(h: Hex): WedgeAt | null {
 
 const localKey = (k: number, j: number): string => `${k}:${j}`;
 
+/** Which sixth of the board a hex is in; null for the Portal. */
+export const wedgeIndexOf = (h: Hex): number | null => wedgeOf(h)?.wedge ?? null;
+
+/**
+ * The board with its dungeons where the world server says they are now:
+ * dungeons move when they are closed (19 §8.1), so the generated board only
+ * says where they started. A dungeon stands alone on its hex, covering what
+ * the ground holds. Cached per board and set of places.
+ */
+const LIVE = new Map<string, Board>();
+export function withDungeons(board: Board, dungeons: readonly number[]): Board {
+  const at = [...dungeons].sort((a, b) => a - b);
+  const key = `${board.id}:${board.seed}:${at.join(',')}`;
+  let live = LIVE.get(key);
+  if (live === undefined) {
+    const set = new Set(at);
+    live = {
+      ...board,
+      hexes: board.hexes.map((h) => {
+        const has = h.features.includes('Dungeon');
+        if (has === set.has(h.index)) return h;
+        // A dungeon covers the ground while it stands; gone, the ground is
+        // what it was generated as.
+        return { ...h, features: has ? h.features.filter((f) => f !== 'Dungeon') : ['Dungeon'] };
+      }),
+    };
+    if (LIVE.size > 64) LIVE.clear();
+    LIVE.set(key, live);
+  }
+  return live;
+}
+
 interface Contents { terrain: WorldTerrain; features: WorldFeature[] }
 
 function rollTerrain(seed: number, k: number, j: number, role: RolledRole, gen: WorldGenDef): WorldTerrain {

@@ -21,7 +21,7 @@ import {
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
-import { SEAT_INDICES, type Board, type BoardHex } from '../sim/world/board';
+import { SEAT_INDICES, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
@@ -36,7 +36,27 @@ const DAY = 24 * HOUR;
 
 export const emptyWorld = (): ServerWorld => ({ version: 1, boards: [] });
 
-const boardData = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
+/** The board as generated from its seed: where the dungeons started. */
+const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
+
+/** The board as it stands: the generated one with the dungeons where they
+ *  are now (19 §8.1). Every rule reads this one. */
+const boardData = (b: ServerBoard): Board => withDungeons(generated(b), standingDungeons(b));
+
+/** The sixths' dungeons; a board stored before they moved reads them from
+ *  its generated board. */
+function dungeonsOf(b: ServerBoard): NonNullable<ServerBoard['dungeons']> {
+  b.dungeons ??= generated(b).hexes
+    .filter((h) => h.features.includes('Dungeon'))
+    .map((h) => ({ wedge: wedgeIndexOf(h.hex) ?? 0, n: 0, index: h.index, returnsAt: null }));
+  return b.dungeons;
+}
+
+/** The places a dungeon never shares a hex with. */
+const SITES = new Set(['Dungeon', 'Sanctuary', 'Landmark']);
+
+const standingDungeons = (b: ServerBoard): number[] =>
+  dungeonsOf(b).filter((d) => d.index !== null).map((d) => d.index!);
 
 // ------------------------------------------------------------ what a hex is
 
@@ -175,6 +195,7 @@ function nextEvent(b: ServerBoard, after: number): number {
   }
   for (const s of b.seats) consider(s?.bot ? s.nextMoveAt : null);
   for (const a of b.armies) consider(a.at);
+  for (const d of dungeonsOf(b)) consider(d.returnsAt);
   // The Portal's close pays the ranking and sends its divers home.
   const k = portalEvent(after);
   consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
@@ -193,6 +214,7 @@ function applyDue(b: ServerBoard, t: number): void {
   }
   recomputeChains(b, t);
   closePortal(b, t);
+  for (const d of dungeonsOf(b)) if (d.returnsAt !== null && d.returnsAt <= t) returnDungeon(b, d, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
     .sort((x, y) => x.at! - y.at! || (x.id < y.id ? -1 : 1));
@@ -504,7 +526,68 @@ export function recall(b: ServerBoard, seat: number, armyId: string, t: number):
 // --------------------------------------------------------------- dungeons
 
 const isDungeon = (b: ServerBoard, index: number): boolean =>
-  isBoardIndex(index) && boardData(b).hexes[index].features.includes('Dungeon');
+  isBoardIndex(index) && dungeonsOf(b).some((d) => d.index === index);
+
+const dungeonAt = (b: ServerBoard, index: number) => dungeonsOf(b).find((d) => d.index === index);
+
+/** Which dungeon this is — its sixth and how many times it has moved — so a
+ *  dungeon that comes back is a new one, rooms and all. */
+const dungeonKey = (b: ServerBoard, index: number): string => {
+  const d = dungeonAt(b, index);
+  return d === undefined ? `hex${index}` : `${d.wedge}:${d.n}`;
+};
+
+/**
+ * The first to clear a dungeon's last boss closes it for everyone (19 §8.1):
+ * they are paid its last boss again `closeRewardMultiplier` times over, every
+ * army camped there walks home, everyone's progress in it is gone, and it
+ * comes back elsewhere in its sixth after a rolled while.
+ */
+function closeDungeon(b: ServerBoard, index: number, closer: number, t: number): void {
+  const d = dungeonAt(b, index);
+  if (d === undefined) return;
+  const last = roomReward(WORLD_DUNGEON.depths - 1, WORLD_DUNGEON.roomsPerDepth);
+  const k = WORLD_DUNGEON.closeRewardMultiplier;
+  owe(b, closer, {
+    kind: 'loot', at: t,
+    gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
+    heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
+  });
+  report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true);
+  for (const a of b.armies) {
+    if (a.purpose !== 'delve' || a.target !== index || a.phase === 'home') continue;
+    if (a.owner !== closer) report(b, a.owner, t, `${seatName(b, closer)} cleared the dungeon first — it is closed`, false);
+    if (a.phase === 'camp') turnHome(a, t);
+  }
+  for (const progress of Object.values(b.delves)) delete progress[index];
+  const { returnHoursMin: lo, returnHoursMax: hi } = WORLD_DUNGEON;
+  d.returnsAt = t + Math.round((lo + rand(b.seed, 'dungeonReturn', d.wedge, d.n) * Math.max(0, hi - lo)) * HOUR);
+  d.left = index;
+  d.index = null;
+  d.n += 1;
+}
+
+/**
+ * A closed dungeon comes back in its own sixth, on rings 3–5: on ground
+ * nobody holds and no other site stands on, never beside a city, never where
+ * it last stood. It covers what the ground holds while it stands. With
+ * nowhere to go it tries again an hour later.
+ */
+function returnDungeon(b: ServerBoard, d: NonNullable<ServerBoard['dungeons']>[number], t: number): void {
+  const board = boardData(b);
+  const nearCity = new Set(SEAT_INDICES.flatMap((i) => boardNeighbors(i)));
+  const taken = new Set(standingDungeons(b));
+  const camped = new Set(b.armies.filter((a) => a.phase !== 'home').map((a) => a.target));
+  const room = board.hexes.filter((h) => {
+    const ring = hexDistance(h.hex, hexAt(PORTAL_INDEX));
+    return ring >= 3 && wedgeIndexOf(h.hex) === d.wedge && h.seat === null && !h.features.some((f) => SITES.has(f))
+      && h.index !== d.left && !nearCity.has(h.index) && !taken.has(h.index) && !camped.has(h.index)
+      && (b.hexes[h.index] === undefined || (b.hexes[h.index].owner === null && b.hexes[h.index].improvement === null));
+  });
+  if (room.length === 0) { d.returnsAt = t + HOUR; return; }
+  d.index = room[Math.floor(rand(b.seed, 'dungeonPlace', d.wedge, d.n) * room.length)].index;
+  d.returnsAt = null;
+}
 
 /** The room a seat faces next in a dungeon, or null when it is cleared to
  *  the bottom. Depth is 0-based, room 1-based; the last room is the boss. */
@@ -538,7 +621,7 @@ const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 
 /** A dungeon fields one kind of soldier more than the rest, fixed by its hex. */
 const dungeonAffinity = (b: ServerBoard, index: number): UnitId =>
-  UNIT_ORDER[randInt(b.seed, UNIT_ORDER.length, 'dungeonAffinity', index)];
+  UNIT_ORDER[randInt(b.seed, UNIT_ORDER.length, 'dungeonAffinity', dungeonKey(b, index))];
 
 /** Fight the next room with the army camped at the dungeon. Each fight
  *  resolves at once; the army keeps its losses and its heroes their wounds
@@ -552,7 +635,7 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   const next = nextRoom(cleared);
   if (next === null) return { ok: false, why: 'NothingThere' };
   const plan = generateEnemy({
-    seed: b.seed, parts: ['dungeon', a.target, next.depth, next.room],
+    seed: b.seed, parts: ['dungeon', dungeonKey(b, a.target), next.depth, next.room],
     budget: roomPower(next.depth, next.room), affinity: dungeonAffinity(b, a.target),
   });
   const log = resolveBattle(a.board, buildBoard(plan.squads, plan.fighters));
@@ -564,8 +647,10 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
     progress[a.target] = cleared + 1;
     owe(b, seat, { kind: 'loot', at: t, ...roomReward(next.depth, next.room) });
   }
+  // The last boss down: the dungeon closes for everyone, this army too.
+  if (won && nextRoom(cleared + 1) === null) closeDungeon(b, a.target, seat, t);
   // Nothing left to fight with: what is left walks home.
-  if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
+  else if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
   return { ok: true, won, log, ...next, snapshot: snapshotOf(b, seat, t) };
 }
 
@@ -857,6 +942,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
+    dungeons: standingDungeons(b),
     portal: portalView(b, seat, t),
     effects: [],
   };

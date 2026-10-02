@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
 import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
 import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
-import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
+import { SEAT_INDICES, generateBoard, wedgeIndexOf } from '../src/sim/world/board';
+import { snapshotWorld } from '../src/sim/world/source';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
   build, claim, claimRefusal, collect, delveRoom, descendPortal, drainEffects, portalClosesAt, portalEvent,
@@ -320,6 +321,88 @@ describe('dungeons', () => {
     // a hero left; the room is not cleared.
     const weak = sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(50, 'weak') }, there);
     if (!weak.ok) throw new Error(weak.why);
+  });
+
+  /** A board with the player and a rival camped at the player's nearest
+   *  dungeon, the player one room from the bottom. */
+  function race() {
+    const seed = 7;
+    const w = emptyWorld();
+    const { board: b, seat } = join(w, { id: 'r', name: 'Me', prefer: { id: 'r', seed, seat: 0 } }, T0);
+    for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
+    const d = generateBoard('r', seed).hexes
+      .filter((h) => h.features.includes('Dungeon'))
+      .sort((x, y) => hexDistance(hexAt(home(seat)), x.hex) - hexDistance(hexAt(home(seat)), y.hex))[0];
+    const mine = sendArmy(b, seat, { purpose: 'delve', target: d.index, heroes: [], board: army(200_000, 'closer') }, T0);
+    const theirs = sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(50_000, 'rival') }, T0);
+    if (!mine.ok || !theirs.ok) throw new Error('not sent');
+    const there = Math.max(mine.arrivesAt, theirs.arrivesAt);
+    resolveTo(b, there);
+    b.delves[seat] = { [d.index]: WORLD_DUNGEON.depths * WORLD_DUNGEON.roomsPerDepth - 1 };
+    b.delves[1] = { [d.index]: 5 };
+    drainEffects(b, seat);
+    drainEffects(b, 1);
+    return { b, seat, d, mine: mine.army, theirs: theirs.army, there };
+  }
+
+  it('closes for everyone when its last boss falls: the first to clear it is paid, the rest go home', () => {
+    const { b, seat, d, mine, theirs, there } = race();
+    const fight = delveRoom(b, seat, mine, there);
+    if (!fight.ok) throw new Error(fight.why);
+    expect(fight.won).toBe(true);
+    expect(snapshotOf(b, seat, there).dungeons).not.toContain(d.index);
+    expect(b.delves[seat][d.index]).toBeUndefined();
+    expect(b.delves[1][d.index]).toBeUndefined();
+    for (const id of [mine, theirs]) expect(b.armies.find((a) => a.id === id)?.phase).toBe('home');
+    const paid = drainEffects(b, seat).filter((e) => e.kind === 'loot');
+    // The last room's loot, then the close: the last boss again, twice over.
+    expect(paid).toHaveLength(2);
+    expect(paid[1]).toMatchObject({ gold: Math.round(paid[0].kind === 'loot' ? paid[0].gold * WORLD_DUNGEON.closeRewardMultiplier : 0) });
+    expect(drainEffects(b, 1).some((e) => e.kind === 'report' && !e.good)).toBe(true);
+    // A closed dungeon cannot be delved or marched to.
+    expect(sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(100, 'late') }, there + 1))
+      .toMatchObject({ ok: false, why: 'NothingThere' });
+  });
+
+  it('comes back after a rolled while, elsewhere in its own sixth, on bare ground away from the cities', () => {
+    const { b, seat, d, mine, there } = race();
+    delveRoom(b, seat, mine, there);
+    const gone = b.dungeons!.find((x) => x.index === null)!;
+    const back = gone.returnsAt!;
+    expect(back - there).toBeGreaterThanOrEqual(WORLD_DUNGEON.returnHoursMin * HOUR);
+    expect(back - there).toBeLessThanOrEqual(WORLD_DUNGEON.returnHoursMax * HOUR);
+    resolveTo(b, back - 1);
+    expect(gone.index).toBeNull();
+    resolveTo(b, back);
+    const at = gone.index!;
+    expect(at).not.toBeNull();
+    expect(at).not.toBe(d.index);
+    const hex = generateBoard('r', 7).hexes[at];
+    expect(hexDistance(hex.hex, hexAt(PORTAL_INDEX))).toBeGreaterThanOrEqual(3);
+    expect(hex.features.some((f) => f === 'Sanctuary' || f === 'Landmark' || f === 'Dungeon')).toBe(false);
+    expect(b.hexes[at]).toBeUndefined(); // nobody holds it
+    expect(SEAT_INDICES.some((c) => boardNeighbors(c).includes(at))).toBe(false);
+    expect(snapshotOf(b, seat, back).dungeons).toHaveLength(6);
+    expect(snapshotOf(b, seat, back).dungeons).toContain(at);
+    // A new dungeon: every seat starts it from the top.
+    expect(snapshotOf(b, seat, back).delves[at] ?? 0).toBe(0);
+    expect(wedgeIndexOf(hex.hex)).toBe(gone.wedge);
+    // The player's board shows it where it stands now, and not where it was.
+    const seen = snapshotWorld(snapshotOf(b, seat, back)).board();
+    expect(seen.hexes[at].features).toEqual(['Dungeon']);
+    expect(seen.hexes[d.index].features).not.toContain('Dungeon');
+  });
+
+  it('resolves its return the same read once or read every hour', () => {
+    const once = race();
+    delveRoom(once.b, once.seat, once.mine, once.there);
+    const stepped = race();
+    delveRoom(stepped.b, stepped.seat, stepped.mine, stepped.there);
+    const end = once.there + 3 * 24 * HOUR;
+    resolveTo(once.b, end);
+    for (let t = stepped.there; t < end; t += HOUR + 7 * MIN) resolveTo(stepped.b, t);
+    resolveTo(stepped.b, end);
+    expect(stepped.b.dungeons).toEqual(once.b.dungeons);
   });
 
   it('counts rooms in depths, the last of each a boss, and pays more deeper down', () => {

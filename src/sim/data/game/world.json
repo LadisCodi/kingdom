@@ -39,7 +39,10 @@
         "terrains": ["Grassland", "Plains", "Desert"],
         "excludes": ["Forest", "Dungeon", "Sanctuary", "Landmark"]
       },
-      "Dungeon": { "terrains": ["Mountain"], "excludes": ["Forest", "FertileLand", "Game", "Sanctuary", "Landmark"] },
+      "Dungeon": {
+        "terrains": ["Grassland", "Plains", "Desert", "Mountain"],
+        "excludes": ["Forest", "FertileLand", "Game", "Sanctuary", "Landmark"]
+      },
       "Sanctuary": {
         "terrains": ["Grassland", "Plains"],
         "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Landmark"]
@@ -126,7 +129,10 @@
     "heroXp": 10,
     "stardust": 2,
     "knowledge": 0.25,
-    "bossRewardMultiplier": 3
+    "bossRewardMultiplier": 3,
+    "closeRewardMultiplier": 2,
+    "returnHoursMin": 12,
+    "returnHoursMax": 24
   },
   "worldPortal": {
     "openWeekday": 5,

@@ -28,7 +28,7 @@
 | **Forest** | Grassland, Plains, Mountain | Fertile land, Game, any site |
 | **Fertile land** | Grassland, Plains | Forest, any site |
 | **Game** | Grassland, Plains, Desert | Forest, any site |
-| **Dungeon** | Mountain (outer ring) | every other feature |
+| **Dungeon** | any terrain; placed, and moves (19 §8.1) | every other feature |
 | **Sanctuary** | Grassland, Plains (outer ring) | every other feature |
 | **Landmark** | Grassland, Plains, Desert (corridors) | every other feature |
 
@@ -36,7 +36,7 @@
 - **Fertile land and Game only roll where a Homestead can stand**, the only
   improvement they boost (19 §7).
 - A Mountain is terrain, not a feature: Forest on a Mountain is the forested
-  mountain, Dungeon on a Mountain is a cave in it.
+  mountain. A Dungeon is always drawn as a cave in its own rock.
 - Generation rolls features in their order (`WORLD_FEATURES`) and **skips one
   that does not fit** the terrain or a feature already rolled.
 - The rules are data: a `featureRules` entry per feature in `worldGen`
@@ -61,7 +61,7 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 | Fertile land + Game | Grassland, Plains | 3 |
 | Mountain | Mountain | 4 |
 | Mountain + Forest | Mountain | 3 |
-| Mountain + Dungeon | Mountain | 3 |
+| Dungeon | any — its art carries its own rock | 3 |
 | Sanctuary | Grassland, Plains | 3 |
 | Landmark | Grassland, Plains, Desert | 3 |
 
@@ -153,7 +153,7 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 - Loose props laid out by slots.
 - More than one combination sprite on a hex, except what an improvement
   leaves behind (§3).
-- A Dungeon on open ground, a Forest in the desert, two sites on one hex (§1).
+- A Forest in the desert, two sites on one hex (§1).
 - A separate drawing per terrain for the same combination (§2).
 - Hex plates of their own: the province's terrain set serves the board (§2).
 - Variants of an improvement: its three tiers are its variety (§3).

@@ -247,7 +247,7 @@
     },
     "worldDungeon": {
       "type": "object",
-      "doc": "A dungeon on the outer ring: depths of rooms, cleared once per player by a camped army (Docs/features/19-world-map.md §8.1, 11-expeditions.md).",
+      "doc": "A dungeon: depths of rooms, a race — the first to clear its last boss closes it for everyone, and it comes back elsewhere in its sixth of the board (Docs/features/19-world-map.md §8.1, 11-expeditions.md).",
       "fields": {
         "depths": { "type": "int", "min": 1, "max": 9, "doc": "Depths in every dungeon." },
         "roomsPerDepth": { "type": "int", "min": 2, "doc": "Rooms in a depth; the last is its boss." },
@@ -279,7 +279,22 @@
           "min": 0,
           "doc": "Knowledge a room pays, times the depth’s scale — at least 1."
         },
-        "bossRewardMultiplier": { "type": "float", "min": 1, "doc": "A boss pays this many times a room." }
+        "bossRewardMultiplier": { "type": "float", "min": 1, "doc": "A boss pays this many times a room." },
+        "closeRewardMultiplier": {
+          "type": "float",
+          "min": 0,
+          "doc": "Closing a dungeon pays its last boss again, this many times over, to whoever closed it."
+        },
+        "returnHoursMin": {
+          "type": "float",
+          "min": 0,
+          "doc": "After a dungeon closes, it comes back after at least this many hours…"
+        },
+        "returnHoursMax": {
+          "type": "float",
+          "min": 0,
+          "doc": "…and at most this many: each return rolls a time between the two."
+        }
       }
     },
     "worldPortal": {
