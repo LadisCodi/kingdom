@@ -4150,6 +4150,10 @@ export class Game {
     );
   }
 
+  /** The map plot the tutorial is pointing at, set by the stage every frame
+   *  a line points at one (ui/stage/stage.ts) and drawn on the ground. */
+  tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null = null;
+
   /** Bumped by every notify(): what the map's markers are cached against. */
   private notifies = 0;
   private markerCache: { key: string; layer: MarkerLayer } | null = null;
@@ -4165,7 +4169,10 @@ export class Game {
     const key = `${this.notifies}|${JSON.stringify(this.mode)}|${this.ghostHeld}|${this.inspectedDistrictId}`;
     if (this.markerCache?.key !== key) this.markerCache = { key, layer: this.buildMarkers() };
     // The two that run on the clock: the hint's expiry, the wheels' sweep.
-    return { ...this.markerCache.layer, hintCell: this.hintCell(), spellZones: this.spellZones() };
+    return {
+      ...this.markerCache.layer,
+      hintCell: this.hintCell(), spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+    };
   }
 
   private buildMarkers(): MarkerLayer {
@@ -4185,6 +4192,7 @@ export class Game {
       inspectedDistrictId: this.inspectedDistrictId,
       hintCell: null,
       spellZones: [],
+      tutorialFocus: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];

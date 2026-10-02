@@ -79,6 +79,9 @@ export interface MarkerLayer {
   inspectedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
+  /** The plot the tutorial is pointing at (ui/stage/stage.ts): lit on the
+   *  ground, under what stands on it. The hand stays in the stage. */
+  tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
    *  cells each one covers, and how much of its window is left. */
   spellZones: Array<{
@@ -1118,6 +1121,33 @@ export function drawMap(
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
     drawReach(ctx, reachBorder(state, map, visible), cellRect, size);
+  }
+
+  // Pass 1.3: THE TUTORIAL'S POINTER on a map plot (ui/stage/stage.ts): its
+  // diamond lit in the stage's blue, over the ground and under everything
+  // that stands, so the tree it points at stands in front of the light. The
+  // halo breathes on the stage's own beat, 1.4 s.
+  if (markers.tutorialFocus) {
+    const p = camera.plotBox(markers.tutorialFocus.cell, markers.tutorialFocus.span);
+    const b = { x: p.x + p.w * 0.03, y: p.y + p.h * 0.03, w: p.w * 0.94, h: p.h * 0.94 };
+    const beat = reducedMotion?.matches ? 0.7 : 0.4 + 0.6 * (0.5 - 0.5 * Math.cos((clockNow / 1400) * Math.PI * 2));
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    diamondPath(ctx, b);
+    ctx.strokeStyle = PALETTE.tutorialGlowOuter;
+    // Two widths for the halo's soft edge, rather than a blur.
+    ctx.globalAlpha = 0.35 * beat;
+    ctx.lineWidth = Math.max(8, size * 0.3);
+    ctx.stroke();
+    ctx.globalAlpha = 0.6 * beat;
+    ctx.lineWidth = Math.max(5, size * 0.17);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = PALETTE.tutorialGlowInner;
+    ctx.lineWidth = Math.max(2, size * 0.05);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and

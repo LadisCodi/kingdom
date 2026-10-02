@@ -100,16 +100,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // ------------------------------------------------------------ the pieces
   // A CONTROL is highlighted by its own silhouette lit in a blue magic glow
   // (`.stg-glow` on the control itself); a MAP PLOT by the same glow drawn
-  // as the plot's diamond — this ring.
-  // The halo is an svg of its own so its pulse is an opacity on an element —
-  // composited — rather than a blurred stroke repainted every frame.
-  const ring = el('div', { class: 'stg-ring' });
-  ring.innerHTML = '<svg class="stg-ring-pulse" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon class="stg-ring-halo" points="50,3 97,50 50,97 3,50"/></svg>'
-    + '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon class="stg-ring-line" points="50,3 97,50 50,97 3,50"/></svg>';
-  // A control's glow pulses the same way: its silhouette is lit once
-  // (`.stg-glow`, a still filter) and this soft light round its box breathes.
+  // as the plot's diamond ON THE GROUND — by the map, under the trees and
+  // buildings standing on it (`game.tutorialFocus`, mapRenderer Pass 1.3).
+  // The control's glow pulses as an opacity, composited: its silhouette is
+  // lit once (`.stg-glow`, a still filter) and this soft light round its box
+  // breathes.
   const halo = el('div', { class: 'stg-halo', 'aria-hidden': 'true' });
   halo.hidden = true;
   // The pointer: a gloved hand, pointing down at the target from above it —
@@ -156,7 +151,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       + `--delay:${(-Math.random() * 4).toFixed(2)}s`;
     sparks.append(mote);
   }
-  const layer = el('div', { class: 'stg' }, halo, sparks, ring, arrow, box);
+  // The hand last: it points over everything, the dialogue box included.
+  const layer = el('div', { class: 'stg' }, halo, sparks, box, arrow);
 
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
@@ -571,7 +567,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const show = r !== null;
     const isCell = playing?.target?.kind === 'cell';
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
-    ring.hidden = !show || !isCell;
+    game.tutorialFocus = show && playing?.target?.kind === 'cell'
+      ? { cell: playing.target.cell, span: playing.target.span } : null;
     halo.hidden = glowing === null;
     arrow.hidden = !show;
     sparks.hidden = !show;
@@ -580,7 +577,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const padded = {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
     };
-    Object.assign(isCell ? ring.style : halo.style, padded);
+    if (!isCell) Object.assign(halo.style, padded);
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     // The arrow points DOWN at the target from above it, unless that would
     // leave the screen, then UP from below.
@@ -612,6 +609,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
     if (playing === null) {
+      game.tutorialFocus = null;
       // Not while the page is hidden: a timer still fires there, and a
       // scene would play to nobody.
       if (now - lastCheck > IDLE_CHECK_MS - 10 && !document.hidden) {
