@@ -1,6 +1,6 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, LAIR_ORDER, levelIndexed, terrainGate } from './data/definitions';
+import { ABANDONED, DISTRICTS, FOG, LANDMARKS, LAIR_ORDER, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { lairIsFound } from './lairZone';
 import {
@@ -11,6 +11,8 @@ import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import { recordEvent } from './events';
 import { isTechComplete, revealedCellCount } from './research';
+import { onPaidReveal, undiscoveredAround } from './treasures';
+import { sightedThings } from './sight';
 import {
   addToWallet, coordKey, districtCells, getWallet, townhall,
   type Coord, type District, type GameState, type TechId,
@@ -297,6 +299,9 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   addToWallet(state.city.wallet, 'Gold', -payment);
   if (done + 1 >= FOG.tapsToReveal) {
     delete state.fog.progress[key];
+    // Read before the reveal: afterwards these are what it DISCOVERED, and a
+    // treasure it brings due prefers one of them (sim/treasures.ts).
+    const fresh = undiscoveredAround(state, map, block);
     // The whole block clears at once. There is no half a mountain.
     for (const c of block) {
       const k = coordKey(c);
@@ -308,6 +313,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     // that doubles from ring 4. Knowledge comes out of dungeons instead
     // (sim/expeditions.ts), because heroes and relics are all it buys.
     recordEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
+    onPaidReveal(state, map, block, fresh);
     // Clearing a cell can bring a whole ring of new ground into view.
     recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc
@@ -339,6 +345,15 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
   // and it has no picture on the map until then (Docs/proposals/lairs.md §2.1).
   for (const id of LAIR_ORDER) {
     if (lairIsFound(state, id)) recordSiteDiscovery(state, id);
+  }
+  // A playtest signal: when each silhouette was first seen (Docs/playtest.md §5).
+  for (const t of sightedThings(state, map)) state.signals.sightedAt[t.id] ??= state.lastAdvance;
+  // An abandoned building is named when it is DISCOVERED: sighted, it is only
+  // the silhouette of a ruin, and what it was is the find
+  // (Docs/features/01-map-and-fog.md §6.3).
+  for (const a of ABANDONED) {
+    if (state.abandoned.repaired[a.id] === true) continue;
+    if (fogState(state, map, a.location) !== 'Undiscovered') recordSiteDiscovery(state, a.id);
   }
 }
 

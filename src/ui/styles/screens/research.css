@@ -59,7 +59,11 @@
   scrollbar-width: none;
   border: 14px solid transparent;
   border-image: url('../../assets/rb-page.png') 56 fill / 26px stretch;
-  padding: 18px 4px 0;
+  /* The Knowledge tab stays down over the book (hud.css) and is sized in
+     --rpx, the page in pixels: on a frame taller than the phone's the tab
+     grows past the page's top, so the page's top grows with it and the
+     chapter's title starts under the tab. */
+  padding: max(18px, calc(var(--rpx) * 198 - 51px)) 4px 0;
   margin: 0;
   color: var(--ink);
 }

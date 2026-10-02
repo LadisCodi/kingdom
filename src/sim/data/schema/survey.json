@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "fields": {
+    "survey": {
+      "type": "object",
+      "doc": "The Survey: one ladder over the whole province, climbed by cells revealed (Docs/features/25-the-survey.md). Every list is one entry a level; their length IS the ladder.",
+      "fields": {
+        "cells": {
+          "type": "list",
+          "of": { "type": "int" },
+          "doc": "The cells revealed each level asks for, rising; the last is the province bought out."
+        },
+        "goldFloorPerMinute": {
+          "type": "int",
+          "min": 0,
+          "doc": "The least a minute of a free cell’s purse pays, whatever the kingdom makes."
+        },
+        "freeGoldMinutes": {
+          "type": "list",
+          "of": { "type": "int" },
+          "doc": "Free column: a purse of this many minutes of the kingdom’s Gold production."
+        },
+        "freeKnowledge": {
+          "type": "list",
+          "of": { "type": "int" },
+          "doc": "Free column: Knowledge, over the bar’s cap like a lump."
+        },
+        "freeSilverKeys": { "type": "list", "of": { "type": "int" }, "doc": "Free column: silver keys." },
+        "freeGoldKeys": { "type": "list", "of": { "type": "int" }, "doc": "Free column: gold keys." },
+        "freePacks": {
+          "type": "list",
+          "of": { "type": "text" },
+          "doc": "Free column: a card pack tier, or empty for none."
+        },
+        "freeGems": { "type": "list", "of": { "type": "int" }, "doc": "Free column: Gems." },
+        "paidGems": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Gems." },
+        "paidGoldKeys": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: gold keys." },
+        "paidPacks": {
+          "type": "list",
+          "of": { "type": "text" },
+          "doc": "Paid column: a card pack tier, or empty for none."
+        },
+        "paidStardust": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Stardust." }
+      }
+    }
+  }
+}

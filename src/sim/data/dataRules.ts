@@ -15,6 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
+import regionMap from './region-map.json';
 import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
@@ -48,7 +49,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'terrain', label: 'Terrain', domain: 'World', view: 'table', noun: 'terrain', source: 'terrain' },
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
   { id: 'garrisons', label: 'Garrisons', domain: 'World', view: 'table', noun: 'garrison', source: 'garrisons' },
-  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
+  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
   { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel'] },
@@ -73,7 +74,8 @@ export const COLLECTIONS: readonly CollectionDef[] = [
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
-  { id: 'daily', label: 'Daily & missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['daily', 'missions'] },
+  { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
+  { id: 'missions', label: 'Missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['missions'] },
   { id: 'collection', label: 'Card collection', domain: 'Progression', view: 'form', noun: 'setting', groups: ['collection'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
@@ -181,7 +183,7 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 /** Quest goal types and what their target names; null = takes none. Mirrors
  *  the importer's QUEST_GOAL_TYPES. */
 export const QUEST_GOALS: Record<string, RefKind | null> = {
-  BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
+  BuildDistrict: 'building', RepairDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
   TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, FindLairs: null, ClearLairs: null, CollectResource: 'currency',
@@ -469,6 +471,10 @@ function neverFalls(push: Push, id: string, field: string, v: unknown): void {
  *  bonus is a flat amount and is not clamped). */
 export const ADJACENCY_CLAMP = 0.25;
 
+/** The abandoned buildings authored in the map (Docs/features/01-map-and-fog.md §6.3). */
+const ABANDONED_IDS: readonly string[] = ((regionMap as { abandoned?: Array<{ id: string }> }).abandoned ?? [])
+  .map((a) => a.id);
+
 /** What a scene condition's target must name, by kind (Docs/features/24-dialogue.md §5). */
 const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   questReached: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
@@ -486,7 +492,10 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   bookOpen: () => ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
-  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'],
+  abandonedRevealed: () => ABANDONED_IDS,
+  siteOpen: () => ABANDONED_IDS,
+  repairing: () => ABANDONED_IDS,
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {

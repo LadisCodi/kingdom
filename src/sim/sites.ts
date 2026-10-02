@@ -1,4 +1,5 @@
-// Where the authored map SITES are — landmarks and lairs — and nothing else.
+// Where the authored map SITES are — landmarks, lairs and abandoned buildings
+// — and nothing else.
 //
 // This module deliberately knows about coordinates and content ids only, never
 // about GameState. That is what lets districts.ts ask "is this cell a site?"
@@ -6,7 +7,9 @@
 // The claiming and delving rules live in landmarks.ts and expeditions.ts; only
 // the geography lives here.
 
-import { LANDMARKS, LAIRS, type LandmarkDef, type LairDef } from './data/definitions';
+import {
+  ABANDONED, DISTRICTS, LANDMARKS, LAIRS, type AbandonedDef, type LandmarkDef, type LairDef,
+} from './data/definitions';
 import { cellsOfRect, coordKey, type Coord, type GameState, type LairId } from './state';
 
 /**
@@ -33,6 +36,25 @@ const spread = <T extends { location: Coord; size: number }>(
 const LANDMARK_BY_CELL = spread(LANDMARKS);
 const LAIR_BY_CELL = spread(Object.values(LAIRS));
 
+const ABANDONED_BY_CELL: ReadonlyMap<string, AbandonedDef> = (() => {
+  const out = new Map<string, AbandonedDef>();
+  for (const a of ABANDONED) {
+    for (const c of cellsOfRect(a.location, DISTRICTS[a.districtId].size)) out.set(coordKey(c), a);
+  }
+  return out;
+})();
+
+/** The abandoned building authored on this cell, repaired or not. */
+export const abandonedDefAt = (cell: Coord): AbandonedDef | undefined =>
+  ABANDONED_BY_CELL.get(coordKey(cell));
+
+/** The abandoned building still standing in ruin on this cell: once its
+ *  repair starts it is a district, and its cells are that district's. */
+export const standingAbandonedAt = (state: GameState, cell: Coord): AbandonedDef | undefined => {
+  const a = ABANDONED_BY_CELL.get(coordKey(cell));
+  return a !== undefined && state.abandoned.repaired[a.id] !== true ? a : undefined;
+};
+
 export const landmarkDefAt = (cell: Coord): LandmarkDef | undefined =>
   LANDMARK_BY_CELL.get(coordKey(cell));
 
@@ -57,6 +79,7 @@ export const standingLairAt = (state: GameState, cell: Coord): LairDef | undefin
 export const cellHasSite = (state: GameState, cell: Coord): boolean => {
   const key = coordKey(cell);
   if (LANDMARK_BY_CELL.has(key)) return true;
+  if (standingAbandonedAt(state, cell) !== undefined) return true;
   const lair = LAIR_BY_CELL.get(key);
   return lair !== undefined && state.lairs[lair.id]?.cleared !== true;
 };

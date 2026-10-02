@@ -66,7 +66,7 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
 export function buildingPortrait(
   def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number, building = false,
 ): HTMLElement {
-  // Levelled art comes in TIERS (`_l1`, `_l4`, `_l8`): the highest one at or
+  // Levelled art comes in TIERS (`_l1`–`_l3`, `_l4`, `_l8`): the highest one at or
   // below this level, walked down the way the map draws it — a level with no
   // art of its own must not fall past its tier to the icon.
   let url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`);

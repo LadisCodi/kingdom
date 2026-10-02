@@ -26,4 +26,6 @@ function record(state: GameState, key: string): void {
   if (state.discoveries[key]) return;
   state.discoveries[key] = true;
   state.pendingDiscoveries.push(key);
+  // A playtest signal: when a site came out of the dark (Docs/playtest.md §5).
+  if (key.startsWith('site:')) state.signals.discoveredAt[key.slice(5)] ??= state.lastAdvance;
 }

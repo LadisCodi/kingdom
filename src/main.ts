@@ -13,7 +13,7 @@ import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, DISTRICTS, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { grantPack, seasonLeftMs } from './sim/collection';
 import { PACK_ORDER } from './sim/data/definitions';
@@ -35,16 +35,16 @@ import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
 import { renderKnowledgeSheet } from './ui/knowledgeSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
-import { renderDailySheet } from './ui/dailySheet';
 import { renderPassSheet } from './ui/passSheet';
-import { mountDailyPill } from './ui/dailyPill';
+import { renderSurveySheet } from './ui/surveySheet';
 import { mountSeasonPill } from './ui/seasonPill';
+import { mountSurveyPill } from './ui/surveyPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { lairCardScreen, landmarkCardScreen } from './ui/siteCard';
-import { landmarkDefAt, standingLairAt } from './sim/sites';
+import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -76,7 +76,10 @@ import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
 
-const AUTOSAVE_TICKS = 30;
+// Every five seconds to the device: a page killed without a `pagehide` (an
+// app swiped away, a crashed tab) loses no more than that. The cloud copy is
+// debounced on its own (persist/saveManager.ts).
+const AUTOSAVE_TICKS = 5;
 
 async function boot(): Promise<void> {
   // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),
@@ -164,8 +167,8 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
-  mountDailyPill(game, document.getElementById('daily')!);
   mountSeasonPill(game, document.getElementById('season')!);
+  mountSurveyPill(game, document.getElementById('survey')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
@@ -220,8 +223,8 @@ async function boot(): Promise<void> {
     world: renderDispatchSheet,
     army: renderArmySheet,
     builder: renderBuilderSheet,
-    daily: renderDailySheet,
     pass: renderPassSheet,
+    survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,
@@ -276,8 +279,12 @@ async function boot(): Promise<void> {
     const canvasTop = canvas.getBoundingClientRect().top;
     const top = document.getElementById('header')!.getBoundingClientRect().bottom - canvasTop;
     // The card sits at the bottom of #panel, so its top edge is the lowest
-    // top among the slot's children — not the slot's own.
-    const tops = [...panelRoot.children].map((c) => c.getBoundingClientRect().top - canvasTop);
+    // top among the slot's children — not the slot's own. A legacy screen is
+    // a `display: contents` wrapper with no box of its own, so it is measured
+    // by what it holds.
+    const boxed = (c: Element): Element =>
+      getComputedStyle(c).display === 'contents' && c.firstElementChild ? boxed(c.firstElementChild) : c;
+    const tops = [...panelRoot.children].map((c) => boxed(c).getBoundingClientRect().top - canvasTop);
     const bottom = tops.length > 0 ? Math.min(...tops) : canvas.clientHeight;
     camera.centerFootprintWithin(cell, size, top, bottom, CAMERA_GLIDE_MS);
   };
@@ -299,6 +306,12 @@ async function boot(): Promise<void> {
       const lair = standingLairAt(game.state, site)!;
       panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
       frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
+    } else if (site !== null && standingAbandonedAt(game.state, site)) {
+      // An abandoned building's card is the district card's frame, with its
+      // own close (siteCard.ts `renderAbandonedCard`).
+      const ruin = standingAbandonedAt(game.state, site)!;
+      panelSlot.show(`abandoned:${ruin.id}`, () => legacy(() => renderAbandonedCard(game, ruin)));
+      frameOnMap(`abandoned:${ruin.id}`, ruin.location, DISTRICTS[ruin.districtId].size);
     } else if (site !== null && landmarkDefAt(site)) {
       // A landmark's card, in the same frame as a lair's (siteCard.ts,
       // `landmarkCardScreen`). Keyed by cell, so tapping a different site is
@@ -325,7 +338,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -342,6 +355,8 @@ async function boot(): Promise<void> {
     }
     else overlaySlot.clear();
   };
+  // A return is watched for its first tap (Docs/playtest.md §5).
+  game.armReturnTap(catchUp === null ? 0 : (catchUp as CatchUpReport).elapsedMs);
   // Show the offline report once, and only when the absence was long enough
   // to be worth interrupting for.
   if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
@@ -500,8 +515,7 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
-      // The founding too, so a warp past midnight is a second day (the
-      // daily chest waits for one).
+      // The founding too, so a warp past midnight is a second day.
       game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       // The lairs' counters, so the warp demos a raid landing during an

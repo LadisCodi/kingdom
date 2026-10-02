@@ -27,6 +27,40 @@
   midday sun, and a hex world map in the same hand
   ([`art/style-prompt.md`](art/style-prompt.md)).
 
+## The fantasies
+
+> **The player feels they are winning back a kingdom the fog swallowed, never
+> sure what the next cell holds.**
+
+- **The column is the treasure hunt**, and its verb is the paid fog: a tap on
+  a fogged cell, five to a reveal.
+- **Three layers, one job each:**
+
+| Fantasy | Its job | Felt when |
+|---|---|---|
+| **Accumulation** | come back tomorrow | the stores' bubbles and a full Mana well after a night away |
+| **Collection** | keep playing for weeks | the card missing from a 28-day album; the next of thirty-two heroes |
+| **Power, against the world** | the reason to pay | a Legendary hero takes the room the party lost |
+
+- **The framing is the monarch who came home** — *Your Majesty — you came!* —
+  and a kingdom put right, in Isolde's voice
+  ([`features/23-tutorials.md`](features/23-tutorials.md) §3). It is the
+  column's voice, not a layer.
+- **Nothing else is declared as a fantasy.** Optimisation (adjacency,
+  workshops, Harmony), the raids, the Wonders, the guild and the world are
+  mechanics serving the four above (**OQ-6**).
+- **First session:** the column at the First Morning's first reveal, which
+  sets a chest in the fog beside it (beats 1.1b–1.1c), and again at the old House found in the fog
+  (4.1–4.3); accumulation at the first rent (7.1).
+- **What is sold expresses the fantasies**: the column through **the
+  Survey**, a ladder climbed by cells revealed with a paid column
+  ([`features/25-the-survey.md`](features/25-the-survey.md)); the layers
+  through keys and card packs, at published odds
+  ([`features/14-monetization.md`](features/14-monetization.md) §2).
+- **Playtest:** the sentence a player should describe the game with —
+  *"I'm finding what the fog took from my kingdom."* How a session checks it
+  is [`playtest.md`](playtest.md).
+
 ## The three promises
 
 1. **Your city can never be attacked. Everything outside it can be.** The
@@ -52,13 +86,15 @@
 
 1. **Reveal** — spend Gold to peel back the fog. Cost scales steeply with
    distance from the Townhall. **The frontier stays connected**, and a building
-   sees further than it can buy.
+   sees further than it can buy. What the fog kept comes out: **treasures** to
+   pick up, and **abandoned buildings** to repair.
 2. **Clear** — every ruin opens with a gate, and discovering the ruin starts
    the gate's counter: clear it with hero and troops before it raids the city.
 3. **Harvest** — tap resource cells directly. Every tap on the ground spends
    **1 Mana**. Cells exhaust after a number of taps and recover on a timer.
-4. **Build** — place districts on revealed land. Costs are charged up front;
-   construction takes time and runs while the player is away.
+4. **Build** — repair what the fog kept, then place districts on revealed
+   land. Costs are charged up front; construction takes time and runs while
+   the player is away.
 5. **Grow** — train villagers at the Townhall. Housed villagers pay rent, the
    idle backbone of the economy.
 6. **Staff** — assign workers. They are units that walk to cells inside their
@@ -77,6 +113,8 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 | Found in the fog | Gives |
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
+| **Treasures** — one every five cells revealed, a chest in the fog beside the last | a coin, picked up with a free tap once its cell is revealed |
+| **Abandoned buildings** — the village the fog swallowed, seen first as silhouettes of their ruins | a House, plots, a Farm, a Sawmill… repaired before the player can build their own |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |
 | **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |
@@ -295,12 +333,14 @@ be shipped.
   authority is for the social layer and the telemetry.
 - **Out of scope:** CPI, IPM, real cohorted D30, measured ARPDAU.
 
-The three questions it answers:
+The four questions it answers:
 
 1. **Does the loop hold for thirty days?** On day 14, is there still something
    to want that nobody had to author by hand?
 2. **Where would people pay?** Which surfaces have demand, not how much.
 3. **Is there a demo that carries the thesis?** The paid fog is filmable.
+4. **Does the fantasy land?** A tester describes the game in the fantasy's
+   words, not the mechanic's ([`playtest.md`](playtest.md)).
 
 ## Where to read next
 

@@ -162,9 +162,9 @@ export function renderStoreSheet(game: Game): HTMLElement {
   });
 
   // ---- gem packs: upright cards, count over art over price
-  // GEM_PACK_ORDER, not every SKU: the Royal chest is a Store row because the
-  // budget has to see it, but it is sold on the daily chest where the ladder
-  // beside it explains the price (Docs/features/12-quests.md §3.3).
+  // GEM_PACK_ORDER, not every SKU: the season pass is a Store row because the
+  // budget has to see it, but it is sold on the pass where the ladder beside
+  // it explains the price (Docs/features/20-season-pass.md §6).
   const packs = GEM_PACK_ORDER.map((id) => {
     const sku = STORE[id];
     // Each pack has its own art, dropped into render/assets as
@@ -204,7 +204,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         formatExact(game.walletValue('Gems')))),
     ...offers,
     ...cardPacks,
-    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the season pass and the daily chest.'),
+    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the season pass.'),
     // The bundles keep their own heading under Cards: same shelf, other till.
     // A player scanning for cards finds every way to get one in one place,
     // and the `$` on the button is what says the rail changed.

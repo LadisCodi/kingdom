@@ -7,6 +7,7 @@
       "type": "text",
       "options": [
         "BuildDistrict",
+        "RepairDistrict",
         "UpgradeDistrict",
         "HoldResource",
         "ReachPopulation",

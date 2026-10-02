@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -31,7 +31,7 @@ import { readBits } from './world/fogBits';
 import { WORLD_IMPROVEMENTS } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
-  coordKey, parseCoordKey,
+  cellsOfRect, coordKey, districtOccupies, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
@@ -719,6 +719,16 @@ const MIGRATIONS: readonly Migration[] = [
       tutorial.Seen = [...new Set([...(tutorial.Seen ?? []), 'gift:Warfare'])];
     },
   },
+  {
+    // v79: THE DAILY CHEST IS CUT (Docs/implementation-plan.md Step 13). Its
+    // `Daily` block goes; rungs a player had not claimed are not paid out.
+    // The purchase log keeps any `RoyalChest` it holds — it is a record.
+    to: 79,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Daily;
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -835,16 +845,14 @@ export function serialize(state: GameState, now: number): SaveFile {
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
         UtcOffsetMinutes: state.kingdom.utcOffsetMinutes,
-        Daily: {
-          Season: state.kingdom.daily.season,
-          Rung: state.kingdom.daily.rung,
-          LastClaimedDay: state.kingdom.daily.lastClaimedDay,
-          RoyalSeason: state.kingdom.daily.royalSeason,
-          RoyalClaimed: state.kingdom.daily.royalClaimed,
-        },
         // The season pass (sim/pass.ts). The BOARD travels whole: a mission
         // is its odometer key plus what that odometer read when it was
         // issued, so dropping one loses the only record of where it started.
+        Survey: {
+          ClaimedFree: state.kingdom.survey.claimedFree,
+          ClaimedPaid: state.kingdom.survey.claimedPaid,
+          Owned: state.kingdom.survey.owned,
+        },
         Pass: {
           Season: state.kingdom.pass.season,
           Xp: state.kingdom.pass.xp,
@@ -867,6 +875,14 @@ export function serialize(state: GameState, now: number): SaveFile {
         Progress: Object.entries(state.fog.progress).map(([k, taps]) => ({
           Coord: parseCoordKey(k),
           Taps: taps,
+        })),
+        PaidReveals: state.fog.paidReveals,
+        TreasuresPlaced: state.fog.treasuresPlaced,
+        Treasures: Object.entries(state.fog.treasures).map(([k, t]) => ({
+          Coord: parseCoordKey(k),
+          N: t.n,
+          Coin: t.coin,
+          AtUtc: iso(t.at),
         })),
       },
       'kingdom.features': {
@@ -926,6 +942,17 @@ export function serialize(state: GameState, now: number): SaveFile {
         Veteran: state.tutorial.veteran,
         Seen: Object.keys(state.tutorial.seen),
         StartedAtUtc: iso(state.tutorial.startedAt),
+      },
+      'kingdom.abandoned': {
+        Repaired: Object.keys(state.abandoned.repaired),
+      },
+      // The playtest's signs (Docs/playtest.md §5): the times; the counts are
+      // the tallies'.
+      'kingdom.signals': {
+        SightedAt: Object.fromEntries(Object.entries(state.signals.sightedAt).map(([id, t]) => [id, iso(t)])),
+        DiscoveredAt: Object.fromEntries(Object.entries(state.signals.discoveredAt).map(([id, t]) => [id, iso(t)])),
+        TreasureWaitMs: state.signals.treasureWaitMs,
+        ReturnTaps: state.signals.returnTaps.map((r) => ({ AtUtc: iso(r.at), Kind: r.kind })),
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1207,25 +1234,19 @@ export function deserialize(
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
     state.kingdom.utcOffsetMinutes = Number.isFinite(kingdomDto.UtcOffsetMinutes) ? kingdomDto.UtcOffsetMinutes : 0;
-    // Additive: a save written before the chest existed has no Daily block and
-    // the defaults below start the season at rung zero, which is exactly right
-    // for a player meeting it for the first time. `Season: -1` matches no real
-    // season, so a missing block reads as "not in one" rather than as season 0.
-    const daily = kingdomDto.Daily as {
-      Season?: number; Rung?: number; LastClaimedDay?: number | null;
-      RoyalSeason?: number | null; RoyalClaimed?: number[];
+    // Additive: a save from before the pass has no Pass block, and
+    // `Season: -1` matches no real season — so it reads as an empty pass
+    // rather than as season 0's, and the first live tick fills the board from
+    // the window it lands in.
+    // Additive (v82): a kingdom from before the Survey opens it with nothing
+    // taken — its level is read off the cells it has already revealed.
+    const survey = kingdomDto.Survey as
+      { ClaimedFree?: number[]; ClaimedPaid?: number[]; Owned?: boolean } | undefined;
+    state.kingdom.survey = {
+      claimedFree: [...(survey?.ClaimedFree ?? [])],
+      claimedPaid: [...(survey?.ClaimedPaid ?? [])],
+      owned: survey?.Owned === true,
     };
-    if (daily) {
-      state.kingdom.daily.season = daily.Season ?? -1;
-      state.kingdom.daily.rung = daily.Rung ?? 0;
-      state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
-      state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
-      state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
-    }
-    // Additive in exactly the chest's way: a save from before the pass has no
-    // Pass block, and `Season: -1` matches no real season — so it reads as an
-    // empty pass rather than as season 0's, and the first live tick fills the
-    // board from the window it lands in.
     const pass = kingdomDto.Pass as {
       Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
       PaidSeason?: number | null; LastWindow?: number; Week?: number;
@@ -1261,7 +1282,19 @@ export function deserialize(
 
   const fogDto = modules['kingdom.fogOfWar'];
   if (fogDto) {
-    state.fog = { revealed: {}, discovered: {}, progress: {} };
+    state.fog = {
+      revealed: {}, discovered: {}, progress: {},
+      // Additive: a save from before the treasures starts their clock at zero,
+      // so a veteran is not showered with what its old reveals would have paid.
+      paidReveals: fogDto.PaidReveals ?? 0,
+      treasuresPlaced: fogDto.TreasuresPlaced ?? 0,
+      treasures: {},
+    };
+    for (const t of (fogDto.Treasures ?? []) as { Coord: Coord; N: number; Coin: CurrencyId; AtUtc?: string }[]) {
+      state.fog.treasures[coordKey(t.Coord)] = {
+        n: t.N ?? 0, coin: t.Coin, at: t.AtUtc === undefined ? lastSaved : ms(t.AtUtc),
+      };
+    }
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
     for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Taps: number }[]) {
@@ -1367,6 +1400,32 @@ export function deserialize(
       seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
       startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
     };
+
+  // Additive (v83): a kingdom from before the signals starts them empty.
+  const signalsDto = modules['kingdom.signals'] as {
+    SightedAt?: Record<string, string>; DiscoveredAt?: Record<string, string>;
+    TreasureWaitMs?: number; ReturnTaps?: Array<{ AtUtc: string; Kind: string }>;
+  } | undefined;
+  state.signals = {
+    sightedAt: Object.fromEntries(Object.entries(signalsDto?.SightedAt ?? {}).map(([id, t]) => [id, ms(t)])),
+    discoveredAt: Object.fromEntries(Object.entries(signalsDto?.DiscoveredAt ?? {}).map(([id, t]) => [id, ms(t)])),
+    treasureWaitMs: signalsDto?.TreasureWaitMs ?? 0,
+    returnTaps: (signalsDto?.ReturnTaps ?? []).map((r) => ({ at: ms(r.AtUtc), kind: r.Kind })),
+  };
+
+  // Additive (v81). A kingdom from before the abandoned buildings may have
+  // built where one now stands: that one never appears — it reads as already
+  // repaired, and the building there is the kingdom's own.
+  const abandonedDto = modules['kingdom.abandoned'] as { Repaired?: string[] } | undefined;
+  state.abandoned = {
+    repaired: Object.fromEntries((abandonedDto?.Repaired ?? []).map((id) => [id, true as const])),
+  };
+  for (const a of ABANDONED) {
+    const cells = cellsOfRect(a.location, DISTRICTS[a.districtId].size);
+    if (cells.some((c) => state.city.districts.some((d) => districtOccupies(d, c)))) {
+      state.abandoned.repaired[a.id] = true;
+    }
+  }
 
   const questsDto = modules['kingdom.quests'];
   if (questsDto) {

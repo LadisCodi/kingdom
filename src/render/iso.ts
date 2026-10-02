@@ -39,7 +39,7 @@ export function corners(box: PlotBox, inset = 0): Corners {
 
 /** Trace a plot's diamond into the current path. Does not begin or close it,
  *  so a caller can batch many cells into one fill. */
-export function diamondPath(ctx: CanvasRenderingContext2D, box: PlotBox, inset = 0): void {
+export function diamondPath(ctx: CanvasPath, box: PlotBox, inset = 0): void {
   const c = corners(box, inset);
   ctx.moveTo(...c.top);
   ctx.lineTo(...c.right);

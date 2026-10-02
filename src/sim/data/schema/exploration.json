@@ -54,7 +54,13 @@
         "goldPriceBase": {
           "type": "int",
           "min": 1,
-          "doc": "Gold for the first point of Knowledge bought; the nth point ever bought costs n times this, never reset."
+          "doc": "Gold for the first point of Knowledge bought; the nth point ever bought costs this times n to the exponent, never reset."
+        },
+        "goldPriceExponent": {
+          "type": "float",
+          "min": 1,
+          "max": 4,
+          "doc": "How steeply the Gold price climbs: the nth point ever bought costs the base times n to this. 1 is a straight line; 2 makes the tenth point a hundred times the first."
         },
         "gemsPerPoint": { "type": "int", "min": 1, "doc": "Gems for one point of Knowledge. Never rises." }
       }
@@ -78,6 +84,41 @@
         "windowEndHour": { "type": "int", "min": 1, "max": 24, "doc": "The local hour the raid window closes." }
       }
     },
-    "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } }
+    "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } },
+    "treasure": {
+      "type": "object",
+      "doc": "What the people who fled left on the ground (Docs/features/01-map-and-fog.md §6.2).",
+      "fields": {
+        "everyReveals": {
+          "type": "int",
+          "min": 1,
+          "doc": "A treasure is due every this many cells the player pays to reveal, the first on the very first."
+        },
+        "workSeconds": {
+          "type": "int",
+          "min": 0,
+          "doc": "What a treasure pays: this many seconds of the kingdom's production of its coin."
+        },
+        "floor": {
+          "type": "map",
+          "of": { "type": "int", "min": 0 },
+          "keysRef": "currency",
+          "doc": "The least a treasure of each coin pays, whatever the production."
+        },
+        "weights": {
+          "type": "map",
+          "of": { "type": "int", "min": 0 },
+          "keysRef": "currency",
+          "doc": "How often each coin is the treasure. Stone only once it is on the plank."
+        },
+        "knowledge": {
+          "type": "int",
+          "min": 0,
+          "doc": "What a Knowledge treasure pays, over the bar’s cap like a lump."
+        },
+        "firstCoin": { "type": "text", "ref": "currency", "doc": "The First Morning's treasure: its coin." },
+        "firstAmount": { "type": "int", "min": 0, "doc": "The First Morning's treasure: what it pays." }
+      }
+    }
   }
 }

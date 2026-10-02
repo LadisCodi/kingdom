@@ -12,7 +12,7 @@
 // not (an island nobody can walk to, whose fog is therefore free).
 
 import {
-  DISTRICTS, FEATURES, LANDMARK_ART, LAIR_ORDER, UNIT_ORDER,
+  DISTRICTS, FEATURES, FOG, LANDMARK_ART, LAIR_ORDER, UNIT_ORDER,
 } from './definitions';
 import {
   cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId,
@@ -41,6 +41,20 @@ export interface RegionMapDoc {
     guard: { threat: string; power: number; warningMinutes: number };
     /** The card's line over its painting, two lines at most (§6). */
     flavour: string;
+  }>;
+  /** Buildings standing in ruin where the fog took them, to be found and
+   *  repaired (Docs/features/01-map-and-fog.md §6.3). Absent = none. */
+  abandoned?: Array<{
+    id: string;
+    /** Which building it is — a `buildings` entry. Its footprint is that
+     *  building's size, anchored at (x, y). */
+    district: string;
+    x: number; y: number;
+    /** How far its ruin is sighted past the fog (§4.1). 0 = never. */
+    sight: number;
+    /** What its card and its banner call it — *The Millers' house*. Absent =
+     *  "The old <building>". */
+    name?: string;
   }>;
 }
 
@@ -76,6 +90,8 @@ export const MAX_LAIR_RADIUS = 4;
 export const MAX_LAIR_SIGHT = 8;
 /** Two lines over the card's painting, in the sheet's body size. */
 export const MAX_FLAVOUR = 120;
+/** An abandoned building's name fits the site card's title line. */
+export const MAX_ABANDONED_NAME = 32;
 
 export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   const errors: MapIssue[] = [];
@@ -230,6 +246,56 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       err(`${what}'s flavour is ${r.flavour.length} characters; the card holds ${MAX_FLAVOUR}`, r);
     }
     claimSite(what, r.x, r.y, r.size);
+  }
+
+  // ------------------------------------------------- abandoned buildings
+  // A building the fog swallowed, to be found and repaired
+  // (Docs/features/01-map-and-fog.md §6.3). Its ground is checked as a
+  // site's, and its id shares the sites' one namespace, since a discovery
+  // is recorded by id.
+  const siteIds = new Set<string>([...doc.landmarks.map((l) => l.id), ...Object.keys(doc.lairs)]);
+  const ringOf = (c: Coord): number => {
+    const gap = (d: number, n: number): number => (d < 0 ? -d : d > n - 1 ? d - (n - 1) : 0);
+    const th = DISTRICTS.Townhall.size;
+    return Math.max(gap(c.x - TOWNHALL_FOOTPRINT[0].x, th.x), gap(c.y - TOWNHALL_FOOTPRINT[0].y, th.y));
+  };
+  /** The first Townhall level whose reach covers the ring, or null. */
+  const levelReaching = (ring: number): number | null => {
+    const at = FOG.reachPerTownhallLevel.findIndex((r) => r >= ring);
+    return at === -1 ? null : at + 1;
+  };
+  const byKind = new Map<string, number[]>();
+  for (const a of doc.abandoned ?? []) {
+    const what = `the abandoned ${a.district} "${a.id}"`;
+    if (typeof a.id !== 'string' || a.id.trim() === '') err('an abandoned building needs an id', a);
+    else if (siteIds.has(a.id)) err(`the id "${a.id}" is already taken`, a);
+    siteIds.add(a.id);
+    const def = (DISTRICTS as Record<string, (typeof DISTRICTS)[keyof typeof DISTRICTS] | undefined>)[a.district];
+    if (def === undefined) { err(`${what} is not a building`, a); continue; }
+    if (!def.buildable) err(`${what} is not a building the player can raise`, a);
+    if (!isCount(a.sight) || a.sight > MAX_LAIR_SIGHT) err(`${what} needs a sight from 0 to ${MAX_LAIR_SIGHT}`, a);
+    if (a.name !== undefined && (typeof a.name !== 'string' || a.name.trim() === '' || a.name.length > MAX_ABANDONED_NAME)) {
+      err(`${what}'s name must be 1 to ${MAX_ABANDONED_NAME} characters`, a);
+    }
+    const cells = cellsOfRect({ x: a.x, y: a.y }, def.size);
+    for (const c of cells) claimCell(what, c.x, c.y);
+    // It must be repairable where it is first reached: the Townhall level
+    // that first covers it leaves room in the count cap for it and for every
+    // other abandoned one of its kind already inside that reach.
+    const level = levelReaching(Math.min(...cells.map(ringOf)));
+    if (level === null) { err(`${what} lies past every Townhall's reach`, a); continue; }
+    byKind.set(a.district, [...(byKind.get(a.district) ?? []), level]);
+  }
+  for (const [district, levels] of byKind) {
+    const caps = DISTRICTS[district as keyof typeof DISTRICTS].maxCountPerTownhallLevel;
+    if (caps.length === 0) continue;
+    for (const level of levels) {
+      const within = levels.filter((l) => l <= level).length;
+      const cap = caps[Math.min(level, caps.length) - 1];
+      if (within > cap) {
+        err(`${within} abandoned ${district} lie inside Townhall ${level}'s reach, and it allows ${cap}`);
+      }
+    }
   }
 
   // --------------------------------------------------------- reachability

@@ -11,7 +11,7 @@ import { populationCost } from '../src/sim/population';
 
 describe('population cost (Docs/05)', () => {
   it('pays the authored ladder for the first villagers, in order', () => {
-    expect(CITY_DEF.populationCostFirst).toEqual([5, 20, 100, 300, 500, 1000]);
+    expect(CITY_DEF.populationCostFirst).toEqual([5, 20, 45, 100, 250, 500, 1000]);
     CITY_DEF.populationCostFirst.forEach((cost, i) => {
       expect(populationCost(i), `villager ${i + 1}`).toBe(cost);
     });

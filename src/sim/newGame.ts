@@ -2,7 +2,7 @@
 // fog seed, authored map features.
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
-import { dayIndex } from './daily';
+import { dayIndex } from './day';
 import { freshCollection, seasonAt } from './collection';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
@@ -38,17 +38,17 @@ export function newGame(map: MapData, now: number): GameState {
     kingdom: {
       builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
-      daily: { season: -1, rung: 0, lastClaimedDay: null, royalSeason: null, royalClaimed: [] },
       pass: {
         season: -1, xp: 0, claimedFree: [], claimedPaid: [], paidSeason: null,
         live: [], lastWindow: -1, issuedThisWeek: {}, week: -1,
       },
+      survey: { claimedFree: [], claimedPaid: [], owned: false },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
       utcOffsetMinutes: 0,
     },
     player: { wallet: playerWallet, payer: null },
-    fog: { revealed: {}, discovered: {}, progress: {} },
+    fog: { revealed: {}, discovered: {}, progress: {}, paidReveals: 0, treasuresPlaced: 0, treasures: {} },
     features: {},
     featureMeta: {},
     featureRespawns: [],
@@ -93,6 +93,8 @@ export function newGame(map: MapData, now: number): GameState {
     discoveries: {},
     // A new kingdom meets every door shut and every scene unplayed.
     tutorial: { veteran: false, seen: {}, startedAt: now },
+    abandoned: { repaired: {} },
+    signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [] },
     pendingDiscoveries: [],
     // The world board and seat are derived from the kingdom's own seed until
     // a server assigns them (sim/world/explorers.ts).

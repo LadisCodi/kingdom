@@ -48,7 +48,10 @@ export type SimEvent =
   /** A villager was delivered — the one path population grows by. */
   | { kind: 'villager' }
   | { kind: 'heroLevel'; hero: HeroId }
-  | { kind: 'packOpened' };
+  | { kind: 'packOpened' }
+  /** A playtest signal (Docs/playtest.md §5): counted on `signal:<key>` and
+   *  read by nothing in the game — it is for the person reading the save. */
+  | { kind: 'signal'; key: string };
 
 /**
  * WHICH ODOMETER AN EVENT BUMPS, as a key.
@@ -72,6 +75,7 @@ function keysFor(event: SimEvent): string[] {
     case 'villager': return ['villagers'];
     case 'heroLevel': return ['heroLevels'];
     case 'packOpened': return ['packs'];
+    case 'signal': return [`signal:${event.key}`];
     default: return [];
   }
 }

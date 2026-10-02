@@ -261,7 +261,7 @@ Quests:
   radius as the distance, and with each building's own level in its haul and
   its cadence.
 - The tap does not read it. It has no caller in `src/` (orders,
-  [`12-quests.md`](12-quests.md) §6, do not exist); it is kept as a dead export
+  [`12-quests.md`](12-quests.md) §5, do not exist); it is kept as a dead export
   with a comment saying so.
 
 ## 5. Areas of influence, claims and migration

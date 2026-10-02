@@ -39,8 +39,8 @@ Every feature below is shaped by these.
 1. **It is played in visits, not sittings** — ~30 minutes a day across two or
    three check-ins. **If a feature needs more, the feature is wrong.**
 2. **Price every reward in a duration of the player's own production**, never in
-   absolute amounts. A tap pays seconds of WORK on what you tapped; a daily
-   chest pays a fraction of the pool. A ladder is relative too: a Wonder's cost
+   absolute amounts. A tap pays seconds of WORK on what you tapped; a
+   Survey chest pays hours of production. A ladder is relative too: a Wonder's cost
    is a curve, not a table.
 3. **There is no offline cap.** An absence is replayed in full; what the city
    makes is bounded by what it can hold — each building's store, the Mana
@@ -63,7 +63,7 @@ One file per feature, in the order a player meets them.
 
 | # | Feature | Covers | State |
 |---|---|---|---|
-| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
+| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds — **treasures and abandoned buildings** | built; treasures and abandoned buildings **designed 2026-10-02** |
 | 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the three scopes, who is authoritative over each, what the save records, and what the promises allow to be contested. It no longer designs the world board | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
@@ -75,7 +75,7 @@ One file per feature, in the order a player meets them.
 | 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
 | 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | **rooms built 2026-09-09**; the tick resolver and the Guild are ahead |
 | — | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls. **The resolver 11, 18 and the world map all call** | designed 2026-09-08 |
-| 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest — a 20-day season of 14 rungs, free track and Royal track | built |
+| 12 | [Quests and onboarding](features/12-quests.md) | the quest chain and the authored onboarding it carries | built; **the daily chest is cut 2026-10-02** |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built, **catalogue empty** |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
@@ -83,11 +83,12 @@ One file per feature, in the order a player meets them.
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
 | 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, an army that marches to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, and the weekly Portal dive | designed 2026-09-24 |
-| 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
+| 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the Survey pays for exploring, this pays for playing | built |
 | 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 | 22 | [Progression](features/22-progression.md) | **how the game opens up** — the doors and what opens each, the five books and the milestones that open them, the Orcs, the Thorned Shrine and the Watchtower as places that open mechanics, heroes by story then by the Tavern, the first pack, and the pace of the tree | built 2026-10-01 |
 | 23 | [Tutorials](features/23-tutorials.md) | the **First Morning** — ten scripted minutes, beat by beat — then one introduction per system, help when stuck, and the input lock | built 2026-10-01 |
 | 24 | [Dialogue](features/24-dialogue.md) | the **visual-novel stage** every tutorial speaks through: a character each side, a box that can sit anywhere, the pointer, the conditions, and the cast led by **Isolde, the Royal Advisor** | built 2026-10-01 |
+| 25 | [The Survey](features/25-the-survey.md) | **a ladder that pays for exploring** — 36 levels over the whole province, climbed by cells revealed, a free column and a paid one bought once; never resets | built 2026-10-02 |
 
 ## Reference
 
@@ -95,6 +96,7 @@ Not features — how content and art are made.
 
 | File | What it covers |
 |---|---|
+| [`playtest.md`](playtest.md) | **how a playtest checks the fantasy**: the moments each fantasy is pinned to, what to watch, the five questions to ask after, and how to read the numbers |
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
 | [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the two files that cannot be shared, and why the seam between code and art is a filename |

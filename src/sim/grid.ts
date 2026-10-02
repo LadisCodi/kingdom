@@ -99,7 +99,13 @@ export function buildMapDataFrom(region: RegionMapDoc): MapData {
   // lair is PLACED, not painted. They land in the same two maps, so the one
   // set of rules — revealed as a unit, priced as the sum, drawn once — covers
   // them without knowing what they are.
-  for (const site of [...region.landmarks, ...Object.values(region.lairs)]) {
+  // An abandoned building is a site too, its size the building's own —
+  // grouped only when square, the one shape a block can take.
+  const abandoned = (region.abandoned ?? []).map((a) => {
+    const s = DISTRICTS[a.district as keyof typeof DISTRICTS]?.size ?? { x: 1, y: 1 };
+    return { x: a.x, y: a.y, size: s.x === s.y ? s.x : 1 };
+  });
+  for (const site of [...region.landmarks, ...Object.values(region.lairs), ...abandoned]) {
     const size = site.size ?? 1;
     if (size <= 1) continue;
     const anchorKey = coordKey({ x: site.x, y: site.y });

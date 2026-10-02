@@ -49,13 +49,25 @@ export const PALETTE = {
   lairZoneTintFog: 'rgba(170, 40, 25, 0.38)',
   lairZoneBorder: '#b3402c',
   gridLine: 'rgba(0, 0, 0, 0.18)',
-  fogUndiscovered: '#0c1017',
-  fogDiscovered: 'rgba(10, 13, 18, 0.55)',
-  /** The white a fog cell flashes when a tap on it takes. */
-  fogFlash: '#ffffff',
-  /** A thing sighted past the fog: one flat cold shape, faint over the dark. */
-  sighted: '#8796ad',
-  sightedAlpha: 0.28,
+  // THE FOG IS A SEA OF CLOUDS (Docs/art/art-direction.md §8.1). Its tones,
+  // sampled off the locked mockup: the bank's mid tone under everything,
+  // the thin veil over ground the player can buy, the cushion over ground
+  // they cannot yet.
+  fogUndiscovered: '#bcc2f7',
+  /** The veil: a pale sheen over a payable Discovered cell, its ground
+   *  drained of colour first (`fogDrain`). */
+  fogDiscovered: 'rgba(242, 238, 250, 0.38)',
+  /** How much colour the fog takes out of the ground under it — a grey laid
+   *  with the `saturation` composite, at this alpha. */
+  fogDrain: 0.55,
+  /** The cushion over a Discovered cell the player cannot buy yet. */
+  fogCushion: 'rgba(223, 216, 235, 0.86)',
+  /** What a tap on the fog flashes: a puff of the cloud's own sunlit tone. */
+  fogFlash: '#fff8f0',
+  /** A thing sighted past the fog: its flat shape rising out of the cloud
+   *  tops, in the cloud-shadow tone. */
+  sighted: '#9aa3d6',
+  sightedAlpha: 0.82,
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing

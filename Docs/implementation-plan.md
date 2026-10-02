@@ -79,7 +79,7 @@ Two more that are design-visible:
 | Five relics, passives, attunement | [`09`](features/09-relics.md) | **built, and superseded** — the build has relics dropping from ruins, attunement slots, Stardust levels and a Fragments gate; **the design of 2026-09-09 replaces all four with the card collection** (§4, the collection rework). The actives left for the tomes 2026-09-03 |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each one fight resolved on entry ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)), and the fight is the **tick auto-battler** ([`combat.md`](features/combat.md)) with the screen that replays its event stream. Tiers T2–T5 and authored boss formations are what is left |
-| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — the chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09. Orders were cut 2026-09-03 and a recurring generated ask came back 2026-09-15 as the **season pass's mission board**, deliberately not as fetch-quests ([`12`](features/12-quests.md) §6) |
+| The quest chain, the onboarding | [`12`](features/12-quests.md) | **built**. Orders were cut 2026-09-03 and a recurring generated ask came back 2026-09-15 as the **season pass's mission board**, deliberately not as fetch-quests ([`12`](features/12-quests.md) §5). **The daily chest is cut 2026-10-02** (Step 13) |
 | **The season pass, and the missions that feed it** | [`20`](features/20-season-pass.md) | **built 2026-09-15** — 40 levels on the collection's 28-day clock, two reward columns, eight generated missions on one board, two issued every eight hours, **active play only**. It is the first build of [`13`](features/13-events.md) §2.4's two-column track. **The dungeon's card packs moved onto it**, which re-cuts OQ-102 without closing it |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
@@ -194,7 +194,7 @@ production beat.
 ### The late-game sink · Wonders — **designed and closed, deliberately unsequenced**
 
 **Replaces generated orders, which were cut on 2026-09-03**
-([`12-quests.md`](features/12-quests.md) §6). Same job, and the measurement that
+([`12-quests.md`](features/12-quests.md) §5). Same job, and the measurement that
 decided it: the game holds **~29,100,000 Gold of sink** — 28,517,245 in fog,
 527,000 in landmark claims, 51,926 in the fifteen upgrades, 6,600 in the tree — and
 **every coin of it is one-time.** The end of the province is the end of the
@@ -743,6 +743,149 @@ what it did; every later one is on the new, much flatter curve.
   both name the goods columns that this step deletes.
 - **Size:** a day of code, and then the authoring — 23 buildings × up to 10
   levels is the real cost of the step.
+
+### Step 10 · What the fog kept — **BUILT 2026-10-02**
+
+**The column's moment in the first minute** ([`overview.md`](overview.md) §
+*The fantasies*): treasures under the fog, and the opening's buildings found
+abandoned and repaired.
+
+- **Design:** [`01-map-and-fog.md`](features/01-map-and-fog.md) §6.2–§6.3;
+  the beats in [`23-tutorials.md`](features/23-tutorials.md) §3–§3.1; the
+  chain in [`12-quests.md`](features/12-quests.md) §2; the Build door in
+  [`22-progression.md`](features/22-progression.md) §3.
+- **Treasures — BUILT 2026-10-02** (`sim/treasures.ts`, `tests/treasures.test.ts`;
+  art in `Docs/art/originals/fog-finds/`). The save gains a count of paid reveals and the treasures
+  placed — cell, ordinal, picked up — additive, a `SAVE_VERSION` bump and no
+  migrator. The placement runs in the paid-reveal handler, on the neighbours
+  that reveal discovered, with `rand(seed, n)`. The `treasure.*` settings go
+  in the exploration settings with their schema. The tap handler picks up
+  before it harvests and charges no Mana; placement picks up; Knowledge lands
+  over the cap.
+- **The map file** gains abandoned buildings (a district id, a cell and a
+  `sight`), sighted by the same sweep as landmarks and lairs (`sim/sight.ts`),
+  with their tool in the map editor and their rules in `mapRules.ts`: legal
+  ground for the building, and the count-cap rule of §6.3.
+- **Abandoned buildings — BUILT 2026-10-02** (`commands.ts` `repairAbandoned`,
+  `sites.ts`, `tests/abandoned.test.ts`; the ruins' art in
+  `Docs/art/originals/fog-finds/`). They stay out of the district list until a repair
+  starts; the repair is the build command at level 1 on its cell, skipping
+  the unlock technology. A card with **Repair** in place of the upgrade row.
+- **The opening — BUILT 2026-10-02:** Build opens at `GrowingTown` (`sim/doors.ts`); the
+  chain's reorder at 8–25 — Agriculture, Farming and Saws after Townhall 2 —
+  moves the Knowledge rewards so the zero-drip guarantee still holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
+  data. Re-run the 30-day harness: the opening gains 20 Gold and one cell.
+- **A kingdom saved before** starts its count of paid reveals at zero, and an
+  abandoned building whose cell it has built on never appears.
+- **Art:** a ruined level 1 for every building (`<sprite>_ruin.png`), the
+  opening's four first — House, plot, Farm, Sawmill; the closed chest, and the treasure's sack, crate and pot.
+- **Size:** two to three days of code, plus the art.
+
+### Step 11 · The sea of clouds — **BUILT 2026-10-02, but for the wisps**
+
+- **Built:** the bank (`fog_cloud`, three variants) and its wall (`fog_wall`,
+  two) on every cell the fog hides and past the map's edge, flattened,
+  jittered by the cell's hash and swaying on the spot; the payable veil (the
+  ground drained with a `saturation` composite, then a pale sheen thinned a
+  fifth per tap); the cushion (`fog_cloud_cushion`) over a cell the player
+  cannot buy yet, a site left in view; props paled rather than darkened;
+  silhouettes in the cloud-shadow tone. Measured at ~100 fps at the closest
+  and the furthest zoom, without the cached layer.
+- **Not yet:** the curling wisps of a tear and of a reveal, and the colour
+  flooding back — the white flash is a cream puff of the cloud's tone for now.
+
+**The fog drawn as the fiction says it is**: a sunlit sea of clouds in place
+of the dark fog of war.
+
+- **Design:** [`art/art-direction.md`](art/art-direction.md) §8.1;
+  [`01-map-and-fog.md`](features/01-map-and-fog.md) §4.2; target
+  [`art/mockups/fog/sea-of-clouds.png`](art/mockups/fog/sea-of-clouds.png).
+- **Art first**, through the ChatGPT pipeline anchored on the mockup, true
+  alpha: three or four cloud-bank puffs at the tile diamond, a wall variant,
+  the not-payable cushion, the payable veil's sheen, the wisps of a tear.
+- **`mapRenderer.ts`, pass 1:**
+  - the bank replaces the `fogUndiscovered` fill, off the map's edge too: a
+    puff per Undiscovered cell, picked by the cell's hash, depth-sorted with
+    everything, the wall puff on a cell touching Discovered ground;
+  - a payable Discovered cell draws its ground and props desaturated (a
+    `saturation` composite over the diamond), then the veil — replacing the
+    `fogDiscovered` scrim and the `FOG_DIM` dim;
+  - a not-payable one draws the cushion over its props, tall enough that only
+    the tips of tall things clear it — replacing the second scrim layer;
+  - silhouettes in the cloud-shadow tone, drawn after the bank.
+- **Cache the bank** in an offscreen layer rebuilt when the fog changes; the
+  drift is a sway of the layer, not a redraw. Measure a zoomed-out frame
+  before and after.
+- **`tapFx`:** the white `fogFlash` becomes a tear — mist alpha at
+  `1 − taps / 5` and a puff per tap — and a reveal plays the wisps and floods
+  the cell's saturation back over ~0.6 s.
+- **The tones** go in `palette.ts` as tokens (§8.1's table).
+- **Size:** a day or two of rendering, plus the art sheet.
+
+### Step 12 · The Survey — **BUILT 2026-10-02**, but for the seal
+
+- **Built:** `sim/survey.ts`, `survey.json` (parallel lists, the pass's
+  shape), the `Survey` SKU, the `survey` door and Isolde's introduction, the
+  pill (`ui/surveyPill.ts`) and the sheet (`ui/surveySheet.ts`, the pass's
+  ladder), `tests/survey.test.ts`. SAVE_VERSION 78.
+- **Not yet:** the seal that flies from a revealed cell to the pill when a
+  level is crossed (25-the-survey.md §4).
+
+
+**What the column sells**: a ladder over the province climbed by cells
+revealed, with a paid column bought once.
+
+- **Design:** [`25-the-survey.md`](features/25-the-survey.md); the door in
+  [`22-progression.md`](features/22-progression.md) §3; the SKU in
+  [`14-monetization.md`](features/14-monetization.md) §2.
+- **A new collection, `survey`**: one entry a level — its cell count and
+  both columns' rewards — with its schema, its line in `balance.ts` and its
+  entry in `COLLECTIONS`. The reward kinds are the season pass's.
+- **The sim:** the level is a pure read of the revealed count, so nothing new
+  is scheduled; the save gains the claimed cells and whether the paid column
+  is bought — additive, a `SAVE_VERSION` bump and no migrator.
+- **The UI:** the season pass's ladder sheet, fed by the Survey; a pill
+  opened with the Store; the seal that flies from a revealed cell to the pill
+  when a level is crossed.
+- **The store:** a `Survey` entry in `store`, bought through the
+  confirmation like the season pass. Drop the Fog charter from the catalogue.
+- **Gate:** a kingdom with the province bought out has reached level 36; one
+  revealed by the harness to day 30 has claimed a level at least every two
+  days (**OQ-121**).
+- **Size:** a day of code, most of it reused from the season pass.
+
+### Step 13 · Retire the daily chest — **DONE 2026-10-02**
+
+**A login ladder expresses no fantasy**, and three two-column ladders were
+one too many: the Survey pays for exploring, the season pass for playing,
+and coming back tomorrow is the stores and the Mana well filled overnight.
+
+- **Its Gems move to the season pass**: the pass's free column gains ~4,200
+  Gems a season (`pass.freeGems`), so the recurring floor stays ~8,000 a
+  season ([`20-season-pass.md`](features/20-season-pass.md) §2). Its Mana
+  goes; the refill ad stays the free path.
+- **Delete** `sim/daily.ts`, its pill and sheet, the `RoyalChest` entry in
+  `store`, the `daily.*` settings (the file keeps `missions`), the `daily`
+  scene and its door in `sim/doors.ts`.
+- **The save:** `state.kingdom.daily` goes — a migrator that drops it,
+  `SAVE_VERSION` bumped. Rungs a player had not claimed are not paid out.
+- **Also update `CLAUDE.md`** if anything there names the chest, and
+  re-run the 30-day harness: the opening loses the chest's daily Mana.
+- **Size:** half a day.
+
+### Step 14 · The fantasy signals — **BUILT 2026-10-02**
+
+**The playtest's signs, in the save**, so a session can be read without an
+observer ([`playtest.md`](playtest.md) §5).
+
+- Counts on the tallies, under `signal:*`: `treasurePlaced`,
+  `treasurePicked`, `revealUnasked`, `surveyOpened`, `surveyClaimed`. The
+  Survey bought is the store's own purchase record.
+- Times in the `kingdom.signals` module: when each silhouette was first
+  sighted, when each site was discovered, the summed wait of the treasures
+  picked up, and the first tap of each of the last thirty sessions.
+- **Not yet:** a pipeline. Until it exists the save is the log, as for the
+  store.
 
 ## 5. Deliberately after everything above
 

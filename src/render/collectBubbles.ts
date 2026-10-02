@@ -23,6 +23,21 @@ const HOP_MS = 260;
 export class CollectBubbles {
   private shownSince = new Map<string, number>();
   private hopAt = new Map<string, number>();
+  /** Where each bubble was last drawn, in the canvas's CSS pixels, and when —
+   *  so the stage's pointer can stand above a bubble rather than over it. */
+  private placed = new Map<string, { x: number; y: number; w: number; h: number; at: number }>();
+
+  /** The bubble on building `id` was drawn here, now. */
+  place(id: string, rect: { x: number; y: number; w: number; h: number }, now: number): void {
+    this.placed.set(id, { ...rect, at: now });
+  }
+
+  /** Where the bubble on building `id` is, if one was drawn in the last few
+   *  frames — a stale place is no place. */
+  rectOf(id: string, now: number): { x: number; y: number; w: number; h: number } | null {
+    const p = this.placed.get(id);
+    return p === undefined || now - p.at > 250 ? null : p;
+  }
 
   /** A haul landed in the building at `cell`. */
   bump(cell: Coord): void {
@@ -42,6 +57,7 @@ export class CollectBubbles {
   /** The store emptied: the next bubble here pops in afresh. */
   forget(id: string): void {
     this.shownSince.delete(id);
+    this.placed.delete(id);
   }
 
   /** The hop a fresh haul gives, [0, 1] and back to 0. */

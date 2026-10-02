@@ -446,7 +446,7 @@ export const ADJACENCY_CLAMP = 0.25;
 /** Absolute types are state predicates (done-or-not, regardless of when the
  *  quest activated); relative types count events only while active. */
 export type QuestGoalType =
-  | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
+  | 'BuildDistrict' | 'RepairDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
   | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'
@@ -507,7 +507,8 @@ export type SceneCondition =
   | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
-  | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted';
+  | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing';
 
 export interface SceneLine {
   speaker: string;
@@ -838,6 +839,18 @@ export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // rings: authored distance → total Gold cost to clear one cell at that ring.
 export const FOG = balance.fog;
+
+/** What the people who fled left on the ground — a coin under the fog, due
+ *  every few cells revealed (Docs/features/01-map-and-fog.md §6.2). */
+export const TREASURE = balance.treasure as {
+  everyReveals: number;
+  workSeconds: number;
+  floor: Partial<Record<CurrencyId, number>>;
+  weights: Partial<Record<CurrencyId, number>>;
+  knowledge: number;
+  firstCoin: CurrencyId;
+  firstAmount: number;
+};
 
 // ----------------------------------------------------------------- city def
 
@@ -1212,6 +1225,29 @@ export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
   location: { x: l.x, y: l.y },
   claimCost: l.claimCost,
   size: l.size ?? 1,
+}));
+
+/** A building standing in ruin where the fog took it, to be found and
+ *  repaired (Docs/features/01-map-and-fog.md §6.3). Authored in the map. */
+export interface AbandonedDef {
+  id: string;
+  districtId: DistrictId;
+  /** Anchor, top-left; the footprint is the building's own size. */
+  location: Coord;
+  /** How far its ruin is sighted past the fog; 0 = never. */
+  sight: number;
+  /** What its card and its banner call it. */
+  name: string;
+}
+
+export const ABANDONED: readonly AbandonedDef[] = ((regionMap as {
+  abandoned?: Array<{ id: string; district: string; x: number; y: number; sight: number; name?: string }>;
+}).abandoned ?? []).map((a) => ({
+  id: a.id,
+  districtId: a.district as DistrictId,
+  location: { x: a.x, y: a.y },
+  sight: a.sight,
+  name: a.name ?? `The old ${DISTRICTS[a.district as DistrictId]?.name ?? a.district}`,
 }));
 
 /**
@@ -2163,8 +2199,8 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
-  RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
   SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
+  Survey: { name: 'The Royal Survey', description: 'The Survey\u2019s second column, for the whole province.', sprite: 'season_pass' },
   // The three bundles, a satchel to a cabinet: the same containment ladder the
   // Gem packs walk, in a collector's furniture rather than a treasury's.
   CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
@@ -2213,15 +2249,26 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
 
-/** The daily chest season — Docs/features/12-quests.md §3. Parallel lists,
- *  one per reward kind; their length IS the length of the ladder. The free
- *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
- *  ones. */
-export const DAILY = balance.daily;
+/** The Survey — Docs/features/25-the-survey.md: one ladder over the whole
+ *  province, climbed by cells revealed. Parallel lists, one per reward kind;
+ *  their length IS the ladder's, and `cells` is what each level asks for. */
+export const SURVEY = balance.survey as {
+  cells: number[];
+  goldFloorPerMinute: number;
+  freeGoldMinutes: number[];
+  freeKnowledge: number[];
+  freeSilverKeys: number[];
+  freeGoldKeys: number[];
+  freePacks: string[];
+  freeGems: number[];
+  paidGems: number[];
+  paidGoldKeys: number[];
+  paidPacks: string[];
+  paidStardust: number[];
+};
 
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
- *  parallel lists, one per reward kind; their length IS the ladder's, exactly
- *  as `DAILY`'s is. A pack column holds a `PackTier` or `''` for no pack at
+ *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
  *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
 export const PASS = balance.pass as {
   missionXp: number;
@@ -2335,4 +2382,10 @@ export const GAME_VERSION = '0.1.0';
 // v78: a march is priced hex by hex — an explorer trip keeps `StepMs`, the
 // time to leave each hex of its path, in place of one `MsPerHex` (read as
 // that pace on every hex). Additive.
-export const SAVE_VERSION = 78;
+// v79: the daily chest is cut — `kingdom.kingdoms.Daily` is dropped.
+// v80: the fog's treasures (`PaidReveals`, `TreasuresPlaced`, `Treasures` on
+// `kingdom.fogOfWar`), additive.
+// v81: the abandoned buildings (`kingdom.abandoned`), additive.
+// v82: the Survey (`kingdom.kingdoms.Survey`), additive.
+// v83: the playtest's signals (`kingdom.signals`, a treasure's `AtUtc`), additive.
+export const SAVE_VERSION = 83;

@@ -18,7 +18,7 @@ Smooth, simplified materials with subtle surface variation—no photographic tex
 
 The environment should feel like a polished mobile strategy-game diorama. Keep every building, resource, unit, road, and terrain type visually distinct at thumbnail size. Maintain a clear hierarchy, generous spacing, and low visual clutter.
 
-If terrain boundaries are visible, present them as softly rounded, raised diorama edges. Any unexplored terrain should be noticeably darker, simpler, and less saturated than explored territory while remaining consistent with the same stylized 3D world.
+If terrain boundaries are visible, present them as softly rounded, raised diorama edges. Any unexplored terrain lies under a bright, sunlit sea of stylized clouds — cream tops, lilac-blue shadows — and ground the player can see but does not yet own lies under low pale mist, desaturated; never darkness.
 
 Characters and soldiers must remain small gameplay-scale figures integrated into the environment. They must never pose for the camera or become the main subject.
 
@@ -28,6 +28,6 @@ Show the complete scene with comfortable breathing room around it. Use the same 
 === AVOID ===
 No text, letters, numbers, labels, signs, interface, logo, watermark, title treatment, or advertising layout.
 
-No dramatic cinematic framing, close-up heroes, posed characters, camera flare, lens flare, heavy bloom, harsh shadows, fog, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
+No dramatic cinematic framing, close-up heroes, posed characters, camera flare, lens flare, heavy bloom, harsh shadows, atmospheric haze over explored ground, gritty realism, photorealism, painterly illustration, visible brushwork, pixel art, flat vector art, physical board-game pieces, dark survival aesthetics, or excessive visual clutter.
 
 Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.

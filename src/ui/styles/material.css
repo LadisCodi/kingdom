@@ -530,17 +530,6 @@
 
 
 
-/* ---- the daily pill is the nailed parchment card of P1, nine-sliced so the
-   nails land in the corners. (The quest scroll is its own art: quest.css.) */
-.dly-pill {
-  border: calc(var(--px) * 16) solid transparent;
-  border-image: url('../assets/plate-parchment.png') 64 fill / calc(var(--px) * 16) round;
-  border-radius: 0;
-  background: none;
-}
-.dly-pill { border-width: calc(var(--px) * 10); border-image-width: calc(var(--px) * 10); }
-.dly-pill { padding: 0 calc(var(--px) * 6) 0 calc(var(--px) * 2); min-height: calc(var(--px) * 47); gap: calc(var(--px) * 6); }
-
 /* ---- the store (M5): cards are parchment in wood, the vignettes lighter ---- */
 .store-banner,
 .store-pack {
@@ -586,20 +575,6 @@
 .col-vault { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
 .col-plaque { background: url('../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
 
-/* ---- the daily chest (M8): parchment cells, wood and gold slabs ---- */
-.dly-clock,
-.dly-cell,
-.dly-heads,
-.dly-foot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.dly-cell {
-  background:
-    linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
-.dly-head.is-free { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
-.dly-rung { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128); }
-.dly-row:has(button.dly-cell) .dly-rung { background: var(--gold); }
-
 /* ---- settings and mana (M9): parchment cards ---- */
 .set-row,
 .mana-refills {
@@ -625,8 +600,7 @@
 }
 
 /* ---- the things that float over the map (M12) ---- */
-.toast-msg,
-.dly-pill { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
+.toast-msg { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- welcome back (M13) ---- */
 .wel-rows,

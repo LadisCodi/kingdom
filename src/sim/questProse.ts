@@ -24,7 +24,7 @@
 // It lives here rather than in `sim/data/` for the reason `techProse.ts` does:
 // it needs display names, and `definitions.ts` may not import it back.
 
-import { CURRENCIES, DISTRICTS, FEATURES, LANDMARK_ART, TECHNOLOGIES } from './data/definitions';
+import { ABANDONED, CURRENCIES, DISTRICTS, FEATURES, LANDMARK_ART, TECHNOLOGIES } from './data/definitions';
 import type { QuestDef, QuestGoalType } from './data/definitions';
 import type { CurrencyId, DistrictId, FeatureId, LandmarkKind, TechId } from './state';
 
@@ -93,6 +93,17 @@ export function questLine(quest: {
         : n === 1
           ? `Build ${one(districtName(target))}.`
           : `Build ${count(n)} ${plural(n, districtName(target))}.`;
+    case 'RepairDistrict': {
+      // One ruin of its kind on the map: it has a name of its own, and that is
+      // what the line asks for — "Repair the Millers' house."
+      const ruins = ABANDONED.filter((a) => a.districtId === target);
+      if (n === 1 && ruins.length === 1) {
+        const name = ruins[0].name;
+        return `Repair ${name.charAt(0).toLowerCase()}${name.slice(1)}.`;
+      }
+      const what = (target === null ? 'building' : districtName(target)).toLowerCase();
+      return n === 1 ? `Repair the old ${what}.` : `Repair ${count(n)} old ${plural(n, what)}.`;
+    }
     case 'UpgradeDistrict': {
       const what = target === null ? 'building' : districtName(target);
       const bar = level === null ? '' : ` to level ${level}`;

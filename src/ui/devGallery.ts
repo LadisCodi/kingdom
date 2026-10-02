@@ -250,7 +250,7 @@ export function mountGallery(root: HTMLElement): void {
       name: 'plate-parchment 64 fill / 16px round',
       css: "border:16px solid transparent;"
         + `border-image:url('${mat('plate-parchment')}') 64 fill / 16px round;`,
-      used: '.hud-plaque · .dly-pill · .q-scroll',
+      used: '.hud-plaque · .q-scroll',
     },
   ];
   // Four shapes, and the first is the cruel one: 44px of box for a 12px slice

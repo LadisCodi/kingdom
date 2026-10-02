@@ -7,7 +7,7 @@
 // would be chasing the player's thumb. A UI target is re-found every frame,
 // because screens rebuild their nodes.
 
-import { DISTRICTS, LAIRS, LANDMARKS } from '../../sim/data/definitions';
+import { ABANDONED, DISTRICTS, LAIRS, LANDMARKS } from '../../sim/data/definitions';
 import { explorationGate, fogState, isPayable } from '../../sim/fog';
 import { townhallDistance } from '../../sim/grid';
 import { harvestSourceAt, isExhausted } from '../../sim/harvest';
@@ -123,6 +123,17 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
       const l = LANDMARKS.find((x) => x.id === id);
       return l === undefined ? null : { kind: 'cell', cell: l.location, span: { x: l.size, y: l.size } };
     }
+    // An abandoned building, wherever the fog has it — a silhouette, a ruin
+    // under the scrim, or revealed (01-map-and-fog.md §6.3).
+    case 'abandoned': {
+      const a = ABANDONED.find((x) => x.id === id);
+      return a === undefined ? null : { kind: 'cell', cell: a.location, span: DISTRICTS[a.districtId].size };
+    }
+    // The nearest treasure still on the ground, chest or open (§6.2).
+    case 'treasure': {
+      const cell = nearest(game, (c) => game.state.fog.treasures[coordKey(c)] !== undefined);
+      return cell === null ? null : { kind: 'cell', cell, span: ONE };
+    }
     default: return null;
   }
 }
@@ -179,6 +190,20 @@ export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect
   const canvas = frame.querySelector('canvas');
   const c = canvas?.getBoundingClientRect() ?? origin;
   return { x: box.x + c.left - origin.left, y: box.y + c.top - origin.top, w: box.w, h: box.h };
+}
+
+/** The top of the collect bubble standing over a map target, relative to
+ *  `frame`, or null when there is none — the pointer stands above it rather
+ *  than hiding what a line may be asking the player to tap. */
+export function bubbleTopOver(game: Game, target: Target, frame: HTMLElement): number | null {
+  if (target.kind !== 'cell') return null;
+  const d = game.state.city.districts.find((x) => targetHasCell(target, x.location));
+  if (d === undefined) return null;
+  const r = game.collectBubbles.rectOf(d.uniqueId, performance.now());
+  if (r === null) return null;
+  const canvas = frame.querySelector('canvas');
+  const c = canvas?.getBoundingClientRect() ?? frame.getBoundingClientRect();
+  return r.y + c.top - frame.getBoundingClientRect().top;
 }
 
 /** Is `cell` inside a cell target's plot? */

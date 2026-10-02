@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { recordEvent } from './sim/events';
 import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
@@ -8,6 +9,7 @@ import {
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
+  repairAbandoned,
 } from './sim/commands';
 import {
   BANNER_ORDER,
@@ -90,7 +92,7 @@ import {
   watchedRefillsLeft,
 } from './sim/manaRefill';
 import { sightedAt } from './sim/sight';
-import { landmarkDefAt, standingLairAt } from './sim/sites';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
 import { lairHolding, lairZoneCells } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
@@ -98,7 +100,7 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
-  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
+  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal, revealedCellCount,
 } from './sim/research';
 import {
   effectiveAutoTapCooldownMs,
@@ -117,15 +119,15 @@ import {
   type QueueItem, type Wallet,
 } from './sim/state';
 import {
-  anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
-  claimRoyalRung, freeReward, ladderLength, nextRung, royalOwned, royalPending,
-  royalReward, rungsClaimed, seasonEndsAt,
-} from './sim/daily';
-import {
   anyCellPending, boardIsFull, boardMissions, buyPass, claimCell, claimMission,
   freeCell, levelProgress, ladderLength as passLadderLength,
   paidCell, passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
 } from './sim/pass';
+import {
+  anySurveyPending, buySurvey, claimSurveyCell, freeSurveyCell, nextLevelCells, paidSurveyCell,
+  surveyLength, surveyLevel, surveyOwned,
+} from './sim/survey';
+import { pickUpTreasure, treasureAt } from './sim/treasures';
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
 } from './sim/missions';
@@ -133,7 +135,7 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
+import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import { dispatchExplorer, homeIndex, worldFogAt } from './sim/world/explorers';
@@ -175,10 +177,12 @@ export type Mode =
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
   | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
-  | 'daily' | 'store' | 'payerProfile' | 'iapConfirm'
+  | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
   | 'pass'
+  // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
+  | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
   // button (Docs/art/ui-menus-redesign.md §7.27).
   | 'upgrade'
@@ -197,7 +201,7 @@ export type OverlayName =
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', army: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
+  world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -368,7 +372,8 @@ export class Game {
   ghostHeld = false;
   /** What the builder sheet was raised for — the build on the ghost, or an
    *  upgrade — so a builder freed while it is open offers that exact job. */
-  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string } = { kind: 'build' };
+  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string }
+    | { kind: 'repair'; id: string } = { kind: 'build' };
   /** Which card panel is open over the battle screen, if any. */
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
@@ -812,11 +817,37 @@ export class Game {
         // under the fog, and the bubble over it is what the player taps
         // (Docs/proposals/lairs.md §6). A landmark waits to be revealed.
         const lair = standingLairAt(this.state, cell);
-        if (!lair && !landmarkDefAt(cell)) return false;
+        // An abandoned building opens its card once its ground is revealed;
+        // before that a tap on it is a tap on the fog.
+        if (!lair && !landmarkDefAt(cell) && !standingAbandonedAt(this.state, cell)) return false;
         if (!lair && fogState(this.state, this.map, cell) !== 'Revealed') return false;
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
+        this.noteFirstTap('site');
         playSfx('click');
+        this.notify();
+        return true;
+      },
+    });
+    // 60 — a treasure on revealed ground (01-map-and-fog.md §6.2). Picked up
+    // free, like a store, before the cell's own harvest answers: on a forest
+    // the first tap takes the treasure and the next one swings the axe. On a
+    // Discovered cell the chest is a reason to pay the fog, so the tap falls
+    // through to the reveal.
+    this.tapChain.register({
+      priority: 60,
+      handle: (cell) => {
+        if (this.openOverlay !== null) return false;
+        if (treasureAt(this.state, cell) === undefined) return false;
+        const picked = pickUpTreasure(this.state, this.map, cell);
+        if (picked.kind !== 'PickedUp') return false;
+        this.noteFirstTap('treasure');
+        this.tapFeedback(cell, 'pop');
+        const entries = (Object.entries(picked.reward) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+        for (const [c, n] of entries) this.floaters.add(cell, `+${formatCount(n)}`, c);
+        const box = this.camera.cellToScreen(cell);
+        const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+        queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
         this.notify();
         return true;
       },
@@ -840,7 +871,7 @@ export class Game {
         // not one Gold, so the floater has to be told what it cost.
         const charged = nextRevealTapCost(this.state, this.map, cell);
         const result = revealTap(this.state, this.map, cell);
-        if (result === 'Paid' || result === 'Revealed') this.flashFog(cell);
+        if (result === 'Paid' || result === 'Revealed') { this.flashFog(cell); this.noteFirstTap('reveal'); }
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'NotReachable') {
           // Say the rule, not just "no". A player who has been told once that
@@ -934,10 +965,37 @@ export class Game {
     });
   }
 
+  /** Is this session's first tap still to be noted (Docs/playtest.md §5)?
+   *  Only a session that follows an absence is watched — `armReturnTap`. */
+  private firstTapNoted = true;
+
+  /**
+   * A session that follows an absence of five minutes or more watches for its
+   * first tap: what brought the player back. A reload, a crash, a tab put
+   * down for a moment is the same sitting, and is not a return.
+   */
+  armReturnTap(awayMs: number): void {
+    this.firstTapNoted = awayMs < 5 * 60_000;
+  }
+
+  /**
+   * A PLAYTEST SIGNAL: what the first tap of a session was on — a store, the
+   * fog, a treasure, a site, a menu — which is what brought the player back.
+   * The last thirty sessions are kept.
+   */
+  private noteFirstTap(kind: string): void {
+    if (this.firstTapNoted) return;
+    this.firstTapNoted = true;
+    const taps = this.state.signals.returnTaps;
+    taps.push({ at: this.state.lastAdvance, kind });
+    if (taps.length > 30) taps.splice(0, taps.length - 30);
+  }
+
   /** Empty a building's store into the purse, with the tap's own feedback:
    *  the punch on the building, a floater per currency, and the haul flying
    *  to the header. */
   private collectStoreOf(district: District): void {
+    this.noteFirstTap('store');
     const moved = collectBuilding(this.state, district.uniqueId, this.now());
     const entries = (Object.entries(moved) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
     if (entries.length === 0) return;
@@ -2166,17 +2224,15 @@ export class Game {
   // ------------------------------------------------------------- ad offers
 
   /** The standing offer, or null. Drives the widget and the popup. */
-  // ------------------------------------------------------------ daily chest
-
   // ------------------------------------------------------- the season pass
 
   /**
    * THE WHOLE PASS SCREEN, flattened — the plank, the XP bar, the board and
    * the two-column ladder (Docs/features/20-season-pass.md §6).
    *
-   * `dailySeason()`'s shape and for its reason: every cell carries its OWN
-   * `claimable` and `claimed`, because every cell is its own button and
-   * nothing else on the sheet decides what can be taken.
+   * Every cell carries its OWN `claimable` and `claimed`, because every cell
+   * is its own button and nothing else on the sheet decides what can be
+   * taken.
    */
   passScreen(): {
     level: number;
@@ -2284,68 +2340,55 @@ export class Game {
     this.openIap('SeasonPass', 'pass');
   }
 
-  doClaimMission(id: string): void {
-    if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
-    playSfx('questComplete');
-    this.notify();
-  }
+  // ---------------------------------------------------------------- the Survey
 
-  /**
-   * The season: the whole ladder, both tracks, and how long is left.
-   *
-   * Never null. The sheet has to render after the last rung is taken, because
-   * the Royal chest stays buyable until the window closes — the PILL decides
-   * whether there is a reason to open it, not this.
-   *
-   * Every cell carries its OWN `claimable` and `claimed`, because every cell
-   * is its own button (Docs/features/12-quests.md §3.2). Nothing else on the
-   * sheet decides what can be taken.
-   */
-  dailySeason(): {
-    rung: number;
-    claimed: number;
+  /** THE SURVEY'S SHEET, flattened (Docs/features/25-the-survey.md §6): the
+   *  province's count, the next level's, and the two-column ladder. Every
+   *  cell carries its own `claimable` and `claimed`, the pass's rule. */
+  surveyScreen(): {
+    level: number;
     length: number;
-    available: boolean;
-    complete: boolean;
-    royal: boolean;
-    royalPriceUsd: number;
-    endsIn: string;
+    revealed: number;
+    total: number;
+    nextAt: number | null;
+    owned: boolean;
+    priceUsd: number;
     ladder: Array<{
-      rung: number;
-      free: { reward: Wallet; claimed: boolean; claimable: boolean };
-      royal: { reward: Wallet; claimed: boolean; claimable: boolean; locked: boolean };
+      level: number;
+      cells: number;
+      reached: boolean;
+      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      paid: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
     }>;
   } {
-    const now = this.now();
-    const length = ladderLength();
-    const claimed = rungsClaimed(this.state, now);
-    const available = chestAvailable(this.state, now);
-    const rung = nextRung(this.state, now);
-    const owned = royalOwned(this.state, now);
+    const level = surveyLevel(this.state);
+    const owned = surveyOwned(this.state);
+    const { claimedFree, claimedPaid } = this.state.kingdom.survey;
     return {
-      rung,
-      claimed,
-      length,
-      available,
-      complete: claimed >= length,
-      royal: owned,
-      royalPriceUsd: STORE.RoyalChest.priceUsd,
-      endsIn: formatDuration((seasonEndsAt(now) - now) / 1000),
-      ladder: Array.from({ length }, (_, i) => {
+      level,
+      length: surveyLength(),
+      revealed: revealedCellCount(this.state),
+      total: this.map.terrain.size,
+      nextAt: nextLevelCells(this.state),
+      owned,
+      priceUsd: STORE.Survey.priceUsd,
+      ladder: SURVEY.cells.map((cells, i) => {
         const n = i + 1;
-        const pending = royalPending(this.state, n, now);
+        const free = freeSurveyCell(this.state, n);
+        const paid = paidSurveyCell(n);
         return {
-          rung: n,
+          level: n,
+          cells,
+          reached: n <= level,
           free: {
-            reward: freeReward(this.state, n),
-            claimed: n <= claimed,
-            claimable: available && n === rung,
+            reward: free.wallet, pack: free.pack,
+            claimed: claimedFree.includes(n),
+            claimable: n <= level && !claimedFree.includes(n),
           },
-          royal: {
-            reward: royalReward(this.state, n),
-            // Reached, owned and not pending means it has been taken.
-            claimed: owned && n <= claimed && !pending,
-            claimable: pending,
+          paid: {
+            reward: paid.wallet, pack: paid.pack,
+            claimed: owned && claimedPaid.includes(n),
+            claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
           },
         };
@@ -2353,62 +2396,35 @@ export class Game {
     };
   }
 
-  /** Is there a reason to show the pill at all? A rung waiting, a Royal cell
-   *  waiting, or a Royal chest still on the table (§3.4). */
-  dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
-    const now = this.now();
-    // The chest arrives the day after the kingdom's first, once the First
-    // Morning is over (Docs/features/22-progression.md §3).
-    if (!this.doorOpen('daily')) return null;
-    if (!chestSheetOpen(this.state, now)) return null;
-    const ready = chestAvailable(this.state, now);
-    const pending = anyRoyalPending(this.state, now);
-    const season = this.dailySeason();
+  /** The Survey's pill: absent until its door opens, glowing while a cell
+   *  waits. */
+  surveyPillState(): { level: number; length: number; revealed: number; nextAt: number | null; glowing: boolean } | null {
+    if (!this.doorOpen('survey')) return null;
     return {
-      showing: true,
-      glowing: ready || pending,
-      // Short, so the pill clears the Knowledge tab beside it: the day, the
-      // word that says something waits, or just the time left.
-      label: ready
-        ? `Day ${season.rung}/${season.length}`
-        : pending
-          ? 'Rewards!'
-          : season.endsIn,
+      level: surveyLevel(this.state),
+      length: surveyLength(),
+      revealed: revealedCellCount(this.state),
+      nextAt: nextLevelCells(this.state),
+      glowing: anySurveyPending(this.state),
     };
   }
 
-  /** The free cell of today's rung — the tap that advances the ladder. */
-  doClaimFreeRung(): void {
-    const now = this.now();
-    if (!chestAvailable(this.state, now)) return;
-    // Read the haul BEFORE the claim: after it, this rung is behind us.
-    const haul = freeReward(this.state, nextRung(this.state, now));
-    if (claimFreeRung(this.state, now) !== 'Claimed') return;
-    this.announceChest(haul);
-  }
-
-  /** One Royal cell, of a rung already climbed. */
-  doClaimRoyalRung(rung: number): void {
-    const now = this.now();
-    if (!royalPending(this.state, rung, now)) return;
-    const haul = royalReward(this.state, rung);
-    if (claimRoyalRung(this.state, rung, now) !== 'Claimed') return;
-    this.announceChest(haul);
-  }
-
-  /** The sheet STAYS OPEN after a claim — there are thirteen more cells on it,
-   *  and closing it after every tap would make taking a bought season a
-   *  thirteen-round trip through the pill. */
-  private announceChest(haul: Wallet): void {
-    playSfx('quest');
+  doClaimSurveyCell(level: number, track: 'free' | 'paid'): void {
+    const cell = track === 'free' ? freeSurveyCell(this.state, level) : paidSurveyCell(level);
+    if (claimSurveyCell(this.state, level, track) !== 'Claimed') return;
+    playSfx('questComplete');
     this.notify();
-    this.reward(haul);
+    this.reward(cell.wallet);
   }
 
-  /** The Royal chest goes through the same confirmation every other real-money
-   *  SKU does — the price meets the budget in exactly one place (iapSheet.ts). */
-  doBuyRoyalChest(): void {
-    this.openIap('RoyalChest', 'daily');
+  doBuySurvey(): void {
+    this.openIap('Survey', 'survey');
+  }
+
+  doClaimMission(id: string): void {
+    if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
+    playSfx('questComplete');
+    this.notify();
   }
 
   adOffer(): { reward: number } | null {
@@ -2511,6 +2527,35 @@ export class Game {
   }
 
   /**
+   * Repair the abandoned building on this cell (Docs/features/01-map-and-fog.md
+   * §6.3). It is refused the way a build is, and the same walls raise the same
+   * answers: the builder offer, the purse that shakes, the words.
+   */
+  doRepairAbandoned(cell: Coord): void {
+    const site = standingAbandonedAt(this.state, cell);
+    if (!site) return;
+    const cost = nextBuildCost(this.state, site.districtId);
+    const result = repairAbandoned(this.state, this.map, site.id);
+    if (result === 'Started') {
+      playSfx('buildPlaced');
+      this.inspectedSite = null;
+      if (this.openOverlay === 'builder') this.openOverlay = null;
+    } else if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(cost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      this.builderAsk = { kind: 'repair', id: site.id };
+      this.offerBuilder();
+    } else if (result === 'CountLimit') {
+      this.toast(`The Townhall can hold no more ${DISTRICTS[site.districtId].name} — raise it first`);
+    } else if (result === 'NotRevealed') {
+      this.toast('Clear the fog off it first');
+    } else {
+      this.toast(this.refusalWords(result, site.districtId, 1));
+    }
+    this.notify();
+  }
+
+  /**
    * A refusal in plain words, and — where there is one — the errand that
    * answers it. Three of them are a different trip each: the map, a workshop
    * queue, a decoration. A bare enum name told the player none of that.
@@ -2602,6 +2647,15 @@ export class Game {
       return {
         verb: 'Build', what: `Ready to build the ${def.name}`,
         cost: nextBuildCost(this.state, def.id), start: () => this.confirmBuild(),
+      };
+    }
+    if (ask.kind === 'repair') {
+      const site = ABANDONED.find((a) => a.id === ask.id);
+      if (!site || this.state.abandoned.repaired[site.id] === true) return null;
+      const def = DISTRICTS[site.districtId];
+      return {
+        verb: 'Repair', what: `Ready to repair ${site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name}`,
+        cost: nextBuildCost(this.state, def.id), start: () => this.doRepairAbandoned(site.location),
       };
     }
     const d = districtById(this.state, ask.districtUniqueId);
@@ -2696,9 +2750,9 @@ export class Game {
    *  the budget. Nothing is granted from the store card itself.
    *
    *  `from` is where "Not now" and a completed purchase go back to — the store
-   *  for a Gem pack, the daily chest for the Royal one. A confirmation that
-   *  always returned to the store would take a player who tapped a price on
-   *  the chest somewhere they never asked to go. */
+   *  for a Gem pack, the pass for its paid column. A confirmation that always
+   *  returned to the store would take a player who tapped a price on the pass
+   *  somewhere they never asked to go. */
   openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
     this.pendingSku = id;
     this.pendingSkuFrom = from;
@@ -2713,17 +2767,17 @@ export class Game {
   confirmIap(): void {
     const id = this.pendingSku;
     if (id === null) return;
-    // Two SKUs do not grant Gems and so do not go through `buySku` directly.
-    // Both still spend the budget through it, inside their own command: the
-    // Royal chest is an unlock plus a back-pay (sim/daily.ts), and a card
+    // Two kinds of SKU do not grant Gems and so do not go through `buySku`
+    // directly. Both still spend the budget through it, inside their own
+    // command: the pass is an unlock plus a back-pay (sim/pass.ts), and a card
     // bundle is a hand of packs and wildcards (sim/collection.ts).
-    const result = id === 'RoyalChest'
-      ? buyRoyalChest(this.state, this.now())
-      : id === 'SeasonPass'
-        ? buyPass(this.state, this.now())
-        : bundleOf(id) !== null
-          ? buyCardBundle(this.state, id, this.now())
-          : buySku(this.state, id, this.now());
+    const result = id === 'SeasonPass'
+      ? buyPass(this.state, this.now())
+      : id === 'Survey'
+        ? buySurvey(this.state, this.now())
+      : bundleOf(id) !== null
+        ? buyCardBundle(this.state, id, this.now())
+        : buySku(this.state, id, this.now());
     if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
@@ -2734,7 +2788,8 @@ export class Game {
       if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
       else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
       this.setOverlay(back);
-      if (result === 'Purchased' && id !== 'RoyalChest' && id !== 'SeasonPass' && bundleOf(id) === null) {
+      if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
+      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null) {
         this.reward({ Gems: STORE[id].gems });
       }
     } else if (result === 'SeasonClosing') {
@@ -2858,9 +2913,6 @@ export class Game {
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
       case 'payerProfile': return 'payer';
-      // `endsIn` is a string the season formats; when it changes, the sheet
-      // should, and not before.
-      case 'daily': return JSON.stringify(this.dailySeason());
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -2949,7 +3001,11 @@ export class Game {
   private sceneIntroduces(siteId: string): boolean {
     if (this.state.tutorial.veteran) return false;
     return SCENES.some((s) =>
-      (s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId);
+      ((s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId)
+      // An abandoned building a scene points at is the advisor's to name:
+      // its banner would land on top of whatever she is saying when the fog
+      // first shows it (the Millers' house, beside the first chest).
+      || s.lines.some((l) => l.point === `abandoned:${siteId}`));
   }
 
   /** Every bed is taken. A House already going up is the answer the player
@@ -3070,10 +3126,21 @@ export class Game {
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
-      case 'BuildDistrict':
+      case 'RepairDistrict':
+      case 'BuildDistrict': {
+        // One of its kind still standing as a ruin is the way to build it
+        // (Docs/features/01-map-and-fog.md §6.3) — and before the Build door
+        // opens, the only way.
+        const ruin = ABANDONED.find((a) => a.districtId === quest.goalTarget
+          && standingAbandonedAt(this.state, a.location) !== undefined);
+        if (ruin) {
+          centerCell(ruin.location);
+          break;
+        }
         this.setUiHint(`build:${quest.goalTarget}`);
         overlay('build');
         break;
+      }
       case 'UpgradeDistrict': {
         const target = built((d) => d.definitionId === quest.goalTarget);
         this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
@@ -3979,6 +4046,8 @@ export class Game {
     // A padlocked door says what opens it and opens nothing
     // (Docs/features/22-progression.md §3).
     const door = name === null ? undefined : OVERLAY_DOOR[name];
+    if (name !== null && name !== 'welcome' && name !== 'payerProfile') this.noteFirstTap(`menu:${name}`);
+    if (name === 'survey') recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
     if (door !== undefined && !isDoorOpen(this.state, door)) {
       this.toast(DOOR_HINT[door]);
       this.notify();
@@ -5055,6 +5124,20 @@ function siteBanner(id: string): Banner | null {
       name: lair.name,
       desc: lair.description,
       sprite: lair.sprite,
+      tone: 'gold',
+    };
+  }
+  // An abandoned building is named the moment it is discovered: the shape in
+  // the clouds was the mystery, and this is the find (01-map-and-fog.md §6.3).
+  const ruin = ABANDONED.find((a) => a.id === id);
+  if (ruin) {
+    const def = DISTRICTS[ruin.districtId];
+    return {
+      title: 'An abandoned building!',
+      icon: def.glyph,
+      name: ruin.name,
+      desc: 'Clear the fog off it, then repair it.',
+      sprite: `${def.sprite}_ruin`,
       tone: 'gold',
     };
   }
