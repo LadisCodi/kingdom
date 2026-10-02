@@ -557,6 +557,7 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    this.notifies += 1;
     // The ad offer's latch. Here rather than in `tick()` because Mana crosses
     // the 50% gate on a TAP, not on the second — and every command ends in a
     // notify, so this sees the spend that made the player eligible instead of
@@ -4149,7 +4150,25 @@ export class Game {
     );
   }
 
+  /** Bumped by every notify(): what the map's markers are cached against. */
+  private notifies = 0;
+  private markerCache: { key: string; layer: MarkerLayer } | null = null;
+
+  /**
+   * What the map draws over the ground — asked once a FRAME. Everything in it
+   * but the hint and the spell wheels moves only with the state (which always
+   * ends in a notify), the mode and the selection, so that part is built once
+   * per change and kept; placing a building recomputed its range, adjacency,
+   * captured cells and ghost steps sixty times a second.
+   */
   markers(): MarkerLayer {
+    const key = `${this.notifies}|${JSON.stringify(this.mode)}|${this.ghostHeld}|${this.inspectedDistrictId}`;
+    if (this.markerCache?.key !== key) this.markerCache = { key, layer: this.buildMarkers() };
+    // The two that run on the clock: the hint's expiry, the wheels' sweep.
+    return { ...this.markerCache.layer, hintCell: this.hintCell(), spellZones: this.spellZones() };
+  }
+
+  private buildMarkers(): MarkerLayer {
     const layer: MarkerLayer = {
       selected: null,
       validCells: [],
@@ -4164,8 +4183,8 @@ export class Game {
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
-      hintCell: this.hintCell(),
-      spellZones: this.spellZones(),
+      hintCell: null,
+      spellZones: [],
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
