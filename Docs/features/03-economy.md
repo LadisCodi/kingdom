@@ -155,17 +155,18 @@ running. Research already worked this way.
 - Capacity is per building, per level, in units: `buildings` ›
   `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
   Stone and Gold in one store.
-- Capacity is authored as about **8 h** of the building at full strength at
-  level 1, rising to about **12 h** at level 10 (OQ-107). Nothing but the
+- Capacity is authored as about **4 h** of the building at full strength at
+  levels 1–5, rising to about **12 h** at level 10 (OQ-107). Nothing but the
   building's level raises it (OQ-108).
 
-| Building | Level 1 | Level 10 |
-|---|---|---|
-| Housing | 29,000 Gold | 4,600,000 |
-| Farm | 8,600 | 250,000 |
-| Sawmill | 7,200 | 170,000 |
-| Quarry | 3,100 | 100,000 |
-| Docks | 6,200 | 120,000 |
+| Building | Level 1 | Level 5 | Level 10 |
+|---|---|---|---|
+| Townhall | 2,400 Gold | 250,000 | 2,600,000 |
+| Housing | 15,000 Gold | 350,000 | 4,600,000 |
+| Farm | 4,300 | 14,000 | 250,000 |
+| Sawmill | 3,600 | 11,000 | 170,000 |
+| Quarry | 1,600 | 5,500 | 100,000 |
+| Docks | 3,100 | 12,000 | 120,000 |
 
 - A data rule requires a store on anything that makes Gold or harvests, and
   forbids one on anything else.
@@ -285,7 +286,7 @@ and research**.
 | The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
-| Store capacity per level | about 8 h of the building at level 1, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Store capacity per level | about 4 h of the building at levels 1–5, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
