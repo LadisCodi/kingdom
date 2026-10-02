@@ -62,6 +62,7 @@ import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
 import { SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
+import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -419,6 +420,15 @@ async function boot(): Promise<void> {
     () => {},
   );
 
+  // The perf readout's meter (?dev): every section below is timed through
+  // it, and the dev bar's 📈 shows what a second costs.
+  const perf = new URLSearchParams(location.search).has('dev') ? createPerfMeter() : null;
+  if (perf !== null) {
+    const notify = game.notify.bind(game);
+    game.notify = () => perf.time('notify', notify);
+  }
+  const timed = <T>(label: string, fn: () => T): T => (perf === null ? fn() : perf.time(label, fn));
+
   // ------------------------------------------------------- the single tick
   // The ambience bed follows the camera: waves over water, wind over snow.
   // Off-map void keeps the LAST bed — the world's edge shouldn't chirp.
@@ -434,7 +444,7 @@ async function boot(): Promise<void> {
 
   let ticks = 0;
   const runTick = () => {
-    game.tick();
+    timed('tick', () => game.tick());
     syncAmbience(biomeAtCenter()); // ambience has its own mute now
     ticks += 1;
     if (ticks % AUTOSAVE_TICKS === 0) saveManager.save(game.state, game.now());
@@ -460,17 +470,18 @@ async function boot(): Promise<void> {
     window.addEventListener(type, touched, { capture: true, passive: true });
   }
   const frame = (t: number) => {
+    perf?.frame(t);
     if (game.scene === 'world') {
-      drawWorld(worldCanvas, worldCamera, {
+      timed('world', () => drawWorld(worldCanvas, worldCamera, {
         state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
         armies: game.worldView?.armies,
-      });
+      }));
     } else {
       const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
       if (view !== lastView) { lastView = view; lastActive = t; }
       if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
         lastDraw = t;
-        drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs));
       }
     }
     requestAnimationFrame(frame);
@@ -628,8 +639,18 @@ async function boot(): Promise<void> {
       setDevice(DEVICES[(at + 1) % DEVICES.length].id);
     });
     try { setDevice(localStorage.getItem(DEVICE_KEY) ?? 'off'); } catch { setDevice('off'); }
+    // THE PERF READOUT (ui/perfHud.ts), remembered across reloads.
+    const PERF_KEY = 'kingdom.devPerf';
+    const perfButton = button('📈 perf', () => {
+      perf?.setVisible(!perf.visible());
+      try { localStorage.setItem(PERF_KEY, perf?.visible() ? '1' : '0'); } catch { /* private window */ }
+    });
+    if (perf !== null) {
+      document.getElementById('ui')!.append(perf.node);
+      try { perf.setVisible(localStorage.getItem(PERF_KEY) === '1'); } catch { /* private window */ }
+    }
     const devGrid = el('div', { class: 'dev-grid' },
-      deviceButton,
+      deviceButton, perfButton,
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
