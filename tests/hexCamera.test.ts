@@ -1,20 +1,22 @@
 // The world board on screen (Docs/features/19-world-map.md §1.2,
-// Docs/art/art-direction.md §7): a flat pointy-top layout, two registers.
+// Docs/art/art-direction.md §7): a pointy-top layout, tilted, two registers.
 import { describe, expect, it } from 'vitest';
 import { HexCamera } from '../src/render/world/hexCamera';
 import {
-  HEX_W, STRATEGIC_W, acrossEdge, edgeDir, hexCorners, hexToPlane, planeToHex, regionEdges,
+  HEX_W, STRATEGIC_W, TILT, acrossEdge, edgeDir, hexCorners, hexToPlane, planeToHex, regionEdges,
 } from '../src/render/world/hexLayout';
 import { BOARD_HEXES, HEX_DIRS, hexNeighbors } from '../src/sim/world/hex';
 
 const phone = { clientWidth: 390, clientHeight: 844 };
 
 describe('the hex layout', () => {
-  it('lays hexes HEX_W apart across a row and 1.5 radii down', () => {
+  it('lays hexes HEX_W apart across a row and 1.5 radii down, tilted', () => {
     expect(hexToPlane({ q: 1, r: 0 }).x - hexToPlane({ q: 0, r: 0 }).x).toBeCloseTo(HEX_W);
     const down = hexToPlane({ q: 0, r: 1 });
     expect(down.x).toBeCloseTo(HEX_W / 2);
-    expect(down.y).toBeCloseTo((HEX_W / Math.sqrt(3)) * 1.5);
+    expect(down.y).toBeCloseTo((HEX_W / Math.sqrt(3)) * 1.5 * TILT);
+    expect(TILT).toBeGreaterThan(0.5);
+    expect(TILT).toBeLessThan(1);
   });
 
   it('finds every hex from its own centre and from near its corners', () => {

@@ -25,7 +25,7 @@ import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import { hexCorners, regionEdges } from './hexLayout';
+import { TILT, hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
 
 /** The terrain plate under each kind of ground: the province's tileable
@@ -71,6 +71,9 @@ export const SEAT_COLORS = {
 const MIST = '#d9e0e6';
 const MIST_DEEP = '#b9c4cd';
 const SEAM = 'rgba(40, 52, 30, 0.28)';
+/** A tile's side: packed earth under the ground, grey under the mist. */
+const SKIRT_EARTH = { lit: '#7a5a3a', shade: '#5c4129' };
+const SKIRT_MIST = { lit: '#9aa6b2', shade: '#86929e' };
 const SENSED_DIM = 'rgba(24, 32, 44, 0.48)';
 const SENSED_VEIL = 'rgba(225, 232, 238, 0.28)';
 
@@ -177,7 +180,7 @@ function drawArmy(
   const q = camera.hexToScreen(hexAt(at.to));
   const x = p.x + (q.x - p.x) * at.f;
   const garrisoned = a.phase === 'garrison';
-  const y = p.y + (q.y - p.y) * at.f + (garrisoned ? camera.hexRadius * 0.35 : 0);
+  const y = p.y + (q.y - p.y) * at.f + (garrisoned ? camera.hexRadius * 0.35 * TILT : 0);
   const size = Math.max(16, camera.hexWidth * (garrisoned ? 0.22 : 0.3));
   // A banner in its owner's colour under the soldier, so whose it is reads first.
   ctx.save();
@@ -213,6 +216,10 @@ function drawHex(
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
 
+  // The tile's thickness under its two lower edges: hidden by the row in
+  // front, it shows only along the board's near rim.
+  drawSkirt(ctx, c.x, c.y, r, fogState === 'Unknown');
+
   if (fogState === 'Unknown') {
     drawMist(ctx, c.x, c.y, r, bh.index);
     return;
@@ -225,8 +232,8 @@ function drawHex(
     drawPortalGround(ctx, c.x, c.y, r);
   } else if (bh.terrain !== null) {
     ctx.fillStyle = PLATE_COLOR[bh.terrain];
-    ctx.fillRect(c.x - r, c.y - r, r * 2, r * 2);
-    drawSprite(ctx, PLATE[bh.terrain], c.x - r, c.y - r, r * 2, r * 2);
+    ctx.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    drawSprite(ctx, PLATE[bh.terrain], c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
   }
   ctx.restore();
 
@@ -234,7 +241,7 @@ function drawHex(
   // ground's own props, at most three side by side.
   if (bh.seat !== null) {
     const mine = bh.index === homeIndex(frame.state);
-    drawProp(ctx, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35, hw * 0.86);
+    drawProp(ctx, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
   } else if (bh.role === 'portal') {
     drawPortal(ctx, c.x, c.y, r);
   } else {
@@ -249,7 +256,7 @@ function drawHex(
       ? [-0.3, 0.3, 0.3].slice(0, props.length)
       : props.length <= 1 ? [0] : props.length === 2 ? [-0.2, 0.2] : [-0.26, 0, 0.26];
     props.slice(0, 3).forEach((p, i) => {
-      drawProp(ctx, p.sprite, c.x + spread[i] * hw, c.y + r * (0.3 + (i % 2) * 0.12), hw * p.size * scale * (props.length > 1 ? 0.8 : 1));
+      drawProp(ctx, p.sprite, c.x + spread[i] * hw, c.y + r * (0.3 + (i % 2) * 0.12) * TILT, hw * p.size * scale * (props.length > 1 ? 0.8 : 1));
     });
     if (held !== null) drawHeld(ctx, camera, held, c, fogState, frame);
   }
@@ -268,6 +275,27 @@ function drawHex(
   ctx.strokeStyle = SEAM;
   ctx.lineWidth = Math.max(1, r * 0.025);
   ctx.stroke();
+}
+
+/** How thick a tile is, as a share of its radius. */
+const SKIRT = 0.16;
+
+/** The two faces under a tile's lower edges, the right one in shade. */
+function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, mist: boolean): void {
+  const [, c1, c2, c3] = hexCorners(cx, cy, r);
+  const d = r * SKIRT;
+  const face = (a: { x: number; y: number }, b: { x: number; y: number }, color: string) => {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(b.x, b.y + d);
+    ctx.lineTo(a.x, a.y + d);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+  face(c2, c3, mist ? SKIRT_MIST.lit : SKIRT_EARTH.lit);
+  face(c1, c2, mist ? SKIRT_MIST.shade : SKIRT_EARTH.shade);
 }
 
 /** A sprite standing with its foot at (x, footY), `width` wide. */
@@ -296,7 +324,7 @@ function drawMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numb
   for (let i = 0; i < 4; i++) {
     const a = ((seed * 7 + i * 13) % 12) / 12 * Math.PI * 2;
     const px = cx + Math.cos(a) * r * 0.45;
-    const py = cy + Math.sin(a) * r * 0.35;
+    const py = cy + Math.sin(a) * r * 0.35 * TILT;
     const g = ctx.createRadialGradient(px, py, 0, px, py, r * 0.75);
     g.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
     g.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -329,12 +357,12 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
   void_.addColorStop(1, '#160d26');
   ctx.fillStyle = void_;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, r * 0.48, r * 0.4, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, r * 0.48, r * 0.48 * TILT, 0, 0, Math.PI * 2);
   ctx.fill();
   for (let i = 0; i < 9; i++) {
     const a = (i / 9) * Math.PI * 2 - Math.PI / 2;
     const sx = cx + Math.cos(a) * r * 0.6;
-    const sy = cy + Math.sin(a) * r * 0.5;
+    const sy = cy + Math.sin(a) * r * 0.6 * TILT;
     const sh = r * (0.22 + (i % 3) * 0.05);
     ctx.fillStyle = '#5b5466';
     ctx.strokeStyle = '#25202c';
@@ -362,14 +390,14 @@ function drawHeld(
   // its builder is still at it.
   ctx.save();
   if (!held.held) ctx.globalAlpha = 0.45;
-  drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18, hw * 0.16);
+  drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18 * TILT, hw * 0.16);
   ctx.restore();
   if (held.improvement !== null || held.work !== null) {
     const kind = held.improvement?.kind ?? held.work!.kind;
     const level = held.improvement?.level ?? 1;
     ctx.save();
     if (held.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
-    drawProp(ctx, `${IMPROVEMENT_SPRITE[kind]}_${tierOf(level)}`, c.x, c.y + r * 0.42, hw * 0.62);
+    drawProp(ctx, `${IMPROVEMENT_SPRITE[kind]}_${tierOf(level)}`, c.x, c.y + r * 0.42 * TILT, hw * 0.62);
     ctx.restore();
   }
   // Cut off from its city: greyed, buildings intact (art-direction §8).
@@ -509,12 +537,12 @@ function drawRoute(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number
   ctx.strokeStyle = 'rgba(46, 28, 14, 0.5)';
   ctx.lineWidth = width + 2.5;
   ctx.beginPath();
-  ctx.arc(end.x, end.y, ring, 0, Math.PI * 2);
+  ctx.ellipse(end.x, end.y, ring, ring * TILT, 0, 0, Math.PI * 2);
   ctx.stroke();
   ctx.strokeStyle = 'rgba(255, 246, 220, 0.95)';
   ctx.lineWidth = width;
   ctx.beginPath();
-  ctx.arc(end.x, end.y, ring, 0, Math.PI * 2);
+  ctx.ellipse(end.x, end.y, ring, ring * TILT, 0, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
