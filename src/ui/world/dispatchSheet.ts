@@ -13,7 +13,8 @@ import {
 } from '../../sim/world/explorers';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { WORLD_BUILD } from '../../sim/data/definitions';
+import { WORLD_BUILD, WORLD_DUNGEON } from '../../sim/data/definitions';
+import { nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, sheet, stat } from '../kit';
@@ -93,6 +94,23 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   return lines;
 }
 
+const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve' } as const;
+const ARMY_INFO = {
+  attack: 'Send an army', claim: 'Send an army to take it', garrison: 'Station an army here',
+  delve: 'An army camps here and fights room by room',
+} as const;
+
+/** How far the player has gone in a dungeon. */
+function dungeonLines(game: Game, bh: BoardHex): HTMLElement[] {
+  if (!bh.features.includes('Dungeon')) return [];
+  const cleared = game.worldSource().delved(bh.index);
+  const room = nextRoom(cleared);
+  const per = WORLD_DUNGEON.roomsPerDepth;
+  return [el('p', { class: 'wd-line' }, room === null
+    ? 'Cleared to the bottom'
+    : `Depth ${formatCount(room.depth + 1)} of ${formatCount(WORLD_DUNGEON.depths)} · Room ${formatCount(room.room)} of ${formatCount(per)}`)];
+}
+
 /** One button per thing the acting seat can do here. */
 function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
   const seat = game.worldSeat();
@@ -115,11 +133,21 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         });
       case 'army':
         return action({
-          label: a.purpose === 'attack' ? 'Attack' : a.purpose === 'claim' ? 'Claim' : 'Garrison',
-          kind: a.purpose === 'attack' ? 'destructive' : 'primary',
-          info: a.purpose === 'attack' ? 'Send an army' : a.purpose === 'claim' ? 'Send an army to take it' : 'Station an army here',
+          label: ARMY_VERB[a.purpose], kind: a.purpose === 'attack' ? 'destructive' : 'primary',
+          info: ARMY_INFO[a.purpose],
           onClick: () => game.openArmy(bh.index, a.purpose),
         });
+      case 'delve': {
+        const cleared = game.worldSource().delved(bh.index);
+        const room = nextRoom(cleared);
+        return action({
+          label: 'Attack', kind: 'destructive',
+          info: room === null ? 'Cleared to the bottom'
+            : `${room.boss ? 'The boss' : `Room ${formatCount(room.room)}`} · ${formatCount(roomPower(room.depth, room.room))} power`,
+          disabledReason: room === null ? 'Cleared to the bottom' : undefined,
+          onClick: () => void game.doDelveRoom(a.army),
+        });
+      }
       case 'recall':
         return action({
           label: 'Recall', kind: 'secondary', info: 'The garrison marches home',
@@ -166,7 +194,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
 
-  lines.push(...controlLines(game, bh, fog));
+  lines.push(...controlLines(game, bh, fog), ...dungeonLines(game, bh));
   if (game.actingSeat !== null) {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }

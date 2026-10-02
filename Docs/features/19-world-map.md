@@ -14,7 +14,7 @@
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6). Five stand-in rivals claim, build, man a Fortress and now and
 > then attack on their own. The hex art is the province's, arranged on a
-> hex. Dungeons and the Portal (§8.1, §10) are designed, not built.
+> hex. Dungeons (§8.1) are built; the Portal (§10) is designed, not built.
 
 ## 1. The board
 
@@ -285,9 +285,11 @@ held, some are destinations.
   - The camped army's losses and its heroes' wounds carry from room to room.
   - Recalling it marches it home, to be reinforced and sent again.
 - **Depth N+1 opens when depth N's boss falls.** Nothing else gates a depth.
-- **The boss of Depth 1 pays the dungeon's found book**
-  ([`22-progression.md`](22-progression.md) §4). Every room pays the room
-  rewards of [`11-expeditions.md`](11-expeditions.md) §7.
+- **Every dungeon is 3 depths of 8 rooms**; the last room of a depth is its
+  boss, which fields more and pays a multiple of a room.
+- **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
+  room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
+  beyond its rooms — the found book — is **OQ-118**.
 
 ## 9. Generation
 

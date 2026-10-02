@@ -89,5 +89,19 @@
     "attackChance": 0.15,
     "armyPower": 500,
     "garrisonPower": 600
+  },
+  "worldDungeon": {
+    "depths": 3,
+    "roomsPerDepth": 8,
+    "powerStart": [300, 900, 2400],
+    "powerStep": [70, 180, 420],
+    "bossMultiplier": 1.6,
+    "rewardBase": [1, 2.2, 4.5],
+    "rewardGrowth": 1.06,
+    "gold": 20,
+    "heroXp": 10,
+    "stardust": 2,
+    "knowledge": 0.25,
+    "bossRewardMultiplier": 3
   }
 }

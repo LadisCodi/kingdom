@@ -2,12 +2,13 @@
 // the chain back to the city, improvements and their stores, and the
 // stand-in rivals — resolved the same however often the board is read.
 import { describe, expect, it } from 'vitest';
-import { WORLD, WORLD_BOTS, WORLD_BUILD } from '../src/sim/data/definitions';
-import { buildBoard, generateEnemy } from '../src/sim/battle';
+import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON } from '../src/sim/data/definitions';
+import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
+import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
-  build, claim, claimRefusal, collect, drainEffects, emptyWorld, fittingImprovements, improvementRate, join,
+  build, claim, claimRefusal, collect, delveRoom, drainEffects, nextRoom, roomPower, roomReward, emptyWorld, fittingImprovements, improvementRate, join,
   outpostGold, recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storesAt,
 } from '../src/worldServer/core';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -279,5 +280,51 @@ describe('armies', () => {
     expect(b.hexes[next].garrison).toBeNull();
     resolveTo(b, T0 + OUTPOST_MS + 3 * STEP);
     expect(b.armies).toHaveLength(0);
+  });
+});
+
+describe('dungeons', () => {
+  const army = (power: number, key: string) => {
+    const plan = generateEnemy({ seed: 2, parts: ['delver', key], budget: power, affinity: 'Any' });
+    // A delving army needs someone to lead it: a villain reads as a hero.
+    return buildBoard(plan.squads, [...plan.fighters, villainFighter(Object.keys(VILLAINS)[0] as VillainId)]);
+  };
+
+  it('camps an army at a dungeon and fights it room by room, for the player alone', () => {
+    // The first seed whose board has a dungeon.
+    let seed = 1;
+    while (!generateBoard('d', seed).hexes.some((h) => h.features.includes('Dungeon'))) seed += 1;
+    const w = emptyWorld();
+    const { board: b, seat } = join(w, { id: 'me', name: 'Me', prefer: { id: 'd', seed, seat: 0 } }, T0);
+    for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
+    const d = generateBoard('d', seed).hexes.find((h) => h.features.includes('Dungeon'))!;
+    const STEP = WORLD.marchSecondsPerHex * 1000;
+    const r = sendArmy(b, seat, { purpose: 'delve', target: d.index, heroes: [], board: army(20_000, 'strong'), msPerHex: STEP }, T0);
+    if (!r.ok) throw new Error(r.why);
+    const there = T0 + (hexLine(hexAt(home(seat)), hexAt(d.index)).length - 1) * STEP;
+    resolveTo(b, there);
+    expect(b.armies[0].phase).toBe('camp');
+    const fight = delveRoom(b, seat, r.army, there);
+    if (!fight.ok) throw new Error(fight.why);
+    expect(fight.room).toBe(1);
+    expect(fight.won).toBe(true);
+    expect(b.delves[seat][d.index]).toBe(1);
+    expect(drainEffects(b, seat).some((e) => e.kind === 'loot')).toBe(true);
+    expect(b.delves[1]?.[d.index] ?? 0).toBe(0);
+    expect(snapshotOf(b, seat, there).delves[d.index]).toBe(1);
+    // A weak army is beaten, keeps its losses, and stays camped while it has
+    // a hero left; the room is not cleared.
+    const weak = sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(50, 'weak'), msPerHex: STEP }, there);
+    if (!weak.ok) throw new Error(weak.why);
+  });
+
+  it('counts rooms in depths, the last of each a boss, and pays more deeper down', () => {
+    expect(nextRoom(0)).toEqual({ depth: 0, room: 1, boss: false });
+    expect(nextRoom(WORLD_DUNGEON.roomsPerDepth - 1)).toEqual({ depth: 0, room: WORLD_DUNGEON.roomsPerDepth, boss: true });
+    expect(nextRoom(WORLD_DUNGEON.roomsPerDepth)).toEqual({ depth: 1, room: 1, boss: false });
+    expect(nextRoom(WORLD_DUNGEON.depths * WORLD_DUNGEON.roomsPerDepth)).toBeNull();
+    expect(roomPower(0, WORLD_DUNGEON.roomsPerDepth)).toBeGreaterThan(roomPower(0, WORLD_DUNGEON.roomsPerDepth - 1));
+    expect(roomReward(1, 1).gold).toBeGreaterThan(roomReward(0, 1).gold);
+    expect(roomReward(0, 1).knowledge).toBeGreaterThanOrEqual(1);
   });
 });

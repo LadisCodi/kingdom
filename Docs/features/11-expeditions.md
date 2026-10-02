@@ -6,10 +6,10 @@
 > party rules: [`combat.md`](combat.md). Screens:
 > [`11a-ruins-ui.md`](11a-ruins-ui.md).
 >
-> **Status: designed, not built.** The province's ruins became lairs
-> ([`../proposals/lairs.md`](../proposals/lairs.md)); their depths and rooms
-> live here, on the world map; §4 is still the ruins' content, to be
-> re-authored for the outer ring.
+> **Status: built on the world board as 3 depths × 8 rooms** with the room
+> formula of §6 and §7.1, one shape for every dungeon (`worldDungeon` in the
+> world collection). Not built: supplies, the Scout preview, boss chests
+> (§7.2), permanent generation (§7.3) and §4's per-ruin content.
 
 ## 1. Structure
 

@@ -36,8 +36,10 @@ export interface ServerHex {
   garrison: string | null;
 }
 
-/** What an army was sent to do (19 §4, §5.1, §6). */
-export type ArmyPurpose = 'attack' | 'claim' | 'garrison';
+export type ArmyPhase = 'out' | 'garrison' | 'camp' | 'home';
+
+/** What an army was sent to do (19 §4, §5.1, §6, §8.1). */
+export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve';
 
 /** An army out on the board — server state from the moment it leaves
  *  (02-map-scopes.md §3.1). */
@@ -53,11 +55,12 @@ export interface ServerArmy {
   departedAt: number;
   msPerHex: number;
   purpose: ArmyPurpose;
-  /** Marching out, standing in a Fortress, or walking home. */
-  phase: 'out' | 'garrison' | 'home';
+  /** Marching out, standing in a Fortress, camped at a dungeon, or walking
+   *  home. */
+  phase: ArmyPhase;
   target: number;
   /** When it reaches where it is going: the target, or home. Null while it
-   *  stands in a Fortress. */
+   *  stands in a Fortress or camps at a dungeon. */
   at: number | null;
   /** Everyone it has lost so far, for the count it comes home with. */
   fallen: Array<{ unitId: UnitId; count: number }>;
@@ -72,7 +75,9 @@ export type WorldEffect =
     fallen: Array<{ unitId: UnitId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
-  | { kind: 'report'; at: number; text: string; good: boolean };
+  | { kind: 'report'; at: number; text: string; good: boolean }
+  /** What a cleared dungeon room paid (11-expeditions.md §7). */
+  | { kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number };
 
 export interface ServerSeat {
   playerId: string;
@@ -102,6 +107,9 @@ export interface ServerBoard {
   effects: Record<number, WorldEffect[]>;
   /** The counter army ids are made from. */
   nextId: number;
+  /** Rooms each seat has cleared in each dungeon, by hex index: progress is
+   *  per player (19 §8.1). */
+  delves: Record<number, Record<number, number>>;
 }
 
 export interface ServerWorld {
@@ -133,7 +141,7 @@ export interface ArmyView {
   id: string;
   owner: number;
   purpose: ArmyPurpose;
-  phase: 'out' | 'garrison' | 'home';
+  phase: ArmyPhase;
   path: number[];
   departedAt: number;
   msPerHex: number;
@@ -152,6 +160,8 @@ export interface WorldSnapshot {
   seats: SeatView[];
   hexes: HexView[];
   armies: ArmyView[];
+  /** Rooms the player has cleared in each dungeon, by hex index. */
+  delves: Record<number, number>;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
 }
@@ -172,4 +182,10 @@ export type CollectResult =
 
 export type SendResult =
   | { ok: true; army: string; arrivesAt: number; snapshot: WorldSnapshot }
+  | { ok: false; why: Refusal };
+
+/** A dungeon room fought: the fight itself, for the battle screen, and
+ *  whether it fell. */
+export type DelveResult =
+  | { ok: true; won: boolean; log: import('../sim/battle').BattleLog; depth: number; room: number; boss: boolean; snapshot: WorldSnapshot }
   | { ok: false; why: Refusal };

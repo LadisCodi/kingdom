@@ -1657,7 +1657,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
     armies: (Array.isArray(d.Armies) ? d.Armies : [])
       .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
-        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison'].includes(a.Purpose as string))
+        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve'].includes(a.Purpose as string))
       .map((a) => ({
         id: a.ID as string,
         heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],

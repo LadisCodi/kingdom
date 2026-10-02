@@ -203,6 +203,43 @@
         "armyPower": { "type": "int", "min": 1, "doc": "What a rival’s attacking army is worth." },
         "garrisonPower": { "type": "int", "min": 1, "doc": "What a rival’s Fortress garrison is worth." }
       }
+    },
+    "worldDungeon": {
+      "type": "object",
+      "doc": "A dungeon on the outer ring: depths of rooms, cleared once per player by a camped army (Docs/features/19-world-map.md §8.1, 11-expeditions.md).",
+      "fields": {
+        "depths": { "type": "int", "min": 1, "max": 9, "doc": "Depths in every dungeon." },
+        "roomsPerDepth": { "type": "int", "min": 2, "doc": "Rooms in a depth; the last is its boss." },
+        "powerStart": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "length": { "sibling": "depths" },
+          "doc": "What room 1 of each depth fields."
+        },
+        "powerStep": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "length": { "sibling": "depths" },
+          "doc": "What each room after the first adds, per depth."
+        },
+        "bossMultiplier": { "type": "float", "min": 1, "doc": "A boss fields this many times the room before it would." },
+        "rewardBase": {
+          "type": "list",
+          "of": { "type": "float", "min": 0 },
+          "length": { "sibling": "depths" },
+          "doc": "The reward scale of each depth."
+        },
+        "rewardGrowth": { "type": "float", "min": 1, "doc": "Each room pays this many times the one before it." },
+        "gold": { "type": "float", "min": 0, "doc": "Gold a room pays, times the depth’s scale." },
+        "heroXp": { "type": "float", "min": 0, "doc": "Hero XP a room pays, times the depth’s scale." },
+        "stardust": { "type": "float", "min": 0, "doc": "Stardust a room pays, times the depth’s scale." },
+        "knowledge": {
+          "type": "float",
+          "min": 0,
+          "doc": "Knowledge a room pays, times the depth’s scale — at least 1."
+        },
+        "bossRewardMultiplier": { "type": "float", "min": 1, "doc": "A boss pays this many times a room." }
+      }
     }
   }
 }

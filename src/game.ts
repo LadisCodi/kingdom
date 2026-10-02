@@ -107,7 +107,7 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
-import { boonText, pullPrice } from './sim/heroes';
+import { addHeroXp, boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -4490,7 +4490,15 @@ export class Game {
     // What the server owed: armies home and the reports of what they did.
     for (const e of snap.effects) {
       if (e.kind === 'armyHome') receiveArmy(this.state, e);
-      else this.toast(e.text);
+      else if (e.kind === 'loot') {
+        // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
+        // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
+        addToWallet(this.state.city.wallet, 'Gold', e.gold);
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', e.knowledge);
+        addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
+        addHeroXp(this.state, e.heroXp);
+        this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp });
+      } else this.toast(e.text);
     }
     this.worldView = snap;
     const board = snapshotWorld(snap).board();
@@ -4632,6 +4640,24 @@ export class Game {
     this.dismiss();
     this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
     this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Fight the next room of the dungeon an army camps at, and watch it. */
+  async doDelveRoom(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.delveRoom(armyId, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, {
+      title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
+      subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
+      prizes: [],
+    });
+    this.notify();
   }
 
   /** Call an army home. */

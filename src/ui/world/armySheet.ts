@@ -11,7 +11,7 @@ import { renderBattleSheet, type BattleView } from '../battleSheet';
 import { unitBust } from '../unitArt';
 import { seatName } from './dispatchSheet';
 
-const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison' } as const;
+const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve' } as const;
 
 export function renderArmySheet(game: Game): HTMLElement {
   const target = game.armyTarget;
@@ -21,9 +21,9 @@ export function renderArmySheet(game: Game): HTMLElement {
   const steps = hexDistance(hexAt(game.homeHex()), hexAt(target));
   const preview = game.armyPreview();
   const march = formatDuration((steps * WORLD.marchSecondsPerHex * 1000) / 1000);
-  const where = game.armyPurpose === 'garrison'
-    ? `Your ${WORLD_BUILD.improvements.Fortress.name}`
-    : game.armyPurpose === 'claim' ? 'Ground nobody holds' : `${seatName(game, h?.owner ?? null)} ground`;
+  const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.improvements.Fortress.name}`
+    : game.armyPurpose === 'claim' ? 'Ground nobody holds'
+      : game.armyPurpose === 'delve' ? 'A dungeon' : `${seatName(game, h?.owner ?? null)} ground`;
   const view: BattleView = {
     title: `${where} · ${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'}, ${march}`,
     enemy: {

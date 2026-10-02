@@ -16,7 +16,7 @@ import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
-import { WORLD, WORLD_BOTS, WORLD_BUILD, type WorldImprovementDef } from '../sim/data/definitions';
+import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, type WorldImprovementDef } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
 import { SEAT_INDICES, type Board, type BoardHex } from '../sim/world/board';
@@ -24,7 +24,7 @@ import { boardNeighbors, hexAt, hexIndex, hexLine, isBoardIndex } from '../sim/w
 import { boardOf } from '../sim/world/source';
 import { WORLD_IMPROVEMENTS, type WorldImprovement } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, HexView, Refusal, SendResult,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, Refusal, SendResult,
   ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot,
 } from './types';
 
@@ -340,6 +340,13 @@ const coveringGarrisons = (b: ServerBoard, index: number, holder: number): Serve
 
 function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
   const h = b.hexes[a.target];
+  if (a.purpose === 'delve') {
+    if (isDungeon(b, a.target)) {
+      a.phase = 'camp';
+      a.at = null;
+    } else turnHome(a, t);
+    return;
+  }
   if (a.purpose === 'garrison') {
     if (h !== undefined && h.owner === a.owner && isHeld(h, t) && h.improvement?.kind === 'Fortress' && h.garrison === null) {
       a.phase = 'garrison';
@@ -405,6 +412,11 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
 export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, index: number, t: number): Refusal | null {
   if (!isBoardIndex(index)) return 'NoSuchHex';
   const h = b.hexes[index];
+  if (purpose === 'delve') {
+    if (!isDungeon(b, index)) return 'NothingThere';
+    return b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'delve' && a.phase !== 'home')
+      ? 'Busy' : null;
+  }
   if (purpose === 'garrison') {
     if (h === undefined || h.owner !== seat) return 'NotYours';
     if (!isHeld(h, t) || h.improvement?.kind !== 'Fortress') return 'NotAFortress';
@@ -452,13 +464,81 @@ export function recall(b: ServerBoard, seat: number, armyId: string, t: number):
   const a = b.armies.find((x) => x.id === armyId);
   if (a === undefined || a.owner !== seat) return { ok: false, why: 'NoArmy' };
   if (a.phase === 'home') return { ok: false, why: 'Busy' };
-  if (a.phase === 'garrison') {
+  if (a.phase === 'garrison' || a.phase === 'camp') {
     if (b.hexes[a.target]?.garrison === a.id) b.hexes[a.target].garrison = null;
     turnHome(a, t);
   } else {
     turnHome(a, t, t - a.departedAt);
   }
   return { ok: true, finishesAt: a.at!, snapshot: snapshotOf(b, seat, t) };
+}
+
+// --------------------------------------------------------------- dungeons
+
+const isDungeon = (b: ServerBoard, index: number): boolean =>
+  isBoardIndex(index) && boardData(b).hexes[index].features.includes('Dungeon');
+
+/** The room a seat faces next in a dungeon, or null when it is cleared to
+ *  the bottom. Depth is 0-based, room 1-based; the last room is the boss. */
+export function nextRoom(cleared: number): { depth: number; room: number; boss: boolean } | null {
+  const per = WORLD_DUNGEON.roomsPerDepth;
+  if (cleared >= WORLD_DUNGEON.depths * per) return null;
+  const room = (cleared % per) + 1;
+  return { depth: Math.floor(cleared / per), room, boss: room === per };
+}
+
+/** What a room fields. */
+export function roomPower(depth: number, room: number): number {
+  const base = WORLD_DUNGEON.powerStart[depth] + WORLD_DUNGEON.powerStep[depth] * (room - 1);
+  return Math.round(room === WORLD_DUNGEON.roomsPerDepth ? base * WORLD_DUNGEON.bossMultiplier : base);
+}
+
+/** What a room pays (11-expeditions.md §7.1); a boss, a multiple of it. */
+export function roomReward(depth: number, room: number): { gold: number; knowledge: number; heroXp: number; stardust: number } {
+  const d = WORLD_DUNGEON;
+  const boss = room === d.roomsPerDepth ? d.bossRewardMultiplier : 1;
+  const scale = d.rewardBase[depth] * d.rewardGrowth ** (room - 1) * boss;
+  return {
+    gold: Math.round(d.gold * scale),
+    knowledge: Math.max(1, Math.round(d.knowledge * scale)),
+    heroXp: Math.round(d.heroXp * scale),
+    stardust: Math.round(d.stardust * scale),
+  };
+}
+
+const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
+
+/** A dungeon fields one kind of soldier more than the rest, fixed by its hex. */
+const dungeonAffinity = (b: ServerBoard, index: number): UnitId =>
+  UNIT_ORDER[randInt(b.seed, UNIT_ORDER.length, 'dungeonAffinity', index)];
+
+/** Fight the next room with the army camped at the dungeon. Each fight
+ *  resolves at once; the army keeps its losses and its heroes their wounds
+ *  from room to room, and a wiped army goes home. */
+export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: number): DelveResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat || a.phase !== 'camp') return { ok: false, why: 'NoArmy' };
+  const progress = (b.delves[seat] ??= {});
+  const cleared = progress[a.target] ?? 0;
+  const next = nextRoom(cleared);
+  if (next === null) return { ok: false, why: 'NothingThere' };
+  const plan = generateEnemy({
+    seed: b.seed, parts: ['dungeon', a.target, next.depth, next.room],
+    budget: roomPower(next.depth, next.room), affinity: dungeonAffinity(b, a.target),
+  });
+  const log = resolveBattle(a.board, buildBoard(plan.squads, plan.fighters));
+  const after = boardAfter(log, a.board, 'ours');
+  a.board = after.board;
+  addFallen(a.fallen, after.fallen);
+  const won = log.winner === 'ours';
+  if (won) {
+    progress[a.target] = cleared + 1;
+    owe(b, seat, { kind: 'loot', at: t, ...roomReward(next.depth, next.room) });
+  }
+  // Nothing left to fight with: what is left walks home.
+  if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
+  return { ok: true, won, log, ...next, snapshot: snapshotOf(b, seat, t) };
 }
 
 /** What the server owes a seat, handed over once. */
@@ -587,6 +667,7 @@ export function join(
     armies: [],
     effects: {},
     nextId: 1,
+    delves: {},
   };
   w.boards.push(b);
   return { board: b, seat };
@@ -623,6 +704,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     seats: b.seats.map((s, i) => ({ seat: i, name: s?.name ?? 'A free city', you: i === seat, bot: s?.bot ?? false })),
     hexes,
     armies,
+    delves: { ...(b.delves[seat] ?? {}) },
     effects: [],
   };
 }

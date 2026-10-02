@@ -2038,6 +2038,24 @@ export interface WorldBuildDef {
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
 
+/** A dungeon's depths and rooms, and what a room pays (19 §8.1). */
+export interface WorldDungeonDef {
+  depths: number;
+  roomsPerDepth: number;
+  powerStart: readonly number[];
+  powerStep: readonly number[];
+  bossMultiplier: number;
+  rewardBase: readonly number[];
+  rewardGrowth: number;
+  gold: number;
+  heroXp: number;
+  stardust: number;
+  knowledge: number;
+  bossRewardMultiplier: number;
+}
+
+export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;
+
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
   actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;

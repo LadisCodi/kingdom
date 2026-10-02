@@ -14,8 +14,10 @@ export type HexAction =
   | { kind: 'claim'; gold: number; seconds: number }
   /** An army: to attack a rival's ground, to take ground nobody holds, or to
    *  man the player's own Fortress (19 §4–§6). */
-  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' }
+  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' }
   | { kind: 'recall'; army: string }
+  /** Fight the next room of a dungeon, with the army camped there. */
+  | { kind: 'delve'; army: string }
   | { kind: 'build'; improvement: WorldImprovement; level: number; gold: number; seconds: number }
   | { kind: 'collect'; material: number; knowledge: number; ready: boolean };
 
@@ -41,6 +43,13 @@ const collectable = (h: HexControl): { material: number; knowledge: number } => 
 /** What `seat` can do on this hex now, in the order the sheet shows it. */
 export function hexActions(source: WorldSource, seat: number, bh: BoardHex): HexAction[] {
   const h = source.hexOf(bh.index);
+  // A dungeon: never held, open to any army (19 §8.1).
+  if (bh.features.includes('Dungeon')) {
+    const mine = source.armies().find((a) => a.owner === seat && a.target === bh.index && a.purpose === 'delve' && a.phase !== 'home');
+    if (mine === undefined) return [{ kind: 'army', purpose: 'delve' }];
+    if (mine.phase === 'camp') return [{ kind: 'delve', army: mine.id }, { kind: 'recall', army: mine.id }];
+    return [{ kind: 'recall', army: mine.id }];
+  }
   if (h !== null && h.held && h.owner !== seat) {
     return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
   }

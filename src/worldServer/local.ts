@@ -12,10 +12,11 @@ import type { Board } from '../sim/battle';
 import type { HeroId } from '../sim/state';
 import type { WorldImprovement } from '../sim/world/types';
 import {
-  build, claim, collect, drainEffects, emptyWorld, join, recall, resolveTo, sendArmy, snapshotOf,
+  build, claim, collect, delveRoom, drainEffects, emptyWorld, join, recall, resolveTo, sendArmy, snapshotOf,
 } from './core';
 import type {
-  ArmyPurpose, BoardRef, CollectResult, CommandResult, SendResult, ServerBoard, ServerWorld, WorldSnapshot,
+  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SendResult, ServerBoard, ServerWorld,
+  WorldSnapshot,
 } from './types';
 
 /** What the client asks of the world server. `asSeat` is the dev tool's
@@ -31,6 +32,7 @@ export interface WorldServerApi {
     now: number, asSeat?: number,
   ): Promise<SendResult>;
   recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
+  delveRoom(armyId: string, now: number): Promise<DelveResult>;
 }
 
 /** Where the local server keeps its state: localStorage in the game, a map
@@ -63,6 +65,7 @@ export class LocalWorldServer implements WorldServerApi {
       b.armies ??= [];
       b.effects ??= {};
       b.nextId ??= 1;
+      b.delves ??= {};
       for (const h of Object.values(b.hexes)) h.garrison ??= null;
     }
   }
@@ -138,5 +141,9 @@ export class LocalWorldServer implements WorldServerApi {
 
   async recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => recall(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async delveRoom(armyId: string, now: number): Promise<DelveResult> {
+    return this.run(undefined, (b, seat) => delveRoom(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
   }
 }

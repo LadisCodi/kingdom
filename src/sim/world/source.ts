@@ -44,6 +44,19 @@ export interface WorldSource {
   controlOf(index: number): Seat | null;
   /** What stands on a held or claimed hex, or null. Never a city. */
   hexOf(index: number): HexControl | null;
+  /** Armies out on the board, the player's and the rivals'. */
+  armies(): readonly ArmyControl[];
+  /** Rooms the player has cleared in the dungeon on a hex. */
+  delved(index: number): number;
+}
+
+/** An army as the board shows it (worldServer/types.ts `ArmyView`). */
+export interface ArmyControl {
+  id: string;
+  owner: number;
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve';
+  phase: 'out' | 'garrison' | 'camp' | 'home';
+  target: number;
 }
 
 const BOARDS = new Map<string, Board>();
@@ -78,6 +91,8 @@ export function localWorld(ref: BoardRef): WorldSource {
     seats: () => seats,
     controlOf: (index) => seats.find((s) => s.index === index) ?? null,
     hexOf: () => null,
+    armies: () => [],
+    delved: () => 0,
   };
 }
 
@@ -87,6 +102,8 @@ export function snapshotWorld(snap: {
   board: BoardRef;
   seats: ReadonlyArray<{ seat: number; name: string; you: boolean }>;
   hexes: ReadonlyArray<HexControl & { index: number }>;
+  armies?: readonly ArmyControl[];
+  delves?: Readonly<Record<number, number>>;
 }): WorldSource {
   let rival = 0;
   const seats: Seat[] = snap.seats.map((s) => ({
@@ -105,5 +122,7 @@ export function snapshotWorld(snap: {
       return h === undefined || h.owner === null ? null : seats[h.owner] ?? null;
     },
     hexOf: (index) => hexes.get(index) ?? null,
+    armies: () => snap.armies ?? [],
+    delved: (index) => snap.delves?.[index] ?? 0,
   };
 }
