@@ -52,9 +52,9 @@
 
 | Column | Pays |
 |---|---|
-| Free | a purse of Gold (10 → 90 minutes up the ladder) and one more: a Green or Yellow pack, a gold key every fifth level, Knowledge, or a silver key |
+| Free | a purse of Gold (3 → 20 minutes up the ladder) and, on about one level in three, one more: a Green or Yellow pack, a gold key, Knowledge, or a silver key |
 | Paid | Gems, rising, and one more: a gold key every third level, Stardust, or a Blue, Purple or Golden pack |
-| **Level 36** | the grand prize: 2,000 Gems and three gold keys free; 10,000 Gems and five gold keys paid |
+| **Level 36** | the grand prize: 500 Gems and a gold key free; 10,000 Gems and five gold keys paid |
 
 ## 4. Claiming
 
