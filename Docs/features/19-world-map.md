@@ -10,10 +10,11 @@
 > **Status: built against a local stand-in for the world server**
 > ([`../plans/world-board.md`](../plans/world-board.md)): the board, the fog
 > and the explorers (§1–§3, §9); claiming, the chain, inactive hexes,
-> improvements and their stores, landmarks and Sanctuaries (§5, §7, §8).
-> Five stand-in rivals claim and build on their own. The hex art is the
-> province's, arranged on a hex. Armies, attacks, dungeons and the Portal
-> (§4, §6, §8.1, §10) are designed, not built.
+> improvements and their stores, landmarks and Sanctuaries (§5, §7, §8);
+> armies, the War Camp, attacks, conquest and denial, Fortress garrisons
+> (§4, §6). Five stand-in rivals claim, build, man a Fortress and now and
+> then attack on their own. The hex art is the province's, arranged on a
+> hex. Dungeons and the Portal (§8.1, §10) are designed, not built.
 
 ## 1. The board
 
@@ -123,8 +124,8 @@
     charged as in any fight ([`combat.md`](combat.md) §4).
 - **Army slots:**
   - every player has **one** from the moment the world opens;
-  - the **War Camp** — a new building, one per city, opened by an Atlas card —
-    adds **one per level**.
+  - the **War Camp** — a building, one per city, opened by the Atlas card
+    *Muster* — adds **one per level**.
 - How many armies can march at once is also bounded by heroes free to lead
   them.
 - A march is a **timer**: an army sent before a twelve-hour absence has

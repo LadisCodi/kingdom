@@ -1398,6 +1398,13 @@
         {"stat":"worldRevealRadius","op":"flat","value":1}
       ]
     },
+    "Muster": {
+      "name": "Muster", "glyph": "⛺", "kind": "unlock",
+      "tome": "Atlas", "era": 2, "row": 4, "col": 1,
+      "requires": ["FarsightIV", "Pathfinding", "WaypostsIV"],
+      "gold": 9000, "knowledge": 20,
+      "unlocks": [{"district":"WarCamp"}]
+    },
     "WaypostsIV": {
       "name": "Wayposts IV", "glyph": "🪧", "kind": "bonus",
       "tome": "Atlas", "era": 2, "row": 3, "col": 2,

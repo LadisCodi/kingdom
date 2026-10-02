@@ -135,6 +135,8 @@ describe('every upgradable building has something to show for the level', () => 
     'bedsPerLevel',
     // The Tavern's: a share more Hero XP (Docs/features/22-progression.md §6).
     'heroXpBonusPerLevel',
+    // The War Camp's: armies more out at once (Docs/features/19-world-map.md §4).
+    'armySlotsPerLevel',
     // What a producer's LATE level buys, since crew and reach stop growing at
     // five (Docs/plans/builder-30-days.md §4).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',

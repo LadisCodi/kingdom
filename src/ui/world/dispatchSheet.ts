@@ -113,6 +113,18 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           info: `${WORLD_BUILD.improvements[a.improvement].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doBuildHex(bh.index, a.improvement, a.level, asRival ? 0 : a.gold),
         });
+      case 'army':
+        return action({
+          label: a.purpose === 'attack' ? 'Attack' : a.purpose === 'claim' ? 'Claim' : 'Garrison',
+          kind: a.purpose === 'attack' ? 'destructive' : 'primary',
+          info: a.purpose === 'attack' ? 'Send an army' : a.purpose === 'claim' ? 'Send an army to take it' : 'Station an army here',
+          onClick: () => game.openArmy(bh.index, a.purpose),
+        });
+      case 'recall':
+        return action({
+          label: 'Recall', kind: 'secondary', info: 'The garrison marches home',
+          onClick: () => void game.doRecallArmy(a.army),
+        });
       case 'collect':
         return action({
           label: 'Collect', kind: 'gold',

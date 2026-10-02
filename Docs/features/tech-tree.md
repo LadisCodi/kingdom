@@ -29,7 +29,7 @@
 | **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
 | **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
 | **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |
-| **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 12 |
+| **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 13 |
 
 ## 2. Civics
 
@@ -373,11 +373,12 @@
 | Scouts I | +1 explorer out at once | 2,500 G · 6 K |
 | Scouts II | +1 explorer out at once | 4,000 G · 9 K |
 
-### 6.2 Era 2 — 3 cards · 48 K · 20,000 Gold
+### 6.2 Era 2 — 4 cards · 68 K · 29,000 Gold
 
 | Card | Opens / does | Price |
 |---|---|---|
 | **Pathfinding** | +1 hex an explorer sees round its path | 8,000 G · 18 K |
+| **Muster** | Opens the War Camp — more armies out at once | 9,000 G · 20 K |
 
 | Rank | Moves | Price |
 |---|---|---|

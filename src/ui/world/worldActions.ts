@@ -12,6 +12,10 @@ import { fittingImprovements, outpostGold } from '../../worldServer/core';
 
 export type HexAction =
   | { kind: 'claim'; gold: number; seconds: number }
+  /** An army: to attack a rival's ground, to take ground nobody holds, or to
+   *  man the player's own Fortress (19 §4–§6). */
+  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' }
+  | { kind: 'recall'; army: string }
   | { kind: 'build'; improvement: WorldImprovement; level: number; gold: number; seconds: number }
   | { kind: 'collect'; material: number; knowledge: number; ready: boolean };
 
@@ -37,6 +41,9 @@ const collectable = (h: HexControl): { material: number; knowledge: number } => 
 /** What `seat` can do on this hex now, in the order the sheet shows it. */
 export function hexActions(source: WorldSource, seat: number, bh: BoardHex): HexAction[] {
   const h = source.hexOf(bh.index);
+  if (h !== null && h.held && h.owner !== seat) {
+    return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
+  }
   if (h === null) {
     const neverHeld = bh.role === 'portal' || bh.features.includes('Dungeon') || bh.seat !== null;
     if (neverHeld || !touches(source, seat, bh.index)) return [];
@@ -44,6 +51,11 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex): Hex
   }
   if (h.owner !== seat || !h.held) return [];
   const out: HexAction[] = [];
+  // The player's own Fortress: man it, or call its garrison home.
+  if (h.improvement?.kind === 'Fortress') {
+    if (h.garrison && h.garrison.owner === seat) out.push({ kind: 'recall', army: h.garrison.army });
+    else out.push({ kind: 'army', purpose: 'garrison' });
+  }
   const { material, knowledge } = collectable(h);
   if (h.stores !== null && (h.stores.materialCap > 0 || h.stores.knowledgeCap > 0)) {
     out.push({ kind: 'collect', material, knowledge, ready: material > 0 || knowledge > 0 });

@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  GAME_VERSION, MISSIONS, SAVE_VERSION, TECHNOLOGIES,
+  GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -1044,6 +1044,10 @@ export function serialize(state: GameState, now: number): SaveFile {
           Index: b.index, What: b.what, Level: b.level, FinishesAtUtc: iso(b.finishesAt),
         })),
         Sanctuaries: state.world.sanctuaries,
+        // What the city lent each army out: the army itself is server state.
+        Armies: state.world.armies.map((a) => ({
+          ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
+        })),
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1617,6 +1621,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Explorers?: Array<Record<string, unknown>>;
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
+    Armies?: Array<Record<string, unknown>>;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   const walks = (path: unknown): path is number[] => Array.isArray(path) && path.length >= 2
@@ -1650,5 +1655,16 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         finishesAt: ms(b.FinishesAtUtc as string),
       })),
     sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
+    armies: (Array.isArray(d.Armies) ? d.Armies : [])
+      .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
+        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison'].includes(a.Purpose as string))
+      .map((a) => ({
+        id: a.ID as string,
+        heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],
+        troops: (a.Troops as Array<{ unitId: string; count: number }>)
+          .filter((t) => t.unitId in UNITS && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
+        target: a.Target as number,
+        purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
+      })),
   };
 }

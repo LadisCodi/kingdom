@@ -678,6 +678,9 @@ export interface DistrictDef {
   /** Percent more Hero XP the kingdom earns while this stands — the TOTAL at
    *  each level. Only the Tavern has any (Docs/features/22-progression.md §6). */
   heroXpBonusPerLevel: readonly number[];
+  /** Armies more the kingdom can have out on the world board, the TOTAL at
+   *  each level. Only the War Camp has any (Docs/features/19-world-map.md §4). */
+  armySlotsPerLevel: readonly number[];
   /** Everything this building can turn out; empty = it trains nothing. A list
    *  rather than one id, so a hall can offer a choice — and so the Townhall
    *  can offer the Villager on the same footing. Army size is a
@@ -2256,4 +2259,6 @@ export const GAME_VERSION = '0.1.0';
 // v76: the world board's builders and Sanctuaries — `Builds` and
 // `Sanctuaries` on `kingdom.world`, additive. World control itself is server
 // state and is never in the save.
-export const SAVE_VERSION = 76;
+// v77: armies out on the world board — `Armies` on `kingdom.world`, the
+// troops and heroes each one took. Additive.
+export const SAVE_VERSION = 77;

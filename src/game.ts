@@ -64,9 +64,9 @@ import {
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
-import { typeMultiplier } from './sim/combat';
+import { partyPower, typeMultiplier } from './sim/combat';
 import {
-  attackLair, claimLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
+  attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
@@ -140,9 +140,11 @@ import { dispatchExplorer, homeIndex } from './sim/world/explorers';
 import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
-import type { Refusal, WorldSnapshot } from './worldServer/types';
+import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
+import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
-import { WORLD_BUILD } from './sim/data/definitions';
+import { WORLD, WORLD_BUILD } from './sim/data/definitions';
 import type { WorldImprovement } from './sim/world/types';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -184,13 +186,16 @@ export type OverlayName =
   | 'heroPicker'
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
-  | 'world';
+  | 'world'
+  // An army composed for the world board, on the lair attack's screen
+  // (Docs/features/19-world-map.md §4).
+  | 'army';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
+  world: 'world', army: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -3984,7 +3989,7 @@ export class Game {
     }
     // Building happens on the province: the Build menu takes the player home.
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
-    if (name !== 'world') this.selectedHex = null;
+    if (name !== 'world' && name !== 'army') this.selectedHex = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
@@ -4482,6 +4487,11 @@ export class Game {
       this.state.world.revealed = emptyBits();
       this.state.world.explorers = [];
     }
+    // What the server owed: armies home and the reports of what they did.
+    for (const e of snap.effects) {
+      if (e.kind === 'armyHome') receiveArmy(this.state, e);
+      else this.toast(e.text);
+    }
     this.worldView = snap;
     const board = snapshotWorld(snap).board();
     this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
@@ -4549,6 +4559,90 @@ export class Game {
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
     playSfx('click');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  // ------------------------------------------------------ armies on the board
+
+  /** Where the army being composed is going, and to do what. */
+  armyTarget: number | null = null;
+  armyPurpose: ArmyPurpose = 'attack';
+
+  /** Compose an army for a hex, on the attack screen. */
+  openArmy(target: number, purpose: ArmyPurpose): void {
+    this.armyTarget = target;
+    this.armyPurpose = purpose;
+    this.selectedHex = target;
+    this.partyHeroes = this.state.heroes.owned
+      .filter((h) => heroCanFight(this.state, h, this.now()))
+      .slice(0, heroSlots(this.state));
+    this.prefillParty('Any');
+    this.setOverlay('army');
+  }
+
+  /** What the army would meet there, as far as the player can see: the
+   *  garrisons covering the hex, and what they are worth. */
+  armyPreview(): { power: number; attack: number; garrisons: number } {
+    const target = this.armyTarget;
+    const party = partyOf(this.state, this.expeditionParty.filter((s) => s.count > 0), this.partyHeroes, this.now());
+    const attack = partyPower(party);
+    if (target === null || this.armyPurpose !== 'attack') return { power: 0, attack, garrisons: 0 };
+    const source = this.worldSource();
+    const holder = source.hexOf(target)?.owner ?? null;
+    let power = 0;
+    let garrisons = 0;
+    for (const i of [target, ...boardNeighbors(target)]) {
+      const g = source.hexOf(i)?.garrison;
+      if (g && g.owner === holder) { power += g.power; garrisons += 1; }
+    }
+    return { power, attack, garrisons };
+  }
+
+  /** Why the army cannot set out, in words, or null. */
+  armyBlockText(): string | null {
+    if (this.armyTarget === null) return 'No destination chosen';
+    if (freeArmySlots(this.state) === 0) return 'Every army is out — the War Camp sends more';
+    if (this.partyHeroes.length === 0) return 'An army needs a hero to lead it';
+    if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return 'A hero in it cannot march';
+    if (this.armyPurpose !== 'claim' && !this.expeditionParty.some((s) => s.count > 0)) return 'An army needs soldiers';
+    return null;
+  }
+
+  /** Set the army out. Its troops leave the roster and its heroes are busy
+   *  until the server says it is home. */
+  async doSendArmy(): Promise<void> {
+    const target = this.armyTarget;
+    if (this.worldServer === null || target === null || this.armyBlockText() !== null) return;
+    const slots = this.expeditionParty.filter((s) => s.count > 0).map((s) => ({ ...s }));
+    const heroes = [...this.partyHeroes];
+    const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
+    const r = await this.worldServer.sendArmy({
+      purpose: this.armyPurpose, target, heroes, board, msPerHex: WORLD.marchSecondsPerHex * 1000,
+    }, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    departArmy(this.state, {
+      id: r.army, heroes, troops: slots.map((s) => ({ unitId: s.unitId, count: s.count })),
+      target, purpose: this.armyPurpose,
+    });
+    this.armyTarget = null;
+    this.dismiss();
+    this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Call an army home. */
+  async doRecallArmy(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.recall(armyId, this.now(), this.actingSeat ?? undefined);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
     this.applyWorldSnapshot(r.snapshot);
   }
 

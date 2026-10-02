@@ -51,6 +51,7 @@ import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
+import { renderArmySheet } from './ui/world/armySheet';
 import { mountExplorerChip } from './ui/world/explorerChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
@@ -213,6 +214,7 @@ async function boot(): Promise<void> {
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
+    army: renderArmySheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     pass: renderPassSheet,
@@ -319,7 +321,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world',
+        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -432,6 +434,7 @@ async function boot(): Promise<void> {
     if (game.scene === 'world') {
       drawWorld(worldCanvas, worldCamera, {
         state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
+        armies: game.worldView?.armies,
       });
     } else {
       drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);

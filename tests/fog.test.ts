@@ -254,7 +254,8 @@ describe('exploring pays in ground, not in currency', () => {
     // 500 Gold and up, climbing down the page; Scouting left it.
     // 583,385: the world board's explorers — Scouts I–II and Pathfinding
     // joined the Atlas under Cartography.
-    expect(tree).toBe(583_385);
+    // 592,385: Muster, the War Camp's card, closes the Atlas page.
+    expect(tree).toBe(592_385);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

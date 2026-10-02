@@ -36,6 +36,7 @@ export function freshWorld(seed: number): WorldState {
     explorers: [],
     builds: [],
     sanctuaries: 0,
+    armies: [],
   };
 }
 

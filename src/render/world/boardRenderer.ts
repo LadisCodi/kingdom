@@ -18,6 +18,7 @@ import {
 } from '../../sim/world/explorers';
 import { hexAt, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
+import type { ArmyView } from '../../worldServer/types';
 import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
 import { formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
@@ -78,6 +79,8 @@ export interface WorldFrame {
   now: number;
   /** The hex the dispatch sheet is about, or null. */
   selected: number | null;
+  /** Every army the server says is out, the player's and the rivals'. */
+  armies?: readonly ArmyView[];
 }
 
 export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: WorldFrame): void {
@@ -133,6 +136,54 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
 
   for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now);
+  for (const army of frame.armies ?? []) {
+    const seat = source.seats()[army.owner];
+    const color = seat === undefined ? '#888' : seat.owner.you ? SEAT_COLORS.you
+      : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
+    const at = armyPosition(army, now);
+    // A rival's army is seen only where the player can see.
+    const near = states[at.from] !== 'Unknown' || states[at.to] !== 'Unknown';
+    if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now);
+  }
+}
+
+/** Where an army stands at `now`: between two hexes of its path, `f` of the
+ *  way, or in its Fortress. */
+function armyPosition(a: ArmyView, now: number): { from: number; to: number; f: number } {
+  const steps = a.path.length - 1;
+  if (a.phase === 'garrison' || steps === 0) return { from: a.target, to: a.target, f: 0 };
+  const leftAt = a.phase === 'home' && a.at !== null ? a.at - steps * a.msPerHex : a.departedAt;
+  const s = Math.max(0, Math.min(steps, (now - leftAt) / a.msPerHex));
+  const along = a.phase === 'home' ? steps - s : s;
+  const i = Math.min(steps - 1, Math.floor(along));
+  return { from: a.path[i], to: a.path[i + 1], f: Math.min(1, along - i) };
+}
+
+function drawArmy(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, a: ArmyView,
+  at: { from: number; to: number; f: number }, color: string, now: number,
+): void {
+  const p = camera.hexToScreen(hexAt(at.from));
+  const q = camera.hexToScreen(hexAt(at.to));
+  const x = p.x + (q.x - p.x) * at.f;
+  const garrisoned = a.phase === 'garrison';
+  const y = p.y + (q.y - p.y) * at.f + (garrisoned ? camera.hexRadius * 0.35 : 0);
+  const size = Math.max(16, camera.hexWidth * (garrisoned ? 0.22 : 0.3));
+  // A banner in its owner's colour under the soldier, so whose it is reads first.
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#1d140c';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(x, y, size * 0.45, size * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  const aspect = spriteAspect('unit_warrior');
+  if (aspect !== null) drawSprite(ctx, 'unit_warrior', x - size / 2, y - size * aspect * 0.9, size, size * aspect);
+  if (!garrisoned && a.at !== null) {
+    drawPill(ctx, camera, x, y - size * (aspect ?? 1) - 8, formatCountdown(Math.max(0, a.at - now) / 1000));
+  }
 }
 
 // ------------------------------------------------------------------ a hex
