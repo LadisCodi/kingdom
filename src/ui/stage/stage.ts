@@ -100,11 +100,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // ------------------------------------------------------------ the pieces
   // A CONTROL is highlighted by its own silhouette lit in a blue magic glow
   // (`.stg-glow` on the control itself); a MAP PLOT by the same glow drawn
-  // as the plot's diamond — this ring.
-  const ring = el('div', { class: 'stg-ring' });
-  ring.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon class="stg-ring-halo" points="50,3 97,50 50,97 3,50"/>'
-    + '<polygon class="stg-ring-line" points="50,3 97,50 50,97 3,50"/></svg>';
+  // as the plot's diamond ON THE GROUND — by the map, under the trees and
+  // buildings standing on it (`game.tutorialFocus`, mapRenderer Pass 1.3).
+  // The control's glow pulses as an opacity, composited: its silhouette is
+  // lit once (`.stg-glow`, a still filter) and this soft light round its box
+  // breathes.
+  const halo = el('div', { class: 'stg-halo', 'aria-hidden': 'true' });
+  halo.hidden = true;
   // The pointer: a gloved hand, pointing down at the target from above it —
   // or up from below.
   const handDown = spriteUrl('tutorial_hand_down');
@@ -149,7 +151,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       + `--delay:${(-Math.random() * 4).toFixed(2)}s`;
     sparks.append(mote);
   }
-  const layer = el('div', { class: 'stg' }, sparks, ring, arrow, box);
+  // The hand last: it points over everything, the dialogue box included.
+  const layer = el('div', { class: 'stg' }, halo, sparks, box, arrow);
 
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
@@ -564,14 +567,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const show = r !== null;
     const isCell = playing?.target?.kind === 'cell';
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
-    ring.hidden = !show || !isCell;
+    game.tutorialFocus = show && playing?.target?.kind === 'cell'
+      ? { cell: playing.target.cell, span: playing.target.span } : null;
+    halo.hidden = glowing === null;
     arrow.hidden = !show;
     sparks.hidden = !show;
     if (!show) return;
     const pad = playing?.target?.kind === 'cell' ? 0 : 6;
-    Object.assign(ring.style, {
+    const padded = {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
-    });
+    };
+    if (!isCell) Object.assign(halo.style, padded);
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     // The arrow points DOWN at the target from above it, unless that would
     // leave the screen, then UP from below.
@@ -588,11 +594,25 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     });
   };
 
+  /**
+   * THE STAGE'S CLOCK. While a scene plays it runs every frame — the line
+   * types and the hand follows its target. Between scenes there is nothing
+   * to animate, so it wakes four times a second to ask whether one is due
+   * and whether the player is idle. Within a frame the layout is READ first
+   * (where the target is, whether it is in sight) and WRITTEN after, so the
+   * browser lays the page out once; the costlier reads — the scroller walk,
+   * the cast's fit — ride the tenth-of-a-second check.
+   */
+  const IDLE_CHECK_MS = 250;
+  let lastIdleHelp = 0;
   const frameTick = (now: number): void => {
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
     if (playing === null) {
-      if (now - lastCheck > 250) {
+      game.tutorialFocus = null;
+      // Not while the page is hidden: a timer still fires there, and a
+      // scene would play to nobody.
+      if (now - lastCheck > IDLE_CHECK_MS - 10 && !document.hidden) {
         lastCheck = now;
         const scene = due();
         if (scene !== null) start(scene);
@@ -600,12 +620,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     } else {
       const l = line();
       if (l !== null) {
-        // Type the line.
+        // Type the line — written below, after the layout has been read.
+        let typedText: string | null = null;
         if (playing.typed < l.text.length) {
           const before = Math.floor(playing.typed);
           playing.typed = Math.min(l.text.length, playing.typed + HELP.typeCharsPerSecond * dt);
           const shown = Math.floor(playing.typed);
-          text.textContent = l.text.slice(0, shown);
+          typedText = l.text.slice(0, shown);
           // A soft knock every third letter as the line types — never on a
           // space, never two at once, and none for a line finished by a tap.
           for (let i = before; i < shown; i++) {
@@ -615,7 +636,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
             }
           }
         }
-        more.hidden = !(l.until === 'tap' && playing.typed >= l.text.length);
+        const moreHidden = !(l.until === 'tap' && playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is
         // kept while it still fits.
         const was = playing.target;
@@ -628,10 +649,6 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         if (moved && playing.target?.kind === 'cell') {
           game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
         }
-        // A control scrolled out of its row — the fourth card of the build
-        // menu — is brought into view, or the lock holds the player in front
-        // of something they cannot reach.
-        if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
         const r = playing.target === null ? null : targetRect(game, playing.target, frame);
         // A MAP TARGET OUT OF SIGHT is brought back: the player tapped another
         // forest than the one pointed at, or panned away, and the hand is
@@ -655,15 +672,25 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           playing.missingSince = null;
         }
         drawTarget(r);
-        fitCast();
+        if (typedText !== null) text.textContent = typedText;
+        more.hidden = moreHidden;
         if (now - lastCheck > 100) {
           lastCheck = now;
+          // A control scrolled out of its row — the fourth card of the build
+          // menu — is brought into view, or the lock holds the player in
+          // front of something they cannot reach.
+          if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
+          fitCast();
           if (lineHolds(l)) { graced(); next(); }
         }
       }
     }
-    idleHelp(now);
-    requestAnimationFrame(frameTick);
+    if (now - lastIdleHelp > IDLE_CHECK_MS - 10) {
+      lastIdleHelp = now;
+      idleHelp(now);
+    }
+    if (playing !== null) requestAnimationFrame(frameTick);
+    else setTimeout(() => frameTick(performance.now()), IDLE_CHECK_MS);
   };
   requestAnimationFrame(frameTick);
 }

@@ -52,6 +52,8 @@ import textTick1 from './sounds/text_tick_01.ogg?url';
 import textTick2 from './sounds/text_tick_02.ogg?url';
 import unlockUrl from './sounds/unlock_splash.ogg?url';
 
+import { audioContext } from './context';
+
 export type SfxName =
   | 'pop' | 'tooltip' | 'click' | 'discovery' | 'quest' | 'research'
   | 'error' | 'tapEmpty' | 'revealPaid' | 'revealDone' | 'buildPlaced'
@@ -215,7 +217,8 @@ export function playSfx(name: SfxName, opts: PlayOptions = {}): void {
   if (group !== undefined && (voices.get(group) ?? 0) >= (opts.limit ?? 3)) return;
   try {
     if (ctx === null) {
-      ctx = new AudioContext();
+      ctx = audioContext();
+      if (ctx === null) return;
       warmAll();
     }
     if (ctx.state === 'suspended') void ctx.resume();

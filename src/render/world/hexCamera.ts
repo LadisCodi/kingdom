@@ -9,6 +9,7 @@
 
 import type { Hex } from '../../sim/world/hex';
 import { BOARD_RADIUS } from '../../sim/world/hex';
+import { MAX_DPR } from '../camera';
 import {
   BOARD_HALF_H, BOARD_HALF_W, HEX_R, HEX_W, STRATEGIC_W, hexToPlane, planeToHex,
 } from './hexLayout';
@@ -24,8 +25,10 @@ export class HexCamera {
 
   constructor(private canvas: Viewport) {}
 
+  /** The backing scale: the screen's, but never past the province's
+   *  `MAX_DPR` — a 3× phone gains no detail, only 2.25 times the pixels. */
   get dpr(): number {
-    return typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+    return typeof window === 'undefined' ? 1 : Math.min(MAX_DPR, window.devicePixelRatio || 1);
   }
 
   /** As close as the board goes: the tactical register. */

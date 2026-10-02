@@ -10,6 +10,7 @@ import { arrivesAt, returnsAt } from '../../sim/world/explorers';
 import { el, formatCount } from '../format';
 import { iconEl } from '../kit';
 import { explorerCount } from './dispatchSheet';
+import { setHidden, setText } from '../domWrite';
 
 export function mountExplorerChip(game: Game, root: HTMLElement): void {
   const count = el('span', { class: 'world-chip-count' });
@@ -28,8 +29,8 @@ export function mountExplorerChip(game: Game, root: HTMLElement): void {
 
   const refresh = (): void => {
     const { out, slots } = explorerCount(game);
-    root.hidden = game.scene !== 'world' || slots === 0 || game.hasOpenSheet();
-    count.textContent = `${formatCount(slots - out)}/${formatCount(slots)}`;
+    setHidden(root, game.scene !== 'world' || slots === 0 || game.hasOpenSheet());
+    setText(count, `${formatCount(slots - out)}/${formatCount(slots)}`);
   };
   game.onChange(refresh);
   refresh();

@@ -22,7 +22,7 @@ import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
-  buildDurationForCell, canMoveDistrict, districtCount, districtLabel, hasPlacementRestriction,
+  buildDurationForCell, canMoveDistrict, canPlaceAnywhere, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
   requiredPopulation,
 } from './sim/districts';
@@ -557,6 +557,7 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    this.notifies += 1;
     // The ad offer's latch. Here rather than in `tick()` because Mana crosses
     // the 50% gate on a TAP, not on the second — and every command ends in a
     // notify, so this sees the spend that made the player eligible instead of
@@ -4108,12 +4109,13 @@ export class Game {
     return BUILDABLE_DISTRICTS.filter((id) => this.canBuildNow(id)).length;
   }
 
-  /** Under its cap, somewhere legal to put it, and affordable this second. */
+  /** Under its cap, affordable this second, and somewhere legal to put it —
+   *  the map scan last, as the dearest of the three. */
   canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
-    if (validPlacementCells(this.state, this.map, id).length === 0) return false;
-    return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
+    if (!canAfford(this.state.city.wallet, nextBuildCost(this.state, id))) return false;
+    return canPlaceAnywhere(this.state, this.map, id);
   }
 
   /** Per-second Research CTA: some technology can be started. The same shape
@@ -4148,7 +4150,32 @@ export class Game {
     );
   }
 
+  /** The map plot the tutorial is pointing at, set by the stage every frame
+   *  a line points at one (ui/stage/stage.ts) and drawn on the ground. */
+  tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null = null;
+
+  /** Bumped by every notify(): what the map's markers are cached against. */
+  private notifies = 0;
+  private markerCache: { key: string; layer: MarkerLayer } | null = null;
+
+  /**
+   * What the map draws over the ground — asked once a FRAME. Everything in it
+   * but the hint and the spell wheels moves only with the state (which always
+   * ends in a notify), the mode and the selection, so that part is built once
+   * per change and kept; placing a building recomputed its range, adjacency,
+   * captured cells and ghost steps sixty times a second.
+   */
   markers(): MarkerLayer {
+    const key = `${this.notifies}|${JSON.stringify(this.mode)}|${this.ghostHeld}|${this.inspectedDistrictId}`;
+    if (this.markerCache?.key !== key) this.markerCache = { key, layer: this.buildMarkers() };
+    // The two that run on the clock: the hint's expiry, the wheels' sweep.
+    return {
+      ...this.markerCache.layer,
+      hintCell: this.hintCell(), spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+    };
+  }
+
+  private buildMarkers(): MarkerLayer {
     const layer: MarkerLayer = {
       selected: null,
       validCells: [],
@@ -4163,8 +4190,9 @@ export class Game {
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
-      hintCell: this.hintCell(),
-      spellZones: this.spellZones(),
+      hintCell: null,
+      spellZones: [],
+      tutorialFocus: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];

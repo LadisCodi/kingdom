@@ -236,6 +236,14 @@ html[data-device] #app::after {
   color: #e8e2d0; font-size: var(--text-helper);
 }
 .dev-bar > * { pointer-events: auto; }
+/* The perf readout (ui/perfHud.ts): top left, under the header, never in the way of a tap. */
+#ui > .dev-perf {
+  display: none; position: absolute; left: calc(var(--px) * 8); top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--rpx) * 150);
+  z-index: 9999; pointer-events: none; white-space: pre;
+  font: 600 11px/1.35 ui-monospace, monospace; color: #d8f7c8;
+  background: rgba(10, 14, 20, 0.78); border-radius: 6px; padding: 4px 6px;
+}
+#ui > .dev-perf.is-open { display: block; }
 .dev-toggle {
   order: 2; /* under the grid, so it stays put when the grid opens */
   font: inherit; font-weight: var(--weight-strong); color: inherit;
