@@ -27,6 +27,37 @@
   midday sun, and a hex world map in the same hand
   ([`art/style-prompt.md`](art/style-prompt.md)).
 
+## The fantasies
+
+> **The player feels they are winning back a kingdom the fog swallowed, never
+> sure what the next cell holds.**
+
+- **The column is the treasure hunt**, and its verb is the paid fog: a tap on
+  a fogged cell, five to a reveal.
+- **Three layers, one job each:**
+
+| Fantasy | Its job | Felt when |
+|---|---|---|
+| **Accumulation** | come back tomorrow | the stores' bubbles and a full Mana well after a night away |
+| **Collection** | keep playing for weeks | the card missing from a 28-day album; the next of thirty-two heroes |
+| **Power, against the world** | the reason to pay | a Legendary hero takes the room the party lost |
+
+- **The framing is the monarch who came home** — *Your Majesty — you came!* —
+  and a kingdom put right, in Isolde's voice
+  ([`features/23-tutorials.md`](features/23-tutorials.md) §3). It is the
+  column's voice, not a layer.
+- **Nothing else is declared as a fantasy.** Optimisation (adjacency,
+  workshops, Harmony), the raids, the Wonders, the guild and the world are
+  mechanics serving the four above (**OQ-6**).
+- **First session:** the column at the First Morning's first reveal (beats
+  1.1–1.2), accumulation at the first rent (7.1). Today the first reveal holds
+  no surprise and the first find comes at hour 2 (**OQ-118**).
+- **What is sold expresses a layer**: keys and card packs, at published odds
+  ([`features/14-monetization.md`](features/14-monetization.md) §2). Nothing
+  sold expresses the column yet (**OQ-119**).
+- **Playtest:** the sentence a player should describe the game with —
+  *"I'm finding what the fog took from my kingdom."*
+
 ## The three promises
 
 1. **Your city can never be attacked. Everything outside it can be.** The

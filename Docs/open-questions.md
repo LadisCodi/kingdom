@@ -225,6 +225,15 @@ New with [`22-progression.md`](features/22-progression.md),
 | **OQ-116** | **Does the tree last as long as §8 says?** The prices were set against a drip of ~20 a day and the lumps; era 3 at ~750 K is about six weeks. The harness (2026-10-01) reaches Townhall 3 on day 8, 4 on day 9, 5 on 11, 6 on 12, 7 on 17 and 8 on 25 — against develop's 6 · 12 · 15 · 16 · 18 · 25 — and fails its own day-7 bound on Townhall 3 (develop already failed day 8 on Townhall 4). | research pacing, the harness's bounds | [`22-progression.md`](features/22-progression.md) §8 | re-set the harness's bounds to the new tree once a playtest agrees; move era-2 prices before the drip |
 | **OQ-117** | **Is the First Morning the right length, and is idle help welcome or a nag?** Ten minutes of locked beats is at the long end for the genre; the idle thresholds (30 s, 60 s) are guesses. | the opening's retention | [`23-tutorials.md`](features/23-tutorials.md) §3, §5 | playtest; cut beats before cutting the lock |
 
+## O · The fantasies
+
+New with the fantasies in [`overview.md`](overview.md) (2026-10-02).
+
+| # | Question | Blocks | Owner doc | Rec. |
+|---|---|---|---|---|
+| **OQ-118** | **Where is the uncertainty in the fog?** The column is the treasure hunt, but only a Discovered cell can be paid for, and a Discovered cell already shows its terrain and feature ([`01-map-and-fog.md`](features/01-map-and-fog.md) §4); tall things show as silhouettes further out (§4.1). The map is authored and identical for every player, and a cell pays a known resource. So a reveal confirms what the player saw, and the first find — a lair or a landmark — comes around hour 2 ([`22-progression.md`](features/22-progression.md) §2), past the First Morning. | the column in the first session; the filmable demo | [`01-map-and-fog.md`](features/01-map-and-fog.md) §6 | a find hidden under some fogged cells, rolled by `rand(seed, cell)` over identical terrain, with the first one inside the First Morning's first patch |
+| **OQ-119** | **What does the column sell?** Keys and card packs express the layers. The comfort SKUs — builders, rush, Mana refill, Knowledge — express no fantasy, and the Fog charter sells instant reveals, which is comfort too. The first price the game shows is a rush: beat 6.2b, *a few Gems would hurry them along* ([`23-tutorials.md`](features/23-tutorials.md) §3). | the store's first impression | [`14-monetization.md`](features/14-monetization.md) §2 | — |
+
 ---
 
 **Closed decisions** move to [`open-questions-closed.md`](open-questions-closed.md).
