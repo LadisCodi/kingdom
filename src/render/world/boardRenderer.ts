@@ -25,18 +25,9 @@ import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import { COMBO_SPRITE, hexArt, type HexCombo } from './hexArt';
+import { COMBO_SPRITE, hexArt, pickVariant, type HexCombo } from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
-
-/** Until hex art exists, the province's tileable textures stand in for the
- *  plates, clipped to the hex. */
-const PLATE_STAND_IN: Record<WorldTerrain, string> = {
-  Grassland: 'terrain_grassland',
-  Plains: 'terrain_plains',
-  Desert: 'terrain_desert',
-  Mountain: 'terrain_grassland',
-};
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -259,8 +250,7 @@ function drawHex(
   } else if (bh.terrain !== null && art !== null) {
     ctx.fillStyle = PLATE_COLOR[bh.terrain];
     ctx.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
-    const plate = spriteUrl(art.plate) !== null ? art.plate : PLATE_STAND_IN[bh.terrain];
-    drawSprite(ctx, plate, c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    drawSprite(ctx, variant(art.plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
   }
   ctx.restore();
 
@@ -272,15 +262,16 @@ function drawHex(
   } else if (art !== null) {
     // Behind, what the improvement does not work; then the combination or
     // the improvement; then Game in front of it.
-    if (art.behind !== null) drawCombo(ctx, art.behind, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
-    if (art.main !== null && 'combo' in art.main) drawCombo(ctx, art.main.combo, c.x, c.y + r * FOOT * TILT, hw, r);
+    const key = bh.index;
+    if (art.behind !== null) drawCombo(ctx, art.behind, key, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
+    if (art.main !== null && 'combo' in art.main) drawCombo(ctx, art.main.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
     if (art.main !== null && 'improvement' in art.main) {
       ctx.save();
       if (held?.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
       drawImprovement(ctx, art.main.improvement, art.main.sprite, standing!.level, c, hw, r);
       ctx.restore();
     }
-    if (art.front !== null) drawCombo(ctx, art.front, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
+    if (art.front !== null) drawCombo(ctx, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
     if (held !== null) drawHeld(ctx, camera, held, c, fogState, frame);
   }
 
@@ -324,9 +315,11 @@ function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: num
 /** A combination standing with its foot at (x, footY), `width` wide: its own
  *  art, whose canvas is the hex's width, or the province's sprites standing
  *  in, laid out across that width. */
-function drawCombo(ctx: CanvasRenderingContext2D, combo: HexCombo, x: number, footY: number, width: number, r: number): void {
+function drawCombo(
+  ctx: CanvasRenderingContext2D, combo: HexCombo, key: number, x: number, footY: number, width: number, r: number,
+): void {
   if (spriteUrl(COMBO_SPRITE[combo]) !== null) {
-    drawProp(ctx, COMBO_SPRITE[combo], x, footY, width);
+    drawProp(ctx, variant(COMBO_SPRITE[combo], key), x, footY, width);
     return;
   }
   const k = width / (r * Math.sqrt(3)); // this drawing's share of a whole hex
@@ -334,6 +327,19 @@ function drawCombo(ctx: CanvasRenderingContext2D, combo: HexCombo, x: number, fo
   for (const p of COMBO_STAND_IN[combo]) {
     drawProp(ctx, p.sprite, x + p.dx * width, top + r * p.dy * TILT * k, width * p.size);
   }
+}
+
+/** How many variants of a sprite exist — `name`, `name_2`, `name_3`… —
+ *  counted once. */
+const variantCounts = new Map<string, number>();
+function variant(name: string, key: number): string {
+  let n = variantCounts.get(name);
+  if (n === undefined) {
+    n = spriteUrl(name) === null ? 0 : 1;
+    while (n > 0 && spriteUrl(`${name}_${n + 1}`) !== null) n += 1;
+    variantCounts.set(name, n);
+  }
+  return pickVariant(name, n, key);
 }
 
 /** An improvement in the middle of its hex: its own art, or the province's

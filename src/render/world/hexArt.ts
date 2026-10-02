@@ -27,13 +27,27 @@ export const COMBO_SPRITE: Record<HexCombo, string> = {
   Landmark: 'whex_landmark',
 };
 
-/** The ground under everything. */
+/** The ground under everything: the province's own textures — one terrain
+ *  set (art-direction §2) — the mossy rock of the tundra under a mountain. */
 export const PLATE_SPRITE: Record<WorldTerrain, string> = {
-  Grassland: 'whex_plate_grassland',
-  Plains: 'whex_plate_plains',
-  Desert: 'whex_plate_desert',
-  Mountain: 'whex_plate_mountain',
+  Grassland: 'terrain_grassland',
+  Plains: 'terrain_plains',
+  Desert: 'terrain_desert',
+  Mountain: 'terrain_tundra',
 };
+
+/**
+ * Which of a sprite's variants a hex draws: `name`, `name_2`, `name_3`…, of
+ * which `count` exist, picked by a hash of the hex so the same hex always
+ * draws the same one and neighbours seldom match.
+ */
+export function pickVariant(name: string, count: number, key: number): string {
+  if (count <= 1) return name;
+  let h = Math.imul(key + 0x9e37, 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  const k = ((h ^ (h >>> 16)) >>> 0) % count;
+  return k === 0 ? name : `${name}_${k + 1}`;
+}
 
 /** An improvement's art, before its tier. */
 export const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {

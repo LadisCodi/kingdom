@@ -6,8 +6,7 @@
 > [`../features/19-world-map.md`](../features/19-world-map.md) §2, §7, §8; the
 > camera is [`../art/art-direction.md`](../art/art-direction.md) §7.1.
 >
-> **Status: planned 2026-10-02.** §1 and the drawing (§2–§6) built the same
-> day, with the province's sprites standing in; the art is being generated. Mockups m60–m61
+> **Status: built 2026-10-02** — the rules, the drawing and the whole art set. Mockups m60–m61
 > ([`../art/ui/mockups/`](../art/ui/mockups)) set the style.
 
 ## 0. Decisions this plan rests on
@@ -49,22 +48,26 @@
 
 A hex is **a terrain plate** under **at most one combination sprite**.
 
-| Plates (4) | |
+| Plates | |
 |---|---|
-| Grassland, Plains, Desert | the ground, tiling at the hex edge |
-| Mountain | rocky ground; the mountain itself is the combination sprite |
+| Grassland, Plains, Desert | the province's own textures, with their variants (one terrain set, art-direction §2) |
+| Mountain | the province's tundra: mossy rock; the mountain itself is the combination sprite |
 
-| Combination sprites (9) | On |
-|---|---|
-| Forest | Grassland, Plains |
-| Fertile land | Grassland, Plains |
-| Game | Grassland, Plains, Desert |
-| Fertile land + Game | Grassland, Plains |
-| Mountain | Mountain |
-| Mountain + Forest | Mountain |
-| Mountain + Dungeon | Mountain |
-| Sanctuary | Grassland, Plains |
-| Landmark | Grassland, Plains, Desert |
+| Combination sprites (9) | On | Variants |
+|---|---|---|
+| Forest | Grassland, Plains | 4 |
+| Fertile land | Grassland, Plains | 3 |
+| Game | Grassland, Plains, Desert | 4 |
+| Fertile land + Game | Grassland, Plains | 3 |
+| Mountain | Mountain | 4 |
+| Mountain + Forest | Mountain | 3 |
+| Mountain + Dungeon | Mountain | 3 |
+| Sanctuary | Grassland, Plains | 3 |
+| Landmark | Grassland, Plains, Desert | 3 |
+
+- **Variants:** `name`, `name_2`, `name_3`…; a hex picks one by a hash of its
+  index, so the same hex always draws the same one. Adding a variant is
+  dropping a file.
 
 - A combination sprite carries no ground: it stands on any plate it is listed
   for, so the same Forest serves grassland and plains.
@@ -77,8 +80,8 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 - [`../art/world/norm_hex.py`](../art/world/norm_hex.py) cuts a sprite from a
   sheet, trims it, scales it to a share of the canvas width (0.88–0.92) and
   sets its lowest opaque row on the canvas's bottom edge.
-- **Files:** `whex_<combination>.png` for combinations, `whex_plate_<terrain>.png`
-  for plates, `whex_<improvement>_l1|l3|l5.png` for improvements
+- **Files:** `whex_<combination>[_n].png` for combinations,
+  `whex_<improvement>_l1|l3|l5.png` for improvements
   (`src/render/world/hexArt.ts`). A missing file falls back to the province's
   sprites.
 
@@ -137,11 +140,10 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 2. **Draw by combination — built.** `src/render/world/hexArt.ts` names the
    art of a hex (`tests/hexArt.test.ts`); the renderer draws it, or the
    province's sprites standing in.
-3. **Art:** the 4 plates, the 9 combinations and the 4 improvements × 3 tiers,
-   generated against m60–m61 and the shipped sprites
-   ([`../art/art-direction.md`](../art/art-direction.md) §9). Test sheet 1
-   (Mountain + Forest, Fertile land + Game) is in; its prompt and original are
-   in [`../art/world/`](../art/world).
+3. **Art — built.** 30 combination sprites and 12 improvement sprites in ten
+   ChatGPT sheets, against m60–m61 and the shipped sprites
+   ([`../art/art-direction.md`](../art/art-direction.md) §9). Prompts, the
+   original sheets and the cutter are in [`../art/world/`](../art/world).
 
 ## 8. Deliberately not in this design
 
@@ -150,3 +152,5 @@ A hex is **a terrain plate** under **at most one combination sprite**.
   leaves behind (§3).
 - A Dungeon on open ground, a Forest in the desert, two sites on one hex (§1).
 - A separate drawing per terrain for the same combination (§2).
+- Hex plates of their own: the province's terrain set serves the board (§2).
+- Variants of an improvement: its three tiers are its variety (§3).

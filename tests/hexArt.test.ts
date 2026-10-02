@@ -1,7 +1,7 @@
 // What a world hex is drawn with (Docs/plans/world-hex-art.md §2–§4).
 import { describe, expect, it } from 'vitest';
 import { generateBoard } from '../src/sim/world/board';
-import { COMBO_SPRITE, HEX_COMBOS, comboOf, hexArt, improvementTier } from '../src/render/world/hexArt';
+import { COMBO_SPRITE, HEX_COMBOS, comboOf, hexArt, improvementTier, pickVariant } from '../src/render/world/hexArt';
 import { fittingImprovements } from '../src/worldServer/core';
 
 describe('a hex by its combination', () => {
@@ -75,5 +75,17 @@ describe('the strategic zoom', () => {
     expect(hexArt('Grassland', ['FertileLand', 'Game'], null, true).main).toEqual({ combo: 'FertileLand' });
     expect(hexArt('Grassland', ['FertileLand', 'Game'], { kind: 'Homestead', level: 1 }, true).front).toBeNull();
     expect(hexArt('Mountain', ['Forest'], null, true).main).toEqual({ combo: 'MountainForest' });
+  });
+});
+
+describe('variants', () => {
+  it('picks one of the variants that exist, the same one for the same hex', () => {
+    expect(pickVariant('whex_forest', 1, 7)).toBe('whex_forest');
+    expect(pickVariant('whex_forest', 0, 7)).toBe('whex_forest');
+    const names = Array.from({ length: 91 }, (_, i) => pickVariant('whex_forest', 4, i));
+    expect(new Set(names)).toEqual(new Set(['whex_forest', 'whex_forest_2', 'whex_forest_3', 'whex_forest_4']));
+    expect(pickVariant('whex_forest', 4, 12)).toBe(names[12]);
+    // Spread evenly enough that no variant takes half the board.
+    for (const v of new Set(names)) expect(names.filter((n) => n === v).length).toBeLessThan(40);
   });
 });
