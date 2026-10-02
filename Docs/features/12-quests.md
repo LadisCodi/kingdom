@@ -114,7 +114,7 @@
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
   it twice over.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **sixteen quests pay Knowledge**,
+  Quest 1 pays Forestry's 2 outright, and **eighteen quests pay Knowledge**,
   placed so that every card the chain demands up to `Attuned` — quest 35,
   Consecration — is affordable **with no drip at all**, prerequisites included.
   **The quest just before each of those research quests pays its card's

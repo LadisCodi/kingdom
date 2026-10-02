@@ -10,7 +10,7 @@
 > **Status: built 2026-10-01** on `feat/ftue`. Every line below is
 > data in `?dev=data` › Progression › **Scenes**. **The treasure and the
 > abandoned buildings** (beats 1.1b–1.1c, 4.1–4.3, the `farm`, `secondHouse` and `sawmill`
-> lessons) are **designed 2026-10-02, not built**.
+> lessons) are **built 2026-10-02**.
 
 ## 1. The rules
 

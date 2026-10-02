@@ -15,6 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
+import regionMap from './region-map.json';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -460,6 +461,10 @@ function neverFalls(push: Push, id: string, field: string, v: unknown): void {
  *  bonus is a flat amount and is not clamped). */
 export const ADJACENCY_CLAMP = 0.25;
 
+/** The abandoned buildings authored in the map (Docs/features/01-map-and-fog.md §6.3). */
+const ABANDONED_IDS: readonly string[] = ((regionMap as { abandoned?: Array<{ id: string }> }).abandoned ?? [])
+  .map((a) => a.id);
+
 /** What a scene condition's target must name, by kind (Docs/features/24-dialogue.md §5). */
 const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   questReached: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
@@ -478,6 +483,9 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
   doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner'],
+  abandonedRevealed: () => ABANDONED_IDS,
+  siteOpen: () => ABANDONED_IDS,
+  repairing: () => ABANDONED_IDS,
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {

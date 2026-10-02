@@ -9,7 +9,7 @@
 // Relics. A veteran kingdom (a save from before the doors) has every door
 // open. The BOOKS are the sim's own doors, decided in `research.ts`.
 
-import { QUESTS } from './data/definitions';
+import { ABANDONED, QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
 import { ownGoldPerMinute } from './population';
 import { readyToCollect } from './storage';
@@ -35,12 +35,20 @@ const questClaimed = (state: GameState, id: string): boolean => {
 const tavernStands = (state: GameState): boolean => state.city.districts.some(
   (d) => d.definitionId === 'Tavern' && d.state === 'Built');
 
+/** Is this district one of the fog's, repaired rather than built? */
+const wasAbandoned = (state: GameState, d: District): boolean =>
+  ABANDONED.some((a) => state.abandoned.repaired[a.id] === true
+    && a.location.x === d.location.x && a.location.y === d.location.y && a.districtId === d.definitionId);
+
 /** What opens each door, as a fact about the kingdom. */
 const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   research: (state) => questReached(state, 'Woodcraft') || state.research.completed.length > 0,
   knowledge: (state) => questReached(state, 'Woodcraft') || state.research.completed.length > 0,
-  build: (state) => questReached(state, 'ARoof')
-    || state.city.districts.some((d) => d.definitionId !== 'Townhall'),
+  // The first building the fog did not keep: the opening's House, plots,
+  // Farm and Sawmill are found and repaired, so a repaired one opens nothing
+  // (Docs/features/22-progression.md §3).
+  build: (state) => questReached(state, 'GrowingTown')
+    || state.city.districts.some((d) => d.definitionId !== 'Townhall' && !wasAbandoned(state, d)),
   heroes: tavernStands,
   banner: tavernStands,
   relics: (state) => state.collection.packs.length > 0
@@ -56,7 +64,7 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
 export const DOOR_HINT: Record<DoorId, string> = {
   research: 'Finish your first task to open this.',
   knowledge: 'Finish your first task to open this.',
-  build: 'Gather some Wood to open this.',
+  build: 'Settle a second villager to open this.',
   heroes: 'Build a Tavern to open this.',
   banner: 'Build a Tavern to open this.',
   relics: 'Clear a lair to open this.',

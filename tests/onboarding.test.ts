@@ -14,13 +14,12 @@
 // opening grants and the ones it earns.
 import { describe, expect, it } from 'vitest';
 import {
-  CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
+  ABANDONED, CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { advance, changeWorkers, enqueueBuild, upgradeDistrict } from '../src/sim/commands';
+import { advance, changeWorkers, enqueueBuild, repairAbandoned, upgradeDistrict } from '../src/sim/commands';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
-import { placementBlock } from '../src/sim/districts';
 import { collectTap } from '../src/sim/harvest';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
@@ -36,8 +35,10 @@ import {
 } from '../src/sim/state';
 import { BERRIES, collectAll, FOREST, map, pourAndResearch, T0 } from './helpers';
 
-const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed at start
-const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
+/** The opening's abandoned buildings (Docs/features/01-map-and-fog.md §6.3). */
+const OLD = (id: string): Coord => ABANDONED.find((a) => a.id === id)!.location;
+const PLOT: Coord = OLD('OldPlotNorth');
+const PLOT_B: Coord = OLD('OldPlotSouth');
 
 describe('a player can actually play the onboarding', () => {
   it('runs steps 1-25 on nothing but what the game gives them', () => {
@@ -81,6 +82,30 @@ describe('a player can actually play the onboarding', () => {
         expect(next, 'the frontier ran out').toBeDefined();
         clear(next);
       }
+    };
+    /** Clear the fog up to a cell: the frontier cell nearest it, until it
+     *  is itself revealed — what a player heading for a ruin does. */
+    const clearTo = (goal: Coord) => {
+      let guard = 0;
+      while (fogState(state, map, goal) !== 'Revealed') {
+        expect(guard++, `no path to ${coordKey(goal)}`).toBeLessThan(40);
+        const next = [...map.terrain.keys()].map(parseCoordKey)
+          .filter((c) => fogState(state, map, c) === 'Discovered'
+            && isReachable(state, map, c) && explorationGate(map, c) === null)
+          .sort((a, b) => Math.max(Math.abs(a.x - goal.x), Math.abs(a.y - goal.y))
+            - Math.max(Math.abs(b.x - goal.x), Math.abs(b.y - goal.y)))[0];
+        expect(next, 'the frontier ran out').toBeDefined();
+        clear(next);
+      }
+    };
+    /** Find an abandoned building and repair it, then wait for the builders. */
+    const repair = (id: string) => {
+      const site = ABANDONED.find((a) => a.id === id)!;
+      clearTo(site.location);
+      expect(repairAbandoned(state, map, id), `could not repair ${id}`).toBe('Started');
+      tick(600);
+      expect(state.city.districts.some((d) => d.definitionId === site.districtId
+        && d.location.x === site.location.x && d.location.y === site.location.y && d.state === 'Built')).toBe(true);
     };
     const research = (id: TechId) => {
       // Research takes no time (07-research.md §1): the Knowledge the chain
@@ -137,8 +162,10 @@ describe('a player can actually play the onboarding', () => {
     chop(QUESTS.find((q) => q.id === 'Timber')!.goalAmount);
     finish('Timber');
 
+    // The roof is the Millers' house, found past the trees and repaired: the
+    // fog kept it, so no technology and no Build menu stand in the way.
     expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.costPerLevel[0].cost.Wood!);
-    build('Housing', { x: 2, y: 0 });
+    repair('OldHouse');
     finish('ARoof');
 
     // ---- steps 5-6: a meal, and the neighbour the roof permits ----
@@ -167,17 +194,13 @@ describe('a player can actually play the onboarding', () => {
     clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount - revealedCellCount(state));
     finish('Explorer');
 
-    // ---- steps 9-12: farming, by hand and then not ----
-    research('Agriculture');
-    finish('Fields');
-
-    // Step 10 asks for TWO plots: enough Food to keep a growing town fed
-    // without tapping the single bush forever. The second plot is priced on
-    // the per-instance curve (10 then 45 Wood), so the player chops for it —
-    // the chain does not hand them the Wood until the NEXT beat.
+    // ---- steps 9-13: the old fields, by hand and then not ----
+    // Two old plots and the old farm between them: found and repaired, no
+    // Agriculture and no Farming asked. The second plot is priced on the
+    // per-instance curve (10 then 45 Wood), so the player chops for it.
     chop(Math.max(0, 55 - wood()));
-    build('FarmLands', PLOT);
-    build('FarmLands', PLOT_B);
+    repair('OldPlotNorth');
+    repair('OldPlotSouth');
     finish('FirstPlot');
 
     while (getWallet(state.city.wallet, 'Food') < 20) {
@@ -192,13 +215,7 @@ describe('a player can actually play the onboarding', () => {
     chop(Math.max(0, 30 - wood()));
     finish('Lumber');
 
-    // Step 13: the Farm is one research down from the plots (Farming, the
-    // row under Agriculture), and the chain asks for it rather than leaving
-    // the player to find out at the build sheet.
-    research('Farming');
-    finish('Tillage');
-
-    build('Farm', { x: -2, y: 0 });
+    repair('OldFarm');
     finish('Farmhand');
 
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
@@ -227,14 +244,9 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // ---- steps 19-21: the wood, automated — TH1 allows the one Sawmill ----
-    research('Saws');
-    finish('SawTeeth');
+    // ---- steps 17-18: the wood, automated — the old sawmill ----
     chop(Math.max(0, DISTRICTS.Sawmill.costPerLevel[0].cost.Wood! - wood()));
-    const millSpot = [...map.terrain.keys()].map(parseCoordKey)
-      .find((c) => placementBlock(state, map, 'Sawmill', c) === null);
-    expect(millSpot, 'nowhere legal to put the Sawmill').toBeDefined();
-    build('Sawmill', millSpot!);
+    repair('OldSawmill');
     finish('TheSawmill');
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
@@ -247,6 +259,15 @@ describe('a player can actually play the onboarding', () => {
     tick(120);
     expect(townhall(state).level).toBe(2);
     finish('ProperCapital');
+
+    // ---- steps 20-22: the technologies of what the fog kept — each opens
+    // building MORE of it ----
+    research('Agriculture');
+    finish('Fields');
+    research('Farming');
+    finish('Tillage');
+    research('Saws');
+    finish('SawTeeth');
 
     // ---- steps 23-25: the three cards after Saws ----
     // A requirement is the row above (2026-09-08), so the book puts Taxes,

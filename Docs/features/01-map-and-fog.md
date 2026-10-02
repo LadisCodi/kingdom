@@ -408,8 +408,8 @@ whatever direction the player explores.
   reveal**, the first on the very first. A cell revealed by a building or a
   claim does not count.
 - **It lands in a cell that reveal discovered** — one of the neighbours that
-  just turned Discovered, chosen by `rand(seed, n)` for the kingdom's n-th
-  treasure. The cell must be one the player can pay for now: inside the
+  just turned Discovered, bare ground before a feature, chosen by
+  `rand(seed, n)` for the kingdom's n-th treasure. The cell must be one the player can pay for now: inside the
   reach, dry unless Sailing is known, and not under a site, an abandoned
   building or a feature that spans cells.
 - **No newly discovered cell qualifies?** It takes another Discovered

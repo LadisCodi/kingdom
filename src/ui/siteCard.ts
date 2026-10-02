@@ -103,13 +103,14 @@ export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement
       el('div', { class: 'site-note' },
         'Left to the fog when its people fled. Repair it and it is yours, '
         + 'exactly as if you had built it.'),
-      action({
+      // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
+      el('div', { 'data-coach': 'repair' }, action({
         label: 'Repair',
         kind: 'primary',
         onClick: () => game.doRepairAbandoned(site.location),
         cost: nextBuildCost(game.state, site.districtId),
         have: (c) => game.walletValue(c),
-      })));
+      }))));
 }
 
 /**

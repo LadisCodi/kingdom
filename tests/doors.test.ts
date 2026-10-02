@@ -161,7 +161,7 @@ describe('the doors of the UI', () => {
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Woodcraft');
     expect(isDoorOpen(state, 'research')).toBe(true);
     expect(isDoorOpen(state, 'build')).toBe(false);
-    state.quests.index = QUESTS.findIndex((q) => q.id === 'ARoof');
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'GrowingTown');
     expect(isDoorOpen(state, 'build')).toBe(true);
   });
 

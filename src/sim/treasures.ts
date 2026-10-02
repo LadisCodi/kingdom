@@ -95,8 +95,13 @@ export function onPaidReveal(state: GameState, map: MapData, revealed: readonly 
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, c]) => c)
     .filter((c) => canHold(state, map, c));
-  let candidates = byKey(fresh);
-  if (candidates.length === 0) candidates = byKey(revealed.flatMap((c) => neighbors(map, c)));
+  // Bare ground first: a chest set down in a wood is a chest the trees hide.
+  const bareFirst = (cells: Coord[]): Coord[] => {
+    const bare = cells.filter((c) => state.features[coordKey(c)] === undefined);
+    return bare.length > 0 ? bare : cells;
+  };
+  let candidates = bareFirst(byKey(fresh));
+  if (candidates.length === 0) candidates = bareFirst(byKey(revealed.flatMap((c) => neighbors(map, c))));
   if (candidates.length === 0) return;
   const n = state.fog.treasuresPlaced;
   const at = candidates[Math.floor(rand(state.seed, 'treasure', n, 'cell') * candidates.length)];

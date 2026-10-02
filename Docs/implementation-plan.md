@@ -744,7 +744,7 @@ what it did; every later one is on the new, much flatter curve.
 - **Size:** a day of code, and then the authoring — 23 buildings × up to 10
   levels is the real cost of the step.
 
-### Step 10 · What the fog kept — **designed 2026-10-02**
+### Step 10 · What the fog kept — **BUILT 2026-10-02**
 
 **The column's moment in the first minute** ([`overview.md`](overview.md) §
 *The fantasies*): treasures under the fog, and the opening's buildings found
@@ -771,7 +771,7 @@ abandoned and repaired.
   `Docs/art/originals/fog-finds/`). They stay out of the district list until a repair
   starts; the repair is the build command at level 1 on its cell, skipping
   the unlock technology. A card with **Repair** in place of the upgrade row.
-- **The opening:** Build opens at `GrowingTown` (`sim/unlocks.ts`); the
+- **The opening — BUILT 2026-10-02:** Build opens at `GrowingTown` (`sim/doors.ts`); the
   chain's reorder at 8–25 — Agriculture, Farming and Saws after Townhall 2 —
   moves the Knowledge rewards so the zero-drip guarantee still holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
   data. Re-run the 30-day harness: the opening gains 20 Gold and one cell.

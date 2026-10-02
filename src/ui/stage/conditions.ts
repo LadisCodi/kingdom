@@ -7,7 +7,7 @@
 // odometer reading it started from.
 
 import {
-  DISTRICTS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
+  ABANDONED, DISTRICTS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
 } from '../../sim/data/definitions';
 import { isDoorOpen, type DoorId } from '../../sim/doors';
 import { tally } from '../../sim/events';
@@ -35,6 +35,10 @@ const WORKSHOPS: readonly string[] = Object.entries(DISTRICTS)
   .filter(([, d]) => d.produces !== null).map(([id]) => id);
 
 const questIndex = (id: string): number => QUESTS.findIndex((q) => q.id === id);
+
+/** Treasures picked up, ever: every one placed that is no longer on the map. */
+const treasuresPicked = (state: Game['state']): number =>
+  state.fog.treasuresPlaced - Object.keys(state.fog.treasures).length;
 
 /** Is `kind(target, amount)` true right now? `tap` never is: a tap is the
  *  stage's own event. */
@@ -129,6 +133,28 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'featureSeen':
       return Object.entries(state.features).some(([key, id]) => id === c.target
         && (state.fog.discovered[key] === true || state.fog.revealed[key] === true));
+    // The fog's treasures (01-map-and-fog.md §6.2): one standing on revealed
+    // ground, or `amount` picked up, ever.
+    case 'treasureRevealed':
+      return treasuresPicked(state) > 0 || Object.keys(state.fog.treasures)
+        .some((key) => state.fog.revealed[key] === true);
+    case 'treasurePicked': return treasuresPicked(state) >= Math.max(1, c.amount);
+    // An abandoned building (§6.3): its ground revealed, its card open, its
+    // repair started. A repaired one has answered all three.
+    case 'abandonedRevealed': {
+      const a = ABANDONED.find((x) => x.id === c.target);
+      if (a === undefined) return false;
+      if (state.abandoned.repaired[a.id] === true) return true;
+      return fogState(state, game.map, a.location) === 'Revealed';
+    }
+    case 'siteOpen': {
+      const a = ABANDONED.find((x) => x.id === c.target);
+      if (a === undefined) return false;
+      if (state.abandoned.repaired[a.id] === true) return true;
+      const open = game.inspectedSite;
+      return open !== null && open.x === a.location.x && open.y === a.location.y;
+    }
+    case 'repairing': return state.abandoned.repaired[c.target] === true;
     default: return false;
   }
 }
