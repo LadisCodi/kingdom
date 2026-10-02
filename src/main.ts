@@ -461,10 +461,12 @@ async function boot(): Promise<void> {
   // ------------------------------------------------------------ render loop
   // Paced (render/framePacer.ts): the display's rate while the map is being
   // touched or the camera is moving, slower while it is only being looked at.
-  // The world board draws every frame: its marchers move on their own.
+  // The world board is paced the same way: its marchers move on their own,
+  // and 30 fps is plenty for a walk.
   let lastDraw = -Infinity;
   let lastActive = -Infinity;
   let lastView = '';
+  let lastWorldView = '';
   const touched = () => { lastActive = performance.now(); };
   for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
     window.addEventListener(type, touched, { capture: true, passive: true });
@@ -472,10 +474,15 @@ async function boot(): Promise<void> {
   const frame = (t: number) => {
     perf?.frame(t);
     if (game.scene === 'world') {
-      timed('world', () => drawWorld(worldCanvas, worldCamera, {
-        state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
-        armies: game.worldView?.armies,
-      }));
+      const view = `${worldCamera.x}|${worldCamera.y}|${worldCamera.zoom}|${worldCanvas.clientWidth}|${worldCanvas.clientHeight}`;
+      if (view !== lastWorldView) { lastWorldView = view; lastActive = t; }
+      if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+        lastDraw = t;
+        timed('world', () => drawWorld(worldCanvas, worldCamera, {
+          state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
+          armies: game.worldView?.armies,
+        }));
+      }
     } else {
       const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
       if (view !== lastView) { lastView = view; lastActive = t; }
