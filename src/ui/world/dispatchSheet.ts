@@ -53,7 +53,8 @@ export function hexTitle(game: Game, bh: BoardHex, fog: FogState): string {
 const MATERIAL_OF: Record<string, string> = { Wood: 'Wood', Food: 'Food', Stone: 'Stone' };
 
 /** "Your" or "Lady Maren's". */
-export function seatName(game: Game, seat: number): string {
+export function seatName(game: Game, seat: number | null): string {
+  if (seat === null) return 'Nobody’s';
   const s = game.worldSource().seats()[seat];
   return s === undefined || s.owner.you ? 'Your' : `${s.owner.name}'s`;
 }

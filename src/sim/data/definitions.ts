@@ -1991,6 +1991,8 @@ export interface WorldDef {
   explorerRevealRadius: number;
   revealRadiusMax: number;
   cartographyExplorers: number;
+  /** Armies out at once before the War Camp adds any. */
+  armySlots: number;
   /** Who holds the five other cities until the board comes from the server. */
   rivals: readonly string[];
 }
@@ -2034,7 +2036,9 @@ export interface WorldBuildDef {
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
 
 /** The local world server's stand-in rivals. */
-export const WORLD_BOTS: { actEveryHours: number; maxHexes: number } = balance.worldBots;
+export const WORLD_BOTS: {
+  actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;
+} = balance.worldBots;
 
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */

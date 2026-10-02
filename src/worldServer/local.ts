@@ -8,9 +8,15 @@
 // Every method is async, as a call to the real server will be, so nothing
 // that uses it changes the day it is swapped for one.
 
+import type { Board } from '../sim/battle';
+import type { HeroId } from '../sim/state';
 import type { WorldImprovement } from '../sim/world/types';
-import { build, claim, collect, emptyWorld, join, resolveTo, snapshotOf } from './core';
-import type { BoardRef, CollectResult, CommandResult, ServerBoard, ServerWorld, WorldSnapshot } from './types';
+import {
+  build, claim, collect, drainEffects, emptyWorld, join, recall, resolveTo, sendArmy, snapshotOf,
+} from './core';
+import type {
+  ArmyPurpose, BoardRef, CollectResult, CommandResult, SendResult, ServerBoard, ServerWorld, WorldSnapshot,
+} from './types';
 
 /** What the client asks of the world server. `asSeat` is the dev tool's
  *  "play as a rival": the command is made for that seat instead. */
@@ -20,6 +26,11 @@ export interface WorldServerApi {
   claim(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
+  sendArmy(
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; msPerHex: number },
+    now: number, asSeat?: number,
+  ): Promise<SendResult>;
+  recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
 }
 
 /** Where the local server keeps its state: localStorage in the game, a map
@@ -47,6 +58,22 @@ export class LocalWorldServer implements WorldServerApi {
       if (text !== null) world = JSON.parse(text) as ServerWorld;
     } catch { world = null; }
     this.world = world?.version === 1 ? world : emptyWorld();
+    // A board kept from before armies existed.
+    for (const b of this.world.boards) {
+      b.armies ??= [];
+      b.effects ??= {};
+      b.nextId ??= 1;
+      for (const h of Object.values(b.hexes)) h.garrison ??= null;
+    }
+  }
+
+  /** What the server owes the player rides out with every answer to them —
+   *  never with one made for another seat. */
+  private deliver<T extends { snapshot?: WorldSnapshot } | WorldSnapshot>(at: { board: ServerBoard; seat: number }, own: boolean, r: T): T {
+    if (!own) return r;
+    const snap = ('snapshot' in r ? r.snapshot : r) as WorldSnapshot | undefined;
+    if (snap !== undefined && 'effects' in snap) snap.effects = drainEffects(at.board, at.seat);
+    return r;
   }
 
   private persist(): void {
@@ -66,39 +93,50 @@ export class LocalWorldServer implements WorldServerApi {
     this.playerId = player.id;
     const { board, seat } = join(this.world, player, now);
     resolveTo(board, now);
+    const snap = this.deliver({ board, seat }, true, snapshotOf(board, seat, now));
     this.persist();
-    return snapshotOf(board, seat, now);
+    return snap;
   }
 
   async snapshot(now: number, asSeat?: number): Promise<WorldSnapshot | null> {
     const at = this.mine(asSeat);
     if (at === null) return null;
     resolveTo(at.board, now);
+    const snap = this.deliver(at, asSeat === undefined, snapshotOf(at.board, at.seat, now));
     this.persist();
-    return snapshotOf(at.board, at.seat, now);
+    return snap;
+  }
+
+  /** Run a command for the player (or the seat it plays as), keep the
+   *  result, and hand over what is owed with it. */
+  private run<T extends { ok: boolean }>(asSeat: number | undefined, fn: (b: ServerBoard, seat: number) => T, refused: T): T {
+    const at = this.mine(asSeat);
+    if (at === null) return refused;
+    const r = this.deliver(at, asSeat === undefined, fn(at.board, at.seat) as T & { snapshot?: WorldSnapshot });
+    this.persist();
+    return r;
   }
 
   async claim(index: number, now: number, asSeat?: number): Promise<CommandResult> {
-    const at = this.mine(asSeat);
-    if (at === null) return { ok: false, why: 'NoBoard' };
-    const r = claim(at.board, at.seat, index, now);
-    this.persist();
-    return r;
+    return this.run(asSeat, (b, seat) => claim(b, seat, index, now), { ok: false, why: 'NoBoard' });
   }
 
   async build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult> {
-    const at = this.mine(asSeat);
-    if (at === null) return { ok: false, why: 'NoBoard' };
-    const r = build(at.board, at.seat, index, kind, now);
-    this.persist();
-    return r;
+    return this.run(asSeat, (b, seat) => build(b, seat, index, kind, now), { ok: false, why: 'NoBoard' });
   }
 
   async collect(index: number, now: number, asSeat?: number): Promise<CollectResult> {
-    const at = this.mine(asSeat);
-    if (at === null) return { ok: false, why: 'NoBoard' };
-    const r = collect(at.board, at.seat, index, now);
-    this.persist();
-    return r;
+    return this.run(asSeat, (b, seat) => collect(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async sendArmy(
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; msPerHex: number },
+    now: number, asSeat?: number,
+  ): Promise<SendResult> {
+    return this.run(asSeat, (b, seat) => sendArmy(b, seat, req, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => recall(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
   }
 }

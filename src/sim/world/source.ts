@@ -25,13 +25,16 @@ export interface Seat {
 /** A held or claimed hex as the server describes it (worldServer/types.ts
  *  `HexView`), in the shape the renderer and the sheets read. */
 export interface HexControl {
-  owner: number;
+  /** Null on ground nobody holds that still carries what was built on it. */
+  owner: number | null;
   held: boolean;
   outpostAt: number;
   improvement: { kind: WorldImprovement; level: number } | null;
   work: { kind: WorldImprovement; toLevel: number; at: number } | null;
   active: boolean;
   stores: { material: number; materialCap: number; knowledge: number; knowledgeCap: number } | null;
+  /** The army standing in its Fortress, if any. */
+  garrison?: { army: string; owner: number; power: number } | null;
 }
 
 export interface WorldSource {
@@ -99,7 +102,7 @@ export function snapshotWorld(snap: {
       const city = seats.find((s) => s.index === index);
       if (city !== undefined) return city;
       const h = hexes.get(index);
-      return h === undefined ? null : seats[h.owner] ?? null;
+      return h === undefined || h.owner === null ? null : seats[h.owner] ?? null;
     },
     hexOf: (index) => hexes.get(index) ?? null,
   };

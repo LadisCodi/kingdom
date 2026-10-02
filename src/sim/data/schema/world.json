@@ -32,6 +32,11 @@
           "of": { "type": "text" },
           "length": { "exact": 5 },
           "doc": "Who holds the five other cities until the board comes from the server."
+        },
+        "armySlots": {
+          "type": "int",
+          "min": 1,
+          "doc": "Armies a player can have out from the moment the world opens; the War Camp adds one per level."
         }
       }
     },
@@ -184,7 +189,19 @@
       "doc": "The stand-in rivals of the local world server, until real players sit in the other five cities.",
       "fields": {
         "actEveryHours": { "type": "float", "min": 0.1, "doc": "On average, how often a rival makes a move." },
-        "maxHexes": { "type": "int", "min": 0, "doc": "The most hexes a rival claims beyond its city." }
+        "maxHexes": {
+          "type": "int",
+          "min": 0,
+          "doc": "The most hexes a rival ever claims with an Outpost; what it takes in a fight comes on top."
+        },
+        "attackChance": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The chance a rival’s move is an attack on a neighbour’s ground beside its own."
+        },
+        "armyPower": { "type": "int", "min": 1, "doc": "What a rival’s attacking army is worth." },
+        "garrisonPower": { "type": "int", "min": 1, "doc": "What a rival’s Fortress garrison is worth." }
       }
     }
   }

@@ -4498,6 +4498,9 @@ export class Game {
       Busy: 'A builder is already at work there', WrongGround: 'That cannot stand here',
       MaxLevel: 'It is as high as it goes', Inactive: 'Cut off from your city — reconnect it first',
       NoBoard: 'The roads to the world are closed',
+      NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
+      Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
+      OwnGround: 'That ground is yours already',
     };
     return LINES[why];
   }

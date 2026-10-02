@@ -4,7 +4,8 @@
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
     "cartographyExplorers": 1,
-    "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"]
+    "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"],
+    "armySlots": 1
   },
   "worldGen": {
     "innerRing": [
@@ -84,6 +85,9 @@
   },
   "worldBots": {
     "actEveryHours": 6,
-    "maxHexes": 8
+    "maxHexes": 8,
+    "attackChance": 0.15,
+    "armyPower": 500,
+    "garrisonPower": 600
   }
 }

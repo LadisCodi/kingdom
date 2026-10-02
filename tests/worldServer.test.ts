@@ -2,12 +2,13 @@
 // the chain back to the city, improvements and their stores, and the
 // stand-in rivals — resolved the same however often the board is read.
 import { describe, expect, it } from 'vitest';
-import { WORLD_BUILD } from '../src/sim/data/definitions';
+import { WORLD, WORLD_BOTS, WORLD_BUILD } from '../src/sim/data/definitions';
+import { buildBoard, generateEnemy } from '../src/sim/battle';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance } from '../src/sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
-  build, claim, claimRefusal, collect, emptyWorld, fittingImprovements, improvementRate, join, outpostGold,
-  recomputeChains, resolveTo, snapshotOf, storesAt,
+  build, claim, claimRefusal, collect, drainEffects, emptyWorld, fittingImprovements, improvementRate, join,
+  outpostGold, recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storesAt,
 } from '../src/worldServer/core';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
 import type { ServerBoard } from '../src/worldServer/types';
@@ -135,13 +136,17 @@ describe('the stand-in rivals', () => {
     const w = emptyWorld();
     const { board } = join(w, { id: 'me', name: 'Me' }, T0);
     resolveTo(board, T0 + 30 * 24 * HOUR);
+    let held = 0;
     for (const [i, s] of board.seats.entries()) {
       if (!s?.bot) continue;
       const theirs = Object.values(board.hexes).filter((h) => h.owner === i);
-      expect(theirs.length).toBeGreaterThan(0);
-      expect(theirs.length).toBeLessThanOrEqual(8);
-      expect(theirs.some((h) => h.improvement !== null)).toBe(true);
+      held += theirs.length;
+      expect(Object.values(board.hexes).some((h) => h.improvement !== null)).toBe(true);
     }
+    // A rival may take a neighbour's ground, but none claims more Outposts
+    // than its size allows.
+    expect(held).toBeGreaterThan(0);
+    for (const s of board.seats) if (s?.bot) expect(s.claims ?? 0).toBeLessThanOrEqual(WORLD_BOTS.maxHexes);
   });
 
   it('play the same board whether it is read once or every few minutes', () => {
@@ -182,5 +187,97 @@ describe('the local server', () => {
     expect(snap.hexes.find((h) => h.index === theirs)?.owner).toBe(2);
     expect(snap.hexes.find((h) => h.index === theirs)?.stores).toBeNull();
     expect(snapshotOf).toBeDefined();
+  });
+});
+
+describe('armies', () => {
+  const army = (power: number, key: string) => {
+    const plan = generateEnemy({ seed: 1, parts: ['test', key], budget: power, affinity: 'Any' });
+    return buildBoard(plan.squads, plan.fighters);
+  };
+  const STEP = WORLD.marchSecondsPerHex * 1000;
+
+  /** The player in seat 0, a rival in seat 1 holding a hex beside the
+   *  player's city — or `apart` hexes from it — and nobody else moving. */
+  function standoff() {
+    const { b, seat } = quietBoard();
+    // A hex next to both cities would be ideal; build the rival a path out
+    // towards the player instead, claimed by hand.
+    const rival = 1;
+    const line = hexLine(hexAt(home(rival)), hexAt(home(seat))).map(hexIndex);
+    let t = T0;
+    for (const i of line.slice(1, -1)) {
+      if (b.hexes[i] === undefined && claimRefusal(b, rival, i, t) === null) {
+        claim(b, rival, i, t);
+        t += OUTPOST_MS;
+        resolveTo(b, t);
+      }
+    }
+    return { b, seat, rival, line, t };
+  }
+
+  it('takes undefended ground beside its own, and turns home', () => {
+    const { b, seat, rival, line, t } = standoff();
+    const next = line[line.length - 2]; // the rival's hex beside the player's city
+    expect(b.hexes[next]?.owner).toBe(rival);
+    const r = sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(300, 'a'), msPerHex: STEP }, t);
+    expect(r.ok).toBe(true);
+    resolveTo(b, t + STEP);
+    expect(b.hexes[next].owner).toBe(seat);
+    expect(b.armies[0].phase).toBe('home');
+    resolveTo(b, t + 2 * STEP);
+    expect(b.armies).toHaveLength(0);
+    const owed = drainEffects(b, seat);
+    expect(owed.some((e) => e.kind === 'armyHome')).toBe(true);
+    expect(owed.some((e) => e.kind === 'report' && e.good)).toBe(true);
+    expect(drainEffects(b, seat)).toEqual([]);
+    expect(drainEffects(b, rival).some((e) => e.kind === 'report' && !e.good)).toBe(true);
+  });
+
+  it('denies ground it cannot reach from its own, leaving its buildings standing', () => {
+    const { b, seat, rival, line, t } = standoff();
+    const far = line[1]; // the rival's hex beside the rival's city
+    expect(b.hexes[far]?.owner).toBe(rival);
+    sendArmy(b, seat, { purpose: 'attack', target: far, heroes: [], board: army(300, 'b'), msPerHex: STEP }, t);
+    resolveTo(b, t + (line.length - 2) * STEP);
+    expect(b.hexes[far].owner).toBeNull();
+    expect(b.hexes[far].outpostAt).toBeLessThanOrEqual(t);
+    // Denied ground is taken by an army, not by a new Outpost.
+    expect(claimRefusal(b, rival, far, t + (line.length - 2) * STEP)).toBe('Taken');
+  });
+
+  it('fights a Fortress garrison first, and goes home beaten when it holds', () => {
+    const { b, seat, rival, line, t } = standoff();
+    const next = line[line.length - 2];
+    // The rival raises a Fortress beside it and mans it strongly.
+    const fortHex = line[line.length - 3];
+    const h = b.hexes[fortHex];
+    h.improvement = { kind: 'Fortress', level: 1 };
+    sendArmy(b, rival, { purpose: 'garrison', target: fortHex, heroes: [], board: army(5000, 'g'), msPerHex: 1 }, t);
+    resolveTo(b, t + 100);
+    expect(b.hexes[fortHex].garrison).not.toBeNull();
+    sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(200, 'weak'), msPerHex: STEP }, t + 100);
+    resolveTo(b, t + 100 + STEP);
+    expect(b.hexes[next].owner).toBe(rival);
+    expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.good)).toBe(true);
+  });
+
+  it('calls a garrison home, and turns a march round on the road', () => {
+    const { b, seat } = quietBoard();
+    const out = sendArmy(b, seat, { purpose: 'attack', target: PORTAL_INDEX, heroes: [], board: army(100, 'r'), msPerHex: STEP }, T0);
+    expect(out.ok).toBe(false); // nobody holds the Portal
+    const next = besideHome(seat)[0];
+    claim(b, seat, next, T0);
+    resolveTo(b, T0 + OUTPOST_MS);
+    b.hexes[next].improvement = { kind: 'Fortress', level: 1 };
+    const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h'), msPerHex: STEP }, T0 + OUTPOST_MS);
+    if (!g.ok) throw new Error(g.why);
+    resolveTo(b, T0 + OUTPOST_MS + STEP);
+    expect(b.hexes[next].garrison).toBe(g.army);
+    const r = recall(b, seat, g.army, T0 + OUTPOST_MS + 2 * STEP);
+    expect(r.ok).toBe(true);
+    expect(b.hexes[next].garrison).toBeNull();
+    resolveTo(b, T0 + OUTPOST_MS + 3 * STEP);
+    expect(b.armies).toHaveLength(0);
   });
 });
