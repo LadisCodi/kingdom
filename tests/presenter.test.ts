@@ -831,7 +831,7 @@ describe('the heroes screen signature', () => {
 describe('the overlay signatures', () => {
   it('hold still on a tick that changed nothing they draw', () => {
     const game = freshPresenter();
-    for (const name of ['daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
+    for (const name of ['iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
       const before = game.overlaySignature(name);
       expect(before, name).not.toBeNull();
       game.tick();

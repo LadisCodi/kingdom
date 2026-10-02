@@ -275,7 +275,7 @@ function payMission(state: GameState, mission: Mission): void {
   if (reward.kind === 'Gems') {
     addToWallet(state.player.wallet, 'Gems', reward.amount);
   } else if (reward.kind === 'Mana') {
-    // ON TOP OF THE CAP, like the daily chest's rung and the ad reward: a
+    // ON TOP OF THE CAP, like the ad reward: a
     // grant clamped to a ceiling the player is already near would pay nothing
     // and read as broken.
     state.city.wallet.Mana = Math.max(

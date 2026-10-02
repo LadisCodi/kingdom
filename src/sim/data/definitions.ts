@@ -2034,7 +2034,6 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
-  RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
   SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
   // The three bundles, a satchel to a cabinet: the same containment ladder the
   // Gem packs walk, in a collector's furniture rather than a treasury's.
@@ -2084,15 +2083,8 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
 
-/** The daily chest season — Docs/features/12-quests.md §3. Parallel lists,
- *  one per reward kind; their length IS the length of the ladder. The free
- *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
- *  ones. */
-export const DAILY = balance.daily;
-
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
- *  parallel lists, one per reward kind; their length IS the ladder's, exactly
- *  as `DAILY`'s is. A pack column holds a `PackTier` or `''` for no pack at
+ *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
  *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
 export const PASS = balance.pass as {
   missionXp: number;
@@ -2195,4 +2187,5 @@ export const GAME_VERSION = '0.1.0';
 // it reads as a veteran. A worker carries its strike's remainder
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
-export const SAVE_VERSION = 74;
+// v75: the daily chest is cut — `kingdom.kingdoms.Daily` is dropped.
+export const SAVE_VERSION = 75;

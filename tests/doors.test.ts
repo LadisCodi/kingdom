@@ -146,7 +146,7 @@ describe('the tutorial in the save', () => {
 describe('the doors of the UI', () => {
   it('shuts every door on a new kingdom', () => {
     const state = firstGame();
-    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'daily', 'banner'] as const;
+    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner'] as const;
     for (const d of doors) expect(isDoorOpen(state, d), d).toBe(false);
   });
 
@@ -163,16 +163,6 @@ describe('the doors of the UI', () => {
     expect(isDoorOpen(state, 'build')).toBe(false);
     state.quests.index = QUESTS.findIndex((q) => q.id === 'ARoof');
     expect(isDoorOpen(state, 'build')).toBe(true);
-    // The daily chest waits for the First Morning's last claim AND for the
-    // next day: the first day is for the city.
-    expect(isDoorOpen(state, 'daily')).toBe(false);
-    state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
-    expect(isDoorOpen(state, 'daily')).toBe(false);
-    const midnight = Math.ceil((state.tutorial.startedAt + 1) / 86_400_000) * 86_400_000;
-    state.lastAdvance = midnight - 1;
-    expect(isDoorOpen(state, 'daily'), 'still the first day').toBe(false);
-    state.lastAdvance = midnight;
-    expect(isDoorOpen(state, 'daily'), 'the next day').toBe(true);
   });
 
   it('never shuts a door once it has opened', () => {

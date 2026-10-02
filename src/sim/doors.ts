@@ -18,7 +18,7 @@ import { townhall, type District, type GameState } from './state';
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
   | 'research' | 'build' | 'heroes' | 'relics' | 'store' | 'world'
-  | 'knowledge' | 'daily' | 'banner';
+  | 'knowledge' | 'banner';
 
 /** Has the chain reached this quest — is it active, or past? */
 const questReached = (state: GameState, id: string): boolean => {
@@ -35,16 +35,6 @@ const questClaimed = (state: GameState, id: string): boolean => {
 const tavernStands = (state: GameState): boolean => state.city.districts.some(
   (d) => d.definitionId === 'Tavern' && d.state === 'Built');
 
-const DAY_MS = 86_400_000;
-
-/** Has the kingdom's clock reached a later LOCAL day than the one it was
- *  founded on? Read off `lastAdvance`, never a clock. */
-const laterDay = (state: GameState): boolean => {
-  const offset = state.kingdom.utcOffsetMinutes * 60_000;
-  const day = (t: number) => Math.floor((t + offset) / DAY_MS);
-  return day(state.lastAdvance) > day(state.tutorial.startedAt);
-};
-
 /** What opens each door, as a fact about the kingdom. */
 const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   research: (state) => questReached(state, 'Woodcraft') || state.research.completed.length > 0,
@@ -59,9 +49,6 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   // The market waits for a capital worth trading with.
   store: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
-  // The first day is for the city: the chest waits for the morning's work
-  // AND for the player to come back another day.
-  daily: (state) => questClaimed(state, 'TaxDay') && laterDay(state),
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —
@@ -75,7 +62,6 @@ export const DOOR_HINT: Record<DoorId, string> = {
   relics: 'Clear a lair to open this.',
   store: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
-  daily: 'Come back tomorrow — a gift will be waiting.',
 };
 
 /** The door's key in `tutorial.seen`. */

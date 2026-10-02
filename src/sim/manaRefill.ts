@@ -11,7 +11,7 @@
 // TWO COUNTERS, ONE DAY. `watched` and `bought` are separate allowances:
 // spending the five videos does not close the Gem ladder, and buying five
 // pools does not cost the player a video. Both roll at UTC midnight, for the
-// reason `daily.ts` gives — the sim may not read a clock it was not handed,
+// reason `day.ts` gives — the sim may not read a clock it was not handed,
 // and a rollover at a different local hour per player costs nothing on a
 // mechanic that never punishes a miss.
 //
@@ -30,7 +30,7 @@
 // counters — buying and claiming are always live player commands.
 
 import { AD, MANA } from './data/definitions';
-import { dayIndex } from './daily';
+import { dayIndex } from './day';
 import { grantMana, mana, manaCap } from './mana';
 import { addToWallet, getWallet, type GameState } from './state';
 

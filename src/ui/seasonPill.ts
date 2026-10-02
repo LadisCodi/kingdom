@@ -1,17 +1,13 @@
 // The season pill (Docs/features/09-relics.md §11.1).
 //
-// It sits DIRECTLY UNDER THE DAILY CHEST'S pill, which is the whole of its
-// placement argument: the game has two seasons — the chest's, which counts
-// from the player's own first day, and the collection's, which is everyone's —
-// and putting them in one column says so without a word of copy.
+// It sits in the left column of pills, under the quest scroll.
 //
 // IT GLOWS WHILE A PACK IS UNOPENED and goes quiet when none is. Never a badge
 // with a count of things owed: the collection asks for one tap, and a number
 // hanging off the pill would turn a cozy screen into a chore list.
 //
-// Built once and mutated, never rebuilt, for the reason dailyPill.ts gives: a
-// `replaceChildren` every tick makes the element new, and a new element
-// restarts its own animation.
+// Built once and mutated, never rebuilt: a `replaceChildren` every tick makes
+// the element new, and a new element restarts its own animation.
 
 import type { Game } from '../game';
 import { el, formatDuration } from './format';

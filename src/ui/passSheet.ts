@@ -5,11 +5,11 @@
 // because it is what doing it is for. A pass that opened on its rewards would
 // be a shop with a chore list buried below the fold.
 //
-// The ladder is `dailySheet.ts`'s, deliberately — same two columns on the same
-// rows, same rule that the right-hand HEAD is the buy button while the pass is
-// unbought, same rule that a cell is a `<button>` exactly when it can be taken
-// and a plain `<div>` otherwise. A player who has climbed the chest's ladder
-// already knows how to read this one, and the price is legible without a sales
+// The ladder is two columns on the same rows; the right-hand HEAD is the buy
+// button while the pass is unbought, and a cell is a `<button>` exactly when it
+// can be taken and a plain `<div>` otherwise. A free player reads the paid
+// column as the ladder they are already climbing, and the price is legible
+// without a sales
 // pitch anywhere on the sheet (Docs/features/13-events.md §2.4).
 //
 // THE MISSION ROW'S RIGHT-HAND BUTTON IS ONE BUTTON WEARING TWO FACES: green
@@ -88,7 +88,7 @@ export function renderPassSheet(game: Game): HTMLElement {
   // ---- the board. A row is a goal, a bar and one button.
   const rows = pass.missions.map((m) => {
     const done = Math.min(m.done, m.target);
-    // A BUTTON EXACTLY WHEN THERE IS SOMETHING TO PRESS, the daily ladder's
+    // A BUTTON EXACTLY WHEN THERE IS SOMETHING TO PRESS, the ladder's own
     // rule: an unfinished mission has no action, so it has no control. The
     // only way to a new mission is to finish an old one — there is nothing to
     // buy here.
@@ -209,8 +209,7 @@ export function renderPassSheet(game: Game): HTMLElement {
     bar,
     board,
     // The heads are OUTSIDE the ladder's scroller, so a prize is never read
-    // against the wrong column — the daily sheet pins them for the same
-    // reason, with `position: sticky` because there it has no pane to sit in.
+    // against the wrong column.
     el('div', { class: 'pss-rungs' },
       heads,
       el('div', { class: 'pss-ladder', 'data-keep-scroll': 'pass-ladder' }, ...ladder)));

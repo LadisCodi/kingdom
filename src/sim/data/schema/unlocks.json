@@ -8,7 +8,7 @@
     },
     "target": {
       "type": "text",
-      "doc": "Which door or book. A door: research, build, heroes, relics, store, world, knowledge, daily, banner. A book: Civics, Warfare, Magic, Sagas, Atlas."
+      "doc": "Which door or book. A door: research, build, heroes, relics, store, world, knowledge, banner. A book: Civics, Warfare, Magic, Sagas, Atlas."
     },
     "title": { "type": "text", "maxLength": 24, "doc": "The name under the icon." },
     "text": {

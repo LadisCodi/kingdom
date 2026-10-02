@@ -34,9 +34,7 @@ import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
 import { renderKnowledgeSheet } from './ui/knowledgeSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
-import { renderDailySheet } from './ui/dailySheet';
 import { renderPassSheet } from './ui/passSheet';
-import { mountDailyPill } from './ui/dailyPill';
 import { mountSeasonPill } from './ui/seasonPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
@@ -148,7 +146,6 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
-  mountDailyPill(game, document.getElementById('daily')!);
   mountSeasonPill(game, document.getElementById('season')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
@@ -196,7 +193,6 @@ async function boot(): Promise<void> {
     knowledge: renderKnowledgeSheet,
     world: renderWorldSheet,
     builder: renderBuilderSheet,
-    daily: renderDailySheet,
     pass: renderPassSheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
@@ -301,7 +297,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm', 'world',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -439,8 +435,7 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
-      // The founding too, so a warp past midnight is a second day (the
-      // daily chest waits for one).
+      // The founding too, so a warp past midnight is a second day.
       game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       // The lairs' counters, so the warp demos a raid landing during an

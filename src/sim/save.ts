@@ -715,6 +715,16 @@ const MIGRATIONS: readonly Migration[] = [
       tutorial.Seen = [...new Set([...(tutorial.Seen ?? []), 'gift:Warfare'])];
     },
   },
+  {
+    // v75: THE DAILY CHEST IS CUT (Docs/implementation-plan.md Step 13). Its
+    // `Daily` block goes; rungs a player had not claimed are not paid out.
+    // The purchase log keeps any `RoyalChest` it holds — it is a record.
+    to: 75,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Daily;
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -831,13 +841,6 @@ export function serialize(state: GameState, now: number): SaveFile {
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
         UtcOffsetMinutes: state.kingdom.utcOffsetMinutes,
-        Daily: {
-          Season: state.kingdom.daily.season,
-          Rung: state.kingdom.daily.rung,
-          LastClaimedDay: state.kingdom.daily.lastClaimedDay,
-          RoyalSeason: state.kingdom.daily.royalSeason,
-          RoyalClaimed: state.kingdom.daily.royalClaimed,
-        },
         // The season pass (sim/pass.ts). The BOARD travels whole: a mission
         // is its odometer key plus what that odometer read when it was
         // issued, so dropping one loses the only record of where it started.
@@ -1178,25 +1181,10 @@ export function deserialize(
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
     state.kingdom.utcOffsetMinutes = Number.isFinite(kingdomDto.UtcOffsetMinutes) ? kingdomDto.UtcOffsetMinutes : 0;
-    // Additive: a save written before the chest existed has no Daily block and
-    // the defaults below start the season at rung zero, which is exactly right
-    // for a player meeting it for the first time. `Season: -1` matches no real
-    // season, so a missing block reads as "not in one" rather than as season 0.
-    const daily = kingdomDto.Daily as {
-      Season?: number; Rung?: number; LastClaimedDay?: number | null;
-      RoyalSeason?: number | null; RoyalClaimed?: number[];
-    };
-    if (daily) {
-      state.kingdom.daily.season = daily.Season ?? -1;
-      state.kingdom.daily.rung = daily.Rung ?? 0;
-      state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
-      state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
-      state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
-    }
-    // Additive in exactly the chest's way: a save from before the pass has no
-    // Pass block, and `Season: -1` matches no real season — so it reads as an
-    // empty pass rather than as season 0's, and the first live tick fills the
-    // board from the window it lands in.
+    // Additive: a save from before the pass has no Pass block, and
+    // `Season: -1` matches no real season — so it reads as an empty pass
+    // rather than as season 0's, and the first live tick fills the board from
+    // the window it lands in.
     const pass = kingdomDto.Pass as {
       Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
       PaidSeason?: number | null; LastWindow?: number; Week?: number;

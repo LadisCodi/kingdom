@@ -38,7 +38,7 @@ import {
   emptyEntry, heroLevelCapForTier, isHeroMaxLevel, tierBlock, tierCost,
   xpLevelCost, type CollectionEntry,
 } from './heroLadder';
-import { dayIndex } from './daily';
+import { dayIndex } from './day';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
 import { recordEvent } from './events';
@@ -449,7 +449,7 @@ export interface PullResult {
  *
  * Lazy and idempotent, exactly as `store.ts` rolls the monthly budget: every
  * writer calls it, so a stale day never leaks and nothing has to happen at
- * midnight. The day is UTC (`dayIndex`), for the reason `daily.ts` gives — the
+ * midnight. The day is UTC (`dayIndex`), for the reason `day.ts` gives — the
  * sim may not read a clock it was not handed, and a mechanic that never
  * punishes a miss can afford a rollover at a different local hour per player.
  */

@@ -1,18 +1,6 @@
 {
   "type": "object",
   "fields": {
-    "daily": {
-      "type": "object",
-      "fields": {
-        "seasonDays": { "type": "int" },
-        "manaFractions": { "type": "list", "of": { "type": "float" } },
-        "gems": { "type": "list", "of": { "type": "int" } },
-        "premiumGems": { "type": "list", "of": { "type": "int" } },
-        "premiumGoldKeys": { "type": "list", "of": { "type": "int" } },
-        "premiumXpHours": { "type": "list", "of": { "type": "int" } },
-        "premiumXpFloor": { "type": "int" }
-      }
-    },
     "missions": {
       "type": "object",
       "fields": {

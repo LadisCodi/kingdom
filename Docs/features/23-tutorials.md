@@ -102,7 +102,7 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 7.1 | `TaxDay` | *Our villager pays rent into the House. When the purse shows, gather it — it's theirs to give, and it costs you nothing.* | the House | none | the quest completes |
 | 7.1b | `TaxDay` | *Gold in the coffers! And another gift from the townsfolk — they're very generous today.* | the quest pill | the pill | claimed |
 | 7.2 | `TaxDay` | *That's how a kingdom is kept, I think: clear the fog, gather, build, grow. The townsfolk will always have their next request.* | the quest pill | all | tap |
-| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. And come back tomorrow — the barns and the purse fill up by morning, and the well with them.* | the quest pill | all | tap — **the First Morning ends** |
+| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. Come back tomorrow — the barns and the purse fill up overnight.* | the quest pill | all | tap — **the First Morning ends** |
 
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.

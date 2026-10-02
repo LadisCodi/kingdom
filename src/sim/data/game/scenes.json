@@ -499,7 +499,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Lost? Look at their request and I’ll point the way. And come back tomorrow — I’ll have a little something for you.",
+        "text": "Lost? Look at their request and I’ll point the way. Come back tomorrow — the barns and the purse fill up overnight.",
         "box": "auto",
         "point": "quest",
         "lock": "all",
@@ -1009,29 +1009,6 @@
         "text": "A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.",
         "box": "auto",
         "point": "district:Townhall",
-        "lock": "none",
-        "until": "tap",
-        "untilTarget": "",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
-      }
-    ]
-  },
-  {
-    "id": "daily",
-    "trigger": "doorOpen",
-    "triggerTarget": "daily",
-    "triggerAmount": 0,
-    "anywhere": false,
-    "skippable": true,
-    "lines": [
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Welcome back, Your Majesty! I saved you a gift — one for every day you visit. Miss a day and it simply waits for you.",
-        "box": "auto",
-        "point": "ui:daily",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
