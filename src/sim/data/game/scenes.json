@@ -711,6 +711,20 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — a new House wants more Wood than we hold. Here, I put some by for just this!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy",
+        "stocks": "Housing"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "Builders want their wood up front — it says so in the guild charter. Choose the House.",
         "box": "auto",
         "point": "ui:build:Housing",
