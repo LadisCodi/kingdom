@@ -196,7 +196,7 @@ Respawn:
 | State | Meaning |
 |---|---|
 | **Undiscovered** | not drawn |
-| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure never, an abandoned building as rubble (§6.2, §6.3); may be paid to clear |
+| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure as a closed chest, an abandoned building as rubble (§6.2, §6.3); may be paid to clear |
 | **Revealed** | yours: buildable, tappable, workable |
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
@@ -303,7 +303,7 @@ fallback past ring 14. The province reaches ring 23.
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
 | **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
 | **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
-| **Treasures** | about one cell in four | a coin, once (§6.2) | tap to pick up |
+| **Treasures** | one every five cells revealed | a coin, once (§6.2) | reveal its cell, tap to pick up |
 | **Abandoned buildings** | authored | a building, once repaired (§6.3) | repair |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
@@ -380,30 +380,36 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 ### 6.2 Treasures
 
-What the people who fled left on the ground.
+What the people who fled left on the ground, found at a steady pace in
+whatever direction the player explores.
 
-- **Hidden until its cell is Revealed.** Under the scrim the cell shows only
-  its terrain and feature.
-- **Which cells hold one is rolled per kingdom**: `rand(seed, cell)` against
-  `treasure.chance`, on every cell except the ones the kingdom starts with
-  revealed and those under a site, a landmark or an abandoned building. The
-  terrain is the same for every player; the treasures are not.
-- **An authored treasure** — a coin and an amount, placed in the map editor —
-  replaces the roll on its cell. The First Morning's first reveal holds one
-  ([`23-tutorials.md`](23-tutorials.md) §3).
+- **One is due every `treasure.everyReveals` cells the player pays to
+  reveal**, the first on the very first. A cell revealed by a building or a
+  claim does not count.
+- **It lands in a cell that reveal discovered** — one of the neighbours that
+  just turned Discovered, chosen by `rand(seed, n)` for the kingdom's n-th
+  treasure. The cell must be one the player can pay for now: inside the
+  reach, dry unless Sailing is known, and not under a site, an abandoned
+  building or a feature that spans cells.
+- **No newly discovered cell qualifies?** It takes another Discovered
+  neighbour of the cell just revealed; failing that, it waits for the next
+  paid reveal. One reveal places one treasure at most.
+- **Discovered, it shows as a closed chest** under the scrim: the player sees
+  something to go and get, not what is in it.
+- **Revealing its cell opens it**: its coin rises out of the chest under a
+  glint. **A tap picks it up, free** — no Mana, as a store is collected free.
+  On a cell with a feature the first tap picks up the treasure and the next
+  harvests; a forest still closed by Forestry gives its treasure.
 - **A treasure is one coin the plank already shows**: Gold, Food, Wood, or
-  Stone once Stone is on the plank, by `treasure.weights`; rarely Knowledge,
-  which lands over the bar's cap like a lump.
+  Stone once Stone is on the plank, by `treasure.weights`, rolled for the
+  n-th treasure; rarely Knowledge, which lands over the bar's cap like a
+  lump.
 - **It pays `treasure.workSeconds` of the kingdom's production of its coin**,
   floored at `treasure.floor`, priced when it is picked up. Knowledge pays a
-  fixed `treasure.knowledge`.
-- **On the reveal it rises out of the cell**: a sack, a crate or a pot by its
-  coin, under a glint. It is not announced.
-- **A tap picks it up, free** — no Mana, as a store is collected free. On a
-  cell with a feature the first tap picks up the treasure and the next one
-  harvests; a forest still closed by Forestry gives its treasure.
-- It waits for ever. Workers never take it; placing a building on its cell
-  picks it up.
+  fixed `treasure.knowledge`. **The first is fixed** — `treasure.first`, 20
+  Gold — for the First Morning ([`23-tutorials.md`](23-tutorials.md) §3).
+- It waits for ever, discovered or revealed. Workers never take it; placing
+  a building on its cell picks it up.
 
 ### 6.3 Abandoned buildings
 
@@ -443,8 +449,7 @@ them, to be found and repaired.
 
 - **`?dev=data` is the source of truth for every number; the map editor is the
   source of truth for the map.**
-- Terrain, features, landmarks, ruins, abandoned buildings and authored
-  treasures live in
+- Terrain, features, landmarks, ruins and abandoned buildings live in
   `src/sim/data/region-map.json`, painted in `?dev=map`
   ([`../map-editor.md`](../map-editor.md)).
 - What a legal map is lives in one module, `mapRules.ts`, checked by the
@@ -468,9 +473,10 @@ them, to be found and repaired.
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
-| How many cells hold a treasure | 1 in 4 | `treasure.chance` |
+| How often a treasure is due | every 5 cells revealed | `treasure.everyReveals` |
 | What a treasure pays | 120 s of the kingdom's production, floored at 10 Gold · 5 Food · 5 Wood · 5 Stone | `treasure.workSeconds`, `treasure.floor` |
 | Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
+| The first treasure | 20 Gold | `treasure.first` |
 | Where the abandoned buildings stand | §6.3 | the map editor |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
@@ -499,7 +505,7 @@ them, to be found and repaired.
 - Line of sight: nothing hides a silhouette (§4.1).
 - A silhouette that says which ore or which landmark it is, or a banner when
   one appears.
-- A treasure that shows under the fog, or a sign of where one is.
+- A treasure placed by the map, or one the player cannot pay to reach.
 - A treasure that expires, or one a worker picks up.
 - An abandoned building above level 1, or one repaired for less than a build.
 

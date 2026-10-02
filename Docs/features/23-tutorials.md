@@ -9,7 +9,7 @@
 >
 > **Status: built 2026-10-01** on `feat/ftue`. Every line below is
 > data in `?dev=data` › Progression › **Scenes**. **The treasure and the
-> abandoned buildings** (beats 1.1b, 4.1–4.3, the `farm`, `sawmill` and `saws`
+> abandoned buildings** (beats 1.1b–1.1c, 4.1–4.3, the `farm`, `sawmill` and `saws`
 > lessons) are **designed 2026-10-02, not built**.
 
 ## 1. The rules
@@ -71,8 +71,9 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 0.2 | — | *I'm Isolde. I kept the royal library — but everyone else fled the fog, so… I'm your Royal Advisor now. I'll do my very best!* | — | all | tap |
 | 0.3 | — | *The fog swallowed everything past the Townhall — our forests, our fields, our people's work. The books say it can be pushed back. I hope.* | — | all | tap |
 | 1.1 | `FirstSteps` | *Those trees in the fog are ours! A few coins and a little patience clear a patch — tap it, Your Majesty. Five times, I've read.* | the nearest fogged forest | that cell | the cell is revealed |
-| 1.1b | `FirstSteps` | *Oh! Look — someone left that behind when they fled. Tap it! It's ours now.* | the treasure ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2) | that cell | picked up |
-| 1.2 | `FirstSteps` | *Timber — and a purse! The fog keeps more of what they left, I'm sure of it. Three more stands, and our axes will have work again.* | the next fogged forest | the map | the quest completes |
+| 1.1b | `FirstSteps` | *Timber! Oh, it worked! And — look, right beside it! Something in the fog. Clear that one too!* | the chest ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2) | that cell | revealed |
+| 1.1c | `FirstSteps` | *A purse someone dropped when they fled! Tap it — it's ours now.* | the treasure | that cell | picked up |
+| 1.2 | `FirstSteps` | *The fog keeps more of what they left, I'm sure of it. Three more stands, and our axes will have work again.* | the next fogged forest | the map | the quest completes |
 | 1.3 | `FirstSteps` | *The townsfolk saw you win the woods back — they've gathered a gift! Go on, accept it. They'd be ever so pleased.* | the quest pill | the pill | claimed |
 | 2.1 | `Woodcraft` | *Trees at last — and, um, nobody left who remembers how to fell them. But I have a book for that! I have a book for most things.* | **Research** (its padlock breaks) | the tab | the book is open |
 | 2.2 | `Woodcraft` | *Each page is a craft our people can learn. This one's Forestry — chapter one. My favourite!* | the Forestry card | the card | its sheet is open |

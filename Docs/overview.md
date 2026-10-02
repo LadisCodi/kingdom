@@ -50,7 +50,7 @@
   workshops, Harmony), the raids, the Wonders, the guild and the world are
   mechanics serving the four above (**OQ-6**).
 - **First session:** the column at the First Morning's first reveal, which
-  holds a treasure (beat 1.1b), and again at the old House found in the fog
+  sets a chest in the fog beside it (beats 1.1b–1.1c), and again at the old House found in the fog
   (4.1–4.3); accumulation at the first rent (7.1).
 - **What is sold expresses a layer**: keys and card packs, at published odds
   ([`features/14-monetization.md`](features/14-monetization.md) §2). Nothing
@@ -110,7 +110,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 | Found in the fog | Gives |
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
-| **Treasures** — hidden under about one cell in four, rolled per kingdom | a coin, picked up with a free tap |
+| **Treasures** — one every five cells revealed, a chest in the fog beside the last | a coin, picked up with a free tap once its cell is revealed |
 | **Abandoned buildings** — the village the fog swallowed | a House, plots, a Sawmill… repaired before the player can build their own |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |

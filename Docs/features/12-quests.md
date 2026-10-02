@@ -133,9 +133,9 @@
   opening is short of, not coin: a reward that buys taps arrives exactly where
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
-- Quest 1's first reveal holds an authored treasure of **20 Gold**
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2), and `ARoof` asks for one
-  more cell, the old House's.
+- Quest 1's first reveal sets the first treasure beside it, **20 Gold**
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2); revealing its cell is one
+  more cell, and `ARoof` asks for another, the old House's.
 - Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
   — the first four cards are priced in Knowledge alone — and 2 Knowledge,
   which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the

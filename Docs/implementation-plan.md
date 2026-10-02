@@ -754,16 +754,16 @@ abandoned and repaired.
   the beats in [`23-tutorials.md`](features/23-tutorials.md) §3–§3.1; the
   chain in [`12-quests.md`](features/12-quests.md) §2; the Build door in
   [`22-progression.md`](features/22-progression.md) §3.
-- **Treasures.** The roll is `rand(seed, regionId, x, y)` against
-  `treasure.chance`, so a treasure's existence is a fact of the map and the
-  save records only the cells **picked up** — additive, a `SAVE_VERSION` bump
-  and no migrator. The `treasure.*` settings go in the exploration settings
-  with their schema. The tap handler picks up before it harvests and charges
-  no Mana; placement picks up; Knowledge lands over the cap.
-- **The map file** gains two kinds — abandoned buildings (a district id and a
-  cell) and authored treasures (a cell, a coin, an amount) — with their tools
-  in the map editor and their rules in `mapRules.ts`: legal ground for the
-  building, and the count-cap rule of §6.3.
+- **Treasures.** The save gains a count of paid reveals and the treasures
+  placed — cell, ordinal, picked up — additive, a `SAVE_VERSION` bump and no
+  migrator. The placement runs in the paid-reveal handler, on the neighbours
+  that reveal discovered, with `rand(seed, n)`. The `treasure.*` settings go
+  in the exploration settings with their schema. The tap handler picks up
+  before it harvests and charges no Mana; placement picks up; Knowledge lands
+  over the cap.
+- **The map file** gains abandoned buildings (a district id and a cell),
+  with their tool in the map editor and their rules in `mapRules.ts`: legal
+  ground for the building, and the count-cap rule of §6.3.
 - **Abandoned buildings** stay out of the district list until a repair
   starts; the repair is the build command at level 1 on its cell, skipping
   the unlock technology. A card with **Repair** in place of the upgrade row.
@@ -771,11 +771,10 @@ abandoned and repaired.
   reorder at 8–22 moves the Knowledge rewards so the zero-drip guarantee still
   holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
   data. Re-run the 30-day harness: the opening gains 20 Gold and one cell.
-- **A kingdom saved before** finds the treasures under ground it already
-  revealed, and an abandoned building whose cell it has built on never
-  appears.
+- **A kingdom saved before** starts its count of paid reveals at zero, and an
+  abandoned building whose cell it has built on never appears.
 - **Art:** one rubble drawing per footprint size; the ruined House, plot and
-  Sawmill (`<sprite>_ruin.png`); the treasure's sack, crate and pot.
+  Sawmill (`<sprite>_ruin.png`); the closed chest, and the treasure's sack, crate and pot.
 - **Size:** two to three days of code, plus the art.
 
 ## 5. Deliberately after everything above
