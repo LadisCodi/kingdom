@@ -885,6 +885,12 @@ export function drawMap(
   });
 
   for (const { cell, key, fog, payable, box } of floor) {
+    // The window is the screen's bounding box in CELL space — about twice
+    // the screen — so its corners are culled here. The margins are art's:
+    // a prop rises up to three cells above its plot and a block's art spans
+    // three cells down and across from its anchor.
+    if (box.x + box.w * 3 < 0 || box.x - box.w * 3 > w
+      || box.y + box.h * 4 < 0 || box.y - box.w * 3 > h) continue;
     const cx = cell.x;
     const cy = cell.y;
 
