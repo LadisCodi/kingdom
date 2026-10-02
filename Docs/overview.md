@@ -49,9 +49,9 @@
 - **Nothing else is declared as a fantasy.** Optimisation (adjacency,
   workshops, Harmony), the raids, the Wonders, the guild and the world are
   mechanics serving the four above (**OQ-6**).
-- **First session:** the column at the First Morning's first reveal (beats
-  1.1–1.2), accumulation at the first rent (7.1). Today the first reveal holds
-  no surprise and the first find comes at hour 2 (**OQ-118**).
+- **First session:** the column at the First Morning's first reveal, which
+  holds a treasure (beat 1.1b), and again at the old House found in the fog
+  (4.1–4.3); accumulation at the first rent (7.1).
 - **What is sold expresses a layer**: keys and card packs, at published odds
   ([`features/14-monetization.md`](features/14-monetization.md) §2). Nothing
   sold expresses the column yet (**OQ-119**).
@@ -83,13 +83,15 @@
 
 1. **Reveal** — spend Gold to peel back the fog. Cost scales steeply with
    distance from the Townhall. **The frontier stays connected**, and a building
-   sees further than it can buy.
+   sees further than it can buy. What the fog kept comes out: **treasures** to
+   pick up, and **abandoned buildings** to repair.
 2. **Clear** — every ruin opens with a gate, and discovering the ruin starts
    the gate's counter: clear it with hero and troops before it raids the city.
 3. **Harvest** — tap resource cells directly. Every tap on the ground spends
    **1 Mana**. Cells exhaust after a number of taps and recover on a timer.
-4. **Build** — place districts on revealed land. Costs are charged up front;
-   construction takes time and runs while the player is away.
+4. **Build** — repair what the fog kept, then place districts on revealed
+   land. Costs are charged up front; construction takes time and runs while
+   the player is away.
 5. **Grow** — train villagers at the Townhall. Housed villagers pay rent, the
    idle backbone of the economy.
 6. **Staff** — assign workers. They are units that walk to cells inside their
@@ -108,6 +110,8 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 | Found in the fog | Gives |
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
+| **Treasures** — hidden under about one cell in four, rolled per kingdom | a coin, picked up with a free tap |
+| **Abandoned buildings** — the village the fog swallowed | a House, plots, a Sawmill… repaired before the player can build their own |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |
 | **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |

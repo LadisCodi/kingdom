@@ -82,9 +82,9 @@
 
 | # | Quests | The beat | Opens |
 |---|---|---|---|
-| **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells, Forestry, 25 Wood, a House, Food, a villager, rent | Research, Knowledge, Build, the daily chest |
-| **8–15** · farming | `Explorer` · `Fields` · `FirstPlot` · `ByHand` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, Agriculture, two plots, Food by hand, Farming, a Farm, a worker | |
-| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `SawTeeth` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, Saws, the Sawmill, three workers, **Townhall 2** | |
+| **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge, the daily chest |
+| **8–15** · farming | `Explorer` · `FirstPlot` · `ByHand` · `Fields` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, Agriculture, Farming, a Farm, a worker | **Build** |
+| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `SawTeeth` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, **the old Sawmill repaired**, three workers, Saws, **Townhall 2** | |
 | **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
 | **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
@@ -94,6 +94,11 @@
 | **57–63** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
 | **64–67** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
+- **The fog's buildings come first, the player's own after.** The House, the
+  plots and the Sawmill of the opening are abandoned ones, repaired
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3); the technology that
+  unlocks each comes later and opens building more. A repair counts for a
+  goal that asks for that building.
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
   Hospitality) rather than pointing past cards the player cannot start.
@@ -128,6 +133,9 @@
   opening is short of, not coin: a reward that buys taps arrives exactly where
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
+- Quest 1's first reveal holds an authored treasure of **20 Gold**
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2), and `ARoof` asks for one
+  more cell, the old House's.
 - Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
   — the first four cards are priced in Knowledge alone — and 2 Knowledge,
   which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the

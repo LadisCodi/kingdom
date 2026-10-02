@@ -4,8 +4,9 @@
 > reveal, and what the fog holds. The *scopes* the map splits into are
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
-> **Status: built.** The map is authored in the `?dev=map` editor
-> ([`../map-editor.md`](../map-editor.md)) and stored in
+> **Status: built**, except the treasures and the abandoned buildings (§6.2,
+> §6.3): **designed 2026-10-02, not built.** The map is authored in the
+> `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
 
 ## 1. The grid
@@ -195,7 +196,7 @@ Respawn:
 | State | Meaning |
 |---|---|
 | **Undiscovered** | not drawn |
-| **Discovered** | drawn under a scrim; terrain and feature visible; may be paid to clear |
+| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure never, an abandoned building as rubble (§6.2, §6.3); may be paid to clear |
 | **Revealed** | yours: buildable, tappable, workable |
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
@@ -302,6 +303,8 @@ fallback past ring 14. The province reaches ring 23.
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
 | **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
 | **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
+| **Treasures** | about one cell in four | a coin, once (§6.2) | tap to pick up |
+| **Abandoned buildings** | authored | a building, once repaired (§6.3) | repair |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.
@@ -375,11 +378,73 @@ Costs are **authored per sanctuary**, not derived from distance.
 - Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
   [`combat.md`](combat.md).
 
+### 6.2 Treasures
+
+What the people who fled left on the ground.
+
+- **Hidden until its cell is Revealed.** Under the scrim the cell shows only
+  its terrain and feature.
+- **Which cells hold one is rolled per kingdom**: `rand(seed, cell)` against
+  `treasure.chance`, on every cell except the ones the kingdom starts with
+  revealed and those under a site, a landmark or an abandoned building. The
+  terrain is the same for every player; the treasures are not.
+- **An authored treasure** — a coin and an amount, placed in the map editor —
+  replaces the roll on its cell. The First Morning's first reveal holds one
+  ([`23-tutorials.md`](23-tutorials.md) §3).
+- **A treasure is one coin the plank already shows**: Gold, Food, Wood, or
+  Stone once Stone is on the plank, by `treasure.weights`; rarely Knowledge,
+  which lands over the bar's cap like a lump.
+- **It pays `treasure.workSeconds` of the kingdom's production of its coin**,
+  floored at `treasure.floor`, priced when it is picked up. Knowledge pays a
+  fixed `treasure.knowledge`.
+- **On the reveal it rises out of the cell**: a sack, a crate or a pot by its
+  coin, under a glint. It is not announced.
+- **A tap picks it up, free** — no Mana, as a store is collected free. On a
+  cell with a feature the first tap picks up the treasure and the next one
+  harvests; a forest still closed by Forestry gives its treasure.
+- It waits for ever. Workers never take it; placing a building on its cell
+  picks it up.
+
+### 6.3 Abandoned buildings
+
+The village the fog swallowed: buildings standing in ruin where the fog took
+them, to be found and repaired.
+
+- **Authored in the map editor**: a building from `buildings` and its cell, the
+  same for every kingdom.
+- **Discovered, it shows as rubble** — one drawing for every kind, at its
+  footprint: something is there, not what. Undiscovered, nothing.
+- **Revealed, it shows its own ruined drawing** and a banner names it
+  (*An abandoned Sawmill!*), unless a scene says it instead. A footprint is
+  revealed all at once, priced as a feature's (§3.1).
+- **A tap opens its card**: what the building is and what it does, and
+  **Repair**.
+- **Repairing it is building it at level 1, where it stands**: the level-1
+  cost at the next ordinal, a builder and the level-1 time
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §3,
+  [`06-construction.md`](06-construction.md) §1). It is refused as a build is
+  — no builder free, the count cap reached, a coin short.
+- **No technology is asked.** The technology that unlocks a building opens
+  building more of it; its levels stay gated as for any other.
+- **While abandoned it only takes up its cells**: no production, store, crew,
+  area, adjacency or Harmony, no place in the count cap, and it cannot be
+  moved.
+- **Once the repair starts it is that building**: stamped with its ordinal,
+  under construction, then finished at level 1, revealing and discovering its
+  ground and in every way one the player built.
+- **The opening's**, inside the first Townhall's reach: **the old House**
+  (ring 2, beside the first forest), **two old plots** (FarmLands, by the
+  berries) and **the old Sawmill** (ring 3, in the thickest trees).
+- **Every abandoned building can be repaired at the Townhall level whose reach
+  first covers it**: the count cap at that level leaves room for every
+  abandoned one of its kind inside that reach (`mapRules.ts`).
+
 ## 7. Where the map is authored
 
 - **`?dev=data` is the source of truth for every number; the map editor is the
   source of truth for the map.**
-- Terrain, features, landmarks and ruins live in
+- Terrain, features, landmarks, ruins, abandoned buildings and authored
+  treasures live in
   `src/sim/data/region-map.json`, painted in `?dev=map`
   ([`../map-editor.md`](../map-editor.md)).
 - What a legal map is lives in one module, `mapRules.ts`, checked by the
@@ -403,6 +468,10 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
 | Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| How many cells hold a treasure | 1 in 4 | `treasure.chance` |
+| What a treasure pays | 120 s of the kingdom's production, floored at 10 Gold · 5 Food · 5 Wood · 5 Stone | `treasure.workSeconds`, `treasure.floor` |
+| Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
+| Where the abandoned buildings stand | §6.3 | the map editor |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
@@ -430,6 +499,9 @@ Costs are **authored per sanctuary**, not derived from distance.
 - Line of sight: nothing hides a silhouette (§4.1).
 - A silhouette that says which ore or which landmark it is, or a banner when
   one appears.
+- A treasure that shows under the fog, or a sign of where one is.
+- A treasure that expires, or one a worker picks up.
+- An abandoned building above level 1, or one repaired for less than a build.
 
-**Open questions:** OQ-49, OQ-50, OQ-92 in
+**Open questions:** OQ-49, OQ-50, OQ-92, OQ-120 in
 [`../open-questions.md`](../open-questions.md).

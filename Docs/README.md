@@ -63,7 +63,7 @@ One file per feature, in the order a player meets them.
 
 | # | Feature | Covers | State |
 |---|---|---|---|
-| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
+| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds — **treasures and abandoned buildings** | built; treasures and abandoned buildings **designed 2026-10-02** |
 | 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the three scopes, who is authoritative over each, what the save records, and what the promises allow to be contested. It no longer designs the world board | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |

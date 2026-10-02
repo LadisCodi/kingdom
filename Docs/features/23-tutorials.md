@@ -8,7 +8,9 @@
 > beats follow are [`12-quests.md`](12-quests.md) §2.
 >
 > **Status: built 2026-10-01** on `feat/ftue`. Every line below is
-> data in `?dev=data` › Progression › **Scenes**.
+> data in `?dev=data` › Progression › **Scenes**. **The treasure and the
+> abandoned buildings** (beats 1.1b, 4.1–4.3, the `farm`, `sawmill` and `saws`
+> lessons) are **designed 2026-10-02, not built**.
 
 ## 1. The rules
 
@@ -69,7 +71,8 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 0.2 | — | *I'm Isolde. I kept the royal library — but everyone else fled the fog, so… I'm your Royal Advisor now. I'll do my very best!* | — | all | tap |
 | 0.3 | — | *The fog swallowed everything past the Townhall — our forests, our fields, our people's work. The books say it can be pushed back. I hope.* | — | all | tap |
 | 1.1 | `FirstSteps` | *Those trees in the fog are ours! A few coins and a little patience clear a patch — tap it, Your Majesty. Five times, I've read.* | the nearest fogged forest | that cell | the cell is revealed |
-| 1.2 | `FirstSteps` | *Timber! Oh, it worked! Three more stands, and our axes will have work again.* | the next fogged forest | the map | the quest completes |
+| 1.1b | `FirstSteps` | *Oh! Look — someone left that behind when they fled. Tap it! It's ours now.* | the treasure ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2) | that cell | picked up |
+| 1.2 | `FirstSteps` | *Timber — and a purse! The fog keeps more of what they left, I'm sure of it. Three more stands, and our axes will have work again.* | the next fogged forest | the map | the quest completes |
 | 1.3 | `FirstSteps` | *The townsfolk saw you win the woods back — they've gathered a gift! Go on, accept it. They'd be ever so pleased.* | the quest pill | the pill | claimed |
 | 2.1 | `Woodcraft` | *Trees at last — and, um, nobody left who remembers how to fell them. But I have a book for that! I have a book for most things.* | **Research** (its padlock breaks) | the tab | the book is open |
 | 2.2 | `Woodcraft` | *Each page is a craft our people can learn. This one's Forestry — chapter one. My favourite!* | the Forestry card | the card | its sheet is open |
@@ -81,9 +84,9 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 3.2 | `Timber` | *Hold your finger down and the axe keeps swinging! When a stand is bare, move on — it grows back. Trees are patient like that.* | the nearest forest with wood left | none | the quest completes |
 | 3.3 | `Timber` | *Oh — the well is lower. Every swing drew a drop. Don't fret! It fills itself again, slowly, hour by hour. I checked twice.* | the Mana gauge | everything | a tap |
 | 3.4 | `Timber` | *Wood for the kingdom! The woodfolk have sent their thanks — accept it, and the well gets a little of its magic back.* | the quest pill | the pill | claimed |
-| 4.1 | `ARoof` | *Wood at last — and not one roof to sleep under. Nobody will settle here like this. A House! We need a House.* | **Build** (its padlock breaks) | the tab | the build menu is open |
-| 4.2 | `ARoof` | *Builders want their wood up front — it says so in the guild charter. Choose the House.* | the Housing card | the card | placing |
-| 4.3 | `ARoof` | *Anywhere on the cleared ground. Drag it wherever feels right, then confirm. I'd pick somewhere sunny.* | the confirm button | the map and the panel | placed |
+| 4.1 | `ARoof` | *Wood at last — and not one roof to sleep under. The Millers' house stood just there, by the old road… the fog has it. Clear it, Your Majesty!* | the old House's rubble ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3) | that cell | revealed |
+| 4.2 | `ARoof` | *There it is! The roof's fallen in, but the walls are sound. Open it.* | the old House | the House | its card is open |
+| 4.3 | `ARoof` | *Builders want their wood up front — it says so in the guild charter. Repair it!* | **Repair** | the button | repairing |
 | 4.4 | `ARoof` | *Hear that? Hammers! And builders keep at it while you're away — they don't need watching. Unlike me.* | the construction | all | tap |
 | 4.5 | `ARoof` | *Our first roof! The townsfolk want to thank you for it — please, accept their gift.* | the quest pill | the pill | claimed |
 | 5.1 | `Rations` | *A roof is a start — but people eat, and our pantry is… a shelf. Berry bushes would do. Clear the fog off one, then pick it.* | the nearest berries, fogged or not | none | the quest completes |
@@ -125,27 +128,26 @@ Beats, as the First Morning's, each on its quest.
 | Scene | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
-| | | *Let's raise one!* | **Build** | the tab | the build menu is open |
+| | | *Nobody left us a Farm — we'll raise our own! The builders can put up anything our books have taught them.* | **Build** (its padlock breaks) | the tab | the build menu is open |
 | | | *Choose the Farm.* | the Farm card | the card | placing |
-| | | *A Farm works the plots one step around it, corners too. Set it beside them — each in reach shows what it holds — then build.* | **Build** — the ghost starts beside the plots, where it works the most | the map and the panel | placed |
+| | | *A Farm works the plots one step around it, corners too. Drag it beside them — each in reach shows what it holds — then build.* | **Build** — the ghost starts beside the plots, where it works the most | the map and the panel | placed |
 | | | *A Farm for Oakville! The townsfolk are grateful already — accept their gift.* | the quest pill | the pill | claimed |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
 | | | *The Farm stands — and nobody works it. Oh dear. Open it, Your Majesty.* | the Farm | the Farm | its card is open |
 | | | *Send a villager! They'll walk to a plot in reach, reap it and carry the crop home. More hands, more trips.* | the card's **+** | none | the quest completes |
 | | | *Look at them go! The harvest piles up in the Farm's barn — gather it when it's ready. A full barn stops the work.* | the Farm | all | tap |
-| `saws` | `SawTeeth` | *The Farm reaps by itself… so why not the forest? I'm sure there's a chapter on it. Let me find it!* | **Research** | the tab | the book is open |
-| | | *Here — Saws! It teaches us to build a Sawmill.* | the Saws card | the card | its sheet is open |
-| | | *Pour in our Knowledge…* · *…and a little Gold for the blades. There!* | **+N** · **Research** | the button | filled · done |
-| | | *Let's close the book and raise it.* | the close knob | the knob | the book is shut |
-| `sawmill` | `TheSawmill` | *Oh — a Sawmill wants more Wood than we hold. Here, I put some by for just this!* (only while the Wood is short; she makes up the difference) | nothing | all | tap |
-| | | *A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you.* | **Build** | the tab | the build menu is open |
-| | | *Choose the Sawmill.* | the Sawmill card | the card | placing |
-| | | *Like the Farm, it only works what's in its reach. Set it where the most trees stand inside the outline, then build.* | the confirm button | the map and the panel | placed |
+| `sawmill` | `TheSawmill` | *The Farm reaps by itself… so why not the forest? There was a Sawmill among the trees — the old one. Find it, Your Majesty, and open it.* | the old Sawmill, its rubble if still fogged | none | its card is open |
+| | | *Oh — mending it wants more Wood than we hold. Here, I put some by for just this!* (only while the Wood is short; she makes up the difference) | nothing | all | tap |
+| | | *A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you. Repair it!* | **Repair** | the button | repairing |
 | | | *Another builder at work! The townsfolk have noticed — accept their thanks.* | the quest pill | the pill | claimed |
 | `sawmillCrew` | `Crewed` | *The Sawmill is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Sawmill | none | the Sawmill is finished |
 | | | *The Sawmill stands idle — saws, and nobody to swing them. Open it.* | the Sawmill | the Sawmill | its card is open |
 | | | *Send it woodcutters. The townsfolk hope to see three villagers at work — the Farm's count too.* | the card's **+** | none | the quest completes |
 | | | *Food and Wood come in by themselves now, even while you're away. A real town, Your Majesty! I— I'm a little proud.* | the Sawmill | all | tap |
+| `saws` | `SawTeeth` | *One Sawmill, and the woods are singing! There must be a chapter on raising more. Let me find it!* | **Research** | the tab | the book is open |
+| | | *Here — Saws! It teaches our builders to raise a Sawmill of our own, once the Townhall has room for two.* | the Saws card | the card | its sheet is open |
+| | | *Pour in our Knowledge…* · *…and a little Gold for the blades. There!* | **+N** · **Research** | the button | filled · done |
+| | | *Let's close the book.* | the close knob | the knob | the book is shut |
 
 | `picks` | `Picks` | *A second story wants stone, and nobody here knows how to cut it. But I'm sure I know a chapter that can teach them!* | **Research** | the tab | the book is open |
 | | | *Pickaxes. It opens the mountains to us.* | the Pickaxes card | the card | its sheet is open |
@@ -157,6 +159,9 @@ Beats, as the First Morning's, each on its quest.
 - **A worker building's ghost starts where it would work the most** — the
   Farm beside the plots, the Sawmill in the thickest trees — the nearest of
   those to the Townhall.
+- **The abandoned buildings teach repair; the Farm teaches building.** The
+  Build tab's padlock breaks in the `farm` lesson, the first time the kingdom
+  needs something the fog did not keep.
 
 ## 4. The introductions
 

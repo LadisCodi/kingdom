@@ -33,8 +33,8 @@
 
 | When | What the player meets | Opened by |
 |---|---|---|
-| **Minute 0–10** · the First Morning | fog, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, building, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
-| **Session 1** | farms, workers, the Sawmill, Townhall 2 | the quest chain |
+| **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
+| **Session 1** | the old plots, the Farm and **the Build tab**, workers, the old Sawmill, Townhall 2 | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing a lair's ground; Isolde hands over the book |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 43 cells revealed |
@@ -49,7 +49,7 @@
 | Door | Opens when | While shut |
 |---|---|---|
 | **Research** (nav) | the quest `Woodcraft` is reached | padlocked — *Finish your first task to open this* |
-| **Build** (nav) | the quest `ARoof` is reached | padlocked — *Gather some Wood to open this* |
+| **Build** (nav) | the quest `Farmhand` is reached — the first building the fog did not keep | padlocked — *Learn Farming to open this* |
 | **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to open this* |
 | **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to open this* |
 | **Store** (nav), and the Gems on the plank | the Townhall reaches **level 2** | padlocked — *Raise the Townhall to level 2 to open this* |
@@ -208,7 +208,7 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
 | The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |
 | Hero XP per Tavern level | +10% | `buildings` › `Tavern` › `heroXpBonusPerLevel` |
-| Which quest opens Research and Build | `Woodcraft` · `ARoof` | `sim/unlocks.ts` |
+| Which quest opens Research and Build | `Woodcraft` · `Farmhand` | `sim/unlocks.ts` |
 | What opens a book | §4 | `sim/research.ts` `TOME_OPENS` |
 
 ## 11. Deliberately not in this design

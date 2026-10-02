@@ -744,6 +744,40 @@ what it did; every later one is on the new, much flatter curve.
 - **Size:** a day of code, and then the authoring — 23 buildings × up to 10
   levels is the real cost of the step.
 
+### Step 10 · What the fog kept — **designed 2026-10-02**
+
+**The column's moment in the first minute** ([`overview.md`](overview.md) §
+*The fantasies*): treasures under the fog, and the opening's buildings found
+abandoned and repaired.
+
+- **Design:** [`01-map-and-fog.md`](features/01-map-and-fog.md) §6.2–§6.3;
+  the beats in [`23-tutorials.md`](features/23-tutorials.md) §3–§3.1; the
+  chain in [`12-quests.md`](features/12-quests.md) §2; the Build door in
+  [`22-progression.md`](features/22-progression.md) §3.
+- **Treasures.** The roll is `rand(seed, regionId, x, y)` against
+  `treasure.chance`, so a treasure's existence is a fact of the map and the
+  save records only the cells **picked up** — additive, a `SAVE_VERSION` bump
+  and no migrator. The `treasure.*` settings go in the exploration settings
+  with their schema. The tap handler picks up before it harvests and charges
+  no Mana; placement picks up; Knowledge lands over the cap.
+- **The map file** gains two kinds — abandoned buildings (a district id and a
+  cell) and authored treasures (a cell, a coin, an amount) — with their tools
+  in the map editor and their rules in `mapRules.ts`: legal ground for the
+  building, and the count-cap rule of §6.3.
+- **Abandoned buildings** stay out of the district list until a repair
+  starts; the repair is the build command at level 1 on its cell, skipping
+  the unlock technology. A card with **Repair** in place of the upgrade row.
+- **The opening:** Build opens at `Farmhand` (`sim/unlocks.ts`); the chain's
+  reorder at 8–22 moves the Knowledge rewards so the zero-drip guarantee still
+  holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
+  data. Re-run the 30-day harness: the opening gains 20 Gold and one cell.
+- **A kingdom saved before** finds the treasures under ground it already
+  revealed, and an abandoned building whose cell it has built on never
+  appears.
+- **Art:** one rubble drawing per footprint size; the ruined House, plot and
+  Sawmill (`<sprite>_ruin.png`); the treasure's sack, crate and pot.
+- **Size:** two to three days of code, plus the art.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.
