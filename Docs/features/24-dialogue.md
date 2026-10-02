@@ -40,8 +40,11 @@
   long for it is set smaller until it fits, never let out of the paper, and
   no line is longer than 140 characters (`tests/stage.test.ts`).
 - **The text types itself** at 40 characters a second, with a soft wooden
-  knock every third letter (`textTick`, never on a space). A tap finishes the
-  line; the next tap moves on.
+  knock every third letter (`textTick`, never on a space). A tap while it
+  types finishes the line and nothing else; the next tap moves on.
+- **A line that appears on its own** — a scene starting, a beat met — takes
+  no input for its first 0.5 s (`help.inputGraceSeconds`), so a tap meant
+  for the game never skips it.
 - **A line that waits for a tap takes one anywhere on the screen** — the
   box, the map, a menu — and keeps it: the tap reaches nothing behind it.
   Panning the map is not a tap. A golden **quill** at the box's corner says
@@ -63,6 +66,7 @@
 | `exit` | the speaker leaves after this line |
 | `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` · `idea` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
 | `gives` | a book the speaker hands the player as the line is read — only one that opens on a gift: `Warfare`. Absent on every other line |
+| `stocks` | a building whose price the speaker makes up: the line plays only while the wallet cannot pay for one more of it, and as it is read hands over the missing currencies (never goods). Absent on every other line |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and
   two flags: `skippable` — an introduction, which waits a breath after the
@@ -83,6 +87,7 @@
 | `lair:<id>` · `landmark:<id>` | that site |
 | `lair:` | the first lair found that still stands |
 | `quest` | the quest pill |
+| `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
@@ -96,6 +101,10 @@
   before the line appears; `auto` judges the target where the glide ends.
 - A target that moves (a scrolling list, a card rebuilt) is re-found every
   frame.
+- **A line that points at the nav bar is always preceded by one that walks
+  the player back to the map** — `back`, locked to it, until `mainScreen`
+  (`tests/stage.test.ts`). The nav bar steps aside for every sheet, card and
+  placement bar; on the map already, that line is passed at once.
 
 ## 5. Conditions
 
@@ -111,6 +120,7 @@ which one a line waits on is data.
 | `training` | a villager is in training, or `amount` villagers live |
 | `sighted` | a silhouette stands past the fog: anything, a `mountain` · `landmark` · `lair`, a kind of landmark, or one lair |
 | `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen — drawn, not merely in the page |
+| `mainScreen` | back on the map: no sheet, no card, no placing |
 | `taps` | `amount` taps on the ground since the line began |
 | `lairFound` · `lairDefeated` · `lairCleared` | that lair (or any) found · beaten · claimed |
 | `landmarkClaimed` · `landmarkSeen` | that landmark, kind or any claimed · that one out of the dark |

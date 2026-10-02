@@ -10,8 +10,8 @@ import { cellHasSite } from './sites';
 import { lairHolding } from './lairZone';
 import { harmonyBlock } from './harmony';
 import {
-  cellsOfRect, coordKey, districtAt, townhall,
-  type Coord, type District, type DistrictId, type GameState, type GoodsStock,
+  addToWallet, cellsOfRect, coordKey, districtAt, getWallet, townhall,
+  type Coord, type CurrencyId, type District, type DistrictId, type GameState, type GoodsStock,
   type TechId, type Wallet,
 } from './state';
 
@@ -298,6 +298,26 @@ export const upgradeDuration = (
 /** Cost of the NEXT instance of a type (distance no longer affects cost). */
 export const nextBuildCost = (state: GameState, definitionId: DistrictId): Wallet =>
   buildCost(definitionId, nextOrdinal(state, definitionId));
+
+/** What the wallet lacks to pay for the next instance of a type — empty when
+ *  it can. Currencies only: goods are a workshop's errand, not a gift. */
+export function buildShortfall(state: GameState, definitionId: DistrictId): Wallet {
+  const out: Wallet = {};
+  for (const [c, amount] of Object.entries(nextBuildCost(state, definitionId))) {
+    const lack = amount - getWallet(state.city.wallet, c as CurrencyId);
+    if (lack > 0) out[c as CurrencyId] = lack;
+  }
+  return out;
+}
+
+/** Make up that shortfall — a scene line that `stocks` a building, so the
+ *  tutorial asking for one never strands a player who spent the Wood. The
+ *  stage calls it as the line is read. */
+export function stockBuild(state: GameState, definitionId: DistrictId): void {
+  for (const [c, amount] of Object.entries(buildShortfall(state, definitionId))) {
+    addToWallet(state.city.wallet, c as CurrencyId, amount);
+  }
+}
 
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
   buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));

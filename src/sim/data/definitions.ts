@@ -504,7 +504,7 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
  *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
 export type SceneCondition =
   | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
-  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
+  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted';
@@ -527,6 +527,10 @@ export interface SceneLine {
   /** A book the speaker hands the player as this line is read; absent or
    *  null hands nothing (Docs/features/24-dialogue.md §3). */
   gives?: TomeId | null;
+  /** A building the speaker makes up the price of: the line plays only while
+   *  the wallet cannot pay for one more of it, and as it is read hands over
+   *  what is missing. Absent or null: an ordinary line. */
+  stocks?: DistrictId | null;
 }
 
 export interface SceneDef {
@@ -555,6 +559,7 @@ export const HELP = balance.help as {
   idleWiggleSeconds: number; idleAdvisorSeconds: number; advisorRestSeconds: number;
   advisorShowSeconds: number; pointerSeconds: number; untilQuest: string;
   lockFailsafeSeconds: number; typeCharsPerSecond: number; sceneGapSeconds: number;
+  inputGraceSeconds: number;
 };
 
 /** The full-screen splash a big unlock opens with (23-tutorials.md §4.6):

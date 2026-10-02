@@ -517,6 +517,7 @@ export const RULES: Readonly<Record<string, Rule>> = {
       lines.forEach((l, j) => {
         const line = l as Record<string, unknown>;
         check(entry, ['lines', j, 'untilTarget'], line.until, line.untilTarget);
+        if (line.stocks !== undefined && line.stocks !== null) check(entry, ['lines', j, 'stocks'], 'placed', line.stocks);
         if (line.lock !== 'none' && line.lock !== 'all' && String(line.point ?? '') === '') {
           push(entry, ['lines', j, 'lock'], `locks to a target but points at nothing`);
         }

@@ -80,6 +80,9 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     }
     case 'overlay': return game.openOverlay === c.target;
     case 'noOverlay': return game.openOverlay === null;
+    // BACK ON THE MAP: no sheet, no card, no placing — what the nav bar
+    // needs before a line can point at it (it steps aside for all of them).
+    case 'mainScreen': return !game.hasOpenSheet();
     // ON SCREEN, not merely in the document: the quest scroll stays in the
     // DOM, hidden, while a card covers it.
     case 'ui': {

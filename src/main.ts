@@ -11,6 +11,7 @@ import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
+import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
@@ -42,8 +43,8 @@ import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { lairCardScreen, renderSiteCard } from './ui/siteCard';
-import { standingLairAt } from './sim/sites';
+import { lairCardScreen, landmarkCardScreen } from './ui/siteCard';
+import { landmarkDefAt, standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -73,6 +74,7 @@ import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
 import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
+import { dragToScroll } from './ui/kit/scroll';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -177,6 +179,8 @@ async function boot(): Promise<void> {
   mountUnlockSplash(game, document.getElementById('unlock')!);
   // What is mounted, as classes on #ui, for the CSS that steps aside.
   mirrorMountFlags(document.getElementById('ui')!);
+  // A mouse drags every list and row the way a finger does (kit/scroll.ts).
+  dragToScroll(document.getElementById('ui')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
@@ -295,13 +299,13 @@ async function boot(): Promise<void> {
       const lair = standingLairAt(game.state, site)!;
       panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
       frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
-    } else if (site !== null) {
-      // Keyed by cell, so tapping a different site is a real remount.
-      panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
-        () => renderSiteCard(game, site) ?? el('div'),
-        () => game.dismiss(),
-      ));
-      frameOnMap(`site:${site.x},${site.y}`, site, { x: 1, y: 1 });
+    } else if (site !== null && landmarkDefAt(site)) {
+      // A landmark's card, in the same frame as a lair's (siteCard.ts,
+      // `landmarkCardScreen`). Keyed by cell, so tapping a different site is
+      // a real remount.
+      const landmark = landmarkDefAt(site)!;
+      panelSlot.show(`site:${site.x},${site.y}`, () => landmarkCardScreen(game, landmark));
+      frameOnMap(`site:${site.x},${site.y}`, landmark.location, { x: landmark.size, y: landmark.size });
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
       // Built once per building and mutated on the tick (districtCard.ts):
@@ -430,14 +434,29 @@ async function boot(): Promise<void> {
   window.addEventListener('pagehide', () => saveManager.save(game.state, game.now(), true));
 
   // ------------------------------------------------------------ render loop
-  const frame = () => {
+  // Paced (render/framePacer.ts): the display's rate while the map is being
+  // touched or the camera is moving, slower while it is only being looked at.
+  // The world board draws every frame: its marchers move on their own.
+  let lastDraw = -Infinity;
+  let lastActive = -Infinity;
+  let lastView = '';
+  const touched = () => { lastActive = performance.now(); };
+  for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
+    window.addEventListener(type, touched, { capture: true, passive: true });
+  }
+  const frame = (t: number) => {
     if (game.scene === 'world') {
       drawWorld(worldCanvas, worldCamera, {
         state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
         armies: game.worldView?.armies,
       });
     } else {
-      drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+      const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
+      if (view !== lastView) { lastView = view; lastActive = t; }
+      if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+        lastDraw = t;
+        drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+      }
     }
     requestAnimationFrame(frame);
   };

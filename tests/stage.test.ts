@@ -6,6 +6,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { giveBook } from '../src/sim/research';
+import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
+import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
 import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
@@ -85,6 +87,37 @@ describe('the scenes, against the game', () => {
     expect(gifts).toEqual(['firstLair']);
   });
 
+  it('never strands the Sawmill lesson on a short purse: Isolde makes up the Wood', () => {
+    const scene = SCENES.find((s) => s.id === 'sawmill')!;
+    expect(scene.lines[0]).toMatchObject({ stocks: 'Sawmill', until: 'tap' });
+    const game = freshPresenter(firstGame());
+    const wallet = game.state.city.wallet;
+    const cost = nextBuildCost(game.state, 'Sawmill');
+    wallet.Wood = 0;
+    expect(buildShortfall(game.state, 'Sawmill')).toEqual(cost);
+    stockBuild(game.state, 'Sawmill');
+    expect(canAfford(wallet, cost)).toBe(true);
+    // Exactly the difference: nothing past the price, nothing when it is met.
+    expect(wallet.Wood).toBe(cost.Wood);
+    expect(buildShortfall(game.state, 'Sawmill')).toEqual({});
+    stockBuild(game.state, 'Sawmill');
+    expect(wallet.Wood).toBe(cost.Wood);
+  });
+
+  it('steps back out to the map before it points at the nav bar', () => {
+    // The nav bar steps aside for every sheet, card and placement bar, so a
+    // line that points at it over one would point at nothing — and, locked
+    // to it, leave the player nothing to tap. The line before always walks
+    // them back out; on the map already, it is passed at once.
+    for (const scene of SCENES) {
+      scene.lines.forEach((line, i) => {
+        if (!line.point.startsWith('ui:nav:')) return;
+        expect(scene.lines[i - 1], `${scene.id}: "${line.text}"`)
+          .toMatchObject({ point: 'back', until: 'mainScreen', lock: 'target' });
+      });
+    }
+  });
+
   it('never locks a line to a target it does not point at', () => {
     for (const scene of SCENES) {
       for (const line of scene.lines) {
@@ -121,6 +154,22 @@ describe('the faces', () => {
 
 describe('the conditions read the kingdom', () => {
   const args = (kind: never, target = '', amount = 0) => ({ kind, target, amount, tapsAtStart: 0 });
+
+  it('is back on the map only with nothing open', () => {
+    const game = freshPresenter(firstGame());
+    const main = () => conditionHolds(game, args('mainScreen' as never));
+    expect(main()).toBe(true);
+    game.inspectedSite = LANDMARKS[0].location;
+    expect(main()).toBe(false);
+    game.dismiss();
+    game.inspectedDistrictId = game.state.city.districts[0].uniqueId;
+    expect(main()).toBe(false);
+    game.dismiss();
+    game.openOverlay = 'research';
+    expect(main()).toBe(false);
+    game.dismiss();
+    expect(main()).toBe(true);
+  });
 
   it('follows the quest chain', () => {
     const game = freshPresenter(firstGame());
