@@ -42,8 +42,9 @@ describe('build cost by instance', () => {
   // The cheapest thing in the game, deliberately: a crop plot is a furrow,
   // and at 20 Wood it cost twice a House — which stranded the player at
   // onboarding step 10 with nothing left after the roof.
-  it('FarmLands: 10 → 32 → 54 → 77 → 101 → 125', () => {
-    const expected = [10, 32, 54, 77, 101, 125];
+  // And the second is not three times the first: the opening asks for two.
+  it('FarmLands (0.5 + 1.2): 10 → 17 → 24 → 32 → 41 → 50', () => {
+    const expected = [10, 17, 24, 32, 41, 50];
     expected.forEach((wood, i) => expect(buildCost('FarmLands', i + 1)).toEqual({ Wood: wood }));
   });
 });

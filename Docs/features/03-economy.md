@@ -228,7 +228,7 @@ absence is replayed, and each building stops when its store is full
 - Villagers complete sequentially at `training.seconds` = 20 s each.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first six (`5, 20, 100, 300, 500, 1000`), then `×1.05`
+- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.05`
   per villager beyond — the Townhall's levels ask for villagers
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1), so the curve
   has to let a city reach seventy of them in a month.

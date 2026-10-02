@@ -204,7 +204,7 @@
     "heroXpBonusPerLevel": [],
     "armySlotsPerLevel": [],
     "costPerLevel": [{ "cost": { "Wood": 10 }, "goods": {} }],
-    "instanceLinearGrowth": 2,
+    "instanceLinearGrowth": 0.5,
     "instanceExponentialGrowth": 1.2,
     "buildDurationSeconds": 10,
     "buildDurationDistrictGrowth": 1.2,
