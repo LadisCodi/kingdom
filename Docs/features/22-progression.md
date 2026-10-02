@@ -101,9 +101,9 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 15 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
-| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 5 Knowledge; **the Book of Magic opens** |
-| **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 5 Knowledge |
+| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 3 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 3 Knowledge; **the Book of Magic opens** |
+| **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 3 Knowledge |
 
 - **A landmark inside a standing lair's ground cannot be claimed.** The
   Thorned Shrine waits for the Orcs to fall, so the book of the army always

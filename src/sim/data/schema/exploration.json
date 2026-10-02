@@ -54,7 +54,13 @@
         "goldPriceBase": {
           "type": "int",
           "min": 1,
-          "doc": "Gold for the first point of Knowledge bought; the nth point ever bought costs n times this, never reset."
+          "doc": "Gold for the first point of Knowledge bought; the nth point ever bought costs this times n to the exponent, never reset."
+        },
+        "goldPriceExponent": {
+          "type": "float",
+          "min": 1,
+          "max": 4,
+          "doc": "How steeply the Gold price climbs: the nth point ever bought costs the base times n to this. 1 is a straight line; 2 makes the tenth point a hundred times the first."
         },
         "gemsPerPoint": { "type": "int", "min": 1, "doc": "Gems for one point of Knowledge. Never rises." }
       }

@@ -137,13 +137,14 @@ describe('how long until the bar moves', () => {
 });
 
 describe('buying Knowledge', () => {
-  it('prices the nth point ever bought with Gold at n × base', () => {
+  it('prices the nth point ever bought with Gold at base × n²', () => {
     const state = empty();
     const base = KNOWLEDGE.goldPriceBase;
     expect(base).toBe(100);
+    expect(KNOWLEDGE.goldPriceExponent).toBe(2);
     expect(knowledgeGoldPrice(state, 0)).toBe(0);
     expect(knowledgeGoldPrice(state, 1)).toBe(base);
-    expect(knowledgeGoldPrice(state, 3)).toBe(base * (1 + 2 + 3));
+    expect(knowledgeGoldPrice(state, 3)).toBe(base * (1 + 4 + 9));
   });
 
   it('keeps the count: a second purchase continues the ladder', () => {
@@ -151,15 +152,15 @@ describe('buying Knowledge', () => {
     const base = KNOWLEDGE.goldPriceBase;
     fund(state, { Gold: 100_000 });
     expect(buyKnowledge(state, 2, 'Gold')).toBe('Bought');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(100_000 - base * 3);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(100_000 - base * (1 + 4));
     expect(state.kingdom.knowledgeBoughtWithGold).toBe(2);
     expect(knowledgeHeld(state)).toBe(2);
-    // The third point costs 3 × base, whatever happened in between.
+    // The third point costs 3² × base, whatever happened in between.
     fund(state, { Knowledge: 0 });
-    expect(knowledgeGoldPrice(state, 1)).toBe(base * 3);
+    expect(knowledgeGoldPrice(state, 1)).toBe(base * 9);
     const gold = getWallet(state.city.wallet, 'Gold');
     expect(buyKnowledge(state, 2, 'Gold')).toBe('Bought');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - base * (3 + 4));
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - base * (9 + 16));
     expect(state.kingdom.knowledgeBoughtWithGold).toBe(4);
   });
 
@@ -167,9 +168,9 @@ describe('buying Knowledge', () => {
     const state = empty();
     expect(knowledgeGemPrice(1)).toBe(KNOWLEDGE.gemsPerPoint);
     expect(knowledgeGemPrice(5)).toBe(5 * KNOWLEDGE.gemsPerPoint);
-    fund(state, { Gems: 100 });
+    fund(state, { Gems: 5 * KNOWLEDGE.gemsPerPoint });
     expect(buyKnowledge(state, 4, 'Gems')).toBe('Bought');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - 4 * KNOWLEDGE.gemsPerPoint);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(KNOWLEDGE.gemsPerPoint);
     expect(knowledgeHeld(state)).toBe(4);
     expect(state.kingdom.knowledgeBoughtWithGold).toBe(0);
     expect(knowledgeGemPrice(1)).toBe(KNOWLEDGE.gemsPerPoint);

@@ -29,10 +29,11 @@
   "knowledge": {
     "basePerHour": 1,
     "cap": 10,
-    "landmarkClaimLump": 5,
+    "landmarkClaimLump": 3,
     "conquestFirstClearLump": 15,
     "goldPriceBase": 100,
-    "gemsPerPoint": 10
+    "goldPriceExponent": 2,
+    "gemsPerPoint": 270
   },
   "raid": {
     "takeFractionMax": 0.5,
@@ -41,7 +42,7 @@
     "windowEndHour": 23
   },
   "delve": {
-    "firstClearKnowledge": 15
+    "firstClearKnowledge": 3
   },
   "treasure": {
     "everyReveals": 5,
