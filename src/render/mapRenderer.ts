@@ -837,36 +837,30 @@ export function drawMap(
   };
 
   // Every cell on screen with ground the player can see, and what its fog
-  // is. The floor below is drawn from exactly this, and only this, so it is
-  // also what says when the floor has to be drawn again. The rest is the
-  // cloud bank's mask, a byte a cell.
+  // is — the props below are drawn from it, and its codes are what says
+  // when the floor has to be drawn again. The rest is the cloud bank's mask,
+  // a byte a cell.
   const floor: FloorCell[] = [];
   let floorSig = 0x811c9dc5;
   const maskW = view.x1 - view.x0 + 1;
   const maskH = view.y1 - view.y0 + 1;
   const mask = new Uint8Array(maskW * maskH);
+  const codes = new Uint8Array(maskW * maskH);
   for (let cy = view.y0; cy <= view.y1; cy++) {
     for (let cx = view.x0; cx <= view.x1; cx++) {
       const cell = { x: cx, y: cy };
-      const key = coordKey(cell);
-      const terrain = map.terrain.get(key);
+      const i = (cy - view.y0) * maskW + (cx - view.x0);
       // Past the map's edge, and under the fog, is the cloud bank.
-      const fog = terrain ? fogState(state, map, cell) : 'Undiscovered';
-      if (!terrain || fog === 'Undiscovered') {
-        mask[(cy - view.y0) * maskW + (cx - view.x0)] = 255;
-        continue;
-      }
-      const payable = fog === 'Discovered' && isPayable(state, map, cell);
-      const taps = fog === 'Discovered' ? state.fog.progress[key] ?? 0 : 0;
-      const box = cellRect(cell);
-      floor.push({ cell, key, terrain, fog, payable, taps, box });
-      if (fog === 'Revealed') revealedOnScreen.set(key, box);
-      const code = fog === 'Revealed' ? 1 : (payable ? 2 : 3) + 4 * taps;
+      const seen = floorCellOf(state, map, cell, cellRect);
+      if (seen === null) { mask[i] = 255; continue; }
+      floor.push(seen);
+      if (seen.fog === 'Revealed') revealedOnScreen.set(seen.key, seen.box);
+      codes[i] = seen.code;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
-      floorSig = Math.imul(floorSig ^ code, 16777619);
+      floorSig = Math.imul(floorSig ^ seen.code, 16777619);
     }
   }
-  drawFloor(layers.floor, camera, map, floor, floorSig >>> 0, w, h, dpr);
+  drawFloor(layers.floor, camera, state, map, { x0: view.x0, y0: view.y0, w: maskW, h: maskH, codes }, w, h, dpr, clockNow);
   drawFogLayer(layers.fog, {
     w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
     mask, maskX: view.x0, maskY: view.y0, maskW, maskH,
@@ -1627,6 +1621,33 @@ interface FloorCell {
   /** Taps already paid into it — the veil thins with each. */
   taps: number;
   box: PlotBox;
+  /** Everything above in one byte, never 0: a cell whose code changes has
+   *  to be drawn again. 0 is a cell the floor does not draw. */
+  code: number;
+}
+
+/** The floor's view of one cell — null under the bank or past the map. */
+function floorCellOf(
+  state: GameState, map: MapData, cell: Coord, rect: (c: Coord) => PlotBox,
+): FloorCell | null {
+  const key = coordKey(cell);
+  const terrain = map.terrain.get(key);
+  if (!terrain) return null;
+  const fog = fogState(state, map, cell);
+  if (fog === 'Undiscovered') return null;
+  const payable = fog === 'Discovered' && isPayable(state, map, cell);
+  const taps = fog === 'Discovered' ? state.fog.progress[key] ?? 0 : 0;
+  const code = fog === 'Revealed' ? 1 : (payable ? 2 : 3) + 4 * taps;
+  return { cell, key, terrain, fog, payable, taps, box: rect(cell), code };
+}
+
+/** The floor codes of the cells on screen, over a window of cells. */
+interface CellCodes {
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+  codes: Uint8Array;
 }
 
 /**
@@ -1652,6 +1673,9 @@ function mapLayers(canvas: HTMLCanvasElement): MapLayers {
       return c;
     };
     layers = { floor: make(), fog: make() };
+    // The floor is bigger than the screen and is MOVED, not redrawn
+    // (drawFloor), so it is sized and placed by hand.
+    layers.floor.classList.add('map-floor');
     mapLayerSets.set(canvas, layers);
   }
   return layers;
@@ -1660,102 +1684,196 @@ function mapLayers(canvas: HTMLCanvasElement): MapLayers {
 /**
  * THE FLOOR, KEPT. The ground, its fringes and the fog's scrim are more than
  * half of what a frame paints, and none of it moves unless the camera does
- * or the fog changes. So it is a canvas of its own, under the map's; it is
- * drawn again only when what it was drawn from changes — the view, or a
- * cell's fog — or while some of its art has yet to load.
+ * or the fog changes. So it is a canvas of its own under the map's, drawn
+ * `FLOOR_MARGIN` px past the screen on every side:
+ *
+ * - a PAN slides the canvas (a CSS transform, composited) until the screen
+ *   reaches its edge, and only then is it drawn again around the new view;
+ * - a ZOOM scales it while the zoom is still moving, and draws it again,
+ *   sharp, once the zoom has settled — or sooner, if the scaled canvas no
+ *   longer covers the screen or has been blown up past `FLOOR_MAX_SCALE`;
+ * - a cell on screen whose fog changed draws it again, and so does art
+ *   that has yet to load.
  */
+const FLOOR_MARGIN = 256;
+const FLOOR_MAX_SCALE = 1.3;
+const FLOOR_ZOOM_SETTLE_MS = 160;
+
 interface Floor {
-  /** What it was drawn from; `complete` is false while art was missing. */
-  view: string;
-  sig: number;
+  /** What it was drawn at: the projected-plane point at its top-left, the
+   *  zoom, and the screen it was drawn for. */
+  px: number;
+  py: number;
+  zoom: number;
+  w: number;
+  h: number;
+  dpr: number;
+  /** Its size in CSS px. */
+  cw: number;
+  ch: number;
+  /** The floor code of every cell it was drawn from. */
+  drawn: CellCodes;
+  /** False while some of its art had yet to load. */
   complete: boolean;
+  /** The zoom of the last frame, and when it last changed. */
+  lastZoom: number;
+  zoomAt: number;
 }
 const floors = new WeakMap<HTMLCanvasElement, Floor>();
+
+/** Are the cells on screen still what the floor was drawn from? */
+function codesMatch(drawn: CellCodes, seen: CellCodes): boolean {
+  for (let y = 0; y < seen.h; y++) {
+    const dy = seen.y0 + y - drawn.y0;
+    if (dy < 0 || dy >= drawn.h) return false;
+    for (let x = 0; x < seen.w; x++) {
+      const dx = seen.x0 + x - drawn.x0;
+      if (dx < 0 || dx >= drawn.w) return false;
+      if (drawn.codes[dy * drawn.w + dx] !== seen.codes[y * seen.w + x]) return false;
+    }
+  }
+  return true;
+}
 
 function drawFloor(
   fc: HTMLCanvasElement,
   camera: Camera,
+  state: GameState,
   map: MapData,
-  cells: FloorCell[],
-  sig: number,
+  seen: CellCodes,
   w: number,
   h: number,
   dpr: number,
+  clock: number,
 ): void {
-  const view = `${w}|${h}|${dpr}|${camera.x}|${camera.y}|${camera.zoom}`;
+  const zoom = camera.zoom;
   let floor = floors.get(fc);
-  if (floor === undefined) {
-    floor = { view: '', sig: 0, complete: false };
-    floors.set(fc, floor);
+  if (floor !== undefined && floor.lastZoom !== zoom) {
+    floor.lastZoom = zoom;
+    floor.zoomAt = clock;
   }
-  if (floor.view !== view || floor.sig !== sig || !floor.complete) {
-    if (fc.width !== Math.round(w * dpr) || fc.height !== Math.round(h * dpr)) {
-      fc.width = Math.round(w * dpr);
-      fc.height = Math.round(h * dpr);
+  // Where the floor as drawn lands on screen now.
+  const place = (f: Floor) => {
+    const k = zoom / f.zoom;
+    return { k, x: (f.px - camera.x) * zoom + w / 2, y: (f.py - camera.y) * zoom + h / 2 };
+  };
+  let at = floor === undefined ? null : place(floor);
+  const keep = floor !== undefined && at !== null
+    && floor.complete && floor.w === w && floor.h === h && floor.dpr === dpr
+    && (floor.zoom === zoom
+      || (clock - floor.zoomAt < FLOOR_ZOOM_SETTLE_MS && at.k <= FLOOR_MAX_SCALE))
+    && at.x <= 0 && at.y <= 0 && at.x + floor.cw * at.k >= w && at.y + floor.ch * at.k >= h
+    && codesMatch(floor.drawn, seen);
+
+  if (!keep) {
+    const m = FLOOR_MARGIN;
+    const cw = w + 2 * m;
+    const ch = h + 2 * m;
+    const bw = Math.round(cw * dpr);
+    const bh = Math.round(ch * dpr);
+    if (fc.width !== bw || fc.height !== bh) {
+      fc.width = bw;
+      fc.height = bh;
     }
+    fc.style.width = `${cw}px`;
+    fc.style.height = `${ch}px`;
     const g = fc.getContext('2d')!;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Drawn in SCREEN coordinates, shifted by the margin.
+    g.setTransform(dpr, 0, 0, dpr, m * dpr, m * dpr);
     g.imageSmoothingEnabled = true;
     g.imageSmoothingQuality = 'high';
     g.fillStyle = PALETTE.fogUndiscovered;
-    g.fillRect(0, 0, w, h);
+    g.fillRect(-m, -m, cw, ch);
+    const win = camera.visibleCells(1, m);
+    const drawn: CellCodes = {
+      x0: win.x0, y0: win.y0, w: win.x1 - win.x0 + 1, h: win.y1 - win.y0 + 1,
+      codes: new Uint8Array((win.x1 - win.x0 + 1) * (win.y1 - win.y0 + 1)),
+    };
     let complete = true;
-    for (const { cell, terrain, fog, payable, taps, box } of cells) {
-      // The ground: one of the terrain's drawings, picked by a hash of the
-      // cell so a field of it does not weave (src/render/terrain.ts), then
-      // the fringe of any neighbour that creeps over it. Flat colour while
-      // the art is missing — that path has to be given the diamond shape
-      // explicitly, where a drawing carries its own.
-      const groundKey = terrainKey(terrain, cell);
-      const ground = drawGround(g, groundKey, box);
-      if (!ground) {
-        if (spriteUrl(groundKey) !== null) complete = false; // still loading
-        g.fillStyle = TERRAIN_COLORS[terrain];
-        fillDiamond(g, box);
-      }
-      if (!drawTerrainFringes(g, map, cell, terrain, box)) complete = false;
-      // THE GRID LINE IS SCAFFOLDING, and only for ground that has no art:
-      // it was what told one flat-coloured cell from the next. Drawn over a
-      // real tile it is a dark seam on ground that is supposed to read as a
-      // continuous field, and the fringes above already say where one
-      // terrain ends.
-      if (!ground) {
-        g.strokeStyle = PALETTE.gridLine;
-        g.lineWidth = 1;
-        strokeDiamond(g, box, 0.5);
-      }
-      if (fog === 'Discovered') {
-        // THE MIST (art-direction.md §8.1). The ground loses its colour, then
-        // a pale veil lies on it — thinner with every tap that takes, torn a
-        // fifth at a time.
-        const thin = 1 - 0.6 * (taps / FOG.tapsToReveal);
-        g.save();
-        g.globalCompositeOperation = 'saturation';
-        g.globalAlpha = PALETTE.fogDrain * thin;
-        g.fillStyle = '#808080';
-        fillDiamond(g, box);
-        g.restore();
-        g.save();
-        g.globalAlpha = thin;
-        g.fillStyle = PALETTE.fogDiscovered;
-        fillDiamond(g, box);
-        g.restore();
-        // A cell you can see but cannot buy yet — not touching cleared
-        // ground, or past the Townhall's reach — lies under a cushion, so
-        // the payable frontier reads as a border rather than as every pale
-        // tile on screen. Both rules are spatial, so they should be visible
-        // spatially — a toast on a refused tap is the fallback, not the
-        // teacher.
-        if (!payable) {
-          g.fillStyle = PALETTE.fogCushion;
-          fillDiamond(g, box);
-        }
+    for (let cy = win.y0; cy <= win.y1; cy++) {
+      for (let cx = win.x0; cx <= win.x1; cx++) {
+        const one = floorCellOf(state, map, { x: cx, y: cy }, (c) => camera.cellToScreen(c));
+        if (one === null) continue;
+        drawn.codes[(cy - win.y0) * drawn.w + (cx - win.x0)] = one.code;
+        const { box } = one;
+        // The window is the screen's bounding box in CELL space, so its
+        // corners are far off the canvas.
+        if (box.x + box.w * 1.5 < -m || box.x - box.w * 0.5 > w + m
+          || box.y + box.h * 1.5 < -m || box.y - box.h > h + m) continue;
+        if (!drawFloorCell(g, map, one)) complete = false;
       }
     }
-    floor.view = view;
-    floor.sig = sig;
-    floor.complete = complete;
+    floor = {
+      px: camera.x + (-m - w / 2) / zoom, py: camera.y + (-m - h / 2) / zoom,
+      zoom, w, h, dpr, cw, ch, drawn, complete, lastZoom: zoom, zoomAt: floor?.zoomAt ?? -Infinity,
+    };
+    floors.set(fc, floor);
+    at = place(floor);
   }
+  // Snapped to the device pixel while it is not scaled, so a still floor is
+  // never resampled.
+  const x = at!.k === 1 ? Math.round(at!.x * dpr) / dpr : at!.x;
+  const y = at!.k === 1 ? Math.round(at!.y * dpr) / dpr : at!.y;
+  const transform = at!.k === 1 ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px) scale(${at!.k})`;
+  if (fc.style.transform !== transform) fc.style.transform = transform;
+}
+
+/** One cell of the floor: its ground, its fringes and its fog. False while
+ *  some of its art has yet to load. */
+function drawFloorCell(g: CanvasRenderingContext2D, map: MapData, one: FloorCell): boolean {
+  const { cell, terrain, fog, payable, taps, box } = one;
+  let complete = true;
+  // The ground: one of the terrain's drawings, picked by a hash of the
+  // cell so a field of it does not weave (src/render/terrain.ts), then
+  // the fringe of any neighbour that creeps over it. Flat colour while
+  // the art is missing — that path has to be given the diamond shape
+  // explicitly, where a drawing carries its own.
+  const groundKey = terrainKey(terrain, cell);
+  const ground = drawGround(g, groundKey, box);
+  if (!ground) {
+    if (spriteUrl(groundKey) !== null) complete = false; // still loading
+    g.fillStyle = TERRAIN_COLORS[terrain];
+    fillDiamond(g, box);
+  }
+  if (!drawTerrainFringes(g, map, cell, terrain, box)) complete = false;
+  // THE GRID LINE IS SCAFFOLDING, and only for ground that has no art:
+  // it was what told one flat-coloured cell from the next. Drawn over a
+  // real tile it is a dark seam on ground that is supposed to read as a
+  // continuous field, and the fringes above already say where one
+  // terrain ends.
+  if (!ground) {
+    g.strokeStyle = PALETTE.gridLine;
+    g.lineWidth = 1;
+    strokeDiamond(g, box, 0.5);
+  }
+  if (fog === 'Discovered') {
+    // THE MIST (art-direction.md §8.1). The ground loses its colour, then
+    // a pale veil lies on it — thinner with every tap that takes, torn a
+    // fifth at a time.
+    const thin = 1 - 0.6 * (taps / FOG.tapsToReveal);
+    g.save();
+    g.globalCompositeOperation = 'saturation';
+    g.globalAlpha = PALETTE.fogDrain * thin;
+    g.fillStyle = '#808080';
+    fillDiamond(g, box);
+    g.restore();
+    g.save();
+    g.globalAlpha = thin;
+    g.fillStyle = PALETTE.fogDiscovered;
+    fillDiamond(g, box);
+    g.restore();
+    // A cell you can see but cannot buy yet — not touching cleared
+    // ground, or past the Townhall's reach — lies under a cushion, so
+    // the payable frontier reads as a border rather than as every pale
+    // tile on screen. Both rules are spatial, so they should be visible
+    // spatially — a toast on a refused tap is the fallback, not the
+    // teacher.
+    if (!payable) {
+      g.fillStyle = PALETTE.fogCushion;
+      fillDiamond(g, box);
+    }
+  }
+  return complete;
 }
 
 // ---------------------------------------------------------- unit animation
