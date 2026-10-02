@@ -14,7 +14,7 @@
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, fogStateOf, homeIndex, returnsAt, worldFogAt, type FogState,
+  arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDEX, hexAt, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
@@ -23,6 +23,7 @@ import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/wor
 import { formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect } from '../sprites';
+import { homeboundMs, legPosition } from '../../sim/world/travel';
 import { WORLD_BUILD } from '../../sim/data/definitions';
 import { hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
@@ -161,12 +162,11 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
  *  way, or in its Fortress. */
 function armyPosition(a: ArmyView, now: number): { from: number; to: number; f: number } {
   const steps = a.path.length - 1;
-  if (a.phase === 'garrison' || steps === 0) return { from: a.target, to: a.target, f: 0 };
-  const leftAt = a.phase === 'home' && a.at !== null ? a.at - steps * a.msPerHex : a.departedAt;
-  const s = Math.max(0, Math.min(steps, (now - leftAt) / a.msPerHex));
-  const along = a.phase === 'home' ? steps - s : s;
-  const i = Math.min(steps - 1, Math.floor(along));
-  return { from: a.path[i], to: a.path[i + 1], f: Math.min(1, along - i) };
+  if (a.phase === 'garrison' || a.phase === 'camp' || steps === 0) return { from: a.target, to: a.target, f: 0 };
+  const out = a.phase === 'out';
+  const start = out ? a.departedAt : (a.at ?? now) - homeboundMs(a.stepMs);
+  const at = legPosition(a.stepMs, now - start, out);
+  return { from: a.path[at.k], to: a.path[at.next], f: at.f };
 }
 
 function drawArmy(
@@ -520,16 +520,19 @@ function drawRoute(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number
 }
 
 /** Where a trip is at `now`: between step `step` and the next of its path,
- *  `f` of the way, and whether it is still on its way out. */
+ *  `f` of the way, and whether it is still on its way out. While it works the
+ *  hex it went to, it stands there, its whole way out behind it. */
 function tripPosition(
   trip: GameState['world']['explorers'][number], now: number,
-): { step: number; from: number; to: number; f: number; outbound: boolean } {
-  const steps = trip.path.length - 1;
-  const s = Math.max(0, (now - trip.departedAt) / trip.msPerHex);
-  const outbound = s <= steps;
-  const along = outbound ? s : Math.max(0, 2 * steps - s);
-  const i = Math.min(steps - 1, Math.floor(along));
-  return { step: i, from: trip.path[i], to: trip.path[i + 1], f: Math.min(1, along - i), outbound };
+): { step: number; from: number; to: number; f: number; outbound: boolean; working: boolean } {
+  const working = now >= arrivesAt(trip) && now < revealsAt(trip);
+  const outbound = now < revealsAt(trip);
+  const at = working
+    ? legPosition(trip.stepMs, Number.POSITIVE_INFINITY, true)
+    : legPosition(trip.stepMs, now - (outbound ? trip.departedAt : revealsAt(trip)), outbound);
+  // `step` is the lower of the two hexes, the way the trail reads it.
+  const step = Math.min(at.k, at.next);
+  return { step, from: trip.path[at.k], to: trip.path[at.next], f: at.f, outbound, working };
 }
 
 function drawExplorer(
@@ -574,8 +577,10 @@ function drawExplorer(
     ctx.fill();
   }
 
-  // A wooden pill: how long until it is there, or until it is home.
-  const left = Math.max(0, ((pos.outbound ? arrivesAt(trip) : returnsAt(trip)) - now) / 1000);
+  // A wooden pill: how long until it is there, until the hex is explored, or
+  // until it is home.
+  const until = pos.working ? revealsAt(trip) : pos.outbound ? arrivesAt(trip) : returnsAt(trip);
+  const left = Math.max(0, (until - now) / 1000);
   const text = formatCountdown(left);
   const fs = Math.max(11, Math.min(15, unit * 0.11));
   ctx.save();

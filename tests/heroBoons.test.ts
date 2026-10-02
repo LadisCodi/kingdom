@@ -22,7 +22,7 @@ import { effectiveBuildTimeMultiplier } from '../src/sim/upgrades';
 import { firstClearLump, knowledgeLump } from '../src/sim/knowledge';
 import { manaProduction } from '../src/sim/mana';
 import { drillOf } from '../src/sim/expeditions';
-import { marchMsPerHex } from '../src/sim/world/explorers';
+import { explorerSpeed } from '../src/sim/world/explorers';
 import { buildBoard } from '../src/sim/battle';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshGame, map, T0 } from './helpers';
@@ -206,8 +206,8 @@ describe('each boon reaches the number it names', () => {
   it('the Scout — an explorer marches faster', () => {
     expect(HEROES.Scout.boon!.stat).toBe('worldRevealSpeed');
     const state = freshGame();
-    const before = marchMsPerHex(state);
+    expect(explorerSpeed(state)).toBe(1);
     own(state, 'Scout');
-    expect(marchMsPerHex(state)).toBe(Math.round(before / HEROES.Scout.boon!.value));
+    expect(explorerSpeed(state)).toBeCloseTo(HEROES.Scout.boon!.value, 6);
   });
 });

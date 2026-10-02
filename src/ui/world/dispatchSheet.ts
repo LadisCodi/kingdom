@@ -9,9 +9,10 @@
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  explorerSlots, fogStateOf, freeExplorers, marchMsPerHex, returnsAt, type FogState,
+  exploreWorkMs, explorerRoute, explorerSlots, fogStateOf, freeExplorers, returnsAt, type FogState,
 } from '../../sim/world/explorers';
 import { hexAt, hexDistance } from '../../sim/world/hex';
+import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
 import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
@@ -234,15 +235,20 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   if (index !== home && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
-    const trip = (2 * distance * marchMsPerHex(state)) / 1000;
+    const route = explorerRoute(state, index, now);
+    const work = exploreWorkMs(state, index) / 1000;
+    const trip = route === null ? 0 : (outboundMs(route.stepMs) + homeboundMs(route.stepMs)) / 1000 + work;
     let reason: string | undefined;
     if (slots === 0) reason = 'Research Cartography in the Atlas';
+    else if (route === null) reason = 'No way there through explored ground';
     else if (free === 0) {
       const back = Math.min(...state.world.explorers.map(returnsAt));
       reason = `Every explorer is out — one is back in ${formatCountdown(Math.max(0, back - now) / 1000)}`;
     }
     body.append(
-      el('div', { class: 'wd-march' }, stat('compass', formatDuration(trip), 'there and back')),
+      ...(route === null ? [] : [el('div', { class: 'wd-march' },
+        stat('compass', formatDuration(trip), 'there and back'),
+        stat('hourglass', formatDuration(work), 'to explore'))]),
       action({
         label: 'Explore', kind: 'primary', icon: 'compass',
         onClick: () => game.doSendExplorer(),

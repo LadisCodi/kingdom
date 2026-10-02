@@ -88,7 +88,8 @@ describe('Explore', () => {
   it('needs Cartography, then sends an explorer and closes the sheet', () => {
     const { game, toasts } = world();
     game.enterWorld();
-    game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
+    const beside = boardNeighbors(game.homeHex()).find((n) => n !== PORTAL_INDEX)!;
+    game.handleWorldTap(...tapAt(game, beside));
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(0);
     expect(toasts.at(-1)).toMatch(/Cartography/);
@@ -96,13 +97,23 @@ describe('Explore', () => {
     game.state.research.completed.push('Cartography');
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
-    expect(game.state.world.explorers[0].target).toBe(PORTAL_INDEX);
+    expect(game.state.world.explorers[0].target).toBe(beside);
     expect(game.openOverlay).toBeNull();
 
-    game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
+    game.handleWorldTap(...tapAt(game, beside));
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
     expect(toasts.at(-1)).toMatch(/Every explorer is out/);
+  });
+
+  it('will not go where it has not seen the way', () => {
+    const { game, toasts } = world();
+    game.state.research.completed.push('Cartography');
+    game.enterWorld();
+    game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
+    game.doSendExplorer();
+    expect(game.state.world.explorers).toHaveLength(0);
+    expect(toasts.at(-1)).toMatch(/explored ground/);
   });
 });
 

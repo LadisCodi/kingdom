@@ -7,6 +7,8 @@ import { armySize } from '../src/sim/army';
 import { heroCanFight } from '../src/sim/heroHealth';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import { armySlots, heroAway } from '../src/sim/world/armies';
+import { homeIndex } from '../src/sim/world/explorers';
+import { homeboundMs, outboundMs } from '../src/sim/world/travel';
 import { boardNeighbors, hexAt, hexDistance } from '../src/sim/world/hex';
 import { deserialize, serialize } from '../src/sim/save';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -19,7 +21,6 @@ const OUTPOST_MS = WORLD_BUILD.outpost.buildSeconds * 1000;
 /** The server's rules, read as if the hex were explored: the fog is the
  *  sheet's to apply (tests/worldScene.test.ts holds it there). */
 const SEEN = { revealed: true };
-const STEP = WORLD.marchSecondsPerHex * 1000;
 
 /** A connected player with soldiers, and a rival who holds the hex beside
  *  the player's city — claimed by hand through the dev seat. */
@@ -67,6 +68,8 @@ describe('an army on the board', () => {
     expect(game.openOverlay).toBe('army');
     expect(game.armyBlockText()).toBeNull();
     const hero = game.partyHeroes[0];
+    const route = game.armyRoute(target)!;
+    expect(route.path).toEqual([homeIndex(game.state), target]);
     await game.doSendArmy();
     expect(game.state.world.armies).toHaveLength(1);
     expect(heroAway(game.state, hero)).toBe(true);
@@ -80,11 +83,11 @@ describe('an army on the board', () => {
     expect(game.armyBlockText()).toMatch(/Every army is out/);
     game.dismiss();
 
-    clock.t += STEP;
+    clock.t += outboundMs(route.stepMs);
     await game.refreshWorld();
     expect(game.worldSource().hexOf(target)?.owner).toBe(game.state.world.board.seat);
 
-    clock.t += STEP;
+    clock.t += homeboundMs(route.stepMs);
     advance(game.state, map, clock.t);
     await game.refreshWorld();
     expect(game.state.world.armies).toEqual([]);

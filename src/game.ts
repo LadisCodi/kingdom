@@ -136,7 +136,9 @@ import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, homeIndex } from './sim/world/explorers';
+import { dispatchExplorer, homeIndex, worldFogAt } from './sim/world/explorers';
+import { fastestRoute, type Route } from './sim/world/travel';
+import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
@@ -144,7 +146,7 @@ import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
 import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
-import { WORLD, WORLD_BUILD } from './sim/data/definitions';
+import { WORLD_BUILD } from './sim/data/definitions';
 import type { WorldImprovement } from './sim/world/types';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -4522,6 +4524,7 @@ export class Game {
       Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
       OwnGround: 'That ground is yours already',
       Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
+      NoRoute: 'No way there through explored ground',
     };
     return LINES[why];
   }
@@ -4609,9 +4612,17 @@ export class Game {
     return { power, attack, garrisons };
   }
 
+  /** The quickest way an army can take to a hex: through Revealed ground
+   *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
+  armyRoute(target: number): Route | null {
+    const fog = worldFogAt(this.state, this.now());
+    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i));
+  }
+
   /** Why the army cannot set out, in words, or null. */
   armyBlockText(): string | null {
     if (this.armyTarget === null) return 'No destination chosen';
+    if (this.armyRoute(this.armyTarget) === null) return 'No way there through explored ground';
     if (freeArmySlots(this.state) === 0) return 'Every army is out — the War Camp sends more';
     if (this.partyHeroes.length === 0) return 'An army needs a hero to lead it';
     if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return 'A hero in it cannot march';
@@ -4627,8 +4638,9 @@ export class Game {
     const slots = this.expeditionParty.filter((s) => s.count > 0).map((s) => ({ ...s }));
     const heroes = [...this.partyHeroes];
     const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
+    const route = this.armyRoute(target)!;
     const r = await this.worldServer.sendArmy({
-      purpose: this.armyPurpose, target, heroes, board, msPerHex: WORLD.marchSecondsPerHex * 1000,
+      purpose: this.armyPurpose, target, heroes, board, path: route.path,
     }, this.now());
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
@@ -4768,6 +4780,8 @@ export class Game {
       this.toast(`Every explorer is out — one is back in ${formatCountdown((result.nextFreeAt - this.now()) / 1000)}`);
     } else if (result.kind === 'NoCartography') {
       this.toast('Research Cartography in the Atlas to send an explorer');
+    } else if (result.kind === 'NoRoute') {
+      this.toast('No way there through explored ground');
     }
     this.notify();
   }

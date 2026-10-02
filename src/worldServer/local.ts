@@ -29,7 +29,7 @@ export interface WorldServerApi {
   build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; msPerHex: number },
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
     now: number, asSeat?: number,
   ): Promise<SendResult>;
   recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
@@ -139,7 +139,7 @@ export class LocalWorldServer implements WorldServerApi {
   }
 
   async sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; msPerHex: number },
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
     now: number, asSeat?: number,
   ): Promise<SendResult> {
     return this.run(asSeat, (b, seat) => sendArmy(b, seat, req, now), { ok: false, why: 'NoBoard' });

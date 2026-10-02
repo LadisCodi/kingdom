@@ -1035,7 +1035,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Revealed: state.world.revealed,
         Explorers: state.world.explorers.map((e) => ({
           ID: e.id, Target: e.target, Path: e.path,
-          DepartedAtUtc: iso(e.departedAt), MsPerHex: e.msPerHex, Radius: e.radius,
+          DepartedAtUtc: iso(e.departedAt), StepMs: e.stepMs, WorkMs: e.workMs, Radius: e.radius,
         })),
         // The builders out on the board: a TIMER each, priced when the server
         // accepted the build, so a builder away during an absence is home on
@@ -1624,6 +1624,15 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Armies?: Array<Record<string, unknown>>;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
+  // A trip's time to leave each hex of its path; a v77 trip kept one pace for
+  // every hex (`MsPerHex`), read as that pace on each.
+  const stepsOf = (e: Record<string, unknown>): number[] | null => {
+    const n = Array.isArray(e.Path) ? e.Path.length : 0;
+    if (Array.isArray(e.StepMs) && e.StepMs.length === n && e.StepMs.every((x) => Number.isFinite(x) && (x as number) >= 1)) {
+      return [...(e.StepMs as number[])];
+    }
+    return Number.isFinite(e.MsPerHex) && (e.MsPerHex as number) >= 1 ? new Array<number>(n).fill(e.MsPerHex as number) : null;
+  };
   const walks = (path: unknown): path is number[] => Array.isArray(path) && path.length >= 2
     && path.every(isBoardIndex)
     && path.every((i, k) => k === 0 || hexDistance(hexAt(path[k - 1] as number), hexAt(i as number)) === 1);
@@ -1636,13 +1645,14 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     revealed: readBits(d.Revealed),
     explorers: (Array.isArray(d.Explorers) ? d.Explorers : [])
       .filter((e) => typeof e.ID === 'string' && walks(e.Path) && typeof e.DepartedAtUtc === 'string'
-        && Number.isFinite(e.MsPerHex) && (e.MsPerHex as number) >= 1)
+        && stepsOf(e) !== null)
       .map((e) => ({
         id: e.ID as string,
         target: (e.Path as number[])[(e.Path as number[]).length - 1],
         path: [...(e.Path as number[])],
         departedAt: ms(e.DepartedAtUtc as string),
-        msPerHex: e.MsPerHex as number,
+        stepMs: stepsOf(e)!,
+        workMs: Number.isFinite(e.WorkMs) && (e.WorkMs as number) >= 0 ? e.WorkMs as number : 0,
         radius: Number.isInteger(e.Radius) ? Math.max(1, e.Radius as number) : 1,
       })),
     builds: (Array.isArray(d.Builds) ? d.Builds : [])

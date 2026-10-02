@@ -1,16 +1,16 @@
 // Explorers and the world fog (Docs/features/19-world-map.md §3).
 //
 // An explorer is a SLOT, like a builder: Cartography opens the first and the
-// Atlas adds more. Sent to a hex, it marches there along a straight line,
-// reveals its own hex and the ones round it on reaching each hex of the path
-// (never the city it left from), and marches home. It never fights and can
-// never be stopped, so it lives here, in the player's own save.
+// Atlas adds more. Sent to a hex, it takes the quickest way there through
+// explored ground (sim/world/travel.ts), works at it — longer the further it
+// lies from the city — and only then reveals it and the hexes round it, and
+// walks home the way it came. It never fights and can never be stopped, so
+// it lives here, in the player's own save.
 //
 // THE REVEAL IS COMPUTED, NOT STEPPED. A trip is priced when it leaves —
-// path, pace, radius — so what it has revealed at `t` is a pure function of
-// the trip and `t`, and nothing in the sim needs to observe the steps: fog
-// is information, never permission (02-map-scopes.md §3). That is why a
-// march has exactly ONE boundary, the moment it is home, when its whole
+// path, pace, work, radius — so what it has revealed at `t` is a pure
+// function of the trip and `t`, and nothing in the sim needs a boundary for
+// it. A trip has exactly ONE boundary, the moment it is home, when its
 // reveal is folded into the stored bitset and its slot frees. An absence of
 // any length adds at most one boundary per explorer, because nothing ever
 // sends one out again on its own (CLAUDE.md, invariant 1).
@@ -23,7 +23,9 @@ import { newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldSt
 import { techFlat } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
-import { PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexIndex, hexLine, isBoardIndex } from './hex';
+import { PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
+import { boardOf } from './source';
+import { fastestRoute, homeboundMs, outboundMs, type Route } from './travel';
 
 /** A new kingdom's world: a board and a seat derived from the kingdom's own
  *  seed — the stand-in for "the first board with a free city, on its first
@@ -61,36 +63,41 @@ export function revealRadius(state: GameState): number {
   return Math.min(WORLD.revealRadiusMax, Math.max(1, radius));
 }
 
-/** Milliseconds an explorer takes per hex, out or back: the authored pace
- *  divided by `worldRevealSpeed` (a speed — it never slows a march). */
-export function marchMsPerHex(state: GameState): number {
-  const speed = Math.max(1, resolve(state, 'worldRevealSpeed', 1));
-  return Math.max(1, Math.round((WORLD.marchSecondsPerHex * 1000) / speed));
+/** How much faster an explorer marches over every hex: `worldRevealSpeed`
+ *  (a speed — it never slows a march). */
+export const explorerSpeed = (state: GameState): number => Math.max(1, resolve(state, 'worldRevealSpeed', 1));
+
+/**
+ * The quickest way an explorer can take to a hex: through Revealed ground
+ * only, every hex adding its own time as it is left (sim/world/travel.ts).
+ * The destination may be any hex the player has at least Sensed — that is
+ * what an explorer goes to see. Null when there is no way.
+ */
+export function explorerRoute(state: GameState, target: number, now: number): Route | null {
+  if (!isBoardIndex(target)) return null;
+  const fog = worldFogAt(state, now);
+  if (fogStateOf(state, target, now, fog) === 'Unknown') return null;
+  const speed = explorerSpeed(state);
+  return fastestRoute(boardOf(state.world.board).hexes, homeIndex(state), target, 'explorer', (i) => hasBit(fog, i), () => speed);
 }
+
+/** How long an explorer works at a hex before it is revealed: a base, and
+ *  more for every hex it lies from the city. */
+export const exploreWorkMs = (state: GameState, target: number): number =>
+  (WORLD.exploreWorkSeconds + WORLD.exploreWorkSecondsPerHex * hexDistance(hexAt(homeIndex(state)), hexAt(target))) * 1000;
 
 // ------------------------------------------------------------- a trip
 
-const steps = (trip: ExplorerTrip): number => trip.path.length - 1;
+export const arrivesAt = (trip: ExplorerTrip): number => trip.departedAt + outboundMs(trip.stepMs);
 
-export const arrivesAt = (trip: ExplorerTrip): number => trip.departedAt + steps(trip) * trip.msPerHex;
+/** When its work is done and the hex is revealed. */
+export const revealsAt = (trip: ExplorerTrip): number => arrivesAt(trip) + trip.workMs;
 
-export const returnsAt = (trip: ExplorerTrip): number => trip.departedAt + 2 * steps(trip) * trip.msPerHex;
+export const returnsAt = (trip: ExplorerTrip): number => revealsAt(trip) + homeboundMs(trip.stepMs);
 
-/** How many hexes past the city the trip has reached by `t` (0..steps). The
- *  way home retraces the same hexes, so it reaches nothing new. */
-export function stepsReached(trip: ExplorerTrip, t: number): number {
-  if (t <= trip.departedAt) return 0;
-  return Math.min(steps(trip), Math.floor((t - trip.departedAt) / trip.msPerHex));
-}
-
-/** When the trip reveals a hex it reaches — the moment it arrives on
- *  `path[k]`. For the renderer's fade. */
-export const reachedAt = (trip: ExplorerTrip, k: number): number => trip.departedAt + k * trip.msPerHex;
-
-function revealInto(bits: HexBits, trip: ExplorerTrip, reached: number): void {
-  for (let k = 1; k <= reached; k++) {
-    for (const i of boardWithin(trip.path[k], trip.radius)) setBit(bits, i);
-  }
+/** The target and the hexes round it, once the work there is done. */
+function revealInto(bits: HexBits, trip: ExplorerTrip): void {
+  for (const i of boardWithin(trip.target, trip.radius)) setBit(bits, i);
 }
 
 // --------------------------------------------------------------- the fog
@@ -103,7 +110,7 @@ export function worldFogAt(state: GameState, t: number): HexBits {
   const bits = copyBits(state.world.revealed);
   setBit(bits, homeIndex(state));
   setBit(bits, PORTAL_INDEX);
-  for (const trip of state.world.explorers) revealInto(bits, trip, stepsReached(trip, t));
+  for (const trip of state.world.explorers) if (t >= revealsAt(trip)) revealInto(bits, trip);
   return bits;
 }
 
@@ -125,7 +132,9 @@ export type DispatchResult =
   | { kind: 'OffBoard' }
   | { kind: 'Home' }
   | { kind: 'NoCartography' }
-  | { kind: 'NoExplorerFree'; nextFreeAt: number };
+  | { kind: 'NoExplorerFree'; nextFreeAt: number }
+  /** No way there through explored ground. */
+  | { kind: 'NoRoute' };
 
 /** Send an explorer to a hex. Everything about the trip is priced now. */
 export function dispatchExplorer(state: GameState, target: number, now: number): DispatchResult {
@@ -136,12 +145,15 @@ export function dispatchExplorer(state: GameState, target: number, now: number):
   if (freeExplorers(state) === 0) {
     return { kind: 'NoExplorerFree', nextFreeAt: Math.min(...state.world.explorers.map(returnsAt)) };
   }
+  const route = explorerRoute(state, target, now);
+  if (route === null) return { kind: 'NoRoute' };
   const trip: ExplorerTrip = {
     id: newId(state, 'explorer'),
     target,
-    path: hexLine(hexAt(home), hexAt(target)).map(hexIndex),
+    path: route.path,
     departedAt: now,
-    msPerHex: marchMsPerHex(state),
+    stepMs: route.stepMs,
+    workMs: exploreWorkMs(state, target),
     radius: revealRadius(state),
   };
   state.world.explorers.push(trip);
@@ -191,7 +203,7 @@ export function returnExplorers(state: GameState, t: number): ExplorerHome[] {
   const out: ExplorerHome[] = [];
   for (const trip of due) {
     const before = countBits(state.world.revealed);
-    revealInto(state.world.revealed, trip, steps(trip));
+    revealInto(state.world.revealed, trip);
     // The city and the Portal are always revealed; they are never stored.
     clearBit(state.world.revealed, homeIndex(state));
     clearBit(state.world.revealed, PORTAL_INDEX);

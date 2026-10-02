@@ -435,9 +435,12 @@ export interface ExplorerTrip {
   /** Board indices from the city (first) to the target (last). */
   path: number[];
   departedAt: number;
-  /** Milliseconds a step takes, out and back. */
-  msPerHex: number;
-  /** Hexes it reveals round each hex of its path. */
+  /** Milliseconds to leave each hex of the path, priced when it set out:
+   *  out, every hex but the last; home, every hex but the city. */
+  stepMs: number[];
+  /** Milliseconds it works at the target before the hex is revealed. */
+  workMs: number;
+  /** Hexes it reveals round its target. */
   radius: number;
 }
 

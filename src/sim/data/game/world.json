@@ -1,6 +1,9 @@
 {
   "world": {
-    "marchSecondsPerHex": 60,
+    "explorerSecondsPerHex": 60,
+    "armySecondsPerHex": 120,
+    "exploreWorkSeconds": 30,
+    "exploreWorkSecondsPerHex": 30,
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
     "cartographyExplorers": 1,
@@ -119,5 +122,10 @@
     "milestoneGems": 100,
     "rankGems": [300, 150, 150, 50, 50, 50],
     "botFloorChance": 0.6
+  },
+  "worldTravel": {
+    "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5, "Mountain": 3 },
+    "feature": { "Forest": 1.5, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
+    "portal": 1
   }
 }

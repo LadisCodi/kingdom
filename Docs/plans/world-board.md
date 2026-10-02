@@ -53,7 +53,8 @@
 
 | Setting | First value |
 |---|---|
-| `marchSecondsPerHex` | 60 (armies reuse it) |
+| `explorerSecondsPerHex` / `armySecondsPerHex` | 60 / 120, times the ground (`worldTravel`) |
+| `exploreWorkSeconds` + `exploreWorkSecondsPerHex` | 30 + 30 a hex from the city |
 | `explorerRevealRadius` | 1 (1–2) |
 | `cartographyExplorers` | 1 |
 | `rivals` | five stub names |
@@ -83,7 +84,7 @@
   `ExplorerTrip = { id, target, path, departedAt, msPerHex, radius }`.
   `newGame` derives the seed and the seat from `state.seed`.
 - `src/sim/world/explorers.ts`: `explorerSlots`, `freeExplorers`,
-  `revealRadius`, `marchMsPerHex` (the first reader of `worldRevealSpeed`),
+  `revealRadius`, `explorerSpeed` (the first reader of `worldRevealSpeed`),
   `tripTimes`, `worldFogAt`, `fogStateOf`, `dispatchExplorer(state, target, now)`
   → `Sent | NoCartography | NoExplorerFree | Home | OffBoard`,
   `nextExplorerReturn`, `returnExplorers`.
@@ -147,7 +148,7 @@
 - No outposts, connection, improvements or claimable rim yet (the edge helper
   is ready).
 - No Portal counter.
-- Armies will reuse `marchSecondsPerHex` and the reveal discs, but their march
+- Armies will reuse the march timing and the reveal discs, but their march
   is server state and gets no boundary in the client.
 
 ## 8. Open points

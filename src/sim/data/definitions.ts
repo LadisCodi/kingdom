@@ -1990,7 +1990,14 @@ export const RAID = balance.raid;
 /** Marches and explorers on the shared board (Docs/features/19-world-map.md
  *  §3–§4). */
 export interface WorldDef {
-  marchSecondsPerHex: number;
+  /** Seconds a marcher takes to leave a hex of open ground: an explorer, an
+   *  army — each hex multiplies its own (worldTravel). */
+  explorerSecondsPerHex: number;
+  armySecondsPerHex: number;
+  /** An explorer's work at its target before the hex is revealed: a base,
+   *  and more for every hex it lies from the city. */
+  exploreWorkSeconds: number;
+  exploreWorkSecondsPerHex: number;
   explorerRevealRadius: number;
   revealRadiusMax: number;
   cartographyExplorers: number;
@@ -2037,6 +2044,15 @@ export interface WorldBuildDef {
 }
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
+
+/** How long a march takes to leave a hex, as factors on the base (19 §4). */
+export interface WorldTravelDef {
+  terrain: Partial<Record<WorldTerrain, number>>;
+  feature: Partial<Record<WorldFeature, number>>;
+  portal: number;
+}
+
+export const WORLD_TRAVEL = balance.worldTravel as WorldTravelDef;
 
 /** A dungeon's depths and rooms, and what a room pays (19 §8.1). */
 export interface WorldDungeonDef {
@@ -2299,4 +2315,7 @@ export const GAME_VERSION = '0.1.0';
 // state and is never in the save.
 // v77: armies out on the world board — `Armies` on `kingdom.world`, the
 // troops and heroes each one took. Additive.
-export const SAVE_VERSION = 77;
+// v78: a march is priced hex by hex — an explorer trip keeps `StepMs`, the
+// time to leave each hex of its path, in place of one `MsPerHex` (read as
+// that pace on every hex). Additive.
+export const SAVE_VERSION = 78;

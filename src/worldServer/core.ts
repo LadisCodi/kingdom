@@ -22,7 +22,8 @@ import {
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
 import { SEAT_INDICES, type Board, type BoardHex } from '../sim/world/board';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, hexLine, isBoardIndex } from '../sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
+import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
 import { WORLD_IMPROVEMENTS, type WorldImprovement } from '../sim/world/types';
 import type {
@@ -276,7 +277,11 @@ export function collect(b: ServerBoard, seat: number, index: number, t: number):
 
 // ---------------------------------------------------------------- armies
 
-const stepsOf = (a: ServerArmy): number => a.path.length - 1;
+/** A path a client sent: from the seat's city to the target, a step at a
+ *  time, on the board. */
+const walksFrom = (from: number, to: number, path: readonly number[]): boolean =>
+  path.length >= 2 && path[0] === from && path[path.length - 1] === to && path.every(isBoardIndex)
+  && path.every((i, k) => k === 0 || hexDistance(hexAt(path[k - 1]), hexAt(i)) === 1);
 
 /** Owed to a seat: delivered with its next snapshot. */
 function owe(b: ServerBoard, seat: number, effect: WorldEffect): void {
@@ -290,7 +295,7 @@ const seatName = (b: ServerBoard, seat: number | null): string =>
   seat === null ? 'nobody' : b.seats[seat]?.name ?? 'a rival';
 
 /** Walk home from wherever it stands, by the way it came. */
-function turnHome(a: ServerArmy, t: number, walked = stepsOf(a) * a.msPerHex): void {
+function turnHome(a: ServerArmy, t: number, walked = homeboundMs(a.stepMs)): void {
   a.phase = 'home';
   a.at = t + walked;
 }
@@ -450,27 +455,32 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
  *  its troops off the roster; the server trusts what it was sent. */
 export function sendArmy(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; msPerHex: number },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[] },
   t: number,
 ): SendResult {
   resolveTo(b, t);
   const why = sendRefusal(b, seat, req.purpose, req.target, t);
   if (why !== null) return { ok: false, why };
-  const a = launch(b, seat, req, t);
+  const path = req.path !== undefined ? (walksFrom(SEAT_INDICES[seat], req.target, req.path) ? req.path : null)
+    : fastestRoute(boardData(b).hexes, SEAT_INDICES[seat], req.target, 'army', () => true)?.path ?? null;
+  if (path === null) return { ok: false, why: 'NoRoute' };
+  const a = launch(b, seat, { ...req, path }, t);
   return { ok: true, army: a.id, arrivesAt: a.at!, snapshot: snapshotOf(b, seat, t) };
 }
 
 /** Put an army on the road — inside the resolve loop as well as from it. */
 function launch(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; msPerHex: number },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[] },
   t: number,
 ): ServerArmy {
-  const path = hexLine(hexAt(SEAT_INDICES[seat]), hexAt(req.target)).map(hexIndex);
+  const path = req.path;
+  // Every hex adds its own time as it is left; the server prices it.
+  const stepMs = stepTimes(boardData(b).hexes, path, 'army');
   const a: ServerArmy = {
     id: `army_${b.nextId++}`, owner: seat, heroes: [...req.heroes], board: req.board, path,
-    departedAt: t, msPerHex: Math.max(1, Math.round(req.msPerHex)), purpose: req.purpose,
-    phase: 'out', target: req.target, at: t + (path.length - 1) * Math.max(1, Math.round(req.msPerHex)), fallen: [],
+    departedAt: t, stepMs, purpose: req.purpose,
+    phase: 'out', target: req.target, at: t + outboundMs(stepMs), fallen: [],
   };
   b.armies.push(a);
   return a;
@@ -706,7 +716,7 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
     const [i, h] = empty;
     const g: ServerArmy = {
       id: `army_${b.nextId++}`, owner: seat, heroes: [], board: botBoard(b, seat, s.moves, WORLD_BOTS.garrisonPower),
-      path: hexLine(hexAt(SEAT_INDICES[seat]), hexAt(i)).map(hexIndex), departedAt: t, msPerHex: 1,
+      path: [SEAT_INDICES[seat], i], departedAt: t, stepMs: [1, 1],
       purpose: 'garrison', phase: 'garrison', target: i, at: null, fallen: [],
     };
     b.armies.push(g);
@@ -721,10 +731,11 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
       const i = Number(k);
       if (h.owner !== null && h.owner !== seat && isHeld(h, t) && touches(b, seat, i, t)) prey.push(i);
     }
-    if (prey.length > 0) {
+    const target = prey.length > 0 ? prey[roll('prey', prey.length)] : null;
+    const route = target === null ? null : fastestRoute(data.hexes, SEAT_INDICES[seat], target, 'army', () => true);
+    if (target !== null && route !== null) {
       launch(b, seat, {
-        purpose: 'attack', target: prey[roll('prey', prey.length)], heroes: [],
-        board: botBoard(b, seat, s.moves, WORLD_BOTS.armyPower), msPerHex: WORLD.marchSecondsPerHex * 1000,
+        purpose: 'attack', target, heroes: [], board: botBoard(b, seat, s.moves, WORLD_BOTS.armyPower), path: route.path,
       }, t);
       done = true;
     }
@@ -836,7 +847,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
   }).sort((x, y) => x.index - y.index);
   const armies: ArmyView[] = b.armies.map((a) => ({
     id: a.id, owner: a.owner, purpose: a.purpose, phase: a.phase, path: a.path,
-    departedAt: a.departedAt, msPerHex: a.msPerHex, target: a.target, at: a.at,
+    departedAt: a.departedAt, stepMs: a.stepMs, target: a.target, at: a.at,
     power: boardPower(a.board), heroes: a.owner === seat ? [...a.heroes] : null,
   }));
   return {

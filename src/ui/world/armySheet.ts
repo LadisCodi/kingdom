@@ -3,7 +3,8 @@
 // with where it is going and what covers it in the enemy's place.
 
 import type { Game } from '../../game';
-import { WORLD, WORLD_BUILD } from '../../sim/data/definitions';
+import { WORLD_BUILD } from '../../sim/data/definitions';
+import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { UnitId } from '../../sim/state';
 import { el, formatCount, formatDuration } from '../format';
@@ -18,9 +19,10 @@ export function renderArmySheet(game: Game): HTMLElement {
   if (target === null) return el('div');
   const source = game.worldSource();
   const h = source.hexOf(target);
-  const steps = hexDistance(hexAt(game.homeHex()), hexAt(target));
+  const route = game.armyRoute(target);
+  const steps = route === null ? hexDistance(hexAt(game.homeHex()), hexAt(target)) : route.path.length - 1;
   const preview = game.armyPreview();
-  const march = formatDuration((steps * WORLD.marchSecondsPerHex * 1000) / 1000);
+  const march = route === null ? 'no way there' : formatDuration(outboundMs(route.stepMs) / 1000);
   const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.improvements.Fortress.name}`
     : game.armyPurpose === 'claim' ? 'Ground nobody holds'
       : game.armyPurpose === 'delve' ? 'A dungeon'

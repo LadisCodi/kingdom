@@ -53,7 +53,8 @@ export interface ServerArmy {
   /** Board indices from the city to the target. */
   path: number[];
   departedAt: number;
-  msPerHex: number;
+  /** Milliseconds to leave each hex of the path (sim/world/travel.ts). */
+  stepMs: number[];
   purpose: ArmyPurpose;
   /** Marching out, standing in a Fortress, camped at a dungeon, or walking
    *  home. */
@@ -162,7 +163,7 @@ export interface ArmyView {
   phase: ArmyPhase;
   path: number[];
   departedAt: number;
-  msPerHex: number;
+  stepMs: number[];
   target: number;
   at: number | null;
   power: number;
@@ -202,7 +203,7 @@ export interface WorldSnapshot {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts';
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

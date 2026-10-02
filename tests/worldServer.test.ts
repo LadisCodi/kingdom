@@ -2,7 +2,7 @@
 // the chain back to the city, improvements and their stores, and the
 // stand-in rivals — resolved the same however often the board is read.
 import { describe, expect, it } from 'vitest';
-import { WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
+import { WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
 import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
 import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
@@ -12,6 +12,7 @@ import {
   portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, fittingImprovements, improvementRate, join,
   outpostGold, recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storesAt,
 } from '../src/worldServer/core';
+import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
 import type { ServerBoard } from '../src/worldServer/types';
 
@@ -197,7 +198,6 @@ describe('armies', () => {
     const plan = generateEnemy({ seed: 1, parts: ['test', key], budget: power, affinity: 'Any' });
     return buildBoard(plan.squads, plan.fighters);
   };
-  const STEP = WORLD.marchSecondsPerHex * 1000;
 
   /** The player in seat 0, a rival in seat 1 holding a hex beside the
    *  player's city — or `apart` hexes from it — and nobody else moving. */
@@ -222,12 +222,13 @@ describe('armies', () => {
     const { b, seat, rival, line, t } = standoff();
     const next = line[line.length - 2]; // the rival's hex beside the player's city
     expect(b.hexes[next]?.owner).toBe(rival);
-    const r = sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(300, 'a'), msPerHex: STEP }, t);
-    expect(r.ok).toBe(true);
-    resolveTo(b, t + STEP);
+    const r = sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(300, 'a') }, t);
+    if (!r.ok) throw new Error(r.why);
+    resolveTo(b, r.arrivesAt);
     expect(b.hexes[next].owner).toBe(seat);
     expect(b.armies[0].phase).toBe('home');
-    resolveTo(b, t + 2 * STEP);
+    expect(b.armies[0].at).toBe(r.arrivesAt + homeboundMs(b.armies[0].stepMs));
+    resolveTo(b, b.armies[0].at!);
     expect(b.armies).toHaveLength(0);
     const owed = drainEffects(b, seat);
     expect(owed.some((e) => e.kind === 'armyHome')).toBe(true);
@@ -240,12 +241,13 @@ describe('armies', () => {
     const { b, seat, rival, line, t } = standoff();
     const far = line[1]; // the rival's hex beside the rival's city
     expect(b.hexes[far]?.owner).toBe(rival);
-    sendArmy(b, seat, { purpose: 'attack', target: far, heroes: [], board: army(300, 'b'), msPerHex: STEP }, t);
-    resolveTo(b, t + (line.length - 2) * STEP);
+    const r = sendArmy(b, seat, { purpose: 'attack', target: far, heroes: [], board: army(300, 'b') }, t);
+    if (!r.ok) throw new Error(r.why);
+    resolveTo(b, r.arrivesAt);
     expect(b.hexes[far].owner).toBeNull();
     expect(b.hexes[far].outpostAt).toBeLessThanOrEqual(t);
     // Denied ground is taken by an army, not by a new Outpost.
-    expect(claimRefusal(b, rival, far, t + (line.length - 2) * STEP)).toBe('Taken');
+    expect(claimRefusal(b, rival, far, r.arrivesAt)).toBe('Taken');
   });
 
   it('fights a Fortress garrison first, and goes home beaten when it holds', () => {
@@ -255,31 +257,33 @@ describe('armies', () => {
     const fortHex = line[line.length - 3];
     const h = b.hexes[fortHex];
     h.improvement = { kind: 'Fortress', level: 1 };
-    sendArmy(b, rival, { purpose: 'garrison', target: fortHex, heroes: [], board: army(5000, 'g'), msPerHex: 1 }, t);
-    resolveTo(b, t + 100);
+    const g = sendArmy(b, rival, { purpose: 'garrison', target: fortHex, heroes: [], board: army(5000, 'g') }, t);
+    if (!g.ok) throw new Error(g.why);
+    resolveTo(b, g.arrivesAt);
     expect(b.hexes[fortHex].garrison).not.toBeNull();
-    sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(200, 'weak'), msPerHex: STEP }, t + 100);
-    resolveTo(b, t + 100 + STEP);
+    const r = sendArmy(b, seat, { purpose: 'attack', target: next, heroes: [], board: army(200, 'weak') }, g.arrivesAt);
+    if (!r.ok) throw new Error(r.why);
+    resolveTo(b, r.arrivesAt);
     expect(b.hexes[next].owner).toBe(rival);
     expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.good)).toBe(true);
   });
 
   it('calls a garrison home, and turns a march round on the road', () => {
     const { b, seat } = quietBoard();
-    const out = sendArmy(b, seat, { purpose: 'attack', target: PORTAL_INDEX, heroes: [], board: army(100, 'r'), msPerHex: STEP }, T0);
+    const out = sendArmy(b, seat, { purpose: 'attack', target: PORTAL_INDEX, heroes: [], board: army(100, 'r') }, T0);
     expect(out.ok).toBe(false); // nobody holds the Portal
     const next = besideHome(seat)[0];
     claim(b, seat, next, T0);
     resolveTo(b, T0 + OUTPOST_MS);
     b.hexes[next].improvement = { kind: 'Fortress', level: 1 };
-    const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h'), msPerHex: STEP }, T0 + OUTPOST_MS);
+    const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h') }, T0 + OUTPOST_MS);
     if (!g.ok) throw new Error(g.why);
-    resolveTo(b, T0 + OUTPOST_MS + STEP);
+    resolveTo(b, g.arrivesAt);
     expect(b.hexes[next].garrison).toBe(g.army);
-    const r = recall(b, seat, g.army, T0 + OUTPOST_MS + 2 * STEP);
+    const r = recall(b, seat, g.army, g.arrivesAt + 1000);
     expect(r.ok).toBe(true);
     expect(b.hexes[next].garrison).toBeNull();
-    resolveTo(b, T0 + OUTPOST_MS + 3 * STEP);
+    resolveTo(b, b.armies[0].at!);
     expect(b.armies).toHaveLength(0);
   });
 });
@@ -299,10 +303,9 @@ describe('dungeons', () => {
     const { board: b, seat } = join(w, { id: 'me', name: 'Me', prefer: { id: 'd', seed, seat: 0 } }, T0);
     for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
     const d = generateBoard('d', seed).hexes.find((h) => h.features.includes('Dungeon'))!;
-    const STEP = WORLD.marchSecondsPerHex * 1000;
-    const r = sendArmy(b, seat, { purpose: 'delve', target: d.index, heroes: [], board: army(20_000, 'strong'), msPerHex: STEP }, T0);
+    const r = sendArmy(b, seat, { purpose: 'delve', target: d.index, heroes: [], board: army(20_000, 'strong') }, T0);
     if (!r.ok) throw new Error(r.why);
-    const there = T0 + (hexLine(hexAt(home(seat)), hexAt(d.index)).length - 1) * STEP;
+    const there = r.arrivesAt;
     resolveTo(b, there);
     expect(b.armies[0].phase).toBe('camp');
     const fight = delveRoom(b, seat, r.army, there);
@@ -315,7 +318,7 @@ describe('dungeons', () => {
     expect(snapshotOf(b, seat, there).delves[d.index]).toBe(1);
     // A weak army is beaten, keeps its losses, and stays camped while it has
     // a hero left; the room is not cleared.
-    const weak = sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(50, 'weak'), msPerHex: STEP }, there);
+    const weak = sendArmy(b, 1, { purpose: 'delve', target: d.index, heroes: [], board: army(50, 'weak') }, there);
     if (!weak.ok) throw new Error(weak.why);
   });
 
@@ -351,12 +354,11 @@ describe('the Dark Portal', () => {
   it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {
     const { b, seat } = quietBoard();
     const opens = portalOpensAt(portalEvent(T0) + 1);
-    const STEP = WORLD.marchSecondsPerHex * 1000;
-    expect(sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's'), msPerHex: STEP }, T0))
+    expect(sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, T0))
       .toEqual({ ok: false, why: 'Shut' });
-    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's'), msPerHex: STEP }, opens);
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, opens);
     if (!r.ok) throw new Error(r.why);
-    const there = opens + 4 * STEP;
+    const there = r.arrivesAt;
     resolveTo(b, there);
     expect(b.armies[0].phase).toBe('camp');
     for (let i = 0; i < WORLD_PORTAL.attemptsPerDay; i++) {

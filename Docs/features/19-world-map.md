@@ -92,21 +92,25 @@
   revealed for everyone, senses nothing.
 - **Only a Revealed hex can be acted on.** Claiming, building and sending an
   army all need the hex explored first; on Sensed or Unknown ground the only
-  action is Explore. Marches pass through fog freely.
+  action is Explore.
+- **A march never passes through fog**: every hex on its way is Revealed;
+  only an explorer's destination may be Sensed.
 
 ### 3.1 Explorers
 
-- **You explore by sending an explorer to a hex.** It marches there, reveals,
-  and marches home. There is no button that buys fog.
+- **You explore by sending an explorer to a Sensed hex.** It marches there,
+  works there, and marches home. There is no button that buys fog.
 - **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
   first; a rank ladder in the Atlas gives more. No training, no cost per use.
 - **An explorer never fights and can never be stopped, attacked or lost.** It
   lives in the player's own save, like the fog it reveals.
-- Anything of yours that marches — an explorer or an army — reveals **its own
-  hex and the six around it** on reaching each hex of its path, from the first
-  hex past the city; leaving reveals nothing. The radius upgrades to 2.
-- **A march costs time, linear in hexes** (§4), and no Gold.
-- An explorer's march time divides by `worldRevealSpeed`.
+- **The work**: once there, the explorer works the hex for
+  `exploreWorkSeconds` (30) plus `exploreWorkSecondsPerHex` (30) for every
+  hex it lies from the city.
+- When the work is done, the hex **and the six around it** are revealed. The
+  radius upgrades to 2. Nothing is revealed on the way.
+- **A march costs time, hex by hex** (§4.1), and no Gold.
+- An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 
 ## 4. Armies
 
@@ -131,7 +135,34 @@
   them.
 - A march is a **timer**: an army sent before a twelve-hour absence has
   arrived on return ([`02-map-scopes.md`](02-map-scopes.md) §4).
-- March time is **linear in hexes** — *Y hexes cost X·Y*.
+
+### 4.1 March time
+
+- **A march is a path, hex by hex**, and the way taken is **the quickest** —
+  through Revealed hexes only (§3).
+- **Every hex adds its time when the marcher leaves it**: out, the city and
+  every hex before the destination; home, the destination and every hex
+  before the city.
+- A hex's time is the marcher's **pace** times the hex's **ground**:
+
+| Pace on open ground | Seconds a hex |
+|---|---|
+| Explorer (`explorerSecondsPerHex`) | 60 |
+| Army (`armySecondsPerHex`) | 120 |
+
+| Ground (`worldTravel`) | Factor |
+|---|---|
+| Grassland, Plains | ×1 |
+| Desert | ×1.5 |
+| Mountain | ×3 |
+| Forest (a feature, on top of the terrain) | ×1.5 |
+| Every other feature, the Portal | ×1 |
+
+- Factors multiply: a forest on desert is ×2.25.
+- *Example, an explorer*: leaving open plain 1 min, a plain with forest
+  1 min 30 s, a mountain 3 min.
+- **A speed divides one hex's time** and never lengthens it — the hook for a
+  hero or technology that is quicker over some ground.
 
 ## 5. Control, claiming and connection
 
@@ -379,7 +410,9 @@ The outer scope feeds the inner one.
 |---|---|---|
 | **Army slots** (1, +1 per War Camp level) | everything — conflict, the Portal | the board feels too quiet or too violent |
 | **Casualty replacement time** | how often a player can act at all | attacks are too cheap to repeat |
-| **March time per hex** | the tempo of the whole scope | the board resolves too fast or feels like waiting |
+| **Army seconds per hex** (120) | the tempo of conquest | the board resolves too fast or feels like waiting |
+| **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
+| **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
 | **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
