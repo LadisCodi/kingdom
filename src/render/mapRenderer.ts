@@ -6,9 +6,9 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
-import { landmarkDefAt, standingLairAt } from '../sim/sites';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from '../sim/sites';
 import { lairZoneCells } from '../sim/lairZone';
-import { LAIR_ORDER, LAIRS } from '../sim/data/definitions';
+import { ABANDONED, LAIR_ORDER, LAIRS } from '../sim/data/definitions';
 import {
   clearLairArt, clearLairBubbles, compactCountdown, markLairArt, heldZone, LAIR_AVATAR, markLairBubble, outerSides,
 } from './lairMap';
@@ -22,7 +22,7 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type FeatureId, type GameState, type LairId, type UnitId,
+  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -658,11 +658,11 @@ export function drawMap(
    * with one colour, which no filter does. Returns where it landed.
    */
   let sightCanvas: HTMLCanvasElement | null = null;
-  const silhouette = (plot: PlotBox, keys: string[]): PlotBox | null => {
+  const silhouette = (plot: PlotBox, keys: string[], plots = FEATURE_PLOTS): PlotBox | null => {
     const key = keys.find((k) => spriteAspect(k) !== null);
     if (key === undefined) return null;
     const foot = base(plot);
-    const cw = plot.w * FEATURE_PLOTS;
+    const cw = plot.w * plots;
     const ch = cw * spriteAspect(key)!;
     if (cw < 1 || ch < 1) return null;
     sightCanvas ??= document.createElement('canvas');
@@ -674,7 +674,7 @@ export function drawMap(
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, gc.width, gc.height);
-    const tall = drawStanding(g, key, cw / 2, ch, plot.w, FEATURE_PLOTS);
+    const tall = drawStanding(g, key, cw / 2, ch, plot.w, plots);
     if (tall <= 0) return null;
     g.globalCompositeOperation = 'source-in';
     g.fillStyle = PALETTE.sighted;
@@ -684,12 +684,16 @@ export function drawMap(
     ctx.globalAlpha = PALETTE.sightedAlpha;
     ctx.drawImage(gc, 0, 0, Math.ceil(cw * dpr), Math.ceil(ch * dpr), foot.x - cw / 2, foot.y - ch, cw, ch);
     ctx.restore();
-    return artRect(plot, tall, FEATURE_PLOTS);
+    return artRect(plot, tall, plots);
   };
 
   /** The drawings a sighted thing would be drawn with in plain view. */
   const sightKeys = (t: Sighted): string[] => {
     if (t.kind === 'lair') return [LAIRS[t.id as LairId].sprite];
+    if (t.kind === 'abandoned') {
+      const a = ABANDONED.find((x) => x.id === t.id);
+      return a === undefined ? [] : ruinKeys(a.districtId);
+    }
     if (t.kind === 'landmark') {
       const l = LANDMARKS.find((x) => x.id === t.id);
       return l === undefined ? [] : [LANDMARK_ART[l.kind].sprite];
@@ -858,6 +862,22 @@ export function drawMap(
         later(cell, () => dimmed(fog === 'Revealed' ? 1 : TREASURE_DIM, () => {
           punched(key, box, () => { stand(box, keys, ''); });
         }));
+      }
+
+      // An abandoned building (01-map-and-fog.md §6.3): its ruin, drawn as a
+      // building is — one plot across, feet on the plot's bottom corner — and
+      // dimmed by the fog like anything standing in it.
+      const ruin = standingAbandonedAt(state, cell);
+      if (ruin && ruin.location.x === cx && ruin.location.y === cy) {
+        const size = DISTRICTS[ruin.districtId].size;
+        const plot = size.x === 1 && size.y === 1 ? box : camera.plotBox(cell, size);
+        later(cell, (mark) => {
+          dimmed(dim, () => {
+            punched(key, plot, () => {
+              mark(artRect(plot, stand(plot, ruinKeys(ruin.districtId), ''), 1));
+            });
+          });
+        }, size);
       }
 
       if (fog === 'Revealed') drawResourceState(cell, box);
@@ -1047,8 +1067,10 @@ export function drawMap(
     if (plot.x + plot.w * 1.5 < 0 || plot.x - plot.w * 0.5 > w
       || plot.y + plot.h < 0 || plot.y - plot.w * 2 > h) continue;
     const keys = sightKeys(t);
+    // A ruin is building art: one plot across, where a feature's is two.
+    const plots = t.kind === 'abandoned' ? 1 : FEATURE_PLOTS;
     later(t.anchor, (mark) => {
-      const art = silhouette(plot, keys);
+      const art = silhouette(plot, keys, plots);
       if (art !== null) mark(art);
     }, span);
   }
@@ -1528,6 +1550,13 @@ function unitTransform(
   ctx.translate(-cx, -cy);
   draw();
   ctx.restore();
+}
+
+/** The drawings an abandoned building's ruin may use: its own ruin, then its
+ *  level-1 art while that has not landed (Docs/features/01-map-and-fog.md §6.3). */
+function ruinKeys(districtId: DistrictId): string[] {
+  const sprite = DISTRICTS[districtId].sprite;
+  return [`${sprite}_ruin`, `${sprite}_l1`, sprite];
 }
 
 function drawGlyph(

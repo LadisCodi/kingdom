@@ -1,4 +1,5 @@
-// The card for a map SITE — a landmark, or a lair (`lairCardScreen`).
+// The card for a map SITE — a landmark, an abandoned building, or a lair
+// (`lairCardScreen`).
 //
 // These are what paid fog is FOR. A player who clears a distance-9 ring and
 // finds one more iron vein has learned that exploring is a treadmill; a player
@@ -8,8 +9,9 @@
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  FOG, LAIRS, LANDMARK_ART, MANA, type LandmarkDef,
+  DISTRICTS, FOG, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
 } from '../sim/data/definitions';
+import { nextBuildCost } from '../sim/districts';
 import type { LairView, RaidableId } from '../sim/lairs';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
@@ -79,6 +81,35 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     have: (c) => game.walletValue(c),
   }));
   return panel(body);
+}
+
+/**
+ * AN ABANDONED BUILDING'S CARD (Docs/features/01-map-and-fog.md §6.3), in the
+ * district card's frame: what the building was, what it does once it stands
+ * again, and Repair — a build at level 1, where it stands, at the price of
+ * the next one of its kind.
+ */
+export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement {
+  const def = DISTRICTS[site.districtId];
+  return el('div', { class: 'dc site-ab' },
+    el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+    windowHead(site.name, [closeKnob(() => game.dismiss(), `Close ${site.name}`)]),
+    el('div', { class: 'site site-ab-body' },
+      el('div', { class: 'site-head' },
+        art(`${def.sprite}_ruin`, def.glyph),
+        el('div', {},
+          el('div', { class: 'site-kind' }, 'Abandoned'),
+          el('div', { class: 'site-note' }, def.promise))),
+      el('div', { class: 'site-note' },
+        'Left to the fog when its people fled. Repair it and it is yours, '
+        + 'exactly as if you had built it.'),
+      action({
+        label: 'Repair',
+        kind: 'primary',
+        onClick: () => game.doRepairAbandoned(site.location),
+        cost: nextBuildCost(game.state, site.districtId),
+        have: (c) => game.walletValue(c),
+      })));
 }
 
 /**

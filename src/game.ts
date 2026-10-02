@@ -8,6 +8,7 @@ import {
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
+  repairAbandoned,
 } from './sim/commands';
 import {
   BANNER_ORDER,
@@ -90,7 +91,7 @@ import {
   watchedRefillsLeft,
 } from './sim/manaRefill';
 import { sightedAt } from './sim/sight';
-import { landmarkDefAt, standingLairAt } from './sim/sites';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
 import { lairHolding, lairZoneCells } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
@@ -129,7 +130,7 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
+import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -348,7 +349,8 @@ export class Game {
   ghostHeld = false;
   /** What the builder sheet was raised for — the build on the ghost, or an
    *  upgrade — so a builder freed while it is open offers that exact job. */
-  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string } = { kind: 'build' };
+  builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string }
+    | { kind: 'repair'; id: string } = { kind: 'build' };
   /** Which card panel is open over the battle screen, if any. */
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
@@ -776,7 +778,9 @@ export class Game {
         // under the fog, and the bubble over it is what the player taps
         // (Docs/proposals/lairs.md §6). A landmark waits to be revealed.
         const lair = standingLairAt(this.state, cell);
-        if (!lair && !landmarkDefAt(cell)) return false;
+        // An abandoned building opens its card once its ground is revealed;
+        // before that a tap on it is a tap on the fog.
+        if (!lair && !landmarkDefAt(cell) && !standingAbandonedAt(this.state, cell)) return false;
         if (!lair && fogState(this.state, this.map, cell) !== 'Revealed') return false;
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
@@ -2374,6 +2378,35 @@ export class Game {
   }
 
   /**
+   * Repair the abandoned building on this cell (Docs/features/01-map-and-fog.md
+   * §6.3). It is refused the way a build is, and the same walls raise the same
+   * answers: the builder offer, the purse that shakes, the words.
+   */
+  doRepairAbandoned(cell: Coord): void {
+    const site = standingAbandonedAt(this.state, cell);
+    if (!site) return;
+    const cost = nextBuildCost(this.state, site.districtId);
+    const result = repairAbandoned(this.state, this.map, site.id);
+    if (result === 'Started') {
+      playSfx('buildPlaced');
+      this.inspectedSite = null;
+      if (this.openOverlay === 'builder') this.openOverlay = null;
+    } else if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(cost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      this.builderAsk = { kind: 'repair', id: site.id };
+      this.offerBuilder();
+    } else if (result === 'CountLimit') {
+      this.toast(`The Townhall can hold no more ${DISTRICTS[site.districtId].name} — raise it first`);
+    } else if (result === 'NotRevealed') {
+      this.toast('Clear the fog off it first');
+    } else {
+      this.toast(this.refusalWords(result, site.districtId, 1));
+    }
+    this.notify();
+  }
+
+  /**
    * A refusal in plain words, and — where there is one — the errand that
    * answers it. Three of them are a different trip each: the map, a workshop
    * queue, a decoration. A bare enum name told the player none of that.
@@ -2465,6 +2498,15 @@ export class Game {
       return {
         verb: 'Build', what: `Ready to build the ${def.name}`,
         cost: nextBuildCost(this.state, def.id), start: () => this.confirmBuild(),
+      };
+    }
+    if (ask.kind === 'repair') {
+      const site = ABANDONED.find((a) => a.id === ask.id);
+      if (!site || this.state.abandoned.repaired[site.id] === true) return null;
+      const def = DISTRICTS[site.districtId];
+      return {
+        verb: 'Repair', what: `Ready to repair ${site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name}`,
+        cost: nextBuildCost(this.state, def.id), start: () => this.doRepairAbandoned(site.location),
       };
     }
     const d = districtById(this.state, ask.districtUniqueId);
@@ -4549,6 +4591,20 @@ function siteBanner(id: string): Banner | null {
       name: lair.name,
       desc: lair.description,
       sprite: lair.sprite,
+      tone: 'gold',
+    };
+  }
+  // An abandoned building is named the moment it is discovered: the shape in
+  // the clouds was the mystery, and this is the find (01-map-and-fog.md §6.3).
+  const ruin = ABANDONED.find((a) => a.id === id);
+  if (ruin) {
+    const def = DISTRICTS[ruin.districtId];
+    return {
+      title: 'An abandoned building!',
+      icon: def.glyph,
+      name: ruin.name,
+      desc: 'Clear the fog off it, then repair it.',
+      sprite: `${def.sprite}_ruin`,
       tone: 'gold',
     };
   }

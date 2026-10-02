@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  GAME_VERSION, MISSIONS, SAVE_VERSION, TECHNOLOGIES,
+  ABANDONED, DISTRICTS, GAME_VERSION, MISSIONS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -27,7 +27,7 @@ import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import { isStoreFull } from './storage';
 import {
-  coordKey, parseCoordKey,
+  cellsOfRect, coordKey, districtOccupies, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
@@ -933,6 +933,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         Seen: Object.keys(state.tutorial.seen),
         StartedAtUtc: iso(state.tutorial.startedAt),
       },
+      'kingdom.abandoned': {
+        Repaired: Object.keys(state.abandoned.repaired),
+      },
       'kingdom.research': {
         Completed: state.research.completed,
         Poured: state.research.poured,
@@ -1343,6 +1346,20 @@ export function deserialize(
       seen: Object.fromEntries((tutorialDto.Seen ?? []).map((k) => [k, true as const])),
       startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
     };
+
+  // Additive (v77). A kingdom from before the abandoned buildings may have
+  // built where one now stands: that one never appears — it reads as already
+  // repaired, and the building there is the kingdom's own.
+  const abandonedDto = modules['kingdom.abandoned'] as { Repaired?: string[] } | undefined;
+  state.abandoned = {
+    repaired: Object.fromEntries((abandonedDto?.Repaired ?? []).map((id) => [id, true as const])),
+  };
+  for (const a of ABANDONED) {
+    const cells = cellsOfRect(a.location, DISTRICTS[a.districtId].size);
+    if (cells.some((c) => state.city.districts.some((d) => districtOccupies(d, c)))) {
+      state.abandoned.repaired[a.id] = true;
+    }
+  }
 
   const questsDto = modules['kingdom.quests'];
   if (questsDto) {

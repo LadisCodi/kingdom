@@ -21,14 +21,14 @@ import { Camera } from '../render/camera';
 import { TILE_H, TILE_W } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
-  FEATURES, LANDMARK_ART, LAIRS, UNIT_ORDER,
+  DISTRICTS, FEATURES, LANDMARK_ART, LAIRS, UNIT_ORDER,
 } from '../sim/data/definitions';
 import regionMap from '../sim/data/region-map.json';
 import {
   LANDMARK_KINDS, TERRAIN_IDS, type MapIssue, type RegionMapDoc,
 } from '../sim/data/mapRules';
 import { coordKey, type Coord, type FeatureId, type TerrainId } from '../sim/state';
-import { MapDoc } from './doc';
+import { MapDoc, type SiteKind } from './doc';
 import { drawEditor, type Overlays, type ViewState } from './render';
 import './editor.css';
 
@@ -38,7 +38,7 @@ type Tool = 'paint' | 'rect' | 'fill' | 'pick' | 'sites';
  *  landmark used to be a bare `N` and a bare `Delete` — correct, discoverable
  *  by nobody. They are modes now, for the same reason terrain has swatches:
  *  the tool should say what a click is about to do. */
-type SiteMode = 'select' | 'place' | 'erase';
+type SiteMode = 'select' | 'place' | 'placeRuin' | 'erase';
 
 type Brush =
   | { kind: 'terrain'; id: TerrainId }
@@ -129,7 +129,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   let painting = false;
   let spaceHeld = false;
   let rectFrom: Coord | null = null;
-  let dragSite: { kind: 'landmark' | 'lair'; id: string } | null = null;
+  let dragSite: { kind: SiteKind; id: string } | null = null;
   let hover: Coord | null = null;
   let lastPaint: Coord | null = null;
   let lastPointer = { x: 0, y: 0 };
@@ -257,9 +257,19 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       return;
     }
 
+    if (siteMode === 'placeRuin') {
+      if (hit) { selected = hit; refresh(); return; }
+      selected = { kind: 'abandoned', id: doc.strokeResult(() => doc.addAbandoned(cell)) };
+      refresh();
+      return;
+    }
+
     if (siteMode === 'erase') {
       if (hit?.kind === 'landmark') {
         doc.stroke(() => doc.removeLandmark(hit.id));
+        if (selected?.id === hit.id) selected = null;
+      } else if (hit?.kind === 'abandoned') {
+        doc.stroke(() => doc.removeAbandoned(hit.id));
         if (selected?.id === hit.id) selected = null;
       } else if (hit?.kind === 'lair') {
         toast(`${hit.id} cannot be deleted — the five lairs are fixed in code.`, true);
@@ -288,6 +298,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
 
     if (dragSite && moved) {
       if (dragSite.kind === 'landmark') doc.moveLandmark(dragSite.id, cell);
+      else if (dragSite.kind === 'abandoned') doc.moveAbandoned(dragSite.id, cell);
       else doc.moveLair(dragSite.id, cell);
       refresh();
       return;
@@ -373,6 +384,11 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       selected = null;
       refresh();
     }
+    if ((key === 'delete' || key === 'backspace') && selected?.kind === 'abandoned') {
+      doc.stroke(() => doc.removeAbandoned(selected!.id));
+      selected = null;
+      refresh();
+    }
   });
   window.addEventListener('keyup', (e) => { if (e.key === ' ') spaceHeld = false; });
 
@@ -447,7 +463,8 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       const MODES: Array<[SiteMode, string, string]> = [
         ['select', '⤧ Select & move', 'Click a site to inspect it, drag to move it'],
         ['place', '＋ Place landmark', 'Click any cell to drop a new landmark (N)'],
-        ['erase', '🗑 Erase landmark', 'Click a landmark to delete it (or Delete when selected)'],
+        ['placeRuin', '＋ Place abandoned', 'Click any cell to drop an abandoned building'],
+        ['erase', '🗑 Erase', 'Click a landmark or an abandoned building to delete it (or Delete when selected)'],
       ];
       const modeRow = el('div', { class: 'ed-modes' });
       for (const [id, label, title] of MODES) {
@@ -457,10 +474,14 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
         b.onclick = () => { siteMode = id; refresh(); };
         modeRow.append(b);
       }
-      toolbar.append(el('div', { class: 'ed-label' }, 'Landmarks'), modeRow);
+      toolbar.append(el('div', { class: 'ed-label' }, 'Sites'), modeRow);
       if (siteMode === 'place') {
         toolbar.append(el('p', { class: 'ed-note' },
           'New landmarks arrive as an unnamed Shrine at 25,000 Gold — rename and price it here.'));
+      }
+      if (siteMode === 'placeRuin') {
+        toolbar.append(el('p', { class: 'ed-note' },
+          'New abandoned buildings arrive as an old House seen from 3 rings — pick the building here.'));
       }
       if (siteMode === 'erase') {
         toolbar.append(el('p', { class: 'ed-note' },
@@ -604,6 +625,42 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       return card;
     }
 
+    if (sel.kind === 'abandoned') {
+      const a = doc.abandoned.find((x) => x.id === sel.id);
+      if (!a) return card;
+      card.append(el('h2', {}, 'Abandoned building'));
+      card.append(field('id', textInput(a.id, (v) => {
+        doc.stroke(() => doc.updateAbandoned(a.id, { id: v }));
+        selected = { kind: 'abandoned', id: v };
+        refresh();
+      })));
+      const buildable = Object.values(DISTRICTS).filter((d) => d.buildable).map((d) => d.id);
+      card.append(field('building', select(buildable, a.district, (v) => {
+        doc.stroke(() => doc.updateAbandoned(a.id, { district: v }));
+        refresh();
+      })));
+      // What its card and banner call it; blank = "The old <building>".
+      card.append(field('name', textInput(a.name ?? '', (v) => {
+        doc.stroke(() => doc.updateAbandoned(a.id, { name: v.trim() === '' ? undefined : v }));
+        refresh();
+      })));
+      // How far its ruin shows as a silhouette past the fog (§4.1); 0 = never.
+      card.append(field('sight', numberInput(a.sight, (v) => {
+        doc.stroke(() => doc.updateAbandoned(a.id, { sight: v }));
+        refresh();
+      })));
+      card.append(el('p', { class: 'ed-hint' },
+        `at (${a.x}, ${a.y}) · ring ${doc.distanceAt(a)} · repaired at level 1, at the next ordinal's price`));
+      const remove = el('button', { class: 'ed-danger', type: 'button' }, 'Delete abandoned building');
+      remove.onclick = () => {
+        doc.stroke(() => doc.removeAbandoned(a.id));
+        selected = null;
+        refresh();
+      };
+      card.append(remove);
+      return card;
+    }
+
     const r = doc.lairs[sel.id];
     if (!r) return card;
     const patch = (p: Parameters<MapDoc['updateLair']>[1]) => {
@@ -701,7 +758,8 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
   const HINTS: Record<SiteMode, string> = {
     select: 'Sites: click to inspect, drag to move',
     place: 'Sites: click any cell to place a landmark',
-    erase: 'Sites: click a landmark to delete it',
+    placeRuin: 'Sites: click any cell to place an abandoned building',
+    erase: 'Sites: click a landmark or an abandoned building to delete it',
   };
 
   const readout = (): string => {

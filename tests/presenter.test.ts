@@ -388,7 +388,7 @@ describe('the banner queue', () => {
     game.doClaimLandmark(tower.location);
     expect(state.landmarks.claimed[tower.id]).toBe(true);
     // Its wider sight may bring OTHER sites into view; those are news.
-    const sightings = new Set(['A place of power!', 'Lair sighted!']);
+    const sightings = new Set(['A place of power!', 'Lair sighted!', 'An abandoned building!']);
     expect(drain(game).filter((t) => !sightings.has(t))).toEqual([]);
     state.pendingDiscoveries.push('resource:Wood');
     game.notify();

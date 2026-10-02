@@ -766,7 +766,9 @@ abandoned and repaired.
   `sight`), sighted by the same sweep as landmarks and lairs (`sim/sight.ts`),
   with their tool in the map editor and their rules in `mapRules.ts`: legal
   ground for the building, and the count-cap rule of §6.3.
-- **Abandoned buildings** stay out of the district list until a repair
+- **Abandoned buildings — BUILT 2026-10-02** (`commands.ts` `repairAbandoned`,
+  `sites.ts`, `tests/abandoned.test.ts`; the ruins' art in
+  `Docs/art/originals/fog-finds/`). They stay out of the district list until a repair
   starts; the repair is the build command at level 1 on its cell, skipping
   the unlock technology. A card with **Repair** in place of the upgrade row.
 - **The opening:** Build opens at `GrowingTown` (`sim/unlocks.ts`); the

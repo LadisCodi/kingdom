@@ -22,6 +22,9 @@ import { coordKey, type Coord, type FeatureId, type TerrainId } from '../sim/sta
 
 export type LandmarkRow = RegionMapDoc['landmarks'][number];
 export type LairRow = RegionMapDoc["lairs"][string];
+export type AbandonedRow = NonNullable<RegionMapDoc['abandoned']>[number];
+/** What a site is, for the editor's selection and its tools. */
+export type SiteKind = 'landmark' | 'lair' | 'abandoned';
 
 /** What the census counts, per distance ring. */
 export interface RingRow {
@@ -66,6 +69,7 @@ export class MapDoc {
 
   get landmarks(): ReadonlyArray<LandmarkRow> { return this.doc.landmarks; }
   get lairs(): Readonly<Record<string, LairRow>> { return this.doc.lairs; }
+  get abandoned(): ReadonlyArray<AbandonedRow> { return this.doc.abandoned ?? []; }
 
   terrainAt(cell: Coord): TerrainId | null {
     return this.map.terrain.get(coordKey(cell)) ?? null;
@@ -85,7 +89,7 @@ export class MapDoc {
     return revealCost(this.distanceAt(cell));
   }
 
-  siteAt(cell: Coord): { kind: 'landmark' | 'lair'; id: string } | null {
+  siteAt(cell: Coord): { kind: SiteKind; id: string } | null {
     return this.sitesOn(cell)[0] ?? null;
   }
 
@@ -180,6 +184,7 @@ export class MapDoc {
     this.clearFeature(cell);
     for (const site of this.sitesOn(cell)) {
       if (site.kind === 'landmark') this.removeLandmark(site.id);
+      else if (site.kind === 'abandoned') this.removeAbandoned(site.id);
       // A lair cannot be deleted (LairId is fixed in code), so erasing the
       // ground under one is refused rather than silently stranding it.
       else this.setTerrain(cell, 'Grassland');
@@ -248,15 +253,51 @@ export class MapDoc {
     if (i >= 0) { this.doc.landmarks.splice(i, 1); this.revision += 1; }
   }
 
+  moveAbandoned(id: string, cell: Coord): void {
+    const a = (this.doc.abandoned ?? []).find((x) => x.id === id);
+    if (a) { a.x = cell.x; a.y = cell.y; this.revision += 1; }
+  }
+
+  updateAbandoned(id: string, patch: Partial<AbandonedRow>): void {
+    const list = this.doc.abandoned ?? [];
+    const i = list.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    list[i] = { ...list[i], ...patch };
+    this.revision += 1;
+  }
+
+  /** A new abandoned building: an old House, seen from three rings, to be
+   *  renamed and retyped in the inspector (Docs/features/01-map-and-fog.md
+   *  §6.3). Its id is a save key — the repairs are recorded by it. */
+  addAbandoned(cell: Coord): string {
+    this.doc.abandoned ??= [];
+    const list = this.doc.abandoned;
+    let n = list.length + 1;
+    let id = `OldBuilding${n}`;
+    while (list.some((a) => a.id === id)) id = `OldBuilding${++n}`;
+    list.push({ id, district: 'Housing', x: cell.x, y: cell.y, sight: 3 });
+    this.revision += 1;
+    return id;
+  }
+
+  removeAbandoned(id: string): void {
+    const list = this.doc.abandoned ?? [];
+    const i = list.findIndex((a) => a.id === id);
+    if (i >= 0) { list.splice(i, 1); this.revision += 1; }
+  }
+
   /** Every site standing on a cell (validation forbids more than one, but the
    *  editor has to cope with the moment before the designer fixes it). */
-  sitesOn(cell: Coord): Array<{ kind: 'landmark' | 'lair'; id: string }> {
-    const out: Array<{ kind: 'landmark' | 'lair'; id: string }> = [];
+  sitesOn(cell: Coord): Array<{ kind: SiteKind; id: string }> {
+    const out: Array<{ kind: SiteKind; id: string }> = [];
     for (const l of this.doc.landmarks) {
       if (l.x === cell.x && l.y === cell.y) out.push({ kind: 'landmark', id: l.id });
     }
     for (const [id, r] of Object.entries(this.doc.lairs)) {
       if (r.x === cell.x && r.y === cell.y) out.push({ kind: 'lair', id });
+    }
+    for (const a of this.doc.abandoned ?? []) {
+      if (a.x === cell.x && a.y === cell.y) out.push({ kind: 'abandoned', id: a.id });
     }
     return out;
   }

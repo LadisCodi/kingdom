@@ -12,7 +12,7 @@ import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, DISTRICTS, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { grantPack, seasonLeftMs } from './sim/collection';
 import { PACK_ORDER } from './sim/data/definitions';
@@ -40,8 +40,8 @@ import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { lairCardScreen, renderSiteCard } from './ui/siteCard';
-import { standingLairAt } from './sim/sites';
+import { lairCardScreen, renderAbandonedCard, renderSiteCard } from './ui/siteCard';
+import { standingAbandonedAt, standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -248,8 +248,12 @@ async function boot(): Promise<void> {
     const canvasTop = canvas.getBoundingClientRect().top;
     const top = document.getElementById('header')!.getBoundingClientRect().bottom - canvasTop;
     // The card sits at the bottom of #panel, so its top edge is the lowest
-    // top among the slot's children — not the slot's own.
-    const tops = [...panelRoot.children].map((c) => c.getBoundingClientRect().top - canvasTop);
+    // top among the slot's children — not the slot's own. A legacy screen is
+    // a `display: contents` wrapper with no box of its own, so it is measured
+    // by what it holds.
+    const boxed = (c: Element): Element =>
+      getComputedStyle(c).display === 'contents' && c.firstElementChild ? boxed(c.firstElementChild) : c;
+    const tops = [...panelRoot.children].map((c) => boxed(c).getBoundingClientRect().top - canvasTop);
     const bottom = tops.length > 0 ? Math.min(...tops) : canvas.clientHeight;
     camera.centerFootprintWithin(cell, size, top, bottom, CAMERA_GLIDE_MS);
   };
@@ -271,6 +275,12 @@ async function boot(): Promise<void> {
       const lair = standingLairAt(game.state, site)!;
       panelSlot.show(`lair:${lair.id}`, () => lairCardScreen(game, lair.id));
       frameOnMap(`lair:${lair.id}`, lair.location, { x: lair.size, y: lair.size });
+    } else if (site !== null && standingAbandonedAt(game.state, site)) {
+      // An abandoned building's card is the district card's frame, with its
+      // own close (siteCard.ts `renderAbandonedCard`).
+      const ruin = standingAbandonedAt(game.state, site)!;
+      panelSlot.show(`abandoned:${ruin.id}`, () => legacy(() => renderAbandonedCard(game, ruin)));
+      frameOnMap(`abandoned:${ruin.id}`, ruin.location, DISTRICTS[ruin.districtId].size);
     } else if (site !== null) {
       // Keyed by cell, so tapping a different site is a real remount.
       panelSlot.show(`site:${site.x},${site.y}`, () => legacy(

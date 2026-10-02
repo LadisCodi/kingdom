@@ -722,6 +722,9 @@ export interface GameState {
    * `startedAt` is when the kingdom was founded.
    */
   tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
+  /** The abandoned buildings whose repair has started, by id — from then on
+   *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
+  abandoned: { repaired: Record<string, true> };
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];

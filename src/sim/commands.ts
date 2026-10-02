@@ -2,11 +2,11 @@
 // serves both the live once-per-second tick and offline replay.
 
 import { grantStoryHeroes } from './story';
-import { BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
+import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import { RUSH } from './data/definitions';
 import {
-  buildDurationForCell, buildGoodsCost, canMoveDistrict,
+  buildDurationForCell, buildGoodsCost, canMoveDistrict, districtCount, maxDistrictCount,
   nextBuildCost, nextOrdinal,
   placementBlock, requiredPopulation, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration, upgradeGoodsCost,
@@ -14,7 +14,7 @@ import {
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
-import { revealAroundDistrict } from './fog';
+import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
 import { recordEvent } from './events';
 import {
@@ -135,6 +135,17 @@ export function enqueueBuild(
   // them.
   if (harmonyBlock(state, DISTRICTS[definitionId], 1) !== null) return 'NeedsHarmony';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
+  return startBuild(state, map, definitionId, cell);
+}
+
+/**
+ * Pay for a building and put it on the ground, under construction, with its
+ * job in the queue — the half of a build that every way of starting one
+ * shares. The caller has already said the ground and the building are legal.
+ */
+function startBuild(
+  state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
+): 'Started' | 'NotEnoughResources' | 'NotEnoughGoods' {
   const cost = nextBuildCost(state, definitionId);
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
   // goods are paid when the build is QUEUED and refunded in full on cancel —
@@ -169,6 +180,48 @@ export function enqueueBuild(
     startedAt: null,
   });
   return 'Started';
+}
+
+// ------------------------------------------------------------- repairing
+
+export type RepairRefusal =
+  | 'NotFound' | 'NotRevealed' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
+  | 'NotEnoughResources' | 'NotEnoughGoods';
+
+/**
+ * Why an abandoned building cannot be repaired right now, or null if it can
+ * (Docs/features/01-map-and-fog.md §6.3).
+ *
+ * A repair IS a build at level 1, where it stands: the same builder, count
+ * cap, Harmony and price — the level-1 cost at the next ordinal. Two rules of
+ * a build do not apply, and that is the whole difference: no technology is
+ * asked, and the ground is not the player's to choose.
+ */
+export function repairRefusal(state: GameState, map: MapData, id: string): RepairRefusal | null {
+  const site = ABANDONED.find((a) => a.id === id);
+  if (site === undefined || state.abandoned.repaired[id] === true) return 'NotFound';
+  const def = DISTRICTS[site.districtId];
+  const cells = cellsOfRect(site.location, def.size);
+  if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
+  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
+  if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
+  if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
+  if (!canAffordGoods(state.city.goods, buildGoodsCost(site.districtId))) return 'NotEnoughGoods';
+  return null;
+}
+
+export type RepairResult = 'Started' | RepairRefusal;
+
+/** Start repairing an abandoned building: from now on it is that building,
+ *  under construction, stamped with its ordinal. */
+export function repairAbandoned(state: GameState, map: MapData, id: string): RepairResult {
+  const refusal = repairRefusal(state, map, id);
+  if (refusal !== null) return refusal;
+  const site = ABANDONED.find((a) => a.id === id)!;
+  const started = startBuild(state, map, site.districtId, site.location);
+  if (started === 'Started') state.abandoned.repaired[id] = true;
+  return started;
 }
 
 // ------------------------------------------------------------------- moving

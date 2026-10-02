@@ -1222,6 +1222,29 @@ export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
   size: l.size ?? 1,
 }));
 
+/** A building standing in ruin where the fog took it, to be found and
+ *  repaired (Docs/features/01-map-and-fog.md §6.3). Authored in the map. */
+export interface AbandonedDef {
+  id: string;
+  districtId: DistrictId;
+  /** Anchor, top-left; the footprint is the building's own size. */
+  location: Coord;
+  /** How far its ruin is sighted past the fog; 0 = never. */
+  sight: number;
+  /** What its card and its banner call it. */
+  name: string;
+}
+
+export const ABANDONED: readonly AbandonedDef[] = ((regionMap as {
+  abandoned?: Array<{ id: string; district: string; x: number; y: number; sight: number; name?: string }>;
+}).abandoned ?? []).map((a) => ({
+  id: a.id,
+  districtId: a.district as DistrictId,
+  location: { x: a.x, y: a.y },
+  sight: a.sight,
+  name: a.name ?? `The old ${DISTRICTS[a.district as DistrictId]?.name ?? a.district}`,
+}));
+
 /**
  * A relic: ONE permanent kingdom passive, always on, whose number rises with
  * its level and has no ceiling (Docs/features/09-relics.md §1-§2).
@@ -2202,4 +2225,5 @@ export const GAME_VERSION = '0.1.0';
 // v75: the daily chest is cut — `kingdom.kingdoms.Daily` is dropped.
 // v76: the fog's treasures (`PaidReveals`, `TreasuresPlaced`, `Treasures` on
 // `kingdom.fogOfWar`), additive.
-export const SAVE_VERSION = 76;
+// v77: the abandoned buildings (`kingdom.abandoned`), additive.
+export const SAVE_VERSION = 77;

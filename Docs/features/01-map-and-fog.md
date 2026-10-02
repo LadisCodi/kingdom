@@ -4,8 +4,8 @@
 > reveal, and what the fog holds. The *scopes* the map splits into are
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
-> **Status: built**, the treasures (§6.2) since 2026-10-02 — except the
-> abandoned buildings (§6.3) and the sea of clouds the fog is drawn as (§4.2):
+> **Status: built**, the treasures and the abandoned buildings (§6.2, §6.3)
+> since 2026-10-02 — except the sea of clouds the fog is drawn as (§4.2):
 > **designed 2026-10-02, not built.** The map is authored in the
 > `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
@@ -437,8 +437,8 @@ whatever direction the player explores.
 The village the fog swallowed: buildings standing in ruin where the fog took
 them, to be found and repaired.
 
-- **Authored in the map editor**: a building from `buildings`, its cell and
-  its `sight`, the same for every kingdom.
+- **Authored in the map editor**: a building from `buildings`, its cell, its
+  `sight` and the name its card and banner carry, the same for every kingdom.
 - **Every building has its own ruined drawing** of its level 1
   (`<sprite>_ruin.png`).
 - **It is found the way a landmark is**:
