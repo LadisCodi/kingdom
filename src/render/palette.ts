@@ -69,6 +69,10 @@ export const PALETTE = {
   sighted: '#9aa3d6',
   sightedAlpha: 0.82,
   selected: '#ffe27a',
+  /** The tutorial's pointer on a map plot: the stage's magic blue
+   *  (tokens.css --magic-glow-*), a wide soft halo and a bright line. */
+  tutorialGlowOuter: '#3c9dff',
+  tutorialGlowInner: '#c8f0ff',
   validTarget: 'rgba(126, 217, 87, 0.85)',
   /* A SPELL STANDING ON THE GROUND. Violet is the magic colour and nothing
      else on the map uses it — the ground is warm greens and browns, so a

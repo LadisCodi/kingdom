@@ -50,6 +50,11 @@
   pointer-events: none;
   transition-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);
 }
+/* Slid away, its orbs stop breathing: a loop nobody can see still paints. */
+#ui.has-menu > #navbar.nav .k-cta::before,
+#ui.has-menu > #navbar.nav .k-cta::after,
+#ui.has-card > #navbar.nav .k-cta::before,
+#ui.has-card > #navbar.nav .k-cta::after { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   #navbar.nav { transition: none; }
 }

@@ -11,6 +11,7 @@ import type { Game } from '../game';
 import { watchtowerSighted } from '../sim/landmarks';
 import { el } from './format';
 import { iconEl } from './kit';
+import { setAttr, setHidden } from './domWrite';
 
 export function mountWorldKnob(game: Game, root: HTMLElement): void {
   const lock = el('span', { class: 'world-knob-lock', 'aria-hidden': 'true' }, iconEl('padlock', { size: 'sm' }));
@@ -35,7 +36,7 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
   let wasLocked: boolean | null = null;
   const refresh = (): void => {
     const locked = !game.doorOpen('world');
-    root.hidden = game.hasOpenSheet() || (locked && !watchtowerSighted(game.state));
+    setHidden(root, game.hasOpenSheet() || (locked && !watchtowerSighted(game.state)));
     if (wasLocked === true && !locked) {
       knob.classList.add('is-unlocking');
       window.setTimeout(() => knob.classList.remove('is-unlocking'), 900);
@@ -44,7 +45,7 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
     knob.classList.toggle('is-locked', locked);
     const away = game.scene === 'world';
     knob.classList.toggle('is-away', away);
-    knob.setAttribute('aria-label', away ? 'Back to the city' : 'The world');
+    setAttr(knob, 'aria-label', away ? 'Back to the city' : 'The world');
   };
   game.onChange(refresh);
   refresh();

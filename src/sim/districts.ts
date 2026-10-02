@@ -160,6 +160,23 @@ export const validPlacementCells = (
   (c) => placementBlock(state, map, definitionId, c, movingId) === null);
 
 /**
+ * Is there anywhere at all to put one? `validPlacementCells(…).length > 0`,
+ * asked the cheap way, because the Build tab's count asks it of every
+ * building on every notify: the rules that are about the BUILDING rather
+ * than the cell (`placementBlock`'s cap, research and Harmony) once, then
+ * the revealed cells alone — an unrevealed one is never valid — stopping at
+ * the first that is.
+ */
+export function canPlaceAnywhere(state: GameState, map: MapData, definitionId: DistrictId): boolean {
+  const def = DISTRICTS[definitionId];
+  if (districtCount(state, definitionId) >= maxDistrictCount(state, def)) return false;
+  if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return false;
+  if (harmonyBlock(state, def, 1) !== null) return false;
+  return map.cells.some((c) => state.fog.revealed[coordKey(c)]
+    && placementBlock(state, map, definitionId, c) === null);
+}
+
+/**
  * Can this building be picked up and put down somewhere else?
  *
  * One gate: **`buildable` only**, which is the Townhall's exclusion — it is

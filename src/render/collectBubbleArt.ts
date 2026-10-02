@@ -20,8 +20,10 @@ const PARCHMENT_LIGHT = '#fbf1da';
 const RIM = '#8a5a2b';
 const RIM_FULL = '#b3402c';
 
-const reducedMotion = (): boolean =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** One query, asked once; read on every draw. */
+const reducedMotionQuery = typeof matchMedia === 'function'
+  ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+const reducedMotion = (): boolean => reducedMotionQuery?.matches ?? false;
 
 /** A stable phase per building, so the neighbourhood does not bob in step. */
 const phaseOf = (id: string): number => {

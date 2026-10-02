@@ -28,7 +28,7 @@ import { WORLD_BUILD } from '../../sim/data/definitions';
 import {
   COMBO_SPRITE, OUTPOST_BUILDING_SPRITE, OUTPOST_SPRITE, hexArt, pickVariant, type HexCombo,
 } from './hexArt';
-import { TILT, hexCorners, regionEdges } from './hexLayout';
+import { HEX_R, TILT, hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
 
 /** A flat colour under the plate, for the frames before it loads. */
@@ -244,7 +244,7 @@ function drawHex(
   drawSkirt(ctx, c.x, c.y, r, fogState === 'Unknown');
 
   if (fogState === 'Unknown') {
-    drawMist(ctx, c.x, c.y, r, bh.index);
+    drawMist(ctx, c.x, c.y, r, bh.index, camera.dpr);
     return;
   }
 
@@ -384,7 +384,7 @@ function drawProp(ctx: CanvasRenderingContext2D, sprite: string, x: number, foot
 
 /** Opaque rolling mist: a pale hex with soft puffs, placed by the hex's
  *  index so the clouds hold still from frame to frame. */
-function drawMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, seed: number): void {
+function paintMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, seed: number): void {
   ctx.save();
   hexPath(ctx, cx, cy, r * 1.04);
   ctx.fillStyle = MIST;
@@ -406,6 +406,33 @@ function drawMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numb
   ctx.fillStyle = shade;
   ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
   ctx.restore();
+}
+
+/**
+ * THE MIST, BAKED. Its puffs depend on the hex's index only through
+ * `seed * 7 % 12` — twelve drawings in all — so each is painted once, at the
+ * closest zoom and the screen's scale, and laid down as one copy: four
+ * radial gradients a hex, ninety hexes a frame, were most of the board's cost.
+ */
+const MIST_KINDS = 12;
+const mists = new Map<number, HTMLCanvasElement>();
+let mistScale = 0;
+
+function drawMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, seed: number, dpr: number): void {
+  const bakeR = HEX_R * dpr;
+  if (mistScale !== bakeR) {
+    mists.clear();
+    mistScale = bakeR;
+  }
+  const kind = seed % MIST_KINDS;
+  let art = mists.get(kind);
+  if (art === undefined) {
+    art = document.createElement('canvas');
+    art.width = art.height = Math.ceil(bakeR * 2.4);
+    paintMist(art.getContext('2d')!, bakeR * 1.2, bakeR * 1.2, bakeR, kind);
+    mists.set(kind, art);
+  }
+  ctx.drawImage(art, cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 2.4);
 }
 
 /** The Portal's hex has no ground: cracked dark stone. */

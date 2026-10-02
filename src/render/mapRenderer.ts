@@ -19,12 +19,13 @@ import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTrain
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
-  harvestSourceAt, recoversAt, recoveryProgress, stockFraction,
+  recoveryProgress, recoversForSpec, stockFraction,
 } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
+  queueProgress, remainingSeconds, coordKey, districtById, districtCells,
+  type HarvestSourceId,
   type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
@@ -78,6 +79,9 @@ export interface MarkerLayer {
   inspectedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
+  /** The plot the tutorial is pointing at (ui/stage/stage.ts): lit on the
+   *  ground, under what stands on it. The hand stays in the stage. */
+  tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
    *  cells each one covers, and how much of its window is left. */
   spellZones: Array<{
@@ -262,8 +266,9 @@ export function drawMap(
 
   // The per-cell resource-state overlay (recovery/tap bar). An exhausted
   // feature already swaps to its own sprite; no extra dim on top of it.
-  const drawResourceState = (cell: Coord, box: PlotBox) => {
-    const source = harvestSourceAt(state, cell);
+  // `source` is the cell's harvest source, which the caller already knows —
+  // asked of the sim it is a scan of the district list per cell per frame.
+  const drawResourceState = (cell: Coord, box: PlotBox, source: HarvestSourceId | null) => {
     if (source === null) return;
     const spec = HARVEST[source];
     const growing = recoveryProgress(state, map, cell, spec, now);
@@ -429,7 +434,10 @@ export function drawMap(
     const c = mid(box);
     const foot = base(box);
     if (lifted) ctx.globalAlpha = 0.28;
-    const exhausted = recoversAt(state, map, district.location, now) !== null;
+    // Its harvest source, as `harvestSourceAt` would say for its own cell.
+    const source = district.state === 'Built' ? def.providesHarvestSource : null;
+    const exhausted = source !== null
+      && recoversForSpec(state, map, district.location, HARVEST[source], now) !== null;
     // Exhausted crop plot gets its own base sprite when available;
     // otherwise the normal sprite (or glyph) plus the withered overlay.
     const exhaustedPlot = district.definitionId === 'FarmLands' &&
@@ -510,7 +518,7 @@ export function drawMap(
       }
       // A district that is itself a resource cell (FarmLands → Crops,
       // lived-in Housing → Taxes): wear/recovery bar.
-      if (def.providesHarvestSource !== null) drawResourceState(district.location, box);
+      if (def.providesHarvestSource !== null) drawResourceState(district.location, box, source);
       // Townhall: villager-training progress bar, and the population count.
       //
       // Population is drawn HERE rather than in the header because the
@@ -579,12 +587,19 @@ export function drawMap(
    * diamond a hole in it) — only those within reach, so the path stays a
    * handful of diamonds. Filled in by the floor pass below.
    */
-  const revealedOnScreen = new Map<string, PlotBox>();
+  const viewW = view.x1 - view.x0 + 1;
+  const viewH = view.y1 - view.y0 + 1;
+  /** By the cell's index in the view's window: no key strings per lookup. */
+  const revealedOnScreen: Array<PlotBox | undefined> = new Array(viewW * viewH);
   const clippedOffRevealed = (cell: Coord, draw: () => void): void => {
     let clear: Path2D | null = null;
     for (let dy = -2; dy <= 2; dy++) {
+      const y = cell.y + dy - view.y0;
+      if (y < 0 || y >= viewH) continue;
       for (let dx = -2; dx <= 2; dx++) {
-        const box = revealedOnScreen.get(coordKey({ x: cell.x + dx, y: cell.y + dy }));
+        const x = cell.x + dx - view.x0;
+        if (x < 0 || x >= viewW) continue;
+        const box = revealedOnScreen[y * viewW + x];
         if (box === undefined) continue;
         if (clear === null) {
           clear = new Path2D();
@@ -740,9 +755,11 @@ export function drawMap(
     if (cw < 1 || ch < 1) return null;
     sightCanvas ??= document.createElement('canvas');
     const gc = sightCanvas;
+    // Each side only ever GROWS: two things of different shapes drawn in
+    // one frame would otherwise reallocate the canvas back and forth.
     if (gc.width < cw * dpr || gc.height < ch * dpr) {
-      gc.width = Math.ceil(cw * dpr);
-      gc.height = Math.ceil(ch * dpr);
+      gc.width = Math.max(gc.width, Math.ceil(cw * dpr));
+      gc.height = Math.max(gc.height, Math.ceil(ch * dpr));
     }
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -791,9 +808,11 @@ export function drawMap(
     if (cw <= 0 || ch <= 0) return;
     rimCanvas ??= document.createElement('canvas');
     const gc = rimCanvas;
+    // Each side only ever GROWS: two things of different shapes drawn in
+    // one frame would otherwise reallocate the canvas back and forth.
     if (gc.width < cw * dpr || gc.height < ch * dpr) {
-      gc.width = Math.ceil(cw * dpr);
-      gc.height = Math.ceil(ch * dpr);
+      gc.width = Math.max(gc.width, Math.ceil(cw * dpr));
+      gc.height = Math.max(gc.height, Math.ceil(ch * dpr));
     }
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -842,8 +861,12 @@ export function drawMap(
   // a byte a cell.
   const floor: FloorCell[] = [];
   let floorSig = 0x811c9dc5;
-  const maskW = view.x1 - view.x0 + 1;
-  const maskH = view.y1 - view.y0 + 1;
+  const maskW = viewW;
+  const maskH = viewH;
+  // Which building stands on each cell, so the props below ask a map rather
+  // than scanning the district list per cell.
+  const occupied = new Set<string>();
+  for (const d of state.city.districts) for (const c of districtCells(d)) occupied.add(coordKey(c));
   const mask = new Uint8Array(maskW * maskH);
   const codes = new Uint8Array(maskW * maskH);
   for (let cy = view.y0; cy <= view.y1; cy++) {
@@ -854,7 +877,7 @@ export function drawMap(
       const seen = floorCellOf(state, map, cell, cellRect);
       if (seen === null) { mask[i] = 255; continue; }
       floor.push(seen);
-      if (seen.fog === 'Revealed') revealedOnScreen.set(seen.key, seen.box);
+      if (seen.fog === 'Revealed') revealedOnScreen[i] = seen.box;
       codes[i] = seen.code;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
       floorSig = Math.imul(floorSig ^ seen.code, 16777619);
@@ -869,6 +892,12 @@ export function drawMap(
   });
 
   for (const { cell, key, fog, payable, box } of floor) {
+    // The window is the screen's bounding box in CELL space — about twice
+    // the screen — so its corners are culled here. The margins are art's:
+    // a prop rises up to three cells above its plot and a block's art spans
+    // three cells down and across from its anchor.
+    if (box.x + box.w * 3 < 0 || box.x - box.w * 3 > w
+      || box.y + box.h * 4 < 0 || box.y - box.w * 3 > h) continue;
     const cx = cell.x;
     const cy = cell.y;
 
@@ -876,13 +905,12 @@ export function drawMap(
     // scrim, said again for what stands on it, from the same `payable`.
     const dim = fog === 'Discovered' ? (payable ? FOG_DIM : FOG_DIM * FOG_DIM) : 1;
     const feature = state.features[key];
-    const district = state.city.districts.find((d) => districtOccupies(d, cell));
-    if (district) continue; // drawn (with its overlays) in the district pass
+    if (occupied.has(key)) continue; // drawn (with its overlays) in the district pass
 
     // Features (Forest): normal or exhausted sprite, emoji fallback.
     if (feature) {
       const def = FEATURES[feature];
-      const exhausted = recoversAt(state, map, cell, now) !== null;
+      const exhausted = recoversForSpec(state, map, cell, HARVEST[def.source], now) !== null;
       // A feature that spans cells is ONE THING: drawn once, on its anchor,
       // across its whole block (Docs/features/01-map-and-fog.md §3.1). Every
       // other cell of it draws nothing at all.
@@ -965,7 +993,7 @@ export function drawMap(
       }, size);
     }
 
-    if (fog === 'Revealed') drawResourceState(cell, box);
+    if (fog === 'Revealed') drawResourceState(cell, box, feature ? FEATURES[feature].source : null);
 
     if (fog === 'Discovered') {
       // A cell you can see but cannot buy yet lies under a cushion of cloud
@@ -1005,7 +1033,7 @@ export function drawMap(
     }
     // A tap on the fog flashes the cell white, the last one too as it
     // clears (Game.flashFog).
-    const flash = tapFx.sample(`fog:${key}`)?.flash ?? 0;
+    const flash = tapFx.idle ? 0 : tapFx.sample(`fog:${key}`)?.flash ?? 0;
     if (flash > 0.02) {
       ctx.save();
       ctx.globalAlpha = flash * 0.75;
@@ -1093,6 +1121,33 @@ export function drawMap(
       for (let cx = view.x0; cx <= view.x1; cx++) visible.push({ x: cx, y: cy });
     }
     drawReach(ctx, reachBorder(state, map, visible), cellRect, size);
+  }
+
+  // Pass 1.3: THE TUTORIAL'S POINTER on a map plot (ui/stage/stage.ts): its
+  // diamond lit in the stage's blue, over the ground and under everything
+  // that stands, so the tree it points at stands in front of the light. The
+  // halo breathes on the stage's own beat, 1.4 s.
+  if (markers.tutorialFocus) {
+    const p = camera.plotBox(markers.tutorialFocus.cell, markers.tutorialFocus.span);
+    const b = { x: p.x + p.w * 0.03, y: p.y + p.h * 0.03, w: p.w * 0.94, h: p.h * 0.94 };
+    const beat = reducedMotion?.matches ? 0.7 : 0.4 + 0.6 * (0.5 - 0.5 * Math.cos((clockNow / 1400) * Math.PI * 2));
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    diamondPath(ctx, b);
+    ctx.strokeStyle = PALETTE.tutorialGlowOuter;
+    // Two widths for the halo's soft edge, rather than a blur.
+    ctx.globalAlpha = 0.35 * beat;
+    ctx.lineWidth = Math.max(8, size * 0.3);
+    ctx.stroke();
+    ctx.globalAlpha = 0.6 * beat;
+    ctx.lineWidth = Math.max(5, size * 0.17);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = PALETTE.tutorialGlowInner;
+    ctx.lineWidth = Math.max(2, size * 0.05);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // Pass 1.5: districts, each drawn once spanning its full footprint — and

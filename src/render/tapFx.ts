@@ -27,6 +27,12 @@ export class TapFx {
     this.punches.set(anchorKey, [this.clock(), strength]);
   }
 
+  /** Nothing is punching — most frames. A caller that builds a key string
+   *  per cell to ask `sample` asks this first. */
+  get idle(): boolean {
+    return this.punches.size === 0;
+  }
+
   /** Current punch state for the sprite anchored at `anchorKey`; null = idle. */
   sample(anchorKey: string): PunchSample | null {
     const punch = this.punches.get(anchorKey);

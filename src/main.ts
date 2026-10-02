@@ -45,7 +45,7 @@ import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
 import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
 import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
-import { renderResearchMenu } from './ui/researchMenu';
+import { renderResearchMenu, researchSignature } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
@@ -62,6 +62,7 @@ import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
 import { SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
+import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
@@ -251,6 +252,12 @@ async function boot(): Promise<void> {
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
     build: () => buildMenuSignature(game),
+    research: () => researchSignature(game),
+    // Each of these reads one presenter view and nothing that counts down,
+    // so that view IS what it is drawn from.
+    purse: () => JSON.stringify(game.state.city.wallet),
+    pass: () => JSON.stringify([game.passScreen(), game.seasonInfo().name]),
+    survey: () => JSON.stringify(game.surveyScreen()),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
@@ -419,6 +426,15 @@ async function boot(): Promise<void> {
     () => {},
   );
 
+  // The perf readout's meter (?dev): every section below is timed through
+  // it, and the dev bar's 📈 shows what a second costs.
+  const perf = new URLSearchParams(location.search).has('dev') ? createPerfMeter() : null;
+  if (perf !== null) {
+    const notify = game.notify.bind(game);
+    game.notify = () => perf.time('notify', notify);
+  }
+  const timed = <T>(label: string, fn: () => T): T => (perf === null ? fn() : perf.time(label, fn));
+
   // ------------------------------------------------------- the single tick
   // The ambience bed follows the camera: waves over water, wind over snow.
   // Off-map void keeps the LAST bed — the world's edge shouldn't chirp.
@@ -434,7 +450,7 @@ async function boot(): Promise<void> {
 
   let ticks = 0;
   const runTick = () => {
-    game.tick();
+    timed('tick', () => game.tick());
     syncAmbience(biomeAtCenter()); // ambience has its own mute now
     ticks += 1;
     if (ticks % AUTOSAVE_TICKS === 0) saveManager.save(game.state, game.now());
@@ -451,26 +467,43 @@ async function boot(): Promise<void> {
   // ------------------------------------------------------------ render loop
   // Paced (render/framePacer.ts): the display's rate while the map is being
   // touched or the camera is moving, slower while it is only being looked at.
-  // The world board draws every frame: its marchers move on their own.
+  // The world board is paced the same way: its marchers move on their own,
+  // and 30 fps is plenty for a walk.
   let lastDraw = -Infinity;
   let lastActive = -Infinity;
   let lastView = '';
+  let lastWorldView = '';
+  // THE FULL-SCREEN LAYERS — the battle, the unlock splash, the gacha reveal,
+  // the rewarded video — hide the board whole. Nothing is drawn under them:
+  // the canvas keeps its last frame, which is all a dimmed backdrop shows.
+  const fullScreens = ['battle', 'unlock', 'gacha', 'ad']
+    .map((id) => document.getElementById(id))
+    .filter((e): e is HTMLElement => e !== null);
+  const underFullScreen = (): boolean => fullScreens.some((e) => e.childElementCount > 0);
   const touched = () => { lastActive = performance.now(); };
   for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
     window.addEventListener(type, touched, { capture: true, passive: true });
   }
   const frame = (t: number) => {
-    if (game.scene === 'world') {
-      drawWorld(worldCanvas, worldCamera, {
-        state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
-        armies: game.worldView?.armies,
-      });
+    perf?.frame(t);
+    if (underFullScreen()) {
+      // Nothing to draw; see fullScreens.
+    } else if (game.scene === 'world') {
+      const view = `${worldCamera.x}|${worldCamera.y}|${worldCamera.zoom}|${worldCanvas.clientWidth}|${worldCanvas.clientHeight}`;
+      if (view !== lastWorldView) { lastWorldView = view; lastActive = t; }
+      if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+        lastDraw = t;
+        timed('world', () => drawWorld(worldCanvas, worldCamera, {
+          state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
+          armies: game.worldView?.armies,
+        }));
+      }
     } else {
       const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
       if (view !== lastView) { lastView = view; lastActive = t; }
       if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
         lastDraw = t;
-        drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs));
       }
     }
     requestAnimationFrame(frame);
@@ -628,8 +661,18 @@ async function boot(): Promise<void> {
       setDevice(DEVICES[(at + 1) % DEVICES.length].id);
     });
     try { setDevice(localStorage.getItem(DEVICE_KEY) ?? 'off'); } catch { setDevice('off'); }
+    // THE PERF READOUT (ui/perfHud.ts), remembered across reloads.
+    const PERF_KEY = 'kingdom.devPerf';
+    const perfButton = button('📈 perf', () => {
+      perf?.setVisible(!perf.visible());
+      try { localStorage.setItem(PERF_KEY, perf?.visible() ? '1' : '0'); } catch { /* private window */ }
+    });
+    if (perf !== null) {
+      document.getElementById('ui')!.append(perf.node);
+      try { perf.setVisible(localStorage.getItem(PERF_KEY) === '1'); } catch { /* private window */ }
+    }
     const devGrid = el('div', { class: 'dev-grid' },
-      deviceButton,
+      deviceButton, perfButton,
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),

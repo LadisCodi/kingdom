@@ -17,8 +17,10 @@ import type { Game } from '../game';
 import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled,
-  isFoundTome, isTomeOpen, researchRefusal, techCost, techKnowledgeCost, techPoured, techState,
+  isFoundTome, isTomeOpen, openTomes, researchRefusal, revealedCellCount, techCost, techKnowledgeCost,
+  techPoured, techState,
 } from '../sim/research';
+import { knowledgeHeld } from '../sim/knowledge';
 import { techLine } from '../sim/techProse';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
@@ -100,6 +102,19 @@ function bookmarks(game: Game): HTMLElement {
   }
   return row;
 }
+
+/**
+ * What the book is drawn from, so the host rebuilds it only when one of
+ * these moves (ui/kit/host.ts) — not on every notify: it is a page of up to
+ * a hundred and seventy cards. The open book and the selection; the hint;
+ * the research itself; the purse and the Knowledge held, which every price
+ * and orb is read against; the revealed cells, which open the bands; and
+ * which books are on the shelf. Nothing on it counts down.
+ */
+export const researchSignature = (game: Game): string => JSON.stringify([
+  activeTome, selected, game.uiHint(), game.state.research, game.state.city.wallet,
+  knowledgeHeld(game.state), revealedCellCount(game.state), openTomes(game.state),
+]);
 
 export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;

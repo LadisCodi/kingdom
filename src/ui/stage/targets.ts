@@ -187,7 +187,9 @@ export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect
     return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
   }
   const box = game.camera.plotBox(target.cell, target.span);
-  const canvas = frame.querySelector('canvas');
+  // The map's own canvas: the floor and the cloud bank are canvases too,
+  // under it, and the floor is larger than the frame and slides.
+  const canvas = frame.querySelector<HTMLCanvasElement>('canvas#map');
   const c = canvas?.getBoundingClientRect() ?? origin;
   return { x: box.x + c.left - origin.left, y: box.y + c.top - origin.top, w: box.w, h: box.h };
 }
@@ -201,7 +203,9 @@ export function bubbleTopOver(game: Game, target: Target, frame: HTMLElement): n
   if (d === undefined) return null;
   const r = game.collectBubbles.rectOf(d.uniqueId, performance.now());
   if (r === null) return null;
-  const canvas = frame.querySelector('canvas');
+  // The map's own canvas: the floor and the cloud bank are canvases too,
+  // under it, and the floor is larger than the frame and slides.
+  const canvas = frame.querySelector<HTMLCanvasElement>('canvas#map');
   const c = canvas?.getBoundingClientRect() ?? frame.getBoundingClientRect();
   return r.y + c.top - frame.getBoundingClientRect().top;
 }
