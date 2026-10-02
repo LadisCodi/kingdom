@@ -93,6 +93,10 @@ export function questLine(quest: {
         : n === 1
           ? `Build ${one(districtName(target))}.`
           : `Build ${count(n)} ${plural(n, districtName(target))}.`;
+    case 'RepairDistrict': {
+      const what = (target === null ? 'building' : districtName(target)).toLowerCase();
+      return n === 1 ? `Repair the old ${what}.` : `Repair ${count(n)} old ${plural(n, what)}.`;
+    }
     case 'UpgradeDistrict': {
       const what = target === null ? 'building' : districtName(target);
       const bar = level === null ? '' : ` to level ${level}`;

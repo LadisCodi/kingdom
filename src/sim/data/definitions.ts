@@ -446,7 +446,7 @@ export const ADJACENCY_CLAMP = 0.25;
 /** Absolute types are state predicates (done-or-not, regardless of when the
  *  quest activated); relative types count events only while active. */
 export type QuestGoalType =
-  | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
+  | 'BuildDistrict' | 'RepairDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
   | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'

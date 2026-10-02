@@ -433,7 +433,8 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
       const id = quest.goalTarget as keyof typeof DISTRICTS;
       // Level 1 is the build; level 2 is the cheapest upgrade a quest asks
       // for, and the first that could name a currency the map cannot pay.
-      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].costPerLevel[0].cost
+      const cost = quest.goalType === 'BuildDistrict' || quest.goalType === 'RepairDistrict'
+        ? DISTRICTS[id].costPerLevel[0].cost
         : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].costPerLevel[1].cost
           : null;
       if (cost === null) return;

@@ -5,7 +5,7 @@ import type { QuestGoalType } from '../src/sim/data/definitions';
 import { questLine, QUEST_LINE_MAX } from '../src/sim/questProse';
 
 const ALL_GOALS: readonly QuestGoalType[] = [
-  'BuildDistrict', 'UpgradeDistrict', 'HoldResource', 'ReachPopulation',
+  'BuildDistrict', 'RepairDistrict', 'UpgradeDistrict', 'HoldResource', 'ReachPopulation',
   'CompleteTech', 'CompleteTechs', 'AssignWorkers', 'TrainArmy',
   'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
   'ClaimLandmarks', 'FindLairs', 'ClearLairs',

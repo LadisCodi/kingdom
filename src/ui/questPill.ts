@@ -44,7 +44,7 @@ const goalIcon = (quest: QuestDef): IconName => {
   switch (quest.goalType) {
     case 'CollectResource': case 'HoldResource':
       return (quest.goalTarget as CurrencyId | null) ?? 'quest';
-    case 'BuildDistrict': case 'UpgradeDistrict':
+    case 'BuildDistrict': case 'RepairDistrict': case 'UpgradeDistrict':
       return (quest.goalTarget as DistrictId | null) ?? 'build';
     case 'CompleteTech': case 'CompleteTechs': return 'research';
     case 'ReachPopulation': return 'population';

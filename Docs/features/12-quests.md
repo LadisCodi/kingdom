@@ -31,6 +31,10 @@
   cannot be cancelled, so it is the player's from then; the quest does not
   wait for the scaffold. What needs the building *standing* — its workers, a
   villager's roof — waits for it on its own.
+- **`RepairDistrict` asks for an abandoned building** — *repair the old
+  farm* — and counts as `BuildDistrict` does: a building of its kind,
+  however it came. Its 🔍 points at the ruin
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3).
 - **`DiscoverCells` is a total** — *clear the fog from 32 tiles in all*, the
   same count the book bands read. A player who cleared everything in reach
   before the quest arrived is never stuck behind it.
@@ -40,7 +44,7 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
+| BuildDistrict · RepairDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
 - **`FindLairs` counts lairs found**, cleared or not — a lair is found when a
   cell of its zone is revealed. The Book of Warfare opens on the first, so the

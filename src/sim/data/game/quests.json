@@ -47,7 +47,7 @@
   {
     "id": "ARoof",
     "name": "A roof",
-    "goalType": "BuildDistrict",
+    "goalType": "RepairDistrict",
     "goalTarget": "Housing",
     "goalAmount": 1,
     "goalLevel": null,
@@ -122,7 +122,7 @@
   {
     "id": "FirstPlot",
     "name": "First plot",
-    "goalType": "BuildDistrict",
+    "goalType": "RepairDistrict",
     "goalTarget": "FarmLands",
     "goalAmount": 2,
     "goalLevel": null,
@@ -167,7 +167,7 @@
   {
     "id": "Farmhand",
     "name": "Farmhand",
-    "goalType": "BuildDistrict",
+    "goalType": "RepairDistrict",
     "goalTarget": "Farm",
     "goalAmount": 1,
     "goalLevel": null,
@@ -242,7 +242,7 @@
   {
     "id": "TheSawmill",
     "name": "The Sawmill",
-    "goalType": "BuildDistrict",
+    "goalType": "RepairDistrict",
     "goalTarget": "Sawmill",
     "goalAmount": 1,
     "goalLevel": null,

@@ -183,7 +183,7 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
 /** Quest goal types and what their target names; null = takes none. Mirrors
  *  the importer's QUEST_GOAL_TYPES. */
 export const QUEST_GOALS: Record<string, RefKind | null> = {
-  BuildDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
+  BuildDistrict: 'building', RepairDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
   TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, FindLairs: null, ClearLairs: null, CollectResource: 'currency',

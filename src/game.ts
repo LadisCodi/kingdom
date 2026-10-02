@@ -3112,10 +3112,21 @@ export class Game {
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
-      case 'BuildDistrict':
+      case 'RepairDistrict':
+      case 'BuildDistrict': {
+        // One of its kind still standing as a ruin is the way to build it
+        // (Docs/features/01-map-and-fog.md §6.3) — and before the Build door
+        // opens, the only way.
+        const ruin = ABANDONED.find((a) => a.districtId === quest.goalTarget
+          && standingAbandonedAt(this.state, a.location) !== undefined);
+        if (ruin) {
+          centerCell(ruin.location);
+          break;
+        }
         this.setUiHint(`build:${quest.goalTarget}`);
         overlay('build');
         break;
+      }
       case 'UpgradeDistrict': {
         const target = built((d) => d.definitionId === quest.goalTarget);
         this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
