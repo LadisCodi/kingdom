@@ -22,7 +22,7 @@ import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
-  buildDurationForCell, canMoveDistrict, districtCount, districtLabel, hasPlacementRestriction,
+  buildDurationForCell, canMoveDistrict, canPlaceAnywhere, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
   requiredPopulation,
 } from './sim/districts';
@@ -4108,12 +4108,13 @@ export class Game {
     return BUILDABLE_DISTRICTS.filter((id) => this.canBuildNow(id)).length;
   }
 
-  /** Under its cap, somewhere legal to put it, and affordable this second. */
+  /** Under its cap, affordable this second, and somewhere legal to put it —
+   *  the map scan last, as the dearest of the three. */
   canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
-    if (validPlacementCells(this.state, this.map, id).length === 0) return false;
-    return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
+    if (!canAfford(this.state.city.wallet, nextBuildCost(this.state, id))) return false;
+    return canPlaceAnywhere(this.state, this.map, id);
   }
 
   /** Per-second Research CTA: some technology can be started. The same shape
