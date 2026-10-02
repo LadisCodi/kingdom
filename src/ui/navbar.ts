@@ -14,6 +14,7 @@ import type { Game, OverlayName } from '../game';
 import type { DoorId } from '../sim/doors';
 import { el } from './format';
 import { iconEl, setCta, type IconName } from './kit';
+import { setAttr } from './domWrite';
 
 // Army lost its tab. An army only matters at the moment it is SENT somewhere,
 // so composition is set inside the expedition sheet and units are trained at
@@ -84,9 +85,9 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
         window.setTimeout(() => button.classList.remove('is-unlocking'), 900);
       }
       button.classList.toggle('is-locked', locked);
-      button.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      setAttr(button, 'aria-disabled', locked ? 'true' : 'false');
       // Its name is hidden with its mark, so a reader hears only that it is shut.
-      button.setAttribute('aria-label', locked ? 'Locked' : def.label);
+      setAttr(button, 'aria-label', locked ? 'Locked' : def.label);
       // The orb shows when the screen behind the tab has
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started

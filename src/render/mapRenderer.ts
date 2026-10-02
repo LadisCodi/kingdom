@@ -752,9 +752,11 @@ export function drawMap(
     if (cw < 1 || ch < 1) return null;
     sightCanvas ??= document.createElement('canvas');
     const gc = sightCanvas;
+    // Each side only ever GROWS: two things of different shapes drawn in
+    // one frame would otherwise reallocate the canvas back and forth.
     if (gc.width < cw * dpr || gc.height < ch * dpr) {
-      gc.width = Math.ceil(cw * dpr);
-      gc.height = Math.ceil(ch * dpr);
+      gc.width = Math.max(gc.width, Math.ceil(cw * dpr));
+      gc.height = Math.max(gc.height, Math.ceil(ch * dpr));
     }
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -803,9 +805,11 @@ export function drawMap(
     if (cw <= 0 || ch <= 0) return;
     rimCanvas ??= document.createElement('canvas');
     const gc = rimCanvas;
+    // Each side only ever GROWS: two things of different shapes drawn in
+    // one frame would otherwise reallocate the canvas back and forth.
     if (gc.width < cw * dpr || gc.height < ch * dpr) {
-      gc.width = Math.ceil(cw * dpr);
-      gc.height = Math.ceil(ch * dpr);
+      gc.width = Math.max(gc.width, Math.ceil(cw * dpr));
+      gc.height = Math.max(gc.height, Math.ceil(ch * dpr));
     }
     const g = gc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);

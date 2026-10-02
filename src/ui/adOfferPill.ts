@@ -15,6 +15,7 @@
 import type { Game } from '../game';
 import { el, formatExact } from './format';
 import { iconEl } from './kit';
+import { setHidden, setText } from './domWrite';
 
 export function mountAdOfferPill(game: Game, root: HTMLElement): void {
   const amount = el('b', { class: 'ad-tab-amount' }, '');
@@ -35,12 +36,12 @@ export function mountAdOfferPill(game: Game, root: HTMLElement): void {
     // Hidden behind any sheet, exactly like the quest and delve pills — the
     // map chrome must not compete with whatever the player just opened.
     const showing = offer !== null && !game.hasOpenSheet() && game.adWatch() === null;
-    root.hidden = !showing;
+    setHidden(root, !showing);
     if (!showing) {
       wasShowing = false;
       return;
     }
-    amount.textContent = `+${formatExact(offer!.reward)}`;
+    setText(amount, `+${formatExact(offer!.reward)}`);
     if (!wasShowing) {
       // Restart the slide only when it genuinely arrives.
       tab.classList.remove('is-in');

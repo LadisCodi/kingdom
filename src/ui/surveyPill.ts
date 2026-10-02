@@ -12,6 +12,7 @@
 import type { Game } from '../game';
 import { el, formatCount } from './format';
 import { progress, setCta } from './kit';
+import { setAttr, setHidden, setText } from './domWrite';
 
 export function mountSurveyPill(game: Game, root: HTMLElement): void {
   const compass = el('span', { class: 'svw-compass', 'aria-hidden': 'true' });
@@ -30,19 +31,19 @@ export function mountSurveyPill(game: Game, root: HTMLElement): void {
 
   const refresh = (): void => {
     const s = game.surveyPillState();
-    root.hidden = s === null;
+    setHidden(root, s === null);
     if (s === null) return;
     const screen = game.surveyScreen();
     const from = s.level === 0 ? 0 : screen.ladder[s.level - 1].cells;
     const to = s.nextAt;
     if (to === null) bar.set(1, formatCount(s.revealed));
     else bar.set((s.revealed - from) / Math.max(1, to - from), `${formatCount(s.revealed)} / ${formatCount(to)}`);
-    seal.textContent = formatCount(s.level);
+    setText(seal, formatCount(s.level));
     // The badge counts the LEVELS waiting, either column.
     const waiting = screen.ladder.filter((r) => r.free.claimable || r.paid.claimable).length;
     widget.classList.toggle('is-ready', waiting > 0);
     setCta(compass, waiting);
-    widget.setAttribute('aria-label', waiting > 0
+    setAttr(widget, 'aria-label', waiting > 0
       ? `${formatCount(waiting)} levels waiting on the Royal Survey`
       : 'The Royal Survey');
   };

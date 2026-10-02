@@ -12,6 +12,7 @@
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { iconEl, setCta } from './kit';
+import { setAttr, setHidden, setStyle, setText } from './domWrite';
 
 export function mountSeasonPill(game: Game, root: HTMLElement): void {
   const name = el('span', { class: 'sea-pill-name' }, '');
@@ -38,19 +39,19 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
     const state = game.seasonPillState();
     // Absent entirely before the first card: the collection is hidden until
     // the player holds one, so its door must be too.
-    root.hidden = state === null || !state.showing;
+    setHidden(root, state === null || !state.showing);
     if (root.hidden) return;
     const info = game.seasonInfo();
-    name.textContent = info.name;
-    count.textContent = `${info.held}/${info.total}`;
+    setText(name, info.name);
+    setText(count, `${info.held}/${info.total}`);
     // A width, not a transform: the trough is a fact about the season and the
     // countdown beside it already moves every tick.
-    fill.style.width = `${Math.round((info.held / info.total) * 100)}%`;
-    left.textContent = info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`;
+    setStyle(fill, 'width', `${Math.round((info.held / info.total) * 100)}%`);
+    setText(left, info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`);
     pill.classList.toggle('is-quiet', !state!.glowing);
     // The orb is the ask (kit/cta.ts), the same one every waiting thing wears.
     setCta(pill, state!.glowing ? 1 : 0);
-    pill.setAttribute('aria-label', state!.glowing
+    setAttr(pill, 'aria-label', state!.glowing
       ? 'A reward is waiting on the season pass'
       : `${info.name} — the season pass`);
   };
