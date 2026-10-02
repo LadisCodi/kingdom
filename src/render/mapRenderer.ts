@@ -633,9 +633,11 @@ export function drawMap(
     const foot = base(box);
     const dx = box.w * 0.18 * jitter(7);
     const dy = box.h * 0.25 * jitter(19);
+    // Half a row back: a cloud is wider than its cell, and one level with a
+    // building or a tree beside it would otherwise spill over its art.
     later(cell, () => clippedTo(clearOfBank, cell, () => {
       drawSprite(ctx, key, foot.x - cw / 2 + sway + dx, foot.y + box.h * CLOUD_SINK - ch + dy, cw, ch);
-    }));
+    }), undefined, { depthBias: -0.5 });
   };
 
   interface Standing {
@@ -709,10 +711,12 @@ export function drawMap(
     cell: Coord, draw: (mark: (r: PlotBox) => void) => void, span = { x: 1, y: 1 },
     extra: {
       rect?: PlotBox; ghost?: (clip: PlotBox[]) => void; occludes?: boolean;
+      /** Added to the depth: below 0 sorts it behind its row. */
+      depthBias?: number;
     } = {},
   ): void => {
     standing.push({
-      depth: (cell.x + span.x / 2) + (cell.y + span.y / 2),
+      depth: (cell.x + span.x / 2) + (cell.y + span.y / 2) + (extra.depthBias ?? 0),
       tie: cell.x + span.x,
       draw,
       rect: extra.rect ?? camera.plotBox(cell, { x: span.x || 1, y: span.y || 1 }),
