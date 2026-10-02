@@ -18,10 +18,11 @@ import {
 } from '../../sim/world/explorers';
 import { hexAt, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
-import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
+import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
 import { formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
-import { drawSprite, spriteAspect } from '../sprites';
+import { drawIcon, drawSprite, spriteAspect } from '../sprites';
+import { WORLD_BUILD } from '../../sim/data/definitions';
 import { hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
 
@@ -49,6 +50,15 @@ const PROP: Record<WorldFeature | 'Mountain', { sprite: string; size: number }> 
   Sanctuary: { sprite: 'landmark_leyspring', size: 0.5 },
   Landmark: { sprite: 'landmark_stones', size: 0.56 },
 };
+
+/** What stands on a held hex: the province's own buildings, standing in
+ *  until hex art exists. A level draws the highest tier at or below it. */
+const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {
+  LoggingCamp: 'sawmill', Homestead: 'farm', StonePit: 'quarry', Fortress: 'barracks',
+};
+const tierOf = (level: number): string => (level >= 8 ? 'l8' : level >= 4 ? 'l4' : 'l1');
+const OUTPOST_SPRITE = 'landmark_watchtower';
+const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
 
 /** The player's colour, then the five rivals', in seat order after it. */
 export const SEAT_COLORS = {
@@ -107,11 +117,15 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawHex(ctx, camera, bh, states[bh.index], c, frame);
   }
 
-  // Borders: every city the player can see, in its owner's colour.
+  // Borders: each kingdom's city and the ground it holds or is claiming, as
+  // far as the player can see it, in its owner's colour.
   for (const seat of source.seats()) {
-    if (states[seat.index] === 'Unknown') continue;
+    const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
+      .filter((i) => states[i] !== 'Unknown');
+    if (region.length === 0) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
-    drawBorder(ctx, camera, [hexAt(seat.index)], color, states[seat.index] === 'Sensed' ? 0.55 : 1);
+    const seen = region.some((i) => states[i] === 'Revealed');
+    drawBorder(ctx, camera, region.map(hexAt), color, seen ? 1 : 0.55);
   }
 
   if (frame.selected !== null) {
@@ -163,13 +177,20 @@ function drawHex(
   } else if (bh.role === 'portal') {
     drawPortal(ctx, c.x, c.y, r);
   } else {
+    const held = frame.source.hexOf(bh.index);
     const props: Array<{ sprite: string; size: number }> = [];
     if (bh.terrain === 'Mountain') props.push(PROP.Mountain);
     for (const f of bh.features) props.push(PROP[f]);
-    const spread = props.length <= 1 ? [0] : props.length === 2 ? [-0.2, 0.2] : [-0.26, 0, 0.26];
+    // An improvement takes the middle; the ground's own props step aside.
+    const standing = held?.improvement ?? null;
+    const scale = standing !== null ? 0.6 : 1;
+    const spread = standing !== null
+      ? [-0.3, 0.3, 0.3].slice(0, props.length)
+      : props.length <= 1 ? [0] : props.length === 2 ? [-0.2, 0.2] : [-0.26, 0, 0.26];
     props.slice(0, 3).forEach((p, i) => {
-      drawProp(ctx, p.sprite, c.x + spread[i] * hw, c.y + r * (0.3 + (i % 2) * 0.12), hw * p.size * (props.length > 1 ? 0.8 : 1));
+      drawProp(ctx, p.sprite, c.x + spread[i] * hw, c.y + r * (0.3 + (i % 2) * 0.12), hw * p.size * scale * (props.length > 1 ? 0.8 : 1));
     });
+    if (held !== null) drawHeld(ctx, camera, held, c, fogState, frame);
   }
 
   if (fogState === 'Sensed') {
@@ -266,6 +287,91 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
     ctx.fill();
     ctx.stroke();
   }
+}
+
+// ------------------------------------------------------------ held ground
+
+function drawHeld(
+  ctx: CanvasRenderingContext2D, camera: HexCamera,
+  held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, frame: WorldFrame,
+): void {
+  const r = camera.hexRadius;
+  const hw = camera.hexWidth;
+  // The Outpost: a small watch-tower on the hex's upper right, faint while
+  // its builder is still at it.
+  ctx.save();
+  if (!held.held) ctx.globalAlpha = 0.45;
+  drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18, hw * 0.16);
+  ctx.restore();
+  if (held.improvement !== null || held.work !== null) {
+    const kind = held.improvement?.kind ?? held.work!.kind;
+    const level = held.improvement?.level ?? 1;
+    ctx.save();
+    if (held.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
+    drawProp(ctx, `${IMPROVEMENT_SPRITE[kind]}_${tierOf(level)}`, c.x, c.y + r * 0.42, hw * 0.62);
+    ctx.restore();
+  }
+  // Cut off from its city: greyed, buildings intact (art-direction §8).
+  if (held.held && !held.active) {
+    ctx.save();
+    hexPath(ctx, c.x, c.y, r);
+    ctx.fillStyle = CUT_OFF;
+    ctx.fill();
+    ctx.restore();
+  }
+  // A builder at work: an hourglass and the time left.
+  const now = frame.now;
+  const busyUntil = !held.held ? held.outpostAt : held.work?.at ?? null;
+  if (busyUntil !== null && fogState === 'Revealed') drawPill(ctx, camera, c.x, c.y - r * 0.62, formatCountdown(Math.max(0, busyUntil - now) / 1000));
+  // The player's own store, ready: a bubble with what it holds.
+  const s = held.stores;
+  if (s !== null && held.held && held.active) {
+    const produces = held.improvement === null ? '' : WORLD_BUILD.improvements[held.improvement.kind].produces;
+    const icon = produces !== '' && s.material >= Math.max(1, s.materialCap * 0.25) ? produces
+      : s.knowledge >= 1 ? 'Knowledge' : null;
+    if (icon !== null) drawBubble(ctx, camera, c.x, c.y - r * 0.55, icon);
+  }
+}
+
+/** A round wooden bubble with an icon, over a hex. */
+function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, icon: string): void {
+  const size = Math.max(16, camera.hexWidth * 0.2);
+  ctx.save();
+  ctx.fillStyle = '#6b4424';
+  ctx.strokeStyle = '#2e1c0e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.72, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - size * 0.2, y + size * 0.62);
+  ctx.lineTo(x, y + size * 0.95);
+  ctx.lineTo(x + size * 0.2, y + size * 0.62);
+  ctx.fill();
+  drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  ctx.restore();
+}
+
+/** A wooden pill with a short text — a countdown over something at work. */
+function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string): void {
+  const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(text).width + fs * 1.4;
+  const ph = fs * 1.6;
+  ctx.fillStyle = '#5a3a20';
+  ctx.strokeStyle = '#2e1c0e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y + 0.5);
+  ctx.restore();
 }
 
 // --------------------------------------------------------------- borders

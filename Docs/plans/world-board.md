@@ -7,6 +7,8 @@
 > What the board IS stays in [`../features/19-world-map.md`](../features/19-world-map.md).
 >
 > **Status: built 2026-10-01**, stages 1–5. Branch `feat/world-map`.
+> Step 2 (control) followed on 2026-10-02 against a local stand-in for the
+> world server: `src/worldServer/` (§9).
 > Mockups: [`../art/ui/mockups/`](../art/ui/mockups) m55–m59.
 
 ## 0. Decisions this plan rests on
@@ -154,3 +156,23 @@
 - **Retuning `worldGen` reshuffles every local board**; the fog survives
   because it indexes hexes. Acceptable until the server freezes the board.
 - The province's era gates count revealed cells; **world hexes never count**.
+
+## 9. The world server stand-in
+
+- **World control is server state**, so it lives behind an async API
+  (`src/worldServer/local.ts`, `WorldServerApi`) the client calls as it will
+  call the real server. The local implementation keeps its state under its
+  own key in the browser, apart from the save.
+- **Its rules are pure functions** of the board and `now`
+  (`src/worldServer/core.ts`): everything due is resolved in time order when
+  the board is read, stores are anchored at the last event and read as
+  anchor + rate × time, so a board read once or every minute agrees.
+- **Five stand-in rivals** claim, build and raise on a hashed schedule, up to
+  `worldBots.maxHexes`. The dev bar's **🎭 as:** plays any of them by hand,
+  free.
+- **The client keeps only its half**: the builder a world build holds
+  (`state.world.builds`, a timer in `advance()`), and the Sanctuaries held,
+  which set the Mana ceiling. It reads the board from the server's snapshot.
+- **Swapping in the real server** replaces `LocalWorldServer` and nothing
+  else.
+

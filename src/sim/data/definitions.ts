@@ -2249,4 +2249,7 @@ export const GAME_VERSION = '0.1.0';
 // v75: the world board. `kingdom.world` (the board and seat, the fog bitset,
 // the explorers out) is additive: a save without it derives its board and
 // seat from its own seed and starts with nothing revealed. No migrator.
-export const SAVE_VERSION = 75;
+// v76: the world board's builders and Sanctuaries — `Builds` and
+// `Sanctuaries` on `kingdom.world`, additive. World control itself is server
+// state and is never in the save.
+export const SAVE_VERSION = 76;

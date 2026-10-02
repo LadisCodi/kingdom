@@ -7,11 +7,13 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: the board, the fog and the explorers are built** (§1–§3, §9;
-> [`../plans/world-board.md`](../plans/world-board.md)): the world door
-> opens the board, a tap on a hex opens its sheet, and Explore sends an
-> explorer. The hex art is the province's, arranged on a hex, until hex art
-> exists. Everything from §4 on is designed, not built.
+> **Status: built against a local stand-in for the world server**
+> ([`../plans/world-board.md`](../plans/world-board.md)): the board, the fog
+> and the explorers (§1–§3, §9); claiming, the chain, inactive hexes,
+> improvements and their stores, landmarks and Sanctuaries (§5, §7, §8).
+> Five stand-in rivals claim and build on their own. The hex art is the
+> province's, arranged on a hex. Armies, attacks, dungeons and the Portal
+> (§4, §6, §8.1, §10) are designed, not built.
 
 ## 1. The board
 
@@ -138,7 +140,10 @@
 - **Adjacency is always required.** A player may only take a hex adjacent to an
   **active** hex of their own.
 - **A neutral hex with nothing on it** is claimed by building an **Outpost**,
-  paying its cost and its time.
+  paying its Gold and a builder's time. Each Outpost costs more than the last,
+  by the hexes already held.
+- **World builds use the province's builders**: an Outpost or an improvement
+  level holds a builder until it stands, like a building in the city.
 - **A neutral hex that still carries buildings** — someone held it and lost it —
   has its Outpost already standing: marching an army there is enough to claim
   it, and its improvements change hands intact.

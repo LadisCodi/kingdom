@@ -110,7 +110,7 @@ import {
 import { boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
-  builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
@@ -138,7 +138,12 @@ import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import { dispatchExplorer, homeIndex } from './sim/world/explorers';
 import { hexAt, hexIndex } from './sim/world/hex';
-import { localWorld, type WorldSource } from './sim/world/source';
+import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
+import type { WorldServerApi } from './worldServer/local';
+import type { Refusal, WorldSnapshot } from './worldServer/types';
+import { emptyBits } from './sim/world/fogBits';
+import { WORLD_BUILD } from './sim/data/definitions';
+import type { WorldImprovement } from './sim/world/types';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -655,6 +660,16 @@ export class Game {
     // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
     setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
+    // The world board is server state: read it every second while it is on
+    // screen, and now and then otherwise (a held Sanctuary moves the Mana
+    // ceiling wherever the player is).
+    this.worldTicks += 1;
+    if (this.worldServer !== null && (this.scene === 'world' || this.worldTicks % 30 === 0)) void this.refreshWorld();
+    for (const done of result.worldBuildsDone) {
+      this.toast(done.what === 'Outpost'
+        ? 'Your Outpost stands — the ground is yours'
+        : `${WORLD_BUILD.improvements[done.what].name} reached level ${formatCount(done.level)}`);
+    }
     // An explorer home says what it found; the board already shows where.
     for (const home of result.explorersHome) {
       this.toast(home.revealed > 0
@@ -4420,9 +4435,142 @@ export class Game {
   /** The world's camera, handed over by main once the canvas exists. */
   worldCamera: HexCamera | null = null;
 
-  /** Where the board comes from (sim/world/source.ts). */
+  private worldTicks = 0;
+  /** The world server, handed over by main — the local stand-in for now
+   *  (worldServer/local.ts). */
+  worldServer: WorldServerApi | null = null;
+  /** What the server last said about the board. */
+  worldView: WorldSnapshot | null = null;
+  /** The dev tool's "play as": the seat world commands are made for, or
+   *  null for the player's own. A rival's commands cost the player nothing. */
+  actingSeat: number | null = null;
+
+  /** Where the board comes from: the server's snapshot once there is one,
+   *  the locally generated board before (sim/world/source.ts). */
   worldSource(): WorldSource {
-    return localWorld(this.state.world.board);
+    return this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(this.state.world.board);
+  }
+
+  /** The seat world commands are made for. */
+  worldSeat(): number {
+    return this.actingSeat ?? this.state.world.board.seat;
+  }
+
+  /** Take a seat on the server's board. A player who has already explored
+   *  a locally generated board asks to keep it. */
+  async connectWorld(): Promise<void> {
+    if (this.worldServer === null) return;
+    const snap = await this.worldServer.join(
+      { id: 'local-player', name: this.state.city.name, prefer: this.state.world.board }, this.now());
+    this.applyWorldSnapshot(snap);
+  }
+
+  /** Ask the server for the board as it stands now. */
+  async refreshWorld(): Promise<void> {
+    if (this.worldServer === null) return;
+    const snap = await this.worldServer.snapshot(this.now());
+    if (snap !== null) this.applyWorldSnapshot(snap);
+  }
+
+  /** Take what the server says. A different board or seat makes the fog
+   *  meaningless, so it starts again; the Sanctuaries held set the Mana
+   *  ceiling. */
+  private applyWorldSnapshot(snap: WorldSnapshot): void {
+    const mine = this.state.world.board;
+    if (snap.board.id !== mine.id || snap.board.seed !== mine.seed || snap.board.seat !== mine.seat) {
+      this.state.world.board = { ...snap.board };
+      this.state.world.revealed = emptyBits();
+      this.state.world.explorers = [];
+    }
+    this.worldView = snap;
+    const board = snapshotWorld(snap).board();
+    this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
+      && board.hexes[h.index].features.includes('Sanctuary')).length;
+    this.notify();
+  }
+
+  /** The line a refused world command shows. */
+  private worldRefusal(why: Refusal): string {
+    const LINES: Record<Refusal, string> = {
+      NoSuchHex: 'There is no such place', NotAdjacent: 'Claim the ground beside it first',
+      Taken: 'Someone holds it already', NeverHeld: 'Nobody can hold this place',
+      NotYours: 'This is not your ground', NotStanding: 'The Outpost is still being built',
+      Busy: 'A builder is already at work there', WrongGround: 'That cannot stand here',
+      MaxLevel: 'It is as high as it goes', Inactive: 'Cut off from your city — reconnect it first',
+      NoBoard: 'The roads to the world are closed',
+    };
+    return LINES[why];
+  }
+
+  /** A builder free for the world, or the line that says why not. */
+  private worldBuilderRefusal(gold: number): string | null {
+    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) return 'Every builder is busy';
+    if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
+    return null;
+  }
+
+  /** Claim a hex with an Outpost: a builder and its Gold. */
+  async doClaimHex(index: number, gold: number): Promise<void> {
+    await this.worldCommand(index, 'Outpost', 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+  }
+
+  /** Build an improvement on a held hex, or raise it a level. */
+  async doBuildHex(index: number, kind: WorldImprovement, level: number, gold: number): Promise<void> {
+    await this.worldCommand(index, kind, level, gold, (asSeat) => this.worldServer!.build(index, kind, this.now(), asSeat));
+  }
+
+  private async worldCommand(
+    index: number, what: 'Outpost' | WorldImprovement, level: number, gold: number,
+    send: (asSeat?: number) => ReturnType<WorldServerApi['claim']>,
+  ): Promise<void> {
+    if (this.worldServer === null) return;
+    // Playing a rival's part: the server does the rest, and nothing is paid.
+    if (this.actingSeat !== null) {
+      const r = await send(this.actingSeat);
+      if (!r.ok) this.toast(this.worldRefusal(r.why));
+      await this.refreshWorld();
+      return;
+    }
+    const refused = this.worldBuilderRefusal(gold);
+    if (refused !== null) {
+      this.toast(refused);
+      this.notify();
+      return;
+    }
+    const r = await send();
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
+    this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
+    playSfx('click');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Collect a held hex's stores into the purse. */
+  async doCollectHex(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.collect(index, this.now(), this.actingSeat ?? undefined);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (this.actingSeat === null) {
+      const haul: Wallet = {};
+      if (r.material !== null) {
+        addToWallet(this.state.city.wallet, r.material.currency, r.material.amount);
+        haul[r.material.currency] = r.material.amount;
+      }
+      if (r.knowledge > 0) {
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', r.knowledge);
+        haul.Knowledge = r.knowledge;
+      }
+      if (Object.keys(haul).length > 0) this.reward(haul);
+    }
+    this.applyWorldSnapshot(r.snapshot);
   }
 
   /** Go out to the world board — behind the Watchtower's door. */
@@ -4435,6 +4583,7 @@ export class Game {
     this.dismiss();
     this.scene = 'world';
     this.worldCamera?.fitBoard();
+    void this.refreshWorld();
     this.notify();
   }
 
@@ -4606,7 +4755,7 @@ export class Game {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
       const max = builderCount(this.state);
-      return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
+      return { kind: 'builders', value: max - Math.min(busyBuilders(this.state), max), max };
     }
     const inspected = this.inspectedDistrictId === null
       ? undefined

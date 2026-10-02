@@ -19,7 +19,7 @@ import { WORLD } from '../data/definitions';
 import { resolve } from '../modifiers';
 import { isTechComplete } from '../research';
 import { randInt } from '../rng';
-import { newId, type ExplorerTrip, type GameState, type WorldState } from '../state';
+import { newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState } from '../state';
 import { techFlat } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
@@ -34,6 +34,8 @@ export function freshWorld(seed: number): WorldState {
     board: { id: `local-${boardSeed.toString(36)}`, seed: boardSeed, seat: randInt(seed, 6, 'world', 'seat') },
     revealed: emptyBits(),
     explorers: [],
+    builds: [],
+    sanctuaries: 0,
   };
 }
 
@@ -155,6 +157,23 @@ export function nextExplorerReturn(state: GameState, after: number): number | nu
     if (at > after && (next === null || at < next)) next = at;
   }
   return next;
+}
+
+// --------------------------------------------------- builders on the board
+
+/** The next world build a builder finishes strictly after `after`, or null.
+ *  A TIMER priced when the server accepted it: the builder comes home then. */
+export function nextWorldBuildDone(state: GameState, after: number): number | null {
+  let next: number | null = null;
+  for (const b of state.world.builds) if (b.finishesAt > after && (next === null || b.finishesAt < next)) next = b.finishesAt;
+  return next;
+}
+
+/** Free the builders whose world build is done by `t`; what they finished. */
+export function finishWorldBuilds(state: GameState, t: number): WorldBuild[] {
+  const done = state.world.builds.filter((b) => b.finishesAt <= t);
+  if (done.length > 0) state.world.builds = state.world.builds.filter((b) => b.finishesAt > t);
+  return done.sort((a, b) => a.finishesAt - b.finishesAt || a.index - b.index);
 }
 
 /** An explorer that came home, and how many hexes its trip added to the

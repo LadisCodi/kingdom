@@ -425,6 +425,9 @@ export interface Mission {
  * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
  * with one boundary — the moment it is home.
  */
+/** What can stand on a held world hex (sim/world/types.ts). */
+export type WorldImprovementId = 'LoggingCamp' | 'Homestead' | 'StonePit' | 'Fortress';
+
 export interface ExplorerTrip {
   id: string;
   /** The hex it was sent to, as a board index. */
@@ -446,6 +449,22 @@ export interface WorldState {
    *  stored; a march under way is derived, not stored. */
   revealed: number[];
   explorers: ExplorerTrip[];
+  /** Builders out on the world board: what each is raising and when it is
+   *  done. The server holds the hex; this is the builder's half, so a
+   *  province build and a world build share the one crew. */
+  builds: WorldBuild[];
+  /** Sanctuaries held and on the chain, as the server last said — each
+   *  raises the Mana ceiling (Docs/features/19-world-map.md §8). */
+  sanctuaries: number;
+}
+
+export interface WorldBuild {
+  /** The board hex, by index. */
+  index: number;
+  /** An Outpost, or an improvement's level. */
+  what: 'Outpost' | WorldImprovementId;
+  level: number;
+  finishesAt: number;
 }
 
 export interface GameState {
@@ -870,3 +889,7 @@ export const builderCount = (state: GameState): number => Math.max(1, state.king
  * constant (1) and neither read the builders.
  */
 export const buildQueueCapacity = (state: GameState): number => builderCount(state);
+
+/** Builders at work: on the city's queue, and out on the world board. */
+export const busyBuilders = (state: GameState): number =>
+  state.city.queue.length + state.world.builds.length;

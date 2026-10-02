@@ -54,6 +54,7 @@ import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { mountExplorerChip } from './ui/world/explorerChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
+import { LocalWorldServer, browserStore } from './worldServer/local';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
@@ -132,6 +133,10 @@ async function boot(): Promise<void> {
   const worldCanvas = document.getElementById('world') as HTMLCanvasElement;
   const worldCamera = new HexCamera(worldCanvas);
   game.worldCamera = worldCamera;
+  // World control is server state. Until the server exists, a local stand-in
+  // plays its part, under its own key (worldServer/local.ts).
+  game.worldServer = new LocalWorldServer(browserStore());
+  void game.connectWorld();
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
 
@@ -186,7 +191,11 @@ async function boot(): Promise<void> {
   });
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
-  const resetSave = () => void saveManager.reset().then(() => location.reload());
+  const resetSave = () => void saveManager.reset().then(() => {
+    // The local world server's board goes with the save it was played from.
+    try { localStorage.removeItem('kingdom.worldServer'); } catch { /* private window */ }
+    location.reload();
+  });
 
   const panelRoot = document.getElementById('panel')!;
   const overlayRoot = document.getElementById('overlay')!;
@@ -641,6 +650,20 @@ async function boot(): Promise<void> {
         game.unlockQueue.push(...Object.keys(UNLOCKS));
         runTick();
       }),
+      // The world server's stand-in rivals: play a turn as any of them, to
+      // set up a board by hand. Their commands cost the player nothing.
+      (() => {
+        const b = button('🎭 as: you', () => {
+          const seats = game.worldView?.seats ?? [];
+          const order = [null, ...seats.filter((s) => !s.you).map((s) => s.seat)];
+          const at = order.indexOf(game.actingSeat);
+          game.actingSeat = order[(at + 1) % order.length] ?? null;
+          const who = game.actingSeat === null ? 'you' : seats.find((s) => s.seat === game.actingSeat)?.name ?? '?';
+          b.textContent = `🎭 as: ${who}`;
+          runTick();
+        });
+        return b;
+      })(),
       button('🗑 reset save', resetSave));
     // A tab that shows and hides the grid, so the tools stay one tap away
     // without covering the map. Whether it is open survives a reload.

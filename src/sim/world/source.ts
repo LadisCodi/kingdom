@@ -9,6 +9,7 @@
 
 import { WORLD, WORLD_GEN } from '../data/definitions';
 import { generateBoard, SEAT_INDICES, type Board } from './board';
+import type { WorldImprovement } from './types';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
@@ -21,12 +22,25 @@ export interface Seat {
   owner: { you: true } | { you: false; name: string; rival: number };
 }
 
+/** A held or claimed hex as the server describes it (worldServer/types.ts
+ *  `HexView`), in the shape the renderer and the sheets read. */
+export interface HexControl {
+  owner: number;
+  held: boolean;
+  outpostAt: number;
+  improvement: { kind: WorldImprovement; level: number } | null;
+  work: { kind: WorldImprovement; toLevel: number; at: number } | null;
+  active: boolean;
+  stores: { material: number; materialCap: number; knowledge: number; knowledgeCap: number } | null;
+}
+
 export interface WorldSource {
   board(): Board;
   seats(): readonly Seat[];
-  /** Who holds a hex, or null when nobody does. Step 1 knows only the
-   *  cities. */
+  /** Whose city or ground a hex is, or null when nobody's. */
   controlOf(index: number): Seat | null;
+  /** What stands on a held or claimed hex, or null. Never a city. */
+  hexOf(index: number): HexControl | null;
 }
 
 const BOARDS = new Map<string, Board>();
@@ -60,5 +74,33 @@ export function localWorld(ref: BoardRef): WorldSource {
     board: () => boardOf(ref),
     seats: () => seats,
     controlOf: (index) => seats.find((s) => s.index === index) ?? null,
+    hexOf: () => null,
+  };
+}
+
+/** The board as the world server last described it: its seats, and every
+ *  hex it says is held or being claimed. */
+export function snapshotWorld(snap: {
+  board: BoardRef;
+  seats: ReadonlyArray<{ seat: number; name: string; you: boolean }>;
+  hexes: ReadonlyArray<HexControl & { index: number }>;
+}): WorldSource {
+  let rival = 0;
+  const seats: Seat[] = snap.seats.map((s) => ({
+    seat: s.seat,
+    index: SEAT_INDICES[s.seat],
+    owner: s.you ? { you: true } : { you: false, name: s.name, rival: rival++ },
+  }));
+  const hexes = new Map(snap.hexes.map((h) => [h.index, h]));
+  return {
+    board: () => boardOf(snap.board),
+    seats: () => seats,
+    controlOf: (index) => {
+      const city = seats.find((s) => s.index === index);
+      if (city !== undefined) return city;
+      const h = hexes.get(index);
+      return h === undefined ? null : seats[h.owner] ?? null;
+    },
+    hexOf: (index) => hexes.get(index) ?? null,
   };
 }

@@ -1,10 +1,10 @@
 // THE DISPATCH SHEET — what a tapped world hex holds, and what can be done
 // there (Docs/features/19-world-map.md §1.2, §3).
 //
-// The hexagon is the tap target; this sheet is where the action happens.
-// Step 1 has one action, Explore. What the hex holds is told only as far as
-// the player has seen it: a Revealed hex names its ground, a Sensed one is
-// shapes in the mist, an Unknown one is nothing at all.
+// The hexagon is the tap target; this sheet is where the action happens:
+// Explore, Claim, Build, Upgrade, Collect. What the hex holds is told only as
+// far as the player has seen it: a Revealed hex names its ground and who
+// holds it, a Sensed one is shapes in the mist, an Unknown one nothing.
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
@@ -13,8 +13,11 @@ import {
 } from '../../sim/world/explorers';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
+import { WORLD_BUILD } from '../../sim/data/definitions';
+import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, sheet, stat } from '../kit';
+import { hexActions, type HexAction } from './worldActions';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
   Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert', Mountain: 'Mountains',
@@ -32,17 +35,91 @@ const ROLE_NAME: Record<BoardHex['role'], string> = {
 
 const FOG_NAME: Record<FogState, string> = { Revealed: 'Revealed', Sensed: 'Sensed', Unknown: 'Unknown' };
 
-/** What the sheet is called: who holds it, or what it is, or that nobody
- *  knows. */
+/** What the sheet is called: whose city, what stands there, what it is,
+ *  or that nobody knows. */
 export function hexTitle(game: Game, bh: BoardHex, fog: FogState): string {
   if (bh.role === 'portal') return 'The Dark Portal';
   const control = game.worldSource().controlOf(bh.index);
-  if (control !== null && control.owner.you) return 'Your city';
+  if (bh.seat !== null && control?.owner.you) return 'Your city';
   if (fog === 'Unknown') return 'Unknown ground';
-  if (control !== null && !control.owner.you) return `${control.owner.name}'s city`;
+  if (bh.seat !== null && control !== null && !control.owner.you) return `${control.owner.name}'s city`;
   if (fog === 'Sensed') return 'Misty ground';
+  const standing = game.worldSource().hexOf(bh.index)?.improvement;
+  if (standing) return WORLD_BUILD.improvements[standing.kind].name;
   const main = bh.features.find((f) => f !== 'FertileLand' && f !== 'Game');
   return main !== undefined ? FEATURE_NAME[main] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
+}
+
+const MATERIAL_OF: Record<string, string> = { Wood: 'Wood', Food: 'Food', Stone: 'Stone' };
+
+/** "Your" or "Lady Maren's". */
+export function seatName(game: Game, seat: number): string {
+  const s = game.worldSource().seats()[seat];
+  return s === undefined || s.owner.you ? 'Your' : `${s.owner.name}'s`;
+}
+
+/** Who holds a hex and how it stands, for the lines under the title. */
+function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
+  if (bh.seat !== null || fog === 'Unknown') return [];
+  const source = game.worldSource();
+  const h = source.hexOf(bh.index);
+  if (h === null) return [];
+  const now = game.now();
+  const mine = h.owner === game.worldSeat();
+  const lines: HTMLElement[] = [];
+  const whose = `${seatName(game, h.owner)} ground`;
+  if (!h.held) {
+    lines.push(el('p', { class: 'wd-line' }, `${whose}, being claimed · the Outpost stands in ${formatCountdown(Math.max(0, h.outpostAt - now) / 1000)}`));
+    return lines;
+  }
+  lines.push(el('p', { class: `wd-line${h.active ? '' : ' is-cut'}` },
+    h.active ? whose : `${whose} — cut off from its city, it makes nothing`));
+  if (h.improvement !== null) {
+    lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.improvements[h.improvement.kind].name} · level ${formatCount(h.improvement.level)}`));
+  }
+  if (h.work !== null) {
+    lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
+  }
+  if (mine && h.stores !== null) {
+    const produces = h.improvement === null ? '' : WORLD_BUILD.improvements[h.improvement.kind].produces;
+    if (produces !== '' && h.stores.materialCap > 0) {
+      lines.push(el('p', { class: 'wd-line' }, `${MATERIAL_OF[produces]} in store ${formatCount(Math.floor(h.stores.material))}/${formatCount(Math.floor(h.stores.materialCap))}`));
+    }
+    if (h.stores.knowledgeCap > 0) {
+      lines.push(el('p', { class: 'wd-line' }, `Knowledge in store ${formatCount(Math.floor(h.stores.knowledge))}/${formatCount(h.stores.knowledgeCap)}`));
+    }
+  }
+  return lines;
+}
+
+/** One button per thing the acting seat can do here. */
+function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
+  const seat = game.worldSeat();
+  const asRival = game.actingSeat !== null;
+  const have = (c: CurrencyId) => (asRival ? Infinity : getWallet(game.state.city.wallet, c));
+  return hexActions(game.worldSource(), seat, bh).map((a: HexAction) => {
+    switch (a.kind) {
+      case 'claim':
+        return action({
+          label: 'Claim', kind: 'primary', cost: { Gold: a.gold }, have,
+          info: `An Outpost · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doClaimHex(bh.index, asRival ? 0 : a.gold),
+        });
+      case 'build':
+        return action({
+          label: a.level === 1 ? 'Build' : 'Upgrade', kind: a.level === 1 ? 'primary' : 'secondary',
+          cost: { Gold: a.gold }, have,
+          info: `${WORLD_BUILD.improvements[a.improvement].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doBuildHex(bh.index, a.improvement, a.level, asRival ? 0 : a.gold),
+        });
+      case 'collect':
+        return action({
+          label: 'Collect', kind: 'gold',
+          disabledReason: a.ready ? undefined : 'Nothing to collect yet',
+          onClick: () => void game.doCollectHex(bh.index),
+        });
+    }
+  });
 }
 
 export function renderDispatchSheet(game: Game): HTMLElement {
@@ -76,8 +153,12 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
 
-  const body = el('div', { class: 'wd-body' }, ...lines);
-  if (index !== home) {
+  lines.push(...controlLines(game, bh, fog));
+  if (game.actingSeat !== null) {
+    lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
+  }
+  const body = el('div', { class: 'wd-body' }, ...lines, ...actionRows(game, bh));
+  if (index !== home && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
     const trip = (2 * distance * marchMsPerHex(state)) / 1000;

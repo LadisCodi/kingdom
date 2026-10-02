@@ -28,6 +28,7 @@ import { newGame } from './newGame';
 import { isStoreFull } from './storage';
 import { freshWorld } from './world/explorers';
 import { readBits } from './world/fogBits';
+import { WORLD_IMPROVEMENTS } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   coordKey, parseCoordKey,
@@ -1036,6 +1037,13 @@ export function serialize(state: GameState, now: number): SaveFile {
           ID: e.id, Target: e.target, Path: e.path,
           DepartedAtUtc: iso(e.departedAt), MsPerHex: e.msPerHex, Radius: e.radius,
         })),
+        // The builders out on the board: a TIMER each, priced when the server
+        // accepted the build, so a builder away during an absence is home on
+        // return.
+        Builds: state.world.builds.map((b) => ({
+          Index: b.index, What: b.what, Level: b.level, FinishesAtUtc: iso(b.finishesAt),
+        })),
+        Sanctuaries: state.world.sanctuaries,
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1607,6 +1615,8 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
   const d = dto as {
     BoardID?: unknown; BoardSeed?: unknown; Seat?: unknown; Revealed?: unknown;
     Explorers?: Array<Record<string, unknown>>;
+    Builds?: Array<Record<string, unknown>>;
+    Sanctuaries?: unknown;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   const walks = (path: unknown): path is number[] => Array.isArray(path) && path.length >= 2
@@ -1630,5 +1640,15 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         msPerHex: e.MsPerHex as number,
         radius: Number.isInteger(e.Radius) ? Math.max(1, e.Radius as number) : 1,
       })),
+    builds: (Array.isArray(d.Builds) ? d.Builds : [])
+      .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
+        && (b.What === 'Outpost' || WORLD_IMPROVEMENTS.includes(b.What as never)))
+      .map((b) => ({
+        index: b.Index as number,
+        what: b.What as GameState['world']['builds'][number]['what'],
+        level: Number.isInteger(b.Level) ? b.Level as number : 1,
+        finishesAt: ms(b.FinishesAtUtc as string),
+      })),
+    sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
   };
 }
