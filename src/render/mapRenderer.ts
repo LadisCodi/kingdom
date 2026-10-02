@@ -19,12 +19,13 @@ import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTrain
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
-  harvestSourceAt, recoversAt, recoveryProgress, stockFraction,
+  recoveryProgress, recoversForSpec, stockFraction,
 } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
+  queueProgress, remainingSeconds, coordKey, districtById, districtCells,
+  type HarvestSourceId,
   type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
@@ -262,8 +263,9 @@ export function drawMap(
 
   // The per-cell resource-state overlay (recovery/tap bar). An exhausted
   // feature already swaps to its own sprite; no extra dim on top of it.
-  const drawResourceState = (cell: Coord, box: PlotBox) => {
-    const source = harvestSourceAt(state, cell);
+  // `source` is the cell's harvest source, which the caller already knows —
+  // asked of the sim it is a scan of the district list per cell per frame.
+  const drawResourceState = (cell: Coord, box: PlotBox, source: HarvestSourceId | null) => {
     if (source === null) return;
     const spec = HARVEST[source];
     const growing = recoveryProgress(state, map, cell, spec, now);
@@ -429,7 +431,10 @@ export function drawMap(
     const c = mid(box);
     const foot = base(box);
     if (lifted) ctx.globalAlpha = 0.28;
-    const exhausted = recoversAt(state, map, district.location, now) !== null;
+    // Its harvest source, as `harvestSourceAt` would say for its own cell.
+    const source = district.state === 'Built' ? def.providesHarvestSource : null;
+    const exhausted = source !== null
+      && recoversForSpec(state, map, district.location, HARVEST[source], now) !== null;
     // Exhausted crop plot gets its own base sprite when available;
     // otherwise the normal sprite (or glyph) plus the withered overlay.
     const exhaustedPlot = district.definitionId === 'FarmLands' &&
@@ -510,7 +515,7 @@ export function drawMap(
       }
       // A district that is itself a resource cell (FarmLands → Crops,
       // lived-in Housing → Taxes): wear/recovery bar.
-      if (def.providesHarvestSource !== null) drawResourceState(district.location, box);
+      if (def.providesHarvestSource !== null) drawResourceState(district.location, box, source);
       // Townhall: villager-training progress bar, and the population count.
       //
       // Population is drawn HERE rather than in the header because the
@@ -579,12 +584,19 @@ export function drawMap(
    * diamond a hole in it) — only those within reach, so the path stays a
    * handful of diamonds. Filled in by the floor pass below.
    */
-  const revealedOnScreen = new Map<string, PlotBox>();
+  const viewW = view.x1 - view.x0 + 1;
+  const viewH = view.y1 - view.y0 + 1;
+  /** By the cell's index in the view's window: no key strings per lookup. */
+  const revealedOnScreen: Array<PlotBox | undefined> = new Array(viewW * viewH);
   const clippedOffRevealed = (cell: Coord, draw: () => void): void => {
     let clear: Path2D | null = null;
     for (let dy = -2; dy <= 2; dy++) {
+      const y = cell.y + dy - view.y0;
+      if (y < 0 || y >= viewH) continue;
       for (let dx = -2; dx <= 2; dx++) {
-        const box = revealedOnScreen.get(coordKey({ x: cell.x + dx, y: cell.y + dy }));
+        const x = cell.x + dx - view.x0;
+        if (x < 0 || x >= viewW) continue;
+        const box = revealedOnScreen[y * viewW + x];
         if (box === undefined) continue;
         if (clear === null) {
           clear = new Path2D();
@@ -842,8 +854,12 @@ export function drawMap(
   // a byte a cell.
   const floor: FloorCell[] = [];
   let floorSig = 0x811c9dc5;
-  const maskW = view.x1 - view.x0 + 1;
-  const maskH = view.y1 - view.y0 + 1;
+  const maskW = viewW;
+  const maskH = viewH;
+  // Which building stands on each cell, so the props below ask a map rather
+  // than scanning the district list per cell.
+  const occupied = new Set<string>();
+  for (const d of state.city.districts) for (const c of districtCells(d)) occupied.add(coordKey(c));
   const mask = new Uint8Array(maskW * maskH);
   const codes = new Uint8Array(maskW * maskH);
   for (let cy = view.y0; cy <= view.y1; cy++) {
@@ -854,7 +870,7 @@ export function drawMap(
       const seen = floorCellOf(state, map, cell, cellRect);
       if (seen === null) { mask[i] = 255; continue; }
       floor.push(seen);
-      if (seen.fog === 'Revealed') revealedOnScreen.set(seen.key, seen.box);
+      if (seen.fog === 'Revealed') revealedOnScreen[i] = seen.box;
       codes[i] = seen.code;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
       floorSig = Math.imul(floorSig ^ seen.code, 16777619);
@@ -876,13 +892,12 @@ export function drawMap(
     // scrim, said again for what stands on it, from the same `payable`.
     const dim = fog === 'Discovered' ? (payable ? FOG_DIM : FOG_DIM * FOG_DIM) : 1;
     const feature = state.features[key];
-    const district = state.city.districts.find((d) => districtOccupies(d, cell));
-    if (district) continue; // drawn (with its overlays) in the district pass
+    if (occupied.has(key)) continue; // drawn (with its overlays) in the district pass
 
     // Features (Forest): normal or exhausted sprite, emoji fallback.
     if (feature) {
       const def = FEATURES[feature];
-      const exhausted = recoversAt(state, map, cell, now) !== null;
+      const exhausted = recoversForSpec(state, map, cell, HARVEST[def.source], now) !== null;
       // A feature that spans cells is ONE THING: drawn once, on its anchor,
       // across its whole block (Docs/features/01-map-and-fog.md §3.1). Every
       // other cell of it draws nothing at all.
@@ -965,7 +980,7 @@ export function drawMap(
       }, size);
     }
 
-    if (fog === 'Revealed') drawResourceState(cell, box);
+    if (fog === 'Revealed') drawResourceState(cell, box, feature ? FEATURES[feature].source : null);
 
     if (fog === 'Discovered') {
       // A cell you can see but cannot buy yet lies under a cushion of cloud
@@ -1005,7 +1020,7 @@ export function drawMap(
     }
     // A tap on the fog flashes the cell white, the last one too as it
     // clears (Game.flashFog).
-    const flash = tapFx.sample(`fog:${key}`)?.flash ?? 0;
+    const flash = tapFx.idle ? 0 : tapFx.sample(`fog:${key}`)?.flash ?? 0;
     if (flash > 0.02) {
       ctx.save();
       ctx.globalAlpha = flash * 0.75;

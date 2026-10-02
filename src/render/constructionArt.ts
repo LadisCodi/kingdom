@@ -11,8 +11,10 @@ import hammerUrl from '../ui/assets/art-hammer.png?url';
 import { loadImage } from './imageLoad';
 import { drawSprite } from './sprites';
 
-const reducedMotion = (): boolean =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** One query, asked once; read on every draw. */
+const reducedMotionQuery = typeof matchMedia === 'function'
+  ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+const reducedMotion = (): boolean => reducedMotionQuery?.matches ?? false;
 
 /**
  * A three-slice: the image's `slice` source pixels at each end kept in
