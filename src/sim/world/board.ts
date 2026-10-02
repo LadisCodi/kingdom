@@ -93,10 +93,25 @@ function rollTerrain(seed: number, k: number, j: number, role: RolledRole, gen: 
   return WORLD_TERRAINS[WORLD_TERRAINS.length - 1];
 }
 
-function rollFeatures(seed: number, k: number, j: number, role: RolledRole, gen: WorldGenDef): WorldFeature[] {
+/** Whether a feature may join a hex of this terrain already holding `held`
+ *  (Docs/plans/world-hex-art.md §1). */
+export function featureFits(gen: WorldGenDef, terrain: WorldTerrain, held: readonly WorldFeature[], f: WorldFeature): boolean {
+  const rule = gen.featureRules[f];
+  if (rule === undefined || !rule.terrains.includes(terrain)) return false;
+  return held.every((h) => !rule.excludes.includes(h) && !(gen.featureRules[h]?.excludes.includes(f) ?? false));
+}
+
+/** Each feature rolled in its order; one that does not fit the terrain or a
+ *  feature already kept is skipped. */
+function rollFeatures(seed: number, k: number, j: number, role: RolledRole, terrain: WorldTerrain, gen: WorldGenDef): WorldFeature[] {
   const chances = gen.featureChance[role];
-  const out = WORLD_FEATURES.filter((f) => rand(seed, 'worldWedge', k, j, 'feature', f) < (chances[f] ?? 0));
-  return out.slice(0, gen.maxFeaturesPerHex);
+  const out: WorldFeature[] = [];
+  for (const f of WORLD_FEATURES) {
+    if (out.length >= gen.maxFeaturesPerHex) break;
+    if (rand(seed, 'worldWedge', k, j, 'feature', f) >= (chances[f] ?? 0)) continue;
+    if (featureFits(gen, terrain, out, f)) out.push(f);
+  }
+  return out;
 }
 
 /**
@@ -114,10 +129,8 @@ function rollWedge(seed: number, gen: WorldGenDef): Map<string, Contents> {
   for (let k = 2; k <= BOARD_RADIUS; k++) {
     for (let j = 0; j < k; j++) {
       const role = roleOf(wedgeHex(k, j, 0)) as RolledRole;
-      local.set(localKey(k, j), {
-        terrain: rollTerrain(seed, k, j, role, gen),
-        features: rollFeatures(seed, k, j, role, gen),
-      });
+      const terrain = rollTerrain(seed, k, j, role, gen);
+      local.set(localKey(k, j), { terrain, features: rollFeatures(seed, k, j, role, terrain, gen) });
     }
   }
   // The city's own hex.

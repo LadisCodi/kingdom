@@ -343,6 +343,25 @@ Contents are rolled at board creation, under rules:
 - Dungeons and Sanctuaries appear **only on the outer ring**; landmarks only
   on the corridors.
 
+### 9.1 Which features roll where
+
+| Feature | Rolls on | Never with |
+|---|---|---|
+| **Forest** | Grassland, Plains, Mountain | Fertile land, Game, any site |
+| **Fertile land** | Grassland, Plains | Forest, any site |
+| **Game** | Grassland, Plains, Desert | Forest, any site |
+| **Dungeon** | Mountain | every other feature |
+| **Sanctuary** | Grassland, Plains | every other feature |
+| **Landmark** | Grassland, Plains, Desert | every other feature |
+
+- Dungeon, Sanctuary and Landmark are **sites**: a site stands alone on its hex.
+- Features roll in the table's order; **one that does not fit the terrain or a
+  feature already rolled is skipped**. At most `maxFeaturesPerHex` (2) are kept.
+- The rules are data (`worldGen.featureRules`), and the inner ring obeys them
+  too.
+- Every combination they allow has its own art
+  ([`../plans/world-hex-art.md`](../plans/world-hex-art.md) §2).
+
 ## 10. The Dark Portal
 
 A recurring timed event on the centre hex. The reference is Infinity Kingdom's

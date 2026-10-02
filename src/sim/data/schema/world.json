@@ -114,6 +114,26 @@
             }
           }
         },
+        "featureRules": {
+          "type": "map",
+          "keysRef": "worldFeature",
+          "of": {
+            "type": "object",
+            "fields": {
+              "terrains": {
+                "type": "list",
+                "of": { "type": "text", "ref": "worldTerrain" },
+                "doc": "The terrains it rolls on."
+              },
+              "excludes": {
+                "type": "list",
+                "of": { "type": "text", "ref": "worldFeature" },
+                "doc": "The features it never shares a hex with. Both sides name each other."
+              }
+            }
+          },
+          "doc": "Where each feature may roll, and what it never shares a hex with (Docs/plans/world-hex-art.md §1). A feature that does not fit is skipped; the inner ring must obey them too."
+        },
         "maxFeaturesPerHex": {
           "type": "int",
           "min": 0,

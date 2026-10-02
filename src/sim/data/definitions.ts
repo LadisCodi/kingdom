@@ -2015,8 +2015,13 @@ export interface WorldGenDef {
   innerRing: readonly WorldHexDef[];
   terrainWeights: Record<RolledRole, Partial<Record<WorldTerrain, number>>>;
   featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
+  /** Where each feature may roll, and what it never shares a hex with. */
+  featureRules: Record<WorldFeature, WorldFeatureRule>;
   maxFeaturesPerHex: number;
 }
+
+/** A feature's place on the board (Docs/plans/world-hex-art.md §1). */
+export interface WorldFeatureRule { terrains: readonly WorldTerrain[]; excludes: readonly WorldFeature[] }
 
 export const WORLD: WorldDef = balance.world;
 export const WORLD_GEN = balance.worldGen as WorldGenDef;

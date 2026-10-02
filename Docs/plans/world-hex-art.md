@@ -6,7 +6,8 @@
 > [`../features/19-world-map.md`](../features/19-world-map.md) §2, §7, §8; the
 > camera is [`../art/art-direction.md`](../art/art-direction.md) §7.1.
 >
-> **Status: planned 2026-10-02, not built.** Mockups m60–m61
+> **Status: planned 2026-10-02.** §1 built the same day; the drawing (§2–§6)
+> is not. Mockups m60–m61
 > ([`../art/ui/mockups/`](../art/ui/mockups)) set the style.
 
 ## 0. Decisions this plan rests on
@@ -122,9 +123,9 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 
 ## 7. Build order
 
-1. **Rules:** `featureRules` in `worldGen` (data, schema, `dataRules.ts`),
-   generation that skips what does not fit, a test that no board breaks a
-   rule over a few hundred seeds.
+1. **Rules — built.** `featureRules` in `worldGen`, generation that skips
+   what does not fit, the chances raised so a board holds as many of each
+   feature as before (`tests/worldBoard.test.ts`).
 2. **Draw by combination:** a lookup from a hex's terrain and features to its
    sprite name, the §3 improvement rule, the §4 zoom rule — first with the
    province sprites standing in.

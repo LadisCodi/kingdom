@@ -75,6 +75,31 @@ describe('the board', () => {
     }
   });
 
+  it('puts every feature only where it may stand, and never beside one it excludes', () => {
+    for (let seed = 0; seed < 500; seed++) {
+      for (const h of generateBoard('t', seed * 7919).hexes) {
+        if (h.terrain === null) continue;
+        h.features.forEach((f, n) => {
+          const rule = WORLD_GEN.featureRules[f];
+          expect(rule.terrains, `${f} on ${h.terrain}`).toContain(h.terrain);
+          for (const other of h.features.slice(0, n)) expect(rule.excludes, `${f} with ${other}`).not.toContain(other);
+        });
+      }
+    }
+  });
+
+  it('skips a feature that does not fit, and keeps the rest', () => {
+    const gen = structuredClone(WORLD_GEN) as typeof WORLD_GEN;
+    for (const role of ['corridor', 'home', 'outer'] as const) gen.featureChance[role] = { Forest: 1, Game: 1 };
+    // Beside a city the §9 fix-up has the last word.
+    const nearCity = new Set(SEATS.flatMap((c) => hexNeighbors(c).map(hexIndex)));
+    for (const h of generateBoard('t', 1, gen).hexes) {
+      if ((h.role !== 'corridor' && h.role !== 'outer') || nearCity.has(h.index)) continue;
+      if (h.terrain === 'Desert') expect(h.features).toEqual(['Game']);
+      else expect(h.features).toEqual(['Forest']);
+    }
+  });
+
   it('puts the player in their seat and the rivals in the rest', () => {
     const world = localWorld({ id: 'test', seed: 0x5eed, seat: 2 });
     const seats = world.seats();
@@ -109,5 +134,20 @@ describe('the world data', () => {
       'world.explorerRevealRadius: is past revealRadiusMax',
     ]));
     expect(errors(b).some((m) => m.startsWith('worldGen.innerRing'))).toBe(true);
+  });
+
+  it('refuses a feature rule that cannot hold', () => {
+    const b = structuredClone(doc) as Record<string, any>;
+    b.worldGen.featureRules.Game.excludes = ['Forest', 'Dungeon', 'Sanctuary', 'Landmark', 'Game', 'FertileLand'];
+    b.worldGen.featureRules.Landmark.terrains = [];
+    delete b.worldGen.featureRules.Sanctuary;
+    b.worldGen.innerRing[0] = { terrain: 'Desert', features: ['Forest'] };
+    expect(errors(b)).toEqual(expect.arrayContaining([
+      'worldGen.featureRules.Game.excludes: cannot exclude itself',
+      'worldGen.featureRules.FertileLand.excludes: Game excludes FertileLand, so FertileLand must exclude Game',
+      'worldGen.featureRules.Landmark.terrains: names no terrain — it could never roll',
+      'worldGen.featureRules.Sanctuary: is missing — every feature says where it rolls',
+      'worldGen.innerRing.0.features.0: a Forest never stands on Desert',
+    ]));
   });
 });

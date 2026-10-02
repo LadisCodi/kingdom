@@ -658,6 +658,30 @@ export const RULES: Readonly<Record<string, Rule>> = {
         }
       }
     }
+    // Where each feature may roll, and what it never shares a hex with
+    // (Docs/plans/world-hex-art.md §1).
+    const rules = (gen.featureRules ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    const excludes = (f: string) => list(rules[f]?.excludes) as string[];
+    for (const f of WORLD_FEATURES) {
+      if (rules[f] === undefined) { push(null, ['worldGen', 'featureRules', f], 'is missing — every feature says where it rolls'); continue; }
+      if (list(rules[f]!.terrains).length === 0) push(null, ['worldGen', 'featureRules', f, 'terrains'], 'names no terrain — it could never roll');
+      for (const other of excludes(f)) {
+        if (other === f) push(null, ['worldGen', 'featureRules', f, 'excludes'], 'cannot exclude itself');
+        else if (!excludes(other).includes(f)) push(null, ['worldGen', 'featureRules', other, 'excludes'], `${f} excludes ${other}, so ${other} must exclude ${f}`);
+      }
+    }
+    list(gen.innerRing).forEach((h, i) => {
+      const hex = (h ?? {}) as Record<string, unknown>;
+      const held = list(hex.features) as string[];
+      held.forEach((f, n) => {
+        const rule = rules[f];
+        if (rule === undefined) return;
+        if (!list(rule.terrains).includes(hex.terrain)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never stands on ${String(hex.terrain)}`);
+        for (const other of held.slice(0, n)) {
+          if (excludes(f).includes(other)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never shares a hex with ${other}`);
+        }
+      });
+    });
     const weights = (gen.terrainWeights ?? {}) as Record<string, Record<string, unknown> | undefined>;
     for (const [role, row] of Object.entries(weights)) {
       if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
