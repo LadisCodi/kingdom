@@ -17,7 +17,7 @@ import {
 import type { TechEffect } from './techEffectRules';
 import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
-import type { RolledRole, WorldFeature, WorldTerrain } from '../world/types';
+import type { RolledRole, WorldFeature, WorldImprovement, WorldTerrain } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
@@ -2008,6 +2008,33 @@ export interface WorldGenDef {
 
 export const WORLD: WorldDef = balance.world;
 export const WORLD_GEN = balance.worldGen as WorldGenDef;
+
+/** One level of a world improvement. */
+export interface WorldImprovementLevel { gold: number; buildSeconds: number; perHour: number; store: number }
+
+export interface WorldImprovementDef {
+  name: string;
+  /** What the hex must be: a Forest, open ground, a Mountain, or anything. */
+  needs: 'Forest' | 'Open' | 'Mountain' | 'Any';
+  /** The material its store fills with; '' for one that makes nothing. */
+  produces: '' | 'Wood' | 'Food' | 'Stone';
+  levels: readonly WorldImprovementLevel[];
+}
+
+/** What is built on a held world hex and what it pays (19 §5.1, §7). */
+export interface WorldBuildDef {
+  outpost: { gold: number; goldGrowth: number; buildSeconds: number };
+  improvements: Record<WorldImprovement, WorldImprovementDef>;
+  innerRingMultiplier: number;
+  featureFoodBonus: number;
+  landmark: { knowledgePerDay: number; store: number };
+  sanctuaryManaCap: number;
+}
+
+export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
+
+/** The local world server's stand-in rivals. */
+export const WORLD_BOTS: { actEveryHours: number; maxHexes: number } = balance.worldBots;
 
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */

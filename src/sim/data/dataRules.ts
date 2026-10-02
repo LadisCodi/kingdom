@@ -15,7 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
-import { WORLD_FEATURES, WORLD_TERRAINS } from '../world/types';
+import { WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -51,7 +51,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
-  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen'] },
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -113,7 +113,7 @@ export type RefKind =
   /** Someone who speaks on the stage (`speakers`). */
   | 'speaker'
   /** A world hex's terrain, and what it may hold (sim/world/types.ts). */
-  | 'worldTerrain' | 'worldFeature';
+  | 'worldTerrain' | 'worldFeature' | 'worldImprovement';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -172,6 +172,7 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
   worldTerrain: WORLD_TERRAINS,
   worldFeature: WORLD_FEATURES,
+  worldImprovement: WORLD_IMPROVEMENTS,
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -662,6 +663,19 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
         push(null, ['worldGen', 'terrainWeights', role], 'every weight is 0 — a hex here could roll no terrain');
       }
+    }
+    const build = (doc.worldBuild ?? {}) as Record<string, unknown>;
+    const improvements = (build.improvements ?? {}) as Record<string, Record<string, unknown>>;
+    for (const id of WORLD_IMPROVEMENTS) {
+      const def = improvements[id];
+      if (def === undefined) { push(null, ['worldBuild', 'improvements', id], 'is missing — every improvement needs its ladder'); continue; }
+      const levels = list(def.levels) as Array<Record<string, unknown>>;
+      if (levels.length === 0) push(null, ['worldBuild', 'improvements', id, 'levels'], 'has no level 1');
+      const makes = def.produces !== '' && def.produces !== undefined;
+      levels.forEach((l, i) => {
+        if (makes && (num(l.perHour) <= 0 || num(l.store) <= 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'makes nothing, or has nowhere to put it');
+        if (!makes && (num(l.perHour) > 0 || num(l.store) > 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'fills a store with nothing');
+      });
     }
     const world = (doc.world ?? {}) as Record<string, unknown>;
     if (num(world.explorerRevealRadius) > num(world.revealRadiusMax)) {

@@ -101,6 +101,91 @@
           "doc": "A rolled hex keeps at most this many features, in the order they are listed."
         }
       }
+    },
+    "worldBuild": {
+      "type": "object",
+      "doc": "What is built on a held world hex and what it pays (Docs/features/19-world-map.md §5.1, §7).",
+      "fields": {
+        "outpost": {
+          "type": "object",
+          "doc": "The claim on a neutral hex. Takes a builder.",
+          "fields": {
+            "gold": { "type": "int", "min": 0, "doc": "Gold for the first Outpost." },
+            "goldGrowth": {
+              "type": "float",
+              "min": 1,
+              "doc": "Each Outpost costs this many times the last, by hexes already held."
+            },
+            "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." }
+          }
+        },
+        "improvements": {
+          "type": "map",
+          "keysRef": "worldImprovement",
+          "doc": "Each improvement and its ladder. One per hex, after the Outpost.",
+          "of": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "text" },
+              "needs": {
+                "type": "text",
+                "options": ["Forest", "Open", "Mountain", "Any"],
+                "doc": "Forest: a Forest feature. Open: no Forest, Dungeon, Sanctuary or Landmark, and not a Mountain. Mountain: Mountain terrain."
+              },
+              "produces": {
+                "type": "text",
+                "options": ["", "Wood", "Food", "Stone"],
+                "emptyOk": true,
+                "doc": "The material its store fills with; empty for a Fortress."
+              },
+              "levels": {
+                "type": "list",
+                "of": {
+                  "type": "object",
+                  "fields": {
+                    "gold": { "type": "int", "min": 0, "doc": "Gold this level costs." },
+                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." },
+                    "perHour": {
+                      "type": "int",
+                      "min": 0,
+                      "doc": "What it adds to its store an hour, while its hex is active."
+                    },
+                    "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+                  }
+                },
+                "doc": "Level 1 is the build."
+              }
+            }
+          }
+        },
+        "innerRingMultiplier": {
+          "type": "float",
+          "min": 1,
+          "doc": "What an improvement on the inner ring makes, times its level’s rate (3 = +200%)."
+        },
+        "featureFoodBonus": {
+          "type": "float",
+          "min": 0,
+          "doc": "The share more a Homestead makes for each of Fertile land and Wild game on its hex."
+        },
+        "landmark": {
+          "type": "object",
+          "doc": "A corridor landmark: a store of Knowledge while its hex is held and active.",
+          "fields": {
+            "knowledgePerDay": { "type": "int", "min": 0 },
+            "store": { "type": "int", "min": 0, "doc": "The most Knowledge it holds before it stops." }
+          }
+        },
+        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Sanctuary adds." }
+      }
+    },
+    "worldBots": {
+      "type": "object",
+      "doc": "The stand-in rivals of the local world server, until real players sit in the other five cities.",
+      "fields": {
+        "actEveryHours": { "type": "float", "min": 0.1, "doc": "On average, how often a rival makes a move." },
+        "maxHexes": { "type": "int", "min": 0, "doc": "The most hexes a rival claims beyond its city." }
+      }
     }
   }
 }

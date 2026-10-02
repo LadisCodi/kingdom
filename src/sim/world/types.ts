@@ -7,6 +7,10 @@
 export const WORLD_TERRAINS = ['Grassland', 'Plains', 'Desert', 'Mountain'] as const;
 export type WorldTerrain = typeof WORLD_TERRAINS[number];
 
+/** What a player builds on a held hex, after its Outpost (19 §7). */
+export const WORLD_IMPROVEMENTS = ['LoggingCamp', 'Homestead', 'StonePit', 'Fortress'] as const;
+export type WorldImprovement = typeof WORLD_IMPROVEMENTS[number];
+
 /** In the order a hex rolls them — and keeps them, when a hex holds more
  *  than `maxFeaturesPerHex` would allow. */
 export const WORLD_FEATURES = ['Forest', 'FertileLand', 'Game', 'Dungeon', 'Sanctuary', 'Landmark'] as const;
