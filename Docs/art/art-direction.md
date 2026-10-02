@@ -36,7 +36,7 @@ nearest-neighbour ever again.**
 
 | | **The city** | **The world board** |
 |---|---|---|
-| Camera | **isometric 2:1** (§3) | **flat, top-down** |
+| Camera | **isometric 2:1** (§3) | **a slight tilt** (§7.1) |
 | The unit | a square cell, drawn as a diamond | a pointy-top hexagon |
 | What it is for | *a diorama you look into* | *a map you read* |
 | Palette | the same | the same |
@@ -44,10 +44,9 @@ nearest-neighbour ever again.**
 - **One palette, one terrain set, one light.** The two scales differ in camera,
   never in colour: a single set of terrain art serves both, and the money saved
   is a second terrain set never made (closes OQ-66).
-- The world board is flat because its job is **counting** — hexes, distance,
-  borders, ownership ([`../features/19-world-map.md`](../features/19-world-map.md)
-  §1.2). An isometric hex board makes distance harder to read, which is the
-  hexagon's only job.
+- The world board's tilt is slight: rows stay straight and every hex is the
+  same size, so hexes, distance, borders and ownership still count at a glance
+  ([`../features/19-world-map.md`](../features/19-world-map.md) §1.2).
 - What carries continuity between them is the palette, the light and the
   silhouettes — not the camera.
 
@@ -132,7 +131,7 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 
 ## 7. The hex board
 
-- **Pointy-top hexagons, flat camera.**
+- **Pointy-top hexagons, a slight tilt** (§7.1).
 - Two zoom registers ([`../features/19-world-map.md`](../features/19-world-map.md)
   §1.2), one asset set serving both:
 
@@ -149,6 +148,21 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
   that, the hex is overloaded and something must be dropped or merged.
 - Ownership reads as a **border colour on the hex edge**, never as a tint over
   the ground — a tinted hex fights the terrain it is meant to identify.
+
+### 7.1 The tilt
+
+- **The ground is squashed to 72 % top to bottom** — the board seen from a
+  little south of overhead. No vanishing point: a far hex is as big as a near
+  one.
+- **Only the ground tilts.** Terrain plates, hex edges, borders, rims and
+  route rings are squashed; castles, trees, mountains, buildings and figures
+  stand upright, their foot on the squashed ground.
+- **A tile has thickness**: a side 16 % of the hex's radius deep under its two
+  lower edges, the right face in shade. Packed earth under revealed and sensed
+  ground, grey under the mist.
+- The row in front hides that side, so it shows only along the near rim of the
+  board, and where explored ground meets the mist.
+- **Hex art is still authored flat** (256 × 296) and squashed when drawn.
 
 ## 8. States the map has to show
 
@@ -218,6 +232,8 @@ Every one of these is a treatment of the same asset, never a second asset.
 | **Headroom per footprint** (§3.1) | how much a building towers | buildings hide each other, or look squat |
 | **Villager height** (48 px) | whether the city reads as a city | people vanish, or dominate |
 | **Hex width** (256 px authored) | how much a hex can hold | content stops fitting at the tactical size |
+| **Board tilt** (72 %) | how much depth the board has | the board reads flat, or distance stops reading |
+| **Tile thickness** (16 % of the radius) | how solid a tile feels | the rim looks like a wall, or not at all |
 | **Terrain busyness** | how much the ground competes | the map feels noisy and nothing pops |
 
 ## 11. Deliberately not in this design
@@ -229,7 +245,8 @@ Every one of these is a treatment of the same asset, never a second asset.
 - **The "manage from afar" 80° camera** that showed the top face of everything.
   That was a rule for pixel tiles and it dies with them.
 - **A second palette for the world board** (§2).
-- **An isometric hex board** (§2).
+- **Perspective on the hex board** — a vanishing point, far hexes smaller
+  (§7.1).
 - **Visible grid lines** on the city ground (§4).
 - **Baked hex illustrations** per feature combination (§7).
 - **Chrome.** It is specified elsewhere and this document does not touch it.
