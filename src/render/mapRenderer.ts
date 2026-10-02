@@ -574,6 +574,11 @@ export function drawMap(
   /** How far below its cell's front corner a cloud's foot sits, in cell
    *  heights — so it covers its own ground rather than standing on it. */
   const CLOUD_SINK = 0.35;
+  /** The patch of mist on a cell the player can pay for: how wide, how flat,
+   *  and how thick before the first tap — it thins with every tap. */
+  const PATCH_SPAN = 1.25;
+  const PATCH_SQUASH = 0.45;
+  const PATCH_ALPHA = 0.45;
 
   /**
    * THE GROUND THE PLAYER CAN SEE, on screen: no cloud of the bank covers it.
@@ -1004,6 +1009,26 @@ export function drawMap(
       // the cell, so only the tips of tall things clear it; a site is left
       // in view.
       if (!payable && !cellHasSiteForView(cell)) later(cell, () => clippedTo(clearOfCushion, cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
+      // A cell the player can pay for keeps a thin patch of mist over what is
+      // on it, so it reads as part of the bank and still shows its contents.
+      if (payable) {
+        const patchKey = variantKey('fog_cloud', cell);
+        const aspect = spriteAspect(patchKey);
+        if (aspect !== null) {
+          const thin = 1 - 0.6 * ((state.fog.progress[key] ?? 0) / FOG.tapsToReveal);
+          const phase = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
+          const sway = Math.sin(clockNow / 3600 + (phase % 628) / 100) * size * 0.01;
+          const pw = box.w * PATCH_SPAN;
+          const ph = pw * aspect * PATCH_SQUASH;
+          const foot = base(box);
+          later(cell, () => clippedTo(clearOfCushion, cell, () => {
+            ctx.save();
+            ctx.globalAlpha *= PATCH_ALPHA * thin;
+            drawSprite(ctx, patchKey, foot.x - pw / 2 + sway, foot.y + box.h * 0.1 - ph, pw, ph);
+            ctx.restore();
+          }));
+        }
+      }
       // Reveal progress only — the total cost is deliberately not shown.
       // Five taps at every ring, so the bar fills in the same five steps
       // wherever the player is standing.
