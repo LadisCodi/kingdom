@@ -50,6 +50,7 @@
 | **Power** | silver and gold keys; card packs and wildcards | stronger heroes and higher relics, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, buy Knowledge, refresh the shop | buys back the player's time |
 | **Breadth** | hero slots, builders | more things at once |
+| **Exploration** | the Survey's paid column ([`25-the-survey.md`](25-the-survey.md)) | more of what exploring finds — never a reveal |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
@@ -95,7 +96,7 @@
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Royal chest** | season | **$9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
 | **Season pass, paid column** | season | **$4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
-| Fog charter | land | $2.99 | a bundle of instant reveals |
+| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems, gold keys, Gold and Star packs, Stardust and Hero XP on every one of 36 levels climbed by cells revealed, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
@@ -359,6 +360,8 @@ One page, refreshed weekly:
 ## 10. Deliberately not in this design
 
 - A real charge, ever.
+- **A reveal for sale.** The fog is bought with Gold, a tap at a time; what
+  money buys is what exploring finds — the Survey.
 - A second premium currency.
 - **A monthly card.** A subscription measured in calendar days over a ladder
   that is not; the Royal chest and the season pass are the season products

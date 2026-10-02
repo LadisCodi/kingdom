@@ -52,9 +52,11 @@
 - **First session:** the column at the First Morning's first reveal, which
   sets a chest in the fog beside it (beats 1.1b–1.1c), and again at the old House found in the fog
   (4.1–4.3); accumulation at the first rent (7.1).
-- **What is sold expresses a layer**: keys and card packs, at published odds
-  ([`features/14-monetization.md`](features/14-monetization.md) §2). Nothing
-  sold expresses the column yet (**OQ-119**).
+- **What is sold expresses the fantasies**: the column through **the
+  Survey**, a ladder climbed by cells revealed with a paid column
+  ([`features/25-the-survey.md`](features/25-the-survey.md)); the layers
+  through keys and card packs, at published odds
+  ([`features/14-monetization.md`](features/14-monetization.md) §2).
 - **Playtest:** the sentence a player should describe the game with —
   *"I'm finding what the fog took from my kingdom."*
 

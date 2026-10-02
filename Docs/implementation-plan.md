@@ -808,6 +808,30 @@ of the dark fog of war.
 - **The tones** go in `palette.ts` as tokens (§8.1's table).
 - **Size:** a day or two of rendering, plus the art sheet.
 
+### Step 12 · The Survey — **designed 2026-10-02**
+
+**What the column sells**: a ladder over the province climbed by cells
+revealed, with a paid column bought once.
+
+- **Design:** [`25-the-survey.md`](features/25-the-survey.md); the door in
+  [`22-progression.md`](features/22-progression.md) §3; the SKU in
+  [`14-monetization.md`](features/14-monetization.md) §2.
+- **A new collection, `survey`**: one entry a level — its cell count and
+  both columns' rewards — with its schema, its line in `balance.ts` and its
+  entry in `COLLECTIONS`. The reward kinds are the season pass's.
+- **The sim:** the level is a pure read of the revealed count, so nothing new
+  is scheduled; the save gains the claimed cells and whether the paid column
+  is bought — additive, a `SAVE_VERSION` bump and no migrator.
+- **The UI:** the season pass's ladder sheet, fed by the Survey; a pill
+  opened with the Store; the seal that flies from a revealed cell to the pill
+  when a level is crossed.
+- **The store:** a `Survey` entry in `store`, bought through the
+  confirmation like the season pass. Drop the Fog charter from the catalogue.
+- **Gate:** a kingdom with the province bought out has reached level 36; one
+  revealed by the harness to day 30 has claimed a level at least every two
+  days (**OQ-121**).
+- **Size:** a day of code, most of it reused from the season pass.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.

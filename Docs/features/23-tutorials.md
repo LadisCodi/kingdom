@@ -176,6 +176,7 @@ last line, as a hint.
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
 | `townhall2` | the Townhall reaches level 2 (quest `ProperCapital` complete) | Isolde | *A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.* | the Townhall |
+| `survey` | the Survey opens, after `townhall2` | Isolde | *And look — the Royal Survey! Every patch we win back from the fog is written in it, and the crown pays for every page. We've filled a few already!* | the Survey pill |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
 | `eras` | 43 cells revealed — Civics chapter II | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |

@@ -54,6 +54,7 @@
 | **Heroes** (nav) | a **Tavern** stands | padlocked — *Build a Tavern to open this* |
 | **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to open this* |
 | **Store** (nav), and the Gems on the plank | the Townhall reaches **level 2** | padlocked — *Raise the Townhall to level 2 to open this* |
+| **Survey** pill ([`25-the-survey.md`](25-the-survey.md)) | the Townhall reaches **level 2**, with the Store | absent |
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
 | **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
