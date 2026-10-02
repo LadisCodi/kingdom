@@ -39,8 +39,8 @@ Every feature below is shaped by these.
 1. **It is played in visits, not sittings** — ~30 minutes a day across two or
    three check-ins. **If a feature needs more, the feature is wrong.**
 2. **Price every reward in a duration of the player's own production**, never in
-   absolute amounts. A tap pays seconds of WORK on what you tapped; a daily
-   chest pays a fraction of the pool. A ladder is relative too: a Wonder's cost
+   absolute amounts. A tap pays seconds of WORK on what you tapped; a
+   Survey chest pays hours of production. A ladder is relative too: a Wonder's cost
    is a curve, not a table.
 3. **There is no offline cap.** An absence is replayed in full; what the city
    makes is bounded by what it can hold — each building's store, the Mana
@@ -75,7 +75,7 @@ One file per feature, in the order a player meets them.
 | 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
 | 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | **rooms built 2026-09-09**; the tick resolver and the Guild are ahead |
 | — | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls. **The resolver 11, 18 and the world map all call** | designed 2026-09-08 |
-| 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest — a 20-day season of 14 rungs, free track and Royal track | built |
+| 12 | [Quests and onboarding](features/12-quests.md) | the quest chain and the authored onboarding it carries | built; **the daily chest is cut 2026-10-02** |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built, **catalogue empty** |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
@@ -83,7 +83,7 @@ One file per feature, in the order a player meets them.
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
 | 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, an army that marches to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, and the weekly Portal dive | designed 2026-09-24 |
-| 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the daily chest pays for showing up, this pays for playing | built |
+| 20 | [The season pass](features/20-season-pass.md) | **a ladder that pays for playing** — 40 levels on the collection's 28-day clock, two reward columns, and the eight generated missions that are the only thing that climbs it; the Survey pays for exploring, this pays for playing | built |
 | 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 | 22 | [Progression](features/22-progression.md) | **how the game opens up** — the doors and what opens each, the five books and the milestones that open them, the Orcs, the Thorned Shrine and the Watchtower as places that open mechanics, heroes by story then by the Tavern, the first pack, and the pace of the tree | built 2026-10-01 |
 | 23 | [Tutorials](features/23-tutorials.md) | the **First Morning** — ten scripted minutes, beat by beat — then one introduction per system, help when stuck, and the input lock | built 2026-10-01 |

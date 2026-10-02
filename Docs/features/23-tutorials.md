@@ -102,7 +102,7 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 7.1 | `TaxDay` | *Our villager pays rent into the House. When the purse shows, gather it — it's theirs to give, and it costs you nothing.* | the House | none | the quest completes |
 | 7.1b | `TaxDay` | *Gold in the coffers! And another gift from the townsfolk — they're very generous today.* | the quest pill | the pill | claimed |
 | 7.2 | `TaxDay` | *That's how a kingdom is kept, I think: clear the fog, gather, build, grow. The townsfolk will always have their next request.* | the quest pill | all | tap |
-| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. And come back tomorrow — I'll have a little something for you.* | the quest pill | all | tap — **the First Morning ends** |
+| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. And come back tomorrow — the barns and the purse fill up by morning, and the well with them.* | the quest pill | all | tap — **the First Morning ends** |
 
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.
@@ -233,7 +233,6 @@ Each points at what it is about.
 | `wounded` | the first soldier comes home wounded | *Our soldiers came home wounded — but not lost, thank goodness. The Infirmary patches them up for less than a new recruit.* |
 | `workshops` | the first workshop is finished | *A workshop! It turns raw goods into fine ones — and our grandest buildings will ask for them.* |
 | `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony — and our grandest buildings ask for it.* |
-| `daily` | the daily chest opens — the day after the kingdom's first | *Welcome back, Your Majesty! I saved you a gift — one for every day you visit. Miss a day and it simply waits for you.* |
 
 ### 4.6 The unlock splash
 

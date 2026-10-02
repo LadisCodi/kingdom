@@ -57,7 +57,6 @@
 | **Survey** pill ([`25-the-survey.md`](25-the-survey.md)) | the Townhall reaches **level 2**, with the Store | absent |
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
-| **Daily chest** pill | the First Morning is over (quest `TaxDay` claimed) **and** it is a later local day than the kingdom's first — the first day is for the city | absent |
 | **Season** pill | as today — a card or a pack held | absent |
 | **The Book of Civics** | always open | — |
 | **The Book of Warfare** | Isolde **hands it over**, once the first lair is discovered and its card opened (`firstLair`, [`23-tutorials.md`](23-tutorials.md) §4.2) | a padlocked bookmark — *Find a lair* |

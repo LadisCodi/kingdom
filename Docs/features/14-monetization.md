@@ -6,7 +6,7 @@
 > [`08-magic.md`](08-magic.md) §6, the two call placements in
 > [`10-heroes.md`](10-heroes.md) §6.2.
 >
-> **Status: three ad placements, the builder offer, the Royal chest and the
+> **Status: three ad placements, the builder offer and the
 > store's first cut are built** — the payer profile and its monthly budget (§3), and five
 > surfaces: builders for Gems, keys for Gems, cards for Gems, the three **card
 > bundles** for simulated dollars (§2.3), Gem packs for simulated dollars,
@@ -38,8 +38,8 @@
   column pays 24 card packs a season before an offer sells a wildcard, and
   **a hero slot is the only slot in a party that is ever sold** — every troop
   slot on the board is open from the first fight ([`combat.md`](combat.md) §3);
-  the daily chest's free track pays Gems every season, and the Royal chest's
-  own gold keys are the same keys an ad already gives away daily.
+  the pass's free column pays Gems every season, and the Survey's paid gold
+  keys are the same keys an ad already gives away daily.
 - **There is no exception, and the season pass does not make one.** Its
   mission board cannot be bought out at any price: the only way to a new
   mission is to finish an old one
@@ -66,25 +66,22 @@
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
   ([`10-heroes.md`](10-heroes.md) §6.1).
-- Faucet: **3,750 up front, ~4,500/month from the chest, and what the
+- Faucet: **3,750 up front, ~8,000 a season from the pass, and what the
   collection pays** — 500 to start, 750 across the quest chain, 500 a first
-  delve clear, **3,000 a daily-chest season** (20 days, so ~4,500 a month —
-  [`12-quests.md`](12-quests.md) §3.2), and **2,000 an album with 25,000 for
-  the whole collection** ([`09-relics.md`](09-relics.md) §5): 35,000 a season
-  to a player who completes it, of the order of a Royal chest, and most of it
-  behind the gold cards a free player rarely finishes. The chest is the floor
-  and the collection is the ceiling; a free player earns three gold keys, or a
-  builder and change, from the chest alone every month.
-
-## 2. The catalogue
-
+  delve clear, **~8,000 in the season pass's free column**
+  ([`20-season-pass.md`](20-season-pass.md) §2), and **2,000 an album with
+  25,000 for the whole collection** ([`09-relics.md`](09-relics.md) §5):
+  35,000 a season to a player who completes it, most of it behind the gold
+  cards a free player rarely finishes. The pass is the floor and the
+  collection is the ceiling; a free player earns about five gold keys a
+  month from the pass alone.
 - Eighteen SKUs in five families.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in `store`. The
   builders and the two keys are built and priced in Gems — a Gem price is not
   a `store` entry. **A `store` entry is real money**; most of them grant Gems, and
-  the ones that do not (the Royal chest, the three card bundles, the banner
-  set) grant a lot for a season or once and never a currency drip. Everything
+  the ones that do not (the two paid columns, the three card bundles, the
+  banner set) grant a lot for a season or once and never a currency drip. Everything
   else is designed, not built.
 
 | SKU | Family | Price | Grants |
@@ -94,7 +91,6 @@
 | **Gold key** | chance | Gems (1,500) | one golden call — built |
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
-| **Royal chest** | season | **$9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
 | **Season pass, paid column** | season | **$4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
 | **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems, gold keys, Gold and Star packs, Stardust and Hero XP on every one of 36 levels climbed by cells revealed, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
@@ -134,11 +130,6 @@
 
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
   buys 50,000. No tier is a better deal than another.
-- **The Royal chest sits outside the ladder on purpose** — $9.99 for 50,000
-  Gems of value, ten times the rate, paid out over fourteen logins in twenty
-  days. A pack is Gems now; the pass is Gems, keys and XP for showing up. Half
-  its value is not Gems at all, which is what keeps the packs worth measuring
-  ([`12-quests.md`](12-quests.md) §3.2).
 - Every Gem sink is priced to the ladder (§9). Anchors: a second builder is
   the $4.99 pack; a silver key is 500 Gems and a gold one 1,500; an hour of
   speed-up is 720 Gems.
@@ -156,13 +147,12 @@
 - **Every pack in one is a star pack**, so every one of them guarantees a gold
   edition. That is what a bundle is for: the gold cards are what the last two
   albums turn on, and they are the slowest thing in the collection to earn.
-- **They grant no Gems**, on the Royal chest's precedent. A bundle hands over
+- **They grant no Gems.** A bundle hands over
   the things, not the currency that buys them, and the packs land unopened —
   the Collection is where a pack is turned over, never the till.
 - **Priced at 1.5× to 2× the Gem ladder**, rising with the rung, against the
-  flat 500 Gems to the dollar (§2.2). Well under the Royal chest's ten times:
-  the season product stays the season product, and the bundles stay
-  measurable against a Gem pack of the same price.
+  flat 500 Gems to the dollar (§2.2), so the bundles stay measurable against
+  a Gem pack of the same price.
 - The row prints **what lands, line by line**, and the confirmation prints the
   same list above the price. A bundle's argument is the hand; it is not
   promised on one screen and left off the other.
@@ -255,7 +245,7 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 - If it ranks, cosmetics become a pipeline decision; if it does not, the
   cosmetic thesis is recorded as weaker than assumed. **OQ-26.**
 
-## 6. Rewarded video: seven placements
+## 6. Rewarded video: six placements
 
 | # | Placement | Reward | Status |
 |---|---|---|---|
@@ -265,7 +255,6 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 | 4 | Double a quest reward | ×2 on claim | designed |
 | 5 | Refresh the event shop | one refresh | designed |
 | 6 | Skip a builder timer | a slice of the remaining build | designed |
-| 7 | A second daily chest | one extra ladder claim | designed |
 
 - Placement 1: the reward is a whole pool, so the Sanctum — which raises the
   cap — raises the value of every future ad with it; the offer only appears
@@ -279,11 +268,11 @@ offer_shown → store_opened → sku_viewed → confirm_opened
   ([`10-heroes.md`](10-heroes.md) §6.2). Like placement 1 they carry a **daily
   cap** rather than a shortage condition, because a call answers no shortage —
   the cap is what keeps them from becoming the whole game.
-- Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §6): no timer
+- Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §5): no timer
   to skip, no slot to reroll, and a Wonder discount would sell permanent
   progression (§1).
 - An offer answers a shortage rather than interrupting: placement 1 only
-  appears below half a pool; 5 and 7 only on a card the player already opened.
+  appears below half a pool; 5 only on a card the player already opened.
 - The reward is priced in the player's own production, never as an absolute,
   so an ad is worth the same fraction of progress at hour 1 and hour 40.
 
@@ -348,8 +337,7 @@ One page, refreshed weekly:
 | Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |
 | How short an album must be for an offer | **3 cards** | `collection.wildcardOfferAt` |
 | The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.albumGems`, `collection.prizeGems` |
-| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `currencies`, `quests`, `delve.firstClearGems`, `daily.gems` |
-| The Royal chest | **$9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `store`, `daily.premium*` |
+| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **~8,000 a pass season** | `currencies`, `quests`, `delve.firstClearGems`, `pass.freeGems` |
 | Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `store`, `packs` · `packTier` · `wildcards` · `wildcardRarity` |
 | How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundleWithdrawHours` |
 | Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
@@ -364,9 +352,10 @@ One page, refreshed weekly:
   money buys is what exploring finds — the Survey.
 - A second premium currency.
 - **A monthly card.** A subscription measured in calendar days over a ladder
-  that is not; the Royal chest and the season pass are the season products
-  ([`12-quests.md`](12-quests.md) §3.3,
-  [`20-season-pass.md`](20-season-pass.md) §2).
+  that is not; the season pass and the Survey are the ladder products
+  ([`20-season-pass.md`](20-season-pass.md) §2,
+  [`25-the-survey.md`](25-the-survey.md)).
+- **A login ladder**, and the Royal chest that was its paid column.
 - **A deadline on a mission, a reroll, and a price on finishing one.** The
   season pass's board is capped rather than timed, and nothing on it is for
   sale at any price — the work is the whole of it (§1).

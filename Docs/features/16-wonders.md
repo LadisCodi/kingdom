@@ -163,8 +163,8 @@ shape is fixed here.
 ### 6.2 An unbounded effect
 
 - Every reward in this game is priced in a duration of the player's own
-  production (a tap pays seconds of work; the daily chest pays a fraction of
-  the pool), so doubling output doubles both sides and nothing is trivialised.
+  production (a tap pays seconds of work; a Survey chest pays hours of
+  production), so doubling output doubles both sides and nothing is trivialised.
 - Exceptions priced in absolute Gold: the fog, the technology tree, the
   landmark claims. A deep Wonder trivialises them. Acceptable because all three
   are one-time and bought long before a Wonder is deep; eras re-pricing the

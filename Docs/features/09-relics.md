@@ -248,10 +248,6 @@ The eight, and which one axis each grows:
   epoch, so catching up is one step however long the absence was.
 - The rollover **announces itself**: a banner names the new season and what
   the cards melted down for.
-- This is a different clock from the daily chest's 20-day season
-  ([`12-quests.md`](12-quests.md) §3), which counts from the player's own
-  first day. Both keep the word: the chest's is *your* season, the
-  collection's is *the* season.
 
 ## 4. The albums and the cards
 
@@ -374,10 +370,10 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
 
 | Tier | Slots | Guarantees | Falls from |
 |---|---|---|---|
-| **Green** | 2 | one 1★ | every ruin room, the daily chest, the pass's free track |
-| **Yellow** | 3 | one 2★ | the daily chest's later rungs, quests |
+| **Green** | 2 | one 1★ | every ruin room, the pass's free track |
+| **Yellow** | 3 | one 2★ | quests |
 | **Rose** | 3 | one 3★ | a depth's boss, the weekly event track |
-| **Blue** | 4 | one 4★ | the pass's paid column, the Royal chest, **the store** |
+| **Blue** | 4 | one 4★ | the pass's paid column, **the store** |
 | **Purple** | 6 | one 5★ | the collection's late milestones, guild chests, **the store** |
 | **Golden** | 1 | — (it rolls **gold only**) | a bottomed ruin, **the store** |
 | **Bronze chest** | 7 | one 3★ · one 4★ | **the vault** — bought with stars |
@@ -406,8 +402,7 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
   The faucet that would renew at volume is still the **repeatable dungeon**,
   designed to follow ([`../implementation-plan.md`](../implementation-plan.md)
   §4) — **OQ-102**. Until it lands the free player sees about 52 packs a
-  season (24 from the pass, 28 from the daily chest) and closes about **two
-  albums of eight**.
+  season, all from the pass's free column (**OQ-88**).
 - The pace to author against is **how many of the eight a player who buys
   nothing completes in a season**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
@@ -449,15 +444,13 @@ sold together for **money** rather than for Gems, on the store's own shelf
   **Purple** packs, which guarantee a 5★ rather than a gold edition; whether a
   bundle also carries a Golden is open
   ([`../plans/collection-eight.md`](../plans/collection-eight.md) §3.1).
-- **A bundle grants no Gems**, on the Royal chest's precedent: it hands over
+- **A bundle grants no Gems**: it hands over
   the things, not the currency that buys them. The packs land **unopened**,
   like every pack that falls — ten bought together are ten to open in the
   Collection, not ten reveals at the till.
 - **It beats the Gem ladder, and the dearer one beats the cheaper one**:
   1.5× at the satchel, 1.8× at the case, 2× at the cabinet, against the flat
   500 Gems to the dollar ([`14-monetization.md`](14-monetization.md) §2.2).
-  Far under the Royal chest's ten times, which is what keeps the season
-  product the season product.
 - **No bundle sells a gold wildcard**, at any price. §9's line holds against
   money exactly as it holds against Gems: the gold slots of the last two
   albums are earned or sent.
@@ -569,9 +562,7 @@ gacha already owns. Mockups: M19–M22 in
 
 ### 11.1 The season pill
 
-- On the map, in the left column, **directly under the daily chest's pill**
-  ([`12-quests.md`](12-quests.md) §3.4) — the two seasons sit together, and
-  the collection's is the second thing a returning player reads.
+- On the map, in the left column of pills, beside the season pass's.
 - A parchment pill with the **season's crest**, its name, `12/72` cards and
   the time left. Tapping it opens the Collection.
 - It **glows while a pack is unopened** and goes quiet once none is; it is

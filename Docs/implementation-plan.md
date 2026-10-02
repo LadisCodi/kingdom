@@ -79,7 +79,7 @@ Two more that are design-visible:
 | Five relics, passives, attunement | [`09`](features/09-relics.md) | **built, and superseded** — the build has relics dropping from ruins, attunement slots, Stardust levels and a Fragments gate; **the design of 2026-09-09 replaces all four with the card collection** (§4, the collection rework). The actives left for the tomes 2026-09-03 |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each one fight resolved on entry ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)), and the fight is the **tick auto-battler** ([`combat.md`](features/combat.md)) with the screen that replays its event stream. Tiers T2–T5 and authored boss formations are what is left |
-| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — the chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09. Orders were cut 2026-09-03 and a recurring generated ask came back 2026-09-15 as the **season pass's mission board**, deliberately not as fetch-quests ([`12`](features/12-quests.md) §6) |
+| The quest chain, the onboarding | [`12`](features/12-quests.md) | **built**. Orders were cut 2026-09-03 and a recurring generated ask came back 2026-09-15 as the **season pass's mission board**, deliberately not as fetch-quests ([`12`](features/12-quests.md) §5). **The daily chest is cut 2026-10-02** and still in the code — Step 13 |
 | **The season pass, and the missions that feed it** | [`20`](features/20-season-pass.md) | **built 2026-09-15** — 40 levels on the collection's 28-day clock, two reward columns, eight generated missions on one board, two issued every eight hours, **active play only**. It is the first build of [`13`](features/13-events.md) §2.4's two-column track. **The dungeon's card packs moved onto it**, which re-cuts OQ-102 without closing it |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
@@ -194,7 +194,7 @@ production beat.
 ### The late-game sink · Wonders — **designed and closed, deliberately unsequenced**
 
 **Replaces generated orders, which were cut on 2026-09-03**
-([`12-quests.md`](features/12-quests.md) §6). Same job, and the measurement that
+([`12-quests.md`](features/12-quests.md) §5). Same job, and the measurement that
 decided it: the game holds **~29,100,000 Gold of sink** — 28,517,245 in fog,
 527,000 in landmark claims, 51,926 in the fifteen upgrades, 6,600 in the tree — and
 **every coin of it is one-time.** The end of the province is the end of the
@@ -831,6 +831,25 @@ revealed, with a paid column bought once.
   revealed by the harness to day 30 has claimed a level at least every two
   days (**OQ-121**).
 - **Size:** a day of code, most of it reused from the season pass.
+
+### Step 13 · Retire the daily chest — **cut 2026-10-02**
+
+**A login ladder expresses no fantasy**, and three two-column ladders were
+one too many: the Survey pays for exploring, the season pass for playing,
+and coming back tomorrow is the stores and the Mana well filled overnight.
+
+- **Its Gems move to the season pass**: the pass's free column gains ~4,200
+  Gems a season (`pass.freeGems`), so the recurring floor stays ~8,000 a
+  season ([`20-season-pass.md`](features/20-season-pass.md) §2). Its Mana
+  goes; the refill ad stays the free path.
+- **Delete** `sim/daily.ts`, its pill and sheet, the `RoyalChest` entry in
+  `store`, the `daily.*` settings (the file keeps `missions`), the `daily`
+  scene and its door in `sim/doors.ts`.
+- **The save:** `state.kingdom.daily` goes — a migrator that drops it,
+  `SAVE_VERSION` bumped. Rungs a player had not claimed are not paid out.
+- **Also update `CLAUDE.md`** if anything there names the chest, and
+  re-run the 30-day harness: the opening loses the chest's daily Mana.
+- **Size:** half a day.
 
 ## 5. Deliberately after everything above
 

@@ -25,11 +25,11 @@
 | **Mana** | time, capped | every tap on the ground · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
-| **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
-| **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
-| **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
+| **Hero XP** | dungeons · the Survey's paid column | hero levels, on any hero | kingdom | no — reads on the roster |
+| **Cards** | packs — every room, every boss, the event, the pass, the Survey, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
+| **Gems** | quests, first clears, the season pass and the Survey (both columns), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
-| **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, a free call's ad, the season pass or the Survey | one call on the golden banner | player | no — a price on a button |
 
 - Eleven wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a

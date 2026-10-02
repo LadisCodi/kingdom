@@ -119,8 +119,8 @@ Two routes pay it, and they share nothing but the prize.
 
 - One counter per route. Spending the videos never closes the ladder, and
   buying pools never costs a video — so the day's ceiling is **ten refills**.
-- Both reset at **00:00 UTC**, for the reason [`12-quests.md`](12-quests.md) §4
-  gives for the chest: the sim may not read a clock it was not handed.
+- Both reset at **00:00 UTC**: the sim may not read a clock it was not
+  handed, so the day is the instant's, never the viewer's.
 - Both roll **lazily**, on the next read, so nothing happens at midnight and a
   session left open across it resolves correctly.
 

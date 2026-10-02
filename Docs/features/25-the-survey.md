@@ -3,9 +3,8 @@
 > **Scope.** The kingdom's **Survey**: one ladder over the whole province,
 > climbed by the cells revealed, with a free column and a paid one. It is what
 > the game sells of its column, the treasure hunt in the fog
-> ([`../overview.md`](../overview.md) § *The fantasies*). The other two
-> ladders are the daily chest ([`12-quests.md`](12-quests.md) §3) and the
-> season pass ([`20-season-pass.md`](20-season-pass.md)).
+> ([`../overview.md`](../overview.md) § *The fantasies*). The other ladder
+> is the season pass ([`20-season-pass.md`](20-season-pass.md)).
 >
 > **Status: designed 2026-10-02, not built.**
 
@@ -17,11 +16,10 @@
   **$9.99, once per kingdom**.
 - **It never resets and never expires.** A level reached stays reached.
 
-**The split against the other two ladders**, one sentence each:
+**The split against the season pass**, one sentence each:
 
 | Ladder | Climbs on | Pays for |
 |---|---|---|
-| The daily chest | days played | showing up |
 | The season pass | mission XP | playing |
 | **The Survey** | **cells revealed** | **exploring** |
 

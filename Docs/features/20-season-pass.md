@@ -17,10 +17,10 @@
 - The paid column is one purchase, `SeasonPass`, **$4.99**, once a season
   ([`14-monetization.md`](14-monetization.md) §2).
 
-**The split against the daily chest.** Both are 28-day two-track ladders that
-pay Gems, and the line between them is one sentence: the **chest pays for
-showing up** (its ladder advances on days played), the **pass pays for
-playing** (its ladder advances on XP).
+**The split against the Survey** ([`25-the-survey.md`](25-the-survey.md)).
+Both are two-column ladders, and the line between them is one sentence: the
+**pass pays for playing** (its ladder advances on XP, every season), the
+**Survey pays for exploring** (its ladder advances on cells revealed, once).
 
 ## 2. The ladder
 
@@ -37,10 +37,12 @@ playing** (its ladder advances on XP).
 
 | Column | Pays |
 |---|---|
-| Free | Green / Yellow / Rose packs, Gems, Gold keys, Stardust — **24 packs a season** |
+| Free | Green / Yellow / Rose packs, Gems, Gold keys, Stardust — **24 packs and ~8,000 Gems a season**, the recurring F2P Gem faucet |
 | Paid | Blue / Purple / Golden packs, more Gems, more keys, more Stardust — a pack every level |
 
 - The pass **adds** Gold keys; the dungeon pays none.
+- **Its free Gems are the game's recurring Gem floor**: ~8,000 a season,
+  about five gold keys a month to a player who buys nothing.
 
 ## 3. The missions
 
@@ -123,8 +125,8 @@ then nothing for ever. That is a welcome, not a supply. The dungeon now feeds
 the collection through the missions it completes, which is the one source that
 answers *playing more*.
 
-This does not close **OQ-102**: 24 free-track packs plus the daily chest's 28
-is ~52 against a target of 200. The pass changes the faucet's shape, not its
+This does not close **OQ-102**: 24 free-track packs a season against a
+target of 200. The pass changes the faucet's shape, not its
 volume, and the repeatable dungeon still owes the bulk.
 
 ## 5. Dials, in the order to reach for them
@@ -147,7 +149,7 @@ volume, and the repeatable dungeon still owes the bulk.
 
 - One sheet. The **board is on top** because it is the thing the player does;
   the ladder is underneath because it is what doing it is for.
-- The ladder is the daily chest's: two columns on the same rows, and the
+- The ladder is two columns on the same rows, and the
   paid column's **head is the buy button** while the pass is unbought.
 - A cell is a button exactly when it can be taken. One padlock per cell.
 - A mission row reads left to right: **what to do · how far · what for**, and
