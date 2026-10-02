@@ -639,6 +639,10 @@
 /* In the left column of pills, under the quest scroll (ui/seasonPill.ts). */
 #season { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
 #season[hidden] { display: none; }
+/* The Survey's pill, under the season's, in the same parchment
+   (Docs/features/25-the-survey.md §4). */
+#survey { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
+#survey[hidden] { display: none; }
 
 .sea-pill {
   display: flex;

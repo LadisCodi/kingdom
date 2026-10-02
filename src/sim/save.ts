@@ -844,6 +844,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         // The season pass (sim/pass.ts). The BOARD travels whole: a mission
         // is its odometer key plus what that odometer read when it was
         // issued, so dropping one loses the only record of where it started.
+        Survey: {
+          ClaimedFree: state.kingdom.survey.claimedFree,
+          ClaimedPaid: state.kingdom.survey.claimedPaid,
+          Owned: state.kingdom.survey.owned,
+        },
         Pass: {
           Season: state.kingdom.pass.season,
           Xp: state.kingdom.pass.xp,
@@ -1195,6 +1200,15 @@ export function deserialize(
     // `Season: -1` matches no real season — so it reads as an empty pass
     // rather than as season 0's, and the first live tick fills the board from
     // the window it lands in.
+    // Additive (v78): a kingdom from before the Survey opens it with nothing
+    // taken — its level is read off the cells it has already revealed.
+    const survey = kingdomDto.Survey as
+      { ClaimedFree?: number[]; ClaimedPaid?: number[]; Owned?: boolean } | undefined;
+    state.kingdom.survey = {
+      claimedFree: [...(survey?.ClaimedFree ?? [])],
+      claimedPaid: [...(survey?.ClaimedPaid ?? [])],
+      owned: survey?.Owned === true,
+    };
     const pass = kingdomDto.Pass as {
       Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
       PaidSeason?: number | null; LastWindow?: number; Week?: number;

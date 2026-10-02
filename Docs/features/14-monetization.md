@@ -92,7 +92,7 @@
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Season pass, paid column** | season | **$4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
-| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems, gold keys, Gold and Star packs, Stardust and Hero XP on every one of 36 levels climbed by cells revealed, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) |
+| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems on every one of 36 levels climbed by cells revealed, with gold keys, Stardust and packs, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |

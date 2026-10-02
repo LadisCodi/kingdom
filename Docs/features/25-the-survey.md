@@ -6,7 +6,8 @@
 > ([`../overview.md`](../overview.md) § *The fantasies*). The other ladder
 > is the season pass ([`20-season-pass.md`](20-season-pass.md)).
 >
-> **Status: designed 2026-10-02, not built.**
+> **Status: built 2026-10-02**, but for the seal that flies to the pill
+> (§4).
 
 ## 1. Shape
 
@@ -45,14 +46,15 @@
 | **36** | **the whole province** |
 
 - **Every cell of both columns pays something.** No rung is empty.
-- Rewards follow the house rule: Gold and materials are **hours of the
-  kingdom's own production**, never amounts.
+- **Two prizes a cell**, which is what a cell shows.
+- The free purse follows the house rule: **minutes of the kingdom's own Gold
+  production**, floored, priced when it is claimed.
 
 | Column | Pays |
 |---|---|
-| Free | production chests, Knowledge, Green and Yellow packs, silver keys; a gold key every fifth level |
-| Paid | Gems, gold keys, Gold and Star packs, Stardust, Hero XP — on every level |
-| **Level 36, both** | the grand prize: the free column's gold keys and Gems, the paid column's Star packs and a pile of Gems |
+| Free | a purse of Gold (10 → 90 minutes up the ladder) and one more: a Green or Yellow pack, a gold key every fifth level, Knowledge, or a silver key |
+| Paid | Gems, rising, and one more: a gold key every third level, Stardust, or a Blue, Purple or Golden pack |
+| **Level 36** | the grand prize: 2,000 Gems and three gold keys free; 10,000 Gems and five gold keys paid |
 
 ## 4. Claiming
 
@@ -86,10 +88,10 @@
 
 | Dial | Value | Key |
 |---|---|---|
-| The levels, in cells revealed | §3 | `survey.levels` › `cells` |
-| What each level pays, both columns | §3 | `survey.levels` › `free`, `paid` |
+| The levels, in cells revealed | §3 | `survey.cells` |
+| What each level pays, both columns | §3 | `survey` › `free*`, `paid*` |
+| The free purse's floor | 5 Gold a minute | `survey.goldFloorPerMinute` |
 | The paid column's price | **$9.99** | `store` › `Survey` |
-| A production chest | hours of the kingdom's production | `survey.levels` › `free` |
 
 ## 8. Deliberately not in this design
 

@@ -40,6 +40,7 @@ export function newGame(map: MapData, now: number): GameState {
         season: -1, xp: 0, claimedFree: [], claimedPaid: [], paidSeason: null,
         live: [], lastWindow: -1, issuedThisWeek: {}, week: -1,
       },
+      survey: { claimedFree: [], claimedPaid: [], owned: false },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
       utcOffsetMinutes: 0,

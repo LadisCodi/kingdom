@@ -90,6 +90,9 @@ export type StoreSkuId =
   /** The season pass's paid column, for one season: it grants nothing on
    *  purchase and opens the levels already reached (sim/pass.ts). */
   | 'SeasonPass'
+  /** The Survey's paid column, once for the whole province: the same shape
+   *  (sim/survey.ts). */
+  | 'Survey'
   /** The collection's three bundles: star packs and wildcards for money
    *  rather than for Gems (Docs/features/09-relics.md §6.1). */
   | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
@@ -469,6 +472,14 @@ export interface GameState {
       /** The Monday-aligned week `issuedThisWeek` belongs to. Stale reads as
        *  an empty quota, the same pull rule as `season`. */
       week: number;
+    };
+    /** THE SURVEY (sim/survey.ts): one ladder over the whole province. Its
+     *  level is derived from the cells revealed; what is stored is what has
+     *  been taken, and whether the paid column is bought. It never resets. */
+    survey: {
+      claimedFree: number[];
+      claimedPaid: number[];
+      owned: boolean;
     };
   };
   player: {

@@ -55,6 +55,14 @@
     "wildcards": 0,
     "wildcardRarity": 0
   },
+  "Survey": {
+    "priceUsd": 9.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0
+  },
   "CardsSatchel": {
     "priceUsd": 4.99,
     "gems": 0,

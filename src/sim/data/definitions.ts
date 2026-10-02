@@ -2071,6 +2071,7 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
+  Survey: { name: 'The Royal Survey', description: 'The Survey\u2019s second column, for the whole province.', sprite: 'season_pass' },
   // The three bundles, a satchel to a cabinet: the same containment ladder the
   // Gem packs walk, in a collector's furniture rather than a treasury's.
   CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
@@ -2118,6 +2119,24 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
 /** Monthly simulated budgets by payer profile, in dollars
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
+
+/** The Survey — Docs/features/25-the-survey.md: one ladder over the whole
+ *  province, climbed by cells revealed. Parallel lists, one per reward kind;
+ *  their length IS the ladder's, and `cells` is what each level asks for. */
+export const SURVEY = balance.survey as {
+  cells: number[];
+  goldFloorPerMinute: number;
+  freeGoldMinutes: number[];
+  freeKnowledge: number[];
+  freeSilverKeys: number[];
+  freeGoldKeys: number[];
+  freePacks: string[];
+  freeGems: number[];
+  paidGems: number[];
+  paidGoldKeys: number[];
+  paidPacks: string[];
+  paidStardust: number[];
+};
 
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
  *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
@@ -2227,4 +2246,5 @@ export const GAME_VERSION = '0.1.0';
 // v76: the fog's treasures (`PaidReveals`, `TreasuresPlaced`, `Treasures` on
 // `kingdom.fogOfWar`), additive.
 // v77: the abandoned buildings (`kingdom.abandoned`), additive.
-export const SAVE_VERSION = 77;
+// v78: the Survey (`kingdom.kingdoms.Survey`), additive.
+export const SAVE_VERSION = 78;

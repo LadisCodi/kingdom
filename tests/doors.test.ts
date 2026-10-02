@@ -146,7 +146,7 @@ describe('the tutorial in the save', () => {
 describe('the doors of the UI', () => {
   it('shuts every door on a new kingdom', () => {
     const state = firstGame();
-    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner'] as const;
+    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'] as const;
     for (const d of doors) expect(isDoorOpen(state, d), d).toBe(false);
   });
 

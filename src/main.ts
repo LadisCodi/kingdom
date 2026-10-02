@@ -35,7 +35,9 @@ import { renderManaSheet } from './ui/manaSheet';
 import { renderKnowledgeSheet } from './ui/knowledgeSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderPassSheet } from './ui/passSheet';
+import { renderSurveySheet } from './ui/surveySheet';
 import { mountSeasonPill } from './ui/seasonPill';
+import { mountSurveyPill } from './ui/surveyPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -147,6 +149,7 @@ async function boot(): Promise<void> {
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountSeasonPill(game, document.getElementById('season')!);
+  mountSurveyPill(game, document.getElementById('survey')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
@@ -194,6 +197,7 @@ async function boot(): Promise<void> {
     world: renderWorldSheet,
     builder: renderBuilderSheet,
     pass: renderPassSheet,
+    survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,

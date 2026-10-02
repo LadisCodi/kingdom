@@ -48,7 +48,7 @@ function packChip(tier: PackTier): HTMLElement {
     : el('img', { class: 'pss-pack', src: url, alt: `${tier} pack`, title: `${tier} pack` });
 }
 
-function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
+export function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
   const chips = (Object.entries(reward) as Array<[CurrencyId, number]>).map(([c, n]) =>
     el('span', { class: 'pss-prize' },
       currencyIcon(c, { size: 'sm' }),

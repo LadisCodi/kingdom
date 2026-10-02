@@ -983,6 +983,29 @@
     ]
   },
   {
+    "id": "survey",
+    "trigger": "doorOpen",
+    "triggerTarget": "survey",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "And look — the Royal Survey! Every patch we win back from the fog is written in it, and the crown pays for every page.",
+        "box": "auto",
+        "point": "ui:survey",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
     "id": "builders",
     "trigger": "overlay",
     "triggerTarget": "builder",

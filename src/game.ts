@@ -99,7 +99,7 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
-  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal,
+  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal, revealedCellCount,
 } from './sim/research';
 import {
   effectiveAutoTapCooldownMs,
@@ -122,6 +122,10 @@ import {
   freeCell, levelProgress, ladderLength as passLadderLength,
   paidCell, passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
 } from './sim/pass';
+import {
+  anySurveyPending, buySurvey, claimSurveyCell, freeSurveyCell, nextLevelCells, paidSurveyCell,
+  surveyLength, surveyLevel, surveyOwned,
+} from './sim/survey';
 import { pickUpTreasure, treasureAt } from './sim/treasures';
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
@@ -130,7 +134,7 @@ import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
+import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -163,6 +167,8 @@ export type OverlayName =
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
   | 'pass'
+  // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
+  | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
   // button (Docs/art/ui-menus-redesign.md §7.27).
   | 'upgrade'
@@ -178,7 +184,7 @@ export type OverlayName =
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', knowledge: 'knowledge', store: 'store',
+  world: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -2272,6 +2278,87 @@ export class Game {
     this.openIap('SeasonPass', 'pass');
   }
 
+  // ---------------------------------------------------------------- the Survey
+
+  /** THE SURVEY'S SHEET, flattened (Docs/features/25-the-survey.md §6): the
+   *  province's count, the next level's, and the two-column ladder. Every
+   *  cell carries its own `claimable` and `claimed`, the pass's rule. */
+  surveyScreen(): {
+    level: number;
+    length: number;
+    revealed: number;
+    total: number;
+    nextAt: number | null;
+    owned: boolean;
+    priceUsd: number;
+    ladder: Array<{
+      level: number;
+      cells: number;
+      reached: boolean;
+      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      paid: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
+    }>;
+  } {
+    const level = surveyLevel(this.state);
+    const owned = surveyOwned(this.state);
+    const { claimedFree, claimedPaid } = this.state.kingdom.survey;
+    return {
+      level,
+      length: surveyLength(),
+      revealed: revealedCellCount(this.state),
+      total: this.map.terrain.size,
+      nextAt: nextLevelCells(this.state),
+      owned,
+      priceUsd: STORE.Survey.priceUsd,
+      ladder: SURVEY.cells.map((cells, i) => {
+        const n = i + 1;
+        const free = freeSurveyCell(this.state, n);
+        const paid = paidSurveyCell(n);
+        return {
+          level: n,
+          cells,
+          reached: n <= level,
+          free: {
+            reward: free.wallet, pack: free.pack,
+            claimed: claimedFree.includes(n),
+            claimable: n <= level && !claimedFree.includes(n),
+          },
+          paid: {
+            reward: paid.wallet, pack: paid.pack,
+            claimed: owned && claimedPaid.includes(n),
+            claimable: owned && n <= level && !claimedPaid.includes(n),
+            locked: !owned,
+          },
+        };
+      }),
+    };
+  }
+
+  /** The Survey's pill: absent until its door opens, glowing while a cell
+   *  waits. */
+  surveyPillState(): { level: number; length: number; revealed: number; nextAt: number | null; glowing: boolean } | null {
+    if (!this.doorOpen('survey')) return null;
+    return {
+      level: surveyLevel(this.state),
+      length: surveyLength(),
+      revealed: revealedCellCount(this.state),
+      nextAt: nextLevelCells(this.state),
+      glowing: anySurveyPending(this.state),
+    };
+  }
+
+  doClaimSurveyCell(level: number, track: 'free' | 'paid'): void {
+    const cell = track === 'free' ? freeSurveyCell(this.state, level) : paidSurveyCell(level);
+    if (claimSurveyCell(this.state, level, track) !== 'Claimed') return;
+    playSfx('questComplete');
+    this.notify();
+    this.reward(cell.wallet);
+  }
+
+  doBuySurvey(): void {
+    this.openIap('Survey', 'survey');
+  }
+
   doClaimMission(id: string): void {
     if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
     playSfx('questComplete');
@@ -2624,6 +2711,8 @@ export class Game {
     // bundle is a hand of packs and wildcards (sim/collection.ts).
     const result = id === 'SeasonPass'
       ? buyPass(this.state, this.now())
+      : id === 'Survey'
+        ? buySurvey(this.state, this.now())
       : bundleOf(id) !== null
         ? buyCardBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
@@ -2637,7 +2726,8 @@ export class Game {
       if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
       else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
       this.setOverlay(back);
-      if (result === 'Purchased' && id !== 'SeasonPass' && bundleOf(id) === null) {
+      if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
+      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null) {
         this.reward({ Gems: STORE[id].gems });
       }
     } else if (result === 'SeasonClosing') {

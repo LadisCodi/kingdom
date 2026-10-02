@@ -822,7 +822,15 @@ of the dark fog of war.
 - **The tones** go in `palette.ts` as tokens (§8.1's table).
 - **Size:** a day or two of rendering, plus the art sheet.
 
-### Step 12 · The Survey — **designed 2026-10-02**
+### Step 12 · The Survey — **BUILT 2026-10-02**, but for the seal
+
+- **Built:** `sim/survey.ts`, `survey.json` (parallel lists, the pass's
+  shape), the `Survey` SKU, the `survey` door and Isolde's introduction, the
+  pill (`ui/surveyPill.ts`) and the sheet (`ui/surveySheet.ts`, the pass's
+  ladder), `tests/survey.test.ts`. SAVE_VERSION 78.
+- **Not yet:** the seal that flies from a revealed cell to the pill when a
+  level is crossed (25-the-survey.md §4).
+
 
 **What the column sells**: a ladder over the province climbed by cells
 revealed, with a paid column bought once.

@@ -26,6 +26,7 @@ import currencies from './game/currencies.json';
 import relics from './game/relics.json';
 import quests from './game/quests.json';
 import pass from './game/pass.json';
+import survey from './game/survey.json';
 import missions from './game/missions.json';
 import collection from './game/collection.json';
 import store from './game/store.json';
@@ -55,6 +56,7 @@ const balance = {
   ...relics,
   "quests": quests,
   ...pass,
+  ...survey,
   ...missions,
   ...collection,
   "store": store,

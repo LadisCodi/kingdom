@@ -18,7 +18,7 @@ import { townhall, type District, type GameState } from './state';
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
   | 'research' | 'build' | 'heroes' | 'relics' | 'store' | 'world'
-  | 'knowledge' | 'banner';
+  | 'knowledge' | 'banner' | 'survey';
 
 /** Has the chain reached this quest — is it active, or past? */
 const questReached = (state: GameState, id: string): boolean => {
@@ -56,6 +56,9 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
     || state.collection.completed.length > 0,
   // The market waits for a capital worth trading with.
   store: (state) => townhall(state).level >= 2,
+  // The Survey opens with the Store: what the column sells is sold there
+  // (Docs/features/25-the-survey.md §5).
+  survey: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
 };
 
@@ -69,6 +72,7 @@ export const DOOR_HINT: Record<DoorId, string> = {
   banner: 'Build a Tavern to open this.',
   relics: 'Clear a lair to open this.',
   store: 'Raise the Townhall to level 2 to open this.',
+  survey: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
 };
 
