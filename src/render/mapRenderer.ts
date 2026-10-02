@@ -442,8 +442,8 @@ export function drawMap(
       return drew;
     };
     // Levelled art comes in TIERS, not one piece per level: a building draws
-    // the highest `_l<n>` it owns at or below its level, so `_l1`, `_l4` and
-    // `_l8` dress all ten levels with three drawings. Walking down is also
+    // the highest `_l<n>` it owns at or below its level, so `_l1`, `_l2`,
+    // `_l3`, `_l4` and `_l8` dress all ten levels with five drawings. Walking down is also
     // what stops a level with no art of its own from falling past the base
     // sprite to the emoji.
     const keys: string[] = [];

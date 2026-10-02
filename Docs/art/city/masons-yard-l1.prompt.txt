@@ -1,18 +1,20 @@
 Generate one image. Square framing, 1:1 aspect ratio.
 
-Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
+Use the FIRST attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
 
 This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game—not marketing key art.
 
 === NEW SCENE ===
-A single small MASON'S YARD, alone, centred — where the crew dresses Stone into blocks.
+A single small MASON'S YARD, alone, centred — where the crew dresses Stone into blocks. It is LEVEL 1 of this building.
 
-An open working yard with a low cream stone shed under a BLUE tiled lean-to roof. In the yard, a heavy timber workbench holding a half-dressed stone block, with a mallet and a broad chisel on it. Three finished square blocks stacked neatly, and a fine pale dust on the ground around them.
+THIS IS LEVEL 1 — A CAMP, NOT YET A BUILDING. What is BUILT is made ONLY OF WOOD: rough round logs, split planks, poles, stakes, bark shingles and a little rope, in warm honey-brown and sun-bleached timber tones. NO dressed stone, NO cream plaster, NO blue roof tiles, NO glass, NO banners, NO gold, no paint. Simple, low, humble and makeshift. The level-3 image you drew earlier in this conversation is this building two upgrades later: yours must look clearly poorer, smaller and earlier than it. Keep what makes this building itself — the grey stone being worked, which is the only stone in it, and keep the game style, chunky readable shapes and saturation of the reference — humble is not drab.
+
+A stone-dressing camp: a plank lean-to over a log block holding a rough grey stone, a wooden mallet and a chisel, a heap of rough stones and a wooden sledge for dragging blocks. It must not look like a carpenter's: stone is what is worked here, not wood.
 
 === NO GROUND — THIS IS CRITICAL ===
 Draw the BUILDING ONLY. Do NOT draw any ground underneath it.
 There must be NO grass, NO soil, NO turf plate, NO raised earth block, NO rocky base, NO island, NO platform and NO terrain of any kind. The game supplies the ground from its own separate terrain tiles; this asset is only what STANDS on that ground.
-The low stone wall, the bushes and the short earth path are part of the building and stay — but they sit directly on nothing, with full transparency beneath and around them.
+The building's own fences, stacks and props are part of the building and stay — but they sit directly on nothing, with full transparency beneath and around them.
 Below the building's footprint there is transparency, not soil. Nothing is cut away and nothing hangs in mid-air: simply do not draw a ground plate at all.
 
 === CAMERA — THIS IS CRITICAL ===
@@ -34,7 +36,7 @@ The single building, centred, with comfortable empty breathing room on all four 
 Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
 The building, its low wall, its bushes and its short path must be the ONLY opaque pixels in the file. Every pixel outside them must be fully transparent, alpha = 0.
 The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
-The building's own cast shadow may stay, softly faded into full transparency.
+No cast shadow and no drop shadow: the game draws its own.
 
 === LOCKED VISUAL STYLE ===
 Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
@@ -62,3 +64,5 @@ No checkerboard pattern painted into the image. No opaque background of any colo
 
 Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.
 Above all: NO GROUND PLATE, and the 2:1 camera ratio exactly.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
