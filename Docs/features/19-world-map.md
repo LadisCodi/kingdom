@@ -163,6 +163,9 @@
   1 min 30 s, a mountain 3 min.
 - **A speed divides one hex's time** and never lengthens it — the hook for a
   hero or technology that is quicker over some ground.
+- **Your explorers and armies show their way**: footprints along the hexes
+  walked, a dashed line along the hexes still to go, ringed on the hex it is
+  bound for — the target out, the city home. A rival's army shows only itself.
 
 ## 5. Control, claiming and connection
 

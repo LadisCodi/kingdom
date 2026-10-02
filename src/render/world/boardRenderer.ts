@@ -173,30 +173,37 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     const at = armyPosition(army, now);
     // A rival's army is seen only where the player can see.
     const near = states[at.from] !== 'Unknown' || states[at.to] !== 'Unknown';
-    if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now);
+    // Only the player's own armies show the way they are taking.
+    if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now, seat?.owner.you === true);
   }
 }
 
 /** Where an army stands at `now`: between two hexes of its path, `f` of the
  *  way, or in its Fortress. */
-function armyPosition(a: ArmyView, now: number): { from: number; to: number; f: number } {
+/** Where an army is at `now`, as `tripPosition` reads an explorer: between
+ *  path[k] and path[next], `f` of the way; still at its hex once it is there. */
+function armyPosition(a: ArmyView, now: number): { from: number; to: number; f: number; step: number; outbound: boolean; moving: boolean } {
   const steps = a.path.length - 1;
-  if (a.phase === 'garrison' || a.phase === 'camp' || steps === 0) return { from: a.target, to: a.target, f: 0 };
+  if (a.phase === 'garrison' || a.phase === 'camp' || steps === 0) {
+    return { from: a.target, to: a.target, f: 0, step: steps, outbound: true, moving: false };
+  }
   const out = a.phase === 'out';
   const start = out ? a.departedAt : (a.at ?? now) - homeboundMs(a.stepMs);
   const at = legPosition(a.stepMs, now - start, out);
-  return { from: a.path[at.k], to: a.path[at.next], f: at.f };
+  return { from: a.path[at.k], to: a.path[at.next], f: at.f, step: Math.min(at.k, at.next), outbound: out, moving: true };
 }
 
 function drawArmy(
   ctx: CanvasRenderingContext2D, camera: HexCamera, a: ArmyView,
-  at: { from: number; to: number; f: number }, color: string, now: number,
+  at: ReturnType<typeof armyPosition>, color: string, now: number, trail: boolean,
 ): void {
   const p = camera.hexToScreen(hexAt(at.from));
   const q = camera.hexToScreen(hexAt(at.to));
   const x = p.x + (q.x - p.x) * at.f;
   const garrisoned = a.phase === 'garrison';
   const y = p.y + (q.y - p.y) * at.f + (garrisoned ? camera.hexRadius * 0.35 * TILT : 0);
+  // The way it has walked and the way still to go, as an explorer's.
+  if (trail && at.moving) drawTrail(ctx, camera, a.path, at.step, at.outbound, { x: p.x + (q.x - p.x) * at.f, y: p.y + (q.y - p.y) * at.f });
   const size = Math.max(16, camera.hexWidth * (garrisoned ? 0.22 : 0.3));
   // A banner in its owner's colour under the soldier, so whose it is reads first.
   ctx.save();
@@ -633,6 +640,33 @@ function tripPosition(
   return { step, from: trip.path[at.k], to: trip.path[at.next], f: at.f, outbound, working };
 }
 
+/**
+ * Behind a marcher, footprints along the hexes it has walked; ahead, a line
+ * along the hexes it will walk, to the hex it is going to — or, on the way
+ * back, to the city — ringed where it ends. `step` is the lower of the two
+ * hexes it is between; `here` is where it stands.
+ */
+function drawTrail(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, path: readonly number[], step: number, outbound: boolean,
+  here: { x: number; y: number },
+): void {
+  const at = (k: number) => camera.hexToScreen(hexAt(path[k]));
+  const last = path.length - 1;
+  const walked: Array<{ x: number; y: number }> = [];
+  const ahead: Array<{ x: number; y: number }> = [here];
+  if (outbound) {
+    for (let k = 0; k <= step; k++) walked.push(at(k));
+    walked.push(here);
+    for (let k = step + 1; k <= last; k++) ahead.push(at(k));
+  } else {
+    for (let k = last; k > step; k--) walked.push(at(k));
+    walked.push(here);
+    for (let k = step; k >= 0; k--) ahead.push(at(k));
+  }
+  drawFootprints(ctx, walked, camera.hexWidth);
+  drawRoute(ctx, ahead, camera.hexWidth);
+}
+
 function drawExplorer(
   ctx: CanvasRenderingContext2D, camera: HexCamera, trip: GameState['world']['explorers'][number], now: number,
 ): void {
@@ -643,25 +677,7 @@ function drawExplorer(
   const y = a.y + (b.y - a.y) * pos.f;
   const unit = camera.hexWidth;
 
-  // Behind it, footprints along the hexes it has walked; ahead, a line along
-  // the hexes it will walk, to the hex it is going to — or, on the way back,
-  // to the city — ringed where it ends.
-  const at = (k: number) => camera.hexToScreen(hexAt(trip.path[k]));
-  const here = { x, y };
-  const last = trip.path.length - 1;
-  const walked: Array<{ x: number; y: number }> = [];
-  const ahead: Array<{ x: number; y: number }> = [here];
-  if (pos.outbound) {
-    for (let k = 0; k <= pos.step; k++) walked.push(at(k));
-    walked.push(here);
-    for (let k = pos.step + 1; k <= last; k++) ahead.push(at(k));
-  } else {
-    for (let k = last; k > pos.step; k--) walked.push(at(k));
-    walked.push(here);
-    for (let k = pos.step; k >= 0; k--) ahead.push(at(k));
-  }
-  drawFootprints(ctx, walked, unit);
-  drawRoute(ctx, ahead, unit);
+  drawTrail(ctx, camera, trip.path, pos.step, pos.outbound, { x, y });
 
   // The scout, gameplay-sized: a figure on the board, not a portrait.
   const fw = Math.max(18, unit * 0.32);
