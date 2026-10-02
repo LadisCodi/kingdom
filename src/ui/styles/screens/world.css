@@ -10,7 +10,7 @@
   touch-action: none;
 }
 #app.in-world #world { display: block; }
-#app.in-world #map { visibility: hidden; }
+#app.in-world #map, #app.in-world .map-layer { visibility: hidden; }
 #app.in-world #quest,
 #app.in-world #daily,
 #app.in-world #season,

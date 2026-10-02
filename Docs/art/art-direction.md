@@ -198,7 +198,7 @@ province under the midday sun. Target:
 | **Revealed** | full colour — the only coloured ground on screen |
 | **Discovered, payable** | a thin see-through veil, ankle-high: terrain desaturated with a pale sheen, tree crowns standing out of it almost whole |
 | **Discovered, not payable** | a low cushion of cloud, almost opaque: terrain hidden, only the tips of tall things poking out |
-| **Undiscovered** | the cloud bank: sculpted cumulus filling everything, rising into a rounded wall about a cell high where it meets the mist, the wall's shadow on the cells in front of it |
+| **Undiscovered** | the cloud bank: one seamless field of sculpted cumulus filling everything, off the map's edge too; toward a seen cell only the tallest puffs remain, so its edge is the outline of the clouds, inside the fogged cell |
 
 - **The clouds are a stylized material**, like the tree canopies: chunky,
   softly bevelled, three flat tones and a clean edge — never photographic,
@@ -208,13 +208,13 @@ province under the midday sun. Target:
 |---|---|
 | Cloud top, sunlit | `#EAE2EB` |
 | Cloud mid | `#BCC2F7` |
-| Cloud shadow, the wall's shadow | `#ABB5F3` |
+| Cloud shadow | `#ABB5F3` |
 | The not-payable cushion | `#DFD8EB` |
 
 - **One cushion a cell.** Every fogged cell carries its own mist on its own
   diamond, dipping a little at the edges, so the grid reads from the dips and
   no line is drawn.
-- **Density is height.** The veil, then the cushion, then the wall: the fog
+- **Density is height.** The veil, then the cushion, then the bank: the fog
   rises step by step away from the cleared ground.
 - **A sighted thing rises out of the cloud tops**
   ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4.1) as a
@@ -226,8 +226,12 @@ province under the midday sun. Target:
   the cell, torn from the middle, with curling wisps lifting away.
 - **A reveal blows it away**: the last wisps lift and fade in under a second,
   and the colour floods back into the cell from its centre.
-- **The bank drifts**, slowly and on the spot, a few pixels on a loop of
-  several seconds; no cloud ever crosses a cell's boundary.
+- **The bank drifts**: the whole field slides slowly across the province,
+  one texture repeat every ten minutes, with a slow boil over it; it never
+  covers a cell the player can see.
+- **Art:** the bank is one tileable texture
+  (`src/render/fog/cloud_tile.webp`; original and prompt in
+  [`fog/`](fog/)); the cushion and the payable patch are sprites.
 - **What is drawn over the fog stays over it**: the reach line, the lair's
   ground, the progress bar of a tap.
 

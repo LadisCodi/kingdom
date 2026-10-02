@@ -234,15 +234,16 @@ export class Camera {
    * Under `'iso'` the viewport's rectangle is a DIAMOND in cell space, so the
    * four screen corners are unprojected and the box is taken around them —
    * a renderer walking rows would otherwise miss the cells at the left and
-   * right points of the screen.
+   * right points of the screen. `pad` grows the viewport by that many screen
+   * px on every side first.
    */
-  visibleCells(margin = 1): { x0: number; y0: number; x1: number; y1: number } {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
+  visibleCells(margin = 1, pad = 0): { x0: number; y0: number; x1: number; y1: number } {
+    const w = this.canvas.clientWidth + pad;
+    const h = this.canvas.clientHeight + pad;
     const corners = [
-      this.screenToCellExact(0, 0),
-      this.screenToCellExact(w, 0),
-      this.screenToCellExact(0, h),
+      this.screenToCellExact(-pad, -pad),
+      this.screenToCellExact(w, -pad),
+      this.screenToCellExact(-pad, h),
       this.screenToCellExact(w, h),
     ];
     const xs = corners.map((c) => c.x);
