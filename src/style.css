@@ -43,6 +43,10 @@ body {
    CSS size the width/height attributes drive layout (the DPR backing-store
    resize would grow it every frame). Explicit CSS size breaks that loop. */
 #map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+/* The floor and the cloud bank, under #map (render/mapRenderer.ts mapLayers). */
+.map-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+/* The floor is bigger than the frame and slides under it (drawFloor). */
+.map-floor { inset: 0 auto auto 0; transform-origin: 0 0; will-change: transform; }
 #ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; }
 #ui > * { pointer-events: auto; }
 

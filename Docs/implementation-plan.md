@@ -783,14 +783,14 @@ abandoned and repaired.
 
 ### Step 11 · The sea of clouds — **BUILT 2026-10-02, but for the wisps**
 
-- **Built:** the bank (`fog_cloud`, three variants) and its wall (`fog_wall`,
-  two) on every cell the fog hides and past the map's edge, flattened,
-  jittered by the cell's hash and swaying on the spot; the payable veil (the
+- **Built:** the bank, one shader pass over a tileable cloud texture cut to
+  a byte-a-cell mask (`src/render/fog/fogLayer.ts`), on its own WebGL canvas
+  between the floor's and the map's; the
+  payable patch (`fog_cloud`, three variants) on its cell; the payable veil (the
   ground drained with a `saturation` composite, then a pale sheen thinned a
   fifth per tap); the cushion (`fog_cloud_cushion`) over a cell the player
   cannot buy yet, a site left in view; props paled rather than darkened;
-  silhouettes in the cloud-shadow tone. Measured at ~100 fps at the closest
-  and the furthest zoom, without the cached layer.
+  silhouettes in the cloud-shadow tone.
 - **Not yet:** the curling wisps of a tear and of a reveal, and the colour
   flooding back — the white flash is a cream puff of the cloud's tone for now.
 
