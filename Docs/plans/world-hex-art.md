@@ -107,6 +107,9 @@ A hex is **a terrain plate** under **at most one combination sprite**.
   province building does.
 - **The Outpost** is a small watch-tower at the hex's upper-right corner,
   always; it is never part of a combination.
+  - Three variants (`whex_outpost[_n]`), picked like a combination's, and a
+    scaffolded tower (`whex_outpost_building`) while its builder is at it.
+  - Drawn 0.24 of the hex's width, on a 256 px canvas.
 
 ## 4. The strategic zoom
 
@@ -140,8 +143,8 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 2. **Draw by combination — built.** `src/render/world/hexArt.ts` names the
    art of a hex (`tests/hexArt.test.ts`); the renderer draws it, or the
    province's sprites standing in.
-3. **Art — built.** 30 combination sprites and 12 improvement sprites in ten
-   ChatGPT sheets, against m60–m61 and the shipped sprites
+3. **Art — built.** 30 combination sprites, 12 improvement sprites and 4
+   Outpost towers in eleven ChatGPT sheets, against m60–m61 and the shipped sprites
    ([`../art/art-direction.md`](../art/art-direction.md) §9). Prompts, the
    original sheets and the cutter are in [`../art/world/`](../art/world).
 

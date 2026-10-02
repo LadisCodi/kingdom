@@ -25,7 +25,9 @@ import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import { COMBO_SPRITE, hexArt, pickVariant, type HexCombo } from './hexArt';
+import {
+  COMBO_SPRITE, OUTPOST_BUILDING_SPRITE, OUTPOST_SPRITE, hexArt, pickVariant, type HexCombo,
+} from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
 
@@ -68,9 +70,12 @@ const standInTier = (level: number): string => (level >= 8 ? 'l8' : level >= 4 ?
 /** Hex art's foot line: the bottom of its canvas, a little in front of the
  *  hex's centre (world-hex-art.md §2), as a share of the tilted radius. */
 const FOOT = 0.62;
+/** The Outpost's tower, as a share of the hex's width. */
+const OUTPOST_WIDTH = 0.24;
 /** Below this many pixels a hex, the strategic zoom (world-hex-art.md §4). */
 const STRATEGIC_PX = 70;
-const OUTPOST_SPRITE = 'landmark_watchtower';
+/** The province's watch-tower stands in until the Outpost has its own art. */
+const OUTPOST_STAND_IN = 'landmark_watchtower';
 const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
 
 /** The player's colour, then the five rivals', in seat order after it. */
@@ -272,7 +277,7 @@ function drawHex(
       ctx.restore();
     }
     if (art.front !== null) drawCombo(ctx, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
-    if (held !== null) drawHeld(ctx, camera, held, c, fogState, frame);
+    if (held !== null) drawHeld(ctx, camera, key, held, c, fogState, frame);
   }
 
   if (fogState === 'Sensed') {
@@ -437,20 +442,34 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
 
 // ------------------------------------------------------------ held ground
 
+/** The Outpost's watch-tower at the hex's upper-right corner: its own art —
+ *  scaffolded while the builder is at it — or the province's tower, faint
+ *  while it is building. */
+function drawOutpost(
+  ctx: CanvasRenderingContext2D, built: boolean, key: number, c: { x: number; y: number }, hw: number, r: number,
+): void {
+  const x = c.x + hw * 0.28;
+  const footY = c.y - r * 0.12 * TILT;
+  if (spriteUrl(OUTPOST_SPRITE) !== null) {
+    const sprite = built || spriteUrl(OUTPOST_BUILDING_SPRITE) === null ? variant(OUTPOST_SPRITE, key) : OUTPOST_BUILDING_SPRITE;
+    drawProp(ctx, sprite, x, footY, hw * OUTPOST_WIDTH);
+    return;
+  }
+  ctx.save();
+  if (!built) ctx.globalAlpha = 0.45;
+  drawProp(ctx, OUTPOST_STAND_IN, x, footY, hw * 0.16);
+  ctx.restore();
+}
+
 function drawHeld(
-  ctx: CanvasRenderingContext2D, camera: HexCamera,
+  ctx: CanvasRenderingContext2D, camera: HexCamera, key: number,
   held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, frame: WorldFrame,
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
   // The Outpost: a small watch-tower on the hex's upper right, faint while
   // its builder is still at it.
-  if (hw >= STRATEGIC_PX) {
-    ctx.save();
-    if (!held.held) ctx.globalAlpha = 0.45;
-    drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18 * TILT, hw * 0.16);
-    ctx.restore();
-  }
+  if (hw >= STRATEGIC_PX) drawOutpost(ctx, held.held, key, c, hw, r);
   // Cut off from its city: greyed, buildings intact (art-direction §8).
   if (held.held && !held.active) {
     ctx.save();

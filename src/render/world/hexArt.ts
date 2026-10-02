@@ -57,6 +57,11 @@ export const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {
   Fortress: 'whex_fortress',
 };
 
+/** The Outpost's watch-tower at the hex's corner — `whex_outpost[_n]` — and
+ *  the same tower while its builder is still at it. */
+export const OUTPOST_SPRITE = 'whex_outpost';
+export const OUTPOST_BUILDING_SPRITE = 'whex_outpost_building';
+
 /** Three art tiers across an improvement's five levels. */
 export const improvementTier = (level: number): string => (level >= 5 ? 'l5' : level >= 3 ? 'l3' : 'l1');
 

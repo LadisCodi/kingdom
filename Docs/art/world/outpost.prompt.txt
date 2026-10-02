@@ -1,0 +1,19 @@
+WORLD HEX SPRITES — THE OUTPOST WATCH-TOWER, for the game "Kingdom". Follow this file exactly.
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references.
+- ref-improvements.png = buildings ALREADY APPROVED for the world board (logging camps and a fortress). THE STYLE IS LOCKED ON THEM: same render, same blue slate roofs, cream stone, golden timber, same light from above, same camera, same saturation.
+- approved-sheet1.png = two approved hex sprites, for the scale of trees and rocks.
+
+WHAT IT IS
+An OUTPOST is the small watch-tower a player raises on a hex of the world map to claim it. It stands at the CORNER of the hex, next to whatever else is there, so it is SMALL and NARROW: a slim tower, about twice as tall as it is wide, a footprint no bigger than one of the trees in approved-sheet1.png. It must read at a glance when shown only 30 px wide: one clear silhouette, no tiny details.
+- NO ground plate, NO grass patch, NO base platform, NO drop shadow. Only the tower and what touches its foot (a couple of stones or a crate at most), on full transparency.
+- Camera: from a little south of overhead, seen from a high three-quarter angle, standing upright, as the buildings in ref-improvements.png.
+- Its pennant is plain CREAM cloth with no emblem: the game shows who owns it with a coloured border.
+
+THE SHEET: one landscape image, 1536x1024, FOUR towers in a 2x2 grid (top-left, top-right, bottom-left, bottom-right), each centred in its quadrant and about 380 px tall. Nothing may cross the vertical or horizontal midline: a clear 60 px band of transparency along both midlines.
+- TOP-LEFT — OUTPOST v1: a square timber watch-tower on a low cream-stone base, a small blue slate pyramid roof, a lookout platform with a railing under the roof, a cream pennant on a pole.
+- TOP-RIGHT — OUTPOST v2: a round cream-stone tower, a blue conical roof, a small wooden balcony, a cream pennant.
+- BOTTOM-LEFT — OUTPOST v3: a tall timber tower on four splayed legs with cross-braces, a small hut at the top with a blue roof, a ladder, a cream pennant.
+- BOTTOM-RIGHT — OUTPOST UNDER CONSTRUCTION: the tower of v1 half built — the stone base done, timber frame rising inside wooden scaffolding, a stack of planks, no roof yet, no pennant.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
