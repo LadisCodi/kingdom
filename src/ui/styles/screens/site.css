@@ -5,75 +5,6 @@
  * something you FOUND. So the art is large, the promise is a headline, and
  * there is exactly one thing to do. */
 
-.site { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
-
-/* The site in a square parchment vignette, the words beside it (M11). */
-.site-head { display: flex; align-items: center; gap: calc(var(--px) * 12); }
-.site-art {
-  flex: none;
-  width: calc(var(--px) * 96);
-  height: calc(var(--px) * 96);
-  padding: calc(var(--px) * 8);
-  box-sizing: border-box;
-  object-fit: contain;
-  border-radius: var(--radius-sm);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3);
-}
-.site-art--glyph { display: grid; place-items: center; font-size: calc(var(--px) * 34); }
-
-.site-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
-.site-kind { font-size: var(--text-body); color: var(--ink-muted); }
-
-/* The promise, stated once and large: this is what paid fog buys. */
-.site-gift {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 8) calc(var(--px) * 10);
-  border-radius: var(--radius-sm);
-  background: var(--parchment-shade);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-}
-
-.site-desc { font-size: var(--text-body); color: var(--ink); line-height: 1.3; }
-/* Three parchment tiles sharing the row, the icon over the number (M11). */
-.site-stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--px) * 8); }
-.site-stats > .k-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 2);
-  min-height: calc(var(--px) * 84);
-  padding: calc(var(--px) * 8) calc(var(--px) * 4);
-  border-radius: var(--radius-sm);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
-  background: var(--parchment-shade);
-  text-align: center;
-}
-.site-stats > .k-stat > .icon { --icon-size: calc(var(--px) * 34); margin-bottom: calc(var(--px) * 2); }
-.site-stats > .k-stat .k-stat-value { font-size: var(--text-body); line-height: 1.1; }
-.site-stats > .k-stat .k-stat-unit { font-size: calc(var(--px) * 12); font-weight: var(--weight-small); line-height: 1.1; }
-/* The one verb is the width of the card. */
-.site > .k-action,
-.site-lair > .k-action { display: flex; flex-direction: column; align-items: stretch; }
-.site > .k-action > .k-btn,
-.site-lair > .k-action > .k-btn { width: 100%; }
-.site-note {
-  display: flex;
-  align-items: flex-start;
-  gap: calc(var(--px) * 6);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  color: var(--ink-muted);
-  line-height: 1.35;
-}
-
 /* ---- the lair's card (Docs/proposals/lairs.md §6)
  *
  * The district card's frame (`.dc`, material.css) and the kit's pieces: a
@@ -186,3 +117,63 @@
 .lc-go > .k-btn { min-width: calc(var(--px) * 180); }
 /* Beaten: the countdown box turns into the notice that the reward waits. */
 .lc-clock.is-beaten .lc-clock-value { font-size: calc(var(--px) * 16); color: var(--leaf-dark); }
+
+/* ---- the landmark's card
+ *
+ * The lair card's frame and tiles (`.lc`), with the site standing on its
+ * tile in place of a painting, and what a claim gives captioned under each
+ * amount. */
+.lm-art.k-section {
+  position: relative;
+  height: calc(var(--px) * 150);
+  padding: 0;
+}
+.lm-art-img {
+  position: absolute;
+  inset: calc(var(--px) * 10);
+  width: calc(100% - var(--px) * 20);
+  height: calc(100% - var(--px) * 20);
+  object-fit: contain;
+}
+/* Whether it is yours: the reward chip's "full" tag, in the tile's corner. */
+.lm-status {
+  position: absolute;
+  top: calc(var(--px) * 8);
+  left: calc(var(--px) * 8);
+  margin: 0;
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 6);
+  background: var(--wood-dark);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  text-transform: uppercase;
+}
+.lm-chip.k-section {
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  max-width: calc(var(--px) * 180);
+  height: auto;
+  padding: calc(var(--px) * 8) calc(var(--px) * 6);
+}
+.lm-chip-line { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.lm-chip-caption {
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+}
+.lm-note {
+  margin: var(--space-section) 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  line-height: 1.35;
+  text-align: center;
+}
+.lm-note.is-claimed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 6);
+  color: var(--ink);
+}

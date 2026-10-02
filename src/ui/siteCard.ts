@@ -17,100 +17,123 @@ import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import type { Coord, LairId } from '../sim/state';
-import { landmarkDefAt } from '../sim/sites';
+import type { LairId } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
-import { action, btn, closeKnob, iconEl, panel, sectionHead, stat, windowHead, type IconName } from './kit';
+import { btn, closeKnob, iconEl, sectionHead, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
 
-/** The site art, at card size: the sprite if it exists, its glyph if not. */
-function art(sprite: string, glyph: string): HTMLElement {
-  const url = spriteUrl(sprite);
-  return url
-    ? spriteImgAt(url, 'site-art')
-    : el('div', { class: 'site-art site-art--glyph' }, glyph);
-}
-
-function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
+/**
+ * THE LANDMARK'S CARD — the lair card's frame (`.dc`), and four things in
+ * it, top to bottom:
+ *
+ *   the name, on the plain title plank;
+ *   the site itself, on a darker-paper tile, with whether it is yours;
+ *   what claiming it gives — a bigger Mana pool and the fog lifted round it;
+ *   Claim and its price, or, once claimed, what it is holding now.
+ *
+ * Built once per landmark; rebuilt only when what it says moves (the claim,
+ * the price, whether the purse covers it).
+ */
+export function landmarkCardScreen(game: Game, def: LandmarkDef): Screen {
   const look = LANDMARK_ART[def.kind];
-  const claimed = game.state.landmarks.claimed[def.id] === true;
-  const cost = landmarkClaimCost(game.state, def);
+  const root = el('div', { class: 'dc lc lm' });
+  const frame = el('div', { class: 'k-frame', 'aria-hidden': 'true' });
+  let signature: string | null = null;
+  const side = FOG.claimDiscoverRadius * 2 + 1;
 
-  const body = el('div', { class: 'site' },
-    el('div', { class: 'site-head' },
-      art(look.sprite, look.glyph),
-      el('div', {},
-        el('div', { class: 'site-name' }, look.name),
-        el('div', { class: 'site-kind' }, claimed ? 'Claimed' : 'Unclaimed'))),
+  const build = (claimed: boolean, cost: number): void => {
+    const url = spriteUrl(look.sprite);
+    const figure = el('div', { class: 'lm-art k-section' },
+      url ? spriteImgAt(url, 'lm-art-img') : el('div', { class: 'lc-art-glyph' }, look.glyph),
+      el('p', { class: 'lm-status' }, claimed ? 'Claimed' : 'Unclaimed'));
+
     // The promise, stated as the two things it actually buys: a bigger pool
     // (which is also a bigger reward every time an ad refills it), and a
-    // lantern held up over the map around it.
-    el('div', { class: 'site-gift' },
-      stat('Mana', `+${formatExact(MANA.landmarkCap)}`, 'to your pool, for good'),
-      // `showme` is the "look over there" glyph the quest pill already uses,
-      // and looking is exactly what a claim buys here — not owning.
-      stat('showme', `${FOG.claimDiscoverRadius * 2 + 1}×${FOG.claimDiscoverRadius * 2 + 1}`,
-        'of map uncovered')),
-  );
+    // lantern held up over the map around it. `showme` is the "look over
+    // there" glyph the quest pill already uses, and looking is exactly what
+    // a claim buys here — not owning.
+    const gift = el('div', { class: 'lc-reward' },
+      giftChip('Mana', `+${formatExact(MANA.landmarkCap)}`, 'Mana, for good'),
+      giftChip('showme', `${side}×${side}`, 'of map uncovered'));
 
-  if (claimed) {
-    body.append(el('div', { class: 'site-note' },
-      iconEl('tick', { size: 'sm' }),
+    const go = claimed
       // Spelled out against the running total, because the value of a claim
       // is what it made the ceiling, not the number on the tin.
-      `Holding ${formatExact(MANA.landmarkCap)} more Mana. `
-      + `Your pool: ${formatExact(manaCap(game.state))}.`));
-    return panel(body);
-  }
+      ? el('p', { class: 'lm-note is-claimed' },
+        iconEl('tick', { size: 'sm' }),
+        `Holding ${formatExact(MANA.landmarkCap)} more Mana. Your pool: ${formatExact(manaCap(game.state))}.`)
+      : el('div', { class: 'lc-go' }, btn({
+        label: 'Claim',
+        kind: 'primary',
+        onClick: () => game.doClaimLandmark(def.location),
+        cost: { Gold: cost },
+        have: (c) => game.walletValue(c),
+      }));
 
-  // What the claim actually buys, in the player's terms: a deeper pool means a
-  // longer session AND a larger refill, because a refill fills the whole
-  // thing. Relic upkeep is gone, so the old "how many relics you can wear"
-  // framing would be describing a rule that no longer exists.
-  body.append(el('div', { class: 'site-note' },
-    `Claiming it holds ${formatExact(MANA.landmarkCap)} more Mana, for good — a longer run of `
-    + 'taps, and more from every refill. It also lifts the fog for '
-    + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
-    + 'though clearing it is still yours to pay for.'));
+    root.replaceChildren(frame,
+      windowHead(look.name, [closeKnob(() => game.dismiss(), `Close ${look.name}`)]),
+      figure,
+      sectionHead(claimed ? 'Gives' : 'Claim it for'),
+      gift,
+      // What the claim actually buys, in the player's terms: a deeper pool
+      // means a longer session AND a larger refill, because a refill fills
+      // the whole thing.
+      ...(claimed ? [] : [el('p', { class: 'lm-note' },
+        `A longer run of taps, and more from every refill. The fog lifts for `
+        + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
+        + 'though clearing it is still yours to pay for.')]),
+      go);
+  };
 
-  body.append(action({
-    label: 'Claim',
-    kind: 'primary',
-    onClick: () => game.doClaimLandmark(def.location),
-    cost: { Gold: cost },
-    have: (c) => game.walletValue(c),
-  }));
-  return panel(body);
+  return {
+    root,
+    refresh: () => {
+      const claimed = game.state.landmarks.claimed[def.id] === true;
+      const cost = landmarkClaimCost(game.state, def);
+      const now = `${claimed}|${cost}|${game.walletValue('Gold') >= cost}|${manaCap(game.state)}`;
+      if (now === signature) return;
+      signature = now;
+      releaseSprites(root);
+      build(claimed, cost);
+    },
+  };
+}
+
+/** One tile of what a landmark gives: the icon and the amount, a caption
+ *  under them saying what the amount is. */
+function giftChip(icon: IconName, value: string, caption: string): HTMLElement {
+  return el('div', { class: 'lc-chip lm-chip k-section' },
+    el('div', { class: 'lm-chip-line' }, iconEl(icon, { size: 'lg' }), el('b', { class: 'lc-chip-value' }, value)),
+    el('span', { class: 'lm-chip-caption' }, caption));
 }
 
 /**
- * AN ABANDONED BUILDING'S CARD (Docs/features/01-map-and-fog.md §6.3), in the
- * district card's frame: what the building was, what it does once it stands
- * again, and Repair — a build at level 1, where it stands, at the price of
- * the next one of its kind.
+ * AN ABANDONED BUILDING'S CARD (Docs/features/01-map-and-fog.md §6.3) — the
+ * landmark card's frame and tiles: the name on the plank, its ruin on a
+ * tile, what it does once it stands again, and Repair — a build at level 1,
+ * where it stands, at the price of the next one of its kind.
  */
 export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement {
   const def = DISTRICTS[site.districtId];
-  return el('div', { class: 'dc site-ab' },
+  const url = spriteUrl(`${def.sprite}_ruin`);
+  return el('div', { class: 'dc lc lm' },
     el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
     windowHead(site.name, [closeKnob(() => game.dismiss(), `Close ${site.name}`)]),
-    el('div', { class: 'site site-ab-body' },
-      el('div', { class: 'site-head' },
-        art(`${def.sprite}_ruin`, def.glyph),
-        el('div', {},
-          el('div', { class: 'site-kind' }, 'Abandoned'),
-          el('div', { class: 'site-note' }, def.promise))),
-      el('div', { class: 'site-note' },
-        'Left to the fog when its people fled. Repair it and it is yours, '
-        + 'exactly as if you had built it.'),
-      // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
-      el('div', { 'data-coach': 'repair' }, action({
-        label: 'Repair',
-        kind: 'primary',
-        onClick: () => game.doRepairAbandoned(site.location),
-        cost: nextBuildCost(game.state, site.districtId),
-        have: (c) => game.walletValue(c),
-      }))));
+    el('div', { class: 'lm-art k-section' },
+      url ? spriteImgAt(url, 'lm-art-img') : el('div', { class: 'lc-art-glyph' }, def.glyph),
+      el('p', { class: 'lm-status' }, 'Abandoned')),
+    el('p', { class: 'lm-note' }, def.promise),
+    el('p', { class: 'lm-note' },
+      'Left to the fog when its people fled. Repair it and it is yours, '
+      + 'exactly as if you had built it.'),
+    // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
+    el('div', { class: 'lc-go', 'data-coach': 'repair' }, btn({
+      label: 'Repair',
+      kind: 'primary',
+      onClick: () => game.doRepairAbandoned(site.location),
+      cost: nextBuildCost(game.state, site.districtId),
+      have: (c) => game.walletValue(c),
+    })));
 }
 
 /**
@@ -209,12 +232,4 @@ function rewardChip(icon: IconName, value: string, tag?: string): HTMLElement {
     iconEl(icon, { size: 'lg' }),
     el('b', { class: 'lc-chip-value' }, value),
     ...(tag ? [el('span', { class: 'lc-chip-tag' }, tag)] : []));
-}
-
-/** Null when the cell holds no landmark — the caller then shows nothing. A
- *  lair has a screen of its own (`lairCardScreen`). */
-export function renderSiteCard(game: Game, cell: Coord): HTMLElement | null {
-  const landmark = landmarkDefAt(cell);
-  if (landmark) return landmarkCard(game, landmark);
-  return null;
 }

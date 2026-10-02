@@ -58,8 +58,7 @@
   overscroll-behavior-x: contain;
 }
 .bld-row::-webkit-scrollbar { display: none; }
-/* Held by a mouse (kit/scroll.ts): the hand leads, the snap waits. */
-.bld-row.is-dragging { scroll-snap-type: none; cursor: grabbing; }
+/* Held by a mouse (kit/scroll.ts): the card under the hand is not pressed. */
 .bld-row.is-dragging .bld-card:active { transform: none; }
 
 /* THE CARD, tall: the art, the name, the promise, the price, and a foot. */

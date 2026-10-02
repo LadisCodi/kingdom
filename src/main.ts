@@ -11,6 +11,7 @@ import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
+import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, DISTRICTS, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
@@ -42,8 +43,8 @@ import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
-import { lairCardScreen, renderAbandonedCard, renderSiteCard } from './ui/siteCard';
-import { standingAbandonedAt, standingLairAt } from './sim/sites';
+import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
+import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -68,6 +69,7 @@ import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
 import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
+import { dragToScroll } from './ui/kit/scroll';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -162,6 +164,8 @@ async function boot(): Promise<void> {
   mountUnlockSplash(game, document.getElementById('unlock')!);
   // What is mounted, as classes on #ui, for the CSS that steps aside.
   mirrorMountFlags(document.getElementById('ui')!);
+  // A mouse drags every list and row the way a finger does (kit/scroll.ts).
+  dragToScroll(document.getElementById('ui')!);
   // The fight, under the reveal that deals what it paid.
   mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
@@ -285,13 +289,13 @@ async function boot(): Promise<void> {
       const ruin = standingAbandonedAt(game.state, site)!;
       panelSlot.show(`abandoned:${ruin.id}`, () => legacy(() => renderAbandonedCard(game, ruin)));
       frameOnMap(`abandoned:${ruin.id}`, ruin.location, DISTRICTS[ruin.districtId].size);
-    } else if (site !== null) {
-      // Keyed by cell, so tapping a different site is a real remount.
-      panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
-        () => renderSiteCard(game, site) ?? el('div'),
-        () => game.dismiss(),
-      ));
-      frameOnMap(`site:${site.x},${site.y}`, site, { x: 1, y: 1 });
+    } else if (site !== null && landmarkDefAt(site)) {
+      // A landmark's card, in the same frame as a lair's (siteCard.ts,
+      // `landmarkCardScreen`). Keyed by cell, so tapping a different site is
+      // a real remount.
+      const landmark = landmarkDefAt(site)!;
+      panelSlot.show(`site:${site.x},${site.y}`, () => landmarkCardScreen(game, landmark));
+      frameOnMap(`site:${site.x},${site.y}`, landmark.location, { x: landmark.size, y: landmark.size });
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
       // Built once per building and mutated on the tick (districtCard.ts):
@@ -405,8 +409,22 @@ async function boot(): Promise<void> {
   window.addEventListener('pagehide', () => saveManager.save(game.state, game.now(), true));
 
   // ------------------------------------------------------------ render loop
-  const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+  // Paced (render/framePacer.ts): the display's rate while the map is being
+  // touched or the camera is moving, slower while it is only being looked at.
+  let lastDraw = -Infinity;
+  let lastActive = -Infinity;
+  let lastView = '';
+  const touched = () => { lastActive = performance.now(); };
+  for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
+    window.addEventListener(type, touched, { capture: true, passive: true });
+  }
+  const frame = (t: number) => {
+    const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
+    if (view !== lastView) { lastView = view; lastActive = t; }
+    if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+      lastDraw = t;
+      drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+    }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

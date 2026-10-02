@@ -93,6 +93,7 @@ function towards(game: Game, point: string): Coord | null {
 export function resolveTarget(game: Game, point: string, previous: Target | null): Target | null {
   if (point === '') return null;
   if (point === 'quest') return { kind: 'ui', key: 'quest' };
+  if (point === BACK) return { kind: 'ui', key: BACK };
   if (point.startsWith('ui:')) return { kind: 'ui', key: point.slice(3) };
   if (previous?.kind === 'cell' && stillGood(game, point, previous.cell)) return previous;
   const [kind, id = ''] = point.split(':');
@@ -145,9 +146,35 @@ function firstStandingLair(game: Game): LairId | '' {
   return (found[0]?.[0] ?? '') as LairId | '';
 }
 
+/** The point that names THE WAY BACK to the map: the close of whatever is
+ *  open on top (24-dialogue.md §4). */
+export const BACK = 'back';
+
+/** Is `node` drawn, not merely in the page? */
+const drawn = (node: HTMLElement): boolean => {
+  const r = node.getBoundingClientRect();
+  return r.width > 0 || r.height > 0;
+};
+
+/**
+ * The close of whatever is open on top: a menu or sheet (`#overlay`) before
+ * a card or a placement bar (`#panel`), and in each the last one drawn — a
+ * popup opened over a sheet comes after it. Every close is marked
+ * `data-own-close` (kit `closeKnob`, the cast bar's cancel) or is the host's
+ * own knob on a legacy screen.
+ */
+function backNode(): HTMLElement | null {
+  for (const mount of ['overlay', 'panel']) {
+    const closes = document.getElementById(mount)
+      ?.querySelectorAll<HTMLElement>('[data-own-close], .legacy-close') ?? [];
+    for (let i = closes.length - 1; i >= 0; i--) if (drawn(closes[i])) return closes[i];
+  }
+  return null;
+}
+
 /** The DOM node a UI target names, if it is on screen. */
-export const uiNode = (key: string): HTMLElement | null =>
-  document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(key)}"]`);
+export const uiNode = (key: string): HTMLElement | null => (key === BACK ? backNode()
+  : document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(key)}"]`));
 
 /** Where a target is on screen right now, relative to `frame` (#app). */
 export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect | null {

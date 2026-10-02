@@ -104,6 +104,20 @@ describe('the scenes, against the game', () => {
     expect(wallet.Wood).toBe(cost.Wood);
   });
 
+  it('steps back out to the map before it points at the nav bar', () => {
+    // The nav bar steps aside for every sheet, card and placement bar, so a
+    // line that points at it over one would point at nothing — and, locked
+    // to it, leave the player nothing to tap. The line before always walks
+    // them back out; on the map already, it is passed at once.
+    for (const scene of SCENES) {
+      scene.lines.forEach((line, i) => {
+        if (!line.point.startsWith('ui:nav:')) return;
+        expect(scene.lines[i - 1], `${scene.id}: "${line.text}"`)
+          .toMatchObject({ point: 'back', until: 'mainScreen', lock: 'target' });
+      });
+    }
+  });
+
   it('never locks a line to a target it does not point at', () => {
     for (const scene of SCENES) {
       for (const line of scene.lines) {
@@ -140,6 +154,22 @@ describe('the faces', () => {
 
 describe('the conditions read the kingdom', () => {
   const args = (kind: never, target = '', amount = 0) => ({ kind, target, amount, tapsAtStart: 0 });
+
+  it('is back on the map only with nothing open', () => {
+    const game = freshPresenter(firstGame());
+    const main = () => conditionHolds(game, args('mainScreen' as never));
+    expect(main()).toBe(true);
+    game.inspectedSite = LANDMARKS[0].location;
+    expect(main()).toBe(false);
+    game.dismiss();
+    game.inspectedDistrictId = game.state.city.districts[0].uniqueId;
+    expect(main()).toBe(false);
+    game.dismiss();
+    game.openOverlay = 'research';
+    expect(main()).toBe(false);
+    game.dismiss();
+    expect(main()).toBe(true);
+  });
 
   it('follows the quest chain', () => {
     const game = freshPresenter(firstGame());

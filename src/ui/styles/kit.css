@@ -1119,3 +1119,7 @@
 .k-price-term { display: flex; align-items: center; gap: calc(var(--px) * 6); }
 .k-price-term > .icon { --icon-size: calc(var(--px) * 28); }
 .k-price-term.is-short { color: var(--clay); }
+
+/* Held by a mouse (kit/scroll.ts `dragToScroll`): any scroller, mid-drag.
+   The hand leads; a snap waits for the release. */
+.is-dragging { cursor: grabbing; scroll-snap-type: none; }

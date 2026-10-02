@@ -503,7 +503,7 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
  *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
 export type SceneCondition =
   | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
-  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'ui'
+  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'

@@ -32,6 +32,10 @@
    order, and an introduction waits a breath (20 s) after the last scene.
 7. **A scene is never skipped, only tapped through**: a tap anywhere moves
    a line on ([`24-dialogue.md`](24-dialogue.md) §2).
+8. **Before pointing at the nav bar, a scene takes the player back to the
+   map**: with a sheet, a card or a placement open, Isolde first asks them to
+   set it aside and points at its close ([`24-dialogue.md`](24-dialogue.md)
+   §4).
 
 ## 2. Three kinds of guidance
 

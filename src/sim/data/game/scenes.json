@@ -124,6 +124,19 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "Trees at last — and, um, nobody left who remembers how to fell them. But I have a book for that! I have a book for most things.",
         "box": "auto",
         "point": "ui:nav:research",
@@ -672,6 +685,19 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "That House is full — two to a roof. And the fog kept no other… so we’ll raise one of our own!",
         "box": "auto",
         "point": "ui:nav:build",
@@ -856,6 +882,19 @@
     "anywhere": false,
     "skippable": true,
     "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
       {
         "speaker": "advisor",
         "side": "left",
@@ -1062,6 +1101,19 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "You’ve seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.",
         "box": "auto",
         "point": "ui:nav:research",
@@ -1153,6 +1205,19 @@
         "point": "",
         "lock": "none",
         "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
@@ -1266,6 +1331,19 @@
       {
         "speaker": "advisor",
         "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
         "text": "Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.",
         "box": "auto",
         "point": "ui:nav:collection",
@@ -1286,6 +1364,19 @@
     "anywhere": true,
     "skippable": true,
     "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
       {
         "speaker": "advisor",
         "side": "left",
@@ -1330,6 +1421,19 @@
         "point": "",
         "lock": "none",
         "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,

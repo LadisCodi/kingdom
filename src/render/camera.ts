@@ -21,6 +21,9 @@ export interface PlotBox {
  *  but long enough to read as travel rather than a cut. */
 export const CAMERA_GLIDE_MS = 200;
 
+/** The highest backing scale the map is drawn at (`Camera.dpr`). */
+export const MAX_DPR = 2;
+
 export class Camera {
   x = 0; // projected-plane coords of the viewport centre
   y = 0;
@@ -32,8 +35,14 @@ export class Camera {
 
   constructor(private canvas: HTMLCanvasElement) {}
 
+  /**
+   * The canvas's backing scale: the screen's, but never past MAX_DPR. The
+   * art is authored at twice the size it is drawn at (src/render/palette.ts),
+   * so a 3× phone gains no detail over 2× — it only fills 2.25 times the
+   * pixels every frame.
+   */
   get dpr(): number {
-    return window.devicePixelRatio || 1;
+    return Math.min(MAX_DPR, window.devicePixelRatio || 1);
   }
 
   /** A cell's ground diamond on screen: `tileW` across, `tileH` down. */
