@@ -142,8 +142,12 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 
 - **Author at the tactical size and downscale.** A hex asset is **256 px wide ×
   296 px tall** (pointy-top: height = width × 2/√3), generated at 2×.
-- **A hex holds 0…N features**, so its art is a base terrain plate plus
-  composable props — never one baked illustration per combination.
+- **A hex is a terrain plate plus one sprite for its combination** of
+  terrain and features — a forested mountain is one drawing, not a mountain
+  beside some trees. Generation only makes the combinations that have art
+  ([`../plans/world-hex-art.md`](../plans/world-hex-art.md) §1–§2).
+- **An improvement's art includes the feature it works** (the Logging Camp
+  among its trees); what it does not work stays drawn behind it.
 - **Three or four content elements read comfortably on a tactical hex.** Past
   that, the hex is overloaded and something must be dropped or merged.
 - Ownership reads as a **border colour on the hex edge**, never as a tint over
@@ -248,7 +252,7 @@ Every one of these is a treatment of the same asset, never a second asset.
 - **Perspective on the hex board** — a vanishing point, far hexes smaller
   (§7.1).
 - **Visible grid lines** on the city ground (§4).
-- **Baked hex illustrations** per feature combination (§7).
+- **Loose props laid out side by side** on a hex (§7).
 - **Chrome.** It is specified elsewhere and this document does not touch it.
 
 ---
