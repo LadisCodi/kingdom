@@ -1,11 +1,11 @@
 // The world board, drawn (Docs/features/19-world-map.md §1–§3,
 // Docs/art/art-direction.md §2, §7, §8).
 //
-// A flat, top-down board: each hex a plate of the province's own terrain
-// texture, with the province's own sprites standing on it as props — one
-// palette, one terrain set, one light. There is no hex art yet, so this is
-// the province's art arranged on a hex; the plates and props it reads are
-// named in one place below, so hex art drops in by filename.
+// A slightly tilted board (art-direction §7.1): each hex a terrain plate and
+// one sprite for its combination of terrain and features, or the improvement
+// standing in its place (hexArt.ts, Docs/plans/world-hex-art.md). Hex art
+// drops in by filename; until a file exists, the province's own textures and
+// sprites stand in for it.
 //
 // The three fog states are treatments of the same hex, never a second asset:
 // Revealed is full colour, Sensed is the same hex dimmed under a thin veil,
@@ -19,18 +19,19 @@ import {
 import { PORTAL_INDEX, hexAt, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
-import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
+import type { WorldImprovement, WorldTerrain } from '../../sim/world/types';
 import { formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
-import { drawIcon, drawSprite, spriteAspect } from '../sprites';
+import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
 import { WORLD_BUILD } from '../../sim/data/definitions';
+import { COMBO_SPRITE, hexArt, type HexCombo } from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import type { HexCamera } from './hexCamera';
 
-/** The terrain plate under each kind of ground: the province's tileable
- *  textures, clipped to the hex. */
-const PLATE: Record<WorldTerrain, string> = {
+/** Until hex art exists, the province's tileable textures stand in for the
+ *  plates, clipped to the hex. */
+const PLATE_STAND_IN: Record<WorldTerrain, string> = {
   Grassland: 'terrain_grassland',
   Plains: 'terrain_plains',
   Desert: 'terrain_desert',
@@ -42,23 +43,42 @@ const PLATE_COLOR: Record<WorldTerrain, string> = {
   Grassland: '#6fae3c', Plains: '#a8ab4c', Desert: '#d8bf78', Mountain: '#8f9a7c',
 };
 
-/** What stands on a hex, and how big, as a share of the hex's width. */
-const PROP: Record<WorldFeature | 'Mountain', { sprite: string; size: number }> = {
-  Mountain: { sprite: 'mountain_2x2', size: 0.9 },
-  Forest: { sprite: 'forest_3', size: 0.8 },
-  FertileLand: { sprite: 'farmlands', size: 0.6 },
-  Game: { sprite: 'wild_animals', size: 0.5 },
-  Dungeon: { sprite: 'mountain', size: 0.62 },
-  Sanctuary: { sprite: 'landmark_leyspring', size: 0.5 },
-  Landmark: { sprite: 'landmark_stones', size: 0.56 },
+/** Until a combination has its own art, the province's sprites stand in for
+ *  it: each a share of the hex's width, offset across it (`dx`, of the
+ *  width) and down it (`dy`, of the tilted radius, from the centre). */
+const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx: number; dy: number }>> = {
+  Forest: [{ sprite: 'forest_3', size: 0.8, dx: 0, dy: 0.3 }],
+  FertileLand: [{ sprite: 'farmlands', size: 0.6, dx: 0, dy: 0.3 }],
+  Game: [{ sprite: 'wild_animals', size: 0.5, dx: 0, dy: 0.3 }],
+  FertileGame: [
+    { sprite: 'farmlands', size: 0.55, dx: 0.12, dy: 0.2 },
+    { sprite: 'wild_animals', size: 0.38, dx: -0.2, dy: 0.5 },
+  ],
+  Mountain: [{ sprite: 'mountain_2x2', size: 0.9, dx: 0, dy: 0.3 }],
+  MountainForest: [
+    { sprite: 'mountain_2x2', size: 0.78, dx: 0.06, dy: 0.2 },
+    { sprite: 'forest_3', size: 0.48, dx: -0.22, dy: 0.5 },
+  ],
+  MountainDungeon: [
+    { sprite: 'mountain_2x2', size: 0.82, dx: -0.04, dy: 0.25 },
+    { sprite: 'mountain', size: 0.36, dx: 0.22, dy: 0.5 },
+  ],
+  Sanctuary: [{ sprite: 'landmark_leyspring', size: 0.5, dx: 0, dy: 0.3 }],
+  Landmark: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
 };
 
-/** What stands on a held hex: the province's own buildings, standing in
- *  until hex art exists. A level draws the highest tier at or below it. */
-const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {
+/** The province's buildings stand in for improvement art; a level draws the
+ *  highest province tier at or below it. */
+const IMPROVEMENT_STAND_IN: Record<WorldImprovement, string> = {
   LoggingCamp: 'sawmill', Homestead: 'farm', StonePit: 'quarry', Fortress: 'barracks',
 };
-const tierOf = (level: number): string => (level >= 8 ? 'l8' : level >= 4 ? 'l4' : 'l1');
+const standInTier = (level: number): string => (level >= 8 ? 'l8' : level >= 4 ? 'l4' : 'l1');
+
+/** Hex art's foot line: the bottom of its canvas, a little in front of the
+ *  hex's centre (world-hex-art.md §2), as a share of the tilted radius. */
+const FOOT = 0.62;
+/** Below this many pixels a hex, the strategic zoom (world-hex-art.md §4). */
+const STRATEGIC_PX = 70;
 const OUTPOST_SPRITE = 'landmark_watchtower';
 const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
 
@@ -225,39 +245,42 @@ function drawHex(
     return;
   }
 
+  // A city's hex and the Portal have their own drawing; every other hex is
+  // its plate and its art (world-hex-art.md §2–§3).
+  const held = bh.seat === null && bh.role !== 'portal' ? frame.source.hexOf(bh.index) : null;
+  const standing = held?.improvement ?? (held?.work !== null && held?.work !== undefined ? { kind: held.work.kind, level: 1 } : null);
+  const art = bh.terrain === null ? null : hexArt(bh.terrain, bh.features, standing, hw < STRATEGIC_PX);
+
   ctx.save();
   hexPath(ctx, c.x, c.y, r);
   ctx.clip();
   if (bh.role === 'portal') {
     drawPortalGround(ctx, c.x, c.y, r);
-  } else if (bh.terrain !== null) {
+  } else if (bh.terrain !== null && art !== null) {
     ctx.fillStyle = PLATE_COLOR[bh.terrain];
     ctx.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
-    drawSprite(ctx, PLATE[bh.terrain], c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    const plate = spriteUrl(art.plate) !== null ? art.plate : PLATE_STAND_IN[bh.terrain];
+    drawSprite(ctx, plate, c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
   }
   ctx.restore();
 
-  // What stands on it, standing up off the plate: a city, the Portal, or the
-  // ground's own props, at most three side by side.
   if (bh.seat !== null) {
     const mine = bh.index === homeIndex(frame.state);
     drawProp(ctx, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
   } else if (bh.role === 'portal') {
     drawPortal(ctx, c.x, c.y, r);
-  } else {
-    const held = frame.source.hexOf(bh.index);
-    const props: Array<{ sprite: string; size: number }> = [];
-    if (bh.terrain === 'Mountain') props.push(PROP.Mountain);
-    for (const f of bh.features) props.push(PROP[f]);
-    // An improvement takes the middle; the ground's own props step aside.
-    const standing = held?.improvement ?? null;
-    const scale = standing !== null ? 0.6 : 1;
-    const spread = standing !== null
-      ? [-0.3, 0.3, 0.3].slice(0, props.length)
-      : props.length <= 1 ? [0] : props.length === 2 ? [-0.2, 0.2] : [-0.26, 0, 0.26];
-    props.slice(0, 3).forEach((p, i) => {
-      drawProp(ctx, p.sprite, c.x + spread[i] * hw, c.y + r * (0.3 + (i % 2) * 0.12) * TILT, hw * p.size * scale * (props.length > 1 ? 0.8 : 1));
-    });
+  } else if (art !== null) {
+    // Behind, what the improvement does not work; then the combination or
+    // the improvement; then Game in front of it.
+    if (art.behind !== null) drawCombo(ctx, art.behind, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
+    if (art.main !== null && 'combo' in art.main) drawCombo(ctx, art.main.combo, c.x, c.y + r * FOOT * TILT, hw, r);
+    if (art.main !== null && 'improvement' in art.main) {
+      ctx.save();
+      if (held?.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
+      drawImprovement(ctx, art.main.improvement, art.main.sprite, standing!.level, c, hw, r);
+      ctx.restore();
+    }
+    if (art.front !== null) drawCombo(ctx, art.front, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
     if (held !== null) drawHeld(ctx, camera, held, c, fogState, frame);
   }
 
@@ -296,6 +319,34 @@ function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: num
   };
   face(c2, c3, mist ? SKIRT_MIST.lit : SKIRT_EARTH.lit);
   face(c1, c2, mist ? SKIRT_MIST.shade : SKIRT_EARTH.shade);
+}
+
+/** A combination standing with its foot at (x, footY), `width` wide: its own
+ *  art, whose canvas is the hex's width, or the province's sprites standing
+ *  in, laid out across that width. */
+function drawCombo(ctx: CanvasRenderingContext2D, combo: HexCombo, x: number, footY: number, width: number, r: number): void {
+  if (spriteUrl(COMBO_SPRITE[combo]) !== null) {
+    drawProp(ctx, COMBO_SPRITE[combo], x, footY, width);
+    return;
+  }
+  const k = width / (r * Math.sqrt(3)); // this drawing's share of a whole hex
+  const top = footY - r * FOOT * TILT * k;
+  for (const p of COMBO_STAND_IN[combo]) {
+    drawProp(ctx, p.sprite, x + p.dx * width, top + r * p.dy * TILT * k, width * p.size);
+  }
+}
+
+/** An improvement in the middle of its hex: its own art, or the province's
+ *  building standing in. */
+function drawImprovement(
+  ctx: CanvasRenderingContext2D, kind: WorldImprovement, sprite: string, level: number,
+  c: { x: number; y: number }, hw: number, r: number,
+): void {
+  if (spriteUrl(sprite) !== null) {
+    drawProp(ctx, sprite, c.x, c.y + r * FOOT * TILT, hw);
+    return;
+  }
+  drawProp(ctx, `${IMPROVEMENT_STAND_IN[kind]}_${standInTier(level)}`, c.x + hw * 0.06, c.y + r * 0.42 * TILT, hw * 0.62);
 }
 
 /** A sprite standing with its foot at (x, footY), `width` wide. */
@@ -388,16 +439,10 @@ function drawHeld(
   const hw = camera.hexWidth;
   // The Outpost: a small watch-tower on the hex's upper right, faint while
   // its builder is still at it.
-  ctx.save();
-  if (!held.held) ctx.globalAlpha = 0.45;
-  drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18 * TILT, hw * 0.16);
-  ctx.restore();
-  if (held.improvement !== null || held.work !== null) {
-    const kind = held.improvement?.kind ?? held.work!.kind;
-    const level = held.improvement?.level ?? 1;
+  if (hw >= STRATEGIC_PX) {
     ctx.save();
-    if (held.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
-    drawProp(ctx, `${IMPROVEMENT_SPRITE[kind]}_${tierOf(level)}`, c.x, c.y + r * 0.42 * TILT, hw * 0.62);
+    if (!held.held) ctx.globalAlpha = 0.45;
+    drawProp(ctx, OUTPOST_SPRITE, c.x + hw * 0.27, c.y - r * 0.18 * TILT, hw * 0.16);
     ctx.restore();
   }
   // Cut off from its city: greyed, buildings intact (art-direction §8).

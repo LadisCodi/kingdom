@@ -6,8 +6,8 @@
 > [`../features/19-world-map.md`](../features/19-world-map.md) §2, §7, §8; the
 > camera is [`../art/art-direction.md`](../art/art-direction.md) §7.1.
 >
-> **Status: planned 2026-10-02.** §1 built the same day; the drawing (§2–§6)
-> is not. Mockups m60–m61
+> **Status: planned 2026-10-02.** §1 and the drawing (§2–§6) built the same
+> day, with the province's sprites standing in; the art is being generated. Mockups m60–m61
 > ([`../art/ui/mockups/`](../art/ui/mockups)) set the style.
 
 ## 0. Decisions this plan rests on
@@ -72,7 +72,15 @@ A hex is **a terrain plate** under **at most one combination sprite**.
   (the hex squashed to 72 %), its foot line a little in front of the centre,
   and it may rise above the hex by up to 0.8 of the hex's width.
 - **Authored** 512 px wide (2× the 256 px hex), transparent, no ground, no
-  shadow.
+  shadow. The canvas is the hex's width; **its bottom edge stands on the foot
+  line**, and the art is centred on it.
+- [`../art/world/norm_hex.py`](../art/world/norm_hex.py) cuts a sprite from a
+  sheet, trims it, scales it to a share of the canvas width (0.88–0.92) and
+  sets its lowest opaque row on the canvas's bottom edge.
+- **Files:** `whex_<combination>.png` for combinations, `whex_plate_<terrain>.png`
+  for plates, `whex_<improvement>_l1|l3|l5.png` for improvements
+  (`src/render/world/hexArt.ts`). A missing file falls back to the province's
+  sprites.
 
 ## 3. A hex with an improvement
 
@@ -126,12 +134,14 @@ A hex is **a terrain plate** under **at most one combination sprite**.
 1. **Rules — built.** `featureRules` in `worldGen`, generation that skips
    what does not fit, the chances raised so a board holds as many of each
    feature as before (`tests/worldBoard.test.ts`).
-2. **Draw by combination:** a lookup from a hex's terrain and features to its
-   sprite name, the §3 improvement rule, the §4 zoom rule — first with the
-   province sprites standing in.
+2. **Draw by combination — built.** `src/render/world/hexArt.ts` names the
+   art of a hex (`tests/hexArt.test.ts`); the renderer draws it, or the
+   province's sprites standing in.
 3. **Art:** the 4 plates, the 9 combinations and the 4 improvements × 3 tiers,
    generated against m60–m61 and the shipped sprites
-   ([`../art/art-direction.md`](../art/art-direction.md) §9).
+   ([`../art/art-direction.md`](../art/art-direction.md) §9). Test sheet 1
+   (Mountain + Forest, Fertile land + Game) is in; its prompt and original are
+   in [`../art/world/`](../art/world).
 
 ## 8. Deliberately not in this design
 

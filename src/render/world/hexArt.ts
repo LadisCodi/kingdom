@@ -1,0 +1,110 @@
+// What a world hex is drawn with (Docs/plans/world-hex-art.md §2–§4): a
+// terrain plate, at most one sprite for its combination of terrain and
+// features, an improvement that includes the feature it works, and what the
+// improvement leaves behind. Pure: names only, no drawing, so the rules are
+// testable and the art drops in by filename.
+
+import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
+
+/** Every combination generation can make (world-hex-art.md §2). */
+export const HEX_COMBOS = [
+  'Forest', 'FertileLand', 'Game', 'FertileGame',
+  'Mountain', 'MountainForest', 'MountainDungeon',
+  'Sanctuary', 'Landmark',
+] as const;
+export type HexCombo = typeof HEX_COMBOS[number];
+
+/** The sprite each combination is drawn with. */
+export const COMBO_SPRITE: Record<HexCombo, string> = {
+  Forest: 'whex_forest',
+  FertileLand: 'whex_fertile',
+  Game: 'whex_game',
+  FertileGame: 'whex_fertile_game',
+  Mountain: 'whex_mountain',
+  MountainForest: 'whex_mountain_forest',
+  MountainDungeon: 'whex_mountain_dungeon',
+  Sanctuary: 'whex_sanctuary',
+  Landmark: 'whex_landmark',
+};
+
+/** The ground under everything. */
+export const PLATE_SPRITE: Record<WorldTerrain, string> = {
+  Grassland: 'whex_plate_grassland',
+  Plains: 'whex_plate_plains',
+  Desert: 'whex_plate_desert',
+  Mountain: 'whex_plate_mountain',
+};
+
+/** An improvement's art, before its tier. */
+export const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {
+  LoggingCamp: 'whex_logging_camp',
+  Homestead: 'whex_homestead',
+  StonePit: 'whex_stone_pit',
+  Fortress: 'whex_fortress',
+};
+
+/** Three art tiers across an improvement's five levels. */
+export const improvementTier = (level: number): string => (level >= 5 ? 'l5' : level >= 3 ? 'l3' : 'l1');
+
+/** The combination a hex of this terrain and these features is drawn as;
+ *  null for bare ground. */
+export function comboOf(terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
+  const has = (f: WorldFeature) => features.includes(f);
+  if (terrain === 'Mountain') {
+    if (has('Dungeon')) return 'MountainDungeon';
+    return has('Forest') ? 'MountainForest' : 'Mountain';
+  }
+  if (has('Sanctuary')) return 'Sanctuary';
+  if (has('Landmark')) return 'Landmark';
+  if (has('Forest')) return 'Forest';
+  if (has('FertileLand')) return has('Game') ? 'FertileGame' : 'FertileLand';
+  if (has('Game')) return 'Game';
+  return null;
+}
+
+/** What a hex is drawn with, back to front. */
+export interface HexArt {
+  plate: string;
+  /** What an improvement does not work, drawn behind it at 60 %. */
+  behind: HexCombo | null;
+  /** The combination, or the improvement standing in its place. */
+  main: { combo: HexCombo } | { improvement: WorldImprovement; sprite: string } | null;
+  /** Game left in front of an improvement. */
+  front: HexCombo | null;
+}
+
+/** What each improvement works, and so takes out of the hex's drawing. */
+const WORKS: Record<WorldImprovement, (terrain: WorldTerrain, f: readonly WorldFeature[]) => [WorldTerrain, WorldFeature[]]> = {
+  LoggingCamp: (t, f) => [t, f.filter((x) => x !== 'Forest')],
+  StonePit: (_t, f) => ['Grassland', [...f]],
+  Homestead: (t, f) => [t, f.filter((x) => x !== 'FertileLand')],
+  Fortress: (t, f) => [t, [...f]],
+};
+
+/**
+ * The art for a hex: its plate, its combination, or its improvement with
+ * what is left of the combination behind it — Game, the one small thing,
+ * goes in front instead (world-hex-art.md §3). At the strategic zoom Game is
+ * not drawn (§4).
+ */
+export function hexArt(
+  terrain: WorldTerrain, features: readonly WorldFeature[],
+  improvement: { kind: WorldImprovement; level: number } | null, strategic: boolean,
+): HexArt {
+  const shown = strategic ? features.filter((f) => f !== 'Game') : features;
+  const plate = PLATE_SPRITE[terrain];
+  if (improvement === null) {
+    const combo = comboOf(terrain, shown);
+    return { plate, behind: null, main: combo === null ? null : { combo }, front: null };
+  }
+  const [t, rest] = WORKS[improvement.kind](terrain, shown);
+  const left = comboOf(t, rest);
+  const main = {
+    improvement: improvement.kind,
+    sprite: `${IMPROVEMENT_SPRITE[improvement.kind]}_${improvementTier(improvement.level)}`,
+  };
+  if (left === 'Game') return { plate, behind: null, main, front: 'Game' };
+  // Game beside fertile land: the Homestead took the fields, the boars stay.
+  if (left === 'FertileGame') return { plate, behind: 'FertileLand', main, front: 'Game' };
+  return { plate, behind: left, main, front: null };
+}

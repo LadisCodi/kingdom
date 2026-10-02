@@ -1,0 +1,19 @@
+WORLD HEX SPRITES — TEST SHEET 1 (two sprites) for the game "Kingdom".
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references.
+- ref-board.png = the world board we are building: tilted pointy-top hex tiles, bright stylized-3D, lit from above by a midday sun. Match its trees, rocks, fields and animals exactly in render, saturation and scale.
+- ref-assets.png = sprites that already ship in the game. Same render, same chunky rounded silhouettes, same saturation. Your sprites will sit next to these.
+
+WHAT THESE ARE
+Each sprite is the CONTENT of one hex of the world board, standing on a separate ground tile the game draws under it. So: NO ground, NO grass, NO soil, NO base, NO platform, NO hex outline, NO drop shadow. Only the objects, on full transparency.
+- The camera is the one in ref-board.png: from a little south of overhead, objects seen from a high three-quarter angle, standing upright.
+- Each sprite must fit on a hex: imagine a hex tile 1000 px wide seen at this tilt — its top face is an elongated hexagon 1000 px wide and about 720 px tall. Every object of the sprite stands INSIDE that face; the leftmost and rightmost points of the drawing are no wider than 900 px. Things may rise above it.
+- Draw as if the sprite will be shown about 130 px wide on a phone: big readable shapes, no tiny details.
+
+THE SHEET: one landscape image, 1536x1024, two sprites side by side, LEFT and RIGHT halves. Nothing may cross the vertical midline: keep a clear 60 px band of transparency down the middle.
+
+LEFT — "Forested mountain": one big grey-rock mountain (like the mountains in ref-board.png and ref-assets.png, two or three peaks, a little moss), its lower slopes and foot wrapped by a band of the same round deciduous trees as ref-board.png's forests — trees on the left, right and front of the mountain base, a few climbing the slope. It reads at a glance as ONE place: a wooded mountain. About 70% of the width is mountain.
+
+RIGHT — "Fertile land with game": two or three rectangular golden wheat fields with soft furrows laid flat as if on the ground (they are the only thing here that lies flat), a short wooden fence along one of them, a couple of hay stooks, and in front a pair of wild boars (like ref-board.png's boars) — the boars a little to the front-left of the fields. No farmhouse, no buildings.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
