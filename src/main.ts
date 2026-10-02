@@ -45,7 +45,7 @@ import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
 import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
 import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites';
-import { renderResearchMenu } from './ui/researchMenu';
+import { renderResearchMenu, researchSignature } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
@@ -252,6 +252,12 @@ async function boot(): Promise<void> {
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
     settings: () => settingsSignature(game),
     build: () => buildMenuSignature(game),
+    research: () => researchSignature(game),
+    // Each of these reads one presenter view and nothing that counts down,
+    // so that view IS what it is drawn from.
+    purse: () => JSON.stringify(game.state.city.wallet),
+    pass: () => JSON.stringify([game.passScreen(), game.seasonInfo().name]),
+    survey: () => JSON.stringify(game.surveyScreen()),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
