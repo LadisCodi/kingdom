@@ -492,6 +492,11 @@ async function boot(): Promise<void> {
         lair.armedAt -= delta;
         if (lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
       }
+      // The world board as well: the explorers and builders out, and every
+      // time the local world server keeps — marches, builds, rivals.
+      for (const e of game.state.world.explorers) e.departedAt -= delta;
+      for (const b of game.state.world.builds) b.finishesAt -= delta;
+      void game.worldServer?.devShift?.(delta).then(() => game.refreshWorld());
       runTick();
     };
     const allTechs = () => {

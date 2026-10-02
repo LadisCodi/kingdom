@@ -35,6 +35,9 @@ export interface WorldServerApi {
   recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
   delveRoom(armyId: string, now: number): Promise<DelveResult>;
   descendPortal(armyId: string, now: number): Promise<DelveResult>;
+  /** Dev only: move every time on the player's board `ms` into the past,
+   *  so the next read plays that much more of the world. */
+  devShift?(ms: number): Promise<void>;
 }
 
 /** Where the local server keeps its state: localStorage in the game, a map
@@ -148,6 +151,24 @@ export class LocalWorldServer implements WorldServerApi {
 
   async delveRoom(armyId: string, now: number): Promise<DelveResult> {
     return this.run(undefined, (b, seat) => delveRoom(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async devShift(ms: number): Promise<void> {
+    const at = this.mine();
+    if (at === null) return;
+    const b = at.board;
+    b.resolvedTo -= ms;
+    for (const h of Object.values(b.hexes)) {
+      h.outpostAt -= ms;
+      h.storeAt -= ms;
+      if (h.work !== null) h.work.at -= ms;
+    }
+    for (const a of b.armies) {
+      a.departedAt -= ms;
+      if (a.at !== null) a.at -= ms;
+    }
+    for (const s of b.seats) if (s?.nextMoveAt != null) s.nextMoveAt -= ms;
+    this.persist();
   }
 
   async descendPortal(armyId: string, now: number): Promise<DelveResult> {
