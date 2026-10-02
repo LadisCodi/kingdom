@@ -1,0 +1,367 @@
+{
+  "type": "object",
+  "fields": {
+    "world": {
+      "type": "object",
+      "doc": "The world board: how a march is timed and what an explorer sees (Docs/features/19-world-map.md §3–§4).",
+      "fields": {
+        "explorerSecondsPerHex": {
+          "type": "int",
+          "min": 1,
+          "doc": "Seconds an explorer takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel), and worldRevealSpeed divides it."
+        },
+        "armySecondsPerHex": {
+          "type": "int",
+          "min": 1,
+          "doc": "Seconds an army takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel)."
+        },
+        "exploreWorkSeconds": {
+          "type": "int",
+          "min": 0,
+          "doc": "Seconds an explorer works at the hex it was sent to before it is revealed, whatever the distance."
+        },
+        "exploreWorkSecondsPerHex": {
+          "type": "int",
+          "min": 0,
+          "doc": "Seconds more of that work for every hex the target lies from the city."
+        },
+        "explorerRevealRadius": {
+          "type": "int",
+          "min": 1,
+          "max": 2,
+          "doc": "Hexes round every hex of its path that a marching explorer reveals, before the tree."
+        },
+        "revealRadiusMax": {
+          "type": "int",
+          "min": 1,
+          "max": 2,
+          "doc": "The most a reveal radius can reach, however the tree raises it."
+        },
+        "cartographyExplorers": {
+          "type": "int",
+          "min": 0,
+          "doc": "Explorer slots Cartography opens. The Atlas ladder adds to it."
+        },
+        "rivals": {
+          "type": "list",
+          "of": { "type": "text" },
+          "length": { "exact": 5 },
+          "doc": "Who holds the five other cities until the board comes from the server."
+        },
+        "armySlots": {
+          "type": "int",
+          "min": 1,
+          "doc": "Armies a player can have out from the moment the world opens; the War Camp adds one per level."
+        }
+      }
+    },
+    "worldGen": {
+      "type": "object",
+      "doc": "How a board is rolled (19 §9): one wedge, turned six times; the inner ring authored.",
+      "fields": {
+        "innerRing": {
+          "type": "list",
+          "length": { "exact": 6 },
+          "doc": "The six hexes round the Portal, east first and on round the compass. Authored, never rolled or turned.",
+          "of": {
+            "type": "object",
+            "fields": {
+              "terrain": { "type": "text", "ref": "worldTerrain" },
+              "features": { "type": "list", "of": { "type": "text", "ref": "worldFeature" } }
+            }
+          }
+        },
+        "terrainWeights": {
+          "type": "object",
+          "doc": "The odds of each terrain, by the ring a hex is on. Relative weights.",
+          "fields": {
+            "corridor": { "type": "map", "keysRef": "worldTerrain", "of": { "type": "float", "min": 0 }, "doc": "Rings 2–3." },
+            "home": {
+              "type": "map",
+              "keysRef": "worldTerrain",
+              "of": { "type": "float", "min": 0 },
+              "doc": "Ring 4, round the cities. A city hex itself is always Grassland."
+            },
+            "outer": {
+              "type": "map",
+              "keysRef": "worldTerrain",
+              "of": { "type": "float", "min": 0 },
+              "doc": "Ring 5, the rim."
+            }
+          }
+        },
+        "featureChance": {
+          "type": "object",
+          "doc": "The chance a hex rolls each feature, by its ring. Dungeons and Sanctuaries only on the outer ring; landmarks only on the corridors.",
+          "fields": {
+            "corridor": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Rings 2–3."
+            },
+            "home": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Ring 4."
+            },
+            "outer": {
+              "type": "map",
+              "keysRef": "worldFeature",
+              "of": { "type": "float", "min": 0, "max": 1 },
+              "doc": "Ring 5."
+            }
+          }
+        },
+        "featureRules": {
+          "type": "map",
+          "keysRef": "worldFeature",
+          "of": {
+            "type": "object",
+            "fields": {
+              "terrains": {
+                "type": "list",
+                "of": { "type": "text", "ref": "worldTerrain" },
+                "doc": "The terrains it rolls on."
+              },
+              "excludes": {
+                "type": "list",
+                "of": { "type": "text", "ref": "worldFeature" },
+                "doc": "The features it never shares a hex with. Both sides name each other."
+              }
+            }
+          },
+          "doc": "Where each feature may roll, and what it never shares a hex with (Docs/plans/world-hex-art.md §1). A feature that does not fit is skipped; the inner ring must obey them too."
+        },
+        "placedPerWedge": {
+          "type": "map",
+          "keysRef": "worldFeature",
+          "of": { "type": "int", "min": 0, "max": 3 },
+          "doc": "Sites PLACED rather than rolled: exactly this many on the outer ring of every sixth of the board, never beside a city (19 §9). A placed feature has no chance of its own."
+        },
+        "maxFeaturesPerHex": {
+          "type": "int",
+          "min": 0,
+          "max": 3,
+          "doc": "A rolled hex keeps at most this many features, in the order they are listed."
+        }
+      }
+    },
+    "worldBuild": {
+      "type": "object",
+      "doc": "What is built on a held world hex and what it pays (Docs/features/19-world-map.md §5.1, §7).",
+      "fields": {
+        "outpost": {
+          "type": "object",
+          "doc": "The claim on a neutral hex. Takes a builder.",
+          "fields": {
+            "gold": { "type": "int", "min": 0, "doc": "Gold for the first Outpost." },
+            "goldGrowth": {
+              "type": "float",
+              "min": 1,
+              "doc": "Each Outpost costs this many times the last, by hexes already held."
+            },
+            "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." }
+          }
+        },
+        "improvements": {
+          "type": "map",
+          "keysRef": "worldImprovement",
+          "doc": "Each improvement and its ladder. One per hex, after the Outpost.",
+          "of": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "text" },
+              "needs": {
+                "type": "text",
+                "options": ["Forest", "Open", "Mountain", "Any"],
+                "doc": "Forest: a Forest feature. Open: no Forest, Dungeon, Sanctuary or Landmark, and not a Mountain. Mountain: Mountain terrain."
+              },
+              "produces": {
+                "type": "text",
+                "options": ["", "Wood", "Food", "Stone"],
+                "emptyOk": true,
+                "doc": "The material its store fills with; empty for a Fortress."
+              },
+              "levels": {
+                "type": "list",
+                "of": {
+                  "type": "object",
+                  "fields": {
+                    "gold": { "type": "int", "min": 0, "doc": "Gold this level costs." },
+                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." },
+                    "perHour": {
+                      "type": "int",
+                      "min": 0,
+                      "doc": "What it adds to its store an hour, while its hex is active."
+                    },
+                    "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+                  }
+                },
+                "doc": "Level 1 is the build."
+              }
+            }
+          }
+        },
+        "innerRingMultiplier": {
+          "type": "float",
+          "min": 1,
+          "doc": "What an improvement on the inner ring makes, times its level’s rate (3 = +200%)."
+        },
+        "featureFoodBonus": {
+          "type": "float",
+          "min": 0,
+          "doc": "The share more a Homestead makes for each of Fertile land and Wild game on its hex."
+        },
+        "landmark": {
+          "type": "object",
+          "doc": "A corridor landmark: a store of Knowledge while its hex is held and active.",
+          "fields": {
+            "knowledgePerDay": { "type": "int", "min": 0 },
+            "store": { "type": "int", "min": 0, "doc": "The most Knowledge it holds before it stops." }
+          }
+        },
+        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Sanctuary adds." }
+      }
+    },
+    "worldBots": {
+      "type": "object",
+      "doc": "The stand-in rivals of the local world server, until real players sit in the other five cities.",
+      "fields": {
+        "actEveryHours": { "type": "float", "min": 0.1, "doc": "On average, how often a rival makes a move." },
+        "maxHexes": {
+          "type": "int",
+          "min": 0,
+          "doc": "The most hexes a rival ever claims with an Outpost; what it takes in a fight comes on top."
+        },
+        "attackChance": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The chance a rival’s move is an attack on a neighbour’s ground beside its own."
+        },
+        "armyPower": { "type": "int", "min": 1, "doc": "What a rival’s attacking army is worth." },
+        "garrisonPower": { "type": "int", "min": 1, "doc": "What a rival’s Fortress garrison is worth." }
+      }
+    },
+    "worldDungeon": {
+      "type": "object",
+      "doc": "A dungeon: depths of rooms, a race — the first to clear its last boss closes it for everyone, and it comes back elsewhere in its sixth of the board (Docs/features/19-world-map.md §8.1, 11-expeditions.md).",
+      "fields": {
+        "depths": { "type": "int", "min": 1, "max": 9, "doc": "Depths in every dungeon." },
+        "roomsPerDepth": { "type": "int", "min": 2, "doc": "Rooms in a depth; the last is its boss." },
+        "powerStart": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "length": { "sibling": "depths" },
+          "doc": "What room 1 of each depth fields."
+        },
+        "powerStep": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "length": { "sibling": "depths" },
+          "doc": "What each room after the first adds, per depth."
+        },
+        "bossMultiplier": { "type": "float", "min": 1, "doc": "A boss fields this many times the room before it would." },
+        "rewardBase": {
+          "type": "list",
+          "of": { "type": "float", "min": 0 },
+          "length": { "sibling": "depths" },
+          "doc": "The reward scale of each depth."
+        },
+        "rewardGrowth": { "type": "float", "min": 1, "doc": "Each room pays this many times the one before it." },
+        "gold": { "type": "float", "min": 0, "doc": "Gold a room pays, times the depth’s scale." },
+        "heroXp": { "type": "float", "min": 0, "doc": "Hero XP a room pays, times the depth’s scale." },
+        "stardust": { "type": "float", "min": 0, "doc": "Stardust a room pays, times the depth’s scale." },
+        "knowledge": {
+          "type": "float",
+          "min": 0,
+          "doc": "Knowledge a room pays, times the depth’s scale — at least 1."
+        },
+        "bossRewardMultiplier": { "type": "float", "min": 1, "doc": "A boss pays this many times a room." },
+        "closeRewardMultiplier": {
+          "type": "float",
+          "min": 0,
+          "doc": "Closing a dungeon pays its last boss again, this many times over, to whoever closed it."
+        },
+        "returnHoursMin": {
+          "type": "float",
+          "min": 0,
+          "doc": "After a dungeon closes, it comes back after at least this many hours…"
+        },
+        "returnHoursMax": {
+          "type": "float",
+          "min": 0,
+          "doc": "…and at most this many: each return rolls a time between the two."
+        }
+      }
+    },
+    "worldPortal": {
+      "type": "object",
+      "doc": "The Dark Portal: a weekly depth ladder on the centre hex (Docs/features/19-world-map.md §10).",
+      "fields": {
+        "openWeekday": {
+          "type": "int",
+          "min": 0,
+          "max": 6,
+          "doc": "The UTC weekday it opens on, 0 = Sunday. Always the same one."
+        },
+        "openDays": { "type": "int", "min": 1, "max": 6, "doc": "Days it stays open; it is shut the rest of the week." },
+        "floors": { "type": "int", "min": 1, "doc": "How deep it goes." },
+        "attemptsPerDay": {
+          "type": "int",
+          "min": 1,
+          "doc": "Floors a player may clear a UTC day. A failed fight spends nothing."
+        },
+        "powerStart": { "type": "int", "min": 1, "doc": "What the first floor fields." },
+        "powerGrowth": { "type": "float", "min": 1, "doc": "Each floor fields this many times the one above." },
+        "rewardBase": {
+          "type": "float",
+          "min": 0,
+          "doc": "The reward scale of the first floor, on the dungeon room formula."
+        },
+        "rewardGrowth": { "type": "float", "min": 1, "doc": "Each floor pays this many times the one above." },
+        "roseEvery": { "type": "int", "min": 1, "doc": "A Rose pack on every floor this many deep." },
+        "goldenEvery": { "type": "int", "min": 1, "doc": "A Golden pack instead on every floor this many deep." },
+        "milestoneEvery": {
+          "type": "int",
+          "min": 1,
+          "doc": "A milestone every this many floors, for the first player to it each event."
+        },
+        "milestoneGems": { "type": "int", "min": 0, "doc": "What a milestone pays its first." },
+        "rankGems": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "length": { "exact": 6 },
+          "doc": "What each final place pays, first to sixth."
+        },
+        "botFloorChance": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The chance a stand-in rival clears a floor with each move while it is open."
+        }
+      }
+    },
+    "worldTravel": {
+      "type": "object",
+      "doc": "How long a march takes to leave each hex: the marcher’s own seconds a hex (explorerSecondsPerHex, armySecondsPerHex) times its terrain’s factor times each of its features’ (Docs/features/19-world-map.md §4).",
+      "fields": {
+        "terrain": {
+          "type": "map",
+          "keysRef": "worldTerrain",
+          "of": { "type": "float", "min": 0.1 },
+          "doc": "By terrain. 1 is open ground."
+        },
+        "feature": {
+          "type": "map",
+          "keysRef": "worldFeature",
+          "of": { "type": "float", "min": 0.1 },
+          "doc": "By feature, multiplied in for each the hex holds."
+        },
+        "portal": { "type": "float", "min": 0.1, "doc": "The Portal’s hex, which has no terrain." }
+      }
+    }
+  }
+}

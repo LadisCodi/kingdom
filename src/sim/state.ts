@@ -417,6 +417,70 @@ export interface Mission {
   claimed: boolean;
 }
 
+/**
+ * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
+ *
+ * Everything a trip will ever do is priced when it leaves: its path, its
+ * pace and how far it sees. What it has revealed at any moment is derived
+ * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
+ * with one boundary — the moment it is home.
+ */
+/** What can stand on a held world hex (sim/world/types.ts). */
+export type WorldImprovementId = 'LoggingCamp' | 'Homestead' | 'StonePit' | 'Fortress';
+
+export interface ExplorerTrip {
+  id: string;
+  /** The hex it was sent to, as a board index. */
+  target: number;
+  /** Board indices from the city (first) to the target (last). */
+  path: number[];
+  departedAt: number;
+  /** Milliseconds to leave each hex of the path, priced when it set out:
+   *  out, every hex but the last; home, every hex but the city. */
+  stepMs: number[];
+  /** Milliseconds it works at the target before the hex is revealed. */
+  workMs: number;
+  /** Hexes it reveals round its target. */
+  radius: number;
+}
+
+export interface WorldState {
+  /** Which board, and which of its six cities is the player's. */
+  board: { id: string; seed: number; seat: number };
+  /** The hexes revealed and folded in: three uint32 words over the board's
+   *  91 indices. The city and the Portal are always revealed and never
+   *  stored; a march under way is derived, not stored. */
+  revealed: number[];
+  explorers: ExplorerTrip[];
+  /** Builders out on the world board: what each is raising and when it is
+   *  done. The server holds the hex; this is the builder's half, so a
+   *  province build and a world build share the one crew. */
+  builds: WorldBuild[];
+  /** Sanctuaries held and on the chain, as the server last said — each
+   *  raises the Mana ceiling (Docs/features/19-world-map.md §8). */
+  sanctuaries: number;
+  /** The player's armies out on the board: the client's half — who went and
+   *  with what. The army itself is server state (02-map-scopes.md §3.1). */
+  armies: WorldArmyOut[];
+}
+
+export interface WorldArmyOut {
+  id: string;
+  heroes: HeroId[];
+  troops: Array<{ unitId: UnitId; count: number }>;
+  target: number;
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+}
+
+export interface WorldBuild {
+  /** The board hex, by index. */
+  index: number;
+  /** An Outpost, or an improvement's level. */
+  what: 'Outpost' | WorldImprovementId;
+  level: number;
+  finishesAt: number;
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -741,6 +805,14 @@ export interface GameState {
    * it (the daily chest waits for the next day).
    */
   tutorial: { veteran: boolean; seen: Record<string, true>; startedAt: number };
+  /**
+   * The world board as the player's own save knows it
+   * (Docs/features/02-map-scopes.md §3, §6): which board and seat, the fog,
+   * and the explorers out on it. World CONTROL is not here — it is server
+   * state — and neither is the board's contents, which are a pure function
+   * of its seed (sim/world/board.ts).
+   */
+  world: WorldState;
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];
@@ -831,3 +903,7 @@ export const builderCount = (state: GameState): number => Math.max(1, state.king
  * constant (1) and neither read the builders.
  */
 export const buildQueueCapacity = (state: GameState): number => builderCount(state);
+
+/** Builders at work: on the city's queue, and out on the world board. */
+export const busyBuilders = (state: GameState): number =>
+  state.city.queue.length + state.world.builds.length;

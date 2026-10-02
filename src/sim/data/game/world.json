@@ -1,0 +1,158 @@
+{
+  "world": {
+    "explorerSecondsPerHex": 60,
+    "armySecondsPerHex": 120,
+    "exploreWorkSeconds": 30,
+    "exploreWorkSecondsPerHex": 30,
+    "explorerRevealRadius": 1,
+    "revealRadiusMax": 2,
+    "cartographyExplorers": 1,
+    "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"],
+    "armySlots": 1
+  },
+  "worldGen": {
+    "innerRing": [
+      { "terrain": "Grassland", "features": ["Forest"] },
+      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Grassland", "features": ["FertileLand"] },
+      { "terrain": "Grassland", "features": ["Forest"] },
+      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Plains", "features": [] }
+    ],
+    "terrainWeights": {
+      "corridor": { "Grassland": 4, "Plains": 3, "Desert": 1, "Mountain": 2 },
+      "home": { "Grassland": 5, "Plains": 3, "Desert": 1, "Mountain": 2 },
+      "outer": { "Grassland": 3, "Plains": 2, "Desert": 2, "Mountain": 3 }
+    },
+    "featureChance": {
+      "corridor": { "Forest": 0.41, "FertileLand": 0.28, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0.39 },
+      "home": { "Forest": 0.47, "FertileLand": 0.34, "Game": 0.23, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 },
+      "outer": { "Forest": 0.35, "FertileLand": 0.14, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 }
+    },
+    "featureRules": {
+      "Forest": {
+        "terrains": ["Grassland", "Plains", "Mountain"],
+        "excludes": ["FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
+      },
+      "FertileLand": { "terrains": ["Grassland", "Plains"], "excludes": ["Forest", "Dungeon", "Sanctuary", "Landmark"] },
+      "Game": {
+        "terrains": ["Grassland", "Plains", "Desert"],
+        "excludes": ["Forest", "Dungeon", "Sanctuary", "Landmark"]
+      },
+      "Dungeon": {
+        "terrains": ["Grassland", "Plains", "Desert", "Mountain"],
+        "excludes": ["Forest", "FertileLand", "Game", "Sanctuary", "Landmark"]
+      },
+      "Sanctuary": {
+        "terrains": ["Grassland", "Plains"],
+        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Landmark"]
+      },
+      "Landmark": {
+        "terrains": ["Grassland", "Plains", "Desert"],
+        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Sanctuary"]
+      }
+    },
+    "placedPerWedge": { "Dungeon": 1, "Sanctuary": 1 },
+    "maxFeaturesPerHex": 2
+  },
+  "worldBuild": {
+    "outpost": { "gold": 500, "goldGrowth": 1.35, "buildSeconds": 1800 },
+    "improvements": {
+      "LoggingCamp": {
+        "name": "Logging Camp",
+        "needs": "Forest",
+        "produces": "Wood",
+        "levels": [
+          { "gold": 600, "buildSeconds": 1200, "perHour": 30, "store": 240 },
+          { "gold": 1500, "buildSeconds": 3600, "perHour": 50, "store": 400 },
+          { "gold": 3500, "buildSeconds": 10800, "perHour": 80, "store": 640 },
+          { "gold": 8000, "buildSeconds": 21600, "perHour": 120, "store": 960 },
+          { "gold": 18000, "buildSeconds": 43200, "perHour": 170, "store": 1360 }
+        ]
+      },
+      "Homestead": {
+        "name": "Homestead",
+        "needs": "Open",
+        "produces": "Food",
+        "levels": [
+          { "gold": 600, "buildSeconds": 1200, "perHour": 30, "store": 240 },
+          { "gold": 1500, "buildSeconds": 3600, "perHour": 50, "store": 400 },
+          { "gold": 3500, "buildSeconds": 10800, "perHour": 80, "store": 640 },
+          { "gold": 8000, "buildSeconds": 21600, "perHour": 120, "store": 960 },
+          { "gold": 18000, "buildSeconds": 43200, "perHour": 170, "store": 1360 }
+        ]
+      },
+      "StonePit": {
+        "name": "Stone Pit",
+        "needs": "Mountain",
+        "produces": "Stone",
+        "levels": [
+          { "gold": 800, "buildSeconds": 1800, "perHour": 20, "store": 160 },
+          { "gold": 2000, "buildSeconds": 5400, "perHour": 35, "store": 280 },
+          { "gold": 4500, "buildSeconds": 14400, "perHour": 55, "store": 440 },
+          { "gold": 10000, "buildSeconds": 28800, "perHour": 80, "store": 640 },
+          { "gold": 22000, "buildSeconds": 54000, "perHour": 115, "store": 920 }
+        ]
+      },
+      "Fortress": {
+        "name": "Fortress",
+        "needs": "Any",
+        "produces": "",
+        "levels": [
+          { "gold": 2500, "buildSeconds": 7200, "perHour": 0, "store": 0 },
+          { "gold": 6000, "buildSeconds": 21600, "perHour": 0, "store": 0 },
+          { "gold": 14000, "buildSeconds": 43200, "perHour": 0, "store": 0 }
+        ]
+      }
+    },
+    "innerRingMultiplier": 3,
+    "featureFoodBonus": 0.5,
+    "landmark": { "knowledgePerDay": 4, "store": 8 },
+    "sanctuaryManaCap": 10
+  },
+  "worldBots": {
+    "actEveryHours": 6,
+    "maxHexes": 8,
+    "attackChance": 0.15,
+    "armyPower": 500,
+    "garrisonPower": 600
+  },
+  "worldDungeon": {
+    "depths": 3,
+    "roomsPerDepth": 8,
+    "powerStart": [300, 900, 2400],
+    "powerStep": [70, 180, 420],
+    "bossMultiplier": 1.6,
+    "rewardBase": [1, 2.2, 4.5],
+    "rewardGrowth": 1.06,
+    "gold": 20,
+    "heroXp": 10,
+    "stardust": 2,
+    "knowledge": 0.25,
+    "bossRewardMultiplier": 3,
+    "closeRewardMultiplier": 2,
+    "returnHoursMin": 12,
+    "returnHoursMax": 24
+  },
+  "worldPortal": {
+    "openWeekday": 5,
+    "openDays": 3,
+    "floors": 40,
+    "attemptsPerDay": 3,
+    "powerStart": 400,
+    "powerGrowth": 1.1,
+    "rewardBase": 1.5,
+    "rewardGrowth": 1.08,
+    "roseEvery": 5,
+    "goldenEvery": 10,
+    "milestoneEvery": 10,
+    "milestoneGems": 100,
+    "rankGems": [300, 150, 150, 50, 50, 50],
+    "botFloorChance": 0.6
+  },
+  "worldTravel": {
+    "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5, "Mountain": 3 },
+    "feature": { "Forest": 1.5, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
+    "portal": 1
+  }
+}

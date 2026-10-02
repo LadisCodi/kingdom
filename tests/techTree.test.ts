@@ -171,7 +171,8 @@ describe('the shipped tech tree', () => {
   // table, so every stat is now named at the call site that owns it.
   it('puts every stat the registry declares somewhere the sim reads it', () => {
     const dir = new URL('../src/sim/', import.meta.url);
-    const sources = readdirSync(dir)
+    // Recursive: the world board's readers live in `src/sim/world/`.
+    const sources = readdirSync(dir, { recursive: true })
       .filter((f) => f.endsWith('.ts'))
       .map((f) => readFileSync(new URL(f, dir), 'utf8'))
       .join('\n');

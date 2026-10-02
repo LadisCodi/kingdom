@@ -286,6 +286,19 @@ export const TECH_STATS = {
     says: { flat: '{v} sight into the fog for every[ {target}] building' },
     reads: 'fog.ts#effectiveDiscoverRadius',
   },
+  // ---- the world board
+  explorerSlots: {
+    what: 'explorers that can be out on the world board at once — whole explorers, so flat',
+    ops: ['flat'], targets: ['global'], unit: 'explorers',
+    says: { flat: '{v} to the explorers out at once' },
+    reads: 'explorers.ts#explorerSlots',
+  },
+  worldRevealRadius: {
+    what: 'hexes an explorer reveals round each hex of its path — whole hexes, so flat, and capped',
+    ops: ['flat'], targets: ['global'], unit: 'hexes',
+    says: { flat: '{v} to how far an explorer sees round its path' },
+    reads: 'explorers.ts#revealRadius',
+  },
   // ---- the army
   armyCap: {
     what: 'the army power the halls can field',

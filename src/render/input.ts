@@ -32,7 +32,8 @@ const HOLD_REPEAT_MS = 100;
 
 export function wireInput(
   canvas: HTMLCanvasElement,
-  camera: Camera,
+  /** What a gesture moves: the province's camera, or the world board's. */
+  camera: Pick<Camera, 'panByScreen' | 'zoomAbout' | 'zoomBy'>,
   onTap: (sx: number, sy: number) => void,
   /** Returns true when the repeat consumed the gesture (it collected). */
   onHold: (sx: number, sy: number) => boolean,

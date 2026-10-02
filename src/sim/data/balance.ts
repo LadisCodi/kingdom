@@ -36,6 +36,7 @@ import scenes from './game/scenes.json';
 import speakers from './game/speakers.json';
 import tutorial from './game/tutorial.json';
 import unlocks from './game/unlocks.json';
+import world from './game/world.json';
 
 const balance = {
   "terrain": terrain,
@@ -65,6 +66,7 @@ const balance = {
   "speakers": speakers,
   ...tutorial,
   "unlocks": unlocks,
+  ...world,
 };
 
 export default balance;

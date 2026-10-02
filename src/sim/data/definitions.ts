@@ -17,6 +17,7 @@ import {
 import type { TechEffect } from './techEffectRules';
 import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
+import type { RolledRole, WorldFeature, WorldImprovement, WorldTerrain } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
@@ -682,6 +683,9 @@ export interface DistrictDef {
   /** Percent more Hero XP the kingdom earns while this stands — the TOTAL at
    *  each level. Only the Tavern has any (Docs/features/22-progression.md §6). */
   heroXpBonusPerLevel: readonly number[];
+  /** Armies more the kingdom can have out on the world board, the TOTAL at
+   *  each level. Only the War Camp has any (Docs/features/19-world-map.md §4). */
+  armySlotsPerLevel: readonly number[];
   /** Everything this building can turn out; empty = it trains nothing. A list
    *  rather than one id, so a hall can offer a choice — and so the Townhall
    *  can offer the Villager on the same footing. Army size is a
@@ -1985,6 +1989,131 @@ export const garrisonForTier = (tier: number): GarrisonDef =>
  *  window, and the fraction of the stores one may take
  *  (Docs/proposals/lairs.md §4). */
 export const RAID = balance.raid;
+
+// ------------------------------------------------------------ the world board
+
+/** Marches and explorers on the shared board (Docs/features/19-world-map.md
+ *  §3–§4). */
+export interface WorldDef {
+  /** Seconds a marcher takes to leave a hex of open ground: an explorer, an
+   *  army — each hex multiplies its own (worldTravel). */
+  explorerSecondsPerHex: number;
+  armySecondsPerHex: number;
+  /** An explorer's work at its target before the hex is revealed: a base,
+   *  and more for every hex it lies from the city. */
+  exploreWorkSeconds: number;
+  exploreWorkSecondsPerHex: number;
+  explorerRevealRadius: number;
+  revealRadiusMax: number;
+  cartographyExplorers: number;
+  /** Armies out at once before the War Camp adds any. */
+  armySlots: number;
+  /** Who holds the five other cities until the board comes from the server. */
+  rivals: readonly string[];
+}
+
+export interface WorldHexDef { terrain: WorldTerrain; features: readonly WorldFeature[] }
+
+/** How a board is rolled (19 §9). */
+export interface WorldGenDef {
+  /** East first, on round in HEX_DIRS order. */
+  innerRing: readonly WorldHexDef[];
+  terrainWeights: Record<RolledRole, Partial<Record<WorldTerrain, number>>>;
+  featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
+  /** Where each feature may roll, and what it never shares a hex with. */
+  featureRules: Record<WorldFeature, WorldFeatureRule>;
+  /** Sites placed, not rolled: so many on the outer ring of every wedge. */
+  placedPerWedge: Partial<Record<WorldFeature, number>>;
+  maxFeaturesPerHex: number;
+}
+
+/** A feature's place on the board (Docs/plans/world-hex-art.md §1). */
+export interface WorldFeatureRule { terrains: readonly WorldTerrain[]; excludes: readonly WorldFeature[] }
+
+export const WORLD: WorldDef = balance.world;
+export const WORLD_GEN = balance.worldGen as WorldGenDef;
+
+/** One level of a world improvement. */
+export interface WorldImprovementLevel { gold: number; buildSeconds: number; perHour: number; store: number }
+
+export interface WorldImprovementDef {
+  name: string;
+  /** What the hex must be: a Forest, open ground, a Mountain, or anything. */
+  needs: 'Forest' | 'Open' | 'Mountain' | 'Any';
+  /** The material its store fills with; '' for one that makes nothing. */
+  produces: '' | 'Wood' | 'Food' | 'Stone';
+  levels: readonly WorldImprovementLevel[];
+}
+
+/** What is built on a held world hex and what it pays (19 §5.1, §7). */
+export interface WorldBuildDef {
+  outpost: { gold: number; goldGrowth: number; buildSeconds: number };
+  improvements: Record<WorldImprovement, WorldImprovementDef>;
+  innerRingMultiplier: number;
+  featureFoodBonus: number;
+  landmark: { knowledgePerDay: number; store: number };
+  sanctuaryManaCap: number;
+}
+
+export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
+
+/** How long a march takes to leave a hex, as factors on the base (19 §4). */
+export interface WorldTravelDef {
+  terrain: Partial<Record<WorldTerrain, number>>;
+  feature: Partial<Record<WorldFeature, number>>;
+  portal: number;
+}
+
+export const WORLD_TRAVEL = balance.worldTravel as WorldTravelDef;
+
+/** A dungeon's depths and rooms, and what a room pays (19 §8.1). */
+export interface WorldDungeonDef {
+  depths: number;
+  roomsPerDepth: number;
+  powerStart: readonly number[];
+  powerStep: readonly number[];
+  bossMultiplier: number;
+  rewardBase: readonly number[];
+  rewardGrowth: number;
+  gold: number;
+  heroXp: number;
+  stardust: number;
+  knowledge: number;
+  bossRewardMultiplier: number;
+  /** Closing a dungeon pays its last boss again, this many times over. */
+  closeRewardMultiplier: number;
+  /** A closed dungeon comes back after a roll between these many hours. */
+  returnHoursMin: number;
+  returnHoursMax: number;
+}
+
+export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;
+
+/** The Dark Portal's week and its ladder (19 §10). */
+export interface WorldPortalDef {
+  openWeekday: number;
+  openDays: number;
+  floors: number;
+  attemptsPerDay: number;
+  powerStart: number;
+  powerGrowth: number;
+  rewardBase: number;
+  rewardGrowth: number;
+  roseEvery: number;
+  goldenEvery: number;
+  milestoneEvery: number;
+  milestoneGems: number;
+  rankGems: readonly number[];
+  botFloorChance: number;
+}
+
+export const WORLD_PORTAL: WorldPortalDef = balance.worldPortal;
+
+/** The local world server's stand-in rivals. */
+export const WORLD_BOTS: {
+  actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;
+} = balance.worldBots;
+
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;
@@ -2195,4 +2324,15 @@ export const GAME_VERSION = '0.1.0';
 // it reads as a veteran. A worker carries its strike's remainder
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
-export const SAVE_VERSION = 74;
+// v75: the world board. `kingdom.world` (the board and seat, the fog bitset,
+// the explorers out) is additive: a save without it derives its board and
+// seat from its own seed and starts with nothing revealed. No migrator.
+// v76: the world board's builders and Sanctuaries — `Builds` and
+// `Sanctuaries` on `kingdom.world`, additive. World control itself is server
+// state and is never in the save.
+// v77: armies out on the world board — `Armies` on `kingdom.world`, the
+// troops and heroes each one took. Additive.
+// v78: a march is priced hex by hex — an explorer trip keeps `StepMs`, the
+// time to leave each hex of its path, in place of one `MsPerHex` (read as
+// that pace on every hex). Additive.
+export const SAVE_VERSION = 78;

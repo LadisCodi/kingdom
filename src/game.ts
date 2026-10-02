@@ -45,7 +45,7 @@ import {
   bundleGemValue, bundleOf, bundlesForSale, cardCount,
   heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
   placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
-  buyFromVaultMany, canClaimAlbum, claimAlbum,
+  buyFromVaultMany, canClaimAlbum, claimAlbum, grantPack,
   wildcardCovers, wildcardOffers, wildcardsHeld,
   PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
   type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
@@ -64,9 +64,9 @@ import {
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
-import { typeMultiplier } from './sim/combat';
+import { partyPower, typeMultiplier } from './sim/combat';
 import {
-  attackLair, claimLair, heroLevel, lairBlock, lairClearReward, previewLair, troopSlots,
+  attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
@@ -107,10 +107,10 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
-import { boonText, pullPrice } from './sim/heroes';
+import { addHeroXp, boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
-  builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
@@ -135,6 +135,19 @@ import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { KINGDOM_DEF, QUESTS, SCENES, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
+import { HexCamera } from './render/world/hexCamera';
+import { dispatchExplorer, homeIndex, worldFogAt } from './sim/world/explorers';
+import { fastestRoute, type Route } from './sim/world/travel';
+import { hasBit } from './sim/world/fogBits';
+import { hexAt, hexIndex } from './sim/world/hex';
+import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
+import type { WorldServerApi } from './worldServer/local';
+import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
+import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { boardNeighbors } from './sim/world/hex';
+import { emptyBits } from './sim/world/fogBits';
+import { WORLD_BUILD } from './sim/data/definitions';
+import type { WorldImprovement } from './sim/world/types';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -173,15 +186,18 @@ export type OverlayName =
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
   | 'heroPicker'
-  // The world beyond the province — a preview until the board is built
-  // (Docs/features/22-progression.md §5).
-  | 'world';
+  // A hex of the world board, and what can be done there — the dispatch
+  // sheet (Docs/features/19-world-map.md §1.2).
+  | 'world'
+  // An army composed for the world board, on the lair attack's screen
+  // (Docs/features/19-world-map.md §4).
+  | 'army';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
+  world: 'world', army: 'world', knowledge: 'knowledge', daily: 'daily', store: 'store',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -651,6 +667,22 @@ export class Game {
     // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
     setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
+    // The world board is server state: read it every second while it is on
+    // screen, and now and then otherwise (a held Sanctuary moves the Mana
+    // ceiling wherever the player is).
+    this.worldTicks += 1;
+    if (this.worldServer !== null && (this.scene === 'world' || this.worldTicks % 30 === 0)) void this.refreshWorld();
+    for (const done of result.worldBuildsDone) {
+      this.toast(done.what === 'Outpost'
+        ? 'Your Outpost stands — the ground is yours'
+        : `${WORLD_BUILD.improvements[done.what].name} reached level ${formatCount(done.level)}`);
+    }
+    // An explorer home says what it found; the board already shows where.
+    for (const home of result.explorersHome) {
+      this.toast(home.revealed > 0
+        ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map`
+        : 'Your explorer is home — nothing new out there');
+    }
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -3957,6 +3989,9 @@ export class Game {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    // Building happens on the province: the Build menu takes the player home.
+    if (name === 'build' && this.scene === 'world') this.scene = 'province';
+    if (name !== 'world' && name !== 'army') this.selectedHex = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
@@ -3982,6 +4017,7 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
+    this.selectedHex = null;
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
@@ -4397,6 +4433,366 @@ export class Game {
     this.notify();
   }
 
+  // ------------------------------------------------------- the world board
+
+  /** Which board is on screen. Not saved: a reload opens on the province. */
+  scene: 'province' | 'world' = 'province';
+  /** The world hex the dispatch sheet is about. */
+  selectedHex: number | null = null;
+  /** The world's camera, handed over by main once the canvas exists. */
+  worldCamera: HexCamera | null = null;
+
+  private worldTicks = 0;
+  /** The world server, handed over by main — the local stand-in for now
+   *  (worldServer/local.ts). */
+  worldServer: WorldServerApi | null = null;
+  /** What the server last said about the board. */
+  worldView: WorldSnapshot | null = null;
+  /** The dev tool's "play as": the seat world commands are made for, or
+   *  null for the player's own. A rival's commands cost the player nothing. */
+  actingSeat: number | null = null;
+
+  /** Where the board comes from: the server's snapshot once there is one,
+   *  the locally generated board before (sim/world/source.ts). */
+  worldSource(): WorldSource {
+    return this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(this.state.world.board);
+  }
+
+  /** The seat world commands are made for. */
+  worldSeat(): number {
+    return this.actingSeat ?? this.state.world.board.seat;
+  }
+
+  /** Take a seat on the server's board. A player who has already explored
+   *  a locally generated board asks to keep it. */
+  async connectWorld(): Promise<void> {
+    if (this.worldServer === null) return;
+    const snap = await this.worldServer.join(
+      { id: 'local-player', name: this.state.city.name, prefer: this.state.world.board }, this.now());
+    this.applyWorldSnapshot(snap);
+  }
+
+  /** Ask the server for the board as it stands now. */
+  async refreshWorld(): Promise<void> {
+    if (this.worldServer === null) return;
+    const snap = await this.worldServer.snapshot(this.now());
+    if (snap !== null) this.applyWorldSnapshot(snap);
+  }
+
+  /** Take what the server says. A different board or seat makes the fog
+   *  meaningless, so it starts again; the Sanctuaries held set the Mana
+   *  ceiling. */
+  private applyWorldSnapshot(snap: WorldSnapshot): void {
+    const mine = this.state.world.board;
+    if (snap.board.id !== mine.id || snap.board.seed !== mine.seed || snap.board.seat !== mine.seat) {
+      this.state.world.board = { ...snap.board };
+      this.state.world.revealed = emptyBits();
+      this.state.world.explorers = [];
+    }
+    // What the server owed: armies home and the reports of what they did.
+    for (const e of snap.effects) {
+      if (e.kind === 'armyHome') receiveArmy(this.state, e);
+      else if (e.kind === 'loot') {
+        // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
+        // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
+        addToWallet(this.state.city.wallet, 'Gold', e.gold);
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', e.knowledge);
+        addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
+        addHeroXp(this.state, e.heroXp);
+        if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
+        if (e.pack) grantPack(this.state, e.pack, 'portal');
+        this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+      } else this.toast(e.text);
+    }
+    this.worldView = snap;
+    const board = snapshotWorld(snap).board();
+    this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
+      && board.hexes[h.index].features.includes('Sanctuary')).length;
+    this.notify();
+  }
+
+  /** The line a refused world command shows. */
+  private worldRefusal(why: Refusal): string {
+    const LINES: Record<Refusal, string> = {
+      NoSuchHex: 'There is no such place', NotAdjacent: 'Claim the ground beside it first',
+      Taken: 'Someone holds it already', NeverHeld: 'Nobody can hold this place',
+      NotYours: 'This is not your ground', NotStanding: 'The Outpost is still being built',
+      Busy: 'A builder is already at work there', WrongGround: 'That cannot stand here',
+      MaxLevel: 'It is as high as it goes', Inactive: 'Cut off from your city — reconnect it first',
+      NoBoard: 'The roads to the world are closed',
+      NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
+      Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
+      OwnGround: 'That ground is yours already',
+      Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
+      NoRoute: 'No way there through explored ground',
+    };
+    return LINES[why];
+  }
+
+  /** A builder free for the world, or the line that says why not. */
+  private worldBuilderRefusal(gold: number): string | null {
+    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) return 'Every builder is busy';
+    if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
+    return null;
+  }
+
+  /** Claim a hex with an Outpost: a builder and its Gold. */
+  async doClaimHex(index: number, gold: number): Promise<void> {
+    await this.worldCommand(index, 'Outpost', 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+  }
+
+  /** Build an improvement on a held hex, or raise it a level. */
+  async doBuildHex(index: number, kind: WorldImprovement, level: number, gold: number): Promise<void> {
+    await this.worldCommand(index, kind, level, gold, (asSeat) => this.worldServer!.build(index, kind, this.now(), asSeat));
+  }
+
+  private async worldCommand(
+    index: number, what: 'Outpost' | WorldImprovement, level: number, gold: number,
+    send: (asSeat?: number) => ReturnType<WorldServerApi['claim']>,
+  ): Promise<void> {
+    if (this.worldServer === null) return;
+    // Playing a rival's part: the server does the rest, and nothing is paid.
+    if (this.actingSeat !== null) {
+      const r = await send(this.actingSeat);
+      if (!r.ok) this.toast(this.worldRefusal(r.why));
+      await this.refreshWorld();
+      return;
+    }
+    const refused = this.worldBuilderRefusal(gold);
+    if (refused !== null) {
+      this.toast(refused);
+      this.notify();
+      return;
+    }
+    const r = await send();
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
+    this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
+    playSfx('click');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  // ------------------------------------------------------ armies on the board
+
+  /** Where the army being composed is going, and to do what. */
+  armyTarget: number | null = null;
+  armyPurpose: ArmyPurpose = 'attack';
+
+  /** Compose an army for a hex, on the attack screen. */
+  openArmy(target: number, purpose: ArmyPurpose): void {
+    this.armyTarget = target;
+    this.armyPurpose = purpose;
+    this.selectedHex = target;
+    this.partyHeroes = this.state.heroes.owned
+      .filter((h) => heroCanFight(this.state, h, this.now()))
+      .slice(0, heroSlots(this.state));
+    this.prefillParty('Any');
+    this.setOverlay('army');
+  }
+
+  /** What the army would meet there, as far as the player can see: the
+   *  garrisons covering the hex, and what they are worth. */
+  armyPreview(): { power: number; attack: number; garrisons: number } {
+    const target = this.armyTarget;
+    const party = partyOf(this.state, this.expeditionParty.filter((s) => s.count > 0), this.partyHeroes, this.now());
+    const attack = partyPower(party);
+    if (target === null || this.armyPurpose !== 'attack') return { power: 0, attack, garrisons: 0 };
+    const source = this.worldSource();
+    const holder = source.hexOf(target)?.owner ?? null;
+    let power = 0;
+    let garrisons = 0;
+    for (const i of [target, ...boardNeighbors(target)]) {
+      const g = source.hexOf(i)?.garrison;
+      if (g && g.owner === holder) { power += g.power; garrisons += 1; }
+    }
+    return { power, attack, garrisons };
+  }
+
+  /** The quickest way an army can take to a hex: through Revealed ground
+   *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
+  armyRoute(target: number): Route | null {
+    const fog = worldFogAt(this.state, this.now());
+    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i));
+  }
+
+  /** Why the army cannot set out, in words, or null. */
+  armyBlockText(): string | null {
+    if (this.armyTarget === null) return 'No destination chosen';
+    if (this.armyRoute(this.armyTarget) === null) return 'No way there through explored ground';
+    if (freeArmySlots(this.state) === 0) return 'Every army is out — the War Camp sends more';
+    if (this.partyHeroes.length === 0) return 'An army needs a hero to lead it';
+    if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return 'A hero in it cannot march';
+    if (this.armyPurpose !== 'claim' && !this.expeditionParty.some((s) => s.count > 0)) return 'An army needs soldiers';
+    return null;
+  }
+
+  /** Set the army out. Its troops leave the roster and its heroes are busy
+   *  until the server says it is home. */
+  async doSendArmy(): Promise<void> {
+    const target = this.armyTarget;
+    if (this.worldServer === null || target === null || this.armyBlockText() !== null) return;
+    const slots = this.expeditionParty.filter((s) => s.count > 0).map((s) => ({ ...s }));
+    const heroes = [...this.partyHeroes];
+    const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
+    const route = this.armyRoute(target)!;
+    const r = await this.worldServer.sendArmy({
+      purpose: this.armyPurpose, target, heroes, board, path: route.path,
+    }, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    departArmy(this.state, {
+      id: r.army, heroes, troops: slots.map((s) => ({ unitId: s.unitId, count: s.count })),
+      target, purpose: this.armyPurpose,
+    });
+    this.armyTarget = null;
+    this.dismiss();
+    this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Fight the next room of the dungeon an army camps at, and watch it. */
+  async doDelveRoom(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.delveRoom(armyId, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, {
+      title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
+      subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
+      prizes: [],
+    });
+    this.notify();
+  }
+
+  /** Go down the Portal's next floor, and watch the fight. */
+  async doDescendPortal(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.descendPortal(armyId, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [] });
+    this.notify();
+  }
+
+  /** Call an army home. */
+  async doRecallArmy(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.recall(armyId, this.now(), this.actingSeat ?? undefined);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Collect a held hex's stores into the purse. */
+  async doCollectHex(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.collect(index, this.now(), this.actingSeat ?? undefined);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (this.actingSeat === null) {
+      const haul: Wallet = {};
+      if (r.material !== null) {
+        addToWallet(this.state.city.wallet, r.material.currency, r.material.amount);
+        haul[r.material.currency] = r.material.amount;
+      }
+      if (r.knowledge > 0) {
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', r.knowledge);
+        haul.Knowledge = r.knowledge;
+      }
+      if (Object.keys(haul).length > 0) this.reward(haul);
+    }
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Go out to the world board — behind the Watchtower's door. */
+  enterWorld(): void {
+    if (!isDoorOpen(this.state, 'world')) {
+      this.toast(DOOR_HINT.world);
+      this.notify();
+      return;
+    }
+    this.dismiss();
+    this.scene = 'world';
+    this.worldCamera?.fitBoard();
+    void this.refreshWorld();
+    this.notify();
+  }
+
+  /** Back to the province. */
+  leaveWorld(): void {
+    if (this.openOverlay === 'world') this.openOverlay = null;
+    this.selectedHex = null;
+    this.scene = 'province';
+    this.notify();
+  }
+
+  /** A tap on the world board: a hex opens its sheet; off the board closes
+   *  it. The hexagon is the tap target, never the icons on it (19 §1.2). */
+  handleWorldTap(sx: number, sy: number): void {
+    if (this.worldCamera === null) return;
+    const index = hexIndex(this.worldCamera.screenToHex(sx, sy));
+    if (index < 0) {
+      this.dismiss();
+      return;
+    }
+    this.selectedHex = index;
+    this.setOverlay('world');
+  }
+
+  /** Bring a hex into view. */
+  showHex(index: number): void {
+    this.worldCamera?.centerOnHex(hexAt(index));
+    this.notify();
+  }
+
+  /** Send an explorer to the hex the sheet is about. */
+  doSendExplorer(): void {
+    const target = this.selectedHex;
+    if (target === null) return;
+    const result = dispatchExplorer(this.state, target, this.now());
+    if (result.kind === 'Sent') {
+      playSfx('click');
+      this.dismiss();
+      return;
+    }
+    if (result.kind === 'NoExplorerFree') {
+      this.toast(`Every explorer is out — one is back in ${formatCountdown((result.nextFreeAt - this.now()) / 1000)}`);
+    } else if (result.kind === 'NoCartography') {
+      this.toast('Research Cartography in the Atlas to send an explorer');
+    } else if (result.kind === 'NoRoute') {
+      this.toast('No way there through explored ground');
+    } else if (result.kind === 'Explored') {
+      this.toast('Already explored');
+    }
+    this.notify();
+  }
+
+  /** The player's own city on the board. */
+  homeHex(): number {
+    return homeIndex(this.state);
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
@@ -4515,7 +4911,7 @@ export class Game {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
       const max = builderCount(this.state);
-      return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
+      return { kind: 'builders', value: max - Math.min(busyBuilders(this.state), max), max };
     }
     const inspected = this.inspectedDistrictId === null
       ? undefined

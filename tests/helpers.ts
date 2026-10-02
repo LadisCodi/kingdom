@@ -10,6 +10,7 @@ import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { choosePayerProfile } from '../src/sim/store';
+import { freshWorld } from '../src/sim/world/explorers';
 import { Camera } from '../src/render/camera';
 import {
   DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, type DistrictDef,
@@ -48,6 +49,7 @@ export const freshGame = (): GameState => {
 export const firstGame = (): GameState => {
   const state = newGame(map, T0);
   state.seed = TEST_SEED;
+  state.world = freshWorld(TEST_SEED);
   // A payer profile, so the presenter does not hold every test behind the
   // profile sheet. Dolphin: enough budget to buy a pack, not everything.
   // tests/store.test.ts builds its own games to exercise the choice itself.

@@ -117,7 +117,7 @@ export function syncHeroBoons(state: GameState): void {
  */
 const BOON_SAYS: Partial<Record<ModifierStat, (pct: string) => string>> = {
   buildSpeed: (v) => `The builders work ${v} faster`,
-  worldRevealSpeed: (v) => `World-map cells are scouted ${v} faster`,
+  worldRevealSpeed: (v) => `Explorers march ${v} faster`,
   manaRegen: (v) => `Your kingdom makes ${v} more Mana`,
   knowledgeYield: (v) => `Every lump of Knowledge is ${v} bigger`,
   heroXp: (v) => `Every room teaches your heroes ${v} more`,

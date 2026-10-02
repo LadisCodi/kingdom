@@ -41,13 +41,16 @@ import {
   wakeIdleWorkersAt, type DepositEvent, type StrikeEvent,
 } from './workers';
 import {
-  addToWallet, builderCount, buildQueueCapacity, cellsOfRect, completesAt, districtById,
+  addToWallet, builderCount, buildQueueCapacity, busyBuilders, cellsOfRect, completesAt, districtById,
   districtOccupies, getWallet,
   newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type TechId, type UnitId, type Wallet,
+  type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
+import {
+  finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
+} from './world/explorers';
 
 // ------------------------------------------------------------------ building
 
@@ -127,7 +130,7 @@ export function enqueueBuild(
   definitionId: DistrictId,
   cell: Coord,
 ): EnqueueBuildResult {
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   // Harmony and the goods are told apart from the cell before it is, because
   // the answer to each is a different errand — build a decoration, queue at a
   // workshop, or pick another spot — and `InvalidCell` would name none of
@@ -344,7 +347,7 @@ export function upgradeRefusal(
   if (state.city.population < requiredPopulation(district.definitionId, district.level + 1)) {
     return 'NeedsPopulation';
   }
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
   // Two purses, two refusals. Goods are told apart from raw resources because
   // the answer to each is a different errand: one is a trip to the map, the
@@ -538,12 +541,18 @@ export interface AdvanceResult {
    *  into Gold, the stars are gone and a new season is open
    *  (Docs/features/09-relics.md §3). */
   seasonClosed: SeasonClose | null;
+  /** Explorers that came home from the world board, and what they revealed. */
+  explorersHome: ExplorerHome[];
+  /** World builds whose builder came home: the Outpost or level stands. */
+  worldBuildsDone: WorldBuild[];
 }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
   trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
+  explorersHome: [],
+  worldBuildsDone: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -598,6 +607,11 @@ function applyDueAt(
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
     out.goodsMade.push(...completeWorkshopItems(state, t));
+    // An explorer home is a TIMER: its march resolves at its absolute time,
+    // and its whole reveal folds into the fog here (sim/world/explorers.ts).
+    out.explorersHome.push(...returnExplorers(state, t));
+    // A builder out on the world board comes home when its build stands.
+    out.worldBuildsDone.push(...finishWorldBuilds(state, t));
   });
 }
 
@@ -635,6 +649,8 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   // clients never disagree about when the season ends.
   consider(seasonEndsAt(state.collection.season));
   consider(nextWorkshopCompletion(state, after));
+  consider(nextExplorerReturn(state, after));
+  consider(nextWorldBuildDone(state, after));
   return t;
 }
 
