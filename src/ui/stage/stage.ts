@@ -588,11 +588,24 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     });
   };
 
+  /**
+   * THE STAGE'S CLOCK. While a scene plays it runs every frame — the line
+   * types and the hand follows its target. Between scenes there is nothing
+   * to animate, so it wakes four times a second to ask whether one is due
+   * and whether the player is idle. Within a frame the layout is READ first
+   * (where the target is, whether it is in sight) and WRITTEN after, so the
+   * browser lays the page out once; the costlier reads — the scroller walk,
+   * the cast's fit — ride the tenth-of-a-second check.
+   */
+  const IDLE_CHECK_MS = 250;
+  let lastIdleHelp = 0;
   const frameTick = (now: number): void => {
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
     if (playing === null) {
-      if (now - lastCheck > 250) {
+      // Not while the page is hidden: a timer still fires there, and a
+      // scene would play to nobody.
+      if (now - lastCheck > IDLE_CHECK_MS - 10 && !document.hidden) {
         lastCheck = now;
         const scene = due();
         if (scene !== null) start(scene);
@@ -600,12 +613,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     } else {
       const l = line();
       if (l !== null) {
-        // Type the line.
+        // Type the line — written below, after the layout has been read.
+        let typedText: string | null = null;
         if (playing.typed < l.text.length) {
           const before = Math.floor(playing.typed);
           playing.typed = Math.min(l.text.length, playing.typed + HELP.typeCharsPerSecond * dt);
           const shown = Math.floor(playing.typed);
-          text.textContent = l.text.slice(0, shown);
+          typedText = l.text.slice(0, shown);
           // A soft knock every third letter as the line types — never on a
           // space, never two at once, and none for a line finished by a tap.
           for (let i = before; i < shown; i++) {
@@ -615,7 +629,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
             }
           }
         }
-        more.hidden = !(l.until === 'tap' && playing.typed >= l.text.length);
+        const moreHidden = !(l.until === 'tap' && playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is
         // kept while it still fits.
         const was = playing.target;
@@ -628,10 +642,6 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         if (moved && playing.target?.kind === 'cell') {
           game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
         }
-        // A control scrolled out of its row — the fourth card of the build
-        // menu — is brought into view, or the lock holds the player in front
-        // of something they cannot reach.
-        if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
         const r = playing.target === null ? null : targetRect(game, playing.target, frame);
         // A MAP TARGET OUT OF SIGHT is brought back: the player tapped another
         // forest than the one pointed at, or panned away, and the hand is
@@ -655,15 +665,25 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           playing.missingSince = null;
         }
         drawTarget(r);
-        fitCast();
+        if (typedText !== null) text.textContent = typedText;
+        more.hidden = moreHidden;
         if (now - lastCheck > 100) {
           lastCheck = now;
+          // A control scrolled out of its row — the fourth card of the build
+          // menu — is brought into view, or the lock holds the player in
+          // front of something they cannot reach.
+          if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
+          fitCast();
           if (lineHolds(l)) { graced(); next(); }
         }
       }
     }
-    idleHelp(now);
-    requestAnimationFrame(frameTick);
+    if (now - lastIdleHelp > IDLE_CHECK_MS - 10) {
+      lastIdleHelp = now;
+      idleHelp(now);
+    }
+    if (playing !== null) requestAnimationFrame(frameTick);
+    else setTimeout(() => frameTick(performance.now()), IDLE_CHECK_MS);
   };
   requestAnimationFrame(frameTick);
 }
