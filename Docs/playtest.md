@@ -82,7 +82,7 @@ counts under `signal:*` on the tallies, times in `kingdom.signals`.
 | a silhouette sighted → its cell discovered, and the time between | does the mystery pull the player |
 | a paid reveal no active quest asked for | exploring for its own sake |
 | the Survey opened · a cell claimed · its paid column bought | does the column sell |
-| the session's first tap after an absence: a store, a reveal or a menu | what brought the player back |
+| the session's first tap after an absence of five minutes or more: a store, a reveal or a menu | what brought the player back |
 
 ## 6. Deliberately not in this protocol
 

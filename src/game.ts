@@ -965,8 +965,18 @@ export class Game {
     });
   }
 
-  /** Has this session's first tap been noted yet (Docs/playtest.md §5)? */
-  private firstTapNoted = false;
+  /** Is this session's first tap still to be noted (Docs/playtest.md §5)?
+   *  Only a session that follows an absence is watched — `armReturnTap`. */
+  private firstTapNoted = true;
+
+  /**
+   * A session that follows an absence of five minutes or more watches for its
+   * first tap: what brought the player back. A reload, a crash, a tab put
+   * down for a moment is the same sitting, and is not a return.
+   */
+  armReturnTap(awayMs: number): void {
+    this.firstTapNoted = awayMs < 5 * 60_000;
+  }
 
   /**
    * A PLAYTEST SIGNAL: what the first tap of a session was on — a store, the
@@ -2991,7 +3001,11 @@ export class Game {
   private sceneIntroduces(siteId: string): boolean {
     if (this.state.tutorial.veteran) return false;
     return SCENES.some((s) =>
-      (s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId);
+      ((s.trigger === 'lairFound' || s.trigger === 'landmarkSeen') && s.triggerTarget === siteId)
+      // An abandoned building a scene points at is the advisor's to name:
+      // its banner would land on top of whatever she is saying when the fog
+      // first shows it (the Millers' house, beside the first chest).
+      || s.lines.some((l) => l.point === `abandoned:${siteId}`));
   }
 
   /** Every bed is taken. A House already going up is the answer the player

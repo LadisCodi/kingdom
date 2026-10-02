@@ -120,7 +120,7 @@ export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement
     el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
     windowHead(site.name, [closeKnob(() => game.dismiss(), `Close ${site.name}`)]),
     el('div', { class: 'lm-art k-section' },
-      url ? spriteImgAt(url, 'lm-art-img') : el('div', { class: 'lc-art-glyph' }, def.glyph),
+      url ? spriteImgAt(url, 'lm-art-img is-ruin') : el('div', { class: 'lc-art-glyph' }, def.glyph),
       el('p', { class: 'lm-status' }, 'Abandoned')),
     el('p', { class: 'lm-note' }, def.promise),
     el('p', { class: 'lm-note' },

@@ -355,6 +355,8 @@ async function boot(): Promise<void> {
     }
     else overlaySlot.clear();
   };
+  // A return is watched for its first tap (Docs/playtest.md §5).
+  game.armReturnTap(catchUp === null ? 0 : (catchUp as CatchUpReport).elapsedMs);
   // Show the offline report once, and only when the absence was long enough
   // to be worth interrupting for.
   if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
