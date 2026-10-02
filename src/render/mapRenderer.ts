@@ -576,28 +576,31 @@ export function drawMap(
   const CLOUD_SINK = 0.35;
 
   /**
-   * THE GROUND THE PLAYER HAS REVEALED, on screen: no cloud covers it. A
-   * cloud is wider than its cell and rises toward the back, so one standing
-   * in front of revealed ground would hide it; a cloud near any is clipped to
-   * the frame less those cells (evenodd: the frame, and every revealed
-   * diamond as a hole in it). Filled in by the floor pass below, read when
-   * the clouds are drawn.
+   * THE GROUND THE PLAYER CAN SEE, on screen: no cloud of the bank covers it.
+   * A cloud is wider than its cell and rises toward the back, so one standing
+   * in front of seen ground would hide it; a cloud near any is clipped to the
+   * frame less those cells (evenodd: the frame, and every seen diamond as a
+   * hole in it). A cushion lies on Discovered ground by design, so it is kept
+   * off the Revealed alone. Filled in by the floor pass below, read when the
+   * clouds are drawn.
    */
-  const revealedOnScreen = new Set<string>();
-  const clearOfClouds = new Path2D();
-  clearOfClouds.rect(-w, -h, w * 3, h * 3);
-  const nearRevealed = (cell: Coord): boolean => {
+  const seenOnScreen = new Set<string>();
+  const clearOfBank = new Path2D();
+  const clearOfCushion = new Path2D();
+  clearOfBank.rect(-w, -h, w * 3, h * 3);
+  clearOfCushion.rect(-w, -h, w * 3, h * 3);
+  const nearSeen = (cell: Coord): boolean => {
     for (let dy = -2; dy <= 2; dy++) {
       for (let dx = -2; dx <= 2; dx++) {
-        if (revealedOnScreen.has(coordKey({ x: cell.x + dx, y: cell.y + dy }))) return true;
+        if (seenOnScreen.has(coordKey({ x: cell.x + dx, y: cell.y + dy }))) return true;
       }
     }
     return false;
   };
-  const outsideRevealed = (cell: Coord, draw: () => void): void => {
-    if (!nearRevealed(cell)) { draw(); return; }
+  const clippedTo = (clear: Path2D, cell: Coord, draw: () => void): void => {
+    if (!nearSeen(cell)) { draw(); return; }
     ctx.save();
-    ctx.clip(clearOfClouds, 'evenodd');
+    ctx.clip(clear, 'evenodd');
     draw();
     ctx.restore();
   };
@@ -630,7 +633,7 @@ export function drawMap(
     const foot = base(box);
     const dx = box.w * 0.18 * jitter(7);
     const dy = box.h * 0.25 * jitter(19);
-    later(cell, () => outsideRevealed(cell, () => {
+    later(cell, () => clippedTo(clearOfBank, cell, () => {
       drawSprite(ctx, key, foot.x - cw / 2 + sway + dx, foot.y + box.h * CLOUD_SINK - ch + dy, cw, ch);
     }));
   };
@@ -882,7 +885,9 @@ export function drawMap(
       const taps = fog === 'Discovered' ? state.fog.progress[key] ?? 0 : 0;
       const box = cellRect(cell);
       floor.push({ cell, key, terrain, fog, payable, taps, box });
-      if (fog === 'Revealed') { revealedOnScreen.add(key); diamondPath(clearOfClouds, box); }
+      seenOnScreen.add(key);
+      diamondPath(clearOfBank, box);
+      if (fog === 'Revealed') diamondPath(clearOfCushion, box);
       const code = fog === 'Revealed' ? 1 : (payable ? 2 : 3) + 4 * taps;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
       floorSig = Math.imul(floorSig ^ code, 16777619);
@@ -994,7 +999,7 @@ export function drawMap(
       // (the floor's veil, drawFloor). The cushion stands over what is on
       // the cell, so only the tips of tall things clear it; a site is left
       // in view.
-      if (!payable && !cellHasSiteForView(cell)) later(cell, () => outsideRevealed(cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
+      if (!payable && !cellHasSiteForView(cell)) later(cell, () => clippedTo(clearOfCushion, cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
       // Reveal progress only — the total cost is deliberately not shown.
       // Five taps at every ring, so the bar fills in the same five steps
       // wherever the player is standing.
