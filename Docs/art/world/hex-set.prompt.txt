@@ -1,0 +1,41 @@
+WORLD HEX SPRITES — THE FULL SET for the game "Kingdom". Follow this file exactly.
+
+GENERATE NEW IMAGES. Do not edit or export the attached files: they are ONLY style references.
+- approved-sheet1.png = TWO HEX SPRITES ALREADY APPROVED (left: forested mountain; right: fertile land with game). THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same scale of trees, rocks, fields and animals, same camera. Every sprite of this set must look like it was made in the same session.
+- ref-board.png = the world board these sprites live on.
+- ref-assets.png = sprites that already ship in the game.
+
+WHAT A SPRITE IS (same rules as approved-sheet1.png)
+- The CONTENT of one hex of the world board, standing on a separate ground tile the game draws under it. NO ground plate, NO base, NO hex outline, NO drop shadow. Only the objects, on full transparency. (Small tufts of grass or bushes between objects are fine, as in approved-sheet1.png.)
+- Camera: from a little south of overhead, objects seen from a high three-quarter angle, standing upright.
+- Footprint: a hex tile seen at this tilt has a top face like an elongated hexagon, about 1.4 times wider than tall. Every object stands inside it; things may rise above it.
+- Draw as if shown about 130 px wide on a phone: big readable shapes, no tiny details.
+- VARIANTS of the same thing must be clearly the same kind of place, at the same size, but with a different arrangement and silhouette, so a board full of them does not look repeated.
+
+EACH SHEET: one landscape image, 1536x1024, FOUR sprites in a 2x2 grid (top-left, top-right, bottom-left, bottom-right). Nothing may cross the vertical or the horizontal midline: keep a clear 60 px band of transparency along both midlines. Every sprite about the same size as those in approved-sheet1.png relative to its quadrant.
+
+End of every request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG. Do not re-render to fix a prop count.
+
+=== THE THINGS ===
+FOREST — a grove of the round deciduous trees of approved-sheet1.png, a few conifers, bushes. About 75% of the footprint covered.
+MOUNTAIN — a grey-rock mountain with a little moss, like the mountain of approved-sheet1.png but with NO forest around it: bare rock, a few boulders and tufts at its foot.
+FORESTED MOUNTAIN — as approved-sheet1.png left.
+FERTILE LAND — golden wheat fields lying flat, furrows, short wooden fences, hay stooks. No farmhouse, no buildings, no animals.
+GAME — wild animals among low bushes and grass tufts (they must sit well on grass AND on sand), no fields, no buildings.
+FERTILE LAND WITH GAME — as approved-sheet1.png right.
+MOUNTAIN WITH DUNGEON — a grey-rock mountain like MOUNTAIN, with a dark dungeon entrance at its foot: two torches, old worn stone steps. Mysterious, never gory: no skulls, no bones.
+SANCTUARY — a small white-marble shrine with a soft blue glow and clear blue water, a few flowers. Calm and holy.
+LANDMARK — ancient standing stones with faintly glowing blue runes, a little moss, a few flowers at their feet.
+
+=== SHEET 1 === TL: FOREST v1, a dense round grove. TR: FOREST v2, two groves with a small glade between them. BL: FOREST v3, a grove with a fallen log and a few mushrooms. BR: FOREST v4, a mixed grove with more conifers and a mossy rock.
+=== SHEET 2 === TL: MOUNTAIN v1, one tall peak. TR: MOUNTAIN v2, twin peaks. BL: MOUNTAIN v3, a broad low massif with three rounded tops. BR: MOUNTAIN v4, a jagged ridge with boulders at its foot.
+=== SHEET 3 === TL: FORESTED MOUNTAIN v2, the mountain at the back-right, the forest wrapping its left and front. TR: FORESTED MOUNTAIN v3, a lower massif with conifers climbing to the top. BL: FERTILE LAND WITH GAME v2, one large field and a small one, a pair of deer in front. BR: FERTILE LAND WITH GAME v3, three narrow fields, boars at the front-right.
+=== SHEET 4 === TL: FERTILE LAND v1, three fields and hay stooks. TR: FERTILE LAND v2, two fields and a short row of young fruit trees. BL: FERTILE LAND v3, fields with a scarecrow and a fence corner. BR: GAME v1, two boars beside a bush.
+=== SHEET 5 === TL: GAME v2, a pair of deer by some bushes. TR: GAME v3, a boar family (two adults, two piglets) by a log. BL: GAME v4, a stag and a doe among flowers. BR: MOUNTAIN WITH DUNGEON v1, an arched doorway carved into the rock.
+=== SHEET 6 === TL: MOUNTAIN WITH DUNGEON v2, a cave mouth shored with old wooden beams, like a deep mine. TR: MOUNTAIN WITH DUNGEON v3, a ruined stone portal half swallowed by the mountain. BL: SANCTUARY v1, a small round temple with white columns over a spring. BR: SANCTUARY v2, a marble arch over a clear pool.
+=== SHEET 7 === TL: SANCTUARY v3, a marble statue of a robed goddess holding a basin of glowing water. TR: LANDMARK v1, a ring of standing stones. BL: LANDMARK v2, one tall menhir with smaller stones round it. BR: LANDMARK v3, a dolmen: two upright stones and a capstone.
+
+=== SHEET 8 — IMPROVEMENTS === These are buildings a player builds on a hex; each INCLUDES the feature it works, so it replaces that feature's drawing. Blue roofs, cream stone, golden timber, as in ref-assets.png. Level 1 small, level 3 bigger, level 5 grand — the same place growing.
+TL: LOGGING CAMP level 1 — a small timber lodge with a blue roof, a log pile and a sawhorse, among a ring of the forest trees, a few stumps. TR: LOGGING CAMP level 3 — a bigger lodge and a saw-pit, several log stacks, more stumps, trees around. BL: LOGGING CAMP level 5 — a large two-storey timber hall with a wooden crane, big log piles, trees around. BR: FORTRESS level 1 — a squat stone watch-tower inside a wooden palisade.
+=== SHEET 9 — IMPROVEMENTS === TL: STONE PIT level 1 — a grey-rock mountain (as MOUNTAIN) with a cut face, a small wooden shed and a few stone blocks. TR: STONE PIT level 3 — the mountain cut in terraces, a wooden crane, a cart of blocks. BL: STONE PIT level 5 — deep quarry terraces, two cranes, stacks of cut blocks, a small stone house. BR: FORTRESS level 3 — a stone keep with a short curtain wall.
+=== SHEET 10 — IMPROVEMENTS === TL: HOMESTEAD level 1 — a small farmhouse with a blue roof, one wheat field, a fence. TR: HOMESTEAD level 3 — a farmhouse, a barn and two fields. BL: HOMESTEAD level 5 — a large farmstead with a windmill, three fields and haystacks. BR: FORTRESS level 5 — a fortified keep with two towers and walls. Fortress banners are plain cream cloth (no colour, the game draws ownership itself).

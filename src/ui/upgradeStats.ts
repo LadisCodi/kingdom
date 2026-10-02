@@ -124,6 +124,10 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.bedsPerLevel.length > 0) {
     add('beds', 'hp', 'Beds', 'Beds', levelIndexed(def.bedsPerLevel, level));
   }
+  // The War Camp's whole ladder: armies more out at once on the world board.
+  if (def.armySlotsPerLevel.length > 0) {
+    add('armySlots', 'army', 'Armies out', 'Armies', levelIndexed(def.armySlotsPerLevel, level));
+  }
   // The Tavern's whole ladder: a share more Hero XP, the TOTAL at the level.
   if (def.heroXpBonusPerLevel.length > 0) {
     const xp = levelIndexed(def.heroXpBonusPerLevel, level);

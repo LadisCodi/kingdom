@@ -159,8 +159,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 - **Mana is what magic costs, wherever you are.** In the city it hurries
   production — a tap on the ground is a small spell. Collecting a building is
-  free. On the world map it bends an expedition
-  or shortens a march.
+  free. On the world map it costs nothing.
 - Capped, and what arrives over the cap is lost. It refills whether or not
   the player is playing.
 - A new kingdom starts full.

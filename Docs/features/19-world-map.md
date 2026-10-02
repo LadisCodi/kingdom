@@ -7,29 +7,37 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: designed, not built.** Nothing of this exists in code but the
-> `worldRevealSpeed` modifier stat.
+> **Status: built against a local stand-in for the world server**
+> ([`../plans/world-board.md`](../plans/world-board.md)): the board, the fog
+> and the explorers (§1–§3, §9); claiming, the chain, inactive hexes,
+> improvements and their stores, landmarks and Sanctuaries (§5, §7, §8);
+> armies, the War Camp, attacks, conquest and denial, Fortress garrisons
+> (§4, §6). Five stand-in rivals claim, build, man a Fortress and now and
+> then attack on their own. The hex art is the province's, arranged on a
+> hex. Dungeons (§8.1) and the Dark Portal (§10) are built too: the Portal
+> opens on Fridays (UTC) for three days, its numbers in `worldPortal`.
 
 ## 1. The board
 
 - **A pointy-top hex board, radius 5 from the centre: 91 hexes.**
 - **Six players a board.** A seventh player opens a new instance; for the
   prototype that is enough.
-- A player's starting hex is assigned at random from the free ones.
+- **A player joins the first board with a free city**, on its first free
+  corner, assigned at random.
 - Rings are roles, not decoration:
 
 | Ring | Hexes | Its job |
 |---|---|---|
-| **0 — the centre** | 1 | The Dark Portal. Never owned, never built on, never fogged (§9) |
-| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to improvements built on it** (§6.3) |
-| **2 — the corridors** | 12 | The ground between a city and the centre. Nothing special, and unavoidable |
-| **3 — the home ring** | 18 | The six city hexes, equidistant, and the ground between them |
-| **4 — the outer ring** | 24 | Dungeons, Sanctuaries and the rare books. Poor in production, rich in what production cannot buy |
+| **0 — the centre** | 1 | The Dark Portal. Never owned, never built on, never fogged (§10) |
+| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to improvements built on it** (§7) |
+| **2–3 — the corridors** | 30 | The ground between a city and the centre. Nothing special, and unavoidable |
+| **4 — the home ring** | 24 | The six city hexes, on its corners, and the ground between them |
+| **5 — the outer ring** | 30 | Dungeons and Sanctuaries. Poor in production, rich in what production cannot buy |
 
-- From a city on ring 3 the centre is **three hexes away**: two corridor hexes
-  on ring 2, then one on ring 1.
-- **The inner ring is the best ground and the worst to hold** — it is one hex
-  from all five rivals and hangs off an exposed corridor.
+- A city is **four hexes** from the centre and four from each neighbouring
+  city.
+- An inner-ring hex is three hexes from its nearest city and at most five from
+  any.
 - **The board is small on purpose.** There is nowhere to hide, every hex has a
   job, and conflict is a property of the geometry rather than a rule.
 
@@ -80,45 +88,84 @@
 | **Unknown** | opaque rolling mist, the whole hex hidden | Undiscovered |
 
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**
-- **Fog is information, not permission.** It never blocks movement or an action,
-  which is what keeps it client-authoritative and in the player's own save
-  ([`02-map-scopes.md`](02-map-scopes.md) §3).
+- **A hex is Sensed when it is next to a hex you revealed.** The Portal,
+  revealed for everyone, senses nothing.
+- **Only a Revealed hex can be acted on.** Claiming, building and sending an
+  army all need the hex explored first; on Sensed or Unknown ground the only
+  action is Explore, and a Revealed hex never offers it.
+- **A march never passes through fog**: every hex on its way is Revealed;
+  only an explorer's destination may be Sensed.
 
-### 3.1 Exploring costs an army
+### 3.1 Explorers
 
-- **You explore by sending an army, and it marches.** There is no button that
-  buys fog: a hex is revealed because something of yours went and looked.
-- An army reveals **its own hex and the six around it** at every hex it passes
-  through — so a march opens a corridor, not a dot. The radius is a progression
-  axis and upgrades to 2.
-- **Marching costs time, scaling with distance** (§4). It costs **no Gold**:
-  Gold's sink out here is building (§6), and charging for the march as well
-  would be charging twice for one decision.
-- Exploring, claiming, attacking, defending a corridor and diving the Portal
-  all draw on the same armies. **Choosing to explore is choosing not to do the
-  other four** (§4).
-- The march timer divides by `worldRevealSpeed` from the modifier stack — a
-  multiplier, never a subtracted discount.
-- The board is small and opens quickly by design. **Discovery is not the
-  bottleneck here; the army is.**
+- **You explore by sending an explorer to a Sensed hex.** It marches there,
+  works there, and marches home. There is no button that buys fog.
+- **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
+  first; a rank ladder in the Atlas gives more. No training, no cost per use.
+- **An explorer never fights and can never be stopped, attacked or lost.** It
+  lives in the player's own save, like the fog it reveals.
+- **The work**: once there, the explorer works the hex for
+  `exploreWorkSeconds` (30) plus `exploreWorkSecondsPerHex` (30) for every
+  hex it lies from the city.
+- When the work is done, the hex **and the six around it** are revealed. The
+  radius upgrades to 2. Nothing is revealed on the way.
+- **A march costs time, hex by hex** (§4.1), and no Gold.
+- An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 
-## 4. The army is the bottleneck
+## 4. Armies
 
-> **This is the balancing lever for the whole board.**
+> **How many armies a player has is the balancing lever for the whole board.**
 
-- One bag of troops does everything: takes neutral ground, attacks a rival,
-  garrisons a corridor, collects free hexes, and dives the Portal.
-- An army is **occupied for the whole march and the action at the end of it**,
-  and troops lost take time to replace.
-- **When the board feels wrong — too much conflict, too little, the Portal
-  eating every army — the numbers to move are how many armies a player has and
-  how long casualties take to replace.** Not the +200%, not the march times.
-- Marching is a **timer**: an army sent before a twelve-hour absence has
-  arrived on return
-  ([`02-map-scopes.md`](02-map-scopes.md) §4).
-- March time is **linear in hexes** — *Y hexes cost X·Y*. The board is ten hexes
-  across at its widest; superlinear scaling exists to stop large maps
-  collapsing and there is no large map here.
+- **An army is a party sent out**: the same party a lair attack fields — at
+  least one hero and up to six squads ([`combat.md`](combat.md) §3) — composed
+  on the same screen.
+- Armies take neutral ground, attack a rival, garrison a Fortress and dive the
+  Portal.
+- **An army is busy for its whole march and the action at the end of it**:
+  - its troops leave the roster and cannot fight a lair;
+  - **its heroes are busy** and cannot lead another party
+    ([`10-heroes.md`](10-heroes.md) §2.7);
+  - it comes home with its survivors and its heroes' wounds; casualties are
+    charged as in any fight ([`combat.md`](combat.md) §4).
+- **Army slots:**
+  - every player has **one** from the moment the world opens;
+  - the **War Camp** — a building, one per city, opened by the Atlas card
+    *Muster* — adds **one per level**.
+- How many armies can march at once is also bounded by heroes free to lead
+  them.
+- A march is a **timer**: an army sent before a twelve-hour absence has
+  arrived on return ([`02-map-scopes.md`](02-map-scopes.md) §4).
+
+### 4.1 March time
+
+- **A march is a path, hex by hex**, and the way taken is **the quickest** —
+  through Revealed hexes only (§3).
+- **Every hex adds its time when the marcher leaves it**: out, the city and
+  every hex before the destination; home, the destination and every hex
+  before the city.
+- A hex's time is the marcher's **pace** times the hex's **ground**:
+
+| Pace on open ground | Seconds a hex |
+|---|---|
+| Explorer (`explorerSecondsPerHex`) | 60 |
+| Army (`armySecondsPerHex`) | 120 |
+
+| Ground (`worldTravel`) | Factor |
+|---|---|
+| Grassland, Plains | ×1 |
+| Desert | ×1.5 |
+| Mountain | ×3 |
+| Forest (a feature, on top of the terrain) | ×1.5 |
+| Every other feature, the Portal | ×1 |
+
+- Factors multiply: a forest on desert is ×2.25.
+- *Example, an explorer*: leaving open plain 1 min, a plain with forest
+  1 min 30 s, a mountain 3 min.
+- **A speed divides one hex's time** and never lengthens it — the hook for a
+  hero or technology that is quicker over some ground.
+- **Your explorers and armies show their way**: footprints along the hexes
+  walked, a dashed line along the hexes still to go, ringed on the hex it is
+  bound for — the target out, the city home. A rival's army shows only itself.
 
 ## 5. Control, claiming and connection
 
@@ -129,7 +176,10 @@
 - **Adjacency is always required.** A player may only take a hex adjacent to an
   **active** hex of their own.
 - **A neutral hex with nothing on it** is claimed by building an **Outpost**,
-  paying its cost and its time.
+  paying its Gold and a builder's time. Each Outpost costs more than the last,
+  by the hexes already held.
+- **World builds use the province's builders**: an Outpost or an improvement
+  level holds a builder until it stands, like a building in the city.
 - **A neutral hex that still carries buildings** — someone held it and lost it —
   has its Outpost already standing: marching an army there is enough to claim
   it, and its improvements change hands intact.
@@ -178,6 +228,8 @@ accident.**
   that needs them awake.
 - **Defence is pre-positioned, never reactive:** what defends a hex is what was
   garrisoned there before the attack (§6.1).
+- **A hex no Fortress covers has no defence.** An enemy army that arrives
+  takes it or denies it without a fight.
 
 Two plays out of one button:
 
@@ -193,28 +245,52 @@ Two plays out of one button:
 
 ### 6.1 The Fortress
 
-- A **Fortress** stations troops on a hex. They defend that hex **and every hex
-  adjacent to it**: while they stand, no enemy takes any of them.
-- The Fortress itself can be attacked directly, with its troops as the
-  defenders. **That is how a blockade is broken** — from the front.
+- **A Fortress is garrisoned by an army.** The army marches to it and stays,
+  holding its army slot and its heroes, until it is recalled.
+- The garrison **covers its own hex and the six around it**.
+- **An attack on a covered hex is fought against the garrison**, the
+  defender's real party with its heroes' current HP:
+  - the attacker wins → the garrison falls and the attacker takes or denies
+    the hex it attacked; the Fortress stays, empty;
+  - the garrison wins, or the fight times out → the attacker marches home
+    with its survivors.
+- A hex covered by more than one garrison needs **every one beaten**, one
+  after another on the same arrival; the army carries its losses from one
+  fight into the next.
+- A garrison defends whether its hex is active or not.
+- Both sides' casualties are charged as in any fight
+  ([`combat.md`](combat.md) §4); a fallen garrison's heroes go home
+  exhausted.
 
 ## 7. Improvements
 
 Built only on a hex the player already controls, and only after the Outpost.
+**Each is opened by its own Atlas card**; *Cartography* opens the first
+explorer and the Outpost.
 
 | Improvement | Needs | Gives |
 |---|---|---|
 | **Outpost** | — | takes the hex, and opens the rest of this table |
-| **Sawmill** | a Forest | Wood to the main city, hourly |
-| **Farm** | a hex with no feature | Food to the main city, hourly |
-| **Quarry** | a Mountain | Stone to the main city, hourly |
-| **Fortress** | — | stations troops; defends this hex and its six neighbours (§6.1) |
+| **Logging Camp** | a Forest | Wood, into its store |
+| **Homestead** | a hex with no feature | Food, into its store |
+| **Stone Pit** | a Mountain | Stone, into its store |
+| **Fortress** | — | garrisoned by an army; covers this hex and its six neighbours (§6.1) |
 
 - **Improvements are what Gold buys out here.** They are the world's Gold sink,
   which is why the march is free.
 - **The inner ring pays +200%** to improvements standing on it. Permanent,
   independent of whether the Portal is open, and **only while the hex is
   active**.
+
+### 7.1 Stores
+
+- **A producing improvement fills a store of its own**, as a province building
+  does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
+- **A tap on its hex collects the store into the city's wallet**, free.
+- **Yield and store size are authored amounts per improvement level.**
+- An inactive hex's store stops filling and can still be collected.
+- **The store goes with the hex.** A conquest hands it to the conqueror; a
+  denial empties it. Collecting is the defence.
 
 ## 8. Features
 
@@ -223,20 +299,52 @@ held, some are destinations.
 
 | Feature | What it does |
 |---|---|
-| **Forest** | opens the Sawmill |
-| **Fertile land** | a Farm here yields extra Food |
-| **Game** | a Farm here yields extra Food |
-| **Dungeon** | held by enemies. Cleared, it takes expeditions — and it is where the **rare spellbooks** are ([`07-research.md`](07-research.md)). **Outer ring only** |
+| **Forest** | opens the Logging Camp |
+| **Fertile land** | a Homestead here yields extra Food |
+| **Game** | a Homestead here yields extra Food |
+| **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). **Outer ring only** |
 | **Sanctuary** | raises max Mana while the hex is held and active. **Outer ring only** |
+| **Landmark** | fills a store of Knowledge while the hex is held and active, collected with a tap like an improvement's (§7.1). **Corridors only** (rings 2–3) |
 
-> **The province's ruins pay the basic books; the outer ring's dungeons pay the
-> rare ones.** A player who never contests the board still has a complete route
-> through research — the world widens what a kingdom can become, it never
-> monopolises it.
+### 8.1 Dungeons
+
+- **A dungeon is depths of rooms** — the depth and room design of
+  [`11-expeditions.md`](11-expeditions.md): numbered depths, one fight a room,
+  a boss at the end of each depth.
+- **Each player delves for themselves**: their own progress, room by room.
+- **But closing it is a race.** The first player to beat a dungeon's last boss
+  closes it for everyone:
+  - they are paid that boss again, `closeRewardMultiplier` (2) times over;
+  - every army camped there walks home, and everyone's progress in it is gone;
+  - the others are told who closed it.
+- **A closed dungeon comes back** after a roll between `returnHoursMin` and
+  `returnHoursMax` (12–24 h), in its own sixth of the board:
+  - on rings 3–5, on a hex nobody holds and no other site stands on;
+  - never beside a city, never where it last stood;
+  - it covers what the ground holds while it stands; gone, the ground is as
+    it was;
+  - it is a new dungeon: every player starts it from the top.
+- Where every dungeon stands is server state.
+- A dungeon hex is never owned and needs no adjacency: any army can march to
+  it.
+- **An army camps at the dungeon.** From the dungeon's sheet the player
+  attacks its rooms one at a time; each fight resolves at once.
+  - The camped army's losses and its heroes' wounds carry from room to room.
+  - Recalling it marches it home, to be reinforced and sent again.
+- **Depth N+1 opens when depth N's boss falls.** Nothing else gates a depth.
+- **Every dungeon is 3 depths of 8 rooms**; the last room of a depth is its
+  boss, which fields more and pays a multiple of a room.
+- **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
+  room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
+  beyond its rooms — the found book — is **OQ-118**.
 
 ## 9. Generation
 
 Contents are rolled at board creation, under rules:
+
+- **One 60° wedge is rolled and turned six times**, so every seat has the same
+  ground round it. A wedge is a seat's 15 hexes of rings 1–5; the inner ring
+  is the exception (below).
 
 - A hex designated for a player start is always **Grassland with no feature**.
 - Every player has **at least one Grassland + Forest** hex adjacent to their
@@ -244,10 +352,35 @@ Contents are rolled at board creation, under rules:
 - Every player has **at least one Grassland with no feature** adjacent to their
   city.
 - **No dungeon** is adjacent to a player's city.
-- **The inner ring is not rolled — it is authored by hand**, so all six hexes
-  are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
+- **The inner ring is not rolled and not turned — it is authored by hand**, so
+  all six hexes are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
   (one of them Fertile land), 2 Mountain.
-- Dungeons and Sanctuaries appear **only on the outer ring**.
+- **Every sixth of the board has exactly one Dungeon and one Sanctuary**, on
+  its outer ring and never beside a city: six of each on every board, one for
+  each seat at the same distance. They are placed, not rolled
+  (`worldGen.placedPerWedge`); the ground under them turns to a terrain they
+  stand on.
+- Landmarks are rolled, only on the corridors.
+
+### 9.1 Which features roll where
+
+| Feature | Rolls on | Never with |
+|---|---|---|
+| **Forest** | Grassland, Plains, Mountain | Fertile land, Game, any site |
+| **Fertile land** | Grassland, Plains | Forest, any site |
+| **Game** | Grassland, Plains, Desert | Forest, any site |
+| **Dungeon** | any terrain (its art carries its own rock) | every other feature |
+| **Sanctuary** | Grassland, Plains | every other feature |
+| **Landmark** | Grassland, Plains, Desert | every other feature |
+
+- Dungeon, Sanctuary and Landmark are **sites**: a site stands alone on its hex.
+- Features roll in the table's order; **one that does not fit the terrain or a
+  feature already rolled is skipped**. Dungeon and Sanctuary are placed
+  instead (above). At most `maxFeaturesPerHex` (2) are kept.
+- The rules are data (`worldGen.featureRules`), and the inner ring obeys them
+  too.
+- Every combination they allow has its own art
+  ([`../plans/world-hex-art.md`](../plans/world-hex-art.md) §2).
 
 ## 10. The Dark Portal
 
@@ -288,9 +421,9 @@ finishing instantly.
 
 ### 10.4 What it pays
 
-- **By depth** — an immediate reward for clearing each floor. This is the main
-  line, and it makes diving worth it for a player with no interest in the
-  ranking.
+- **By depth** — an immediate reward for clearing each floor: **Knowledge,
+  Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
+  This is the main line.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
 - **By final rank** — Top 1 / Top 2–3 / Top 4–6.
@@ -301,11 +434,11 @@ The outer scope feeds the inner one.
 
 | The world pays | Which lands in |
 |---|---|
-| **Wood, Food and Stone**, hourly, from improvements | the city's own purse |
+| **Wood, Food and Stone**, collected from improvements' stores (§7.1) | the city's own purse |
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
-| **Rare spellbooks**, from outer-ring dungeons | [`07-research.md`](07-research.md) |
-| **Star card packs** — a gold card guaranteed | the collection's two hardest albums ([`09-relics.md`](09-relics.md) §6) |
-| **Knowledge lumps**, from taken landmarks | research ([`07-research.md`](07-research.md) §7) |
+| **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
+| **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |
+| **Knowledge**, from held landmarks' stores | research ([`07-research.md`](07-research.md) §7) |
 
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
@@ -314,12 +447,16 @@ The outer scope feeds the inner one.
 
 | Dial | Moves | Reach for it when |
 |---|---|---|
-| **Armies per player** | everything — conflict, exploring, the Portal | the board feels too quiet or too violent |
+| **Army slots** (1, +1 per War Camp level) | everything — conflict, the Portal | the board feels too quiet or too violent |
 | **Casualty replacement time** | how often a player can act at all | attacks are too cheap to repeat |
-| **March time per hex** | the tempo of the whole scope | the board resolves too fast or feels like waiting |
+| **Army seconds per hex** (120) | the tempo of conquest | the board resolves too fast or feels like waiting |
+| **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
+| **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
+| **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
 | **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
+| **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
 | **Reveal radius** (1, upgrading to 2) | how fast the board opens | exploring becomes the bottleneck |
 
@@ -333,7 +470,6 @@ The outer scope feeds the inner one.
   is what was garrisoned beforehand.
 - **Losing a hex outright to a cut corridor** — it goes inactive, never away.
 - **Cities on the world map.** One or two structures on a claimed hex, no more.
-- **Server-authoritative fog** (`02` §3).
 - **Reusing `grid.ts`** for the lattice.
 - **A rule that forbids continuous conflict.** The price in troops is the only
   brake.

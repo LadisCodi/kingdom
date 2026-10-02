@@ -47,7 +47,7 @@
 // anchor — so the offline replay and the live tick land on the same integer.
 // The pool is its only ceiling, away or not.
 
-import { MANA, levelIndexed } from './data/definitions';
+import { MANA, WORLD_BUILD, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
@@ -105,6 +105,8 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
 export function manaCap(state: GameState): number {
   let cap = MANA.baseCap;
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
+  // Each Sanctuary held and on the chain, on the world board (19 §8).
+  cap += state.world.sanctuaries * WORLD_BUILD.sanctuaryManaCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
       cap += levelIndexed(MANA.sanctumCapPerLevel, d.level);

@@ -357,7 +357,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - Villain buffs crossing sides
 - **A whole authored formation** — named villains in named slots beside chosen
   squads. A boss's villain is authored; the squads around it are still rolled
-- Casualties *inside* the resolver, healing timers, permanent garrisons
+- Casualties *inside* the resolver, healing timers
 - RNG in resolution
 - Draws
 

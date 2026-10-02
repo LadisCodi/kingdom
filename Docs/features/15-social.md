@@ -124,6 +124,10 @@ Submitted as they happen:
 
 ## 6. The siege
 
+> **To be redesigned with the social layer.** Written against the delves and
+> landmark claims that no longer exist; the world board now comes first
+> ([`02-map-scopes.md`](02-map-scopes.md) §7).
+
 - The siege is the **world map's** encounter
   ([`02-map-scopes.md`](02-map-scopes.md) §7): a contested landmark held by an
   authored threat, cleared by a guild. The province's ruin gates are cleared

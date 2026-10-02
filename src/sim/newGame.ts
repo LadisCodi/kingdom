@@ -10,6 +10,7 @@ import { reconcileSchedule } from './timeline';
 import { newSeed } from './rng';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
 import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
+import { freshWorld } from './world/explorers';
 
 export function newGame(map: MapData, now: number): GameState {
   const kingdomWallet: Wallet = {};
@@ -19,6 +20,7 @@ export function newGame(map: MapData, now: number): GameState {
     if (def.scope === 'player') playerWallet[id as CurrencyId] = def.start;
   }
 
+  const seed = newSeed();
   const state: GameState = {
     regionId: 'oakville',
     city: {
@@ -94,7 +96,10 @@ export function newGame(map: MapData, now: number): GameState {
     abandoned: { repaired: {} },
     signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [] },
     pendingDiscoveries: [],
-    seed: newSeed(),
+    // The world board and seat are derived from the kingdom's own seed until
+    // a server assigns them (sim/world/explorers.ts).
+    world: freshWorld(seed),
+    seed,
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,

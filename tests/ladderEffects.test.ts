@@ -28,6 +28,7 @@ import {
 import { armyCap, trainCost, trainSecondsAt, woundedCap, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
+import { explorerSlots, revealRadius } from '../src/sim/world/explorers';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { manaCap, manaProduction } from '../src/sim/mana';
@@ -186,6 +187,10 @@ function probe(state: GameState): Record<string, number> {
   addHeroXp(state, 100);
   put('heroXp.per100', getWallet(state.kingdom.wallet, 'HeroXp') - before);
   state.kingdom.wallet.HeroXp = before;
+
+  // The world board.
+  put('explorerSlots', explorerSlots(state));
+  put('worldRevealRadius', revealRadius(state));
 
   // A control that no ladder may move: what a lair fields, which is authored
   // and belongs to nobody's ladder.

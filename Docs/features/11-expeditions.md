@@ -1,10 +1,15 @@
-# 11 · Ruins — depths and rooms
+# 11 · Dungeons — depths and rooms
 
-> **Spec.** Combat resolution, unit stats and party rules:
-> [`combat.md`](combat.md). Ruin placement and discovery:
-> [`01-map-and-fog.md`](01-map-and-fog.md) §6. Screens:
-> [`11a-ruins-ui.md`](11a-ruins-ui.md). Guild costs:
-> [`buildings.md`](buildings.md).
+> **Spec.** The depths and rooms of a world-map dungeon
+> ([`19-world-map.md`](19-world-map.md) §8.1): where it sits, who may enter
+> and how an army camps there is that doc. Combat resolution, unit stats and
+> party rules: [`combat.md`](combat.md). Screens:
+> [`11a-ruins-ui.md`](11a-ruins-ui.md).
+>
+> **Status: built on the world board as 3 depths × 8 rooms** with the room
+> formula of §6 and §7.1, one shape for every dungeon (`worldDungeon` in the
+> world collection). Not built: supplies, the Scout preview, boss chests
+> (§7.2), permanent generation (§7.3) and §4's per-ruin content.
 
 ## 1. Structure
 
@@ -24,7 +29,6 @@ One `depths` entry per depth, plus two tables.
 | Field | Value |
 |---|---|
 | `rooms` | 8–18 |
-| `guildReq` | Guild level that opens this depth. Default `= depth_index`. **`0` on every Depth 1** |
 | `powerStart`, `powerStep` | Enemy power in room 1, per-room increment |
 | `threatMix` | Type weights per room, biased to the ruin's affinity |
 | `boss` | Authored formation: squads plus **named villains** in named slots → [`combat.md`](combat.md) §9 |
@@ -38,54 +42,34 @@ One `depths` entry per depth, plus two tables.
 
 ```
 powerStart(D+1)  ≥  powerStart(D) + powerStep(D) × (rooms(D) − 1)
-guildReq(D+1)    ≥  guildReq(D)
 ```
-
-Plus, per Guild level: at least two ruins must have an open, unfinished depth,
-with different affinities.
 
 ## 3. Gates
 
-- **Ruin availability:** discovered on the map, gate cleared. Depth 1 opens
-  when the gate falls.
-- **Depth availability:** `guildReq` ≤ current Adventurers' Guild level.
-
-| Guild level | Opens | Also |
-|---|---|---|
-| 1 | Barrow D1 · every discovered ruin's D1 | — |
-| 2 | Barrow D2 | — |
-| 3 | Barrow D3 · Chapel D2 | Scout: room threat preview |
-| 4 | Chapel D3 · Ironworks D2 | — |
-| 5 | Ironworks D3 · Counting House D2 | — |
-| 6 | Counting House D3 · Observatory D2 | — |
-| 7 | Observatory D3 | — |
-
-Guild upgrades cost city resources only — never a ruin-sourced resource.
-
-**The Guild opens depths and nothing else.** Every TROOP slot on the board is
-open from the first fight — nothing gates one and nothing sells one
-([`combat.md`](combat.md) §3) — and the only slot that is bought is a HERO
-slot ([`10-heroes.md`](10-heroes.md) §3).
+- **Depth 1 is open** to any army that reaches the dungeon.
+- **Depth N+1 opens when depth N's boss falls.** Nothing else gates a depth.
 
 ## 4. Launch content
 
-| Ruin | Tier | Affinity | Depth 1 | Depth 2 | Depth 3 | Rooms | Bottom |
+| Dungeon | Tier | Affinity | Depth 1 | Depth 2 | Depth 3 | Rooms | Bottom |
 |---|---|---|---|---|---|---|---|
-| Hollow Barrow | I | Warrior | 10 · *open* | 12 · *G2* | 8 · *G3* | 30 | D3 |
-| Sunken Chapel | II | Archer | 8 · *open* | 12 · *G3* | 12 · *G4* | 32 | D3 |
-| Drowned Ironworks | III | Lancer | 10 · *open* | 12 · *G4* | 14 · *G5* | 36 | D3 |
-| The Counting House | IV | Cavalry | 12 · *open* | 14 · *G5* | 16 · *G6* | 42 | D4+ |
-| Star Observatory | V | mixed | 12 · *open* | 16 · *G6* | 18 · *G7* | 46 | D5+ |
+| Hollow Barrow | I | Warrior | 10 | 12 | 8 | 30 | D3 |
+| Sunken Chapel | II | Archer | 8 | 12 | 12 | 32 | D3 |
+| Drowned Ironworks | III | Lancer | 10 | 12 | 14 | 36 | D3 |
+| The Counting House | IV | Cavalry | 12 | 14 | 16 | 42 | D4+ |
+| Star Observatory | V | mixed | 12 | 16 | 18 | 46 | D5+ |
 
 186 rooms, 15 bosses. A ruin at its **bottom** has no deeper depth and needs its
-own state, distinct from *locked*. Depths 4–5 sit behind Guild 8+.
+own state, distinct from *locked*.
 
 ## 5. Attempt flow
 
 1. Open ruin → depth stack → room ladder → frontier room.
 2. Room sheet shows threat (if Scout unlocked), `power_req` vs. party power,
    supply cost.
-3. Compose party — hero mandatory ([`combat.md`](combat.md)).
+3. Fight with the army camped at the dungeon — hero mandatory
+   ([`combat.md`](combat.md)). Its losses and its heroes' wounds carry from
+   room to room.
 4. Deduct supplies. Enter. Resolve the fight. Take the casualties.
 5. **Cleared:** grant rewards, mark room, advance frontier.
    **Failed:** nothing granted, room stays unclaimed.
@@ -184,8 +168,8 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 
 - **Map marker** — progress, badge when a room is enterable.
 - **Discovery card** — one-off on fog lift.
-- **Ruin sheet** — depth stack; locked depths shown with `guildReq` and boss
-  reward visible; states: locked / open / in-progress / complete / bottomed out.
+- **Dungeon sheet** — depth stack; locked depths shown with the boss that
+  opens them and its reward; states: locked / open / in-progress / complete / bottomed out.
 - **Room ladder** — cleared / frontier / locked; next-carrot banner above the
   frontier; auto-scroll to frontier.
 - **Room sheet** — the battle screen: the dungeon in the widget at the top,
@@ -195,7 +179,6 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 - **Result: cleared** — chest, passive counter increment, next-room CTA.
 - **Result: failed** — power gap and losing matchup stated; retry / recompose /
   leave.
-- **Guild screen** — next level's cost and the depths it opens, with boss art.
 - **Reservoir meter** — shared with city idle; distinct full state.
 
 ## 10. Dials
@@ -203,7 +186,7 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 | Dial | Key |
 |---|---|
 | `powerStart`, `powerStep` per depth | `depths` |
-| `rooms`, `guildReq` per depth | `depths` |
+| `rooms` per depth | `depths` |
 | Reward base and per-room growth (×1.06) | `depths` |
 | Knowledge per room (×0.25, at least 1) | `ruins.knowledgeCoef` |
 | Boss chest and fragment pool | a `bosses` collection *(designed)* |

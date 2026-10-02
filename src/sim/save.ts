@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, DISTRICTS, GAME_VERSION, MISSIONS, SAVE_VERSION, TECHNOLOGIES,
+  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -26,6 +26,10 @@ import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import { isStoreFull } from './storage';
+import { freshWorld } from './world/explorers';
+import { readBits } from './world/fogBits';
+import { WORLD_IMPROVEMENTS } from './world/types';
+import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   cellsOfRect, coordKey, districtOccupies, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
@@ -716,10 +720,10 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v75: THE DAILY CHEST IS CUT (Docs/implementation-plan.md Step 13). Its
+    // v79: THE DAILY CHEST IS CUT (Docs/implementation-plan.md Step 13). Its
     // `Daily` block goes; rungs a player had not claimed are not paid out.
     // The purchase log keeps any `RoyalChest` it holds — it is a record.
-    to: 75,
+    to: 79,
     migrate: (modules) => {
       const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
       if (kingdom !== undefined) delete kingdom.Daily;
@@ -1047,6 +1051,31 @@ export function serialize(state: GameState, now: number): SaveFile {
           },
         })),
       },
+      // The world board as this save knows it (Docs/features/02-map-scopes.md
+      // §6): which board and seat, the fog, and the explorers out. A trip is a
+      // TIMER priced when it left, so it is written whole and resolves on the
+      // next advance. World control is server state and is never here.
+      'kingdom.world': {
+        BoardID: state.world.board.id,
+        BoardSeed: state.world.board.seed,
+        Seat: state.world.board.seat,
+        Revealed: state.world.revealed,
+        Explorers: state.world.explorers.map((e) => ({
+          ID: e.id, Target: e.target, Path: e.path,
+          DepartedAtUtc: iso(e.departedAt), StepMs: e.stepMs, WorkMs: e.workMs, Radius: e.radius,
+        })),
+        // The builders out on the board: a TIMER each, priced when the server
+        // accepted the build, so a builder away during an absence is home on
+        // return.
+        Builds: state.world.builds.map((b) => ({
+          Index: b.index, What: b.what, Level: b.level, FinishesAtUtc: iso(b.finishesAt),
+        })),
+        Sanctuaries: state.world.sanctuaries,
+        // What the city lent each army out: the army itself is server state.
+        Armies: state.world.armies.map((a) => ({
+          ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
+        })),
+      },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
       // reader leaves it null and the profile sheet asks on the next launch.
@@ -1209,7 +1238,7 @@ export function deserialize(
     // `Season: -1` matches no real season — so it reads as an empty pass
     // rather than as season 0's, and the first live tick fills the board from
     // the window it lands in.
-    // Additive (v78): a kingdom from before the Survey opens it with nothing
+    // Additive (v82): a kingdom from before the Survey opens it with nothing
     // taken — its level is read off the cells it has already revealed.
     const survey = kingdomDto.Survey as
       { ClaimedFree?: number[]; ClaimedPaid?: number[]; Owned?: boolean } | undefined;
@@ -1372,7 +1401,7 @@ export function deserialize(
       startedAt: tutorialDto.StartedAtUtc === undefined ? 0 : ms(tutorialDto.StartedAtUtc),
     };
 
-  // Additive (v79): a kingdom from before the signals starts them empty.
+  // Additive (v83): a kingdom from before the signals starts them empty.
   const signalsDto = modules['kingdom.signals'] as {
     SightedAt?: Record<string, string>; DiscoveredAt?: Record<string, string>;
     TreasureWaitMs?: number; ReturnTaps?: Array<{ AtUtc: string; Kind: string }>;
@@ -1384,7 +1413,7 @@ export function deserialize(
     returnTaps: (signalsDto?.ReturnTaps ?? []).map((r) => ({ at: ms(r.AtUtc), kind: r.Kind })),
   };
 
-  // Additive (v77). A kingdom from before the abandoned buildings may have
+  // Additive (v81). A kingdom from before the abandoned buildings may have
   // built where one now stands: that one never appears — it reads as already
   // repaired, and the building there is the kingdom's own.
   const abandonedDto = modules['kingdom.abandoned'] as { Repaired?: string[] } | undefined;
@@ -1601,6 +1630,9 @@ export function deserialize(
     state.regionId = modules['meta.region'] as GameState['regionId'];
   }
   if (typeof modules['meta.seed'] === 'number') state.seed = modules['meta.seed'] as number;
+  // AFTER the seed: a save from before the world board derives its board and
+  // seat from the kingdom's own seed, not from the one newGame just rolled.
+  state.world = readWorld(modules['kingdom.world'], state.seed);
   state.nextId = Math.max(state.nextId, (modules['meta.nextId'] as number) ?? 1);
   state.lastAdvance = lastSaved;
 
@@ -1635,4 +1667,73 @@ export function deserialize(
     result: report,
   });
   return state;
+}
+
+/** The world module, read defensively: a save without it (or with a broken
+ *  one) gets the world its seed would have given it. A trip whose path does
+ *  not walk the board step by step is dropped rather than trusted. */
+function readWorld(dto: unknown, seed: number): GameState['world'] {
+  const fresh = freshWorld(seed);
+  if (dto === null || typeof dto !== 'object') return fresh;
+  const d = dto as {
+    BoardID?: unknown; BoardSeed?: unknown; Seat?: unknown; Revealed?: unknown;
+    Explorers?: Array<Record<string, unknown>>;
+    Builds?: Array<Record<string, unknown>>;
+    Sanctuaries?: unknown;
+    Armies?: Array<Record<string, unknown>>;
+  };
+  const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
+  // A trip's time to leave each hex of its path; a v77 trip kept one pace for
+  // every hex (`MsPerHex`), read as that pace on each.
+  const stepsOf = (e: Record<string, unknown>): number[] | null => {
+    const n = Array.isArray(e.Path) ? e.Path.length : 0;
+    if (Array.isArray(e.StepMs) && e.StepMs.length === n && e.StepMs.every((x) => Number.isFinite(x) && (x as number) >= 1)) {
+      return [...(e.StepMs as number[])];
+    }
+    return Number.isFinite(e.MsPerHex) && (e.MsPerHex as number) >= 1 ? new Array<number>(n).fill(e.MsPerHex as number) : null;
+  };
+  const walks = (path: unknown): path is number[] => Array.isArray(path) && path.length >= 2
+    && path.every(isBoardIndex)
+    && path.every((i, k) => k === 0 || hexDistance(hexAt(path[k - 1] as number), hexAt(i as number)) === 1);
+  return {
+    board: {
+      id: typeof d.BoardID === 'string' ? d.BoardID : fresh.board.id,
+      seed: Number.isInteger(d.BoardSeed) ? (d.BoardSeed as number) >>> 0 : fresh.board.seed,
+      seat,
+    },
+    revealed: readBits(d.Revealed),
+    explorers: (Array.isArray(d.Explorers) ? d.Explorers : [])
+      .filter((e) => typeof e.ID === 'string' && walks(e.Path) && typeof e.DepartedAtUtc === 'string'
+        && stepsOf(e) !== null)
+      .map((e) => ({
+        id: e.ID as string,
+        target: (e.Path as number[])[(e.Path as number[]).length - 1],
+        path: [...(e.Path as number[])],
+        departedAt: ms(e.DepartedAtUtc as string),
+        stepMs: stepsOf(e)!,
+        workMs: Number.isFinite(e.WorkMs) && (e.WorkMs as number) >= 0 ? e.WorkMs as number : 0,
+        radius: Number.isInteger(e.Radius) ? Math.max(1, e.Radius as number) : 1,
+      })),
+    builds: (Array.isArray(d.Builds) ? d.Builds : [])
+      .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
+        && (b.What === 'Outpost' || WORLD_IMPROVEMENTS.includes(b.What as never)))
+      .map((b) => ({
+        index: b.Index as number,
+        what: b.What as GameState['world']['builds'][number]['what'],
+        level: Number.isInteger(b.Level) ? b.Level as number : 1,
+        finishesAt: ms(b.FinishesAtUtc as string),
+      })),
+    sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
+    armies: (Array.isArray(d.Armies) ? d.Armies : [])
+      .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
+        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve', 'portal'].includes(a.Purpose as string))
+      .map((a) => ({
+        id: a.ID as string,
+        heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],
+        troops: (a.Troops as Array<{ unitId: string; count: number }>)
+          .filter((t) => t.unitId in UNITS && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
+        target: a.Target as number,
+        purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
+      })),
+  };
 }

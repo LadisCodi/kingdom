@@ -1,50 +1,48 @@
-/* THE WORLD BEYOND (Docs/features/22-progression.md §5) — the board drawn in
- * ink on the sheet's parchment: the lattice, our hex, the rivals under a wash
- * of fog, the Portal at the heart. Ink and parchment only; no new art. */
-.world-sheet {
+/* THE WORLD BOARD (Docs/features/19-world-map.md) — its own canvas, drawn
+ * instead of the province's while the player is out there. The province's
+ * pills step aside; the header, the nav and the knob stay. */
+#world {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  touch-action: none;
+}
+#app.in-world #world { display: block; }
+#app.in-world #map { visibility: hidden; }
+#app.in-world #quest,
+#app.in-world #daily,
+#app.in-world #season,
+#app.in-world #edge,
+#app.in-world #panel { display: none; }
+
+/* THE EXPLORERS CHIP — the builders' parchment plaque, top left under the
+ * header: a compass and how many are free of how many. */
+#worldchip {
+  position: absolute;
+  left: 0;
+  top: var(--hud-h);
+  z-index: 3;
+}
+#worldchip[hidden] { display: none; }
+.world-chip.hud-plaque { cursor: pointer; }
+
+/* THE DISPATCH SHEET — a hex, what it holds, and Explore. */
+.wd-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 10);
+  gap: calc(var(--px) * 8);
   padding: calc(var(--px) * 4) calc(var(--px) * 6) calc(var(--px) * 10);
 }
-.world-board { width: min(100%, calc(var(--px) * 320)); height: auto; }
-.world-hex { stroke: var(--ink-muted); stroke-width: 1; stroke-linejoin: round; }
-.world-hex.is-wild { fill: var(--parchment-shade); opacity: 0.55; }
-.world-hex.is-kingdom { fill: var(--locked); }
-.world-hex.is-ours { fill: var(--leaf); stroke: var(--leaf-dark); stroke-width: 2; }
-.world-hex.is-portal { fill: #6a4a8c; stroke: #3d2a55; stroke-width: 2; }
-.world-flag { fill: var(--clay); stroke: var(--wood-dark); stroke-width: 1; opacity: 0.8; }
-.world-home { fill: var(--gold); stroke: var(--wood-dark); stroke-width: 1.5; }
-.world-portal { fill: #2a1b3a; stroke: #b99ae0; stroke-width: 1.5; }
-.world-key {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: calc(var(--px) * 6) calc(var(--px) * 14);
-  font-size: calc(var(--px) * 13);
+.wd-where {
+  margin: 0;
+  font-size: calc(var(--px) * 14);
+  font-weight: var(--weight-strong);
   color: var(--ink-muted);
 }
-.world-key > span::before {
-  content: '';
-  display: inline-block;
-  width: calc(var(--px) * 10);
-  height: calc(var(--px) * 10);
-  margin-right: calc(var(--px) * 5);
-  border-radius: 50%;
-  vertical-align: -1px;
-}
-.world-key-home::before { background: var(--leaf); }
-.world-key-rival::before { background: var(--clay); }
-.world-key-portal::before { background: #6a4a8c; }
-.world-line {
-  margin: 0;
-  max-width: calc(var(--px) * 320);
-  text-align: center;
-  font-size: calc(var(--px) * 15);
-  color: var(--ink);
-}
-.world-soon { font-weight: var(--weight-title); color: var(--wood-dark); }
+.wd-line { margin: 0; font-size: calc(var(--px) * 15); color: var(--ink); }
+.wd-march { display: flex; justify-content: flex-start; }
 
 /* THE DOOR — a round wooden knob, the compass carved into it, bottom right
  * just above the nav, level with the quest scroll's foot; padlocked in brass
@@ -71,7 +69,11 @@
   filter: drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.6));
 }
 .world-knob-lock .icon { --icon-size: calc(var(--px) * 24); }
-.world-knob.is-locked > .icon { filter: grayscale(1) brightness(0.8); opacity: 0.8; }
+.world-knob-out, .world-knob-home { display: contents; }
+.world-knob-home { display: none; }
+.world-knob.is-away .world-knob-out { display: none; }
+.world-knob.is-away .world-knob-home { display: contents; }
+.world-knob.is-locked .world-knob-out .icon { filter: grayscale(1) brightness(0.8); opacity: 0.8; }
 .world-knob.is-locked .world-knob-lock { display: block; }
 .world-knob.is-shaking .world-knob-lock { animation: nav-lock-shake 380ms ease-in-out; }
 .world-knob.is-unlocking .world-knob-lock {

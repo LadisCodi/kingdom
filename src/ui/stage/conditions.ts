@@ -18,7 +18,7 @@ import { fogState } from '../../sim/fog';
 import { sightedThings } from '../../sim/sight';
 import { woundedCount } from '../../sim/army';
 import {
-  buildQueueCapacity, type LairId, type TechId, type TomeId,
+  buildQueueCapacity, busyBuilders, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
 import type { Game } from '../../game';
 
@@ -115,7 +115,7 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'bookOpen': return isTomeOpen(state, c.target as TomeId);
     case 'doorOpen': return isDoorOpen(state, c.target as DoorId);
     case 'manaEmpty': return mana(state) < 1;
-    case 'buildersBusy': return state.city.queue.length >= buildQueueCapacity(state);
+    case 'buildersBusy': return busyBuilders(state) >= buildQueueCapacity(state);
     case 'raided':
       return Object.values(state.lairs).some((l) => Object.values(l!.hoard).some((n) => (n ?? 0) > 0));
     case 'wounded': return woundedCount(state) > 0;

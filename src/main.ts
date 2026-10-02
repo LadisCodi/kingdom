@@ -51,7 +51,12 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
-import { renderWorldSheet } from './ui/worldSheet';
+import { renderDispatchSheet } from './ui/world/dispatchSheet';
+import { renderArmySheet } from './ui/world/armySheet';
+import { mountExplorerChip } from './ui/world/explorerChip';
+import { HexCamera } from './render/world/hexCamera';
+import { drawWorld } from './render/world/boardRenderer';
+import { LocalWorldServer, browserStore } from './worldServer/local';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
@@ -126,6 +131,15 @@ async function boot(): Promise<void> {
   // Center on the middle of the Townhall's 2x2 footprint (fractional cell).
   camera.centerOnCell({ x: TOWNHALL_ORIGIN.x + 0.5, y: TOWNHALL_ORIGIN.y + 0.5 });
   const game = new Game(state, map, camera);
+  // The world board's own canvas and camera (Docs/features/19-world-map.md):
+  // a second scene, drawn instead of the province while the player is out.
+  const worldCanvas = document.getElementById('world') as HTMLCanvasElement;
+  const worldCamera = new HexCamera(worldCanvas);
+  game.worldCamera = worldCamera;
+  // World control is server state. Until the server exists, a local stand-in
+  // plays its part, under its own key (worldServer/local.ts).
+  game.worldServer = new LocalWorldServer(browserStore());
+  void game.connectWorld();
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
 
@@ -158,6 +172,7 @@ async function boot(): Promise<void> {
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
+  mountExplorerChip(game, document.getElementById('worldchip')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -181,7 +196,11 @@ async function boot(): Promise<void> {
   });
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
-  const resetSave = () => void saveManager.reset().then(() => location.reload());
+  const resetSave = () => void saveManager.reset().then(() => {
+    // The local world server's board goes with the save it was played from.
+    try { localStorage.removeItem('kingdom.worldServer'); } catch { /* private window */ }
+    location.reload();
+  });
 
   const panelRoot = document.getElementById('panel')!;
   const overlayRoot = document.getElementById('overlay')!;
@@ -198,7 +217,8 @@ async function boot(): Promise<void> {
     heroPicker: renderHeroPicker,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
-    world: renderWorldSheet,
+    world: renderDispatchSheet,
+    army: renderArmySheet,
     builder: renderBuilderSheet,
     pass: renderPassSheet,
     survey: renderSurveySheet,
@@ -315,7 +335,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -344,6 +364,12 @@ async function boot(): Promise<void> {
   if (game.state.player.payer === null) game.setOverlay('payerProfile');
 
   game.onChange(refreshScreens);
+  // Which board is on screen, as a class the CSS swaps the canvases and the
+  // province's pills on.
+  const appRoot = document.getElementById('app')!;
+  const syncScene = () => appRoot.classList.toggle('in-world', game.scene === 'world');
+  game.onChange(syncScene);
+  syncScene();
 
   // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
   // sheets: a legacy full-screen menu has no "beside" to tap. #overlay is
@@ -378,6 +404,15 @@ async function boot(): Promise<void> {
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
   );
+  // The world board takes the same gestures: a drag pans, a pinch or the
+  // wheel zooms, a tap picks a hex. Nothing there is held or dragged.
+  wireInput(
+    worldCanvas, worldCamera,
+    (sx, sy) => game.handleWorldTap(sx, sy),
+    () => false,
+    () => false,
+    () => {},
+  );
 
   // ------------------------------------------------------- the single tick
   // The ambience bed follows the camera: waves over water, wind over snow.
@@ -411,6 +446,7 @@ async function boot(): Promise<void> {
   // ------------------------------------------------------------ render loop
   // Paced (render/framePacer.ts): the display's rate while the map is being
   // touched or the camera is moving, slower while it is only being looked at.
+  // The world board draws every frame: its marchers move on their own.
   let lastDraw = -Infinity;
   let lastActive = -Infinity;
   let lastView = '';
@@ -419,11 +455,18 @@ async function boot(): Promise<void> {
     window.addEventListener(type, touched, { capture: true, passive: true });
   }
   const frame = (t: number) => {
-    const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
-    if (view !== lastView) { lastView = view; lastActive = t; }
-    if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
-      lastDraw = t;
-      drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+    if (game.scene === 'world') {
+      drawWorld(worldCanvas, worldCamera, {
+        state: game.state, source: game.worldSource(), now: game.now(), selected: game.selectedHex,
+        armies: game.worldView?.armies,
+      });
+    } else {
+      const view = `${camera.x}|${camera.y}|${camera.zoom}|${canvas.clientWidth}|${canvas.clientHeight}`;
+      if (view !== lastView) { lastView = view; lastActive = t; }
+      if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
+        lastDraw = t;
+        drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs);
+      }
     }
     requestAnimationFrame(frame);
   };
@@ -477,6 +520,11 @@ async function boot(): Promise<void> {
         lair.armedAt -= delta;
         if (lair.nextRaidAt !== null) lair.nextRaidAt -= delta;
       }
+      // The world board as well: the explorers and builders out, and every
+      // time the local world server keeps — marches, builds, rivals.
+      for (const e of game.state.world.explorers) e.departedAt -= delta;
+      for (const b of game.state.world.builds) b.finishesAt -= delta;
+      void game.worldServer?.devShift?.(delta).then(() => game.refreshWorld());
       runTick();
     };
     const allTechs = () => {
@@ -638,6 +686,20 @@ async function boot(): Promise<void> {
         game.unlockQueue.push(...Object.keys(UNLOCKS));
         runTick();
       }),
+      // The world server's stand-in rivals: play a turn as any of them, to
+      // set up a board by hand. Their commands cost the player nothing.
+      (() => {
+        const b = button('🎭 as: you', () => {
+          const seats = game.worldView?.seats ?? [];
+          const order = [null, ...seats.filter((s) => !s.you).map((s) => s.seat)];
+          const at = order.indexOf(game.actingSeat);
+          game.actingSeat = order[(at + 1) % order.length] ?? null;
+          const who = game.actingSeat === null ? 'you' : seats.find((s) => s.seat === game.actingSeat)?.name ?? '?';
+          b.textContent = `🎭 as: ${who}`;
+          runTick();
+        });
+        return b;
+      })(),
       button('🗑 reset save', resetSave));
     // A tab that shows and hides the grid, so the tools stay one tap away
     // without covering the map. Whether it is open survives a reload.
