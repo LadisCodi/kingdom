@@ -6,6 +6,7 @@
 import coastUrl from './sounds/ambiance_coast.ogg?url';
 import meadowUrl from './sounds/ambiance_meadow.ogg?url';
 import snowUrl from './sounds/ambiance_snow.ogg?url';
+import { existingAudioContext, streamedLoop, type Loop } from './context';
 
 export type AmbienceName = 'meadow' | 'coast' | 'snow';
 
@@ -16,38 +17,18 @@ const TRACKS: Record<AmbienceName, string> = {
 };
 
 const VOLUME = 0.22;
+/** How long a crossfade between two beds takes. */
+const FADE_MS = 500;
 
-const players = new Map<AmbienceName, HTMLAudioElement>();
-const fades = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
+const players = new Map<AmbienceName, Loop>();
 
-function playerFor(name: AmbienceName): HTMLAudioElement {
-  let audio = players.get(name);
-  if (!audio) {
-    audio = new Audio(TRACKS[name]);
-    audio.loop = true;
-    audio.volume = 0;
-    audio.id = `ambience-${name}`;
-    document.body.append(audio); // invisible; in the DOM only for tooling
-    players.set(name, audio);
+function playerFor(name: AmbienceName): Loop {
+  let loop = players.get(name);
+  if (!loop) {
+    loop = streamedLoop(TRACKS[name], `ambience-${name}`);
+    players.set(name, loop);
   }
-  return audio;
-}
-
-function fadeTo(audio: HTMLAudioElement, target: number): void {
-  const running = fades.get(audio);
-  if (running) clearInterval(running);
-  const timer = setInterval(() => {
-    const delta = target - audio.volume;
-    if (Math.abs(delta) < 0.03) {
-      audio.volume = target;
-      if (target === 0) audio.pause();
-      clearInterval(timer);
-      fades.delete(audio);
-      return;
-    }
-    audio.volume += Math.sign(delta) * 0.03;
-  }, 50);
-  fades.set(audio, timer);
+  return loop;
 }
 
 /** Called once per second from the tick (and safe to call more often):
@@ -59,34 +40,40 @@ function fadeTo(audio: HTMLAudioElement, target: number): void {
 // way to keep the harp and drop the wind, or the reverse.
 const MUTE_KEY = 'kingdom.ambienceMuted';
 
+/** Read once, then kept: the tick asks every second. */
+let muted: boolean | null = null;
+
 export const ambienceMuted = (): boolean => {
+  if (muted !== null) return muted;
   try {
-    return localStorage.getItem(MUTE_KEY) === '1';
+    muted = localStorage.getItem(MUTE_KEY) === '1';
   } catch {
-    return false;
+    muted = false;
   }
+  return muted;
 };
 
-export function setAmbienceMuted(muted: boolean): void {
+export function setAmbienceMuted(on: boolean): void {
+  muted = on;
   try {
-    if (muted) localStorage.setItem(MUTE_KEY, '1');
+    if (on) localStorage.setItem(MUTE_KEY, '1');
     else localStorage.removeItem(MUTE_KEY);
   } catch { /* storage blocked — the toggle just won't persist */ }
-  if (muted) syncAmbience(null);
+  if (on) syncAmbience(null);
 }
 
 export function syncAmbience(name: AmbienceName | null): void {
   if (ambienceMuted()) name = null;
+  // Nothing plays before a gesture has made the audio context (context.ts).
+  if (existingAudioContext() === null) return;
   try {
-    for (const [key, audio] of players) {
-      if (key !== name && !audio.paused) fadeTo(audio, 0);
+    for (const [key, loop] of players) {
+      if (key !== name) loop.fadeTo(0, FADE_MS);
     }
     if (name === null) return;
     const target = playerFor(name);
-    if (target.paused) {
-      void target.play().catch(() => { /* pre-gesture autoplay block — next tick retries */ });
-    }
-    fadeTo(target, VOLUME);
+    target.play();
+    target.fadeTo(VOLUME, FADE_MS);
   } catch {
     // No audio — the game stays silent, never broken.
   }

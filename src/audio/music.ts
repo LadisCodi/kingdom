@@ -6,9 +6,11 @@
 // localStorage key, not in the game save.
 
 import trackUrl from './music/music-harp-peaceful-loop.ogg?url';
+import { resumeAudio, streamedLoop, type Loop } from './context';
 
 const MUTE_KEY = 'kingdom.musicMuted';
-let audio: HTMLAudioElement | null = null;
+const VOLUME = 0.35;
+let loop: Loop | null = null;
 
 export const musicMuted = (): boolean => {
   try {
@@ -23,23 +25,18 @@ export function setMusicMuted(muted: boolean): void {
     if (muted) localStorage.setItem(MUTE_KEY, '1');
     else localStorage.removeItem(MUTE_KEY);
   } catch { /* storage blocked — the toggle just won't persist */ }
-  if (muted) audio?.pause();
-  else startMusic(); // called from the toggle tap — a gesture, so play() is allowed
+  if (muted) {
+    loop?.fadeTo(0, 0);
+    loop?.audio.pause();
+  } else startMusic(); // called from the toggle tap — a gesture, so play() is allowed
 }
 
-/** Start (or resume) the loop. Safe to call repeatedly. */
+/** Start (or resume) the loop. Safe to call repeatedly — and called from
+ *  every pointerdown, which is also what wakes the audio context. */
 export function startMusic(): void {
+  resumeAudio();
   if (musicMuted()) return;
-  if (!audio) {
-    audio = new Audio(trackUrl);
-    audio.loop = true;
-    audio.volume = 0.35;
-    // In the DOM only so tooling can find it — an <audio> tag without
-    // `controls` renders nothing.
-    audio.id = 'bgm';
-    document.body.append(audio);
-  }
-  if (audio.paused) {
-    void audio.play().catch(() => { /* pre-gesture autoplay block — retried on the next tap */ });
-  }
+  loop ??= streamedLoop(trackUrl, 'bgm');
+  loop.play();
+  loop.fadeTo(VOLUME, 0);
 }
