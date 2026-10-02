@@ -101,10 +101,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   // A CONTROL is highlighted by its own silhouette lit in a blue magic glow
   // (`.stg-glow` on the control itself); a MAP PLOT by the same glow drawn
   // as the plot's diamond — this ring.
+  // The halo is an svg of its own so its pulse is an opacity on an element —
+  // composited — rather than a blurred stroke repainted every frame.
   const ring = el('div', { class: 'stg-ring' });
-  ring.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
-    + '<polygon class="stg-ring-halo" points="50,3 97,50 50,97 3,50"/>'
+  ring.innerHTML = '<svg class="stg-ring-pulse" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+    + '<polygon class="stg-ring-halo" points="50,3 97,50 50,97 3,50"/></svg>'
+    + '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
     + '<polygon class="stg-ring-line" points="50,3 97,50 50,97 3,50"/></svg>';
+  // A control's glow pulses the same way: its silhouette is lit once
+  // (`.stg-glow`, a still filter) and this soft light round its box breathes.
+  const halo = el('div', { class: 'stg-halo', 'aria-hidden': 'true' });
+  halo.hidden = true;
   // The pointer: a gloved hand, pointing down at the target from above it —
   // or up from below.
   const handDown = spriteUrl('tutorial_hand_down');
@@ -149,7 +156,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       + `--delay:${(-Math.random() * 4).toFixed(2)}s`;
     sparks.append(mote);
   }
-  const layer = el('div', { class: 'stg' }, sparks, ring, arrow, box);
+  const layer = el('div', { class: 'stg' }, halo, sparks, ring, arrow, box);
 
   let playing: Playing | null = null;
   /** No introduction starts before this: the breath between two scenes. */
@@ -565,13 +572,15 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const isCell = playing?.target?.kind === 'cell';
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
     ring.hidden = !show || !isCell;
+    halo.hidden = glowing === null;
     arrow.hidden = !show;
     sparks.hidden = !show;
     if (!show) return;
     const pad = playing?.target?.kind === 'cell' ? 0 : 6;
-    Object.assign(ring.style, {
+    const padded = {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
-    });
+    };
+    Object.assign(isCell ? ring.style : halo.style, padded);
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     // The arrow points DOWN at the target from above it, unless that would
     // leave the screen, then UP from below.

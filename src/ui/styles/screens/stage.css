@@ -23,31 +23,38 @@
   position: absolute;
   pointer-events: none;
 }
-.stg-ring[hidden], .stg-hand[hidden] { display: none; }
+.stg-ring[hidden], .stg-hand[hidden], .stg-halo[hidden] { display: none; }
 .stg-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .stg-ring polygon { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+/* THE PULSES ARE OPACITY. A blurred stroke or a drop-shadow that changes is
+   repainted every frame of its loop; a still one faded in and out is only
+   composited. So the halo is drawn once, at its widest, and breathes. */
 .stg-ring .stg-ring-halo {
   stroke: var(--magic-glow-outer);
-  stroke-width: calc(var(--px) * 10);
-  opacity: 0.55;
+  stroke-width: calc(var(--px) * 14);
   filter: blur(calc(var(--px) * 3));
-  animation: stg-halo 1.4s ease-in-out infinite;
+}
+.stg-ring-pulse {
+  opacity: 0.4;
+  animation: stg-pulse 1.4s ease-in-out infinite;
+  will-change: opacity;
 }
 .stg-ring .stg-ring-line { stroke: var(--magic-glow-inner); stroke-width: calc(var(--px) * 3); }
-@keyframes stg-halo { 50% { opacity: 0.95; stroke-width: calc(var(--px) * 14); } }
+@keyframes stg-pulse { 50% { opacity: 1; } }
 
 .stg-glow {
   filter: drop-shadow(0 0 calc(var(--px) * 2) var(--magic-glow-inner))
-    drop-shadow(0 0 calc(var(--px) * 8) var(--magic-glow-outer))
-    drop-shadow(0 0 calc(var(--px) * 16) var(--magic-glow-outer));
-  animation: stg-glow 1.4s ease-in-out infinite;
+    drop-shadow(0 0 calc(var(--px) * 8) var(--magic-glow-outer));
 }
-@keyframes stg-glow {
-  50% {
-    filter: drop-shadow(0 0 calc(var(--px) * 3) var(--magic-glow-inner))
-      drop-shadow(0 0 calc(var(--px) * 12) var(--magic-glow-outer))
-      drop-shadow(0 0 calc(var(--px) * 24) var(--magic-glow-outer));
-  }
+.stg-halo {
+  position: absolute;
+  pointer-events: none;
+  border-radius: calc(var(--px) * 14);
+  box-shadow: 0 0 calc(var(--px) * 12) calc(var(--px) * 2) var(--magic-glow-outer),
+    0 0 calc(var(--px) * 24) var(--magic-glow-outer);
+  opacity: 0.35;
+  animation: stg-pulse 1.4s ease-in-out infinite;
+  will-change: opacity;
 }
 
 .stg-hand {
@@ -312,7 +319,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stg-ring polygon, .stg-glow, .stg-hand, .stg-more, #quest.is-nudging > * { animation: none; }
+  .stg-ring polygon, .stg-ring-pulse, .stg-halo, .stg-hand, .stg-more, #quest.is-nudging > * { animation: none; }
   .stg-sparks { display: none; }
   .stg-actor, .stg-peek { transition: none; }
 }
