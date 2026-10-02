@@ -1,6 +1,6 @@
 Generate one image. Square framing, 1:1 aspect ratio.
 
-Use the attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
+Use the FIRST attached image as a STRICT ART-STYLE REFERENCE. The new image must look as though it belongs to the same game, was produced by the same art team, and uses the same renderer, materials, camera language, palette, lighting, proportions, and level of detail. Use the reference for STYLE ONLY; do not copy its settlement layout.
 
 This is an ART DIRECTION REFERENCE for a mobile management / light-4X strategy game—not marketing key art.
 
@@ -10,7 +10,7 @@ A single small RUNE CARVER'S SHED, alone, centred — where the crew pours Mana 
 An open timber shed on cream stone footings under a BLUE tiled roof. Standing in front of it, a waist-high upright slab of pale stone, half-carved, its grooves glowing soft VIOLET, with a few violet motes drifting up from it. A chisel and a mallet on a low bench, and one finished glowing runestone leaning against the shed.
 
 === THIS IS THE SAME BUILDING, UPGRADED TO LEVEL 4 ===
-The attached sprite is this building at level 1. This image is THAT SAME BUILDING after the player has upgraded it — not a different building, and not a second design.
+The SECOND attached image is this building at level 3, and the THIRD is the same building at level 8. This image is level 4: THAT SAME BUILDING one upgrade above level 3, still far below level 8 — not a different building, and not a second design.
 KEEP, exactly: its silhouette and proportions, its palette, its roof colour and roof shape, the placement of its door, and every feature that identifies it. A player must recognise it at a glance and never have to re-learn which building this is.
 ADD, and only this: the shed enclosed and given a first floor, TWO standing stones instead of one, a workbench laid with chisels, and a low ring of small runestones glowing violet.
 The building grows by gaining mass, storeys and props. It is never replaced, never restyled, and never moved on its plot.
@@ -40,7 +40,7 @@ The single building, centred, with comfortable empty breathing room on all four 
 Deliver the result as a PNG file with a GENUINELY TRANSPARENT BACKGROUND.
 The building, its low wall, its bushes and its short path must be the ONLY opaque pixels in the file. Every pixel outside them must be fully transparent, alpha = 0.
 The transparency must be a REAL ALPHA CHANNEL in the PNG. Do NOT draw a checkerboard pattern into the pixels — a picture of transparency is not transparency. Do NOT fill the background with grey, white, black or any other colour.
-The building's own cast shadow may stay, softly faded into full transparency.
+No cast shadow and no drop shadow: the game draws its own.
 
 === LOCKED VISUAL STYLE ===
 Bright, cheerful stylized 3D game render viewed from a slightly high 3/4 top-down isometric camera.
@@ -68,3 +68,7 @@ No checkerboard pattern painted into the image. No opaque background of any colo
 
 Do not add buildings, characters, props, terrain features, banners, or landmarks that were not requested.
 Above all: NO GROUND PLATE, and the 2:1 camera ratio exactly.
+
+It is a RUNE CARVER'S workshop, never a smelter or a forge: no furnace, no chimney with fire, no anvil, no orange glow. What glows is VIOLET, in carved stone.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
