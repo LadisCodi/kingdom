@@ -27,7 +27,7 @@ import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
+import { bubbleTopOver, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
 /** A scene on the stage, and where it has got to. */
 interface Playing {
@@ -579,8 +579,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     arrow.classList.toggle('is-below', !above);
     const src = above ? handDown : handUp;
     if (src !== null && arrow.getAttribute('src') !== src) arrow.setAttribute('src', src);
+    // Over a building with its collect bubble up, the hand stands above the
+    // bubble: a line asking the player to gather it must not hide it.
+    const bubble = above && playing?.target ? bubbleTopOver(game, playing.target, frame) : null;
+    const top = bubble === null ? r.y - 8 : Math.min(r.y - 8, bubble - 4);
     Object.assign(arrow.style, {
-      left: `${r.x + r.w / 2}px`, top: above ? `${r.y - 8}px` : `${r.y + r.h + 8}px`,
+      left: `${r.x + r.w / 2}px`, top: above ? `${top}px` : `${r.y + r.h + 8}px`,
     });
   };
 

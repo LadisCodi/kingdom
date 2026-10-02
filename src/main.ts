@@ -76,7 +76,10 @@ import { button, el } from './ui/format';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
 
-const AUTOSAVE_TICKS = 30;
+// Every five seconds to the device: a page killed without a `pagehide` (an
+// app swiped away, a crashed tab) loses no more than that. The cloud copy is
+// debounced on its own (persist/saveManager.ts).
+const AUTOSAVE_TICKS = 5;
 
 async function boot(): Promise<void> {
   // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),

@@ -192,6 +192,20 @@ export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect
   return { x: box.x + c.left - origin.left, y: box.y + c.top - origin.top, w: box.w, h: box.h };
 }
 
+/** The top of the collect bubble standing over a map target, relative to
+ *  `frame`, or null when there is none — the pointer stands above it rather
+ *  than hiding what a line may be asking the player to tap. */
+export function bubbleTopOver(game: Game, target: Target, frame: HTMLElement): number | null {
+  if (target.kind !== 'cell') return null;
+  const d = game.state.city.districts.find((x) => targetHasCell(target, x.location));
+  if (d === undefined) return null;
+  const r = game.collectBubbles.rectOf(d.uniqueId, performance.now());
+  if (r === null) return null;
+  const canvas = frame.querySelector('canvas');
+  const c = canvas?.getBoundingClientRect() ?? frame.getBoundingClientRect();
+  return r.y + c.top - frame.getBoundingClientRect().top;
+}
+
 /** Is `cell` inside a cell target's plot? */
 export const targetHasCell = (target: Target, cell: Coord): boolean =>
   target.kind === 'cell'
