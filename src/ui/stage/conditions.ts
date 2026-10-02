@@ -74,8 +74,11 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
         && (isTechComplete(state, c.target as TechId) || isTechFilled(state, c.target as TechId));
     case 'placing':
       return game.mode.kind === 'placing' && game.mode.definitionId === c.target;
+    // At least `amount` of it (one when 0): the opening's second House must
+    // not be met by the first, repaired from the fog.
     case 'placed':
-      return state.city.districts.some((d) => d.definitionId === c.target);
+      return state.city.districts.filter((d) => d.definitionId === c.target).length
+        >= Math.max(1, c.amount);
     case 'built': {
       const matches = (id: string): boolean => (c.target === 'AnyWorkshop'
         ? WORKSHOPS.includes(id) : id === c.target);

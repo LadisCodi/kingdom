@@ -730,7 +730,7 @@
         "lock": "map",
         "until": "placed",
         "untilTarget": "Housing",
-        "untilAmount": 0,
+        "untilAmount": 2,
         "exit": false,
         "expression": "worried"
       },
