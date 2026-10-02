@@ -15,6 +15,7 @@ import { advanceTraining, nextTrainingCompletion } from './army';
 import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { revealAroundDistrict } from './fog';
+import { pickUpTreasure } from './treasures';
 import { recordEvent } from './events';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
@@ -43,7 +44,7 @@ import {
 import {
   addToWallet, builderCount, buildQueueCapacity, cellsOfRect, completesAt, districtById,
   districtOccupies, getWallet,
-  newId, remainingSeconds, townhall,
+  districtCells, newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
   type QueueItem, type TechId, type UnitId, type Wallet,
 } from './state';
@@ -157,6 +158,9 @@ export function enqueueBuild(
   };
   const duration = buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);
+  // A treasure under the new footprint is picked up, not buried
+  // (Docs/features/01-map-and-fog.md §6.2).
+  for (const c of districtCells(district)) pickUpTreasure(state, map, c);
   state.city.queue.push({
     uniqueId: `BuildItem_${district.uniqueId}`,
     kind: 'build',

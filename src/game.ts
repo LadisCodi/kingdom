@@ -121,6 +121,7 @@ import {
   freeCell, levelProgress, ladderLength as passLadderLength,
   paidCell, passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
 } from './sim/pass';
+import { pickUpTreasure, treasureAt } from './sim/treasures';
 import {
   isHardKind, missionComplete, missionProgress, nextWindowAt,
 } from './sim/missions';
@@ -780,6 +781,28 @@ export class Game {
         this.inspectedSite = cell;
         this.inspectedDistrictId = null;
         playSfx('click');
+        this.notify();
+        return true;
+      },
+    });
+    // 60 — a treasure on revealed ground (01-map-and-fog.md §6.2). Picked up
+    // free, like a store, before the cell's own harvest answers: on a forest
+    // the first tap takes the treasure and the next one swings the axe. On a
+    // Discovered cell the chest is a reason to pay the fog, so the tap falls
+    // through to the reveal.
+    this.tapChain.register({
+      priority: 60,
+      handle: (cell) => {
+        if (this.openOverlay !== null) return false;
+        if (treasureAt(this.state, cell) === undefined) return false;
+        const picked = pickUpTreasure(this.state, this.map, cell);
+        if (picked.kind !== 'PickedUp') return false;
+        this.tapFeedback(cell, 'pop');
+        const entries = (Object.entries(picked.reward) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+        for (const [c, n] of entries) this.floaters.add(cell, `+${formatCount(n)}`, c);
+        const box = this.camera.cellToScreen(cell);
+        const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+        queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
         this.notify();
         return true;
       },

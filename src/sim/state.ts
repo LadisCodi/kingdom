@@ -483,6 +483,14 @@ export interface GameState {
      *  to a revealed cell are ALSO Discovered — that part stays derived.) */
     discovered: Record<string, true>;
     progress: Record<string, number>; // coordKey → taps spent so far, 1..4
+    /** Cells the player has paid to reveal, ever — the treasures' clock
+     *  (sim/treasures.ts). A building's ground or a claim does not count. */
+    paidReveals: number;
+    /** How many treasures the fog has placed, ever: the next one's ordinal. */
+    treasuresPlaced: number;
+    /** coordKey → a treasure waiting on that cell, Discovered or Revealed.
+     *  Picked up, it leaves the record. */
+    treasures: Record<string, { n: number; coin: CurrencyId }>;
   };
   features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
   /** Respawning features: current cell → its map-authored ORIGIN + respawn

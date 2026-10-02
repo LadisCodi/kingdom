@@ -516,6 +516,8 @@ export function drawMap(
    * the player cannot buy yet takes it twice.
    */
   const FOG_DIM = 0.45;
+  /** A chest in the fog is dimmed far less than the ground it sits on. */
+  const TREASURE_DIM = 0.85;
   const dimmed = (dim: number, draw: () => void): void => {
     if (dim >= 1) { draw(); return; }
     ctx.save();
@@ -844,6 +846,20 @@ export function drawMap(
           if (!claimed) drawSiteBadge(plot, '✦');
         }, { x: landmark.size, y: landmark.size });
       }
+      // A treasure (01-map-and-fog.md §6.2): a closed chest while the cell is
+      // fog — a thing to go and get, so it stands out of the scrim more than
+      // the ground under it — and, once revealed, what it holds, waiting for
+      // the tap that picks it up.
+      const treasure = state.fog.treasures[key];
+      if (treasure !== undefined) {
+        const keys = fog === 'Revealed'
+          ? [`treasure_${treasure.coin.toLowerCase()}`, 'treasure_closed']
+          : ['treasure_closed'];
+        later(cell, () => dimmed(fog === 'Revealed' ? 1 : TREASURE_DIM, () => {
+          punched(key, box, () => { stand(box, keys, ''); });
+        }));
+      }
+
       if (fog === 'Revealed') drawResourceState(cell, box);
 
       if (fog === 'Discovered') {

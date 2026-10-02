@@ -42,5 +42,14 @@
   },
   "delve": {
     "firstClearKnowledge": 15
+  },
+  "treasure": {
+    "everyReveals": 5,
+    "workSeconds": 120,
+    "floor": { "Gold": 10, "Food": 5, "Wood": 5, "Stone": 5 },
+    "weights": { "Gold": 3, "Food": 3, "Wood": 3, "Stone": 2, "Knowledge": 1 },
+    "knowledge": 1,
+    "firstCoin": "Gold",
+    "firstAmount": 20
   }
 }

@@ -11,6 +11,7 @@ import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import { recordEvent } from './events';
 import { isTechComplete, revealedCellCount } from './research';
+import { onPaidReveal, undiscoveredAround } from './treasures';
 import {
   addToWallet, coordKey, districtCells, getWallet, townhall,
   type Coord, type District, type GameState, type TechId,
@@ -297,6 +298,9 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   addToWallet(state.city.wallet, 'Gold', -payment);
   if (done + 1 >= FOG.tapsToReveal) {
     delete state.fog.progress[key];
+    // Read before the reveal: afterwards these are what it DISCOVERED, and a
+    // treasure it brings due prefers one of them (sim/treasures.ts).
+    const fresh = undiscoveredAround(state, map, block);
     // The whole block clears at once. There is no half a mountain.
     for (const c of block) {
       const k = coordKey(c);
@@ -308,6 +312,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     // that doubles from ring 4. Knowledge comes out of dungeons instead
     // (sim/expeditions.ts), because heroes and relics are all it buys.
     recordEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
+    onPaidReveal(state, map, block, fresh);
     // Clearing a cell can bring a whole ring of new ground into view.
     recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc

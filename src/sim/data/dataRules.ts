@@ -47,7 +47,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'terrain', label: 'Terrain', domain: 'World', view: 'table', noun: 'terrain', source: 'terrain' },
   { id: 'harvest', label: 'Harvest', domain: 'World', view: 'table', noun: 'source', source: 'harvest' },
   { id: 'garrisons', label: 'Garrisons', domain: 'World', view: 'table', noun: 'garrison', source: 'garrisons' },
-  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'knowledge', 'raid', 'delve'] },
+  { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },

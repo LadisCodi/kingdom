@@ -4,9 +4,9 @@
 > reveal, and what the fog holds. The *scopes* the map splits into are
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
-> **Status: built**, except the treasures and the abandoned buildings (§6.2,
-> §6.3) and the sea of clouds the fog is drawn as (§4.2): **designed
-> 2026-10-02, not built.** The map is authored in the
+> **Status: built**, the treasures (§6.2) since 2026-10-02 — except the
+> abandoned buildings (§6.3) and the sea of clouds the fog is drawn as (§4.2):
+> **designed 2026-10-02, not built.** The map is authored in the
 > `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
 

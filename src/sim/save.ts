@@ -867,6 +867,13 @@ export function serialize(state: GameState, now: number): SaveFile {
           Coord: parseCoordKey(k),
           Taps: taps,
         })),
+        PaidReveals: state.fog.paidReveals,
+        TreasuresPlaced: state.fog.treasuresPlaced,
+        Treasures: Object.entries(state.fog.treasures).map(([k, t]) => ({
+          Coord: parseCoordKey(k),
+          N: t.n,
+          Coin: t.coin,
+        })),
       },
       'kingdom.features': {
         Cells: Object.entries(state.features).map(([k, id]) => ({
@@ -1220,7 +1227,17 @@ export function deserialize(
 
   const fogDto = modules['kingdom.fogOfWar'];
   if (fogDto) {
-    state.fog = { revealed: {}, discovered: {}, progress: {} };
+    state.fog = {
+      revealed: {}, discovered: {}, progress: {},
+      // Additive: a save from before the treasures starts their clock at zero,
+      // so a veteran is not showered with what its old reveals would have paid.
+      paidReveals: fogDto.PaidReveals ?? 0,
+      treasuresPlaced: fogDto.TreasuresPlaced ?? 0,
+      treasures: {},
+    };
+    for (const t of (fogDto.Treasures ?? []) as { Coord: Coord; N: number; Coin: CurrencyId }[]) {
+      state.fog.treasures[coordKey(t.Coord)] = { n: t.N ?? 0, coin: t.Coin };
+    }
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
     for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Taps: number }[]) {

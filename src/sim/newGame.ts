@@ -45,7 +45,7 @@ export function newGame(map: MapData, now: number): GameState {
       utcOffsetMinutes: 0,
     },
     player: { wallet: playerWallet, payer: null },
-    fog: { revealed: {}, discovered: {}, progress: {} },
+    fog: { revealed: {}, discovered: {}, progress: {}, paidReveals: 0, treasuresPlaced: 0, treasures: {} },
     features: {},
     featureMeta: {},
     featureRespawns: [],

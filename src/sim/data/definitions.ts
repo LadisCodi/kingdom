@@ -835,6 +835,18 @@ export const CROPS_EXHAUSTED_GLYPH = '🥀';
 // rings: authored distance → total Gold cost to clear one cell at that ring.
 export const FOG = balance.fog;
 
+/** What the people who fled left on the ground — a coin under the fog, due
+ *  every few cells revealed (Docs/features/01-map-and-fog.md §6.2). */
+export const TREASURE = balance.treasure as {
+  everyReveals: number;
+  workSeconds: number;
+  floor: Partial<Record<CurrencyId, number>>;
+  weights: Partial<Record<CurrencyId, number>>;
+  knowledge: number;
+  firstCoin: CurrencyId;
+  firstAmount: number;
+};
+
 // ----------------------------------------------------------------- city def
 
 export const CITY_DEF = {
@@ -2188,4 +2200,6 @@ export const GAME_VERSION = '0.1.0';
 // (`StrikeCarry`), additive too. The tree in five books renamed and split a
 // few cards: the migrator carries a researched one to its successors.
 // v75: the daily chest is cut — `kingdom.kingdoms.Daily` is dropped.
-export const SAVE_VERSION = 75;
+// v76: the fog's treasures (`PaidReveals`, `TreasuresPlaced`, `Treasures` on
+// `kingdom.fogOfWar`), additive.
+export const SAVE_VERSION = 76;

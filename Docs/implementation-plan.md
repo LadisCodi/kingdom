@@ -754,7 +754,8 @@ abandoned and repaired.
   the beats in [`23-tutorials.md`](features/23-tutorials.md) §3–§3.1; the
   chain in [`12-quests.md`](features/12-quests.md) §2; the Build door in
   [`22-progression.md`](features/22-progression.md) §3.
-- **Treasures.** The save gains a count of paid reveals and the treasures
+- **Treasures — BUILT 2026-10-02** (`sim/treasures.ts`, `tests/treasures.test.ts`;
+  art in `Docs/art/originals/fog-finds/`). The save gains a count of paid reveals and the treasures
   placed — cell, ordinal, picked up — additive, a `SAVE_VERSION` bump and no
   migrator. The placement runs in the paid-reveal handler, on the neighbours
   that reveal discovered, with `rand(seed, n)`. The `treasure.*` settings go
