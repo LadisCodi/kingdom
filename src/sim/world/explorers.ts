@@ -131,6 +131,8 @@ export type DispatchResult =
   | { kind: 'Sent'; trip: ExplorerTrip }
   | { kind: 'OffBoard' }
   | { kind: 'Home' }
+  /** Already Revealed: there is nothing left there to explore. */
+  | { kind: 'Explored' }
   | { kind: 'NoCartography' }
   | { kind: 'NoExplorerFree'; nextFreeAt: number }
   /** No way there through explored ground. */
@@ -141,6 +143,7 @@ export function dispatchExplorer(state: GameState, target: number, now: number):
   if (!isBoardIndex(target)) return { kind: 'OffBoard' };
   const home = homeIndex(state);
   if (target === home) return { kind: 'Home' };
+  if (fogStateOf(state, target, now) === 'Revealed') return { kind: 'Explored' };
   if (explorerSlots(state) === 0) return { kind: 'NoCartography' };
   if (freeExplorers(state) === 0) {
     return { kind: 'NoExplorerFree', nextFreeAt: Math.min(...state.world.explorers.map(returnsAt)) };

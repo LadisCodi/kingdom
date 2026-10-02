@@ -11,7 +11,7 @@ import {
 } from '../src/sim/world/explorers';
 import { boardOf } from '../src/sim/world/source';
 import { homeboundMs, outboundMs, stepTimes } from '../src/sim/world/travel';
-import { bitIndices, bitsFrom, hasBit } from '../src/sim/world/fogBits';
+import { bitIndices, bitsFrom, hasBit, setBit } from '../src/sim/world/fogBits';
 import {
   BOARD_SIZE, HEX_DIRS, PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, hexIndex,
 } from '../src/sim/world/hex';
@@ -24,6 +24,12 @@ const HOUR = 60 * MIN;
 
 /** A hex next to the city: Sensed from the start, so it can be explored. */
 const nextDoor = (state: GameState) => boardNeighbors(homeIndex(state)).find((n) => n !== PORTAL_INDEX)!;
+
+/** The rim hex across the board from the city. */
+const rim = (state: GameState) => {
+  const home = hexAt(homeIndex(state));
+  return hexIndex({ q: (-home.q * 5) / 4, r: (-home.r * 5) / 4 });
+};
 
 /** A kingdom that has seen the whole board but for its outer ring. */
 const seenMost = (state: GameState) => {
@@ -71,7 +77,7 @@ describe('a new kingdom on the board', () => {
 describe('sending an explorer', () => {
   it('needs Cartography, a free explorer, and a hex that is not home', () => {
     const state = freshGame();
-    expect(dispatchExplorer(state, portal, T0).kind).toBe('NoCartography');
+    expect(dispatchExplorer(state, nextDoor(state), T0).kind).toBe('NoCartography');
     state.research.completed.push('Cartography');
     expect(explorerSlots(state)).toBe(WORLD.cartographyExplorers);
     expect(dispatchExplorer(state, -1, T0).kind).toBe('OffBoard');
@@ -84,23 +90,39 @@ describe('sending an explorer', () => {
 
   it('goes only where it has seen the way, to a hex it has at least sensed', () => {
     const state = exploring();
-    // The Portal is in sight, but the way there is not.
-    expect(dispatchExplorer(state, portal, T0).kind).toBe('NoRoute');
+    // Across the board, sensed but with no way there seen.
+    const across = rim(state);
+    const span = hexDistance(hexAt(across), hexAt(homeIndex(state)));
+    setBit(state.world.revealed, boardNeighbors(across).find((n) => hexDistance(hexAt(n), hexAt(homeIndex(state))) === span - 1)!);
+    expect(fogStateOf(state, across, T0)).toBe('Sensed');
+    expect(dispatchExplorer(state, across, T0).kind).toBe('NoRoute');
+    state.world.revealed = bitsFrom([]);
     const far = hexIndex({ q: 0, r: -5 });
     expect(fogStateOf(state, far, T0)).toBe('Unknown');
     expect(dispatchExplorer(state, far, T0).kind).toBe('NoRoute');
     seenMost(state);
-    expect(dispatchExplorer(state, portal, T0).kind).toBe('Sent');
+    expect(dispatchExplorer(state, portal, T0).kind).toBe('Explored');
+    const edge = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, T0) === 'Sensed')!;
+    expect(dispatchExplorer(state, edge.index, T0).kind).toBe('Sent');
+  });
+
+  it('has nothing to explore where it has already seen', () => {
+    const state = exploring();
+    const trip = sent(state, nextDoor(state), T0);
+    advance(state, map, returnsAt(trip));
+    expect(dispatchExplorer(state, nextDoor(state), returnsAt(trip)).kind).toBe('Explored');
+    expect(dispatchExplorer(state, portal, returnsAt(trip)).kind).toBe('Explored');
   });
 
   it('takes the quickest way through explored ground, every hex timed as it is left', () => {
     const state = exploring();
     seenMost(state);
-    const trip = sent(state, portal, T0);
+    const target = rim(state);
+    const trip = sent(state, target, T0);
     const fog = worldFogAt(state, T0);
     expect(trip.path[0]).toBe(homeIndex(state));
-    expect(trip.path.at(-1)).toBe(portal);
-    expect(trip.path.every((i) => hasBit(fog, i))).toBe(true);
+    expect(trip.path.at(-1)).toBe(target);
+    expect(trip.path.slice(0, -1).every((i) => hasBit(fog, i))).toBe(true);
     const hexes = boardOf(state.world.board).hexes;
     expect(trip.stepMs).toEqual(stepTimes(hexes, trip.path, 'explorer'));
     expect(trip.stepMs[0]).toBe(WORLD.explorerSecondsPerHex * 1000); // the city is open ground
@@ -109,7 +131,7 @@ describe('sending an explorer', () => {
     expect(returnsAt(trip) - revealsAt(trip)).toBe(homeboundMs(trip.stepMs));
     // No way through the seen ground is quicker: a straight line of open ground
     // is the floor.
-    const d = hexDistance(hexAt(homeIndex(state)), hexAt(portal));
+    const d = hexDistance(hexAt(homeIndex(state)), hexAt(target));
     expect(outboundMs(trip.stepMs)).toBeGreaterThanOrEqual(d * WORLD.explorerSecondsPerHex * 1000);
   });
 
@@ -125,9 +147,9 @@ describe('sending an explorer', () => {
     const state = exploring();
     seenMost(state);
     expect(explorerSpeed(state)).toBe(1);
-    const slow = explorerRoute(state, portal, T0)!;
+    const slow = explorerRoute(state, rim(state), T0)!;
     grantHero(state, 'Scout');
-    const quick = explorerRoute(state, portal, T0)!;
+    const quick = explorerRoute(state, rim(state), T0)!;
     const v = HEROES.Scout.boon!.value;
     expect(quick.path).toEqual(slow.path);
     expect(quick.stepMs).toEqual(slow.stepMs.map((ms) => Math.round(ms / v)));
@@ -168,7 +190,8 @@ describe('what a march reveals', () => {
     // The city and the Portal are never stored.
     expect(bitIndices(state.world.revealed)).not.toContain(portal);
     expect(bitIndices(state.world.revealed)).not.toContain(homeIndex(state));
-    expect(dispatchExplorer(state, nextDoor(state), returnsAt(trip)).kind).toBe('Sent');
+    const further = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, returnsAt(trip)) === 'Sensed')!;
+    expect(dispatchExplorer(state, further.index, returnsAt(trip)).kind).toBe('Sent');
   });
 });
 

@@ -232,7 +232,8 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }
   const body = el('div', { class: 'wd-body' }, ...lines, ...actionRows(game, bh));
-  if (index !== home && game.actingSeat === null) {
+  // Explore is offered only on ground not yet explored.
+  if (index !== home && fog !== 'Revealed' && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
     const route = explorerRoute(state, index, now);

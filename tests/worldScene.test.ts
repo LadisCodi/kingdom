@@ -110,10 +110,20 @@ describe('Explore', () => {
     const { game, toasts } = world();
     game.state.research.completed.push('Cartography');
     game.enterWorld();
-    game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
+    game.selectedHex = hexIndex({ q: 0, r: -5 });
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(0);
     expect(toasts.at(-1)).toMatch(/explored ground/);
+  });
+
+  it('has nothing to explore on ground already explored', () => {
+    const { game, toasts } = world();
+    game.state.research.completed.push('Cartography');
+    game.enterWorld();
+    game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
+    game.doSendExplorer();
+    expect(game.state.world.explorers).toHaveLength(0);
+    expect(toasts.at(-1)).toMatch(/Already explored/);
   });
 });
 

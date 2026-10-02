@@ -4782,6 +4782,8 @@ export class Game {
       this.toast('Research Cartography in the Atlas to send an explorer');
     } else if (result.kind === 'NoRoute') {
       this.toast('No way there through explored ground');
+    } else if (result.kind === 'Explored') {
+      this.toast('Already explored');
     }
     this.notify();
   }

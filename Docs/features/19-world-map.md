@@ -92,7 +92,7 @@
   revealed for everyone, senses nothing.
 - **Only a Revealed hex can be acted on.** Claiming, building and sending an
   army all need the hex explored first; on Sensed or Unknown ground the only
-  action is Explore.
+  action is Explore, and a Revealed hex never offers it.
 - **A march never passes through fog**: every hex on its way is Revealed;
   only an explorer's destination may be Sensed.
 
