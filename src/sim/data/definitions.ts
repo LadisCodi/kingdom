@@ -2017,6 +2017,8 @@ export interface WorldGenDef {
   featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
   /** Where each feature may roll, and what it never shares a hex with. */
   featureRules: Record<WorldFeature, WorldFeatureRule>;
+  /** Sites placed, not rolled: so many on the outer ring of every wedge. */
+  placedPerWedge: Partial<Record<WorldFeature, number>>;
   maxFeaturesPerHex: number;
 }
 

@@ -134,6 +134,12 @@
           },
           "doc": "Where each feature may roll, and what it never shares a hex with (Docs/plans/world-hex-art.md §1). A feature that does not fit is skipped; the inner ring must obey them too."
         },
+        "placedPerWedge": {
+          "type": "map",
+          "keysRef": "worldFeature",
+          "of": { "type": "int", "min": 0, "max": 3 },
+          "doc": "Sites PLACED rather than rolled: exactly this many on the outer ring of every sixth of the board, never beside a city (19 §9). A placed feature has no chance of its own."
+        },
         "maxFeaturesPerHex": {
           "type": "int",
           "min": 0,

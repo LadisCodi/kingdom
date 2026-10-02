@@ -27,7 +27,7 @@
     "featureChance": {
       "corridor": { "Forest": 0.41, "FertileLand": 0.28, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0.39 },
       "home": { "Forest": 0.47, "FertileLand": 0.34, "Game": 0.23, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 },
-      "outer": { "Forest": 0.35, "FertileLand": 0.14, "Game": 0.19, "Dungeon": 0.54, "Sanctuary": 0.31, "Landmark": 0 }
+      "outer": { "Forest": 0.35, "FertileLand": 0.14, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 }
     },
     "featureRules": {
       "Forest": {
@@ -49,6 +49,7 @@
         "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Sanctuary"]
       }
     },
+    "placedPerWedge": { "Dungeon": 1, "Sanctuary": 1 },
     "maxFeaturesPerHex": 2
   },
   "worldBuild": {

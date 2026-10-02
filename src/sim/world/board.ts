@@ -108,10 +108,51 @@ function rollFeatures(seed: number, k: number, j: number, role: RolledRole, terr
   const out: WorldFeature[] = [];
   for (const f of WORLD_FEATURES) {
     if (out.length >= gen.maxFeaturesPerHex) break;
+    if ((gen.placedPerWedge[f] ?? 0) > 0) continue; // placed, not rolled
     if (rand(seed, 'worldWedge', k, j, 'feature', f) >= (chances[f] ?? 0)) continue;
     if (featureFits(gen, terrain, out, f)) out.push(f);
   }
   return out;
+}
+
+/** The city's neighbours, in HEX_DIRS order, as the local places of the
+ *  wedge they map to. */
+function seatNeighbourPlaces(): string[] {
+  const around: string[] = [];
+  for (const n of hexNeighbors(SEATS[0])) {
+    const at = wedgeOf(n);
+    if (at === null) continue;
+    const key = localKey(at.k, at.j);
+    if (!around.includes(key)) around.push(key);
+  }
+  return around;
+}
+
+/** The outer-ring places of a wedge that a placed site may take: not beside
+ *  the city (19 §9). */
+export function siteRoom(around: readonly string[] = seatNeighbourPlaces()): string[] {
+  return Array.from({ length: BOARD_RADIUS }, (_, j) => localKey(BOARD_RADIUS, j)).filter((key) => !around.includes(key));
+}
+
+/**
+ * The sites placed rather than rolled (`placedPerWedge`): exactly so many of
+ * each on the wedge's outer ring, each on a place of its own, the ground
+ * turned to a terrain it stands on when it does not already fit.
+ */
+function placeSites(seed: number, local: Map<string, Contents>, gen: WorldGenDef, around: readonly string[]): void {
+  const taken = new Set<string>();
+  for (const f of WORLD_FEATURES) {
+    const count = gen.placedPerWedge[f] ?? 0;
+    for (let i = 0; i < count; i++) {
+      const free = siteRoom(around).filter((key) => !taken.has(key));
+      if (free.length === 0) return;
+      const key = free[Math.floor(rand(seed, 'worldWedge', 'place', f, i) * free.length)];
+      const terrains = gen.featureRules[f]?.terrains ?? [];
+      const was = local.get(key)!.terrain;
+      local.set(key, { terrain: terrains.includes(was) ? was : (terrains[0] ?? was), features: [f] });
+      taken.add(key);
+    }
+  }
 }
 
 /**
@@ -136,14 +177,8 @@ function rollWedge(seed: number, gen: WorldGenDef): Map<string, Contents> {
   // The city's own hex.
   local.set(localKey(HOME_RING, 0), { terrain: 'Grassland', features: [] });
 
-  // Its neighbours, in HEX_DIRS order, as the local places they map to.
-  const around: string[] = [];
-  for (const n of hexNeighbors(SEATS[0])) {
-    const at = wedgeOf(n);
-    if (at === null) continue;
-    const key = localKey(at.k, at.j);
-    if (!around.includes(key)) around.push(key);
-  }
+  const around = seatNeighbourPlaces();
+  placeSites(seed, local, gen, around);
   const cell = (key: string): Contents => local.get(key)!;
   for (const key of around) cell(key).features = cell(key).features.filter((f) => f !== 'Dungeon');
   const isForest = (c: Contents) => c.terrain === 'Grassland' && c.features.includes('Forest');

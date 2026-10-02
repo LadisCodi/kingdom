@@ -15,7 +15,7 @@
 // module.
 
 import techTree from './tech-tree.json';
-import { WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
+import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -669,6 +669,20 @@ export const RULES: Readonly<Record<string, Rule>> = {
         if (other === f) push(null, ['worldGen', 'featureRules', f, 'excludes'], 'cannot exclude itself');
         else if (!excludes(other).includes(f)) push(null, ['worldGen', 'featureRules', other, 'excludes'], `${f} excludes ${other}, so ${other} must exclude ${f}`);
       }
+    }
+    // Sites placed, not rolled: on the outer ring, as many as it has room for.
+    const placed = (gen.placedPerWedge ?? {}) as Record<string, unknown>;
+    let placedTotal = 0;
+    for (const [f, n] of Object.entries(placed)) {
+      if (num(n) <= 0) continue;
+      placedTotal += num(n);
+      if (!PLACED_SITES.includes(f as never)) push(null, ['worldGen', 'placedPerWedge', f], `only ${PLACED_SITES.join(' and ')} are placed`);
+      for (const [role, row] of Object.entries(chances)) {
+        if (num(row?.[f]) > 0) push(null, ['worldGen', 'featureChance', role, f], `a ${f} is placed (placedPerWedge), not rolled — its chance is 0`);
+      }
+    }
+    if (placedTotal > OUTER_SITE_ROOM) {
+      push(null, ['worldGen', 'placedPerWedge'], `${placedTotal} sites, but a wedge's outer ring has room for ${OUTER_SITE_ROOM} away from the city`);
     }
     list(gen.innerRing).forEach((h, i) => {
       const hex = (h ?? {}) as Record<string, unknown>;

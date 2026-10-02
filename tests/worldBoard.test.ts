@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { WORLD_GEN } from '../src/sim/data/definitions';
 import { validateData, type DataDoc } from '../src/sim/data/dataRules';
 import balance from '../src/sim/data/balance';
-import { HOME_RING, SEATS, SEAT_INDICES, generateBoard, type Board } from '../src/sim/world/board';
+import { HOME_RING, SEATS, SEAT_INDICES, generateBoard, siteRoom, type Board } from '../src/sim/world/board';
+import { OUTER_SITE_ROOM } from '../src/sim/world/types';
 import {
   BOARD_HEXES, HEX_DIRS, PORTAL_INDEX, hexDistance, hexIndex, hexNeighbors, rotate60,
 } from '../src/sim/world/hex';
@@ -88,9 +89,31 @@ describe('the board', () => {
     }
   });
 
+  it('places exactly one dungeon and one sanctuary in every sixth, on the rim, away from the cities', () => {
+    expect(siteRoom()).toHaveLength(OUTER_SITE_ROOM);
+    const nearCity = new Set(SEATS.flatMap((c) => hexNeighbors(c).map(hexIndex)));
+    for (let seed = 0; seed < 300; seed++) {
+      const b = generateBoard('t', seed * 104_729);
+      for (const site of ['Dungeon', 'Sanctuary'] as const) {
+        const at = b.hexes.filter((h) => h.features.includes(site));
+        expect(at, `${site} on seed ${seed}`).toHaveLength(6);
+        for (const h of at) {
+          expect(h.role).toBe('outer');
+          expect(h.features).toEqual([site]);
+          expect(nearCity.has(h.index)).toBe(false);
+          expect(WORLD_GEN.featureRules[site].terrains).toContain(h.terrain);
+        }
+        // One a wedge: each seat has its own, at the same place.
+        const nearest = SEATS.map((c) => Math.min(...at.map((h) => hexDistance(c, h.hex))));
+        expect(new Set(nearest).size).toBe(1);
+      }
+    }
+  });
+
   it('skips a feature that does not fit, and keeps the rest', () => {
     const gen = structuredClone(WORLD_GEN) as typeof WORLD_GEN;
     for (const role of ['corridor', 'home', 'outer'] as const) gen.featureChance[role] = { Forest: 1, Game: 1 };
+    gen.placedPerWedge = {};
     // Beside a city the §9 fix-up has the last word.
     const nearCity = new Set(SEATS.flatMap((c) => hexNeighbors(c).map(hexIndex)));
     for (const h of generateBoard('t', 1, gen).hexes) {
@@ -134,6 +157,17 @@ describe('the world data', () => {
       'world.explorerRevealRadius: is past revealRadiusMax',
     ]));
     expect(errors(b).some((m) => m.startsWith('worldGen.innerRing'))).toBe(true);
+  });
+
+  it('refuses a placed site that is also rolled, or more sites than the rim holds', () => {
+    const b = structuredClone(doc) as Record<string, any>;
+    b.worldGen.featureChance.outer.Dungeon = 0.2;
+    b.worldGen.placedPerWedge = { Dungeon: 2, Sanctuary: 1, Landmark: 1 };
+    expect(errors(b)).toEqual(expect.arrayContaining([
+      'worldGen.featureChance.outer.Dungeon: a Dungeon is placed (placedPerWedge), not rolled — its chance is 0',
+      'worldGen.placedPerWedge.Landmark: only Dungeon and Sanctuary are placed',
+      "worldGen.placedPerWedge: 4 sites, but a wedge's outer ring has room for 2 away from the city",
+    ]));
   });
 
   it('refuses a feature rule that cannot hold', () => {

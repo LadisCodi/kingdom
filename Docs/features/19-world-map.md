@@ -340,8 +340,12 @@ Contents are rolled at board creation, under rules:
 - **The inner ring is not rolled and not turned — it is authored by hand**, so
   all six hexes are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
   (one of them Fertile land), 2 Mountain.
-- Dungeons and Sanctuaries appear **only on the outer ring**; landmarks only
-  on the corridors.
+- **Every sixth of the board has exactly one Dungeon and one Sanctuary**, on
+  its outer ring and never beside a city: six of each on every board, one for
+  each seat at the same distance. They are placed, not rolled
+  (`worldGen.placedPerWedge`); the ground under them turns to a terrain they
+  stand on.
+- Landmarks are rolled, only on the corridors.
 
 ### 9.1 Which features roll where
 
@@ -356,7 +360,8 @@ Contents are rolled at board creation, under rules:
 
 - Dungeon, Sanctuary and Landmark are **sites**: a site stands alone on its hex.
 - Features roll in the table's order; **one that does not fit the terrain or a
-  feature already rolled is skipped**. At most `maxFeaturesPerHex` (2) are kept.
+  feature already rolled is skipped**. Dungeon and Sanctuary are placed
+  instead (above). At most `maxFeaturesPerHex` (2) are kept.
 - The rules are data (`worldGen.featureRules`), and the inner ring obeys them
   too.
 - Every combination they allow has its own art

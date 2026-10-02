@@ -16,6 +16,14 @@ export type WorldImprovement = typeof WORLD_IMPROVEMENTS[number];
 export const WORLD_FEATURES = ['Forest', 'FertileLand', 'Game', 'Dungeon', 'Sanctuary', 'Landmark'] as const;
 export type WorldFeature = typeof WORLD_FEATURES[number];
 
+/** How many outer-ring places of a wedge a placed site can take — the five
+ *  of ring 5 less the three beside a city (`siteRoom` in board.ts; the test
+ *  holds the two together). */
+export const OUTER_SITE_ROOM = 2;
+
+/** The sites placed on the outer ring rather than rolled (19 §9). */
+export const PLACED_SITES: readonly WorldFeature[] = ['Dungeon', 'Sanctuary'];
+
 /**
  * A hex's job, by its ring (19 §1): the Portal at the centre, the inner ring,
  * the corridors (rings 2–3), the home ring the cities stand on (4) and the
