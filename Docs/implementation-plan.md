@@ -778,6 +778,36 @@ abandoned and repaired.
   opening's four first — House, plot, Farm, Sawmill; the closed chest, and the treasure's sack, crate and pot.
 - **Size:** two to three days of code, plus the art.
 
+### Step 11 · The sea of clouds — **look locked 2026-10-02**
+
+**The fog drawn as the fiction says it is**: a sunlit sea of clouds in place
+of the dark fog of war.
+
+- **Design:** [`art/art-direction.md`](art/art-direction.md) §8.1;
+  [`01-map-and-fog.md`](features/01-map-and-fog.md) §4.2; target
+  [`art/mockups/fog/sea-of-clouds.png`](art/mockups/fog/sea-of-clouds.png).
+- **Art first**, through the ChatGPT pipeline anchored on the mockup, true
+  alpha: three or four cloud-bank puffs at the tile diamond, a wall variant,
+  the not-payable cushion, the payable veil's sheen, the wisps of a tear.
+- **`mapRenderer.ts`, pass 1:**
+  - the bank replaces the `fogUndiscovered` fill, off the map's edge too: a
+    puff per Undiscovered cell, picked by the cell's hash, depth-sorted with
+    everything, the wall puff on a cell touching Discovered ground;
+  - a payable Discovered cell draws its ground and props desaturated (a
+    `saturation` composite over the diamond), then the veil — replacing the
+    `fogDiscovered` scrim and the `FOG_DIM` dim;
+  - a not-payable one draws the cushion over its props, tall enough that only
+    the tips of tall things clear it — replacing the second scrim layer;
+  - silhouettes in the cloud-shadow tone, drawn after the bank.
+- **Cache the bank** in an offscreen layer rebuilt when the fog changes; the
+  drift is a sway of the layer, not a redraw. Measure a zoomed-out frame
+  before and after.
+- **`tapFx`:** the white `fogFlash` becomes a tear — mist alpha at
+  `1 − taps / 5` and a puff per tap — and a reveal plays the wisps and floods
+  the cell's saturation back over ~0.6 s.
+- **The tones** go in `palette.ts` as tokens (§8.1's table).
+- **Size:** a day or two of rendering, plus the art sheet.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.

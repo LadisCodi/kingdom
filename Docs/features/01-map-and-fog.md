@@ -5,7 +5,8 @@
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
 > **Status: built**, except the treasures and the abandoned buildings (§6.2,
-> §6.3): **designed 2026-10-02, not built.** The map is authored in the
+> §6.3) and the sea of clouds the fog is drawn as (§4.2): **designed
+> 2026-10-02, not built.** The map is authored in the
 > `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
 
@@ -196,7 +197,7 @@ Respawn:
 | State | Meaning |
 |---|---|
 | **Undiscovered** | not drawn |
-| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure as a closed chest, an abandoned building as its ruin (§6.2, §6.3); may be paid to clear |
+| **Discovered** | drawn under mist (§4.2); terrain and feature visible, a treasure as a closed chest, an abandoned building as its ruin (§6.2, §6.3); may be paid to clear |
 | **Revealed** | yours: buildable, tappable, workable |
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
@@ -218,7 +219,7 @@ Respawn:
 - A building's fog radii and a claim's discover ring ignore the reach, the way
   they ignore Sailing. Only the player's tap and a Divination are refused, and a
   refused tap costs nothing.
-- A Discovered cell past the reach stays visible under the scrim and draws like
+- A Discovered cell past the reach stays visible under the mist and draws like
   a cell the frontier has not reached.
 - **The reach is drawn**: a line of white dots, each ringed in a thin dark
   outline, along the last ring the player may pay for, with a soft shadow on
@@ -246,8 +247,8 @@ lies close enough to it.
   footprint. Discovered cells do not see.
 - A lair's sight reaches past its ground (`radius`), or it is 0 and never
   sighted: every cell of its ground finds it (`src/sim/data/mapRules.ts`).
-- **A silhouette is the thing's own drawing as one flat, cold, faint shape**
-  over the dark: no name, no badge, no bubble.
+- **A silhouette is the thing's own drawing as one flat, pale shape** rising
+  out of the cloud tops: no name, no badge, no bubble.
 - It stops being a silhouette once any cell of it is Discovered — a lair once
   it is found — and draws as itself.
 - **It ignores the Townhall's reach and the exploration gates.** Seeing what
@@ -258,6 +259,24 @@ lies close enough to it.
   towards it*, and costs nothing.
 - A scene may wait on it: the `sighted` condition
   ([`24-dialogue.md`](24-dialogue.md) §5).
+
+### 4.2 How the fog is drawn
+
+**A sunlit sea of clouds**, not darkness
+([`../art/art-direction.md`](../art/art-direction.md) §8.1, target
+[`../art/mockups/fog/sea-of-clouds.png`](../art/mockups/fog/sea-of-clouds.png)):
+
+| State | Drawn as |
+|---|---|
+| Revealed | full colour |
+| Discovered, payable | a thin veil of mist, the ground seen through it, desaturated |
+| Discovered, not payable | a low cushion of cloud, almost opaque; only tall things' tips show |
+| Undiscovered | the cloud bank, rising into a wall where it meets the mist |
+
+- The fog thickens step by step away from the cleared ground, so the cells a
+  tap can buy read at a glance.
+- Every fogged cell carries its own mist, so the grid reads cell by cell.
+- A tap tears the mist; a reveal blows it away and the colour comes back.
 
 ## 5. The price of a cell
 
@@ -289,8 +308,9 @@ fallback past ring 14. The province reaches ring 23.
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
-- **Every tap that takes flashes the cell white**, the last one too as it
-  clears — every cell of a block at once. A refused tap does not flash.
+- **Every tap that takes tears a fifth of the cell's mist away**, the last
+  one blowing it off — every cell of a block at once (§4.2). A refused tap
+  tears nothing.
 - At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
   the outer third of it is most of that; the count multiplier only raises it.
   It is the largest Gold sink in the game by three orders of magnitude. What
@@ -311,7 +331,7 @@ fallback past ring 14. The province reaches ring 23.
   (including the ad reward, which is a whole pool) is larger.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
-  through the Discovered scrim once discovered.
+  through the Discovered mist once discovered.
 - **A site coming into view is announced once**, by a banner — unless a
   scene introduces it ([`23-tutorials.md`](23-tutorials.md)), which then says
   it instead. A resource is never announced: its coin lands on the plank.
@@ -395,7 +415,7 @@ whatever direction the player explores.
 - **No newly discovered cell qualifies?** It takes another Discovered
   neighbour of the cell just revealed; failing that, it waits for the next
   paid reveal. One reveal places one treasure at most.
-- **Discovered, it shows as a closed chest** under the scrim: the player sees
+- **Discovered, it shows as a closed chest** under the mist: the player sees
   something to go and get, not what is in it.
 - **Revealing its cell opens it**: its coin rises out of the chest under a
   glint. **A tap picks it up, free** — no Mana, as a store is collected free.
@@ -427,7 +447,7 @@ them, to be found and repaired.
 |---|---|
 | Undiscovered, out of sight | nothing |
 | Undiscovered, in sight (§4.1) | **the silhouette of its ruin** — something stands there, not what |
-| Discovered | its ruin under the scrim, and a banner names it (*An abandoned Sawmill!*) unless a scene says it instead |
+| Discovered | its ruin under the mist, and a banner names it (*An abandoned Sawmill!*) unless a scene says it instead |
 | Revealed | its ruin, and a tap opens its card |
 
 - A footprint is revealed all at once, priced as a feature's (§3.1).

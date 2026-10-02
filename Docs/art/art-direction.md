@@ -156,16 +156,60 @@ Every one of these is a treatment of the same asset, never a second asset.
 
 | State | Treatment |
 |---|---|
-| **Undiscovered** | opaque rolling mist; the hex or cell is not there |
-| **Discovered / Sensed** | dimmed, desaturated, half-veiled; silhouettes show through |
+| **Undiscovered** | the cloud bank (§8.1); the hex or cell is not there |
+| **Discovered / Sensed** | under low mist, desaturated (§8.1); silhouettes rise out of the clouds |
 | **Revealed** | full colour, the default |
 | **Exhausted** (a harvest cell) | the same tile, spent — stumps, bare soil, still clearly the same place |
 | **Under construction** | scaffold and a pit, at the building's own footprint |
 | **Selected / valid target** | a warm rim on the diamond's edge, never a fill |
 | **Inactive** (a world hex off the chain) | greyed toward the Sensed treatment, buildings intact |
 
-- **Unexplored ground is darker, simpler and less saturated — and still the same
-  stylized world.** It is never a flat grey void.
+- **Unexplored ground is under a sunlit sea of clouds — and still the same
+  stylized world.** It is never dark, and never a flat grey void.
+
+### 8.1 The fog: a sea of clouds
+
+The fog that swallowed the kingdom is a bright sea of clouds lying on the
+province under the midday sun. Target:
+[`mockups/fog/sea-of-clouds.png`](mockups/fog/sea-of-clouds.png).
+
+| Fog state ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4) | Drawn as |
+|---|---|
+| **Revealed** | full colour — the only coloured ground on screen |
+| **Discovered, payable** | a thin see-through veil, ankle-high: terrain desaturated with a pale sheen, tree crowns standing out of it almost whole |
+| **Discovered, not payable** | a low cushion of cloud, almost opaque: terrain hidden, only the tips of tall things poking out |
+| **Undiscovered** | the cloud bank: sculpted cumulus filling everything, rising into a rounded wall about a cell high where it meets the mist, the wall's shadow on the cells in front of it |
+
+- **The clouds are a stylized material**, like the tree canopies: chunky,
+  softly bevelled, three flat tones and a clean edge — never photographic,
+  wispy, grey or gloomy.
+
+| Tone | Value |
+|---|---|
+| Cloud top, sunlit | `#EAE2EB` |
+| Cloud mid | `#BCC2F7` |
+| Cloud shadow, the wall's shadow | `#ABB5F3` |
+| The not-payable cushion | `#DFD8EB` |
+
+- **One cushion a cell.** Every fogged cell carries its own mist on its own
+  diamond, dipping a little at the edges, so the grid reads from the dips and
+  no line is drawn.
+- **Density is height.** The veil, then the cushion, then the wall: the fog
+  rises step by step away from the cleared ground.
+- **A sighted thing rises out of the cloud tops**
+  ([`../features/01-map-and-fog.md`](../features/01-map-and-fog.md) §4.1) as a
+  flat, pale shape in the cloud-shadow tone, hazy at its foot: something
+  stands there, not what.
+- **A treasure's chest and an abandoned building's ruin** show through the
+  veil as themselves, desaturated with the ground.
+- **A tap tears the cushion**: each of the five takes a fifth of the mist off
+  the cell, torn from the middle, with curling wisps lifting away.
+- **A reveal blows it away**: the last wisps lift and fade in under a second,
+  and the colour floods back into the cell from its centre.
+- **The bank drifts**, slowly and on the spot, a few pixels on a loop of
+  several seconds; no cloud ever crosses a cell's boundary.
+- **What is drawn over the fog stays over it**: the reach line, the lair's
+  ground, the progress bar of a tap.
 
 ## 9. The pipeline
 
@@ -229,6 +273,8 @@ Every one of these is a treatment of the same asset, never a second asset.
 - **The "manage from afar" 80° camera** that showed the top face of everything.
   That was a rule for pixel tiles and it dies with them.
 - **A second palette for the world board** (§2).
+- **A dark fog of war**, and weather: no cloud moves across the map, and the
+  fog has no night.
 - **An isometric hex board** (§2).
 - **Visible grid lines** on the city ground (§4).
 - **Baked hex illustrations** per feature combination (§7).
