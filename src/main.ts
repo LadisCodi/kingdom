@@ -467,13 +467,22 @@ async function boot(): Promise<void> {
   let lastActive = -Infinity;
   let lastView = '';
   let lastWorldView = '';
+  // THE FULL-SCREEN LAYERS — the battle, the unlock splash, the gacha reveal,
+  // the rewarded video — hide the board whole. Nothing is drawn under them:
+  // the canvas keeps its last frame, which is all a dimmed backdrop shows.
+  const fullScreens = ['battle', 'unlock', 'gacha', 'ad']
+    .map((id) => document.getElementById(id))
+    .filter((e): e is HTMLElement => e !== null);
+  const underFullScreen = (): boolean => fullScreens.some((e) => e.childElementCount > 0);
   const touched = () => { lastActive = performance.now(); };
   for (const type of ['pointerdown', 'pointermove', 'wheel'] as const) {
     window.addEventListener(type, touched, { capture: true, passive: true });
   }
   const frame = (t: number) => {
     perf?.frame(t);
-    if (game.scene === 'world') {
+    if (underFullScreen()) {
+      // Nothing to draw; see fullScreens.
+    } else if (game.scene === 'world') {
       const view = `${worldCamera.x}|${worldCamera.y}|${worldCamera.zoom}|${worldCanvas.clientWidth}|${worldCanvas.clientHeight}`;
       if (view !== lastWorldView) { lastWorldView = view; lastActive = t; }
       if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
