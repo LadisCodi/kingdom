@@ -2,6 +2,8 @@
 // districts, worker units, bars, markers, floaters. Everything is redrawn
 // each frame it is asked for (main.ts paces how often) except the floor —
 // ground and fog scrim — which is kept in a canvas of its own (drawFloor).
+// Three canvases stack: the floor, the cloud bank (a shader, fog/fogLayer.ts)
+// and the map canvas, which holds everything that stands.
 
 import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
@@ -47,6 +49,7 @@ import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
+import { drawFogLayer } from './fog/fogLayer';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -155,8 +158,11 @@ export function drawMap(
     canvas.height = Math.round(h * dpr);
   }
   const ctx = canvas.getContext('2d')!;
+  const layers = mapLayers(canvas);
   // The frame's own clock, for animations the sim knows nothing about.
   const clockNow = performance.now();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // SMOOTHING ON. The world is stylized 3D, not pixel art: every piece is
   // authored at twice the size it is drawn at (a 1×1 tile is a 256×128 PNG
@@ -164,7 +170,8 @@ export function drawMap(
   // neighbour on a downscale is just aliasing.
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  // No background fill: the floor (drawFloor) is opaque and covers the frame.
+  // No background fill: the floor and the bank are canvases of their own,
+  // under this one (mapLayers).
 
   // The three numbers a frame is drawn from. `tw`/`th` are the ground
   // diamond, always 2:1; `size` is A CELL'S WORTH OF PIXELS for things that
@@ -559,21 +566,6 @@ export function drawMap(
     withSpriteLook(ctx, { brightness: 1 + 0.18 * (1 - dim), saturate: 0.15 + 0.7 * dim }, draw);
   };
 
-  /**
-   * A CLOUD OF THE BANK on a cell the fog still hides — or on no cell at all,
-   * past the map's edge (art-direction.md §8.1). A cell that touches ground
-   * the player can see takes the WALL, the bank rising where it meets the
-   * mist. Each drifts on the spot, a few pixels on a loop of its own, and
-   * never across its cell.
-   */
-  /** How many cells wide a cloud of the bank is drawn. */
-  const CLOUD_SPAN = 1.7;
-  /** How flat the bank lies, and how far the wall rises. */
-  const CLOUD_SQUASH = 0.55;
-  const CLOUD_WALL_SQUASH = 0.85;
-  /** How far below its cell's front corner a cloud's foot sits, in cell
-   *  heights — so it covers its own ground rather than standing on it. */
-  const CLOUD_SINK = 0.35;
   /** The patch of mist on a cell the player can pay for: how wide, how flat,
    *  and how thick before the first tap — it thins with every tap. */
   const PATCH_SPAN = 1.25;
@@ -581,29 +573,27 @@ export function drawMap(
   const PATCH_ALPHA = 0.45;
 
   /**
-   * THE GROUND THE PLAYER CAN SEE, on screen: no cloud of the bank covers it.
-   * A cloud is wider than its cell and rises toward the back, so one standing
-   * in front of seen ground would hide it; a cloud near any is clipped to the
-   * frame less those cells (evenodd: the frame, and every seen diamond as a
-   * hole in it). A cushion lies on Discovered ground by design, so it is kept
-   * off the Revealed alone. Filled in by the floor pass below, read when the
-   * clouds are drawn.
+   * THE REVEALED GROUND ON SCREEN: no cushion or patch of mist covers it. One
+   * is wider than its cell, so one beside revealed ground is clipped to the
+   * frame less the revealed diamonds near it (evenodd: the frame, and each
+   * diamond a hole in it) — only those within reach, so the path stays a
+   * handful of diamonds. Filled in by the floor pass below.
    */
-  const seenOnScreen = new Set<string>();
-  const clearOfBank = new Path2D();
-  const clearOfCushion = new Path2D();
-  clearOfBank.rect(-w, -h, w * 3, h * 3);
-  clearOfCushion.rect(-w, -h, w * 3, h * 3);
-  const nearSeen = (cell: Coord): boolean => {
+  const revealedOnScreen = new Map<string, PlotBox>();
+  const clippedOffRevealed = (cell: Coord, draw: () => void): void => {
+    let clear: Path2D | null = null;
     for (let dy = -2; dy <= 2; dy++) {
       for (let dx = -2; dx <= 2; dx++) {
-        if (seenOnScreen.has(coordKey({ x: cell.x + dx, y: cell.y + dy }))) return true;
+        const box = revealedOnScreen.get(coordKey({ x: cell.x + dx, y: cell.y + dy }));
+        if (box === undefined) continue;
+        if (clear === null) {
+          clear = new Path2D();
+          clear.rect(-w, -h, w * 3, h * 3);
+        }
+        diamondPath(clear, box);
       }
     }
-    return false;
-  };
-  const clippedTo = (clear: Path2D, cell: Coord, draw: () => void): void => {
-    if (!nearSeen(cell)) { draw(); return; }
+    if (clear === null) { draw(); return; }
     ctx.save();
     ctx.clip(clear, 'evenodd');
     draw();
@@ -614,36 +604,6 @@ export function drawMap(
   const cellHasSiteForView = (cell: Coord): boolean =>
     landmarkDefAt(cell) !== undefined || standingAbandonedAt(state, cell) !== undefined
     || standingLairAt(state, cell) !== undefined;
-
-  const queueCloud = (cell: Coord): void => {
-    const box = cellRect(cell);
-    if (box.x + box.w * 1.5 < 0 || box.x - box.w * 0.5 > w || box.y + box.h * 2 < 0 || box.y - box.h > h) return;
-    const wall = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].some((d) => {
-      const n = { x: cell.x + d.x, y: cell.y + d.y };
-      return map.terrain.has(coordKey(n)) && fogState(state, map, n) !== 'Undiscovered';
-    });
-    const key = variantKey(wall ? 'fog_wall' : 'fog_cloud', cell);
-    const aspect = spriteAspect(key);
-    if (aspect === null) return;
-    const phase = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
-    const sway = Math.sin(clockNow / 3200 + (phase % 628) / 100) * size * 0.012;
-    // Wider than its cell, so neighbours knit into one bank, and FLATTENED:
-    // the bank lies on the province, and only the wall rises — about a cell
-    // high — where it meets the mist (art-direction.md §8.1).
-    // A little of each cloud's size and seat is its own, by the cell's hash,
-    // so a field of them reads as a bank rather than as wallpaper.
-    const jitter = (n: number): number => ((phase >>> n) % 1000) / 1000 - 0.5;
-    const cw = box.w * CLOUD_SPAN * (1 + 0.22 * jitter(3));
-    const ch = cw * aspect * (wall ? CLOUD_WALL_SQUASH : CLOUD_SQUASH) * (1 + 0.3 * jitter(13));
-    const foot = base(box);
-    const dx = box.w * 0.18 * jitter(7);
-    const dy = box.h * 0.25 * jitter(19);
-    // Half a row back: a cloud is wider than its cell, and one level with a
-    // building or a tree beside it would otherwise spill over its art.
-    later(cell, () => clippedTo(clearOfBank, cell, () => {
-      drawSprite(ctx, key, foot.x - cw / 2 + sway + dx, foot.y + box.h * CLOUD_SINK - ch + dy, cw, ch);
-    }), undefined, { depthBias: -0.5 });
-  };
 
   interface Standing {
     depth: number;
@@ -878,31 +838,41 @@ export function drawMap(
 
   // Every cell on screen with ground the player can see, and what its fog
   // is. The floor below is drawn from exactly this, and only this, so it is
-  // also what says when the floor has to be drawn again.
+  // also what says when the floor has to be drawn again. The rest is the
+  // cloud bank's mask, a byte a cell.
   const floor: FloorCell[] = [];
   let floorSig = 0x811c9dc5;
+  const maskW = view.x1 - view.x0 + 1;
+  const maskH = view.y1 - view.y0 + 1;
+  const mask = new Uint8Array(maskW * maskH);
   for (let cy = view.y0; cy <= view.y1; cy++) {
     for (let cx = view.x0; cx <= view.x1; cx++) {
       const cell = { x: cx, y: cy };
       const key = coordKey(cell);
       const terrain = map.terrain.get(key);
       // Past the map's edge, and under the fog, is the cloud bank.
-      if (!terrain) { queueCloud(cell); continue; }
-      const fog = fogState(state, map, cell);
-      if (fog === 'Undiscovered') { queueCloud(cell); continue; }
+      const fog = terrain ? fogState(state, map, cell) : 'Undiscovered';
+      if (!terrain || fog === 'Undiscovered') {
+        mask[(cy - view.y0) * maskW + (cx - view.x0)] = 255;
+        continue;
+      }
       const payable = fog === 'Discovered' && isPayable(state, map, cell);
       const taps = fog === 'Discovered' ? state.fog.progress[key] ?? 0 : 0;
       const box = cellRect(cell);
       floor.push({ cell, key, terrain, fog, payable, taps, box });
-      seenOnScreen.add(key);
-      diamondPath(clearOfBank, box);
-      if (fog === 'Revealed') diamondPath(clearOfCushion, box);
+      if (fog === 'Revealed') revealedOnScreen.set(key, box);
       const code = fog === 'Revealed' ? 1 : (payable ? 2 : 3) + 4 * taps;
       floorSig = Math.imul(floorSig ^ (((cx & 0xffff) << 16) | (cy & 0xffff)), 16777619);
       floorSig = Math.imul(floorSig ^ code, 16777619);
     }
   }
-  drawFloor(canvas, ctx, camera, map, floor, floorSig >>> 0, w, h, dpr);
+  drawFloor(layers.floor, camera, map, floor, floorSig >>> 0, w, h, dpr);
+  drawFogLayer(layers.fog, {
+    w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
+    mask, maskX: view.x0, maskY: view.y0, maskW, maskH,
+    maskSig: `${view.x0}|${view.y0}|${maskW}|${maskH}|${floorSig >>> 0}`,
+    clock: clockNow,
+  });
 
   for (const { cell, key, fog, payable, box } of floor) {
     const cx = cell.x;
@@ -1008,7 +978,7 @@ export function drawMap(
       // (the floor's veil, drawFloor). The cushion stands over what is on
       // the cell, so only the tips of tall things clear it; a site is left
       // in view.
-      if (!payable && !cellHasSiteForView(cell)) later(cell, () => clippedTo(clearOfCushion, cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
+      if (!payable && !cellHasSiteForView(cell)) later(cell, () => clippedOffRevealed(cell, () => { stand(box, ['fog_cloud_cushion'], ''); }));
       // A cell the player can pay for keeps a thin patch of mist over what is
       // on it, so it reads as part of the bank and still shows its contents.
       if (payable) {
@@ -1021,7 +991,7 @@ export function drawMap(
           const pw = box.w * PATCH_SPAN;
           const ph = pw * aspect * PATCH_SQUASH;
           const foot = base(box);
-          later(cell, () => clippedTo(clearOfCushion, cell, () => {
+          later(cell, () => clippedOffRevealed(cell, () => {
             ctx.save();
             ctx.globalAlpha *= PATCH_ALPHA * thin;
             drawSprite(ctx, patchKey, foot.x - pw / 2 + sway, foot.y + box.h * 0.1 - ph, pw, ph);
@@ -1205,8 +1175,8 @@ export function drawMap(
     const keys = sightKeys(t);
     // A ruin is building art: one plot across, where a feature's is two.
     const plots = t.kind === 'abandoned' ? 1 : FEATURE_PLOTS;
-    // A row forward: the clouds of the cells just in front rise about a cell,
-    // and a ruin, one plot tall, would sink out of sight behind them.
+    // A row forward: the cushions of the cells just in front rise over their
+    // plots, and a ruin, one plot tall, would sink out of sight behind them.
     later(t.anchor, (mark) => {
       const art = silhouette(plot, keys, plots);
       if (art !== null) mark(art);
@@ -1660,14 +1630,41 @@ interface FloorCell {
 }
 
 /**
+ * THE CANVASES UNDER THE MAP: the floor, then the cloud bank, then the map
+ * canvas itself on top — siblings in the DOM, so the browser composites
+ * them and no frame copies one into another. Made the first time a map
+ * canvas is drawn, and laid exactly over it (`.map-layer`).
+ */
+interface MapLayers {
+  floor: HTMLCanvasElement;
+  fog: HTMLCanvasElement;
+}
+const mapLayerSets = new WeakMap<HTMLCanvasElement, MapLayers>();
+
+function mapLayers(canvas: HTMLCanvasElement): MapLayers {
+  let layers = mapLayerSets.get(canvas);
+  if (layers === undefined) {
+    const make = (): HTMLCanvasElement => {
+      const c = document.createElement('canvas');
+      c.className = 'map-layer';
+      c.setAttribute('aria-hidden', 'true');
+      canvas.parentElement?.insertBefore(c, canvas);
+      return c;
+    };
+    layers = { floor: make(), fog: make() };
+    mapLayerSets.set(canvas, layers);
+  }
+  return layers;
+}
+
+/**
  * THE FLOOR, KEPT. The ground, its fringes and the fog's scrim are more than
  * half of what a frame paints, and none of it moves unless the camera does
- * or the fog changes. So it is drawn into a canvas of its own and laid down
- * in one copy; it is drawn again only when what it was drawn from changes —
- * the view, or a cell's fog — or while some of its art has yet to load.
+ * or the fog changes. So it is a canvas of its own, under the map's; it is
+ * drawn again only when what it was drawn from changes — the view, or a
+ * cell's fog — or while some of its art has yet to load.
  */
 interface Floor {
-  canvas: HTMLCanvasElement;
   /** What it was drawn from; `complete` is false while art was missing. */
   view: string;
   sig: number;
@@ -1676,8 +1673,7 @@ interface Floor {
 const floors = new WeakMap<HTMLCanvasElement, Floor>();
 
 function drawFloor(
-  target: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D,
+  fc: HTMLCanvasElement,
   camera: Camera,
   map: MapData,
   cells: FloorCell[],
@@ -1687,16 +1683,15 @@ function drawFloor(
   dpr: number,
 ): void {
   const view = `${w}|${h}|${dpr}|${camera.x}|${camera.y}|${camera.zoom}`;
-  let floor = floors.get(target);
+  let floor = floors.get(fc);
   if (floor === undefined) {
-    floor = { canvas: document.createElement('canvas'), view: '', sig: 0, complete: false };
-    floors.set(target, floor);
+    floor = { view: '', sig: 0, complete: false };
+    floors.set(fc, floor);
   }
   if (floor.view !== view || floor.sig !== sig || !floor.complete) {
-    const fc = floor.canvas;
-    if (fc.width !== target.width || fc.height !== target.height) {
-      fc.width = target.width;
-      fc.height = target.height;
+    if (fc.width !== Math.round(w * dpr) || fc.height !== Math.round(h * dpr)) {
+      fc.width = Math.round(w * dpr);
+      fc.height = Math.round(h * dpr);
     }
     const g = fc.getContext('2d')!;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1761,10 +1756,6 @@ function drawFloor(
     floor.sig = sig;
     floor.complete = complete;
   }
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(floor.canvas, 0, 0);
-  ctx.restore();
 }
 
 // ---------------------------------------------------------- unit animation

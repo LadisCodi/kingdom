@@ -271,7 +271,7 @@ lies close enough to it.
 | Revealed | full colour |
 | Discovered, payable | a thin veil of mist, the ground seen through it, desaturated |
 | Discovered, not payable | a low cushion of cloud, almost opaque; only tall things' tips show |
-| Undiscovered | the cloud bank, rising into a wall where it meets the mist |
+| Undiscovered | the cloud bank, its edge the outline of the clouds |
 
 - The fog thickens step by step away from the cleared ground, so the cells a
   tap can buy read at a glance.
