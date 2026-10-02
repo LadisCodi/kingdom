@@ -96,6 +96,7 @@ Not features — how content and art are made.
 
 | File | What it covers |
 |---|---|
+| [`playtest.md`](playtest.md) | **how a playtest checks the fantasy**: the moments each fantasy is pinned to, what to watch, the five questions to ask after, and how to read the numbers |
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
 | [`plans/the-4x-build.md`](plans/the-4x-build.md) | **the work left, cut into five lanes that run at the same time on different machines** — what each lane owns, the two files that cannot be shared, and why the seam between code and art is a filename |

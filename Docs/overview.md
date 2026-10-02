@@ -58,7 +58,8 @@
   through keys and card packs, at published odds
   ([`features/14-monetization.md`](features/14-monetization.md) §2).
 - **Playtest:** the sentence a player should describe the game with —
-  *"I'm finding what the fog took from my kingdom."*
+  *"I'm finding what the fog took from my kingdom."* How a session checks it
+  is [`playtest.md`](playtest.md).
 
 ## The three promises
 
@@ -333,12 +334,14 @@ be shipped.
   authority is for the social layer and the telemetry.
 - **Out of scope:** CPI, IPM, real cohorted D30, measured ARPDAU.
 
-The three questions it answers:
+The four questions it answers:
 
 1. **Does the loop hold for thirty days?** On day 14, is there still something
    to want that nobody had to author by hand?
 2. **Where would people pay?** Which surfaces have demand, not how much.
 3. **Is there a demo that carries the thesis?** The paid fog is filmable.
+4. **Does the fantasy land?** A tester describes the game in the fantasy's
+   words, not the mechanic's ([`playtest.md`](playtest.md)).
 
 ## Where to read next
 

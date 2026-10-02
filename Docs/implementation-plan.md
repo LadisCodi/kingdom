@@ -851,6 +851,23 @@ and coming back tomorrow is the stores and the Mana well filled overnight.
   re-run the 30-day harness: the opening loses the chest's daily Mana.
 - **Size:** half a day.
 
+### Step 14 · The fantasy signals — **designed 2026-10-02**
+
+**The playtest's signs, in the log**, so a session can be read without an
+observer ([`playtest.md`](playtest.md) §5).
+
+- Five events beside the store's funnel
+  ([`14-monetization.md`](features/14-monetization.md) §4): a chest
+  discovered and picked up, a silhouette sighted and its cell discovered, a
+  paid reveal no active quest asked for, the Survey opened / claimed /
+  bought, and the first tap of a session after an absence.
+- Each carries the funnel's context — Townhall level, minutes played, day
+  index — and the time since the paired event where there is one.
+- **Until the pipeline exists the save is the log**, as for the store.
+- **Blocked on:** Steps 10 and 12 for the chest, silhouette and Survey
+  signals; the other two can land now.
+- **Size:** half a day.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.
