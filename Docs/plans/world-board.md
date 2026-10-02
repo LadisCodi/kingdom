@@ -53,7 +53,7 @@
 
 | Setting | First value |
 |---|---|
-| `marchSecondsPerHex` | ~600 (armies reuse it) |
+| `marchSecondsPerHex` | 60 (armies reuse it) |
 | `explorerRevealRadius` | 1 (1–2) |
 | `cartographyExplorers` | 1 |
 | `rivals` | five stub names |

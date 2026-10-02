@@ -1,6 +1,6 @@
 {
   "world": {
-    "marchSecondsPerHex": 600,
+    "marchSecondsPerHex": 60,
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
     "cartographyExplorers": 1,
