@@ -90,9 +90,9 @@
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**
 - **A hex is Sensed when it is next to a hex you revealed.** The Portal,
   revealed for everyone, senses nothing.
-- **Fog is information, not permission.** It never blocks movement or an action,
-  which is what keeps it client-authoritative and in the player's own save
-  ([`02-map-scopes.md`](02-map-scopes.md) §3).
+- **Only a Revealed hex can be acted on.** Claiming, building and sending an
+  army all need the hex explored first; on Sensed or Unknown ground the only
+  action is Explore. Marches pass through fog freely.
 
 ### 3.1 Explorers
 
@@ -397,7 +397,6 @@ The outer scope feeds the inner one.
   is what was garrisoned beforehand.
 - **Losing a hex outright to a cut corridor** — it goes inactive, never away.
 - **Cities on the world map.** One or two structures on a claimed hex, no more.
-- **Server-authoritative fog** (`02` §3).
 - **Reusing `grid.ts`** for the lattice.
 - **A rule that forbids continuous conflict.** The price in troops is the only
   brake.

@@ -4,7 +4,9 @@
 import { describe, expect, it } from 'vitest';
 import { HexCamera } from '../src/render/world/hexCamera';
 import { DOOR_HINT } from '../src/sim/doors';
-import { PORTAL_INDEX, hexAt, hexIndex } from '../src/sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../src/sim/world/hex';
+import { setBit } from '../src/sim/world/fogBits';
+import { hexActions } from '../src/ui/world/worldActions';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import { hexTitle } from '../src/ui/world/dispatchSheet';
 import { fogStateOf } from '../src/sim/world/explorers';
@@ -103,3 +105,20 @@ describe('Explore', () => {
     expect(toasts.at(-1)).toMatch(/Every explorer is out/);
   });
 });
+
+describe('acting on the board', () => {
+  it('offers nothing on ground not yet explored but Explore', async () => {
+    const { game } = world();
+    game.state.research.completed.push('Cartography');
+    const board = game.worldSource().board();
+    const beside = boardNeighbors(game.homeHex()).find((n) => board.hexes[n].role !== 'portal')!;
+    expect(fogStateOf(game.state, beside, T0)).toBe('Sensed');
+    expect(hexActions(game.worldSource(), game.worldSeat(), board.hexes[beside], { revealed: false })).toEqual([]);
+    // Once seen, the same hex can be claimed.
+    setBit(game.state.world.revealed, beside);
+    expect(fogStateOf(game.state, beside, T0)).toBe('Revealed');
+    expect(hexActions(game.worldSource(), game.worldSeat(), board.hexes[beside], { revealed: true })
+      .some((a) => a.kind === 'claim')).toBe(true);
+  });
+});
+

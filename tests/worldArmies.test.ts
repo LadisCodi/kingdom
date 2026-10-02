@@ -16,6 +16,9 @@ import type { Game } from '../src/game';
 import { freshGame, freshPresenter, fund, map, T0 } from './helpers';
 
 const OUTPOST_MS = WORLD_BUILD.outpost.buildSeconds * 1000;
+/** The server's rules, read as if the hex were explored: the fog is the
+ *  sheet's to apply (tests/worldScene.test.ts holds it there). */
+const SEEN = { revealed: true };
 const STEP = WORLD.marchSecondsPerHex * 1000;
 
 /** A connected player with soldiers, and a rival who holds the hex beside
@@ -39,7 +42,7 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
   for (let step = 0; step < 4 && target < 0; step++) {
     const source = game.worldSource();
     const board = source.board();
-    const options = board.hexes.filter((h) => hexActions(source, rival, h).some((a) => a.kind === 'claim'));
+    const options = board.hexes.filter((h) => hexActions(source, rival, h, SEEN).some((a) => a.kind === 'claim'));
     const beside = options.find((h) => boardNeighbors(SEAT_INDICES[me]).includes(h.index));
     const next = beside ?? options.sort((a, b) => dist(a.index, SEAT_INDICES[me]) - dist(b.index, SEAT_INDICES[me]))[0];
     await game.doClaimHex(next.index, 0);

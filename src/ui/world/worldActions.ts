@@ -42,8 +42,11 @@ const collectable = (h: HexControl): { material: number; knowledge: number } => 
   knowledge: Math.floor(h.stores?.knowledge ?? 0),
 });
 
-/** What `seat` can do on this hex now, in the order the sheet shows it. */
-export function hexActions(source: WorldSource, seat: number, bh: BoardHex): HexAction[] {
+/** What `seat` can do on this hex now, in the order the sheet shows it.
+ *  Nothing is claimed, built on or sent an army until it is Revealed: the
+ *  player acts only on ground they have seen (19 §3). */
+export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen: { revealed: boolean }): HexAction[] {
+  if (!seen.revealed) return [];
   const h = source.hexOf(bh.index);
   // The Dark Portal: any army may go down while it is open (19 §10.3).
   if (bh.role === 'portal') {

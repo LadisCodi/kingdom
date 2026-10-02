@@ -15,6 +15,9 @@ import { freshGame, freshPresenter, fund, map, T0 } from './helpers';
 import { HexCamera } from '../src/render/world/hexCamera';
 
 const OUTPOST_MS = WORLD_BUILD.outpost.buildSeconds * 1000;
+/** The server's rules, read as if the hex were explored: the fog is the
+ *  sheet's to apply (tests/worldScene.test.ts holds it there). */
+const SEEN = { revealed: true };
 
 async function connected(): Promise<{ game: Game; clock: { t: number }; toasts: string[] }> {
   const game = freshPresenter(freshGame());
@@ -35,7 +38,7 @@ function claimable(game: Game): number {
   const source = game.worldSource();
   const board = source.board();
   return boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) =>
-    hexActions(source, game.worldSeat(), board.hexes[n]).some((a) => a.kind === 'claim'))!;
+    hexActions(source, game.worldSeat(), board.hexes[n], SEEN).some((a) => a.kind === 'claim'))!;
 }
 
 describe('connecting to the world server', () => {
@@ -56,7 +59,7 @@ describe('claiming with a builder', () => {
     fund(game.state, { Gold: 100_000 });
     const at = claimable(game);
     const before = getWallet(game.state.city.wallet, 'Gold');
-    const offer = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[at])[0];
+    const offer = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[at], SEEN)[0];
     expect(offer.kind).toBe('claim');
     await game.doClaimHex(at, offer.kind === 'claim' ? offer.gold : 0);
     expect(getWallet(game.state.city.wallet, 'Gold')).toBe(before - WORLD_BUILD.outpost.gold);
@@ -65,7 +68,7 @@ describe('claiming with a builder', () => {
 
     // Every builder is busy: a second claim is refused before it is sent.
     const second = boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) => n !== at
-      && hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[n]).some((a) => a.kind === 'claim'));
+      && hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[n], SEEN).some((a) => a.kind === 'claim'));
     if (second !== undefined) {
       await game.doClaimHex(second, 0);
       expect(toasts.at(-1)).toBe('Every builder is busy');
@@ -95,14 +98,14 @@ describe('building and collecting', () => {
     fund(game.state, { Gold: 100_000, Wood: 0, Food: 0, Stone: 0 });
     const board = game.worldSource().board();
     const at = boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) =>
-      hexActions(game.worldSource(), game.worldSeat(), board.hexes[n]).some((a) => a.kind === 'claim')
+      hexActions(game.worldSource(), game.worldSeat(), board.hexes[n], SEEN).some((a) => a.kind === 'claim')
       // Every city has a forest beside it (19 §9), so a Logging Camp fits.
       && fittingImprovements(board.hexes[n]).includes('LoggingCamp'))!;
     await game.doClaimHex(at, WORLD_BUILD.outpost.gold);
     clock.t += OUTPOST_MS;
     advance(game.state, map, clock.t);
     await game.refreshWorld();
-    const build = hexActions(game.worldSource(), game.worldSeat(), board.hexes[at]).find((a) => a.kind === 'build'
+    const build = hexActions(game.worldSource(), game.worldSeat(), board.hexes[at], SEEN).find((a) => a.kind === 'build'
       && WORLD_BUILD.improvements[a.improvement].produces !== '');
     if (build === undefined || build.kind !== 'build') throw new Error('no producing improvement offered');
     await game.doBuildHex(at, build.improvement, 1, build.gold);
@@ -124,7 +127,7 @@ describe('playing as a rival', () => {
     game.actingSeat = rival;
     const board = game.worldSource().board();
     const at = boardNeighbors(SEAT_INDICES[rival]).find((n) =>
-      hexActions(game.worldSource(), rival, board.hexes[n]).some((a) => a.kind === 'claim'))!;
+      hexActions(game.worldSource(), rival, board.hexes[n], SEEN).some((a) => a.kind === 'claim'))!;
     await game.doClaimHex(at, 0);
     expect(game.worldSource().hexOf(at)?.owner).toBe(rival);
     expect(busyBuilders(game.state)).toBe(0);

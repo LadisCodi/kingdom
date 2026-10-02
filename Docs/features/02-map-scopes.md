@@ -70,13 +70,11 @@ One tactile loop and one planning loop, across two or three visits a day.
   observe it, and nothing another player does can reach it.
 - **World control is server-authoritative.** Who holds a hex, and what is built
   on it, is contested state and cannot live in a save.
-- **World fog is client-authoritative**, and lives in the player's own save: a
-  small bitset over 91 hexes. It falls on the client side **because it decides
-  nothing** — fog is information, never permission, and never blocks a move or
-  an action.
-- If fog is ever made to gate something — *you cannot attack what you have not
-  explored* — it becomes server-authoritative state. **That is a deliberate
-  decision, never a drift.**
+- **World fog gates actions**: a hex must be Revealed before it is claimed,
+  built on or sent an army ([`19-world-map.md`](19-world-map.md) §3).
+- **So world fog is server-authoritative** — the server checks it. Until the
+  real server exists the fog lives in the player's save (a bitset over 91
+  hexes) and the client applies the rule; the local stand-in trusts it.
 
 ### 3.1 Armies on the server
 
@@ -160,7 +158,6 @@ the board and can come at any point.
 ## 8. Deliberately not in this design
 
 - A procedural province generator.
-- Server-authoritative world fog (§3).
 - A hexagon that opens a map of its own (§1.3).
 - Cities on the world board.
 - Raiding a player's city (§5).

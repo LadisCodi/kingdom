@@ -135,7 +135,9 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
   const seat = game.worldSeat();
   const asRival = game.actingSeat !== null;
   const have = (c: CurrencyId) => (asRival ? Infinity : getWallet(game.state.city.wallet, c));
-  return hexActions(game.worldSource(), seat, bh).map((a: HexAction) => {
+  // Playing a rival's part, the player's own fog does not bind that seat.
+  const revealed = asRival || fogStateOf(game.state, bh.index, game.now()) === 'Revealed';
+  return hexActions(game.worldSource(), seat, bh, { revealed }).map((a: HexAction) => {
     switch (a.kind) {
       case 'claim':
         return action({
@@ -219,7 +221,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     // Bare ground is already its own title; say what it holds only past that.
     if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
   } else if (fog === 'Sensed') {
-    lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Send an explorer to see what is there.'));
+    lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Explore it before anything can be done there.'));
   } else if (fog === 'Unknown') {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
