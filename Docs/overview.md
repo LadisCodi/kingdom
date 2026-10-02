@@ -111,7 +111,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
 | **Treasures** — one every five cells revealed, a chest in the fog beside the last | a coin, picked up with a free tap once its cell is revealed |
-| **Abandoned buildings** — the village the fog swallowed | a House, plots, a Sawmill… repaired before the player can build their own |
+| **Abandoned buildings** — the village the fog swallowed, seen first as silhouettes of their ruins | a House, plots, a Farm, a Sawmill… repaired before the player can build their own |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |
 | **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |

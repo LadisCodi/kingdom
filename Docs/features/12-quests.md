@@ -83,9 +83,9 @@
 | # | Quests | The beat | Opens |
 |---|---|---|---|
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge, the daily chest |
-| **8–15** · farming | `Explorer` · `FirstPlot` · `ByHand` · `Fields` · `Lumber` · `Tillage` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, Agriculture, Farming, a Farm, a worker | **Build** |
-| **16–22** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `SawTeeth` · `ProperCapital` | a second villager (the first House full), a second House, three villagers, **the old Sawmill repaired**, three workers, Saws, **Townhall 2** | |
-| **23–25** · the rows after Saws | `Levies` · `Sawpits` · `Regrowth` | Trade Routes I, Sawpits I, Reforesting I | |
+| **8–13** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, a worker | |
+| **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build** |
+| **20–25** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
 | **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
 | **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
@@ -95,10 +95,10 @@
 | **64–67** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **The fog's buildings come first, the player's own after.** The House, the
-  plots and the Sawmill of the opening are abandoned ones, repaired
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3); the technology that
-  unlocks each comes later and opens building more. A repair counts for a
-  goal that asks for that building.
+  plots, the Farm and the Sawmill of the opening are abandoned ones, found
+  and repaired ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3); the
+  technology that unlocks each comes after Townhall 2 and opens building
+  more. A repair counts for a goal that asks for that building.
 - **A requirement is the row above**, so the chain walks the rows it needs
   (`Watered` and `Fallow` before Urban Planning, `Crafts` and `Knack` before
   Hospitality) rather than pointing past cards the player cannot start.

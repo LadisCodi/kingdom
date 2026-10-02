@@ -196,7 +196,7 @@ Respawn:
 | State | Meaning |
 |---|---|
 | **Undiscovered** | not drawn |
-| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure as a closed chest, an abandoned building as rubble (§6.2, §6.3); may be paid to clear |
+| **Discovered** | drawn under a scrim; terrain and feature visible, a treasure as a closed chest, an abandoned building as its ruin (§6.2, §6.3); may be paid to clear |
 | **Revealed** | yours: buildable, tappable, workable |
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
@@ -239,6 +239,7 @@ lies close enough to it.
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
 | Watchtower | 4 | `fog.sight.watchtower` |
 | A lair not yet found | its own, past its ground: Orcs 3, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
+| An abandoned building (§6.3), as its ruin | its own: the opening's 3 | `sight` on the building, in the map editor |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
@@ -416,14 +417,21 @@ whatever direction the player explores.
 The village the fog swallowed: buildings standing in ruin where the fog took
 them, to be found and repaired.
 
-- **Authored in the map editor**: a building from `buildings` and its cell, the
-  same for every kingdom.
-- **Discovered, it shows as rubble** — one drawing for every kind, at its
-  footprint: something is there, not what. Undiscovered, nothing.
-- **Revealed, it shows its own ruined drawing** and a banner names it
-  (*An abandoned Sawmill!*), unless a scene says it instead. A footprint is
-  revealed all at once, priced as a feature's (§3.1).
-- **A tap opens its card**: what the building is and what it does, and
+- **Authored in the map editor**: a building from `buildings`, its cell and
+  its `sight`, the same for every kingdom.
+- **Every building has its own ruined drawing** of its level 1
+  (`<sprite>_ruin.png`).
+- **It is found the way a landmark is**:
+
+| Fog | Shows |
+|---|---|
+| Undiscovered, out of sight | nothing |
+| Undiscovered, in sight (§4.1) | **the silhouette of its ruin** — something stands there, not what |
+| Discovered | its ruin under the scrim, and a banner names it (*An abandoned Sawmill!*) unless a scene says it instead |
+| Revealed | its ruin, and a tap opens its card |
+
+- A footprint is revealed all at once, priced as a feature's (§3.1).
+- **Its card** says what the building is and what it does, and offers
   **Repair**.
 - **Repairing it is building it at level 1, where it stands**: the level-1
   cost at the next ordinal, a builder and the level-1 time
@@ -438,9 +446,16 @@ them, to be found and repaired.
 - **Once the repair starts it is that building**: stamped with its ordinal,
   under construction, then finished at level 1, revealing and discovering its
   ground and in every way one the player built.
-- **The opening's**, inside the first Townhall's reach: **the old House**
-  (ring 2, beside the first forest), **two old plots** (FarmLands, by the
-  berries) and **the old Sawmill** (ring 3, in the thickest trees).
+- **The opening's**, inside the first Townhall's reach, each in sight of the
+  starting ground:
+
+| Building | Where |
+|---|---|
+| **the old House** | ring 3, past the first forest |
+| **two old plots** (FarmLands) | by the berries |
+| **the old Farm** | beside the old plots, working both |
+| **the old Sawmill** | ring 3, in the thickest trees |
+
 - **Every abandoned building can be repaired at the Townhall level whose reach
   first covers it**: the count cap at that level leaves room for every
   abandoned one of its kind inside that reach (`mapRules.ts`).
@@ -508,6 +523,7 @@ them, to be found and repaired.
 - A treasure placed by the map, or one the player cannot pay to reach.
 - A treasure that expires, or one a worker picks up.
 - An abandoned building above level 1, or one repaired for less than a build.
+- A generic ruin: an abandoned building is always seen as the building it is.
 
 **Open questions:** OQ-49, OQ-50, OQ-92, OQ-120 in
 [`../open-questions.md`](../open-questions.md).

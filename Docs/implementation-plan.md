@@ -761,20 +761,21 @@ abandoned and repaired.
   in the exploration settings with their schema. The tap handler picks up
   before it harvests and charges no Mana; placement picks up; Knowledge lands
   over the cap.
-- **The map file** gains abandoned buildings (a district id and a cell),
+- **The map file** gains abandoned buildings (a district id, a cell and a
+  `sight`), sighted by the same sweep as landmarks and lairs (`sim/sight.ts`),
   with their tool in the map editor and their rules in `mapRules.ts`: legal
   ground for the building, and the count-cap rule of §6.3.
 - **Abandoned buildings** stay out of the district list until a repair
   starts; the repair is the build command at level 1 on its cell, skipping
   the unlock technology. A card with **Repair** in place of the upgrade row.
-- **The opening:** Build opens at `Farmhand` (`sim/unlocks.ts`); the chain's
-  reorder at 8–22 moves the Knowledge rewards so the zero-drip guarantee still
-  holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
+- **The opening:** Build opens at `GrowingTown` (`sim/unlocks.ts`); the
+  chain's reorder at 8–25 — Agriculture, Farming and Saws after Townhall 2 —
+  moves the Knowledge rewards so the zero-drip guarantee still holds (`tests/quests.test.ts`, `tests/onboarding.test.ts`); the scenes are
   data. Re-run the 30-day harness: the opening gains 20 Gold and one cell.
 - **A kingdom saved before** starts its count of paid reveals at zero, and an
   abandoned building whose cell it has built on never appears.
-- **Art:** one rubble drawing per footprint size; the ruined House, plot and
-  Sawmill (`<sprite>_ruin.png`); the closed chest, and the treasure's sack, crate and pot.
+- **Art:** a ruined level 1 for every building (`<sprite>_ruin.png`), the
+  opening's four first — House, plot, Farm, Sawmill; the closed chest, and the treasure's sack, crate and pot.
 - **Size:** two to three days of code, plus the art.
 
 ## 5. Deliberately after everything above
