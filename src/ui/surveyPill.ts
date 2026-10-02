@@ -1,45 +1,50 @@
-// The Survey's pill (Docs/features/25-the-survey.md §4–§5): in the left
-// column of pills, under the season's. It reads the province's count against
-// the next level's, and glows while a cell is waiting. Absent until its door
-// opens, with the Store.
+// The Survey's widget on the map (Docs/features/25-the-survey.md §4–§5),
+// drawn from Docs/art/ui/mockups/m63-survey-widget.png: a small piece of the
+// menu's ledger — a parchment card in its nailed frame, the brass compass from
+// the menu's title with the count of levels waiting on its rim, "Survey", a
+// gold trough to the next level and the level's blue seal. It glows while a
+// level waits. Absent until its door opens, with the Store; it sits under the
+// Knowledge tab, never beside it (survey.css).
 //
-// Built once and mutated, never rebuilt, for the season pill's reason: a new
-// element restarts its own animation.
+// Built once and mutated, never rebuilt: a new element restarts its own
+// animation.
 
 import type { Game } from '../game';
 import { el, formatCount } from './format';
-import { iconEl, setCta } from './kit';
+import { progress, setCta } from './kit';
 
 export function mountSurveyPill(game: Game, root: HTMLElement): void {
-  const name = el('span', { class: 'sea-pill-name' }, 'Royal Survey');
-  const fill = el('span', { class: 'sea-pill-fill' });
-  const count = el('span', { class: 'sea-pill-count' }, '');
-  const level = el('span', { class: 'sea-pill-left' }, '');
-  const pill = el('button', {
-    class: 'sea-pill', type: 'button', 'aria-label': 'The Royal Survey', 'data-coach': 'survey',
+  const compass = el('span', { class: 'svw-compass', 'aria-hidden': 'true' });
+  const bar = progress('gold');
+  const seal = el('b', {}, '');
+  const widget = el('button', {
+    class: 'svw', type: 'button', 'aria-label': 'The Royal Survey', 'data-coach': 'survey',
   },
-    iconEl('showme', { size: 'lg' }),
-    el('span', { class: 'sea-pill-body' },
-      name,
-      el('span', { class: 'sea-pill-trough' }, fill, count),
-      el('span', { class: 'sea-pill-clock' }, level)),
+    compass,
+    el('span', { class: 'svw-body' },
+      el('span', { class: 'svw-name' }, 'Survey'),
+      el('span', { class: 'svw-line' }, bar.root, el('span', { class: 'rs-seal is-active' }, seal))),
   );
-  pill.addEventListener('click', () => game.setOverlay('survey'));
-  root.replaceChildren(pill);
+  widget.addEventListener('click', () => game.setOverlay('survey'));
+  root.replaceChildren(widget);
 
   const refresh = (): void => {
     const s = game.surveyPillState();
     root.hidden = s === null;
     if (s === null) return;
-    const from = s.level === 0 ? 0 : game.surveyScreen().ladder[s.level - 1].cells;
+    const screen = game.surveyScreen();
+    const from = s.level === 0 ? 0 : screen.ladder[s.level - 1].cells;
     const to = s.nextAt;
-    count.textContent = to === null ? formatCount(s.revealed) : `${formatCount(s.revealed)}/${formatCount(to)}`;
-    fill.style.width = to === null ? '100%'
-      : `${Math.round(Math.max(0, Math.min(1, (s.revealed - from) / Math.max(1, to - from))) * 100)}%`;
-    level.textContent = `Level ${formatCount(s.level)} of ${formatCount(s.length)}`;
-    pill.classList.toggle('is-quiet', !s.glowing);
-    setCta(pill, s.glowing ? 1 : 0);
-    pill.setAttribute('aria-label', s.glowing ? 'A reward is waiting on the Royal Survey' : 'The Royal Survey');
+    if (to === null) bar.set(1, formatCount(s.revealed));
+    else bar.set((s.revealed - from) / Math.max(1, to - from), `${formatCount(s.revealed)} / ${formatCount(to)}`);
+    seal.textContent = formatCount(s.level);
+    // The badge counts the LEVELS waiting, either column.
+    const waiting = screen.ladder.filter((r) => r.free.claimable || r.paid.claimable).length;
+    widget.classList.toggle('is-ready', waiting > 0);
+    setCta(compass, waiting);
+    widget.setAttribute('aria-label', waiting > 0
+      ? `${formatCount(waiting)} levels waiting on the Royal Survey`
+      : 'The Royal Survey');
   };
   game.onChange(refresh);
   refresh();

@@ -78,11 +78,28 @@
 
 ## 6. The screen
 
-- **One sheet, the season pass's ladder**: two columns on the same rows, the
-  paid column's head the buy button while the Survey is unbought.
-- Above the ladder, **the province**: cells revealed out of the whole, and the
-  next level's count.
-- A cell is a button exactly when it can be taken. One padlock per cell.
+Drawn from [`../art/ui/mockups/m62-royal-survey.png`](../art/ui/mockups/m62-royal-survey.png)
+and [`m63-survey-widget.png`](../art/ui/mockups/m63-survey-widget.png).
+
+- **A full-screen ledger**: the whole width and height under the header; only
+  the ladder scrolls.
+- **The title band** carries a brass compass at its left end.
+- **The province**, on a strip of surveyor's map: the level's blue seal, the
+  gold trough to the next level, the next level's cream seal, and the cells
+  revealed out of the whole.
+- **Two column heads**: *Free* on wood; *Royal Survey* on gold, carrying
+  **Buy** with the price on its face while the Survey is unbought.
+- **The ladder**: a rope down the middle threading one wax seal a level —
+  green when nothing on it waits, gold while something does, cream ahead.
+  Left of it the free tile (parchment), right the paid tile (gilded).
+- A tile holds at most two rewards, each at the header coin's size. It is a
+  button exactly when it can be taken: then it glows gold and carries the
+  orb. Taken, it is dimmed and ticked; unbought, it carries a padlock.
+- **The grand prize** — the top level — is pinned under the ladder, with its
+  chest.
+- **The widget on the map**: a parchment card with the compass (the count of
+  levels waiting on its rim), *Survey*, the trough and the level's seal; it
+  glows while a level waits, and sits under the Knowledge tab.
 
 ## 7. Dials, in the order to reach for them
 

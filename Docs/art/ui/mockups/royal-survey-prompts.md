@@ -56,3 +56,24 @@ No new text anywhere else. Raw image only — do not resize, verify or save a co
 - `m63-survey-widget.png` — the widget, first take: clear of the Knowledge
   tab, about 48% of the width.
 - Both came back 853×1844, the iPhone X's aspect, not its pixel size.
+
+## The pieces (2026-10-02)
+
+The menu is built from the shipped kit (seals, vertical rope, buttons, badge
+orb, close knob, bar, red ribbon, `plate-parchment`, icons) and five new
+pieces, one ChatGPT image each, so each comes back at full size. Originals in
+`Docs/art/ui/survey/`, cut into `src/ui/assets/` by `Docs/art/ui/survey/cut.sh`.
+
+Every prompt opens with:
+
+> GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references. Image 1 is the mockup of the menu this piece belongs to; the other images are pieces of the same UI that already ship — match their drawing, outline, shading and materials exactly: warm, natural, textured, lit from above, never flat fills, never plastic gloss.
+
+and every transparent one ends with:
+
+> One piece alone, centred, filling the canvas edge to edge with only a thin margin. Do not draw text, labels, captions, shadows, glow, sparkles or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+- **`survey-compass`** (refs: m62, `ref-ui-kit.png`) — square. The round brass medallion at the left end of the mockup's title plank: a thick polished brass ring with a fine rope-twist edge, inside it a parchment-cream face with an engraved compass rose, eight points, the north point gilded, a small brass pin at the centre.
+- **`survey-chest`** (refs: m62, the atlas `chest` slice) — square. The mockup's grand-prize chest: a wooden treasure chest bound in gold, its lid thrown open, heaped with violet gems and a few gold coins, seen from the front three-quarters.
+- **`plank-gold`** (refs: m62, `plank-wood.png`, `plank-blue.png`) — exactly the shape and proportions of the attached planks, 765×170: the same long rounded board with a brass nail near each end, but painted a rich golden yellow over the wood, its grain still showing through, the edges darker gold — the mockup's "Royal Survey" column head.
+- **`plate-gold`** (refs: m62, `plate-parchment.png`) — exactly the shape and proportions of the attached plate, 572×258: the same panel of warm parchment inside a frame with a nail in each corner, but the frame is gilded — warm gold-painted wood with a brass sheen — and the parchment a shade warmer; the mockup's paid tiles.
+- **`survey-map`** (refs: m62, `tex-parchment.jpg`) — OPAQUE, wide, 1500×500: yellowed parchment like the attached texture, drawn over with a surveyor's map in faint brown ink — a light square grid, a winding coastline, a river, a few little hills and trees, a compass rose in one corner — all faint, so ink text on top stays readable. It fills the whole canvas, no border, no frame. Raw image only — do not resize, verify or save a corrected file.
