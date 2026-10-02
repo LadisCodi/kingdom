@@ -1205,10 +1205,12 @@ export function drawMap(
     const keys = sightKeys(t);
     // A ruin is building art: one plot across, where a feature's is two.
     const plots = t.kind === 'abandoned' ? 1 : FEATURE_PLOTS;
+    // A row forward: the clouds of the cells just in front rise about a cell,
+    // and a ruin, one plot tall, would sink out of sight behind them.
     later(t.anchor, (mark) => {
       const art = silhouette(plot, keys, plots);
       if (art !== null) mark(art);
-    }, span);
+    }, span, { depthBias: 1 });
   }
 
   // The people go in the same list, so a villager behind a hall is behind it.
