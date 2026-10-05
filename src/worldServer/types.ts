@@ -80,6 +80,9 @@ export type WorldEffect =
     heroes: Array<{ id: HeroId; hp: number }>;
   }
   | { kind: 'report'; at: number; text: string; good: boolean }
+  /** Precious material the server hands back or over: an offer taken, or
+   *  one that came back (19 §7.5). */
+  | { kind: 'goods'; at: number; lot: Lot; text: string }
   /** What a cleared dungeon room paid (11-expeditions.md §7). */
   | {
     kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number;
@@ -150,6 +153,26 @@ export interface ServerBoard {
   beaten?: Record<number, number[]>;
   /** When each stand-in rival will have beaten a camp it means to claim. */
   botCamps?: Record<number, Record<number, number>>;
+  /** The Exchange's standing offers (19 §7.5). */
+  offers?: Offer[];
+}
+
+/** An amount of one precious material. */
+export interface Lot { id: PreciousId; amount: number }
+
+/** An offer on the Exchange: `give` is held by the server from the moment
+ *  it is made until it is taken, withdrawn, or comes back. */
+export interface Offer {
+  id: string;
+  seat: number;
+  give: Lot;
+  want: Lot;
+  at: number;
+  /** When it comes back to whoever made it. */
+  expiresAt: number;
+  /** When a stand-in rival takes it — set on a fair offer of what one
+   *  yields; null otherwise. */
+  takeAt: number | null;
 }
 
 /** A sixth's dungeon (19 §8.1): standing on a hex, or closed and coming
@@ -240,14 +263,25 @@ export interface WorldSnapshot {
   portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
+  /** Every standing offer on the Exchange. */
+  offers?: OfferView[];
 }
+
+/** An offer as a player sees it: whose, and whether it is theirs. */
+export interface OfferView { id: string; seat: number; mine: boolean; give: Lot; want: Lot; expiresAt: number }
+
+/** An Exchange command: what the player received at once, if anything. */
+export type TradeResult =
+  | { ok: true; received: Lot | null; snapshot: WorldSnapshot }
+  | { ok: false; why: Refusal };
 
 /** Why a command was refused, in a word the client turns into a line. */
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
-  | 'NothingBuilding' | 'Guarded';
+  | 'NothingBuilding' | 'Guarded'
+  | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

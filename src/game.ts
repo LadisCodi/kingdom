@@ -153,7 +153,7 @@ import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
-import type { WorldBuildWhat } from './sim/state';
+import { PRECIOUS, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -164,7 +164,7 @@ import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
 import { pay } from './sim/wallet';
-import { addGood } from './sim/goods';
+import { addGood, getGood } from './sim/goods';
 import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
@@ -203,7 +203,10 @@ export type OverlayName =
   | 'world'
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
-  | 'army';
+  | 'army'
+  // The Exchange: precious materials traded between the board's players
+  // (Docs/features/19-world-map.md §7.5).
+  | 'exchange';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
@@ -4659,6 +4662,10 @@ export class Game {
           this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
         }
         this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+      } else if (e.kind === 'goods') {
+        // Precious material from the Exchange: an offer taken, or one back.
+        addGood(this.state.city.goods, e.lot.id, e.lot.amount);
+        this.toast(e.text);
       } else this.toast(e.text);
     }
     this.worldView = snap;
@@ -4684,6 +4691,8 @@ export class Game {
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',
+      NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
+      TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
     };
     return LINES[why];
   }
@@ -4908,6 +4917,81 @@ export class Game {
       ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
       : `Your explorer is home — nothing new out there${found}`);
     if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  }
+
+  /** What the player is about to offer on the Exchange. */
+  exchangeDraft: { give: PreciousId; giveN: number; want: PreciousId; wantN: number } = {
+    give: 'Starmetal', giveN: 10, want: 'Heartwood', wantN: 10,
+  };
+
+  /** Open the Exchange, the player's own material offered first. */
+  openExchange(): void {
+    const own = this.worldSource().board().materials[this.worldSeat()];
+    if (own !== undefined && this.exchangeDraft.give !== own) {
+      this.exchangeDraft = { ...this.exchangeDraft, give: own, want: PRECIOUS.find((p) => p !== own)! };
+    }
+    this.setOverlay('exchange');
+  }
+
+  /** Put the draft up: what it gives leaves the city's goods now. */
+  async doPostOffer(): Promise<void> {
+    if (this.worldServer === null) return;
+    const d = this.exchangeDraft;
+    if (getGood(this.state.city.goods, d.give) < d.giveN) {
+      this.toast(`Not enough ${d.give}`);
+      this.notify();
+      return;
+    }
+    addGood(this.state.city.goods, d.give, -d.giveN);
+    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN }, this.now());
+    if (!r.ok) {
+      addGood(this.state.city.goods, d.give, d.giveN);
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    playSfx('click');
+    this.toast('Your offer is up on the Exchange');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Take an offer: pay what it wants, receive what it gives. */
+  async doTakeOffer(offerId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const o = this.worldView?.offers?.find((x) => x.id === offerId);
+    if (o === undefined) return;
+    if (getGood(this.state.city.goods, o.want.id) < o.want.amount) {
+      this.toast(`Not enough ${o.want.id}`);
+      this.notify();
+      return;
+    }
+    addGood(this.state.city.goods, o.want.id, -o.want.amount);
+    const r = await this.worldServer.takeOffer(offerId, this.now());
+    if (!r.ok) {
+      addGood(this.state.city.goods, o.want.id, o.want.amount);
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (r.received !== null) {
+      addGood(this.state.city.goods, r.received.id, r.received.amount);
+      this.toast(`+${formatCount(r.received.amount)} ${r.received.id}`);
+    }
+    playSfx('click');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Take one's own offer down: what it held comes back. */
+  async doWithdrawOffer(offerId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.withdrawOffer(offerId, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (r.received !== null) addGood(this.state.city.goods, r.received.id, r.received.amount);
+    this.applyWorldSnapshot(r.snapshot);
   }
 
   /** Pay a camp off with its tribute: the camp is beaten for the player,

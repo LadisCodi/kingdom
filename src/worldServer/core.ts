@@ -17,10 +17,10 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL, WORLD_PRECIOUS,
+  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
-import type { HeroId, PreciousId, UnitId } from '../sim/state';
+import { PRECIOUS, type HeroId, type PreciousId, type UnitId } from '../sim/state';
 import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
@@ -30,6 +30,7 @@ import { WORLD_DISTRICTS, type WorldDistrict, type WorldUpgrade } from '../sim/w
 import type {
   ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
   SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
+  Lot, TradeResult,
 } from './types';
 
 const HOUR = 3_600_000;
@@ -182,6 +183,94 @@ export function tribute(b: ServerBoard, seat: number, index: number, t: number):
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
 }
 
+// ------------------------------------------------------------ the Exchange
+
+/** A fair offer is one for one, of two different materials (19 §7.5). */
+const isFair = (o: { give: Lot; want: Lot }): boolean => o.give.amount === o.want.amount && o.give.id !== o.want.id;
+
+/** The stand-in rival that yields what an offer wants, if one sits at the
+ *  board — it is who takes a fair offer. */
+function botYielding(b: ServerBoard, id: PreciousId, not: number): number | null {
+  const materials = boardData(b).materials;
+  const seat = b.seats.findIndex((s, i) => s?.bot === true && i !== not && materials[i] === id);
+  return seat < 0 ? null : seat;
+}
+
+const lotLine = (l: Lot): string => `${l.amount} ${l.id}`;
+
+/** Put an offer up. The client has paid `give`; the server holds it. */
+export function postOffer(b: ServerBoard, seat: number, give: Lot, want: Lot, t: number): TradeResult {
+  resolveTo(b, t);
+  const why = placeOffer(b, seat, give, want, t);
+  return why !== null ? { ok: false, why } : { ok: true, received: null, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** An offer onto the board at `t`, already resolved to — or why not. */
+function placeOffer(b: ServerBoard, seat: number, give: Lot, want: Lot, t: number): Refusal | null {
+  const whole = (l: Lot) => Number.isInteger(l.amount) && l.amount > 0 && (PRECIOUS as readonly string[]).includes(l.id);
+  if (!whole(give) || !whole(want) || give.id === want.id) return 'BadOffer';
+  const offers = (b.offers ??= []);
+  if (offers.filter((o) => o.seat === seat).length >= WORLD_EXCHANGE.maxOffers) return 'TooManyOffers';
+  const taker = isFair({ give, want }) ? botYielding(b, want.id, seat) : null;
+  offers.push({
+    id: `offer_${b.nextId++}`, seat, give: { ...give }, want: { ...want }, at: t,
+    expiresAt: t + WORLD_EXCHANGE.offerHours * HOUR,
+    takeAt: taker === null || b.seats[seat]?.bot ? null : t + WORLD_EXCHANGE.botTakeHours * HOUR,
+  });
+  return null;
+}
+
+/** Take someone's offer. The client has paid its `want`; it receives the
+ *  `give` at once, and the offer's maker is owed the `want`. */
+export function takeOffer(b: ServerBoard, seat: number, offerId: string, t: number): TradeResult {
+  resolveTo(b, t);
+  const o = b.offers?.find((x) => x.id === offerId);
+  if (o === undefined) return { ok: false, why: 'NoSuchOffer' };
+  if (o.seat === seat) return { ok: false, why: 'OwnOffer' };
+  b.offers = b.offers!.filter((x) => x !== o);
+  const name = b.seats[seat]?.name ?? 'Someone';
+  owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.want }, text: `${name} took your offer — ${lotLine(o.want)} for ${lotLine(o.give)}` });
+  return { ok: true, received: { ...o.give }, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Take back one's own offer: what it held comes back at once. */
+export function withdrawOffer(b: ServerBoard, seat: number, offerId: string, t: number): TradeResult {
+  resolveTo(b, t);
+  const o = b.offers?.find((x) => x.id === offerId);
+  if (o === undefined) return { ok: false, why: 'NoSuchOffer' };
+  if (o.seat !== seat) return { ok: false, why: 'NotYours' };
+  b.offers = b.offers!.filter((x) => x !== o);
+  return { ok: true, received: { ...o.give }, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Offers due at `t`: a rival takes a fair one, or one comes back. */
+function settleOffers(b: ServerBoard, t: number): void {
+  if (b.offers === undefined) return;
+  const due = b.offers.filter((o) => (o.takeAt !== null && o.takeAt <= t) || o.expiresAt <= t);
+  for (const o of due) {
+    b.offers = b.offers.filter((x) => x !== o);
+    if (o.takeAt !== null && o.takeAt <= t && o.takeAt < o.expiresAt) {
+      const by = botYielding(b, o.want.id, o.seat);
+      const name = by === null ? 'A rival' : b.seats[by]?.name ?? 'A rival';
+      owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.want }, text: `${name} took your offer — ${lotLine(o.want)} for ${lotLine(o.give)}` });
+    } else if (!b.seats[o.seat]?.bot) {
+      owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.give }, text: `Nobody took your offer — ${lotLine(o.give)} came back` });
+    }
+  }
+}
+
+/** A stand-in rival keeps one offer up: its own material, one for one, for
+ *  one of the other two. */
+function botOffer(b: ServerBoard, seat: number, t: number): void {
+  if ((b.offers ?? []).some((o) => o.seat === seat)) return;
+  const own = boardData(b).materials[seat];
+  if (own === undefined) return;
+  const others = PRECIOUS.filter((p) => p !== own);
+  const want = others[randInt(b.seed, others.length, 'botOffer', seat, b.nextId)];
+  const n = WORLD_EXCHANGE.botOfferAmount;
+  placeOffer(b, seat, { id: own, amount: n }, { id: want, amount: n }, t);
+}
+
 /** Whether a hex lies beside `seat`'s city or its held, active ground. */
 function touches(b: ServerBoard, seat: number, index: number, t: number): boolean {
   return boardNeighbors(index).some((n) =>
@@ -269,6 +358,10 @@ function nextEvent(b: ServerBoard, after: number): number {
   for (const s of b.seats) consider(s?.bot ? s.nextMoveAt : null);
   for (const a of b.armies) consider(a.at);
   for (const d of dungeonsOf(b)) consider(d.returnsAt);
+  for (const o of b.offers ?? []) {
+    consider(o.expiresAt);
+    consider(o.takeAt);
+  }
   // The Portal's close pays the ranking and sends its divers home.
   const k = portalEvent(after);
   consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
@@ -287,6 +380,7 @@ function applyDue(b: ServerBoard, t: number): void {
   }
   recomputeChains(b, t);
   closePortal(b, t);
+  settleOffers(b, t);
   for (const d of dungeonsOf(b)) if (d.returnsAt !== null && d.returnsAt <= t) returnDungeon(b, d, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
@@ -925,6 +1019,7 @@ function botBoard(b: ServerBoard, seat: number, move: number, power: number): Fi
  *  Fortress into one of its districts and raise it. It pays nothing. */
 function botMove(b: ServerBoard, seat: number, t: number): void {
   const s = b.seats[seat]!;
+  botOffer(b, seat, t);
   const roll = (what: string, max: number) => randInt(b.seed, max, 'bot', seat, s.moves, what);
   const data = boardData(b);
   const mine = Object.entries(b.hexes).map(([k, h]) => [Number(k), h] as const).filter(([, h]) => h.owner === seat);
@@ -1069,6 +1164,9 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
     beaten: [...(b.beaten?.[seat] ?? [])],
+    offers: (b.offers ?? []).map((o) => ({
+      id: o.id, seat: o.seat, mine: o.seat === seat, give: { ...o.give }, want: { ...o.want }, expiresAt: o.expiresAt,
+    })),
     dungeons: standingDungeons(b),
     portal: portalView(b, seat, t),
     effects: [],

@@ -221,5 +221,11 @@
     "storeDays": 1,
     "ownShare": 0.7,
     "campPerPower": 0.01
+  },
+  "worldExchange": {
+    "offerHours": 24,
+    "maxOffers": 3,
+    "botTakeHours": 2,
+    "botOfferAmount": 10
   }
 }

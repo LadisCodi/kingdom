@@ -15,7 +15,8 @@
 > (§4, §6); monster camps (§5.4), their numbers in `worldCamps`; Dungeons
 > (§8.1) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
-> camps, man a Fortress and now and then attack on their own.
+> camps, trade on the Exchange (§7.5), man a Fortress and now and then
+> attack on their own.
 > The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
@@ -418,6 +419,23 @@ gates them; *Cartography* opens the first explorer.
   of the other two:
   - a beaten camp pays `campPerPower` of its power (§5.4);
   - a scouting reward may be one (§3.2).
+
+### 7.5 The Exchange
+
+- **A sheet on the world board**, from the *Exchange* chip under the
+  explorers: what the player holds of the three, the offers standing, and an
+  offer to make.
+- **An offer gives so many of one material for so many of another.** What
+  it gives leaves the player's goods when it is made; the server holds it.
+- **Taken by a player**: the taker pays what it wants and receives what it
+  gives at once; its maker is paid what it wanted.
+- **A fair offer — one for one — is taken by a rival** that yields what it
+  wants, `botTakeHours` after it is made. An uneven one waits for a player.
+- **Withdrawn**, or after `offerHours` with nobody taking it, it comes back
+  whole.
+- Up to `maxOffers` standing per player.
+- **Each rival keeps one offer up**: `botOfferAmount` of its own material,
+  one for one, for one of the other two.
 
 ## 8. Features
 

@@ -22,8 +22,8 @@
 > (§1.6). Scouting rewards (§2) are built too — spec
 > [`19`](../features/19-world-map.md) §3.2. Precious materials (§3.1–§3.3)
 > are built — spec [`19`](../features/19-world-map.md) §7.4 — and paid by
-> camps and scouting; still proposed: the Exchange (§3.4), what they buy
-> (§3.5), and their dungeon and Portal lumps.
+> camps and scouting, and traded on the Exchange (§3.4, spec 19 §7.5);
+> still proposed: what they buy (§3.5), and their dungeon and Portal lumps.
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);
