@@ -49,13 +49,12 @@ export function hexTitle(game: Game, bh: BoardHex, fog: FogState): string {
   if (fog === 'Unknown') return 'Unknown ground';
   if (bh.seat !== null && control !== null && !control.owner.you) return `${control.owner.name}'s city`;
   if (fog === 'Sensed') return 'Misty ground';
-  const standing = game.worldSource().hexOf(bh.index)?.improvement;
-  if (standing) return WORLD_BUILD.improvements[standing.kind].name;
-  const main = bh.features.find((f) => f !== 'FertileLand' && f !== 'Game');
+  // A district, standing or going up, is what the hex is called.
+  const held = game.worldSource().hexOf(bh.index);
+  if (held !== null) return WORLD_BUILD.districts[held.district].name;
+  const main = bh.features[0];
   return main !== undefined ? FEATURE_NAME[main] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
 }
-
-const MATERIAL_OF: Record<string, string> = { Wood: 'Wood', Food: 'Food', Stone: 'Stone' };
 
 /** "Your" or "Lady Maren's". */
 export function seatName(game: Game, seat: number | null): string {
@@ -78,27 +77,21 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (!h.held) {
     lines.push(el('p', { class: 'wd-line' }, mine && work !== null && game.actingSeat === null
       ? `${whose}, being claimed`
-      : `${whose}, being claimed · the Outpost stands in ${formatCountdown(Math.max(0, h.outpostAt - now) / 1000)}`));
+      : `${whose}, being claimed · it stands in ${formatCountdown(Math.max(0, h.standsAt - now) / 1000)}`));
     if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     return lines;
   }
   lines.push(el('p', { class: `wd-line${h.active ? '' : ' is-cut'}` },
     h.active ? whose : `${whose} — cut off from its city, it makes nothing`));
-  if (h.improvement !== null) {
-    lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.improvements[h.improvement.kind].name} · level ${formatCount(h.improvement.level)}`));
+  if (h.fortress > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.upgrades.Fortress.name} · level ${formatCount(h.fortress)}`));
   }
   if (h.work !== null) {
     if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     else lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
   }
-  if (mine && h.stores !== null) {
-    const produces = h.improvement === null ? '' : WORLD_BUILD.improvements[h.improvement.kind].produces;
-    if (produces !== '' && h.stores.materialCap > 0) {
-      lines.push(el('p', { class: 'wd-line' }, `${MATERIAL_OF[produces]} in store ${formatCount(Math.floor(h.stores.material))}/${formatCount(Math.floor(h.stores.materialCap))}`));
-    }
-    if (h.stores.knowledgeCap > 0) {
-      lines.push(el('p', { class: 'wd-line' }, `Knowledge in store ${formatCount(Math.floor(h.stores.knowledge))}/${formatCount(h.stores.knowledgeCap)}`));
-    }
+  if (mine && h.stores !== null && h.stores.cap > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${h.stores.currency} in store ${formatCount(Math.floor(h.stores.amount))}/${formatCount(Math.floor(h.stores.cap))}`));
   }
   return lines;
 }
@@ -151,15 +144,15 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
       case 'claim':
         return action({
           label: 'Claim', kind: 'primary', cost: { Gold: a.gold }, have,
-          info: `An Outpost · ${formatDuration(a.seconds)}`,
+          info: `${WORLD_BUILD.districts[a.district].name} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doClaimHex(bh.index, asRival ? 0 : a.gold),
         });
-      case 'build':
+      case 'upgrade':
         return action({
-          label: a.level === 1 ? 'Build' : 'Upgrade', kind: a.level === 1 ? 'primary' : 'secondary',
+          label: a.level === 1 ? 'Build' : 'Upgrade', kind: 'secondary',
           cost: { Gold: a.gold }, have,
-          info: `${WORLD_BUILD.improvements[a.improvement].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
-          onClick: () => void game.doBuildHex(bh.index, a.improvement, a.level, asRival ? 0 : a.gold),
+          info: `${WORLD_BUILD.upgrades[a.upgrade].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doUpgradeHex(bh.index, a.upgrade, a.level, asRival ? 0 : a.gold),
         });
       case 'army':
         return action({
@@ -312,7 +305,7 @@ function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
     () => game.doFinishExplorer(trip.id));
 }
 
-/** A builder's work on one of the player's hexes: the Outpost, or a level. */
+/** A builder's work on one of the player's hexes: its district, or an upgrade's level. */
 function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
   return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
     () => void game.doFinishHexWork(index));

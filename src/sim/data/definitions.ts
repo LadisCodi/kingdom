@@ -17,7 +17,7 @@ import {
 import type { TechEffect } from './techEffectRules';
 import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
-import type { RolledRole, WorldFeature, WorldImprovement, WorldTerrain } from '../world/types';
+import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrade } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
@@ -2078,24 +2078,30 @@ export const WORLD: WorldDef = balance.world;
 export const WORLD_GEN = balance.worldGen as WorldGenDef;
 
 /** One level of a world improvement. */
-export interface WorldImprovementLevel { gold: number; buildSeconds: number; perHour: number; store: number }
-
-export interface WorldImprovementDef {
+/** A district: the feature that makes a hex this one, and what it pays
+ *  (19 §7). */
+export interface WorldDistrictDef {
   name: string;
-  /** What the hex must be: a Forest, open ground, a Mountain, or anything. */
-  needs: 'Forest' | 'Open' | 'Mountain' | 'Any';
-  /** The material its store fills with; '' for one that makes nothing. */
-  produces: '' | 'Wood' | 'Food' | 'Stone';
-  levels: readonly WorldImprovementLevel[];
+  /** The feature a hex holds for this to be its district; 'None' for bare ground. */
+  feature: WorldFeature | 'None';
+  /** The currency its store fills with; '' for one that makes nothing. */
+  produces: '' | 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
+  perHour: number;
+  store: number;
+}
+
+/** An upgrade built into a district that stands, and its levels (19 §7.2). */
+export interface WorldUpgradeDef {
+  name: string;
+  levels: ReadonlyArray<{ gold: number; buildSeconds: number }>;
 }
 
 /** What is built on a held world hex and what it pays (19 §5.1, §7). */
 export interface WorldBuildDef {
-  outpost: { gold: number; goldGrowth: number; buildSeconds: number };
-  improvements: Record<WorldImprovement, WorldImprovementDef>;
+  claim: { gold: number; goldGrowth: number; buildSeconds: number };
+  districts: Record<WorldDistrict, WorldDistrictDef>;
+  upgrades: Record<WorldUpgrade, WorldUpgradeDef>;
   innerRingMultiplier: number;
-  featureFoodBonus: number;
-  landmark: { knowledgePerDay: number; store: number };
   sanctuaryManaCap: number;
 }
 

@@ -9,7 +9,7 @@
 
 import { WORLD, WORLD_GEN } from '../data/definitions';
 import { generateBoard, SEAT_INDICES, withDungeons, type Board } from './board';
-import type { WorldImprovement } from './types';
+import type { WorldDistrict, WorldUpgrade } from './types';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
@@ -25,14 +25,18 @@ export interface Seat {
 /** A held or claimed hex as the server describes it (worldServer/types.ts
  *  `HexView`), in the shape the renderer and the sheets read. */
 export interface HexControl {
-  /** Null on ground nobody holds that still carries what was built on it. */
+  /** Null on ground nobody holds that still carries its district. */
   owner: number | null;
+  /** Its district stands; until `standsAt` it is being claimed. */
   held: boolean;
-  outpostAt: number;
-  improvement: { kind: WorldImprovement; level: number } | null;
-  work: { kind: WorldImprovement; toLevel: number; at: number } | null;
+  standsAt: number;
+  district: WorldDistrict;
+  /** The Fortress built into it: its level, 0 for none. */
+  fortress: number;
+  work: { upgrade: WorldUpgrade; toLevel: number; at: number } | null;
   active: boolean;
-  stores: { material: number; materialCap: number; knowledge: number; knowledgeCap: number } | null;
+  /** Its store, in its district's currency; only on the player's own hexes. */
+  stores: { currency: 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge'; amount: number; cap: number } | null;
   /** The army standing in its Fortress, if any. */
   garrison?: { army: string; owner: number; power: number } | null;
 }

@@ -600,7 +600,7 @@ export interface AdvanceResult {
   seasonClosed: SeasonClose | null;
   /** Explorers that came home from the world board, and what they revealed. */
   explorersHome: ExplorerHome[];
-  /** World builds whose builder came home: the Outpost or level stands. */
+  /** World builds whose builder came home: the district or upgrade stands. */
   worldBuildsDone: WorldBuild[];
 }
 

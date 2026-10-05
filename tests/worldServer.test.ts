@@ -1,17 +1,19 @@
 // The world server's rules (Docs/features/19-world-map.md §5–§7): claiming,
-// the chain back to the city, improvements and their stores, and the
+// the chain back to the city, districts and their stores, and the
 // stand-in rivals — resolved the same however often the board is read.
 import { describe, expect, it } from 'vitest';
-import { WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
+import { DISTRICTS, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
+import { houseGoldPerMinute } from '../src/sim/population';
+import { addBuilt, freshGame } from './helpers';
 import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
 import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard, wedgeIndexOf } from '../src/sim/world/board';
 import { snapshotWorld } from '../src/sim/world/source';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
-  build, claim, claimRefusal, collect, delveRoom, descendPortal, drainEffects, portalClosesAt, portalEvent,
-  portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, fittingImprovements, improvementRate, join,
-  outpostGold, recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storesAt,
+  claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
+  portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
+  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, upgrade,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -20,7 +22,8 @@ import type { ServerBoard } from '../src/worldServer/types';
 const T0 = Date.parse('2026-08-20T12:00:00Z');
 const MIN = 60_000;
 const HOUR = 60 * MIN;
-const OUTPOST_MS = WORLD_BUILD.outpost.buildSeconds * 1000;
+/** How long a district takes to build: the claim. */
+const CLAIM_MS = WORLD_BUILD.claim.buildSeconds * 1000;
 
 /** A board with the player in seat 0 and the bots asleep, so a test moves
  *  only what it means to. */
@@ -55,21 +58,31 @@ describe('claiming ground', () => {
     const { b, seat } = quietBoard();
     const next = besideHome(seat)[0];
     const r = claim(b, seat, next, T0);
-    expect(r.ok && r.finishesAt).toBe(T0 + OUTPOST_MS);
+    expect(r.ok && r.finishesAt).toBe(T0 + CLAIM_MS);
     expect(claim(b, 1, next, T0)).toEqual({ ok: false, why: 'Taken' });
-    resolveTo(b, T0 + OUTPOST_MS - 1);
+    resolveTo(b, T0 + CLAIM_MS - 1);
     expect(b.hexes[next].active).toBe(false);
-    resolveTo(b, T0 + OUTPOST_MS);
+    resolveTo(b, T0 + CLAIM_MS);
     expect(b.hexes[next].active).toBe(true);
     // Held ground reaches further.
-    const beyond = boardNeighbors(next).find((n) => claimRefusal(b, seat, n, T0 + OUTPOST_MS) === null
+    const beyond = boardNeighbors(next).find((n) => claimRefusal(b, seat, n, T0 + CLAIM_MS) === null
       && hexDistance(hexAt(n), hexAt(home(seat))) === 2);
     expect(beyond).toBeDefined();
   });
 
-  it('prices each Outpost by the hexes already held', () => {
-    expect(outpostGold(0)).toBe(WORLD_BUILD.outpost.gold);
-    expect(outpostGold(2)).toBeGreaterThan(outpostGold(1));
+  it('prices each claim by the hexes already held', () => {
+    expect(claimGold(0)).toBe(WORLD_BUILD.claim.gold);
+    expect(claimGold(2)).toBeGreaterThan(claimGold(1));
+  });
+
+  it('builds the district the hex\'s feature decides', () => {
+    const { b, seat } = quietBoard();
+    const next = besideHome(seat)[0];
+    claim(b, seat, next, T0);
+    const view = snapshotOf(b, seat, T0).hexes.find((h) => h.index === next)!;
+    expect(view.held).toBe(false);
+    expect(view.district).toBe(districtOf(data.hexes[next]));
+    expect(WORLD_BUILD.districts[view.district].feature).toBe(data.hexes[next].features[0] ?? 'None');
   });
 });
 
@@ -79,64 +92,78 @@ describe('the chain back to the city', () => {
     // A line of two hexes out from the city.
     const first = besideHome(seat)[0];
     claim(b, seat, first, T0);
-    resolveTo(b, T0 + OUTPOST_MS);
-    const second = boardNeighbors(first).find((n) => claimRefusal(b, seat, n, T0 + OUTPOST_MS) === null
+    resolveTo(b, T0 + CLAIM_MS);
+    const second = boardNeighbors(first).find((n) => claimRefusal(b, seat, n, T0 + CLAIM_MS) === null
       && !boardNeighbors(n).includes(home(seat)))!;
-    claim(b, seat, second, T0 + OUTPOST_MS);
-    resolveTo(b, T0 + 2 * OUTPOST_MS);
+    claim(b, seat, second, T0 + CLAIM_MS);
+    resolveTo(b, T0 + 2 * CLAIM_MS);
     expect(b.hexes[second].active).toBe(true);
     // The link falls (as a denial will make it): the far hex goes inactive,
     // and stays its owner's.
-    const cut = T0 + 2 * OUTPOST_MS;
+    const cut = T0 + 2 * CLAIM_MS;
     delete b.hexes[first];
     recomputeChains(b, cut);
     expect(b.hexes[second].owner).toBe(seat);
     expect(b.hexes[second].active).toBe(false);
     // Mended: the link is claimed again and the branch comes back.
     expect(claim(b, seat, first, cut).ok).toBe(true);
-    resolveTo(b, cut + OUTPOST_MS);
+    resolveTo(b, cut + CLAIM_MS);
     expect(b.hexes[second].active).toBe(true);
   });
 });
 
-describe('improvements and their stores', () => {
-  /** A held hex beside the city that takes a producing improvement. */
+describe('districts and their stores', () => {
+  /** A district beside the city that makes something, standing. */
   function producing() {
     const { b, seat } = quietBoard();
-    const at = besideHome(seat).find((n) => fittingImprovements(data.hexes[n]).some((k) => k !== 'Fortress'))!;
+    const at = besideHome(seat).find((n) => districtRate(data.hexes[n]).cap > 0)!;
     claim(b, seat, at, T0);
-    const t1 = T0 + OUTPOST_MS;
-    const kind = fittingImprovements(data.hexes[at]).find((k) => k !== 'Fortress')!;
-    const r = build(b, seat, at, kind, t1);
-    if (!r.ok) throw new Error(r.why);
-    return { b, seat, at, kind, ready: r.finishesAt };
+    return { b, seat, at, ready: T0 + CLAIM_MS };
   }
 
-  it('fills its store at its rate, stops when full, and pays a tap', () => {
-    const { b, seat, at, kind, ready } = producing();
-    const { perHour, cap } = improvementRate(data.hexes[at], kind, 1);
+  it('fills its store at its rate, stops when full, and pays a tap in its own currency', () => {
+    const { b, seat, at, ready } = producing();
+    const { currency, perHour, cap } = districtRate(data.hexes[at]);
     resolveTo(b, ready + HOUR);
-    expect(storesAt(b, at, ready + HOUR).material).toBeCloseTo(perHour, 6);
+    expect(storedAt(b, at, ready + HOUR)).toBeCloseTo(perHour, 6);
     resolveTo(b, ready + 1000 * HOUR);
-    expect(storesAt(b, at, ready + 1000 * HOUR).material).toBe(cap);
+    expect(storedAt(b, at, ready + 1000 * HOUR)).toBe(cap);
     const r = collect(b, seat, at, ready + 1000 * HOUR);
-    expect(r.ok && r.material?.amount).toBe(Math.floor(cap));
-    expect(b.hexes[at].material).toBeLessThan(1);
+    expect(r.ok && r.paid).toEqual({ currency, amount: Math.floor(cap) });
+    expect(b.hexes[at].stored).toBeLessThan(1);
   });
 
-  it('refuses ground it cannot stand on, a second build at once, and a rival’s hex', () => {
-    const { b, seat, at, kind, ready } = producing();
-    expect(build(b, seat, at, kind, ready - 1)).toEqual({ ok: false, why: 'Busy' });
-    expect(build(b, 1, at, kind, ready)).toEqual({ ok: false, why: 'NotYours' });
-    const other = fittingImprovements(data.hexes[at]).includes('Fortress') ? null : 'Fortress';
-    expect(other).toBeNull(); // a Fortress fits anywhere
-    const r = build(b, seat, at, kind, ready);
-    expect(r.ok).toBe(true);
+  it('pays a Rural district a tenth of what a full level-1 House pays', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
+    state.city.population = DISTRICTS.Housing.populationCapacityPerLevel[0];
+    expect(WORLD_BUILD.districts.Rural.produces).toBe('Gold');
+    expect(WORLD_BUILD.districts.Rural.perHour).toBe((houseGoldPerMinute(state, house) * 60) / 10);
+  });
+
+  it('takes a Fortress into any district, a level at a time', () => {
+    const { b, seat, at, ready } = producing();
+    expect(upgrade(b, seat, at, 'Fortress', ready - 1)).toEqual({ ok: false, why: 'NotStanding' });
+    expect(upgrade(b, 1, at, 'Fortress', ready)).toEqual({ ok: false, why: 'NotYours' });
+    const r = upgrade(b, seat, at, 'Fortress', ready);
+    if (!r.ok) throw new Error(r.why);
+    expect(upgrade(b, seat, at, 'Fortress', ready)).toEqual({ ok: false, why: 'Busy' });
+    resolveTo(b, r.finishesAt);
+    expect(b.hexes[at].fortress).toBe(1);
+    let t = r.finishesAt;
+    for (let level = 2; level <= WORLD_BUILD.upgrades.Fortress.levels.length; level++) {
+      const next = upgrade(b, seat, at, 'Fortress', t);
+      if (!next.ok) throw new Error(next.why);
+      t = next.finishesAt;
+      resolveTo(b, t);
+    }
+    expect(upgrade(b, seat, at, 'Fortress', t)).toEqual({ ok: false, why: 'MaxLevel' });
   });
 });
 
 describe('the stand-in rivals', () => {
-  it('claim ground and build on it, and stop at their size', () => {
+  it('claim ground and raise a Fortress on it, and stop at their size', () => {
     const w = emptyWorld();
     const { board } = join(w, { id: 'me', name: 'Me' }, T0);
     resolveTo(board, T0 + 30 * 24 * HOUR);
@@ -145,9 +172,9 @@ describe('the stand-in rivals', () => {
       if (!s?.bot) continue;
       const theirs = Object.values(board.hexes).filter((h) => h.owner === i);
       held += theirs.length;
-      expect(Object.values(board.hexes).some((h) => h.improvement !== null)).toBe(true);
+      expect(theirs.some((h) => h.fortress > 0)).toBe(true);
     }
-    // A rival may take a neighbour's ground, but none claims more Outposts
+    // A rival may take a neighbour's ground, but none claims more districts
     // than its size allows.
     expect(held).toBeGreaterThan(0);
     for (const s of board.seats) if (s?.bot) expect(s.claims ?? 0).toBeLessThanOrEqual(WORLD_BOTS.maxHexes);
@@ -212,7 +239,7 @@ describe('armies', () => {
     for (const i of line.slice(1, -1)) {
       if (b.hexes[i] === undefined && claimRefusal(b, rival, i, t) === null) {
         claim(b, rival, i, t);
-        t += OUTPOST_MS;
+        t += CLAIM_MS;
         resolveTo(b, t);
       }
     }
@@ -246,8 +273,8 @@ describe('armies', () => {
     if (!r.ok) throw new Error(r.why);
     resolveTo(b, r.arrivesAt);
     expect(b.hexes[far].owner).toBeNull();
-    expect(b.hexes[far].outpostAt).toBeLessThanOrEqual(t);
-    // Denied ground is taken by an army, not by a new Outpost.
+    expect(b.hexes[far].standsAt).toBeLessThanOrEqual(t);
+    // Denied ground is taken by an army, not by a new claim.
     expect(claimRefusal(b, rival, far, r.arrivesAt)).toBe('Taken');
   });
 
@@ -257,7 +284,7 @@ describe('armies', () => {
     // The rival raises a Fortress beside it and mans it strongly.
     const fortHex = line[line.length - 3];
     const h = b.hexes[fortHex];
-    h.improvement = { kind: 'Fortress', level: 1 };
+    h.fortress = 1;
     const g = sendArmy(b, rival, { purpose: 'garrison', target: fortHex, heroes: [], board: army(5000, 'g') }, t);
     if (!g.ok) throw new Error(g.why);
     resolveTo(b, g.arrivesAt);
@@ -275,9 +302,9 @@ describe('armies', () => {
     expect(out.ok).toBe(false); // nobody holds the Portal
     const next = besideHome(seat)[0];
     claim(b, seat, next, T0);
-    resolveTo(b, T0 + OUTPOST_MS);
-    b.hexes[next].improvement = { kind: 'Fortress', level: 1 };
-    const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h') }, T0 + OUTPOST_MS);
+    resolveTo(b, T0 + CLAIM_MS);
+    b.hexes[next].fortress = 1;
+    const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h') }, T0 + CLAIM_MS);
     if (!g.ok) throw new Error(g.why);
     resolveTo(b, g.arrivesAt);
     expect(b.hexes[next].garrison).toBe(g.army);

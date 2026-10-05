@@ -4,6 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import { DISTRICTS, type PackTier } from './data/definitions';
+import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import buildings from './data/game/buildings.json';
@@ -426,7 +427,9 @@ export interface Mission {
  * with one boundary — the moment it is home.
  */
 /** What can stand on a held world hex (sim/world/types.ts). */
-export type WorldImprovementId = 'LoggingCamp' | 'Homestead' | 'StonePit' | 'Fortress';
+/** What a builder out on the world board is building: a hex's district
+ *  (the claim), or an upgrade into one (Docs/features/19-world-map.md §7). */
+export type WorldBuildWhat = WorldDistrict | WorldUpgrade;
 
 export interface ExplorerTrip {
   id: string;
@@ -475,8 +478,8 @@ export interface WorldArmyOut {
 export interface WorldBuild {
   /** The board hex, by index. */
   index: number;
-  /** An Outpost, or an improvement's level. */
-  what: 'Outpost' | WorldImprovementId;
+  /** A district, or an upgrade's level. */
+  what: WorldBuildWhat;
   level: number;
   finishesAt: number;
 }

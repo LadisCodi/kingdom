@@ -81,7 +81,7 @@ export type ModifierStat =
   // Delver's Lantern that names it still loads. The Lantern needs a new
   // effect (Docs/open-questions.md OQ-113, Docs/proposals/relic-effects.md).
   | 'roomHaul'        // a room's Gold and Stone — NOT READ
-  | 'worldImprovementYield'; // what a world-map improvement grants an hour — NOT READ YET
+  | 'worldImprovementYield'; // what a world-map district grants an hour — NOT READ YET
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 
