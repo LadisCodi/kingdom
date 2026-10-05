@@ -443,7 +443,9 @@ gates them; *Cartography* opens the first explorer.
 - **Lumps** are mostly the player's own material (`ownShare`), otherwise one
   of the other two:
   - a beaten camp pays `campPerPower` of its power (§5.4);
-  - a scouting reward may be one (§3.2).
+  - a scouting reward may be one (§3.2);
+  - every dungeon room pays one (§8.1), and every fifth Portal floor
+    (§10.4).
 
 ### 7.5 The Exchange
 
@@ -661,6 +663,9 @@ finishing instantly.
 - **By depth** — an immediate reward for clearing each floor: **Knowledge,
   Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
   This is the main line.
+- **Every `preciousEvery` (5) floors, a lump of precious material** —
+  `precious` on the floors' scale, mostly the player's own (§7.4). The
+  Descend button says when the next floor pays one.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
 - **By final rank** — Top 1 / Top 2–3 / Top 4–6.

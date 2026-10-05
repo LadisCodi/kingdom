@@ -1078,7 +1078,9 @@ export const floorPower = (floor: number): number =>
 
 /** What a floor pays: the dungeon room formula on the Portal's own scale,
  *  and a pack on the floors that carry one. */
-export function floorReward(floor: number): { gold: number; knowledge: number; heroXp: number; stardust: number; pack?: 'Rose' | 'Golden' } {
+export function floorReward(
+  floor: number,
+): { gold: number; knowledge: number; heroXp: number; stardust: number; pack?: 'Rose' | 'Golden'; precious: number } {
   const scale = WORLD_PORTAL.rewardBase * WORLD_PORTAL.rewardGrowth ** (floor - 1);
   const d = WORLD_DUNGEON;
   const pack = floor % WORLD_PORTAL.goldenEvery === 0 ? 'Golden' : floor % WORLD_PORTAL.roseEvery === 0 ? 'Rose' : undefined;
@@ -1086,6 +1088,8 @@ export function floorReward(floor: number): { gold: number; knowledge: number; h
     gold: Math.round(d.gold * scale), knowledge: Math.max(1, Math.round(d.knowledge * scale)),
     heroXp: Math.round(d.heroXp * scale), stardust: Math.round(d.stardust * scale),
     ...(pack ? { pack } : {}),
+    // Every `preciousEvery` floors, a lump of precious material (19 §10.4).
+    precious: floor % WORLD_PORTAL.preciousEvery === 0 ? Math.max(1, Math.round(WORLD_PORTAL.precious * scale)) : 0,
   };
 }
 
@@ -1118,7 +1122,11 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
       gems = WORLD_PORTAL.milestoneGems;
       report(b, seat, t, `First to floor ${floor} of the Portal`, true);
     }
-    owe(b, seat, { kind: 'loot', at: t, ...floorReward(floor), ...(gems > 0 ? { gems } : {}) });
+    const { precious, ...pay } = floorReward(floor);
+    owe(b, seat, {
+      kind: 'loot', at: t, ...pay, ...(gems > 0 ? { gems } : {}),
+      ...(precious > 0 ? { precious: { id: lumpMaterial(boardData(b), seat, 'portal', p.event, floor), amount: precious } } : {}),
+    });
   }
   if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
   const lost = after.fallen.reduce((n, f) => n + f.count, 0);

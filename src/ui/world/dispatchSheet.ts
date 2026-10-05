@@ -18,7 +18,7 @@ import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
 import { WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
-import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
+import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
@@ -218,7 +218,8 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         const floor = (p?.floor ?? 0) + 1;
         return action({
           label: 'Descend', kind: 'destructive',
-          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power`,
+          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power${
+            floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''}`,
           disabledReason: p === null || !p.open ? 'The Portal is shut'
             : p.attemptsLeft === 0 ? 'No clears left today' : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
           onClick: () => void game.doDescendPortal(a.army),

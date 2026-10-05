@@ -8,8 +8,9 @@ import { generateBoard } from '../src/sim/world/board';
 import { snapshotWorld } from '../src/sim/world/source';
 import { hexActions } from '../src/ui/world/worldActions';
 import {
-  delveRoom, drainEffects, dungeonInfo, emptyWorld, join, resolveTo, roomReward, sendArmy, snapshotOf,
+  delveRoom, drainEffects, dungeonInfo, emptyWorld, floorReward, join, resolveTo, roomReward, sendArmy, snapshotOf,
 } from '../src/worldServer/core';
+import { WORLD_PORTAL } from '../src/sim/data/definitions';
 
 const T0 = Date.parse('2026-08-20T12:00:00Z');
 
@@ -74,5 +75,15 @@ describe('fighting a room', () => {
     const { b, seat } = delving();
     const source = snapshotWorld(snapshotOf(b, seat, T0));
     expect(hexActions(source, seat, source.board().hexes[dungeon.index], { revealed: true })).toEqual([{ kind: 'openDelve' }]);
+  });
+});
+
+describe('the Dark Portal', () => {
+  it('pays a lump of precious material every few floors, more deeper down', () => {
+    const every = WORLD_PORTAL.preciousEvery;
+    expect(floorReward(1).precious).toBe(0);
+    expect(floorReward(every).precious).toBeGreaterThan(0);
+    expect(floorReward(every * 2).precious).toBeGreaterThan(floorReward(every).precious);
+    expect(floorReward(every + 1).precious).toBe(0);
   });
 });

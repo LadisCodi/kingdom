@@ -28,7 +28,9 @@
 > lumps. Camp raids (§1.6) are built — spec 19 §5.5 — burning the district
 > rather than only emptying its store, a garrisoned Fortress fighting them.
 > Research asks for them from the single tree's chapter 5 on (19 §7.6),
-> the Atlas being one chapter now. Still proposed: the Portal's lumps.
+> the Atlas being one chapter now, and Portal floors pay lumps (19 §10.4).
+> **Everything in this proposal is now built**; the spec is
+> [`19-world-map.md`](../features/19-world-map.md).
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);
