@@ -56,7 +56,8 @@
 
 - One anonymous account per browser (built). Its id is who the player is to
   the world server (built).
-- A **display name**, chosen once, unique-ish.
+- A **nickname**, chosen the first time out onto the world map, unique and
+  never changed ([`19-world-map.md`](19-world-map.md) §1.3) (built).
 - **Optional email linking** on the anonymous account, for recovery. The
   *just play* path survives.
 - Not in scope: avatars, friend requests, chat, moderation.

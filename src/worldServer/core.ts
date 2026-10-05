@@ -38,6 +38,9 @@ const DAY = 24 * HOUR;
 
 export const emptyWorld = (): ServerWorld => ({ version: 3, boards: [] });
 
+/** The seed of a board the server opens, from its name. */
+export const newBoardSeed = (id: string): number => randInt(0x5eed, 0x1_0000_0000, 'board', id);
+
 /** The board as generated from its seed: where the dungeons started. */
 const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
 
@@ -1263,8 +1266,15 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
  * `prefer` lets a player who already explored a locally generated board keep
  * it — its id, seed and seat — so their fog still means something.
  */
+/**
+ * Seat a player (19 §1.3): where they already sit; else in a rival's city on
+ * the newest board that still has a rival, the rival leaving it; else on a
+ * new board of their own with five rivals, named `fresh` when the server
+ * names it. `prefer` makes that new board a given one, and skips the rivals'
+ * cities — the tests' way to a known board.
+ */
 export function join(
-  w: ServerWorld, player: { id: string; name: string; prefer?: BoardRef }, t: number,
+  w: ServerWorld, player: { id: string; name: string; prefer?: BoardRef; fresh?: { id: string; seed: number } }, t: number,
 ): { board: ServerBoard; seat: number } {
   for (const b of w.boards) {
     const seat = b.seats.findIndex((s) => s?.playerId === player.id);
@@ -1277,11 +1287,20 @@ export function join(
       return { board: b, seat };
     }
   }
-  const seed = player.prefer?.seed ?? randInt(t >>> 0, 0x1_0000_0000, 'board', player.id);
+  if (player.prefer === undefined) {
+    for (const b of [...w.boards].reverse()) {
+      const seat = b.seats.findIndex((s) => s?.bot === true);
+      if (seat >= 0) {
+        takeOver(b, seat, player, t);
+        return { board: b, seat };
+      }
+    }
+  }
+  const seed = player.prefer?.seed ?? player.fresh?.seed ?? randInt(t >>> 0, 0x1_0000_0000, 'board', player.id);
   const seat = player.prefer?.seat ?? randInt(seed, 6, 'seat', player.id);
   let rival = 0;
   const b: ServerBoard = {
-    id: player.prefer?.id ?? `local-${seed.toString(36)}`,
+    id: player.prefer?.id ?? player.fresh?.id ?? `local-${seed.toString(36)}`,
     seed,
     seats: Array.from({ length: 6 }, (_, i) => i === seat
       ? { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 }
@@ -1299,6 +1318,37 @@ export function join(
   };
   w.boards.push(b);
   return { board: b, seat };
+}
+
+/**
+ * A player takes a rival's city (19 §1.3). The rival leaves the board with
+ * everything that was only its own — armies, offers, plans, claims still
+ * being built — and its districts stand on, nobody's, to be claimed. Its
+ * stores go with it.
+ */
+function takeOver(b: ServerBoard, seat: number, player: { id: string; name: string }, t: number): void {
+  resolveTo(b, t);
+  settleStores(b, t);
+  const gone = new Set(b.armies.filter((a) => a.owner === seat).map((a) => a.id));
+  b.armies = b.armies.filter((a) => a.owner !== seat);
+  for (const [key, h] of Object.entries(b.hexes)) {
+    if (h.garrison !== null && gone.has(h.garrison)) h.garrison = null;
+    if (h.owner !== seat) continue;
+    if (!isHeld(h, t)) {
+      delete b.hexes[Number(key)];
+      continue;
+    }
+    h.owner = null;
+    h.stored = 0;
+    h.precious = 0;
+    h.work = null;
+  }
+  b.offers = (b.offers ?? []).filter((o) => o.seat !== seat);
+  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
+    if (perSeat !== undefined) delete perSeat[seat];
+  }
+  b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };
+  recomputeChains(b, t);
 }
 
 // ------------------------------------------------------------------ views

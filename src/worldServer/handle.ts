@@ -19,10 +19,16 @@ import {
   claim, collect, delveRoom, descendPortal, finish, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
   sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
 } from './core';
+import { nicknameProblem, normalNickname } from './nickname';
 import type {
-  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard,
+  ArmyPurpose, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard,
   ServerWorld, TradeResult, WorldSnapshot,
 } from './types';
+
+/** A join: the seat, or why there is none. */
+export type JoinResult =
+  | { ok: true; snapshot: WorldSnapshot }
+  | { ok: false; why: 'BadNickname' | 'NicknameTaken' | 'Offline' };
 
 /** What an army is sent out with. */
 export interface SendArmyRequest {
@@ -31,7 +37,10 @@ export interface SendArmyRequest {
 
 /** Everything a client can ask, and what each is answered with. */
 export interface WorldCommands {
-  join: { cmd: { name: string; prefer?: BoardRef }; reply: WorldSnapshot };
+  /** Take a seat on the board, by the nickname the player chose; already
+   *  seated, the seat they have. The nickname's uniqueness is the caller's
+   *  to settle first — it is a fact about every board, not this one. */
+  join: { cmd: { nickname: string }; reply: JoinResult };
   snapshot: { cmd: Record<never, never>; reply: WorldSnapshot | null };
   claim: { cmd: { index: number }; reply: CommandResult };
   upgrade: { cmd: { index: number; what: WorldUpgrade }; reply: CommandResult };
@@ -65,6 +74,9 @@ export interface WorldRequest<K extends WorldCommandKind = WorldCommandKind> {
   ack: number;
   /** Dev only: make the command for another seat on the player's board. */
   asSeat?: number;
+  /** Server only, never from a client: what a board this join has to open
+   *  is called. */
+  newBoard?: { id: string; seed: number };
   cmd: WorldCommand<K>;
 }
 
@@ -91,9 +103,13 @@ export function seatOf(w: ServerWorld, playerId: string): { board: ServerBoard; 
 export function handleWorld<K extends WorldCommandKind>(w: ServerWorld, req: WorldRequest<K>, now: number): WorldReply<K> {
   const cmd = req.cmd as WorldCommand;
   if (cmd.kind === 'join') {
-    const { board, seat } = join(w, { id: req.playerId, name: cmd.name, prefer: cmd.prefer }, now);
+    if (seatOf(w, req.playerId) === null && nicknameProblem(cmd.nickname) !== null) {
+      return { ok: false, why: 'BadNickname' } as WorldReply<K>;
+    }
+    const { board, seat } = join(w, { id: req.playerId, name: normalNickname(cmd.nickname), fresh: req.newBoard }, now);
     resolveTo(board, now);
-    return deliver(board, seat, req.ack, true, snapshotOf(board, seat, now)) as WorldReply<K>;
+    const snapshot = deliver(board, seat, req.ack, true, snapshotOf(board, seat, now)) as WorldSnapshot;
+    return { ok: true, snapshot } as WorldReply<K>;
   }
   const mine = seatOf(w, req.playerId);
   if (mine === null) return refusedFor(cmd.kind) as WorldReply<K>;

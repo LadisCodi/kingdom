@@ -61,6 +61,7 @@ import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { RemoteWorldServer } from './worldServer/remote';
+import { renderNicknameSheet } from './ui/world/nicknameSheet';
 import { cloudWorldCall } from './persist/cloud';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
@@ -262,6 +263,7 @@ async function boot(): Promise<void> {
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,
+    nickname: renderNicknameSheet,
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
@@ -378,7 +380,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {

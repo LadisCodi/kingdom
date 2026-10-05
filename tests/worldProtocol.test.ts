@@ -9,7 +9,7 @@ import { PRECIOUS } from '../src/sim/state';
 import { deserialize, serialize } from '../src/sim/save';
 import { generateBoard, SEAT_INDICES } from '../src/sim/world/board';
 import { boardNeighbors } from '../src/sim/world/hex';
-import { emptyWorld } from '../src/worldServer/core';
+import { emptyWorld, join } from '../src/worldServer/core';
 import { handleWorld, OPS_KEPT, type WorldCommand, type WorldCommandKind, type WorldRequest } from '../src/worldServer/handle';
 import { ClockSync } from '../src/worldServer/clockSync';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -25,7 +25,7 @@ const other = PRECIOUS.find((p) => p !== own)!;
 /** A world with the player seated on board 'x' and the rivals asleep. */
 function seated(): ServerWorld {
   const w = emptyWorld();
-  handleWorld(w, req('join', { kind: 'join', name: 'Me', prefer: { id: 'x', seed: SEED, seat: 0 } }), T0);
+  join(w, { id: 'me', name: 'Me', prefer: { id: 'x', seed: SEED, seat: 0 } }, T0);
   for (const s of w.boards[0].seats) if (s?.bot) s.nextMoveAt = null;
   return w;
 }
@@ -101,6 +101,7 @@ describe('the client', () => {
     game.persist = () => order.push(`save ${game.state.world.effectSeq}`);
     game.worldServer = server;
     await game.connectWorld();
+    await game.doJoinWorld('Mel');
     return { game, clock, server, order };
   }
 
@@ -134,10 +135,11 @@ describe('the stand-in', () => {
   it('hands the seat it once gave everyone to this device\'s player', async () => {
     const store = memoryStore();
     const old = new LocalWorldServer(store, () => T0);
-    await old.join({ id: 'local-player', name: 'Me', prefer: { id: 'x', seed: SEED, seat: 3 } });
+    await old.connect('local-player');
+    const first = await old.join('Mel');
     const now = new LocalWorldServer(store, () => T0 + 1);
-    const snap = await now.join({ id: 'local-4f2a', name: 'Me' });
-    expect(snap.board).toEqual({ id: 'x', seed: SEED, seat: 3 });
+    const back = await now.connect('local-4f2a');
+    expect(back.kind === 'seated' && back.snapshot.board).toEqual(first.ok && first.snapshot.board);
   });
 });
 

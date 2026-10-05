@@ -148,6 +148,7 @@ import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
+import { nicknameProblem } from './worldServer/nickname';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
@@ -210,13 +211,16 @@ export type OverlayName =
   | 'exchange'
   // A world dungeon's descent: its rooms, the race, the army camped there
   // (Docs/features/19-world-map.md §8.2).
-  | 'delve';
+  | 'delve'
+  // The name the player goes out onto the world board under, asked the
+  // first time out (Docs/features/19-world-map.md §1.3).
+  | 'nickname';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey',
+  world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -2962,6 +2966,8 @@ export class Game {
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
       case 'payerProfile': return 'payer';
+      // Rebuilt only when the answer changes: the field keeps what is typed.
+      case 'nickname': return JSON.stringify([this.nicknameRefused, this.joiningWorld]);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -4648,34 +4654,40 @@ export class Game {
     return this.actingSeat ?? this.state.world.board.seat;
   }
 
-  /** Take a seat on the server's board. A player who has already explored
-   *  a locally generated board asks to keep it. */
+  /** Whether the player sits on a world board: null until the server has
+   *  said (19 §1.3). A player is on no board until they first go out. */
+  worldSeated: boolean | null = null;
+
+  /** Find out where the player sits — never taking a seat. */
   async connectWorld(): Promise<void> {
     if (this.worldServer === null || this.worldReading) return;
     this.worldReading = true;
     try {
-      const snap = await this.worldServer.join(
-        { id: this.playerId, name: this.state.city.name, prefer: this.state.world.board });
-      await this.worldServer.setBoost(worldImprovementBoost(this.state));
-      this.applyWorldSnapshot(snap);
-      this.recallUnknownArmies(snap);
-    } catch (err) {
-      // Unreachable: the board stays the one generated here, every command
-      // is refused, and the next read tries to join again.
-      console.warn('kingdom: could not join the world server', err);
+      const r = await this.worldServer.connect(this.playerId);
+      if (r.kind === 'unseated') this.worldSeated = false;
+      if (r.kind === 'seated') await this.seatedOn(r.snapshot);
     } finally {
       this.worldReading = false;
     }
+  }
+
+  /** On a board: the server's view, the research it should know of, and
+   *  any army the save has out that this server never heard of. */
+  private async seatedOn(snap: WorldSnapshot): Promise<void> {
+    this.worldSeated = true;
+    this.applyWorldSnapshot(snap);
+    this.recallUnknownArmies(snap);
+    await this.worldServer?.setBoost(worldImprovementBoost(this.state));
   }
 
   /** A read or a join on its way: the next waits its turn rather than
    *  piling up behind a slow server. */
   private worldReading = false;
 
-  /** Ask the server for the board as it stands now — joining first if it
-   *  never could. */
+  /** Ask the server for the board as it stands now — connecting first if
+   *  it could not before. Nothing to read for a player on no board. */
   async refreshWorld(): Promise<void> {
-    if (this.worldServer === null || this.worldReading) return;
+    if (this.worldServer === null || this.worldReading || this.worldSeated === false) return;
     if (this.worldView === null) return this.connectWorld();
     this.worldReading = true;
     try {
@@ -4684,6 +4696,37 @@ export class Game {
     } finally {
       this.worldReading = false;
     }
+  }
+
+  /** The nickname sheet's state: what was typed, why the server refused it,
+   *  and whether a join is on its way. */
+  nicknameDraft = '';
+  nicknameRefused: string | null = null;
+  joiningWorld = false;
+
+  /** Take a seat on the world board under the nickname chosen, and go out. */
+  async doJoinWorld(nickname: string): Promise<void> {
+    if (this.worldServer === null || this.joiningWorld) return;
+    this.nicknameDraft = nickname;
+    const problem = nicknameProblem(nickname);
+    if (problem !== null) {
+      this.nicknameRefused = problem;
+      this.notify();
+      return;
+    }
+    this.joiningWorld = true;
+    this.nicknameRefused = null;
+    this.notify();
+    const r = await this.worldServer.join(nickname);
+    this.joiningWorld = false;
+    if (!r.ok) {
+      this.nicknameRefused = r.why === 'NicknameTaken' ? 'Another kingdom has that name' : this.worldRefusal(r.why);
+      this.notify();
+      return;
+    }
+    await this.seatedOn(r.snapshot);
+    if (this.openOverlay === 'nickname') this.openOverlay = null;
+    this.goOutToWorld();
   }
 
   /** An army this save has out that the server it joined never heard of —
@@ -4787,6 +4830,7 @@ export class Game {
       NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
       TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
+      BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
     };
     return LINES[why];
   }
@@ -5185,6 +5229,22 @@ export class Game {
       this.notify();
       return;
     }
+    // The first time out, the player takes a seat, under a name of their
+    // choosing (19 §1.3); until then they are on no board. With no server
+    // at all there is no seat to take: the board is the one made here.
+    if (this.worldServer !== null && this.worldSeated !== true) {
+      void this.connectWorld().then(() => {
+        if (this.worldSeated === true) this.goOutToWorld();
+        else if (this.worldSeated === false) this.setOverlay('nickname');
+        else this.toast(this.worldRefusal('Offline'));
+        this.notify();
+      });
+      return;
+    }
+    this.goOutToWorld();
+  }
+
+  private goOutToWorld(): void {
     this.dismiss();
     this.scene = 'world';
     // Out onto the board at the player's own city, up close.

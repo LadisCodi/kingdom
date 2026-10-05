@@ -4,7 +4,7 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: step 2 built and deployed.** The game uses the real server
+> **Status: step 3 built.** The game uses the real server
 > when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
@@ -13,8 +13,8 @@
 |---|---|---|
 | 1 | **The door** | every world request goes through `handleWorld` (`src/worldServer/handle.ts`); the server keeps the time; command ids; effects sent until acknowledged; the player's id is the signed-in user; `npm run server:bundle` |
 | 2 | **The world server** | a `world` edge function and a `boards` table on the Supabase project the cloud saves already use; `RemoteWorldServer` beside the stand-in; the client picks one by env |
-| 3 | **Seating** | a player joins a shared board in a free or bot seat instead of a board of their own |
-| 4 | **Profiles** | a display name, chosen once; optional email linking (15 §2) |
+| 3 | **Seating** | a player is on no board until they first go out; then a nickname, and a rival's city on a shared board (19 §1.3) |
+| 4 | **Accounts** | optional email linking (15 §2) |
 | 5 | **Neighbours and help** | 15 §3 |
 | 6 | **Guilds** | 15 §4 |
 | 7 | **The guild week** | 15 §5 |
@@ -50,13 +50,17 @@
   `supabase/functions/_shared/world.js`. The bundle is checked to reach for
   no browser API (`tests/serverBundle.test.ts`).
 - **Storage** (`supabase/migrations/`): one row per board — `boards (id,
-  doc jsonb, version)` — and one per seated player — `seats (user_id,
-  board_id, seat)`.
+  doc jsonb, version, bots)` — one per seated player — `seats (user_id,
+  board_id, seat)` — and one per nickname — `profiles (user_id, nickname)`,
+  unique on its lower case.
 - **A request:** the user from the JWT; read the player's board and its
   version; `handleWorld` at the function's clock; write it back only if the
   version is unchanged (`update_board`), else start again on the newer board,
-  up to five times. A first join writes the board and the seat together
-  (`create_board`); a board id already taken becomes `b-<user>`.
+  up to five times.
+- **A first join:** the nickname reserved (`claim_nickname`, which keeps a
+  player's first one); the newest board with a rival left (`open_board`)
+  written back with the player in that rival's seat (`take_seat`), else a
+  new board `b-<user>` and its seat (`create_board`).
 - **A malformed request** is refused before it is read; one that throws is
   refused and nothing is written.
 - **Dev "play as"** reaches only the rivals' seats on the real server.
@@ -71,8 +75,10 @@
   through is refused as `Offline`.
 - The board is read every 5 s on the world screen, every 30 s elsewhere; a
   read waits for the one before it.
-- A join that fails leaves the board as generated locally; the next read
-  joins again.
+- At load the client only asks where the player sits. The first time out,
+  an unseated player is asked a nickname; joining seats them and goes out.
+- A connect that fails leaves the player off the board; the next read asks
+  again.
 - On a join, an army the save has out that the server does not hold comes
   home whole.
 

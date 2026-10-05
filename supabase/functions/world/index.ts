@@ -41,6 +41,23 @@ const store = {
     if (error) throw error;
     return data === true;
   },
+  async openBoard() {
+    const { data, error } = await admin.rpc('open_board');
+    if (error) throw error;
+    return (data as string | null) ?? null;
+  },
+  async takeSeat(boardId: string, doc: unknown, version: number, userId: string, seat: number) {
+    const { data, error } = await admin.rpc('take_seat', {
+      p_id: boardId, p_doc: doc, p_version: version, p_user: userId, p_seat: seat,
+    });
+    if (error) throw error;
+    return data === true;
+  },
+  async claimNickname(userId: string, nickname: string) {
+    const { data, error } = await admin.rpc('claim_nickname', { p_user: userId, p_nickname: nickname });
+    if (error) throw error;
+    return (data as string | null) ?? null;
+  },
 };
 
 Deno.serve(async (req) => {
