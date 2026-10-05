@@ -16,6 +16,10 @@
 > camps; a camp can be paid off, dearer than fighting it; precious materials
 > are traded, one of the three near each player; a little early, required
 > later (§1.4, §3).
+> **Built:** camps (§1.1–§1.4, Gold and Hero XP loot) — the spec is now
+> [`19`](../features/19-world-map.md) §5.4. Still proposed: villain-led inner
+> camps (§1.2), the precious-material and pack loot (§1.5) and camp raids
+> (§1.6).
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);

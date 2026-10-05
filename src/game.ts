@@ -163,6 +163,8 @@ import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
+import { pay } from './sim/wallet';
+import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
   | { kind: 'normal' }
@@ -4678,6 +4680,7 @@ export class Game {
       Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
+      Guarded: 'A camp holds it — beat it, or pay it off, first',
     };
     return LINES[why];
   }
@@ -4790,6 +4793,9 @@ export class Game {
     const target = this.armyTarget;
     const party = partyOf(this.state, this.expeditionParty.filter((s) => s.count > 0), this.partyHeroes, this.now());
     const attack = partyPower(party);
+    if (target !== null && this.armyPurpose === 'clear') {
+      return { power: this.worldSource().board().hexes[target]?.camp?.power ?? 0, attack, garrisons: 0 };
+    }
     if (target === null || this.armyPurpose !== 'attack') return { power: 0, attack, garrisons: 0 };
     const source = this.worldSource();
     const holder = source.hexOf(target)?.owner ?? null;
@@ -4889,6 +4895,30 @@ export class Game {
       this.notify();
       return;
     }
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Pay a camp off with its tribute: the camp is beaten for the player,
+   *  and pays nothing (19 §5.4). */
+  async doTributeCamp(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const camp = this.worldSource().board().hexes[index]?.camp;
+    if (!camp) return;
+    const cost = campTribute(camp.power);
+    if (!canAfford(this.state.city.wallet, cost)) {
+      this.shake(Object.keys(cost) as CurrencyId[]);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.tribute(index, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    pay(this.state.city.wallet, cost);
+    playSfx('click');
+    this.toast(`The camp of ${CAMP_CREATURE[camp.creature]} takes the tribute and leaves`);
     this.applyWorldSnapshot(r.snapshot);
   }
 

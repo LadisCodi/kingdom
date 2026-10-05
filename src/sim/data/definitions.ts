@@ -2169,6 +2169,24 @@ export interface WorldPortalDef {
 
 export const WORLD_PORTAL: WorldPortalDef = balance.worldPortal;
 
+/** Monster camps on the world board (19 §5.4): where they stand, how strong,
+ *  what they pay, and what paying one off costs. */
+export interface WorldCampsDef {
+  share: number;
+  lurkingShare: number;
+  /** Power on rings 1 to 6, the inner ring first. */
+  powerByRing: readonly number[];
+  powerJitter: number;
+  creatures: Record<'inner' | 'corridor' | 'home' | 'outer', readonly LairId[]>;
+  goldPerPower: number;
+  heroXpPerPower: number;
+  tributePremium: number;
+  tributeLossShare: number;
+  botHoursPer1000Power: number;
+}
+
+export const WORLD_CAMPS = balance.worldCamps as unknown as WorldCampsDef;
+
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
   actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;

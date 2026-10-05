@@ -17,6 +17,7 @@ import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
 import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
@@ -96,12 +97,22 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   return lines;
 }
 
-const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend' } as const;
+const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'Attack' } as const;
 const ARMY_INFO = {
   attack: 'Send an army', claim: 'Send an army to take it', garrison: 'Station an army here',
   delve: 'An army camps here and fights room by room',
   portal: 'An army goes down, a floor at a time',
+  clear: 'Beat the camp, and take its loot',
 } as const;
+
+/** A camp: whose, how strong, and how hard against the player's best party. */
+function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
+  if (!campShown(game.worldSource(), bh, fog) || bh.camp === null) return [];
+  const difficulty = campDifficulty(bh.camp.power, strongestParty(game.state));
+  return [el('p', { class: 'wd-line' },
+    `A camp of ${CAMP_CREATURE[bh.camp.creature]} · Power ${formatCount(bh.camp.power)} · `,
+    el('b', { style: `color: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty))];
+}
 
 /** The Portal: shut with its countdown, or open with the player's floor,
  *  the clears left today and the ranking. */
@@ -182,6 +193,12 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           onClick: () => void game.doDelveRoom(a.army),
         });
       }
+      case 'tribute':
+        return action({
+          label: 'Pay off', kind: 'secondary', cost: a.cost, have,
+          info: 'The camp leaves, and pays nothing',
+          onClick: () => void game.doTributeCamp(bh.index),
+        });
       case 'recall':
         return action({
           label: 'Recall', kind: 'secondary', info: 'The garrison marches home',
@@ -228,7 +245,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
 
-  lines.push(...controlLines(game, bh, fog), ...dungeonLines(game, bh), ...portalLines(game, bh));
+  lines.push(...controlLines(game, bh, fog), ...campLines(game, bh, fog), ...dungeonLines(game, bh), ...portalLines(game, bh));
   if (game.actingSeat !== null) {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }

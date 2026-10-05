@@ -17,11 +17,12 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL,
+  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
 import { SEAT_INDICES, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
@@ -119,7 +120,49 @@ export function claimRefusal(b: ServerBoard, seat: number, index: number, t: num
   const bh = boardData(b).hexes[index];
   if (bh.role === 'portal' || bh.features.includes('Dungeon')) return 'NeverHeld';
   if (SEAT_INDICES.includes(index) || b.hexes[index] !== undefined) return 'Taken';
-  return touches(b, seat, index, t) ? null : 'NotAdjacent';
+  if (!touches(b, seat, index, t)) return 'NotAdjacent';
+  return guarded(b, seat, index) ? 'Guarded' : null;
+}
+
+// ------------------------------------------------------------- camps
+
+/** The monster camp on a hex as the board was made (19 §5.4), or null. */
+export const campAt = (b: ServerBoard, index: number) => boardData(b).hexes[index]?.camp ?? null;
+
+/** Has `seat` beaten the camp on `index`? Each player beats a camp for
+ *  themselves. */
+export const hasBeaten = (b: ServerBoard, seat: number, index: number): boolean =>
+  b.beaten?.[seat]?.includes(index) ?? false;
+
+/** Does a camp still stand between `seat` and claiming `index`? Once anyone
+ *  holds the hex, its camp no longer matters. */
+const guarded = (b: ServerBoard, seat: number, index: number): boolean =>
+  b.hexes[index] === undefined && campAt(b, index) !== null && !hasBeaten(b, seat, index);
+
+function beat(b: ServerBoard, seat: number, index: number): void {
+  const list = ((b.beaten ??= {})[seat] ??= []);
+  if (!list.includes(index)) list.push(index);
+}
+
+/** The camp's army: its creature's lair is its formation's type, as a lair's
+ *  garrison is (18 §2), rolled under the hex. */
+function campBoard(b: ServerBoard, index: number): FightBoard {
+  const camp = campAt(b, index)!;
+  const plan = generateEnemy({
+    seed: b.seed, parts: ['camp', index], budget: camp.power, affinity: LAIRS[camp.creature].guard.threat,
+  });
+  return buildBoard(plan.squads, plan.fighters);
+}
+
+/** Pay a camp off: the client paid its tribute; the camp is beaten for this
+ *  seat, and pays nothing. */
+export function tribute(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  if (!isBoardIndex(index)) return { ok: false, why: 'NoSuchHex' };
+  if (b.hexes[index] !== undefined) return { ok: false, why: 'Taken' };
+  if (!guarded(b, seat, index)) return { ok: false, why: 'NothingThere' };
+  beat(b, seat, index);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
 }
 
 /** Whether a hex lies beside `seat`'s city or its held, active ground. */
@@ -417,6 +460,31 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     } else turnHome(a, t);
     return;
   }
+  if (a.purpose === 'clear') {
+    // A camp is fought on arrival, as an attack is; won, it is beaten for
+    // this seat and pays its loot (19 §5.4).
+    const camp = campAt(b, a.target);
+    if (camp !== null && guarded(b, a.owner, a.target)) {
+      const log = resolveBattle(a.board, campBoard(b, a.target));
+      const after = boardAfter(log, a.board, 'ours');
+      a.board = after.board;
+      addFallen(a.fallen, after.fallen);
+      const name = CAMP_CREATURE[camp.creature];
+      if (log.winner === 'ours') {
+        beat(b, a.owner, a.target);
+        owe(b, a.owner, {
+          kind: 'loot', at: t, knowledge: 0, stardust: 0,
+          gold: Math.round(camp.power * WORLD_CAMPS.goldPerPower),
+          heroXp: Math.round(camp.power * WORLD_CAMPS.heroXpPerPower),
+        });
+        report(b, a.owner, t, `Your army beat the camp of ${name}`, true);
+      } else {
+        report(b, a.owner, t, `Your army was beaten back by the camp of ${name}`, false);
+      }
+    } else report(b, a.owner, t, 'Your army found no camp there and turned back', false);
+    turnHome(a, t);
+    return;
+  }
   if (a.purpose === 'claim') {
     if (h !== undefined && h.owner === null && touches(b, a.owner, a.target, t)) {
       h.owner = a.owner;
@@ -490,6 +558,11 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
     return h.garrison !== null || heading ? 'Garrisoned' : null;
   }
   if (purpose === 'claim') return h !== undefined && h.owner === null ? null : 'NothingThere';
+  if (purpose === 'clear') {
+    if (!guarded(b, seat, index)) return 'NothingThere';
+    return b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'clear' && a.phase !== 'home')
+      ? 'Busy' : null;
+  }
   if (h === undefined || h.owner === null) return 'NothingThere';
   return h.owner === seat ? 'OwnGround' : null;
 }
@@ -849,6 +922,14 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
     }
   }
   if (!done && (s.claims ?? 0) < WORLD_BOTS.maxHexes) {
+    // A rival beats a camp in its way after a while, by the camp's power,
+    // without a fight being played out (19 §5.4).
+    const pending = ((b.botCamps ??= {})[seat] ??= {});
+    for (let i = 0; i < data.hexes.length; i++) {
+      if (claimRefusal(b, seat, i, t) !== 'Guarded') continue;
+      pending[i] ??= t + Math.round((campAt(b, i)!.power / 1000) * WORLD_CAMPS.botHoursPer1000Power * HOUR);
+      if (pending[i] <= t) beat(b, seat, i);
+    }
     const open: number[] = [];
     for (let i = 0; i < data.hexes.length; i++) if (claimRefusal(b, seat, i, t) === null) open.push(i);
     if (open.length > 0) {
@@ -947,6 +1028,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
+    beaten: [...(b.beaten?.[seat] ?? [])],
     dungeons: standingDungeons(b),
     portal: portalView(b, seat, t),
     effects: [],

@@ -52,6 +52,8 @@ export interface WorldSource {
   armies(): readonly ArmyControl[];
   /** Rooms the player has cleared in the dungeon on a hex. */
   delved(index: number): number;
+  /** Has the player beaten the monster camp on a hex (19 §5.4)? */
+  campBeaten(index: number): boolean;
   /** The Dark Portal as the server last described it, or null. */
   portal(): PortalControl | null;
 }
@@ -70,7 +72,7 @@ export interface PortalControl {
 export interface ArmyControl {
   id: string;
   owner: number;
-  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
   phase: 'out' | 'garrison' | 'camp' | 'home';
   target: number;
 }
@@ -109,6 +111,7 @@ export function localWorld(ref: BoardRef): WorldSource {
     hexOf: () => null,
     armies: () => [],
     delved: () => 0,
+    campBeaten: () => false,
     portal: () => null,
   };
 }
@@ -121,6 +124,8 @@ export function snapshotWorld(snap: {
   hexes: ReadonlyArray<HexControl & { index: number }>;
   armies?: readonly ArmyControl[];
   delves?: Readonly<Record<number, number>>;
+  /** The monster camps the player has beaten. */
+  beaten?: readonly number[];
   /** Where the dungeons stand now; the generated board's when not told. */
   dungeons?: readonly number[];
   portal?: PortalControl;
@@ -144,6 +149,7 @@ export function snapshotWorld(snap: {
     hexOf: (index) => hexes.get(index) ?? null,
     armies: () => snap.armies ?? [],
     delved: (index) => snap.delves?.[index] ?? 0,
+    campBeaten: (index) => snap.beaten?.includes(index) ?? false,
     portal: () => snap.portal ?? null,
   };
 }
