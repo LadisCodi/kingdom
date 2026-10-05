@@ -71,7 +71,7 @@ Buildability:
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
 | **Mountain** | Stone | 1 | never | — | Pickaxes |
 | **Iron mountain** | Stone | **5** | never | — | **Mining** |
-| **Gold mountain** | **Gold** | **3** | never | — | **Deep Mining** |
+| **Gold mountain** | **Gold** | **3** | never | — | **Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 
 Mountains:
@@ -83,15 +83,15 @@ Mountains:
 |---|---|---|---|
 | **Mountain** | Stone, 1 | **Pickaxes** | the everyday building material |
 | **Iron mountain** | Stone, **5** | **Mining** | the same material, five times over |
-| **Gold mountain** | **Gold**, 3 | **Deep Mining** | the only Gold source on the map outside housing taxes |
+| **Gold mountain** | **Gold**, 3 | **Mining** | the only Gold source on the map outside housing taxes: a Mana sink for Gold |
 
 - A mountain blocks a footprint like any other feature. No placement rule of its
   own.
 - The bare peak answers a pick once **Pickaxes** is researched — taught
   just before the first upgrade that costs Stone, the House's second story
   ([`23-tutorials.md`](23-tutorials.md) §3.1). The metal is gated further:
-  Mining for iron, Deep Mining for gold. A gated mountain is visible and
-  refusing; a refused tap costs no Mana.
+  Mining, in chapter 3, opens iron and gold; Deep Mining raises the gold.
+  A gated mountain is visible and refusing; a refused tap costs no Mana.
 - **The Quarry cuts Stone from every mountain in its area of influence, the way
   the Sawmill takes Wood from every forest in its own.** One building works all
   three mountains; a district's harvest source is a list. A district names a
@@ -340,23 +340,25 @@ The near map is laid out so the first Townhalls look one way at a time
 (`tests/provinceLayout.test.ts`):
 
 - **South first.** The Thorned Shrine (4 rings) is sighted from the first
-  ring; the only landmark in sight while the Townhall is at level 1.
+  ring; with the Watchtower to the north, the only landmarks in sight while
+  the Townhall is at level 1.
 - **The Orcs** (6 rings, south, past the shrine) show from ring 3, as the
   player reaches the shrine. Their ground (radius 2) starts at ring 4 and
   holds the shrine, so they are found at Townhall 2 and cleared before it is
   claimed. A lair is fought once found, so it is its ground, not its camp,
   that the chain needs in reach.
-- **The near mountains are the Harpies'.** Two 2×2 blocks, sighted from the
-  first ring to the north-east, lie on the Harpies' ground (radius 2). Their
-  camp is 6 rings out: past Townhall 2's reach, inside Townhall 3's.
-  Revealing a block finds them, so no big mountain is worked before they fall.
+- **The Harpies guard the gold.** The one gold vein in Townhall 2's reach,
+  4 rings to the north-east, lies on the Harpies' ground (radius 2), and no
+  big mountain stands on the east of the town. Their camp is 6 rings out:
+  past Townhall 2's reach, inside Townhall 3's. Revealing the vein finds them.
 - **One loose stone node** stands 2 rings from the Townhall, to the north,
   on no lair's ground: the stone the opening has, and the reason to want
   more.
-- **The Harpies** show from ring 3 beyond their mountains: the camp that
-  holds the stone is in sight before the player can reach it.
-- The Watchtower (8 rings north) and the Fallen Stones (7 rings) are sighted
-  from ring 4, at Townhall 2.
+- **The Harpies** show from ring 3 beyond their vein: the camp that holds
+  the gold is in sight before the player can reach it.
+- **The Watchtower** (5 rings north) is sighted from Townhall 1's ground and
+  reached at Townhall 2: the world map's door is in view from the start. The
+  Fallen Stones (7 rings) are sighted from ring 4, at Townhall 2.
 
 ### The landmark tiers
 
@@ -369,7 +371,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | The far ring | **100,000** | 4 |
 
 - The nearest sanctuary is the cheapest; the far ring is the dearest.
-- **The Watchtower** (`NorthWatch`, 8 rings north, **10,000**) is a landmark
+- **The Watchtower** (`NorthWatch`, 5 rings north, **10,000**) is a landmark
   of its own kind: claimed like any other, it discovers **8** rings round it
   rather than 5 and opens the world door and the Atlas
   ([`22-progression.md`](22-progression.md) §5).

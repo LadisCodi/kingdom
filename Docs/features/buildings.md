@@ -178,7 +178,7 @@
 
 - Sends its crew to every mountain inside its area of influence: bare rock
   pays Stone; an iron vein pays Stone once `Mining` is researched; a gold
-  mountain pays Gold once `Deep Mining` is researched
+  mountain pays Gold once `Mining` is researched too
   ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
 - Build 45 Gold + 30 Wood, 120 s. Level 2: 66 Gold + 44 Wood, 30 s; time ×1.5
   per level.

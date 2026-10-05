@@ -200,6 +200,7 @@ describe('the conditions read the kingdom', () => {
 
   it('sees what stands past the fog, by kind, landmark kind or lair', () => {
     const game = freshPresenter(firstGame());
+    game.state.fog.revealed = {}; // the opening's own ground already sights the tower
     const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
     expect(conditionHolds(game, args('sighted' as never, 'Watchtower'))).toBe(false);
     reveal(game.state, [{ x: tower.location.x, y: tower.location.y + FOG.sight.watchtower }]);

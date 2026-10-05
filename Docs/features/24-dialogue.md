@@ -73,6 +73,8 @@
   last scene, rather than a beat of the First Morning — and `anywhere` — may
   it start over a sheet the player has open.
 - Scenes are considered **in list order**, one at a time.
+- **A `sighted` scene waits for the First Morning to end**: what stands in
+  view past the fog never interrupts the morning's beats.
 
 ## 4. The pointer
 

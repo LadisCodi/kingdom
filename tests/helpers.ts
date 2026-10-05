@@ -244,8 +244,11 @@ export const addAllTrainers = (state: GameState): void => {
  * that says nothing about what is under test.
  */
 export const completeTech = (state: GameState, id: TechId): void => {
+  // Done is done: without this the walk re-climbs every path to the root, and
+  // a tree whose rows split and merge has a great many of them.
+  if (state.research.completed.includes(id)) return;
   for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
-  if (!state.research.completed.includes(id)) state.research.completed.push(id);
+  state.research.completed.push(id);
 };
 
 /**

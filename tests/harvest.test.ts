@@ -314,13 +314,13 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
-      // One landform, three depths of skill. Pickaxes opens the bare peak —
-      // taught in the opening, just before the Barracks asks for Stone —
-      // Mining gets the iron out of it and Deep Mining reaches the gold. One
-      // building works all three: the ladder is in the research.
+      // One landform, two depths of skill. Pickaxes opens the bare peak —
+      // taught in the opening, just before the Barracks asks for Stone — and
+      // Mining gets the iron and the gold out of it, so a gold vein is a Mana
+      // sink from chapter 3. One building works all three.
       Stone: 'Pickaxes',
       MountainIron: 'Mining',
-      MountainGold: 'DeepMining',
+      MountainGold: 'Mining',
     });
   });
 });

@@ -1499,7 +1499,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Gold in the mountain! With Deep Mining, one day, the Quarry will dig coin right out of it.",
+        "text": "Gold in the mountain! Once we learn Mining, every swing of a pick there brings up coin.",
         "box": "auto",
         "point": "feature:MountainGold",
         "lock": "none",
