@@ -4,7 +4,7 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: step 2 built, not yet deployed.** The game uses the real server
+> **Status: step 2 built and deployed.** The game uses the real server
 > when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
