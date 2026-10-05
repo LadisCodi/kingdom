@@ -152,8 +152,10 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ### 2.7 The party rule
 
-- **At least one hero is mandatory** in every fight: gates, rooms, bosses.
-  There is no fight without a hero and no hero-only fight.
+- **A lair takes soldiers alone, a hero alone, or both.** A party with
+  nobody in it is refused. The kingdom owns no hero until the Tavern's first
+  call, so the first fights are soldiers alone.
+- **An army on the world map needs a hero** to lead it.
 - In the province a hero is never *busy*. Fights resolve on entry; what
   limits leading every fight with the same hero is its HP (§2.8).
 - **On the world map a hero in an army is busy** for the army's whole march
@@ -292,8 +294,8 @@ Every faucet is a fight or a banner. Room and floor amounts are
   hit is forced, the hero is still the roll's
   ([`22-progression.md`](22-progression.md) §6).
 - **The banner hangs in the Tavern.** Until a Tavern stands, the Heroes tab
-  and the Store's banner are padlocked; the Warden, the kingdom's from the
-  start, is met on the attack sheet, and Bess arrives with the Tavern.
+  and the Store's banner are padlocked. **The kingdom starts with no hero**:
+  its first is this free call, and no hero is ever granted by the story.
 - A rewarded video pays for a call: **five a day on the common banner, one on
   the golden one**.
 - The common banner spaces its five by a **5-minute cooldown**; the golden one

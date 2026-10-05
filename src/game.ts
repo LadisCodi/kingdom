@@ -3527,8 +3527,8 @@ export class Game {
     this.notify();
   }
 
-  /** Open the battle sheet on a lair. A hero ALONE is a legal board here, so
-   *  this never opens pre-blocked for want of an army. */
+  /** Open the battle sheet on a lair. A hero alone and soldiers alone are
+   *  both legal boards here. */
   openLair(lairId: LairId): void {
     this.lairId = lairId;
     // A lair resolves on entry, so nobody is busy: the roster is the party.
@@ -3554,7 +3554,7 @@ export class Game {
   }
 
   doAttackLair(): void {
-    if (this.lairId === null || this.partyHeroes.length === 0) return;
+    if (this.lairId === null) return;
     const lairId = this.lairId;
     const report = attackLair(
       this.state, this.map, lairId, this.partyHeroes, this.expeditionParty, this.now());
@@ -5935,6 +5935,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   LairNotFound: 'Clear a path to the lair first',
   AlreadyCleared: 'That lair is already cleared',
   AlreadyDefeated: 'They are beaten — claim what they left behind',
+  EmptyParty: 'Pick who goes in',
   NoHero: 'Pick a hero to lead them',
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',

@@ -100,13 +100,14 @@ describe('the quest chain', () => {
       'Watered', 'Fallow', 'MoreRoom',            // 35-37 the rows above Urban Planning
       'SecondStory', 'Chisels', 'Stoneworks',     // 38-40 a storey, then stone
       'Crafts', 'Knack', 'Hearth',                // 41-43 the rows above Hospitality
-      'OpenDoors', 'FirstSummon',                 // 44-45 THE TAVERN: Bess, the
-                                                  //   banner and the Sagas, and a
-                                                  //   first call that cannot miss
+      'OpenDoors', 'FirstSummon',                 // 44-45 THE TAVERN: the banner
+                                                  //   and the Sagas, and a first
+                                                  //   call that cannot miss — the
+                                                  //   kingdom's first hero
     );
 
     // Then the city the tutorial deferred, the Townhall ladder, and the world.
-    inOrder('FirstSummon', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
+    inOrder('FirstSummon', 'Fellowship', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
       'Magistrate', 'Borough', 'SecondLair', 'TheWatchtower');
     expect(QUESTS.at(-1)).toMatchObject({ id: 'DeeperStill', goalType: 'TrainArmy' });
     // The first pack is the first quest-paid pack, and it is the first fight's.
@@ -149,10 +150,16 @@ describe('the quest chain', () => {
     completeRanks(state, 'Sawpits', 1);
     expect(isQuestComplete(state, sawpits)).toBe(true);
 
+    // No hero from the start: the first comes from the first call.
+    state.heroes.owned = [];
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
-    expect(questValue(state, summon)).toBe(1); // the Warden
-    state.heroes.owned.push('Cook', 'Scout');   // Bess, and the first call
+    expect(questValue(state, summon)).toBe(0);
+    state.heroes.owned.push('Scout');
     expect(isQuestComplete(state, summon)).toBe(true);
+    const fellowship = QUESTS.find((q) => q.id === 'Fellowship')!;
+    expect(isQuestComplete(state, fellowship)).toBe(false);
+    state.heroes.owned.push('Cook', 'Bard');
+    expect(isQuestComplete(state, fellowship)).toBe(true);
 
     // A landmark goal may name a KIND: the Watchtower, and only it.
     const tower = QUESTS.find((q) => q.id === 'TheWatchtower')!;
@@ -500,7 +507,9 @@ describe('quests fund the research tree', () => {
     // 16,035: `Picks` at 40 teaches Pickaxes before the Barracks wants Stone.
     // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
     // the chain asks for the book that only a found lair opens.
-    expect(chain).toBe(16_215);
+    // 16,465: `Fellowship` at 250 asks for three heroes once the banner has
+    // had time to answer — the kingdom starts with none.
+    expect(chain).toBe(16_465);
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).

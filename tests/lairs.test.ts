@@ -31,7 +31,8 @@ import { placementBlock } from '../src/sim/districts';
 import { workableCells } from '../src/sim/workers';
 import { reapCells } from '../src/sim/casting';
 import { formationPower } from '../src/sim/combat';
-import { attackLair, claimLair, partyBoard, partyOf, previewLair } from '../src/sim/expeditions';
+import { attackLair, claimLair, lairBlock, partyBoard, partyOf, previewLair } from '../src/sim/expeditions';
+import { grantHero } from '../src/sim/heroes';
 import { heroCanFight, heroHp, heroMaxHp, setHeroHp } from '../src/sim/heroHealth';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, getWallet, type GameState, type LairId } from '../src/sim/state';
@@ -371,8 +372,10 @@ describe('the zone', () => {
 describe('clearing the lair', () => {
   /** A kingdom that can put a party on the orc lair's doorstep — the company
    *  the chain musters before `DriveThemOut` (12-quests.md §2). */
+  // The Warden, as a hero the banner brought: the kingdom starts with none.
   function readyToFight(units = 24): GameState {
     const state = watched();
+    grantHero(state, 'Warden');
     addAllTrainers(state);
     for (let i = 0; i < units; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
@@ -382,11 +385,14 @@ describe('clearing the lair', () => {
 
   const company = [{ unitId: 'Warrior' as const, count: 24 }];
 
-  it('is beatable by the company the chain musters, at the orc lair', () => {
+  // The chain sends the player at the Orcs long before the Tavern, so the
+  // first fight is the company alone.
+  it('is beatable by the company the chain musters, at the orc lair, with no hero', () => {
     const state = readyToFight();
-    const preview = previewLair(state, ORCS, ['Warden'], company);
+    const preview = previewLair(state, ORCS, [], company);
     expect(preview.enough).toBe(true);
-    expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('Cleared');
+    expect(preview.fallen).toBeGreaterThanOrEqual(0);
+    expect(attackLair(state, map, ORCS, [], company).result).toBe('Cleared');
     // Beaten, not yet cleared: the claim is what clears it (§5).
     expect(lairAwaitsClaim(state, ORCS)).toBe(true);
     expect(lairIsCleared(state, ORCS)).toBe(false);
@@ -396,7 +402,13 @@ describe('clearing the lair', () => {
     expect(clearedLairCount(state)).toBe(1);
   });
 
-  it('IS beatable by a hero alone — the first fight needs no army', () => {
+  it('refuses a party with nobody in it', () => {
+    const state = readyToFight();
+    expect(lairBlock(state, map, ORCS, [], [])).toBe('EmptyParty');
+    expect(lairBlock(state, map, ORCS, ['Scout'], company)).toBe('NoHero');
+  });
+
+  it('IS beatable by a hero alone', () => {
     const state = readyToFight();
     expect(attackLair(state, map, ORCS, ['Warden'], []).result).toBe('Cleared');
   });
@@ -534,7 +546,7 @@ describe('a save', () => {
     for (let i = 0; i < 24; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
-    attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 24 }]);
+    attackLair(state, map, ORCS, [], [{ unitId: 'Warrior', count: 24 }]);
     // A beaten lair keeps its unclaimed reward across a save…
     const beaten = deserialize(serialize(state, T0), map, T0 + DAY)!;
     expect(lairAwaitsClaim(beaten, ORCS)).toBe(true);
@@ -548,8 +560,10 @@ describe('a save', () => {
 });
 
 describe('the route to a lair', () => {
+  // A kingdom yet to call its first hero: the first fight is soldiers alone.
   function presenterAtTheLair() {
     const state = watched();
+    state.heroes.owned = [];
     addAllTrainers(state);
     for (let i = 0; i < 24; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
@@ -564,7 +578,8 @@ describe('the route to a lair', () => {
     expect(game.lairFor(ORCS)!.cleared).toBe(false);
     game.openLair(ORCS);
     expect(game.openOverlay).toBe('lair');
-    expect(game.partyHeroes).toEqual(['Warden']);
+    // No hero yet — the first fight is the company alone.
+    expect(game.partyHeroes).toEqual([]);
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 24 }]);
     expect(game.lairBlockText()).toBeNull();
     expect(game.lairPreview()!.enough).toBe(true);

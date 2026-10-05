@@ -198,7 +198,7 @@ plays this before the lair's own scene. Its lines are beats.
 |---|---|---|---|---|
 | `orcs` | the Orcs are discovered | **Grukk** (right), **the Warden** (right), Isolde | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *Soldiers it is! The research tree knows how to raise a Barracks — let's read it together.* | Research |
 | `raid` | the first raid lands | Isolde | *They've robbed our stores! Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.* | the lair |
-| `battle` | the first attack sheet opens | the Warden | *Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it'll go before we march.* | the attack button |
+| `battle` | the first attack sheet opens | the Warden | *Pick who goes in: as many soldiers as you can spare. The numbers tell you how it'll go before we march.* | the attack button |
 | `victory` | the first lair is cleared | the Warden, Isolde | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* | the lair |
 | `relics` | Relics opens | Isolde | *Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.* | Relics |
 
@@ -207,7 +207,7 @@ plays this before the lair's own scene. Its lines are beats.
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
 | `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
-| `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Bess:** *And me? I'm not bad with a ladle in a scrap, either.* · **Isolde:** *The Tavern flies the banner — your first call is on the house. And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
+| `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Isolde:** *The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
 | `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I'd love to sketch it.* | the Watchtower |
 | `world` | the Watchtower is claimed | Isolde | *Other kingdoms, Your Majesty. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob |

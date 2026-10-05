@@ -153,13 +153,15 @@ describe('the hero slots', () => {
     expect(game.partyHeroes).toEqual(['Warden', 'Adventurer']);
   });
 
-  it('clears a slot, and the party is never left without a hero to send', () => {
+  it('clears a slot, and soldiers may still go alone — but not nobody', () => {
     const game = atTheLair();
     game.partyHeroes = ['Warden'];
     game.clearHeroSlot(0);
     expect(game.partyHeroes).toEqual([]);
+    expect(game.lairBlockText()).toBeNull();
+    game.expeditionParty = [];
     // The fight refuses, in words, rather than the screen hiding the button.
-    expect(game.lairBlockText()).toBe('Pick a hero to lead them');
+    expect(game.lairBlockText()).toBe('Pick who goes in');
   });
 });
 
