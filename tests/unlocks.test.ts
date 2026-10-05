@@ -70,6 +70,21 @@ describe('the presenter', () => {
     expect(game.unlockQueue).toEqual([]);
   });
 
+  // The First Morning plays before the profile is asked (Docs/features/
+  // 14-monetization.md §3.1): nothing it opens may wait on a profile, or the
+  // morning stalls. Only the profile sheet, once owed, holds a splash back.
+  it('shows a splash through the First Morning, with no profile chosen yet', () => {
+    const state = firstGame();
+    state.player.payer = null;
+    const game = freshPresenter(state);
+    expect(game.payerDue()).toBe(false);
+    game.unlockQueue.push('relics');
+    expect(game.unlockOnScreen()).toBe('relics');
+    state.tutorial.veteran = true; // the morning is over, and the profile is owed
+    expect(game.payerDue()).toBe(true);
+    expect(game.unlockOnScreen()).toBeNull();
+  });
+
   it('waits for a reveal on screen to be read', () => {
     const game = freshPresenter(firstGame());
     game.unlockQueue.push('relics');
