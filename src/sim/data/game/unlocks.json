@@ -34,6 +34,13 @@
     "icon": "unlock_relics",
     "text": "Cards come in packs. Complete a page of the album and the kingdom earns a relic, a gift that grows every season."
   },
+  "bag": {
+    "kind": "door",
+    "target": "bag",
+    "title": "The Bag",
+    "icon": "unlock_bag",
+    "text": "Chests, speed-ups and boosts you find are kept here until you use them. Open a chest when you need what is inside, or spend a speed-up on any timer."
+  },
   "world": {
     "kind": "door",
     "target": "world",
