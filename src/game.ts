@@ -4870,7 +4870,8 @@ export class Game {
     }
     this.dismiss();
     this.scene = 'world';
-    this.worldCamera?.fitBoard();
+    // Out onto the board at the player's own city, up close.
+    this.worldCamera?.focusHex(hexAt(homeIndex(this.state)));
     void this.refreshWorld();
     this.notify();
   }
