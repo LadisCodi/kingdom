@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { HeroId, PreciousId, UnitId } from '../sim/state';
+import type { HeroId, LairId, PreciousId, UnitId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -230,6 +230,10 @@ export interface ArmyView {
   at: number | null;
   power: number;
   heroes: HeroId[] | null;
+  /** Its own owner sees what it fights with as it stands: each slot, a
+   *  hero's wounds, and the soldiers lost so far. */
+  slots?: Array<{ kind: 'troop' | 'hero'; unitId: UnitId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
+  fallen?: Array<{ unitId: UnitId; count: number }>;
 }
 
 export interface SeatView { seat: number; name: string; you: boolean; bot: boolean }
@@ -259,12 +263,27 @@ export interface WorldSnapshot {
   beaten?: number[];
   /** The hexes a dungeon stands on now. */
   dungeons: number[];
+  /** Each standing dungeon's name, creature and bosses, and the race. */
+  dungeonInfo?: DungeonView[];
   /** The Dark Portal as the player sees it. */
   portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
   /** Every standing offer on the Exchange. */
   offers?: OfferView[];
+}
+
+/** A standing dungeon as a player reads it (19 §8.1). */
+export interface DungeonView {
+  index: number;
+  /** What its rolls are keyed on: its sixth and how many times it moved. */
+  key: string;
+  name: string;
+  creature: LairId;
+  /** Who waits at the bottom of each depth. */
+  bosses: string[];
+  /** Every player who has cleared a room in it, furthest first. */
+  race: Array<{ seat: number; cleared: number }>;
 }
 
 /** An offer as a player sees it: whose, and whether it is theirs. */
@@ -306,5 +325,10 @@ export type SendResult =
 /** A dungeon room fought: the fight itself, for the battle screen, and
  *  whether it fell. */
 export type DelveResult =
-  | { ok: true; won: boolean; log: import('../sim/battle').BattleLog; depth: number; room: number; boss: boolean; snapshot: WorldSnapshot }
+  | {
+    ok: true; won: boolean; log: import('../sim/battle').BattleLog; depth: number; room: number; boss: boolean;
+    /** Soldiers this fight cost. */
+    lost: number;
+    snapshot: WorldSnapshot;
+  }
   | { ok: false; why: Refusal };

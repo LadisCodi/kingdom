@@ -20,7 +20,7 @@ import {
   LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
-import { PRECIOUS, type HeroId, type PreciousId, type UnitId } from '../sim/state';
+import { PRECIOUS, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
@@ -780,6 +780,7 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
     kind: 'loot', at: t,
     gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
     heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
+    precious: { id: lumpMaterial(boardData(b), closer, 'close', dungeonKey(b, index)), amount: Math.round(last.precious * k) },
   });
   report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true);
   for (const a of b.armies) {
@@ -833,7 +834,9 @@ export function roomPower(depth: number, room: number): number {
 }
 
 /** What a room pays (11-expeditions.md §7.1); a boss, a multiple of it. */
-export function roomReward(depth: number, room: number): { gold: number; knowledge: number; heroXp: number; stardust: number } {
+export function roomReward(
+  depth: number, room: number,
+): { gold: number; knowledge: number; heroXp: number; stardust: number; precious: number } {
   const d = WORLD_DUNGEON;
   const boss = room === d.roomsPerDepth ? d.bossRewardMultiplier : 1;
   const scale = d.rewardBase[depth] * d.rewardGrowth ** (room - 1) * boss;
@@ -842,6 +845,28 @@ export function roomReward(depth: number, room: number): { gold: number; knowled
     knowledge: Math.max(1, Math.round(d.knowledge * scale)),
     heroXp: Math.round(d.heroXp * scale),
     stardust: Math.round(d.stardust * scale),
+    precious: Math.max(1, Math.round(d.precious * scale)),
+  };
+}
+
+/** A dungeon as a player reads it: its name, the creature that holds it,
+ *  who waits at the bottom of each depth — all rolled with the dungeon, so
+ *  one that comes back is a new one (19 §8.1). */
+export function dungeonInfo(b: ServerBoard, index: number): { name: string; creature: LairId; bosses: string[] } {
+  const d = WORLD_DUNGEON;
+  const key = dungeonKey(b, index);
+  const word = (list: readonly string[], part: string) => list[randInt(b.seed, list.length, 'dungeonName', key, part)];
+  // Each sixth keeps its own first word — a board-wide offset plus the
+  // sixth — so two standing at once never share a name; one that comes back
+  // is told apart by its second.
+  const wedge = dungeonAt(b, index)?.wedge ?? 0;
+  const first = d.nameFirst[(randInt(b.seed, d.nameFirst.length, 'dungeonFirst') + wedge) % d.nameFirst.length];
+  const unit = dungeonAffinity(b, index);
+  const creature = (Object.keys(LAIRS) as LairId[]).find((l) => LAIRS[l].guard.threat === unit) ?? 'Orcs';
+  return {
+    name: `The ${first} ${word(d.nameSecond, 'second')}`,
+    creature,
+    bosses: Array.from({ length: d.depths }, (_, depth) => d.bossNames[randInt(b.seed, d.bossNames.length, 'dungeonBoss', key, depth)]),
   };
 }
 
@@ -870,16 +895,21 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   const after = boardAfter(log, a.board, 'ours');
   a.board = after.board;
   addFallen(a.fallen, after.fallen);
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
   const won = log.winner === 'ours';
   if (won) {
     progress[a.target] = cleared + 1;
-    owe(b, seat, { kind: 'loot', at: t, ...roomReward(next.depth, next.room) });
+    const { precious, ...pay } = roomReward(next.depth, next.room);
+    owe(b, seat, {
+      kind: 'loot', at: t, ...pay,
+      precious: { id: lumpMaterial(boardData(b), seat, 'room', dungeonKey(b, a.target), next.depth, next.room), amount: precious },
+    });
   }
   // The last boss down: the dungeon closes for everyone, this army too.
   if (won && nextRoom(cleared + 1) === null) closeDungeon(b, a.target, seat, t);
   // Nothing left to fight with: what is left walks home.
   else if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
-  return { ok: true, won, log, ...next, snapshot: snapshotOf(b, seat, t) };
+  return { ok: true, won, log, ...next, lost, snapshot: snapshotOf(b, seat, t) };
 }
 
 // ------------------------------------------------------------ the Portal
@@ -981,7 +1011,8 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
     owe(b, seat, { kind: 'loot', at: t, ...floorReward(floor), ...(gems > 0 ? { gems } : {}) });
   }
   if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
-  return { ok: true, won, log, depth: 0, room: floor, boss: false, snapshot: snapshotOf(b, seat, t) };
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
+  return { ok: true, won, log, depth: 0, room: floor, boss: false, lost, snapshot: snapshotOf(b, seat, t) };
 }
 
 function portalView(b: ServerBoard, seat: number, t: number): PortalView {
@@ -1155,6 +1186,13 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     id: a.id, owner: a.owner, purpose: a.purpose, phase: a.phase, path: a.path,
     departedAt: a.departedAt, stepMs: a.stepMs, target: a.target, at: a.at,
     power: boardPower(a.board), heroes: a.owner === seat ? [...a.heroes] : null,
+    ...(a.owner === seat ? {
+      slots: a.board.slots.map((s) => ({
+        kind: s.kind, unitId: s.unitId, fighterId: s.fighterId, name: s.name, count: s.count,
+        hp: s.hpPool, hpMax: s.hpUnit * Math.max(1, s.count),
+      })),
+      fallen: a.fallen.map((f) => ({ ...f })),
+    } : {}),
   }));
   return {
     board: { id: b.id, seed: b.seed, seat },
@@ -1168,6 +1206,15 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
       id: o.id, seat: o.seat, mine: o.seat === seat, give: { ...o.give }, want: { ...o.want }, expiresAt: o.expiresAt,
     })),
     dungeons: standingDungeons(b),
+    // Every standing dungeon: its name, and the race — how far each player
+    // has gone in it (19 §8.1).
+    dungeonInfo: standingDungeons(b).map((index) => ({
+      index, key: dungeonKey(b, index), ...dungeonInfo(b, index),
+      race: Object.entries(b.delves)
+        .map(([s, p]) => ({ seat: Number(s), cleared: p[index] ?? 0 }))
+        .filter((r) => r.cleared > 0)
+        .sort((x, y) => y.cleared - x.cleared || x.seat - y.seat),
+    })),
     portal: portalView(b, seat, t),
     effects: [],
   };

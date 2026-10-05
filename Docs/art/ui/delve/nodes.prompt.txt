@@ -1,0 +1,12 @@
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references (image 1: the game's UI kit pieces, drawn the way your output must be drawn; image 2: a mockup of the screen these pieces will be used in — copy its look, not its layout).
+
+A sprite sheet, square, 2×2 grid of four separate game UI pieces for a cozy fantasy mobile game, each centred in its own quadrant with a clear empty band of at least 40 px around it; nothing crosses the canvas midlines. Materials: carved stone and warm torchlight, textured, hand-painted, lit from above — never flat, never glossy, never plastic. Same painted style as image 1.
+
+- Top left: a ROOM NODE — a round carved stone disc seen slightly from above, like a stepping stone set into a cave stair, with a chiselled raised rim and a slightly dished centre, cool grey stone, unlit.
+- Top right: the SAME room node, the exact same shape and size, but LIT: warm orange torchlight glowing on it from inside, and its rim inlaid with a band of worn gold.
+- Bottom left: a BOSS NODE — a larger, darker carved stone disc, the same view, its rim carved with a ring of small horns and a skull motif at the front, ominous but cartoon-friendly.
+- Bottom right: a WALL TORCH — a wooden torch in an iron bracket meant to be fixed to a wall, burning with a bright warm flame, upright, taller than wide.
+
+The empty centre of every disc stays empty: no icons, no portraits, no numbers, no text anywhere.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

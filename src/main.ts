@@ -54,6 +54,7 @@ import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { renderArmySheet } from './ui/world/armySheet';
 import { renderExchangeSheet } from './ui/world/exchangeSheet';
+import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
 import { mountExchangeChip } from './ui/world/exchangeChip';
 import { HexCamera } from './render/world/hexCamera';
@@ -248,6 +249,7 @@ async function boot(): Promise<void> {
     world: renderDispatchSheet,
     army: renderArmySheet,
     exchange: renderExchangeSheet,
+    delve: renderDelveScreen,
     builder: renderBuilderSheet,
     pass: renderPassSheet,
     survey: renderSurveySheet,
