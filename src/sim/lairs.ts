@@ -40,7 +40,7 @@ import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
 import { recordSiteDiscovery } from './discovery';
 import { lairIsFound } from './lairZone';
 import { rand } from './rng';
-import { cityGoldPerMinute, ownGoldPerMinute } from './population';
+import { cityGoldPerMinute, ownGoldBase, ownGoldPerMinute } from './population';
 import { cityGatherPerSecond } from './upgrades';
 import { storedOf, takeFromStore } from './storage';
 import {
@@ -173,7 +173,7 @@ export function setUtcOffset(state: GameState, minutes: number, t: number): void
 export function cityRatePerSecond(state: GameState, currency: RaidableId): number {
   const gathered = cityGatherPerSecond(state, currency);
   if (currency !== 'Gold') return gathered;
-  return gathered + (cityGoldPerMinute(state) - ownGoldPerMinute(townhall(state))) / 60;
+  return gathered + (cityGoldPerMinute(state) - ownGoldPerMinute(state, townhall(state))) / 60;
 }
 
 /**
@@ -181,7 +181,7 @@ export function cityRatePerSecond(state: GameState, currency: RaidableId): numbe
  * is the city's floor, the one source of Gold a standing lair cannot shut off
  * (Docs/features/18-garrisons-and-raids.md §4).
  */
-const raidable = (d: District): boolean => ownGoldPerMinute(d) === 0;
+const raidable = (d: District): boolean => ownGoldBase(d) === 0;
 
 const raidableStored = (state: GameState, c: RaidableId): number =>
   state.city.districts.reduce((n, d) => n + (raidable(d) ? storedOf(d, c) : 0), 0);

@@ -69,6 +69,8 @@ export interface TechnologyDef {
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
   cost: Wallet; // city Gold and kingdom Knowledge
+  /** Refined goods paid with the Gold when it is completed; empty = none. */
+  goods: GoodsStock;
   requires: TechId[]; // tree edges — all must be completed first
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
@@ -110,7 +112,7 @@ export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) a
  * the page does not draw one, `canStartTech` refuses one and `GATES` below
  * skips one. These four numbers only exist so the fields stay non-optional.
  */
-const NO_SLOT = { tome: 'Civics' as TomeId, era: 1, row: 0, col: 0 };
+const NO_SLOT = { tome: 'Kingdom' as TomeId, era: 1, row: 0, col: 0 };
 
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
   TECH_ORDER.map((id) => {
@@ -131,6 +133,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
+      goods: (node.goods ?? {}) as GoodsStock,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];
@@ -902,25 +905,17 @@ export interface TomeDef {
 }
 
 /**
- * The shelf, in reading order: the three general books, then the found ones.
+ * The shelf, in reading order: the kingdom's one tree, then the found books.
  *
- * Civics is open from the first minute; every other book opens on a fact
- * about the world, never on a research (`sim/research.ts#TOME_OPENS`,
- * Docs/features/22-progression.md §4). What paces an open book is its era
- * bars, which ask for revealed cells.
+ * The tree is open from the first minute and read in CHAPTERS — its bands —
+ * one per Townhall step, each opened by revealed cells and closed by a finale
+ * that opens the next Townhall level (Docs/plans/tech-tree-rework.md). A found
+ * book opens on a fact about the world (`sim/research.ts#TOME_OPENS`).
  */
 export const TOMES: Record<TomeId, TomeDef> = {
-  Civics: {
-    id: 'Civics', name: 'Civics', glyph: '🏛️',
-    blurb: 'The city and its purse.',
-  },
-  Magic: {
-    id: 'Magic', name: 'Magic', glyph: '🔯',
-    blurb: 'The land’s magic, and what you can see of it.',
-  },
-  Warfare: {
-    id: 'Warfare', name: 'Warfare', glyph: '🚩',
-    blurb: 'The army, and the lairs it clears.',
+  Kingdom: {
+    id: 'Kingdom', name: 'Kingdom', glyph: '🏛️',
+    blurb: 'Everything the kingdom learns, chapter by chapter.',
   },
   Sagas: {
     id: 'Sagas', name: 'Sagas', glyph: '📖',
@@ -974,6 +969,21 @@ export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
       { length: ERA_COUNT[tome] },
       (_, i) => eraCells(treeDoc as unknown as TechTreeDoc, tome, i + 1),
     )];
+  }
+  return out;
+})();
+
+/**
+ * THE CARD PACK FINISHING A BAND PAYS — `ERA_REWARDS[tome][era]`, indexed by
+ * era like `ERA_UNLOCK_CELLS`, so `[0]` is unused. Null = that band pays
+ * nothing; a book the file names no rewards for pays nothing in any band.
+ */
+export const ERA_REWARDS: Record<TomeId, Array<PackTier | null>> = (() => {
+  const authored = (treeDoc as unknown as TechTreeDoc).eraRewards ?? {};
+  const out = {} as Record<TomeId, Array<PackTier | null>>;
+  for (const tome of TOME_ORDER) {
+    const list = authored[tome] ?? [];
+    out[tome] = [null, ...Array.from({ length: ERA_COUNT[tome] }, (_, i) => (list[i] ?? null) as PackTier | null)];
   }
   return out;
 })();
@@ -2405,4 +2415,4 @@ export const GAME_VERSION = '0.2.0';
 // v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
 // v85: the world board is radius 6 — the save's world fog, trips, builds,
 // Sanctuaries and armies are reset, the armies' troops sent home.
-export const SAVE_VERSION = 85;
+export const SAVE_VERSION = 86;

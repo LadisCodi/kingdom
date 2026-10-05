@@ -46,7 +46,8 @@ describe('the drip', () => {
     expect(knowledgeHeld(state)).toBe(10);
 
     // Pour some into a technology: the bar drops below the cap and fills again.
-    expect(pourKnowledge(state, 'Warrior').poured).toBeGreaterThan(0);
+    // Forestry: the tree's first card, workable from the first minute.
+    expect(pourKnowledge(state, 'Forestry').poured).toBeGreaterThan(0);
     const after = knowledgeHeld(state);
     expect(after).toBeLessThan(10);
     // The clock ran while the bar was full, and banked nothing: the next point

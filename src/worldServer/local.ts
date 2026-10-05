@@ -13,10 +13,10 @@ import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
   claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  sendArmy, snapshotOf, upgrade,
+  sendArmy, setBoost, snapshotOf, upgrade,
 } from './core';
 import type {
-  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SendResult, ServerBoard, ServerWorld,
+  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard, ServerWorld,
   WorldSnapshot,
 } from './types';
 
@@ -32,10 +32,12 @@ export interface WorldServerApi {
   finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[]; speed?: number },
     now: number, asSeat?: number,
   ): Promise<SendResult>;
   recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
+  /** What this kingdom's research does to its districts' output and stores. */
+  setBoost(boost: SeatBoost, now: number): Promise<void>;
   delveRoom(armyId: string, now: number): Promise<DelveResult>;
   descendPortal(armyId: string, now: number): Promise<DelveResult>;
   /** Dev only: move every time on the player's board `ms` into the past,
@@ -149,11 +151,19 @@ export class LocalWorldServer implements WorldServerApi {
   }
 
   async sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
+    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[]; speed?: number },
     now: number, asSeat?: number,
   ): Promise<SendResult> {
     return this.run(asSeat, (b, seat) => sendArmy(b, seat, req, now), { ok: false, why: 'NoBoard' });
   }
+
+  async setBoost(boost: SeatBoost, now: number): Promise<void> {
+    const at = this.mine();
+    if (at === null) return;
+    setBoost(at.board, at.seat, boost, now);
+    this.persist();
+  }
+
 
   async recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => recall(b, seat, armyId, now), { ok: false, why: 'NoBoard' });

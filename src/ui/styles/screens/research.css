@@ -238,9 +238,7 @@
 }
 .rb-mark > .icon { position: relative; --icon-size: calc(var(--px) * 30); }
 .rb-mark.is-open { height: calc(var(--px) * 90); }
-.rb-mark[data-tome='Civics'] { --tome: #efe2bd; }
-.rb-mark[data-tome='Warfare'] { --tome: #c2493b; }
-.rb-mark[data-tome='Magic'] { --tome: #3d67bf; }
+.rb-mark[data-tome='Kingdom'] { --tome: #efe2bd; }
 .rb-mark[data-tome='Sagas'] { --tome: #d9912f; }
 .rb-mark[data-tome='Atlas'] { --tome: #4f9a6a; }
 /* A shut general book (Docs/features/22-progression.md §3): the ribbon in

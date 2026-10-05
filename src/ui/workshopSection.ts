@@ -34,7 +34,7 @@ export function workshopSection(
   const recipe = recipeOf(district);
   const line = game.state.city.workshops[district.uniqueId];
   const items = line?.items ?? [];
-  const capacity = queueCapacity(district);
+  const capacity = queueCapacity(game.state, district);
   const crew = district.assignedWorkers;
 
   const box = el('div', { class: 'dc-workshop' });
@@ -120,7 +120,7 @@ export function workshopSection(
 function workshopQueue(game: Game, district: District): HTMLElement {
   const now = game.now();
   const items = game.state.city.workshops[district.uniqueId]?.items ?? [];
-  const capacity = queueCapacity(district);
+  const capacity = queueCapacity(game.state, district);
   const crew = district.assignedWorkers;
   const box = el('div', { class: 'dc-ws-live' });
   const strip = el('div', { class: 'dc-ws-queue' });

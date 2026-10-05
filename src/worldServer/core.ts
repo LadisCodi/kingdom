@@ -27,8 +27,8 @@ import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/t
 import { boardOf } from '../sim/world/source';
 import { WORLD_DISTRICTS, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SendResult,
-  ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
+  SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
 } from './types';
 
 const HOUR = 3_600_000;
@@ -71,12 +71,37 @@ export function districtOf(bh: BoardHex): WorldDistrict | null {
 /** What a district on this hex makes an hour and how much its store holds,
  *  in its currency: the inner ring multiplies both, so its store lasts the
  *  same hours. */
-export function districtRate(bh: BoardHex): { currency: WorldStoreCurrency | null; perHour: number; cap: number } {
+export function districtRate(
+  bh: BoardHex, boost: SeatBoost = NO_BOOST,
+): { currency: WorldStoreCurrency | null; perHour: number; cap: number } {
   const d = districtOf(bh);
   const def = d === null ? null : WORLD_BUILD.districts[d];
   if (def === null || def.produces === '') return { currency: null, perHour: 0, cap: 0 };
   const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
-  return { currency: def.produces, perHour: def.perHour * mult, cap: def.store * mult };
+  return { currency: def.produces, perHour: def.perHour * mult * boost.produce, cap: def.store * mult * boost.store };
+}
+
+const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
+
+/** What a seat's research does to its districts' output and stores; none for
+ *  a free hex. */
+const boostOf = (b: ServerBoard, owner: number | null): SeatBoost =>
+  (owner === null ? undefined : b.seats[owner]?.boost) ?? NO_BOOST;
+
+/**
+ * Take a seat's multipliers on its districts' output and stores. A rate
+ * changes only at an event, so every store is settled to `t` first: what was
+ * made before the research is not repriced, and nothing after it is missed.
+ */
+export function setBoost(b: ServerBoard, seat: number, boost: SeatBoost, t: number): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined) return;
+  const next = { produce: Math.max(1, boost.produce), store: Math.max(1, boost.store) };
+  const now = s.boost ?? NO_BOOST;
+  if (now.produce === next.produce && now.store === next.store) return;
+  resolveTo(b, t);
+  settleStores(b, t);
+  s.boost = next;
 }
 
 /** What the next claim costs a seat that already holds or claims `held`
@@ -123,7 +148,7 @@ export function storedAt(b: ServerBoard, index: number, t: number): number {
   if (h === undefined) return 0;
   const dt = t - h.storeAt;
   if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return h.stored;
-  const { perHour, cap } = districtRate(boardData(b).hexes[index]);
+  const { perHour, cap } = districtRate(boardData(b).hexes[index], boostOf(b, h.owner));
   return Math.min(Math.max(cap, h.stored), h.stored + (perHour * dt) / HOUR);
 }
 
@@ -473,7 +498,7 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
  *  its troops off the roster; the server trusts what it was sent. */
 export function sendArmy(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[] },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[]; speed?: number },
   t: number,
 ): SendResult {
   resolveTo(b, t);
@@ -489,12 +514,14 @@ export function sendArmy(
 /** Put an army on the road — inside the resolve loop as well as from it. */
 function launch(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[] },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[]; speed?: number },
   t: number,
 ): ServerArmy {
   const path = req.path;
-  // Every hex adds its own time as it is left; the server prices it.
-  const stepMs = stepTimes(boardData(b).hexes, path, 'army');
+  // Every hex adds its own time as it is left; the server prices it, at the
+  // pace the client sent.
+  const speed = Math.max(1, req.speed ?? 1);
+  const stepMs = stepTimes(boardData(b).hexes, path, 'army', () => speed);
   const a: ServerArmy = {
     id: `army_${b.nextId++}`, owner: seat, heroes: [...req.heroes], board: req.board, path,
     departedAt: t, stepMs, purpose: req.purpose,
@@ -900,7 +927,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     const index = Number(k);
     const bh = data.hexes[index];
     const mineHex = h.owner === seat;
-    const rate = districtRate(bh);
+    const rate = districtRate(bh, boostOf(b, h.owner));
     return {
       index, owner: h.owner, held: isHeld(h, t), standsAt: h.standsAt,
       district: districtOf(bh) ?? 'Rural', fortress: h.fortress, work: h.work, active: h.active,

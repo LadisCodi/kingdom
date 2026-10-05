@@ -26,6 +26,7 @@ import { activeQuest } from './quests';
 import { rand } from './rng';
 import { cellHasSite } from './sites';
 import { isTechComplete } from './research';
+import { techMultiplier } from './techEffects';
 import {
   addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type GameState, type Wallet,
 } from './state';
@@ -134,7 +135,11 @@ export function treasureReward(state: GameState, treasure: { n: number; coin: Cu
   if (coin === 'Knowledge') return { Knowledge: TREASURE.knowledge };
   const rate = coin === 'Gold' ? cityGoldPerSecond(state) : cityGatherPerSecond(state, coin);
   const floor = TREASURE.floor[coin] ?? 0;
-  return { [coin]: Math.max(floor, Math.round(rate * TREASURE.workSeconds)) };
+  // The tree's `treasureYield` lifts a find priced in production — never the
+  // first, which the opening counts on, and never Knowledge, which the
+  // chapters' budget counts on.
+  return { [coin]: Math.round(Math.max(floor, rate * TREASURE.workSeconds)
+    * techMultiplier(state, 'treasureYield')) };
 }
 
 export type PickUpResult = { kind: 'PickedUp'; reward: Wallet } | { kind: 'None' } | { kind: 'Hidden' };

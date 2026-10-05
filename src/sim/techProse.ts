@@ -131,9 +131,20 @@ function unlockClauses(unlocks: readonly TechUnlock[]): string[] {
       byLevel.set(level, [...(byLevel.get(level) ?? []), districtName(id)]);
     } else rest.push(unlockPhrase(unlock));
   }
-  const levels = [...byLevel.entries()].map(([level, names]) => (names.length === 1
-    ? `${names[0]} level ${level}`
-    : `${serial(names)} at level ${level}`));
+  // …and one set of buildings reaching SEVERAL levels is one clause too:
+  // "Farm, Sawmill, Quarry and Docks at levels 9 and 10", not the four names
+  // twice over (a chapter's last card opens the top two levels at once).
+  const bySet = new Map<string, { names: string[]; levels: number[] }>();
+  for (const [level, names] of byLevel) {
+    const key = names.join('|');
+    const group = bySet.get(key) ?? { names, levels: [] };
+    group.levels.push(level);
+    bySet.set(key, group);
+  }
+  const levels = [...bySet.values()].map(({ names, levels: at }) => {
+    const which = at.length === 1 ? `level ${at[0]}` : `levels ${serial(at.map(String))}`;
+    return names.length === 1 ? `${names[0]} ${which}` : `${serial(names)} at ${which}`;
+  });
   return [...levels, ...rest];
 }
 

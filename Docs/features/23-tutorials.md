@@ -176,25 +176,24 @@ last line, as a hint.
 | `survey` | the Survey opens, after `townhall2` | Isolde | *And look — the Royal Survey! Every patch we win back from the fog is written in it, and the crown pays for every page. We've filled a few already!* | the Survey pill |
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
-| `eras` | 43 cells revealed — Civics chapter II | Isolde | *You've seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.* | Research |
+| `eras` | 100 cells revealed — chapter 3's bar | Isolde | *You've seen more of the land than any monarch in years — and look, the tree has noticed! A new chapter can open.* | Research |
 
 ### 4.2 The Orcs
 
-**`firstLair` — the Book of Warfare is handed over.** The first lair found,
-Orcs or Harpies, plays this before the lair's own scene. Its lines are beats.
+**`firstLair` — the first lair.** The first lair found, Orcs or Harpies,
+plays this before the lair's own scene. Its lines are beats.
 
 | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|
 | *Your Majesty — a camp, out past the fog! Whoever they are, they've seen our smoke too. Tap it… carefully.* | the lair | the lair | its card is open |
 | *Raiders! See that clock? When it runs out, they rob our stores — and nothing near their camp can be worked while it stands.* | the lair's card | all | tap |
-| *Axes won't do. But — wait! I have a book for this. The Book of Warfare. I never dared open it… here, it's yours now.* | — | all | tap — **she gives the book**: it opens, and its splash follows (§4.6) |
+| *Axes won't do. We need soldiers — and the research tree knows how to raise them. Look for the Warrior.* | — | all | tap |
 
-- **The Book of Warfare opens on her gift and nothing else** — not on the
-  lair. A veteran kingdom has every book open.
+- The Warrior is a card in chapter 2 of the one tree; nothing is handed over.
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `orcs` | the Orcs are discovered | **Grukk** (right), **the Warden** (right), Isolde | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *Soldiers it is! The Book of Warfare starts with a Barracks — let's read it together.* | Research |
+| `orcs` | the Orcs are discovered | **Grukk** (right), **the Warden** (right), Isolde | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Warden:** *Warden of the Guard, Your Majesty. Give me soldiers and I'll drive them out.* · **Isolde:** *Soldiers it is! The research tree knows how to raise a Barracks — let's read it together.* | Research |
 | `raid` | the first raid lands | Isolde | *They've robbed our stores! Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.* | the lair |
 | `battle` | the first attack sheet opens | the Warden | *Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it'll go before we march.* | the attack button |
 | `victory` | the first lair is cleared | the Warden, Isolde | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* | the lair |
@@ -204,7 +203,7 @@ Orcs or Harpies, plays this before the lair's own scene. Its lines are beats.
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. And the Book of Magic is open! I've waited years for this.* | Research |
+| `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Bess:** *And me? I'm not bad with a ladle in a scrap, either.* · **Isolde:** *The Tavern flies the banner — your first call is on the house. And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
 | `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I'd love to sketch it.* | the Watchtower |
@@ -236,7 +235,7 @@ Each points at what it is about.
 A big opening is named full-screen before anyone talks about it.
 
 - **What has one:** the doors Build, Research, Heroes, Relics and the world,
-  and the books Warfare, Magic, Sagas and Atlas. Nothing else.
+  and the found books Sagas and Atlas. Nothing else.
 - **What it shows:** a dark veil over the whole game, the thing's icon on a
   slowly turning golden burst, its name, and one paragraph.
 - **The way out:** *Tap to continue* appears two seconds after the entrance

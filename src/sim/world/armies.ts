@@ -11,6 +11,16 @@ import { DISTRICTS, WORLD, levelIndexed } from '../data/definitions';
 import { applyLosses, woundedCap, woundedCount, woundedOf, woundedShareFor } from '../army';
 import { setHeroHp } from '../heroHealth';
 import { newId, type GameState, type HeroId, type UnitId, type WorldArmyOut } from '../state';
+import { techMultiplier } from '../techEffects';
+
+/**
+ * How much faster this kingdom's armies march over every hex — the tree's
+ * `armyMarchSpeed`, a speed each hex's time is divided by. The march is
+ * timed by the world server; the city prices its own pace and sends it with
+ * the army, the way it sends the army's board (worldServer/core.ts#sendArmy).
+ */
+export const armyMarchSpeed = (state: GameState): number =>
+  Math.max(1, techMultiplier(state, 'armyMarchSpeed'));
 
 /** How many armies can be out at once: the base, plus the War Camp's. */
 export function armySlots(state: GameState): number {

@@ -5,7 +5,7 @@ import { CITY_DEF, DISTRICTS, TRAINING, levelIndexed } from './data/definitions'
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordEvent } from './events';
-import { techValue } from './techEffects';
+import { techMultiplier, techValue } from './techEffects';
 import { effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { storageSpace, storeInto } from './storage';
 import { addToWallet, type District, type GameState } from './state';
@@ -76,7 +76,7 @@ export const houseTaxBonus = (district: District): number => {
  * whatever the levels standing in it.
  */
 export function houseGoldPerMinute(state: GameState, district: District): number {
-  const own = ownGoldPerMinute(district);
+  const own = ownGoldPerMinute(state, district);
   const residents = residentsOf(state, district);
   if (residents === 0) return own;
   return own + Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
@@ -85,14 +85,20 @@ export function houseGoldPerMinute(state: GameState, district: District): number
 }
 
 /**
- * The Gold a building makes BY ITSELF a minute, with nobody in it — the
- * Townhall's own income (`buildings.goldPerMinutePerLevel`), so the city
- * always has a source of Gold. A level fact; nothing scales it.
+ * The Gold a building makes BY ITSELF a minute at its level, with nobody in
+ * it — the Townhall's own income (`buildings.goldPerMinutePerLevel`), so the
+ * city always has a source of Gold. 0 for every building that makes none,
+ * which is what the checks for "does it pay at all" read.
  */
-export const ownGoldPerMinute = (district: District): number => {
+export const ownGoldBase = (district: District): number => {
   const list = DISTRICTS[district.definitionId].goldPerMinutePerLevel;
   return list.length === 0 ? 0 : levelIndexed(list, district.level);
 };
+
+/** …and what it actually makes, after the tree (`ownGold`). A percent of 0
+ *  is 0, so a building that makes none still makes none. */
+export const ownGoldPerMinute = (state: GameState, district: District): number =>
+  techMultiplier(state, 'ownGold') * ownGoldBase(district);
 
 /** City-wide Gold income a minute: every house's rent and the Townhall's own. */
 export function cityGoldPerMinute(state: GameState): number {
@@ -175,7 +181,7 @@ export const villagerTrainSeconds = (place: number): number =>
  *  an income of its own. */
 const rentPayers = (state: GameState): District[] =>
   state.city.districts.filter((d) => d.state === 'Built'
-    && (districtCapacity(state, d) > 0 || ownGoldPerMinute(d) > 0));
+    && (districtCapacity(state, d) > 0 || ownGoldBase(d) > 0));
 
 /**
  * A house's rate just changed at `t`: rescale its partial progress since the

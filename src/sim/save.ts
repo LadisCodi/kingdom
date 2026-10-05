@@ -988,6 +988,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.research': {
         Completed: state.research.completed,
         Poured: state.research.poured,
+        Rewarded: state.research.rewarded,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -1408,6 +1409,7 @@ export function deserialize(
       poured: Object.fromEntries(Object.entries((researchDto.Poured ?? {}) as Record<string, number>)
         .filter(([id, n]) => TECHNOLOGIES[id as TechId] !== undefined && n > 0
           && !(researchDto.Completed ?? []).includes(id))) as Partial<Record<TechId, number>>,
+      rewarded: Array.isArray(researchDto.Rewarded) ? (researchDto.Rewarded as string[]) : [],
     };
   }
 

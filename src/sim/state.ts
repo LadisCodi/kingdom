@@ -83,7 +83,7 @@ export type HeroId =
  *  layout: one bounded page per book, each paced by eras
  *  (Docs/features/07-research.md §2); what opens each is
  *  `sim/research.ts#TOME_OPENS`. */
-export type TomeId = 'Civics' | 'Warfare' | 'Magic' | 'Sagas' | 'Atlas';
+export type TomeId = 'Kingdom' | 'Sagas' | 'Atlas';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
@@ -586,6 +586,9 @@ export interface GameState {
     /** Knowledge poured into technologies not yet researched. It stays there
      *  for ever; a technology leaves this map when it is researched. */
     poured: Partial<Record<TechId, number>>;
+    /** Bands finished whole whose card pack has been paid, as `Tome:era` —
+     *  so a band pays once, whatever is researched after. */
+    rewarded: string[];
   };
   /**
    * Scheduled content: seasons, events and gacha banners.

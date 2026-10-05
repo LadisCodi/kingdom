@@ -73,7 +73,10 @@ export function effectiveStock(
   // The relic's term is FLAT and lands AFTER the terrain multiplier, so a
   // richer ground and a richer relic add rather than compounding — and `+1` is
   // a real +20% on a five-unit Stone where a percentage would round away.
-  return Math.max(1, Math.round(resolve(state, 'harvestStock', spec.stock * m)));
+  // The tree's `cellStock` scales the depot with the ground, before the
+  // relic's flat term — a richer kind of tree, not a richer relic.
+  const held = spec.stock * m * techMultiplier(state, 'cellStock', { harvest: spec.id });
+  return Math.max(1, Math.round(resolve(state, 'harvestStock', held)));
 }
 
 /**
@@ -154,7 +157,9 @@ export const effectiveRecoveryMs = (
  * must never reprice a bush already on its way back.
  */
 export const effectiveRespawnMs = (state: GameState, spec: HarvestSpec): number =>
-  Math.max(1000, Math.round(resolve(state, 'cellRespawn', spec.respawnSeconds * 1000)));
+  Math.max(1000, Math.round(resolve(state, 'cellRespawn', spec.respawnSeconds * 1000)
+    // A SPEED the wait is divided by, aimed at the source (`respawnSpeed`).
+    / Math.max(1, techMultiplier(state, 'respawnSpeed', { harvest: spec.id }))));
 
 /** A depot with no capacity never runs down and never recovers, because it
  *  never went anywhere: `stock` 0 is how the workbook says "this is bedrock".

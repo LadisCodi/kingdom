@@ -25,15 +25,20 @@ import { getWallet } from '../src/sim/state';
 import {
   HARVEST, LANDMARKS, LAIRS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { armyCap, trainCost, trainSecondsAt, woundedCap, woundedShareFor } from '../src/sim/army';
+import { armyCap, healSecondsAt, trainCost, trainSecondsAt, woundedCap, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
-import { explorerSlots, revealRadius } from '../src/sim/world/explorers';
+import { explorerSlots, explorerSpeed, revealRadius } from '../src/sim/world/explorers';
+import { armyMarchSpeed } from '../src/sim/world/armies';
+import { worldImprovementBoost } from '../src/sim/world/boost';
+import { decorationHarmony } from '../src/sim/harmony';
+import { treasureReward } from '../src/sim/treasures';
+import { assignableWorkerLimit, influenceRadius } from '../src/sim/workers';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { manaCap, manaProduction } from '../src/sim/mana';
 import { firstClearLump, knowledgeLump, landmarkClaimLump } from '../src/sim/knowledge';
-import { cityGoldPerMinute, districtCapacity, maxPopulation } from '../src/sim/population';
+import { cityGoldPerMinute, districtCapacity, maxPopulation, ownGoldPerMinute } from '../src/sim/population';
 import {
   cityGatherPerSecond, effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
   effectiveTaxRate,
@@ -41,9 +46,9 @@ import {
   tapWorkSeconds, workerStrikeMs,
 } from '../src/sim/upgrades';
 import { addHeroXp, callStardust } from '../src/sim/heroes';
-import { effectiveRecoveryMs } from '../src/sim/harvest';
+import { effectiveRecoveryMs, effectiveRespawnMs, effectiveStock } from '../src/sim/harvest';
 import { storageCapacity } from '../src/sim/storage';
-import { queuedWorkMs } from '../src/sim/workshops';
+import { queueCapacity, queuedWorkMs } from '../src/sim/workshops';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import {
@@ -78,6 +83,8 @@ function probeState(): GameState {
   addBuilt(state, 'Barracks', { x: 8, y: 2 });
   addBuilt(state, 'Sanctum', { x: 9, y: 2 });
   addBuilt(state, 'Carpenter', { x: 10, y: 2 });
+  addBuilt(state, 'Docks', { x: 11, y: 2 });
+  addBuilt(state, 'Garden', { x: 12, y: 2 });
   state.city.population = 4;
   // Two landmarks held and one lair cleared, so the per-entity drips are not
   // multiplied by zero.
@@ -110,6 +117,17 @@ function probe(state: GameState): Record<string, number> {
     put(`tapDraw.${id}`, tapDraw(state, spec, 0));
     put(`strikeMs.${id}`, workerStrikeMs(state, spec));
     put(`recoveryMs.${id}`, effectiveRecoveryMs(state, spec, { x: 0, y: 0 }));
+    put(`stock.${id}`, effectiveStock(state, map, { x: 0, y: 0 }, spec));
+    put(`respawnMs.${id}`, effectiveRespawnMs(state, spec));
+  }
+  // What a producer's crew does, building by building.
+  for (const d of state.city.districts) {
+    const source = d.definitionId === 'Farm' ? 'Crops' : d.definitionId === 'Sawmill' ? 'Forest'
+      : d.definitionId === 'Quarry' ? 'Stone' : d.definitionId === 'Docks' ? 'Fish' : null;
+    if (source === null) continue;
+    put(`strikeMs.${d.definitionId}`, workerStrikeMs(state, HARVEST[source], d));
+    put(`crewSlots.${d.definitionId}`, assignableWorkerLimit(state, d));
+    put(`reach.${d.definitionId}`, influenceRadius(state, d));
   }
   const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill') ?? null;
   put('workerStrike.Forest.sawmill', effectiveWorkerStrike(state, HARVEST.Forest, sawmill));
@@ -135,6 +153,13 @@ function probe(state: GameState): Record<string, number> {
     put(`trainMs.${u}`, trainSecondsAt(state, barracks.uniqueId, u));
   }
   put('workshopMs.Planks', queuedWorkMs(state, carpenter, 'Planks'));
+  put('workshopQueue.Carpenter', queueCapacity(state, carpenter));
+  put('ownGold.Townhall', ownGoldPerMinute(state, th));
+  const garden = state.city.districts.find((d) => d.definitionId === 'Garden')!;
+  put('harmony.Garden', decorationHarmony(state, garden));
+  const infirmary = state.city.districts.find((d) => d.definitionId === 'Infirmary')!;
+  put('healSeconds.Warrior10', healSecondsAt(state, infirmary.uniqueId, 'Warrior', 10));
+  for (const [c, n] of Object.entries(treasureReward(state, { n: 5, coin: 'Wood' }))) put(`treasure.${c}`, n as number);
   put('woundedCap', woundedCap(state));
   put('callStardust', callStardust(state, 'basic'));
 
@@ -191,6 +216,11 @@ function probe(state: GameState): Record<string, number> {
   // The world board.
   put('explorerSlots', explorerSlots(state));
   put('worldRevealRadius', revealRadius(state));
+  put('explorerSpeed', explorerSpeed(state));
+  put('armyMarchSpeed', armyMarchSpeed(state));
+  const boost = worldImprovementBoost(state);
+  put('improvement.produce', boost.produce);
+  put('improvement.store', boost.store);
 
   // A control that no ladder may move: what a lair fields, which is authored
   // and belongs to nobody's ladder.

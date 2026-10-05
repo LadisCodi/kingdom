@@ -53,8 +53,8 @@
 | BuildDistrict · RepairDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
 - **`FindLairs` counts lairs found**, cleared or not — a lair is found when a
-  cell of its zone is revealed. The Book of Warfare opens on the first, so the
-  chain asks for it before any military research.
+  cell of its zone is revealed. The chain asks for it before any military
+  research, so the soldiers have a reason.
   - The hint points at the dark cell nearest the ground of the nearest lair
     not yet found.
 - **`ClaimLandmarks` may name a landmark kind** — *Claim the Watchtower* — and
@@ -94,7 +94,7 @@
 | **8–13** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, a worker | |
 | **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build**; the Store and the Survey |
 | **20–25** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
-| **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
+| **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
 | **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
 | **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
