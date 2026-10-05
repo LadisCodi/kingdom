@@ -73,8 +73,8 @@ export function districtCardSignature(game: Game, district: District): string {
   if (district.state === 'Built' && district.level < def.maxLevel) {
     parts.push(
       shorts(upgradeCost(district.definitionId, district.ordinal, district.level) as Record<string, number>),
-      upgradeGoodsCost(district.definitionId, next),
-      canAffordGoods(s.city.goods, upgradeGoodsCost(district.definitionId, next)),
+      upgradeGoodsCost(s, district.definitionId, next),
+      canAffordGoods(s.city.goods, upgradeGoodsCost(s, district.definitionId, next)),
       harmonyBlock(s, def, next, district),
       requiredPopulation(district.definitionId, next),
       upgradeDuration(s, district.definitionId, district.level),

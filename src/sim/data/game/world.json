@@ -110,8 +110,8 @@
         "name": "Fortress",
         "levels": [
           { "gold": 2500, "buildSeconds": 7200 },
-          { "gold": 6000, "buildSeconds": 21600 },
-          { "gold": 14000, "buildSeconds": 43200 }
+          { "gold": 6000, "buildSeconds": 21600, "anyPrecious": 10 },
+          { "gold": 14000, "buildSeconds": 43200, "goods": { "Starmetal": 10, "Heartwood": 10, "Moonglass": 10 } }
         ]
       }
     },

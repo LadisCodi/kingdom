@@ -230,7 +230,7 @@ describe('the late levels are gated by goods, the Townhall AND the chapter\'s ca
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('NotEnoughGoods');
 
     // And the goods are the only thing left between the player and the level.
-    for (const [good, n] of Object.entries(upgradeGoodsCost('Sawmill', 6))) {
+    for (const [good, n] of Object.entries(upgradeGoodsCost(state, 'Sawmill', 6))) {
       addGood(state.city.goods, good as GoodId, n);
     }
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
@@ -247,7 +247,7 @@ describe('the late levels are gated by goods, the Townhall AND the chapter\'s ca
     addGood(state.city.goods, 'Planks', 10);
     addGood(state.city.goods, 'CutStone', 4);
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
-    expect(getGood(state.city.goods, 'Planks')).toBe(10 - upgradeGoodsCost('Sawmill', 6).Planks!);
+    expect(getGood(state.city.goods, 'Planks')).toBe(10 - upgradeGoodsCost(state, 'Sawmill', 6).Planks!);
     expect(getGood(state.city.goods, 'CutStone')).toBe(4);
   });
 });

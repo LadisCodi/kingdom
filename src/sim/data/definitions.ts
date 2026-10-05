@@ -656,7 +656,8 @@ export interface DistrictDef {
    *  per level: index 0 is the BUILD, index 1 what reaching level 2 costs.
    *  Authored on the `DistrictCosts` sheet, never derived from a curve
    *  (Docs/features/05-city-and-districts.md §3). Exactly `maxLevel` long. */
-  costPerLevel: readonly { cost: Wallet; goods: GoodsStock }[];
+  /** `anyPrecious`: so many of any precious material (19 §7.6). */
+  costPerLevel: readonly { cost: Wallet; goods: GoodsStock; anyPrecious?: number | null }[];
   /** How much dearer a LATER instance is:
    *  `M(N) = linear × (N − 1) + growth^(N − 1)`, which is exactly 1 at N = 1,
    *  so the first one pays the table. The linear term prices the early
@@ -2109,7 +2110,8 @@ export interface WorldDistrictDef {
 /** An upgrade built into a district that stands, and its levels (19 §7.2). */
 export interface WorldUpgradeDef {
   name: string;
-  levels: ReadonlyArray<{ gold: number; buildSeconds: number }>;
+  /** `goods` and `anyPrecious`: the precious materials a level costs (19 §7.6). */
+  levels: ReadonlyArray<{ gold: number; buildSeconds: number; goods?: GoodsStock | null; anyPrecious?: number | null }>;
 }
 
 /** What is built on a held world hex and what it pays (19 §5.1, §7). */

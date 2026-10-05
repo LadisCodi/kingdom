@@ -47,6 +47,10 @@ export function goodsCostForLevel(def: DistrictDef, level: number): GoodsStock {
   return def.costPerLevel[level - 1]?.goods ?? {};
 }
 
+/** What reaching `level` costs in precious material of any kind. */
+export const anyPreciousForLevel = (def: DistrictDef, level: number): number =>
+  def.costPerLevel[level - 1]?.anyPrecious ?? 0;
+
 /** Everything the city holds, in authored order, for a card that lists it. */
 export const goodsHeld = (state: GameState): { id: GoodId; amount: number }[] =>
   (Object.keys(GOODS) as GoodId[])

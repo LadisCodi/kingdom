@@ -213,7 +213,20 @@
                   "type": "object",
                   "fields": {
                     "gold": { "type": "int", "min": 0, "doc": "Gold this level costs." },
-                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." }
+                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." },
+                    "anyPrecious": {
+                      "type": "int",
+                      "min": 0,
+                      "nullable": true,
+                      "doc": "Precious material of any kind this level costs (19 §7.6)."
+                    },
+                    "goods": {
+                      "type": "map",
+                      "of": { "type": "int", "min": 0 },
+                      "keysRef": "good",
+                      "nullable": true,
+                      "doc": "Goods — precious materials, chiefly — this level costs."
+                    }
                   }
                 },
                 "doc": "Level 1 is the build."

@@ -437,6 +437,28 @@ gates them; *Cartography* opens the first explorer.
 - **Each rival keeps one offer up**: `botOfferAmount` of its own material,
   one for one, for one of the other two.
 
+### 7.6 What they buy
+
+- **Never while the world is shut.** Until the Watchtower is claimed, no
+  price asks for precious material: its terms are left off.
+- **Early: a few of any.** A building's level 5 asks `anyPrecious` (5; the
+  Townhall 10) of any material, and Fortress level 2 asks 10. *Any* is paid
+  from what the player holds most of, after the named terms, and the price
+  shows the materials it will take.
+- **Late: each of the three, named.** Levels 8–10 of every building but
+  Housing name all three materials, the two the player does not yield
+  included:
+
+  | Buildings | Level 8 | Level 9 | Level 10 |
+  |---|---|---|---|
+  | producers and workshops | 2 each | 4 each | 6 each |
+  | the Sanctum, the Tavern, the halls, the Infirmary, the War Camp | 4 each | 8 each | 12 each |
+  | the Townhall | 10 each | 20 each | 30 each |
+
+  Fortress level 3 asks 10 of each.
+- They are goods terms on a level's price: `buildings` › `costPerLevel`
+  (`goods`, `anyPrecious`) and `worldBuild.upgrades` › `levels`.
+
 ## 8. Features
 
 A hex holds **none or one**. A feature decides the district built there
@@ -597,6 +619,7 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Precious prices** — level 5's *any*, levels 8–10 each (§7.6) | how much the late city needs the world and trade | the late city stalls, or ignores the world |
 | **Rich shares** and **precious yield** (4 a day) | how much of the world's materials the board makes | late prices go unpaid, or the materials pile up |
 | **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
