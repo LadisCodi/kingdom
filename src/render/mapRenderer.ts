@@ -37,7 +37,7 @@ import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
-  drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
+  drawIcon, drawSprite, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
@@ -47,7 +47,7 @@ import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
-import { formatCount, formatDuration } from '../ui/format';
+import { formatCount, formatDuration, formatExact } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 import { drawFogLayer } from './fog/fogLayer';
@@ -125,6 +125,36 @@ function labelFace(): string {
       .getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
   }
   return labelFontStack;
+}
+
+/** The level of a building past its first, on the blue enamel plaque the
+ *  upgrade sheet wears (Docs/art/originals/ui-level-plaques.png): the number
+ *  in white, outlined in the plaque's own blue. Its top-right corner sits at
+ *  (right, top), the roof's corner. */
+const PLAQUE_CAP = 70 / 480; // the plaque's round end, as its nine-slice cuts it
+const PLAQUE_INK = '#154576';
+function drawLevelPlaque(
+  ctx: CanvasRenderingContext2D, level: number, right: number, top: number, size: number,
+): void {
+  const h = Math.max(17, size * 0.2);
+  const text = formatExact(level);
+  ctx.save();
+  ctx.font = labelFont(h * 0.64, 11, true);
+  const w = Math.max(h * 1.7, ctx.measureText(text).width + h * 1.1);
+  const x = right - w;
+  if (!drawSpriteThreeSlice(ctx, 'plaque_level', PLAQUE_CAP, x, top, w, h)) {
+    ctx.fillStyle = PLAQUE_INK;
+    ctx.fillRect(x, top, w, h);
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, h * 0.16);
+  ctx.strokeStyle = PLAQUE_INK;
+  ctx.strokeText(text, x + w / 2, top + h * 0.47);
+  ctx.fillStyle = PALETTE.label;
+  ctx.fillText(text, x + w / 2, top + h * 0.47);
+  ctx.restore();
 }
 
 /** Map labels are NUMBERS and short counts, so they are set in the body face,
@@ -504,13 +534,7 @@ export function drawMap(
       ctx.fillStyle = PALETTE.constructionHatch;
       fillDiamond(ctx, box);
     } else {
-      if (district.level > 1) {
-        ctx.fillStyle = PALETTE.label;
-        ctx.font = labelFont(size * 0.16, 12);
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`L${district.level}`, box.x + box.w - 3, roof);
-      }
+      if (district.level > 1) drawLevelPlaque(ctx, district.level, box.x + box.w - 3, roof, size);
       // Exhausted crop plot: withered overlay (unless its sprite covers it).
       if (exhaustedPlot && !drewExhaustedPlot) {
         drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, box.x, c.y - box.h * 0.5, box.w, size * 0.3, box.h);
