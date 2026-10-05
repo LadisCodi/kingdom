@@ -1,0 +1,27 @@
+WORLD DISTRICT SPRITES for the game "Kingdom". Follow this file exactly.
+
+GENERATE NEW IMAGES. Do not edit or export the attached files: they are ONLY style references.
+- approved-sheet1.png = TWO HEX SPRITES ALREADY APPROVED. THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same scale of trees, rocks, houses and animals, same camera.
+- ref-assets.png = sprites that already ship in the game. Top row: LOGGING CAMP, STONE PIT, HOMESTEAD, FORTRESS — districts a player builds. Bottom row: FOREST, GAME, LANDMARK, SANCTUARY — the features they stand on. Your sprites sit next to these on the same board: match them.
+
+WHAT A SPRITE IS (same rules as the attached ones)
+- The CONTENT of one hex of the world board, standing on a separate ground tile the game draws under it. NO ground plate, NO base, NO hex outline, NO drop shadow. Only the objects, on full transparency. Small tufts of grass, bushes and short dirt paths between objects are fine.
+- Camera: from a little south of overhead, objects seen from a high three-quarter angle, standing upright.
+- Footprint: a hex tile seen at this tilt has a top face like an elongated hexagon, about 1.4 times wider than tall. Every object stands inside it; things may rise above it.
+- Draw as if shown about 130 px wide on a phone: big readable shapes, no tiny details.
+- Blue roofs, cream walls and stone, golden timber, as in ref-assets.png.
+- Each district INCLUDES the feature it works, as the LOGGING CAMP includes its forest.
+- VARIANTS of the same district must be clearly the same kind of place, at the same size, with a different arrangement and silhouette.
+
+EACH SHEET: one landscape image, 1536x1024, FOUR sprites in a 2x2 grid (top-left, top-right, bottom-left, bottom-right). Nothing may cross the vertical or the horizontal midline: keep a clear 60 px band of transparency along both midlines. Every sprite about the same size as those in approved-sheet1.png relative to its quadrant.
+
+End of every request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG. Do not re-render to fix a prop count.
+
+=== THE DISTRICTS ===
+RURAL DISTRICT — a small hamlet on bare grass: three or four little cottages with blue roofs and cream walls, a stone well, a tiny vegetable patch, a few trees and bushes, short dirt paths between the houses. Humble and lived-in, a little smaller than the HOMESTEAD. NO wheat fields, NO castle, NO walls.
+HUNTING GROUNDS — a hunter's log cabin with a blue roof, a wooden drying rack with hides, antlers over the door, a woodpile, and a deer or a boar among bushes nearby, like the GAME of ref-assets. NO fields.
+OBSERVATORY — the LANDMARK of ref-assets (ancient standing stones with faintly glowing blue runes, moss, flowers) with a small round cream-stone tower beside them, its blue dome open on a brass telescope. Scholarly and calm.
+SHRINE — the SANCTUARY of ref-assets (white marble over a clear blue spring) tended by people: a small cream-stone chapel with a blue roof beside it, a short stone path, candles and flowers. Calm and holy.
+
+=== SHEET 1 === TL: RURAL DISTRICT v1, three cottages round a well. TR: RURAL DISTRICT v2, four cottages along a short lane, a cart. BL: RURAL DISTRICT v3, two cottages, a little barn and the vegetable patch. BR: HUNTING GROUNDS v1, the cabin with the drying rack and a pair of deer.
+=== SHEET 2 === TL: OBSERVATORY v1, a ring of standing stones with the tower at the back-right. TR: SHRINE v1, the marble spring at the front, the chapel at the back. BL: HUNTING GROUNDS v2, the cabin among conifers, a boar at the front. BR: RURAL DISTRICT v4, three cottages and a tall tree, a hen yard.

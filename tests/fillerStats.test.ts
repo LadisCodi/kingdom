@@ -23,9 +23,8 @@ import { buildBoard, generateEnemy } from '../src/sim/battle';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
 import { boardNeighbors } from '../src/sim/world/hex';
 import {
-  build, claim, emptyWorld, fittingImprovements, improvementRate, join, resolveTo, sendArmy, setBoost, storesAt,
+  claim, districtRate, emptyWorld, join, resolveTo, sendArmy, setBoost, storedAt,
 } from '../src/worldServer/core';
-import { WORLD_BUILD } from '../src/sim/data/definitions';
 import { townhall, type District, type DistrictId, type GameState, type TechId } from '../src/sim/state';
 import { FOREST, addBuilt, freshGame, fund, map, T0 } from './helpers';
 
@@ -214,28 +213,25 @@ describe('the world', () => {
     const w = emptyWorld();
     const { board: b, seat } = join(w, { id: 'me', name: 'Me', prefer: { id: 'test', seed: 0x5eed, seat: 0 } }, T0);
     for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
+    // A claimed hex IS its district, and a producing one fills a store.
     const at = boardNeighbors(SEAT_INDICES[seat])
-      .find((n) => fittingImprovements(data.hexes[n]).some((k) => k !== 'Fortress')
-        && !data.hexes[n].features.includes('Dungeon'))!;
-    claim(b, seat, at, T0);
-    const t1 = T0 + WORLD_BUILD.outpost.buildSeconds * 1000;
-    const kind = fittingImprovements(data.hexes[at]).find((k) => k !== 'Fortress')!;
-    const r = build(b, seat, at, kind, t1);
+      .find((n) => districtRate(data.hexes[n]).perHour > 0 && !data.hexes[n].features.includes('Dungeon'))!;
+    const r = claim(b, seat, at, T0);
     if (!r.ok) throw new Error(r.why);
     const HOUR = 3_600_000;
-    const { perHour, cap } = improvementRate(data.hexes[at], kind, 1);
-    expect(improvementRate(data.hexes[at], kind, 1, { produce: 1.5, store: 2 }))
-      .toEqual({ perHour: perHour * 1.5, cap: cap * 2 });
+    const { perHour, cap } = districtRate(data.hexes[at]);
+    expect(districtRate(data.hexes[at], { produce: 1.5, store: 2 }))
+      .toMatchObject({ perHour: perHour * 1.5, cap: cap * 2 });
 
     const boostAt = r.finishesAt + HOUR;
     resolveTo(b, boostAt);
-    const before = storesAt(b, at, boostAt).material;
+    const before = storedAt(b, at, boostAt);
     setBoost(b, seat, { produce: 1.5, store: 2 }, boostAt);
     // What was made before the research is not repriced…
-    expect(storesAt(b, at, boostAt).material).toBeCloseTo(before, 9);
+    expect(storedAt(b, at, boostAt)).toBeCloseTo(before, 9);
     // …and what is made after it is.
     resolveTo(b, boostAt + HOUR);
-    expect(storesAt(b, at, boostAt + HOUR).material).toBeCloseTo(Math.min(cap * 2, before + perHour * 1.5), 6);
+    expect(storedAt(b, at, boostAt + HOUR)).toBeCloseTo(Math.min(cap * 2, before + perHour * 1.5), 6);
   });
 
   it('treasureYield lifts a find priced in production, never the first and never Knowledge', () => {

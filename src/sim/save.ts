@@ -28,7 +28,7 @@ import { newGame } from './newGame';
 import { isStoreFull } from './storage';
 import { freshWorld } from './world/explorers';
 import { readBits } from './world/fogBits';
-import { WORLD_IMPROVEMENTS } from './world/types';
+import { WORLD_DISTRICTS, WORLD_UPGRADES } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   cellsOfRect, coordKey, districtOccupies, parseCoordKey,
@@ -1751,7 +1751,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
       })),
     builds: (Array.isArray(d.Builds) ? d.Builds : [])
       .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
-        && (b.What === 'Outpost' || WORLD_IMPROVEMENTS.includes(b.What as never)))
+        && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never)))
       .map((b) => ({
         index: b.Index as number,
         what: b.What as GameState['world']['builds'][number]['what'],

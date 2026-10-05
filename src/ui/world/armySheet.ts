@@ -23,7 +23,7 @@ export function renderArmySheet(game: Game): HTMLElement {
   const steps = route === null ? hexDistance(hexAt(game.homeHex()), hexAt(target)) : route.path.length - 1;
   const preview = game.armyPreview();
   const march = route === null ? 'no way there' : formatDuration(outboundMs(route.stepMs) / 1000);
-  const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.improvements.Fortress.name}`
+  const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.upgrades.Fortress.name}`
     : game.armyPurpose === 'claim' ? 'Ground nobody holds'
       : game.armyPurpose === 'delve' ? 'A dungeon'
         : game.armyPurpose === 'portal' ? 'The Dark Portal' : `${seatName(game, h?.owner ?? null)} ground`;

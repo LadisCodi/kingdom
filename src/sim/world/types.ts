@@ -7,9 +7,14 @@
 export const WORLD_TERRAINS = ['Grassland', 'Plains', 'Desert'] as const;
 export type WorldTerrain = typeof WORLD_TERRAINS[number];
 
-/** What a player builds on a held hex, after its Outpost (19 §7). */
-export const WORLD_IMPROVEMENTS = ['LoggingCamp', 'Homestead', 'StonePit', 'Fortress'] as const;
-export type WorldImprovement = typeof WORLD_IMPROVEMENTS[number];
+/** What a held hex is (19 §7): the claim builds it, and the hex's feature
+ *  decides which — `worldBuild.districts` says which feature each takes. */
+export const WORLD_DISTRICTS = ['Rural', 'LoggingCamp', 'Quarry', 'FarmLands', 'HuntingGrounds', 'Observatory', 'Shrine'] as const;
+export type WorldDistrict = typeof WORLD_DISTRICTS[number];
+
+/** What can be built into a district that stands (19 §7.2). */
+export const WORLD_UPGRADES = ['Fortress'] as const;
+export type WorldUpgrade = typeof WORLD_UPGRADES[number];
 
 /** In the order a hex rolls them: the first to roll and fit is the one it
  *  keeps (`maxFeaturesPerHex`, 19 §9). A Mountain is a feature, as in the

@@ -666,8 +666,8 @@
         {"stat":"crewSlots","op":"flat","value":1}
       ]
     },
-    "LoggingCampsI": {
-      "name": "Logging Camps I", "glyph": "🏕️", "kind": "bonus",
+    "FrontierWorksI": {
+      "name": "Frontier Works I", "glyph": "🏕️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 2,
       "requires": ["MinersI"],
       "gold": 85000, "knowledge": 15,

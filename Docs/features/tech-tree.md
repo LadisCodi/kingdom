@@ -153,7 +153,7 @@
 | **Warhorns I** | +10% unitAtk | 85,000 G · 15 K | *dead end* |
 | **Old Growth I** | +25% cellStock — Wood | 85,000 G · 9 K |  |
 | **Bunkhouse I** | +1 crewSlots | 85,000 G · 9 K |  |
-| **Logging Camps I** | +15% improvementYield | 85,000 G · 15 K | *dead end* |
+| **Frontier Works I** | +15% improvementYield | 85,000 G · 15 K | *dead end* |
 | **Dominion** | Townhall L8 | 130,000 G · 6 K · 4 Planks · 4 CutStone · 2 Iron | **finale** |
 
 ## 9. Chapter 8 — Townhall 8 → 9

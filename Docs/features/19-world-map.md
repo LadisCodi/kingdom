@@ -9,15 +9,13 @@
 >
 > **Status: built against a local stand-in for the world server**:
 > the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
-> the explorers (§3); the chain and inactive hexes (§5.2–§5.3);
+> the explorers (§3); claiming a district, its store, its roads and the
+> Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); Dungeons (§8.1) and the Dark Portal (§10), which opens on
 > Fridays (UTC) for three days, its numbers in `worldPortal`. Five stand-in
 > rivals claim, build, man a Fortress and now and then attack on their own.
->
-> **Designed, not yet built: districts (§5.1, §7)** — today a claim is an
-> Outpost and then an improvement. The plan is
-> [`../plans/world-districts.md`](../plans/world-districts.md).
+> The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
 
