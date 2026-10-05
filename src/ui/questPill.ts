@@ -35,6 +35,7 @@ import type { CurrencyId, DistrictId } from '../sim/state';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';
+import { ScrollRoll } from './scrollRoll';
 import { iconEl, progress, currencyIcon, type IconName } from './kit';
 
 /** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
@@ -85,16 +86,8 @@ const rewardNodes = (quest: QuestDef): Node[] => {
   return parts;
 };
 
-/** The unroll, in ms. The words start before the parchment is fully open. */
-const OPEN_MS = 520;
-const WORDS_IN_AT = 360;
-const WORDS_MS = 200;
-const CLOSE_WORDS_MS = 160;
-const CLOSE_MS = 420;
 /** The pause between rolling one quest up and unrolling the next. */
 const BETWEEN_MS = 500;
-/** How narrow the rolled-up scroll is: its two rollers side by side. */
-const ROLLED = 0.16;
 
 const sleep = (ms: number) => new Promise<void>((r) => { window.setTimeout(r, ms); });
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -136,35 +129,8 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   });
   root.replaceChildren(scroll);
 
-  const unroll = async () => {
-    const fast = calm();
-    base.animate([
-      { width: `${ROLLED * 100}%`, opacity: 0 },
-      { width: '100%', opacity: 1 },
-    ], { duration: fast ? 0 : OPEN_MS, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'backwards' });
-    const words = content.animate([{ opacity: 0 }, { opacity: 1 }], {
-      duration: fast ? 0 : WORDS_MS, delay: fast ? 0 : WORDS_IN_AT, fill: 'backwards',
-    });
-    if (!fast) playSfx('scrollOpen');
-    await words.finished;
-  };
-
-  const rollUp = async () => {
-    const fast = calm();
-    if (!fast) playSfx('scrollClose');
-    await content.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: fast ? 0 : CLOSE_WORDS_MS, fill: 'forwards',
-    }).finished;
-    await base.animate([
-      { width: '100%', opacity: 1 },
-      { width: `${ROLLED * 100}%`, opacity: 0 },
-    ], { duration: fast ? 0 : CLOSE_MS, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)', fill: 'forwards' }).finished;
-  };
-
-  /** Drop the held end states of a roll-up, so the next unroll starts clean. */
-  const settle = () => {
-    for (const a of [...base.getAnimations(), ...content.getAnimations()]) a.cancel();
-  };
+  // The roll itself lives in ./scrollRoll.ts; every wait in it ends.
+  const roll = new ScrollRoll(base, content, calm, playSfx);
 
   // Rebuild only what changes with the quest itself; the rest is mutated.
   let shownIndex = -1;
@@ -208,30 +174,37 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     busy = true;
     // The claimed card keeps its face while it rolls up, but stops bobbing.
     scroll.classList.add('is-leaving');
-    await rollUp();
     let next = game.questInfo();
-    if (next !== null) {
-      await sleep(BETWEEN_MS);
+    try {
+      await roll.rollUp();
       next = game.questInfo();
+      if (next !== null) {
+        await sleep(BETWEEN_MS);
+        next = game.questInfo();
+      }
+    } finally {
+      // Whatever ended the roll-up, the scroll does not stay rolled up and
+      // busy: that was the blank scroll (Docs/plans/ux-pass.md §2.2).
+      roll.settle();
+      scroll.classList.remove('is-leaving');
+      busy = false;
     }
-    settle();
-    scroll.classList.remove('is-leaving');
     if (next === null) {
       // The chain is done: the scroll stays rolled up, and goes.
       shownIndex = -1;
       root.hidden = true;
-      busy = false;
       return;
     }
     fill(next);
     live(next);
     root.hidden = game.hasOpenSheet();
-    busy = false;
-    await unroll();
+    await roll.unroll();
   };
 
   const refresh = () => {
     if (busy) return;
+    // Between rolls, nothing may still hold the words faded out.
+    roll.heal();
     const info = game.questInfo();
     if (info === null) {
       // Retired when the chain ends — rolled up first if it was on screen.
@@ -252,7 +225,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     live(info);
     if (owedUnroll && !root.hidden) {
       owedUnroll = false;
-      void unroll();
+      void roll.unroll();
     }
   };
   game.onChange(refresh);
