@@ -165,12 +165,12 @@
 | **Citadels** | the four halls L8 | 180,000 G · 6 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
 | **Paving** | the Plaza | 180,000 G · 6 K |  |
 | **Stonecutting II** | +15% harvestYield — Stone | 180,000 G · 6 K |  |
-| **Warband IV** | Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army. | 180,000 G · 6 K |  |
+| **Colours I** | +10% armyCap | 180,000 G · 6 K |  |
 | **Trade Routes V** | +10% taxRate | 180,000 G · 6 K |  |
 | **Surveying I** | +1 influenceRadius | 180,000 G · 6 K |  |
 | **Shield Wall II** | +10% unitDef — Melee | 180,000 G · 10 K | *dead end* |
 | **Guild Halls II** | +15% workshopSpeed | 180,000 G · 6 K |  |
-| **Attunement IV** | Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from. | 180,000 G · 6 K |  |
+| **Attunement IV** | Sanctum L6 · Sanctum L7 · Sanctum L8 · Sanctum L9 · Sanctum L10 | 180,000 G · 6 K |  |
 | **Swift Scouts I** | +25% explorerSpeed | 180,000 G · 10 K | *dead end* |
 | **Sovereignty** | Townhall L9 | 270,000 G · 4 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone | **finale** |
 
@@ -183,7 +183,7 @@
 | **Warlords** | the four halls L9 · the four halls L10 | 380,000 G · 9 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Sacred Grounds** | the Shrine | 380,000 G · 9 K |  |
 | **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 380,000 G · 9 K |  |
-| **Colours I** | +10% armyCap | 380,000 G · 9 K |  |
+| **Warhorns II** | +10% unitAtk | 380,000 G · 9 K |  |
 | **Flowerbeds I** | +25% decorationHarmony | 380,000 G · 9 K |  |
 | **Fishers I** | +15% crewStrikeSpeed — Docks | 380,000 G · 9 K |  |
 | **Supply Depots I** | +25% improvementStore | 380,000 G · 15 K | *dead end* |
@@ -262,7 +262,7 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | `tapWorkSeconds` | multiplies the number | 0 |
 | `taxRate` | multiplies the number | 5 |
 | `treasureYield` | multiplies a fog treasure priced in production; never the first, never Knowledge | 1 |
-| `unitAtk` | multiplies the number | 2 |
+| `unitAtk` | multiplies the number | 3 |
 | `unitDef` | multiplies the number | 3 |
 | `unitHp` | multiplies the number | 1 |
 | `villagerTrainingSpeed` | a villager’s training time is divided by it | 1 |

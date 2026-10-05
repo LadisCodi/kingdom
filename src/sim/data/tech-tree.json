@@ -719,12 +719,14 @@
         {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Stone"}}
       ]
     },
-    "WarbandIV": {
-      "name": "Warband IV", "glyph": "🏰", "kind": "mechanic",
-      "description": "Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.",
+    "ColoursI": {
+      "name": "Colours I", "glyph": "🚩", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 35, "col": 2,
       "requires": ["Citadels"],
-      "gold": 180000, "knowledge": 6
+      "gold": 180000, "knowledge": 6,
+      "effects": [
+        {"stat":"armyCap","op":"percent","value":10}
+      ]
     },
     "TradeRoutesV": {
       "name": "Trade Routes V", "glyph": "💰", "kind": "bonus",
@@ -738,7 +740,7 @@
     "SurveyingI": {
       "name": "Surveying I", "glyph": "📐", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 36, "col": 1,
-      "requires": ["StonecuttingII", "WarbandIV"],
+      "requires": ["StonecuttingII", "ColoursI"],
       "gold": 180000, "knowledge": 6,
       "effects": [
         {"stat":"influenceRadius","op":"flat","value":1}
@@ -747,7 +749,7 @@
     "ShieldWallII": {
       "name": "Shield Wall II", "glyph": "🛡️", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 36, "col": 2,
-      "requires": ["WarbandIV"],
+      "requires": ["ColoursI"],
       "gold": 180000, "knowledge": 10,
       "effects": [
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Melee"}}
@@ -763,11 +765,11 @@
       ]
     },
     "AttunementIV": {
-      "name": "Attunement IV", "glyph": "💫", "kind": "mechanic",
-      "description": "Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.",
+      "name": "Attunement IV", "glyph": "💫", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 1,
       "requires": ["SurveyingI"],
-      "gold": 180000, "knowledge": 6
+      "gold": 180000, "knowledge": 6,
+      "unlocks": [{"districtLevel":{"id":"Sanctum","level":6}}, {"districtLevel":{"id":"Sanctum","level":7}}, {"districtLevel":{"id":"Sanctum","level":8}}, {"districtLevel":{"id":"Sanctum","level":9}}, {"districtLevel":{"id":"Sanctum","level":10}}]
     },
     "SwiftScoutsI": {
       "name": "Swift Scouts I", "glyph": "🏃", "kind": "bonus",
@@ -822,13 +824,13 @@
         {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
       ]
     },
-    "ColoursI": {
-      "name": "Colours I", "glyph": "🚩", "kind": "bonus",
+    "WarhornsII": {
+      "name": "Warhorns II", "glyph": "📯", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 40, "col": 2,
       "requires": ["Warlords"],
       "gold": 380000, "knowledge": 9,
       "effects": [
-        {"stat":"armyCap","op":"percent","value":10}
+        {"stat":"unitAtk","op":"percent","value":10}
       ]
     },
     "FlowerbedsI": {
@@ -843,7 +845,7 @@
     "FishersI": {
       "name": "Fishers I", "glyph": "🎣", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 1,
-      "requires": ["IronPicksI", "ColoursI"],
+      "requires": ["IronPicksI", "WarhornsII"],
       "gold": 380000, "knowledge": 9,
       "effects": [
         {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Docks"}}
@@ -852,7 +854,7 @@
     "SupplyDepotsI": {
       "name": "Supply Depots I", "glyph": "📦", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 2,
-      "requires": ["ColoursI"],
+      "requires": ["WarhornsII"],
       "gold": 380000, "knowledge": 15,
       "effects": [
         {"stat":"improvementStore","op":"percent","value":25}
