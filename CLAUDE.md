@@ -144,6 +144,26 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | **a tutorial scene, a line, a speaker** — who says what, where the box sits, what it points at, what locks, what moves it on — at `?dev=data` › Scenes / Speakers / Tutorial help (`Docs/features/23-tutorials.md`, `24-dialogue.md`) | a new scene **condition kind** (`src/ui/stage/conditions.ts`), a new pointer target syntax (`targets.ts`) |
 | which quest opens a UI door is its position in the chain | **what opens a door** (`sim/doors.ts`) and **what opens a book** (`sim/research.ts` `TOME_OPENS`) |
 
+## Branching — Git Flow
+
+`main` is what is live (a push to it deploys GitHub Pages); `develop` is
+where work lands. Neither is committed to directly — everything arrives by
+PR, merged with a merge commit.
+
+| Branch | From | Merges into | For |
+|---|---|---|---|
+| `feature/<slug>` | `develop` | `develop` | new behaviour, art, docs, chores |
+| `bugfix/<slug>` | `develop` | `develop` | a bug not yet on `main` |
+| `release/<x.y.z>` | `develop` | `main`, then back into `develop` | shipping; tag `v<x.y.z>` on `main` |
+| `hotfix/<slug>` | `main` | `main`, then back into `develop` | a bug that is live; bumps the patch |
+
+- **GitHub runs no tests.** The gate is local: `npm test` and `npm run build`
+  both green before a branch is pushed for a PR, and again on the release
+  branch before it goes to `main`. Red means no PR.
+- **Finishing a feature or bugfix is one motion**: commit, run the gate,
+  push, open the PR into `develop`, merge it. No need to ask.
+- **A release or hotfix to `main` is only on request** — it deploys.
+
 ## Saves
 
 `SAVE_VERSION` is 83; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
@@ -259,4 +279,5 @@ Rules for writting design documents:
   (`Docs/implementation-plan.md` §5).
 - Don't re-type a file's contents from tool output when editing — read and
   modify in place.
-- Don't commit or push unless asked. Branch off `develop`.
+- Don't push to `main` or open a release unless asked; everything else
+  follows Git Flow above.
