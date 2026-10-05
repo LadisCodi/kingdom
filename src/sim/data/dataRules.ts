@@ -58,7 +58,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
   { id: 'adjacency', label: 'Adjacency', domain: 'City', view: 'table', noun: 'rule', source: 'adjacency' },
   { id: 'economy', label: 'Economy', domain: 'City', view: 'form', noun: 'setting',
-    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush'] },
+    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'bag'] },
 
   { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', file: 'src/sim/data/tech-tree.json' },
 
@@ -88,6 +88,8 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'unlocks', label: 'Unlock splashes', domain: 'Progression', view: 'table', noun: 'unlock', source: 'unlocks' },
 
   { id: 'store', label: 'Store', domain: 'Store', view: 'table', noun: 'product', source: 'store' },
+  // The Bag (Docs/plans/relics-and-bag.md): what the player holds and uses.
+  { id: 'items', label: 'Items', domain: 'Progression', view: 'table', noun: 'item', source: 'items' },
   { id: 'packs', label: 'Card packs', domain: 'Store', view: 'table', noun: 'pack', source: 'packs' },
   { id: 'banners', label: 'Banners', domain: 'Store', view: 'table', noun: 'banner', source: 'banners' },
   { id: 'monetization', label: 'Ads & payers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer'] },
@@ -178,6 +180,9 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   worldDistrict: WORLD_DISTRICTS,
   worldUpgrade: WORLD_UPGRADES,
 };
+
+/** The coins a chest may pay: what the city makes, by rent or by crews. */
+export const CHEST_COINS: readonly string[] = ['Gold', 'Food', 'Wood', 'Stone'];
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
 export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'] as const;
@@ -494,7 +499,7 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   bookOpen: () => ['Kingdom', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
-  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag'],
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
@@ -636,6 +641,15 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (num(r.magnitude) === 0) push(i, ['magnitude'], 'a rule with magnitude 0 does nothing — delete it');
       if (r.stat !== 'goldPerMinute' && Math.abs(num(r.magnitude)) > ADJACENCY_CLAMP) {
         push(i, ['magnitude'], `is past the ±${ADJACENCY_CLAMP} clamp`);
+      }
+    }
+  },
+  items: (doc, push) => {
+    for (const [id, it] of records(doc.items)) {
+      // A chest pays the city's own production, and only the four coins the
+      // city makes have one (`cityMakesPerSecond`).
+      if (it.kind === 'chest' && !CHEST_COINS.includes(String(it.coin))) {
+        push(id, ['coin'], 'a chest pays Gold, Food, Wood or Stone');
       }
     }
   },

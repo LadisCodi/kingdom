@@ -43,6 +43,10 @@ import { setAttr } from './domWrite';
 // than after the thing it buys made the relics a screen behind a screen.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName; door: DoorId }> = [
   { name: 'store', label: 'Store', icon: 'shop', door: 'store' },
+  // The Bag (Docs/art/ui-inventory.md §3.1). It takes the Relics tab's
+  // place once relics are found rather than collected; until then the bar
+  // carries both.
+  { name: 'bag', label: 'Bag', icon: 'chest', door: 'bag' },
   { name: 'collection', label: 'Relics', icon: 'relics', door: 'relics' },
   { name: 'heroes', label: 'Heroes', icon: 'helmet', door: 'heroes' },
   { name: 'research', label: 'Research', icon: 'research', door: 'research' },
@@ -95,7 +99,8 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       const count = locked ? 0
         : def.name === 'build' ? game.buildCtaCount()
           : def.name === 'research' ? game.researchCtaCount()
-            : 0;
+            : def.name === 'bag' ? game.bagBadge()
+              : 0;
       // The kit's orb, with the count on it past one (kit/cta.ts).
       setCta(button, count);
     }

@@ -9,6 +9,7 @@ import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import buildings from './data/game/buildings.json';
+import items from './data/game/items.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 import type { AlbumId } from './data/seasons';
@@ -44,6 +45,9 @@ export type GoodsStock = Partial<Record<GoodId, number>>;
  *  way `TechId` is the tree's: a building added in `?dev=data` is a type the
  *  moment it is saved, and a typo anywhere still fails to compile. */
 export type DistrictId = keyof typeof buildings;
+/** Every item the Bag can hold — `data/game/items.json`'s keys, like
+ *  `DistrictId` (Docs/plans/relics-and-bag.md). */
+export type ItemId = keyof typeof items;
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -817,6 +821,15 @@ export interface GameState {
   /** The abandoned buildings whose repair has started, by id — from then on
    *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
   abandoned: { repaired: Record<string, true> };
+  /**
+   * THE BAG (Docs/proposals/inventory.md): what the player holds and has not
+   * used yet. Not a wallet — an item is spent by being USED, never by a
+   * price. `held` absent = none; nothing in it expires or can be raided.
+   * `fresh` is every item gained since its tile was last tapped (the tile's
+   * sparkle, the tab's dot); `badge` counts what was gained since the Bag was
+   * last opened (the nav's orb).
+   */
+  bag: { held: Partial<Record<ItemId, number>>; fresh: Partial<Record<ItemId, true>>; badge: number };
   /**
    * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
    * save; nothing in the game reads them. Counts live on `tallies` under

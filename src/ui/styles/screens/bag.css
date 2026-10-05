@@ -1,0 +1,183 @@
+/* The Bag (Docs/art/ui-inventory.md §3, M69): tabs over a grid of square
+ * plates, four a row, and the popover a tile opens inside the grid. */
+
+/* THE TABS: the Build menu's wooden plates (build.css), four across. */
+.bag-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--px) * 6);
+  padding-top: calc(var(--px) * 8);
+  margin-bottom: calc(var(--px) * 10);
+}
+/* A tab with nothing in it is still there, greyed — the wood gone dull. */
+.bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
+/* Something new in it: a small red wax dot at the plate's corner. */
+.bag-dot {
+  position: absolute;
+  top: calc(var(--px) * -3);
+  right: calc(var(--px) * -2);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
+  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
+}
+
+/* THE GRID: four plates a row; the popover spans the row under its tile. */
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--px) * 8);
+  align-content: start;
+  padding-bottom: var(--space-section);
+}
+.bag-grid.is-empty { display: flex; align-items: center; justify-content: center; min-height: calc(var(--px) * 200); }
+.bag-empty {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* THE TILE: a square plate painted in its tier's colour over wood, lit from
+ * above, the size printed at the top and the count at the bottom right in
+ * cream with a dark outline. */
+.bag-tile {
+  --tier: #e8d6ae;
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: calc(var(--px) * 2) solid rgba(60, 36, 18, 0.75);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%, rgba(40, 22, 10, 0.28)),
+    linear-gradient(var(--tier), var(--tier)),
+    url('../../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128);
+  background-blend-mode: normal, multiply, normal;
+  box-shadow:
+    inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.35),
+    inset 0 calc(var(--px) * -3) 0 rgba(40, 22, 10, 0.35),
+    0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.5);
+  cursor: pointer;
+}
+.bag-tile.is-tier-1 { --tier: #efe0bd; }
+.bag-tile.is-tier-2 { --tier: #8fd06a; }
+.bag-tile.is-tier-3 { --tier: #6fb6e0; }
+.bag-tile.is-tier-4 { --tier: #b38ae6; }
+.bag-tile.is-tier-5 { --tier: #f4c24a; }
+.bag-tile:active { translate: 0 calc(var(--px) * 2); box-shadow: inset 0 calc(var(--px) * 3) calc(var(--px) * 4) rgba(40, 22, 10, 0.45); }
+.bag-tile > .icon { --icon-size: 58%; }
+.bag-tile-size,
+.bag-tile-count {
+  position: absolute;
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 14);
+  font-weight: var(--weight-title);
+  color: var(--ink-inverse);
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    calc(var(--px) * -1) calc(var(--px) * -1) 0 #2b1709, calc(var(--px) * 1) calc(var(--px) * -1) 0 #2b1709,
+    calc(var(--px) * -1) calc(var(--px) * 1) 0 #2b1709, calc(var(--px) * 1) calc(var(--px) * 1) 0 #2b1709;
+}
+.bag-tile-size { top: calc(var(--px) * 3); left: 0; right: 0; text-align: center; }
+.bag-tile-count { bottom: calc(var(--px) * 3); right: calc(var(--px) * 6); }
+.bag-tile-new { position: absolute; top: calc(var(--px) * -4); right: calc(var(--px) * -4); }
+.bag-tile-new > .icon { --icon-size: calc(var(--px) * 18); }
+/* The open one wears the kit's gold corner brackets. */
+.bag-tile.is-picked {
+  outline: calc(var(--px) * 3) solid var(--gold);
+  outline-offset: calc(var(--px) * 2);
+}
+
+/* THE POPOVER: a parchment plate under the tile's row, a notch pointing up
+ * at its column. */
+.bag-pop {
+  --notch-col: 1;
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  margin-top: calc(var(--px) * 6);
+  padding: calc(var(--px) * 12) calc(var(--px) * 14);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
+    url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(40, 22, 10, 0.35);
+}
+.bag-pop::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * -9);
+  left: calc((var(--notch-col) - 0.5) * 25% - var(--px) * 8);
+  width: calc(var(--px) * 16);
+  height: calc(var(--px) * 16);
+  rotate: 45deg;
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  border-left: calc(var(--px) * 2) solid var(--section-line);
+  border-top: calc(var(--px) * 2) solid var(--section-line);
+}
+.bag-pop-name {
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 17);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+}
+.bag-pop-line { font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
+.bag-qty-row { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.bag-qty-row > .k-knob { flex: none; }
+.bag-qty-row > .k-btn:not(.k-knob) { flex: none; min-height: calc(var(--px) * 36); }
+/* The trough: a groove cut in wood, the thumb a brass knob. */
+.bag-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: calc(var(--px) * 12);
+  appearance: none;
+  border-radius: calc(var(--px) * 6);
+  background: url('../../assets/tex-wood-dark.jpg') center / calc(var(--px) * 64) calc(var(--px) * 64);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(0, 0, 0, 0.55);
+}
+.bag-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe39a, var(--gold) 50%, var(--gold-dark));
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-slider::-moz-range-thumb {
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe39a, var(--gold) 50%, var(--gold-dark));
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-qty {
+  min-width: calc(var(--px) * 34);
+  padding: calc(var(--px) * 3) calc(var(--px) * 6);
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  box-shadow: inset 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.35);
+  text-align: center;
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.bag-total {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.bag-use { display: flex; justify-content: flex-end; }

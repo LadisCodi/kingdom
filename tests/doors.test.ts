@@ -11,6 +11,7 @@ import { pull, pullPrice } from '../src/sim/heroes';
 import { claimQuest } from '../src/sim/quests';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect } from '../src/sim/doors';
+import { grantItem, useItem } from '../src/sim/bag';
 import { townhall } from '../src/sim/state';
 import { coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
@@ -130,8 +131,17 @@ describe('the tutorial in the save', () => {
 describe('the doors of the UI', () => {
   it('shuts every door on a new kingdom', () => {
     const state = firstGame();
-    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'] as const;
+    const doors = ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag'] as const;
     for (const d of doors) expect(isDoorOpen(state, d), d).toBe(false);
+  });
+
+  it('opens the Bag with the first item, and keeps it open once seen', () => {
+    const state = firstGame();
+    grantItem(state, 'GoldChest10m');
+    expect(isDoorOpen(state, 'bag')).toBe(true);
+    markDoorSeen(state, 'bag');
+    useItem(state, 'GoldChest10m', 1);
+    expect(isDoorOpen(state, 'bag')).toBe(true);
   });
 
   it('opens the Store with the second Townhall', () => {

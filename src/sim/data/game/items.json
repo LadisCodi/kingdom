@@ -1,0 +1,86 @@
+{
+  "GoldChest10m": {
+    "name": "Gold chest",
+    "kind": "chest",
+    "coin": "Gold",
+    "seconds": 600,
+    "tier": 1
+  },
+  "GoldChest1h": {
+    "name": "Gold chest",
+    "kind": "chest",
+    "coin": "Gold",
+    "seconds": 3600,
+    "tier": 2
+  },
+  "GoldChest8h": {
+    "name": "Gold chest",
+    "kind": "chest",
+    "coin": "Gold",
+    "seconds": 28800,
+    "tier": 4
+  },
+  "FoodChest10m": {
+    "name": "Food chest",
+    "kind": "chest",
+    "coin": "Food",
+    "seconds": 600,
+    "tier": 1
+  },
+  "FoodChest1h": {
+    "name": "Food chest",
+    "kind": "chest",
+    "coin": "Food",
+    "seconds": 3600,
+    "tier": 2
+  },
+  "FoodChest8h": {
+    "name": "Food chest",
+    "kind": "chest",
+    "coin": "Food",
+    "seconds": 28800,
+    "tier": 4
+  },
+  "WoodChest10m": {
+    "name": "Wood chest",
+    "kind": "chest",
+    "coin": "Wood",
+    "seconds": 600,
+    "tier": 1
+  },
+  "WoodChest1h": {
+    "name": "Wood chest",
+    "kind": "chest",
+    "coin": "Wood",
+    "seconds": 3600,
+    "tier": 2
+  },
+  "WoodChest8h": {
+    "name": "Wood chest",
+    "kind": "chest",
+    "coin": "Wood",
+    "seconds": 28800,
+    "tier": 4
+  },
+  "StoneChest10m": {
+    "name": "Stone chest",
+    "kind": "chest",
+    "coin": "Stone",
+    "seconds": 600,
+    "tier": 1
+  },
+  "StoneChest1h": {
+    "name": "Stone chest",
+    "kind": "chest",
+    "coin": "Stone",
+    "seconds": 3600,
+    "tier": 2
+  },
+  "StoneChest8h": {
+    "name": "Stone chest",
+    "kind": "chest",
+    "coin": "Stone",
+    "seconds": 28800,
+    "tier": 4
+  }
+}

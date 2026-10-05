@@ -32,6 +32,7 @@ import collection from './game/collection.json';
 import heroLadder from './game/heroLadder.json';
 import store from './game/store.json';
 import packs from './game/packs.json';
+import items from './game/items.json';
 import banners from './game/banners.json';
 import monetization from './game/monetization.json';
 import scenes from './game/scenes.json';
@@ -64,6 +65,7 @@ const balance = {
   ...heroLadder,
   "store": store,
   "packs": packs,
+  "items": items,
   "banners": banners,
   ...monetization,
   "scenes": scenes,

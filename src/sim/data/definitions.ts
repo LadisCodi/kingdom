@@ -21,7 +21,7 @@ import type { ModifierScope, ModifierStat } from '../modifiers';
 import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrade } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
-  HarvestSourceId, HeroId,
+  HarvestSourceId, HeroId, ItemId,
   LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
   Wallet,
 } from '../state';
@@ -381,6 +381,28 @@ export const STORAGE = balance.storage;
 
 // Buying time with Gems: seconds of a build or training line one Gem finishes.
 export const RUSH = balance.rush;
+
+// The Bag's own settings (Docs/plans/relics-and-bag.md).
+export const BAG = balance.bag;
+
+/** What using an item does (Docs/proposals/inventory.md §3). */
+export type ItemKind = 'chest';
+
+/** One item, whole, as `?dev=data` authors it (`data/game/items.json`). */
+export interface ItemDef {
+  name: string;
+  kind: ItemKind;
+  /** A chest's coin. */
+  coin: CurrencyId | null;
+  /** A chest: seconds of the city's production it pays. */
+  seconds: number;
+  /** The tile's plate, 1 (cream) to 5 (gold). */
+  tier: number;
+}
+
+export const ITEMS = balance.items as Record<ItemId, ItemDef>;
+/** File order: the Bag sorts by kind, then by size, from it. */
+export const ITEM_ORDER = Object.keys(ITEMS) as ItemId[];
 
 
 // Villager training at the Townhall. There is no tap that hurries it: a queue
@@ -2492,4 +2514,5 @@ export const GAME_VERSION: string = pkg.version;
 // v87: the last world-server effect applied (`EffectSeq` on `kingdom.world`),
 // additive.
 // v88: minutes on screen (`PlayMs` on `kingdom.signals`), additive.
-export const SAVE_VERSION = 88;
+// v89: the Bag (`kingdom.bag`), additive.
+export const SAVE_VERSION = 89;

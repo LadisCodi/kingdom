@@ -2,6 +2,9 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
+import {
+  BAG_TABS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, useItem, type BagTab,
+} from './sim/bag';
 import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
@@ -14,10 +17,10 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
+  ITEMS, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type FaceId, type PackTier, HELP } from './sim/data/definitions';
+  type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -115,7 +118,7 @@ import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
-  type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
+  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
   type QueueItem, type Wallet,
 } from './sim/state';
 import {
@@ -188,6 +191,8 @@ export type Mode =
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
   | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
+  // The Bag (Docs/art/ui-inventory.md): items held until they are used.
+  | 'bag'
   | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -217,10 +222,21 @@ export type OverlayName =
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname';
 
+/** The Bag as its screen draws it (ui/bagSheet.ts). */
+export interface BagScreen {
+  tab: BagTab;
+  /** Every tab, whether it holds anything, and whether anything in it is new. */
+  tabs: Array<{ tab: BagTab; any: boolean; fresh: boolean }>;
+  /** The open tab's items, in the Bag's order. */
+  items: Array<{ id: ItemId; def: ItemDef; count: number; fresh: boolean; worth: Wallet }>;
+  /** The tile whose popover is open. */
+  picked: ItemId | null;
+}
+
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
-  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
+  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
 };
 
@@ -2564,6 +2580,67 @@ export class Game {
    * §6.3). It is refused the way a build is, and the same walls raise the same
    * answers: the builder offer, the purse that shakes, the words.
    */
+  // ------------------------------------------------------------- the Bag
+
+  /** The Bag's open tab (Docs/art/ui-inventory.md §3.2). */
+  bagTab: BagTab = 'Resources';
+  /** The tile whose popover is open, and how many the slider has chosen. */
+  bagPicked: ItemId | null = null;
+  bagQty = 1;
+
+  /** The Bag, as its screen draws it: every held item of the open tab, in
+   *  file order, with what one is worth now. */
+  bagScreen(): BagScreen {
+    const held = heldItems(this.state);
+    return {
+      tab: this.bagTab,
+      tabs: BAG_TABS.map((tab) => ({
+        tab,
+        any: held.some((id) => bagTabOf(id) === tab),
+        fresh: held.some((id) => bagTabOf(id) === tab && this.state.bag.fresh[id] === true),
+      })),
+      items: held.filter((id) => bagTabOf(id) === this.bagTab).map((id) => ({
+        id,
+        def: ITEMS[id],
+        count: itemCount(this.state, id),
+        fresh: this.state.bag.fresh[id] === true,
+        worth: chestValue(this.state, id),
+      })),
+      picked: this.bagPicked,
+    };
+  }
+
+  /** The nav orb on the Bag: what came in since it was last opened. */
+  bagBadge(): number {
+    return this.state.bag.badge;
+  }
+
+  openBagTab(tab: BagTab): void {
+    if (tab === this.bagTab) return;
+    this.bagTab = tab;
+    this.bagPicked = null;
+    this.notify();
+  }
+
+  /** A tap on a tile: open its popover, or close it if it is the open one. */
+  pickBagItem(id: ItemId): void {
+    this.bagPicked = this.bagPicked === id ? null : id;
+    this.bagQty = 1;
+    markItemSeen(this.state, id);
+    this.notify();
+  }
+
+  doUseItem(id: ItemId, n: number): void {
+    const worth = chestValue(this.state, id);
+    if (useItem(this.state, id, n) !== 'Used') return;
+    const haul: Wallet = {};
+    for (const [c, v] of Object.entries(worth) as Array<[CurrencyId, number]>) haul[c] = v * n;
+    this.reward(haul);
+    if (itemCount(this.state, id) === 0) this.bagPicked = null;
+    this.bagQty = 1;
+    this.notify();
+  }
+
   doRepairAbandoned(cell: Coord): void {
     const site = standingAbandonedAt(this.state, cell);
     if (!site) return;
@@ -4191,6 +4268,9 @@ export class Game {
     // Anything else taking the screen closes a picker without an answer.
     if (name !== 'heroPicker') this.heroPick = null;
     if (name !== 'collection') this.vaultOpen = false;
+    // Opening the Bag is seeing what came in: the nav's orb clears.
+    if (name === 'bag') markBagOpened(this.state);
+    if (name !== 'bag') this.bagPicked = null;
     if (name !== 'collection') {
       this.openRelicId = null;
       this.armedWildcard = null;
