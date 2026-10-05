@@ -68,7 +68,7 @@ export type HarvestSourceId =
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 /** A landmark's kind decides its art and name — and, for the Watchtower, a
  *  door: claiming it opens the world (Docs/features/22-progression.md §5). */
-export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring' | 'Watchtower';
+export type LandmarkKind = 'StandingStones' | 'Leyspring' | 'Watchtower';
 export type LairId =
   | 'Orcs' | 'Harpies' | 'Goblins' | 'WolfRiders' | 'Drake';
 export type ArtifactId =
@@ -808,9 +808,10 @@ export interface GameState {
    * RELIC FRAGMENTS (Docs/proposals/relic-restoration.md §2, sim/relics.ts):
    * by relic, six slots — five pieces, the keystone — counted found and
    * bound apart. A relic's level stays `artifacts.levels`. `chests` numbers
-   * the Restorer's chests opened, so each one's roll is its own.
+   * the Restorer's chests opened, so each one's roll is its own;
+   * `premiumShrines` counts the Shrines bought with Gems, which prices the next.
    */
-  relics: { held: Partial<Record<ArtifactId, { found: number[]; bound: number[] }>>; chests: number };
+  relics: { held: Partial<Record<ArtifactId, { found: number[]; bound: number[] }>>; chests: number; premiumShrines: number };
   /**
    * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
    * save; nothing in the game reads them. Counts live on `tallies` under

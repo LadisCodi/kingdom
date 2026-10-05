@@ -1649,16 +1649,12 @@
     ]
   },
   "landmarks": [
-    { "id": "ThornedShrine", "kind": "Shrine", "x": 5, "y": 5, "claimCost": 2000 },
     { "id": "WhisperingStones", "kind": "StandingStones", "x": -12, "y": 7, "claimCost": 25000 },
     { "id": "BrightLeyspring", "kind": "Leyspring", "x": -8, "y": 14, "claimCost": 25000 },
-    { "id": "OldOakShrine", "kind": "Shrine", "x": 7, "y": 20, "claimCost": 25000 },
     { "id": "CircleOfNine", "kind": "StandingStones", "x": 7, "y": 12, "claimCost": 100000 },
     { "id": "SunkenLeyspring", "kind": "Leyspring", "x": 9, "y": -3, "claimCost": 25000 },
-    { "id": "CliffShrine", "kind": "Shrine", "x": -4, "y": -13, "claimCost": 100000 },
     { "id": "FallenStones", "kind": "StandingStones", "x": -7, "y": -4, "claimCost": 25000 },
     { "id": "MirrorLeyspring", "kind": "Leyspring", "x": -10, "y": -8, "claimCost": 100000 },
-    { "id": "WindwardShrine", "kind": "Shrine", "x": 15, "y": 2, "claimCost": 100000 },
     { "id": "NorthWatch", "kind": "Watchtower", "x": -2, "y": -5, "claimCost": 10000 }
   ],
   "lairs": {
@@ -1708,6 +1704,7 @@
     { "id": "OldFarm", "district": "Farm", "x": -3, "y": 1, "sight": 3, "name": "The old farm" },
     { "id": "OldPlotNorth", "district": "FarmLands", "x": -3, "y": 0, "sight": 3, "name": "An old crop plot" },
     { "id": "OldPlotSouth", "district": "FarmLands", "x": -3, "y": 2, "sight": 3, "name": "An old crop plot" },
-    { "id": "OldSawmill", "district": "Sawmill", "x": 1, "y": 4, "sight": 3, "name": "The old sawmill" }
+    { "id": "OldSawmill", "district": "Sawmill", "x": 1, "y": 4, "sight": 3, "name": "The old sawmill" },
+    { "id": "ThornedShrine", "district": "Shrine", "x": 5, "y": 5, "sight": 3, "name": "The thorned shrine" }
   ]
 }

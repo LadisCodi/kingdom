@@ -11,7 +11,7 @@ import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, 
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
-  buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, researchTech, upgradeDistrict,
+  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
   repairAbandoned,
@@ -21,7 +21,7 @@ import {
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  RELIC_RULES, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
+  RELIC_RULES, SHRINE_RULES, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -174,7 +174,7 @@ import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null; premium?: true }
   /** Relocating a building that already exists. The same targeting model as
    *  placing — a ghost you move and confirm — with `origin` kept so Cancel
    *  can put it back and so the ghost knows which footprint is its own. */
@@ -2059,9 +2059,37 @@ export class Game {
     this.setOverlay(null);
   }
 
+  /** Place a Shrine anywhere, for Gems (relic-restoration.md §5.1). */
+  startPremiumShrine(): void {
+    if (premiumShrinePrice(this.state) === null) return;
+    this.startPlacement('Shrine');
+    if (this.mode.kind === 'placing') this.mode = { ...this.mode, premium: true };
+    this.notify();
+  }
+
+  /** The next premium Shrine's Gem price, and how many Shrines stand. */
+  shrineOffer(): { gems: number | null; standing: number; max: number } {
+    return {
+      gems: premiumShrinePrice(this.state),
+      standing: districtCount(this.state, 'Shrine'),
+      max: 1 + SHRINE_RULES.premiumGems.length,
+    };
+  }
+
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
+    if (this.mode.premium) {
+      const result = buildPremiumShrine(this.state, this.map, selected);
+      if (result === 'Started') {
+        playSfx('buildPlaced');
+        this.mode = { kind: 'normal' };
+      } else if (result === 'NotEnoughGems') this.shake(['Gems']);
+      else if (result === 'NoBuilderFree') this.offerBuilder();
+      else this.toast(result === 'NoneLeft' ? 'Every Shrine is built' : result === 'CountLimit' ? 'Five Shrines stand already' : 'Not here');
+      this.notify();
+      return;
+    }
     const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
@@ -2461,6 +2489,8 @@ export class Game {
       this.toast(`The Townhall can hold no more ${DISTRICTS[site.districtId].name} — raise it first`);
     } else if (result === 'NotRevealed') {
       this.toast('Clear the fog off it first');
+    } else if (result === 'LairHeld') {
+      this.toast('A lair holds its ground — clear it first');
     } else {
       this.toast(this.refusalWords(result, site.districtId, 1));
     }
@@ -4416,14 +4446,16 @@ export class Game {
         duration: 0, affordable: false, captured: 0, unmoved: false,
       };
     }
-    const cost = nextBuildCost(this.state, definitionId);
+    // A premium Shrine is paid in Gems, the city's price not at all.
+    const gems = this.mode.premium ? premiumShrinePrice(this.state) ?? 0 : 0;
+    const cost = this.mode.premium ? { Gems: gems } : nextBuildCost(this.state, definitionId);
     return {
       kind: 'build',
       definitionId,
       cell: selected,
       cost,
       duration: buildDurationForCell(this.state, definitionId, selected, this.map),
-      affordable: canAfford(this.state.city.wallet, cost),
+      affordable: this.mode.premium ? getWallet(this.state.player.wallet, 'Gems') >= gems : canAfford(this.state.city.wallet, cost),
       captured: this.capturedCells(definitionId, selected).length,
       unmoved: false,
     };

@@ -35,6 +35,18 @@
           "doc": "What a pack the save or a world source still names is worth in fragments."
         }
       }
+    },
+    "shrines": {
+      "type": "object",
+      "doc": "The Shrines (relic-restoration.md §5.1).",
+      "fields": {
+        "manaCap": { "type": "int", "min": 0, "doc": "Max Mana each Shrine standing adds." },
+        "premiumGems": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "The Shrines built anywhere for Gems: one price each, in order; how many there are is how long this is."
+        }
+      }
     }
   }
 }

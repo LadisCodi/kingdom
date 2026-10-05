@@ -778,6 +778,12 @@ export interface DistrictDef {
    *  column for both and no prefix summed anywhere. Empty = it demands
    *  nothing (Docs/features/21-harmony.md). */
   harmonyCostPerLevel: readonly number[];
+  /** Holds one city relic, whose passive and spell act over its aura
+   *  (Docs/proposals/relic-restoration.md §5.1): the Shrine. */
+  hostsRelic: boolean;
+  /** A host's aura, by level: cells within this many of its footprint
+   *  (Chebyshev). */
+  auraRadiusPerLevel: readonly number[];
 }
 
 /**
@@ -805,7 +811,7 @@ export const WORKSHOPS: DistrictId[] =
  *  which is cheapest first and so the order their Townhall gates open in. The
  *  build menu shows them as their own section. */
 export const DECORATIONS: DistrictId[] =
-  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].harmonySupply > 0);
+  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].harmonySupply > 0 && !balance.districts[id].hostsRelic);
 
 /**
  * The districts, with the gates the technologies hand them.
@@ -1203,7 +1209,6 @@ export interface LandmarkDef {
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
-  Shrine: { name: 'Shrine', glyph: '⛩️', sprite: 'landmark_shrine' },
   StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
   Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
   Watchtower: { name: 'Watchtower', glyph: '🗼', sprite: 'landmark_watchtower' },
@@ -1545,6 +1550,10 @@ export const relicKind = (id: ArtifactId): RelicKind => ab(id).kind;
 /** Where a relic's first fragment is found by play: a lair (its prize) for a
  *  city relic, a world source for a world one. */
 export const relicDoor = (id: ArtifactId): string => ab(id).door;
+
+/** The Shrines (`relics.json`'s `shrines`): the Mana each adds, and the
+ *  Gems each premium Shrine costs — as many premium Shrines as prices. */
+export const SHRINE_RULES = balance.shrines as { manaCap: number; premiumGems: number[] };
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
@@ -2469,4 +2478,5 @@ export const GAME_VERSION: string = pkg.version;
 // v91: the gacha keys move from the player's purse to the Bag (a migrator).
 // v92: the card season goes; cards, packs and wildcards become relic
 // fragments (`kingdom.relics`), pass missions use items (a migrator).
-export const SAVE_VERSION = 92;
+// v93: the Shrine landmarks leave the map; their claims go (a migrator).
+export const SAVE_VERSION = 93;

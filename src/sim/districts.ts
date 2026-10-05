@@ -191,7 +191,7 @@ export function canPlaceAnywhere(state: GameState, map: MapData, definitionId: D
  * wait is priced when the builder starts it and stamped on the queue item.
  */
 export const canMoveDistrict = (district: District): boolean =>
-  DISTRICTS[district.definitionId].buildable;
+  DISTRICTS[district.definitionId].buildable || DISTRICTS[district.definitionId].hostsRelic;
 
 // ----------------------------------------------------------------- the price
 

@@ -2,7 +2,7 @@
 // first Townhalls can see and reach, pinned against the authored map so a
 // map edit cannot quietly undo the order the opening is built on.
 import { describe, expect, it } from 'vitest';
-import { FOG, LAIRS, LANDMARKS, levelIndexed } from '../src/sim/data/definitions';
+import { ABANDONED, FOG, LAIRS, LANDMARKS, levelIndexed } from '../src/sim/data/definitions';
 import { advance } from '../src/sim/commands';
 import { footprintAt, townhallDistance } from '../src/sim/grid';
 import { lairZoneCells, zoneLairsAt } from '../src/sim/lairZone';
@@ -30,8 +30,9 @@ const lairDistance = (id: LairId): number =>
 
 const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
 
-const nearestLandmark = [...LANDMARKS]
-  .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location))[0];
+/** The first thing to the south: the Thorned Shrine's ruin, on the Orcs'
+ *  ground — once a landmark, now the province's one Shrine site. */
+const shrine = ABANDONED.find((a) => a.id === 'ThornedShrine')!;
 
 /** Every mountain cell on the map, with the block it belongs to. */
 const mountains = [...map.initialFeatures]
@@ -39,17 +40,17 @@ const mountains = [...map.initialFeatures]
   .map(([key]) => { const cell = parseCoordKey(key); return { cell, size: footprintAt(map, cell).size }; });
 
 describe('the province opens to the south', () => {
-  it('shows the first landmark from the first ring', () => {
-    expect(sightedAt(freshGame(), map, nearestLandmark.location)?.id).toBe(nearestLandmark.id);
+  it('shows the Shrine\'s ruin from the first ring', () => {
+    expect(sightedAt(freshGame(), map, shrine.location)?.id).toBe(shrine.id);
   });
 
-  it('shows two landmarks while the Townhall is at level 1 — the first, south, and the Watchtower, north — and the two camps', () => {
+  it('shows the Shrine\'s ruin, south, and the Watchtower, north, while the Townhall is at level 1 — and the two camps', () => {
     const state = revealedTo(reachAt(1));
     const seen = sightedThings(state, map);
-    const landmarks = seen.filter((t) => t.kind === 'landmark');
-    expect(landmarks.map((t) => t.id).sort()).toEqual([nearestLandmark.id, tower.id].sort());
+    expect(seen.filter((t) => t.kind === 'landmark').map((t) => t.id)).toEqual([tower.id]);
+    expect(seen.some((t) => t.kind === 'abandoned' && t.id === shrine.id)).toBe(true);
     // South on screen is +x +y; north is −x −y.
-    expect(nearestLandmark.location.x + nearestLandmark.location.y).toBeGreaterThan(0);
+    expect(shrine.location.x + shrine.location.y).toBeGreaterThan(0);
     expect(tower.location.x + tower.location.y).toBeLessThan(0);
     expect(seen.filter((t) => t.kind === 'lair').map((t) => t.id).sort()).toEqual(['Harpies', 'Orcs']);
   });
@@ -59,8 +60,8 @@ describe('the province opens to the south', () => {
     expect(sightedAt(revealedTo(reachAt(1)), map, LAIRS.Orcs.location)?.id).toBe('Orcs');
   });
 
-  it('holds the first landmark on the Orcs’ ground', () => {
-    expect(lairZoneCells('Orcs').some((c) => coordKey(c) === coordKey(nearestLandmark.location))).toBe(true);
+  it('holds the Shrine\'s ruin on the Orcs’ ground', () => {
+    expect(lairZoneCells('Orcs').some((c) => coordKey(c) === coordKey(shrine.location))).toBe(true);
   });
 });
 

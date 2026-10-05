@@ -2,7 +2,7 @@
 // serves both the live once-per-second tick and offline replay.
 
 import { track } from './analytics';
-import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
+import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, SHRINE_RULES, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import {
   buildDurationForCell, buildGoodsCost, canMoveDistrict, districtCount, maxDistrictCount,
@@ -12,6 +12,7 @@ import {
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { dropFragments } from './relics';
+import { lairHolding } from './lairZone';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -150,12 +151,14 @@ export function enqueueBuild(
  */
 function startBuild(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
+  /** False when the price was paid another way — a premium Shrine's Gems. */
+  charge = true,
 ): 'Started' | 'NotEnoughResources' | 'NotEnoughGoods' {
-  const cost = nextBuildCost(state, definitionId);
+  const cost = charge ? nextBuildCost(state, definitionId) : {};
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
   // goods are paid when the build is QUEUED and refunded in full on cancel —
   // the rule a workshop item already follows.
-  const goods = buildGoodsCost(state, definitionId);
+  const goods = charge ? buildGoodsCost(state, definitionId) : {};
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
@@ -189,8 +192,35 @@ function startBuild(
 
 // ------------------------------------------------------------- repairing
 
+/** The Gems the next premium Shrine costs, or null when all are built
+ *  (Docs/proposals/relic-restoration.md §5.1, §9). */
+export const premiumShrinePrice = (state: GameState): number | null =>
+  SHRINE_RULES.premiumGems[state.relics.premiumShrines] ?? null;
+
+export type PremiumShrineResult =
+  | 'Started' | 'NoneLeft' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+
+/**
+ * BUILD A SHRINE ANYWHERE, FOR GEMS: breadth, like a builder — one more
+ * host, never a relic. The ruin in the fog is the Shrine play finds; these
+ * are the rest, each dearer than the last, and the ladder ends.
+ */
+export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord): PremiumShrineResult {
+  const price = premiumShrinePrice(state);
+  if (price === null) return 'NoneLeft';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (districtCount(state, 'Shrine') >= maxDistrictCount(state, DISTRICTS.Shrine)) return 'CountLimit';
+  if (placementBlock(state, map, 'Shrine', cell) !== null) return 'InvalidCell';
+  if (getWallet(state.player.wallet, 'Gems') < price) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -price);
+  state.relics.premiumShrines += 1;
+  startBuild(state, map, 'Shrine', cell, false);
+  track(state, 'premium_shrine', { n: state.relics.premiumShrines, gems: price });
+  return 'Started';
+}
+
 export type RepairRefusal =
-  | 'NotFound' | 'NotRevealed' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
+  | 'NotFound' | 'NotRevealed' | 'LairHeld' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
   | 'NotEnoughResources' | 'NotEnoughGoods';
 
 /**
@@ -208,6 +238,8 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   const def = DISTRICTS[site.districtId];
   const cells = cellsOfRect(site.location, def.size);
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
+  // Not on ground a lair still holds — the Thorned Shrine waits on the Orcs.
+  if (cells.some((c) => lairHolding(state, c) !== null)) return 'LairHeld';
   if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';

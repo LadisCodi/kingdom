@@ -1421,7 +1421,7 @@
   },
   {
     "id": "shrineSeen",
-    "trigger": "landmarkSeen",
+    "trigger": "abandonedRevealed",
     "triggerTarget": "ThornedShrine",
     "triggerAmount": 0,
     "anywhere": false,
@@ -1430,9 +1430,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Old stones, still standing — a shrine! Claimed, it deepens our well for good. Though not while the Orcs squat beside it.",
+        "text": "A shrine in ruins! Repaired, it deepens our well and can hold a relic. Though not while the Orcs squat beside it.",
         "box": "auto",
-        "point": "landmark:ThornedShrine",
+        "point": "abandoned:ThornedShrine",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

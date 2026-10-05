@@ -50,13 +50,30 @@ export function relicCardTile(game: Game, view: RelicView): HTMLElement {
   return b;
 }
 
-/** The Bag's Relics tab: city relics, then world relics, under thin headers. */
+/** The Shrines: how many stand, and the next one for Gems while any are
+ *  left (relic-restoration.md §5.1). */
+function shrineRow(game: Game): HTMLElement {
+  const offer = game.shrineOffer();
+  return el('div', { class: 'rl-shrines' },
+    iconEl('Shrine', { size: 'sm' }),
+    el('span', {}, `Shrines ${formatExact(offer.standing)} / ${formatExact(offer.max)}`),
+    ...(offer.gems === null ? [] : [btn({
+      label: 'Build a Shrine',
+      kind: 'gem',
+      cost: { Gems: offer.gems },
+      have: (c) => game.walletValue(c),
+      onClick: () => game.startPremiumShrine(),
+    })]));
+}
+
+/** The Bag's Relics tab: the Shrines, then city relics, then world relics,
+ *  under thin headers. */
 export function relicTab(game: Game): HTMLElement[] {
   const rows = game.relicRows();
   if (rows.length === 0) {
     return [el('p', { class: 'bag-empty' }, 'Relic fragments turn up in lairs and in the fog')];
   }
-  const out: HTMLElement[] = [];
+  const out: HTMLElement[] = [shrineRow(game)];
   for (const kind of ['city', 'world'] as const) {
     const of = rows.filter((r) => r.kind === kind);
     if (of.length === 0) continue;

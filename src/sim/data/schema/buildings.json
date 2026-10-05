@@ -148,6 +148,16 @@
       "of": { "type": "int" },
       "length": { "sibling": "maxLevel", "upTo": true },
       "doc": "Harmony demanded: a TOTAL at each level, entry 0 gating the build."
+    },
+    "hostsRelic": {
+      "type": "bool",
+      "doc": "Holds one city relic, whose passive and spell act over its aura (relic-restoration.md §5.1). A host may climb levels though it supplies Harmony; it is moved, never built for Gold."
+    },
+    "auraRadiusPerLevel": {
+      "type": "list",
+      "of": { "type": "int", "min": 0 },
+      "length": { "sibling": "maxLevel", "upTo": true },
+      "doc": "A host's aura, by level: every cell within this many of its footprint (Chebyshev)."
     }
   }
 }

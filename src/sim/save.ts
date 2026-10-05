@@ -827,6 +827,19 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v93: THE SHRINES ARE FOUND IN RUINS (Docs/plans/relics-and-bag.md,
+    // step 6). The four Shrine landmarks leave the map: one is the Thorned
+    // Shrine's ruin now, the others are gone, and a claim on any of them goes
+    // with them. A Shrine standing adds the +10 max Mana a claim did.
+    to: 93,
+    migrate: (modules) => {
+      const lm = modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined;
+      if (lm?.Claimed === undefined) return;
+      const gone = ['ThornedShrine', 'OldOakShrine', 'CliffShrine', 'WindwardShrine'];
+      lm.Claimed = lm.Claimed.filter((id) => !gone.includes(id));
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -1057,6 +1070,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Held: Object.fromEntries(Object.entries(state.relics.held)
           .map(([id, f]) => [id, { Found: f!.found, Bound: f!.bound }])),
         Chests: state.relics.chests,
+        PremiumShrines: state.relics.premiumShrines,
       },
       // The playtest's signs (Docs/playtest.md §5): the times; the counts are
       // the tallies'.
@@ -1540,7 +1554,7 @@ export function deserialize(
   // v92. Six slots a relic, found and bound; a relic the build no longer
   // knows, or a malformed slot list, is dropped.
   const relicsDto = modules['kingdom.relics'] as
-    { Held?: Record<string, { Found?: number[]; Bound?: number[] }>; Chests?: number } | undefined;
+    { Held?: Record<string, { Found?: number[]; Bound?: number[] }>; Chests?: number; PremiumShrines?: number } | undefined;
   const six = (v: unknown): number[] => (Array.isArray(v) && v.length === 6 && v.every((n) => Number.isInteger(n) && n >= 0)
     ? [...v] : [0, 0, 0, 0, 0, 0]);
   state.relics = {
@@ -1548,6 +1562,7 @@ export function deserialize(
       .filter(([id]) => (ARTIFACT_ORDER as string[]).includes(id))
       .map(([id, f]) => [id, { found: six(f.Found), bound: six(f.Bound) }])),
     chests: Number.isInteger(relicsDto?.Chests) ? relicsDto!.Chests! : 0,
+    premiumShrines: Number.isInteger(relicsDto?.PremiumShrines) ? relicsDto!.PremiumShrines! : 0,
   };
 
   // Additive (v81). A kingdom from before the abandoned buildings may have
