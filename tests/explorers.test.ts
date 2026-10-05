@@ -7,8 +7,9 @@ import type { GameState } from '../src/sim/state';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import {
   arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf,
-  freshWorld, homeIndex, returnsAt, revealsAt, worldFogAt,
+  explorerRushCost, finishExplorerWithGems, freshWorld, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt,
 } from '../src/sim/world/explorers';
+import { RUSH } from '../src/sim/data/definitions';
 import { boardOf } from '../src/sim/world/source';
 import { homeboundMs, outboundMs, stepTimes } from '../src/sim/world/travel';
 import { bitIndices, bitsFrom, hasBit, setBit } from '../src/sim/world/fogBits';
@@ -86,7 +87,10 @@ describe('sending an explorer', () => {
     expect(dispatchExplorer(state, BOARD_SIZE, T0).kind).toBe('OffBoard');
     expect(dispatchExplorer(state, homeIndex(state), T0).kind).toBe('Home');
     const trip = sent(state, nextDoor(state), T0);
-    const busy = dispatchExplorer(state, nextDoor(state), T0);
+    // Somewhere the first trip will not reveal: no explorer is left for it.
+    const elsewhere = boardNeighbors(homeIndex(state))
+      .find((n) => n !== PORTAL_INDEX && hexDistance(hexAt(n), hexAt(trip.target)) > trip.radius)!;
+    const busy = dispatchExplorer(state, elsewhere, T0);
     expect(busy).toEqual({ kind: 'NoExplorerFree', nextFreeAt: returnsAt(trip) });
   });
 
@@ -301,5 +305,48 @@ describe('the save', () => {
     const loaded = deserialize(file, map, T0)!;
     expect(loaded.world.explorers.map((e) => e.id)).toEqual([state.world.explorers[0].id]);
     expect(loaded.world.revealed).toEqual(bitsFrom([]));
+  });
+});
+
+// One explorer per hex: a second is not sent where one is already going, and
+// the trip can be finished with Gems at the rate every other wait is bought
+// at (Docs/features/19-world-map.md §3).
+describe('a trip out', () => {
+  it('is the only one sent to a hex, or to one its reveal will reach', () => {
+    const state = exploring();
+    const target = nextDoor(state);
+    const trip = sent(state, target, T0);
+    const again = dispatchExplorer(state, target, T0);
+    expect(again.kind).toBe('BeingExplored');
+    expect(tripRevealing(state, target)).toBe(trip);
+    const reached = boardWithin(target, trip.radius).find((i) => i !== target && i !== homeIndex(state));
+    if (reached !== undefined) expect(tripRevealing(state, reached)).toBe(trip);
+  });
+
+  it('is finished with Gems for the time it has left: revealed, and home', () => {
+    const state = exploring();
+    const target = nextDoor(state);
+    const trip = sent(state, target, T0);
+    const now = T0 + 10_000;
+    const gems = explorerRushCost(trip, now);
+    expect(gems).toBe(Math.max(1, Math.ceil((returnsAt(trip) - now) / 1000 / RUSH.secondsPerGem)));
+    state.player.wallet.Gems = gems;
+    const r = finishExplorerWithGems(state, trip.id, now);
+    expect(r.kind).toBe('Finished');
+    expect(state.player.wallet.Gems).toBe(0);
+    expect(state.world.explorers).toEqual([]);
+    expect(hasBit(state.world.revealed, target)).toBe(true);
+    // Nothing comes home twice when time catches up.
+    const report = advance(state, map, returnsAt(trip) + 1);
+    expect(report.explorersHome).toEqual([]);
+  });
+
+  it('is not finished without the Gems', () => {
+    const state = exploring();
+    const trip = sent(state, nextDoor(state), T0);
+    state.player.wallet.Gems = 0;
+    expect(finishExplorerWithGems(state, trip.id, T0).kind).toBe('NotEnoughGems');
+    expect(state.world.explorers).toHaveLength(1);
+    expect(finishExplorerWithGems(state, 'nobody', T0).kind).toBe('NotFound');
   });
 });

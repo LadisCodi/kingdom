@@ -9,8 +9,10 @@
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  exploreGold, exploreWorkMs, explorerRoute, explorerSlots, fogStateOf, freeExplorers, returnsAt, type FogState,
+  arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
+  returnsAt, revealsAt, tripRevealing, type FogState,
 } from '../../sim/world/explorers';
+import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
@@ -18,7 +20,7 @@ import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definit
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
-import { action, sheet, stat } from '../kit';
+import { action, btn, progress, sheet, stat } from '../kit';
 import { hexActions, type HexAction } from './worldActions';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
@@ -232,8 +234,12 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }
   const body = el('div', { class: 'wd-body' }, ...lines, ...actionRows(game, bh));
-  // Explore is offered only on ground not yet explored.
-  if (index !== home && fog !== 'Revealed' && game.actingSeat === null) {
+  // A trip that will reveal the hex: how far along it is, and the Gems that
+  // finish it. While one is out, Explore is not offered there again.
+  const trip = game.actingSeat === null ? tripRevealing(state, index) : null;
+  if (trip !== null && (fog !== 'Revealed' || trip.target === index)) body.append(tripRow(game, trip));
+  // Explore is offered only on ground not yet explored, and nobody is out to.
+  if (index !== home && fog !== 'Revealed' && trip === null && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
     const route = explorerRoute(state, index, now);
@@ -260,6 +266,35 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     );
   }
   return sheet({ title: hexTitle(game, bh, fog), onClose: () => game.dismiss() }, body);
+}
+
+/**
+ * AN EXPLORER'S TRIP, as the training line draws a batch: what it is doing
+ * over the bar, the bar for the whole trip — there, the work, and home —
+ * with the time left inside it, the trip's total under it, and the Gems
+ * button that finishes it.
+ */
+function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
+  const now = game.now();
+  const total = returnsAt(trip) - trip.departedAt;
+  const left = Math.max(0, returnsAt(trip) - now);
+  const doing = now < arrivesAt(trip) ? 'On the way'
+    : now < revealsAt(trip) ? 'Exploring'
+      : 'Coming home';
+  const bar = progress('green');
+  bar.run(total <= 0 ? 1 : 1 - left / total, left, formatDuration(Math.ceil(left / 1000)));
+  return el('div', { class: 'tr-batch-row wd-trip' },
+    el('div', { class: 'tr-batch-progress' },
+      el('span', { class: 'tr-batch-what' }, doing),
+      bar.root,
+      el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total / 1000))}`)),
+    btn({
+      label: 'Finish',
+      kind: 'gem',
+      onClick: () => game.doFinishExplorer(trip.id),
+      cost: { Gems: explorerRushCost(trip, now) },
+      have: (c) => game.walletValue(c),
+    }));
 }
 
 /** For the explorers chip: how many are out of how many. */
