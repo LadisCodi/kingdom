@@ -122,11 +122,23 @@ describe('the shortfall sheet', () => {
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(1);
   });
 
-  it('only shakes the purse when the Bag has nothing for it', () => {
+  it('only shakes the purse when the Bag is shut and has nothing for it', () => {
     const state = city();
+    state.tutorial.veteran = false;
     const game = freshPresenter(state);
     state.city.wallet.Food = 0;
     game.doQueueTraining();
     expect(game.openOverlay).toBeNull();
+  });
+
+  it('with the Bag open but no chest of the coin, sends the player to the store\'s bundles', () => {
+    const state = city();
+    townhall(state).level = 2;
+    for (let x = 3; x <= 5; x++) addBuilt(state, 'Housing', { x, y: 0 });
+    const game = freshPresenter(state);
+    state.city.wallet.Food = 0;
+    game.doQueueTraining();
+    expect(game.openOverlay).toBe('shortfall');
+    expect(game.shortfallScreen()!.chests).toEqual([]);
   });
 });

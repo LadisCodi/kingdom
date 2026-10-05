@@ -5,7 +5,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "GemsPurse": {
     "priceUsd": 4.99,
@@ -13,7 +14,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "GemsChest": {
     "priceUsd": 9.99,
@@ -21,7 +23,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "GemsVault": {
     "priceUsd": 19.99,
@@ -29,7 +32,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "GemsHoard": {
     "priceUsd": 49.99,
@@ -37,7 +41,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "GemsTreasury": {
     "priceUsd": 99.99,
@@ -45,7 +50,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "SeasonPass": {
     "priceUsd": 4.99,
@@ -53,7 +59,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "Survey": {
     "priceUsd": 9.99,
@@ -61,7 +68,8 @@
     "packs": 0,
     "packTier": "",
     "wildcards": 0,
-    "wildcardRarity": 0
+    "wildcardRarity": 0,
+    "items": {}
   },
   "CardsSatchel": {
     "priceUsd": 4.99,
@@ -69,7 +77,8 @@
     "packs": 2,
     "packTier": "Purple",
     "wildcards": 1,
-    "wildcardRarity": 4
+    "wildcardRarity": 4,
+    "items": {}
   },
   "CardsCase": {
     "priceUsd": 9.99,
@@ -77,7 +86,8 @@
     "packs": 5,
     "packTier": "Purple",
     "wildcards": 1,
-    "wildcardRarity": 5
+    "wildcardRarity": 5,
+    "items": {}
   },
   "CardsCabinet": {
     "priceUsd": 19.99,
@@ -85,6 +95,61 @@
     "packs": 10,
     "packTier": "Purple",
     "wildcards": 3,
-    "wildcardRarity": 5
+    "wildcardRarity": 5,
+    "items": {}
+  },
+  "SpeedupSatchel": {
+    "priceUsd": 1.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "GeneralSpeedup1h": 2, "GeneralSpeedup15m": 2 }
+  },
+  "SpeedupCrate": {
+    "priceUsd": 4.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "GeneralSpeedup3h": 1, "GeneralSpeedup1h": 2, "ConstructionSpeedup1h": 1 }
+  },
+  "SpeedupChest": {
+    "priceUsd": 9.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "GeneralSpeedup8h": 1, "ConstructionSpeedup3h": 1, "TrainingSpeedup1h": 1 }
+  },
+  "ResourceSack": {
+    "priceUsd": 1.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "ChoiceChest8h": 1 }
+  },
+  "ResourceCart": {
+    "priceUsd": 4.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "ChoiceChest8h": 3 }
+  },
+  "BuildersCrate": {
+    "priceUsd": 4.99,
+    "gems": 0,
+    "packs": 0,
+    "packTier": "",
+    "wildcards": 0,
+    "wildcardRarity": 0,
+    "items": { "ConstructionSpeedup1h": 4, "ConstructionSpeedup3h": 1, "ChoiceChest1h": 1 }
   }
 }

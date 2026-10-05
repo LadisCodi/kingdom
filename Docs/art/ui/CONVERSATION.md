@@ -886,3 +886,16 @@ for.
 - **What to know:** the even 4×4 cut caught a few pixels of the row above at
   the top of three cells; the sheet's three row boundaries were cleared to
   alpha 0 in a 24 px band before slicing.
+
+---
+
+## The Bag's store bundles
+
+- **Date:** 2026-10-05
+- **Conversation:** <https://chatgpt.com/c/6ac41909-d1bc-83eb-9c4f-f737717b712c>
+  ("Generar hoja de paquetes"); `items/ref-store.png` (the Gem packs) and
+  `items/ref-items.png` (the Bag's icons) attached.
+- **Files:** `items/bundles-sheet.png`, 1536×1024, 3×2, true alpha first time.
+  Cut by `items/cut_bundles.py` into `src/render/assets/bundle_{speed_s,
+  speed_m,speed_l,res_s,res_m,builder}.png`, 256×256.
+- **Prompt:** `items/bundles-prompt.md`, one message.

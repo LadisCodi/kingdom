@@ -102,7 +102,9 @@ export type StoreSkuId =
   | 'Survey'
   /** The collection's three bundles: star packs and wildcards for money
    *  rather than for Gems (Docs/features/09-relics.md §6.1). */
-  | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
+  | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet'
+  /** The Bag's bundles: items for money (Docs/proposals/inventory.md §5). */
+  | 'SpeedupSatchel' | 'SpeedupCrate' | 'SpeedupChest' | 'ResourceSack' | 'ResourceCart' | 'BuildersCrate';
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */

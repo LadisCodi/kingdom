@@ -682,6 +682,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if ((num(s.wildcards) > 0) !== (num(s.wildcardRarity) > 0)) push(id, ['wildcardRarity'], 'a wildcard count and a wildcard rarity go together');
       if (num(s.wildcardRarity) > 5) push(id, ['wildcardRarity'], '5★ is the dearest wildcard');
       if (num(s.gems) > 0 && (num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['gems'], 'grants both Gems and cards — a product is one thing');
+      const items = Object.values((s.items ?? {}) as Record<string, unknown>).some((n) => num(n) > 0);
+      if (items && (num(s.gems) > 0 || num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['items'], 'grants items and something else — a product is one thing');
     }
   },
   banners: (doc, push) => {
