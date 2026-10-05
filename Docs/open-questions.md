@@ -222,6 +222,19 @@ New with the fantasies in [`overview.md`](overview.md) (2026-10-02).
 | **OQ-120** | **How often, and how much, does the fog pay in treasure?** One every five cells revealed, at 120 s of production, is a guess. Too rare and the fog goes back to confirming what the player saw; too often and a chest is noise, and the fog's price curve is paid back faster than it was tuned for. | the fog's pace | [`01-map-and-fog.md`](features/01-map-and-fog.md) §6.2 | instrument treasures picked up per session in the 30-day harness |
 | **OQ-121** | **Does the Survey's ladder match the pace of the fog, and what may it pay?** Its levels sit at 20 → 1,470 cells revealed, dense early and spread where the fog is dear, but how many cells a kingdom reveals a week is the harness's to say — if a level is weeks apart by month two, the ladder has stopped being a reason to explore. Its free column adds Gems and gold keys to the faucet ([`14-monetization.md`](features/14-monetization.md) §1.1), and $9.99 once for the whole province sits beside the season products' $4.99 and $9.99 every season. | the Survey's rewards table | [`25-the-survey.md`](features/25-the-survey.md) §3 | read cells revealed per day off the 30-day harness before pricing a single rung |
 
+
+## P · A living world map
+
+New with [`proposals/world-dynamics.md`](proposals/world-dynamics.md) (2026-10-05).
+
+| # | Question | Blocks | Owner doc | Rec. |
+|---|---|---|---|---|
+| **OQ-128** | **Is a monster camp beaten by each player, or once for everyone?** Per player keeps the fight fair and nobody's kill can be stolen, and it is how dungeon progress already works; shared makes the board change for all six, and makes clearing a race. | camps' server state | [`19-world-map.md`](features/19-world-map.md) | per player |
+| **OQ-129** | **Do the stand-in rivals fight camps?** They do not fight anything but players' ground today; a bot that ignores camps would expand faster than any player. | bots | [`19-world-map.md`](features/19-world-map.md) | treat a camp as beaten after a delay by its power |
+| **OQ-130** | **Can a camp be paid off with goods instead of fought?** Elvenar's second road lets a player who will not fight still expand; it also turns the precious materials into a key. | camps, precious materials | [`proposals/world-dynamics.md`](proposals/world-dynamics.md) §7 | not in the first version |
+| **OQ-131** | **Do players trade precious materials?** Three materials and one wedge richer in each is what makes trading worth having; it is also a social system the board does not have yet. | precious materials | [`proposals/world-dynamics.md`](proposals/world-dynamics.md) §3.3 | later, with the social layer |
+| **OQ-132** | **How much of the late city do the precious materials price?** On every level 8–10 the city cannot finish without the world; on a few, the world is a shortcut. | city building costs, the Atlas | [`17-workshops-and-goods.md`](features/17-workshops-and-goods.md) | levels 9–10 and the Atlas only, to start |
+
 ---
 
 **Closed decisions** move to [`open-questions-closed.md`](open-questions-closed.md).
