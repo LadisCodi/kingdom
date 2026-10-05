@@ -750,8 +750,10 @@ export interface GameState {
    *  top level rather than inside `city`. See sim/modifiers.ts. */
   modifiers: Modifier[];
   /** The quest chain: index into QUESTS (length = all done); progress is the
-   *  event counter for RELATIVE goals, reset when a quest is claimed. */
-  quests: { index: number; progress: number };
+   *  event counter for RELATIVE goals, reset when a quest is claimed. `rush`
+   *  is the tutorial's rent rush (sim/quests.ts): the quest it is for, and
+   *  when it tops the house up — null once it has. */
+  quests: { index: number; progress: number; rush?: { index: number; at: number | null } };
   /**
    * THE LIFETIME ODOMETERS the season pass's missions read (sim/events.ts).
    *

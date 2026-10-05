@@ -17,6 +17,7 @@ import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
+import { storedOf } from '../src/sim/storage';
 import { techCost, techKnowledgeCost } from '../src/sim/research';
 import { collectBuilding } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
@@ -238,6 +239,8 @@ describe('the quest chain', () => {
     state.city.population = 1; // 30 gold/min in rent (one of the two beds)
     state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay');
     state.quests.progress = 7;
+    // The rush has come and gone: this is about the rent alone.
+    state.quests.rush = { index: state.quests.index, at: null };
     tickAt(state, T0); // anchor the rent clock
     const restored = deserialize(serialize(state, T0), map, T0 + 120_000)!;
     expect(restored.quests.index).toBe(state.quests.index);
@@ -248,6 +251,60 @@ describe('the quest chain', () => {
     collectBuilding(restored, home.uniqueId, T0 + 120_000);
     expect(restored.quests.progress).toBe(7 + 60);
     expect(isQuestComplete(restored, activeQuest(restored)!)).toBe(true);
+  });
+});
+
+// The opening's Tax Day would wait half a minute on the first house's rent.
+// The rush tops it up a few seconds after the quest arrives instead — a
+// timer like any other, so it has to agree between one advance and many.
+describe('the tutorial rent rush', () => {
+  const taxDay = (): GameState => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    state.city.population = 1;
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay');
+    state.quests.progress = 0;
+    tickAt(state, T0); // the quest is active here: the rush is stamped
+    return state;
+  };
+  const house = (state: GameState) => state.city.districts.find((d) => d.definitionId === 'Housing')!;
+  const quest = () => QUESTS.find((q) => q.id === 'TaxDay')!;
+
+  it('fills the house with what the quest asks once its seconds are up', () => {
+    const state = taxDay();
+    const at = T0 + quest().tutorialRentSeconds! * 1000;
+    tickAt(state, at - 1);
+    expect(storedOf(house(state), 'Gold')).toBeLessThan(quest().goalAmount);
+    tickAt(state, at);
+    expect(storedOf(house(state), 'Gold')).toBeGreaterThanOrEqual(quest().goalAmount);
+    expect(state.quests.rush?.at).toBe(null);
+  });
+
+  it('agrees between one advance and a tick a second', () => {
+    const one = taxDay();
+    const stepped = taxDay();
+    tickAt(one, T0 + 20_000);
+    for (let t = T0 + 1000; t <= T0 + 20_000; t += 1000) tickAt(stepped, t);
+    expect(storedOf(house(stepped), 'Gold')).toBe(storedOf(house(one), 'Gold'));
+  });
+
+  it('happens once, and only on the quest that asks for it', () => {
+    const state = taxDay();
+    tickAt(state, T0 + 10_000);
+    const home = house(state);
+    home.stored = {};
+    tickAt(state, T0 + 11_000);
+    expect(storedOf(home, 'Gold')).toBeLessThan(quest().goalAmount);
+    const plain = freshGame();
+    plain.quests.index = QUESTS.findIndex((q) => q.tutorialRentSeconds === null);
+    tickAt(plain, T0);
+    expect(plain.quests.rush).toBeUndefined();
+  });
+
+  it('survives the save', () => {
+    const state = taxDay();
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(restored.quests.rush).toEqual(state.quests.rush);
   });
 });
 
@@ -536,7 +593,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -608,7 +665,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const quest: QuestDef = {
       id: 'test', name: 'test',
       goalType: 'FindLairs', goalTarget: null, goalAmount: 1, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
     };
     const restore = activate(state, quest);
     try {
@@ -627,7 +684,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: cleared, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
     });
     try {
       // Everything in reach was cleared already: the quest is done on arrival,

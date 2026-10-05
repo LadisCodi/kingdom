@@ -929,6 +929,8 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.quests': {
         Index: state.quests.index,
         Progress: state.quests.progress,
+        Rush: state.quests.rush === undefined ? undefined
+          : { Index: state.quests.rush.index, AtUtc: isoOrNull(state.quests.rush.at) },
       },
       // The lifetime odometers the missions read (sim/events.ts). A plain
       // key→count map, written whole: every live mission stores a BASE
@@ -1433,6 +1435,9 @@ export function deserialize(
       index: questsDto.Index ?? 0,
       progress: questsDto.Progress ?? 0,
     };
+    if (questsDto.Rush !== undefined && questsDto.Rush !== null) {
+      state.quests.rush = { index: questsDto.Rush.Index ?? 0, at: msOrNull(questsDto.Rush.AtUtc) };
+    }
   }
 
   const talliesDto = modules['kingdom.tallies'];

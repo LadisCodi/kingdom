@@ -49,6 +49,7 @@ import {
   type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
+import { applyRentRush, nextRentRush, stampRentRush } from './quests';
 import {
   finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
 } from './world/explorers';
@@ -669,6 +670,10 @@ function applyDueAt(
     out.explorersHome.push(...returnExplorers(state, t));
     // A builder out on the world board comes home when its build stands.
     out.worldBuildsDone.push(...finishWorldBuilds(state, t));
+    // The tutorial's rent rush: stamped when its quest becomes active, and
+    // the house topped up when it falls due (sim/quests.ts).
+    stampRentRush(state, t);
+    applyRentRush(state, t);
   });
 }
 
@@ -708,6 +713,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextWorkshopCompletion(state, after));
   consider(nextExplorerReturn(state, after));
   consider(nextWorldBuildDone(state, after));
+  consider(nextRentRush(state));
   return t;
 }
 

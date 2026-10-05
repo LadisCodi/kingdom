@@ -48,6 +48,12 @@
     "autoClaim": {
       "type": "bool",
       "doc": "Claims itself the moment it is done — for a quest whose next step the player is already reaching for, where a tap on the scroll would only be in the way."
+    },
+    "tutorialRentSeconds": {
+      "type": "int",
+      "min": 1,
+      "nullable": true,
+      "doc": "Tutorial pacing, for a quest that collects Gold: this many seconds after the quest becomes active, the first house's store is topped up with the Gold the goal still asks, instead of waiting on its rent. Null: the real rent."
     }
   }
 }

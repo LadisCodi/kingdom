@@ -6,8 +6,9 @@
 
 import { ownedArtifacts } from './artifacts';
 import {
-  LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
+  DISTRICTS, LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
+import { collectThreshold, storageCapacity, storageSpace, storedOf, storeInto } from './storage';
 import { recordResourceDiscovery } from './discovery';
 import { clearedLairCount, foundLairCount } from './lairs';
 import { grantPack } from './collection';
@@ -155,4 +156,41 @@ export function claimQuest(state: GameState): ClaimResult {
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';
+}
+
+/**
+ * THE TUTORIAL'S RENT RUSH — a pacing hack for the opening, not a mechanic.
+ *
+ * A quest with `tutorialRentSeconds` asks for Gold the first house would take
+ * half a minute of rent to make. So when it becomes active, a moment that many
+ * seconds later is stamped; at it, the first house's store is topped up with
+ * what the goal still asks (and at least enough for its purse to show). The
+ * real rent goes on beside it.
+ *
+ * It is a TIMER like any other: stamped at a boundary, considered in
+ * `nextBoundary`, resolved in `applyDueAt` — so a replay agrees with live play.
+ */
+export function stampRentRush(state: GameState, t: number): void {
+  const quest = activeQuest(state);
+  if (quest === null || quest.tutorialRentSeconds === null || quest.tutorialRentSeconds === undefined) return;
+  if (state.quests.rush?.index === state.quests.index) return;
+  state.quests.rush = { index: state.quests.index, at: t + quest.tutorialRentSeconds * 1000 };
+}
+
+/** When the rush tops the house up, or null. */
+export const nextRentRush = (state: GameState): number | null => state.quests.rush?.at ?? null;
+
+export function applyRentRush(state: GameState, t: number): void {
+  const rush = state.quests.rush;
+  if (rush === undefined || rush.at === null || t < rush.at) return;
+  rush.at = null;
+  const quest = activeQuest(state);
+  if (rush.index !== state.quests.index || quest === null || quest.goalTarget !== 'Gold') return;
+  const need = quest.goalAmount - state.quests.progress;
+  const house = state.city.districts.find((d) => d.state === 'Built'
+    && DISTRICTS[d.definitionId].populationCapacityPerLevel.length > 0 && storageCapacity(state, d) > 0);
+  if (house === undefined || need <= 0) return;
+  const want = Math.max(need, collectThreshold(state, house)) - storedOf(house, 'Gold');
+  const add = Math.min(storageSpace(state, house), want);
+  if (add > 0) storeInto(house, 'Gold', add);
 }
