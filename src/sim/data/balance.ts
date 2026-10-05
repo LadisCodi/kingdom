@@ -29,6 +29,7 @@ import pass from './game/pass.json';
 import survey from './game/survey.json';
 import missions from './game/missions.json';
 import collection from './game/collection.json';
+import heroLadder from './game/heroLadder.json';
 import store from './game/store.json';
 import packs from './game/packs.json';
 import banners from './game/banners.json';
@@ -60,6 +61,7 @@ const balance = {
   ...survey,
   ...missions,
   ...collection,
+  ...heroLadder,
   "store": store,
   "packs": packs,
   "banners": banners,

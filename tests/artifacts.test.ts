@@ -24,7 +24,7 @@ import {
   albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack,
   bundleGemValue, bundleOf, bundlesForSale, cardCount, closeSeason,
   grantPack, openPack, packCards, packGemCost, packOdds, packsForSale, productionChest,
-  seasonAt, seasonDef, seasonEndsAt, seasonHeld, seasonStartsAt, vaultCost,
+  seasonAt, seasonDef, seasonEndsAt, seasonHeld, vaultCost,
   buyFromVaultMany,
   closeGold, payCollectionPrize, PRIZE_BANNER, canClaimAlbum, claimAlbum,
   albumOfRelic, relicOfAlbum,
@@ -33,7 +33,7 @@ import {
   wildcardsHeld, SEASON_CARDS,
 } from '../src/sim/collection';
 import {
-  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASON_EPOCH, SEASONS,
+  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, RARITIES, SEASONS,
   type AlbumId, type Rarity,
 } from '../src/sim/data/seasons';
 import { advance } from '../src/sim/commands';
@@ -1244,22 +1244,6 @@ describe('the eight albums run in laps', () => {
 });
 
 describe('the season', () => {
-  it('runs on a shared calendar, with no state in the answer', () => {
-    expect(seasonAt(SEASON_EPOCH)).toBe(0);
-    expect(seasonStartsAt(0)).toBe(SEASON_EPOCH);
-    const oneSeason = COLLECTION.seasonDays * 86_400_000;
-    expect(seasonEndsAt(0)).toBe(SEASON_EPOCH + oneSeason);
-    expect(seasonAt(SEASON_EPOCH + oneSeason)).toBe(1);
-    // A player arriving on the last day is in the same season as everyone
-    // else — asked in fractions of a season, so the length stays a dial.
-    expect(seasonAt(SEASON_EPOCH + oneSeason - 1)).toBe(0);
-    expect(seasonAt(seasonEndsAt(7) - 1)).toBe(7);
-    // A WHOLE NUMBER OF WEEKS, so a season always opens on the epoch's
-    // weekday: the shared calendar is the argument for the whole feature and a
-    // season that drifted through the week would undo it.
-    expect(COLLECTION.seasonDays % 7).toBe(0);
-  });
-
   // THE LIST CYCLES. Two seasons is the prototype's whole catalogue, so the
   // third occurrence has to be the first one again rather than nothing.
   it('cycles its content rather than running out', () => {

@@ -4,7 +4,6 @@
     "collection": {
       "type": "object",
       "fields": {
-        "seasonDays": { "type": "int" },
         "albumGems": { "type": "int" },
         "prizeGems": { "type": "int" },
         "albumHours": { "type": "list", "of": { "type": "int" } },
@@ -30,16 +29,7 @@
         },
         "wildcardGemCosts": { "type": "list", "of": { "type": "int" } },
         "wildcardOfferAt": { "type": "int" },
-        "bundleWithdrawHours": { "type": "int" },
-        "maxTier": { "type": "int" },
-        "fragmentsPerTierBase": { "type": "int" },
-        "fragmentsPerTierGrowth": { "type": "int" },
-        "ascensionStardustBase": { "type": "int" },
-        "ascensionStardustGrowth": { "type": "int" },
-        "xpLevelCostBase": { "type": "int" },
-        "xpLevelCostGrowth": { "type": "float" },
-        "heroLevelsPerTier": { "type": "int" },
-        "heroMaxLevel": { "type": "int" }
+        "bundleWithdrawHours": { "type": "int" }
       }
     }
   }

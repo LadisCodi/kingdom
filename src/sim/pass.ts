@@ -24,7 +24,8 @@
 // Docs/features/20-season-pass.md.
 
 import { PASS, MISSIONS } from './data/definitions';
-import { grantPack, seasonAt, seasonEndsAt } from './collection';
+import { grantPack } from './collection';
+import { seasonAt, seasonEndsAt } from './seasonClock';
 import { manaCap } from './mana';
 import {
   chooseKind, issueMission, missionComplete, weekIndex, windowIndex,

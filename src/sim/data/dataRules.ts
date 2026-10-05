@@ -66,6 +66,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'heroes', label: 'Heroes', domain: 'Army', view: 'table', noun: 'hero', source: 'heroes' },
   { id: 'villains', label: 'Villains', domain: 'Army', view: 'table', noun: 'villain', source: 'villains' },
   { id: 'combat', label: 'Combat', domain: 'Army', view: 'form', noun: 'setting', groups: ['army', 'combat', 'party'] },
+  { id: 'heroLadder', label: 'Hero ladder', domain: 'Army', view: 'form', noun: 'setting', groups: ['heroLadder'] },
 
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },

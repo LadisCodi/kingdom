@@ -27,7 +27,7 @@ import {
   type BannerId, type CardBundleDef, type FaceId, type PackTier,
 } from './data/definitions';
 import {
-  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, SEASON_EPOCH, seasonContent,
+  ALBUMS, ALBUM_ORDER, CARDS_PER_ALBUM, cardAt, RARITIES, seasonContent,
   type AlbumId, type CardRef, type Rarity, type SeasonDef,
 } from './data/seasons';
 import { rand } from './rng';
@@ -39,24 +39,15 @@ import { buySku, type BuySkuResult } from './store';
 import { grantArtifactLevel } from './artifacts';
 import { callGuaranteed } from './heroes';
 import { cityGatherPerSecond } from './upgrades';
-import { cityGoldPerMinute } from './population';
+import { cityGoldPerSecond } from './production';
 import { recordEvent } from './events';
 
 // ---------------------------------------------------------------- the season
 
-export const SEASON_MS = (): number => COLLECTION.seasonDays * 86_400_000;
-
-/** Which occurrence of the shared calendar `t` falls in. Floor division from
- *  the epoch: no state, so two clients never disagree about the season. */
-export const seasonAt = (t: number): number =>
-  Math.max(0, Math.floor((t - SEASON_EPOCH) / SEASON_MS()));
-
-export const seasonStartsAt = (occurrence: number): number =>
-  SEASON_EPOCH + occurrence * SEASON_MS();
-
-/** The absolute instant this season ends — and the next one opens. */
-export const seasonEndsAt = (occurrence: number): number =>
-  seasonStartsAt(occurrence + 1);
+// The calendar itself is the pass's (`seasonClock.ts`); the album season is
+// one occurrence of it.
+import { SEASON_MS, seasonAt, seasonEndsAt, seasonStartsAt } from './seasonClock';
+export { SEASON_MS, seasonAt, seasonEndsAt, seasonStartsAt };
 
 export const seasonDef = (occurrence: number): SeasonDef => seasonContent(occurrence);
 
@@ -468,12 +459,6 @@ export function payCollectionPrize(state: GameState): CollectionPrize | null {
  * an early album lands in a city with two workers, and a chest of almost
  * nothing would read as a bug rather than as a reward.
  */
-/** Gold a second, taxes and gatherers together — what every reward priced in
- *  production reads, so the chest and the close never disagree about what an
- *  hour of this city is worth. */
-export const cityGoldPerSecond = (state: GameState): number =>
-  cityGoldPerMinute(state) / 60 + cityGatherPerSecond(state, 'Gold');
-
 export function productionChest(state: GameState, hours: number): Wallet {
   const out: Wallet = {};
   const seconds = hours * 3600;

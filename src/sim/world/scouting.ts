@@ -9,12 +9,12 @@
 // production (`tap.workSeconds`'s rule), floored at the authored amount.
 
 import { WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/definitions';
-import { cityGoldPerSecond, grantPack } from '../collection';
+import { grantPack } from '../collection';
+import { cityMakesPerSecond } from '../production';
 import { addHeroXp } from '../heroes';
 import { payKnowledge } from '../knowledge';
 import { addGood } from '../goods';
 import { addToWallet, type GameState, type GoodsStock, type Wallet } from '../state';
-import { cityGatherPerSecond } from '../upgrades';
 import { lumpMaterial, type BoardHex } from './board';
 import { boardOf } from './source';
 
@@ -32,7 +32,7 @@ export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex
   }
   if (scout.reward === 'Gold' || scout.reward === 'Wood' || scout.reward === 'Food' || scout.reward === 'Stone') {
     const hours = role === 'portal' ? 0 : WORLD_SCOUTING.hoursByRole[role];
-    const rate = scout.reward === 'Gold' ? cityGoldPerSecond(state) : cityGatherPerSecond(state, scout.reward);
+    const rate = cityMakesPerSecond(state, scout.reward);
     return { wallet: { [scout.reward]: Math.round(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
   }
   return { wallet: { [scout.reward]: scout.amount }, goods: {}, pack: null };

@@ -1,5 +1,6 @@
 {
   "pass": {
+    "seasonDays": 28,
     "missionXp": 100,
     "levelXpBase": 150,
     "levelXpGrowth": 6,

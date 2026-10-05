@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "fields": {
+    "heroLadder": {
+      "type": "object",
+      "fields": {
+        "maxTier": { "type": "int" },
+        "fragmentsPerTierBase": { "type": "int" },
+        "fragmentsPerTierGrowth": { "type": "int" },
+        "ascensionStardustBase": { "type": "int" },
+        "ascensionStardustGrowth": { "type": "int" },
+        "xpLevelCostBase": { "type": "int" },
+        "xpLevelCostGrowth": { "type": "float" },
+        "heroLevelsPerTier": { "type": "int" },
+        "heroMaxLevel": { "type": "int" }
+      }
+    }
+  }
+}

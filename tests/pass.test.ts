@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { MISSIONS, PASS } from '../src/sim/data/definitions';
-import { seasonAt, seasonEndsAt } from '../src/sim/collection';
+import { seasonAt, seasonEndsAt } from '../src/sim/seasonClock';
 import { recordEvent } from '../src/sim/events';
 import * as pass from '../src/sim/pass';
 import {
