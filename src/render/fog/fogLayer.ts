@@ -14,7 +14,7 @@
 // stacked between the floor and the map canvas — `mapLayers` in
 // mapRenderer.ts) and the world's hexes (`drawCloudBank` with
 // `world/cloudGrid.ts`). A grid is the GLSL that says, for a point of the
-// plane, whether it is under the bank and how far it is from seen ground.
+// plane, how tall a puff has to be to show there.
 
 import { TILE_H, TILE_W } from '../palette';
 import { loadImage } from '../imageLoad';
@@ -62,27 +62,26 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
 /**
- * A grid the bank lies on: GLSL defining `float clearance(vec2 proj)` — for
- * a point of the projected plane, -1 on ground the player can see, otherwise
- * how far it is, in cells, to the nearest such ground (2 when none is near).
- * It reads the mask with `fogAt(vec2 cell)`. `edge` is how far into a fogged
- * cell the bank takes to reach full thickness.
+ * A grid the bank lies on: GLSL defining `float threshold(vec2 proj)` — for
+ * a point of the projected plane, how tall a puff has to be to show there:
+ * 0 in the thick of the bank, rising toward ground the player can see, 1.1
+ * or more where nothing shows. The texture's height runs 0 to 1. It reads
+ * the mask with `fogAt(vec2 cell)`.
  */
 export interface BankGrid {
   glsl: string;
-  edge: number;
 }
 
 /** The province's grid: 2:1 diamonds, cell (x, y). */
 const DIAMONDS: BankGrid = {
-  edge: EDGE_CELLS,
   glsl: `
-float clearance(vec2 proj) {
+float threshold(vec2 proj) {
   float u = proj.x / ${TILE_W.toFixed(1)};
   float v = proj.y / ${TILE_H.toFixed(1)};
   vec2 p = vec2(v + u, v - u);
   vec2 c = floor(p);
-  if (fogAt(c) < 0.5) return -1.0;
+  if (fogAt(c) < 0.5) return 2.0;
+  // How far, in cells, to the nearest ground the player can see.
   float d = 2.0;
   for (int dy = -1; dy <= 1; dy++) {
     for (int dx = -1; dx <= 1; dx++) {
@@ -90,7 +89,7 @@ float clearance(vec2 proj) {
       if (fogAt(n) < 0.5) d = min(d, length(max(abs(p - n - 0.5) - 0.5, 0.0)));
     }
   }
-  return d;
+  return (1.0 - smoothstep(0.0, ${EDGE_CELLS.toFixed(2)}, d)) * 1.1;
 }
 `,
 };
@@ -114,8 +113,8 @@ ${grid.glsl}
 void main() {
   vec2 css = vec2(gl_FragCoord.x, uView.y * uDpr - gl_FragCoord.y) / uDpr;
   vec2 proj = (css - uView * 0.5) / uZoom + uCam;
-  float d = clearance(proj);
-  if (d < 0.0) discard;
+  float th = threshold(proj);
+  if (th >= 1.05) discard;
 
   float drift = uTime / ${DRIFT_S.toFixed(1)};
   vec2 uv = proj / ${CLOUD_PX.toFixed(1)};
@@ -125,8 +124,7 @@ void main() {
   // The texture's light is its height: sunlit tops stand tallest. Toward a
   // seen neighbour only the tallest puffs remain.
   float height = clamp((dot(col, vec3(0.299, 0.587, 0.114)) - 0.68) / 0.3, 0.0, 1.0);
-  float depth = smoothstep(0.0, ${grid.edge.toFixed(2)}, d);
-  float cut = height - (1.0 - depth) * 1.1;
+  float cut = height - th;
   float a = smoothstep(-0.05, 0.05, cut);
   // A soft shadow under the outline, so the edge is clean.
   col *= mix(0.88, 1.0, smoothstep(0.0, 0.25, cut));

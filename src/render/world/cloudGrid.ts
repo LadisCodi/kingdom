@@ -1,8 +1,8 @@
 // The cloud bank on the world's hexes (Docs/art/art-direction.md §8.1): the
 // province's bank (fog/fogLayer.ts), cut to the board's Unknown hexes and to
-// everything past its edge. It is a WebGL canvas under the board's, so every
-// hex the player can see — its plate, its side, what stands on it — is drawn
-// over the clouds.
+// everything past its edge. It is a WebGL canvas between the board's ground
+// (plates and sides) and what stands on it (boardRenderer.ts), so the clouds
+// can lap over the near edge of a tile and nothing upright is hidden.
 
 import { BOARD_RADIUS, type Hex } from '../../sim/world/hex';
 import type { BankGrid } from '../fog/fogLayer';
@@ -16,10 +16,20 @@ export const MASK_ORIGIN = -(BOARD_RADIUS + 1);
 /** The mask's byte for a hex. */
 export const maskIndex = (h: Hex): number => (h.r - MASK_ORIGIN) * MASK_SPAN + (h.q - MASK_ORIGIN);
 
+/** How far the bank laps over a seen hex from an Unknown one, in hex
+ *  widths: the tallest puffs reach this far onto the plate. Further over the
+ *  edges nearer the viewer — the tile's side is under the clouds there. */
+const RISE_NEAR = 0.2;
+const RISE_FAR = 0.1;
+
 /** Pointy-top hexes, cell (q, r) axial, on the plane squashed by TILT.
- *  A distance is in hex widths: centre to centre is one. */
+ *  A distance is in hex widths: centre to centre is one. Larger r is nearer
+ *  the viewer, so the two neighbours at r + 1 are in front of a hex and the
+ *  two at r − 1 behind it.
+ *
+ *  The board stands IN the clouds, not on them: an Unknown hex is the bank
+ *  at full thickness right up to every seen hex, and laps over its edges. */
 export const HEX_GRID: BankGrid = {
-  edge: 0.35,
   glsl: `
 vec2 hexCentre(vec2 h) {
   return vec2(${HEX_W.toFixed(4)} * (h.x + h.y * 0.5), ${(HEX_R * 1.5).toFixed(4)} * h.y);
@@ -34,22 +44,27 @@ vec2 hexRound(vec2 qr) {
   return r.xy;
 }
 
-float clearance(vec2 proj) {
+/** How far f is, in hex widths, inside hex h (centre c) from its edge
+ *  toward the neighbour at h + dir. */
+float edgeDist(vec2 f, vec2 c, vec2 h, vec2 dir) {
+  vec2 toward = (hexCentre(h + dir) - c) / ${HEX_W.toFixed(4)};
+  return max(0.5 - dot(f - c, toward) / ${HEX_W.toFixed(4)}, 0.0);
+}
+
+float threshold(vec2 proj) {
   vec2 f = vec2(proj.x, proj.y / ${TILT.toFixed(4)});
   vec2 h = hexRound(vec2(0.57735027 * f.x - f.y / 3.0, f.y * 2.0 / 3.0) / ${HEX_R.toFixed(4)});
-  if (fogAt(h) < 0.5) return -1.0;
+  if (fogAt(h) > 0.5) return 0.0;
+  // Seen ground: the bank around it laps over its edges.
   vec2 c = hexCentre(h);
-  float d = 2.0;
+  float th = 2.0;
   for (int k = 0; k < 6; k++) {
-    vec2 dir = k == 0 ? vec2(1.0, 0.0) : k == 1 ? vec2(1.0, -1.0) : k == 2 ? vec2(0.0, -1.0)
-      : k == 3 ? vec2(-1.0, 0.0) : k == 4 ? vec2(-1.0, 1.0) : vec2(0.0, 1.0);
-    if (fogAt(h + dir) < 0.5) {
-      // How far the point is from the edge shared with that neighbour.
-      vec2 toward = (hexCentre(h + dir) - c) / ${HEX_W.toFixed(4)};
-      d = min(d, max(0.5 - dot(f - c, toward) / ${HEX_W.toFixed(4)}, 0.0));
-    }
+    vec2 dir = k == 0 ? vec2(0.0, 1.0) : k == 1 ? vec2(-1.0, 1.0) : k == 2 ? vec2(1.0, 0.0)
+      : k == 3 ? vec2(-1.0, 0.0) : k == 4 ? vec2(0.0, -1.0) : vec2(1.0, -1.0);
+    float rise = k < 2 ? ${RISE_NEAR.toFixed(2)} : k < 4 ? ${((RISE_NEAR + RISE_FAR) / 2).toFixed(2)} : ${RISE_FAR.toFixed(2)};
+    if (fogAt(h + dir) > 0.5) th = min(th, edgeDist(f, c, h, dir) / rise);
   }
-  return d;
+  return th;
 }
 `,
 };
