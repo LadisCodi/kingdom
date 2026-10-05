@@ -80,6 +80,13 @@ export class HexCamera {
     this.clamp();
   }
 
+  /** A hex up close: the tactical register, centred on it. Needs no size
+   *  from the canvas, so it holds for a board that is still hidden. */
+  focusHex(h: Hex): void {
+    this.zoom = this.maxZoom;
+    this.centerOnHex(h);
+  }
+
   /** A fit asked for while the canvas had no size yet (it is hidden until
    *  the scene switches), done on the first frame that has one. */
   private fitPending = false;

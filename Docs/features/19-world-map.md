@@ -60,6 +60,7 @@
 - The jump between registers is ~3×. The strategic register is a planning
   surface, not an overview, and ships with the board.
 - 3–4 content elements are legible on a tactical hex.
+- **The board opens on your city**, in the tactical register.
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**
