@@ -135,9 +135,9 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - **What the player sees is what they fight.** The squads are derived from
   `guard` (§2) and their sum is the number the attempt is scored against, so
   the authored budget never appears on screen and never has to be trusted.
-- **A hero alone is a legal board.** Troops are welcome and never required,
-  which is what lets the first fight in the game be fought before the player
-  owns an army.
+- **Soldiers alone and a hero alone are both legal boards**; nobody at all
+  is refused. The first fight in the game is soldiers alone: it comes before
+  the Tavern, and the kingdom owns no hero until then.
 - **No hero is ever busy.** Every fight in the game resolves the instant it is
   entered, so a hero is never away and never unavailable
   ([`10-heroes.md`](10-heroes.md) §2.7).

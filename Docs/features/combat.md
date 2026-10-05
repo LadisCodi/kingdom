@@ -25,8 +25,9 @@
 
 - Every fight fields **troop slots and hero slots**: lairs, dungeon rooms,
   bosses, armies on the world board. There is no hero-only mode.
-- **At least one hero is mandatory** on the player's side
-  ([`10-heroes.md`](10-heroes.md) §2.7). Troop slots may be empty.
+- **A lair needs someone on the player's side** — soldiers, a hero, or
+  both; an army on the world map needs a hero
+  ([`10-heroes.md`](10-heroes.md) §2.7).
 
 ## 3. Board
 

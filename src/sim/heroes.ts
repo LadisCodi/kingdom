@@ -11,8 +11,8 @@
 //     reach by playing.
 //
 // Every drop has a play-based route: Fragments come from repeat delves as well
-// as from duplicates, and one hero is free at the start so the system is
-// reachable without spending anything. Break that and the positioning goes
+// as from duplicates, and the first call is free and always a hero, so the
+// system is reachable without spending anything. Break that and the positioning goes
 // with it.
 //
 // FOUR RULES, none of them negotiable:

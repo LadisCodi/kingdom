@@ -60,12 +60,11 @@ export function newGame(map: MapData, now: number): GameState {
     // (sim/research.ts `TOME_OPENS`), and the era bars pace each page.
     research: { completed: [], poured: {}, rewarded: [] },
     schedule: [],
-    // One hero from the start — the Warden, captain of the guard. Nothing
-    // shows her until the first lair, where she steps forward
-    // (Docs/features/23-tutorials.md §4.2); Bess comes with the Tavern
-    // (sim/story.ts). A wallet may buy power, but never sole access.
+    // No hero yet. The first comes from the first call on the banner, free
+    // once a Tavern stands (Docs/features/10-heroes.md §6.2); until then the
+    // lairs are fought by soldiers alone.
     heroes: {
-      owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
+      owned: [], levels: {}, tiers: {},
       // One hero slot is free; the second and third are Gems, always
       // (Docs/features/10-heroes.md §3).
       heroSlotsPurchased: 0,

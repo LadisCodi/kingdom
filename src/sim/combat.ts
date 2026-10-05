@@ -96,8 +96,8 @@ export interface PartyHero {
 }
 
 export interface Party {
-  /** One per HERO SLOT, and at least one always — there is no fight without a
-   *  hero (Docs/features/10-heroes.md §2.6). */
+  /** One per HERO SLOT, and none at all is legal: soldiers may fight alone
+   *  (Docs/features/10-heroes.md §2.6). */
   heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
   /** The kingdom's drill, resolved by the caller. Absent = none. */

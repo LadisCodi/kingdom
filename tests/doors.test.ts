@@ -77,23 +77,22 @@ describe('the places that open a mechanic', () => {
   });
 });
 
-describe('the heroes the story brings', () => {
-  it('brings Bess with the first Tavern, once', () => {
-    const state = freshGame();
-    expect(state.heroes.owned).toEqual(['Warden']);
+describe('the first hero', () => {
+  it('is nobody\'s from the start, and the Tavern brings none', () => {
+    const state = firstGame();
+    expect(state.heroes.owned).toEqual([]);
     addBuilt(state, 'Tavern', { x: 3, y: 1 });
     advance(state, map, T0 + 1000);
-    expect(state.heroes.owned).toContain('Cook');
-    advance(state, map, T0 + 2000);
-    expect(state.heroes.owned.filter((h) => h === 'Cook')).toHaveLength(1);
+    expect(state.heroes.owned).toEqual([]);
   });
 
-  it('makes the first call on the standard banner free, and never a miss', () => {
-    const state = freshGame();
+  it('comes from the first call on the standard banner: free, and never a miss', () => {
+    const state = firstGame();
     expect(pullPrice(state).amount).toBe(0);
     const result = pull(state, 'basic', { free: true });
     expect(result.result).toBe('Pulled');
     expect(result.heroId).not.toBe(null);
+    expect(state.heroes.owned).toEqual([result.heroId]);
   });
 });
 

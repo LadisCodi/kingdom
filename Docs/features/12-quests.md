@@ -97,10 +97,10 @@
 | **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
 | **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
-| **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, three heroes | **Heroes**, the banner, **the Sagas**; Bess |
-| **50–56** · the town | `FullHouse` · `IronRoad` · `Deft` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **57–63** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
-| **64–67** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
+| **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
+| **50–57** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, three heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **58–64** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
+| **65–68** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
 - **The fog's buildings come first, the player's own after.** The House, the
   plots, the Farm and the Sawmill of the opening are abandoned ones, found
@@ -167,7 +167,7 @@
   the season pass's free column ([`20-season-pass.md`](20-season-pass.md) §2)
   or a wallet.
 - **Stardust is paid only past the first summon** — `FirstSummon`,
-  `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
+  `Fellowship`, `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
   hero ladder it buys is open.
 
 ## 3. Dials, in the order to reach for them
