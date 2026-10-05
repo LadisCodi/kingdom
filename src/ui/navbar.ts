@@ -46,7 +46,7 @@ const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName; do
   // The Bag (Docs/art/ui-inventory.md §3.1). It takes the Relics tab's
   // place once relics are found rather than collected; until then the bar
   // carries both.
-  { name: 'bag', label: 'Bag', icon: 'chest', door: 'bag' },
+  { name: 'bag', label: 'Bag', icon: 'bag', door: 'bag' },
   { name: 'collection', label: 'Relics', icon: 'relics', door: 'relics' },
   { name: 'heroes', label: 'Heroes', icon: 'helmet', door: 'heroes' },
   { name: 'research', label: 'Research', icon: 'research', door: 'research' },
