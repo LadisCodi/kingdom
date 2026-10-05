@@ -108,9 +108,10 @@
 - **Pacing** (the design's target, days orientative — the thirty-day harness
   asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
   6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
-  2026-10-05, three visits a day: 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 ·
-  day 11 — 6 · day 16 — 7 · day 26, and 8 not inside thirty days. Knowledge
-  gates 3 and 4; villagers, and the Food they cost, gate every level from 5.
+  2026-10-05, three visits a day, on the one tree: 2 · day 1 — 3 · day 2 —
+  4 · day 3 — 5 · day 11 — 6 · day 19 — 7 · day 24, and 8 not inside thirty
+  days. Each chapter's spine holds a level a day or two; villagers, and the
+  Food they cost, gate every level from 5.
 
 ## 4. The districts
 

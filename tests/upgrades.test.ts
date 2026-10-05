@@ -200,8 +200,7 @@ describe('every ladder reaches the number it claims to', () => {
   // ground's own chunk, so a rank is worth the same share early and late.
   const YIELD_LADDERS: Array<[string, keyof typeof HARVEST]> = [
     ['Sawpits', 'Forest'], ['Irrigation', 'Crops'], ['Stonecutting', 'Stone'],
-    ['Butchery', 'Meat'], ['IronPicks', 'MountainIron'], ['GoldPanning', 'MountainGold'],
-    ['BigNets', 'Fish'],
+    ['IronPicks', 'MountainIron'],
   ];
   for (const [ladder, source] of YIELD_LADDERS) {
     it(`${ladder} is a share more ${source} for hand AND crew, and nothing else`, () => {

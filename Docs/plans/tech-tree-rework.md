@@ -6,7 +6,8 @@
 > finishing a chapter whole. Pouring, the Knowledge bar and instant
 > completion stay as they are ([`../features/07-research.md`](../features/07-research.md)).
 >
-> **Status.** Agreed design, 2026-10-05; being built. Decisions taken in §8.
+> **Status.** Built 2026-10-05 (P1–P5, P7); P6 measured once — see
+> [`../features/buildings.md`](../features/buildings.md) §3. Decisions in §8.
 
 ## 1. What is there today
 

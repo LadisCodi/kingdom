@@ -15,7 +15,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  ERA_REWARDS, TECHNOLOGIES, TOMES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
