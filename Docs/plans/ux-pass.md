@@ -22,7 +22,7 @@
 | 8 | The level plaque replaces `L3` — **done** | art | low |
 | 9 | Gems are blue — **done** | art | low |
 | 10 | The payer profile out of the first screen — **done** | design | low |
-| 11 | One toast per message | bug | low |
+| 11 | One toast per message — **done** | bug | low |
 
 Rows 8 and 9 can share an art branch. Rows 3, 7 and 10 change data or
 design: the data goes through `?dev=data`, the doc that owns the behaviour
