@@ -179,5 +179,37 @@
     "tributePremium": 1.5,
     "tributeLossShare": 0.35,
     "botHoursPer1000Power": 6
+  },
+  "worldScouting": {
+    "hoursByRole": { "home": 0.5, "outer": 0.75, "corridor": 1.5, "inner": 3 },
+    "rewards": {
+      "home": [
+        { "reward": "Gold", "weight": 4, "amount": 400, "pack": null },
+        { "reward": "Wood", "weight": 2, "amount": 150, "pack": null },
+        { "reward": "Food", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "Stone", "weight": 2, "amount": 150, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 100, "pack": null }
+      ],
+      "outer": [
+        { "reward": "Gold", "weight": 4, "amount": 500, "pack": null },
+        { "reward": "Wood", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "Food", "weight": 2, "amount": 250, "pack": null },
+        { "reward": "Stone", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 150, "pack": null }
+      ],
+      "corridor": [
+        { "reward": "Gold", "weight": 4, "amount": 1000, "pack": null },
+        { "reward": "Knowledge", "weight": 2, "amount": 2, "pack": null },
+        { "reward": "Stardust", "weight": 1, "amount": 10, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 250, "pack": null },
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Green" }
+      ],
+      "inner": [
+        { "reward": "Gold", "weight": 2, "amount": 3000, "pack": null },
+        { "reward": "Stardust", "weight": 3, "amount": 30, "pack": null },
+        { "reward": "Gems", "weight": 1, "amount": 20, "pack": null },
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Rose" }
+      ]
+    }
   }
 }

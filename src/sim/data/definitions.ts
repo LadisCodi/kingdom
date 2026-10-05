@@ -2187,6 +2187,17 @@ export interface WorldCampsDef {
 
 export const WORLD_CAMPS = balance.worldCamps as unknown as WorldCampsDef;
 
+/** What exploring a hex pays (19 §3.2). */
+export type ScoutKind = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'HeroXp' | 'Knowledge' | 'Stardust' | 'Gems' | 'Pack';
+export interface ScoutRewardDef { reward: ScoutKind; weight: number; amount: number; pack: PackTier | null }
+export interface WorldScoutingDef {
+  /** Hours of the city's production a Gold, Wood, Food or Stone reward pays. */
+  hoursByRole: Record<'inner' | 'corridor' | 'home' | 'outer', number>;
+  rewards: Record<'inner' | 'corridor' | 'home' | 'outer', readonly ScoutRewardDef[]>;
+}
+
+export const WORLD_SCOUTING = balance.worldScouting as unknown as WorldScoutingDef;
+
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
   actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;

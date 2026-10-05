@@ -21,14 +21,14 @@
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
+  arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
-import { formatCountdown } from '../../ui/format';
+import { formatCount, formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
@@ -244,6 +244,17 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
     const difficulty = campDifficulty(bh.camp.power, party);
     drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+  }
+
+  // Over every misty hex, what exploring it promises and the Gold it costs
+  // (19 §3.2); once an explorer is on its way there, only the promise.
+  for (const bh of board.hexes) {
+    if (states[bh.index] !== 'Sensed' || bh.scout === null) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const going = tripRevealing(state, bh.index) !== null;
+    drawPromise(ctx, camera, c.x, c.y - r * 0.15, bh.scout.reward === 'Pack' ? 'pack' : bh.scout.reward,
+      going ? null : formatCount(exploreGold(state, bh.index)));
   }
 
   // The Portal's appointment, over its hex: when it opens, or how long it
@@ -741,7 +752,9 @@ function drawHex(
       if (held !== null) drawHeld(ground, g, camera, held, c, fogState, frame);
       // A camp stands at the hex's near left, in front of its feature (19 §5.4).
       if (campShown(frame.source, bh, fogState) && bh.camp !== null) {
-        drawProp(g, LAIRS[bh.camp.creature].sprite, c.x - hw * 0.14, c.y + r * 0.78 * TILT, hw * CAMP_WIDTH);
+        const own = `whex_camp_${bh.camp.creature.toLowerCase()}`;
+        const sprite = spriteUrl(own) !== null ? own : LAIRS[bh.camp.creature].sprite;
+        drawProp(g, sprite, c.x - hw * 0.14, c.y + r * 0.78 * TILT, hw * CAMP_WIDTH);
       }
     }
   };
@@ -756,7 +769,7 @@ function drawHex(
 }
 
 /** A camp's drawing, as a share of the hex's width. */
-const CAMP_WIDTH = 0.46;
+const CAMP_WIDTH = 0.5;
 
 /** How thick a tile is, as a share of its radius. */
 const SKIRT = 0.16;
@@ -916,6 +929,53 @@ function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number,
   ctx.lineTo(x + size * 0.2, y + size * 0.62);
   ctx.fill();
   drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  ctx.restore();
+}
+
+/** A scouting promise: a brass-rimmed medallion holding the reward's icon,
+ *  and under it a small plank with the Gold exploring costs, or none. */
+function drawPromise(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, icon: string, cost: string | null): void {
+  const size = Math.max(18, camera.hexWidth * 0.2);
+  const rad = size * 0.72;
+  ctx.save();
+  const brass = ctx.createLinearGradient(0, y - rad, 0, y + rad);
+  brass.addColorStop(0, '#f2d68a');
+  brass.addColorStop(0.5, '#c99a3e');
+  brass.addColorStop(1, '#7c5820');
+  ctx.fillStyle = brass;
+  ctx.strokeStyle = '#3d2810';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  const wood = ctx.createLinearGradient(0, y - rad, 0, y + rad);
+  wood.addColorStop(0, '#7a4f2a');
+  wood.addColorStop(1, '#4e3018');
+  ctx.fillStyle = wood;
+  ctx.beginPath();
+  ctx.arc(x, y, rad * 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  if (cost !== null) {
+    const fs = Math.max(9, Math.min(13, camera.hexWidth * 0.09));
+    ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+    const coin = fs * 1.2;
+    const pw = ctx.measureText(cost).width + coin + fs * 1.1;
+    const ph = fs * 1.55;
+    const py = y + rad + ph * 0.55;
+    ctx.fillStyle = '#5a3a20';
+    ctx.strokeStyle = '#2e1c0e';
+    ctx.beginPath();
+    ctx.roundRect(x - pw / 2, py - ph / 2, pw, ph, ph * 0.3);
+    ctx.fill();
+    ctx.stroke();
+    drawIcon(ctx, 'Gold', x - pw / 2 + fs * 0.35, py - coin / 2, coin);
+    ctx.fillStyle = '#fff3d6';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cost, x - pw / 2 + fs * 0.45 + coin, py + 0.5);
+  }
   ctx.restore();
 }
 

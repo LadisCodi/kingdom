@@ -435,6 +435,144 @@
           "doc": "Hours a stand-in rival takes to beat a camp, per 1,000 of its power."
         }
       }
+    },
+    "worldScouting": {
+      "type": "object",
+      "doc": "What exploring a hex pays: shown over every misty hex, paid when the explorer sent to it is home (Docs/features/19-world-map.md §3.2).",
+      "fields": {
+        "hoursByRole": {
+          "type": "object",
+          "doc": "Hours of the city’s own production a Gold, Wood, Food or Stone reward pays, by the kind of ring.",
+          "fields": {
+            "inner": { "type": "float", "min": 0 },
+            "corridor": { "type": "float", "min": 0 },
+            "home": { "type": "float", "min": 0 },
+            "outer": { "type": "float", "min": 0 }
+          }
+        },
+        "rewards": {
+          "type": "object",
+          "doc": "What a hex on each kind of ring may promise; one is rolled per hex, by weight.",
+          "fields": {
+            "inner": {
+              "type": "list",
+              "of": {
+                "type": "object",
+                "fields": {
+                  "reward": {
+                    "type": "text",
+                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "doc": "What the hex pays."
+                  },
+                  "weight": {
+                    "type": "float",
+                    "min": 0,
+                    "doc": "How often it is rolled, against the others on the list."
+                  },
+                  "amount": {
+                    "type": "int",
+                    "min": 1,
+                    "doc": "How much it pays — for Gold, Wood, Food and Stone the least it pays, since those are priced in the city’s production; for a pack, how many."
+                  },
+                  "pack": {
+                    "type": "text",
+                    "nullable": true,
+                    "options": ["Green", "Yellow", "Rose", "Blue", "Purple", "Golden"],
+                    "doc": "The pack, when the reward is a pack."
+                  }
+                }
+              }
+            },
+            "corridor": {
+              "type": "list",
+              "of": {
+                "type": "object",
+                "fields": {
+                  "reward": {
+                    "type": "text",
+                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "doc": "What the hex pays."
+                  },
+                  "weight": {
+                    "type": "float",
+                    "min": 0,
+                    "doc": "How often it is rolled, against the others on the list."
+                  },
+                  "amount": {
+                    "type": "int",
+                    "min": 1,
+                    "doc": "How much it pays — for Gold, Wood, Food and Stone the least it pays, since those are priced in the city’s production; for a pack, how many."
+                  },
+                  "pack": {
+                    "type": "text",
+                    "nullable": true,
+                    "options": ["Green", "Yellow", "Rose", "Blue", "Purple", "Golden"],
+                    "doc": "The pack, when the reward is a pack."
+                  }
+                }
+              }
+            },
+            "home": {
+              "type": "list",
+              "of": {
+                "type": "object",
+                "fields": {
+                  "reward": {
+                    "type": "text",
+                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "doc": "What the hex pays."
+                  },
+                  "weight": {
+                    "type": "float",
+                    "min": 0,
+                    "doc": "How often it is rolled, against the others on the list."
+                  },
+                  "amount": {
+                    "type": "int",
+                    "min": 1,
+                    "doc": "How much it pays — for Gold, Wood, Food and Stone the least it pays, since those are priced in the city’s production; for a pack, how many."
+                  },
+                  "pack": {
+                    "type": "text",
+                    "nullable": true,
+                    "options": ["Green", "Yellow", "Rose", "Blue", "Purple", "Golden"],
+                    "doc": "The pack, when the reward is a pack."
+                  }
+                }
+              }
+            },
+            "outer": {
+              "type": "list",
+              "of": {
+                "type": "object",
+                "fields": {
+                  "reward": {
+                    "type": "text",
+                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "doc": "What the hex pays."
+                  },
+                  "weight": {
+                    "type": "float",
+                    "min": 0,
+                    "doc": "How often it is rolled, against the others on the list."
+                  },
+                  "amount": {
+                    "type": "int",
+                    "min": 1,
+                    "doc": "How much it pays — for Gold, Wood, Food and Stone the least it pays, since those are priced in the city’s production; for a pack, how many."
+                  },
+                  "pack": {
+                    "type": "text",
+                    "nullable": true,
+                    "options": ["Green", "Yellow", "Rose", "Blue", "Purple", "Golden"],
+                    "doc": "The pack, when the reward is a pack."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

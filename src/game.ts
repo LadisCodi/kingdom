@@ -139,9 +139,9 @@ import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt } from './sim/world/explorers';
+import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt, type ExplorerHome } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
-import { hexWork, isUpgrade, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
+import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
@@ -690,11 +690,8 @@ export class Game {
       this.toast(worldBuildDone(done.what, done.level));
     }
     // An explorer home says what it found; the board already shows where.
-    for (const home of result.explorersHome) {
-      this.toast(home.revealed > 0
-        ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map`
-        : 'Your explorer is home — nothing new out there');
-    }
+    // The target's promise, if it kept one, is paid and named (19 §3.2).
+    for (const home of result.explorersHome) this.explorerHomeToast(home);
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -4898,6 +4895,15 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
   }
 
+  /** What an explorer home says: what it revealed, and what its target paid. */
+  private explorerHomeToast(home: ExplorerHome): void {
+    const found = home.paid === null ? '' : `, and ${scoutWords(home.paid)}`;
+    this.toast(home.revealed > 0
+      ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
+      : `Your explorer is home — nothing new out there${found}`);
+    if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  }
+
   /** Pay a camp off with its tribute: the camp is beaten for the player,
    *  and pays nothing (19 §5.4). */
   async doTributeCamp(index: number): Promise<void> {
@@ -4988,9 +4994,7 @@ export class Game {
     const result = finishExplorerWithGems(this.state, tripId, this.now());
     if (result.kind === 'Finished') {
       playSfx('gemSpend');
-      this.toast(result.home.revealed > 0
-        ? `Your explorer is home — ${formatCount(result.home.revealed)} new hexes on the map`
-        : 'Your explorer is home — nothing new out there');
+      this.explorerHomeToast(result.home);
     } else if (result.kind === 'NotEnoughGems') {
       this.shake(['Gems']);
     }

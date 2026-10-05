@@ -9,7 +9,7 @@
 >
 > **Status: built against a local stand-in for the world server**:
 > the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
-> the explorers (§3); claiming a district, its store, its roads and the
+> the explorers and their scouting rewards (§3, §3.2); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps (§5.4), their numbers in `worldCamps`; Dungeons
@@ -127,6 +127,23 @@
   trip, and **Finish**: Gems for the time left until it is home, at
   `rush.secondsPerGem` like every other wait. Finished, its hexes are
   revealed and the explorer is home.
+
+### 3.2 Scouting rewards
+
+- **Every hex has a promise**, rolled with the board by its kind of ring
+  (`worldScouting.rewards`, by weight): Gold, Wood, Food, Stone, Hero XP,
+  Knowledge, Stardust, Gems or a card pack. None on a city, the Portal or a
+  dungeon. Past the inner ring every wedge has the same promises.
+- **A Sensed hex shows it**: a brass medallion with the reward's icon, and
+  under it a plank with the Gold its exploring costs. The hex's sheet says
+  what it pays. Once an explorer is on its way there, the plank goes.
+- **Paid when the explorer sent to it is home** (or finished with Gems), and
+  named in the toast that says it is home.
+- **Only the target pays.** The hexes revealed round it pay nothing, and a
+  hex revealed that way has lost its promise.
+- **Gold, Wood, Food and Stone are priced in production** when paid:
+  `hoursByRole` hours of the city's own production of it, floored at the
+  reward's `amount`. Every other reward pays its `amount`.
 
 ## 4. Armies
 
@@ -541,6 +558,7 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |

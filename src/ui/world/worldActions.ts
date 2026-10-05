@@ -11,6 +11,7 @@ import type { HexControl, WorldSource } from '../../sim/world/source';
 import { WORLD_UPGRADES, type WorldDistrict, type WorldUpgrade } from '../../sim/world/types';
 import { claimGold, districtOf } from '../../worldServer/core';
 import { campTribute } from '../../sim/world/camps';
+import type { ScoutPay } from '../../sim/world/scouting';
 import { formatCount } from '../format';
 
 export type HexAction =
@@ -45,6 +46,14 @@ export const worldBuildSeconds = (what: WorldBuildWhat, level: number): number =
 export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
   !isUpgrade(what) ? `Your ${worldBuildName(what)} stands — the ground is yours`
     : level === 1 ? `Your ${worldBuildName(what)} stands` : `${worldBuildName(what)} reached level ${formatCount(level)}`;
+
+/** What a scouting reward is called, as a player reads it: "1,000 Gold",
+ *  "a Green pack". */
+export function scoutWords(pay: ScoutPay): string {
+  if (pay.pack !== null) return `a ${pay.pack} pack`;
+  return Object.entries(pay.wallet)
+    .map(([c, n]) => `${formatCount(n as number)} ${c === 'HeroXp' ? 'Hero XP' : c}`).join(', ');
+}
 
 /** Hexes `seat` holds or is claiming beyond its city. */
 export const hexesHeldBy = (source: WorldSource, seat: number): number =>

@@ -14,7 +14,7 @@ const ARMY = WORLD.armySecondsPerHex * 1000;
 /** A board of open grassland, with whatever ground a test lays on it. */
 function ground(lay: Record<number, Pick<BoardHex, 'terrain' | 'features'>> = {}): BoardHex[] {
   return Array.from({ length: BOARD_SIZE }, (_, index): BoardHex => ({
-    index, hex: hexAt(index), role: 'outer', seat: null, camp: null, ...(lay[index] ?? { terrain: 'Grassland', features: [] }),
+    index, hex: hexAt(index), role: 'outer', seat: null, camp: null, scout: null, ...(lay[index] ?? { terrain: 'Grassland', features: [] }),
   }));
 }
 

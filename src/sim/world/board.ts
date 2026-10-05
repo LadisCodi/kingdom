@@ -6,7 +6,9 @@
 // which seat (`state.world.board`). The server will later hand the client a
 // board of the same shape; only `source.ts` changes then.
 
-import { WORLD_CAMPS, WORLD_GEN, type WorldCampsDef, type WorldGenDef } from '../data/definitions';
+import {
+  WORLD_CAMPS, WORLD_GEN, WORLD_SCOUTING, type ScoutRewardDef, type WorldCampsDef, type WorldGenDef, type WorldScoutingDef,
+} from '../data/definitions';
 import type { LairId } from '../state';
 import { rand } from '../rng';
 import {
@@ -30,6 +32,9 @@ export interface BoardHex {
   /** The monster camp that holds it until a player beats it (19 §5.4), or
    *  null. */
   camp: Camp | null;
+  /** What exploring it pays the player who sends an explorer to it
+   *  (19 §3.2), or null on a city, the Portal and a dungeon. */
+  scout: ScoutRewardDef | null;
 }
 
 /** A monster camp: which creature, how strong, and whether it can be seen
@@ -110,7 +115,7 @@ export function withDungeons(board: Board, dungeons: readonly number[]): Board {
         if (has === set.has(h.index)) return h;
         // A dungeon covers the ground while it stands; gone, the ground is
         // what it was generated as.
-        return { ...h, features: has ? h.features.filter((f) => f !== 'Dungeon') : ['Dungeon'], camp: has ? h.camp : null };
+        return { ...h, features: has ? h.features.filter((f) => f !== 'Dungeon') : ['Dungeon'], camp: has ? h.camp : null, scout: has ? h.scout : null };
       }),
     };
     if (LIVE.size > 64) LIVE.clear();
@@ -244,6 +249,25 @@ function campPower(seed: number, k: number, j: number | string, camps: WorldCamp
   return Math.max(1, Math.round(base * (1 + (rand(seed, 'campPower', k, j) - 0.5) * 2 * camps.powerJitter)));
 }
 
+/** One of a list, by weight, for a roll in [0, 1). */
+function pickWeighted<T extends { weight: number }>(list: readonly T[], x: number): T | null {
+  const total = list.reduce((s, e) => s + e.weight, 0);
+  if (total <= 0) return null;
+  let at = x * total;
+  for (const e of list) {
+    at -= e.weight;
+    if (at < 0) return e;
+  }
+  return list[list.length - 1];
+}
+
+/** A hex's scouting reward, by its kind of ring, rolled under its place. */
+function rollScout(seed: number, role: RolledRole | 'inner', k: number, j: number, scouting: WorldScoutingDef, features: readonly string[]): ScoutRewardDef | null {
+  if (features.includes('Dungeon')) return null;
+  const e = pickWeighted(scouting.rewards[role], rand(seed, 'scout', k, j));
+  return e === null ? null : { ...e };
+}
+
 const pick = <T>(list: readonly T[], x: number): T => list[Math.min(list.length - 1, Math.floor(x * list.length))];
 
 /**
@@ -272,14 +296,17 @@ function rollCamps(seed: number, local: Map<string, Contents>, camps: WorldCamps
 }
 
 /** A board from its seed. Pure: the same seed and data give the same board. */
-export function generateBoard(id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS): Board {
+export function generateBoard(
+  id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS,
+  scouting: WorldScoutingDef = WORLD_SCOUTING,
+): Board {
   const local = rollWedge(seed, gen);
   const wedgeCamps = rollCamps(seed, local, camps);
   const hexes = BOARD_HEXES.map((hex, index): BoardHex => {
     const role = roleOf(hex);
     const seat = SEAT_INDICES.indexOf(index);
     const base = { index, hex, role, seat: seat >= 0 ? seat : null };
-    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null };
+    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null };
     const at = wedgeOf(hex)!;
     if (role === 'inner') {
       // Every inner hex is held by the strongest camp: its +200% is earned.
@@ -289,12 +316,14 @@ export function generateBoard(id: string, seed: number, gen: WorldGenDef = WORLD
         power: campPower(seed, 1, at.wedge, camps),
         lurking: false,
       };
-      return { ...base, terrain: authored.terrain, features: [...authored.features], camp };
+      const scout = rollScout(seed, 'inner', 1, at.wedge, scouting, authored.features);
+      return { ...base, terrain: authored.terrain, features: [...authored.features], camp, scout };
     }
     const key = localKey(at.k, at.j);
     const c = local.get(key)!;
     const camp = wedgeCamps.get(key);
-    return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp } };
+    const scout = seat >= 0 ? null : rollScout(seed, role as RolledRole, at.k, at.j, scouting, c.features);
+    return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout };
   });
   return { id, seed, hexes };
 }
