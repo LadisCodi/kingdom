@@ -8,16 +8,16 @@
 > fight goes through is [`combat.md`](combat.md).
 >
 > **Status: built against a local stand-in for the world server**:
-> the fog and the explorers (§3); the chain and inactive hexes (§5.2–§5.3);
+> the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
+> the explorers (§3); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); Dungeons (§8.1) and the Dark Portal (§10), which opens on
 > Fridays (UTC) for three days, its numbers in `worldPortal`. Five stand-in
 > rivals claim, build, man a Fortress and now and then attack on their own.
 >
-> **Designed, not yet built: the board of radius 6 (§1), one feature a hex
-> (§2, §8, §9) and districts (§5.1, §7)** — today the board is radius 5,
-> a hex holds up to two features, and a claim is an Outpost and then an
-> improvement. The plan is [`../plans/world-districts.md`](../plans/world-districts.md).
+> **Designed, not yet built: districts (§5.1, §7)** — today a claim is an
+> Outpost and then an improvement. The plan is
+> [`../plans/world-districts.md`](../plans/world-districts.md).
 
 ## 1. The board
 

@@ -4,10 +4,10 @@
 import { describe, expect, it } from 'vitest';
 import { HexCamera } from '../src/render/world/hexCamera';
 import { DOOR_HINT } from '../src/sim/doors';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../src/sim/world/hex';
+import { BOARD_RADIUS, PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../src/sim/world/hex';
 import { setBit } from '../src/sim/world/fogBits';
 import { hexActions } from '../src/ui/world/worldActions';
-import { SEAT_INDICES } from '../src/sim/world/board';
+import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import { hexTitle } from '../src/ui/world/dispatchSheet';
 import { fogStateOf } from '../src/sim/world/explorers';
 import type { Game } from '../src/game';
@@ -77,10 +77,10 @@ describe('a tap on the board', () => {
     expect(t(rival)).toBe('Unknown ground');
     // The rim across the board from home: as far from anything seen as it gets.
     const home = hexAt(game.homeHex());
-    const across = hexIndex({ q: (-home.q * 5) / 4, r: (-home.r * 5) / 4 });
+    const across = hexIndex({ q: (-home.q * BOARD_RADIUS) / HOME_RING, r: (-home.r * BOARD_RADIUS) / HOME_RING });
     expect(t(across)).toBe('Unknown ground');
     // Next to the city: shapes in the mist.
-    const beside = hexIndex({ q: (home.q * 5) / 4, r: (home.r * 5) / 4 });
+    const beside = hexIndex({ q: (home.q * BOARD_RADIUS) / HOME_RING, r: (home.r * BOARD_RADIUS) / HOME_RING });
     expect(t(beside)).toBe('Misty ground');
   });
 });

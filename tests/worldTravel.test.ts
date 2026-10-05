@@ -22,14 +22,16 @@ const everywhere = () => true;
 const centre = hexIndex({ q: 0, r: 0 });
 
 describe('what a hex costs to leave', () => {
-  it('is the marcher\'s pace on open ground, times its terrain and each of its features', () => {
+  it('is the marcher\'s pace on open ground, times its terrain and its feature', () => {
     const [plain, forest, mountain] = ground({
       1: { terrain: 'Grassland', features: ['Forest'] },
-      2: { terrain: 'Mountain', features: [] },
+      2: { terrain: 'Grassland', features: ['Mountain'] },
     });
     expect(hexTravelFactor(plain)).toBe(1);
     expect(hexTravelFactor(forest)).toBe(WORLD_TRAVEL.feature.Forest!);
-    expect(hexTravelFactor(mountain)).toBe(WORLD_TRAVEL.terrain.Mountain);
+    expect(hexTravelFactor(mountain)).toBe(WORLD_TRAVEL.feature.Mountain!);
+    expect(hexTravelFactor({ terrain: 'Desert', features: ['Mountain'] } as BoardHex))
+      .toBe(WORLD_TRAVEL.terrain.Desert! * WORLD_TRAVEL.feature.Mountain!);
     expect(hexTravelMs(plain, 'explorer')).toBe(EXPLORER);
     expect(hexTravelMs(forest, 'explorer')).toBe(EXPLORER * WORLD_TRAVEL.feature.Forest!);
     expect(hexTravelMs(plain, 'army')).toBe(ARMY);
@@ -46,7 +48,7 @@ describe('what a hex costs to leave', () => {
     const mountain = boardNeighbors(forest).find((n) => hexDistance(hexAt(n), hexAt(from)) === 2)!;
     const hexes = ground({
       [forest]: { terrain: 'Grassland', features: ['Forest'] },
-      [mountain]: { terrain: 'Mountain', features: [] },
+      [mountain]: { terrain: 'Grassland', features: ['Mountain'] },
     });
     const route = fastestRoute(hexes, from, mountain, 'explorer', everywhere)!;
     expect(route.path).toHaveLength(3);
@@ -74,16 +76,16 @@ describe('the quickest way', () => {
   it('goes round mountains when that is quicker, and over them when it is not', () => {
     // A mountain on the straight line: a hex round it is quicker than over.
     const wall: Record<number, Pick<BoardHex, 'terrain' | 'features'>> = {};
-    wall[centre] = { terrain: 'Mountain', features: [] };
+    wall[centre] = { terrain: 'Grassland', features: ['Mountain'] };
     const round = fastestRoute(ground(wall), from, to, 'army', everywhere)!;
     expect(round.path).not.toContain(centre);
     expect(outboundMs(round.stepMs)).toBe(7 * ARMY);
 
     // A wall across the whole board: the cheapest crossing is one mountain.
     const full: Record<number, Pick<BoardHex, 'terrain' | 'features'>> = {};
-    for (let r = -5; r <= 5; r++) {
+    for (let r = -6; r <= 6; r++) {
       const i = hexIndex({ q: 0, r });
-      if (i >= 0) full[i] = { terrain: 'Mountain', features: [] };
+      if (i >= 0) full[i] = { terrain: 'Grassland', features: ['Mountain'] };
     }
     const over = fastestRoute(ground(full), from, to, 'army', everywhere)!;
     expect(over.path.filter((i) => full[i] !== undefined)).toHaveLength(1);

@@ -34,7 +34,7 @@ import type {
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
-export const emptyWorld = (): ServerWorld => ({ version: 1, boards: [] });
+export const emptyWorld = (): ServerWorld => ({ version: 2, boards: [] });
 
 /** The board as generated from its seed: where the dungeons started. */
 const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
@@ -64,9 +64,8 @@ const standingDungeons = (b: ServerBoard): number[] =>
 export function fits(bh: BoardHex, def: WorldImprovementDef): boolean {
   switch (def.needs) {
     case 'Forest': return bh.features.includes('Forest');
-    case 'Mountain': return bh.terrain === 'Mountain';
-    case 'Open': return bh.terrain !== 'Mountain'
-      && !bh.features.some((f) => f === 'Forest' || f === 'Dungeon' || f === 'Sanctuary' || f === 'Landmark');
+    case 'Mountain': return bh.features.includes('Mountain');
+    case 'Open': return !bh.features.some((f) => f === 'Forest' || f === 'Mountain' || f === 'Dungeon' || f === 'Sanctuary' || f === 'Landmark');
     case 'Any': return true;
   }
 }

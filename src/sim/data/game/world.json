@@ -15,47 +15,78 @@
   "worldGen": {
     "innerRing": [
       { "terrain": "Grassland", "features": ["Forest"] },
-      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Grassland", "features": ["Mountain"] },
       { "terrain": "Grassland", "features": ["FertileLand"] },
       { "terrain": "Grassland", "features": ["Forest"] },
-      { "terrain": "Mountain", "features": [] },
+      { "terrain": "Grassland", "features": ["Mountain"] },
       { "terrain": "Plains", "features": [] }
     ],
     "terrainWeights": {
-      "corridor": { "Grassland": 4, "Plains": 3, "Desert": 1, "Mountain": 2 },
-      "home": { "Grassland": 5, "Plains": 3, "Desert": 1, "Mountain": 2 },
-      "outer": { "Grassland": 3, "Plains": 2, "Desert": 2, "Mountain": 3 }
+      "corridor": { "Grassland": 4, "Plains": 3, "Desert": 1 },
+      "home": { "Grassland": 5, "Plains": 3, "Desert": 1 },
+      "outer": { "Grassland": 3, "Plains": 2, "Desert": 2 }
     },
     "featureChance": {
-      "corridor": { "Forest": 0.41, "FertileLand": 0.28, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0.39 },
-      "home": { "Forest": 0.47, "FertileLand": 0.34, "Game": 0.23, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 },
-      "outer": { "Forest": 0.35, "FertileLand": 0.14, "Game": 0.19, "Dungeon": 0, "Sanctuary": 0, "Landmark": 0 }
+      "corridor": {
+        "Forest": 0.3,
+        "Mountain": 0.29,
+        "FertileLand": 0.3,
+        "Game": 0.29,
+        "Dungeon": 0,
+        "Sanctuary": 0,
+        "Landmark": 0.4
+      },
+      "home": {
+        "Forest": 0.3,
+        "Mountain": 0.26,
+        "FertileLand": 0.35,
+        "Game": 0.35,
+        "Dungeon": 0,
+        "Sanctuary": 0,
+        "Landmark": 0
+      },
+      "outer": {
+        "Forest": 0.25,
+        "Mountain": 0.37,
+        "FertileLand": 0.17,
+        "Game": 0.31,
+        "Dungeon": 0,
+        "Sanctuary": 0,
+        "Landmark": 0
+      }
     },
     "featureRules": {
       "Forest": {
-        "terrains": ["Grassland", "Plains", "Mountain"],
-        "excludes": ["FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
+        "terrains": ["Grassland", "Plains"],
+        "excludes": ["Mountain", "FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
       },
-      "FertileLand": { "terrains": ["Grassland", "Plains"], "excludes": ["Forest", "Dungeon", "Sanctuary", "Landmark"] },
+      "Mountain": {
+        "terrains": ["Grassland", "Plains", "Desert"],
+        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
+      },
+      "FertileLand": {
+        "terrains": ["Grassland", "Plains"],
+        "excludes": ["Forest", "Mountain", "Game", "Dungeon", "Sanctuary", "Landmark"]
+      },
       "Game": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "Dungeon", "Sanctuary", "Landmark"]
+        "excludes": ["Forest", "Mountain", "FertileLand", "Dungeon", "Sanctuary", "Landmark"]
       },
       "Dungeon": {
-        "terrains": ["Grassland", "Plains", "Desert", "Mountain"],
-        "excludes": ["Forest", "FertileLand", "Game", "Sanctuary", "Landmark"]
+        "terrains": ["Grassland", "Plains", "Desert"],
+        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Sanctuary", "Landmark"]
       },
       "Sanctuary": {
         "terrains": ["Grassland", "Plains"],
-        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Landmark"]
+        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Dungeon", "Landmark"]
       },
       "Landmark": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Sanctuary"]
+        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Dungeon", "Sanctuary"]
       }
     },
     "placedPerWedge": { "Dungeon": 1, "Sanctuary": 1 },
-    "maxFeaturesPerHex": 2
+    "maxFeaturesPerHex": 1
   },
   "worldBuild": {
     "outpost": { "gold": 500, "goldGrowth": 1.35, "buildSeconds": 1800 },
@@ -153,8 +184,8 @@
     "botFloorChance": 0.6
   },
   "worldTravel": {
-    "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5, "Mountain": 3 },
-    "feature": { "Forest": 1.5, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
+    "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5 },
+    "feature": { "Forest": 1.5, "Mountain": 3, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
     "portal": 1
   }
 }

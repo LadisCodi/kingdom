@@ -23,8 +23,8 @@ export const HEX_DIRS: readonly Hex[] = [
   { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
 ];
 
-/** Rings from the centre to the rim: 91 hexes. */
-export const BOARD_RADIUS = 5;
+/** Rings from the centre to the rim: 127 hexes. */
+export const BOARD_RADIUS = 6;
 
 export const hexAdd = (a: Hex, b: Hex): Hex => ({ q: a.q + b.q, r: a.r + b.r });
 export const hexScale = (a: Hex, k: number): Hex => ({ q: a.q * k + 0, r: a.r * k + 0 });
@@ -111,7 +111,7 @@ function cubeRound(x: number, y: number, z: number): Hex {
 
 /** Every hex of the board in its canonical order — by row (`r`), then by `q`
  *  — which is what a hex's INDEX means everywhere: the fog bitset, a march's
- *  path, the save. The Portal at the centre is index 45. */
+ *  path, the save. The Portal at the centre is index 63. */
 export const BOARD_HEXES: readonly Hex[] = (() => {
   const out: Hex[] = [];
   for (let r = -BOARD_RADIUS; r <= BOARD_RADIUS; r++) {

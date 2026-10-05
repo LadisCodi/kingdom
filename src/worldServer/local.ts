@@ -66,7 +66,9 @@ export class LocalWorldServer implements WorldServerApi {
       const text = store.load();
       if (text !== null) world = JSON.parse(text) as ServerWorld;
     } catch { world = null; }
-    this.world = world?.version === 1 ? world : emptyWorld();
+    // A store of another version is thrown away: v2's board is radius 6, so
+    // a v1 board's hexes are numbered for a board that no longer exists.
+    this.world = world?.version === 2 ? world : emptyWorld();
     // A board kept from before armies existed.
     for (const b of this.world.boards) {
       b.armies ??= [];

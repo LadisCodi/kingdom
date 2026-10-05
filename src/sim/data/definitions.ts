@@ -2397,4 +2397,6 @@ export const GAME_VERSION = '0.1.0';
 // v82: the Survey (`kingdom.kingdoms.Survey`), additive.
 // v83: the playtest's signals (`kingdom.signals`, a treasure's `AtUtc`), additive.
 // v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
-export const SAVE_VERSION = 84;
+// v85: the world board is radius 6 — the save's world fog, trips, builds,
+// Sanctuaries and armies are reset, the armies' troops sent home.
+export const SAVE_VERSION = 85;

@@ -1,5 +1,6 @@
-// A set of board hexes as three 32-bit words — the world fog's shape in the
-// save (Docs/features/02-map-scopes.md §3: "a small bitset over 91 hexes").
+// A set of board hexes as 32-bit words — four for the 127 hexes — the world
+// fog's shape in the save (Docs/features/02-map-scopes.md §3: "a small
+// bitset over the board").
 //
 // Plain numbers in an array rather than a typed array, so it serialises as
 // itself; every write goes through `>>> 0` so a word never turns negative.

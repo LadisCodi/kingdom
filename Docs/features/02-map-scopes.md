@@ -46,7 +46,7 @@
 Designed in full in [`19-world-map.md`](19-world-map.md). What belongs here is
 only what it is structurally:
 
-- 91 hexes, six players, **real axial coordinates**. `grid.ts` is square-grid
+- 127 hexes, six players, **real axial coordinates**. `grid.ts` is square-grid
   maths with three metrics and is **not** reused.
 - No code shared with the province: no workers, no influence radius, no
   adjacency that pays Gold.
@@ -75,7 +75,7 @@ One tactile loop and one planning loop, across two or three visits a day.
 - **World fog gates actions**: a hex must be Revealed before it is claimed,
   built on or sent an army ([`19-world-map.md`](19-world-map.md) §3).
 - **So world fog is server-authoritative** — the server checks it. Until the
-  real server exists the fog lives in the player's save (a bitset over 91
+  real server exists the fog lives in the player's save (a bitset over 127
   hexes) and the client applies the rule; the local stand-in trusts it.
 
 ### 3.1 Armies on the server

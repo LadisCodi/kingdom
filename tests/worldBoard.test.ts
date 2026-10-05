@@ -18,15 +18,15 @@ describe('the board', () => {
   it('gives every ring its role', () => {
     const count = (role: string) => board.hexes.filter((h) => h.role === role).length;
     expect([count('portal'), count('inner'), count('corridor'), count('home'), count('outer')])
-      .toEqual([1, 6, 30, 24, 30]);
+      .toEqual([1, 6, 54, 30, 36]);
     expect(board.hexes[PORTAL_INDEX]).toMatchObject({ role: 'portal', terrain: null, features: [] });
   });
 
-  it('seats six cities four hexes from the Portal and from each other', () => {
+  it('seats six cities five hexes from the Portal and from each other', () => {
     expect(SEATS).toHaveLength(6);
     SEATS.forEach((s, i) => {
       expect(hexDistance(s, { q: 0, r: 0 })).toBe(HOME_RING);
-      expect(hexDistance(s, SEATS[(i + 1) % 6])).toBe(4);
+      expect(hexDistance(s, SEATS[(i + 1) % 6])).toBe(5);
       expect(board.hexes[SEAT_INDICES[i]]).toMatchObject({ seat: i, terrain: 'Grassland', features: [] });
     });
     expect(board.hexes.filter((h) => h.seat !== null)).toHaveLength(6);
@@ -64,7 +64,7 @@ describe('the board', () => {
       const b = generateBoard('t', seed * 7919);
       for (const s of SEATS) {
         const around = hexNeighbors(s).map(hexIndex).filter((i) => i >= 0).map((i) => b.hexes[i]);
-        expect(around.some((h) => h.terrain === 'Grassland' && h.features.includes('Forest'))).toBe(true);
+        expect(around.some((h) => h.features.includes('Forest'))).toBe(true);
         expect(around.some((h) => h.terrain === 'Grassland' && h.features.length === 0)).toBe(true);
         expect(around.some((h) => h.features.includes('Dungeon'))).toBe(false);
       }
@@ -146,7 +146,7 @@ describe('the world data', () => {
     const b = structuredClone(doc) as Record<string, any>;
     b.worldGen.featureChance.home.Dungeon = 0.1;
     b.worldGen.featureChance.outer.Landmark = 0.1;
-    b.worldGen.terrainWeights.corridor = { Grassland: 0, Plains: 0, Desert: 0, Mountain: 0 };
+    b.worldGen.terrainWeights.corridor = { Grassland: 0, Plains: 0, Desert: 0 };
     b.worldGen.innerRing.pop();
     b.world.explorerRevealRadius = 2;
     b.world.revealRadiusMax = 1;
@@ -166,13 +166,14 @@ describe('the world data', () => {
     expect(errors(b)).toEqual(expect.arrayContaining([
       'worldGen.featureChance.outer.Dungeon: a Dungeon is placed (placedPerWedge), not rolled — its chance is 0',
       'worldGen.placedPerWedge.Landmark: only Dungeon and Sanctuary are placed',
-      "worldGen.placedPerWedge: 4 sites, but a wedge's outer ring has room for 2 away from the city",
+      "worldGen.placedPerWedge: 4 sites, but a wedge's outer ring has room for 3 away from the city",
     ]));
   });
 
   it('refuses a feature rule that cannot hold', () => {
     const b = structuredClone(doc) as Record<string, any>;
-    b.worldGen.featureRules.Game.excludes = ['Forest', 'Dungeon', 'Sanctuary', 'Landmark', 'Game', 'FertileLand'];
+    b.worldGen.featureRules.Game.excludes = [...b.worldGen.featureRules.Game.excludes, 'Game'];
+    b.worldGen.featureRules.FertileLand.excludes = b.worldGen.featureRules.FertileLand.excludes.filter((f: string) => f !== 'Game');
     b.worldGen.featureRules.Landmark.terrains = [];
     delete b.worldGen.featureRules.Sanctuary;
     b.worldGen.innerRing[0] = { terrain: 'Desert', features: ['Forest'] };

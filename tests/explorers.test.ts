@@ -4,7 +4,7 @@ import { advance } from '../src/sim/commands';
 import { WORLD } from '../src/sim/data/definitions';
 import { deserialize, serialize, type CatchUpReport } from '../src/sim/save';
 import type { GameState } from '../src/sim/state';
-import { SEAT_INDICES } from '../src/sim/world/board';
+import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import {
   arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf,
   explorerRushCost, finishExplorerWithGems, freshWorld, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt,
@@ -14,7 +14,7 @@ import { boardOf } from '../src/sim/world/source';
 import { homeboundMs, outboundMs, stepTimes } from '../src/sim/world/travel';
 import { bitIndices, bitsFrom, hasBit, setBit } from '../src/sim/world/fogBits';
 import {
-  BOARD_SIZE, HEX_DIRS, PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, hexIndex,
+  BOARD_RADIUS, BOARD_SIZE, HEX_DIRS, PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, hexIndex,
 } from '../src/sim/world/hex';
 import { grantHero } from '../src/sim/heroes';
 import { HEROES } from '../src/sim/data/definitions';
@@ -29,12 +29,12 @@ const nextDoor = (state: GameState) => boardNeighbors(homeIndex(state)).find((n)
 /** The rim hex across the board from the city. */
 const rim = (state: GameState) => {
   const home = hexAt(homeIndex(state));
-  return hexIndex({ q: (-home.q * 5) / 4, r: (-home.r * 5) / 4 });
+  return hexIndex({ q: (-home.q * BOARD_RADIUS) / HOME_RING, r: (-home.r * BOARD_RADIUS) / HOME_RING });
 };
 
 /** A kingdom that has seen the whole board but for its outer ring. */
 const seenMost = (state: GameState) => {
-  state.world.revealed = bitsFrom(boardWithin(hexIndex({ q: 0, r: 0 }), 4));
+  state.world.revealed = bitsFrom(boardWithin(hexIndex({ q: 0, r: 0 }), BOARD_RADIUS - 1));
 };
 
 /** A kingdom that has researched Cartography: one explorer. */
@@ -58,7 +58,7 @@ describe('a new kingdom on the board', () => {
   it('sees its own city and the Portal, and nothing else', () => {
     const state = freshGame();
     expect(bitIndices(worldFogAt(state, T0))).toEqual([homeIndex(state), portal].sort((a, b) => a - b));
-    expect(state.world.revealed).toEqual([0, 0, 0]);
+    expect(state.world.revealed).toEqual([0, 0, 0, 0]);
     expect(SEAT_INDICES).toContain(homeIndex(state));
   });
 
@@ -158,7 +158,7 @@ describe('sending an explorer', () => {
     const state = exploring();
     const near = nextDoor(state);
     expect(exploreWorkMs(state, near)).toBe((WORLD.exploreWorkSeconds + WORLD.exploreWorkSecondsPerHex) * 1000);
-    expect(exploreWorkMs(state, portal)).toBe((WORLD.exploreWorkSeconds + 4 * WORLD.exploreWorkSecondsPerHex) * 1000);
+    expect(exploreWorkMs(state, portal)).toBe((WORLD.exploreWorkSeconds + HOME_RING * WORLD.exploreWorkSecondsPerHex) * 1000);
     expect(sent(state, near, T0).workMs).toBe(exploreWorkMs(state, near));
   });
 
@@ -282,17 +282,22 @@ describe('the save', () => {
     expect(loaded.world).toEqual(freshWorld(state.seed));
   });
 
-  it('reads a trip saved before travel was timed hex by hex at its old pace, with no work', () => {
+  it('resets a save from before the radius-6 board, and sends its armies\' troops home', () => {
     const state = exploring();
-    const trip = sent(state, nextDoor(state), T0);
+    sent(state, nextDoor(state), T0);
+    state.world.revealed = bitsFrom([1, 2, 3]);
+    state.world.armies = [{ id: 'army_1', heroes: [], troops: [{ unitId: 'Warrior', count: 3 }], target: 1, purpose: 'attack' }];
+    const before = state.army.length;
     const file = serialize(state, T0);
-    const saved = (file.Modules as Record<string, any>)['kingdom.world'].Explorers[0];
-    delete saved.StepMs;
-    delete saved.WorkMs;
-    saved.MsPerHex = 600_000;
-    file.SaveVersion = 77;
+    file.SaveVersion = 84;
     const loaded = deserialize(file, map, T0)!;
-    expect(loaded.world.explorers[0]).toEqual({ ...trip, stepMs: [600_000, 600_000], workMs: 0 });
+    expect(loaded.world.explorers).toEqual([]);
+    expect(loaded.world.armies).toEqual([]);
+    expect(loaded.world.board).toEqual(state.world.board);
+    expect(bitIndices(loaded.world.revealed)).toEqual([]);
+    expect(loaded.army).toHaveLength(before + 3);
+    expect(loaded.army.slice(-3).every((u) => u.definitionId === 'Warrior')).toBe(true);
+    expect(new Set(loaded.army.map((u) => u.uniqueId)).size).toBe(loaded.army.length);
   });
 
   it('drops a trip that does not walk the board, and a broken fog', () => {

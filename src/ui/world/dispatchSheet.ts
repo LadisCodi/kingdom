@@ -25,11 +25,11 @@ import { hexActions, hexWork, type HexAction } from './worldActions';
 import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
-  Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert', Mountain: 'Mountains',
+  Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert',
 };
 
 const FEATURE_NAME: Record<WorldFeature, string> = {
-  Forest: 'Forest', FertileLand: 'Fertile land', Game: 'Wild game',
+  Forest: 'Forest', Mountain: 'Mountains', FertileLand: 'Fertile land', Game: 'Wild game',
   Dungeon: 'Dungeon', Sanctuary: 'Sanctuary', Landmark: 'Landmark',
 };
 

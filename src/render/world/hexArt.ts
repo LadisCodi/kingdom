@@ -1,16 +1,13 @@
 // What a world hex is drawn with (Docs/plans/world-hex-art.md §2–§4): a
-// terrain plate, at most one sprite for its combination of terrain and
-// features, an improvement that includes the feature it works, and what the
-// improvement leaves behind. Pure: names only, no drawing, so the rules are
+// terrain plate, at most one sprite for its feature, and an improvement that
+// includes the feature it works. Pure: names only, no drawing, so the rules are
 // testable and the art drops in by filename.
 
 import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
 
-/** Every combination generation can make (world-hex-art.md §2). */
+/** Every feature's drawing (world-hex-art.md §2): a hex holds one at most. */
 export const HEX_COMBOS = [
-  'Forest', 'FertileLand', 'Game', 'FertileGame',
-  'Mountain', 'MountainForest', 'MountainDungeon',
-  'Sanctuary', 'Landmark',
+  'Forest', 'FertileLand', 'Game', 'Mountain', 'MountainDungeon', 'Sanctuary', 'Landmark',
 ] as const;
 export type HexCombo = typeof HEX_COMBOS[number];
 
@@ -19,21 +16,18 @@ export const COMBO_SPRITE: Record<HexCombo, string> = {
   Forest: 'whex_forest',
   FertileLand: 'whex_fertile',
   Game: 'whex_game',
-  FertileGame: 'whex_fertile_game',
   Mountain: 'whex_mountain',
-  MountainForest: 'whex_mountain_forest',
   MountainDungeon: 'whex_mountain_dungeon',
   Sanctuary: 'whex_sanctuary',
   Landmark: 'whex_landmark',
 };
 
 /** The ground under everything: the province's own textures — one terrain
- *  set (art-direction §2) — the mossy rock of the tundra under a mountain. */
+ *  set (art-direction §2). A mountain's sprite carries its own rock. */
 export const PLATE_SPRITE: Record<WorldTerrain, string> = {
   Grassland: 'terrain_grassland',
   Plains: 'terrain_plains',
   Desert: 'terrain_desert',
-  Mountain: 'terrain_tundra',
 };
 
 /**
@@ -65,17 +59,16 @@ export const OUTPOST_BUILDING_SPRITE = 'whex_outpost_building';
 /** Three art tiers across an improvement's five levels. */
 export const improvementTier = (level: number): string => (level >= 5 ? 'l5' : level >= 3 ? 'l3' : 'l1');
 
-/** The combination a hex of this terrain and these features is drawn as;
- *  null for bare ground. */
-export function comboOf(terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
+/** The drawing a hex's feature is drawn as; null for bare ground. */
+export function comboOf(_terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
   const has = (f: WorldFeature) => features.includes(f);
   // A dungeon's art carries its own rock, whatever ground it came back on.
   if (has('Dungeon')) return 'MountainDungeon';
-  if (terrain === 'Mountain') return has('Forest') ? 'MountainForest' : 'Mountain';
+  if (has('Mountain')) return 'Mountain';
   if (has('Sanctuary')) return 'Sanctuary';
   if (has('Landmark')) return 'Landmark';
   if (has('Forest')) return 'Forest';
-  if (has('FertileLand')) return has('Game') ? 'FertileGame' : 'FertileLand';
+  if (has('FertileLand')) return 'FertileLand';
   if (has('Game')) return 'Game';
   return null;
 }
@@ -94,7 +87,7 @@ export interface HexArt {
 /** What each improvement works, and so takes out of the hex's drawing. */
 const WORKS: Record<WorldImprovement, (terrain: WorldTerrain, f: readonly WorldFeature[]) => [WorldTerrain, WorldFeature[]]> = {
   LoggingCamp: (t, f) => [t, f.filter((x) => x !== 'Forest')],
-  StonePit: (_t, f) => ['Grassland', [...f]],
+  StonePit: (t, f) => [t, f.filter((x) => x !== 'Mountain')],
   Homestead: (t, f) => [t, f.filter((x) => x !== 'FertileLand')],
   Fortress: (t, f) => [t, [...f]],
 };
@@ -122,7 +115,5 @@ export function hexArt(
     sprite: `${IMPROVEMENT_SPRITE[improvement.kind]}_${improvementTier(improvement.level)}`,
   };
   if (left === 'Game') return { plate, behind: null, main, front: 'Game' };
-  // Game beside fertile land: the Homestead took the fields, the boars stay.
-  if (left === 'FertileGame') return { plate, behind: 'FertileLand', main, front: 'Game' };
   return { plate, behind: left, main, front: null };
 }
