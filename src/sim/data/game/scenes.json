@@ -335,19 +335,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "happy"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Our first roof! The townsfolk want to thank you for it — please, accept their gift.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "ARoof",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -371,19 +358,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "worried"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Berries enough for a whole household! The townsfolk have something for you — do accept it.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "Rations",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -463,7 +437,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Let’s close the Townhall — the townsfolk are waiting to thank you.",
+        "text": "Let’s close the Townhall — our villager is settling in.",
         "box": "auto",
         "point": "ui:card:close",
         "lock": "target",
@@ -472,19 +446,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Oakville has its first citizen! Oh, this calls for a celebration — they’ve brought you a gift. Accept it!",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "FirstVillager",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -508,19 +469,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Gold in the coffers! And another gift from the townsfolk — they’re very generous today.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "TaxDay",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       },
       {
         "speaker": "advisor",
@@ -596,19 +544,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "A Farm for Oakville! The townsfolk are grateful already — accept their gift.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "Farmhand",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -747,19 +682,6 @@
         "untilAmount": 2,
         "exit": false,
         "expression": "worried"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Our very own House! The townsfolk want to thank you — please, accept their gift.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "GrowingTown",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -810,19 +732,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Another builder at work! The townsfolk have noticed — accept their thanks.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "TheSawmill",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
@@ -996,19 +905,6 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
-      },
-      {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Stone enough for walls! The masons have sent a gift — accept it.",
-        "box": "auto",
-        "point": "quest",
-        "lock": "target",
-        "until": "questClaimed",
-        "untilTarget": "Rubble",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": "happy"
       }
     ]
   },
