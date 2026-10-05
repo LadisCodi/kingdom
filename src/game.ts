@@ -4278,7 +4278,7 @@ export class Game {
     // The two that run on the clock: the hint's expiry, the wheels' sweep.
     return {
       ...this.markerCache.layer,
-      hintCell: this.hintCell(), spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+      spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
     };
   }
 
@@ -4297,7 +4297,6 @@ export class Game {
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
-      hintCell: null,
       spellZones: [],
       tutorialFocus: null,
     };

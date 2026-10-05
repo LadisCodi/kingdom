@@ -77,10 +77,9 @@ export interface MarkerLayer {
   /** The building whose card is open: it pulses white, so the player can
    *  tell which one the card is about. */
   inspectedDistrictId: string | null;
-  /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
-  hintCell: Coord | null;
-  /** The plot the tutorial is pointing at (ui/stage/stage.ts): lit on the
-   *  ground, under what stands on it. The hand stays in the stage. */
+  /** The plot the stage is pointing at (ui/stage/stage.ts) — a line's, or
+   *  the quest's "show me where": lit on the ground, under what stands on
+   *  it. The hand stays in the stage. */
   tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
    *  cells each one covers, and how much of its window is left. */
@@ -1505,41 +1504,6 @@ export function drawMap(
   }
 
 
-
-  // Pass 3.8: the quest hint — the tutorial's own sign (Docs/features/
-  // 24-dialogue.md §4): the plot's diamond lit in the blue magic glow, and
-  // the gloved hand bobbing over it. One sign for "here" across the map and
-  // the menus, and never an emoji.
-  if (markers.hintCell) {
-    const b = cellRect(markers.hintCell);
-    const c = mid(b);
-    const bob = Math.sin(now / 140) * size * 0.07;
-    const pulse = 0.5 + 0.5 * Math.sin(now / 220);
-    ctx.save();
-    ctx.shadowColor = '#3c9dff';
-    ctx.shadowBlur = 10 + pulse * 10;
-    ctx.strokeStyle = '#c8f0ff';
-    ctx.lineWidth = 3;
-    strokeDiamond(ctx, b, 3);
-    ctx.restore();
-    const handH = size * 0.5;
-    const handW = handH / (spriteAspect('tutorial_hand_down') ?? 1.22);
-    const tipY = c.y - size * 0.12 + bob;
-    // The fingertip sits a little right of the glove's middle.
-    if (!drawSprite(ctx, 'tutorial_hand_down', c.x - handW * 0.57, tipY - handH, handW, handH)) {
-      const half = size * 0.22;
-      ctx.beginPath();
-      ctx.moveTo(c.x, tipY);
-      ctx.lineTo(c.x - half, tipY - half * 1.4);
-      ctx.lineTo(c.x + half, tipY - half * 1.4);
-      ctx.closePath();
-      ctx.fillStyle = '#f2b233';
-      ctx.strokeStyle = '#5c3a1e';
-      ctx.lineWidth = 2;
-      ctx.fill();
-      ctx.stroke();
-    }
-  }
 
   function queueWorkers(): void {
   // Worker units — animated. Walk cycles while moving (carry
