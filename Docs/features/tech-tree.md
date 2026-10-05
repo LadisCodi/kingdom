@@ -16,6 +16,10 @@
   *n* to *n + 1*; it opens on revealed cells and ends in one **finale**, alone
   on its last row, that opens the next Townhall level.
 - **A card needs every card its lines come from**, always on the row above.
+- **A page splits and merges.** A chapter's rows hold one, two or three
+  cards, in a different order each chapter: the spine fans out from one card,
+  converges on one, fans out again, and ends in the finale. The three columns
+  keep a theme — the city left, production in the middle, the army right.
 - **The spine is required**: every card that leads on, in the end, to the
   finale. A card nothing below requires is a **dead end**: optional.
 - **Researching every card of a chapter, dead ends included, pays its card
@@ -74,18 +78,18 @@
 
 | Card | Opens / moves | Price | |
 |---|---|---|---|
-| **Aqueducts** | Housing L3 | 2,000 G · 9 K |  |
-| **Mining** | the Smelter · the iron-mountain Stone tap | 2,000 G · 9 K |  |
-| **Infirmary** | the Infirmary | 2,000 G · 9 K |  |
-| **Communities** | +1 populationCapacity | 2,000 G · 9 K |  |
-| **Stonecutting I** | +15% harvestYield — Stone | 2,000 G · 9 K |  |
-| **Archery** | the Shooting Grounds · the Archer | 2,000 G · 9 K |  |
-| **Sailing** | building on Water | 2,000 G · 9 K |  |
-| **Timber Framing** | the producers L3 | 2,000 G · 9 K |  |
-| **Fletching I** | +10% unitAtk — Distance | 2,000 G · 14 K | *dead end* |
-| **Fishing** | the Docks | 2,000 G · 9 K |  |
-| **Trade Routes II** | +10% taxRate | 2,000 G · 9 K |  |
-| **Treasure Hunters I** | +25% treasureYield | 2,000 G · 14 K | *dead end* |
+| **Mining** | the Smelter · the iron-mountain Stone tap · the gold-mountain Gold tap | 2,000 G · 3 K |  |
+| **Infirmary** | the Infirmary | 2,000 G · 3 K |  |
+| **Stonecutting I** | +15% harvestYield — Stone | 2,000 G · 3 K |  |
+| **Aqueducts** | Housing L3 | 2,000 G · 4 K |  |
+| **Archery** | the Shooting Grounds · the Archer | 2,000 G · 3 K |  |
+| **Timber Framing** | the producers L3 | 2,000 G · 4 K |  |
+| **Communities** | +1 populationCapacity | 2,000 G · 4 K |  |
+| **Sailing** | building on Water | 2,000 G · 4 K |  |
+| **Fletching I** | +10% unitAtk — Distance | 2,000 G · 5 K | *dead end* |
+| **Fishing** | the Docks | 2,000 G · 4 K |  |
+| **Trade Routes II** | +10% taxRate | 2,000 G · 5 K |  |
+| **Treasure Hunters I** | +25% treasureYield | 2,000 G · 5 K | *dead end* |
 | **Magistracy** | Townhall L4 | 3,000 G · 6 K | **finale** |
 
 ## 5. Chapter 4 — Townhall 4 → 5
@@ -95,14 +99,14 @@
 | **Townhouses** | Housing L4 | 8,000 G · 5 K |  |
 | **Stone Dressing** | the Mason's Yard | 8,000 G · 5 K |  |
 | **Spears** | the Spear Hall · the Lancer | 8,000 G · 5 K |  |
-| **Joinery** | the Carpenter | 8,000 G · 5 K |  |
 | **Architecture** | the producers L4 | 8,000 G · 5 K |  |
+| **Joinery** | the Carpenter | 8,000 G · 5 K |  |
+| **Sawpits II** | +15% harvestYield — Wood | 8,000 G · 5 K |  |
 | **Warband II** | the four halls L4 | 8,000 G · 5 K |  |
 | **Guild Halls I** | +15% workshopSpeed | 8,000 G · 5 K |  |
-| **Sawpits II** | +15% harvestYield — Wood | 8,000 G · 5 K |  |
+| **Lumberjacks I** | +15% crewStrikeSpeed — Sawmill | 8,000 G · 5 K |  |
 | **Shield Wall I** | +10% unitDef — Melee | 8,000 G · 9 K | *dead end* |
 | **Carpentry II** | +15% buildSpeed | 8,000 G · 5 K |  |
-| **Lumberjacks I** | +15% crewStrikeSpeed — Sawmill | 8,000 G · 5 K |  |
 | **Woodsheds I** | +25% storageCapacity — Sawmill | 8,000 G · 9 K | *dead end* |
 | **Charter** | Townhall L5 | 12,000 G · 4 K | **finale** |
 
@@ -110,14 +114,14 @@
 
 | Card | Opens / moves | Price | |
 |---|---|---|---|
-| **Terraces** | Housing L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
 | **Ironmongery** | the producers L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
+| **Terraces** | Housing L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
+| **Farmhands I** | +15% crewStrikeSpeed — Farm | 9,000 G · 7 K |  |
 | **Cavalry** | the Stables · the Cavalry | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
 | **Trade Routes III** | +10% taxRate | 9,000 G · 7 K |  |
-| **Farmhands I** | +15% crewStrikeSpeed — Farm | 9,000 G · 7 K |  |
 | **Warband III** | the four halls L5 | 9,000 G · 7 K |  |
 | **Gardening** | the Garden · the Orchard | 9,000 G · 7 K |  |
-| **Deep Mining** | the mountain Gold tap | 9,000 G · 7 K |  |
+| **Deep Mining** | +25% harvestYield — MountainGold | 9,000 G · 7 K |  |
 | **Barding I** | +10% unitDef — Mounted | 9,000 G · 12 K | *dead end* |
 | **Rich Soil I** | +25% cellStock — crop-plot Food | 9,000 G · 7 K |  |
 | **Attunement II** | the Rune Carver · Sanctum L4 | 9,000 G · 7 K |  |
@@ -132,11 +136,11 @@
 | **Waterwheels** | the producers L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
 | **Fortifications** | the four halls L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
 | **Sculpture** | the Well · the Statue | 20,000 G · 9 K |  |
-| **Irrigation II** | +15% harvestYield — crop-plot Food | 20,000 G · 9 K |  |
 | **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 20,000 G · 9 K |  |
 | **Apprentices I** | +1 workshopQueueSlots | 20,000 G · 9 K |  |
-| **Attunement III** | Sanctum L5 | 20,000 G · 9 K |  |
+| **Irrigation II** | +15% harvestYield — crop-plot Food | 20,000 G · 9 K |  |
 | **Vigour I** | +10% unitHp | 20,000 G · 14 K | *dead end* |
+| **Attunement III** | Sanctum L5 | 20,000 G · 9 K |  |
 | **Carpentry III** | +15% buildSpeed | 20,000 G · 9 K |  |
 | **Poultices I** | +25% healSpeed | 20,000 G · 9 K |  |
 | **Gamekeeping I** | +25% respawnSpeed | 20,000 G · 14 K | *dead end* |
@@ -147,14 +151,14 @@
 | Card | Opens / moves | Price | |
 |---|---|---|---|
 | **Mansions** | Housing L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
-| **Windmills** | the producers L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
 | **Bastions** | the four halls L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
 | **Trade Routes IV** | +10% taxRate | 42,000 G · 14 K |  |
-| **Sawpits III** | +15% harvestYield — Wood | 42,000 G · 14 K |  |
+| **Windmills** | the producers L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
 | **Second Sanctum** | one more Sanctum | 42,000 G · 14 K |  |
 | **Civic Treasury I** | +25% ownGold | 42,000 G · 14 K |  |
-| **Miners I** | +15% crewStrikeSpeed — Quarry | 42,000 G · 14 K |  |
+| **Sawpits III** | +15% harvestYield — Wood | 42,000 G · 14 K |  |
 | **Warhorns I** | +10% unitAtk | 42,000 G · 20 K | *dead end* |
+| **Miners I** | +15% crewStrikeSpeed — Quarry | 42,000 G · 14 K |  |
 | **Old Growth I** | +25% cellStock — Wood | 42,000 G · 14 K |  |
 | **Bunkhouse I** | +1 crewSlots | 42,000 G · 14 K |  |
 | **Frontier Works I** | +15% improvementYield | 42,000 G · 20 K | *dead end* |
@@ -170,11 +174,11 @@
 | **Paving** | the Plaza | 90,000 G · 9 K |  |
 | **Stonecutting II** | +15% harvestYield — Stone | 90,000 G · 9 K |  |
 | **Colours I** | +10% armyCap | 90,000 G · 9 K |  |
-| **Trade Routes V** | +10% taxRate | 90,000 G · 9 K |  |
 | **Surveying I** | +1 influenceRadius | 90,000 G · 9 K |  |
+| **Trade Routes V** | +10% taxRate | 90,000 G · 9 K |  |
+| **Attunement IV** | Sanctum L6 · Sanctum L7 · Sanctum L8 · Sanctum L9 · Sanctum L10 | 90,000 G · 9 K |  |
 | **Shield Wall II** | +10% unitDef — Melee | 90,000 G · 14 K | *dead end* |
 | **Guild Halls II** | +15% workshopSpeed | 90,000 G · 9 K |  |
-| **Attunement IV** | Sanctum L6 · Sanctum L7 · Sanctum L8 · Sanctum L9 · Sanctum L10 | 90,000 G · 9 K |  |
 | **Swift Scouts I** | +25% explorerSpeed | 90,000 G · 14 K | *dead end* |
 | **Sovereignty** | Townhall L9 | 135,000 G · 6 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone | **finale** |
 
@@ -185,11 +189,11 @@
 | **Grand Avenues** | Housing L9 · Housing L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Mechanics** | the producers L9 · the producers L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Warlords** | the four halls L9 · the four halls L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
-| **Sacred Grounds** | the Shrine | 190,000 G · 14 K |  |
 | **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 190,000 G · 14 K |  |
+| **Sacred Grounds** | the Shrine | 190,000 G · 14 K |  |
+| **Fishers I** | +15% crewStrikeSpeed — Docks | 190,000 G · 14 K |  |
 | **Warhorns II** | +10% unitAtk | 190,000 G · 14 K |  |
 | **Flowerbeds I** | +25% decorationHarmony | 190,000 G · 14 K |  |
-| **Fishers I** | +15% crewStrikeSpeed — Docks | 190,000 G · 14 K |  |
 | **Supply Depots I** | +25% improvementStore | 190,000 G · 20 K | *dead end* |
 | **Strongroom I** | +25% storageCapacity — Townhall; +25% storageCapacity — Housing | 190,000 G · 14 K |  |
 | **Granaries II** | +25% storageCapacity — Farm | 190,000 G · 14 K |  |

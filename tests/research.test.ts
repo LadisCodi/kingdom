@@ -241,7 +241,16 @@ describe('pouring Knowledge', () => {
   it('holds Knowledge in several technologies at once', () => {
     const state = freshGame();
     openEveryEra(state);
-    const [a, b] = dearest();
+    // The two dearest that do not lead to one another: finishing the way to
+    // one must not finish the other.
+    const above = (id: TechId): Set<TechId> => {
+      const seen = new Set<TechId>();
+      const walk = (t: TechId) => TECHNOLOGIES[t].requires.forEach((r) => { if (!seen.has(r)) { seen.add(r); walk(r); } });
+      walk(id);
+      return seen;
+    };
+    const [a, ...rest] = dearest();
+    const b = rest.find((t) => !above(t).has(a) && !above(a).has(t))!;
     for (const req of [...TECHNOLOGIES[a].requires, ...TECHNOLOGIES[b].requires]) {
       completeTech(state, req);
     }

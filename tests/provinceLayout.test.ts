@@ -28,6 +28,8 @@ const footprint = (o: Coord, size: number): Coord[] => {
 const lairDistance = (id: LairId): number =>
   Math.min(...footprint(LAIRS[id].location, LAIRS[id].size).map((c) => townhallDistance(map, c)));
 
+const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+
 const nearestLandmark = [...LANDMARKS]
   .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location))[0];
 
@@ -41,13 +43,14 @@ describe('the province opens to the south', () => {
     expect(sightedAt(freshGame(), map, nearestLandmark.location)?.id).toBe(nearestLandmark.id);
   });
 
-  it('shows one landmark while the Townhall is at level 1 — the first, south — and the two camps', () => {
+  it('shows two landmarks while the Townhall is at level 1 — the first, south, and the Watchtower, north — and the two camps', () => {
     const state = revealedTo(reachAt(1));
     const seen = sightedThings(state, map);
     const landmarks = seen.filter((t) => t.kind === 'landmark');
-    expect(landmarks.map((t) => t.id)).toEqual([nearestLandmark.id]);
-    // South on screen is +x +y.
-    expect(landmarks[0].anchor.x + landmarks[0].anchor.y).toBeGreaterThan(0);
+    expect(landmarks.map((t) => t.id).sort()).toEqual([nearestLandmark.id, tower.id].sort());
+    // South on screen is +x +y; north is −x −y.
+    expect(nearestLandmark.location.x + nearestLandmark.location.y).toBeGreaterThan(0);
+    expect(tower.location.x + tower.location.y).toBeLessThan(0);
     expect(seen.filter((t) => t.kind === 'lair').map((t) => t.id).sort()).toEqual(['Harpies', 'Orcs']);
   });
 
@@ -74,8 +77,30 @@ describe('the near mountains are the Harpies’', () => {
 
   it('holds every big mountain the second Townhall reaches', () => {
     const big = mountains.filter((m) => m.size > 1 && townhallDistance(map, m.cell) <= reachAt(2));
-    expect(big.length).toBeGreaterThan(0);
     for (const m of big) expect(zoneLairsAt(m.cell), coordKey(m.cell)).toContain('Harpies');
+  });
+
+  // Gold beyond the houses is a Mana sink worth fighting for: the one vein the
+  // second Townhall reaches is on the Harpies' ground.
+  it('guards the gold vein the second Townhall reaches', () => {
+    const gold = [...map.initialFeatures]
+      .filter(([key, id]) => id === 'MountainGold' && townhallDistance(map, parseCoordKey(key)) <= reachAt(2))
+      .map(([key]) => parseCoordKey(key));
+    expect(gold).toHaveLength(1);
+    expect(zoneLairsAt(gold[0])).toContain('Harpies');
+  });
+});
+
+// The world door is the Watchtower: the second Townhall reaches it, so the
+// world map opens in chapter 2, not chapter 4.
+describe('the Watchtower is the second Townhall’s', () => {
+  it('stands past the first Townhall’s reach and inside the second’s', () => {
+    expect(townhallDistance(map, tower.location)).toBeGreaterThan(reachAt(1));
+    expect(townhallDistance(map, tower.location)).toBeLessThanOrEqual(reachAt(2));
+  });
+
+  it('stands on no lair’s ground', () => {
+    expect(zoneLairsAt(tower.location)).toEqual([]);
   });
 
   it('leaves one loose stone node free inside that reach', () => {

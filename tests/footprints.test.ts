@@ -178,24 +178,35 @@ describe('a block behaves as one thing', () => {
     // A block the reach ring CUTS IN HALF — near corner inside, far corner
     // out. That is the whole case: asking for every cell refused a tap on a
     // thing the player could plainly see they had reached.
-    const ladder = FOG.reachPerTownhallLevel;
+    const ladder = FOG.reachPerTownhallLevel as number[];
+    const saved = [...ladder];
     let split: { anchor: Coord; level: number; near: number } | null = null;
-    for (const anchorKey of map.footprintSize.keys()) {
-      const a = parseCoordKey(anchorKey);
+    const blocks = [...map.footprintSize.keys()].map(parseCoordKey).map((a) => {
       const d = footprintCells(map, a).map((c) => townhallDistance(map, c));
-      const near = Math.min(...d);
-      const far = Math.max(...d);
-      const i = ladder.findIndex((r) => r >= near && r < far);
-      if (i !== -1) { split = { anchor: a, level: i + 1, near }; break; }
+      return { anchor: a, near: Math.min(...d), far: Math.max(...d) };
+    });
+    for (const b of blocks) {
+      const i = ladder.findIndex((r) => r >= b.near && r < b.far);
+      if (i !== -1) { split = { anchor: b.anchor, level: i + 1, near: b.near }; break; }
     }
-    expect(split, 'no block on the province is split by any reach').not.toBeNull();
-
-    const state = freshGame();
-    const hall = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
-    hall.level = split!.level;
-    expect(isWithinReach(state, map, split!.anchor)).toBe(true);
-    // And the refusal names the level that opens it — the NEAREST cell's.
-    expect(reachLevelFor(map, split!.anchor)).toBe(split!.level);
+    // The authored map need not have one: the rule is about blocks, not this
+    // map. Then the first ring is drawn through a block's near corner.
+    const cut = blocks.find((b) => b.near < b.far)!;
+    expect(cut, 'the province has a block').toBeDefined();
+    if (split === null) {
+      ladder[0] = cut.near;
+      split = { anchor: cut.anchor, level: 1, near: cut.near };
+    }
+    try {
+      const state = freshGame();
+      const hall = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+      hall.level = split.level;
+      expect(isWithinReach(state, map, split.anchor)).toBe(true);
+      // And the refusal names the level that opens it — the NEAREST cell's.
+      expect(reachLevelFor(map, split.anchor)).toBe(split.level);
+    } finally {
+      ladder.splice(0, ladder.length, ...saved);
+    }
   });
 
   it('draws on one depot, holding its whole area', () => {
