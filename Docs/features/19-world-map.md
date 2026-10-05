@@ -73,7 +73,9 @@
 - The first time out, they choose a **nickname**:
   - 3–16 letters, numbers, spaces, `_` or `-`;
   - unique across the game, whatever its case;
-  - never changed. It is the name every other player reads on the board.
+  - never changed. It is the name every other player reads on the board,
+    on a wooden plank under the city, banded in the kingdom's colour. A
+    rival's city carries its name the same way, once it is out of the fog.
 - The server then seats them:
   - **in a rival's city on the newest board that still has a rival.** The
     rival leaves with its armies, offers and claims under way; its districts
