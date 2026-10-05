@@ -23,6 +23,7 @@
 // a second, weaker copy of that encounter, so it was deleted rather than
 // built (Docs/features/18-garrisons-and-raids.md §9).
 
+import { roundPrice } from './roundPrice';
 import { lairHolding } from './lairZone';
 import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState, recordVisibleSites } from './fog';
@@ -51,7 +52,7 @@ export const isLandmarkClaimed = (state: GameState, id: string): boolean =>
  * has been staring at for a week should cost what the designer said.
  */
 export const landmarkClaimCost = (state: GameState, def: LandmarkDef): number =>
-  Math.max(1, Math.round(resolve(state, 'claimCost', def.claimCost)));
+  Math.max(1, roundPrice(resolve(state, 'claimCost', def.claimCost)));
 
 export type ClaimResult =
   | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'NotEnoughGold' | 'NoLandmark'

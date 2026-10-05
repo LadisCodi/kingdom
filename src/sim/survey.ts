@@ -12,6 +12,7 @@
 // player's pace, and buying the paid column opens every level already
 // reached — a column of cells to tap, not a payout.
 
+import { roundPrice } from './roundPrice';
 import { track as trackEvent } from './analytics';
 import { SURVEY } from './data/definitions';
 import { cityGoldPerSecond } from './production';
@@ -51,7 +52,7 @@ export function freeSurveyCell(state: GameState, level: number): SurveyCell {
   const minutes = SURVEY.freeGoldMinutes[i] ?? 0;
   const wallet: Wallet = {};
   if (minutes > 0) {
-    wallet.Gold = Math.max(SURVEY.goldFloorPerMinute * minutes, Math.round(cityGoldPerSecond(state) * minutes * 60));
+    wallet.Gold = Math.max(SURVEY.goldFloorPerMinute * minutes, roundPrice(cityGoldPerSecond(state) * minutes * 60));
   }
   if ((SURVEY.freeKnowledge[i] ?? 0) > 0) wallet.Knowledge = SURVEY.freeKnowledge[i];
   const items: ItemStock = {};

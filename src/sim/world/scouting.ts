@@ -8,6 +8,7 @@
 // Gold, Wood, Food and Stone are priced then, in hours of the city's own
 // production (`tap.workSeconds`'s rule), floored at the authored amount.
 
+import { roundPrice } from '../roundPrice';
 import { RELIC_RULES, WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/definitions';
 import { dropFragments, openRelicDoor } from '../relics';
 import { cityMakesPerSecond } from '../production';
@@ -33,7 +34,7 @@ export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex
   if (scout.reward === 'Gold' || scout.reward === 'Wood' || scout.reward === 'Food' || scout.reward === 'Stone') {
     const hours = role === 'portal' ? 0 : WORLD_SCOUTING.hoursByRole[role];
     const rate = cityMakesPerSecond(state, scout.reward);
-    return { wallet: { [scout.reward]: Math.round(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
+    return { wallet: { [scout.reward]: roundPrice(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
   }
   return { wallet: { [scout.reward]: scout.amount }, goods: {}, pack: null };
 }

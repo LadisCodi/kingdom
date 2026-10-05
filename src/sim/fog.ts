@@ -1,5 +1,6 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
+import { roundPrice } from './roundPrice';
 import { track } from './analytics';
 import { ABANDONED, DISTRICTS, FOG, LANDMARKS, LAIR_ORDER, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
@@ -95,7 +96,7 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
   // tap charges a fifth of that. Nothing says so on screen: the floater on
   // the tap states what it took, which a nine-cell number says plainly
   // enough (Docs/features/01-map-and-fog.md §3.1).
-  footprintCells(map, cell).reduce((sum, c) => sum + oneCellCost(state, map, c), 0);
+  roundPrice(footprintCells(map, cell).reduce((sum, c) => sum + oneCellCost(state, map, c), 0));
 
 const oneCellCost = (state: GameState, map: MapData, cell: Coord): number =>
   Math.max(

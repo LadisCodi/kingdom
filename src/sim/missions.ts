@@ -30,6 +30,7 @@
 //
 // Docs/features/20-season-pass.md §3.
 
+import { roundPrice } from './roundPrice';
 import { DISTRICTS, MISSIONS, CURRENCIES } from './data/definitions';
 import { armyCap, committedTroops, trainerFor } from './army';
 import { maxDistrictCount, requiredTechForLevel } from './districts';
@@ -211,7 +212,7 @@ function targetFor(
       const minutes = MISSIONS.collectMinutesMin +
         roll * (MISSIONS.collectMinutesMax - MISSIONS.collectMinutesMin);
       const rate = cityMakesPerSecond(state, subject ?? 'Gold');
-      return Math.max(MISSIONS.collectFloor, Math.round(rate * minutes * 60));
+      return Math.max(MISSIONS.collectFloor, roundPrice(rate * minutes * 60));
     }
     case 'DiscoverCells': return inBand(roll, MISSIONS.revealBand);
     case 'BuildDistricts': return inBand(roll, MISSIONS.buildBand);

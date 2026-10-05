@@ -16,6 +16,7 @@
 // own production of its coin (`tap.workSeconds`'s rule), floored. Nothing
 // here is time-based: a treasure waits for ever, so it needs no boundary.
 
+import { roundPrice } from './roundPrice';
 import { track } from './analytics';
 import { HARVEST, RELIC_RULES, TREASURE } from './data/definitions';
 import { dropFragments, type FragmentDrop } from './relics';
@@ -143,7 +144,7 @@ export function treasureReward(state: GameState, treasure: { n: number; coin: Cu
   // The tree's `treasureYield` lifts a find priced in production — never the
   // first, which the opening counts on, and never Knowledge, which the
   // chapters' budget counts on.
-  return { [coin]: Math.round(Math.max(floor, rate * TREASURE.workSeconds)
+  return { [coin]: roundPrice(Math.max(floor, rate * TREASURE.workSeconds)
     * techMultiplier(state, 'treasureYield')) };
 }
 

@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 121 suites, keep them all green
+npm test             # vitest run — 122 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -226,6 +226,11 @@ than the build is rejected rather than downgraded.
   hands the player that many seconds of what they tapped is producing, floored
   at the authored yield. **Follow this for every new reward** — absolute
   amounts in a spreadsheet go stale on their own as the city grows.
+- **A calculated cost or reward is rounded to three significant figures**
+  (`roundPrice`, `src/sim/roundPrice.ts`): 1,234 → 1,230, a whole number
+  below 1,000. Every price off a curve and every reward priced in production
+  goes through it before it is charged or paid (`tests/roundPrice.test.ts`
+  sweeps the curves); an authored number never does.
 - **Every tap on the ground costs 1 Mana** (trees, berries, crops, rocks,
   mountains, shoals); paying fog costs Gold. **A tap on a building never costs
   Mana**: a ready store is collected free, otherwise the building opens.

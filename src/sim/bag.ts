@@ -12,6 +12,7 @@
 //  3. A USE IS A COMMAND. It reads the state as `advance()` left it and
 //     lands in the wallet, past any store — the offline replay never sees it.
 
+import { roundPrice } from './roundPrice';
 import { track } from './analytics';
 import { recordEvent } from './events';
 import { BAG, ITEMS, type BoostKind, type ItemDef } from './data/definitions';
@@ -65,7 +66,7 @@ export function chestValue(state: GameState, id: ItemId, choice?: CurrencyId): W
   if (coin === null || !CHEST_COINS.includes(coin)) return {};
   const made = cityMakesPerSecond(state, coin) * def.seconds;
   const floor = (BAG.chestFloorPerHour * def.seconds) / 3600;
-  return { [coin]: Math.round(Math.max(floor, made)) };
+  return { [coin]: roundPrice(Math.max(floor, made)) };
 }
 
 /** The modifier a boost of this kind runs as: the stat it multiplies. */

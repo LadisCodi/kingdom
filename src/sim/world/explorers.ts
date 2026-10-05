@@ -15,6 +15,7 @@
 // any length adds at most one boundary per explorer, because nothing ever
 // sends one out again on its own (CLAUDE.md, invariant 1).
 
+import { roundPrice } from '../roundPrice';
 import { WORLD } from '../data/definitions';
 import { gemsToFinish } from '../rush';
 import { resolve } from '../modifiers';
@@ -97,7 +98,7 @@ export const exploreWorkMs = (state: GameState, target: number): number =>
 /** Gold to send an explorer to a hex, paid when it leaves: dearer the
  *  further the hex lies from the city. */
 export const exploreGold = (state: GameState, target: number): number =>
-  Math.round(WORLD.exploreGoldBase
+  roundPrice(WORLD.exploreGoldBase
     * WORLD.exploreGoldGrowth ** Math.max(0, hexDistance(hexAt(homeIndex(state)), hexAt(target)) - 1));
 
 // ------------------------------------------------------------- a trip

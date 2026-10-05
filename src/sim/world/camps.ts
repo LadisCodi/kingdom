@@ -2,6 +2,7 @@
 // §5.4): what paying one off costs, and how hard it looks against what the
 // player could field. Who has beaten which camp is the world server's.
 
+import { roundPrice } from '../roundPrice';
 import { COMBAT, HEROES, UNITS, WORLD_CAMPS } from '../data/definitions';
 import { heroSlots } from '../heroes';
 import type { GameState, LairId, Wallet } from '../state';
@@ -19,7 +20,7 @@ export function campTribute(power: number): Wallet {
   const lost = (power * WORLD_CAMPS.tributeLossShare) / UNITS.Warrior.power;
   const out: Wallet = {};
   for (const [c, n] of Object.entries(UNITS.Warrior.recruitCost)) {
-    out[c as keyof Wallet] = Math.ceil((n as number) * lost * WORLD_CAMPS.tributePremium);
+    out[c as keyof Wallet] = Math.max(1, roundPrice(Math.ceil((n as number) * lost * WORLD_CAMPS.tributePremium)));
   }
   return out;
 }
