@@ -14,6 +14,7 @@
 // would mean a save migration plus rebuilding stack entries on every purchase,
 // in exchange for elegance nobody can see.
 
+import { relicAura } from './hosts';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, GameState, HarvestSourceId,
 } from './state';
@@ -102,9 +103,14 @@ export type ModifierScope = CurrencyId | HarvestSourceId | DistrictId | null;
  * and placement are 4-way, areas are Chebyshev, worker travel is Euclidean).
  */
 export interface ModifierArea {
+  /** The zone's anchor: its centre cell, or the top-left cell of `size`. */
   centre: Coord;
-  /** Chebyshev. 0 covers the centre cell alone. */
+  /** Chebyshev, from the anchor or from every cell of `size`. 0 covers the
+   *  anchor (or the footprint) alone. */
   radius: number;
+  /** A FOOTPRINT the radius is measured from — a Shrine's aura is its 2×2
+   *  and the ring round it. Absent = the one anchor cell. */
+  size?: Coord;
   /**
    * WHOSE ZONE IT IS, and WHEN IT WAS CAST.
    *
@@ -139,8 +145,13 @@ export interface Modifier {
 
 /** Chebyshev, inclusive of the centre — so radius 2 is the 5×5 the preview
  *  draws. */
-export const areaCovers = (area: ModifierArea, cell: Coord): boolean =>
-  Math.max(Math.abs(cell.x - area.centre.x), Math.abs(cell.y - area.centre.y)) <= area.radius;
+export const areaCovers = (area: ModifierArea, cell: Coord): boolean => {
+  const w = area.size?.x ?? 1;
+  const h = area.size?.y ?? 1;
+  const dx = Math.max(area.centre.x - cell.x, 0, cell.x - (area.centre.x + w - 1));
+  const dy = Math.max(area.centre.y - cell.y, 0, cell.y - (area.centre.y + h - 1));
+  return Math.max(dx, dy) <= area.radius;
+};
 
 /** Half-open, so a modifier expiring at exactly T is already gone at T. */
 export const isActive = (m: Modifier, t: number): boolean =>
@@ -221,6 +232,13 @@ export function resolveAt(
   scope: ModifierScope = null,
 ): number {
   const t = state.lastAdvance;
+  // The aura stage first: a hosted relic is a fact about the kingdom, so it
+  // folds before the modifiers (sim/hosts.ts). Unscoped, like a relic's
+  // passive always was.
+  if (scope === null) {
+    const aura = relicAura(state, stat, cell);
+    base = (base + aura.add) * aura.mul;
+  }
   let add = 0;
   let mul = 1;
   const stack = state.modifiers
@@ -245,6 +263,13 @@ export const activeModifiers = (state: GameState): Modifier[] =>
 
 export function addModifier(state: GameState, m: Modifier): void {
   state.modifiers.push(m);
+}
+
+/** Drop every modifier the predicate picks. Returns how many went. */
+export function removeModifiersWhere(state: GameState, pick: (m: Modifier) => boolean): number {
+  const before = state.modifiers.length;
+  state.modifiers = state.modifiers.filter((m) => !pick(m));
+  return before - state.modifiers.length;
 }
 
 /** Drop every modifier from `source` (a relic being un-attuned, a season

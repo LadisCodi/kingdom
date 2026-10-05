@@ -1,6 +1,7 @@
 // Population: housing, auto-assigned residents, and the rent each house
 // stores for the player to collect.
 
+import { relicAuraOver } from './hosts';
 import { CITY_DEF, DISTRICTS, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
@@ -79,7 +80,9 @@ export function houseGoldPerMinute(state: GameState, district: District): number
   const own = ownGoldPerMinute(state, district);
   const residents = residentsOf(state, district);
   if (residents === 0) return own;
-  return own + Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+  // A Gilded Ledger's aura reaches the house as a whole (sim/hosts.ts).
+  const aura = relicAuraOver(state, 'taxRate', district);
+  return own + Math.max(0, residents * (effectiveTaxRate(state, district.definitionId) + aura.add) * aura.mul
     * (1 + houseTaxBonus(district))
     + districtAdjacency(state, district));
 }

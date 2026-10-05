@@ -48,7 +48,7 @@ import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 import { formatCount, formatDuration, formatExact } from '../ui/format';
-import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
+import { AURA_RGB, drawArea, drawAreaLine, drawReach } from './areaOverlays';
 import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 import { drawFogLayer } from './fog/fogLayer';
 
@@ -58,6 +58,8 @@ export interface MarkerLayer {
   validCells: Array<{ cell: Coord; label: string }>; // valid placement cells
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
+  /** The influence is a Shrine's aura: it glows gold. */
+  influenceIsAura?: boolean;
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
   yieldCells: Array<{
@@ -1125,7 +1127,7 @@ export function drawMap(
   // everything that stands on it — trees and buildings stand in front of
   // the line (render/areaOverlays.ts).
   drawArea(ctx, markers.influenceCells, cellRect, (b) => diamondPath(ctx, b), size,
-    performance.now());
+    performance.now(), markers.influenceIsAura === true ? AURA_RGB : undefined);
   // Where a building may go (or a spell may land): ONE region in the work
   // area's line, not a diamond per cell (render/areaOverlays.ts); its
   // labels, if any, are Pass 3's.

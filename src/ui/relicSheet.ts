@@ -83,10 +83,31 @@ export function relicTab(game: Game): HTMLElement[] {
   return out;
 }
 
-/** The spell, once restored: cast it, or how long until it can be. */
-function spell(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {
+/** Where a restored city relic is hosted, and the Shrines it could go to
+ *  (sim/hosts.ts): it acts only inside a Shrine's aura. */
+function hostLines(game: Game, view: RelicView): HTMLElement[] {
+  const host = view.host;
+  if (host === null) return [];
+  return [el('div', { class: 'rl-host' },
+    el('div', { class: `rl-line${host.at === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
+      el('span', {}, host.at === null ? 'Not hosted — it acts only inside a Shrine\u2019s aura' : `Hosted in ${host.at}`)),
+    host.shrines.length === 0 && host.at === null
+      ? el('div', { class: 'rl-line is-muted' }, el('span', {}, 'Repair the Shrine in the ruins to host it'))
+      : el('div', { class: 'rl-forge' },
+        ...host.shrines.map((o) => btn({
+          label: 'Host',
+          note: o.holds === null ? o.label : `${o.label} · holds ${o.holds}`,
+          onClick: () => game.doHostRelic(view.id, o.shrineId),
+        })),
+        ...(host.at === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(view.id) })])))];
+}
+
+/** The spell, once restored: cast it, or how long until it can be. A city
+ *  relic's is cast over its Shrine's aura, so it waits for one. */
+export function spell(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {
   const active = ARTIFACTS[id].active;
   if (active === null || !view.restored) return null;
+  if (view.host !== null && view.host.at === null) return null;
   const { phase, leftMs, charges } = view.cast;
   const left = formatDuration(Math.ceil(leftMs / 1000));
   const running = charges > 0
@@ -154,6 +175,7 @@ export function renderRelicSheet(game: Game): HTMLElement {
       el('div', { class: 'rl-line' }, iconEl('shard', { size: 'sm' }),
         el('span', {}, `Spares: ${formatExact(view.spares)}${view.restored ? '' : ' (copies past the first)'}`))),
     ...actions(game, view),
+    ...hostLines(game, view),
     ...[spell(game, id, view)].filter((x): x is HTMLElement => x !== null),
     ...(view.chest === null ? [] : [el('div', { class: 'rl-chest' },
       el('div', { class: 'rl-line is-muted' }, el('span', {},

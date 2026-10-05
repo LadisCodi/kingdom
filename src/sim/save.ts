@@ -30,7 +30,7 @@ import { WORLD_DISTRICTS, WORLD_UPGRADES } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   cellsOfRect, coordKey, districtOccupies, parseCoordKey,
-  type Coord, type District, type GameState, type ItemId, type QueueItem,
+  type ArtifactId, type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
   type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
@@ -64,6 +64,8 @@ interface DistrictDto {
   /** A house's rent anchor. Additive since save 62: before it the city had
    *  one anchor, `LastTaxAt`, which every house starts from. */
   RentAnchorUtc?: string;
+  /** The relic a Shrine holds. Additive since save 94. */
+  Hosts?: string;
 }
 
 interface QueueItemDto {
@@ -918,6 +920,7 @@ export function serialize(state: GameState, now: number): SaveFile {
                 ConstructionState: d.state,
                 ...(d.stored && Object.keys(d.stored).length > 0 ? { Stored: { ...d.stored } } : {}),
                 ...(d.rentAnchor !== undefined ? { RentAnchorUtc: iso(d.rentAnchor) } : {}),
+                ...(d.hosts !== undefined ? { Hosts: d.hosts } : {}),
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -1165,6 +1168,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Area: m.area === undefined ? null : {
             X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius,
             Relic: m.area.relic, SinceUtc: iso(m.area.since),
+            ...(m.area.size !== undefined ? { W: m.area.size.x, H: m.area.size.y } : {}),
           },
         })),
       },
@@ -1285,6 +1289,7 @@ export function deserialize(
         // into the houses from where the old anchor stood.
         ...(d.RentAnchorUtc ? { rentAnchor: ms(d.RentAnchorUtc) }
           : legacyTaxAt !== null ? { rentAnchor: legacyTaxAt } : {}),
+        ...(d.Hosts !== undefined && (ARTIFACT_ORDER as string[]).includes(d.Hosts) ? { hosts: d.Hosts as ArtifactId } : {}),
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -1711,6 +1716,7 @@ export function deserialize(
           centre: { x: m.Area.X, y: m.Area.Y },
           radius: m.Area.Radius,
           relic: m.Area.Relic,
+          ...(m.Area.W !== undefined ? { size: { x: m.Area.W, y: m.Area.H } } : {}),
           // A save from before the map could draw a zone has no instant on it.
           // `expiresAt` still ends the zone correctly; only the wheel's sweep
           // needs a start, and it reads as full rather than as NaN.

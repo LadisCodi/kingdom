@@ -7,6 +7,7 @@
 // leaked into `resolve()` would apply to the whole kingdom, and that is the
 // one bug this file exists to make impossible.
 
+import { castHosted, hostOf } from '../src/sim/hosts';
 import { describe, expect, it } from 'vitest';
 import { grantArtifactLevel, syncArtifactModifiers } from '../src/sim/artifacts';
 import {
@@ -31,7 +32,7 @@ import {
 import { deserialize, serialize } from '../src/sim/save';
 import { workerStrikeMs, effectiveWorkerSpeed } from '../src/sim/upgrades';
 import {
-  addToWallet, coordKey, districtAt, getWallet, type Coord, type GameState,
+  addToWallet, coordKey, districtAt, getWallet, type ArtifactId, type Coord, type GameState,
 } from '../src/sim/state';
 import {
   addBuilt, canGather, freshGame, fund, map, reveal, FOREST, T0,
@@ -51,6 +52,32 @@ const zone = (
     area: { centre, radius, relic: 'DowsingRod', since: T0 },
   });
 };
+
+
+/**
+ * HOST A CITY RELIC beside a cell (sim/hosts.ts): a Shrine at level 1 holding
+ * it, one cell down-right of `cell`, so the aura — its footprint and two cells
+ * round it — covers the cell the test is about. A relic already hosted has
+ * its Shrine moved there.
+ */
+function hostNear(state: GameState, relic: ArtifactId, cell: Coord): void {
+  const at = { x: cell.x + 1, y: cell.y + 1 };
+  const was = hostOf(state, relic);
+  if (was !== null) {
+    was.location = at;
+    return;
+  }
+  state.city.districts.push({
+    uniqueId: `shrine_${relic}`, definitionId: 'Shrine', ordinal: 9, level: 1, assignedWorkers: 0,
+    location: at, state: 'Built', visualVariant: 1, hosts: relic,
+  });
+}
+
+/** Cast a city relic's spell over the aura of a Shrine beside `cell`. */
+function castOn(state: GameState, relic: ArtifactId, cell: Coord, now: number) {
+  hostNear(state, relic, cell);
+  return castHosted(state, map, relic, now);
+}
 
 describe('a zone is a modifier with a centre', () => {
   it('covers a Chebyshev square, inclusive of the centre', () => {
@@ -226,7 +253,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
     const state = armed();
     const window = activeDurationMs(state, 'ForemansSigil');
     expect(window).toBeGreaterThan(0);
-    expect(cast(state, map, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
+    expect(castOn(state, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
 
     expect(castState(state, 'ForemansSigil', T0 + 1).phase).toBe('Active');
     expect(castState(state, 'ForemansSigil', T0 + window - 1).phase).toBe('Active');
@@ -239,20 +266,20 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   it('refuses a second cast while its own window is open, and while it rests', () => {
     const state = armed();
     const window = activeDurationMs(state, 'ForemansSigil');
-    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    castOn(state, 'ForemansSigil', CENTRE, T0);
     expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
-    expect(cast(state, map, 'ForemansSigil', CENTRE, T0 + 1).result).toBe('Active');
+    expect(castOn(state, 'ForemansSigil', CENTRE, T0 + 1).result).toBe('Active');
     expect(castBlock(state, 'ForemansSigil', T0 + window + 1)).toBe('OnCooldown');
     const ready = T0 + window + ARTIFACT_COOLDOWN_SECONDS * 1000;
     expect(castBlock(state, 'ForemansSigil', ready)).toBeNull();
-    expect(cast(state, map, 'ForemansSigil', CENTRE, ready).result).toBe('Cast');
+    expect(castOn(state, 'ForemansSigil', CENTRE, ready).result).toBe('Cast');
   });
 
   // The cycle is checked BEFORE the purse: a relic that is still running tells
   // the player to wait, not that they are poor.
   it('says it is running rather than that the player is poor', () => {
     const state = armed();
-    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    castOn(state, 'ForemansSigil', CENTRE, T0);
     addToWallet(state.city.wallet, 'Mana', -getWallet(state.city.wallet, 'Mana'));
     expect(castBlock(state, 'ForemansSigil', T0 + 1)).toBe('Active');
   });
@@ -262,7 +289,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   // lay a second one on top of the first.
   it('carries both instants through a save', () => {
     const state = armed();
-    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    castOn(state, 'ForemansSigil', CENTRE, T0);
     const back = deserialize(serialize(state, T0), map, T0)!;
     expect(back.artifacts.casts.ForemansSigil)
       .toEqual(state.artifacts.casts.ForemansSigil);
@@ -275,7 +302,7 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   it('needs no boundary: one-call replay equals stepped ticking across it', () => {
     const walk = (steps: number): string => {
       const state = armed();
-      cast(state, map, 'ForemansSigil', CENTRE, T0);
+      castOn(state, 'ForemansSigil', CENTRE, T0);
       const end = T0 + 120 * 60_000;
       for (let i = 1; i <= steps; i++) advance(state, map, T0 + ((end - T0) * i) / steps);
       return castState(state, 'ForemansSigil', end).phase;
@@ -413,7 +440,7 @@ describe('an auto-tap spell buys taps with the Mana of the cast', () => {
     const pool = getWallet(state.city.wallet, 'Mana');
     const cost = castCost(state, REAPER);
 
-    const report = cast(state, map, REAPER, FOREST, T0);
+    const report = castOn(state, REAPER, FOREST, T0);
     expect(report.result).toBe('Cast');
     expect(report.taps).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
@@ -428,7 +455,7 @@ describe('an auto-tap spell buys taps with the Mana of the cast', () => {
     const state = reaper(1);
     const cells = reapCells(state, map, FOREST, activeRadius(state, REAPER));
     expect(cells.length).toBeGreaterThan(1);
-    const report = cast(state, map, REAPER, FOREST, T0);
+    const report = castOn(state, REAPER, FOREST, T0);
     expect(report.affected.length).toBeGreaterThan(1);
   });
 
@@ -438,7 +465,7 @@ describe('an auto-tap spell buys taps with the Mana of the cast', () => {
   it('leaves nothing running behind it', () => {
     const state = reaper(3);
     const wood = (): number => getWallet(state.city.wallet, 'Wood');
-    cast(state, map, REAPER, FOREST, T0);
+    castOn(state, REAPER, FOREST, T0);
     const afterCast = wood();
     // An hour later the city has earned whatever a city earns — and not one
     // tap more of the run, because the run was over before the tick.
@@ -452,7 +479,7 @@ describe('an auto-tap spell buys taps with the Mana of the cast', () => {
   // cooldown exists to hold (OQ-99): a run cannot spend taps on nothing.
   it('stops when the ground is empty rather than spending on nothing', () => {
     const state = reaper(20);
-    const report = cast(state, map, REAPER, FOREST, T0);
+    const report = castOn(state, REAPER, FOREST, T0);
     expect(report.taps).toBeLessThanOrEqual(tapBudget(state, REAPER));
     expect(report.taps).toBeGreaterThan(0);
   });
@@ -481,7 +508,7 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
     const { state, near, far } = sigil(1);
     const swing = (d: typeof near) => workerStrikeMs(state, HARVEST.Forest, d);
     const before = swing(near);
-    expect(cast(state, map, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
+    expect(castOn(state, 'ForemansSigil', CENTRE, T0).result).toBe('Cast');
 
     expect(swing(near)).toBeLessThan(before);
     expect(swing(far)).toBe(before);
@@ -494,7 +521,7 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
   it('moves the swing and the walk together', () => {
     const { state, near } = sigil(1);
     const walkBefore = effectiveWorkerSpeed(state, near.location);
-    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    castOn(state, 'ForemansSigil', CENTRE, T0);
     expect(effectiveWorkerSpeed(state, near.location)).toBeGreaterThan(walkBefore);
   });
 
@@ -515,8 +542,10 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
   it('lets go when its window closes', () => {
     const { state, near } = sigil(1);
     const swing = () => workerStrikeMs(state, HARVEST.Forest, near);
+    // Hosted first: the Sigil's passive stays when its spell goes.
+    hostNear(state, 'ForemansSigil', CENTRE);
     const before = swing();
-    cast(state, map, 'ForemansSigil', CENTRE, T0);
+    castOn(state, 'ForemansSigil', CENTRE, T0);
     expect(swing()).toBeLessThan(before);
     advance(state, map, T0 + activeDurationMs(state, 'ForemansSigil') + 1000);
     expect(swing()).toBe(before);
@@ -540,7 +569,7 @@ describe('Tithe is the other exchange rate', () => {
     const state = ledger(1);
     const pool = getWallet(state.city.wallet, 'Mana');
     const cost = castCost(state, 'GildedLedger');
-    const report = cast(state, map, 'GildedLedger', CENTRE, T0);
+    const report = castOn(state, 'GildedLedger', CENTRE, T0);
     expect(report.result).toBe('Cast');
     expect(report.taps).toBeGreaterThan(0);
     expect(report.affected.length).toBe(2);
@@ -552,7 +581,7 @@ describe('Tithe is the other exchange rate', () => {
   // one always spends the whole budget.
   it('always spends its whole budget, because a house never runs dry', () => {
     const state = ledger(3);
-    const report = cast(state, map, 'GildedLedger', CENTRE, T0);
+    const report = castOn(state, 'GildedLedger', CENTRE, T0);
     expect(report.taps).toBe(tapBudget(state, 'GildedLedger'));
   });
 
@@ -560,7 +589,7 @@ describe('Tithe is the other exchange rate', () => {
     const state = ledger(1);
     const empty = { x: 8, y: 8 };
     reveal(state, [empty]);
-    const report = cast(state, map, 'GildedLedger', empty, T0);
+    const report = castOn(state, 'GildedLedger', empty, T0);
     expect(report.result).toBe('Cast');
     expect(report.taps).toBe(0);
   });
@@ -592,7 +621,7 @@ describe('Divining wakes the ground and keeps it coming back', () => {
     drawFromCell(state, map, FOREST, spec, 999, T0);
     expect(state.harvest[coordKey(FOREST)]!.units).toBe(0);
 
-    expect(cast(state, map, 'DowsingRod', FOREST, T0).result).toBe('Cast');
+    expect(castOn(state, 'DowsingRod', FOREST, T0).result).toBe('Cast');
     expect(state.harvest[coordKey(FOREST)]!.units).toBeGreaterThan(0);
     expect(state.harvest[coordKey(FOREST)]!.exhaustedUntil).toBeNull();
   });
@@ -603,7 +632,7 @@ describe('Divining wakes the ground and keeps it coming back', () => {
   it('leaves a zone behind that shortens the next recovery', () => {
     const state = rod(1);
     const plain = effectiveRecoveryMs(state, HARVEST.Forest, FOREST);
-    cast(state, map, 'DowsingRod', FOREST, T0);
+    castOn(state, 'DowsingRod', FOREST, T0);
     expect(effectiveRecoveryMs(state, HARVEST.Forest, FOREST)).toBeLessThan(plain);
     // And only there.
     expect(effectiveRecoveryMs(state, HARVEST.Forest, { x: 9, y: 9 })).toBe(plain);
@@ -685,6 +714,11 @@ describe('a faster recovery fills the bar faster, not fuller', () => {
     reveal(state, cellsWithinRadius(map, FOREST, 2));
     state.lastAdvance = T0;
     state.artifacts.levels.DowsingRod = level;
+    // A city relic acts where a Shrine holds it: one beside the forest.
+    state.city.districts.push({
+      uniqueId: 'shrine_rod', definitionId: 'Shrine', ordinal: 9, level: 5, assignedWorkers: 0,
+      location: { x: FOREST.x + 2, y: FOREST.y + 2 }, state: 'Built', visualVariant: 1, hosts: 'DowsingRod',
+    });
     syncArtifactModifiers(state);
     fund(state, { Mana: 999 });
     return state;
@@ -695,7 +729,7 @@ describe('a faster recovery fills the bar faster, not fuller', () => {
   /** Empty the forest at T0 and read the bar the instant it went. */
   const barAtEmpty = (level: number, withZone: boolean): number => {
     const state = holder(level);
-    if (withZone) cast(state, map, 'DowsingRod', FOREST, T0);
+    if (withZone) castOn(state, 'DowsingRod', FOREST, T0);
     drawFromCell(state, map, FOREST, spec(state), 999, T0);
     return recoveryProgress(state, map, FOREST, spec(state), T0)!;
   };
@@ -749,7 +783,7 @@ describe('a faster recovery fills the bar faster, not fuller', () => {
     // A zone cast somewhere else entirely, a second later.
     const far = { x: 9, y: 9 };
     reveal(state, [far, ...cellsWithinRadius(map, far, 2)]);
-    cast(state, map, 'DowsingRod', far, T0 + 1000);
+    castOn(state, 'DowsingRod', far, T0 + 1000);
 
     expect(state.harvest[coordKey(FOREST)]!.recoveryMs).toBe(span);
     expect(recoveryProgress(state, map, FOREST, spec(state), T0 + span / 2)!).toBe(half);

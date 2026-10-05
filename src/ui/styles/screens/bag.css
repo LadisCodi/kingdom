@@ -346,7 +346,10 @@
 .rl-line .icon { flex: none; --icon-size: calc(var(--px) * 20); }
 .rl-forge { display: flex; gap: calc(var(--px) * 8); }
 .rl-forge > .k-btn { flex: 1 1 0; }
-.rl-spell, .rl-chest {
+/* Up to five Shrines to choose from: they wrap two to a row. */
+.rl-host .rl-forge { flex-wrap: wrap; }
+.rl-host .rl-forge > .k-btn { flex: 1 1 40%; }
+.rl-spell, .rl-chest, .rl-host {
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 8);

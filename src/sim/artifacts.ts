@@ -10,7 +10,7 @@
 // completed, so the ladder is the player's history rather than a curve with a
 // top, and `per_level` is sized as a season's worth of growth.
 
-import { ARTIFACTS, ARTIFACT_ORDER } from './data/definitions';
+import { ARTIFACTS, ARTIFACT_ORDER, relicKind } from './data/definitions';
 import { addModifier, type Modifier } from './modifiers';
 import type { ArtifactId, GameState } from './state';
 
@@ -75,6 +75,9 @@ const MODIFIER_PREFIX = 'artifact:';
 export function syncArtifactModifiers(state: GameState): void {
   state.modifiers = state.modifiers.filter((m) => !m.id.startsWith(MODIFIER_PREFIX));
   for (const id of ownedArtifacts(state)) {
+    // A city relic acts only where a Shrine holds it — the aura stage
+    // (sim/hosts.ts). A world relic stays kingdom-wide until its Chapel.
+    if (relicKind(id) === 'city') continue;
     const value = passiveValue(state, id);
     // A relic may move more than one number with one value — the Seal's stock
     // and swing, the Sigil's swing and walk. The id carries the stat so two

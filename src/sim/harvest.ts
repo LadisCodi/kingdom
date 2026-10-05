@@ -48,7 +48,7 @@ export function tapYieldAt(
   const source = harvestSourceAt(state, cell);
   if (source === null) return 0;
   const spec = HARVEST[source];
-  const want = Math.max(1, Math.floor(tapDraw(state, spec, 0)));
+  const want = Math.max(1, Math.floor(tapDraw(state, spec, 0, cell)));
   return Math.min(want, stockAt(state, map, cell, now));
 }
 
@@ -76,7 +76,7 @@ export function effectiveStock(
   // The tree's `cellStock` scales the depot with the ground, before the
   // relic's flat term — a richer kind of tree, not a richer relic.
   const held = spec.stock * m * techMultiplier(state, 'cellStock', { harvest: spec.id });
-  return Math.max(1, Math.round(resolve(state, 'harvestStock', held)));
+  return Math.max(1, Math.round(resolveAt(state, 'harvestStock', held, cell)));
 }
 
 /**
@@ -391,7 +391,7 @@ export function tapCell(
   // it adds up. Without that, a +20% TapPower on a cell paying two units a tap
   // is destroyed by rounding and the upgrade is decorative.
   const carry = state.tapCarry[spec.currencyId] ?? 0;
-  const owed = tapDraw(state, spec, carry);
+  const owed = tapDraw(state, spec, carry, cell);
   // Floored at one unit: ten seconds of work on slow ground is a fraction, and
   // a tap that pays nothing is a bug the player experiences as one. The floor
   // is generous on slow ground on purpose — that is where a worker is slowest

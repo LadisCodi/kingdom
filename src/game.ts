@@ -36,7 +36,8 @@ import {
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
-import { activeZones, type Modifier } from './sim/modifiers';
+import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
+import { auraOf, castHosted, hostOf, hostRelic, shrines, unhostRelic } from './sim/hosts';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
@@ -263,6 +264,26 @@ export interface RelicView {
   forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
   /** The Restorer's chest, once it is restored. */
   chest: { gems: number; size: number } | null;
+  /** A restored city relic's Shrine, and the Shrines it could move to; null
+   *  for a world relic or one not restored (sim/hosts.ts). */
+  host: { at: string | null; shrines: ShrineOption[] } | null;
+}
+
+/** A Shrine a relic could be hosted in. */
+export interface ShrineOption {
+  shrineId: string;
+  label: string;
+  /** The relic it holds now, by name. */
+  holds: string | null;
+}
+
+/** A Shrine's card section: what it holds and what it could. */
+export interface ShrineView {
+  holds: ArtifactId | null;
+  /** How far round its footprint the aura reaches. */
+  radius: number;
+  /** Every restored city relic it could host instead, and where each is now. */
+  candidates: Array<{ id: ArtifactId; name: string; at: string | null }>;
 }
 
 /** The Bag as its screen draws it (ui/bagSheet.ts). */
@@ -1323,6 +1344,17 @@ export class Game {
       this.notify();
       return;
     }
+    // A CITY RELIC IS CAST WHERE IT IS HOSTED: its Shrine's aura is the
+    // target, so there is no cell to pick (sim/hosts.ts).
+    if (relicKind(artifactId) === 'city') {
+      if (hostOf(this.state, artifactId) === null) {
+        this.toast('Host it in a Shrine first');
+        this.notify();
+        return;
+      }
+      this.doCast(artifactId, null);
+      return;
+    }
     if (!active.targeted) {
       this.doCast(artifactId, null);
       return;
@@ -1360,10 +1392,16 @@ export class Game {
     this.doCast(this.mode.artifactId, this.mode.selected);
   }
 
-  private doCast(artifactId: ArtifactId, target: Coord | null): void {
-    const report = cast(this.state, this.map, artifactId, target, this.now());
+  private doCast(artifactId: ArtifactId, picked: Coord | null): void {
+    const host = hostOf(this.state, artifactId);
+    const report = relicKind(artifactId) === 'city'
+      ? castHosted(this.state, this.map, artifactId, this.now())
+      : cast(this.state, this.map, artifactId, picked, this.now());
+    // Where the floaters rise: the cell picked, or the Shrine cast from.
+    const target = picked ?? host?.location ?? null;
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
+      else if (report.result === 'NotHosted') this.toast('Host it in a Shrine first');
       else this.toast('That cannot be cast there');
       this.notify();
       return;
@@ -1408,13 +1446,17 @@ export class Game {
     }
     return [...byCast.values()].map((m) => {
       const { centre, radius, relic, since } = m.area!;
+      const area = m.area!;
       const ends = m.expiresAt ?? now;
       const span = Math.max(1, ends - since);
       return {
         relic,
         glyph: ARTIFACTS[relic].glyph,
         centre,
-        cells: [centre, ...cellsWithinRadius(this.map, centre, radius)],
+        // A Shrine's aura is its footprint and the ring round it.
+        cells: area.size !== undefined
+          ? this.map.cells.filter((c) => areaCovers(area, c))
+          : [centre, ...cellsWithinRadius(this.map, centre, radius)],
         left: Math.max(0, Math.min(1, (ends - now) / span)),
         leftMs: Math.max(0, ends - now),
       };
@@ -1506,7 +1548,46 @@ export class Game {
       cast: this.castPhase(id),
       forge,
       chest: restored ? { gems: RELIC_RULES.restorerChestGems, size: RELIC_RULES.restorerChestSize } : null,
+      host: restored && relicKind(id) === 'city' ? {
+        at: this.hostLabel(id),
+        shrines: shrines(this.state).filter((d) => d.hosts !== id).map((d) => ({
+          shrineId: d.uniqueId,
+          label: districtLabel(this.state, d),
+          holds: d.hosts === undefined ? null : ARTIFACTS[d.hosts].name,
+        })),
+      } : null,
     };
+  }
+
+  /** Which Shrine holds a relic, by name, or null. */
+  private hostLabel(id: ArtifactId): string | null {
+    const host = hostOf(this.state, id);
+    return host === null ? null : districtLabel(this.state, host);
+  }
+
+  /** A Shrine's section of its card. */
+  shrineView(district: District): ShrineView {
+    return {
+      holds: district.hosts ?? null,
+      radius: levelIndexed(DISTRICTS[district.definitionId].auraRadiusPerLevel, district.level),
+      candidates: ARTIFACT_ORDER
+        .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1 && id !== district.hosts)
+        .map((id) => ({ id, name: ARTIFACTS[id].name, at: this.hostLabel(id) })),
+    };
+  }
+
+  /** Host a city relic in a Shrine (sim/hosts.ts). */
+  doHostRelic(id: ArtifactId, shrineId: string): void {
+    if (hostRelic(this.state, id, shrineId, this.now()) === 'Hosted') {
+      playSfx('buildPlaced');
+    }
+    this.notify();
+  }
+
+  /** Take a relic out of its Shrine. */
+  doUnhostRelic(id: ArtifactId): void {
+    if (unhostRelic(this.state, id, this.now())) playSfx('click');
+    this.notify();
   }
 
   /** The Bag's Relics tab (M72): every relic met, city then world. */
@@ -4391,7 +4472,12 @@ export class Game {
       // No selection outline: the building pulses white while its card is
       // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
-        if (district.state === 'Built') {
+        if (district.state === 'Built' && DISTRICTS[district.definitionId].hostsRelic) {
+          // A Shrine's area is its aura, in gold (sim/hosts.ts).
+          const aura = auraOf(district, district.hosts ?? 'GildedLedger');
+          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura, c));
+          layer.influenceIsAura = true;
+        } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
         }

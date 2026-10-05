@@ -13,6 +13,7 @@ import {
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { dropFragments } from './relics';
 import { lairHolding } from './lairZone';
+import { endHostedSpell } from './hosts';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -308,6 +309,9 @@ function relocateDistrict(
   state: GameState, map: MapData, district: District, cell: Coord, now: number,
 ): boolean {
   const from = district.location;
+  // A Shrine carries its relic's aura with it, so the spell running in the
+  // old one ends here; the cooldown keeps counting (sim/hosts.ts).
+  if (district.hosts !== undefined) endHostedSpell(state, district.hosts, now);
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
   });

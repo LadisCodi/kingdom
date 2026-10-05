@@ -172,6 +172,9 @@ export interface District {
    *  into `stored`, the way Mana accrues against `lastManaAt`. Absent on
    *  anything that is not a house. */
   rentAnchor?: number;
+  /** The city relic a Shrine holds (sim/hosts.ts). It moves with the
+   *  building; absent = empty. */
+  hosts?: ArtifactId;
 }
 
 export interface QueueItem {

@@ -3,7 +3,7 @@
 // tests/relics.test.ts.
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ARTIFACTS, ARTIFACT_ORDER, HARVEST, HERO_ORDER, HEROES } from '../src/sim/data/definitions';
+import { ARTIFACTS, ARTIFACT_ORDER, HARVEST, HERO_ORDER, HEROES, relicKind } from '../src/sim/data/definitions';
 import {
   artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
   passiveValueAtLevel, syncArtifactModifiers,
@@ -13,9 +13,21 @@ import { effectiveRecoveryMs, effectiveStock } from '../src/sim/harvest';
 import {
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs,
 } from '../src/sim/upgrades';
-import { resolve } from '../src/sim/modifiers';
-import type { GameState } from '../src/sim/state';
+import { resolve, resolveAt } from '../src/sim/modifiers';
+import type { ArtifactId, District, GameState } from '../src/sim/state';
 import { addBuilt, FOREST, freshGame, map } from './helpers';
+
+/** A cell an aura covers, and one far from it. */
+const AT = { x: 1, y: 3 };
+const FAR = { x: 15, y: 15 };
+
+/** A Shrine at level 5 (radius 4) beside `AT`, holding `relic`. */
+function host(state: GameState, relic: ArtifactId): void {
+  state.city.districts.push({
+    uniqueId: `shrine_${relic}`, definitionId: 'Shrine', ordinal: 9, level: 5, assignedWorkers: 0,
+    location: { x: 0, y: 2 }, state: 'Built', visualVariant: 1, hosts: relic,
+  });
+}
 
 describe('a relic is a permanent passive with no ceiling', () => {
   let state: GameState;
@@ -30,16 +42,14 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(artifactLevel(state, 'GildedLedger')).toBe(2);
   });
 
-  // THE POINT OF THE REWORK. There is no socket, so nothing competes: the
-  // moment a relic arrives its number is in the stack, and it stays there.
-  it('puts every relic it has in the modifier stack at once', () => {
+  // A WORLD RELIC'S PASSIVE IS KINGDOM-WIDE until its Chapel exists; a city
+  // relic's waits for a Shrine and acts over its aura (sim/hosts.ts).
+  it('puts every world relic in the modifier stack, and no city relic', () => {
     for (const id of ARTIFACT_ORDER) grantArtifactLevel(state, id);
     const relicMods = state.modifiers.filter((m) => m.source === 'artifact');
-    // One entry PER STAT, not per relic: the Seal moves a node's stock and
-    // what a swing takes, the Sigil moves a crew's swing and its walk.
-    const stats = ARTIFACT_ORDER.reduce((n, id) => n + ARTIFACTS[id].passive.stats.length, 0);
+    const world = ARTIFACT_ORDER.filter((id) => relicKind(id) === 'world');
+    const stats = world.reduce((n, id) => n + ARTIFACTS[id].passive.stats.length, 0);
     expect(relicMods).toHaveLength(stats);
-    expect(new Set(relicMods.map((m) => m.id)).size).toBe(stats);
     expect(relicMods.every((m) => m.expiresAt === null)).toBe(true);
   });
 
@@ -50,11 +60,15 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(passiveValueAtLevel('GildedLedger', 10)).toBeCloseTo(base + perLevel * 9, 6);
   });
 
-  it('moves the number it names, at the base stage', () => {
+  it('moves the number it names, at the base stage, inside its Shrine\'s aura', () => {
     grantArtifactLevel(state, 'GildedLedger');
-    const before = resolve(state, 'taxRate', 1);
+    host(state, 'GildedLedger');
+    const before = resolveAt(state, 'taxRate', 1, AT);
+    expect(before).toBeGreaterThan(1);
     grantArtifactLevel(state, 'GildedLedger');
-    expect(resolve(state, 'taxRate', 1)).toBeGreaterThan(before);
+    expect(resolveAt(state, 'taxRate', 1, AT)).toBeGreaterThan(before);
+    // Outside the aura, nothing.
+    expect(resolveAt(state, 'taxRate', 1, FAR)).toBe(1);
   });
 
   // OQ-97, and the rule the whole shape exists for. Every passive is a SPEED,
@@ -86,10 +100,12 @@ describe('a relic is a permanent passive with no ceiling', () => {
   // The Rod's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
   // approaches an instant recovery without ever arriving at one.
   it('shortens a wait without ever reaching zero', () => {
-    let last = effectiveRecoveryMs(state, HARVEST.Forest, { x: 0, y: 0 });
+    let last = effectiveRecoveryMs(state, HARVEST.Forest, AT);
+    grantArtifactLevel(state, 'DowsingRod');
+    host(state, 'DowsingRod');
     for (let i = 0; i < 40; i++) {
-      grantArtifactLevel(state, 'DowsingRod');
-      const now = effectiveRecoveryMs(state, HARVEST.Forest, { x: 0, y: 0 });
+      if (i > 0) grantArtifactLevel(state, 'DowsingRod');
+      const now = effectiveRecoveryMs(state, HARVEST.Forest, AT);
       expect(now).toBeLessThan(last);
       expect(now).toBeGreaterThan(0);
       last = now;
@@ -99,31 +115,35 @@ describe('a relic is a permanent passive with no ceiling', () => {
   // ONE NUMBER, TWO CALL SITES. The Seal's `+1` has to reach the thumb and the
   // crew, or half the relic is a sentence on a card.
   it('the Seal pays the thumb and the crew from one number', () => {
-    const tap = effectiveUnitsPerStrike(state, HARVEST.Forest);
-    const crew = effectiveWorkerStrike(state, HARVEST.Forest);
+    const shed = { location: FOREST, definitionId: 'Sawmill', level: 1 } as District;
+    const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST);
+    const crew = effectiveWorkerStrike(state, HARVEST.Forest, shed);
     const held = effectiveStock(state, map, FOREST, HARVEST.Forest);
     grantArtifactLevel(state, 'VerdantSeal');
-    expect(effectiveUnitsPerStrike(state, HARVEST.Forest)).toBe(tap + 1);
-    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(crew + 1);
+    host(state, 'VerdantSeal');
+    expect(effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST)).toBe(tap + 1);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest, shed)).toBe(crew + 1);
     expect(effectiveStock(state, map, FOREST, HARVEST.Forest)).toBe(held + 1);
   });
 
   // And the Sigil's one number has to reach both halves of a round trip.
   it('the Sigil hurries a crew\u2019s swing and its walk together', () => {
-    const swing = workerStrikeMs(state, HARVEST.Forest);
-    const walk = effectiveWorkerSpeed(state);
+    const shed = { location: AT, definitionId: 'Sawmill', level: 1 } as District;
+    const swing = workerStrikeMs(state, HARVEST.Forest, shed);
+    const walk = effectiveWorkerSpeed(state, AT);
     grantArtifactLevel(state, 'ForemansSigil');
-    expect(workerStrikeMs(state, HARVEST.Forest)).toBeLessThan(swing);
-    expect(effectiveWorkerSpeed(state)).toBeGreaterThan(walk);
+    host(state, 'ForemansSigil');
+    expect(workerStrikeMs(state, HARVEST.Forest, shed)).toBeLessThan(swing);
+    expect(effectiveWorkerSpeed(state, AT)).toBeGreaterThan(walk);
   });
 
   // Idempotent and total, so four callers cannot drift.
   it('rebuilds the stack rather than adding to it', () => {
-    grantArtifactLevel(state, 'VerdantSeal');
+    grantArtifactLevel(state, 'MusterHorn');
     syncArtifactModifiers(state);
     syncArtifactModifiers(state);
     expect(state.modifiers.filter((m) => m.source === 'artifact'))
-      .toHaveLength(ARTIFACTS.VerdantSeal.passive.stats.length);
+      .toHaveLength(ARTIFACTS.MusterHorn.passive.stats.length);
   });
 });
 
