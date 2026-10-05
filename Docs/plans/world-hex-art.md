@@ -8,6 +8,11 @@
 >
 > **Status: built 2026-10-02** — the rules, the drawing and the whole art set. Mockups m60–m61
 > ([`../art/ui/mockups/`](../art/ui/mockups)) set the style.
+>
+> **Changing with districts** ([`world-districts.md`](world-districts.md)):
+> one feature a hex, Mountain a feature, a district in place of the Outpost
+> and its improvement, and roads under the districts. §1–§3 describe the
+> board as it is built today.
 
 ## 0. Decisions this plan rests on
 
