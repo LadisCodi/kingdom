@@ -1,5 +1,6 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
+import { track } from './analytics';
 import { ABANDONED, DISTRICTS, FOG, LANDMARKS, LAIR_ORDER, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { lairIsFound } from './lairZone';
@@ -347,7 +348,11 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
     if (lairIsFound(state, id)) recordSiteDiscovery(state, id);
   }
   // A playtest signal: when each silhouette was first seen (Docs/playtest.md §5).
-  for (const t of sightedThings(state, map)) state.signals.sightedAt[t.id] ??= state.lastAdvance;
+  for (const t of sightedThings(state, map)) {
+    if (state.signals.sightedAt[t.id] !== undefined) continue;
+    state.signals.sightedAt[t.id] = state.lastAdvance;
+    track(state, 'sighted', { id: t.id });
+  }
   // An abandoned building is named when it is DISCOVERED: sighted, it is only
   // the silhouette of a ruin, and what it was is the find
   // (Docs/features/01-map-and-fog.md §6.3).

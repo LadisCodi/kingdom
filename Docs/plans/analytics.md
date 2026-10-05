@@ -5,7 +5,9 @@
 > [`../features/14-monetization.md`](../features/14-monetization.md) §4
 > designs, and puts [`../playtest.md`](../playtest.md) §5's signals on it.
 >
-> **Status: planned.**
+> **Status: steps 1–3 built**, live with the next release. Code:
+> `src/analytics/`, `src/sim/analytics.ts`; table and views:
+> `supabase/migrations/20261006090000_analytics.sql`.
 
 ## 1. Steps
 
@@ -67,26 +69,26 @@ Every event is one row:
 | `book_opened` | `tome` |
 | `research` | `tech` |
 | `townhall_level` | `level` |
-| `world_joined` | `board`, `took_rival` |
+| `world_joined` | `board`, `players` (humans on it) |
 
 ### 3.3 The playtest signals
 
 | Event | Props |
 |---|---|
-| `treasure_placed` · `treasure_picked` | `id`, `wait_ms` on a pick |
+| `treasure_placed` · `treasure_picked` | `n`, `wait_ms` on a pick |
 | `sighted` · `discovered` | `id`, `wait_ms` on a discovery |
-| `reveal_unasked` | `cell` |
+| `reveal_unasked` | `cells` |
 | `return_tap` | `kind` |
-| `survey_opened` · `survey_claimed` | `cell`, `paid` |
+| `survey_opened` · `survey_claimed` | `level`, `paid` on a claim |
 
 ### 3.4 The store
 
 | Event | Props |
 |---|---|
-| `offer_shown` | `sku`, `where` |
-| `store_opened` | `from` |
-| `sku_viewed` · `confirm_opened` | `sku`, `price_cents` |
-| `purchased` · `dismissed` · `refused_no_credit` | `sku`, `price_cents`, `credit_cents` |
+| `store_opened` | `from` — not a return from its own confirmation |
+| `confirm_opened` | `sku`, `price_cents`, `from` — a price tapped opens it |
+| `purchased` · `refused_no_credit` | `sku`, `price_cents`, `credit_cents` |
+| `dismissed` | `sku` |
 | `ad_offer_shown` · `ad_watched` | `placement` |
 
 ### 3.5 The world and errors
@@ -94,7 +96,7 @@ Every event is one row:
 | Event | Props |
 |---|---|
 | `world_cmd` | `kind`, `ok`, `why` |
-| `client_error` | `message`, the top of the stack, `where` |
+| `client_error` | `message`, the top of the stack; at most 20 a session |
 
 ## 4. Where events come from
 
@@ -109,22 +111,25 @@ Every event is one row:
 ## 5. Sending
 
 - **The table:** `analytics_events`, append-only. RLS lets a signed-in user
-  insert rows whose `user_id` is theirs, and nothing else: no read, update or
-  delete from a client.
+  insert rows whose `user_id` is theirs, and read back only the `id`s of
+  their own — what `on conflict (id) do nothing` needs. No update or delete.
 - **The queue:** events wait in memory and in localStorage, so a session's
   events left unsent go with the next one.
 - **The upload:** a batch every 30 s, and at once when the page is hidden.
   Inserted ignoring duplicates on `id`, so a batch sent twice counts once.
 - **Limits:** `props` at most 2 KB; at most 200 queued, the oldest dropped.
 - **No cloud:** with no Supabase env, nothing is queued.
-- **Kept for** 90 days.
+- **Kept for** 90 days: `select public.prune_analytics()` deletes the rest.
 - **Privacy:** no personal data. Settings says that the prototype sends
   anonymous play data.
 
 ## 6. Reading
 
-Views in the project, read from the Supabase SQL editor, or by asking Claude,
-who queries them (`npx supabase db query`) and writes up what they show:
+Views in the `analytics` schema — not exposed to the API — read from the
+Supabase SQL editor, or by asking Claude, who queries them
+(`npx supabase db query --linked "select * from analytics.v_testers"`) and
+writes up what they show. `analytics.events` is every event without the dev
+sessions:
 
 | View | One row per | Shows |
 |---|---|---|

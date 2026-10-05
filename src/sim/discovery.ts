@@ -3,6 +3,7 @@
 // into view — into a PERSISTED set, and pushes the key onto a transient queue
 // the UI drains into banners. Announced once, ever.
 
+import { track } from './analytics';
 import type { CurrencyId, GameState } from './state';
 
 export const resourceDiscoveryKey = (currency: CurrencyId): string => `resource:${currency}`;
@@ -27,5 +28,10 @@ function record(state: GameState, key: string): void {
   state.discoveries[key] = true;
   state.pendingDiscoveries.push(key);
   // A playtest signal: when a site came out of the dark (Docs/playtest.md §5).
-  if (key.startsWith('site:')) state.signals.discoveredAt[key.slice(5)] ??= state.lastAdvance;
+  if (key.startsWith('site:')) {
+    const id = key.slice(5);
+    state.signals.discoveredAt[id] ??= state.lastAdvance;
+    const sighted = state.signals.sightedAt[id];
+    track(state, 'discovered', { id, ...(sighted === undefined ? {} : { wait_ms: state.lastAdvance - sighted }) });
+  }
 }

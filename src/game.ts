@@ -147,6 +147,7 @@ import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
+import type { Analytics, AnalyticsContext } from './analytics/analytics';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
 import { nicknameProblem } from './worldServer/nickname';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
@@ -696,6 +697,11 @@ export class Game {
     // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
     setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
+    this.drainAnalytics();
+    // The Mana offer's tab, the moment it appears (14 §6).
+    const offered = this.adOffer() !== null;
+    if (offered && !this.adOfferShown) this.track('ad_offer_shown', { placement: 'mana' });
+    this.adOfferShown = offered;
     // The world board is server state: read it every second while it is on
     // screen, and now and then otherwise (a held Sanctuary moves the Mana
     // ceiling wherever the player is).
@@ -1011,6 +1017,7 @@ export class Game {
     const taps = this.state.signals.returnTaps;
     taps.push({ at: this.state.lastAdvance, kind });
     if (taps.length > 30) taps.splice(0, taps.length - 30);
+    this.track('return_tap', { kind });
   }
 
   /** Empty a building's store into the purse, with the tap's own feedback:
@@ -2507,6 +2514,7 @@ export class Game {
   doClaimAdReward(): void {
     const watch = this.adWatch();
     if (watch === null || !watch.ready) return;
+    this.track('ad_watched', { placement: this.adWatchPurpose });
     if (this.adWatchPurpose !== 'mana') {
       const banner = this.adWatchPurpose;
       const claimed = claimFreePull(this.state, banner, this.now());
@@ -2810,6 +2818,7 @@ export class Game {
     this.pendingSku = id;
     this.pendingSkuFrom = from;
     this.setOverlay('iapConfirm');
+    this.track('confirm_opened', { sku: id, price_cents: priceCents(id), from });
   }
 
   /** Where the confirmation came from, and where it returns. */
@@ -2831,6 +2840,8 @@ export class Game {
       : bundleOf(id) !== null
         ? buyCardBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
+    if (result === 'Purchased') this.track('purchased', this.skuProps(id));
+    if (result === 'NoBudget') this.track('refused_no_credit', this.skuProps(id));
     if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
@@ -4125,7 +4136,15 @@ export class Game {
     // (Docs/features/22-progression.md §3).
     const door = name === null ? undefined : OVERLAY_DOOR[name];
     if (name !== null && name !== 'welcome' && name !== 'payerProfile') this.noteFirstTap(`menu:${name}`);
-    if (name === 'survey') recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
+    if (name === 'survey') {
+      recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
+      this.track('survey_opened');
+    }
+    // Back from its own confirmation is not a new visit.
+    if (name === 'store' && this.openOverlay !== 'store' && this.openOverlay !== 'iapConfirm') {
+      this.track('store_opened', { from: this.openOverlay ?? this.scene });
+    }
+    if (name !== 'iapConfirm') this.iapDismissed();
     if (door !== undefined && !isDoorOpen(this.state, door)) {
       this.toast(DOOR_HINT[door]);
       this.notify();
@@ -4165,6 +4184,7 @@ export class Game {
   dismiss(): void {
     this.mode = { kind: 'normal' };
     this.selectedHex = null;
+    this.iapDismissed();
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
@@ -4638,6 +4658,42 @@ export class Game {
   /** Who the player is to the servers: the signed-in user's id, handed over
    *  by main; a test plays as the stand-in's old fixed id. */
   playerId = 'local-player';
+
+  // ------------------------------------------------------------ analytics
+  // Docs/plans/analytics.md. Main hands over the sender when the cloud is
+  // up; without it every event is dropped where it is made.
+  analytics: Analytics | null = null;
+  private adOfferShown = false;
+
+  /** Record an event now, on the game's clock. */
+  track(name: string, props: Record<string, unknown> = {}): void {
+    this.analytics?.track(name, props, this.now());
+  }
+
+  /** Send on what the sim put in its outbox, at the sim's own times. */
+  drainAnalytics(): void {
+    for (const e of this.state.pendingAnalytics.splice(0)) this.analytics?.track(e.name, e.props, e.at, e.offline);
+  }
+
+  /** Where the player is, for every event (Docs/plans/analytics.md §2). */
+  analyticsContext(): AnalyticsContext {
+    return {
+      th: townhall(this.state).level,
+      quest: this.state.quests.index,
+      playedMin: Math.floor(this.state.signals.playMs / 60_000),
+      scene: this.openOverlay ?? this.scene,
+    };
+  }
+
+  /** A SKU's price and what the month's budget had left, for the funnel. */
+  private skuProps(id: StoreSkuId): Record<string, unknown> {
+    return { sku: id, price_cents: priceCents(id), credit_cents: budgetRemainingCents(this.state, this.now()) };
+  }
+
+  /** A confirmation closed without a purchase. */
+  private iapDismissed(): void {
+    if (this.openOverlay === 'iapConfirm' && this.pendingSku !== null) this.track('dismissed', { sku: this.pendingSku });
+  }
   /** Saves the game now — main's save, handed over. A world effect is
    *  acknowledged to the server only once the state it changed is saved, so
    *  a crash between the two delivers it again rather than losing it. */
@@ -4725,6 +4781,7 @@ export class Game {
       return;
     }
     await this.seatedOn(r.snapshot);
+    this.track('world_joined', { board: r.snapshot.board.id, players: r.snapshot.seats.filter((s) => !s.bot).length });
     if (this.openOverlay === 'nickname') this.openOverlay = null;
     this.goOutToWorld();
   }

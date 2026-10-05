@@ -16,6 +16,7 @@
 // own production of its coin (`tap.workSeconds`'s rule), floored. Nothing
 // here is time-based: a treasure waits for ever, so it needs no boundary.
 
+import { track } from './analytics';
 import { HARVEST, TREASURE } from './data/definitions';
 import { cityGoldPerSecond } from './collection';
 import { explorationGate, fogState, isPayable } from './fog';
@@ -99,6 +100,7 @@ export function onPaidReveal(state: GameState, map: MapData, revealed: readonly 
   if (asked !== 'DiscoverCells' && asked !== 'DiscoverFeature' && asked !== 'FindLairs'
     && asked !== 'ClaimLandmarks') {
     recordEvent(state, { kind: 'signal', key: 'revealUnasked' });
+    track(state, 'reveal_unasked', { cells: revealed.length });
   }
   if (!treasureDue(state)) return;
   const byKey = (cells: Iterable<Coord>) => [...new Map([...cells].map((c) => [coordKey(c), c])).entries()]
@@ -118,6 +120,7 @@ export function onPaidReveal(state: GameState, map: MapData, revealed: readonly 
   state.fog.treasures[coordKey(at)] = { n, coin: coinFor(state, n), at: state.lastAdvance };
   state.fog.treasuresPlaced = n + 1;
   recordEvent(state, { kind: 'signal', key: 'treasurePlaced' });
+  track(state, 'treasure_placed', { n });
 }
 
 /** The neighbours of a block that are Undiscovered right now — read BEFORE a
@@ -161,5 +164,6 @@ export function pickUpTreasure(state: GameState, map: MapData, cell: Coord): Pic
   delete state.fog.treasures[key];
   state.signals.treasureWaitMs += Math.max(0, state.lastAdvance - treasure.at);
   recordEvent(state, { kind: 'signal', key: 'treasurePicked' });
+  track(state, 'treasure_picked', { n: treasure.n, wait_ms: Math.max(0, state.lastAdvance - treasure.at) });
   return { kind: 'PickedUp', reward };
 }

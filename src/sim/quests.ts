@@ -4,6 +4,7 @@
 // activate, never dead-ending. RELATIVE goals count recordQuestEvent()
 // calls while active (they hook the sim paths, so offline replay counts).
 
+import { track } from './analytics';
 import { ownedArtifacts } from './artifacts';
 import {
   DISTRICTS, LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
@@ -153,6 +154,7 @@ export function claimQuest(state: GameState): ClaimResult {
   if (quest.rewardPack !== null && quest.rewardPack !== undefined) {
     grantPack(state, quest.rewardPack, 'quest');
   }
+  track(state, 'quest_done', { index: state.quests.index, id: quest.id });
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

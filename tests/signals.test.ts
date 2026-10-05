@@ -55,6 +55,6 @@ describe('the playtest signals (Docs/playtest.md §5)', () => {
     expect(deserialize(file, map, T0)!.signals).toEqual(state.signals);
     delete (file.Modules as Record<string, unknown>)['kingdom.signals'];
     expect(deserialize(file, map, T0)!.signals)
-      .toEqual({ sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [] });
+      .toEqual({ sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [], playMs: 0 });
   });
 });
