@@ -17,11 +17,11 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL,
+  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL, WORLD_PRECIOUS,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
-import type { HeroId, UnitId } from '../sim/state';
-import { SEAT_INDICES, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import type { HeroId, PreciousId, UnitId } from '../sim/state';
+import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
@@ -83,6 +83,23 @@ export function districtRate(
 }
 
 const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
+
+/** What a rich district yields an hour of its wedge's precious material and
+ *  how much its precious store holds (19 §7.4); nothing on other ground. The
+ *  inner ring and a seat's research move it as they move the district. */
+export function preciousRate(
+  board: Board, index: number, boost: SeatBoost = NO_BOOST,
+): { id: PreciousId | null; perHour: number; cap: number } {
+  const bh = board.hexes[index];
+  const id = bh.rich && districtOf(bh) !== null ? materialAt(board, index) : null;
+  if (id === null) return { id: null, perHour: 0, cap: 0 };
+  const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
+  return {
+    id,
+    perHour: (WORLD_PRECIOUS.perDay / 24) * mult * boost.produce,
+    cap: WORLD_PRECIOUS.perDay * WORLD_PRECIOUS.storeDays * mult * boost.store,
+  };
+}
 
 /** What a seat's research does to its districts' output and stores; none for
  *  a free hex. */
@@ -195,10 +212,23 @@ export function storedAt(b: ServerBoard, index: number, t: number): number {
   return Math.min(Math.max(cap, h.stored), h.stored + (perHour * dt) / HOUR);
 }
 
+/** What a rich hex's precious store holds at `t`, from the same anchor. */
+export function preciousAt(b: ServerBoard, index: number, t: number): number {
+  const h = b.hexes[index];
+  if (h === undefined) return 0;
+  const held = h.precious ?? 0;
+  const dt = t - h.storeAt;
+  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return held;
+  const { perHour, cap } = preciousRate(boardData(b), index, boostOf(b, h.owner));
+  return Math.min(Math.max(cap, held), held + (perHour * dt) / HOUR);
+}
+
 /** Move one hex's anchor to `t`. */
 function settleHex(b: ServerBoard, index: number, t: number): void {
   const h = b.hexes[index];
   if (h === undefined || t <= h.storeAt) return;
+  const precious = preciousAt(b, index, t);
+  if (precious > 0) h.precious = precious;
   h.stored = storedAt(b, index, t);
   h.storeAt = t;
 }
@@ -355,9 +385,13 @@ export function collect(b: ServerBoard, seat: number, index: number, t: number):
   const whole = Math.floor(h.stored);
   h.stored -= whole;
   const { currency } = districtRate(boardData(b).hexes[index]);
+  const gem = Math.floor(h.precious ?? 0);
+  if (gem > 0) h.precious = (h.precious ?? 0) - gem;
+  const material = preciousRate(boardData(b), index).id;
   return {
     ok: true,
     paid: currency === null || whole === 0 ? null : { currency, amount: whole },
+    precious: material === null || gem === 0 ? null : { id: material, amount: gem },
     snapshot: snapshotOf(b, seat, t),
   };
 }
@@ -476,6 +510,10 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
           kind: 'loot', at: t, knowledge: 0, stardust: 0,
           gold: Math.round(camp.power * WORLD_CAMPS.goldPerPower),
           heroXp: Math.round(camp.power * WORLD_CAMPS.heroXpPerPower),
+          precious: {
+            id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
+            amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
+          },
         });
         report(b, a.owner, t, `Your army beat the camp of ${name}`, true);
       } else {
@@ -1009,10 +1047,12 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     const bh = data.hexes[index];
     const mineHex = h.owner === seat;
     const rate = districtRate(bh, boostOf(b, h.owner));
+    const gems = preciousRate(data, index, boostOf(b, h.owner));
     return {
       index, owner: h.owner, held: isHeld(h, t), standsAt: h.standsAt,
       district: districtOf(bh) ?? 'Rural', fortress: h.fortress, work: h.work, active: h.active,
       stores: mineHex && rate.currency !== null ? { currency: rate.currency, amount: storedAt(b, index, t), cap: rate.cap } : null,
+      precious: mineHex && gems.id !== null ? { id: gems.id, amount: preciousAt(b, index, t), cap: gems.cap } : null,
       garrison: garrisonView(b, h),
     };
   }).sort((x, y) => x.index - y.index);

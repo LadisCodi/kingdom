@@ -7,9 +7,10 @@
 // board of the same shape; only `source.ts` changes then.
 
 import {
-  WORLD_CAMPS, WORLD_GEN, WORLD_SCOUTING, type ScoutRewardDef, type WorldCampsDef, type WorldGenDef, type WorldScoutingDef,
+  WORLD_CAMPS, WORLD_GEN, WORLD_PRECIOUS, WORLD_SCOUTING, type ScoutRewardDef, type WorldCampsDef, type WorldGenDef,
+  type WorldPreciousDef, type WorldScoutingDef,
 } from '../data/definitions';
-import type { LairId } from '../state';
+import { PRECIOUS, type LairId, type PreciousId } from '../state';
 import { rand } from '../rng';
 import {
   BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexIndex, hexNeighbors, hexScale, ringOf, rotateBy,
@@ -35,6 +36,9 @@ export interface BoardHex {
   /** What exploring it pays the player who sends an explorer to it
    *  (19 §3.2), or null on a city, the Portal and a dungeon. */
   scout: ScoutRewardDef | null;
+  /** A rich hex: its district also yields its wedge's precious material
+   *  (19 §7.4). */
+  rich: boolean;
 }
 
 /** A monster camp: which creature, how strong, and whether it can be seen
@@ -46,7 +50,74 @@ export interface Board {
   id: string;
   seed: number;
   hexes: BoardHex[];
+  /** Each seat's precious material, by seat: two seats each, shuffled by
+   *  the seed. Every rich hex in a seat's wedge yields it (19 §7.4). */
+  materials: PreciousId[];
 }
+
+/** The six seats' materials: each of the three twice, in an order the
+ *  seed shuffles. */
+export function dealMaterials(seed: number): PreciousId[] {
+  const deck = [...PRECIOUS, ...PRECIOUS];
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rand(seed, 'materials', i) * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+/** The material a rich hex yields: its wedge's seat's. The Portal is in no
+ *  wedge and yields nothing. */
+export const materialAt = (board: Board, index: number): PreciousId | null => {
+  const wedge = wedgeIndexOf(BOARD_HEXES[index]);
+  return wedge === null ? null : board.materials[wedge] ?? null;
+};
+
+/** Which material a lump paid to `seat` is: mostly its own (`ownShare`),
+ *  otherwise one of the other two — rolled under the event's own parts. */
+export function lumpMaterial(board: Board, seat: number, ...parts: Array<string | number>): PreciousId {
+  const own = board.materials[seat] ?? PRECIOUS[0];
+  if (rand(board.seed, 'lump', ...parts) < WORLD_PRECIOUS.ownShare) return own;
+  const others = PRECIOUS.filter((p) => p !== own);
+  return others[Math.floor(rand(board.seed, 'lumpOther', ...parts) * others.length)] ?? own;
+}
+
+/** Which kind of rich ground these contents could be, if any. */
+const richKind = (c: { terrain: WorldTerrain | null; features: readonly string[] }): 'feature' | 'desert' | null =>
+  c.features.includes('Forest') || c.features.includes('Mountain') ? 'feature'
+    : c.terrain === 'Desert' && c.features.length === 0 ? 'desert' : null;
+
+/** An inner hex is rich by its own roll: the inner ring is authored per
+ *  wedge, so it has no count to keep. */
+function rollRich(seed: number, wedge: number, c: { terrain: WorldTerrain | null; features: readonly string[] }, precious: WorldPreciousDef): boolean {
+  const kind = richKind(c);
+  const share = kind === 'feature' ? precious.richFeatureShare : kind === 'desert' ? precious.richDesertShare : 0;
+  return share > 0 && rand(seed, 'rich', 1, wedge) < share;
+}
+
+/**
+ * Wedge 0's rich places: of each kind of ground, its share of the places —
+ * at least one while there is any — taken by the lowest rolls, so every
+ * board has rich ground and every wedge the same count (19 §7.4).
+ */
+function richPlaces(seed: number, local: Map<string, Contents>, precious: WorldPreciousDef): Set<string> {
+  const out = new Set<string>();
+  for (const [kind, share] of [['feature', precious.richFeatureShare], ['desert', precious.richDesertShare]] as const) {
+    const places: Array<{ key: string; roll: number }> = [];
+    for (let k = 2; k <= BOARD_RADIUS; k++) {
+      for (let j = 0; j < k; j++) {
+        const key = localKey(k, j);
+        if (key === localKey(HOME_RING, 0) || richKind(local.get(key)!) !== kind) continue;
+        places.push({ key, roll: rand(seed, 'rich', k, j) });
+      }
+    }
+    if (share <= 0 || places.length === 0) continue;
+    const count = Math.max(1, Math.round(places.length * share));
+    places.sort((a, b) => a.roll - b.roll).slice(0, count).forEach((p) => out.add(p.key));
+  }
+  return out;
+}
+
 
 /** The ring the cities stand on: one inside the rim, five hexes apart. */
 export const HOME_RING = BOARD_RADIUS - 1;
@@ -298,15 +369,16 @@ function rollCamps(seed: number, local: Map<string, Contents>, camps: WorldCamps
 /** A board from its seed. Pure: the same seed and data give the same board. */
 export function generateBoard(
   id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS,
-  scouting: WorldScoutingDef = WORLD_SCOUTING,
+  scouting: WorldScoutingDef = WORLD_SCOUTING, precious: WorldPreciousDef = WORLD_PRECIOUS,
 ): Board {
   const local = rollWedge(seed, gen);
   const wedgeCamps = rollCamps(seed, local, camps);
+  const rich = richPlaces(seed, local, precious);
   const hexes = BOARD_HEXES.map((hex, index): BoardHex => {
     const role = roleOf(hex);
     const seat = SEAT_INDICES.indexOf(index);
     const base = { index, hex, role, seat: seat >= 0 ? seat : null };
-    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null };
+    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null, rich: false };
     const at = wedgeOf(hex)!;
     if (role === 'inner') {
       // Every inner hex is held by the strongest camp: its +200% is earned.
@@ -317,13 +389,19 @@ export function generateBoard(
         lurking: false,
       };
       const scout = rollScout(seed, 'inner', 1, at.wedge, scouting, authored.features);
-      return { ...base, terrain: authored.terrain, features: [...authored.features], camp, scout };
+      return {
+        ...base, terrain: authored.terrain, features: [...authored.features], camp, scout,
+        rich: rollRich(seed, at.wedge, authored, precious),
+      };
     }
     const key = localKey(at.k, at.j);
     const c = local.get(key)!;
     const camp = wedgeCamps.get(key);
     const scout = seat >= 0 ? null : rollScout(seed, role as RolledRole, at.k, at.j, scouting, c.features);
-    return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout };
+    return {
+      ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout,
+      rich: seat < 0 && rich.has(key),
+    };
   });
-  return { id, seed, hexes };
+  return { id, seed, hexes, materials: dealMaterials(seed) };
 }

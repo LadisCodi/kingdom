@@ -50,8 +50,10 @@ describe('what a hex promises', () => {
     const floor = { reward: 'Gold' as const, weight: 1, amount: 123, pack: null };
     expect(scoutPay(state, floor, 'home').wallet.Gold).toBeGreaterThanOrEqual(123);
     expect(scoutPay(state, { ...floor, reward: 'Stardust' }, 'inner').wallet).toEqual({ Stardust: 123 });
+    const lump = scoutPay(state, { ...floor, reward: 'Precious' }, 'inner', 40).goods;
+    expect(Object.values(lump)).toEqual([123]);
     expect(scoutPay(state, { reward: 'Pack', weight: 1, amount: 1, pack: 'Rose' }, 'inner'))
-      .toEqual({ wallet: {}, pack: 'Rose' });
+      .toEqual({ wallet: {}, goods: {}, pack: 'Rose' });
   });
 });
 

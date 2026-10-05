@@ -6,7 +6,8 @@
     "inputMana": 0,
     "inputGood": null,
     "inputGoodAmount": 0,
-    "workSeconds": 1200
+    "workSeconds": 1200,
+    "precious": false
   },
   "CutStone": {
     "name": "Cut Stone",
@@ -15,7 +16,8 @@
     "inputMana": 0,
     "inputGood": null,
     "inputGoodAmount": 0,
-    "workSeconds": 1800
+    "workSeconds": 1800,
+    "precious": false
   },
   "Iron": {
     "name": "Iron",
@@ -24,7 +26,8 @@
     "inputMana": 0,
     "inputGood": null,
     "inputGoodAmount": 0,
-    "workSeconds": 3600
+    "workSeconds": 3600,
+    "precious": false
   },
   "Runestone": {
     "name": "Runestone",
@@ -33,6 +36,37 @@
     "inputMana": 20,
     "inputGood": "CutStone",
     "inputGoodAmount": 2,
-    "workSeconds": 10800
+    "workSeconds": 10800,
+    "precious": false
+  },
+  "Starmetal": {
+    "name": "Starmetal",
+    "tier": 3,
+    "input": {},
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": null,
+    "precious": true
+  },
+  "Heartwood": {
+    "name": "Heartwood",
+    "tier": 3,
+    "input": {},
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": null,
+    "precious": true
+  },
+  "Moonglass": {
+    "name": "Moonglass",
+    "tier": 3,
+    "input": {},
+    "inputMana": 0,
+    "inputGood": null,
+    "inputGoodAmount": 0,
+    "workSeconds": null,
+    "precious": true
   }
 }

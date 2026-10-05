@@ -10,6 +10,10 @@
 import { GOODS, type DistrictDef } from './data/definitions';
 import type { GameState, GoodId, GoodsStock } from './state';
 
+/** What one item takes a villager to make; 0 for a precious material, which
+ *  nothing makes — no workshop may produce one (dataRules). */
+export const workSecondsOf = (id: GoodId): number => GOODS[id].workSeconds ?? 0;
+
 export const getGood = (stock: GoodsStock, id: GoodId): number => stock[id] ?? 0;
 
 export function addGood(stock: GoodsStock, id: GoodId, amount: number): void {

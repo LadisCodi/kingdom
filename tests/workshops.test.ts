@@ -63,7 +63,7 @@ describe('a workshop with no crew', () => {
 });
 
 describe('the crew shares the queue', () => {
-  const PLANKS_MIN = GOODS.Planks.workSeconds / 60;
+  const PLANKS_MIN = GOODS.Planks.workSeconds! / 60;
 
   it('one worker, one item: the authored time', () => {
     const { state, shop } = withCarpenter(1);

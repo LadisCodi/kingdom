@@ -22,7 +22,7 @@
 import { techMultiplier, techValue } from './techEffects';
 import { adjacencyMultiplier } from './adjacency';
 import { DISTRICTS, GOODS, RUSH, levelIndexed } from './data/definitions';
-import { addGood, canAffordGoods, payGoods, refundGoods } from './goods';
+import { addGood, canAffordGoods, payGoods, refundGoods, workSecondsOf } from './goods';
 import { canPayMana, grantMana, payMana } from './mana';
 import { canAfford, pay, refund } from './wallet';
 import {
@@ -82,7 +82,7 @@ const inProgress = (d: District, line: WorkshopLine): number =>
 
 /** What this item still owes in total, as stamped when it was queued. */
 const needMs = (item: WorkshopItem): number =>
-  item.needMs ?? GOODS[item.good].workSeconds * 1000;
+  item.needMs ?? workSecondsOf(item.good) * 1000;
 
 /**
  * What one item of `good` will take at THIS workshop, in worker-ms: the
@@ -92,7 +92,7 @@ const needMs = (item: WorkshopItem): number =>
  */
 export const queuedWorkMs = (state: GameState, d: District, good: GoodId): number =>
   Math.max(1000, Math.round(
-    (GOODS[good].workSeconds * 1000 * adjacencyMultiplier(state, d, 'workTime'))
+    (workSecondsOf(good) * 1000 * adjacencyMultiplier(state, d, 'workTime'))
       / Math.max(1, techMultiplier(state, 'workshopSpeed', { district: d.definitionId })),
   ));
 

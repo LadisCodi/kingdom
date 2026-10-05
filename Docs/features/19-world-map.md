@@ -132,7 +132,8 @@
 
 - **Every hex has a promise**, rolled with the board by its kind of ring
   (`worldScouting.rewards`, by weight): Gold, Wood, Food, Stone, Hero XP,
-  Knowledge, Stardust, Gems or a card pack. None on a city, the Portal or a
+  Knowledge, Stardust, Gems, a card pack or a lump of precious material
+  (§7.4). None on a city, the Portal or a
   dungeon. Past the inner ring every wedge has the same promises.
 - **A Sensed hex shows it**: a brass medallion with the reward's icon, and
   under it a plank with the Gold its exploring costs. The hex's sheet says
@@ -288,8 +289,8 @@ accident.**
 - **Fighting it**: an army sent to *clear* it — the party screen, march and
   slot of an attack (§4) — fights on arrival.
   - Won: the camp is beaten for that player, and pays Gold
-    (`goldPerPower`) and Hero XP (`heroXpPerPower`) by its power when the army
-    is home.
+    (`goldPerPower`), Hero XP (`heroXpPerPower`) and a lump of precious
+    material (§7.4) by its power when the army is home.
   - Lost: the army walks home with its survivors; the camp stands, whole.
 - **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
   It is the training cost of the soldiers a winning army would lose
@@ -397,6 +398,26 @@ gates them; *Cartography* opens the first explorer.
 - An inactive hex's store stops filling and can still be collected.
 - **The store goes with the hex.** A conquest hands it to the conqueror; a
   denial empties it. Collecting is the defence.
+
+### 7.4 Precious materials
+
+- **Three materials only the world yields**: Starmetal, Heartwood and
+  Moonglass. They are goods ([`17`](17-workshops-and-goods.md) §1), kept with
+  the refined goods, never made.
+- **Each seat is dealt one**, two seats each, shuffled by the board's seed.
+- **A rich hex** is one Forest or Mountain hex in five (`richFeatureShare`)
+  and one bare Desert hex in four (`richDesertShare`) — counted per wedge,
+  at least one of each kind there is, so every wedge has the same rich
+  ground. An inner hex is rich by its own roll.
+  It yields **its wedge's seat's material** — whoever holds it. Explored, it
+  shows its material's icon and a sparkle; its sheet says *Rich in …*.
+- **A rich district fills a second store** with that material:
+  `perDay` a day (the inner ring multiplies it, as research does), holding
+  `storeDays` of it. One Collect empties both stores.
+- **Lumps** are mostly the player's own material (`ownShare`), otherwise one
+  of the other two:
+  - a beaten camp pays `campPerPower` of its power (§5.4);
+  - a scouting reward may be one (§3.2).
 
 ## 8. Features
 
@@ -558,6 +579,7 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Rich shares** and **precious yield** (4 a day) | how much of the world's materials the board makes | late prices go unpaid, or the materials pile up |
 | **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |

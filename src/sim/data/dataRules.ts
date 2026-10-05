@@ -52,7 +52,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
-  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting'] },
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -589,7 +589,19 @@ export const RULES: Readonly<Record<string, Rule>> = {
     }
   },
   goods: (doc, push) => {
-    for (const [id, g] of records(doc.goods)) if (g.inputGood === id) push(id, ['inputGood'], 'a good cannot be made of itself');
+    for (const [id, g] of records(doc.goods)) {
+      if (g.inputGood === id) push(id, ['inputGood'], 'a good cannot be made of itself');
+      // A precious material is found, never made: it has no recipe and no
+      // work time; every other good has both.
+      if (g.precious === true) {
+        if (g.workSeconds !== null) push(id, ['workSeconds'], 'a precious material is never made: leave it empty');
+        if (g.inputGood !== null || Object.keys((g.input ?? {}) as object).length > 0 || num(g.inputMana) > 0) {
+          push(id, ['input'], 'a precious material has no recipe');
+        }
+      } else if (g.workSeconds === null || g.workSeconds === undefined) {
+        push(id, ['workSeconds'], 'a good that is made needs its work time');
+      }
+    }
   },
   currencies: (doc, push) => {
     for (const [id, c] of records(doc.currencies)) {

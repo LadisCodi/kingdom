@@ -74,8 +74,9 @@ describe('the goods stockpile', () => {
 });
 
 describe('the goods recipes', () => {
-  it('names an input for every good', () => {
+  it('names an input for every good that is made', () => {
     for (const good of Object.values(GOODS)) {
+      if (good.precious) continue; // found on the world board, never made
       const raw = Object.keys(good.input).length > 0;
       const refined = good.inputGood !== null;
       const magic = good.inputMana > 0;
