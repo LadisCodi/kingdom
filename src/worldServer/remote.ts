@@ -9,11 +9,11 @@
 
 import type { WorldUpgrade } from '../sim/world/types';
 import { ClockSync } from './clockSync';
-import type { SendArmyRequest, WorldCommand, WorldCommandKind, WorldReply } from './handle';
-import { newOpId, type WorldServerApi } from './local';
+import type { JoinResult, SendArmyRequest, WorldCommand, WorldCommandKind, WorldReply } from './handle';
+import { newOpId, type WorldConnect, type WorldServerApi } from './local';
 import type { WorldBody } from './serve';
 import type {
-  BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, TradeResult, WorldSnapshot,
+  CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, TradeResult, WorldSnapshot,
 } from './types';
 
 /** One trip to the server: its answer, or whether trying again could help. */
@@ -34,8 +34,8 @@ export class RemoteWorldServer implements WorldServerApi {
   ) {}
 
   /** Send a command until it is answered or plainly cannot be. Null when it
-   *  could not get through. */
-  private async send<K extends WorldCommandKind>(cmd: WorldCommand<K>, asSeat?: number): Promise<WorldReply<K> | null> {
+   *  could not get through — never when the answer itself is null. */
+  private async send<K extends WorldCommandKind>(cmd: WorldCommand<K>, asSeat?: number): Promise<{ reply: WorldReply<K> } | null> {
     const opId = newOpId();
     let last = '';
     for (let n = 0; n < TRIES; n++) {
@@ -46,7 +46,7 @@ export class RemoteWorldServer implements WorldServerApi {
       if (r.ok) {
         const at = serverTimeIn(r.data);
         if (at !== null) this.sync.observe(sentAt, at, Date.now());
-        return r.data as WorldReply<K>;
+        return { reply: r.data as WorldReply<K> };
       }
       last = r.error;
       if (!r.retry) break;
@@ -56,17 +56,21 @@ export class RemoteWorldServer implements WorldServerApi {
   }
 
   private async command<K extends WorldCommandKind>(cmd: WorldCommand<K>, asSeat?: number): Promise<WorldReply<K>> {
-    return (await this.send(cmd, asSeat)) ?? ({ ok: false, why: 'Offline' } as WorldReply<K>);
+    return (await this.send(cmd, asSeat))?.reply ?? ({ ok: false, why: 'Offline' } as WorldReply<K>);
   }
 
-  async join(player: { id: string; name: string; prefer?: BoardRef }): Promise<WorldSnapshot> {
-    const snap = await this.send({ kind: 'join', name: player.name, prefer: player.prefer });
-    if (snap === null) throw new Error('the world server cannot be reached');
-    return snap;
+  /** The player is the signed-in user: the server reads them off the
+   *  session, so the id is not sent. */
+  async connect(_playerId: string): Promise<WorldConnect> {
+    const r = await this.send({ kind: 'snapshot' });
+    if (r === null) return { kind: 'offline' };
+    return r.reply === null ? { kind: 'unseated' } : { kind: 'seated', snapshot: r.reply };
   }
+
+  join(nickname: string): Promise<JoinResult> { return this.command({ kind: 'join', nickname }); }
 
   async snapshot(asSeat?: number): Promise<WorldSnapshot | null> {
-    return (await this.send({ kind: 'snapshot' }, asSeat)) ?? null;
+    return (await this.send({ kind: 'snapshot' }, asSeat))?.reply ?? null;
   }
 
   claim(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'claim', index }, asSeat); }

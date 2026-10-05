@@ -34,6 +34,7 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
   const toasts: string[] = [];
   game.onToast((m) => toasts.push(m));
   await game.connectWorld();
+  await game.doJoinWorld('Mel');
   fund(game.state, { Gold: 100_000 });
   for (let i = 0; i < 40; i++) game.state.army.push({ uniqueId: `w${i}`, definitionId: 'Warrior' });
   const me = game.state.world.board.seat;

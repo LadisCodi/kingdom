@@ -25,8 +25,7 @@
 - **A pointy-top hex board, radius 6 from the centre: 127 hexes.**
 - **Six players a board.** A seventh player opens a new instance; for the
   prototype that is enough.
-- **A player joins the first board with a free city**, on its first free
-  corner, assigned at random.
+- **A player joins when they first go out onto the board** (§1.3).
 - Rings are roles, not decoration:
 
 | Ring | Hexes | Its job |
@@ -67,6 +66,20 @@
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**
+
+### 1.3 Joining
+
+- A player is on no board until they first go out onto the world map.
+- The first time out, they choose a **nickname**:
+  - 3–16 letters, numbers, spaces, `_` or `-`;
+  - unique across the game, whatever its case;
+  - never changed. It is the name every other player reads on the board.
+- The server then seats them:
+  - **in a rival's city on the newest board that still has a rival.** The
+    rival leaves with its armies, offers and claims under way; its districts
+    stand on, nobody's, their stores empty;
+  - **else on a new board of their own**, with five rivals.
+- A board with no rival left is full.
 
 ## 2. The anatomy of a hex
 

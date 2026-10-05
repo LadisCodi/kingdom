@@ -8,23 +8,34 @@
 // board, answers it with `handleWorld`, and writes it back only if nobody
 // wrote it in between; if somebody did, it starts again on the newer board.
 
+import { newBoardSeed } from './core';
 import { handleWorld, type WorldCommandKind, type WorldRequest } from './handle';
+import { nicknameProblem, normalNickname } from './nickname';
 import type { ServerBoard, ServerWorld } from './types';
 
-/** Where boards live: two tables on the server, a map in the tests. */
+/** Where boards live: tables on the server, maps in the tests. */
 export interface BoardStore {
   /** The board a player sits on, if any. */
   boardOf(userId: string): Promise<string | null>;
   load(boardId: string): Promise<{ doc: ServerBoard; version: number } | null>;
   /** Write a board back if it is still at `version`; false if it moved on. */
   update(boardId: string, doc: ServerBoard, version: number): Promise<boolean>;
-  /** A new board and the player's seat on it; false if the id is taken. */
+  /** A new board and the player's seat on it; false if either is taken. */
   create(doc: ServerBoard, userId: string, seat: number): Promise<boolean>;
+  /** The newest board with a rival's city left to take, if any. */
+  openBoard(): Promise<string | null>;
+  /** Write a board back with the player now in `seat`, if it is still at
+   *  `version` and the seat is free; false otherwise. */
+  takeSeat(boardId: string, doc: ServerBoard, version: number, userId: string, seat: number): Promise<boolean>;
+  /** Reserve a nickname for a player: the one they already have if any,
+   *  else this one; null if another player has it, whatever its case. */
+  claimNickname(userId: string, nickname: string): Promise<string | null>;
 }
 
 /** What a client sends: a request without the player — that is the
- *  signed-in user's, never the body's. */
-export type WorldBody = Omit<WorldRequest, 'playerId'>;
+ *  signed-in user's, never the body's — and without a new board's name,
+ *  which is the server's to give. */
+export type WorldBody = Omit<WorldRequest, 'playerId' | 'newBoard'>;
 
 export type Served =
   | { status: 200; reply: unknown }
@@ -47,6 +58,7 @@ export function badBody(body: unknown): string | null {
   if (b.asSeat !== undefined && (!Number.isInteger(b.asSeat) || (b.asSeat as number) < 0 || (b.asSeat as number) > 5)) return 'asSeat';
   const cmd = b.cmd as Record<string, unknown> | null;
   if (cmd === null || typeof cmd !== 'object' || !KINDS.has(cmd.kind as WorldCommandKind)) return 'cmd';
+  if (cmd.kind === 'join' && typeof cmd.nickname !== 'string') return 'nickname';
   return null;
 }
 
@@ -54,14 +66,22 @@ export function badBody(body: unknown): string | null {
 export async function serveWorld(store: BoardStore, userId: string, body: unknown, now: number): Promise<Served> {
   const bad = badBody(body);
   if (bad !== null) return { status: 400, error: `bad request: ${bad}` };
-  const req: WorldRequest = { ...(body as WorldBody), playerId: userId };
+  const { opId, ack, asSeat, cmd } = body as WorldBody;
+  const req: WorldRequest = { opId, ack, asSeat, cmd, playerId: userId };
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     const boardId = await store.boardOf(userId);
-    const row = boardId === null ? null : await store.load(boardId);
-    const world: ServerWorld = { version: 3, boards: row === null ? [] : [row.doc] };
+    if (boardId === null) {
+      if (cmd.kind !== 'join') return { status: 200, reply: refusal(cmd.kind, 'NoBoard') };
+      const seated = await seatNewPlayer(store, req, cmd.nickname, now);
+      if (seated !== null) return seated;
+      continue;
+    }
+    const row = await store.load(boardId);
+    if (row === null) return { status: 409, error: 'the board is gone' };
+    const world: ServerWorld = { version: 3, boards: [row.doc] };
     // Dev "play as" is for the rivals the server plays, never another player.
-    if (req.asSeat !== undefined && row !== null && row.doc.seats[req.asSeat]?.bot !== true) {
-      return { status: 200, reply: refusal(req.cmd.kind, 'NotARival') };
+    if (req.asSeat !== undefined && row.doc.seats[req.asSeat]?.bot !== true) {
+      return { status: 200, reply: refusal(cmd.kind, 'NotARival') };
     }
     let reply: unknown;
     try {
@@ -69,51 +89,87 @@ export async function serveWorld(store: BoardStore, userId: string, body: unknow
     } catch (err) {
       return { status: 400, error: `refused: ${err instanceof Error ? err.message : String(err)}` };
     }
-    const board = world.boards[0];
-    if (board === undefined) return { status: 200, reply };
-    if (row !== null) {
-      if (await store.update(board.id, board, row.version)) return { status: 200, reply };
-      continue;
-    }
-    // A first join: the board was made for this player.
-    const seat = board.seats.findIndex((s) => s?.playerId === userId);
-    if (await store.create(board, userId, seat)) return { status: 200, reply };
-    // The board id the client asked to keep is someone else's: a new one.
-    const cmd = req.cmd;
-    if (cmd.kind === 'join' && cmd.prefer !== undefined) {
-      req.cmd = { ...cmd, prefer: { ...cmd.prefer, id: `b-${userId}` } };
-    }
+    if (await store.update(boardId, world.boards[0], row.version)) return { status: 200, reply };
   }
   return { status: 409, error: 'the board kept changing' };
 }
 
-function refusal(kind: WorldCommandKind, why: 'NotARival'): unknown {
+/** A first join: the nickname reserved, then a rival's city on the newest
+ *  board that has one, else a board of the player's own. Null when the
+ *  board changed under it — the caller starts again. */
+async function seatNewPlayer(store: BoardStore, req: WorldRequest, nickname: string, now: number): Promise<Served | null> {
+  if (nicknameProblem(nickname) !== null) return { status: 200, reply: { ok: false, why: 'BadNickname' } };
+  const name = await store.claimNickname(req.playerId, normalNickname(nickname));
+  if (name === null) return { status: 200, reply: { ok: false, why: 'NicknameTaken' } };
+  const id = `b-${req.playerId}`;
+  const join: WorldRequest = { ...req, cmd: { kind: 'join', nickname: name }, newBoard: { id, seed: newBoardSeed(id) } };
+  const open = await store.openBoard();
+  const row = open === null ? null : await store.load(open);
+  const world: ServerWorld = { version: 3, boards: row === null ? [] : [row.doc] };
+  const reply = handleWorld(world, join, now);
+  const board = world.boards[0];
+  const seat = board.seats.findIndex((s) => s?.playerId === req.playerId);
+  const kept = row === null
+    ? await store.create(board, req.playerId, seat)
+    : await store.takeSeat(board.id, board, row.version, req.playerId, seat);
+  return kept ? { status: 200, reply } : null;
+}
+
+function refusal(kind: WorldCommandKind, why: 'NotARival' | 'NoBoard'): unknown {
   return kind === 'snapshot' || kind === 'setBoost' ? null : { ok: false, why };
 }
 
 /** Boards in memory, for the tests — and the shape the tables keep. */
-export function memoryBoards(): BoardStore & { boards: Map<string, { doc: string; version: number }>; seats: Map<string, string> } {
-  const boards = new Map<string, { doc: string; version: number }>();
+export function memoryBoards(): BoardStore & {
+  boards: Map<string, { doc: string; version: number; at: number }>;
+  seats: Map<string, string>;
+  nicknames: Map<string, string>;
+} {
+  const boards = new Map<string, { doc: string; version: number; at: number }>();
   const seats = new Map<string, string>();
+  const nicknames = new Map<string, string>();
+  let made = 0;
+  const write = (id: string, doc: ServerBoard, version: number) =>
+    boards.set(id, { doc: JSON.stringify(doc), version: version + 1, at: boards.get(id)!.at });
   return {
     boards,
     seats,
+    nicknames,
     async boardOf(userId) { return seats.get(userId) ?? null; },
     async load(id) {
       const r = boards.get(id);
       return r === undefined ? null : { doc: JSON.parse(r.doc) as ServerBoard, version: r.version };
     },
     async update(id, doc, version) {
-      const r = boards.get(id);
-      if (r === undefined || r.version !== version) return false;
-      boards.set(id, { doc: JSON.stringify(doc), version: version + 1 });
+      if (boards.get(id)?.version !== version) return false;
+      write(id, doc, version);
       return true;
     },
     async create(doc, userId) {
       if (boards.has(doc.id) || seats.has(userId)) return false;
-      boards.set(doc.id, { doc: JSON.stringify(doc), version: 0 });
+      boards.set(doc.id, { doc: JSON.stringify(doc), version: 0, at: made++ });
       seats.set(userId, doc.id);
       return true;
+    },
+    async openBoard() {
+      const open = [...boards.entries()]
+        .filter(([, r]) => (JSON.parse(r.doc) as ServerBoard).seats.some((s) => s?.bot === true))
+        .sort((a, b) => b[1].at - a[1].at);
+      return open[0]?.[0] ?? null;
+    },
+    async takeSeat(id, doc, version, userId) {
+      if (boards.get(id)?.version !== version || seats.has(userId)) return false;
+      write(id, doc, version);
+      seats.set(userId, id);
+      return true;
+    },
+    async claimNickname(userId, nickname) {
+      const mine = nicknames.get(userId);
+      if (mine !== undefined) return mine;
+      const lower = nickname.toLowerCase();
+      if ([...nicknames.values()].some((n) => n.toLowerCase() === lower)) return null;
+      nicknames.set(userId, nickname);
+      return nickname;
     },
   };
 }

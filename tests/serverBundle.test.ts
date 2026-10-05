@@ -21,7 +21,7 @@ describe('the server bundle', () => {
     const bundled = await import(/* @vite-ignore */ url) as { handleWorld: typeof handleWorld };
 
     const requests: WorldRequest[] = [
-      { opId: 'a', playerId: 'me', ack: 0, cmd: { kind: 'join', name: 'Me', prefer: { id: 'b', seed: 7, seat: 1 } } },
+      { opId: 'a', playerId: 'me', ack: 0, cmd: { kind: 'join', nickname: 'Me' }, newBoard: { id: 'b', seed: 7 } },
       { opId: 'b', playerId: 'me', ack: 0, cmd: { kind: 'claim', index: boardNeighbors(SEAT_INDICES[1])[0] } },
       { opId: 'c', playerId: 'me', ack: 0, cmd: { kind: 'snapshot' } },
     ];

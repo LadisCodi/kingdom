@@ -192,33 +192,43 @@ describe('the stand-in rivals', () => {
 });
 
 describe('the local server', () => {
-  it('seats a player, keeps the board it was handed, and remembers across a reload', async () => {
+  /** The stand-in with a player seated on a board of their own. */
+  async function seatedOn(store = memoryStore(), clock = { t: T0 }) {
+    const server = new LocalWorldServer(store, () => clock.t);
+    expect(await server.connect('me')).toEqual({ kind: 'unseated' });
+    const j = await server.join('Mel');
+    if (!j.ok) throw new Error(j.why);
+    return { server, snap: j.snapshot, clock };
+  }
+
+  it('seats a player under their nickname, and remembers them across a reload', async () => {
     const store = memoryStore();
-    const server = new LocalWorldServer(store, () => T0);
-    const snap = await server.join({ id: 'me', name: 'Me', prefer: { id: 'mine', seed: 99, seat: 4 } });
-    expect(snap.board).toEqual({ id: 'mine', seed: 99, seat: 4 });
+    const { server, snap } = await seatedOn(store);
+    const seat = snap.board.seat;
+    expect(snap.board.id).toBe('b-me');
     expect(snap.seats.filter((s) => s.bot)).toHaveLength(5);
-    const next = boardNeighbors(SEAT_INDICES[4])[0];
+    expect(snap.seats[seat].name).toBe('Mel');
+    const next = boardNeighbors(SEAT_INDICES[seat])[0];
     const r = await server.claim(next);
     expect(r.ok || r.why).toBeTruthy();
 
     const again = new LocalWorldServer(store, () => T0 + 1000);
-    const back = await again.join({ id: 'me', name: 'Me' });
-    expect(back.board).toEqual(snap.board);
-    expect(back.hexes.some((h) => h.index === next && h.owner === 4) || !r.ok).toBe(true);
+    const back = await again.connect('me');
+    expect(back.kind === 'seated' && back.snapshot.board).toEqual(snap.board);
+    expect(back.kind === 'seated' && back.snapshot.hexes.some((h) => h.index === next && h.owner === seat) || !r.ok).toBe(true);
   });
 
   it('acts for another seat, for the dev tool', async () => {
-    const clock = { t: T0 };
-    const server = new LocalWorldServer(memoryStore(), () => clock.t);
-    await server.join({ id: 'me', name: 'Me', prefer: { id: 'b', seed: 5, seat: 0 } });
-    const theirs = boardNeighbors(SEAT_INDICES[2]).find((n) => !generateBoard('b', 5).hexes[n].features.includes('Dungeon'))!;
-    const r = await server.claim(theirs, 2);
+    const { server, snap, clock } = await seatedOn();
+    const rival = snap.seats.find((s) => s.bot)!.seat;
+    const data = generateBoard(snap.board.id, snap.board.seed);
+    const theirs = boardNeighbors(SEAT_INDICES[rival]).find((n) => !data.hexes[n].features.includes('Dungeon'))!;
+    const r = await server.claim(theirs, rival);
     expect(r.ok).toBe(true);
     clock.t = T0 + 1;
-    const snap = (await server.snapshot())!;
-    expect(snap.hexes.find((h) => h.index === theirs)?.owner).toBe(2);
-    expect(snap.hexes.find((h) => h.index === theirs)?.stores).toBeNull();
+    const now = (await server.snapshot())!;
+    expect(now.hexes.find((h) => h.index === theirs)?.owner).toBe(rival);
+    expect(now.hexes.find((h) => h.index === theirs)?.stores).toBeNull();
     expect(snapshotOf).toBeDefined();
   });
 });

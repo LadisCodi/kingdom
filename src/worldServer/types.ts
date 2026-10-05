@@ -210,6 +210,9 @@ export interface ServerDungeon {
 export interface ServerWorld {
   version: 3;
   boards: ServerBoard[];
+  /** The stand-in's nicknames, by player. The real server keeps them in a
+   *  table of their own: they are unique across every board. */
+  nicknames?: Record<string, string>;
 }
 
 // ------------------------------------------------------------ the view
@@ -329,7 +332,9 @@ export type Refusal =
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */
-  | 'Offline';
+  | 'Offline'
+  /** A nickname of the wrong shape, or one another player has. */
+  | 'BadNickname' | 'NicknameTaken';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }
