@@ -432,7 +432,9 @@ export interface Mission {
 /** What can stand on a held world hex (sim/world/types.ts). */
 /** What a builder out on the world board is building: a hex's district
  *  (the claim), or an upgrade into one (Docs/features/19-world-map.md §7). */
-export type WorldBuildWhat = WorldDistrict | WorldUpgrade;
+/** A world build: a district's claim, an upgrade's level, or the repair of
+ *  a district a camp burnt (19 §5.5). */
+export type WorldBuildWhat = WorldDistrict | WorldUpgrade | 'Repair';
 
 export interface ExplorerTrip {
   id: string;

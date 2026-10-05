@@ -40,6 +40,11 @@ export interface HexControl {
   stores: { currency: 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge'; amount: number; cap: number } | null;
   /** A rich district's precious store (19 §7.4); only on the player's own. */
   precious?: { id: PreciousId; amount: number; cap: number } | null;
+  /** Burnt by a camp's raid, and when its repair is done (19 §5.5). */
+  burnt?: boolean;
+  repairAt?: number | null;
+  /** The player's own: the camps that will raid it, and when next. */
+  threat?: { camps: number[]; nextRaidAt: number } | null;
   /** The army standing in its Fortress, if any. */
   garrison?: { army: string; owner: number; power: number } | null;
 }

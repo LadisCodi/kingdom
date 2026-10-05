@@ -37,6 +37,10 @@ export interface ServerHex {
   precious?: number;
   /** The army garrisoned in its Fortress, by id. */
   garrison: string | null;
+  /** Burnt by a camp's raid (19 §5.5): it makes nothing until repaired. */
+  burnt?: boolean;
+  /** When its repair is done; null or missing while none is under way. */
+  repairAt?: number | null;
 }
 
 export type ArmyPhase = 'out' | 'garrison' | 'camp' | 'home';
@@ -153,6 +157,9 @@ export interface ServerBoard {
   beaten?: Record<number, number[]>;
   /** When each stand-in rival will have beaten a camp it means to claim. */
   botCamps?: Record<number, Record<number, number>>;
+  /** The lurking camps each seat has seen, as its client reported them:
+   *  only a camp the player has seen raids them (19 §5.5). */
+  seenCamps?: Record<number, number[]>;
   /** The Exchange's standing offers (19 §7.5). */
   offers?: Offer[];
 }
@@ -214,6 +221,12 @@ export interface HexView {
   precious?: { id: PreciousId; amount: number; cap: number } | null;
   /** The army standing in its Fortress: whose, and what it is worth. */
   garrison: { army: string; owner: number; power: number } | null;
+  /** Burnt by raiders, and when its repair is done if one is under way. */
+  burnt?: boolean;
+  repairAt?: number | null;
+  /** Only on the player's own hexes: the camps beside it that will raid it,
+   *  and when the next raid lands (19 §5.5). */
+  threat?: { camps: number[]; nextRaidAt: number } | null;
 }
 
 /** An army as a player is told about it: where it walks and whose it is.
@@ -261,6 +274,8 @@ export interface WorldSnapshot {
   delves: Record<number, number>;
   /** The monster camps the player has beaten, by hex index. */
   beaten?: number[];
+  /** The lurking camps the server knows the player has seen. */
+  seenCamps?: number[];
   /** The hexes a dungeon stands on now. */
   dungeons: number[];
   /** Each standing dungeon's name, creature and bosses, and the race. */

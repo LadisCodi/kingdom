@@ -191,7 +191,11 @@
     "heroXpPerPower": 0.1,
     "tributePremium": 1.5,
     "tributeLossShare": 0.35,
-    "botHoursPer1000Power": 6
+    "botHoursPer1000Power": 6,
+    "raidHours": 8,
+    "raidShare": 0.4,
+    "repairCostShare": 0.1,
+    "repairTimeShare": 0.1
   },
   "worldScouting": {
     "hoursByRole": { "home": 0.5, "outer": 0.75, "corridor": 1.5, "inner": 3 },

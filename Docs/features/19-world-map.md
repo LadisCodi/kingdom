@@ -12,7 +12,8 @@
 > the explorers and their scouting rewards (§3, §3.2); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
-> (§4, §6); monster camps (§5.4), their numbers in `worldCamps`; Dungeons
+> (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
+> `worldCamps`; Dungeons
 > and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
 > camps, trade on the Exchange (§7.5), man a Fortress and now and then
@@ -300,6 +301,30 @@ accident.**
   loot.
 - **A rival beats a camp in its way** after `botHoursPer1000Power` hours per
   1,000 of the camp's power, without a fight.
+
+### 5.5 Camp raids
+
+- **A camp raids the player's districts beside it** every `raidHours` (8),
+  on the same UTC hours on every board — while the player has not beaten it
+  and nobody holds its hex.
+- **Only a camp the player has seen raids**: a standing one always; a
+  lurking one once the player's client has told the server it was revealed.
+- **A garrisoned Fortress fights the raiders** — the camp's army against the
+  garrison, as an attack is fought (§6).
+  - The garrison holds: the district is spared; its losses stand.
+  - The garrison falls: what is left of it walks home, and the raid goes on.
+- **A raided district burns**: the raiders carry off `raidShare` (40%) of its
+  stores, its precious store included, and it makes nothing until it is
+  repaired. It is still its owner's and still carries the chain. A burning
+  district is not raided again.
+- **Repairing** takes a builder `repairTimeShare` (10%) of a district's
+  build time and `repairCostShare` (10%) of what a claim costs now; Gems
+  finish it like any wait.
+- **On the map**: a burnt district is charred, with fire at its foot and
+  smoke rising; a district a camp will raid carries crossed swords. Its sheet
+  says who raids it and when; the camp's sheet says which districts it
+  raids.
+- The stand-in rivals are never raided.
 
 ## 6. Attacking
 
@@ -658,6 +683,7 @@ The outer scope feeds the inner one.
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
 | **Camp power by ring** and **share** (a third) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
+| **Raid interval and share** (8 h, 40%) | how hard a neighbouring camp presses | border camps are ignored, or the board feels like a chore |
 | **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |

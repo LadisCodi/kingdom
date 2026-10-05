@@ -1751,7 +1751,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
       })),
     builds: (Array.isArray(d.Builds) ? d.Builds : [])
       .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
-        && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never)))
+        && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never) || b.What === 'Repair'))
       .map((b) => ({
         index: b.Index as number,
         what: b.What as GameState['world']['builds'][number]['what'],
