@@ -14,6 +14,8 @@
   pointer-events: none;
 }
 .stg { position: absolute; inset: 0; }
+/* The quest's "show me where": the hand and the glow, with no line. */
+.stg.is-hint .stg-box { display: none; }
 
 /* ---- the pointer: a gloved hand, and a blue magic glow ----
  * A CONTROL glows along its own silhouette (`.stg-glow`, on the control

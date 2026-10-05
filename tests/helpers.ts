@@ -9,6 +9,7 @@ import { tapCell } from '../src/sim/harvest';
 import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
+import { grantHero } from '../src/sim/heroes';
 import { choosePayerProfile } from '../src/sim/store';
 import { freshWorld } from '../src/sim/world/explorers';
 import { Camera } from '../src/render/camera';
@@ -41,6 +42,9 @@ export const freshGame = (): GameState => {
   // every scene played (Docs/features/22-progression.md §1). The doors
   // themselves — and the chain that walks through them — use `firstGame`.
   state.tutorial.veteran = true;
+  // And one hero, the way a veteran has called at least one: a new kingdom
+  // owns none until the Tavern's banner (Docs/features/10-heroes.md §6.2).
+  grantHero(state, 'Warden');
   return state;
 };
 

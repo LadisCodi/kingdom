@@ -15,7 +15,7 @@
 // portrait that is rebuilt re-enters, and a box that is rebuilt re-types.
 
 import {
-  HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
+  DISTRICTS, HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
 import { playSfx } from '../../audio/sfx';
@@ -27,7 +27,7 @@ import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { bubbleTopOver, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
+import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
 /** A scene on the stage, and where it has got to. */
 interface Playing {
@@ -155,6 +155,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const layer = el('div', { class: 'stg' }, halo, sparks, box, arrow);
 
   let playing: Playing | null = null;
+  /** The quest's "show me where" (Game.hintCell), pointed at with this same
+   *  hand while no scene plays: one sign for "here" (24-dialogue.md §4). */
+  let hinted: Target | null = null;
   /** No introduction starts before this: the breath between two scenes. */
   let gapUntil = 0;
   /** A line that appeared on its own — a scene starting, a beat met — takes
@@ -327,6 +330,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     scene.lines.forEach((l, i) => {
       if (PROGRESS.has(l.until) && lineHolds(l)) resumeAt = i + 1;
     });
+    hinted = null;
+    layer.classList.remove('is-hint');
     root.replaceChildren(layer);
     graced();
     begin(resumeAt);
@@ -369,6 +374,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     box.classList.toggle('no-cast', top < limit);
   };
 
+  /** This line's box already moved out of the hand's way: once a line, so
+   *  the box never flaps between the edges. */
+  let boxMovedForHand = false;
+
   /** Where the box sits: its own place, or away from the target. */
   const place = (l: SceneLine): void => {
     let where = l.box;
@@ -384,6 +393,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       }
       where = r !== null && bottomCovers(r) ? 'top' : 'bottom';
     }
+    boxMovedForHand = false;
+    setPlace(where);
+  };
+
+  /** The box goes to `where`. */
+  const setPlace = (where: string): void => {
     // A box already on screen MOVES to its new place — quickly, overshooting
     // a touch and settling back — rather than jumping there.
     const from = boxShown && box.dataset.place !== where ? box.getBoundingClientRect() : null;
@@ -569,31 +584,43 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   const drawTarget = (r: Rect | null): void => {
+    const pointed = playing?.target ?? hinted;
     const show = r !== null;
-    const isCell = playing?.target?.kind === 'cell';
-    glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
-    game.tutorialFocus = show && playing?.target?.kind === 'cell'
-      ? { cell: playing.target.cell, span: playing.target.span } : null;
+    // Read before anything is written, so the page lays out once: the box,
+    // and the hand's size (a guess on the frame it first shows).
+    const f = frame.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const boxRect = b.width > 0 ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
+    const hand = { w: arrow.offsetWidth || 48, h: arrow.offsetHeight || 56 };
+    const isCell = pointed?.kind === 'cell';
+    glow(show && !isCell && pointed?.kind === 'ui' ? uiNode(pointed.key) : null);
+    game.tutorialFocus = show && pointed?.kind === 'cell'
+      ? { cell: pointed.cell, span: pointed.span } : null;
     halo.hidden = glowing === null;
     arrow.hidden = !show;
     sparks.hidden = !show;
     if (!show) return;
-    const pad = playing?.target?.kind === 'cell' ? 0 : 6;
+    const pad = pointed?.kind === 'cell' ? 0 : 6;
     const padded = {
       left: `${r.x - pad}px`, top: `${r.y - pad}px`, width: `${r.w + pad * 2}px`, height: `${r.h + pad * 2}px`,
     };
     if (!isCell) Object.assign(halo.style, padded);
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    // Over a building with its collect bubble up, the hand stands above the
+    // bubble: a line asking the player to gather it must not hide it.
+    const bubble = pointed ? bubbleTopOver(game, pointed, frame) : null;
+    const top = bubble === null ? r.y - 8 : Math.min(r.y - 8, bubble - 4);
     // The arrow points DOWN at the target from above it, unless that would
-    // leave the screen, then UP from below.
-    const above = r.y > 70;
+    // leave the screen, then UP from below — and never stands on the line.
+    const { above, moveBox } = handPlace(r, hand, boxRect, f.height, top);
+    // Judged only while the box is still: mid-move, it is not where it settles.
+    if (moveBox && !boxMovedForHand && box.getAnimations().length === 0) {
+      boxMovedForHand = true;
+      setPlace(box.dataset.place === 'top' ? 'bottom' : 'top');
+    }
     arrow.classList.toggle('is-below', !above);
     const src = above ? handDown : handUp;
     if (src !== null && arrow.getAttribute('src') !== src) arrow.setAttribute('src', src);
-    // Over a building with its collect bubble up, the hand stands above the
-    // bubble: a line asking the player to gather it must not hide it.
-    const bubble = above && playing?.target ? bubbleTopOver(game, playing.target, frame) : null;
-    const top = bubble === null ? r.y - 8 : Math.min(r.y - 8, bubble - 4);
     Object.assign(arrow.style, {
       left: `${r.x + r.w / 2}px`, top: above ? `${top}px` : `${r.y + r.h + 8}px`,
     });
@@ -609,12 +636,36 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    * the cast's fit — ride the tenth-of-a-second check.
    */
   const IDLE_CHECK_MS = 250;
+
+  /** Between scenes, the quest's hinted cell wears the hand, the motes and
+   *  the plot's glow — no box — until it is tapped or its time runs out. */
+  const pointHint = (): void => {
+    // A sheet over the map covers the cell, so the hand steps aside with it.
+    const cell = game.hasOpenSheet() ? null : game.hintCell();
+    if (cell === null) {
+      if (hinted !== null) {
+        hinted = null;
+        drawTarget(null);
+        layer.classList.remove('is-hint');
+        root.replaceChildren();
+      }
+      game.tutorialFocus = null;
+      return;
+    }
+    const d = game.state.city.districts.find((x) => x.location.x === cell.x && x.location.y === cell.y);
+    hinted = { kind: 'cell', cell, span: d ? DISTRICTS[d.definitionId].size : { x: 1, y: 1 } };
+    if (!layer.classList.contains('is-hint')) {
+      layer.classList.add('is-hint');
+      root.replaceChildren(layer);
+    }
+    drawTarget(targetRect(game, hinted, frame));
+  };
   let lastIdleHelp = 0;
   const frameTick = (now: number): void => {
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
     if (playing === null) {
-      game.tutorialFocus = null;
+      pointHint();
       // Not while the page is hidden: a timer still fires there, and a
       // scene would play to nobody.
       if (now - lastCheck > IDLE_CHECK_MS - 10 && !document.hidden) {
@@ -697,7 +748,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       lastIdleHelp = now;
       idleHelp(now);
     }
-    if (playing !== null) requestAnimationFrame(frameTick);
+    if (playing !== null || hinted !== null) requestAnimationFrame(frameTick);
     else setTimeout(() => frameTick(performance.now()), IDLE_CHECK_MS);
   };
   requestAnimationFrame(frameTick);

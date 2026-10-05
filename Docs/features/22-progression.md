@@ -36,10 +36,10 @@
 | **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the research tree, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
 | **Session 1** | silhouettes in the fog; the old plots, the old Farm and workers; **the Build tab** and a second House; the old Sawmill; Townhall 2 | the quest chain |
 | **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
-| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, the Warrior, the Barracks, soldiers | revealing a lair's ground |
+| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** (captain of the guard) steps forward, the Warrior, the Barracks, soldiers | revealing a lair's ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Day 1–2** | the Thorned Shrine, the Sanctum; Bureaucracy, the end of chapter 2 | claiming the shrine; the chain |
-| **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
+| **Day 2** | **the Tavern**: the banner, **the first hero**, **the Sagas** | building the Tavern |
 | **Day 2–3** | Townhall 3, Mining, the Harpies | the chain; the fog |
 | **Day 4–6** | Townhall 4, chapter 4, workshops and refined goods | Magistracy; 160 cells revealed |
 | **Day 5–7** | **the Watchtower**: the world door, **the Atlas** | claiming the Watchtower |
@@ -119,16 +119,13 @@
   the Tavern's card; the Store keeps a copy, padlocked until a Tavern stands.
 - **Every level adds +10% Hero XP** (`buildings` › `heroXpBonusPerLevel`).
   Its levels 2–5 are unlocked by the Sagas.
-- **Heroes arrive by story, then by the banner:**
-
-| Hero | Arrives | How |
-|---|---|---|
-| **The Warden** | the kingdom's from the start; she **steps forward** when the first lair is discovered | the captain of the guard — nothing shows her before the Orcs, and the first fight needs a hero |
-| **Bess, the Cook** | the moment the first Tavern is finished | granted (`sim/story.ts`) — she runs the Tavern |
-| **The first call** | on the banner, free | **always a hero**: the free call cannot miss |
-
-- The Heroes tab stays padlocked until the Tavern; before it, the Warden is
-  met on the attack sheet's hero slot.
+- **Every hero comes from the banner.** The kingdom starts with none.
+- **The first call is free and always a hero** — a random one. Quest
+  `FirstSummon` asks for it; `Fellowship` asks for three heroes later.
+- Before the Tavern the attack sheet shows no hero slots: the Orcs are
+  fought by soldiers alone.
+- The Warden and Bess speak in the tutorial as the captain of the guard and
+  the Tavern keeper; as heroes they are called like any other.
 
 ## 7. The first card pack
 
@@ -202,7 +199,7 @@ Columns 1–3 wide, read down the page, that converge on one finale:
 - A technology that opens a book.
 - A tutorial level or sandbox separate from the real kingdom: the First
   Morning is played on the save.
-- Heroes before the first lair; a random first free call.
+- A hero granted by the story rather than called.
 - A Tavern that sells calls. The banner sells them; the Tavern hosts it.
 
 **Open questions:** **OQ-115**, **OQ-116**.

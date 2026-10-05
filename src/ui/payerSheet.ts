@@ -1,11 +1,12 @@
-// "Who are you playing as?" — the first thing a new save asks, before the map.
+// "Who are you playing as?" — the first thing a new save asks, once its
+// First Morning is played; or never, when the link set it (`?payer=`).
 //
 // The simulated store (Docs/features/14-monetization.md §3) only measures
 // anything if the money is scarce, and the money is scarce only if the player
 // has declared how much of it there is. So this sheet is MODAL in the strong
 // sense: it has no close knob, the scrim does not dismiss it, and nothing else
 // opens until a profile is picked. It is the one place in the game that makes
-// a demand before the player has done anything, and the copy says why.
+// a demand of the player, and the copy says why.
 //
 // The choice is final for this save. That is stated on the sheet rather than
 // discovered afterwards, and the way out — start over from Settings — is

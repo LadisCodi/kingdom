@@ -159,9 +159,12 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     }
   }
 
+  // No hero yet — the first comes from the Tavern's banner — and the line of
+  // hero slots would offer nothing to pick.
   return armyBox('Your army', view.attack, `is-mine${view.enough ? '' : ' is-short'}`, [
     slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
-    slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes'),
+    ...(game.state.heroes.owned.length > 0
+      ? [slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
   ]);
 }
 

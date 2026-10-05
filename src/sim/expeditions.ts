@@ -208,12 +208,13 @@ export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned
  * a garrison is beaten.
  *
  * Two things make it the right first fight. The threat is in VIEW — no
- * scouting, no hidden type — and the party may be a hero ALONE, so the very
- * first battle needs no army at all. A shortfall warns rather than blocks, and
+ * scouting, no hidden type — and the party may be soldiers alone, so the very
+ * first battle needs no hero. A shortfall warns rather than blocks, and
  * a retry is identical to a first attempt: nothing is lost but the supplies.
  */
 export type LairBlock =
-  | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
+  | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'EmptyParty' | 'NoHero' | 'TooManyHeroes'
+  | 'TooManySlots'
   | 'NotEnoughUnits' | 'NotEnoughSupplies' | 'HeroDown';
 
 export function lairBlock(
@@ -233,14 +234,16 @@ export function lairBlock(
   // Beaten, and waiting for its reward to be claimed: there is nobody left
   // to fight (Docs/proposals/lairs.md §5).
   if (state.lairs[lairId]?.defeated === true) return 'AlreadyDefeated';
-  if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
+  if (heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
   // A hero the last fight left with nothing has to get some of it back first.
   if (heroIds.some((id) => !heroCanFight(state, id, t))) return 'HeroDown';
   // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
   // (Docs/features/10-heroes.md §2.6).
-  // A hero alone is a legal board, so there is no EmptyParty here either.
+  // A hero alone is a legal board, and so are soldiers alone; nobody at all
+  // is not.
   const committed = slots.filter((s) => s.count > 0);
+  if (heroIds.length === 0 && committed.length === 0) return 'EmptyParty';
   if (committed.length > troopSlots()) return 'TooManySlots';
   const available = availableRoster(state);
   for (const s of committed) {
@@ -406,7 +409,7 @@ export interface LairPreview {
   /** Soldiers who would fall — the price the screen states before it is
    *  paid (Docs/features/18-garrisons-and-raids.md §5). The resolver has no
    *  randomness, so this is the fight's own answer, not a guess; the
-   *  infirmary's share of it comes back at a hall. 0 with no hero. */
+   *  infirmary's share of it comes back at a hall. 0 with nobody sent. */
   fallen: number;
   /** True when the party already beats the lair ON PAPER. A shortfall warns,
    *  it never blocks — and the paper is an estimate now, so a party that
@@ -432,7 +435,7 @@ export function previewLair(
   // board is nine slots and a fight a few hundred ticks — and it is what lets
   // the screen say what the attack costs before the button is pressed.
   let fallen = 0;
-  if (heroIds.length > 0) {
+  if (heroIds.length > 0 || committed.length > 0) {
     const ours = partyBoard(party);
     fallen = lossesFrom(resolveBattle(ours, theirs), ours).reduce((n, l) => n + l.count, 0);
   }

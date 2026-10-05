@@ -150,6 +150,15 @@ function firstStandingLair(game: Game): LairId | '' {
  *  open on top (24-dialogue.md §4). */
 export const BACK = 'back';
 
+/**
+ * The controls a line can point at that spend Gems, by their `data-coach`
+ * key. The First Morning never points the hand at one: a beat may name a
+ * paid shortcut, but following the hand must never cost the player Gems
+ * (Docs/features/23-tutorials.md §3). `tests/tutorialGems.test.ts` holds
+ * this list to every Gem button the UI marks for the stage.
+ */
+export const GEM_CONTROLS: ReadonlySet<string> = new Set(['card:finish-training']);
+
 /** Is `node` drawn, not merely in the page? */
 const drawn = (node: HTMLElement): boolean => {
   const r = node.getBoundingClientRect();
@@ -215,3 +224,35 @@ export const targetHasCell = (target: Target, cell: Coord): boolean =>
   target.kind === 'cell'
   && cell.x >= target.cell.x && cell.x < target.cell.x + target.span.x
   && cell.y >= target.cell.y && cell.y < target.cell.y + target.span.y;
+
+/** Do two rects overlap? Touching is not overlapping. */
+const meets = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/** How far the hand bobs away from where it stands. */
+const HAND_BOB = 8;
+
+/**
+ * Where the hand stands on its target `r`: ABOVE it, fingertip down, unless
+ * that would leave the screen — then BELOW, fingertip up. Never on the line
+ * box: a hand that would meet the box stands on the target's other side, and
+ * only when both sides meet it does the box itself move away (`moveBox`).
+ * `fingertip` is where the fingertip rests when above — over a collect
+ * bubble it stands higher, so the bubble stays in sight.
+ */
+export function handPlace(
+  r: Rect, hand: { w: number; h: number }, box: Rect | null, frameH: number, fingertip = r.y - 8,
+): { above: boolean; moveBox: boolean } {
+  const x = r.x + r.w / 2 - hand.w / 2;
+  const aboveRect: Rect = { x, y: fingertip - hand.h - HAND_BOB, w: hand.w, h: hand.h + HAND_BOB };
+  const belowRect: Rect = { x, y: r.y + r.h + 8, w: hand.w, h: hand.h + HAND_BOB };
+  const fitsAbove = r.y > 70;
+  const fitsBelow = belowRect.y + belowRect.h <= frameH;
+  const clear = (side: Rect): boolean => box === null || !meets(side, box);
+  const [first, second] = fitsAbove ? [true, false] : [false, true];
+  if (clear(first ? aboveRect : belowRect)) return { above: first, moveBox: false };
+  if ((second ? fitsAbove : fitsBelow) && clear(second ? aboveRect : belowRect)) {
+    return { above: second, moveBox: false };
+  }
+  return { above: first, moveBox: true };
+}

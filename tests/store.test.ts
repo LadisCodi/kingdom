@@ -2,7 +2,7 @@
 // chosen once, a monthly budget that never rolls over, purchases that grant
 // Gems for real, and refusals that are counted rather than swallowed.
 import { describe, expect, it } from 'vitest';
-import { PAYER, SAVE_VERSION, STORE, STORE_ORDER } from '../src/sim/data/definitions';
+import { PAYER, QUESTS, SAVE_VERSION, STORE, STORE_ORDER } from '../src/sim/data/definitions';
 import { newGame } from '../src/sim/newGame';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
@@ -155,9 +155,34 @@ describe('the save', () => {
   });
 });
 
+/** A kingdom past its First Morning — `TaxDay` claimed — with no profile. */
+const pastMorning = () => {
+  const state = blank();
+  state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
+  return state;
+};
+
 describe('the presenter', () => {
-  it('holds the screen on the profile sheet until a profile is chosen', () => {
+  // The First Morning is played before anything is asked: the sheet waits
+  // for its end (Docs/plans/ux-pass.md §2.10).
+  it('asks nothing through the First Morning', () => {
     const game = freshPresenter(blank());
+    expect(game.payerDue()).toBe(false);
+    game.setOverlay('mana'); // a sheet with no door to open first
+    expect(game.openOverlay).toBe('mana');
+    game.dismiss();
+    expect(game.openOverlay).toBeNull();
+  });
+
+  it('owes the profile the moment the morning ends', () => {
+    const state = blank();
+    const game = freshPresenter(state);
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay') + 1;
+    expect(game.payerDue()).toBe(true);
+  });
+
+  it('holds the screen on the profile sheet until a profile is chosen', () => {
+    const game = freshPresenter(pastMorning());
     game.setOverlay('build');
     expect(game.openOverlay).toBe('payerProfile'); // forced, and remembers the ask
     game.dismiss();

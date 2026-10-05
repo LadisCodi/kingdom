@@ -413,7 +413,7 @@
         "side": "left",
         "text": "They’re on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!",
         "box": "auto",
-        "point": "ui:card:finish-training",
+        "point": "",
         "lock": "none",
         "until": "population",
         "untilTarget": "",
@@ -1181,7 +1181,7 @@
       {
         "speaker": "warden",
         "side": "right",
-        "text": "Pick who goes in: me in a hero slot, soldiers in the others. The numbers tell you how it’ll go before we march.",
+        "text": "Pick who goes in: as many soldiers as you can spare. The numbers tell you how it’ll go before we march.",
         "box": "auto",
         "point": "",
         "lock": "none",
@@ -1323,19 +1323,6 @@
         "expression": ""
       },
       {
-        "speaker": "cook",
-        "side": "right",
-        "text": "And me? I’m not bad with a ladle in a scrap, either.",
-        "box": "auto",
-        "point": "",
-        "lock": "none",
-        "until": "tap",
-        "untilTarget": "",
-        "untilAmount": 0,
-        "exit": false,
-        "expression": ""
-      },
-      {
         "speaker": "advisor",
         "side": "left",
         "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
@@ -1351,7 +1338,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The Tavern flies the banner — your first call is on the house. And a new book, the Sagas! Heroes, legends… my favourite shelf.",
+        "text": "The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.",
         "box": "auto",
         "point": "ui:nav:heroes",
         "lock": "none",

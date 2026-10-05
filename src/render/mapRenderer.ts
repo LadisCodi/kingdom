@@ -37,7 +37,7 @@ import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
-  drawIcon, drawSprite, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
+  drawIcon, drawSprite, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
@@ -47,7 +47,7 @@ import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
 import { drawCharacter, unitHeight } from './characters';
 import { animFor, castFor, NEVER_HIDES, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
-import { formatCount, formatDuration } from '../ui/format';
+import { formatCount, formatDuration, formatExact } from '../ui/format';
 import { drawArea, drawAreaLine, drawReach } from './areaOverlays';
 import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 import { drawFogLayer } from './fog/fogLayer';
@@ -77,10 +77,9 @@ export interface MarkerLayer {
   /** The building whose card is open: it pulses white, so the player can
    *  tell which one the card is about. */
   inspectedDistrictId: string | null;
-  /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
-  hintCell: Coord | null;
-  /** The plot the tutorial is pointing at (ui/stage/stage.ts): lit on the
-   *  ground, under what stands on it. The hand stays in the stage. */
+  /** The plot the stage is pointing at (ui/stage/stage.ts) — a line's, or
+   *  the quest's "show me where": lit on the ground, under what stands on
+   *  it. The hand stays in the stage. */
   tutorialFocus: { cell: Coord; span: { x: number; y: number } } | null;
   /** SPELLS STANDING ON THE GROUND (Docs/features/09-relics.md §11.6): the
    *  cells each one covers, and how much of its window is left. */
@@ -126,6 +125,36 @@ function labelFace(): string {
       .getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
   }
   return labelFontStack;
+}
+
+/** The level of a building past its first, on the blue enamel plaque the
+ *  upgrade sheet wears (Docs/art/originals/ui-level-plaques.png): the number
+ *  in white, outlined in the plaque's own blue. Its top-right corner sits at
+ *  (right, top), the roof's corner. */
+const PLAQUE_CAP = 70 / 480; // the plaque's round end, as its nine-slice cuts it
+const PLAQUE_INK = '#154576';
+function drawLevelPlaque(
+  ctx: CanvasRenderingContext2D, level: number, right: number, top: number, size: number,
+): void {
+  const h = Math.max(17, size * 0.2);
+  const text = formatExact(level);
+  ctx.save();
+  ctx.font = labelFont(h * 0.64, 11, true);
+  const w = Math.max(h * 1.7, ctx.measureText(text).width + h * 1.1);
+  const x = right - w;
+  if (!drawSpriteThreeSlice(ctx, 'plaque_level', PLAQUE_CAP, x, top, w, h)) {
+    ctx.fillStyle = PLAQUE_INK;
+    ctx.fillRect(x, top, w, h);
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, h * 0.16);
+  ctx.strokeStyle = PLAQUE_INK;
+  ctx.strokeText(text, x + w / 2, top + h * 0.47);
+  ctx.fillStyle = PALETTE.label;
+  ctx.fillText(text, x + w / 2, top + h * 0.47);
+  ctx.restore();
 }
 
 /** Map labels are NUMBERS and short counts, so they are set in the body face,
@@ -505,13 +534,7 @@ export function drawMap(
       ctx.fillStyle = PALETTE.constructionHatch;
       fillDiamond(ctx, box);
     } else {
-      if (district.level > 1) {
-        ctx.fillStyle = PALETTE.label;
-        ctx.font = labelFont(size * 0.16, 12);
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`L${district.level}`, box.x + box.w - 3, roof);
-      }
+      if (district.level > 1) drawLevelPlaque(ctx, district.level, box.x + box.w - 3, roof, size);
       // Exhausted crop plot: withered overlay (unless its sprite covers it).
       if (exhaustedPlot && !drewExhaustedPlot) {
         drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, box.x, c.y - box.h * 0.5, box.w, size * 0.3, box.h);
@@ -1505,41 +1528,6 @@ export function drawMap(
   }
 
 
-
-  // Pass 3.8: the quest hint — the tutorial's own sign (Docs/features/
-  // 24-dialogue.md §4): the plot's diamond lit in the blue magic glow, and
-  // the gloved hand bobbing over it. One sign for "here" across the map and
-  // the menus, and never an emoji.
-  if (markers.hintCell) {
-    const b = cellRect(markers.hintCell);
-    const c = mid(b);
-    const bob = Math.sin(now / 140) * size * 0.07;
-    const pulse = 0.5 + 0.5 * Math.sin(now / 220);
-    ctx.save();
-    ctx.shadowColor = '#3c9dff';
-    ctx.shadowBlur = 10 + pulse * 10;
-    ctx.strokeStyle = '#c8f0ff';
-    ctx.lineWidth = 3;
-    strokeDiamond(ctx, b, 3);
-    ctx.restore();
-    const handH = size * 0.5;
-    const handW = handH / (spriteAspect('tutorial_hand_down') ?? 1.22);
-    const tipY = c.y - size * 0.12 + bob;
-    // The fingertip sits a little right of the glove's middle.
-    if (!drawSprite(ctx, 'tutorial_hand_down', c.x - handW * 0.57, tipY - handH, handW, handH)) {
-      const half = size * 0.22;
-      ctx.beginPath();
-      ctx.moveTo(c.x, tipY);
-      ctx.lineTo(c.x - half, tipY - half * 1.4);
-      ctx.lineTo(c.x + half, tipY - half * 1.4);
-      ctx.closePath();
-      ctx.fillStyle = '#f2b233';
-      ctx.strokeStyle = '#5c3a1e';
-      ctx.lineWidth = 2;
-      ctx.fill();
-      ctx.stroke();
-    }
-  }
 
   function queueWorkers(): void {
   // Worker units — animated. Walk cycles while moving (carry

@@ -1779,7 +1779,7 @@ Two square transparent sheets. Run each twice — once normal, once locked.
 > pixel-art icons on a fully transparent background, evenly spaced, none
 > touching, all the same chunky 32×32 scale, each readable at half size:
 > (1) a gold coin, (2) a red apple, (3) a stack of cut logs, (4) a grey
-> stone block, (5) an iron ingot, (6) a cut violet gem, (7) a rolled
+> stone block, (5) an iron ingot, (6) a cut blue gem, (7) a rolled
 > parchment scroll, (8) three tiny villager heads together, (9) a builder's
 > hammer and hard hat, (10) a farmer with a hoe, (11) a bunch of blue
 > berries, (12) a silver fish. Flat two-tone shading, dark brown outline on

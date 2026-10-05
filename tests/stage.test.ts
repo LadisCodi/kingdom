@@ -8,6 +8,7 @@ import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
+import { handPlace } from '../src/ui/stage/targets';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
 import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
 
@@ -218,5 +219,40 @@ describe('the conditions read the kingdom', () => {
   it('never holds on a tap — a tap is the stage’s own event', () => {
     const game = freshPresenter(firstGame());
     expect(conditionHolds(game, args('tap' as never))).toBe(false);
+  });
+});
+
+// The hand never stands on the line it illustrates (Docs/plans/ux-pass.md
+// §2.4): it takes the target's other side, and the box moves only when both
+// sides would meet it.
+describe('the hand and the line box', () => {
+  const hand = { w: 48, h: 56 };
+  const frameH = 900;
+  const target = { x: 180, y: 300, w: 60, h: 40 };
+
+  it('stands above its target when the box is elsewhere', () => {
+    const bottomBox = { x: 0, y: 700, w: 430, h: 160 };
+    expect(handPlace(target, hand, bottomBox, frameH)).toEqual({ above: true, moveBox: false });
+  });
+
+  it('stands below its target when above would meet the box', () => {
+    const topBox = { x: 0, y: 100, w: 430, h: 170 }; // ends 30 px over the target
+    expect(handPlace(target, hand, topBox, frameH)).toEqual({ above: false, moveBox: false });
+  });
+
+  it('moves the box when a target near the top has the box right under it', () => {
+    const high = { x: 180, y: 40, w: 60, h: 40 };
+    const under = { x: 0, y: 100, w: 430, h: 160 };
+    // Above does not fit the screen, below meets the box: the box moves.
+    expect(handPlace(high, hand, under, frameH)).toEqual({ above: false, moveBox: true });
+  });
+
+  it('moves the box when both sides meet it', () => {
+    const tall = { x: 0, y: 150, w: 430, h: 300 }; // wraps the target
+    expect(handPlace(target, hand, tall, frameH)).toEqual({ above: true, moveBox: true });
+  });
+
+  it('stands as it always did with no box on screen', () => {
+    expect(handPlace(target, hand, null, frameH)).toEqual({ above: true, moveBox: false });
   });
 });

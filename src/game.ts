@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
-import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
+import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
@@ -892,6 +892,8 @@ export class Game {
           if (sightedAt(this.state, this.map, cell) !== undefined) {
             this.toast('Something stands in the dark — clear the fog towards it');
           }
+          // Either way the hand shows where the fog can be cleared from.
+          this.hintFrontierNear(cell);
           return true;
         }
         if (fog !== 'Discovered') return false;
@@ -906,6 +908,7 @@ export class Game {
           // the frontier moves outward stops trying to buy the far tile.
           playSfx('error');
           this.toast('Clear a path to it first — the fog lifts from the edges');
+          this.hintFrontierNear(cell);
         } else if (result === 'OutOfReach') {
           // The capital is the reach: say which level opens this ring, so
           // the refusal points at the building rather than at the fog.
@@ -1144,7 +1147,7 @@ export class Game {
    *  swallows the tap on release, so one press never acts twice. */
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
-    const cell = this.camera.screenToCell(sx, sy);
+    const cell = this.collectBubbleCell(sx, sy) ?? this.camera.screenToCell(sx, sy);
     if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
@@ -2771,6 +2774,12 @@ export class Game {
     return pullPrice(this.state, banner);
   }
 
+  /** The payer profile is owed: none chosen, and the First Morning is over.
+   *  The morning is played before anything is asked (14-monetization.md §3). */
+  payerDue(): boolean {
+    return this.state.player.payer === null && !firstMorningOn(this.state);
+  }
+
   /** Choosing a profile is the one command that runs with no profile chosen.
    *  It hands the screen to whatever was waiting behind the sheet. */
   doChoosePayerProfile(profile: PayerProfile): void {
@@ -3201,11 +3210,8 @@ export class Game {
     };
     const built = (pred: (d: District) => boolean) =>
       this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
-    // A cell the player can buy THIS tap: dark, on the cleared ground's edge,
-    // inside the Townhall's reach and behind no technology. Pointing anywhere
-    // else answers the tap with a refusal.
-    const buyable = (c: Coord): boolean => fogState(this.state, this.map, c) === 'Discovered'
-      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
+    // Pointing anywhere but a buyable cell answers the tap with a refusal.
+    const buyable = (c: Coord): boolean => this.isBuyable(c);
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
@@ -3385,6 +3391,26 @@ export class Game {
     }
   }
 
+  /** A cell the player can buy THIS tap: dark, on the cleared ground's edge,
+   *  inside the Townhall's reach and behind no technology. */
+  private isBuyable(c: Coord): boolean {
+    return fogState(this.state, this.map, c) === 'Discovered'
+      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
+  }
+
+  /** A refused fog tap shows where the fog CAN be cleared: the buyable cell
+   *  nearest the one tapped, with the quest hint's hand. */
+  private hintFrontierNear(cell: Coord): void {
+    let best: Coord | null = null;
+    let bestD = Infinity;
+    for (const c of this.map.cells) {
+      if (!this.isBuyable(c)) continue;
+      const d = Math.max(Math.abs(c.x - cell.x), Math.abs(c.y - cell.y));
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best !== null) this.setCellHint(best);
+  }
+
   /** Nearest cell (by townhall distance) satisfying the predicate. */
   private nearestCell(pred: (cell: Coord) => boolean): Coord | null {
     let best: Coord | null = null;
@@ -3507,8 +3533,8 @@ export class Game {
     this.notify();
   }
 
-  /** Open the battle sheet on a lair. A hero ALONE is a legal board here, so
-   *  this never opens pre-blocked for want of an army. */
+  /** Open the battle sheet on a lair. A hero alone and soldiers alone are
+   *  both legal boards here. */
   openLair(lairId: LairId): void {
     this.lairId = lairId;
     // A lair resolves on entry, so nobody is busy: the roster is the party.
@@ -3534,7 +3560,7 @@ export class Game {
   }
 
   doAttackLair(): void {
-    if (this.lairId === null || this.partyHeroes.length === 0) return;
+    if (this.lairId === null) return;
     const lairId = this.lairId;
     const report = attackLair(
       this.state, this.map, lairId, this.partyHeroes, this.expeditionParty, this.now());
@@ -4126,9 +4152,10 @@ export class Game {
   }
 
   setOverlay(name: OverlayName | null): void {
-    // No payer profile, no game: the profile sheet has the screen until one
-    // is chosen (14-monetization.md §3). Whatever was asked for waits.
-    if (this.state.player.payer === null && name !== 'payerProfile') {
+    // No payer profile, no game past the First Morning: the profile sheet has
+    // the screen until one is chosen (14-monetization.md §3). Whatever was
+    // asked for waits.
+    if (this.payerDue() && name !== 'payerProfile') {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
     }
@@ -4186,7 +4213,7 @@ export class Game {
     this.selectedHex = null;
     this.iapDismissed();
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
-    this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
+    this.openOverlay = this.payerDue() ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     this.pendingSku = null;
@@ -4278,7 +4305,7 @@ export class Game {
     // The two that run on the clock: the hint's expiry, the wheels' sweep.
     return {
       ...this.markerCache.layer,
-      hintCell: this.hintCell(), spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+      spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
     };
   }
 
@@ -4297,7 +4324,6 @@ export class Game {
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
-      hintCell: null,
       spellZones: [],
       tutorialFocus: null,
     };
@@ -5380,14 +5406,26 @@ export class Game {
     return homeIndex(this.state);
   }
 
+  /** The cell of the building whose collect bubble covers (sx, sy), if any. */
+  private collectBubbleCell(sx: number, sy: number): Coord | null {
+    const id = this.collectBubbles.at(sx, sy, performance.now());
+    return id === null ? null : districtById(this.state, id)?.location ?? null;
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
-    // So is a tap on the lair's picture above its own ground — its pixels,
-    // not its box, so the cells round its edges still answer as themselves.
-    const bubbled = this.mode.kind === 'normal'
-      ? lairBubbleAt(sx, sy) ?? lairArtAt(sx, sy) : null;
-    const cell = bubbled !== null ? LAIRS[bubbled].location : this.camera.screenToCell(sx, sy);
+    // A store's collect bubble floats over other cells too: a tap on it is a
+    // tap on its building, which collects it. Checked front to back, in the
+    // order they are drawn — the lair's bubble, the collect bubble, then the
+    // lair's picture above its own ground — its pixels, not its box, so the
+    // cells round its edges still answer as themselves.
+    const normal = this.mode.kind === 'normal';
+    const lairBubble = normal ? lairBubbleAt(sx, sy) : null;
+    const storeCell = normal && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
+    const lair = lairBubble ?? (normal && storeCell === null ? lairArtAt(sx, sy) : null);
+    const cell = lair !== null ? LAIRS[lair].location
+      : storeCell ?? this.camera.screenToCell(sx, sy);
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
@@ -5904,6 +5942,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   LairNotFound: 'Clear a path to the lair first',
   AlreadyCleared: 'That lair is already cleared',
   AlreadyDefeated: 'They are beaten — claim what they left behind',
+  EmptyParty: 'Pick who goes in',
   NoHero: 'Pick a hero to lead them',
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',

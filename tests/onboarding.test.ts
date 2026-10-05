@@ -307,8 +307,9 @@ describe('a player can actually play the onboarding', () => {
     finish('WarDrums');
     // The Warrior is a card in the kingdom's one tree, chapter 2: nothing has
     // to be handed over first.
-    // The Warden has been the kingdom's all along, and steps up now.
-    expect(state.heroes.owned).toContain('Warden');
+    // No hero yet: the first fight is soldiers alone, and the first hero
+    // comes from the Tavern's banner.
+    expect(state.heroes.owned).toEqual([]);
     research('Warrior');
     finish('ArmedMen');
   });

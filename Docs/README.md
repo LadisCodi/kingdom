@@ -111,6 +111,8 @@ Not features — how content and art are made.
 | [`plans/analytics.md`](plans/analytics.md) | what the game sends the server about how it is played — the events, how they are sent, and the views they are read from |
 | [`plans/online-server.md`](plans/online-server.md) | the steps from the local world stand-in and the cloud save to a real Supabase server, then the social layer; the protocol every world request follows |
 | [`plans/data-editor.md`](plans/data-editor.md) | `?dev=data`, the tool every piece of game data is authored in: its collections, views and navigation, the files it saves, and the module that says what legal data is |
+| [`plans/review-readiness.md`](plans/review-readiness.md) | what is left before the studio's prototype review: the decisions the checklist asks for, the builds still missing, the docs to tidy, and where each checklist answer comes from |
+| [`plans/ux-pass.md`](plans/ux-pass.md) | usability fixes found playing v0.3.0 on a phone as a free player — one branch each, with what was seen, the rule, where it lives and when it is done |
 | [`map-editor.md`](map-editor.md) | the map editor (`?dev=data#map`) the world is painted in, and the one module that says what a legal map is |
 | [`tech-tree-editor.md`](tech-tree-editor.md) | the tech tree editor (`?dev=data#tree`) technologies are created and arranged in, and the one module that says what a legal tree is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
