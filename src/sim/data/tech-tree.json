@@ -550,26 +550,28 @@
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
     },
-    "LeyLines": {
-      "name": "Ley Lines", "glyph": "〰️", "kind": "mechanic",
-      "description": "The land’s own current — a district beside the Sanctum produces a tenth more.",
-      "tome": "Kingdom", "era": 6, "row": 27, "col": 1,
-      "requires": ["AttunementIII"],
-      "gold": 40000, "knowledge": 6
-    },
     "FletchingII": {
       "name": "Fletching II", "glyph": "🏹", "kind": "bonus",
+      "tome": "Kingdom", "era": 6, "row": 27, "col": 1,
+      "requires": ["AttunementIII"],
+      "gold": 40000, "knowledge": 6,
+      "effects": [
+        {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
+      ]
+    },
+    "SmokehousesI": {
+      "name": "Smokehouses I", "glyph": "🐟", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 2,
       "requires": ["AttunementIII"],
       "gold": 40000, "knowledge": 10,
       "effects": [
-        {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
+        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Docks"}}
       ]
     },
     "Chancery": {
       "name": "Chancery", "glyph": "🖋️", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 28, "col": 1,
-      "requires": ["CarpentryIII", "LeyLines"],
+      "requires": ["CarpentryIII", "FletchingII"],
       "gold": 60000, "knowledge": 4, "goods": {"Planks":3,"CutStone":3,"Iron":1},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":7}}]
     },
