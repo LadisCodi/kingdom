@@ -1073,7 +1073,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Axes won’t do. But — wait! I have a book for this. The Book of Warfare. I never dared open it… here, it’s yours now.",
+        "text": "Axes won’t do. We need soldiers — and the research tree knows how to raise them. Look for the Warrior.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -1081,8 +1081,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea",
-        "gives": "Warfare"
+        "expression": "idea"
       }
     ]
   },

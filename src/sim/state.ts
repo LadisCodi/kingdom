@@ -82,7 +82,7 @@ export type HeroId =
  *  layout: one bounded page per book, each paced by eras
  *  (Docs/features/07-research.md §2); what opens each is
  *  `sim/research.ts#TOME_OPENS`. */
-export type TomeId = 'Civics' | 'Warfare' | 'Magic' | 'Sagas' | 'Atlas';
+export type TomeId = 'Kingdom' | 'Sagas' | 'Atlas';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =

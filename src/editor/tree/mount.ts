@@ -73,7 +73,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
 
   const doc = new TreeDoc(treeJson as unknown as TechTreeDoc);
 
-  let tome: TomeId = 'Civics';
+  let tome: TomeId = 'Kingdom';
   let selected: string | null = null;
   /** While on, clicking a card adds or removes it as the selection's
    *  requirement — the gesture for the edges a drop's default got wrong. */

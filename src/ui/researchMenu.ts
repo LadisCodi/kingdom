@@ -34,7 +34,7 @@ import { el, formatExact, coach } from './format';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
  *  like the selection below. */
-let activeTome: TomeId = 'Civics';
+let activeTome: TomeId = 'Kingdom';
 
 // Module-level so the selection survives the per-tick re-render.
 let selected: TechId | null = null;
@@ -53,16 +53,13 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 /** A book's emblem, stamped on its bookmark. */
 const TOME_MARK: Record<string, string> = {
-  Civics: 'research', Warfare: 'army', Magic: 'Mana', Sagas: 'helmet', Atlas: 'compass',
+  Kingdom: 'research', Sagas: 'helmet', Atlas: 'compass',
 };
 
 /** What opens a shut general book, on its padlocked bookmark
  *  (Docs/features/22-progression.md §3). A found book has no bookmark until
  *  it is found. */
-const TOME_HINT: Partial<Record<TomeId, string>> = {
-  Warfare: 'Find a lair to open the Book of Warfare.',
-  Magic: 'Claim a landmark to open the Book of Magic.',
-};
+const TOME_HINT: Partial<Record<TomeId, string>> = {};
 
 /**
  * The bookmarks: one ribbon per open book, hanging from the page's bottom
@@ -122,7 +119,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
   const root = el('div', { class: 'research-screen' });
 
-  if (!isTomeOpen(state, activeTome)) { activeTome = 'Civics'; selected = null; }
+  if (!isTomeOpen(state, activeTome)) { activeTome = 'Kingdom'; selected = null; }
   // A selection on a page the player has turned away from is not on this one.
   if (selected !== null && TECHNOLOGIES[selected].tome !== activeTome) selected = null;
 

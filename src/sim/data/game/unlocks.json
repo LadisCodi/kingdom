@@ -34,20 +34,6 @@
     "icon": "unlock_relics",
     "text": "Cards come in packs. Complete a page of the album and the kingdom earns a relic, a gift that grows every season."
   },
-  "bookWarfare": {
-    "kind": "book",
-    "target": "Warfare",
-    "title": "Book of Warfare",
-    "icon": "unlock_book_warfare",
-    "text": "A new book of research. Its technologies raise the army, and arm it against the lairs."
-  },
-  "bookMagic": {
-    "kind": "book",
-    "target": "Magic",
-    "title": "Book of Magic",
-    "icon": "unlock_book_magic",
-    "text": "A new book of research. Its technologies deepen the Mana well, and open the Sanctum, the water and the heights."
-  },
   "world": {
     "kind": "door",
     "target": "world",

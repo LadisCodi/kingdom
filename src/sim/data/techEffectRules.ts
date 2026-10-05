@@ -367,7 +367,7 @@ export const TARGET_IDS: Record<TargetKind, readonly string[]> = {
   unit: Object.keys(balance.units),
   unitTag: UNIT_TAGS,
   harvest: Object.keys(balance.harvest),
-  tome: ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
+  tome: ['Kingdom', 'Sagas', 'Atlas'],
 };
 
 /** Which kind of target this is, or null when it is malformed. */

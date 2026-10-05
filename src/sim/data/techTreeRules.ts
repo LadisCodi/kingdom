@@ -151,7 +151,7 @@ export interface TechTreeValidation {
  *  to know the set, and importing `definitions.ts` from here would be a cycle
  *  (it imports this). Typed against the union, so a typo is a compile error
  *  even though a missing tome is not. */
-export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
+export const TOME_IDS: TomeId[] = ['Kingdom', 'Sagas', 'Atlas'];
 
 /**
  * A RANK LADDER is a naming convention, not a field and not a chain: a stem
@@ -192,7 +192,7 @@ export function ladderRank(id: string): { stem: string; rank: number } | null {
  * three books ship four each, and a designer may add or drop one without a
  * code change. This only stops a hand-edited file claiming forty.
  */
-export const ERA_CEILING = 8;
+export const ERA_CEILING = 10;
 
 /** How many bands this book has. */
 export const eraCount = (doc: TechTreeDoc, tome: string): number =>
@@ -582,24 +582,24 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
-  // ---- nothing leads nowhere ------------------------------------------
-  // Every card above a book's last row is needed by one on the row below it,
-  // so every research ends up on the way down the page — a dead end is a
-  // card the player can skip for good, and a page that reads as a tree
-  // should not have twigs. A `planned` card is the exception: nothing that
-  // works may wait on a no-op, so it leads nowhere until it is built.
-  const lastRow = new Map<string, number>();
+  // ---- every chapter ends in one finale ----------------------------------
+  // A band is a CHAPTER: its spine converges on one card, alone on the band's
+  // last row, and the next band's first row grows from it — which is what
+  // makes the chapters sequential, since a requirement is always the row
+  // above. A card that nothing below requires is a DEAD END: optional, and
+  // legal anywhere above the finale (Docs/plans/tech-tree-rework.md §3.2).
+  const bandRows = new Map<string, number>();
   for (const node of onPage.values()) {
-    lastRow.set(node.tome, Math.max(lastRow.get(node.tome) ?? node.row, node.row));
+    const key = `${node.tome}:${node.era}`;
+    bandRows.set(key, Math.max(bandRows.get(key) ?? node.row, node.row));
   }
-  const needed = new Set<string>();
-  for (const node of onPage.values()) for (const req of node.requires ?? []) needed.add(req);
-  for (const [id, node] of onPage) {
-    if (node.planned !== true && node.row < (lastRow.get(node.tome) ?? node.row) && !needed.has(id)) {
+  for (const [key, row] of bandRows) {
+    const [tome, era] = key.split(':');
+    const finale = [...onPage].filter(([, n]) => n.tome === tome && n.row === row);
+    if (finale.length !== 1) {
       errors.push({
-        message: `${id} leads nowhere — a card on the row below has to require it, `
-          + 'or it belongs on the book\'s last row',
-        tech: id,
+        message: `${tome} era ${era} ends on row ${row} with ${finale.length} cards — `
+          + 'a chapter ends in one finale, alone on its last row',
       });
     }
   }

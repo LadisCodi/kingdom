@@ -112,7 +112,7 @@ export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) a
  * the page does not draw one, `canStartTech` refuses one and `GATES` below
  * skips one. These four numbers only exist so the fields stay non-optional.
  */
-const NO_SLOT = { tome: 'Civics' as TomeId, era: 1, row: 0, col: 0 };
+const NO_SLOT = { tome: 'Kingdom' as TomeId, era: 1, row: 0, col: 0 };
 
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
   TECH_ORDER.map((id) => {
@@ -905,25 +905,17 @@ export interface TomeDef {
 }
 
 /**
- * The shelf, in reading order: the three general books, then the found ones.
+ * The shelf, in reading order: the kingdom's one tree, then the found books.
  *
- * Civics is open from the first minute; every other book opens on a fact
- * about the world, never on a research (`sim/research.ts#TOME_OPENS`,
- * Docs/features/22-progression.md §4). What paces an open book is its era
- * bars, which ask for revealed cells.
+ * The tree is open from the first minute and read in CHAPTERS — its bands —
+ * one per Townhall step, each opened by revealed cells and closed by a finale
+ * that opens the next Townhall level (Docs/plans/tech-tree-rework.md). A found
+ * book opens on a fact about the world (`sim/research.ts#TOME_OPENS`).
  */
 export const TOMES: Record<TomeId, TomeDef> = {
-  Civics: {
-    id: 'Civics', name: 'Civics', glyph: '🏛️',
-    blurb: 'The city and its purse.',
-  },
-  Magic: {
-    id: 'Magic', name: 'Magic', glyph: '🔯',
-    blurb: 'The land’s magic, and what you can see of it.',
-  },
-  Warfare: {
-    id: 'Warfare', name: 'Warfare', glyph: '🚩',
-    blurb: 'The army, and the lairs it clears.',
+  Kingdom: {
+    id: 'Kingdom', name: 'Kingdom', glyph: '🏛️',
+    blurb: 'Everything the kingdom learns, chapter by chapter.',
   },
   Sagas: {
     id: 'Sagas', name: 'Sagas', glyph: '📖',

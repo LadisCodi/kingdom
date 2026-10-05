@@ -284,13 +284,7 @@ export function techState(state: GameState, id: TechId): TechState {
  * (`state.tutorial.veteran`, sim/save.ts).
  */
 export const TOME_OPENS: Record<TomeId, (state: GameState) => boolean> = {
-  Civics: () => true,
-  // HANDED OVER, not found: Isolde gives it to the player once the first
-  // lair has been found and looked at (scene `firstLair`,
-  // Docs/features/23-tutorials.md §4.2).
-  Warfare: (state) => state.tutorial.seen[giftKey('Warfare')] === true,
-  // The first landmark CLAIMED: the old stones are where magic is felt.
-  Magic: (state) => Object.values(state.landmarks.claimed).some((c) => c === true),
+  Kingdom: () => true,
   // Found: a Tavern standing.
   Sagas: (state) => state.city.districts.some(
     (d) => d.definitionId === 'Tavern' && d.state === 'Built'),
