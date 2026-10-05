@@ -9,17 +9,17 @@ import {
 } from '../src/sim/world/fogBits';
 
 describe('the hex lattice', () => {
-  it('is 91 hexes in six rings round the Portal', () => {
-    expect(BOARD_SIZE).toBe(91);
-    const rings = [0, 1, 2, 3, 4, 5].map((k) => BOARD_HEXES.filter((h) => ringOf(h) === k).length);
-    expect(rings).toEqual([1, 6, 12, 18, 24, 30]);
+  it('is 127 hexes in seven rings round the Portal', () => {
+    expect(BOARD_SIZE).toBe(127);
+    const rings = [0, 1, 2, 3, 4, 5, 6].map((k) => BOARD_HEXES.filter((h) => ringOf(h) === k).length);
+    expect(rings).toEqual([1, 6, 12, 18, 24, 30, 36]);
     expect(hexAt(PORTAL_INDEX)).toEqual({ q: 0, r: 0 });
-    expect(PORTAL_INDEX).toBe(45);
+    expect(PORTAL_INDEX).toBe(63);
   });
 
   it('round-trips every index', () => {
     BOARD_HEXES.forEach((h, i) => expect(hexIndex(h)).toBe(i));
-    expect(hexIndex({ q: 6, r: 0 })).toBe(-1);
+    expect(hexIndex({ q: 7, r: 0 })).toBe(-1);
   });
 
   it('counts steps, symmetrically and never shorter than a detour', () => {
@@ -41,15 +41,15 @@ describe('the hex lattice', () => {
   });
 
   it('walks rings and discs of the right size', () => {
-    for (let k = 0; k <= 5; k++) {
+    for (let k = 0; k <= 6; k++) {
       const ring = hexRing({ q: 0, r: 0 }, k);
       expect(ring.length).toBe(k === 0 ? 1 : 6 * k);
       for (const h of ring) expect(ringOf(h)).toBe(k);
     }
-    expect(hexesWithin({ q: 0, r: 0 }, 5).map(hexIndex).sort((a, b) => a - b))
+    expect(hexesWithin({ q: 0, r: 0 }, 6).map(hexIndex).sort((a, b) => a - b))
       .toEqual(BOARD_HEXES.map((_, i) => i));
     expect(boardNeighbors(PORTAL_INDEX)).toHaveLength(6);
-    expect(boardNeighbors(hexIndex({ q: 5, r: 0 }))).toHaveLength(3);
+    expect(boardNeighbors(hexIndex({ q: 6, r: 0 }))).toHaveLength(3);
   });
 
   it('draws a march as adjacent steps, end to end, the same every time', () => {
@@ -70,9 +70,9 @@ describe('the hex lattice', () => {
 describe('the fog bitset', () => {
   it('sets, reads, clears and counts', () => {
     const bits = emptyBits();
-    expect(bits).toEqual([0, 0, 0]);
-    for (const i of [0, 31, 32, 63, 64, 90]) setBit(bits, i);
-    expect(bitIndices(bits)).toEqual([0, 31, 32, 63, 64, 90]);
+    expect(bits).toEqual([0, 0, 0, 0]);
+    for (const i of [0, 31, 32, 63, 64, 126]) setBit(bits, i);
+    expect(bitIndices(bits)).toEqual([0, 31, 32, 63, 64, 126]);
     expect(bits.every((w) => w >= 0)).toBe(true);
     clearBit(bits, 31);
     expect(hasBit(bits, 31)).toBe(false);
@@ -81,8 +81,8 @@ describe('the fog bitset', () => {
   });
 
   it('reads a damaged save as empty rather than trusting it', () => {
-    expect(readBits('nope')).toEqual([0, 0, 0]);
-    expect(readBits([-1, 1.5, 2 ** 33])).toEqual([0, 0, 0]);
-    expect(bitIndices(readBits([0, 0, 0xffff_ffff]))).toHaveLength(BOARD_SIZE - 64);
+    expect(readBits('nope')).toEqual([0, 0, 0, 0]);
+    expect(readBits([-1, 1.5, 2 ** 33])).toEqual([0, 0, 0, 0]);
+    expect(bitIndices(readBits([0, 0, 0, 0xffff_ffff]))).toHaveLength(BOARD_SIZE - 96);
   });
 });

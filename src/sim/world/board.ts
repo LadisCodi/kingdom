@@ -1,4 +1,4 @@
-// The board: what each of its 91 hexes holds, and where the six cities stand
+// The board: what each of its 127 hexes holds, and where the six cities stand
 // (Docs/features/19-world-map.md §1, §2, §9).
 //
 // A board is a pure function of its seed and the data — `generateBoard`
@@ -35,8 +35,8 @@ export interface Board {
   hexes: BoardHex[];
 }
 
-/** The ring the cities stand on. */
-export const HOME_RING = 4;
+/** The ring the cities stand on: one inside the rim, five hexes apart. */
+export const HOME_RING = BOARD_RADIUS - 1;
 
 /** The six city hexes: the corners of the home ring, seat i in direction i. */
 export const SEATS: readonly Hex[] = HEX_DIRS.map((d) => hexScale(d, HOME_RING));
@@ -46,7 +46,7 @@ export function roleOf(h: Hex): HexRole {
   const k = ringOf(h);
   if (k === 0) return 'portal';
   if (k === 1) return 'inner';
-  if (k <= 3) return 'corridor';
+  if (k < HOME_RING) return 'corridor';
   if (k === HOME_RING) return 'home';
   return 'outer';
 }
@@ -54,7 +54,7 @@ export function roleOf(h: Hex): HexRole {
 // ------------------------------------------------------------- the wedge
 
 /**
- * A place in the wedge every seat shares: ring `k` (1..5) and step `j`
+ * A place in the wedge every seat shares: ring `k` (1..6) and step `j`
  * (0..k-1) along it, from the corner in the seat's own direction towards
  * the next one. Wedge `w` is wedge 0 turned `w` sixths, so the six seats
  * stand on identical ground (19 §9).
@@ -191,8 +191,8 @@ function placeSites(seed: number, local: Map<string, Contents>, gen: WorldGenDef
  * Wedge 0's contents, keyed by its local place. The inner ring is not here:
  * it is authored, and each of its six hexes is different (19 §9).
  *
- * After the roll, the seat's fix-up (19 §9): a Grassland + Forest neighbour,
- * an empty Grassland neighbour, and no Dungeon beside it. The seat's
+ * After the roll, the seat's fix-up (19 §9): a Forest neighbour, an empty
+ * Grassland neighbour, and no Dungeon beside it. The seat's
  * neighbours fall in this wedge and its two siblings, but every sibling is a
  * turn of this one, so mending the LOCAL place a neighbour maps to mends it
  * for all six seats at once.
@@ -213,7 +213,7 @@ function rollWedge(seed: number, gen: WorldGenDef): Map<string, Contents> {
   placeSites(seed, local, gen, around);
   const cell = (key: string): Contents => local.get(key)!;
   for (const key of around) cell(key).features = cell(key).features.filter((f) => f !== 'Dungeon');
-  const isForest = (c: Contents) => c.terrain === 'Grassland' && c.features.includes('Forest');
+  const isForest = (c: Contents) => c.features.includes('Forest');
   const isOpen = (c: Contents) => c.terrain === 'Grassland' && c.features.length === 0;
   let forest = around.find((key) => isForest(cell(key)));
   if (forest === undefined) {

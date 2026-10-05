@@ -6,7 +6,7 @@
 > feature a hex, a district that is the claim. The art is
 > [`world-hex-art.md`](world-hex-art.md).
 >
-> **Status: step 1 of 4.**
+> **Status: steps 1–2 of 4 built.**
 
 ## 1. Steps
 

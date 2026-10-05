@@ -5,14 +5,14 @@ import { COMBO_SPRITE, HEX_COMBOS, comboOf, hexArt, improvementTier, pickVariant
 import { fittingImprovements } from '../src/worldServer/core';
 
 describe('a hex by its combination', () => {
-  it('names each combination generation can make', () => {
+  it('names the drawing of each feature, on any terrain', () => {
     expect(comboOf('Grassland', [])).toBeNull();
     expect(comboOf('Plains', ['Forest'])).toBe('Forest');
-    expect(comboOf('Grassland', ['FertileLand', 'Game'])).toBe('FertileGame');
+    expect(comboOf('Grassland', ['FertileLand'])).toBe('FertileLand');
     expect(comboOf('Desert', ['Game'])).toBe('Game');
-    expect(comboOf('Mountain', [])).toBe('Mountain');
-    expect(comboOf('Mountain', ['Forest'])).toBe('MountainForest');
-    expect(comboOf('Mountain', ['Dungeon'])).toBe('MountainDungeon');
+    expect(comboOf('Grassland', ['Mountain'])).toBe('Mountain');
+    expect(comboOf('Desert', ['Mountain'])).toBe('Mountain');
+    expect(comboOf('Plains', ['Dungeon'])).toBe('MountainDungeon');
     expect(comboOf('Desert', ['Landmark'])).toBe('Landmark');
     expect(comboOf('Plains', ['Sanctuary'])).toBe('Sanctuary');
   });
@@ -32,23 +32,19 @@ describe('a hex by its combination', () => {
 });
 
 describe('a hex with an improvement', () => {
-  it('takes out the feature it works, and leaves the rest behind it', () => {
-    expect(hexArt('Mountain', ['Forest'], { kind: 'LoggingCamp', level: 1 }, false))
-      .toMatchObject({ behind: 'Mountain', main: { improvement: 'LoggingCamp', sprite: 'whex_logging_camp_l1' }, front: null });
-    expect(hexArt('Mountain', ['Forest'], { kind: 'StonePit', level: 3 }, false))
-      .toMatchObject({ behind: 'Forest', main: { sprite: 'whex_stone_pit_l3' } });
+  it('takes out the feature it works, and leaves what it does not behind it', () => {
     expect(hexArt('Grassland', ['Forest'], { kind: 'LoggingCamp', level: 5 }, false))
-      .toMatchObject({ behind: null, main: { sprite: 'whex_logging_camp_l5' } });
+      .toMatchObject({ behind: null, main: { improvement: 'LoggingCamp', sprite: 'whex_logging_camp_l5' }, front: null });
+    expect(hexArt('Plains', ['Mountain'], { kind: 'StonePit', level: 3 }, false))
+      .toMatchObject({ behind: null, main: { sprite: 'whex_stone_pit_l3' } });
     expect(hexArt('Plains', ['Forest'], { kind: 'Fortress', level: 1 }, false)).toMatchObject({ behind: 'Forest' });
   });
 
   it('keeps the game in front of a Homestead, and the fields go into it', () => {
-    expect(hexArt('Grassland', ['FertileLand', 'Game'], { kind: 'Homestead', level: 1 }, false))
+    expect(hexArt('Grassland', ['Game'], { kind: 'Homestead', level: 1 }, false))
       .toMatchObject({ behind: null, front: 'Game' });
     expect(hexArt('Grassland', ['FertileLand'], { kind: 'Homestead', level: 1 }, false))
       .toMatchObject({ behind: null, front: null });
-    expect(hexArt('Grassland', ['FertileLand', 'Game'], { kind: 'Fortress', level: 1 }, false))
-      .toMatchObject({ behind: 'FertileLand', front: 'Game' });
   });
 
   it('has three art tiers across five levels', () => {
@@ -72,9 +68,8 @@ describe('a hex with an improvement', () => {
 describe('the strategic zoom', () => {
   it('leaves the game out', () => {
     expect(hexArt('Grassland', ['Game'], null, true).main).toBeNull();
-    expect(hexArt('Grassland', ['FertileLand', 'Game'], null, true).main).toEqual({ combo: 'FertileLand' });
-    expect(hexArt('Grassland', ['FertileLand', 'Game'], { kind: 'Homestead', level: 1 }, true).front).toBeNull();
-    expect(hexArt('Mountain', ['Forest'], null, true).main).toEqual({ combo: 'MountainForest' });
+    expect(hexArt('Grassland', ['Game'], { kind: 'Homestead', level: 1 }, true).front).toBeNull();
+    expect(hexArt('Grassland', ['Mountain'], null, true).main).toEqual({ combo: 'Mountain' });
   });
 });
 
@@ -82,10 +77,10 @@ describe('variants', () => {
   it('picks one of the variants that exist, the same one for the same hex', () => {
     expect(pickVariant('whex_forest', 1, 7)).toBe('whex_forest');
     expect(pickVariant('whex_forest', 0, 7)).toBe('whex_forest');
-    const names = Array.from({ length: 91 }, (_, i) => pickVariant('whex_forest', 4, i));
+    const names = Array.from({ length: 127 }, (_, i) => pickVariant('whex_forest', 4, i));
     expect(new Set(names)).toEqual(new Set(['whex_forest', 'whex_forest_2', 'whex_forest_3', 'whex_forest_4']));
     expect(pickVariant('whex_forest', 4, 12)).toBe(names[12]);
     // Spread evenly enough that no variant takes half the board.
-    for (const v of new Set(names)) expect(names.filter((n) => n === v).length).toBeLessThan(40);
+    for (const v of new Set(names)) expect(names.filter((n) => n === v).length).toBeLessThan(56);
   });
 });

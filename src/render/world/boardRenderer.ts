@@ -42,7 +42,7 @@ import type { HexCamera } from './hexCamera';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
-  Grassland: '#6fae3c', Plains: '#a8ab4c', Desert: '#d8bf78', Mountain: '#8f9a7c',
+  Grassland: '#6fae3c', Plains: '#a8ab4c', Desert: '#d8bf78',
 };
 
 /** Until a combination has its own art, the province's sprites stand in for
@@ -52,15 +52,7 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
   Forest: [{ sprite: 'forest_3', size: 0.8, dx: 0, dy: 0.3 }],
   FertileLand: [{ sprite: 'farmlands', size: 0.6, dx: 0, dy: 0.3 }],
   Game: [{ sprite: 'wild_animals', size: 0.5, dx: 0, dy: 0.3 }],
-  FertileGame: [
-    { sprite: 'farmlands', size: 0.55, dx: 0.12, dy: 0.2 },
-    { sprite: 'wild_animals', size: 0.38, dx: -0.2, dy: 0.5 },
-  ],
   Mountain: [{ sprite: 'mountain_2x2', size: 0.9, dx: 0, dy: 0.3 }],
-  MountainForest: [
-    { sprite: 'mountain_2x2', size: 0.78, dx: 0.06, dy: 0.2 },
-    { sprite: 'forest_3', size: 0.48, dx: -0.22, dy: 0.5 },
-  ],
   MountainDungeon: [
     { sprite: 'mountain_2x2', size: 0.82, dx: -0.04, dy: 0.25 },
     { sprite: 'mountain', size: 0.36, dx: 0.22, dy: 0.5 },

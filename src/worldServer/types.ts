@@ -151,7 +151,7 @@ export interface ServerDungeon {
 }
 
 export interface ServerWorld {
-  version: 1;
+  version: 2;
   boards: ServerBoard[];
 }
 

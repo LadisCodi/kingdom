@@ -729,6 +729,35 @@ const MIGRATIONS: readonly Migration[] = [
       if (kingdom !== undefined) delete kingdom.Daily;
     },
   },
+  {
+    // v85: THE WORLD BOARD IS RADIUS 6 (Docs/plans/world-districts.md §1), so
+    // a hex's index means another hex. What the save keeps by index goes —
+    // the fog, explorers out, builders out, the Sanctuaries counted — and the
+    // troops lent to an army come home to the city, because the board they
+    // marched on is gone. The board's id and seed stay: it is the same
+    // board, made again at its new size.
+    to: 85,
+    migrate: (modules) => {
+      const world = modules['kingdom.world'] as Record<string, unknown> | undefined;
+      if (world === undefined) return;
+      const armies = Array.isArray(world.Armies) ? world.Armies as Array<{ Troops?: Array<{ unitId?: string; count?: number }> }> : [];
+      const army = (modules['kingdom.army'] ??= { Units: [] }) as { Units: Array<{ UniqueID: string; DefinitionID: string }> };
+      army.Units ??= [];
+      let next = typeof modules['meta.nextId'] === 'number' ? modules['meta.nextId'] as number : 1;
+      for (const a of armies) {
+        for (const t of a.Troops ?? []) {
+          if (typeof t.unitId !== 'string' || !Number.isInteger(t.count)) continue;
+          for (let i = 0; i < (t.count as number); i++) army.Units.push({ UniqueID: `unit_${next++}`, DefinitionID: t.unitId });
+        }
+      }
+      modules['meta.nextId'] = next;
+      world.Revealed = [];
+      world.Explorers = [];
+      world.Builds = [];
+      world.Sanctuaries = 0;
+      world.Armies = [];
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -1688,14 +1717,13 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Armies?: Array<Record<string, unknown>>;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
-  // A trip's time to leave each hex of its path; a v77 trip kept one pace for
-  // every hex (`MsPerHex`), read as that pace on each.
+  // A trip's time to leave each hex of its path. (A trip from before v78
+  // kept one pace for them all; v85 dropped every trip older than it.)
   const stepsOf = (e: Record<string, unknown>): number[] | null => {
     const n = Array.isArray(e.Path) ? e.Path.length : 0;
-    if (Array.isArray(e.StepMs) && e.StepMs.length === n && e.StepMs.every((x) => Number.isFinite(x) && (x as number) >= 1)) {
-      return [...(e.StepMs as number[])];
-    }
-    return Number.isFinite(e.MsPerHex) && (e.MsPerHex as number) >= 1 ? new Array<number>(n).fill(e.MsPerHex as number) : null;
+    return Array.isArray(e.StepMs) && e.StepMs.length === n && e.StepMs.every((x) => Number.isFinite(x) && (x as number) >= 1)
+      ? [...(e.StepMs as number[])]
+      : null;
   };
   const walks = (path: unknown): path is number[] => Array.isArray(path) && path.length >= 2
     && path.every(isBoardIndex)
