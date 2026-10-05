@@ -27,6 +27,7 @@
 //    odds are the one thing that will eventually HAVE to be server-authoritative,
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
+import { roundPrice } from './roundPrice';
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import {
@@ -215,7 +216,7 @@ export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
  * what keeps Stardust the relics' currency with a hero tax on it rather than
  * a second hero currency — 750 to max one hero against ~3,612 for a relic.
  */
-export const ascensionStardustCost = (tier: number): number => Math.round(
+export const ascensionStardustCost = (tier: number): number => roundPrice(
   HERO_LADDER.ascensionStardustBase * HERO_LADDER.ascensionStardustGrowth ** (tier - 1),
 );
 
@@ -264,7 +265,7 @@ export const heroSlots = (state: GameState): number =>
 
 /** The next one's price: the party-slot ladder with a higher base, because a
  *  hero slot carries a type buff as well as a body. */
-export const heroSlotGemCost = (state: GameState): number => Math.round(
+export const heroSlotGemCost = (state: GameState): number => roundPrice(
   PARTY.heroSlotGemCostBase * PARTY.heroSlotGemCostGrowth ** state.heroes.heroSlotsPurchased,
 );
 

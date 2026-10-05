@@ -10,6 +10,7 @@
 // half of this file that priced a relic's levels went with it, and what is
 // left is a hero's ladder under a name that says so.
 
+import { roundPrice } from './roundPrice';
 import { HERO_LADDER } from './data/definitions';
 
 /** What one collectible looks like, whatever KIND of thing it is. */
@@ -21,14 +22,14 @@ export interface CollectionEntry {
 
 export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments: 0 });
 
-/** Hero XP for a HERO's next level — `round(base × growth^level)`, the same
- *  shape the gold upgrades already use, reused rather than reinvented. */
+/** Hero XP for a HERO's next level — `base × growth^level`, rounded to three
+ *  figures like every calculated price (sim/roundPrice.ts). */
 export const xpLevelCost = (level: number): number =>
-  Math.round(HERO_LADDER.xpLevelCostBase * HERO_LADDER.xpLevelCostGrowth ** level);
+  roundPrice(HERO_LADDER.xpLevelCostBase * HERO_LADDER.xpLevelCostGrowth ** level);
 
 /** Fragments to raise the tier cap from `tier` to `tier + 1`. */
 export const tierCost = (tier: number): number =>
-  Math.round(HERO_LADDER.fragmentsPerTierBase * HERO_LADDER.fragmentsPerTierGrowth ** (tier - 1));
+  roundPrice(HERO_LADDER.fragmentsPerTierBase * HERO_LADDER.fragmentsPerTierGrowth ** (tier - 1));
 
 /** The highest level a hero's ascension allows. An ascension is worth TEN
  *  levels, which is what makes it the thing the collection arc is spent on. */

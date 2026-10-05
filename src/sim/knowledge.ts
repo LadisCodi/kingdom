@@ -22,6 +22,7 @@
 //
 // THE BAR IS THE DRIP'S ONLY CEILING, away or not: ten hours away fills it.
 
+import { roundPrice } from './roundPrice';
 import { DELVE, KNOWLEDGE } from './data/definitions';
 import { clearedLairCount } from './lairs';
 import { recordResourceDiscovery } from './discovery';
@@ -138,7 +139,7 @@ export function knowledgeGoldPrice(state: GameState, count: number): number {
   for (let i = n + 1; i <= n + count; i++) {
     price += Math.round(KNOWLEDGE.goldPriceBase * i ** KNOWLEDGE.goldPriceExponent);
   }
-  return price;
+  return roundPrice(price);
 }
 
 /** Gems for `count` points. Never rises. */

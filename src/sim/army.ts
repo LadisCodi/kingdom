@@ -20,6 +20,7 @@
 // moment units are expedition capital rather than a quest gate, because it
 // removes the only pacing on party size.
 
+import { roundPrice } from './roundPrice';
 import { resolve } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
@@ -181,7 +182,7 @@ export function healCost(
 ): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [c, n] of Object.entries(trainCost(state, unitId))) {
-    out[c] = Math.max(1, Math.round(n * count * ARMY.healCostShare));
+    out[c] = Math.max(1, roundPrice(n * count * ARMY.healCostShare));
   }
   return out;
 }
@@ -363,7 +364,7 @@ export function trainCost(state: GameState, trainee: TrainableId): Record<string
     const mult = Math.max(0, resolve(state, 'recruitCost', 1));
     const out: Record<string, number> = {};
     for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
-      out[c] = Math.max(1, Math.round((n as number) * mult));
+      out[c] = Math.max(1, roundPrice((n as number) * mult));
     }
     return out;
   }

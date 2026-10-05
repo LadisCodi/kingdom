@@ -1,6 +1,7 @@
 // Placement conditions and build/upgrade cost & time formulas. Cost/time
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
+import { roundPrice } from './roundPrice';
 import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
 import { anyPreciousForLevel, goodsCostForLevel } from './goods';
 import { resolvePrice } from './precious';
@@ -217,13 +218,7 @@ export const instanceMultiplier = (definitionId: DistrictId, ordinal: number): n
  * first instance, and rounding a designer's own 12,345 down to 12,300 would
  * make the sheet lie about itself.
  */
-const priced = (base: number, mult: number): number => {
-  if (mult === 1) return base;
-  const v = base * mult;
-  if (v === 0) return 0;
-  const scale = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 2);
-  return Math.round(v / scale) * scale;
-};
+const priced = (base: number, mult: number): number => (mult === 1 ? base : roundPrice(base * mult));
 
 /** What the `level`th level of the `ordinal`th instance costs in currencies.
  *  Level 1 is the build. */
