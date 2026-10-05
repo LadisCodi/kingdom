@@ -12,7 +12,10 @@
 > scouting, an encounter to beat before building, precious goods only the
 > map yields.
 >
-> **Open questions:** OQ-128 to OQ-132 in [`../open-questions.md`](../open-questions.md).
+> **Decided 2026-10-05:** camps are per player; the stand-in rivals beat
+> camps; a camp can be paid off, dearer than fighting it; precious materials
+> are traded, one of the three near each player; a little early, required
+> later (§1.4, §3).
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);
@@ -46,7 +49,7 @@ what the province has no other source of.
 - **Each player beats a camp for themselves**, as each delves a dungeon for
   themselves. Clearing it opens the hex to *you*; a rival still has its own
   fight. Once anyone holds the hex the camp no longer matters: taking it from
-  its holder is an attack on the holder (19 §6). (OQ-128)
+  its holder is an attack on the holder (19 §6).
 - **A camp never comes back.** The repeatable fight is the dungeon (§4); a
   camp is a gate on ground.
 
@@ -82,6 +85,12 @@ what the province has no other source of.
   is home (§1.5), and the hex can be claimed.
 - **Lost**: the army walks home with its survivors; the camp stands, whole.
 - Casualties and wounds as in any fight ([`../features/combat.md`](../features/combat.md) §4).
+- **Or the camp is paid off** — its *tribute*, from the hex's sheet, with no
+  army and no wait: Gold and refined goods, and from the corridors in the
+  camp's precious material. **A tribute is always dearer than the fight**:
+  it is `tributePremium` (×1.5) the cost of training the troops a winning
+  army would lose against it. The player who will not fight can still
+  expand; the player who fights expands for less. A paid camp pays no loot.
 
 ### 1.5 Loot
 
@@ -143,22 +152,43 @@ what the province has no other source of.
 
 | Source | How much |
 |---|---|
-| A rich district's store | the steady trickle |
-| A camp's loot (§1.5) | a lump, the camp's ground's material |
-| A scouting reward (§2) | a lump |
+| A rich district's store | the steady trickle — of the player's own material only |
+| A camp's loot (§1.5) | a lump, mostly the player's own material |
+| A scouting reward (§2) | a lump, mostly the player's own material |
 | Dungeon rooms | the "materials" line of 11 §7.1, which today pays nothing |
 | Portal floors | a lump on the authored floors |
 
-### 3.3 What they buy
+### 3.3 One near, two by trade
 
-- **City buildings' last levels** (8–10): a precious material beside the
-  refined goods on their `costPerLevel` — the world becomes what a late city
-  needs.
-- **Fortress levels 2 and 3**, and the district levels still to design.
-- **The Atlas's technologies**: the world book is paid in what the world
-  yields.
-- **Later — trading**: each seat's wedge rolls richer in one of the three, so
-  the six players have something to trade. (OQ-131)
+- **Each seat is dealt one of the three** when the board is made — two seats
+  each, shuffled by the board's seed. Every rich hex in a seat's wedge yields
+  that seat's material, so the ground stays the same round every city
+  (19 §9) and only what it yields differs.
+- The other two come **a little from camps, scouting and dungeon rooms**, and
+  in quantity **only by trade**.
+
+### 3.4 Trading
+
+- **The Exchange**, a sheet on the world board, opened with the world: a
+  list of offers from the six players.
+- **An offer**: give so many of one precious material for so many of
+  another. What is offered is held by the server until the offer is taken or
+  withdrawn; a taken offer pays both sides at once.
+- **A fair offer is one for one.** The stand-in rivals take fair offers of
+  what they have after a while, so a board of one player and five rivals
+  still trades. An uneven offer waits for a player.
+- An offer stands for 24 hours, then comes back.
+
+### 3.5 What they buy
+
+- **Early: a little, and any of the three.** The first prices that name a
+  precious material — a level-5 building, Fortress level 2, the Atlas's
+  first chapter — ask for a few (5–20) of *any* precious material, so the
+  player's own pays and the mechanic is shown, never a wall.
+- **Late: named, and more.** City buildings' last levels (8–10), Fortress
+  level 3 and the Atlas's later chapters name each material, the two the
+  player does not yield included: the late city needs the world, and the
+  world needs trade.
 
 ## 4. The delve
 
@@ -224,15 +254,18 @@ A full-screen menu, opened from the dungeon's hex (the sheet keeps a
 | **Dungeons** (11, 11a) | the delve screen; rooms pay a precious material |
 | **Goods** (17) | three new goods with no recipe; they price late levels, Fortresses, the Atlas |
 | **World server** | holds which camps each seat has beaten, and the camps' raids; the camps themselves come from the board's seed |
-| **Bots** | treat every camp as beaten after a delay, so they keep pace (OQ-129) |
+| **Bots** | treat every camp as beaten after a delay by its power, so they keep pace; they take fair trades (§3.4) |
 
 ## 6. Order to build it
 
 1. **Camps** — generation, *Guarded*, the *clear* army, loot. The board stops being free real estate.
 2. **Scouting rewards** — the marker on Sensed hexes and the pay-out on return.
-3. **Precious materials** — the goods, rich hexes, their sinks.
-4. **The delve screen** — after the mockups are approved.
-5. **Camp raids** (§1.6) — once camps and districts have been played.
+3. **Precious materials** — the goods, a material dealt to each seat, rich
+   hexes, the early sinks.
+4. **The Exchange** — trading, and the rivals taking fair offers; then the
+   late sinks that need it.
+5. **The delve screen** — after the mockups are approved.
+6. **Camp raids** (§1.6) — once camps and districts have been played.
 
 ## 6.1 Dials, in the order to reach for them
 
@@ -240,6 +273,7 @@ A full-screen menu, opened from the dungeon's hex (the sheet keeps a
 |---|---|
 | Camp density and ring power curve | how fast the board opens |
 | Standing / lurking share | how much exploring surprises |
+| Tribute premium (×1.5) | how much dearer paying a camp off is than fighting it |
 | Scouting rewards by ring | how hard players push outward |
 | Rich-hex share and trickle | how scarce precious materials are |
 | Where precious materials are spent | how much the late city depends on the world |
@@ -249,7 +283,7 @@ A full-screen menu, opened from the dungeon's hex (the sheet keeps a
 
 - **Camps that come back** or wander between hexes: the dungeon is the
   repeatable fight.
-- **Negotiating past a camp with goods** (Elvenar's second road): one way
-  through for now. (OQ-130)
-- **A camp shared between players** — beaten once for everyone. (OQ-128)
-- **Trading** precious materials between players. (OQ-131)
+- **A camp shared between players** — beaten once for everyone.
+- **Trading anything but precious materials**: refined goods, resources and
+  Gold stay each player's own.
+- **A rate set by the market**: one for one is fair, and nothing moves it.
