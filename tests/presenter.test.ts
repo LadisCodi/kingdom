@@ -12,7 +12,7 @@ import { formatDuration } from '../src/ui/format';
 import { grantPack, seasonAt, seasonDef, PRIZE_BANNER } from '../src/sim/collection';
 import { ALBUMS, ALBUM_ORDER } from '../src/sim/data/seasons';
 import type { Game } from '../src/game';
-import { HARVEST, HEROES, LAIRS, LANDMARKS, QUESTS, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, HEROES, LAIRS, LANDMARKS, QUESTS, TECHNOLOGIES, TRAINING } from '../src/sim/data/definitions';
 import { isTechComplete, pourKnowledge } from '../src/sim/research';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
@@ -21,7 +21,7 @@ import {
   coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
 } from '../src/sim/state';
 import {
-  addBuilt, canGather, completeTech, FOREST, firstGame, freshGame, freshPresenter, fund, map, T0,
+  addBuilt, canGather, completeTech, FOREST, firstGame, freshGame, freshPresenter, fund, map, openEveryEra, T0,
   reveal, screenAt,
 } from './helpers';
 import { grantHero } from '../src/sim/heroes';
@@ -369,6 +369,8 @@ describe('the banner queue', () => {
   it('announces no research: it is instant, and the sheet says what it opened', () => {
     const state = freshGame();
     const game = freshPresenter(state);
+    for (const req of TECHNOLOGIES.Warrior.requires) completeTech(state, req);
+    openEveryEra(state);
     fund(state, { Gold: 99_999, Knowledge: 500 });
     pourKnowledge(state, 'Warrior');
     drain(game);

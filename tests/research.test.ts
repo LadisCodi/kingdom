@@ -36,18 +36,29 @@ const research = (state: ReturnType<typeof freshGame>, id: TechId, now = T0) => 
   return researchTech(state, map, id, now);
 };
 
+/** Goods enough for any card's price — a card from chapter 5 asks for some. */
+const stockGoods = (state: ReturnType<typeof freshGame>): void => {
+  state.city.goods = { Planks: 999, CutStone: 999, Iron: 999, Runestone: 999 };
+};
+
+/** The tree's dearest cards in Knowledge — more than one visit's worth each. */
+const dearest = (): TechId[] => TECH_ORDER
+  .filter((id) => TECHNOLOGIES[id].placed && TECHNOLOGIES[id].tome === 'Kingdom')
+  .sort((a, b) => techKnowledgeCost(b) - techKnowledgeCost(a));
+
 describe('technology basics', () => {
   // Docs/features/12-quests.md §2 (quests 9-15): Agriculture opens the plots,
   // and Farming — the row under it — opens the Farm that works them.
   it('the farming chain: Agriculture opens the plots, Farming the Farm', () => {
     const state = freshGame();
     fund(state, { Gold: 5000, Wood: 500, Food: 500, Knowledge: 500 });
+    openEveryEra(state); // Agriculture opens chapter 2, which waits on revealed cells
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(research(state, 'Farming')).toBe('MissingRequirement');
 
     // Nothing at all is researched on a fresh kingdom: a book needs no card
-    // to open it. Forestry is Civics' one first-row card.
+    // to open it. Forestry is the kingdom tree's one first-row card.
     expect(state.research.completed).toEqual([]);
     expect(TECHNOLOGIES.Forestry.requires).toEqual([]);
     expect(TECHNOLOGIES.Agriculture.requires).toEqual(['Forestry']);
@@ -84,12 +95,13 @@ describe('technology basics', () => {
   it('the era bar: a band past the first waits on the region', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000, Knowledge: 5_000 });
+    stockGoods(state); // Cavalry opens chapter 5, priced in goods as well
     const era = TECHNOLOGIES.Cavalry.era;
     expect(era).toBeGreaterThan(1);
     expect(researchRefusal(state, 'Cavalry')).toBe('MissingRequirement');
 
     for (const req of TECHNOLOGIES.Cavalry.requires) completeTech(state, req);
-    expect(eraShortfall(state, 'Warfare', era)).toBeGreaterThan(0);
+    expect(eraShortfall(state, TECHNOLOGIES.Cavalry.tome, era)).toBeGreaterThan(0);
     expect(researchRefusal(state, 'Cavalry')).toBe('EraLocked');
     expect(pourKnowledge(state, 'Cavalry')).toEqual({ result: 'EraLocked', poured: 0 });
     expect(knowledge(state), 'a refused pour takes nothing').toBe(5_000);
@@ -97,7 +109,7 @@ describe('technology basics', () => {
     expect(canStartTech(state, 'Cavalry')).toBe(false);
 
     openEveryEra(state);
-    expect(eraShortfall(state, 'Warfare', era)).toBe(0);
+    expect(eraShortfall(state, TECHNOLOGIES.Cavalry.tome, era)).toBe(0);
     expect(researchRefusal(state, 'Cavalry')).toBe(null);
     expect(research(state, 'Cavalry')).toBe('Researched');
   });
@@ -144,6 +156,8 @@ describe('technology basics', () => {
   it('refuses a technology the city cannot pay for, however much Stardust the kingdom holds', () => {
     const state = freshGame();
     const id: TechId = 'Warrior';
+    for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
+    openEveryEra(state);
     expect(techCost(id)).toBeGreaterThan(0);
     fund(state, { Gold: techCost(id) - 1, Wood: 999_999, Stardust: 999_999, Knowledge: 500 });
     expect(research(state, id)).toBe('NotEnoughGold');
@@ -158,6 +172,8 @@ describe('technology basics', () => {
 
   it('takes no time: completing it creates nothing for advance() to do', () => {
     const state = freshGame();
+    for (const req of TECHNOLOGIES.Warrior.requires) completeTech(state, req);
+    openEveryEra(state);
     fund(state, { Gold: 1000, Knowledge: 10 });
     expect(research(state, 'Warrior')).toBe('Researched');
     const completed = [...state.research.completed];
@@ -169,10 +185,9 @@ describe('technology basics', () => {
 // Pouring (Docs/features/07-research.md §1): Knowledge goes into a card on as
 // many visits as it takes and stays there.
 describe('pouring Knowledge', () => {
-  // A technology whose Knowledge is more than one visit's worth.
   const big = (): { state: ReturnType<typeof freshGame>; id: TechId } => {
     const state = freshGame();
-    const id: TechId = 'Cavalry';
+    const id: TechId = dearest()[0];
     for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
     openEveryEra(state);
     fund(state, { Gold: 99_999, Knowledge: 0 });
@@ -226,8 +241,7 @@ describe('pouring Knowledge', () => {
   it('holds Knowledge in several technologies at once', () => {
     const state = freshGame();
     openEveryEra(state);
-    const a: TechId = 'Cavalry';
-    const b: TechId = 'SecondSanctum';
+    const [a, b] = dearest();
     for (const req of [...TECHNOLOGIES[a].requires, ...TECHNOLOGIES[b].requires]) {
       completeTech(state, req);
     }
@@ -252,6 +266,8 @@ describe('pouring Knowledge', () => {
 
   it('completeTech (the pure half) pays the Gold only once the Knowledge is in', () => {
     const state = freshGame();
+    for (const req of TECHNOLOGIES.Warrior.requires) completeTech(state, req);
+    openEveryEra(state);
     fund(state, { Gold: 1000, Knowledge: 1 });
     pourKnowledge(state, 'Warrior');
     expect(payAndComplete(state, 'Warrior')).toBe('NotFilled');
@@ -313,6 +329,7 @@ describe('the three states — there is no tree fog', () => {
     const state = freshGame();
     const root = roots()[0];
     const child = childrenOf(root)[0];
+    openEveryEra(state); // what Forestry opens is chapter 2, behind its cells
     completeTech(state, root);
     expect(techState(state, root)).toBe('done');
     expect(techState(state, child)).toBe('progress');
@@ -421,16 +438,16 @@ describe('tome page geometry (layout is content)', () => {
   // The page is as long as what the player can SEE: a row the fog has emptied
   // is not a blank line in the middle of the flow.
   it('collapses a row the fog has emptied, and keeps the era bars', () => {
-    const rows = pageRows(TECHNOLOGIES, 'Civics', (id) => TECHNOLOGIES[id as TechId].era === 1);
+    const rows = pageRows(TECHNOLOGIES, 'Kingdom', (id) => TECHNOLOGIES[id as TechId].era === 1);
     expect(rows.some((r) => r.kind === 'techs' && r.era !== 1)).toBe(false);
     for (const row of rows) {
       if (row.kind === 'techs') expect(row.slots.some((slot) => slot !== null)).toBe(true);
     }
-    // Civics runs to THREE bands — a book carries its own count now — and the
-    // two it has past the first hold nothing the filter kept, yet still say
-    // they exist.
-    expect(ERA_COUNT.Civics).toBe(3);
-    expect(rows.filter((r) => r.kind === 'gate').map((r) => r.era)).toEqual([2, 3]);
+    // The kingdom's tree runs to NINE bands, a chapter per Townhall step —
+    // and the eight past the first hold nothing the filter kept, yet still
+    // say they exist.
+    expect(ERA_COUNT.Kingdom).toBe(9);
+    expect(rows.filter((r) => r.kind === 'gate').map((r) => r.era)).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
   });
 });
 
@@ -488,6 +505,8 @@ describe('what the player can actually act on', () => {
   it('is lit by a pour that would fill, or by a full card and the Gold', () => {
     const state = freshGame();
     const id: TechId = 'Warrior';
+    for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
+    openEveryEra(state);
     fund(state, { Gold: 0, Knowledge: techKnowledgeCost(id) - 1 });
     // A pour that would not fill it is not worth a light.
     expect(canStartTech(state, id)).toBe(false);
@@ -504,7 +523,7 @@ describe('what the player can actually act on', () => {
 
   it('counts a partly poured card by what is still missing', () => {
     const state = freshGame();
-    const id: TechId = 'Cavalry';
+    const id: TechId = dearest()[0];
     for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
     openEveryEra(state);
     fund(state, { Knowledge: 10 });
@@ -528,26 +547,25 @@ describe('what the player can actually act on', () => {
 
   it('gates a rank by the row above it — a ladder is a NAME, not a chain', () => {
     const state = freshGame();
-    fund(state, { Gold: 99_999, Knowledge: 999 });
-    expect(canStartTech(state, 'TapPowerI')).toBe(false); // its row above is not done
-    expect(TECHNOLOGIES.TapPowerI.requires).not.toEqual([]);
-    for (const above of TECHNOLOGIES.TapPowerI.requires) completeTech(state, above);
-    expect(canStartTech(state, 'TapPowerI')).toBe(true);
-    // Rank II asks for ITS row above and for the band it sits in — never for
-    // rank I.
-    expect(TECHNOLOGIES.TapPowerII.requires).not.toContain('TapPowerI');
-    expect(canStartTech(state, 'TapPowerII')).toBe(false); // era 2, band shut
-    expect(research(state, 'TapPowerI')).toBe('Researched');
-    expect(rankOf(state, 'TapPower')).toBe(1);
     openEveryEra(state);
-    expect(canStartTech(state, 'TapPowerII')).toBe(false); // band open, row above not
-    for (const above of TECHNOLOGIES.TapPowerII.requires) completeTech(state, above);
-    expect(canStartTech(state, 'TapPowerII')).toBe(true);
+    fund(state, { Gold: 1e9, Knowledge: 999 });
+    stockGoods(state);
+    const [one, two] = ladders.Sawpits;
+    expect(canStartTech(state, one)).toBe(false); // its row above is not done
+    for (const above of TECHNOLOGIES[one].requires) completeTech(state, above);
+    expect(canStartTech(state, one)).toBe(true);
+    // Rank II asks for ITS row above, chapters later — never for rank I.
+    expect(TECHNOLOGIES[two].requires).not.toContain(one);
+    expect(canStartTech(state, two)).toBe(false);
+    expect(research(state, one)).toBe('Researched');
+    expect(rankOf(state, 'Sawpits')).toBe(1);
+    for (const above of TECHNOLOGIES[two].requires) completeTech(state, above);
+    expect(canStartTech(state, two)).toBe(true);
 
     // A finished ladder is not actionable, however rich you are.
-    completeRanks(state, 'TapPower', ladders.TapPower.length);
-    expect(rankOf(state, 'TapPower')).toBe(ladders.TapPower.length);
-    for (const id of ladders.TapPower) expect(canStartTech(state, id)).toBe(false);
+    completeRanks(state, 'Sawpits', ladders.Sawpits.length);
+    expect(rankOf(state, 'Sawpits')).toBe(ladders.Sawpits.length);
+    for (const id of ladders.Sawpits) expect(canStartTech(state, id)).toBe(false);
   });
 
   it('lights the presenter CTA only when something is pressable', () => {
@@ -582,13 +600,10 @@ describe('planned technologies', () => {
   // when the book was laid out — with every requirement one row up, a card
   // that does nothing is a toll on the way to one that does, and the answer
   // for a Civics page with no room for a leaf was to drop them.
-  it('are exactly the five the design lists, and no more', () => {
-    // The tree was rebuilt on 2026-10-01 (Docs/features/22-progression.md §9):
-    // a planned card is a promise of a mechanic still to come, one per book
-    // at most a couple. Cartography left the list with the world board.
-    expect(PLANNED.sort()).toEqual([
-      'Invocation', 'LeyLines', 'LeyReading', 'LeyStorm', 'Rumours',
-    ].sort());
+  it('are none: the one-tree rework cut every no-op until it is built', () => {
+    // A chapter's spine is required, so a planned card would be a toll the
+    // player pays for nothing (Docs/plans/tech-tree-rework.md §5).
+    expect(PLANNED).toEqual([]);
   });
 
   it('are never required by a keystone, so no era is walled behind a no-op', () => {

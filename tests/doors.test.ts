@@ -2,10 +2,10 @@
 // places that open a mechanic when claimed, the heroes the story brings, and
 // what a save from before the doors reads as.
 import { describe, expect, it } from 'vitest';
-import { FOG, LANDMARKS, LAIRS, QUESTS } from '../src/sim/data/definitions';
+import { FOG, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
 import { advance } from '../src/sim/commands';
 import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
-import { giveBook, isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
+import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
 import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
 import { claimQuest } from '../src/sim/quests';
@@ -15,34 +15,19 @@ import { townhall } from '../src/sim/state';
 import { coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
 
-const TOMES: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
+const TOMES: TomeId[] = ['Kingdom', 'Sagas', 'Atlas'];
 const shrine = LANDMARKS.find((l) => l.id === 'ThornedShrine')!;
 const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
 
 describe('the books open on the world', () => {
-  it('opens Civics and nothing else for a new kingdom', () => {
+  it('opens the kingdom\'s one tree and nothing else for a new kingdom', () => {
     const state = firstGame();
-    expect(TOMES.filter((t) => isTomeOpen(state, t))).toEqual(['Civics']);
-    // And a card in a shut book says so before it says anything else.
-    expect(researchRefusal(state, 'Warrior')).toBe('TomeClosed');
-  });
-
-  it('opens Warfare when Isolde HANDS it over, not on the lair alone', () => {
-    const state = firstGame();
-    reveal(state, [LAIRS.Orcs.location]);
-    advance(state, map, T0 + 1000);
-    expect(Object.keys(state.lairs)).toContain('Orcs');
-    expect(isTomeOpen(state, 'Warfare')).toBe(false);
-    // The `firstLair` scene's last line (ui/stage/stage.ts).
-    giveBook(state, 'Warfare');
-    expect(isTomeOpen(state, 'Warfare')).toBe(true);
-    expect(isTomeOpen(state, 'Magic')).toBe(false);
-  });
-
-  it('opens Magic on the first landmark CLAIMED', () => {
-    const state = firstGame();
-    state.landmarks.claimed[LANDMARKS[1].id] = true;
-    expect(isTomeOpen(state, 'Magic')).toBe(true);
+    expect(TOMES.filter((t) => isTomeOpen(state, t))).toEqual(['Kingdom']);
+    // The army is a lane of the one tree, not a book of its own: nothing has
+    // to be found or handed over before a soldier can be researched.
+    expect(researchRefusal(state, 'Warrior')).not.toBe('TomeClosed');
+    // A FOUND book's card still says so before it says anything else.
+    expect(researchRefusal(state, 'Cartography')).toBe('TomeClosed');
   });
 
   it('opens the Sagas with a standing Tavern, and the Atlas with the Watchtower', () => {

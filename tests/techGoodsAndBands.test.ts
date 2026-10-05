@@ -12,10 +12,10 @@ import { researchTech } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getGood } from '../src/sim/goods';
 import type { GameState, TechId, TomeId } from '../src/sim/state';
-import { completeTech, freshGame, fund, map, T0 } from './helpers';
+import { completeTech, freshGame, fund, map, openEveryEra, T0 } from './helpers';
 
-const TOME: TomeId = 'Civics';
-const ERA = 1;
+const TOME: TomeId = 'Kingdom';
+const ERA = 2; // chapter 2: a band of many cards, not the one-card opening
 const band = (): TechId[] => TECH_ORDER.filter((id) => TECHNOLOGIES[id].placed
   && TECHNOLOGIES[id].tome === TOME && TECHNOLOGIES[id].era === ERA);
 /** The band's last card in reading order: everything it needs sits above it. */
@@ -39,6 +39,7 @@ const withReward = (tier: PackTier | null): void => {
 function oneCardShort(): GameState {
   const state = freshGame();
   state.tutorial.veteran = true;
+  openEveryEra(state); // a chapter past the first opens on revealed cells
   for (const id of band()) if (id !== last()) completeTech(state, id);
   fund(state, { Gold: 1e9, Knowledge: 1e6 });
   return state;
@@ -62,7 +63,11 @@ describe('goods on a technology', () => {
   });
 
   it('costs no goods when the card names none', () => {
-    for (const id of TECH_ORDER) expect(TECHNOLOGIES[id].goods).toEqual({});
+    const file = treeDoc.technologies as Record<string, { goods?: Record<string, number> }>;
+    for (const id of TECH_ORDER) {
+      expect(TECHNOLOGIES[id].goods, id).toEqual(file[id].goods ?? {});
+    }
+    expect(TECH_ORDER.some((id) => file[id].goods === undefined)).toBe(true);
   });
 
   it('refuses a good that does not exist, or a count below one', () => {
@@ -84,7 +89,7 @@ describe('the card pack a finished band pays', () => {
     expect(isBandFinished(state, TOME, ERA)).toBe(true);
     expect(state.collection.packs.length).toBe(packs + 1);
     expect(state.collection.packs.at(-1)!.tier).toBe('Green');
-    expect(state.research.rewarded).toEqual(['Civics:1']);
+    expect(state.research.rewarded).toEqual([`${TOME}:${ERA}`]);
     // Asked again, the band has paid already.
     expect(claimBandReward(state, last())).toBeNull();
     expect(state.collection.packs.length).toBe(packs + 1);
@@ -107,16 +112,19 @@ describe('the card pack a finished band pays', () => {
     pourKnowledge(state, last());
     researchTech(state, map, last(), T0);
     const loaded = deserialize(serialize(state, T0), map, T0)!;
-    expect(loaded.research.rewarded).toEqual(['Civics:1']);
+    expect(loaded.research.rewarded).toEqual([`${TOME}:${ERA}`]);
     expect(claimBandReward(loaded, last())).toBeNull();
   });
 
   it('is validated: one entry per band, and only packs that exist', () => {
     const doc = structuredClone(treeDoc) as unknown as TechTreeDoc;
     expect(validateTechTree(doc).ok).toBe(true);
-    doc.eraRewards = { ...doc.eraRewards, Civics: ['Green'] };
+    doc.eraRewards = { ...doc.eraRewards, Kingdom: ['Green'] };
     expect(validateTechTree(doc).errors.map((e) => e.message).join('\n')).toMatch(/band rewards/);
-    doc.eraRewards = { ...doc.eraRewards, Civics: ['Green', null, 'Diamond'] };
+    doc.eraRewards = {
+      ...doc.eraRewards,
+      Kingdom: [...(treeDoc.eraRewards.Kingdom as Array<PackTier | null>).slice(0, -1), 'Diamond' as PackTier],
+    };
     expect(validateTechTree(doc).errors.map((e) => e.message).join('\n')).toMatch(/Diamond/);
   });
 });

@@ -107,10 +107,13 @@ describe('the resolver', () => {
     const state = freshGame();
     const forest = { harvest: 'Forest' } as const;
     expect(techMultiplier(state, 'harvestYield', forest)).toBe(1);
+    // The steps are content; each effect is divided on its own and summed.
+    const step = (n: number) => ladders.Sawpits.slice(0, n)
+      .reduce((sum, id) => sum + TECHNOLOGIES[id].effects[0].value / 100, 0);
     completeRanks(state, 'Sawpits', 2);
-    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + (0.1 + 0.1));
+    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + step(2));
     completeRanks(state, 'Sawpits', 3);
-    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + (0.1 + 0.1 + 0.1));
+    expect(techMultiplier(state, 'harvestYield', forest)).toBe(1 + step(3));
   });
 
   // The trap the whole target vocabulary exists to avoid: an effect aimed at
@@ -139,8 +142,10 @@ describe('the resolver', () => {
     const state = maxed();
     // Warhorns is unaimed; Fletching aims at Distance. The Drill needs each
     // separately or combat pays the unaimed one once per tag a unit carries.
-    const warhorns = ladders.Warhorns.length * 0.05;
-    const fletching = ladders.Fletching.length * 0.1;
+    const pct = (ladder: string) => ladders[ladder]
+      .reduce((sum, id) => sum + TECHNOLOGIES[id].effects[0].value / 100, 0);
+    const warhorns = pct('Warhorns');
+    const fletching = pct('Fletching');
     expect(techTotals(state, 'unitAtk').pct).toBeCloseTo(warhorns);
     expect(techTotals(state, 'unitAtk', { unitTag: 'Distance' }).pct).toBeCloseTo(warhorns + fletching);
     expect(techFlatAimed(state, 'unitAtk', { unitTag: 'Distance' })).toBe(0);
@@ -149,9 +154,11 @@ describe('the resolver', () => {
   it('divides a percent per effect, which is what keeps it bit-exact', () => {
     const state = freshGame();
     completeRanks(state, 'Carpentry', 3);
-    expect(techTotals(state, 'buildSpeed').pct).toBe(0.1 + 0.1 + 0.1);
-    // …and NOT the value a single division would give.
-    expect(techTotals(state, 'buildSpeed').pct).not.toBe(30 / 100);
+    const [a, b, c] = ladders.Carpentry.map((id) => TECHNOLOGIES[id].effects[0].value);
+    expect(techTotals(state, 'buildSpeed').pct).toBe(a / 100 + b / 100 + c / 100);
+    // …and NOT, in general, the value a single division would give: at three
+    // ranks of 15 the two disagree in the last bit.
+    expect(a / 100 + b / 100 + c / 100).not.toBe((a + b + c) / 100);
   });
 
   it('is the identity for a stat nothing authors', () => {
@@ -184,12 +191,14 @@ describe('the resolver', () => {
 // `tests/ladderEffects.test.ts`, which asserts every ladder still moves
 // something.
 describe('every rank in the shipped tree carries a legal effect', () => {
-  it('gives every rank of every ladder exactly one effect the rules accept', () => {
+  // One rank may aim one number at more than one place — Strongroom fills the
+  // Townhall's store AND the houses' — but it always moves something legal.
+  it('gives every rank of every ladder at least one effect the rules accept', () => {
     for (const ladder of bonusLadders) {
       for (const id of ladders[ladder]) {
         const effects = TECHNOLOGIES[id].effects;
-        expect(effects, `${id} is a bonus but moves nothing`).toHaveLength(1);
-        expect(effectProblems(effects[0]), effectLabel(effects[0])).toEqual([]);
+        expect(effects.length, `${id} is a bonus but moves nothing`).toBeGreaterThan(0);
+        for (const e of effects) expect(effectProblems(e), effectLabel(e)).toEqual([]);
       }
     }
   });
