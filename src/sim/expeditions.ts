@@ -6,6 +6,7 @@
 // What is left is the PARTY — what it costs to send and what it is worth —
 // and the one command that spends it: the lair attack.
 
+import { roundPrice } from './roundPrice';
 import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
 import { COMBAT, HEROES, PARTY, LAIRS, RELIC_RULES, UNITS, garrisonForTier } from './data/definitions';
 import { dropFragments, openRelicDoor, type FragmentDrop } from './relics';
@@ -62,7 +63,7 @@ export function lairSupplyCost(
   const mult = Math.max(0, resolve(state, 'supplyCost', 1 - discount));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
-    out[c as keyof Wallet] = Math.max(1, Math.round(n * mult));
+    out[c as keyof Wallet] = Math.max(1, roundPrice(n * mult));
   }
   return out;
 }

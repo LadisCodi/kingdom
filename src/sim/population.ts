@@ -1,6 +1,7 @@
 // Population: housing, auto-assigned residents, and the rent each house
 // stores for the player to collect.
 
+import { roundPrice } from './roundPrice';
 import { relicAuraOver } from './hosts';
 import { CITY_DEF, DISTRICTS, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
@@ -144,7 +145,7 @@ export const populationCost = (currentPopulation: number): number => {
   if (currentPopulation < authored.length) return authored[currentPopulation];
   const last = authored[authored.length - 1];
   const beyond = currentPopulation - (authored.length - 1);
-  return Math.round(last * CITY_DEF.populationCostGrowth ** beyond);
+  return roundPrice(last * CITY_DEF.populationCostGrowth ** beyond);
 };
 
 /**
@@ -269,7 +270,7 @@ function accrueRent(state: GameState, d: District, toTime: number): number {
 export function pullHouseForward(state: GameState, district: District): number {
   const rate = houseGoldPerMinute(state, district);
   if (rate <= 0) return 0;
-  const gold = Math.max(1, Math.round((tapWorkSeconds(state) * rate) / 60));
+  const gold = Math.max(1, roundPrice((tapWorkSeconds(state) * rate) / 60));
   addToWallet(state.city.wallet, 'Gold', gold);
   recordResourceDiscovery(state, 'Gold');
   recordEvent(state, { kind: 'collect', currency: 'Gold', amount: gold });

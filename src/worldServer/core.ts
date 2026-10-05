@@ -12,6 +12,7 @@
 // The client imports the read-only half (what a hex is worth, whether it
 // can be claimed) to draw its buttons; only the server's answer counts.
 
+import { roundPrice } from '../sim/roundPrice';
 import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
   type BattleLog, type Board as FightBoard, type Side,
@@ -130,7 +131,7 @@ export function setBoost(b: ServerBoard, seat: number, boost: SeatBoost, t: numb
 /** What the next claim costs a seat that already holds or claims `held`
  *  hexes beyond its city. */
 export const claimGold = (held: number): number =>
-  Math.round(WORLD_BUILD.claim.gold * WORLD_BUILD.claim.goldGrowth ** held);
+  roundPrice(WORLD_BUILD.claim.gold * WORLD_BUILD.claim.goldGrowth ** held);
 
 const isHeld = (h: ServerHex | undefined, t: number): h is ServerHex => h !== undefined && h.standsAt <= t;
 
@@ -218,7 +219,7 @@ export function reportSeen(b: ServerBoard, seat: number, indices: readonly numbe
 
 /** What repairing a burnt district costs `seat` now, and how long it takes. */
 export const repairPrice = (b: ServerBoard, seat: number): { gold: number; seconds: number } => ({
-  gold: Math.round(claimGold(Math.max(0, hexesOf(b, seat) - 1)) * WORLD_CAMPS.repairCostShare),
+  gold: roundPrice(claimGold(Math.max(0, hexesOf(b, seat) - 1)) * WORLD_CAMPS.repairCostShare),
   seconds: Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare),
 });
 
@@ -820,8 +821,8 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
         beat(b, a.owner, a.target);
         owe(b, a.owner, {
           kind: 'loot', at: t, knowledge: 0, stardust: 0,
-          gold: Math.round(camp.power * WORLD_CAMPS.goldPerPower),
-          heroXp: Math.round(camp.power * WORLD_CAMPS.heroXpPerPower),
+          gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower),
+          heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower),
           precious: {
             id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
             amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
@@ -1060,11 +1061,11 @@ export function roomReward(
   const boss = room === d.roomsPerDepth ? d.bossRewardMultiplier : 1;
   const scale = d.rewardBase[depth] * d.rewardGrowth ** (room - 1) * boss;
   return {
-    gold: Math.round(d.gold * scale),
-    knowledge: Math.max(1, Math.round(d.knowledge * scale)),
-    heroXp: Math.round(d.heroXp * scale),
-    stardust: Math.round(d.stardust * scale),
-    precious: Math.max(1, Math.round(d.precious * scale)),
+    gold: roundPrice(d.gold * scale),
+    knowledge: Math.max(1, roundPrice(d.knowledge * scale)),
+    heroXp: roundPrice(d.heroXp * scale),
+    stardust: roundPrice(d.stardust * scale),
+    precious: Math.max(1, roundPrice(d.precious * scale)),
   };
 }
 
@@ -1194,11 +1195,11 @@ export function floorReward(
   const d = WORLD_DUNGEON;
   const pack = floor % WORLD_PORTAL.goldenEvery === 0 ? 'Golden' : floor % WORLD_PORTAL.roseEvery === 0 ? 'Rose' : undefined;
   return {
-    gold: Math.round(d.gold * scale), knowledge: Math.max(1, Math.round(d.knowledge * scale)),
-    heroXp: Math.round(d.heroXp * scale), stardust: Math.round(d.stardust * scale),
+    gold: roundPrice(d.gold * scale), knowledge: Math.max(1, roundPrice(d.knowledge * scale)),
+    heroXp: roundPrice(d.heroXp * scale), stardust: roundPrice(d.stardust * scale),
     ...(pack ? { pack } : {}),
     // Every `preciousEvery` floors, a lump of precious material (19 §10.4).
-    precious: floor % WORLD_PORTAL.preciousEvery === 0 ? Math.max(1, Math.round(WORLD_PORTAL.precious * scale)) : 0,
+    precious: floor % WORLD_PORTAL.preciousEvery === 0 ? Math.max(1, roundPrice(WORLD_PORTAL.precious * scale)) : 0,
   };
 }
 
