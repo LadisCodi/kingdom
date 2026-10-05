@@ -569,6 +569,9 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
+      // Mana accrues against its own anchor, like rent: without this a warped
+      // absence filled every store and left the well where it was.
+      game.state.city.lastManaAt -= delta;
       // The founding too, so a warp past midnight is a second day.
       game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
