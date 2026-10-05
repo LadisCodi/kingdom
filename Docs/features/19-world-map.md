@@ -116,6 +116,13 @@
   radius upgrades to 2. Nothing is revealed on the way.
 - **A march costs time, hex by hex** (§4.1).
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
+- **One trip per hex.** No explorer is sent to a hex one already out will
+  reveal — its target, or a hex within its reveal.
+- **A hex an explorer is out to shows the trip** in place of Explore: what
+  it is doing (on the way, exploring, coming home), one bar for the whole
+  trip, and **Finish**: Gems for the time left until it is home, at
+  `rush.secondsPerGem` like every other wait. Finished, its hexes are
+  revealed and the explorer is home.
 
 ## 4. Armies
 

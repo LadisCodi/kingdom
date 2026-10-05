@@ -138,7 +138,7 @@ import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, homeIndex, worldFogAt } from './sim/world/explorers';
+import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt } from './sim/world/explorers';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
@@ -4903,6 +4903,20 @@ export class Game {
     this.notify();
   }
 
+  /** Bring an explorer home now, with Gems: its hexes are revealed at once. */
+  doFinishExplorer(tripId: string): void {
+    const result = finishExplorerWithGems(this.state, tripId, this.now());
+    if (result.kind === 'Finished') {
+      playSfx('gemSpend');
+      this.toast(result.home.revealed > 0
+        ? `Your explorer is home — ${formatCount(result.home.revealed)} new hexes on the map`
+        : 'Your explorer is home — nothing new out there');
+    } else if (result.kind === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
   /** Send an explorer to the hex the sheet is about. */
   doSendExplorer(): void {
     const target = this.selectedHex;
@@ -4921,6 +4935,8 @@ export class Game {
       this.toast('No way there through explored ground');
     } else if (result.kind === 'Explored') {
       this.toast('Already explored');
+    } else if (result.kind === 'BeingExplored') {
+      this.toast('An explorer is already on the way');
     } else if (result.kind === 'NotEnoughGold') {
       this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
     }

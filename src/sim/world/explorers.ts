@@ -15,7 +15,7 @@
 // any length adds at most one boundary per explorer, because nothing ever
 // sends one out again on its own (CLAUDE.md, invariant 1).
 
-import { WORLD } from '../data/definitions';
+import { RUSH, WORLD } from '../data/definitions';
 import { resolve } from '../modifiers';
 import { isTechComplete } from '../research';
 import { randInt } from '../rng';
@@ -141,6 +141,8 @@ export type DispatchResult =
   | { kind: 'Home' }
   /** Already Revealed: there is nothing left there to explore. */
   | { kind: 'Explored' }
+  /** An explorer out already will reveal it. */
+  | { kind: 'BeingExplored'; trip: ExplorerTrip }
   | { kind: 'NoCartography' }
   | { kind: 'NoExplorerFree'; nextFreeAt: number }
   /** No way there through explored ground. */
@@ -153,6 +155,8 @@ export function dispatchExplorer(state: GameState, target: number, now: number):
   const home = homeIndex(state);
   if (target === home) return { kind: 'Home' };
   if (fogStateOf(state, target, now) === 'Revealed') return { kind: 'Explored' };
+  const already = tripRevealing(state, target);
+  if (already !== null) return { kind: 'BeingExplored', trip: already };
   if (explorerSlots(state) === 0) return { kind: 'NoCartography' };
   if (freeExplorers(state) === 0) {
     return { kind: 'NoExplorerFree', nextFreeAt: Math.min(...state.world.explorers.map(returnsAt)) };
@@ -215,16 +219,50 @@ export function returnExplorers(state: GameState, t: number): ExplorerHome[] {
     .filter((trip) => returnsAt(trip) <= t)
     .sort((a, b) => returnsAt(a) - returnsAt(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (due.length === 0) return [];
-  const out: ExplorerHome[] = [];
-  for (const trip of due) {
-    const before = countBits(state.world.revealed);
-    revealInto(state.world.revealed, trip);
-    // The city and the Portal are always revealed; they are never stored.
-    clearBit(state.world.revealed, homeIndex(state));
-    clearBit(state.world.revealed, PORTAL_INDEX);
-    out.push({ id: trip.id, target: trip.target, revealed: countBits(state.world.revealed) - before });
-  }
+  const out = due.map((trip) => foldHome(state, trip));
   const home = new Set(due.map((trip) => trip.id));
   state.world.explorers = state.world.explorers.filter((trip) => !home.has(trip.id));
   return out;
+}
+
+/** A trip's reveal, folded into the stored fog. */
+function foldHome(state: GameState, trip: ExplorerTrip): ExplorerHome {
+  const before = countBits(state.world.revealed);
+  revealInto(state.world.revealed, trip);
+  // The city and the Portal are always revealed; they are never stored.
+  clearBit(state.world.revealed, homeIndex(state));
+  clearBit(state.world.revealed, PORTAL_INDEX);
+  return { id: trip.id, target: trip.target, revealed: countBits(state.world.revealed) - before };
+}
+
+/** The trip out that will reveal a hex — sent to it, or to a hex beside it
+ *  within its reach — or null. */
+export function tripRevealing(state: GameState, index: number): ExplorerTrip | null {
+  return state.world.explorers.find((trip) => trip.target === index)
+    ?? state.world.explorers.find((trip) => boardWithin(trip.target, trip.radius).includes(index))
+    ?? null;
+}
+
+/** Gems to bring a trip home now, its reveal done: the time it has left, at
+ *  the build queue's rate (`rush.secondsPerGem`) — one rule for buying time,
+ *  wherever the player meets it. */
+export const explorerRushCost = (trip: ExplorerTrip, now: number): number =>
+  Math.max(1, Math.ceil(Math.max(0, returnsAt(trip) - now) / 1000 / RUSH.secondsPerGem));
+
+export type FinishExplorerResult =
+  | { kind: 'Finished'; home: ExplorerHome }
+  | { kind: 'NotFound' }
+  | { kind: 'NotEnoughGems'; gems: number };
+
+/** Finish a trip with Gems: what it would reveal is revealed now, and the
+ *  explorer is home, its slot free. */
+export function finishExplorerWithGems(state: GameState, tripId: string, now: number): FinishExplorerResult {
+  const trip = state.world.explorers.find((t) => t.id === tripId);
+  if (trip === undefined) return { kind: 'NotFound' };
+  const gems = explorerRushCost(trip, now);
+  if (getWallet(state.player.wallet, 'Gems') < gems) return { kind: 'NotEnoughGems', gems };
+  state.player.wallet.Gems = getWallet(state.player.wallet, 'Gems') - gems;
+  // Out of the list FIRST, so an advance cannot bring it home twice.
+  state.world.explorers = state.world.explorers.filter((t) => t !== trip);
+  return { kind: 'Finished', home: foldHome(state, trip) };
 }

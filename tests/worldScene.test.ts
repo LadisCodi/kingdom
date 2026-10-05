@@ -107,10 +107,11 @@ describe('Explore', () => {
     expect(game.state.world.explorers[0].target).toBe(beside);
     expect(game.openOverlay).toBeNull();
 
+    // The same hex again: one is already on its way there.
     game.handleWorldTap(...tapAt(game, beside));
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
-    expect(toasts.at(-1)).toMatch(/Every explorer is out/);
+    expect(toasts.at(-1)).toMatch(/already on the way/);
   });
 
   it('will not go where it has not seen the way', () => {
