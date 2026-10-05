@@ -10,6 +10,7 @@
 //    timestamp, wipes the cards and the stars, and leaves the levels;
 //  * one call of `advance` over a season boundary equals stepping to it.
 
+import { itemCount } from '../src/sim/bag';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   ARTIFACTS, ARTIFACT_ORDER, BANNERS, CARD_BUNDLE_ORDER, COLLECTION, GEM_PACK_ORDER,
@@ -277,7 +278,7 @@ describe('an album', () => {
     expect(ownsArtifact(state, payout.relic)).toBe(true);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + COLLECTION.albumGems);
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(gold);
-    expect(getWallet(state.player.wallet, 'SilverKey'))
+    expect(itemCount(state, 'SilverKey'))
       .toBe(albumRewards('FirstFurrow').silverKeys);
   });
 
@@ -460,10 +461,10 @@ describe('the collection prize', () => {
   });
 
   it('charges nothing — the five albums were the price', () => {
-    const keys = getWallet(state.player.wallet, BANNERS[PRIZE_BANNER].key);
+    const keys = itemCount(state, BANNERS[PRIZE_BANNER].key);
     state.collection.completed = [...ALBUM_ORDER];
     payCollectionPrize(state);
-    expect(getWallet(state.player.wallet, BANNERS[PRIZE_BANNER].key)).toBe(keys);
+    expect(itemCount(state, BANNERS[PRIZE_BANNER].key)).toBe(keys);
   });
 
   // The guard. `prizePaid` is what stops it, not the shape of the caller.

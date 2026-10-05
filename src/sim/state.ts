@@ -25,11 +25,9 @@ export type CurrencyId =
   // (Docs/features/10-heroes.md §4). Not on the plank — it reads on the
   // roster, beside the button that spends it.
   | 'HeroXp'
-  | 'Gems' // player-scoped, premium
-  // The two gacha keys: one banner each, bought with Gems, spent on a pull.
-  // Player-scoped like Gems, and NOT on the plank — the purse is where they
-  // are read (Docs/features/10-heroes.md §5).
-  | 'SilverKey' | 'GoldKey';
+  | 'Gems'; // player-scoped, premium
+// The two gacha keys are Bag items, not currencies (`items.json`, kind
+// `key`): one banner each, bought with Gems, spent on a pull.
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so

@@ -52,17 +52,5 @@
     "start": 500,
     "primary": true,
     "goldValue": null
-  },
-  "SilverKey": {
-    "cap": null,
-    "start": 0,
-    "primary": false,
-    "goldValue": null
-  },
-  "GoldKey": {
-    "cap": null,
-    "start": 0,
-    "primary": false,
-    "goldValue": null
   }
 }

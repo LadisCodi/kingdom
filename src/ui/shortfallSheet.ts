@@ -16,7 +16,7 @@ export function renderShortfallSheet(game: Game): HTMLElement {
   const rows = view.chests.map((c) => el('div', { class: 'spd-row' },
     el('div', { class: `bag-tile spd-tile is-tier-${c.def.tier}` },
       el('span', { class: 'bag-tile-size' }, formatDuration(c.def.seconds)),
-      ...tileArt(c.def),
+      ...tileArt(c.id),
       el('span', { class: 'bag-tile-count' }, formatExact(c.count))),
     el('div', { class: 'spd-row-name' },
       `${formatExact(c.worth[view.coin] ?? 0)} `, currencyIcon(view.coin, { size: 'sm' })),

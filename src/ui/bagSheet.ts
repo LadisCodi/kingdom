@@ -14,7 +14,7 @@
 import type { BagScreen, Game } from '../game';
 import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
 import { ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
-import type { CurrencyId, Wallet } from '../sim/state';
+import type { CurrencyId, ItemId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, iconEl, knob, sheet, type IconName } from './kit';
 
@@ -29,11 +29,12 @@ const EMPTY_LINE: Record<BagTab, string> = {
 };
 
 /** The size printed at the top of a tile: "10m", "1h", "8h" — or, for what
- *  has no duration, its value: "25%", "5". */
+ *  has no duration, its value: "25%", "5"; a key, nothing. */
 const sizeLabel = (def: ItemDef): string =>
   def.kind === 'flask' ? `${formatExact(def.value)}%`
     : def.kind === 'tome' ? formatExact(def.value)
-      : formatDuration(def.seconds);
+      : def.kind === 'key' ? ''
+        : formatDuration(def.seconds);
 
 /** The one coin a chest pays, and how much of it. */
 const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
@@ -56,9 +57,11 @@ const CHEST_ICON: Partial<Record<CurrencyId, IconName>> = {
 const BOOST_ICON: Record<BoostKind, IconName> = { Rent: 'boostRent', Harvest: 'boostHarvest', Mana: 'boostMana' };
 
 /** An item's picture: the chest of its coin, the winged hourglass, the boost
- *  of its kind, the flask, the tome. */
-const itemIcon = (def: ItemDef): IconName => {
+ *  of its kind, the flask, the tome, the key itself. */
+export const itemIcon = (id: ItemId): IconName => {
+  const def = ITEMS[id];
   switch (def.kind) {
+    case 'key': return id as IconName;
     case 'chest': return (def.coin !== null ? CHEST_ICON[def.coin] : undefined) ?? 'chest';
     case 'choice': return 'choiceChest';
     case 'speedup': return 'speedup';
@@ -69,8 +72,9 @@ const itemIcon = (def: ItemDef): IconName => {
 };
 
 /** A tile's picture, with a speed-up's type badge at its lower left. */
-export function tileArt(def: ItemDef): Node[] {
-  const art = iconEl(itemIcon(def), { size: 'lg' });
+export function tileArt(id: ItemId): Node[] {
+  const def = ITEMS[id];
+  const art = iconEl(itemIcon(id), { size: 'lg' });
   const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
   return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
 }
@@ -87,7 +91,7 @@ const SPEEDS_WHAT: Record<NonNullable<ItemDef['speeds']>, string> = {
 };
 
 /** What the Bag calls an item in its popover: "1h Wood chest". */
-const itemName = (def: ItemDef): string => `${sizeLabel(def)} ${def.name}`;
+const itemName = (def: ItemDef): string => `${sizeLabel(def)} ${def.name}`.trim();
 
 /** The popover's one line: what one is worth now. */
 const itemLine = (def: ItemDef, worth: Wallet): string => {
@@ -104,6 +108,7 @@ const itemLine = (def: ItemDef, worth: Wallet): string => {
   }
   if (def.kind === 'flask') return `Fills ${formatExact(def.value)}% of the Mana pool`;
   if (def.kind === 'tome') return `${formatExact(def.value)} Knowledge, past the bar's cap`;
+  if (def.kind === 'key') return 'One call on its banner, in the store';
   return '';
 };
 
@@ -133,7 +138,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     'aria-expanded': picked ? 'true' : 'false',
   },
     el('span', { class: 'bag-tile-size' }, sizeLabel(item.def)),
-    ...tileArt(item.def),
+    ...tileArt(item.id),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
     ...(item.fresh ? [el('span', { class: 'bag-tile-new' }, iconEl('sparkle', { size: 'sm' }))] : []),
   );
@@ -166,6 +171,13 @@ function quantity(game: Game, item: BagScreen['items'][number], onChange: (n: nu
 }
 
 function popover(game: Game, item: BagScreen['items'][number], column: number): HTMLElement {
+  // A key is spent on its banner's call, in the store (§3.10).
+  if (item.def.kind === 'key') {
+    return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
+      el('div', { class: 'bag-pop-name' }, itemName(item.def)),
+      el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
+      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.setOverlay('store') })));
+  }
   // A speed-up is spent from a timer, so its popover goes to one (§3.5).
   if (item.def.kind === 'speedup') {
     const job = game.firstJobFor(item.id);

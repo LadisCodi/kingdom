@@ -108,8 +108,6 @@ const DEV_GRANTS: ReadonlyArray<{ icon: string; coin: CurrencyId; amount: number
   { icon: '💎', coin: 'Gems', amount: 1000 },
   { icon: '✨', coin: 'Stardust', amount: 100 },
   { icon: '⭐', coin: 'HeroXp', amount: 1000 },
-  { icon: '🗝', coin: 'SilverKey', amount: 5 },
-  { icon: '🔑', coin: 'GoldKey', amount: 5 },
 ];
 
 
@@ -837,7 +835,7 @@ async function boot(): Promise<void> {
       // held, whichever is more, so the button keeps up with a late city.
       ...DEV_GRANTS.map(({ icon, coin, amount }) =>
         Object.assign(button(amount === null ? `${icon} +${coin}` : `${icon} +${formatCount(amount)} ${coin}`, () => {
-          const wallet = coin === 'Gems' || coin === 'SilverKey' || coin === 'GoldKey' ? game.state.player.wallet
+          const wallet = coin === 'Gems' ? game.state.player.wallet
             : coin === 'Stardust' || coin === 'Knowledge' || coin === 'HeroXp' ? game.state.kingdom.wallet
               : game.state.city.wallet;
           addToWallet(wallet, coin, amount ?? Math.max(1000, getWallet(wallet, coin)));

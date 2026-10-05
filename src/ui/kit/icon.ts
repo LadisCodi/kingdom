@@ -84,7 +84,7 @@ export type UiIconName =
   // a chest per coin and the one whose coin is chosen, the speed-up and the
   // badges its types wear (the anvil for workshops, the boot for marches),
   // the boosts, the flask, the tome, the Dowser's map and a relic's shard.
-  | 'bag' | 'chestGold' | 'chestFood' | 'chestWood' | 'chestStone' | 'choiceChest'
+  | 'bag' | 'SilverKey' | 'GoldKey' | 'chestGold' | 'chestFood' | 'chestWood' | 'chestStone' | 'choiceChest'
   | 'speedup' | 'anvil' | 'boot' | 'boostRent' | 'boostHarvest' | 'boostMana'
   | 'manaFlask' | 'knowledgeTome' | 'dowserMap' | 'shard';
 

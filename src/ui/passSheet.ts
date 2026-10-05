@@ -23,7 +23,9 @@
 // Docs/art/ui/mockups/m27-season-pass.png.
 
 import type { Game } from '../game';
-import type { CurrencyId, Wallet } from '../sim/state';
+import type { CurrencyId, ItemId, Wallet } from '../sim/state';
+import type { ItemStock } from '../sim/rewards';
+import { itemIcon } from './bagSheet';
 import type { PackTier } from '../sim/data/definitions';
 import { el, formatCount, formatUsd } from './format';
 import { ctaBadge, currencyIcon, iconEl } from './kit';
@@ -48,11 +50,16 @@ function packChip(tier: PackTier): HTMLElement {
     : el('img', { class: 'pss-pack', src: url, alt: `${tier} pack`, title: `${tier} pack` });
 }
 
-export function prize(reward: Wallet, pack: PackTier | null): HTMLElement[] {
+export function prize(reward: Wallet, pack: PackTier | null, items: ItemStock = {}): HTMLElement[] {
   const chips = (Object.entries(reward) as Array<[CurrencyId, number]>).map(([c, n]) =>
     el('span', { class: 'pss-prize' },
       currencyIcon(c, { size: 'sm' }),
       el('b', {}, formatCount(n))));
+  // Items — a key, a chest — land in the Bag, and wear its pictures.
+  for (const [id, n] of Object.entries(items) as Array<[ItemId, number]>) {
+    if (!n) continue;
+    chips.push(el('span', { class: 'pss-prize' }, iconEl(itemIcon(id), { size: 'sm' }), el('b', {}, formatCount(n))));
+  }
   // The atlas glyph is the fallback, so a tier whose art has not landed still
   // draws something rather than a gap (`tests/icons.test.ts`).
   if (pack !== null) {
@@ -163,7 +170,7 @@ export function renderPassSheet(game: Game): HTMLElement {
   const cell = (
     track: 'free' | 'paid',
     level: number,
-    c: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked?: boolean },
+    c: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean; locked?: boolean },
     grand: boolean,
   ): HTMLElement => {
     const classes = `pss-cell is-${track}`
@@ -172,7 +179,7 @@ export function renderPassSheet(game: Game): HTMLElement {
       + (c.locked ? ' is-locked' : '')
       + (grand ? ' is-grand' : '');
     const bits = [
-      ...prize(c.reward, c.pack),
+      ...prize(c.reward, c.pack, c.items),
       // One mark per cell, never one per prize — the lock is a property of
       // the track, not of each thing behind it.
       ...(c.claimed ? [iconEl('tick', { size: 'sm' })] : []),

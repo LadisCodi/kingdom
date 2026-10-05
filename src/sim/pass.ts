@@ -26,6 +26,7 @@
 import { PASS, MISSIONS } from './data/definitions';
 import { grantPack } from './collection';
 import { seasonAt, seasonEndsAt } from './seasonClock';
+import { grant, type Grant, type ItemStock } from './rewards';
 import { manaCap } from './mana';
 import {
   chooseKind, issueMission, missionComplete, weekIndex, windowIndex,
@@ -150,28 +151,28 @@ const packAt = (column: readonly string[], level: number): PackTier | null => {
 /** What one cell of one column holds. Packs are named separately from the
  *  wallet because a pack is not a currency — it is a thing that goes into the
  *  collection's queue and is opened by hand. */
-export interface PassCell {
+export interface PassCell extends Grant {
   level: number;
-  wallet: Wallet;
-  pack: PackTier | null;
 }
 
 export function freeCell(level: number): PassCell {
   const i = level - 1;
   const wallet: Wallet = {};
+  const items: ItemStock = {};
   if ((PASS.freeGems[i] ?? 0) > 0) wallet.Gems = PASS.freeGems[i];
-  if ((PASS.freeGoldKeys[i] ?? 0) > 0) wallet.GoldKey = PASS.freeGoldKeys[i];
+  if ((PASS.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.freeGoldKeys[i];
   if ((PASS.freeStardust[i] ?? 0) > 0) wallet.Stardust = PASS.freeStardust[i];
-  return { level, wallet, pack: packAt(PASS.freePacks, level) };
+  return { level, wallet, items, pack: packAt(PASS.freePacks, level) };
 }
 
 export function paidCell(level: number): PassCell {
   const i = level - 1;
   const wallet: Wallet = {};
+  const items: ItemStock = {};
   if ((PASS.paidGems[i] ?? 0) > 0) wallet.Gems = PASS.paidGems[i];
-  if ((PASS.paidGoldKeys[i] ?? 0) > 0) wallet.GoldKey = PASS.paidGoldKeys[i];
+  if ((PASS.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.paidGoldKeys[i];
   if ((PASS.paidStardust[i] ?? 0) > 0) wallet.Stardust = PASS.paidStardust[i];
-  return { level, wallet, pack: packAt(PASS.paidPacks, level) };
+  return { level, wallet, items, pack: packAt(PASS.paidPacks, level) };
 }
 
 /** Is this cell waiting to be tapped? Reached, untaken, and — on the paid
@@ -313,14 +314,8 @@ function normalise(state: GameState, now: number): GameState['kingdom']['pass'] 
   return pass;
 }
 
-/** Where each coin of a cell lands — the scopes the wallets already have. */
+/** Pay a cell: its coins to their purses, its keys to the Bag, its pack to
+ *  the collection's queue, unopened (`rewards.ts`). */
 function pay(state: GameState, cell: PassCell): void {
-  if (cell.wallet.Gems) addToWallet(state.player.wallet, 'Gems', cell.wallet.Gems);
-  if (cell.wallet.GoldKey) addToWallet(state.player.wallet, 'GoldKey', cell.wallet.GoldKey);
-  if (cell.wallet.Stardust) {
-    addToWallet(state.kingdom.wallet, 'Stardust', cell.wallet.Stardust);
-  }
-  // Into the collection's own queue, unopened — a pack is a thing the player
-  // opens by hand, never a number that lands in a purse.
-  if (cell.pack !== null) grantPack(state, cell.pack, 'pass');
+  grant(state, cell, 'pass');
 }

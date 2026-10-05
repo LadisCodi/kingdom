@@ -2,6 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
+import type { ItemStock } from './sim/rewards';
 import {
   BAG_TABS, CHEST_COINS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, runningBoosts, useItem,
   type BagTab,
@@ -2332,9 +2333,9 @@ export class Game {
     ladder: Array<{
       level: number;
       reached: boolean;
-      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      free: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean };
       paid: {
-        reward: Wallet; pack: PackTier | null;
+        reward: Wallet; items: ItemStock; pack: PackTier | null;
         claimed: boolean; claimable: boolean; locked: boolean;
       };
     }>;
@@ -2383,12 +2384,14 @@ export class Game {
           reached: n <= level,
           free: {
             reward: free.wallet,
+            items: free.items,
             pack: free.pack,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
             reward: paid.wallet,
+            items: paid.items,
             pack: paid.pack,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
@@ -2433,8 +2436,8 @@ export class Game {
       level: number;
       cells: number;
       reached: boolean;
-      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
-      paid: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
+      free: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      paid: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
     }>;
   } {
     const level = surveyLevel(this.state);
@@ -2457,12 +2460,12 @@ export class Game {
           cells,
           reached: n <= level,
           free: {
-            reward: free.wallet, pack: free.pack,
+            reward: free.wallet, items: free.items, pack: free.pack,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
-            reward: paid.wallet, pack: paid.pack,
+            reward: paid.wallet, items: paid.items, pack: paid.pack,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
@@ -3009,9 +3012,14 @@ export class Game {
 
   /** What a key costs, and what the player holds — the store card's whole
    *  content. One card per banner, because the two keys are two prices. */
-  keyOffer(banner: BannerId): { cost: number; held: number; key: CurrencyId } {
+  keyOffer(banner: BannerId): { cost: number; held: number; key: ItemId } {
     const def = BANNERS[banner];
-    return { cost: def.keyGemCost, held: this.walletValue(def.key), key: def.key };
+    return { cost: def.keyGemCost, held: itemCount(this.state, def.key), key: def.key };
+  }
+
+  /** How many of an item the Bag holds — a key, chiefly. */
+  itemHeld(id: ItemId): number {
+    return itemCount(this.state, id);
   }
 
   doBuyKeys(banner: BannerId, count = 1): void {
@@ -3168,7 +3176,7 @@ export class Game {
 
   /** What the next call on a banner costs: one key of its own kind, or
    *  nothing at all for the free first call on the basic one. */
-  pullPrice(banner: BannerId = STANDARD_BANNER): { currency: CurrencyId; amount: number } {
+  pullPrice(banner: BannerId = STANDARD_BANNER): { key: ItemId; amount: number } {
     return pullPrice(this.state, banner);
   }
 
@@ -3458,7 +3466,7 @@ export class Game {
   doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
     const batch = pullMany(this.state, banner, count);
     if (batch.result === 'NotEnoughKeys') {
-      this.shake([BANNERS[banner].key]);
+      this.shake([]);
       this.notify();
       return;
     }
@@ -4441,7 +4449,7 @@ export class Game {
   doPull(banner: BannerId = STANDARD_BANNER): void {
     const result = pull(this.state, banner);
     if (result.result === 'NotEnoughKeys') {
-      this.shake([BANNERS[banner].key]);
+      this.shake([]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
       this.openReveal(banner, [result]);
@@ -6180,7 +6188,6 @@ export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
     Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
-    SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];
 }
