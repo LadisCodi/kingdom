@@ -206,7 +206,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   const def = DISTRICTS[site.districtId];
   const cells = cellsOfRect(site.location, def.size);
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';

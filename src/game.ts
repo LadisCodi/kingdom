@@ -373,7 +373,8 @@ export class Game {
   /** What the builder sheet was raised for — the build on the ghost, or an
    *  upgrade — so a builder freed while it is open offers that exact job. */
   builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string }
-    | { kind: 'repair'; id: string } = { kind: 'build' };
+    | { kind: 'repair'; id: string }
+    | { kind: 'world'; index: number; what: 'Outpost' | WorldImprovement; level: number; gold: number } = { kind: 'build' };
   /** Which card panel is open over the battle screen, if any. */
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
@@ -2635,6 +2636,24 @@ export class Game {
     });
   }
 
+  /** The builders out on the world board, one row of the builder sheet
+   *  each. A world build is the server's timer: it cannot be rushed, so it
+   *  carries no Finish. Its start is its finish less its authored time. */
+  builderWorldJobs(): Array<{ name: string; task: string; startedAt: number; durationMs: number }> {
+    return this.state.world.builds.map((b) => {
+      const seconds = b.what === 'Outpost'
+        ? WORLD_BUILD.outpost.buildSeconds
+        : WORLD_BUILD.improvements[b.what].levels[b.level - 1]?.buildSeconds ?? 0;
+      return {
+        name: b.what === 'Outpost' ? 'Outpost' : WORLD_BUILD.improvements[b.what].name,
+        task: b.what === 'Outpost' ? 'Claiming on the world map'
+          : b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map` : 'Building on the world map',
+        startedAt: b.finishesAt - seconds * 1000,
+        durationMs: seconds * 1000,
+      };
+    });
+  }
+
   /**
    * The job the builder sheet was raised for, as a free builder's row offers
    * it: what it is, what it costs, and the press that starts it. Null when
@@ -2657,6 +2676,17 @@ export class Game {
       return {
         verb: 'Repair', what: `Ready to repair ${site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name}`,
         cost: nextBuildCost(this.state, def.id), start: () => this.doRepairAbandoned(site.location),
+      };
+    }
+    if (ask.kind === 'world') {
+      const { index, what, level, gold } = ask;
+      const name = what === 'Outpost' ? 'an Outpost' : `the ${WORLD_BUILD.improvements[what].name}`;
+      return {
+        verb: what === 'Outpost' ? 'Claim' : level > 1 ? 'Upgrade' : 'Build',
+        what: what === 'Outpost' ? 'Ready to claim with an Outpost'
+          : level > 1 ? `Ready to upgrade ${name}` : `Ready to build ${name}`,
+        cost: { Gold: gold },
+        start: () => void (what === 'Outpost' ? this.doClaimHex(index, gold) : this.doBuildHex(index, what, level, gold)),
       };
     }
     const d = districtById(this.state, ask.districtUniqueId);
@@ -4626,9 +4656,8 @@ export class Game {
     return LINES[why];
   }
 
-  /** A builder free for the world, or the line that says why not. */
+  /** The Gold for a world build, or the line that says why not. */
   private worldBuilderRefusal(gold: number): string | null {
-    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) return 'Every builder is busy';
     if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
     return null;
   }
@@ -4655,6 +4684,14 @@ export class Game {
       await this.refreshWorld();
       return;
     }
+    // Every builder busy raises the builder sheet, as a refused city build
+    // does: its free row offers this very job once a builder comes home.
+    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) {
+      this.builderAsk = { kind: 'world', index, what, level, gold };
+      this.offerBuilder();
+      this.notify();
+      return;
+    }
     const refused = this.worldBuilderRefusal(gold);
     if (refused !== null) {
       this.toast(refused);
@@ -4670,6 +4707,8 @@ export class Game {
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
     playSfx('click');
+    // Started from a free builder's row: the sheet was only in the way.
+    if (this.openOverlay === 'builder') this.openOverlay = null;
     this.applyWorldSnapshot(r.snapshot);
   }
 
