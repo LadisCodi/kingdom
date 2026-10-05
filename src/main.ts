@@ -75,9 +75,28 @@ import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
-import { button, el } from './ui/format';
+import { button, el, formatCount } from './ui/format';
+import { recordResourceDiscovery } from './sim/discovery';
+import { addToWallet, getWallet, type CurrencyId } from './sim/state';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
+
+/** The dev bar's resource buttons (main.ts dev bar): what each adds — a
+ *  material, null, doubles what is held (at least 1,000). */
+const DEV_GRANTS: ReadonlyArray<{ icon: string; coin: CurrencyId; amount: number | null }> = [
+  { icon: '🪙', coin: 'Gold', amount: null },
+  { icon: '🍎', coin: 'Food', amount: null },
+  { icon: '🪵', coin: 'Wood', amount: null },
+  { icon: '🪨', coin: 'Stone', amount: null },
+  { icon: '🔮', coin: 'Mana', amount: 100 },
+  { icon: '📖', coin: 'Knowledge', amount: 10 },
+  { icon: '💎', coin: 'Gems', amount: 1000 },
+  { icon: '✨', coin: 'Stardust', amount: 100 },
+  { icon: '⭐', coin: 'HeroXp', amount: 1000 },
+  { icon: '🗝', coin: 'SilverKey', amount: 5 },
+  { icon: '🔑', coin: 'GoldKey', amount: 5 },
+];
+
 
 // Every five seconds to the device: a page killed without a `pagehide` (an
 // app swiped away, a crashed tab) loses no more than that. The cloud copy is
@@ -698,6 +717,18 @@ async function boot(): Promise<void> {
         for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
         runTick();
       }),
+      // RESOURCES, into the wallet each one lives in (the scopes the Survey
+      // pays into, sim/survey.ts). A material adds 1,000 or doubles what is
+      // held, whichever is more, so the button keeps up with a late city.
+      ...DEV_GRANTS.map(({ icon, coin, amount }) =>
+        Object.assign(button(amount === null ? `${icon} +${coin}` : `${icon} +${formatCount(amount)} ${coin}`, () => {
+          const wallet = coin === 'Gems' || coin === 'SilverKey' || coin === 'GoldKey' ? game.state.player.wallet
+            : coin === 'Stardust' || coin === 'Knowledge' || coin === 'HeroXp' ? game.state.kingdom.wallet
+              : game.state.city.wallet;
+          addToWallet(wallet, coin, amount ?? Math.max(1000, getWallet(wallet, coin)));
+          recordResourceDiscovery(game.state, coin);
+          runTick();
+        }), { title: amount === null ? `Adds ${formatCount(1000)} ${coin}, or doubles what you hold` : '' })),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {
         game.state.ads.readyAt = 0;
