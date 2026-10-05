@@ -69,6 +69,9 @@ nervous, a bookworm who got the job because nobody else stayed:
 - **She walks the player through accepting a gift twice** — `FirstSteps`
   and `Timber` — and never again: from the third request on, the pill is
   the player's to claim.
+- **The hand never points at something paid for with Gems.** A line may
+  name a Gem shortcut; following the hand never spends one
+  (`tests/tutorialGems.test.ts`).
 
 | # | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
@@ -98,7 +101,7 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 6.0 | `FirstVillager` | *The House is still going up. No family moves in under scaffolding — I asked.* (skipped if it stands) | the House | none | the House is finished |
 | 6.1 | `FirstVillager` | *A roof, a pantry… now we need people! The Townhall calls settlers in from the roads. Open it, Your Majesty.* | the Townhall | the Townhall | its card is open |
 | 6.2 | `FirstVillager` | *Call one! They'll need that roof — and a little Food for the road.* | **Train** | none | a villager is in training |
-| 6.2b | `FirstVillager` | *They're on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!* | **Finish** | none | a villager arrives |
+| 6.2b | `FirstVillager` | *They're on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!* | — | none | a villager arrives |
 | 6.3 | `FirstVillager` | **Villager** (right): *A roof, a hearth and a monarch! I'll pay my rent on time, Your Majesty.* | — | all | tap |
 | 6.3b | `FirstVillager` | *Let's close the Townhall — our villager is settling in.* (skipped if it is closed) | the card's close knob | the knob | the scroll is on screen |
 | 7.1 | `TaxDay` | *Our villager pays rent into the House. When the purse shows, gather it — it's theirs to give, and it costs you nothing.* | the House | none | the quest completes |
