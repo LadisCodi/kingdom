@@ -192,6 +192,9 @@ Respawn:
 
 - **The frontier stays connected.** A cell can be paid for only if it touches
   ground already revealed.
+- **A tap past the frontier points at it.** A tap on a dark cell no path
+  reaches, or on the dark beyond, shows the quest hint's hand on the nearest
+  cell that can be cleared.
 - A feature with a footprint (§3.1) is discovered when any one of its cells is,
   and revealed all at once.
 - Every district has a `fogRevealRadius` and a `fogDiscoverRadius`. A finished

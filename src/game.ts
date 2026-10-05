@@ -892,6 +892,8 @@ export class Game {
           if (sightedAt(this.state, this.map, cell) !== undefined) {
             this.toast('Something stands in the dark — clear the fog towards it');
           }
+          // Either way the hand shows where the fog can be cleared from.
+          this.hintFrontierNear(cell);
           return true;
         }
         if (fog !== 'Discovered') return false;
@@ -906,6 +908,7 @@ export class Game {
           // the frontier moves outward stops trying to buy the far tile.
           playSfx('error');
           this.toast('Clear a path to it first — the fog lifts from the edges');
+          this.hintFrontierNear(cell);
         } else if (result === 'OutOfReach') {
           // The capital is the reach: say which level opens this ring, so
           // the refusal points at the building rather than at the fog.
@@ -3201,11 +3204,8 @@ export class Game {
     };
     const built = (pred: (d: District) => boolean) =>
       this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
-    // A cell the player can buy THIS tap: dark, on the cleared ground's edge,
-    // inside the Townhall's reach and behind no technology. Pointing anywhere
-    // else answers the tap with a refusal.
-    const buyable = (c: Coord): boolean => fogState(this.state, this.map, c) === 'Discovered'
-      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
+    // Pointing anywhere but a buyable cell answers the tap with a refusal.
+    const buyable = (c: Coord): boolean => this.isBuyable(c);
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
@@ -3383,6 +3383,26 @@ export class Game {
         break;
       }
     }
+  }
+
+  /** A cell the player can buy THIS tap: dark, on the cleared ground's edge,
+   *  inside the Townhall's reach and behind no technology. */
+  private isBuyable(c: Coord): boolean {
+    return fogState(this.state, this.map, c) === 'Discovered'
+      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
+  }
+
+  /** A refused fog tap shows where the fog CAN be cleared: the buyable cell
+   *  nearest the one tapped, with the quest hint's hand. */
+  private hintFrontierNear(cell: Coord): void {
+    let best: Coord | null = null;
+    let bestD = Infinity;
+    for (const c of this.map.cells) {
+      if (!this.isBuyable(c)) continue;
+      const d = Math.max(Math.abs(c.x - cell.x), Math.abs(c.y - cell.y));
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best !== null) this.setCellHint(best);
   }
 
   /** Nearest cell (by townhall distance) satisfying the predicate. */
