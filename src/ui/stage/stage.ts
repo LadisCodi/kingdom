@@ -499,7 +499,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  thing, the scene then talks about it; over a sheet only when the scene
    *  says so. */
   const canStart = (scene: SceneDef): boolean => {
-    if (game.state.player.payer === null) return false;
+    // Nothing plays over the profile sheet — which is owed only once the
+    // First Morning is over, so the morning itself plays with no profile.
+    if (game.payerDue()) return false;
     if (game.battle !== null || game.gachaReveal !== null || game.adWatch() !== null) return false;
     if (game.unlockQueue.length > 0) return false;
     if (!scene.anywhere && game.hasOpenSheet()) return false;
