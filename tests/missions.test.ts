@@ -17,7 +17,7 @@ import { advance } from '../src/sim/commands';
 import { rand } from '../src/sim/rng';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  addAllTrainers, addBuilt, collectAll, freshGame, fund, map, clearLair, reveal, T0,
+  addAllTrainers, addBuilt, collectAll, completeTech, freshGame, fund, map, clearLair, reveal, T0,
 } from './helpers';
 import type { GameState, Mission, MissionKind } from '../src/sim/state';
 
@@ -141,6 +141,10 @@ describe('what may be asked', () => {
   it('refuses the Townhall once it is maxed', () => {
     const state = playableKingdom();
     const hall = state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    // Every Townhall level is a chapter's finale now, so the first is
+    // Forestry's: an unresearched gate is a bar the board must not ask for.
+    expect(canIssue(state, 'RaiseTownhall')).toBe(false);
+    completeTech(state, 'Forestry');
     expect(canIssue(state, 'RaiseTownhall')).toBe(true);
     hall.level = DISTRICTS.Townhall.maxLevel;
     expect(canIssue(state, 'RaiseTownhall')).toBe(false);

@@ -15,7 +15,7 @@ import {
   harmonyDemand, harmonyFree, harmonySupply, harmonySurplusMultiplier, harmonySurplusTier,
 } from '../src/sim/harmony';
 import { enqueueBuild, upgradeDistrict } from '../src/sim/commands';
-import { placementBlock, validPlacementCells } from '../src/sim/districts';
+import { placementBlock, requiredTechForLevel, validPlacementCells } from '../src/sim/districts';
 import { effectiveTaxRate } from '../src/sim/upgrades';
 import { townhall, type GameState } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, map } from './helpers';
@@ -181,6 +181,15 @@ describe('supply and demand', () => {
   });
 });
 
+/** Every Housing level is a chapter's card now: research them all, so the
+ *  only gates left on a house are the Townhall, goods and Harmony. */
+const researchHousing = (state: GameState): void => {
+  for (let level = 2; level <= DISTRICTS.Housing.maxLevel; level++) {
+    const gate = requiredTechForLevel('Housing', level);
+    if (gate !== null) completeTech(state, gate);
+  }
+};
+
 describe('the gate', () => {
   /** A city with a Townhall high enough for a late level, and a purse. */
   /** A city with a Townhall high enough for a late level, and a purse. The
@@ -189,6 +198,7 @@ describe('the gate', () => {
   const lateCity = (): GameState => {
     const state = freshGame();
     townhall(state).level = 10;
+    researchHousing(state);
     addBuilt(state, 'Plaza', { x: 6, y: 4 });
     fund(state, { Gold: 9e9, Wood: 9e9, Stone: 9e9, Food: 9e9 });
     for (const id of ['Planks', 'CutStone', 'Iron', 'Runestone'] as const) {
@@ -250,6 +260,7 @@ describe('the gate', () => {
     house.level = 7;
     expect(upgradeDistrict(state, house.uniqueId)).toBe('RequirementsNotMet');
     townhall(state).level = 10;
+    researchHousing(state); // the Townhall's errand includes the card for the level
     addBuilt(state, 'Plaza', { x: 6, y: 4 }); // covers the Townhall's own 30
     expect(upgradeDistrict(state, house.uniqueId)).toBe('NotEnoughGoods');
     state.city.goods.Planks = 999;

@@ -20,20 +20,24 @@ describe('the unlock splashes as data', () => {
   it('names a door or a book that exists', () => {
     const b = structuredClone(doc) as Record<string, any>;
     b.unlocks.heroes.target = 'Tavern';
-    b.unlocks.bookMagic.target = 'heroes';
+    b.unlocks.bookSagas.target = 'heroes';
     const msgs = validateData(b, doc).filter((i) => i.collection === 'unlocks').map((i) => `${i.entry}: ${i.message}`);
-    expect(msgs).toEqual(['heroes: "Tavern" is not a door', 'bookMagic: "heroes" is not a book']);
+    expect(msgs).toEqual(['heroes: "Tavern" is not a door', 'bookSagas: "heroes" is not a book']);
   });
 });
 
 describe('a book is announced once', () => {
-  it('finds Civics open from the first minute, then nothing until the world opens another', () => {
+  it('finds the kingdom\'s tree open from the first minute, then nothing until a book is found', () => {
     const state = firstGame();
-    expect(freshlyOpenBooks(state)).toEqual(['Civics']);
-    markBookSeen(state, 'Civics');
+    expect(freshlyOpenBooks(state)).toEqual(['Kingdom']);
+    markBookSeen(state, 'Kingdom');
     expect(freshlyOpenBooks(state)).toEqual([]);
+    // A landmark used to open the Book of Magic; magic is a lane of the one
+    // tree now, so a claim opens nothing — a standing Tavern finds the Sagas.
     state.landmarks.claimed[LANDMARKS[1].id] = true;
-    expect(freshlyOpenBooks(state)).toEqual(['Magic']);
+    expect(freshlyOpenBooks(state)).toEqual([]);
+    addBuilt(state, 'Tavern', { x: 3, y: 1 });
+    expect(freshlyOpenBooks(state)).toEqual(['Sagas']);
   });
 
   it('announces nothing to a veteran', () => {

@@ -5,7 +5,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
-import { giveBook } from '../src/sim/research';
 import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
@@ -73,7 +72,7 @@ describe('the scenes, against the game', () => {
     }
   });
 
-  it('hands over the Book of Warfare at the first lair found, after its card is opened', () => {
+  it('plays at the first lair found, after its card is opened, and hands over no book', () => {
     const scene = SCENES.find((s) => s.id === 'firstLair')!;
     expect(scene).toMatchObject({ trigger: 'lairFound', triggerTarget: '' });
     // Before every scene a particular lair starts, so it is the one that plays.
@@ -81,10 +80,10 @@ describe('the scenes, against the game', () => {
       expect(SCENES.indexOf(scene), lair).toBeLessThan(SCENES.findIndex((s) => s.id === lair));
     }
     expect(scene.lines[0]).toMatchObject({ point: 'lair:', lock: 'target', until: 'ui', untilTarget: 'lair-card' });
-    expect(scene.lines.at(-1)!.gives).toBe('Warfare');
-    // And nothing else hands a book over.
+    // The army is a lane of the kingdom's one tree, so nothing is handed over:
+    // no scene gives a book (Docs/plans/tech-tree-rework.md §3.1).
     const gifts = SCENES.flatMap((s) => s.lines.filter((l) => l.gives).map(() => s.id));
-    expect(gifts).toEqual(['firstLair']);
+    expect(gifts).toEqual([]);
   });
 
   it('never strands the Sawmill lesson on a short purse: Isolde makes up the Wood', () => {
@@ -188,13 +187,12 @@ describe('the conditions read the kingdom', () => {
     reveal(game.state, [LAIRS.Orcs.location]);
     game.tick();
     expect(conditionHolds(game, args('lairFound' as never, 'Orcs'))).toBe(true);
-    // Found is not given: the book waits for Isolde's line.
-    expect(conditionHolds(game, args('bookOpen' as never, 'Warfare'))).toBe(false);
-    giveBook(game.state, 'Warfare');
-    expect(conditionHolds(game, args('bookOpen' as never, 'Warfare'))).toBe(true);
+    expect(conditionHolds(game, args('bookOpen' as never, 'Sagas'))).toBe(false);
     expect(conditionHolds(game, args('built' as never, 'Tavern', 1))).toBe(false);
     addBuilt(game.state, 'Tavern', { x: 3, y: 1 });
     expect(conditionHolds(game, args('built' as never, 'Tavern', 1))).toBe(true);
+    // A book opens on a fact about the world: a standing Tavern finds the Sagas.
+    expect(conditionHolds(game, args('bookOpen' as never, 'Sagas'))).toBe(true);
     expect(conditionHolds(game, args('doorOpen' as never, 'heroes'))).toBe(true);
     expect(conditionHolds(game, args('built' as never, 'AnyWorkshop', 1))).toBe(false);
   });
