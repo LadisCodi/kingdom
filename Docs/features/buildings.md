@@ -79,7 +79,7 @@
 |---|---|---|---|
 | 1 | — | placed at game start | — |
 | 2 | — | 99 Gold + 66 Wood | 30 s |
-| 3 | `Bureaucracy` (Civics era 2) | 500 Gold + 330 Wood | ×4 per level |
+| 3 | `Bureaucracy` (Civics era 2) | 6,000 Gold + 330 Wood | ×4 per level |
 | 4 | `Magistracy` (Civics era 3) | | |
 
 ### 3.1 The ladder to 10
@@ -107,8 +107,9 @@
 - **Pacing** (the design's target, days orientative — the thirty-day harness
   asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
   6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
-  2026-10-05: 3 · 6 · 16 · 19 · 25 for levels 2–6, and 7 not reached in thirty
-  days — the ladder runs behind target, paced by Gold.
+  2026-10-05, three visits a day: 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 ·
+  day 11 — 6 · day 16 — 7 · day 26, and 8 not inside thirty days. Knowledge
+  gates 3 and 4; villagers, and the Food they cost, gate every level from 5.
 
 ## 4. The districts
 
@@ -208,7 +209,7 @@
 - The Mana engine: each level adds capacity and regeneration
   ([`08-magic.md`](08-magic.md) §2). Unlocked by `Consecration` (Magic era 1).
 - One per city; `Second Sanctum` (Magic era 3) allows a second.
-- Build 750 Gold + 100 Stone, 90 s. Level 2: 1,400 Gold + 220 Stone, 120 s;
+- Build 9,000 Gold + 100 Stone, 90 s. Level 2: 17,000 Gold + 220 Stone, 120 s;
   time ×1.6 per level.
 
 | Level | Capacity | Regen / h | Gate |
@@ -233,10 +234,10 @@ regeneration +20, +25, +30, +36, +42 an hour.
 
 | Hall | Trains | Unlock | Build | Level 2 |
 |---|---|---|---|---|
-| **Barracks** | Warrior | `Warrior` | 300 G + 200 W, 60 s | 1,000 G + 500 W + 170 S, 90 s |
-| **Spear Hall** | Lancer | `Spears` | 410 G + 200 W + 75 S, 120 s | 1,400 G + 660 W + 250 S, 120 s |
-| **Shooting Grounds** | Archer | `Archery` | 410 G + 200 W + 75 S, 300 s | 1,400 G + 660 W + 250 S, 120 s |
-| **Stables** | Cavalry | `Cavalry` | 720 G + 300 W + 180 S, 90 s | 2,400 G + 990 W + 580 S, 180 s |
+| **Barracks** | Warrior | `Warrior` | 3,600 G + 200 W, 60 s | 12,000 G + 500 W + 170 S, 90 s |
+| **Spear Hall** | Lancer | `Spears` | 4,900 G + 200 W + 75 S, 120 s | 17,000 G + 660 W + 250 S, 120 s |
+| **Shooting Grounds** | Archer | `Archery` | 4,900 G + 200 W + 75 S, 300 s | 17,000 G + 660 W + 250 S, 120 s |
+| **Stables** | Cavalry | `Cavalry` | 8,600 G + 300 W + 180 S, 90 s | 29,000 G + 990 W + 580 S, 180 s |
 
 Upgrades grow ×1.6 in time per level; what each level costs is authored in its
 `costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)
@@ -282,10 +283,10 @@ ten field 10,400.
 
 | Workshop | Makes | Unlock | Build | Level 2 |
 |---|---|---|---|---|
-| **Carpenter** | Planks | `Joinery` | 450 G + 300 W, 60 s | 830 G + 550 W, 120 s |
-| **Mason's Yard** | Cut Stone | `Stone Dressing` | 600 G + 250 W + 150 S, 90 s | 1,100 G + 440 W + 280 S, 180 s |
-| **Smelter** | Iron | `Mining` | 1,000 G + 300 S, 120 s | 1,700 G + 550 S, 240 s |
-| **Rune Carver** | Runestone | `Attunement II` | 2,000 G + 500 S, 180 s | 3,300 G + 830 S, 360 s |
+| **Carpenter** | Planks | `Joinery` | 5,400 G + 300 W, 60 s | 10,000 G + 550 W, 120 s |
+| **Mason's Yard** | Cut Stone | `Stone Dressing` | 7,200 G + 250 W + 150 S, 90 s | 13,000 G + 440 W + 280 S, 180 s |
+| **Smelter** | Iron | `Mining` | 12,000 G + 300 S, 120 s | 20,000 G + 550 S, 240 s |
+| **Rune Carver** | Runestone | `Attunement II` | 24,000 G + 500 S, 180 s | 40,000 G + 830 S, 360 s |
 
 Upgrades grow ×1.6 in time per level; what each level costs is authored in its
 `costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)

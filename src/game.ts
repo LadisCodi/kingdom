@@ -4920,6 +4920,8 @@ export class Game {
       this.toast('No way there through explored ground');
     } else if (result.kind === 'Explored') {
       this.toast('Already explored');
+    } else if (result.kind === 'NotEnoughGold') {
+      this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
     }
     this.notify();
   }

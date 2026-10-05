@@ -4,6 +4,8 @@
     "armySecondsPerHex": 120,
     "exploreWorkSeconds": 30,
     "exploreWorkSecondsPerHex": 30,
+    "exploreGoldBase": 2500,
+    "exploreGoldGrowth": 1.5,
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
     "cartographyExplorers": 1,

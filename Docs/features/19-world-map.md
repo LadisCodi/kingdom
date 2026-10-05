@@ -101,7 +101,11 @@
 - **You explore by sending an explorer to a Sensed hex.** It marches there,
   works there, and marches home. There is no button that buys fog.
 - **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
-  first; a rank ladder in the Atlas gives more. No training, no cost per use.
+  first; a rank ladder in the Atlas gives more. No training.
+- **Sending one costs Gold**, paid when it leaves:
+  `exploreGoldBase` (2,500) × `exploreGoldGrowth` (×1.5) for every hex past
+  the first from the city — 2,500 next door, about 19,000 at 6 hexes, 96,000
+  at 10. A short purse refuses the trip.
 - **An explorer never fights and can never be stopped, attacked or lost.** It
   lives in the player's own save, like the fog it reveals.
 - **The work**: once there, the explorer works the hex for
@@ -109,7 +113,7 @@
   hex it lies from the city.
 - When the work is done, the hex **and the six around it** are revealed. The
   radius upgrades to 2. Nothing is revealed on the way.
-- **A march costs time, hex by hex** (§4.1), and no Gold.
+- **A march costs time, hex by hex** (§4.1).
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 
 ## 4. Armies
@@ -454,6 +458,7 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |

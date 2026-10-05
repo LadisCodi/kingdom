@@ -25,6 +25,12 @@
           "min": 0,
           "doc": "Seconds more of that work for every hex the target lies from the city."
         },
+        "exploreGoldBase": { "type": "int", "min": 0, "doc": "Gold to send an explorer to a hex next to the city." },
+        "exploreGoldGrowth": {
+          "type": "float",
+          "min": 1,
+          "doc": "How much dearer exploring is for every hex further from the city."
+        },
         "explorerRevealRadius": {
           "type": "int",
           "min": 1,

@@ -105,6 +105,16 @@ and the army cap; hero slots one free, the rest Gems
 `cooldown` is in ticks. `squadSize` and `frontage` are fixed constants at every
 tier.
 
+What one soldier costs to recruit (`units.recruitCost`), Gold first because
+Gold is what an army is mostly paid in:
+
+| Unit | Recruit cost |
+|---|---|
+| **Warrior** | 100 Gold · 5 Wood · 8 Food |
+| **Lancer** | 200 Gold · 12 Wood · 4 Food |
+| **Archer** | 130 Gold · 12 Wood |
+| **Cavalry** | 300 Gold · 16 Food · 24 Stone |
+
 ## 6. Unit tiers
 
 | Tier | Multiplier | Unlock |

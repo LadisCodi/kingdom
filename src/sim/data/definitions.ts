@@ -2039,6 +2039,10 @@ export interface WorldDef {
    *  and more for every hex it lies from the city. */
   exploreWorkSeconds: number;
   exploreWorkSecondsPerHex: number;
+  /** Gold to send an explorer: the base for a hex next to the city, times
+   *  the growth for every hex further out. */
+  exploreGoldBase: number;
+  exploreGoldGrowth: number;
   explorerRevealRadius: number;
   revealRadiusMax: number;
   cartographyExplorers: number;

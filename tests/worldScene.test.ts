@@ -95,6 +95,12 @@ describe('Explore', () => {
     expect(toasts.at(-1)).toMatch(/Cartography/);
 
     game.state.research.completed.push('Cartography');
+    game.state.city.wallet.Gold = 0;
+    game.doSendExplorer();
+    expect(game.state.world.explorers).toHaveLength(0);
+    expect(toasts.at(-1)).toMatch(/Not enough Gold/);
+
+    game.state.city.wallet.Gold = 1e9;
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
     expect(game.state.world.explorers[0].target).toBe(beside);

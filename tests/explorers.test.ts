@@ -6,7 +6,7 @@ import { deserialize, serialize, type CatchUpReport } from '../src/sim/save';
 import type { GameState } from '../src/sim/state';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import {
-  arrivesAt, dispatchExplorer, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf,
+  arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf,
   freshWorld, homeIndex, returnsAt, revealsAt, worldFogAt,
 } from '../src/sim/world/explorers';
 import { boardOf } from '../src/sim/world/source';
@@ -17,7 +17,7 @@ import {
 } from '../src/sim/world/hex';
 import { grantHero } from '../src/sim/heroes';
 import { HEROES } from '../src/sim/data/definitions';
-import { freshGame, map, T0 } from './helpers';
+import { freshGame, fund, map, T0 } from './helpers';
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -40,6 +40,7 @@ const seenMost = (state: GameState) => {
 function exploring(): GameState {
   const state = freshGame();
   state.research.completed.push('Cartography');
+  fund(state, { Gold: 1e9 }); // exploring is priced in Gold; what it costs is tested below
   return state;
 }
 
@@ -77,6 +78,7 @@ describe('a new kingdom on the board', () => {
 describe('sending an explorer', () => {
   it('needs Cartography, a free explorer, and a hex that is not home', () => {
     const state = freshGame();
+    fund(state, { Gold: 1e9 });
     expect(dispatchExplorer(state, nextDoor(state), T0).kind).toBe('NoCartography');
     state.research.completed.push('Cartography');
     expect(explorerSlots(state)).toBe(WORLD.cartographyExplorers);
@@ -133,6 +135,19 @@ describe('sending an explorer', () => {
     // is the floor.
     const d = hexDistance(hexAt(homeIndex(state)), hexAt(target));
     expect(outboundMs(trip.stepMs)).toBeGreaterThanOrEqual(d * WORLD.explorerSecondsPerHex * 1000);
+  });
+
+  it('costs Gold when it leaves, dearer the further the hex lies, and refuses a short purse', () => {
+    const state = exploring();
+    const near = nextDoor(state);
+    expect(exploreGold(state, near)).toBe(WORLD.exploreGoldBase);
+    expect(exploreGold(state, rim(state))).toBeGreaterThan(exploreGold(state, near));
+    state.city.wallet.Gold = exploreGold(state, near) - 1;
+    expect(dispatchExplorer(state, near, T0)).toEqual({ kind: 'NotEnoughGold', gold: exploreGold(state, near) });
+    expect(state.world.explorers).toHaveLength(0);
+    state.city.wallet.Gold = exploreGold(state, near);
+    sent(state, near, T0);
+    expect(state.city.wallet.Gold).toBe(0);
   });
 
   it('works longer at a hex the further it lies from the city', () => {
