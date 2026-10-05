@@ -17,7 +17,8 @@ import { HexCamera } from '../src/render/world/hexCamera';
 import type { Game } from '../src/game';
 import { freshGame, freshPresenter, fund, map, T0 } from './helpers';
 
-const OUTPOST_MS = WORLD_BUILD.outpost.buildSeconds * 1000;
+/** How long a district takes to build: the claim. */
+const CLAIM_MS = WORLD_BUILD.claim.buildSeconds * 1000;
 /** The server's rules, read as if the hex were explored: the fog is the
  *  sheet's to apply (tests/worldScene.test.ts holds it there). */
 const SEEN = { revealed: true };
@@ -47,7 +48,7 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
     const beside = options.find((h) => boardNeighbors(SEAT_INDICES[me]).includes(h.index));
     const next = beside ?? options.sort((a, b) => dist(a.index, SEAT_INDICES[me]) - dist(b.index, SEAT_INDICES[me]))[0];
     await game.doClaimHex(next.index, 0);
-    clock.t += OUTPOST_MS;
+    clock.t += CLAIM_MS;
     await game.refreshWorld();
     if (beside !== undefined) target = beside.index;
   }

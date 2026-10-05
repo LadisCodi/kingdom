@@ -231,14 +231,14 @@ describe('the placement window and the builder sheet', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
-    state.world.builds.push({ index: 0, what: 'Outpost', level: 1, finishesAt: game.now() + 60_000 });
+    state.world.builds.push({ index: 0, what: 'Rural', level: 1, finishesAt: game.now() + 60_000 });
     game.startPlacement('Housing');
     game.confirmBuild();
     expect(state.city.queue).toHaveLength(0);
     expect(game.openOverlay).toBe('builder');
     expect(game.builderJobs()).toHaveLength(0);
     expect(game.builderWorldJobs()).toHaveLength(1);
-    expect(game.builderWorldJobs()[0].name).toBe('Outpost');
+    expect(game.builderWorldJobs()[0].name).toBe('Rural district');
   });
 });
 

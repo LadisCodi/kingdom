@@ -2,8 +2,8 @@
 // Docs/art/art-direction.md §2, §7, §8).
 //
 // A slightly tilted board (art-direction §7.1): each hex a terrain plate and
-// one sprite for its combination of terrain and features, or the improvement
-// standing in its place (hexArt.ts, Docs/plans/world-hex-art.md). Hex art
+// one sprite for its feature, or the district standing in its place, with
+// its Fortress at the rear corner (hexArt.ts, Docs/plans/world-hex-art.md). Hex art
 // drops in by filename; until a file exists, the province's own textures and
 // sprites stand in for it.
 //
@@ -26,14 +26,13 @@ import {
 import { PORTAL_INDEX, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
-import type { WorldImprovement, WorldTerrain } from '../../sim/world/types';
+import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
 import { formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
-import { WORLD_BUILD } from '../../sim/data/definitions';
 import {
-  COMBO_SPRITE, OUTPOST_BUILDING_SPRITE, OUTPOST_SPRITE, hexArt, pickVariant, type HexCombo,
+  COMBO_SPRITE, fortressSprite, hexArt, pickVariant, type HexCombo,
 } from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import { drawCloudBank } from '../fog/fogLayer';
@@ -61,22 +60,20 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
   Landmark: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
 };
 
-/** The province's buildings stand in for improvement art; a level draws the
- *  highest province tier at or below it. */
-const IMPROVEMENT_STAND_IN: Record<WorldImprovement, string> = {
-  LoggingCamp: 'sawmill', Homestead: 'farm', StonePit: 'quarry', Fortress: 'barracks',
+/** Until a district has its own art, a province building stands in for it,
+ *  in front of its feature's drawing. */
+const DISTRICT_STAND_IN: Record<WorldDistrict, string> = {
+  Rural: 'housing_l1', LoggingCamp: 'sawmill_l1', Quarry: 'quarry_l1', FarmLands: 'farm_l1',
+  HuntingGrounds: 'housing_l1', Observatory: 'housing_l1', Shrine: 'housing_l1',
 };
-const standInTier = (level: number): string => (level >= 8 ? 'l8' : level >= 4 ? 'l4' : 'l1');
 
 /** Hex art's foot line: the bottom of its canvas, a little in front of the
  *  hex's centre (world-hex-art.md §2), as a share of the tilted radius. */
 const FOOT = 0.62;
-/** The Outpost's tower, as a share of the hex's width. */
-const OUTPOST_WIDTH = 0.24;
+/** The Fortress's keep at the rear corner, as a share of the hex's width. */
+const FORTRESS_WIDTH = 0.3;
 /** Below this many pixels a hex, the strategic zoom (world-hex-art.md §4). */
 const STRATEGIC_PX = 70;
-/** The province's watch-tower stands in until the Outpost has its own art. */
-const OUTPOST_STAND_IN = 'landmark_watchtower';
 const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
 
 /** The player's colour, then the five rivals', in seat order after it. */
@@ -169,7 +166,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
 
   // Borders: each kingdom's city and the ground it holds or is claiming, as
   // far as the player can see it, in its owner's colour — dashed round a hex
-  // whose Outpost is still building. Drawn before anything stands on the
+  // whose district is still building. Drawn before anything stands on the
   // board, so it lies over the land and its veil and under what stands there.
   for (const seat of source.seats()) {
     const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
@@ -451,8 +448,7 @@ function drawHex(
   // A city's hex and the Portal have their own drawing; every other hex is
   // its plate and its art (world-hex-art.md §2–§3).
   const held = bh.seat === null && bh.role !== 'portal' ? frame.source.hexOf(bh.index) : null;
-  const standing = held?.improvement ?? (held?.work !== null && held?.work !== undefined ? { kind: held.work.kind, level: 1 } : null);
-  const art = bh.terrain === null ? null : hexArt(bh.terrain, bh.features, standing, hw < STRATEGIC_PX);
+  const art = bh.terrain === null ? null : hexArt(bh.terrain, bh.features, held?.district ?? null, hw < STRATEGIC_PX);
 
   ground.save();
   hexPath(ground, c.x, c.y, r);
@@ -477,19 +473,19 @@ function drawHex(
     } else if (bh.role === 'portal') {
       drawPortal(g, c.x, c.y, r);
     } else if (art !== null) {
-      // Behind, what the improvement does not work; then the combination or
-      // the improvement; then Game in front of it.
+      // The district, which carries its feature in its art; or the feature,
+      // with the district's stand-in in front of it until it has art.
       const key = bh.index;
-      if (art.behind !== null) drawCombo(g, art.behind, key, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
-      if (art.main !== null && 'combo' in art.main) drawCombo(g, art.main.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
-      if (art.main !== null && 'improvement' in art.main) {
+      const own = art.district !== null && spriteUrl(art.district.sprite) !== null;
+      if (art.combo !== null && !own) drawCombo(g, art.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
+      if (art.district !== null) {
         g.save();
-        if (held?.improvement === null) g.globalAlpha = 0.45; // its first level still building
-        drawImprovement(g, art.main.improvement, art.main.sprite, standing!.level, c, hw, r);
+        if (held !== null && !held.held) g.globalAlpha = 0.45; // still being built
+        if (own) drawProp(g, art.district.sprite, c.x, c.y + r * FOOT * TILT, hw);
+        else drawProp(g, DISTRICT_STAND_IN[art.district.kind], c.x + hw * 0.12, c.y + r * 0.7 * TILT, hw * 0.42);
         g.restore();
       }
-      if (art.front !== null) drawCombo(g, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
-      if (held !== null) drawHeld(ground, g, camera, key, held, c, fogState, frame);
+      if (held !== null) drawHeld(ground, g, camera, held, c, fogState, frame);
     }
   };
   if (veil > 0.01 || (held !== null && held.held && !held.active)) drawSilhouetted(ctx, c, r, hw, veil, stand);
@@ -553,19 +549,6 @@ function variant(name: string, key: number): string {
   return pickVariant(name, n, key);
 }
 
-/** An improvement in the middle of its hex: its own art, or the province's
- *  building standing in. */
-function drawImprovement(
-  ctx: CanvasRenderingContext2D, kind: WorldImprovement, sprite: string, level: number,
-  c: { x: number; y: number }, hw: number, r: number,
-): void {
-  if (spriteUrl(sprite) !== null) {
-    drawProp(ctx, sprite, c.x, c.y + r * FOOT * TILT, hw);
-    return;
-  }
-  drawProp(ctx, `${IMPROVEMENT_STAND_IN[kind]}_${standInTier(level)}`, c.x + hw * 0.06, c.y + r * 0.42 * TILT, hw * 0.62);
-}
-
 /** A sprite standing with its foot at (x, footY), `width` wide. */
 function drawProp(ctx: CanvasRenderingContext2D, sprite: string, x: number, footY: number, width: number): void {
   const aspect = spriteAspect(sprite);
@@ -622,47 +605,37 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
 
 // ------------------------------------------------------------ held ground
 
-/** The Outpost's watch-tower at the hex's upper-right corner: its own art —
- *  scaffolded while the builder is at it — or the province's tower, faint
- *  while it is building. */
-function drawOutpost(
-  ctx: CanvasRenderingContext2D, built: boolean, key: number, c: { x: number; y: number }, hw: number, r: number,
+/** The Fortress's keep at the hex's rear corner, by its level — faint while
+ *  its first level is still building. */
+function drawFortress(
+  ctx: CanvasRenderingContext2D, level: number, building: boolean, c: { x: number; y: number }, hw: number, r: number,
 ): void {
-  const x = c.x + hw * 0.28;
-  const footY = c.y - r * 0.12 * TILT;
-  if (spriteUrl(OUTPOST_SPRITE) !== null) {
-    const sprite = built || spriteUrl(OUTPOST_BUILDING_SPRITE) === null ? variant(OUTPOST_SPRITE, key) : OUTPOST_BUILDING_SPRITE;
-    drawProp(ctx, sprite, x, footY, hw * OUTPOST_WIDTH);
-    return;
-  }
   ctx.save();
-  if (!built) ctx.globalAlpha = 0.45;
-  drawProp(ctx, OUTPOST_STAND_IN, x, footY, hw * 0.16);
+  if (building) ctx.globalAlpha = 0.45;
+  drawProp(ctx, fortressSprite(Math.max(1, level)), c.x + hw * 0.26, c.y - r * 0.1 * TILT, hw * FORTRESS_WIDTH);
   ctx.restore();
 }
 
 function drawHeld(
-  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, key: number,
+  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera,
   held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, frame: WorldFrame,
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
-  // The Outpost: a small watch-tower on the hex's upper right, faint while
-  // its builder is still at it.
-  if (hw >= STRATEGIC_PX) drawOutpost(ctx, held.held, key, c, hw, r);
+  // The Fortress built into the district, faint while its first level goes up.
+  if (held.fortress > 0 || held.work?.toLevel === 1) {
+    drawFortress(ctx, held.fortress, held.fortress === 0, c, hw, r);
+  }
   // Cut off from its city: greyed, buildings intact (art-direction §8).
   if (held.held && !held.active) veilHex(ground, ctx, c, r, [CUT_OFF]);
   // A builder at work: an hourglass and the time left.
   const now = frame.now;
-  const busyUntil = !held.held ? held.outpostAt : held.work?.at ?? null;
+  const busyUntil = !held.held ? held.standsAt : held.work?.at ?? null;
   if (busyUntil !== null && fogState === 'Revealed') drawPill(ctx, camera, c.x, c.y - r * 0.62, formatCountdown(Math.max(0, busyUntil - now) / 1000));
   // The player's own store, ready: a bubble with what it holds.
   const s = held.stores;
-  if (s !== null && held.held && held.active) {
-    const produces = held.improvement === null ? '' : WORLD_BUILD.improvements[held.improvement.kind].produces;
-    const icon = produces !== '' && s.material >= Math.max(1, s.materialCap * 0.25) ? produces
-      : s.knowledge >= 1 ? 'Knowledge' : null;
-    if (icon !== null) drawBubble(ctx, camera, c.x, c.y - r * 0.55, icon);
+  if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
+    drawBubble(ctx, camera, c.x, c.y - r * 0.55, s.currency);
   }
 }
 
