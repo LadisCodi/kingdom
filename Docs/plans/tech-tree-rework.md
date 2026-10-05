@@ -1,144 +1,192 @@
-# Tech tree rework — chapters, not ladders
+# Tech tree rework — one tree, in chapters
 
-> **Scope.** A plan to reshape the research tree (`src/sim/data/tech-tree.json`)
-> after Elvenar's: one chapter per Townhall level, a short main path in each,
-> every card opening something concrete, and a Knowledge price that fits what
-> the target player earns. The system — pouring, the bar, instant completion —
-> stays as it is ([`../features/07-research.md`](../features/07-research.md)).
+> **Scope.** Reshape research (`src/sim/data/tech-tree.json`) after Elvenar:
+> one tree in sequential chapters, one chapter per Townhall step, a required
+> spine budgeted to the target player, optional dead ends, and a reward for
+> finishing a chapter whole. Pouring, the Knowledge bar and instant
+> completion stay as they are ([`../features/07-research.md`](../features/07-research.md)).
 >
-> **Status.** Proposal, 2026-10-05. Nothing built. Open decisions in §7.
+> **Status.** Agreed design, 2026-10-05. Nothing built. Open decisions in §8.
 
 ## 1. What is there today
 
-- **167 cards in five books.** Civics 75 · Warfare 40 · Magic 28 · Atlas 13 ·
+- **167 cards in five books**: Civics 75 · Warfare 40 · Magic 28 · Atlas 13 ·
   Sagas 11.
-- **116 are `bonus` cards (69%)**, 42 `unlock`, 9 `mechanic`.
-- **Most bonuses are +5–20% ladders** of one stat, repeated across eras:
-  `harvestYield` 18 cards, `unitAtk` 7, `unitDef` 6, `manaCap` 6, `taxRate` 5,
-  `armyCap` 5, `manaRegen` 5, `knowledgeYield` 5. Civics alone carries 21
-  ladder stems.
-- **The shape is a funnel.** Each band ends in one card that requires the
-  whole row above it, so everything above is mandatory:
-  - `Bureaucracy` (TH3) needs 20 cards · 32 K · 2,430 Gold.
-  - `Magistracy` (TH4) needs **every card in Civics eras 1 and 2**: 42 cards ·
-    113 K · 21,180 Gold.
-- **Tapping cards sit on the main path.** `Bureaucracy` requires `TapPowerI`
-  and `QuickHandsI`. `Magistracy` also needs `TapPowerII` and `QuickHandsII`.
-- **TH5–TH10 have no technology gate.** Goods and villagers gate them instead,
-  so after Magistracy the tree paces nothing the Townhall needs.
-- **Bands open on revealed cells**: Civics 0 · 43 · 100; Warfare 0 · 85 · 100 ·
-  220; Magic 0 · 30 · 100 · 220; Sagas 0 · 100; Atlas 0 · 220.
+- **116 are `bonus` cards (69%)**, most of them +5–20% ladders repeated across
+  eras: `harvestYield` 18 cards, `unitAtk` 7, `unitDef` 6, `manaCap` 6,
+  `taxRate` 5, `armyCap` 5, `manaRegen` 5, `knowledgeYield` 5.
+- **Each band funnels into one card that needs the whole row above it.**
+  `Magistracy` (TH4) needs all 42 cards of Civics eras 1–2: 113 Knowledge by
+  day 5, against about 120 earned.
+- **Tap cards are on the path to the Townhall.** `Bureaucracy` needs
+  `TapPowerI` and `QuickHandsI`.
+- **Nothing in the tree gates TH5–TH10.**
+- **Three books split one Knowledge budget**, so the pacing cannot know which
+  book a point goes to.
 
-### 1.1 Cards that are noise or no longer relevant
+## 2. Elvenar's shape (checked)
 
-| Group | Cards | Why |
+- **One tree, chapters I–XXV, strictly in sequence.**
+- **A chapter opens on exploration**: its first technology needs a number of
+  provinces completed on the world map (480 for chapter 17, 520 for 18).
+- **Lines show requirements.** A technology needs every technology that leads
+  into it.
+- **A technology with no line out of its right side is an optional dead
+  end.** In practice these are some city expansions, squad-size upgrades and
+  unit upgrades. Building levels, Main Hall levels, production steps and the
+  chapter's wonders are required.
+- **Finishing every technology of a chapter grants a Research Diploma**, a new
+  effect in the Cauldron — the reason to do the dead ends.
+- **Two-step price**: fill the Knowledge, then unlock with coins, supplies or
+  goods.
+- **Knowledge: 1 an hour, at most 10** (20 with an enchantment); more from
+  tournaments, world encounters and wonders; buyable with coins, goods or
+  diamonds at a price that rises permanently with each purchase.
+
+## 3. The design
+
+### 3.1 One tree, nine chapters
+
+- **One tree.** Civics, Warfare and Magic become one; Sagas and Atlas stay
+  found books (§6).
+- **Chapter *n* is Townhall *n* → *n+1***; nine chapters.
+- **Chapters are sequential.** Chapter *n+1* cannot start before chapter *n*'s
+  finale is researched.
+- **A chapter opens on revealed cells**, the way the bands open today and the
+  way Elvenar's open on provinces. The finale of a chapter opens the next
+  Townhall level.
+- **Every column mixes lanes** — city, army, magic — shown by a light cue on
+  the card (a frame or colour per lane).
+
+### 3.2 A chapter's layout
+
+- **Columns, 1–4 cards wide**, read left to right; a card needs what its lines
+  lead in from.
+- **The spine is required**: every card with a line out to the right leads,
+  in the end, to the finale.
+- **Dead ends are optional**: a card with no line out to the right. About
+  **20–30%** of a chapter.
+- **Width is the player's choice of order**: a chapter opens 2 wide, widens to
+  3–4, and narrows to the finale (e.g. 2 → 4 → 3 → 1).
+- **About 10 cards a chapter**: ~4 unlocks, ~4 fillers, ~2 dead ends, and the
+  finale (some unlocks and fillers are dead ends).
+
+| Card | Lane | Spine or dead end |
 |---|---|---|
-| **The thumb** | `TapPowerI`–`IV`, `QuickHandsI`–`III` | the tap is no longer a lever worth a research |
-| **The Mana pool** (the tap budget) | `Meditation`, `DeepWellsI`–`V`, `LeyTapsI`–`V` | 11 cards on one number; the Sanctum's own levels already raise it (`mana.sanctumCapPerLevel`) |
-| **Regrowth** | `CropRotationI`–`II`, `ReforestingI`–`II` | 10% off a 60–90 s stump |
-| **Mountains** | `TerracingI`, `StonecuttingI`–`III`, `IronPicksI`–`III`, `GoldPanningI`–`II` | yield ladders on ground that no longer runs out; Terracing was regrowth until 2026-10-05 |
-| **Stores** | `GranariesI`–`III` | a store is sized by building level (03-economy §3.2); OQ-108 says nothing else raises it |
-| **Crew micro** | `WorkerLoadI`–`III`, `CartageI`–`III`, `Roadworks` | a producer's late levels already add units per delivery |
-| **Yield %** | `IrrigationI`–`III`, `SawpitsI`–`III`, `ButcheryI`–`II`, `BigNetsI` | the building's level is the production ladder |
-| **Army %** | `WarhornsI`–`IV`, `ShieldWallI`–`III`, `FletchingI`–`III`, `BardingI`–`III`, `VigourI`–`III`, `ColoursI`–`V`, `DrillYardsI`–`III`, `BedsI`–`III` | 25 small ranks; the halls' levels already raise the cap |
-| **Knowledge lumps %** | `ScriptoriumI`–`V`, `WaypostsI`–`IV`, `BountiesI`–`IV` | they make the Knowledge budget hard to predict |
-| **Planned, no effect** | `Invocation`, `LeyReading`, `LeyStorm`, `Rumours` | researchable, but they do nothing yet |
+| a new building, a building's next level, one more of a building | city | spine |
+| a new unit, the halls' next level | army | spine |
+| the Sanctum's step, a spell | magic | spine |
+| **a filler** aimed at something the player uses (§4) | any | spine |
+| an army stat step, an extra store step, a world extra | any | dead end |
+| **the finale**: the next Townhall level | city | spine, last |
 
-That is roughly **110 cards** that are noise, irrelevant, or do nothing.
+### 3.3 The Knowledge budget
 
-## 2. Elvenar's shape
+The spine of a chapter costs what the three-visits-a-day player earns in that
+chapter's days: about **23 a day** from the bar (10 overnight, 6 and 7 between
+visits), plus about 2 a day from landmarks, lairs and quests; the opening
+quests pay 28.
 
-From memory; the details marked *unsure* should be checked against the game.
-
-- **One tree, in chapters.** Chapters I–II are the base. From III each chapter
-  brings a guest race with its own goods and buildings. A chapter is a few
-  dozen technologies (*unsure*: ~20–40), read left to right.
-- **Two or three lanes that split and rejoin.** There is a main path to the
-  chapter's last card. Some cards are optional, mostly military upgrades and
-  some culture buildings (*unsure* which exactly).
-- **The last card opens the next chapter**, alongside the chapter's own quest
-  steps (*unsure*: guest-race chapters also ask for an embassy and quests).
-- **Every card opens something you can see**: a building, a building's next
-  upgrade level, an expansion slot, a new unit or a unit upgrade, a feature.
-  Pure percentage bonuses are rare. Production grows through building levels
-  and culture, not research.
-- **Knowledge Points: 1 an hour, at most 10 held.** Extra KP comes from
-  tournaments, events, quests and buying. Buying costs coins and supplies, at
-  a price that climbs (*unsure* how it resets).
-- **A card costs KP plus coins and supplies**, and in later chapters goods.
-  Research is the main sink for the basic resources.
-
-What we take from it:
-- one chapter per era;
-- a main path plus a few optional cards;
-- every card opens something;
-- bonuses are rare;
-- the KP total is budgeted per chapter.
-
-## 3. The target shape
-
-### 3.1 Chapters are Townhall levels
-
-- **Nine chapters, one per Townhall step**: chapter *n* runs from Townhall *n*
-  to *n+1*.
-- **Each chapter ends in a finale card that unlocks the next Townhall level**,
-  TH5–TH10 included. The Townhall row's `requiredTechPerLevel` comes from the
-  finale's `unlocks`, a dropdown as today.
-- **A chapter opens when the Townhall reaches its level** (decision D3). Its
-  cards cannot be started before that.
-- **Main path ≈ 70% of the chapter's KP; optional cards the rest.** Lanes
-  split and rejoin; no card asks for a whole row.
-
-### 3.2 The Knowledge budget per chapter
-
-Assumptions for the target player (three visits a day at 8:00, 14:00 and
-21:00):
-- The bar pays about **23 KP a day** (10 overnight, 6 and 7 during the day).
-- Lumps (landmarks, lairs, quests) add about 2 a day on average.
-- The opening quests pay 28.
-
-| Chapter | Townhall | Days (target) | KP earned | Main path | Optional |
+| Chapter | Townhall | Target days | Spine | Dead ends | Opens at |
 |---|---|---|---|---|---|
-| 1 | 1 → 2 | day 1 | ~28 (quests) | 20 | 8 |
-| 2 | 2 → 3 | day 1 → 2 | ~25 | 18 | 7 |
-| 3 | 3 → 4 | 2 → 5 | ~75 | 50 | 25 |
-| 4 | 4 → 5 | 5 → 7 | ~50 | 35 | 15 |
-| 5 | 5 → 6 | 7 → 10 | ~75 | 50 | 25 |
-| 6 | 6 → 7 | 10 → 14 | ~100 | 70 | 30 |
-| 7 | 7 → 8 | 14 → 20 | ~150 | 105 | 45 |
-| 8 | 8 → 9 | 20 → 24 | ~100 | 70 | 30 |
-| 9 | 9 → 10 | 24 → 30 | ~150 | 105 | 45 |
-| | | | **~750** | **~525** | **~225** |
+| 1 | 1 → 2 | day 1 | 20 | — | 0 cells |
+| 2 | 2 → 3 | day 1 → 2 | 18 | 6 | 60 |
+| 3 | 3 → 4 | 2 → 5 | 50 | 15 | 120 |
+| 4 | 4 → 5 | 5 → 7 | 35 | 12 | 180 |
+| 5 | 5 → 6 | 7 → 10 | 50 | 15 | 240 |
+| 6 | 6 → 7 | 10 → 14 | 70 | 20 | 300 |
+| 7 | 7 → 8 | 14 → 20 | 105 | 30 | 380 |
+| 8 | 8 → 9 | 20 → 24 | 70 | 20 | 480 |
+| 9 | 9 → 10 | 24 → 30 | 105 | 30 | 600 |
+| | | | **523** | **148** | |
 
-- Today's tree prices **1,265 K** in total, and TH4 asks for 113 K by day 5
-  against ~120 earned. That only works if every point goes to Civics.
-- Knowledge bought with Gold (`knowledge.goldPrice*`) is the **engaged
-  player's valve**: it turns a Gold surplus into a faster chapter. The
-  measurement bot never bought any; the pacing runs must (§6, P5).
+- Today's tree prices **1,265** Knowledge.
+- A card costs about a tenth of its chapter; the finale costs less than the
+  column before it.
+- The cell gates are a starting point. Each sits inside the reach of the
+  Townhall that opens the chapter (TH2 reaches 144 cells, TH3 256, TH4 324,
+  TH5 484, TH6 576, TH7 784, TH8 1,024, TH9 1,260).
+- **The engaged player's way through is buying Knowledge with Gold**, not
+  skipping cards; the dead ends are where extra Knowledge goes.
 
-### 3.3 What a chapter holds
+### 3.4 Price: Knowledge, then Gold
 
-Eight to ten cards, each opening one thing:
+- **First Knowledge is poured, then Gold completes the card** — as today. The
+  Gold is the sink: priced, like buildings, in days of what the target player
+  collects.
+- **From chapter 5 a card may also ask for goods** (Planks, Cut Stone, Iron,
+  Runestone), like Elvenar's later chapters.
 
-| Slot | Opens | Example |
-|---|---|---|
-| a **new building** | `district` | Quarry, Smelter, Stables |
-| **Housing's next level** | `district` + level | Housing L3 |
-| **the producers' next level** | one card opens it for Sawmill, Quarry, Farm and Docks together | "Timber Framing": producers L3 |
-| **the halls' next level** | `district` + level, all four halls | `WarbandII` as today |
-| **a unit, or a unit upgrade** | `unit`; an upgrade is a new unlock kind (§5) | Archer; Veteran Warriors |
-| **one more of a building** | the existing *one more* unlock | Second Sanctum |
-| **a world/Atlas step** | explorer slot, reveal radius | Scouts, Pathfinding |
-| *(optional)* **one strong bonus** | +10% tax, +1 resident, workshop speed | `Communities`, `TradeRoutes` |
-| **the finale** | the next Townhall level | Bureaucracy, Magistracy, … |
+### 3.5 The chapter reward
 
-- **About 80 cards in the general tree** (9 chapters × 8–10).
-- **Sagas and Atlas stay found books**, 5 to 6 cards each.
-- **Under 100 cards in total**, against 167 today.
+- **Researching every card of a chapter, dead ends included, pays a reward**,
+  our Research Diploma (§8, D2).
 
-## 4. Keep, merge, cut
+## 4. Fillers
 
-- **Keep as unlocks, re-slotted into chapters**:
+A filler is a required card on the spine, so it has to be felt:
+
+- **aimed at something the player already uses** — no Farm storage before the
+  Farm;
+- **real steps**: store +25%, speed +15%, yield +15%, attack/defence +10%,
+  flat +1;
+- **a ladder spread across chapters**, one rank every 2–3 chapters, never two
+  ranks in a row;
+- **never on the tap or Mana.**
+
+*Ready* = the stat exists (`TECH_STATS`); *new* = one stat to add, read where
+its number is computed.
+
+| Lane | Filler | Effect | Stat |
+|---|---|---|---|
+| city | Market Days | +% Gold from Housing | ready (`taxRate` › Housing) |
+| city | Civic Treasury | +% the Townhall's own Gold | new |
+| city | Communities | +1 resident in every house | ready |
+| city | Schooling | villagers train faster | ready |
+| city | Granaries · Woodsheds · Stoneyards · Smokehouses | +% store in Farm · Sawmill · Quarry · Docks | ready (`storageCapacity`) |
+| city | Strongroom | +% store in the Townhall and houses | ready |
+| city | Scaffolding | builders work faster | ready (`buildSpeed`) |
+| city | Sawhorses · Chisels · Bellows · Runic Tools | a workshop works faster | ready (`workshopSpeed`) |
+| city | Apprentices | +1 order slot in a workshop | new |
+| city | Flowerbeds | decorations give +Harmony | new |
+| harvest | Sharp Axes · Sickles · Spears · Nets · Picks | +% per strike: Wood · Food · Meat · Fish · Stone | ready (`harvestYield`) |
+| harvest | Old Growth · Rich Soil | +% held in each tree · each crop plot | new |
+| harvest | Farmhands · Lumberjacks · Miners · Fishers | that building's crew strikes faster | new |
+| harvest | Packhorses | crews carry more per trip | ready (`crewYield`) |
+| harvest | Gamekeeping | berries, game and fish come back faster | new |
+| harvest | Surveying | +1 radius for one producer | new |
+| harvest | Bunkhouse | +1 crew slot in one producer | new |
+| army | Whetstones · Lances · Fletching · Barding | +% attack for one unit type | ready (`unitAtk`) |
+| army | Shield Wall … | +% defence for one unit type | ready (`unitDef`) |
+| army | Rations | +% HP for all troops | ready |
+| army | Drill Masters | one unit type recruits faster | ready (`recruitSpeed`) |
+| army | Barracks Bunks | +% army cap | ready |
+| army | Field Surgeons | +% Infirmary beds | ready |
+| army | Poultices | the Infirmary heals faster | new |
+| army | Mentors | heroes gain more XP | ready |
+| army | Forced March | armies march faster on the board | new |
+| world | Lookouts | +1 fog discover radius | ready |
+| world | Swift Scouts | explorers travel faster | new |
+| world | Cartographers | +1 world reveal radius | ready |
+| world | Logging Camps · Homesteads | world improvements produce more | new |
+| world | Supply Depots | world improvements store more | new |
+| world | Treasure Hunters | fog treasures pay more | new |
+
+- Mountains hold no stock, so "+% held" never aims at Stone, Iron or Gold.
+- Army stat steps beyond one rank per unit per chapter are **dead ends**.
+
+### 4.1 Example — chapter 3 (Townhall 3 → 4)
+
+| Column | Cards |
+|---|---|
+| 1 | Pickaxes (the Quarry) · Market Days I |
+| 2 | Housing L4 · Picks I · Archery (Shooting Grounds) · Stoneyards I |
+| 3 | Masonry (producers L4) · Scaffolding I · *Fletching I (dead end)* |
+| 4 | **Magistracy** (Townhall 4) |
+
+## 5. Keep, merge, cut
+
+- **Keep, re-slotted into chapters** — the unlocks:
   - Civics: `Forestry`, `Agriculture`, `Farming`, `Hunting`, `Saws`,
     `Pickaxes`, `Masonry`, `UrbanPlanning`, `Hospitality`, `Bureaucracy`,
     `Mining`, `Magistracy`, `Joinery`, `StoneDressing`, `Aqueducts`,
@@ -149,66 +197,48 @@ Eight to ten cards, each opening one thing:
   - Magic: `Consecration`, `AttunementII`, `Sailing`, `Fishing`,
     `AttunementIII`, `Shipbuilding`, `SecondSanctum`, `AttunementIV`,
     `LeyLines`.
-  - Sagas: `CommonRoom`, `GuestRooms`, `GreatHall`, `MinstrelsGallery`.
-  - Atlas: `Cartography`, `ScoutsI`–`II`, `Pathfinding`.
-- **Keep as the few optional bonuses**: `Communities`; `TradeRoutes` as 3
-  ranks of +10% rather than 5 of +5%; `SchoolingI`–`II`, now that villager
-  time climbs; `GuildHallsI`–`II`, since goods are the late friction.
-- **Merge**:
-  - the Warfare stat ladders → **one unit upgrade per unit**, spread over
-    chapters 4–9 (4 to 8 cards);
-  - `FarsightI`–`IV` → 2 ranks;
-  - `TalesI`–`III` and `WarmWelcomeI`–`III` → 1 rank each.
-- **Cut** (the §1.1 groups): every tap card, every Mana ladder, regrowth,
-  mountain yields, Granaries, crew micro, yield %, the army % ladders except
-  the merged upgrades, the Knowledge-lump %, and the four planned cards until
-  they are built.
-- **Tap cards: cut, with no replacement.** A tap stays at `tap.workSeconds`.
-  Mana grows only with the Sanctum's levels.
+- **Keep as fillers**, re-stepped to §4's sizes: `Communities`,
+  `TradeRoutesI`–`V` (as Market Days), `SchoolingI`–`II`, `GuildHallsI`–`II`, the `harvestYield`
+  ladders (one rank per source per 2–3 chapters), `GranariesI`–`III`.
+- **Turn into dead ends**: the army stat ladders (`WarhornsI`–`IV`,
+  `ShieldWallI`–`III`, `FletchingI`–`III`, `BardingI`–`III`, `VigourI`–`III`,
+  `ColoursI`–`V`, `DrillYardsI`–`III`, `BedsI`–`III`), one rank per unit per
+  chapter.
+- **Merge**: `FarsightI`–`IV` → 2 ranks; `TalesI`–`III`, `WarmWelcomeI`–`III`
+  → 1 rank each.
+- **Cut**: `TapPowerI`–`IV`, `QuickHandsI`–`III`, `Meditation`,
+  `DeepWellsI`–`V`, `LeyTapsI`–`V`, `TerracingI`, `WorkerLoadI`–`III`,
+  `CartageI`–`III`, `Roadworks`, `ScriptoriumI`–`V`, `WaypostsI`–`IV`,
+  `BountiesI`–`IV`; and `Invocation`, `LeyReading`, `LeyStorm`, `Rumours`
+  until they do something.
+- **About 90 cards in the tree**, plus the found books.
 
-## 5. What it needs beyond data
+## 6. Found books
 
-- **Data only** (`?dev=data#tree`): pruning, re-slotting, prices, chapters as
-  bands, finales for TH5–TH10.
-- **Code**:
-  - a chapter that opens on a Townhall level rather than on revealed cells
-    (`techTreeRules.ts`, `research.ts` `startTech`);
-  - a *unit upgrade* `TechUnlock`, if the merged army cards are upgrades and
-    not stats;
-  - a materials price per card (D4).
-- **Saves**: removed tech ids must be dropped on load. A bonus already
-  researched is simply lost, unless D5 refunds it. This is a semantic change,
-  so it gets a migrator and a `SAVE_VERSION` bump.
-- **The quest chain** names technologies (`ResearchTech` goals; onboarding
-  steps 20–25 research `Hunting`, `TradeRoutesI`, `SawpitsI`, `ReforestingI`).
-  Those goals move to cards that survive.
+- **Sagas and Atlas stay books found in ruins**, 5–6 cards each.
+- **Outside the pacing**: never required by a chapter or a Townhall level.
+- **Paid outside Knowledge** — Gold, or what ruins pay (Stardust) — so they do
+  not draw on a chapter's budget.
 
-## 6. Work plan
+## 7. Work plan
 
 | Phase | What | Touches |
 |---|---|---|
-| **P1 · Prune** | Remove the tap, Mana, regrowth, Granaries and planned cards; rewire `requires` around them so `Bureaucracy` and `Magistracy` no longer pass through them; drop unknown ids on load. | `tech-tree.json` (tree editor), `save.ts` + migrator, `quests.json` goals, `tests/techTree.test.ts`, `tests/ladderEffects.test.ts`, `tests/onboarding.test.ts`, `tests/quests.test.ts` |
-| **P2 · Chapters** | Nine chapters aligned to the Townhall; finale cards for TH5–TH10; KP and Gold per card from §3.2; chapters open on Townhall level (D3). | `tech-tree.json` (eras → chapters), `techTreeRules.ts`, `research.ts`, `unlocks.json` splashes, the research screen's bars |
-| **P3 · Concrete unlocks** | Turn the surviving ladders into level, *one more* and unit-upgrade unlocks; spread producer and Housing levels across chapters. | `tech-tree.json`, `techEffectRules.ts` (retire the unused `TECH_STATS`), `definitions.ts` gates, `techProse.ts` |
-| **P4 · Materials** *(if D4)* | Cards also cost Wood/Stone, and goods from chapter 5. | the tech schema + `researchTech`, `techTreeRules.ts`, tests |
-| **P5 · Measure** | Rerun the three pacing schedules with a bot that also buys Knowledge; tune the per-chapter KP and Gold. | `tests/thirtyDays.test.ts` (re-pin), the scratch pacing runner |
-| **P6 · Docs** | Rewrite `tech-tree.md` around chapters; update `07-research.md` §2, `22-progression.md` §9 and `12-quests.md`; close the decisions in `open-questions-closed.md`. | `Docs/` |
+| **P1 · One tree** | Merge Civics, Warfare and Magic into one tree with lanes; the doors that hand over Warfare and Magic point at their first cards instead. | `tech-tree.json`, `research.ts` (`TOME_OPENS`), `sim/doors.ts`, `unlocks.json`, the stage scene that gives Warfare, the research screen |
+| **P2 · Prune** | Cut §5's list; drop unknown ids on load. | `tech-tree.json`, `save.ts` + migrator, `quests.json` goals naming cut cards, `tests/techTree.test.ts`, `tests/ladderEffects.test.ts`, `tests/onboarding.test.ts`, `tests/quests.test.ts` |
+| **P3 · Chapters** | Nine sequential chapters opened on cells; finales for TH2–TH10; spine and dead ends; Knowledge per card from §3.3. | `tech-tree.json` (eras → chapters), `techTreeRules.ts` (a chapter must end in one finale; every spine card leads to it), `research.ts` |
+| **P4 · Fillers** | Re-step the kept fillers; add the new stats §4 needs. | `techEffectRules.ts` (`TECH_STATS`), the call site of each new stat, `techProse.ts` |
+| **P5 · Reward and goods** | The chapter reward; goods on cards from chapter 5. | `research.ts`, the tech schema, the research screen |
+| **P6 · Measure** | Rerun the three pacing schedules with a bot that buys Knowledge; tune Knowledge, Gold and cell gates per chapter. | the pacing runner, `tests/thirtyDays.test.ts` |
+| **P7 · Docs** | Rewrite `tech-tree.md` around chapters; update `07-research.md`, `22-progression.md`, `12-quests.md`; close the decisions. | `Docs/` |
 
-## 7. Open decisions
+## 8. Open decisions
 
-- **D1 · One tree or five books?** *Recommended:* Civics, Warfare and Magic
-  become one chaptered tree with three lanes (city · army · magic); Sagas and
-  Atlas stay found books. This reopens the 2026-09-24 "three general books"
-  decision.
-- **D2 · A finale for every Townhall level, TH5–TH10 included?**
-  *Recommended: yes.* That is the chapter rule, and it gives the tree
-  something to pace late.
-- **D3 · Chapters open on the Townhall level instead of on revealed cells?**
-  *Recommended: yes.* Fog already bounds the Townhall through its reach.
-- **D4 · Do cards also cost materials (Elvenar's supplies)?** It is one more
-  Gold/Wood sink. It needs code.
-- **D5 · What happens to bonuses a player already researched that are cut?**
-  Lost, or refunded in Knowledge and Gold.
-- **D6 · How many % bonuses survive?** §4 keeps about 8.
-- **D7 · The Knowledge purchase price**: with fewer, budgeted cards, is
-  `n × 100` Gold per point the right valve for the engaged player?
+- **D1 · Refunds.** A player who researched a cut card: lose it, or refund its
+  Knowledge and Gold?
+- **D2 · The chapter reward.** A relic, a card pack, a decoration, or a
+  permanent effect like Elvenar's Cauldron?
+- **D3 · Goods on cards** from chapter 5, or Gold only?
+- **D4 · How many new stats** to build in P4 — all twelve in §4, or the four
+  that add most variety (crew strike speed, stock in trees and plots,
+  workshop slots, world improvement output)?
