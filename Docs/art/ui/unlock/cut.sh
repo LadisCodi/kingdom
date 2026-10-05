@@ -29,3 +29,6 @@ cut_sheet() { # fill sheet id...   (ids in quadrant order: tl tr bl br)
 cut_sheet 0.88 $D/sheet-1-mechanics.png build research heroes relics
 cut_sheet 0.88 $D/sheet-2-books.png     book_warfare book_magic book_sagas book_atlas
 cut_sheet 0.96 $D/sheet-3-world.png     world
+# The Bag (2026-10-05): one icon alone on its sheet — trimmed and fitted.
+magick $D/sheet-4-bag.png -trim +repage -filter Lanczos -resize 450x450 \
+  -background none -gravity center -extent ${SIZE}x${SIZE} PNG32:$OUT/unlock_bag.png

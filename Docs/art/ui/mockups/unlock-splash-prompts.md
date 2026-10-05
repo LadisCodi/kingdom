@@ -71,3 +71,14 @@ One icon alone, centred on a square canvas, filling about 75% of it — THE WORL
 
 `Docs/art/ui/unlock/cut.sh` cuts the three sheets in `Docs/art/ui/unlock/`
 into `src/render/assets/unlock_<id>.png`, 512×512.
+
+### Sheet 4 — the Bag (new chat, 2026-10-05)
+
+Attach `Docs/art/ui/unlock/ref-bag.png` (the unlock icons already cut, and
+heroes and a troop) as the only reference:
+
+> CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — the unlock icons and heroes already in this game; match their style exactly, it is LOCKED.
+>
+> One icon alone, centred on a square canvas, filling about 75% of it — THE BAG: a brown leather adventurer's satchel, slightly bulging, its buckled flap half open, a winged brass hourglass and the corner of a small red treasure chest peeking out, a shoulder strap curling round. Front three-quarter view, the same angle and weight as the attached helmet and chest.
+>
+> (the style block and the tail above)
