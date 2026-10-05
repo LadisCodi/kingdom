@@ -14,7 +14,8 @@
 
 import { track as trackEvent } from './analytics';
 import { SURVEY } from './data/definitions';
-import { cityGoldPerSecond, grantPack } from './collection';
+import { grantPack } from './collection';
+import { cityGoldPerSecond } from './production';
 import { recordEvent } from './events';
 import { payKnowledge } from './knowledge';
 import { revealedCellCount } from './research';

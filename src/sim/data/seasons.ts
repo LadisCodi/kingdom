@@ -230,15 +230,5 @@ export const SEASONS: readonly SeasonDef[] = [
   { name: 'Season of Lanterns', hero: 'GoldenDragon', frame: 'lanterns' },
 ];
 
-/**
- * THE SHARED CALENDAR. Seasons run back to back from this instant, every
- * player in the same one at the same time — a player who arrives on the last
- * day has one day, like everyone else (§3).
- *
- * 2026-01-05T00:00:00Z, a Monday, so a season always opens on one — which is
- * why the length is a whole number of weeks.
- */
-export const SEASON_EPOCH = Date.UTC(2026, 0, 5);
-
 export const seasonContent = (occurrence: number): SeasonDef =>
   SEASONS[((occurrence % SEASONS.length) + SEASONS.length) % SEASONS.length];

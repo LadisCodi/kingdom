@@ -4,6 +4,7 @@
     "pass": {
       "type": "object",
       "fields": {
+        "seasonDays": { "type": "int" },
         "missionXp": { "type": "int" },
         "levelXpBase": { "type": "int" },
         "levelXpGrowth": { "type": "int" },

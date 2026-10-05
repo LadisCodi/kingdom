@@ -39,7 +39,7 @@ import { isTechComplete } from './research';
 import { rand } from './rng';
 import { tally } from './events';
 import { cityGatherPerSecond } from './upgrades';
-import { cityGoldPerSecond } from './collection';
+import { cityGoldPerSecond, cityMakesPerSecond } from './production';
 import {
   newId,
   type CurrencyId, type DistrictId, type GameState, type Mission, type MissionKind,
@@ -209,9 +209,7 @@ function targetFor(
     case 'CollectResource': {
       const minutes = MISSIONS.collectMinutesMin +
         roll * (MISSIONS.collectMinutesMax - MISSIONS.collectMinutesMin);
-      const rate = subject === 'Gold'
-        ? cityGoldPerSecond(state)
-        : cityGatherPerSecond(state, subject ?? 'Gold');
+      const rate = cityMakesPerSecond(state, subject ?? 'Gold');
       return Math.max(MISSIONS.collectFloor, Math.round(rate * minutes * 60));
     }
     case 'DiscoverCells': return inBand(roll, MISSIONS.revealBand);

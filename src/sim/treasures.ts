@@ -18,7 +18,7 @@
 
 import { track } from './analytics';
 import { HARVEST, TREASURE } from './data/definitions';
-import { cityGoldPerSecond } from './collection';
+import { cityMakesPerSecond } from './production';
 import { explorationGate, fogState, isPayable } from './fog';
 import { footprintCells, neighbors, type MapData } from './grid';
 import { recordEvent } from './events';
@@ -31,7 +31,6 @@ import { techMultiplier } from './techEffects';
 import {
   addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type GameState, type Wallet,
 } from './state';
-import { cityGatherPerSecond } from './upgrades';
 
 /** Is a treasure owed and not yet placed? One is owed on the first paid
  *  reveal and every `everyReveals` after it. */
@@ -136,7 +135,7 @@ export function treasureReward(state: GameState, treasure: { n: number; coin: Cu
   const { n, coin } = treasure;
   if (n === 0) return { [TREASURE.firstCoin]: TREASURE.firstAmount };
   if (coin === 'Knowledge') return { Knowledge: TREASURE.knowledge };
-  const rate = coin === 'Gold' ? cityGoldPerSecond(state) : cityGatherPerSecond(state, coin);
+  const rate = cityMakesPerSecond(state, coin);
   const floor = TREASURE.floor[coin] ?? 0;
   // The tree's `treasureYield` lifts a find priced in production — never the
   // first, which the opening counts on, and never Knowledge, which the

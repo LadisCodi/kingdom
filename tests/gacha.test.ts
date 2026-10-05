@@ -12,7 +12,7 @@ import {
 } from '../src/sim/heroes';
 import { heroLevelCapForTier, xpLevelCost } from '../src/sim/heroLadder';
 import type { PullResult } from '../src/sim/heroes';
-import { COLLECTION } from '../src/sim/data/definitions';
+import { HERO_LADDER } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
 import { freshGame, freshPresenter } from './helpers';
 
@@ -66,7 +66,7 @@ describe('fragments are the second door to a hero', () => {
   it('prices the unlock at the ladder\'s own base rung', () => {
     // The number the card shows and the number the first ascension asks for
     // are deliberately the same one, so the player learns it once.
-    expect(heroUnlockCost()).toBe(COLLECTION.fragmentsPerTierBase);
+    expect(heroUnlockCost()).toBe(HERO_LADDER.fragmentsPerTierBase);
   });
 
   // The property the whole design turns on: a hero the banner never offers is
@@ -254,7 +254,7 @@ describe('a hero ascension is worth ten levels', () => {
   it('caps each tier ten levels above the last, and fifty at the top', () => {
     expect(heroLevelCapForTier(1)).toBe(10);
     expect(heroLevelCapForTier(2)).toBe(20);
-    expect(heroLevelCapForTier(COLLECTION.maxTier)).toBe(50);
+    expect(heroLevelCapForTier(HERO_LADDER.maxTier)).toBe(50);
   });
 
   it('keeps the XP curve payable over fifty levels', () => {

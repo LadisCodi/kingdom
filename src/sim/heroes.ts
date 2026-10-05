@@ -30,7 +30,7 @@
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import {
-  BANNERS, COLLECTION, DISTRICTS, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
+  BANNERS, DISTRICTS, HERO_LADDER, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
   type BannerId, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
@@ -187,7 +187,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
  * two. It is deliberately NOT a tier raise: an unlocked hero still starts at
  * tier 1 with the whole ascension ladder ahead of them.
  */
-export const heroUnlockCost = (): number => COLLECTION.fragmentsPerTierBase;
+export const heroUnlockCost = (): number => HERO_LADDER.fragmentsPerTierBase;
 
 export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
 
@@ -215,7 +215,7 @@ export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
  * a second hero currency — 750 to max one hero against ~3,612 for a relic.
  */
 export const ascensionStardustCost = (tier: number): number => Math.round(
-  COLLECTION.ascensionStardustBase * COLLECTION.ascensionStardustGrowth ** (tier - 1),
+  HERO_LADDER.ascensionStardustBase * HERO_LADDER.ascensionStardustGrowth ** (tier - 1),
 );
 
 export type HeroTierResult =

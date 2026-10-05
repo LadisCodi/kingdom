@@ -1176,15 +1176,13 @@ export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
   }),
 ) as Record<PackTier, PackDef>;
 
-/**
- * The HERO collection substrate: Fragments raise a tier cap and Hero XP buys
- * levels within it.
- *
- * It used to be shared with the relics, and is not any more: a relic is
- * levelled by finishing its album and by nothing else, so it has no tier, no
- * Fragments and no level cap (Docs/features/09-relics.md §13).
- */
+/** The card season's albums, stars, vault and wildcards
+ *  (Docs/features/09-relics.md). */
 export const COLLECTION = balance.collection;
+
+/** The hero ladder: Fragments raise a tier cap and Hero XP buys levels within
+ *  it. A relic has no tier, no Fragments and no level cap. */
+export const HERO_LADDER = balance.heroLadder;
 
 /**
  * What a relic waits before its ability can be cast again — counted from the
@@ -2367,6 +2365,8 @@ export const SURVEY = balance.survey as {
  *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
  *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
 export const PASS = balance.pass as {
+  /** The length of the shared 28-day calendar (`sim/seasonClock.ts`). */
+  seasonDays: number;
   missionXp: number;
   levelXpBase: number;
   levelXpGrowth: number;
