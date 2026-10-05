@@ -690,7 +690,7 @@ async function boot(): Promise<void> {
         if (th && th.level < 10) th.level += 1;
         runTick();
       }),
-      // Goods, until a workshop can make them (Docs/plans/builder-30-days.md
+      // Goods, until a workshop can make them (Docs/features/17-workshops-and-goods.md
       // §3): the prices that name them ship before the producer does.
       button('📦 +10 goods', () => {
         for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);

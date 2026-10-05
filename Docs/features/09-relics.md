@@ -3,25 +3,18 @@
 > **Scope.** The eight relics as permanent kingdom passives with no ceiling,
 > and the **collection** that levels them: a 28-day season of eight card albums,
 > the packs the cards come in, duplicates, the vault, trading, wildcards, and
-> the season hero. Heroes are [`10-heroes.md`](10-heroes.md); the ruins the
-> packs fall from are [`11-expeditions.md`](11-expeditions.md).
+> the season hero. Heroes are [`10-heroes.md`](10-heroes.md); where the packs
+> come from is §6.
 >
-> **Status: built 2026-09-11; the eight-album rework landed 2026-09-15**
-> ([`../plans/collection-eight.md`](../plans/collection-eight.md) steps 1–5:
-> the eight relics and their final passives, the nine packs and the vault's
-> three chests, eight albums with a rotating relic pairing, and the lap).
-> Three things are deliberately left out and named where they belong:
-> **trading** (§8 — it waits on the social layer, OQ-89), the **season hero's
-> rate-up** (§10 — it waits on a banner payload in the timeline) and the relic
-> **actives** (the plan's step 6 — **OQ-98** closed in their favour on
-> 2026-09-15, and they are being built out). Everything else runs:
-> the season and its melt-down, the packs, the albums, the payouts, the lap,
-> the collection prize, the stars, the vault, the wildcards and their aimed
-> offers, the close, and the four screens of §11.
+> **Status: built** — the eight relics and their passives and actives, the
+> nine packs and the vault's three chests, eight albums with a rotating relic
+> pairing, the lap, the season and its melt-down, the payouts, the collection
+> prize, the stars, the wildcards and their aimed offers, the close, and the
+> screens of §11. Not built: **trading** (§8 — it waits on the social layer,
+> OQ-89) and the **season hero's rate-up** (§10 — it waits on a banner
+> payload in the timeline).
 >
-> **The faucet is somebody else's step.** The collection is complete and does
-> not yet play: 165 of the free season's 200 packs come from the repeatable
-> dungeon, which is not built — **OQ-102**.
+> **The free faucet is short of its target** — **OQ-102**.
 >
 > **The season is 28 days — four weeks**, sized so the free faucet of ~200
 > packs reads as about seven a day
@@ -32,10 +25,7 @@
 >
 > The store's three **card bundles** (§6.1) are built with them.
 >
-> One bridge, temporary and in the code that owns it: the four relic ACTIVES
-> still live on their relics, gated on owning one, until the Magic tome's
-> spells land ([`07-research.md`](07-research.md) §6). The 72 card faces are
-> painted (2026-09-16, one 3×3 sheet per album).
+> The 72 card faces are painted, one 3×3 sheet per album.
 
 ## 1. The model
 
@@ -55,11 +45,10 @@
 - **A relic is one idea at two speeds** (§2.1): the passive is that idea
   always on, and the **active** is the same idea as a placed zone, for a
   window, bought with Mana. Every relic has one, and it is cast from the relic
-  that owns it. The Magic tome holds no spells — **OQ-98, closed 2026-09-15**
+  that owns it. The Magic tome holds no spells
   ([`07-research.md`](07-research.md) §6).
-- The **Collection** tab replaces the Relics tab in the nav. It is hidden
-  until the player holds a card, and appears the moment they open their first
-  pack.
+- The nav tab is **Relics** (§11.2). It is padlocked until the player holds
+  a pack or a card.
 
 ## 2. The eight relics
 
@@ -75,10 +64,12 @@ never a discount, because a discount dies at 100%.
 | **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
 | **The Delver's Lantern** | a room's **Gold and Stone +X%** | `roomHaul` |
 | **The Muster Horn** | the army the halls field **+X%** | `armyCap` |
-| **The Bailiff's Tally** | every world-map improvement's hourly grant **+X%** | `worldImprovementYield` — **waits on the world map** |
+| **The Bailiff's Tally** | every world-map improvement's hourly grant **+X%** | `worldImprovementYield` — **not read yet** |
 
 - **Five are the city's and three are the pillars outside it** — the dungeon,
   the war and the world map.
+- **Three move nothing today** (**OQ-113**): the Compass's passive and the
+  Lantern's passive and Lamplight act on rooms that no longer read them.
 - **The Lantern takes a room's MATERIAL half only.** Its Stardust is the
   Compass's and its Hero XP is a legendary's boon; three permanent layers on
   one number would be unreadable.
@@ -183,7 +174,7 @@ The eight, and which one axis each grows:
 - Full design, level by level:
   [`../proposals/relic-effects.md`](../proposals/relic-effects.md).
 
-- **Every passive keeps this rule** as of 2026-09-15 (**OQ-97**, closed): a
+- **Every passive keeps this rule**: a
   speed the call site divides by, a multiplier above 1, or a flat term on a
   base the data authors and never grows. Nothing falls, so no level is the
   last one worth having.
@@ -370,12 +361,12 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
 
 | Tier | Slots | Guarantees | Falls from |
 |---|---|---|---|
-| **Green** | 2 | one 1★ | every ruin room, the pass's free track |
-| **Yellow** | 3 | one 2★ | quests |
-| **Rose** | 3 | one 3★ | a depth's boss, the weekly event track |
-| **Blue** | 4 | one 4★ | the pass's paid column, **the store** |
-| **Purple** | 6 | one 5★ | the collection's late milestones, guild chests, **the store** |
-| **Golden** | 1 | — (it rolls **gold only**) | a bottomed ruin, **the store** |
+| **Green** | 2 | one 1★ | the pass's free column, the survey, a quest |
+| **Yellow** | 3 | one 2★ | the pass's free column, the survey |
+| **Rose** | 3 | one 3★ | the pass's free column, the Dark Portal's floors |
+| **Blue** | 4 | one 4★ | the pass's and the survey's paid columns, **the store** |
+| **Purple** | 6 | one 5★ | the pass's and the survey's paid columns, **the store** |
+| **Golden** | 1 | — (it rolls **gold only**) | the paid columns, the Dark Portal's floors, **the store** |
 | **Bronze chest** | 7 | one 3★ · one 4★ | **the vault** — bought with stars |
 | **Silver chest** | 9 | one 4★ · one 5★ | **the vault** |
 | **Gold chest** | 3 | one 5★ · one gold 4★ | **the vault** |
@@ -395,14 +386,8 @@ over the seven faces (1★ · 2★ · 3★ · 4★ · 5★ · gold 4★ · gold 
   Green on most levels, Yellow and Rose on the fifths
   ([`20-season-pass.md`](20-season-pass.md) §2). The paid column pays Blue,
   Purple and Golden.
-  **The ruins pay no packs.** They clear **once**, and a pack per room was 191
-  in the lifetime of an account and then nothing for ever — a **welcome, not a
-  supply**. What the dungeon feeds the collection now is the pass missions it
-  completes, which is the one source that answers *playing more*.
-  The faucet that would renew at volume is still the **repeatable dungeon**,
-  designed to follow ([`../implementation-plan.md`](../implementation-plan.md)
-  §4) — **OQ-102**. Until it lands the free player sees about 52 packs a
-  season, all from the pass's free column (**OQ-88**).
+  **Dungeon rooms pay no packs**: what the dungeon feeds the collection is
+  the pass missions it completes. The faucet at volume is **OQ-102**.
 - The pace to author against is **how many of the eight a player who buys
   nothing completes in a season**. That number, not the price of a pack, is
   what decides whether the collection sells or stalls. **OQ-88.**
@@ -442,8 +427,7 @@ sold together for **money** rather than for Gems, on the store's own shelf
 - **Every bundle is a pack the STORE sells**, never one the faucet drips — a
   bundle of free packs would be the faucet sold back at a price. They hold
   **Purple** packs, which guarantee a 5★ rather than a gold edition; whether a
-  bundle also carries a Golden is open
-  ([`../plans/collection-eight.md`](../plans/collection-eight.md) §3.1).
+  bundle also carries a Golden is open.
 - **A bundle grants no Gems**: it hands over
   the things, not the currency that buys them. The packs land **unopened**,
   like every pack that falls — ten bought together are ten to open in the
@@ -537,7 +521,7 @@ sold together for **money** rather than for Gems, on the store's own shelf
   purchase and the placement are one intention, and sending the player off to
   find the album again would be a second errand.
 - A wildcard is the one targeted purchase in the collection, and it respects
-  the line: the same card is in every Green pack the ruin pays.
+  the line: the same card is in every Green pack the pass pays.
 
 ## 10. The season hero
 
@@ -759,16 +743,14 @@ Every number below is a **proposal until it is authored**; the ones marked
   here.
 - **Ingredients, the 3×3 tier grid, and Fragments as a relic gate.** The
   album is all three.
-- **A relic from a ruin.** Ruins pay packs.
+- **A relic that drops.** Cards come in packs.
 - **A level cap, or a tier.** A relic's level is one number with no top.
 - **A discount as a relic effect.** Speeds and yields only.
 - **A relic carried into a fight**, or one that is worn, slotted or equipped.
 - **An active that is instant**, or one that is not placed. The zone is the
   decision, and an ability that resolved the moment it was bought would be a
   button rather than a choice.
-- **An ability that lives in a tome** (**OQ-98**, closed). A relic whose active
-  was a Magic node would be a passive with a picture, and nine cards a page has
-  to buy something the player presses.
+- **An ability that lives in a tome** ([`07-research.md`](07-research.md) §6).
 - **A separate album screen.** A relic and its nine cards are one page
   (§11.3), and the button that spends them is on it.
 - **An album that closes itself.** The ninth card makes a page CLOSABLE; the
@@ -789,7 +771,7 @@ Every number below is a **proposal until it is authored**; the ones marked
   button the player presses on a card they are tired of.
 - **A stopped clock for a season with nothing after it.** The list cycles, so
   the calendar never runs out and there is no last season to handle.
-- **A gold wildcard in a bundle**, or a bundle of the tiers the ruins drip.
+- **A gold wildcard in a bundle**, or a bundle of the tiers the free column pays.
   Money buys §6.1's hand faster, never a card play cannot reach.
 - **A bundle sold in the last day of a season**, or one whose packs and
   wildcards survive the close to be spent in the next.
@@ -803,5 +785,5 @@ Every number below is a **proposal until it is authored**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-91, OQ-99, OQ-100 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-99, OQ-100, OQ-102, OQ-113 in
 [`../open-questions.md`](../open-questions.md).

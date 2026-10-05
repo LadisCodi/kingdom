@@ -3078,7 +3078,7 @@ export class Game {
   }
 
   /**
-   * The sheet's three pours (Docs/plans/research-book.md §4): how many points
+   * The sheet's three pours (Docs/features/07-research.md §5): how many points
    * the "as much as it can" button pours — the least of what the bar holds
    * and what is missing — and what the Gems button charges to buy every point
    * still missing.

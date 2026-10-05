@@ -1,4 +1,4 @@
-# 18 · Harmony and the decorations
+# 21 · Harmony and the decorations
 
 > **Scope.** The city stat a decoration supplies and an advanced building
 > level demands, the six pieces, the gate between them, and what a surplus
@@ -42,7 +42,7 @@
 - The count cap per piece is the Townhall gate and the ceiling in one, and it
   grows with the Townhall. Meeting a demand therefore takes **several kinds**
   of piece, each priced in a different good: that is what prices Harmony now
-  the plot is unbounded (OQ-1), in place of the ground.
+  the plot is unbounded, in place of the ground.
 - Most supply a Townhall level allows: TH5 **16**, TH6 **48**, TH7 **90**,
   TH8 **162**, TH9 **274**, TH10 **386**.
 
@@ -100,9 +100,7 @@
 
 ## 8. Save
 
-- Nothing new is serialized, and there is no migrator. The save version was
-  bumped anyway, so that a build without the decorations refuses a save that
-  names one rather than loading an id it cannot resolve.
+- Nothing is serialized for Harmony, and there is no migrator.
 
 ## 9. Dials, in the order to reach for them
 
@@ -113,7 +111,7 @@
 | When a piece may stand, and how many | §2 | `buildings.maxCountPerTownhallLevel` |
 | What a piece costs in goods | §2 | `buildings` › `costPerLevel`, its level 1 `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | The surplus tiers and what each pays | 1.10 → +0.05 · 1.25 → +0.10 · 1.50 → +0.15 | `harmony.surplusTiers` |
-| Which technology discovers a piece | §2 | the card's `unlocks` in `?dev=tree` |
+| Which technology discovers a piece | §2 | the card's `unlocks` in `?dev=data#tree` |
 | A house's rent beside a piece | +1 a minute | `adjacency` |
 
 ## 10. Deliberately not in this design
@@ -121,8 +119,7 @@
 - **Harmony as a wallet row, or as anything spent.** It is read where it is
   asked and never leaves the city.
 - **Harmony with reach**, supplied only within a radius. It would make a
-  placement refusable, which adjacency exists to keep from ever being true
-  (OQ-48).
+  placement refusable, which adjacency exists to keep from ever being true.
 - **Demand that drains or decays**, and any deficit that reaches a building
   already standing.
 - **A bonus at demand zero.**

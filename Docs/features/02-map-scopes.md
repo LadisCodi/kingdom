@@ -5,7 +5,9 @@
 > a map design**: the province's map is [`01`](01-map-and-fog.md), the world
 > board is [`19`](19-world-map.md).
 >
-> **Status: designed, not built.**
+> **Status:** the province is built; the world board is built against a local
+> stand-in for the world server ([`19-world-map.md`](19-world-map.md)).
+> Temporary provinces and the guild siege are not built.
 
 ## 1. Three scopes
 
@@ -19,7 +21,7 @@
 
 - One authored map, identical for every player: `region-map.json` as it is. **No
   procedural province generator.**
-- 1,470 cells; the whole fog costs **4,729,789,354 Gold** across the 1,466 that
+- 1,470 cells; the whole fog costs **2,522,803,392 Gold** across the 1,466 that
   are priced.
 - **The buildable plot is the revealed province** — no bound, no ring, no
   expansion to buy ([`05-city-and-districts.md`](05-city-and-districts.md) §4).
@@ -48,7 +50,7 @@ only what it is structurally:
   maths with three metrics and is **not** reused.
 - No code shared with the province: no workers, no influence radius, no
   adjacency that pays Gold.
-- **A hexagon never opens a map of its own** (OQ-5). Contents sit on the hex;
+- **A hexagon never opens a map of its own.** Contents sit on the hex;
   actions live in a dispatch sheet.
 
 ## 2. The two tempos

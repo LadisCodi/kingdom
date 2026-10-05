@@ -212,7 +212,7 @@ export const researchActionableCount = (state: GameState): number =>
 // ------------------------------------------------------------- the states
 
 /**
- * Where a technology stands (Docs/plans/research-book.md §1). There is no
+ * Where a technology stands (Docs/features/07-research.md §5). There is no
  * tree fog: every technology is on its page from the first minute, and this
  * is what varies.
  *

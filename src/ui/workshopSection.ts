@@ -1,6 +1,6 @@
 // The workshop block on a district card: the queue, what the crew is doing to
 // the front of it, and the button that adds one more
-// (Docs/plans/builder-30-days.md §3).
+// (Docs/features/17-workshops-and-goods.md §3).
 //
 // It is deliberately the shape of `trainingSection.ts` — a strip of what is
 // coming, then one action — because a workshop and a hall are the same

@@ -7,8 +7,8 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: built against a local stand-in for the world server**
-> ([`../plans/world-board.md`](../plans/world-board.md)): the board, the fog
+> **Status: built against a local stand-in for the world server**:
+> the board, the fog
 > and the explorers (§1–§3, §9); claiming, the chain, inactive hexes,
 > improvements and their stores, landmarks and Sanctuaries (§5, §7, §8);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
@@ -265,8 +265,7 @@ Two plays out of one button:
 ## 7. Improvements
 
 Built only on a hex the player already controls, and only after the Outpost.
-**Each is opened by its own Atlas card**; *Cartography* opens the first
-explorer and the Outpost.
+No technology gates them; *Cartography* opens the first explorer.
 
 | Improvement | Needs | Gives |
 |---|---|---|
@@ -336,7 +335,7 @@ held, some are destinations.
   boss, which fields more and pays a multiple of a room.
 - **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
   room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
-  beyond its rooms — the found book — is **OQ-118**.
+  beyond its rooms — the found book — is **OQ-122**.
 
 ## 9. Generation
 
@@ -353,8 +352,8 @@ Contents are rolled at board creation, under rules:
   city.
 - **No dungeon** is adjacent to a player's city.
 - **The inner ring is not rolled and not turned — it is authored by hand**, so
-  all six hexes are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
-  (one of them Fertile land), 2 Mountain.
+  all six hexes are worth something and no two are alike: 2 Forest, 2 empty
+  (one of them Fertile land), 2 Mountain (`worldGen.innerRing`).
 - **Every sixth of the board has exactly one Dungeon and one Sanctuary**, on
   its outer ring and never beside a city: six of each on every board, one for
   each seat at the same distance. They are placed, not rolled
@@ -405,7 +404,7 @@ The fixed appointment is worth more than the surprise.
 
 - Every player on the board is notified when it opens, and **every player may
   enter regardless of where their territory is**.
-- A **maximum depth** of 30–50 floors, tuned so nobody empties it in one event.
+- A **maximum depth** of 40 floors (`worldPortal.floors`), tuned so nobody empties it in one event.
 - Floors are taken **one at a time, no skipping**.
 - **Three attempts a day**, restored at a fixed hour. **An attempt is spent only
   on clearing a floor — failing costs nothing.**
@@ -464,7 +463,7 @@ The outer scope feeds the inner one.
 
 - **Attacking a city.** A city hex is never attackable, by anyone, ever.
 - **Cascading conquest** — no hex falls because a neighbour did.
-- **A hex that opens a map of its own** (OQ-5): a dungeon is a destination, not
+- **A hex that opens a map of its own**: a dungeon is a destination, not
   a third map level.
 - **Reactive defence.** Nothing is scrambled when an attack lands; what defends
   is what was garrisoned beforehand.
@@ -475,5 +474,5 @@ The outer scope feeds the inner one.
   brake.
 
 **Open questions:** OQ-3 (season length — the shard is six players on 91 hexes,
-the season is not set), OQ-66, OQ-67 in
+the season is not set), OQ-122 in
 [`../open-questions.md`](../open-questions.md).

@@ -414,7 +414,7 @@ export function upgradeRefusal(
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   // The third errand: the decorations. Asked once, here, and never read
   // again — the level this buys keeps its demand for good, but nothing ever
-  // takes it back (Docs/plans/builder-30-days.md §6.1).
+  // takes it back (Docs/features/21-harmony.md).
   if (harmonyBlock(state, def, district.level + 1, district) !== null) return 'NeedsHarmony';
   return null;
 }

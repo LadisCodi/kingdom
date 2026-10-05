@@ -190,7 +190,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
   });
 });
 
-// STEP 2 (Docs/plans/collection-eight.md): the collection needs eight relics
+// STEP 2 (Docs/features/09-relics.md): the collection needs eight relics
 // and the city had five. The three new ones take the dungeon, the war and the
 // world map.
 describe('the three relics outside the city', () => {

@@ -42,13 +42,14 @@
 ## 3. The price
 
 - `round(base × growth^purchased)`: the same escalating-slot curve as the
-  research and party slots.
+  hero slots.
 - `purchased` is **derived**, `builders − startBuilders`, not stored. A
   *granted* builder (a quest, an event) makes the next *bought* one dearer.
 - Every Gem sink is priced on the 500-Gems-a-dollar ladder
   ([`14-monetization.md`](14-monetization.md) §2.2). Each builder is the next
   pack up (`×2`).
-- The up-front Gem faucet is 3,750 Gems.
+- The up-front Gem faucet is 1,250 Gems: 500 to start, 750 across the quest
+  chain ([`14-monetization.md`](14-monetization.md) §1.1).
 
 | Builder | Gems | Pack |
 |---|---|---|

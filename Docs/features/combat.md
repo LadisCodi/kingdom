@@ -1,15 +1,17 @@
 # Combat — the resolver
 
 > **Spec.** Callers: [`11-expeditions.md`](11-expeditions.md) (rooms and
-> bosses), map landmarks ([`01-map-and-fog.md`](01-map-and-fog.md) §6), the
-> future PvP conquest map. Hero fields, levels and ascension:
+> bosses), the province's lairs
+> ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)), and armies on
+> the world board ([`19-world-map.md`](19-world-map.md)). Hero fields, levels and ascension:
 > [`10-heroes.md`](10-heroes.md). Relics: [`09-relics.md`](09-relics.md).
 > Building levels and costs: [`buildings.md`](buildings.md).
 >
-> **Status: built 2026-09-09.** The resolver is `src/sim/battle.ts` and the
+> **Status: built.** The resolver is `src/sim/battle.ts` and the
 > screen that replays its stream is `src/ui/battleScreen.ts`. Still ahead:
-> unit tiers T2–T5 (§6, no technology opens one yet) and authored boss
-> FORMATIONS beyond the boss villain (§11).
+> unit tiers T2–T5 (§6, no technology opens one yet), villains in a room
+> (§11 — the generator takes a pool and a boss villain, and no caller passes
+> one) and authored boss formations.
 
 ## 1. Model
 
@@ -21,8 +23,8 @@
 
 ## 2. One battle
 
-- Every fight fields **troop slots and hero slots**: gates, ruin rooms,
-  bosses, PvP. There is no hero-only mode.
+- Every fight fields **troop slots and hero slots**: lairs, dungeon rooms,
+  bosses, armies on the world board. There is no hero-only mode.
 - **At least one hero is mandatory** on the player's side
   ([`10-heroes.md`](10-heroes.md) §2.7). Troop slots may be empty.
 
@@ -32,7 +34,8 @@ Per side:
 
 - **6 troop slots** — 2 rows × 3.
 - **3 hero slots**.
-- Every slot, troop or hero, is assigned to the **front** or **back** row.
+- Every slot, troop or hero, sits in the **front** or **back** row — the one
+  its type puts it in (§11).
 - Hero slots are independent of troop slots: a hero never occupies a troop slot
   and never joins a squad.
 - Position determines targeting order only (§8).
@@ -50,9 +53,10 @@ and the army cap; hero slots one free, the rest Gems
   full squad is the ceiling, never the entry price — a player with eleven
   Archers sends eleven.
 - `hp_pool = count × hp_unit`; `alive = ceil(hp_pool / hp_unit)`.
-- **Hit points do not carry between fights.** They are spent inside one and
-  reset when it ends; a squad's HP pool is its count times `hp_unit` every
-  time.
+- **A squad's hit points do not carry between fights.** They are spent inside
+  one and reset when it ends; a squad's HP pool is its count times `hp_unit`
+  every time. A hero's do carry, and mend over time
+  ([`10-heroes.md`](10-heroes.md) §2.8).
 - **WHAT DIES IN THE FIGHT IS GONE FROM THE ROSTER.** A squad that ends with
   340 of its 2,000 hit points lost 83 of its hundred, and those 83 are what
   the city is charged. There is no separate formula: the losses are read off
@@ -85,9 +89,8 @@ and the army cap; hero slots one free, the rest Gems
     the building: they are already trained.
   - Cancelling an order puts them back in their beds and the coin back in the
     purse.
-- **What else an ATTEMPT costs is the caller's rule.** A room and a gate both
-  charge supplies on the way in ([`11-expeditions.md`](11-expeditions.md) §5,
-  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
+- **What else an ATTEMPT costs is the caller's rule.** A lair charges
+  supplies on the way in ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
   the player has banked is ever taken.
 
 ## 5. Unit stats — Tier 1
@@ -213,7 +216,7 @@ Rooms carry a `power_req` budget and a `threatMix`
 ([`11-expeditions.md`](11-expeditions.md) §2). The generator converts
 them:
 
-1. Seed from `(ruin_id, depth_index, room_index)`. Same room, same enemies —
+1. Seed from the room's address — the dungeon, its depth and room. Same room, same enemies —
    the preview and the attempt are one query.
 2. **Villains first**, because what is left is what the squads may cost. Above
    `combat.genVillainThreshold`, up to `combat.genVillainSlots` of them
@@ -234,9 +237,11 @@ can field, so past roughly two thousand points another thousand buys nothing
 fielded is simply not fielded, and the authored ladder lives under that
 ceiling.
 
-**Overrides:** **boss rooms always field their authored villain** (`depths`
-› `bossVillain`), never a rolled one. Authoring a whole formation — named
-villains in named slots, beside chosen squads — is designed and not built.
+**Overrides:** **a boss room always fields its authored villain**, never a
+rolled one. A world dungeon's boss room fields a bigger budget instead
+(`worldDungeon.bossMultiplier`, [`11-expeditions.md`](11-expeditions.md) §6).
+Authoring a whole formation — named villains in named slots, beside chosen
+squads — is designed and not built.
 
 **Budget accounting:** a villain's `power` covers the buff it grants as well
 as its own output, because it is authored rather than derived.
@@ -310,9 +315,9 @@ The cap limits **total troops owned**, not party size.
 
 ## 15. Landmarks
 
-A province landmark is claimed for Gold; it has no fight. Every ruin opens
-with a **gate** — a formation the generator builds from the ruin's `guard`,
-fought on this board as a room ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+A province landmark is claimed for Gold; it has no fight. A lair is a
+formation the generator builds from its `guard`, fought on this board as a
+room ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
 The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 ## 16. Determinism
@@ -335,12 +340,12 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Type fractions, as integer pairs | `combat.typeAdvantageNum/Den`, `combat.typeDisadvantageNum/Den` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `heroes`, `heroes.rarity*` ([`10-heroes.md`](10-heroes.md) §9) |
 | Villain stat blocks, per room | `villains` |
-| Villain pool per depth | `depths` › `villainPool` |
+| Villain pool per depth | — (no key yet: no caller passes one) |
 | Tick length, timeout | `combat.tickMs`, `combat.timeoutTicks` |
 | Enemy slot band, villain threshold, share and slots | `combat.genSlotsMin/Max`, `combat.genVillainThreshold`, `genVillainShare`, `genVillainSlots` |
 | What a hero is worth in the ESTIMATE | `combat.heroPowerPerDmg` |
 | Army cap per building level | `buildings.armyCapPerLevel` |
-| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), `heroes.traitValue`, the `Field Medicine` ranks, `buildings.bedsPerLevel` |
+| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), `heroes.traitValue`, `buildings.bedsPerLevel` |
 | What mending costs against recruiting | `army.healCostShare`, `army.healTimeShare` |
 
 ## 18. Not in this version
@@ -363,5 +368,3 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 **Pending:** tier conversion cost, if any (**OQ-85**) · `powerStart`
 re-authoring against the full T1–T5 power range once tiers exist (**OQ-86**).
-**OQ-82 closed 2026-09-09**: three villain slots, the same three the player
-fields.

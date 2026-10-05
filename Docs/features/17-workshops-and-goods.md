@@ -38,16 +38,16 @@
 
 | Workshop | Makes | Footprint | Unlock | Count cap |
 |---|---|---|---|---|
-| **Carpenter** | Planks | 2×2 | `Engineering` | 1 at TH4, 2 at TH8 |
-| **Mason's Yard** | Cut Stone | 2×2 | `Engineering` | 1 at TH4, 2 at TH8 |
+| **Carpenter** | Planks | 2×2 | `Joinery` | 1 at TH4, 2 at TH8 |
+| **Mason's Yard** | Cut Stone | 2×2 | `Stone Dressing` | 1 at TH4, 2 at TH8 |
 | **Smelter** | Iron | 2×2 | `Mining` | 1 at TH4, 2 at TH8 |
 | **Rune Carver** | Runestone | 2×2 | `Attunement II` | 1 at TH4, 2 at TH8 |
 
-- Max level **10**. Fog ring as any building: reveal 1, discover 2. Movable.
+- Max level **10**. Fog ring: reveal 0, discover 2. Movable.
 - A tap opens the queue. It does not hurry the work and costs no Mana.
 - Build cost: Carpenter 120 Wood · Mason's Yard 100 Wood + 60 Stone ·
-  Smelter 400 Gold + 120 Stone · Rune Carver 800 Gold + 200 Stone. Upgrades
-  follow the ×1.6-a-level curve
+  Smelter 400 Gold + 120 Stone · Rune Carver 800 Gold + 200 Stone. Each
+  level's price is authored (`costPerLevel`), about ×1.6 a level
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3).
 
 ## 4. The crew is the engine
@@ -92,7 +92,7 @@
 
 - Gems **finish the item being worked**, priced on the wall-clock time it has
   left at the current crew — the rush rule of a build
-  ([`14-monetization.md`](14-monetization.md) §2.2).
+  ([`14-monetization.md`](14-monetization.md) §1).
 - More villagers on an item make its rush cheaper.
 - Only the item in progress is for sale. Never the queue behind it, never a
   worker slot.

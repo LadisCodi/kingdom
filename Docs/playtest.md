@@ -6,7 +6,7 @@
 > numbers are read when real players are on it. It answers the prototype's
 > fourth question (§ *What the prototype is for*).
 >
-> **Status: protocol, 2026-10-02.** The log signals of §5 are not built.
+> **Status: protocol.** The log signals of §5 are built.
 
 ## 1. Before: the moments
 

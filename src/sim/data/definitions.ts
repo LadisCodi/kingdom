@@ -221,7 +221,7 @@ const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef 
  *
  * `workSeconds` is the work ONE villager does on a queued item. The crew
  * shares itself over the items in progress, so two workers on one item finish
- * it in half the time (Docs/plans/builder-30-days.md §3).
+ * it in half the time (Docs/features/17-workshops-and-goods.md §3).
  */
 export interface GoodDef {
   id: GoodId;
@@ -385,7 +385,7 @@ export const TAXES = balance.taxes;
  * tier pays on the tax rate. Ascending — a reader takes the LAST tier
  * reached. **At demand 0 there is no ratio and no bonus**, or one Garden at
  * Townhall 5 would pay the top tier for the whole midgame, for free
- * (Docs/plans/builder-30-days.md §6.2).
+ * (Docs/features/21-harmony.md).
  */
 export const HARMONY = balance.harmony as {
   readonly surplusTiers: readonly { readonly at: number; readonly bonus: number }[];
@@ -713,7 +713,7 @@ export interface DistrictDef {
   strikeSpeedPerLevel: readonly number[];
   /** How many items may be queued at once, by level. Empty = not a workshop.
    *  A longer queue is a longer absence covered, never more goods per hour —
-   *  that is the crew (Docs/plans/builder-30-days.md §2.2). */
+   *  that is the crew (Docs/features/17-workshops-and-goods.md §4). */
   queueLengthPerLevel: readonly number[];
   /** Harmony this building SUPPLIES once built. Non-zero = it is a
    *  decoration, which is the whole of what it does: no level, no crew, no
@@ -723,7 +723,7 @@ export interface DistrictDef {
    *  increment, indexed from level 1 the way `armyCapPerLevel` is. So entry 0
    *  is the gate on BUILDING it and the rest are the gates on its levels, one
    *  column for both and no prefix summed anywhere. Empty = it demands
-   *  nothing (Docs/plans/builder-30-days.md §6.1). */
+   *  nothing (Docs/features/21-harmony.md). */
   harmonyCostPerLevel: readonly number[];
 }
 

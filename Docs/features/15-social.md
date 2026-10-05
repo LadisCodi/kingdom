@@ -5,14 +5,16 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: designed, not built.** The game has no social mechanic today.
-> Prototype population is five to ten named playtesters.
+> **Status: designed, not built.** None of this layer exists; the shared
+> world board ([`19-world-map.md`](19-world-map.md)) is the only place other
+> kingdoms appear. Prototype population is five to ten named playtesters.
 
 ## 1. The server
 
 | Concern | Authority |
 |---|---|
-| City simulation, economy, delves, events | client |
+| City simulation, economy, events | client |
+| The world board — claims, armies, dungeons ([`19-world-map.md`](19-world-map.md)) | **server** |
 | Save | per-player |
 | Neighbours, guilds, help, collective bars | **server** |
 | Purchase-intent log, telemetry | **server** |
@@ -68,8 +70,7 @@
 
 - Helping changes only the helper's state and queues a gift for the target.
 - No presence required. A gift is not instant.
-- Build speed is one of the modifier stats [`13-events.md`](13-events.md) §1
-  adds.
+- Build speed is a modifier stat ([`13-events.md`](13-events.md) §1).
 - **OQ-34.**
 
 ## 4. The guild
@@ -89,8 +90,7 @@
 ## 5. The guild week
 
 - A timeline template, not a new scheduler: a recurring window with a hard
-  deadline, the same shape as the weekly event (48 hours on a 7-day period)
-  with a longer duration.
+  deadline on a 7-day period.
 - Stable occurrence ids; phases persist so it cannot pay twice; reconciliation
   before the offline advance.
 - The server keys the bar on the occurrence id, so client and server agree on
@@ -104,8 +104,8 @@ Submitted as they happen:
 | Contribution | Weight |
 |---|---|
 | A **Wonder level** bought | its Gold cost |
-| A **delve depth** extracted | depth × tier |
-| A **landmark** claimed, a **ruin** first-cleared | flat, large |
+| A **dungeon depth** cleared | depth × tier |
+| A **landmark** claimed, a **lair** first-cleared | flat, large |
 | Resources **donated** to the guild | a fraction of the city's hourly rate |
 | A **help** given | flat, small |
 
@@ -130,7 +130,7 @@ Submitted as they happen:
 
 - The siege is the **world map's** encounter
   ([`02-map-scopes.md`](02-map-scopes.md) §7): a contested landmark held by an
-  authored threat, cleared by a guild. The province's ruin gates are cleared
+  authored threat, cleared by a guild. The province's lairs are cleared
   solo, by a hero and a party
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)); province
   landmarks are claimed for Gold.

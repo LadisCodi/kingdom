@@ -15,15 +15,14 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 
 | Sink | Total | Ceiling |
 |---|---|---|
-| Landmark claims | **527,000 Gold** | ten landmarks; 2,000 · 25,000 ×5 · 100,000 ×4 |
-| The whole map's fog | **4,729,789,354 Gold** | a last cell |
-| The fifteen upgrades, fully bought | **51,926 Gold** | `maxLevel` on every one; `TapPower` is **34,006** of it (65%, `costGrowth` 1.9 over ten levels) |
-| The technology tree, 24 techs | **6,600 Gold** | a last node |
+| Landmark claims | **537,000 Gold** | eleven landmarks; 2,000 · 10,000 · 25,000 ×5 · 100,000 ×4 |
+| The whole map's fog | **2,522,803,392 Gold** | a last cell |
+| The technology tree, 167 technologies | **592,385 Gold** | a last node |
 | Buildings and their levels | on a curve | `maxCountPerTownhallLevel`, and `maxLevel` on every district |
-| | **≈ 29,100,000 Gold** | nothing after it |
+| | **≈ 2,524,000,000 Gold** | nothing after it |
 
-- Expedition supplies (50 → 2,000 a launch) repeat, but are gated by the army
-  cap and delve frequency: a drip, not a sink for a surplus.
+- Lair supplies (25 → 1,000 Gold an attack) are paid only until the five
+  lairs are cleared: a drip, not a sink for a surplus.
 - A Wonder is the upgrade ladder with `maxLevel` removed, standing on the map.
 
 ## 2. What a Wonder is
@@ -33,10 +32,10 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 | | How it expresses a level | Can it be infinite? |
 |---|---|---|
 | `DistrictDef` | tables — `maxLevel`, `populationCapacityPerLevel`, `maxWorkersPerLevel`, `influenceRadiusPerLevel`, `requiredTownhallLevelPerLevel`, `requiredTechPerLevel`, `armyCapPerLevel`, all indexed by level | no — a table has a last row |
-| `UpgradeDef` | formulas — `costBase`, `costGrowth`, `effectPerLevel` | yes — only `maxLevel` stops it |
+| a Wonder | formulas — `costBase`, `costGrowth`, `effectPerLevel` (§6) | yes — nothing stops it |
 
 - From the district: placement, footprint, art, being a thing on the map.
-- From the upgrade: the ladder. Level `L` costs `round(costBase × costGrowth^L)`
+- From a formula: the ladder. Level `L` costs `round(costBase × costGrowth^L)`
   Gold and is worth `effectPerLevel × L`.
 - **No per-level table anywhere in a Wonder's definition.**
 - `District.level` is already a plain number: no state change, no migrator.
@@ -78,7 +77,7 @@ Both are structural, not numerical.
 - A Wonder level does not go through the build queue. It is bought like an
   upgrade and lands the moment it is paid.
 - No builder is occupied. `upgradeDuration` and `upgradeDurationLevelGrowth`
-  do not apply. This keeps the second-builder offer (OQ-30) and the *no waiting
+  do not apply. This keeps the second-builder offer and the *no waiting
   line* rule of [`06`](06-construction.md) intact.
 - No boundary in `advance()`: nothing scheduled, nothing expiring, no
   `consider()` in `nextBoundary`, no branch in `applyDueAt`.
@@ -102,9 +101,8 @@ Not in the set:
 - A fog-discount Wonder — the Pitons ladder already does that (**OQ-23**).
 - A combat Wonder — the army cap is a city-building decision
   ([`combat.md`](combat.md) §14).
-- A build-speed Wonder — waits for `buildSpeed` to land as a modifier stat with
-  the event archetype ([`implementation-plan.md`](../implementation-plan.md)
-  Step 2); one entry after that, a code change before it.
+- A build-speed Wonder — `buildSpeed` is a modifier stat, so it would be one
+  entry and one call site.
 
 Names are a first pass, under the same standing offer as the tome titles
 (**OQ-15**).
@@ -173,15 +171,14 @@ shape is fixed here.
 
 ## 7. Code changes
 
-1. **`maxLevel` stops being a wall.** `commands.ts:179`
-   (`if (district.level >= def.maxLevel) return 'AtMaxLevel'`) and
-   `upgrades.ts:38`/`:50`. A Wonder's `maxLevel` is absent, not a big number.
+1. **`maxLevel` stops being a wall.** `commands.ts`
+   (`if (district.level >= def.maxLevel) return 'AtMaxLevel'`). A Wonder's
+   `maxLevel` is absent, not a big number.
 2. **Per-level tables are empty for a Wonder** — no population, workers, army
    cap or per-level tech gate. `requiredTechPerLevel` in particular: a Wonder
    is gated once, at unlock.
-3. **The level is not drawn as stars.** `districtCard.ts:392` renders
-   `levelStars(district.level, def.maxLevel)`, which needs a denominator. A
-   Wonder shows a number and the next level's price.
+3. **The level is a number.** The district card already writes `Lv N` with
+   no denominator; a Wonder adds the next level's price.
 4. **The purchase path is `buyUpgrade`-shaped, not `upgradeDistrict`-shaped**
    (§4): pay, increment, done, no queue item.
 
@@ -192,9 +189,9 @@ and the effective helpers that own each stat.
 
 | Wonder | Stat | The one line that reads it |
 |---|---|---|
-| The Everspring | `cellRecovery` | `src/sim/harvest.ts:88` |
-| The Astral Spire | `manaRegen` | `src/sim/mana.ts:61` |
-| The Bell of Toil | `workerYield` | `src/sim/upgrades.ts:157` |
+| The Everspring | `cellRecovery` | `src/sim/harvest.ts:139` |
+| The Astral Spire | `manaRegen` | `src/sim/mana.ts:79` |
+| The Bell of Toil | `workerYield` | `src/sim/upgrades.ts:147` |
 
 - Cost shape: one entry plus one call site, as for a modifier stat. The stat
   existing guarantees the helper exists.
@@ -209,7 +206,7 @@ and the effective helpers that own each stat.
 
 - A Wonder stands on the province with a footprint deliberately larger than it
   needs (§5.1), and the ground is the half of its price that is not Gold.
-- The plot is not bounded (OQ-1 closed 2026-09-07), so that ground is not
+- The plot is not bounded, so that ground is not
   scarce in itself: what a big footprint costs is **the fog that revealed it**
   and the **adjacency** it displaces ([`03-economy.md`](03-economy.md) §3.1).
 
@@ -242,7 +239,7 @@ differs in three ways:
 
 ## 11. Acceptance
 
-- A player who has bought every technology, every upgrade level and every
+- A player who has bought every technology and every
   landmark still has a priced thing to spend Gold on, and can see its cost.
 - A Wonder level adds no boundary: the replay assertion holds across a Wonder
   purchase during an offline advance; `nextBoundary` is untouched.
@@ -271,6 +268,6 @@ differs in three ways:
 - A Wonder that unlocks a mechanic rather than scaling a number.
 - Prestige, or spending a Wonder for a permanent bonus.
 - Generated orders as the repeating Gold sink ([`12-quests.md`](12-quests.md)
-  §6).
+  §5).
 
 **Open questions:** **OQ-57**, **OQ-58**, **OQ-59**.

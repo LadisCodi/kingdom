@@ -1,5 +1,5 @@
 // Workshops: the queue, the crew that works it, and how the crew shares
-// itself out (Docs/plans/builder-30-days.md §3).
+// itself out (Docs/features/17-workshops-and-goods.md §3).
 //
 // The load-bearing property here is the sharing rule — one more villager is
 // always faster, whatever the queue holds — and the one that is easiest to

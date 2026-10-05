@@ -66,7 +66,3 @@ Four things about the composer, each learned the expensive way:
 | `housing_ruin`, `farm_ruin`, `sawmill_ruin` | 1×1 | — | the camps' ruins, each drawn from its own `_l1` master attached as the subject |
 | the military halls, the Sanctum and the workshops, all tiers | 2×2 | as their 1×1 cut | re-cut from the same masters with `norm_iso.py <master> 2 2`: a 1×1 plot drew them as models beside the Townhall |
 
-**Not yet in `src/render/assets/`.** The renderer is still top-down until lane A
-lands ([`../../plans/the-4x-build.md`](../../plans/the-4x-build.md) §2), and an
-isometric building on a top-down floor is a regression for no gain. These move
-across when the projection does.

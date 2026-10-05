@@ -1,7 +1,7 @@
 # 8 · Magic — Mana, the Sanctum, and landmarks
 
 > **Scope.** What Mana is, its cap, where the ceiling comes from, and the ad
-> that refills it. What Mana *buys* — taps and **spells** — is
+> that refills it. What Mana *buys* — taps and relic casts — is
 > [`04-harvest.md`](04-harvest.md) and [`09-relics.md`](09-relics.md); the ad's
 > place in the wider monetisation is [`14-monetization.md`](14-monetization.md).
 >
@@ -23,24 +23,24 @@
 ## 2. Production and capacity
 
 ```
-regen/h = 12 + Sanctum level (3 / 6 / 9 / 12 / 16) + Ley Taps rank × claimed landmarks
-cap     = 100 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landmark
-          + Meditation (+30) + Deep Wells (+10 per rank)
+regen/h = (12 + Sanctum level) × (1 + 10% per Ley Taps rank)
+cap     = (100 + Sanctum level + 10 per claimed landmark + 10 per held Sanctuary)
+          × (1 + 20% Meditation + 10% per Deep Wells rank)
 ```
 
 | Dial | Raised by | What it means to the player |
 |---|---|---|
-| **Production** (Mana/h) | the **Sanctum**; `Ley Taps` per landmark | the free allowance |
+| **Production** (Mana/h) | the **Sanctum**; `Ley Taps` | the free allowance |
 | **Capacity** (pool size) | the **Sanctum**, **landmarks**, `Meditation`, `Deep Wells` | how long an absence can be banked, and what one ad pays |
 
-| | no Sanctum | L1 | L2 | L3 | L4 | L5 |
-|---|---|---|---|---|---|---|
-| Production / h | 12 | 15 | 18 | 21 | 24 | 28 |
-| Cap (no landmarks) | 100 | 124 | 148 | 172 | 200 | 232 |
-| Fill from empty | 8.3 h | 8.3 h | 8.2 h | 8.2 h | 8.3 h | 8.3 h |
+| | no Sanctum | L1 | L2 | L3 | L4 | L5 | L6 | L7 | L8 | L9 | L10 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Production / h | 12 | 15 | 18 | 21 | 24 | 28 | 32 | 37 | 42 | 48 | 54 |
+| Cap (no landmarks) | 100 | 124 | 148 | 172 | 200 | 232 | 268 | 308 | 352 | 400 | 452 |
+| Fill from empty | 8.3 h | 8.3 h | 8.2 h | 8.2 h | 8.3 h | 8.3 h | 8.4 h | 8.3 h | 8.4 h | 8.3 h | 8.4 h |
 
 - The Townhall level touches neither number.
-- The pool fills from empty in **8.2–8.3 h at every Sanctum level** — about a
+- The pool fills from empty in **8.2–8.4 h at every Sanctum level** — about a
   night. Both base dials are tuned to hold that fill.
 - Landmarks add capacity, never rate, so each one lengthens the fill.
 - The pool is its own ceiling while the player is away: there is no offline
@@ -59,17 +59,18 @@ cap     = 100 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landma
 |---|---|
 | Every tap on the ground — a tree, a bush, a rock, a shoal | **1 Mana** |
 | A tap on a building | **nothing** — it collects its store |
-| Casting a **spell**, either map ([`07-research.md`](07-research.md) §6) | its authored Mana cost, −20%/level of Resonance |
-| Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item — the only sink that is not a tap or a spell |
+| Casting a **relic's active** ([`09-relics.md`](09-relics.md) §2.1) | its authored Mana cost |
+| Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item — the only sink that is not a tap or a cast |
 | Paying fog | **nothing** — a reveal costs Gold |
 
 ## 4. The Sanctum
 
 - A city district, unlocked by `Consecration` (Magic era 1,
   [`tech-tree.md`](tech-tree.md) §4.1).
-- Five levels: capacity **+24 / 48 / 72 / 100 / 132**, production
-  **+3 / 6 / 9 / 12 / 16** per hour. L2 needs Townhall 2; L4 and L5 are
-  granted by the `Attunement II` / `III` spine ranks.
+- Ten levels: capacity **+24 / 48 / 72 / 100 / 132 / 168 / 208 / 252 / 300 /
+  352**, production **+3 / 6 / 9 / 12 / 16 / 20 / 25 / 30 / 36 / 42** per
+  hour. L2–L10 need Townhall 2 / 3 / 3 / 4 / 6 / 7 / 8 / 9 / 10; L4 and L5
+  are also opened by the `Attunement II` / `III` cards.
 - One per city; `Second Sanctum` (Magic era 3) allows a second.
 - Uses the district system as-is: count caps, distance-scaled build time,
   level gates.
@@ -82,19 +83,18 @@ Claiming a landmark, permanently:
 - Lifts the fog five cells around it as **Discovered, never Revealed**
   ([`01-map-and-fog.md`](01-map-and-fog.md) §4).
 
-Ten landmarks on the map:
+Eleven landmarks on the map:
 
-- A full sweep **doubles the base pool** (100 → 200), and so doubles what
+- A full sweep **roughly doubles the base pool** (100 → 210), and so what
   every ad pays.
-- Production does not move with landmarks unless `Ley Taps` is researched
-  (+1/h per landmark per rank).
+- Production does not move with landmarks.
 
 | City | pool | one ad pays |
 |---|---|---|
 | bare kingdom | 100 | **100** |
-| ten landmarks | 200 | **200** |
-| ten landmarks, Sanctum L3 | 272 | **272** |
-| ten landmarks, Sanctum L5, Meditation, Deep Wells V | 412 | **412** |
+| eleven landmarks | 210 | **210** |
+| eleven landmarks, Sanctum L3 | 282 | **282** |
+| eleven landmarks, Sanctum L5, Meditation, Deep Wells V | 581 | **581** |
 
 ## 6. The refill
 
@@ -152,9 +152,7 @@ tap 50      →   50        offer returns
 - **~290 free taps/day** for a player who never watches an ad (12/h × 24).
   Worker income is unaffected by ads.
 - **Ads are worth about three times the free allowance**: ten pools a day is
-  1,000 Mana against the 288 an idle day pays. This line used to read "~12.5 h
-  of production, ~50% faster", which did not follow from the numbers even
-  before the pool doubled — the reward has been a WHOLE pool throughout.
+  1,000 Mana against the 288 an idle day pays.
 - Burning half a pool takes 25–50 s; the cooldown averages 60 s, so the player
   waits 10–30 s at times. If this stalls in playtest, lower the cooldown
   maximum first.
@@ -181,11 +179,12 @@ tap 50      →   50        offer returns
 
 | Also | Value | Key |
 |---|---|---|
-| Sanctum capacity | +24 / 48 / 72 / 100 / 132 | `mana.sanctumCapPerLevel` |
-| Sanctum production | +3 / 6 / 9 / 12 / 16 per hour | `mana.sanctumPerHourPerLevel` |
+| Sanctum capacity | +24 / 48 / 72 / 100 / 132 / 168 / 208 / 252 / 300 / 352 | `mana.sanctumCapPerLevel` |
+| Sanctum production | +3 / 6 / 9 / 12 / 16 / 20 / 25 / 30 / 36 / 42 per hour | `mana.sanctumPerHourPerLevel` |
 | Landmark capacity | **+10 each** | `mana.landmarkCap` |
-| `Meditation` | +30 capacity | `mana.meditationCap` |
-| `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.4) |
+| Sanctuary capacity (world map) | +10 each | `worldBuild.sanctuaryManaCap` |
+| `Meditation` | +20% capacity | `?dev=tree` |
+| `Deep Wells I–V` · `Ley Taps I–V` | +10% capacity per rank · +10% production per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.5) |
 | Gem refill | a whole pool, **400 → 2,000 Gems** by rung, 5 a day | `mana.gemRefillCosts` |
 | Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
@@ -202,7 +201,7 @@ tap 50      →   50        offer returns
 
 - Upkeep of any kind (§3)
 - Ley lines as a spatial magic layer
-- Spell schools or a magic tech tree
+- Spell schools
 - Mana as a build cost
 - Mana as a research currency ([`07-research.md`](07-research.md) §3.1)
 - Mana as the price of fog

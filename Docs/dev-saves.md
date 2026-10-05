@@ -7,9 +7,10 @@
 > — `npx tsx` fetches it for the one run.
 
 Several screens cannot be judged from a new save. The research page is the
-clearest case: a fresh game shows one technology and two bands, so *done*,
-*running*, *available* and *silhouette* — the four states its whole design
-turns on — never appear together until a real player is hours in.
+clearest case: on a fresh game *locked*, *in progress* and *done* — the
+three states its whole design turns on
+([`features/07-research.md`](features/07-research.md) §5.2) — never appear
+together until a real player is hours in.
 
 ## Make one
 
@@ -39,7 +40,8 @@ for (let r = 1; r <= 14; r++) {
 }
 
 state.research.completed = [/* TechIds */];
-state.research.active = [{ id: 'ButcheryII', startedAt: now - 20_000, durationMs: 300_000 }];
+state.research.poured = { ButcheryII: 2 }; // Knowledge poured into one not yet done
+state.tutorial.veteran = true;              // every door and book open, no First Morning
 state.city.wallet.Gold = 4_200;
 state.kingdom.wallet.Knowledge = 40;
 
