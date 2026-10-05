@@ -1,5 +1,5 @@
 // The world server's rules as one ES module for the Supabase edge function
-// (Deno): `src/worldServer/handle.ts` and everything it reads — the sim, the
+// (Deno): `src/worldServer/serve.ts` and everything it reads — the sim, the
 // game data inlined — bundled with no browser in it.
 //
 //   npm run server:bundle    → supabase/functions/_shared/world.js
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const ENTRY = path.join(root, 'src/worldServer/handle.ts');
+export const ENTRY = path.join(root, 'src/worldServer/serve.ts');
 export const OUT = path.join(root, 'supabase/functions/_shared/world.js');
 
 /** What a server bundle must never reach for: the browser, and Vite. */
@@ -32,7 +32,7 @@ export async function bundleWorldServer({ write = false } = {}) {
     // no comment is left for the browser check to misread.
     minifyWhitespace: true,
     minifySyntax: true,
-    banner: { js: '// Built by scripts/server-bundle.mjs from src/worldServer/handle.ts. Do not edit.' },
+    banner: { js: '// Built by scripts/server-bundle.mjs from src/worldServer/serve.ts. Do not edit.' },
   });
   const code = result.outputFiles[0].text;
   if (write) {

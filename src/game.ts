@@ -696,7 +696,10 @@ export class Game {
     // screen, and now and then otherwise (a held Sanctuary moves the Mana
     // ceiling wherever the player is).
     this.worldTicks += 1;
-    if (this.worldServer !== null && (this.scene === 'world' || this.worldTicks % 30 === 0)) void this.refreshWorld();
+    if (this.worldServer !== null) {
+      const every = this.scene === 'world' ? this.worldServer.readEverySeconds() : 30;
+      if (this.worldTicks % every === 0) void this.refreshWorld();
+    }
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
     }
@@ -4648,18 +4651,51 @@ export class Game {
   /** Take a seat on the server's board. A player who has already explored
    *  a locally generated board asks to keep it. */
   async connectWorld(): Promise<void> {
-    if (this.worldServer === null) return;
-    const snap = await this.worldServer.join(
-      { id: this.playerId, name: this.state.city.name, prefer: this.state.world.board });
-    await this.worldServer.setBoost(worldImprovementBoost(this.state));
-    this.applyWorldSnapshot(snap);
+    if (this.worldServer === null || this.worldReading) return;
+    this.worldReading = true;
+    try {
+      const snap = await this.worldServer.join(
+        { id: this.playerId, name: this.state.city.name, prefer: this.state.world.board });
+      await this.worldServer.setBoost(worldImprovementBoost(this.state));
+      this.applyWorldSnapshot(snap);
+      this.recallUnknownArmies(snap);
+    } catch (err) {
+      // Unreachable: the board stays the one generated here, every command
+      // is refused, and the next read tries to join again.
+      console.warn('kingdom: could not join the world server', err);
+    } finally {
+      this.worldReading = false;
+    }
   }
 
-  /** Ask the server for the board as it stands now. */
+  /** A read or a join on its way: the next waits its turn rather than
+   *  piling up behind a slow server. */
+  private worldReading = false;
+
+  /** Ask the server for the board as it stands now — joining first if it
+   *  never could. */
   async refreshWorld(): Promise<void> {
-    if (this.worldServer === null) return;
-    const snap = await this.worldServer.snapshot();
-    if (snap !== null) this.applyWorldSnapshot(snap);
+    if (this.worldServer === null || this.worldReading) return;
+    if (this.worldView === null) return this.connectWorld();
+    this.worldReading = true;
+    try {
+      const snap = await this.worldServer.snapshot();
+      if (snap !== null) this.applyWorldSnapshot(snap);
+    } finally {
+      this.worldReading = false;
+    }
+  }
+
+  /** An army this save has out that the server it joined never heard of —
+   *  sent on another server, the stand-in before the real one — comes home
+   *  whole: the server holds the army, and it holds none of these. Only on a
+   *  join, when no army can be on its way out. */
+  private recallUnknownArmies(snap: WorldSnapshot): void {
+    const known = new Set(snap.armies.filter((a) => a.owner === snap.board.seat).map((a) => a.id));
+    for (const out of [...this.state.world.armies]) {
+      if (known.has(out.id)) continue;
+      receiveArmy(this.state, { armyId: out.id, at: snap.at, troops: out.troops, fallen: [], heroes: [] });
+    }
   }
 
   /** Take what the server says. A different board or seat makes the fog
@@ -4750,6 +4786,7 @@ export class Game {
       Guarded: 'A camp holds it — beat it, or pay it off, first',
       NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
       TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
+      NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
     };
     return LINES[why];
   }

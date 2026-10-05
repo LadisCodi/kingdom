@@ -29,3 +29,6 @@ __pycache__/
 
 # The world server bundle (npm run server:bundle) — built, never committed
 supabase/functions/_shared/world.js
+
+# Supabase CLI state (the linked project)
+supabase/.temp/

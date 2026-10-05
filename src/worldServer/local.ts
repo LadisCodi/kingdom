@@ -52,6 +52,8 @@ export interface WorldServerApi {
   /** How far the server's clock is ahead of this device's, in ms. The
    *  client keeps its time on the server's (Game.now). */
   clockOffset(): number;
+  /** How often the board is read while it is on screen. */
+  readEverySeconds(): number;
   /** Dev only: move every time on the player's board `ms` into the past,
    *  so the next read plays that much more of the world. */
   devShift?(ms: number): Promise<void>;
@@ -199,6 +201,11 @@ export class LocalWorldServer implements WorldServerApi {
   /** The stand-in keeps the device's own time. */
   clockOffset(): number {
     return 0;
+  }
+
+  /** A read costs nothing here: every second. */
+  readEverySeconds(): number {
+    return 1;
   }
 
   async devShift(ms: number): Promise<void> {

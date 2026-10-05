@@ -1,7 +1,8 @@
 // Supabase cloud saves: anonymous auth + one jsonb row per player. When the
 // env vars are absent the game runs in local-save-only mode.
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError, createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { WorldCall } from '../worldServer/remote';
 import type { SaveFile } from '../sim/save';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -68,3 +69,22 @@ export async function cloudSave(save: SaveFile): Promise<boolean> {
     return false;
   }
 }
+
+/** One request to the `world` edge function (worldServer/remote.ts). A
+ *  network failure, a relay failure, a server error or a board written
+ *  under the request is worth another try; anything else is not. */
+export const cloudWorldCall: WorldCall = async (body) => {
+  if (!client || !userId) return { ok: false, retry: false, error: 'no session' };
+  try {
+    const { data, error } = await client.functions.invoke('world', { body });
+    if (!error) return { ok: true, data };
+    if (error instanceof FunctionsHttpError) {
+      const status = (error.context as Response).status;
+      return { ok: false, retry: status >= 500 || status === 409, error: `HTTP ${status}` };
+    }
+    const retry = error instanceof FunctionsFetchError || error instanceof FunctionsRelayError;
+    return { ok: false, retry, error: String(error.message ?? error) };
+  } catch (err) {
+    return { ok: false, retry: true, error: String(err) };
+  }
+};
