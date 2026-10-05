@@ -40,7 +40,17 @@
           "of": { "type": "text" },
           "doc": "Paid column: a card pack tier, or empty for none."
         },
-        "paidStardust": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Stardust." }
+        "paidStardust": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Stardust." },
+        "freeItems": {
+          "type": "list",
+          "of": { "type": "text", "ref": "item", "emptyOk": true },
+          "doc": "Free column: an item to put in the Bag, or empty for none."
+        },
+        "paidItems": {
+          "type": "list",
+          "of": { "type": "text", "ref": "item", "emptyOk": true },
+          "doc": "Paid column: an item to put in the Bag, or empty for none."
+        }
       }
     }
   }

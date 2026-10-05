@@ -532,6 +532,8 @@ export interface QuestDef {
   /** A card pack handed over on the claim, or null. The first one is how the
    *  collection is met (Docs/features/22-progression.md §7). */
   rewardPack: PackTier | null;
+  /** Items it puts in the Bag (Docs/plans/relics-and-bag.md, step 4). */
+  rewardItems: Partial<Record<ItemId, number>>;
   /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
   autoClaim: boolean;
   /** Tutorial pacing on a quest that collects Gold: seconds after it becomes
@@ -901,6 +903,10 @@ export const TREASURE = balance.treasure as {
   knowledge: number;
   firstCoin: CurrencyId;
   firstAmount: number;
+  /** Every this many treasures after the first, one item comes too; 0 never. */
+  itemEvery: number;
+  /** Which item, by weight. */
+  items: Partial<Record<ItemId, number>>;
 };
 
 // ----------------------------------------------------------------- city def
@@ -2068,6 +2074,8 @@ export interface GarrisonDef {
   tier: number;
   takeSeconds: number;
   supplies: Wallet;
+  /** Items a lair of this tier puts in the Bag when its prize is claimed. */
+  rewardItems: Partial<Record<ItemId, number>>;
 }
 
 export const GARRISONS = balance.garrisons as GarrisonDef[];
@@ -2392,6 +2400,9 @@ export const SURVEY = balance.survey as {
   paidGoldKeys: number[];
   paidPacks: string[];
   paidStardust: number[];
+  /** An item a level puts in the Bag, or '' for none, per column. */
+  freeItems: string[];
+  paidItems: string[];
 };
 
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
@@ -2405,6 +2416,8 @@ export const PASS = balance.pass as {
   levelXpGrowth: number;
   freePacks: string[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
   paidPacks: string[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
+  /** An item a level puts in the Bag, or '' for none, per column. */
+  freeItems: string[]; paidItems: string[];
 };
 
 /** The missions that feed the pass — Docs/features/20-season-pass.md §3. A

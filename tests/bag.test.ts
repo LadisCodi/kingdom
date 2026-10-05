@@ -2,7 +2,11 @@
 // city's own production at the moment of use.
 
 import { describe, expect, it } from 'vitest';
-import { BAG, ITEMS, ITEM_ORDER } from '../src/sim/data/definitions';
+import { BAG, ITEMS, ITEM_ORDER, PASS, QUESTS, SURVEY, TREASURE } from '../src/sim/data/definitions';
+import { claimQuest } from '../src/sim/quests';
+import { treasureItem } from '../src/sim/treasures';
+import { paidCell } from '../src/sim/pass';
+import { freeSurveyCell } from '../src/sim/survey';
 import {
   chestValue, grantItem, heldItems, itemCount, markBagOpened, markItemSeen, useItem,
 } from '../src/sim/bag';
@@ -140,5 +144,36 @@ describe('the keys', () => {
     expect(buyKeys(state, 'advanced', 2)).toBe('Purchased');
     expect(itemCount(state, 'GoldKey')).toBe(2);
     expect(useItem(state, 'GoldKey', 1, T0)).toBe('UsedElsewhere');
+  });
+});
+
+describe('items as rewards', () => {
+  it('a quest that names items puts them in the Bag when claimed', () => {
+    // Lumber: hold 30 Wood — a goal met by funding the purse.
+    const quest = QUESTS.find((q) => q.id === 'Lumber')!;
+    expect(Object.keys(quest.rewardItems).length).toBeGreaterThan(0);
+    const state = freshGame();
+    state.quests.index = QUESTS.indexOf(quest);
+    state.city.wallet.Wood = 1000;
+    for (const id of Object.keys(quest.rewardItems)) expect(itemCount(state, id as never)).toBe(0);
+    expect(claimQuest(state)).toBe('Claimed');
+    for (const [id, n] of Object.entries(quest.rewardItems)) expect(itemCount(state, id as never)).toBe(n);
+  });
+
+  it('every itemEvery-th treasure brings an item, rolled on its number', () => {
+    const state = freshGame();
+    expect(treasureItem(state, 0)).toBeNull();
+    expect(treasureItem(state, TREASURE.itemEvery - 1)).toBeNull();
+    const item = treasureItem(state, TREASURE.itemEvery);
+    expect(item).not.toBeNull();
+    expect(Object.keys(TREASURE.items)).toContain(item);
+    expect(treasureItem(state, TREASURE.itemEvery)).toBe(item);
+  });
+
+  it('the pass and the Survey carry their item columns into their cells', () => {
+    const level = PASS.paidItems.findIndex((id) => id !== '') + 1;
+    expect(paidCell(level).items).toEqual({ [PASS.paidItems[level - 1]]: 1 });
+    const sLevel = SURVEY.freeItems.findIndex((id) => id !== '') + 1;
+    expect(freeSurveyCell(freshGame(), sLevel).items[SURVEY.freeItems[sLevel - 1] as never]).toBe(1);
   });
 });

@@ -31,7 +31,8 @@
 
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
-import type { CurrencyId, DistrictId } from '../sim/state';
+import type { CurrencyId, DistrictId, ItemId } from '../sim/state';
+import { itemIcon } from './bagSheet';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';
@@ -82,6 +83,9 @@ const rewardNodes = (quest: QuestDef): Node[] => {
   if (quest.rewardGems > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
       iconEl('Gems', { size: 'sm' }), formatExact(quest.rewardGems)));
+  }
+  for (const [id, n] of Object.entries(quest.rewardItems ?? {}) as Array<[ItemId, number]>) {
+    parts.push(el('span', { class: 'q-reward-item' }, iconEl(itemIcon(id), { size: 'sm' }), formatExact(n)));
   }
   return parts;
 };

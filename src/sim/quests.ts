@@ -20,6 +20,8 @@ import {
   addToWallet, getWallet,
   type CurrencyId, type GameState,
 } from './state';
+import type { ItemId } from './state';
+import { grantItem } from './bag';
 import type { SimEvent } from './events';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
@@ -154,6 +156,8 @@ export function claimQuest(state: GameState): ClaimResult {
   if (quest.rewardPack !== null && quest.rewardPack !== undefined) {
     grantPack(state, quest.rewardPack, 'quest');
   }
+  // Items into the Bag (Docs/plans/relics-and-bag.md, step 4).
+  for (const [id, n] of Object.entries(quest.rewardItems ?? {}) as Array<[ItemId, number]>) grantItem(state, id, n);
   track(state, 'quest_done', { index: state.quests.index, id: quest.id });
   state.quests.index += 1;
   state.quests.progress = 0;

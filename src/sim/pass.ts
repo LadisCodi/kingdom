@@ -26,7 +26,7 @@
 import { PASS, MISSIONS } from './data/definitions';
 import { grantPack } from './collection';
 import { seasonAt, seasonEndsAt } from './seasonClock';
-import { grant, type Grant, type ItemStock } from './rewards';
+import { addItemAt, grant, type Grant, type ItemStock } from './rewards';
 import { manaCap } from './mana';
 import {
   chooseKind, issueMission, missionComplete, weekIndex, windowIndex,
@@ -162,6 +162,7 @@ export function freeCell(level: number): PassCell {
   if ((PASS.freeGems[i] ?? 0) > 0) wallet.Gems = PASS.freeGems[i];
   if ((PASS.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.freeGoldKeys[i];
   if ((PASS.freeStardust[i] ?? 0) > 0) wallet.Stardust = PASS.freeStardust[i];
+  addItemAt(items, PASS.freeItems, level);
   return { level, wallet, items, pack: packAt(PASS.freePacks, level) };
 }
 
@@ -172,6 +173,7 @@ export function paidCell(level: number): PassCell {
   if ((PASS.paidGems[i] ?? 0) > 0) wallet.Gems = PASS.paidGems[i];
   if ((PASS.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.paidGoldKeys[i];
   if ((PASS.paidStardust[i] ?? 0) > 0) wallet.Stardust = PASS.paidStardust[i];
+  addItemAt(items, PASS.paidItems, level);
   return { level, wallet, items, pack: packAt(PASS.paidPacks, level) };
 }
 
