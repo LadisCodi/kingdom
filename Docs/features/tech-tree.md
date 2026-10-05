@@ -81,7 +81,7 @@
 | **Fletching I** | +10% unitAtk — Distance | 2,000 G · 7 K | *dead end* |
 | **Fishing** | the Docks | 2,000 G · 4 K |  |
 | **Trade Routes II** | +10% taxRate | 2,000 G · 4 K |  |
-| **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 2,000 G · 7 K | *dead end* |
+| **Treasure Hunters I** | +25% treasureYield | 2,000 G · 7 K | *dead end* |
 | **Magistracy** | Townhall L4 | 3,000 G · 3 K | **finale** |
 
 ## 5. Chapter 4 — Townhall 4 → 5
@@ -98,8 +98,8 @@
 | **Sawpits II** | +15% harvestYield — Wood | 8,000 G · 3 K |  |
 | **Shield Wall I** | +10% unitDef — Melee | 8,000 G · 6 K | *dead end* |
 | **Carpentry II** | +15% buildSpeed | 8,000 G · 3 K |  |
-| **Woodsheds I** | +25% storageCapacity — Sawmill | 8,000 G · 3 K |  |
-| **Butchery I** | +15% harvestYield — Meat | 8,000 G · 6 K | *dead end* |
+| **Lumberjacks I** | +15% crewStrikeSpeed — Sawmill | 8,000 G · 3 K |  |
+| **Woodsheds I** | +25% storageCapacity — Sawmill | 8,000 G · 6 K | *dead end* |
 | **Charter** | Townhall L5 | 12,000 G · 2 K | **finale** |
 
 ## 6. Chapter 5 — Townhall 5 → 6
@@ -110,14 +110,14 @@
 | **Ironmongery** | the producers L5 | 18,000 G · 4 K · 2 Planks · 2 CutStone |  |
 | **Cavalry** | the Stables · the Cavalry | 18,000 G · 4 K · 2 Planks · 2 CutStone |  |
 | **Trade Routes III** | +10% taxRate | 18,000 G · 4 K |  |
-| **Stonecutting II** | +15% harvestYield — Stone | 18,000 G · 4 K |  |
+| **Farmhands I** | +15% crewStrikeSpeed — Farm | 18,000 G · 4 K |  |
 | **Warband III** | the four halls L5 | 18,000 G · 4 K |  |
 | **Gardening** | the Garden · the Orchard | 18,000 G · 4 K |  |
 | **Deep Mining** | the mountain Gold tap | 18,000 G · 4 K |  |
 | **Barding I** | +10% unitDef — Mounted | 18,000 G · 7 K | *dead end* |
-| **Schooling II** | +20% villagerTrainingSpeed | 18,000 G · 4 K |  |
+| **Rich Soil I** | +25% cellStock — crop-plot Food | 18,000 G · 4 K |  |
 | **Attunement II** | the Rune Carver · Sanctum L4 | 18,000 G · 4 K |  |
-| **Gold Panning I** | +15% harvestYield — mountain Gold | 18,000 G · 7 K | *dead end* |
+| **Smokehouses I** | +25% storageCapacity — Docks | 18,000 G · 7 K | *dead end* |
 | **Exchequer** | Townhall L6 | 27,000 G · 3 K · 2 Planks · 2 CutStone | **finale** |
 
 ## 7. Chapter 6 — Townhall 6 → 7
@@ -130,12 +130,12 @@
 | **Sculpture** | the Well · the Statue | 40,000 G · 6 K |  |
 | **Irrigation II** | +15% harvestYield — crop-plot Food | 40,000 G · 6 K |  |
 | **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 40,000 G · 6 K |  |
-| **Guild Halls II** | +15% workshopSpeed | 40,000 G · 6 K |  |
+| **Apprentices I** | +1 workshopQueueSlots | 40,000 G · 6 K |  |
 | **Attunement III** | Sanctum L5 | 40,000 G · 6 K |  |
 | **Vigour I** | +10% unitHp | 40,000 G · 10 K | *dead end* |
 | **Carpentry III** | +15% buildSpeed | 40,000 G · 6 K |  |
-| **Fletching II** | +10% unitAtk — Distance | 40,000 G · 6 K |  |
-| **Smokehouses I** | +25% storageCapacity — Docks | 40,000 G · 10 K | *dead end* |
+| **Poultices I** | +25% healSpeed | 40,000 G · 6 K |  |
+| **Gamekeeping I** | +25% respawnSpeed | 40,000 G · 10 K | *dead end* |
 | **Chancery** | Townhall L7 | 60,000 G · 4 K · 3 Planks · 3 CutStone · 1 Iron | **finale** |
 
 ## 8. Chapter 7 — Townhall 7 → 8
@@ -148,12 +148,12 @@
 | **Trade Routes IV** | +10% taxRate | 85,000 G · 9 K |  |
 | **Sawpits III** | +15% harvestYield — Wood | 85,000 G · 9 K |  |
 | **Second Sanctum** | one more Sanctum | 85,000 G · 9 K |  |
-| **Crop Rotation II** | +25% regrowthSpeed — crop-plot Food | 85,000 G · 9 K |  |
-| **Iron Picks II** | +15% harvestYield — iron-mountain Stone | 85,000 G · 9 K |  |
+| **Civic Treasury I** | +25% ownGold | 85,000 G · 9 K |  |
+| **Miners I** | +15% crewStrikeSpeed — Quarry | 85,000 G · 9 K |  |
 | **Warhorns I** | +10% unitAtk | 85,000 G · 15 K | *dead end* |
-| **Reforesting II** | +25% regrowthSpeed — Wood | 85,000 G · 9 K |  |
-| **Big Nets I** | +15% harvestYield — Fish | 85,000 G · 9 K |  |
-| **Barding II** | +10% unitDef — Mounted | 85,000 G · 15 K | *dead end* |
+| **Old Growth I** | +25% cellStock — Wood | 85,000 G · 9 K |  |
+| **Bunkhouse I** | +1 crewSlots | 85,000 G · 9 K |  |
+| **Logging Camps I** | +15% improvementYield | 85,000 G · 15 K | *dead end* |
 | **Dominion** | Townhall L8 | 130,000 G · 6 K · 4 Planks · 4 CutStone · 2 Iron | **finale** |
 
 ## 9. Chapter 8 — Townhall 8 → 9
@@ -164,14 +164,14 @@
 | **Hydraulics** | the producers L8 | 180,000 G · 6 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
 | **Citadels** | the four halls L8 | 180,000 G · 6 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
 | **Paving** | the Plaza | 180,000 G · 6 K |  |
-| **Stonecutting III** | +15% harvestYield — Stone | 180,000 G · 6 K |  |
+| **Stonecutting II** | +15% harvestYield — Stone | 180,000 G · 6 K |  |
 | **Warband IV** | Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army. | 180,000 G · 6 K |  |
 | **Trade Routes V** | +10% taxRate | 180,000 G · 6 K |  |
-| **Irrigation III** | +15% harvestYield — crop-plot Food | 180,000 G · 6 K |  |
+| **Surveying I** | +1 influenceRadius | 180,000 G · 6 K |  |
 | **Shield Wall II** | +10% unitDef — Melee | 180,000 G · 10 K | *dead end* |
-| **Stoneyards I** | +25% storageCapacity — Quarry | 180,000 G · 6 K |  |
+| **Guild Halls II** | +15% workshopSpeed | 180,000 G · 6 K |  |
 | **Attunement IV** | Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from. | 180,000 G · 6 K |  |
-| **Vigour II** | +10% unitHp | 180,000 G · 10 K | *dead end* |
+| **Swift Scouts I** | +25% explorerSpeed | 180,000 G · 10 K | *dead end* |
 | **Sovereignty** | Townhall L9 | 270,000 G · 4 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone | **finale** |
 
 ## 10. Chapter 9 — Townhall 9 → 10
@@ -182,14 +182,14 @@
 | **Mechanics** | the producers L9 · the producers L10 | 380,000 G · 9 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Warlords** | the four halls L9 · the four halls L10 | 380,000 G · 9 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Sacred Grounds** | the Shrine | 380,000 G · 9 K |  |
-| **Iron Picks III** | +15% harvestYield — iron-mountain Stone | 380,000 G · 9 K |  |
+| **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 380,000 G · 9 K |  |
 | **Colours I** | +10% armyCap | 380,000 G · 9 K |  |
-| **Butchery II** | +15% harvestYield — Meat | 380,000 G · 9 K |  |
-| **Gold Panning II** | +15% harvestYield — mountain Gold | 380,000 G · 9 K |  |
-| **Warhorns II** | +10% unitAtk | 380,000 G · 15 K | *dead end* |
+| **Flowerbeds I** | +25% decorationHarmony | 380,000 G · 9 K |  |
+| **Fishers I** | +15% crewStrikeSpeed — Docks | 380,000 G · 9 K |  |
+| **Supply Depots I** | +25% improvementStore | 380,000 G · 15 K | *dead end* |
 | **Strongroom I** | +25% storageCapacity — Townhall; +25% storageCapacity — Housing | 380,000 G · 9 K |  |
 | **Granaries II** | +25% storageCapacity — Farm | 380,000 G · 9 K |  |
-| **Fletching III** | +10% unitAtk — Distance | 380,000 G · 15 K | *dead end* |
+| **Forced March I** | +15% armyMarchSpeed | 380,000 G · 15 K | *dead end* |
 | **Golden Age** | Townhall L10 | 570,000 G · 6 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone | **finale** |
 
 ## 11. The found books
@@ -228,46 +228,46 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | Stat | How it enters | Cards |
 |---|---|---|
 | `armyCap` | multiplies the number | 1 |
-| `armyMarchSpeed` | an army's time per hex on the world board is divided by it; the city sends the pace with the army | 0 |
+| `armyMarchSpeed` | an army's time per hex on the world board is divided by it; the city sends the pace with the army | 1 |
 | `autoTapSpeed` | the auto-tap cooldown is divided by it | 0 |
 | `buildSpeed` | build and upgrade times are divided by it | 3 |
-| `cellStock` | multiplies what a cell holds when full; never a mountain, which holds no stock | 0 |
-| `crewSlots` | whole workers, added to a producer's level | 0 |
-| `crewStrikeSpeed` | the time between a building's crew strikes is divided by it | 0 |
+| `cellStock` | multiplies what a cell holds when full; never a mountain, which holds no stock | 2 |
+| `crewSlots` | whole workers, added to a producer's level | 1 |
+| `crewStrikeSpeed` | the time between a building's crew strikes is divided by it | 4 |
 | `crewYield` | multiplies a worker delivery; the fraction carries | 0 |
-| `decorationHarmony` | added to, or multiplying, a decoration's Harmony; whole points, rounded down | 0 |
+| `decorationHarmony` | added to, or multiplying, a decoration's Harmony; whole points, rounded down | 1 |
 | `discoverRadius` | whole rings, added | 2 |
 | `explorerSlots` | whole explorers, added to Cartography's | 2 |
-| `explorerSpeed` | an explorer's time per hex is divided by it, before the Scout's boon | 0 |
-| `harvestYield` | multiplies the chunk a tap and a strike take; the fraction carries | 17 |
-| `healSpeed` | a ward's mending time is divided by it, priced when it starts | 0 |
+| `explorerSpeed` | an explorer's time per hex is divided by it, before the Scout's boon | 1 |
+| `harvestYield` | multiplies the chunk a tap and a strike take; the fraction carries | 8 |
+| `healSpeed` | a ward's mending time is divided by it, priced when it starts | 1 |
 | `heroXp` | multiplies the number | 1 |
-| `improvementStore` | multiplies a world improvement's store; the server settles every store when it changes | 0 |
-| `improvementYield` | multiplies what a world improvement makes an hour; the server settles every store when it changes | 0 |
+| `improvementStore` | multiplies a world improvement's store; the server settles every store when it changes | 1 |
+| `improvementYield` | multiplies what a world improvement makes an hour; the server settles every store when it changes | 1 |
 | `infirmaryBeds` | multiplies the number | 0 |
-| `influenceRadius` | whole tiles, added to a producer's reach | 0 |
+| `influenceRadius` | whole tiles, added to a producer's reach | 1 |
 | `knowledgeYield` | multiplies the number | 0 |
 | `lairKnowledge` | multiplies the number | 0 |
 | `landmarkKnowledge` | multiplies the number | 0 |
 | `manaCap` | multiplies the number | 0 |
 | `manaRegen` | multiplies the number | 0 |
-| `ownGold` | multiplies the Gold the Townhall makes by itself | 0 |
+| `ownGold` | multiplies the Gold the Townhall makes by itself | 1 |
 | `populationCapacity` | whole beds, added | 1 |
 | `recruitSpeed` | a soldier’s training time is divided by it | 0 |
-| `regrowthSpeed` | a stump’s wait is divided by it | 4 |
+| `regrowthSpeed` | a stump’s wait is divided by it | 2 |
 | `requires` | the shape | 0 |
-| `respawnSpeed` | a consumed feature's wait to come back is divided by it | 0 |
-| `storageCapacity` | multiplies the number | 7 |
+| `respawnSpeed` | a consumed feature's wait to come back is divided by it | 1 |
+| `storageCapacity` | multiplies the number | 6 |
 | `summonStardust` | multiplies the number | 1 |
 | `tapWorkSeconds` | multiplies the number | 0 |
 | `taxRate` | multiplies the number | 5 |
-| `treasureYield` | multiplies a fog treasure priced in production; never the first, never Knowledge | 0 |
-| `unitAtk` | multiplies the number | 5 |
-| `unitDef` | multiplies the number | 4 |
-| `unitHp` | multiplies the number | 2 |
-| `villagerTrainingSpeed` | a villager’s training time is divided by it | 2 |
+| `treasureYield` | multiplies a fog treasure priced in production; never the first, never Knowledge | 1 |
+| `unitAtk` | multiplies the number | 2 |
+| `unitDef` | multiplies the number | 3 |
+| `unitHp` | multiplies the number | 1 |
+| `villagerTrainingSpeed` | a villager’s training time is divided by it | 1 |
 | `workerSpeed` | multiplies the number | 0 |
-| `workshopQueueSlots` | whole orders, added to a workshop's queue | 0 |
+| `workshopQueueSlots` | whole orders, added to a workshop's queue | 1 |
 | `workshopSpeed` | a workshop item’s work time is divided by it | 2 |
 | `worldRevealRadius` | whole hexes round an explorer's path, added, capped at 2 | 1 |
 

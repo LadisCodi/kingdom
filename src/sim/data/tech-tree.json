@@ -252,13 +252,13 @@
         {"stat":"taxRate","op":"percent","value":10}
       ]
     },
-    "IronPicksI": {
-      "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
+    "TreasureHuntersI": {
+      "name": "Treasure Hunters I", "glyph": "💎", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 12, "col": 2,
       "requires": ["TimberFraming"],
       "gold": 2000, "knowledge": 7,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
+        {"stat":"treasureYield","op":"percent","value":25}
       ]
     },
     "Magistracy": {
@@ -346,28 +346,28 @@
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
     },
-    "WoodshedsI": {
-      "name": "Woodsheds I", "glyph": "🪵", "kind": "bonus",
+    "LumberjacksI": {
+      "name": "Lumberjacks I", "glyph": "🪓", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 1,
       "requires": ["SawpitsII"],
       "gold": 8000, "knowledge": 3,
       "effects": [
-        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Sawmill"}}
+        {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Sawmill"}}
       ]
     },
-    "ButcheryI": {
-      "name": "Butchery I", "glyph": "🍖", "kind": "bonus",
+    "WoodshedsI": {
+      "name": "Woodsheds I", "glyph": "🪵", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 2,
       "requires": ["SawpitsII"],
       "gold": 8000, "knowledge": 6,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Meat"}}
+        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Sawmill"}}
       ]
     },
     "Charter": {
       "name": "Charter", "glyph": "📜", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 18, "col": 1,
-      "requires": ["CarpentryII", "WoodshedsI"],
+      "requires": ["CarpentryII", "LumberjacksI"],
       "gold": 12000, "knowledge": 2,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":5}}]
     },
@@ -401,13 +401,13 @@
         {"stat":"taxRate","op":"percent","value":10}
       ]
     },
-    "StonecuttingII": {
-      "name": "Stonecutting II", "glyph": "⛏️", "kind": "bonus",
+    "FarmhandsI": {
+      "name": "Farmhands I", "glyph": "🧑‍🌾", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 20, "col": 1,
       "requires": ["Ironmongery"],
       "gold": 18000, "knowledge": 4,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Stone"}}
+        {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Farm"}}
       ]
     },
     "WarbandIII": {
@@ -427,7 +427,7 @@
     "DeepMining": {
       "name": "Deep Mining", "glyph": "🪙", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 21, "col": 1,
-      "requires": ["StonecuttingII", "WarbandIII"],
+      "requires": ["FarmhandsI", "WarbandIII"],
       "gold": 18000, "knowledge": 4,
       "unlocks": [{"harvest":"MountainGold"}]
     },
@@ -440,13 +440,13 @@
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Mounted"}}
       ]
     },
-    "SchoolingII": {
-      "name": "Schooling II", "glyph": "🧺", "kind": "bonus",
+    "RichSoilI": {
+      "name": "Rich Soil I", "glyph": "🌱", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 0,
       "requires": ["Gardening"],
       "gold": 18000, "knowledge": 4,
       "effects": [
-        {"stat":"villagerTrainingSpeed","op":"percent","value":20}
+        {"stat":"cellStock","op":"percent","value":25,"target":{"harvest":"Crops"}}
       ]
     },
     "AttunementII": {
@@ -456,19 +456,19 @@
       "gold": 18000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":4}}, {"district":"RuneCarver"}]
     },
-    "GoldPanningI": {
-      "name": "Gold Panning I", "glyph": "🥇", "kind": "bonus",
+    "SmokehousesI": {
+      "name": "Smokehouses I", "glyph": "🐟", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 2,
       "requires": ["DeepMining"],
       "gold": 18000, "knowledge": 7,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainGold"}}
+        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Docks"}}
       ]
     },
     "Exchequer": {
       "name": "Exchequer", "glyph": "💰", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 23, "col": 1,
-      "requires": ["SchoolingII", "AttunementII"],
+      "requires": ["RichSoilI", "AttunementII"],
       "gold": 27000, "knowledge": 3, "goods": {"Planks":2,"CutStone":2},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":6}}]
     },
@@ -516,13 +516,13 @@
       "requires": ["Fortifications"],
       "gold": 40000, "knowledge": 6
     },
-    "GuildHallsII": {
-      "name": "Guild Halls II", "glyph": "⚙️", "kind": "bonus",
+    "ApprenticesI": {
+      "name": "Apprentices I", "glyph": "🧰", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 26, "col": 0,
       "requires": ["Sculpture"],
       "gold": 40000, "knowledge": 6,
       "effects": [
-        {"stat":"workshopSpeed","op":"percent","value":15}
+        {"stat":"workshopQueueSlots","op":"flat","value":1}
       ]
     },
     "AttunementIII": {
@@ -544,34 +544,34 @@
     "CarpentryIII": {
       "name": "Carpentry III", "glyph": "🔨", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 0,
-      "requires": ["GuildHallsII"],
+      "requires": ["ApprenticesI"],
       "gold": 40000, "knowledge": 6,
       "effects": [
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
     },
-    "FletchingII": {
-      "name": "Fletching II", "glyph": "🏹", "kind": "bonus",
+    "PoulticesI": {
+      "name": "Poultices I", "glyph": "🩹", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 1,
       "requires": ["AttunementIII"],
       "gold": 40000, "knowledge": 6,
       "effects": [
-        {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
+        {"stat":"healSpeed","op":"percent","value":25}
       ]
     },
-    "SmokehousesI": {
-      "name": "Smokehouses I", "glyph": "🐟", "kind": "bonus",
+    "GamekeepingI": {
+      "name": "Gamekeeping I", "glyph": "🦌", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 2,
       "requires": ["AttunementIII"],
       "gold": 40000, "knowledge": 10,
       "effects": [
-        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Docks"}}
+        {"stat":"respawnSpeed","op":"percent","value":25}
       ]
     },
     "Chancery": {
       "name": "Chancery", "glyph": "🖋️", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 28, "col": 1,
-      "requires": ["CarpentryIII", "FletchingII"],
+      "requires": ["CarpentryIII", "PoulticesI"],
       "gold": 60000, "knowledge": 4, "goods": {"Planks":3,"CutStone":3,"Iron":1},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":7}}]
     },
@@ -621,22 +621,22 @@
       "gold": 85000, "knowledge": 9,
       "unlocks": [{"districtCount":"Sanctum"}]
     },
-    "CropRotationII": {
-      "name": "Crop Rotation II", "glyph": "🔄", "kind": "bonus",
+    "CivicTreasuryI": {
+      "name": "Civic Treasury I", "glyph": "🏦", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 31, "col": 0,
       "requires": ["TradeRoutesIV"],
       "gold": 85000, "knowledge": 9,
       "effects": [
-        {"stat":"regrowthSpeed","op":"percent","value":25,"target":{"harvest":"Crops"}}
+        {"stat":"ownGold","op":"percent","value":25}
       ]
     },
-    "IronPicksII": {
-      "name": "Iron Picks II", "glyph": "⛏️", "kind": "bonus",
+    "MinersI": {
+      "name": "Miners I", "glyph": "⛏️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 31, "col": 1,
       "requires": ["SawpitsIII", "SecondSanctum"],
       "gold": 85000, "knowledge": 9,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
+        {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Quarry"}}
       ]
     },
     "WarhornsI": {
@@ -648,37 +648,37 @@
         {"stat":"unitAtk","op":"percent","value":10}
       ]
     },
-    "ReforestingII": {
-      "name": "Reforesting II", "glyph": "🌱", "kind": "bonus",
+    "OldGrowthI": {
+      "name": "Old Growth I", "glyph": "🌳", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 0,
-      "requires": ["CropRotationII"],
+      "requires": ["CivicTreasuryI"],
       "gold": 85000, "knowledge": 9,
       "effects": [
-        {"stat":"regrowthSpeed","op":"percent","value":25,"target":{"harvest":"Forest"}}
+        {"stat":"cellStock","op":"percent","value":25,"target":{"harvest":"Forest"}}
       ]
     },
-    "BigNetsI": {
-      "name": "Big Nets I", "glyph": "🎣", "kind": "bonus",
+    "BunkhouseI": {
+      "name": "Bunkhouse I", "glyph": "🛏️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 1,
-      "requires": ["IronPicksII"],
+      "requires": ["MinersI"],
       "gold": 85000, "knowledge": 9,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Fish"}}
+        {"stat":"crewSlots","op":"flat","value":1}
       ]
     },
-    "BardingII": {
-      "name": "Barding II", "glyph": "🐴", "kind": "bonus",
+    "LoggingCampsI": {
+      "name": "Logging Camps I", "glyph": "🏕️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 2,
-      "requires": ["IronPicksII"],
+      "requires": ["MinersI"],
       "gold": 85000, "knowledge": 15,
       "effects": [
-        {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Mounted"}}
+        {"stat":"improvementYield","op":"percent","value":15}
       ]
     },
     "Dominion": {
       "name": "Dominion", "glyph": "👑", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 33, "col": 1,
-      "requires": ["ReforestingII", "BigNetsI"],
+      "requires": ["OldGrowthI", "BunkhouseI"],
       "gold": 130000, "knowledge": 6, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":8}}]
     },
@@ -710,8 +710,8 @@
       "gold": 180000, "knowledge": 6,
       "unlocks": [{"district":"Plaza"}]
     },
-    "StonecuttingIII": {
-      "name": "Stonecutting III", "glyph": "⛏️", "kind": "bonus",
+    "StonecuttingII": {
+      "name": "Stonecutting II", "glyph": "⛏️", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 35, "col": 1,
       "requires": ["Hydraulics"],
       "gold": 180000, "knowledge": 6,
@@ -735,13 +735,13 @@
         {"stat":"taxRate","op":"percent","value":10}
       ]
     },
-    "IrrigationIII": {
-      "name": "Irrigation III", "glyph": "💧", "kind": "bonus",
+    "SurveyingI": {
+      "name": "Surveying I", "glyph": "📐", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 36, "col": 1,
-      "requires": ["StonecuttingIII", "WarbandIV"],
+      "requires": ["StonecuttingII", "WarbandIV"],
       "gold": 180000, "knowledge": 6,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Crops"}}
+        {"stat":"influenceRadius","op":"flat","value":1}
       ]
     },
     "ShieldWallII": {
@@ -753,35 +753,35 @@
         {"stat":"unitDef","op":"percent","value":10,"target":{"unitTag":"Melee"}}
       ]
     },
-    "StoneyardsI": {
-      "name": "Stoneyards I", "glyph": "🪨", "kind": "bonus",
+    "GuildHallsII": {
+      "name": "Guild Halls II", "glyph": "⚙️", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 0,
       "requires": ["TradeRoutesV"],
       "gold": 180000, "knowledge": 6,
       "effects": [
-        {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Quarry"}}
+        {"stat":"workshopSpeed","op":"percent","value":15}
       ]
     },
     "AttunementIV": {
       "name": "Attunement IV", "glyph": "💫", "kind": "mechanic",
       "description": "Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 1,
-      "requires": ["IrrigationIII"],
+      "requires": ["SurveyingI"],
       "gold": 180000, "knowledge": 6
     },
-    "VigourII": {
-      "name": "Vigour II", "glyph": "❤️", "kind": "bonus",
+    "SwiftScoutsI": {
+      "name": "Swift Scouts I", "glyph": "🏃", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 2,
-      "requires": ["IrrigationIII"],
+      "requires": ["SurveyingI"],
       "gold": 180000, "knowledge": 10,
       "effects": [
-        {"stat":"unitHp","op":"percent","value":10}
+        {"stat":"explorerSpeed","op":"percent","value":25}
       ]
     },
     "Sovereignty": {
       "name": "Sovereignty", "glyph": "🦁", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 38, "col": 1,
-      "requires": ["StoneyardsI", "AttunementIV"],
+      "requires": ["GuildHallsII", "AttunementIV"],
       "gold": 270000, "knowledge": 4, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":9}}]
     },
@@ -813,8 +813,8 @@
       "gold": 380000, "knowledge": 9,
       "unlocks": [{"district":"Shrine"}]
     },
-    "IronPicksIII": {
-      "name": "Iron Picks III", "glyph": "⛏️", "kind": "bonus",
+    "IronPicksI": {
+      "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 40, "col": 1,
       "requires": ["Mechanics"],
       "gold": 380000, "knowledge": 9,
@@ -831,37 +831,37 @@
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
-    "ButcheryII": {
-      "name": "Butchery II", "glyph": "🍖", "kind": "bonus",
+    "FlowerbedsI": {
+      "name": "Flowerbeds I", "glyph": "🌷", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 0,
       "requires": ["SacredGrounds"],
       "gold": 380000, "knowledge": 9,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"Meat"}}
+        {"stat":"decorationHarmony","op":"percent","value":25}
       ]
     },
-    "GoldPanningII": {
-      "name": "Gold Panning II", "glyph": "🥇", "kind": "bonus",
+    "FishersI": {
+      "name": "Fishers I", "glyph": "🎣", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 1,
-      "requires": ["IronPicksIII", "ColoursI"],
+      "requires": ["IronPicksI", "ColoursI"],
       "gold": 380000, "knowledge": 9,
       "effects": [
-        {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainGold"}}
+        {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Docks"}}
       ]
     },
-    "WarhornsII": {
-      "name": "Warhorns II", "glyph": "📯", "kind": "bonus",
+    "SupplyDepotsI": {
+      "name": "Supply Depots I", "glyph": "📦", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 2,
       "requires": ["ColoursI"],
       "gold": 380000, "knowledge": 15,
       "effects": [
-        {"stat":"unitAtk","op":"percent","value":10}
+        {"stat":"improvementStore","op":"percent","value":25}
       ]
     },
     "StrongroomI": {
       "name": "Strongroom I", "glyph": "🔐", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 0,
-      "requires": ["ButcheryII"],
+      "requires": ["FlowerbedsI"],
       "gold": 380000, "knowledge": 9,
       "effects": [
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Townhall"}},
@@ -871,19 +871,19 @@
     "GranariesII": {
       "name": "Granaries II", "glyph": "📦", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 1,
-      "requires": ["GoldPanningII"],
+      "requires": ["FishersI"],
       "gold": 380000, "knowledge": 9,
       "effects": [
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Farm"}}
       ]
     },
-    "FletchingIII": {
-      "name": "Fletching III", "glyph": "🏹", "kind": "bonus",
+    "ForcedMarchI": {
+      "name": "Forced March I", "glyph": "🥾", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 2,
-      "requires": ["GoldPanningII"],
+      "requires": ["FishersI"],
       "gold": 380000, "knowledge": 15,
       "effects": [
-        {"stat":"unitAtk","op":"percent","value":10,"target":{"unitTag":"Distance"}}
+        {"stat":"armyMarchSpeed","op":"percent","value":15}
       ]
     },
     "GoldenAge": {
