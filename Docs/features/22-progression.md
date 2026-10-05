@@ -33,15 +33,15 @@
 
 | When | What the player meets | Opened by |
 |---|---|---|
-| **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the Book of Civics, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
+| **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the research tree, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
 | **Session 1** | silhouettes in the fog; the old plots, the old Farm and workers; **the Build tab** and a second House; the old Sawmill; Townhall 2 | the quest chain |
 | **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
-| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing a lair's ground; Isolde hands over the book |
+| **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, the Warrior, the Barracks, soldiers | revealing a lair's ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
-| **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of Civics and Magic | claiming the shrine; 43 cells revealed (Magic's at 30, Warfare's at 85) |
+| **Day 1–2** | the Thorned Shrine, the Sanctum; Bureaucracy, the end of chapter 2 | claiming the shrine; the chain |
 | **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
 | **Day 2–3** | Townhall 3, Mining, the Harpies | the chain; the fog |
-| **Day 4–6** | Townhall 4, era 3, workshops and refined goods | Magistracy; 100 cells revealed |
+| **Day 4–6** | Townhall 4, chapter 4, workshops and refined goods | Magistracy; 160 cells revealed |
 | **Day 5–7** | **the Watchtower**: the world door, **the Atlas** | claiming the Watchtower |
 | **Week 2+** | decorations and Harmony, Townhall 5–10, the deep lairs | the Townhall ladder |
 
@@ -58,9 +58,7 @@
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
 | **Season** pill | a card or a pack held | absent |
-| **The Book of Civics** | always open | — |
-| **The Book of Warfare** | Isolde **hands it over**, once the first lair is discovered and its card opened (`firstLair`, [`23-tutorials.md`](23-tutorials.md) §4.2) | a padlocked bookmark — *Find a lair* |
-| **The Book of Magic** | the first landmark is **claimed** | a padlocked bookmark — *Claim a landmark* |
+| **The tree** | always open | — |
 | **The Sagas** (found) | a **Tavern** stands | not on the shelf |
 | **The Atlas** (found) | the **Watchtower** is claimed | not on the shelf |
 | **The banner** (in the Store and the Tavern) | a Tavern stands | padlocked in the Store |
@@ -81,16 +79,15 @@
 
 | Book | Kind | Opens when | Remit |
 |---|---|---|---|
-| **Civics** | general | from the first minute | the city and its purse |
-| **Warfare** | general | Isolde hands it over at the first lair discovered | the army, and the lairs it clears |
-| **Magic** | general | the first landmark is claimed | Mana, Knowledge, the Sanctum, the water and the heights |
+| **Kingdom** | the tree | from the first minute | everything the kingdom learns, in nine chapters |
 | **Sagas** | found | a Tavern stands | heroes, and the Tavern that hosts them |
 | **Atlas** | found | the Watchtower is claimed | sight, landmarks, and the world beyond |
 
-- **Opening a book is a fact about the world, never a research.** No
-  technology opens a book.
-- Inside an open book the era bars still pace the page, on cells revealed
+- **The tree is one book** read in chapters, each opened on revealed cells and
+  closed by a finale that opens the next Townhall level
   ([`07-research.md`](07-research.md) §2.1).
+- **Opening a found book is a fact about the world, never a research.** No
+  technology opens a book.
 - **What makes a book open is code** (`sim/research.ts`, `TOME_OPENS`); what is
   in it is the tree file.
 - A book, once open, is open for ever.
@@ -101,13 +98,12 @@
 
 | Place | Where | Found | Claimed or cleared |
 |---|---|---|---|
-| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts; the first lair found brings the Book of Warfare | the hoard, 3 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
-| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 3 Knowledge; **the Book of Magic opens** |
+| **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts | the hoard, 3 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
+| **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 3 Knowledge |
 | **The Watchtower** (landmark, new kind) | 8 rings north of the Townhall, 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 3 Knowledge |
 
 - **A landmark inside a standing lair's ground cannot be claimed.** The
-  Thorned Shrine waits for the Orcs to fall, so the book of the army always
-  opens before the book of magic.
+  Thorned Shrine waits for the Orcs to fall.
 - The Watchtower is claimed like any landmark. Its kind is what makes it a
   door; its price is authored in the map editor.
 - **The world door opens the world board**
@@ -118,7 +114,7 @@
 ## 6. The Tavern and the heroes
 
 - **The Tavern** is a building, one per city, 2×1, on the Economy tab,
-  unlocked by **Hospitality** (Civics, era 2's first row).
+  unlocked by **Hospitality** (chapter 2 of the tree).
 - **L1 opens the Heroes tab, the banner and the Sagas.** The banner lives in
   the Tavern's card; the Store keeps a copy, padlocked until a Tavern stands.
 - **Every level adds +10% Hero XP** (`buildings` › `heroXpBonusPerLevel`).
@@ -147,71 +143,55 @@
 
 | Source | A day |
 |---|---|
-| the drip, three visits a day | ~20 (at most 24) |
-| the quest chain, days 1–2 | ~27 in all |
-| a landmark claimed | 3 each (+Wayposts) |
-| a lair cleared | 3 each (+Bounties) |
+| the drip, three visits a day | ~23 (at most 24) |
+| the quest chain, days 1–2 | ~28 in all |
+| a landmark claimed | 3 each |
+| a lair cleared | 3 each |
 
-### 8.2 What a card costs
+### 8.2 The budget
 
-| Era | Minor | Major | A full band, all books |
-|---|---|---|---|
-| **1** | 1–2 K (the found books 2–8) | 2–3 K | ~110 K — the quest chain funds Civics' |
-| **2** | 2–4 K (the found books 8–15) | 2–10 K | ~230 K |
-| **3** | 8–14 K | 10–25 K | ~750 K |
-| **4** | — | 40 K (the keystones) | 80 K |
+- **A chapter's spine costs what the three-visits-a-day player earns in its
+  days**; the dead ends are Knowledge on top, for a player who buys it or
+  plays more. Per chapter: [`tech-tree.md`](tech-tree.md) §1.
 
-### 8.3 The target
+| Townhall | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|
+| **Target day** | 1 | 2 | 5 | 7 | 10 | 14 | 20 | 24 | 30 |
 
-| Milestone | Day |
-|---|---|
-| Civics era 1 done | 1 |
-| era 2 open in every book | 1–2 |
-| Townhall 3 (Bureaucracy) | 2 |
-| Townhall 4 (Magistracy) | 5–6 |
-| era 2 done in every open book | ~10 |
-| era 3 done | ~6 weeks |
+- The opening's chapters (1 and 2) are funded by the quest chain.
 
-- The 30-day harness measures Townhall 3 on day 8, 4 on 9, 5 on 11, 6 on
-  12, 7 on 17 and 8 on 25 (**OQ-116**).
+## 9. The shape of a chapter
 
-- **The tree is the long arc.** It outlasts the thirty-day window by design;
-  the Townhall ladder and the lairs carry the month, the tree the season
-  after.
-
-## 9. The shape of a book
-
-A page mixes four kinds of card, in the proportion Elvenar's research does:
+Columns 1–3 wide, read down the page, that converge on one finale:
 
 | Card | Share | Examples |
 |---|---|---|
-| **Opens a building** | ~1 in 8 | Saws → the Sawmill; Hospitality → the Tavern |
-| **Opens a building level** | ~1 in 8 | Urban Planning → Housing L2; Timber Framing → Sawmill L3 |
-| **Opens a mechanic** | a few per book | Forestry → the forest tap; Sailing → the water |
-| **A small economy bonus** | the rest | +10% Wood from forests, +10% build speed |
+| **Opens a building** or a building level | ~4 in 10 | Townhouses → Housing L4; Ironmongery → the producers L5 |
+| **A filler**: a real step on something the player already uses | ~4 in 10 | +15% Wood per strike, +25% store in the Farm |
+| **A dead end**: optional | ~2 in 10 | an army stat step |
+| **The finale** | one | Charter → Townhall 5 |
 
-- **Every bonus is a positive percentage that stacks.** It never reduces a
-  number: a wait is moved by a **speed** the time is divided by, so a bonus
-  can climb for ever without reaching zero
+- **Every bonus is a positive percentage or step that stacks.** It never
+  reduces a number: a wait is moved by a **speed** the time is divided by
   ([`07-research.md`](07-research.md) §1.2).
 - **No discounts.** A card never makes a thing cheaper; it makes the kingdom
   produce more.
-- **A yield bonus is a percentage, not a unit.** *+10% Wood from forests* is
-  the same share of a level-1 city's Wood and a level-10 city's; fractions
-  carry, so a crew may bring home 1 on one trip and 2 on the next.
+- **A yield bonus is a percentage, not a unit**; fractions carry.
+- **Nothing on the tap or the Mana pool.**
 
 ## 10. Dials, in the order to reach for them
 
 | Dial | Value | Where |
 |---|---|---|
-| What each card costs | §8.2 | `?dev=data#tree` |
-| What each band asks for in revealed cells | Civics 0 · 43 · 100; Warfare 0 · 85 · 100 · 220; Magic 0 · 30 · 100 · 220; Sagas 0 · 100; Atlas 0 · 220 | `?dev=data#tree` |
+| What each card costs | [`tech-tree.md`](tech-tree.md) | `?dev=data#tree` |
+| What each chapter asks for in revealed cells | 0 · 20 · 100 · 160 · 220 · 280 · 340 · 400 · 460 | `?dev=data#tree` |
+| What finishing a chapter pays | a card pack each | `?dev=data#tree` (`eraRewards`) |
 | The Watchtower's place and price | (−2, −8) · 10,000 Gold | `?dev=data#map` |
 | The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |
 | Hero XP per Tavern level | +10% | `buildings` › `Tavern` › `heroXpBonusPerLevel` |
 | Which quest opens Research and Build | `Woodcraft` · `GrowingTown` | `sim/doors.ts` |
-| What opens a book | §4 | `sim/research.ts` `TOME_OPENS` |
+| What opens a found book | §4 | `sim/research.ts` `TOME_OPENS` |
 
 ## 11. Deliberately not in this design
 

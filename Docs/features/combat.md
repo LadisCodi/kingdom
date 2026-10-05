@@ -78,7 +78,7 @@ and the army cap; hero slots one free, the rest Gems
     - Capped at **90%**: someone always stays out there.
   - **The ward is a building, not a rule.** With no Infirmary built there are
     no beds, so every casualty is a death. It is opened by the `Infirmary`
-    technology in Civics and holds `buildings.bedsPerLevel`, which is the
+    technology (chapter 3) and holds `buildings.bedsPerLevel`, which is the
     whole of what its levels buy ([`buildings.md`](buildings.md) §4.10).
   - **Anything the beds have no room for dies**, which is what makes the
     ceiling a decision.

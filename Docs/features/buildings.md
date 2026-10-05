@@ -78,14 +78,15 @@
 | Level | Gate | Cost | Time |
 |---|---|---|---|
 | 1 | — | placed at game start | — |
-| 2 | — | 99 Gold + 66 Wood | 30 s |
-| 3 | `Bureaucracy` (Civics era 2) | 6,000 Gold + 330 Wood | ×4 per level |
-| 4 | `Magistracy` (Civics era 3) | | |
+| 2 | `Forestry` (chapter 1) | 99 Gold + 66 Wood | 30 s |
+| 3 | `Bureaucracy` (chapter 2) | 6,000 Gold + 330 Wood | ×4 per level |
+| 4 | `Magistracy` (chapter 3) | | |
+| 5–10 | `Charter` · `Exchequer` · `Chancery` · `Dominion` · `Sovereignty` · `Golden Age` (chapters 4–9) | | |
 
 ### 3.1 The ladder to 10
 
-- **Levels 2–4 are gated by the tree**: 3 by `Bureaucracy` (Civics era 2), 4
-  by `Magistracy` (Civics era 3). **No level past 4 asks for a technology.**
+- **Every level is gated by the tree**: the finale of chapter *n* opens
+  Townhall *n + 1* ([`tech-tree.md`](tech-tree.md)).
 - **Levels 5–10 are priced in refined goods**, from one level before every
   other building is (the workshops open at Townhall 4 so a good exists first):
 
@@ -123,7 +124,7 @@
   (`storageCapacityPerLevel`).
 - Housing next to Housing: −1 Gold/min per neighbour, flat — a level does not
   scale it.
-- `Communities` (Civics era 2) adds +1 resident to every Housing.
+- `Communities` (chapter 3) adds +1 resident to every Housing.
 - Build 15 Gold + 10 Wood, 20 s. Level 2: 66 Gold + 33 Wood + 11 Stone, 20 s;
   time ×1.5 per level.
 - Levels 6–10 add two residents and +25% rent each, to 20 residents at +225%
@@ -207,8 +208,8 @@
 ### 4.7 Sanctum
 
 - The Mana engine: each level adds capacity and regeneration
-  ([`08-magic.md`](08-magic.md) §2). Unlocked by `Consecration` (Magic era 1).
-- One per city; `Second Sanctum` (Magic era 3) allows a second.
+  ([`08-magic.md`](08-magic.md) §2). Unlocked by `Consecration` (chapter 2).
+- One per city; `Second Sanctum` (chapter 7) allows a second.
 - Build 9,000 Gold + 100 Stone, 90 s. Level 2: 17,000 Gold + 220 Stone, 120 s;
   time ×1.6 per level.
 
@@ -259,9 +260,8 @@ ten field 10,400.
 - **Beds for the soldiers who came back hurt.** With no Infirmary built, every
   casualty of every fight is a death; with one, a tenth of them wait in its
   beds instead — more when a medic hero walks the field
-  ([`combat.md`](combat.md) §4). Warfare's `Beds` ladder adds a share of
-  beds.
-- Opened by the **`Infirmary` technology in Warfare**. One per city.
+  ([`combat.md`](combat.md) §4).
+- Opened by the **`Infirmary` technology** (chapter 3). One per city.
 - **Beds per level** — 30, 50, 75, 105, 140, 180, 225, 275, 330, 400 — is the
   whole of what a level buys, and the ward's ceiling: what does not fit dies.
 - Mending is **one order and one wait** for a whole ward of one type, on the
@@ -337,7 +337,7 @@ written once. The Townhall's own ladder is §3.
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
 does nothing else, and every piece past the Garden is priced in a refined
 good, paid when the build is queued. The count cap per piece is its Townhall
-gate and its ceiling in one; the piece is discovered by a Civics era-3 card.
+gate and its ceiling in one; the piece is discovered by a card in the tree.
 The table is [`21-harmony.md`](21-harmony.md) §2.
 
 ## 5. Wonders — designed, not built
@@ -357,24 +357,24 @@ Full design: [`16-wonders.md`](16-wonders.md).
 | **The Astral Spire** | `manaRegen` — more Mana per hour |
 | **The Bell of Toil** | `workerYield` — the crew strikes harder |
 
-## 6. The last technology on each ladder
+## 6. The technology on each level
 
-Research owns the early half of every ladder and nothing above it: past these
-levels a building is bought with a Townhall level and goods (§4.11).
+Each chapter's first row opens that Townhall level's next Housing level, the
+four producers' next level and the four halls' next level; the finale opens
+the next Townhall level ([`tech-tree.md`](tech-tree.md)). A level is bought with
+its technology, its Townhall level and, from 6, goods (§4.11).
 
 **Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=data#tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
 
-| Building | Last tech-gated level |
+| Building | Levels and their technology |
 |---|---|
-| Townhall 4 | `Magistracy` (Civics era 3) |
-| Housing 3 | `Aqueducts` (Civics era 3) |
-| Sawmill 4 | TH3 · `Architecture` |
-| Quarry 3 | TH3 · `Architecture` |
-| Docks 2 | `Shipbuilding` (Magic era 3) |
-| Sanctum 5 | TH4 · `Attunement III` (Magic era 3) |
-| Tavern 5 | `Minstrels' Gallery` (Sagas era 2) |
-| the four halls 5 | TH3 · `Warband III` (Warfare era 3) |
-| Farm · the four workshops · the Infirmary | none — their unlock technology is the only one |
+| Townhall | 2 `Forestry` · 3 `Bureaucracy` · 4 `Magistracy` · 5 `Charter` · 6 `Exchequer` · 7 `Chancery` · 8 `Dominion` · 9 `Sovereignty` · 10 `Golden Age` |
+| Housing | 2 `Urban Planning` · 3 `Aqueducts` · 4 `Townhouses` · 5 `Terraces` · 6 `Manors` · 7 `Mansions` · 8 `Sewers` · 9–10 `Grand Avenues` |
+| Farm · Sawmill · Quarry · Docks | 3 `Timber Framing` · 4 `Architecture` · 5 `Ironmongery` · 6 `Waterwheels` · 7 `Windmills` · 8 `Hydraulics` · 9–10 `Mechanics` |
+| the four halls | 4 `Warband II` · 5 `Warband III` · 6 `Fortifications` · 7 `Bastions` · 8 `Citadels` · 9–10 `Warlords` |
+| Sanctum | 4 `Attunement II` · 5 `Attunement III`; past 5 `Attunement IV` |
+| Tavern | 2–5 in the Sagas |
+| the four workshops · the Infirmary | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them
 

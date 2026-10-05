@@ -65,13 +65,13 @@ cap     = (100 + Sanctum level + 10 per claimed landmark + 10 per held Sanctuary
 
 ## 4. The Sanctum
 
-- A city district, unlocked by `Consecration` (Magic era 1,
-  [`tech-tree.md`](tech-tree.md) §4.1).
+- A city district, unlocked by `Consecration` (chapter 2,
+  [`tech-tree.md`](tech-tree.md)).
 - Ten levels: capacity **+24 / 48 / 72 / 100 / 132 / 168 / 208 / 252 / 300 /
   352**, production **+3 / 6 / 9 / 12 / 16 / 20 / 25 / 30 / 36 / 42** per
   hour. L2–L10 need Townhall 2 / 3 / 3 / 4 / 6 / 7 / 8 / 9 / 10; L4 and L5
   are also opened by the `Attunement II` / `III` cards.
-- One per city; `Second Sanctum` (Magic era 3) allows a second.
+- One per city; `Second Sanctum` (chapter 7) allows a second.
 - Uses the district system as-is: count caps, distance-scaled build time,
   level gates.
 

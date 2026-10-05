@@ -1004,7 +1004,7 @@
     "id": "eras",
     "trigger": "revealed",
     "triggerTarget": "",
-    "triggerAmount": 43,
+    "triggerAmount": 100,
     "anywhere": false,
     "skippable": true,
     "lines": [
@@ -1024,7 +1024,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "You’ve seen more of the land than any monarch in years — and look, the books have noticed! Chapter II is open.",
+        "text": "You’ve seen more of the land than any monarch in years — and look, the tree has noticed! A new chapter can open.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "none",
@@ -1135,7 +1135,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Soldiers it is! The Book of Warfare starts with a Barracks — let’s read it together.",
+        "text": "Soldiers it is! The research tree knows how to raise a Barracks — let’s read it together.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "none",
@@ -1289,7 +1289,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Do you feel that? The old stones hum — the well runs deeper already. And the Book of Magic is open! I’ve waited years for this.",
+        "text": "Do you feel that? The old stones hum — the well runs deeper already. I’ve waited years for this.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "none",
