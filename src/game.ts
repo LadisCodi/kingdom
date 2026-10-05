@@ -9,7 +9,7 @@ import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, 
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
-  buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
+  buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
   repairAbandoned,
@@ -17,7 +17,7 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
-  ITEMS, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
+  GOODS, ITEMS, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
@@ -42,7 +42,7 @@ import { harmonyBlock } from './sim/harmony';
 import {
   committedTroops, finishLineWithGems, healCost, healSecondsAt, healWounded, infirmaries, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
-  itemTrainSeconds, trainingCompletesAt,
+  itemTrainSeconds, lineRushCost, trainingCompletesAt, trainingProgress,
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
@@ -68,7 +68,10 @@ import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
-import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
+import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
+import {
+  autoPlan, fits, jobRemainingSeconds, speedupsFor, useAuto, useSpeedup, type SpeedJob,
+} from './sim/speedups';
 import { partyPower, typeMultiplier } from './sim/combat';
 import {
   attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
@@ -115,7 +118,7 @@ import {
 import { addHeroXp, boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
-  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
   type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
@@ -193,6 +196,8 @@ export type OverlayName =
   | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
   // The Bag (Docs/art/ui-inventory.md): items held until they are used.
   | 'bag'
+  // The Speed-up picker, opened by a timer's Speed up (ui-inventory.md §3.7).
+  | 'speedup'
   | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -231,6 +236,22 @@ export interface BagScreen {
   items: Array<{ id: ItemId; def: ItemDef; count: number; fresh: boolean; worth: Wallet }>;
   /** The tile whose popover is open. */
   picked: ItemId | null;
+}
+
+/** The Speed-up picker as its screen draws it (ui/speedupSheet.ts). */
+export interface SpeedupScreen {
+  /** What is being sped up: "Sawmill · level 4". */
+  title: string;
+  icon: DistrictId;
+  progress: number;
+  /** Seconds left. */
+  left: number;
+  /** The speed-ups that fit, typed first, then General, smallest first. */
+  rows: Array<{ id: ItemId; def: ItemDef; count: number }>;
+  /** What Auto would spend; empty when there is nothing to spend. */
+  auto: Array<{ id: ItemId; n: number }>;
+  /** What finishing with Gems costs now. */
+  gems: number;
 }
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
@@ -2641,6 +2662,130 @@ export class Game {
     this.notify();
   }
 
+  // ---------------------------------------------------- the Speed-up picker
+
+  /** The timer the picker is open on, and the overlay it goes back to. */
+  speedJob: SpeedJob | null = null;
+  private speedReturn: OverlayName | null = null;
+
+  /** Does the Bag hold anything that fits this timer — is Speed up worth
+   *  offering over a bare Finish? */
+  hasSpeedups(job: SpeedJob): boolean {
+    return speedupsFor(this.state, job).length > 0;
+  }
+
+  openSpeedup(job: SpeedJob): void {
+    if (jobRemainingSeconds(this.state, job, this.now()) === null) return;
+    if (this.openOverlay !== 'speedup') this.speedReturn = this.openOverlay;
+    this.setOverlay('speedup');
+    this.speedJob = job;
+    this.notify();
+  }
+
+  closeSpeedup(): void {
+    const back = this.speedReturn;
+    this.speedReturn = null;
+    this.speedJob = null;
+    this.setOverlay(back);
+  }
+
+  /** The first running timer a speed-up of this kind fits — where the Bag's
+   *  Speed up a timer goes (ui-inventory.md §3.5). */
+  firstJobFor(id: ItemId): SpeedJob | null {
+    const now = this.now();
+    const jobs: SpeedJob[] = [
+      ...this.state.city.queue.filter((q) => q.startedAt !== null)
+        .map((q): SpeedJob => ({ kind: 'queue', itemId: q.uniqueId })),
+      ...[...new Set(this.state.city.trainingQueue.map((i) => i.buildingId))]
+        .map((b): SpeedJob => ({ kind: 'training', buildingId: b })),
+      ...this.state.city.districts.map((d): SpeedJob => ({ kind: 'workshop', districtId: d.uniqueId })),
+    ];
+    return jobs.find((j) => fits(id, j) && jobRemainingSeconds(this.state, j, now) !== null) ?? null;
+  }
+
+  private jobFacts(job: SpeedJob): { title: string; icon: DistrictId; progress: number; gems: number } | null {
+    const now = this.now();
+    if (job.kind === 'queue') {
+      const item = this.state.city.queue.find((q) => q.uniqueId === job.itemId);
+      const d = item && districtById(this.state, item.districtUniqueId);
+      if (!item || !d) return null;
+      const name = DISTRICTS[d.definitionId].name;
+      return {
+        title: item.kind === 'upgrade' ? `${name} · level ${formatExact(item.targetLevel ?? d.level + 1)}` : name,
+        icon: d.definitionId, progress: queueProgress(item, now), gems: gemRushCost(item, now),
+      };
+    }
+    if (job.kind === 'training') {
+      const d = districtById(this.state, job.buildingId);
+      const head = lineFor(this.state, job.buildingId)[0];
+      if (!d || !head) return null;
+      const n = lineFor(this.state, job.buildingId).reduce((s, i) => s + (i.count ?? 1), 0);
+      return {
+        title: `${DISTRICTS[d.definitionId].name} · ${formatExact(n)} training`,
+        icon: d.definitionId, progress: trainingProgress(this.state, job.buildingId, now),
+        gems: lineRushCost(this.state, job.buildingId, now),
+      };
+    }
+    const d = districtById(this.state, job.districtId);
+    const line = d && this.state.city.workshops[d.uniqueId];
+    const gems = d ? itemRushCost(this.state, d, now) : null;
+    if (!d || !line || line.items.length === 0 || gems === null) return null;
+    const item = line.items[0];
+    const need = item.needMs ?? 1;
+    return {
+      title: `${GOODS[item.good].name} · ${DISTRICTS[d.definitionId].name}`,
+      icon: d.definitionId, progress: need > 0 ? Math.min(1, item.workMs / need) : 1, gems,
+    };
+  }
+
+  speedupScreen(): SpeedupScreen | null {
+    const job = this.speedJob;
+    if (job === null) return null;
+    const now = this.now();
+    const left = jobRemainingSeconds(this.state, job, now);
+    const facts = this.jobFacts(job);
+    if (left === null || facts === null) return null;
+    return {
+      ...facts,
+      left,
+      rows: speedupsFor(this.state, job).map((id) => ({ id, def: ITEMS[id], count: itemCount(this.state, id) })),
+      auto: autoPlan(this.state, job, now),
+    };
+  }
+
+  /** After a Use: a timer that is done closes the picker, where the player
+   *  can see the job finish. */
+  private afterSpeedup(): void {
+    if (this.speedJob !== null && jobRemainingSeconds(this.state, this.speedJob, this.now()) === null) {
+      this.closeSpeedup();
+    }
+    this.notify();
+  }
+
+  doSpeedup(id: ItemId, n = 1): void {
+    if (this.speedJob === null) return;
+    if (useSpeedup(this.state, this.map, this.speedJob, id, n, this.now()) === 'Used') playSfx('click');
+    this.afterSpeedup();
+  }
+
+  doAutoSpeedup(): void {
+    if (this.speedJob === null) return;
+    useAuto(this.state, this.map, this.speedJob, this.now());
+    this.afterSpeedup();
+  }
+
+  /** Finish with Gems — the picker's last row, the same rush as before. */
+  doFinishSpeedJob(): void {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'queue') this.doRush(job.itemId);
+    else if (job.kind === 'training') {
+      const d = districtById(this.state, job.buildingId);
+      if (d) this.doFinishTraining(d);
+    } else this.doRushWorkshopItem(job.districtId);
+    this.afterSpeedup();
+  }
+
   doRepairAbandoned(cell: Coord): void {
     const site = standingAbandonedAt(this.state, cell);
     if (!site) return;
@@ -4255,10 +4400,12 @@ export class Game {
       return;
     }
     this.openOverlay = name;
-    if (name !== null) {
+    // The picker is a sheet over the card it was opened from: the card stays.
+    if (name !== null && name !== 'speedup') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    if (name !== 'speedup') this.speedJob = null;
     // Building happens on the province: the Build menu takes the player home.
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
     if (name !== 'world' && name !== 'army') this.selectedHex = null;

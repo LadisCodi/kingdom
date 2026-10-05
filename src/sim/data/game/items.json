@@ -4,83 +4,319 @@
     "kind": "chest",
     "coin": "Gold",
     "seconds": 600,
-    "tier": 1
+    "tier": 1,
+    "speeds": null
   },
   "GoldChest1h": {
     "name": "Gold chest",
     "kind": "chest",
     "coin": "Gold",
     "seconds": 3600,
-    "tier": 2
+    "tier": 2,
+    "speeds": null
   },
   "GoldChest8h": {
     "name": "Gold chest",
     "kind": "chest",
     "coin": "Gold",
     "seconds": 28800,
-    "tier": 4
+    "tier": 4,
+    "speeds": null
   },
   "FoodChest10m": {
     "name": "Food chest",
     "kind": "chest",
     "coin": "Food",
     "seconds": 600,
-    "tier": 1
+    "tier": 1,
+    "speeds": null
   },
   "FoodChest1h": {
     "name": "Food chest",
     "kind": "chest",
     "coin": "Food",
     "seconds": 3600,
-    "tier": 2
+    "tier": 2,
+    "speeds": null
   },
   "FoodChest8h": {
     "name": "Food chest",
     "kind": "chest",
     "coin": "Food",
     "seconds": 28800,
-    "tier": 4
+    "tier": 4,
+    "speeds": null
   },
   "WoodChest10m": {
     "name": "Wood chest",
     "kind": "chest",
     "coin": "Wood",
     "seconds": 600,
-    "tier": 1
+    "tier": 1,
+    "speeds": null
   },
   "WoodChest1h": {
     "name": "Wood chest",
     "kind": "chest",
     "coin": "Wood",
     "seconds": 3600,
-    "tier": 2
+    "tier": 2,
+    "speeds": null
   },
   "WoodChest8h": {
     "name": "Wood chest",
     "kind": "chest",
     "coin": "Wood",
     "seconds": 28800,
-    "tier": 4
+    "tier": 4,
+    "speeds": null
   },
   "StoneChest10m": {
     "name": "Stone chest",
     "kind": "chest",
     "coin": "Stone",
     "seconds": 600,
-    "tier": 1
+    "tier": 1,
+    "speeds": null
   },
   "StoneChest1h": {
     "name": "Stone chest",
     "kind": "chest",
     "coin": "Stone",
     "seconds": 3600,
-    "tier": 2
+    "tier": 2,
+    "speeds": null
   },
   "StoneChest8h": {
     "name": "Stone chest",
     "kind": "chest",
     "coin": "Stone",
     "seconds": 28800,
-    "tier": 4
+    "tier": 4,
+    "speeds": null
+  },
+  "GeneralSpeedup1m": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 60,
+    "tier": 1,
+    "speeds": "General"
+  },
+  "GeneralSpeedup5m": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 300,
+    "tier": 1,
+    "speeds": "General"
+  },
+  "GeneralSpeedup15m": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 900,
+    "tier": 2,
+    "speeds": "General"
+  },
+  "GeneralSpeedup1h": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": "General"
+  },
+  "GeneralSpeedup3h": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 10800,
+    "tier": 4,
+    "speeds": "General"
+  },
+  "GeneralSpeedup8h": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 4,
+    "speeds": "General"
+  },
+  "GeneralSpeedup24h": {
+    "name": "Speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 86400,
+    "tier": 5,
+    "speeds": "General"
+  },
+  "ConstructionSpeedup1m": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 60,
+    "tier": 1,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup5m": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 300,
+    "tier": 1,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup15m": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 900,
+    "tier": 2,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup1h": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup3h": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 10800,
+    "tier": 4,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup8h": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 4,
+    "speeds": "Construction"
+  },
+  "ConstructionSpeedup24h": {
+    "name": "Construction speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 86400,
+    "tier": 5,
+    "speeds": "Construction"
+  },
+  "TrainingSpeedup1m": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 60,
+    "tier": 1,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup5m": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 300,
+    "tier": 1,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup15m": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 900,
+    "tier": 2,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup1h": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup3h": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 10800,
+    "tier": 4,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup8h": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 4,
+    "speeds": "Training"
+  },
+  "TrainingSpeedup24h": {
+    "name": "Training speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 86400,
+    "tier": 5,
+    "speeds": "Training"
+  },
+  "WorkshopSpeedup1m": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 60,
+    "tier": 1,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup5m": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 300,
+    "tier": 1,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup15m": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 900,
+    "tier": 2,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup1h": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup3h": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 10800,
+    "tier": 4,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup8h": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 4,
+    "speeds": "Workshop"
+  },
+  "WorkshopSpeedup24h": {
+    "name": "Workshop speed-up",
+    "kind": "speedup",
+    "coin": null,
+    "seconds": 86400,
+    "tier": 5,
+    "speeds": "Workshop"
   }
 }

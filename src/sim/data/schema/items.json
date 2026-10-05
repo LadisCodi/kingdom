@@ -4,8 +4,8 @@
     "name": { "type": "text", "doc": "What the Bag calls it; the size is drawn on the tile." },
     "kind": {
       "type": "text",
-      "options": ["chest"],
-      "doc": "What using it does (Docs/proposals/inventory.md §3). chest: the city's own production of `coin` for `seconds`, read at the moment of use."
+      "options": ["chest", "speedup"],
+      "doc": "What using it does (Docs/proposals/inventory.md §3). chest: the city's own production of `coin` for `seconds`, read at the moment of use. speedup: takes `seconds` off a running timer of the kind `speeds` names."
     },
     "coin": {
       "type": "text",
@@ -13,12 +13,22 @@
       "ref": "currency",
       "doc": "A chest's coin: Gold, Food, Wood or Stone."
     },
-    "seconds": { "type": "int", "min": 1, "doc": "A chest: how many seconds of the city's production it pays." },
+    "seconds": {
+      "type": "int",
+      "min": 1,
+      "doc": "A chest: seconds of the city's production it pays. A speed-up: seconds it takes off a timer."
+    },
     "tier": {
       "type": "int",
       "min": 1,
       "max": 5,
       "doc": "The tile's plate: 1 cream, 2 green, 3 blue, 4 violet, 5 gold."
+    },
+    "speeds": {
+      "type": "text",
+      "nullable": true,
+      "options": ["General", "Construction", "Training", "Workshop"],
+      "doc": "A speed-up: the timers it shortens. Construction a build or an upgrade, Training a training line, Workshop the item in progress, General any of them."
     }
   }
 }

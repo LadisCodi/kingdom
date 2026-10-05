@@ -74,6 +74,7 @@ interface QueueItemDto {
   DurationSeconds: number;
   StartedAtUtc: string | null;
   TargetLevel?: number;
+  CutMs?: number;
 }
 
 interface WorkerDto {
@@ -844,6 +845,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               DurationSeconds: q.durationSeconds,
               StartedAtUtc: isoOrNull(q.startedAt),
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
+              ...(q.cutMs ? { CutMs: q.cutMs } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
             TrainingQueue: state.city.trainingQueue.map((i) => ({
@@ -857,6 +859,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               // A ward of wounded is one item that hands over many. Written
               // only when it is one, so a recruit's row is what it always was.
               ...(i.kind === 'heal' ? { Kind: 'heal', Count: i.count ?? 1 } : {}),
+              ...(i.cutMs ? { CutMs: i.cutMs } : {}),
             })),
             // The infirmary: who is waiting to be put back together.
             Wounded: Object.entries(state.city.wounded)
@@ -1217,6 +1220,8 @@ export function deserialize(
         targetLevel: q.TargetLevel,
         durationSeconds: q.DurationSeconds,
         startedAt: msOrNull(q.StartedAtUtc),
+        // Additive (v90): what speed-ups took off it.
+        ...(q.CutMs !== undefined && q.CutMs > 0 ? { cutMs: q.CutMs } : {}),
       }),
     );
     state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
@@ -1230,6 +1235,8 @@ export function deserialize(
       seconds: i.Seconds ?? null,
       // A pre-41 save has no infirmary in it, so every item is a recruit.
       ...(i.Kind === 'heal' ? { kind: 'heal' as const, count: i.Count ?? 1 } : {}),
+      // Additive (v90): what speed-ups took off it.
+      ...(i.CutMs > 0 ? { cutMs: i.CutMs } : {}),
     }));
     state.city.wounded = {};
     for (const w of (cityDto.Wounded ?? []) as any[]) {

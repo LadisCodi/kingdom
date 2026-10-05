@@ -186,16 +186,19 @@ export interface QueueItem {
   targetLevel?: number; // upgrades only
   durationSeconds: number;
   startedAt: number | null; // epoch ms; null until it enters the active window
+  /** Milliseconds speed-ups have taken off it (sim/speedups.ts): the end
+   *  moves, the start stays. Absent = none. */
+  cutMs?: number;
 }
 
 export const completesAt = (item: QueueItem): number =>
-  (item.startedAt ?? Infinity) + item.durationSeconds * 1000;
+  (item.startedAt ?? Infinity) + item.durationSeconds * 1000 - (item.cutMs ?? 0);
 export const remainingSeconds = (item: QueueItem, now: number): number =>
   item.startedAt === null ? item.durationSeconds : Math.max(0, (completesAt(item) - now) / 1000);
 export const queueProgress = (item: QueueItem, now: number): number =>
   item.startedAt === null || item.durationSeconds === 0
     ? (item.startedAt === null ? 0 : 1)
-    : Math.min(1, Math.max(0, (now - item.startedAt) / (item.durationSeconds * 1000)));
+    : Math.min(1, Math.max(0, (now - item.startedAt + (item.cutMs ?? 0)) / (item.durationSeconds * 1000)));
 
 export interface City {
   name: string;
@@ -332,6 +335,8 @@ export interface TrainingItem {
    *  (sim/adjacency.ts). Null until it starts; absent in a pre-30 save, where
    *  it falls back to the authored duration. */
   seconds: number | null;
+  /** Milliseconds speed-ups have taken off it (sim/speedups.ts). Absent = none. */
+  cutMs?: number;
 }
 
 /** A committed stack. A party SLOT holds a unit TYPE and every unit of it you

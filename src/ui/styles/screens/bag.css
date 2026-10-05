@@ -181,3 +181,47 @@
   font-variant-numeric: tabular-nums;
 }
 .bag-use { display: flex; justify-content: flex-end; }
+
+/* A speed-up's type badge, at the icon's lower left (§3.5). */
+.bag-tile-badge {
+  position: absolute;
+  left: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 4);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3d0, var(--parchment-shade));
+  box-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-tile-badge > .icon { --icon-size: calc(var(--px) * 16); }
+
+/* THE SPEED-UP PICKER (§3.7, M71): the job, Auto, the rows, Finish. */
+.spd-job {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding-bottom: calc(var(--px) * 10);
+  border-bottom: calc(var(--px) * 2) solid var(--section-line);
+}
+.spd-job-icon > .icon { --icon-size: calc(var(--px) * 44); }
+.spd-job-mid { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
+.spd-job-name { font-weight: var(--weight-title); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spd-left {
+  flex: none;
+  font-size: calc(var(--px) * 22);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.spd-auto { display: flex; justify-content: center; padding: calc(var(--px) * 10) 0 calc(var(--px) * 4); }
+.spd-rows { display: flex; flex-direction: column; gap: calc(var(--px) * 8); padding: calc(var(--px) * 8) 0; }
+.spd-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
+.spd-tile { flex: none; width: calc(var(--px) * 56); cursor: default; }
+.spd-tile .bag-tile-size, .spd-tile .bag-tile-count { font-size: calc(var(--px) * 11); }
+.spd-tile .bag-tile-badge { width: calc(var(--px) * 16); height: calc(var(--px) * 16); left: calc(var(--px) * 2); bottom: calc(var(--px) * 2); }
+.spd-tile .bag-tile-badge > .icon { --icon-size: calc(var(--px) * 12); }
+.spd-row-name { flex: 1 1 auto; min-width: 0; font-weight: var(--weight-strong); color: var(--ink); }
+.spd-none { margin: 0; text-align: center; color: var(--ink-muted); font-weight: var(--weight-body); }
+.spd-finish { display: flex; justify-content: center; padding-top: calc(var(--px) * 8); border-top: calc(var(--px) * 2) solid var(--section-line); }

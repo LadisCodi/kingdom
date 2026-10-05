@@ -256,6 +256,31 @@ export function finishItemWithGems(
   return 'Success';
 }
 
+/**
+ * TAKE `seconds` OFF THE ITEM IN PROGRESS, at `now` — a speed-up
+ * (sim/speedups.ts). A workshop has no deadline, only work done, so a
+ * speed-up is that many seconds of the crew's work at its rate now, up to
+ * what the item still needs; a finished item is handed over now. Only the
+ * front item, like the Gem rush. Returns the seconds of the wait it used.
+ */
+export function cutWorkshopItem(state: GameState, districtUniqueId: string, seconds: number, now: number): number {
+  const d = districtById(state, districtUniqueId);
+  if (!d || !isWorkshop(d)) return 0;
+  const left = itemRemainingSeconds(state, d, now); // settles to `now`
+  if (left === null || !(seconds > 0)) return 0;
+  const line = state.city.workshops[d.uniqueId]!;
+  const item = line.items[0];
+  if (seconds < left) {
+    const k = inProgress(d, line);
+    item.workMs = Math.min(needMs(item), item.workMs + Math.floor((seconds * 1000 * d.assignedWorkers) / k));
+    return seconds;
+  }
+  line.items.shift();
+  addGood(state.city.goods, item.good, 1);
+  line.anchor = now;
+  return left;
+}
+
 export type CancelItemResult = 'Cancelled' | 'NotAWorkshop' | 'NoSuchItem';
 
 /** Cancel a queued item and refund it in full, the way cancelling a build

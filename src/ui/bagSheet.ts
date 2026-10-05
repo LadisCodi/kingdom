@@ -13,10 +13,10 @@
 
 import type { BagScreen, Game } from '../game';
 import { BAG_TABS, type BagTab } from '../sim/bag';
-import type { ItemDef } from '../sim/data/definitions';
+import { ITEMS, type ItemDef } from '../sim/data/definitions';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
-import { btn, currencyIcon, iconEl, knob, sheet } from './kit';
+import { btn, currencyIcon, iconEl, knob, sheet, type IconName } from './kit';
 
 const COLUMNS = 4;
 
@@ -37,6 +37,30 @@ const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
   return entry ?? null;
 };
 
+/** A typed speed-up's badge on its tile (§3.5): a hammer for construction,
+ *  a helmet for training, a workshop for workshops; General has none. */
+const SPEED_BADGE: Partial<Record<NonNullable<ItemDef['speeds']>, IconName>> = {
+  Construction: 'build', Training: 'helmet', Workshop: 'Carpenter',
+};
+
+/** A tile's picture: the coin a chest pays, an hourglass for a speed-up,
+ *  with the speed-up's type badge at its lower left. */
+export function tileArt(def: ItemDef, worth: Wallet): Node[] {
+  const coin = chestCoin(worth);
+  const art = def.kind === 'speedup' ? iconEl('hourglass', { size: 'lg' })
+    : coin !== null ? currencyIcon(coin[0], { size: 'lg' }) : iconEl('chest', { size: 'lg' });
+  const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
+  return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
+}
+
+/** What a speed-up's popover says it shortens. */
+const SPEEDS_WHAT: Record<NonNullable<ItemDef['speeds']>, string> = {
+  General: 'any build, training or workshop',
+  Construction: 'a build or an upgrade',
+  Training: 'a training line',
+  Workshop: 'the item a workshop is making',
+};
+
 /** What the Bag calls an item in its popover: "1h Wood chest". */
 const itemName = (def: ItemDef): string => `${sizeLabel(def)} ${def.name}`;
 
@@ -45,6 +69,9 @@ const itemLine = (def: ItemDef, worth: Wallet): string => {
   const coin = chestCoin(worth);
   if (def.kind === 'chest' && coin !== null) {
     return `${formatDuration(def.seconds)} of ${coin[0]} — ${formatExact(coin[1])} now`;
+  }
+  if (def.kind === 'speedup' && def.speeds !== null) {
+    return `Takes ${formatDuration(def.seconds)} off ${SPEEDS_WHAT[def.speeds]}`;
   }
   return '';
 };
@@ -68,7 +95,6 @@ function tabRow(game: Game, view: BagScreen): HTMLElement {
 }
 
 function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HTMLElement {
-  const coin = chestCoin(item.worth);
   const b = el('button', {
     class: `bag-tile is-tier-${item.def.tier}${picked ? ' is-picked' : ''}`,
     type: 'button',
@@ -76,7 +102,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     'aria-expanded': picked ? 'true' : 'false',
   },
     el('span', { class: 'bag-tile-size' }, sizeLabel(item.def)),
-    coin !== null ? currencyIcon(coin[0], { size: 'lg' }) : iconEl('chest', { size: 'lg' }),
+    ...tileArt(item.def, item.worth),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
     ...(item.fresh ? [el('span', { class: 'bag-tile-new' }, iconEl('sparkle', { size: 'sm' }))] : []),
   );
@@ -109,6 +135,16 @@ function quantity(game: Game, item: BagScreen['items'][number], onChange: (n: nu
 }
 
 function popover(game: Game, item: BagScreen['items'][number], column: number): HTMLElement {
+  // A speed-up is spent from a timer, so its popover goes to one (§3.5).
+  if (item.def.kind === 'speedup') {
+    const job = game.firstJobFor(item.id);
+    return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
+      el('div', { class: 'bag-pop-name' }, itemName(item.def)),
+      el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
+      job === null
+        ? el('div', { class: 'bag-pop-line' }, 'Nothing of this kind is running')
+        : el('div', { class: 'bag-use' }, btn({ label: 'Speed up a timer', onClick: () => game.openSpeedup(job) })));
+  }
   const coin = chestCoin(item.worth);
   const total = el('div', { class: 'bag-total' });
   const use = el('div', { class: 'bag-use' });
@@ -138,7 +174,10 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
 /** What the Bag reads, so the host rebuilds it only when that moves. The
  *  slider's count is not in it: the slider owns its own redraw. */
 export function bagSignature(game: Game): string {
-  return JSON.stringify(game.bagScreen());
+  const view = game.bagScreen();
+  // A picked speed-up's popover says whether anything of its kind runs.
+  const job = view.picked !== null && ITEMS[view.picked].kind === 'speedup' ? game.firstJobFor(view.picked) : null;
+  return JSON.stringify([view, job]);
 }
 
 export function renderBagSheet(game: Game): HTMLElement {

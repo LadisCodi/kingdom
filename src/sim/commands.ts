@@ -494,6 +494,32 @@ export function finishWithGems(
   return 'Success';
 }
 
+/**
+ * TAKE `ms` OFF THE BUILD OR UPGRADE RUNNING AS `itemId`, at `now` — a
+ * speed-up (sim/speedups.ts). Only a running item: one waiting for a builder
+ * has no clock to move. If that brings its end to `now` or before, it
+ * completes NOW — never at the earlier instant the cut implies — and the item
+ * that takes its builder starts now too, so a speed-up never gives time away.
+ * Returns the milliseconds it used; the rest of a speed-up bigger than the
+ * wait is lost.
+ */
+export function cutQueueItem(state: GameState, map: MapData, itemId: string, ms: number, now: number): number {
+  const item = state.city.queue.find((q) => q.uniqueId === itemId);
+  if (!item || item.startedAt === null || !(ms > 0)) return 0;
+  const left = Math.max(0, completesAt(item) - now);
+  if (ms < left) {
+    item.cutMs = (item.cutMs ?? 0) + ms;
+    return ms;
+  }
+  state.city.queue.splice(state.city.queue.indexOf(item), 1);
+  // A house built or raised pays a new rent from now.
+  repriceTaxAnchorAround(state, now, () => completeQueueItem(state, map, item, now));
+  const slots = Math.max(1, buildQueueCapacity(state));
+  const promoted = state.city.queue[slots - 1];
+  if (promoted !== undefined && promoted.startedAt === null) promoted.startedAt = now;
+  return left;
+}
+
 // ------------------------------------------------------------------- workers
 
 export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'AtCapacity' | 'NotAWorkerDistrict' | 'NoWorkers';
