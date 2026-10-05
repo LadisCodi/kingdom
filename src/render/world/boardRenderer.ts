@@ -24,7 +24,7 @@ import {
   arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
-import { loadImage } from '../imageLoad';
+import { imageCounts, loadImage } from '../imageLoad';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
@@ -33,12 +33,13 @@ import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
 import {
-  COMBO_SPRITE, fortressSprite, hexArt, pickVariant, type HexCombo,
+  COMBO_SPRITE, PLATE_SPRITE, fortressSprite, hexArt, pickVariant, type HexCombo,
 } from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import { drawCloudBank } from '../fog/fogLayer';
 import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
+import { featureNudge, hash01, hexDecorations } from './hexScatter';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -83,7 +84,9 @@ export const SEAT_COLORS = {
   rivals: ['#c8312b', '#2e9e57', '#e0a020', '#7b4fc9', '#1c9a9a'],
 };
 
-const SEAM = 'rgba(40, 52, 30, 0.28)';
+/** The line between two hexes: faint, so the board reads as land and the
+ *  hexes are found rather than drawn. */
+const SEAM = 'rgba(40, 52, 30, 0.08)';
 /** A tile's side: packed earth. */
 const SKIRT_EARTH = { lit: '#7a5a3a', shade: '#5c4129' };
 /** What stands on a Sensed hex rises out of its veil as a silhouette: pale
@@ -130,7 +133,6 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     g.imageSmoothingQuality = 'high';
     return g;
   };
-  const ground = begin(layers.ground);
   const ctx = begin(canvas);
 
   const { state, source, now } = frame;
@@ -140,6 +142,18 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   const states = board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog));
   const clock = performance.now();
   const motion = motionOf(canvas);
+  // THE GROUND, KEPT: plates, their blends, seams and roads change only with
+  // the camera, the fog, what is held and what has loaded — at rest it is
+  // not drawn again. A ground that is not stale is drawn into nothing.
+  let held = '';
+  for (const bh of board.hexes) {
+    const hc = source.hexOf(bh.index);
+    if (hc !== null) held += `${bh.index}:${hc.owner}:${hc.held ? 1 : 0}${hc.active ? 1 : 0};`;
+  }
+  const groundKey = `${camera.x}|${camera.y}|${camera.zoom}|${w}|${h}|${dpr}|${imageCounts().settled}|${states.join(',')}|${held}`;
+  const groundStale = groundKey !== motion.groundKey;
+  motion.groundKey = groundKey;
+  const ground = groundStale ? begin(layers.ground) : nowhere();
   const density = easeDensities(motion, states.map((st) => DENSITY[st]), clock);
   /** How much veil a hex carries, 0 clear to 1 Sensed or thicker. */
   const veilAt = (i: number): number => Math.min(1, density[i] / DENSITY.Sensed);
@@ -203,13 +217,20 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   for (const bh of board.hexes) {
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
-    drawHex(ground, ctx, camera, bh, states[bh.index], veilAt(bh.index), c, frame);
+    drawHex(ground, ctx, camera, bh, states[bh.index], veilAt(bh.index), c, frame, (sx, sy) => {
+      const i = hexIndex(camera.screenToHex(sx, sy));
+      return i < 0 || states[i] !== 'Unknown';
+    });
   }
+
+  // Where two terrains meet, each plate fades softly across the edge into
+  // its neighbour, so the ground reads as land rather than tiles.
+  if (groundStale) blendPlates(ground, camera, frame, states, w, h);
 
   // Roads: every standing district joined to its owner's neighbours, its
   // city included — on the ground, over the plates, so what stands on a
   // hex stands over it (19 §7.1).
-  drawRoads(ground, camera, frame, states);
+  if (groundStale) drawRoads(ground, camera, frame, states);
 
   // The Portal's appointment, over its hex: when it opens, or how long it
   // has left (19 §10.1).
@@ -297,6 +318,8 @@ const smoothstep = (a: number, b: number, x: number): number => {
  *  alone: each hex's density as it eases toward its fog state, and the tap
  *  on the selected hex. */
 interface Motion {
+  /** What the ground was last drawn from (drawWorld). */
+  groundKey?: string;
   density: Float32Array | null;
   at: number;
   selected: number | null;
@@ -331,29 +354,122 @@ function easeDensities(m: Motion, target: readonly number[], clock: number): Flo
   return m.density;
 }
 
+// ----------------------------------------------------------- the ground
+
+/** How far a plate's soft edge reaches past its hex, as a share of the
+ *  radius, and where inside it starts to fade. */
+const BLEND_OUTER = 1.22;
+const BLEND_INNER = 0.8;
+
+/** Which ground softens over which where two meet: the higher over the lower. */
+const BLEND_RANK: Record<WorldTerrain, number> = { Grassland: 0, Plains: 1, Desert: 2 };
+
+/** A plate's sprite with its edge feathered — opaque in the middle, fading
+ *  out past the hex's edge — at a radius in whole pixels. Cached: the
+ *  terrain does not change, only the zoom. */
+const feathered = new Map<string, HTMLCanvasElement | ImageBitmap>();
+
+function featheredPlate(sprite: string, r: number, dpr: number): HTMLCanvasElement | ImageBitmap | null {
+  const url = spriteUrl(sprite);
+  const img = url === null ? null : loadImage(url);
+  if (img === null || !img.ready) return null;
+  const px = Math.max(8, Math.round(r * dpr));
+  const key = `${sprite}@${px}`;
+  let c = feathered.get(key);
+  if (c === undefined) {
+    if (feathered.size > 96) feathered.clear();
+    c = document.createElement('canvas');
+    c.width = Math.ceil(px * BLEND_OUTER * 2);
+    c.height = Math.ceil(px * BLEND_OUTER * 2 * TILT);
+    const g = c.getContext('2d')!;
+    g.drawImage(img.img, 0, 0, c.width, c.height);
+    // The fade is a circle on the untilted ground, squashed with it.
+    g.globalCompositeOperation = 'destination-in';
+    g.save();
+    g.scale(1, TILT);
+    const cx = c.width / 2;
+    const cy = c.height / 2 / TILT;
+    const fade = g.createRadialGradient(cx, cy, px * BLEND_INNER, cx, cy, px * BLEND_OUTER);
+    fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = fade;
+    g.fillRect(0, 0, c.width, c.height / TILT);
+    g.restore();
+    feathered.set(key, c);
+    // A small canvas may stay in software and be uploaded again every time
+    // it is drawn; a bitmap of it lives where the board is drawn.
+    if (typeof createImageBitmap === 'function') {
+      void createImageBitmap(c).then((bitmap) => { if (feathered.get(key) === c) feathered.set(key, bitmap); });
+    }
+  }
+  return c;
+}
+
+/** Every plate beside a different terrain, drawn again feathered over its
+ *  edges: the two grounds blend where they meet. */
+function blendPlates(
+  ground: CanvasRenderingContext2D, camera: HexCamera, frame: WorldFrame, states: readonly FogState[], w: number, h: number,
+): void {
+  const r = camera.hexRadius;
+  const hexes = frame.source.board().hexes;
+  for (const bh of hexes) {
+    if (bh.terrain === null || bh.role === 'portal' || states[bh.index] === 'Unknown') continue;
+    // One side of an edge is enough to blend it: the rarer ground softens
+    // over the commoner — Plains over Grassland, Desert over both.
+    const differs = boardNeighbors(bh.index).some((n) => {
+      const t = hexes[n].terrain;
+      return t !== null && BLEND_RANK[t] < BLEND_RANK[bh.terrain!] && hexes[n].role !== 'portal' && states[n] !== 'Unknown';
+    });
+    if (!differs) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 2 || c.y > h + r * 2) continue;
+    const plate = featheredPlate(variant(PLATE_SPRITE[bh.terrain], bh.index), r, camera.dpr);
+    if (plate === null) continue;
+    const rw = r * BLEND_OUTER;
+    ground.drawImage(plate, c.x - rw, c.y - rw * TILT, rw * 2, rw * 2 * TILT);
+  }
+}
+
 // ------------------------------------------------------------------ roads
 
 /** The road strip: a seamless texture running left to right, its road band
  *  across the middle (Docs/plans/world-districts.md §3). */
 const ROAD_SPRITE = 'wroad';
 /** How wide the strip is drawn, as a share of a hex's width: the road band
- *  is the middle of it. */
-const ROAD_WIDTH = 0.3;
+ *  is the middle of it. Each road is a little wider or narrower. */
+const ROAD_WIDTH = 0.2;
+/** How far a road's two bends swing aside, at most, as a share of its
+ *  length: some roads arc, some snake. */
+const ROAD_BEND = 0.32;
+/** How many straight pieces a road's curve is laid in. */
+const ROAD_PIECES = 10;
 /** Until the texture loads, a plain earth line, this share of a hex wide. */
-const ROAD_STAND_IN = { color: 'rgba(150, 112, 70, 0.85)', width: 0.1 };
+const ROAD_STAND_IN = { color: 'rgba(150, 112, 70, 0.85)', width: 0.08 };
 
 const roadPatterns = new WeakMap<CanvasRenderingContext2D, CanvasPattern>();
 
 /**
  * One road between two hex centres on the screen, laid on the tilted ground:
- * the strip is drawn on the untilted plane, turned to point from one centre
- * to the other, then squashed as the ground is. Drawn centre to centre, so
- * two roads that meet at a hex meet under its district.
+ * a curve on the untilted plane from one centre to the other, its two bends
+ * swung aside by its own amounts (from `seed`, so each road keeps its shape),
+ * then squashed as the ground is. The strip is laid along the curve piece by
+ * piece, its texture running on from one piece to the next. Drawn centre to
+ * centre, so roads that meet at a hex meet under its district.
  */
-function drawRoad(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, hw: number): void {
+function drawRoad(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, hw: number, seed: number): void {
   const dx = b.x - a.x;
   const dy = (b.y - a.y) / TILT;
   const length = Math.hypot(dx, dy);
+  // The curve in the road's own frame: from (0, 0) to (length, 0).
+  const o1 = (hash01(seed, 1) - 0.5) * 2 * ROAD_BEND * length;
+  const o2 = (hash01(seed, 2) - 0.5) * 2 * ROAD_BEND * length;
+  const at = (t: number): { x: number; y: number } => {
+    const u = 1 - t;
+    return {
+      x: 3 * u * u * t * (length / 3) + 3 * u * t * t * (2 * length / 3) + t * t * t * length,
+      y: 3 * u * u * t * o1 + 3 * u * t * t * o2,
+    };
+  };
   const url = spriteUrl(ROAD_SPRITE);
   const img = url === null ? null : loadImage(url);
   ctx.save();
@@ -366,7 +482,7 @@ function drawRoad(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b:
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(length, 0);
+    ctx.bezierCurveTo(length / 3, o1, (2 * length) / 3, o2, length, 0);
     ctx.stroke();
     ctx.restore();
     return;
@@ -376,11 +492,24 @@ function drawRoad(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b:
     pattern = ctx.createPattern(img.img, 'repeat-x')!;
     roadPatterns.set(ctx, pattern);
   }
-  const height = hw * ROAD_WIDTH;
+  const height = hw * ROAD_WIDTH * (0.85 + 0.3 * hash01(seed, 3));
   const k = height / img.img.naturalHeight;
-  pattern.setTransform(new DOMMatrix().translate(0, -height / 2).scale(k));
   ctx.fillStyle = pattern;
-  ctx.fillRect(0, -height / 2, length, height);
+  let along = hash01(seed, 4) * img.img.naturalWidth * k; // each road starts somewhere else on the strip
+  let p = at(0);
+  for (let i = 1; i <= ROAD_PIECES; i++) {
+    const q = at(i / ROAD_PIECES);
+    const seg = Math.hypot(q.x - p.x, q.y - p.y);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.atan2(q.y - p.y, q.x - p.x));
+    pattern.setTransform(new DOMMatrix().translate(-along, -height / 2).scale(k));
+    // A hair longer than the piece, so no gap opens on the outside of a bend.
+    ctx.fillRect(-1, -height / 2, seg + 2, height);
+    ctx.restore();
+    along += seg;
+    p = q;
+  }
   ctx.restore();
 }
 
@@ -403,9 +532,20 @@ function drawRoads(ctx: CanvasRenderingContext2D, camera: HexCamera, frame: Worl
       // Each pair once, from its lower index; a city to a city never.
       if (n < bh.index || states[n] === 'Unknown' || ownerOf(n) !== owner) continue;
       if (bh.seat !== null && source.board().hexes[n].seat !== null) continue;
-      drawRoad(ctx, camera.hexToScreen(bh.hex), camera.hexToScreen(hexAt(n)), hw);
+      drawRoad(ctx, camera.hexToScreen(bh.hex), camera.hexToScreen(hexAt(n)), hw, bh.index * 131 + n);
     }
   }
+}
+
+/** A context that draws nowhere: the ground's, on a frame it is kept. */
+let nowhereCtx: CanvasRenderingContext2D | null = null;
+function nowhere(): CanvasRenderingContext2D {
+  if (nowhereCtx === null) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    nowhereCtx = c.getContext('2d')!;
+  }
+  return nowhereCtx;
 }
 
 /** The canvases under the board's: the ground, then the clouds — made the
@@ -517,6 +657,7 @@ function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
 function drawHex(
   ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
   veil: number, c: { x: number; y: number }, frame: WorldFrame,
+  seenAt: (sx: number, sy: number) => boolean,
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
@@ -560,7 +701,22 @@ function drawHex(
       // with the district's stand-in in front of it until it has art.
       const key = bh.index;
       const own = art.district !== null && spriteUrl(art.district.sprite) !== null;
-      if (art.combo !== null && !own) drawCombo(g, art.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
+      // Bare ground and a feature scatter small decorations over the hex,
+      // a little past its edge, so neighbours blend (world-hex-art.md §3.1);
+      // never where the cloud bank is, nor at the strategic zoom.
+      const decos = art.district === null && hw >= STRATEGIC_PX
+        ? hexDecorations(key, bh.features[0] ?? null)
+          .map((d) => ({ ...d, x: c.x + d.dx * r, y: c.y + d.dy * r * TILT }))
+          .filter((d) => spriteUrl(d.sprite) !== null && seenAt(d.x, d.y))
+        : [];
+      const deco = (d: (typeof decos)[number]) => drawProp(g, d.sprite, d.x, d.y, hw * d.size);
+      for (const d of decos) if (d.dy < 0) deco(d);
+      if (art.combo !== null && !own) {
+        // The feature, nudged off the middle so the rows do not line up.
+        const n = art.district === null ? featureNudge(key) : { dx: 0, dy: 0, scale: 1 };
+        drawCombo(g, art.combo, key, c.x + n.dx * hw, c.y + r * FOOT * TILT + n.dy * hw, hw * n.scale, r);
+      }
+      for (const d of decos) if (d.dy >= 0) deco(d);
       if (art.district !== null) {
         g.save();
         if (held !== null && !held.held) g.globalAlpha = 0.45; // still being built
