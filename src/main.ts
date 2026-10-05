@@ -59,6 +59,8 @@ import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
+import { giveBook } from './sim/research';
+import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
@@ -722,6 +724,21 @@ async function boot(): Promise<void> {
       }),
       button('🌅 skip morning', () => {
         for (const s of SCENES) if (s.id === 'intro' || s.id.startsWith('morning')) game.state.tutorial.seen[`scene:${s.id}`] = true;
+        runTick();
+      }),
+      // Every scene still to play, played: what one would have handed over —
+      // a book, a build's materials — handed over now, so nothing it gives
+      // is left behind it.
+      button('🎓 tutorials', () => {
+        for (const s of SCENES) {
+          const key = `scene:${s.id}`;
+          if (game.state.tutorial.seen[key]) continue;
+          for (const l of s.lines) {
+            if (l.gives) giveBook(game.state, l.gives);
+            if (l.stocks) stockBuild(game.state, l.stocks);
+          }
+          game.state.tutorial.seen[key] = true;
+        }
         runTick();
       }),
       button('🎬 replay scenes', () => {
