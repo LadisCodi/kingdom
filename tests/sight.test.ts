@@ -11,16 +11,24 @@ import { freshGame, map, reveal, T0 } from './helpers';
 /** A cell `d` cells west of the block's left edge, on its top row. */
 const westOf = (anchor: Coord, d: number): Coord => ({ x: anchor.x - d, y: anchor.y });
 
-/** A mountain block of `size` with map cells to its west, out past its
- *  sight — so a test can stand on them. Null when the map has none. */
-const bigMountain = (size: number): Coord | null => {
+/** A mountain block of `size` with map cells on one side of it, out past
+ *  its sight — so a test can stand on them — and the cell `d` rings out on
+ *  that side. Null when the map has none. */
+const bigMountain = (size: number): { anchor: Coord; out: (d: number) => Coord } | null => {
   const room = FOG.sight.mountainBySize[size - 1] + 1;
   for (const [key, id] of map.initialFeatures) {
     if (id !== 'Mountain') continue;
     const at = footprintAt(map, parseCoordKey(key));
     if (at.size !== size) continue;
-    const west = Array.from({ length: room }, (_, i) => westOf(at.anchor, i + 1));
-    if (west.every((c) => map.terrain.has(`${c.x},${c.y}`))) return at.anchor;
+    const { x, y } = at.anchor;
+    const sides: Array<(d: number) => Coord> = [
+      (d) => ({ x: x - d, y }), (d) => ({ x: x + size - 1 + d, y }),
+      (d) => ({ x, y: y - d }), (d) => ({ x, y: y + size - 1 + d }),
+    ];
+    for (const out of sides) {
+      const cells = Array.from({ length: room }, (_, i) => out(i + 1));
+      if (cells.every((c) => map.terrain.has(`${c.x},${c.y}`))) return { anchor: at.anchor, out };
+    }
   }
   return null;
 };
@@ -30,15 +38,15 @@ describe('sighting', () => {
     const sizes = [2, 3].filter((size) => bigMountain(size) !== null);
     expect(sizes.length).toBeGreaterThan(0);
     for (const size of sizes) {
-      const anchor = bigMountain(size)!;
+      const { anchor, out } = bigMountain(size)!;
       const range = FOG.sight.mountainBySize[size - 1];
       const far = freshGame();
       far.fog.revealed = {};
-      reveal(far, [westOf(anchor, range + 1)]);
+      reveal(far, [out(range + 1)]);
       expect(sightedAt(far, map, anchor)).toBeUndefined();
       const near = freshGame();
       near.fog.revealed = {};
-      reveal(near, [westOf(anchor, range)]);
+      reveal(near, [out(range)]);
       expect(sightedAt(near, map, anchor)?.kind).toBe('mountain');
     }
   });
@@ -75,12 +83,12 @@ describe('sighting', () => {
   });
 
   it('drops a thing once it is in plain view', () => {
-    const anchor = bigMountain(2)!;
+    const { anchor, out } = bigMountain(2)!;
     const state = freshGame();
     state.fog.revealed = {};
-    reveal(state, [westOf(anchor, 2)]);
+    reveal(state, [out(2)]);
     expect(sightedAt(state, map, anchor)).toBeDefined();
-    reveal(state, [westOf(anchor, 1)]); // its neighbour: the block is Discovered
+    reveal(state, [out(1)]); // its neighbour: the block is Discovered
     expect(sightedAt(state, map, anchor)).toBeUndefined();
   });
 

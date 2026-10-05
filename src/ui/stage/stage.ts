@@ -27,6 +27,7 @@ import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
+import { firstMorningOn } from '../../sim/doors';
 import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
 /** A scene on the stage, and where it has got to. */
@@ -499,7 +500,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  thing, the scene then talks about it; over a sheet only when the scene
    *  says so. */
   const canStart = (scene: SceneDef): boolean => {
-    if (game.state.player.payer === null) return false;
+    // Nothing plays over the profile sheet — which is owed only once the
+    // First Morning is over, so the morning itself plays with no profile.
+    if (game.payerDue()) return false;
     if (game.battle !== null || game.gachaReveal !== null || game.adWatch() !== null) return false;
     if (game.unlockQueue.length > 0) return false;
     if (!scene.anywhere && game.hasOpenSheet()) return false;
@@ -512,8 +515,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   const due = (): SceneDef | null => {
     if (game.state.tutorial.veteran) return null;
+    // The First Morning runs beat to beat: what stands in view past the fog —
+    // the Watchtower on the northern hills, from the first screen — waits
+    // for it to end rather than interrupting it.
+    const morning = firstMorningOn(game.state);
     for (const scene of SCENES) {
       if (game.state.tutorial.seen[sceneKey(scene.id)]) continue;
+      if (morning && scene.trigger === 'sighted') continue;
       if (!conditionHolds(game, {
         kind: scene.trigger, target: scene.triggerTarget, amount: scene.triggerAmount, tapsAtStart: 0,
       })) continue;

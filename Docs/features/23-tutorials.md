@@ -208,7 +208,7 @@ plays this before the lair's own scene. Its lines are beats.
 |---|---|---|---|---|
 | `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Isolde:** *The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
-| `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
+| `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) — in view from the start, so it plays as the First Morning ends | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I'd love to sketch it.* | the Watchtower |
 | `world` | the Watchtower is claimed | Isolde | *Other kingdoms, Your Majesty. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob |
 
@@ -219,7 +219,7 @@ plays this before the lair's own scene. Its lines are beats.
 | `shrineSeen` | the Thorned Shrine is out of the dark | *Old stones, still standing — a shrine! Claimed, it deepens our well for good. Though not while the Orcs squat beside it.* |
 | `huntSeen` | the first wild game | *Game in the woods! A tap brings home three times what a bush does — once Hunting teaches us how.* |
 | `ironSeen` | the first iron mountain | *Iron in that rock! The Quarry can't cut it until we learn Mining — and then it's worth five bare peaks.* |
-| `goldSeen` | the first gold mountain | *Gold in the mountain! With Deep Mining, one day, the Quarry will dig coin right out of it.* |
+| `goldSeen` | the first gold mountain | *Gold in the mountain! Once we learn Mining, every swing of a pick there brings up coin.* |
 | `fishSeen` | the first shoal | *Fish in the shallows! The Docks will net them, once we learn to build on the water. I can't swim, so… boats.* |
 | `harpies` | the Harpies are discovered | *Harpies, roosting over our mountains! While they stand, not one stone up there is ours. Archers on the wing — riders, I think?* |
 

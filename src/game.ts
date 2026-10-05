@@ -3023,11 +3023,11 @@ export class Game {
   }
 
   /** The unlock splash to show now, or null: never over a fight, a reveal
-   *  or a video, and never before the player has a profile. A scene waits
-   *  for it (ui/stage/stage.ts). */
+   *  or a video, and never over the profile sheet. A scene waits for it
+   *  (ui/stage/stage.ts). */
   unlockOnScreen(): string | null {
     if (this.unlockQueue.length === 0) return null;
-    if (this.state.player.payer === null) return null;
+    if (this.payerDue()) return null;
     if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
     return this.unlockQueue[0];
   }
