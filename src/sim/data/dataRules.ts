@@ -651,6 +651,15 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (it.kind === 'chest' && !CHEST_COINS.includes(String(it.coin))) {
         push(id, ['coin'], 'a chest pays Gold, Food, Wood or Stone');
       }
+      if (it.kind === 'speedup' && (it.speeds === null || it.speeds === undefined)) {
+        push(id, ['speeds'], 'a speed-up names the timers it shortens');
+      }
+      if (it.kind !== 'speedup' && it.speeds !== null && it.speeds !== undefined) {
+        push(id, ['speeds'], 'only a speed-up shortens a timer: leave it empty');
+      }
+      if (it.kind !== 'chest' && it.coin !== null && it.coin !== undefined) {
+        push(id, ['coin'], 'only a chest pays a coin: leave it empty');
+      }
     }
   },
   store: (doc, push) => {

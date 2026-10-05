@@ -24,7 +24,7 @@ export const itemDef = (id: ItemId): ItemDef | undefined => ITEMS[id];
 export const BAG_TABS = ['Resources', 'Speed ups', 'Boosts', 'Other'] as const;
 export type BagTab = typeof BAG_TABS[number];
 
-const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = { chest: 'Resources' };
+const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = { chest: 'Resources', speedup: 'Speed ups' };
 
 /** Which tab an item is shown in: a fact of its kind. */
 export const bagTabOf = (id: ItemId): BagTab => TAB_OF_KIND[ITEMS[id].kind];
@@ -54,7 +54,7 @@ export function chestValue(state: GameState, id: ItemId): Wallet {
   return { [def.coin]: Math.round(Math.max(floor, made)) };
 }
 
-export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem';
+export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'NeedsATimer';
 
 /**
  * Use `n` of an item. A chest pays `n` times what one pays: it lands in the
@@ -64,6 +64,8 @@ export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem';
 export function useItem(state: GameState, id: ItemId, n: number): UseItemResult {
   const def = ITEMS[id];
   if (def === undefined) return 'UnknownItem';
+  // A speed-up is used ON a timer (sim/speedups.ts), never from the Bag alone.
+  if (def.kind === 'speedup') return 'NeedsATimer';
   if (!(n >= 1) || !Number.isInteger(n) || itemCount(state, id) < n) return 'NotHeld';
   const one = chestValue(state, id);
   for (const [c, amount] of Object.entries(one) as Array<[keyof Wallet, number]>) {

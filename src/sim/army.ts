@@ -463,7 +463,7 @@ export const lineFor = (state: GameState, buildingId: string): TrainingItem[] =>
   state.city.trainingQueue.filter((i) => i.buildingId === buildingId);
 
 export const trainingCompletesAt = (item: TrainingItem): number =>
-  item.startedAt === null ? Infinity : item.startedAt + itemTrainSeconds(item) * 1000;
+  item.startedAt === null ? Infinity : item.startedAt + itemTrainSeconds(item) * 1000 - (item.cutMs ?? 0);
 
 /** What is on the bench at this building, if anything. */
 export const unitInTraining = (state: GameState, buildingId: string): TrainingItem | undefined =>
@@ -473,7 +473,7 @@ export function trainingProgress(state: GameState, buildingId: string, now: numb
   const item = unitInTraining(state, buildingId);
   if (!item || item.startedAt === null) return 0;
   const total = itemTrainSeconds(item) * 1000;
-  return total <= 0 ? 1 : Math.min(1, Math.max(0, (now - item.startedAt) / total));
+  return total <= 0 ? 1 : Math.min(1, Math.max(0, (now - item.startedAt + (item.cutMs ?? 0)) / total));
 }
 
 /**
@@ -579,6 +579,34 @@ export function finishLineWithGems(
     (i) => i.buildingId !== buildingId);
   for (const item of line) deliver(state, item.trainee, now);
   return 'Success';
+}
+
+/**
+ * TAKE `ms` OFF THIS BUILDING'S LINE, at `now` — a speed-up
+ * (sim/speedups.ts). The line is one wait: what is left of the head first,
+ * and whatever is over goes on to the next, which starts now. A trainee the
+ * cut finishes is delivered NOW, never earlier. Returns the milliseconds
+ * used; the rest of a speed-up bigger than the line is lost.
+ */
+export function cutLine(state: GameState, buildingId: string, ms: number, now: number): number {
+  let budget = ms;
+  let used = 0;
+  while (budget > 0) {
+    const head = lineFor(state, buildingId)[0];
+    if (head === undefined) break;
+    if (head.startedAt === null) startTrainee(state, head, now);
+    const left = Math.max(0, trainingCompletesAt(head) - now);
+    if (budget < left) {
+      head.cutMs = (head.cutMs ?? 0) + budget;
+      used += budget;
+      break;
+    }
+    state.city.trainingQueue.splice(state.city.trainingQueue.indexOf(head), 1);
+    deliver(state, head.trainee, now, itemCount(head));
+    budget -= left;
+    used += left;
+  }
+  return used;
 }
 
 /** A boundary source: the next unit to appear. */

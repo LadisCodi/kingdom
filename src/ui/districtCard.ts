@@ -35,6 +35,8 @@ import { workshopSection } from './workshopSection';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
+import { timerButton } from './speedupSheet';
+import type { SpeedJob } from '../sim/speedups';
 import {
   queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
@@ -320,16 +322,21 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // No Cancel: a build is paid for when it starts, and a building put in
     // the wrong place is MOVED rather than undone
     // (Docs/features/06-construction.md §1).
+    const job: SpeedJob = { kind: 'queue', itemId: queueItem.uniqueId };
     upgradeAction.push(el('div', { class: 'dc-upgrade' }, part(() => {
       const t = game.now();
-      return JSON.stringify([gemRushCost(queueItem, t), game.walletValue('Gems') < gemRushCost(queueItem, t)]);
-    }, () => btn({
-      label: 'Finish',
-      kind: 'gem',
-      onClick: () => game.doRush(queueItem.uniqueId),
-      cost: { Gems: gemRushCost(queueItem, game.now()) },
-      have: (c) => game.walletValue(c),
-    }))));
+      return JSON.stringify([gemRushCost(queueItem, t), game.walletValue('Gems') < gemRushCost(queueItem, t),
+        queueItem.startedAt !== null && game.hasSpeedups(job)]);
+    }, () => {
+      const finish = btn({
+        label: 'Finish',
+        kind: 'gem',
+        onClick: () => game.doRush(queueItem.uniqueId),
+        cost: { Gems: gemRushCost(queueItem, game.now()) },
+        have: (c) => game.walletValue(c),
+      });
+      return queueItem.startedAt === null ? finish : timerButton(game, job, finish);
+    })));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // ONE BUTTON, and everything it used to say lives behind it now
     // (upgradeSheet.ts, M25): the requirements, whether each is met, and the

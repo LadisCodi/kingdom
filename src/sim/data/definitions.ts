@@ -386,7 +386,10 @@ export const RUSH = balance.rush;
 export const BAG = balance.bag;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
-export type ItemKind = 'chest';
+export type ItemKind = 'chest' | 'speedup';
+
+/** The timers a speed-up shortens: one kind of timer, or any of them. */
+export type SpeedupKind = 'General' | 'Construction' | 'Training' | 'Workshop';
 
 /** One item, whole, as `?dev=data` authors it (`data/game/items.json`). */
 export interface ItemDef {
@@ -394,10 +397,13 @@ export interface ItemDef {
   kind: ItemKind;
   /** A chest's coin. */
   coin: CurrencyId | null;
-  /** A chest: seconds of the city's production it pays. */
+  /** A chest: seconds of the city's production it pays. A speed-up: seconds
+   *  it takes off a timer. */
   seconds: number;
   /** The tile's plate, 1 (cream) to 5 (gold). */
   tier: number;
+  /** A speed-up: the timers it shortens. */
+  speeds: SpeedupKind | null;
 }
 
 export const ITEMS = balance.items as Record<ItemId, ItemDef>;
@@ -2515,4 +2521,5 @@ export const GAME_VERSION: string = pkg.version;
 // additive.
 // v88: minutes on screen (`PlayMs` on `kingdom.signals`), additive.
 // v89: the Bag (`kingdom.bag`), additive.
-export const SAVE_VERSION = 89;
+// v90: speed-ups — `CutMs` on a queue item and a training item, additive.
+export const SAVE_VERSION = 90;

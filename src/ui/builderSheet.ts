@@ -20,6 +20,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress } from './kit';
+import { timerButton } from './speedupSheet';
 import { sheet } from './kit/surface';
 
 const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
@@ -72,13 +73,13 @@ export function renderBuilderSheet(game: Game): HTMLElement {
         el('div', { class: 'crew-name' }, name),
         el('div', { class: 'crew-task' }, task),
         bar.root),
-      btn({
+      timerButton(game, { kind: 'queue', itemId: item.uniqueId }, btn({
         label: 'Finish',
         kind: 'gem',
         onClick: () => game.doRush(item.uniqueId),
         cost: { Gems: gemRushCost(item, t) },
         have: (c) => game.walletValue(c),
-      })));
+      }))));
   }
 
   // A builder out on the world board: the server's timer, so no Finish.
