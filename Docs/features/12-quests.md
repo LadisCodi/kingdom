@@ -28,6 +28,11 @@
   reward paid as a tap would: for a quest whose next step the player is
   already reaching for. `Woodcraft` does — the player wants the axe, not the
   scroll, and the First Morning has shown the scroll already.
+- **A Gold quest may rush the first house's rent** (`tutorialRentSeconds`), a
+  tutorial pacing hack: that many seconds after the quest becomes active, the
+  first house's store is topped up with the Gold the goal still asks. The real
+  rent goes on beside it. `TaxDay` does, at 3 seconds — its rent would
+  otherwise take half a minute.
 - **`BuildDistrict` counts a building the moment its build starts.** A build
   cannot be cancelled, so it is the player's from then; the quest does not
   wait for the scaffold. What needs the building *standing* — its workers, a

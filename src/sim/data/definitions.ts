@@ -488,6 +488,10 @@ export interface QuestDef {
   rewardPack: PackTier | null;
   /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
   autoClaim: boolean;
+  /** Tutorial pacing on a quest that collects Gold: seconds after it becomes
+   *  active until the first house's store holds what it asks (sim/quests.ts
+   *  `applyRentRush`). Null: the real rent. */
+  tutorialRentSeconds: number | null;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -2388,4 +2392,5 @@ export const GAME_VERSION = '0.1.0';
 // v81: the abandoned buildings (`kingdom.abandoned`), additive.
 // v82: the Survey (`kingdom.kingdoms.Survey`), additive.
 // v83: the playtest's signals (`kingdom.signals`, a treasure's `AtUtc`), additive.
-export const SAVE_VERSION = 83;
+// v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
+export const SAVE_VERSION = 84;
