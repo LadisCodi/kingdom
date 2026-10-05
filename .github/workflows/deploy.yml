@@ -24,7 +24,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      # Tests run locally before every PR, not here (one team, no CI).
       - run: npm run build
         env:
           GHPAGES: '1'
