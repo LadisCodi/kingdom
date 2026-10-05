@@ -423,31 +423,45 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | Stat | Book | How it enters |
 |---|---|---|
 | `armyCap` | Warfare | multiplies the number |
+| `armyMarchSpeed` | — | an army's time per hex on the world board is divided by it; the city sends the pace with the army |
 | `autoTapSpeed` | Civics | the auto-tap cooldown is divided by it |
 | `buildSpeed` | Civics | build and upgrade times are divided by it |
+| `cellStock` | — | multiplies what a cell holds when full; never a mountain, which holds no stock |
+| `crewSlots` | — | whole workers, added to a producer's level |
+| `crewStrikeSpeed` | — | the time between a building's crew strikes is divided by it |
 | `crewYield` | Civics | multiplies a worker delivery; the fraction carries |
+| `decorationHarmony` | — | added to, or multiplying, a decoration's Harmony; whole points, rounded down |
 | `discoverRadius` | Atlas | whole rings, added |
 | `explorerSlots` | Atlas | whole explorers, added to Cartography's |
+| `explorerSpeed` | — | an explorer's time per hex is divided by it, before the Scout's boon |
 | `harvestYield` | Civics | multiplies the chunk a tap and a strike take; the fraction carries |
+| `healSpeed` | — | a ward's mending time is divided by it, priced when it starts |
 | `heroXp` | Sagas | multiplies the number |
+| `improvementStore` | — | multiplies a world improvement's store; the server settles every store when it changes |
+| `improvementYield` | — | multiplies what a world improvement makes an hour; the server settles every store when it changes |
 | `infirmaryBeds` | Warfare | multiplies the number |
+| `influenceRadius` | — | whole tiles, added to a producer's reach |
 | `knowledgeYield` | Magic | multiplies the number |
 | `lairKnowledge` | Warfare | multiplies the number |
 | `landmarkKnowledge` | Atlas | multiplies the number |
 | `manaCap` | Magic | multiplies the number |
 | `manaRegen` | Magic | multiplies the number |
+| `ownGold` | — | multiplies the Gold the Townhall makes by itself |
 | `populationCapacity` | Civics | whole beds, added |
 | `recruitSpeed` | Warfare | a soldier’s training time is divided by it |
 | `regrowthSpeed` | Civics | a stump’s wait is divided by it |
+| `respawnSpeed` | — | a consumed feature's wait to come back is divided by it |
 | `storageCapacity` | Civics | multiplies the number |
 | `summonStardust` | Sagas | multiplies the number |
 | `tapWorkSeconds` | Civics | multiplies the number |
 | `taxRate` | Civics | multiplies the number |
+| `treasureYield` | — | multiplies a fog treasure priced in production; never the first, never Knowledge |
 | `unitAtk` | Warfare | multiplies the number |
 | `unitDef` | Warfare | multiplies the number |
 | `unitHp` | Warfare | multiplies the number |
 | `villagerTrainingSpeed` | Civics | a villager’s training time is divided by it |
 | `workerSpeed` | Civics | multiplies the number |
+| `workshopQueueSlots` | — | whole orders, added to a workshop's queue |
 | `workshopSpeed` | Civics | a workshop item’s work time is divided by it |
 | `worldRevealRadius` | Atlas | whole hexes round an explorer's path, added, capped at 2 |
 

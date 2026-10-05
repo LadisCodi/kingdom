@@ -108,7 +108,14 @@ export interface ServerSeat {
   moves: number;
   /** How many hexes it has ever claimed with an Outpost. */
   claims?: number;
+  /** What its own research does to its improvements — multipliers (≥ 1) on
+   *  what each makes an hour and what its store holds. Sent by the client
+   *  (`setBoost`); absent = none. */
+  boost?: SeatBoost;
 }
+
+/** A seat's multipliers on its improvements' output and stores. */
+export interface SeatBoost { produce: number; store: number }
 
 export interface ServerBoard {
   id: string;

@@ -510,7 +510,7 @@ export function changeWorkers(
   if (delta === 1) {
     const assigned = state.city.districts.reduce((s, d) => s + d.assignedWorkers, 0);
     if (state.city.population - assigned < 1) return 'NoFreeWorkers';
-    if (district.assignedWorkers >= assignableWorkerLimit(district)) return 'AtCapacity';
+    if (district.assignedWorkers >= assignableWorkerLimit(state, district)) return 'AtCapacity';
     addWorker(state, map, district, now);
     return 'Assigned';
   }

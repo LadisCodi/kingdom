@@ -27,8 +27,8 @@ import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/t
 import { boardOf } from '../sim/world/source';
 import { WORLD_IMPROVEMENTS, type WorldImprovement } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SendResult,
-  ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
+  SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot,
 } from './types';
 
 const HOUR = 3_600_000;
@@ -76,7 +76,9 @@ export const fittingImprovements = (bh: BoardHex): WorldImprovement[] =>
 
 /** What one level makes an hour on this hex, and how much its store holds:
  *  the inner ring multiplies both, so its store lasts the same hours. */
-export function improvementRate(bh: BoardHex, kind: WorldImprovement, level: number): { perHour: number; cap: number } {
+export function improvementRate(
+  bh: BoardHex, kind: WorldImprovement, level: number, boost: SeatBoost = NO_BOOST,
+): { perHour: number; cap: number } {
   const def = WORLD_BUILD.improvements[kind];
   const l = def.levels[Math.min(level, def.levels.length) - 1];
   if (def.produces === '' || l === undefined) return { perHour: 0, cap: 0 };
@@ -85,7 +87,29 @@ export function improvementRate(bh: BoardHex, kind: WorldImprovement, level: num
     const extras = bh.features.filter((f) => f === 'FertileLand' || f === 'Game').length;
     mult *= 1 + WORLD_BUILD.featureFoodBonus * extras;
   }
-  return { perHour: l.perHour * mult, cap: l.store * mult };
+  return { perHour: l.perHour * mult * boost.produce, cap: l.store * mult * boost.store };
+}
+
+const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
+
+/** What a seat's research does to its improvements; none for a free hex. */
+const boostOf = (b: ServerBoard, owner: number | null): SeatBoost =>
+  (owner === null ? undefined : b.seats[owner]?.boost) ?? NO_BOOST;
+
+/**
+ * Take a seat's multipliers on its improvements' output and stores. A rate
+ * changes only at an event, so every store is settled to `t` first: what was
+ * made before the research is not repriced, and nothing after it is missed.
+ */
+export function setBoost(b: ServerBoard, seat: number, boost: SeatBoost, t: number): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined) return;
+  const next = { produce: Math.max(1, boost.produce), store: Math.max(1, boost.store) };
+  const now = s.boost ?? NO_BOOST;
+  if (now.produce === next.produce && now.store === next.store) return;
+  resolveTo(b, t);
+  settleStores(b, t);
+  s.boost = next;
 }
 
 /** What the next Outpost costs a seat that already holds or claims `held`
@@ -140,7 +164,7 @@ export function storesAt(b: ServerBoard, index: number, t: number): { material: 
   const bh = boardData(b).hexes[index];
   let material = h.material;
   if (h.improvement !== null) {
-    const { perHour, cap } = improvementRate(bh, h.improvement.kind, h.improvement.level);
+    const { perHour, cap } = improvementRate(bh, h.improvement.kind, h.improvement.level, boostOf(b, h.owner));
     material = Math.min(cap, h.material + (perHour * dt) / HOUR);
   }
   const knowledge = bh.features.includes('Landmark')
@@ -498,7 +522,12 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
  *  its troops off the roster; the server trusts what it was sent. */
 export function sendArmy(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[] },
+  req: {
+    purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[];
+    /** How much faster than the base pace it marches (≥ 1), priced by the
+     *  client from its own tree. Absent = the base pace. */
+    speed?: number;
+  },
   t: number,
 ): SendResult {
   resolveTo(b, t);
@@ -514,12 +543,14 @@ export function sendArmy(
 /** Put an army on the road — inside the resolve loop as well as from it. */
 function launch(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[] },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[]; speed?: number },
   t: number,
 ): ServerArmy {
   const path = req.path;
-  // Every hex adds its own time as it is left; the server prices it.
-  const stepMs = stepTimes(boardData(b).hexes, path, 'army');
+  // Every hex adds its own time as it is left; the server prices it, at the
+  // pace the client sent.
+  const speed = Math.max(1, req.speed ?? 1);
+  const stepMs = stepTimes(boardData(b).hexes, path, 'army', () => speed);
   const a: ServerArmy = {
     id: `army_${b.nextId++}`, owner: seat, heroes: [...req.heroes], board: req.board, path,
     departedAt: t, stepMs, purpose: req.purpose,
@@ -939,7 +970,8 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     const index = Number(k);
     const bh = data.hexes[index];
     const mineHex = h.owner === seat;
-    const rate = h.improvement === null ? { cap: 0 } : improvementRate(bh, h.improvement.kind, h.improvement.level);
+    const rate = h.improvement === null ? { cap: 0 }
+      : improvementRate(bh, h.improvement.kind, h.improvement.level, boostOf(b, h.owner));
     const now = storesAt(b, index, t);
     return {
       index, owner: h.owner, held: isHeld(h, t), outpostAt: h.outpostAt,

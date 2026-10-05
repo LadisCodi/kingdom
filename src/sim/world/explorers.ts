@@ -23,7 +23,7 @@ import { randInt } from '../rng';
 import {
   getWallet, newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState,
 } from '../state';
-import { techFlat } from '../techEffects';
+import { techFlat, techMultiplier } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
 import { PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
@@ -68,7 +68,9 @@ export function revealRadius(state: GameState): number {
 
 /** How much faster an explorer marches over every hex: `worldRevealSpeed`
  *  (a speed — it never slows a march). */
-export const explorerSpeed = (state: GameState): number => Math.max(1, resolve(state, 'worldRevealSpeed', 1));
+export const explorerSpeed = (state: GameState): number =>
+  // The tree at the base stage (`explorerSpeed`), the hero's boon on top.
+  Math.max(1, resolve(state, 'worldRevealSpeed', techMultiplier(state, 'explorerSpeed')));
 
 /**
  * The quickest way an explorer can take to a hex: through Revealed ground

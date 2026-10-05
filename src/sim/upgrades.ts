@@ -57,8 +57,10 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     const source = def.harvestSources.find((s) => HARVEST[s].currencyId === currencyId);
     if (source === undefined) continue;
     const spec = HARVEST[source];
-    const radius = def.influenceRadiusPerLevel.length === 0
-      ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
+    // workers.ts#influenceRadius, inlined: workers.ts imports this file.
+    const radius = def.influenceRadiusPerLevel.length === 0 ? 0
+      : Math.floor(techValue(state, 'influenceRadius', levelIndexed(def.influenceRadiusPerLevel, d.level),
+        { district: d.definitionId }));
     // The building's own level is in the rate too: a late Sawmill swings
     // faster and carries more, so a reward priced in production has to see it.
     const cycleSeconds = (2 * radius) / effectiveWorkerSpeed(state)
@@ -177,7 +179,11 @@ export const workerStrikeMs = (
   const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1)
     * Math.max(1, building === null
       ? resolve(state, 'workerStrikeSpeed', 1)
-      : resolveAt(state, 'workerStrikeSpeed', 1, building.location));
+      : resolveAt(state, 'workerStrikeSpeed', 1, building.location))
+    // The tree's `crewStrikeSpeed`: aimed at the building that sent the crew.
+    * Math.max(1, building === null
+      ? techMultiplier(state, 'crewStrikeSpeed')
+      : techMultiplier(state, 'crewStrikeSpeed', { district: building.definitionId }));
   return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
 

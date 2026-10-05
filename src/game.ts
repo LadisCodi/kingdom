@@ -37,7 +37,7 @@ import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
-  committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
+  committedTroops, finishLineWithGems, healCost, healSecondsAt, healWounded, infirmaries, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   itemTrainSeconds, trainingCompletesAt,
 } from './sim/army';
@@ -133,6 +133,7 @@ import {
 } from './sim/missions';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
+import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
@@ -147,7 +148,8 @@ import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
-import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import { WORLD_BUILD } from './sim/data/definitions';
@@ -3072,6 +3074,9 @@ export class Game {
   /** Pay the Gold and complete a technology whose Knowledge is in. */
   doResearchTech(id: TechId): void {
     const result = researchTech(this.state, this.map, id, this.now());
+    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id].effects)) {
+      void this.worldServer.setBoost(worldImprovementBoost(this.state), this.now());
+    }
     if (result === 'Researched') playSfx('researchComplete');
     else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotFilled') this.shake(['Knowledge']);
@@ -4029,7 +4034,8 @@ export class Game {
   }
 
   healWait(unitId: UnitId, count: number): number {
-    return healSeconds(unitId, count);
+    const infirmary = infirmaries(this.state)[0];
+    return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
 
   doTrain(unitId: TrainableId, at?: District): void {
@@ -4169,10 +4175,20 @@ export class Game {
   /** What a building at `cell` would work. `level` matters for a MOVE: an
    *  upgraded Sawmill keeps its bigger radius when it is picked up, and
    *  previewing it at level 1 would understate the spot it is being moved to. */
+  /** How far a producer of this kind reaches at `level`, the tree's
+   *  `influenceRadius` included — what sim/workers.ts#influenceRadius would
+   *  say for a building standing there. */
+  reachAt(definitionId: DistrictId, level: number): number {
+    const def = DISTRICTS[definitionId];
+    if (def.influenceRadiusPerLevel.length === 0) return 0;
+    return Math.floor(techValue(this.state, 'influenceRadius', levelIndexed(def.influenceRadiusPerLevel, level),
+      { district: definitionId }));
+  }
+
   capturedCells(definitionId: DistrictId, cell: Coord, level = 1): Coord[] {
     const def = DISTRICTS[definitionId];
     if (def.harvestSources.length === 0 || def.influenceRadiusPerLevel.length === 0) return [];
-    const radius = levelIndexed(def.influenceRadiusPerLevel, level);
+    const radius = this.reachAt(definitionId, level);
     return cellsWithinRadiusOfRect(this.map, cell, def.size, radius).filter(
       (c) => {
         if (this.state.fog.revealed[coordKey(c)] !== true) return false;
@@ -4263,7 +4279,7 @@ export class Game {
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
-          this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
+          this.map, this.mode.selected, def.size, this.reachAt(this.mode.definitionId, 1),
         ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
@@ -4308,7 +4324,7 @@ export class Game {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
-            levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
+            this.reachAt(this.mode.definitionId, district?.level ?? 1),
           ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
@@ -4366,7 +4382,7 @@ export class Game {
       // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
         if (district.state === 'Built') {
-          layer.influenceCells = withFootprint(influenceCells(this.map, district),
+          layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
         }
       }
@@ -4598,6 +4614,7 @@ export class Game {
     if (this.worldServer === null) return;
     const snap = await this.worldServer.join(
       { id: 'local-player', name: this.state.city.name, prefer: this.state.world.board }, this.now());
+    await this.worldServer.setBoost(worldImprovementBoost(this.state), this.now());
     this.applyWorldSnapshot(snap);
   }
 
@@ -4786,7 +4803,8 @@ export class Game {
    *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
   armyRoute(target: number): Route | null {
     const fog = worldFogAt(this.state, this.now());
-    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i));
+    const speed = armyMarchSpeed(this.state);
+    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i), () => speed);
   }
 
   /** Why the army cannot set out, in words, or null. */
@@ -4810,7 +4828,7 @@ export class Game {
     const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
     const route = this.armyRoute(target)!;
     const r = await this.worldServer.sendArmy({
-      purpose: this.armyPurpose, target, heroes, board, path: route.path,
+      purpose: this.armyPurpose, target, heroes, board, path: route.path, speed: armyMarchSpeed(this.state),
     }, this.now());
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));

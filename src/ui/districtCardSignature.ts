@@ -84,7 +84,7 @@ export function districtCardSignature(game: Game, district: District): string {
     const recipe = recipeOf(district);
     const items = s.city.workshops[district.uniqueId]?.items ?? [];
     parts.push(
-      items.length, queueCapacity(district),
+      items.length, queueCapacity(s, district),
       shorts(recipe.input as Record<string, number>),
       recipe.inputMana > 0 ? mana(s) < recipe.inputMana : null,
     );

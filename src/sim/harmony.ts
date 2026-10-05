@@ -15,6 +15,7 @@
 
 import { DISTRICTS, HARMONY, levelIndexed, type DistrictDef } from './data/definitions';
 import type { District, GameState } from './state';
+import { techValue } from './techEffects';
 
 /** Harmony a building demands at a level. The column is the TOTAL at that
  *  level rather than an increment, indexed from level 1 like
@@ -42,7 +43,16 @@ export const demandLevel = (state: GameState, district: District): number => {
  *  under construction supplies nothing — beauty is delivered, not promised. */
 export const harmonySupply = (state: GameState): number => state.city.districts
   .filter((d) => d.state === 'Built')
-  .reduce((sum, d) => sum + DISTRICTS[d.definitionId].harmonySupply, 0);
+  .reduce((sum, d) => sum + decorationHarmony(state, d), 0);
+
+/** Harmony ONE standing piece supplies, after the tree
+ *  (`decorationHarmony`): whole points, rounded down. A building that
+ *  supplies none still supplies none — the tree only lifts a decoration. */
+export function decorationHarmony(state: GameState, d: District): number {
+  const base = DISTRICTS[d.definitionId].harmonySupply;
+  if (base <= 0) return 0;
+  return Math.floor(techValue(state, 'decorationHarmony', base, { district: d.definitionId }));
+}
 
 /**
  * Harmony the city demands. Every district counts, including one still under

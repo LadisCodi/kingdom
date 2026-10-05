@@ -63,10 +63,10 @@ describe('area of influence & worker limit', () => {
     const state = freshGame();
     const sawmill = builtSawmill(state, [FOREST_A, FOREST_B, FOREST_C]);
     expect(workableCells(state, map, sawmill)).toHaveLength(1);
-    expect(assignableWorkerLimit(sawmill)).toBe(3); // per-level cap — cells don't limit
+    expect(assignableWorkerLimit(state, sawmill)).toBe(3); // per-level cap — cells don't limit
     sawmill.level = 2;
     expect(workableCells(state, map, sawmill)).toHaveLength(2);
-    expect(assignableWorkerLimit(sawmill)).toBe(5);
+    expect(assignableWorkerLimit(state, sawmill)).toBe(5);
     sawmill.level = 3;
     expect(workableCells(state, map, sawmill)).toHaveLength(3);
   });
