@@ -12,7 +12,7 @@ import type { Board } from '../sim/battle';
 import type { HeroId } from '../sim/state';
 import type { WorldImprovement } from '../sim/world/types';
 import {
-  build, claim, collect, delveRoom, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
+  build, claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
   sendArmy, snapshotOf,
 } from './core';
 import type {
@@ -27,6 +27,8 @@ export interface WorldServerApi {
   snapshot(now: number, asSeat?: number): Promise<WorldSnapshot | null>;
   claim(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult>;
+  /** Finish a builder's work on a hex now — paid for by the client. */
+  finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(
     req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
@@ -132,6 +134,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => build(b, seat, index, kind, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async finish(index: number, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => finish(b, seat, index, now), { ok: false, why: 'NoBoard' });
   }
 
   async collect(index: number, now: number, asSeat?: number): Promise<CollectResult> {

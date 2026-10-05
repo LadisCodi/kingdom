@@ -224,7 +224,8 @@ export interface WorldSnapshot {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute';
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
+  | 'NothingBuilding';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

@@ -4,7 +4,6 @@
 import { grantStoryHeroes } from './story';
 import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
-import { RUSH } from './data/definitions';
 import {
   buildDurationForCell, buildGoodsCost, canMoveDistrict, districtCount, maxDistrictCount,
   nextBuildCost, nextOrdinal,
@@ -50,6 +49,7 @@ import {
 } from './state';
 import { collectStore } from './storage';
 import { applyRentRush, nextRentRush, stampRentRush } from './quests';
+import { gemsToFinish } from './rush';
 import {
   finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
 } from './world/explorers';
@@ -468,9 +468,8 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
 
 export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
 
-/** gemCost = max(1, ceil(remainingSeconds / RUSH.secondsPerGem)). */
-export const gemRushCost = (item: QueueItem, now: number): number =>
-  Math.max(1, Math.ceil(remainingSeconds(item, now) / RUSH.secondsPerGem));
+/** The Gems that finish a build now (sim/rush.ts). */
+export const gemRushCost = (item: QueueItem, now: number): number => gemsToFinish(remainingSeconds(item, now));
 
 export function finishWithGems(
   state: GameState,

@@ -9,6 +9,7 @@ import { boardNeighbors } from '../../sim/world/hex';
 import type { HexControl, WorldSource } from '../../sim/world/source';
 import type { WorldImprovement } from '../../sim/world/types';
 import { fittingImprovements, outpostGold } from '../../worldServer/core';
+import { formatCount } from '../format';
 
 export type HexAction =
   | { kind: 'claim'; gold: number; seconds: number }
@@ -34,6 +35,23 @@ function touches(source: WorldSource, seat: number, index: number): boolean {
     const h = source.hexOf(n);
     return h !== null && h.owner === seat && h.held && h.active;
   });
+}
+
+/** What a builder is doing on a hex, and when it began and ends: its
+ *  Outpost going up, or a level being raised. Every job takes exactly its
+ *  data's time, so when it began is when it ends less that. Null when
+ *  nothing is building. */
+export function hexWork(h: HexControl): { what: string; startedAt: number; endsAt: number } | null {
+  if (!h.held) {
+    return { what: 'Building the Outpost', startedAt: h.outpostAt - WORLD_BUILD.outpost.buildSeconds * 1000, endsAt: h.outpostAt };
+  }
+  if (h.work === null) return null;
+  const def = WORLD_BUILD.improvements[h.work.kind];
+  return {
+    what: h.work.toLevel === 1 ? `Building the ${def.name}` : `${def.name} to level ${formatCount(h.work.toLevel)}`,
+    startedAt: h.work.at - def.levels[h.work.toLevel - 1].buildSeconds * 1000,
+    endsAt: h.work.at,
+  };
 }
 
 /** A store is worth a tap once it holds a whole unit of something. */

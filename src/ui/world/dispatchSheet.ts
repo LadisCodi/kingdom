@@ -21,7 +21,8 @@ import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
-import { hexActions, type HexAction } from './worldActions';
+import { hexActions, hexWork, type HexAction } from './worldActions';
+import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
   Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert', Mountain: 'Mountains',
@@ -73,8 +74,12 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   const mine = h.owner === game.worldSeat();
   const lines: HTMLElement[] = [];
   const whose = `${seatName(game, h.owner)} ground`;
+  const work = hexWork(h);
   if (!h.held) {
-    lines.push(el('p', { class: 'wd-line' }, `${whose}, being claimed · the Outpost stands in ${formatCountdown(Math.max(0, h.outpostAt - now) / 1000)}`));
+    lines.push(el('p', { class: 'wd-line' }, mine && work !== null && game.actingSeat === null
+      ? `${whose}, being claimed`
+      : `${whose}, being claimed · the Outpost stands in ${formatCountdown(Math.max(0, h.outpostAt - now) / 1000)}`));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     return lines;
   }
   lines.push(el('p', { class: `wd-line${h.active ? '' : ' is-cut'}` },
@@ -83,7 +88,8 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
     lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.improvements[h.improvement.kind].name} · level ${formatCount(h.improvement.level)}`));
   }
   if (h.work !== null) {
-    lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
+    else lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
   }
   if (mine && h.stores !== null) {
     const produces = h.improvement === null ? '' : WORLD_BUILD.improvements[h.improvement.kind].produces;
@@ -269,32 +275,47 @@ export function renderDispatchSheet(game: Game): HTMLElement {
 }
 
 /**
- * AN EXPLORER'S TRIP, as the training line draws a batch: what it is doing
- * over the bar, the bar for the whole trip — there, the work, and home —
- * with the time left inside it, the trip's total under it, and the Gems
- * button that finishes it.
+ * A WAIT THE PLAYER CAN BUY, as the training line draws a batch: what is
+ * happening over the bar, the bar from start to end with the time left
+ * inside it, the whole wait under it, and the Gems button that finishes it
+ * (sim/rush.ts prices it).
  */
-function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
+function waitRow(
+  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void,
+): HTMLElement {
   const now = game.now();
-  const total = returnsAt(trip) - trip.departedAt;
-  const left = Math.max(0, returnsAt(trip) - now);
-  const doing = now < arrivesAt(trip) ? 'On the way'
-    : now < revealsAt(trip) ? 'Exploring'
-      : 'Coming home';
+  const total = endsAt - startedAt;
+  const left = Math.max(0, endsAt - now);
   const bar = progress('green');
   bar.run(total <= 0 ? 1 : 1 - left / total, left, formatDuration(Math.ceil(left / 1000)));
   return el('div', { class: 'tr-batch-row wd-trip' },
     el('div', { class: 'tr-batch-progress' },
-      el('span', { class: 'tr-batch-what' }, doing),
+      el('span', { class: 'tr-batch-what' }, what),
       bar.root,
       el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total / 1000))}`)),
     btn({
       label: 'Finish',
       kind: 'gem',
-      onClick: () => game.doFinishExplorer(trip.id),
-      cost: { Gems: explorerRushCost(trip, now) },
+      onClick: onFinish,
+      cost: { Gems: gems },
       have: (c) => game.walletValue(c),
     }));
+}
+
+/** An explorer's trip: there, the work, and home. */
+function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
+  const now = game.now();
+  const doing = now < arrivesAt(trip) ? 'On the way'
+    : now < revealsAt(trip) ? 'Exploring'
+      : 'Coming home';
+  return waitRow(game, doing, trip.departedAt, returnsAt(trip), explorerRushCost(trip, now),
+    () => game.doFinishExplorer(trip.id));
+}
+
+/** A builder's work on one of the player's hexes: the Outpost, or a level. */
+function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
+  return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
+    () => void game.doFinishHexWork(index));
 }
 
 /** For the explorers chip: how many are out of how many. */

@@ -194,6 +194,10 @@
   owner's border runs round it dashed, and turns solid when the Outpost stands.
 - **World builds use the province's builders**: an Outpost or an improvement
   level holds a builder until it stands, like a building in the city.
+- **A build on your own hex shows its progress** on the hex's sheet — what
+  is being built, one bar for the whole build, and **Finish**: Gems for the
+  time left, at `rush.secondsPerGem` like every other wait. Finished, it
+  stands at once and the builder is home.
 - **A neutral hex that still carries buildings** — someone held it and lost it —
   has its Outpost already standing: marching an army there is enough to claim
   it, and its improvements change hands intact.
