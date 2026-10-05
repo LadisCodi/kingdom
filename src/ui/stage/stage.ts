@@ -617,6 +617,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         const scene = due();
         if (scene !== null) start(scene);
       }
+    } else if (game.state.tutorial.seen[sceneKey(playing.scene.id)]) {
+      // Marked played from outside — a dev skip: it leaves the screen.
+      end();
     } else {
       const l = line();
       if (l !== null) {
