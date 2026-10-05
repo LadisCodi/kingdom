@@ -76,6 +76,8 @@ describe('a rich district', () => {
     const { board: b, seat } = join(emptyWorld(), { id: 'me', name: 'Me', prefer: { id: 'p', seed, seat: 0 } }, T0);
     for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
     const at = richNextDoor(seed)!;
+    // No camp raids it: this is about the store alone (raids are 19 §5.5).
+    b.beaten = { [seat]: generateBoard('p', seed).hexes.filter((h) => h.camp !== null).map((h) => h.index) };
     const r = claim(b, seat, at, T0);
     if (!r.ok) throw new Error(r.why);
     const stands = r.finishesAt;

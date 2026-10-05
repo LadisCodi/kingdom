@@ -462,6 +462,29 @@
           "type": "float",
           "min": 0,
           "doc": "Hours a stand-in rival takes to beat a camp, per 1,000 of its power."
+        },
+        "raidHours": {
+          "type": "float",
+          "min": 1,
+          "doc": "How often a camp raids the player’s districts beside it, in hours of UTC — every raid lands at the same hours on every board (19 §5.5)."
+        },
+        "raidShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The share of a raided district’s stores the raiders carry off; the district burns."
+        },
+        "repairCostShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "What repairing a burnt district costs, as a share of what claiming a district costs now."
+        },
+        "repairTimeShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "How long repairing takes, as a share of a district’s build time."
         }
       }
     },

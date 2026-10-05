@@ -2197,6 +2197,11 @@ export interface WorldCampsDef {
   tributePremium: number;
   tributeLossShare: number;
   botHoursPer1000Power: number;
+  /** Camp raids (19 §5.5): how often, how much, and what a repair costs. */
+  raidHours: number;
+  raidShare: number;
+  repairCostShare: number;
+  repairTimeShare: number;
 }
 
 export const WORLD_CAMPS = balance.worldCamps as unknown as WorldCampsDef;

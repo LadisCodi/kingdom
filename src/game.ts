@@ -2654,8 +2654,9 @@ export class Game {
       const seconds = worldBuildSeconds(b.what, b.level);
       return {
         name: worldBuildName(b.what),
-        task: isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
-          : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
+        task: b.what === 'Repair' ? 'Repairing on the world map'
+          : isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
+            : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
         startedAt: b.finishesAt - seconds * 1000,
         durationMs: seconds * 1000,
       };
@@ -2689,6 +2690,9 @@ export class Game {
     if (ask.kind === 'world') {
       const { index, what, level, gold } = ask;
       const name = `the ${worldBuildName(what)}`;
+      if (what === 'Repair') {
+        return { verb: 'Repair', what: 'Ready to repair the burnt district', cost: { Gold: gold }, start: () => void this.doRepairHex(index, gold) };
+      }
       return {
         verb: !isUpgrade(what) ? 'Claim' : level > 1 ? 'Upgrade' : 'Build',
         what: !isUpgrade(what) ? `Ready to claim with ${name}`
@@ -4683,10 +4687,30 @@ export class Game {
       } else this.toast(e.text);
     }
     this.worldView = snap;
+    this.reportSeenCamps(snap);
     const board = snapshotWorld(snap).board();
     this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
       && board.hexes[h.index].features.includes('Sanctuary')).length;
     this.notify();
+  }
+
+  /** A lurking camp raids only once the player has seen it, and only the
+   *  player's fog knows that: tell the server of any it has not been told
+   *  of (19 §5.5). Once at a time. */
+  private seenPending = false;
+  private reportSeenCamps(snap: WorldSnapshot): void {
+    if (this.worldServer === null || this.actingSeat !== null || this.seenPending) return;
+    const told = new Set(snap.seenCamps ?? []);
+    const fog = worldFogAt(this.state, this.now());
+    const fresh = snapshotWorld(snap).board().hexes
+      .filter((h) => h.camp?.lurking === true && !told.has(h.index) && hasBit(fog, h.index))
+      .map((h) => h.index);
+    if (fresh.length === 0) return;
+    this.seenPending = true;
+    void this.worldServer.reportSeen(fresh, this.now()).then((r) => {
+      this.seenPending = false;
+      if (r.ok) this.applyWorldSnapshot(r.snapshot);
+    });
   }
 
   /** The line a refused world command shows. */
@@ -4715,6 +4739,12 @@ export class Game {
   private worldBuilderRefusal(gold: number): string | null {
     if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
     return null;
+  }
+
+  /** Repair a district a camp burnt: a builder, and a share of a claim's
+   *  Gold (19 §5.5). */
+  async doRepairHex(index: number, gold: number): Promise<void> {
+    await this.worldCommand(index, 'Repair', 1, gold, (asSeat) => this.worldServer!.repair(index, this.now(), asSeat));
   }
 
   /** Claim a hex: build its district, with a builder and its Gold. */

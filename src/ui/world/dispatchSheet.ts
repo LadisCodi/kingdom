@@ -16,7 +16,7 @@ import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
@@ -90,6 +90,21 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (h.fortress > 0) {
     lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.upgrades.Fortress.name} · level ${formatCount(h.fortress)}`));
   }
+  // Burnt by raiders (19 §5.5): it makes nothing until it is repaired.
+  if (h.burnt) {
+    lines.push(el('p', { class: 'wd-line is-cut' }, 'Burnt by raiders — it makes nothing until it is repaired'));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
+  }
+  // A camp beside it will raid it (19 §5.5).
+  if (mine && !h.burnt && h.threat != null) {
+    const creatures = h.threat.camps
+      .map((c) => game.worldSource().board().hexes[c]?.camp?.creature)
+      .filter((c): c is NonNullable<typeof c> => c !== undefined)
+      .map((c) => CAMP_CREATURE[c]);
+    const guard = h.garrison != null && h.garrison.owner === game.worldSeat() ? ' — your garrison will fight them' : '';
+    lines.push(el('p', { class: 'wd-line is-cut' },
+      `${creatures.join(' and ')} next door raid it in ${formatCountdown(Math.max(0, h.threat.nextRaidAt - now) / 1000)}${guard}`));
+  }
   if (h.work !== null) {
     if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     else lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
@@ -115,9 +130,19 @@ const ARMY_INFO = {
 function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (!campShown(game.worldSource(), bh, fog) || bh.camp === null) return [];
   const difficulty = campDifficulty(bh.camp.power, strongestParty(game.state));
-  return [el('p', { class: 'wd-line' },
+  const lines = [el('p', { class: 'wd-line' },
     `A camp of ${CAMP_CREATURE[bh.camp.creature]} · Power ${formatCount(bh.camp.power)} · `,
     el('b', { style: `color: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty))];
+  // Which of the player's districts it will raid (19 §5.5).
+  const source = game.worldSource();
+  const raided = source.board().hexes
+    .map((h) => source.hexOf(h.index))
+    .filter((h): h is NonNullable<typeof h> => h !== null && h.threat != null && h.threat.camps.includes(bh.index) && !h.burnt);
+  if (raided.length > 0) {
+    lines.push(el('p', { class: 'wd-line is-cut' },
+      `It raids ${raided.length === 1 ? `your ${WORLD_BUILD.districts[raided[0].district].name}` : `${formatCount(raided.length)} of your districts`} every ${formatCount(WORLD_CAMPS.raidHours)} hours`));
+  }
+  return lines;
 }
 
 /** The Portal: shut with its countdown, or open with the player's floor,
@@ -163,6 +188,12 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           label: 'Claim', kind: 'primary', cost: { Gold: a.gold }, have,
           info: `${WORLD_BUILD.districts[a.district].name} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doClaimHex(bh.index, asRival ? 0 : a.gold),
+        });
+      case 'repair':
+        return action({
+          label: 'Repair', kind: 'primary', cost: { Gold: a.gold }, have,
+          info: `The raiders' damage · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doRepairHex(bh.index, asRival ? 0 : a.gold),
         });
       case 'upgrade':
         return action({

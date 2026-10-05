@@ -13,7 +13,7 @@ import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
   claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  postOffer, sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
+  postOffer, repair, reportSeen, sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
 } from './core';
 import type {
   ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard, ServerWorld, TradeResult,
@@ -33,6 +33,10 @@ export interface WorldServerApi {
   /** The Exchange (19 §7.5): the client pays what it gives, and is handed
    *  what it receives. */
   postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult>;
+  /** Repair a district a camp burnt (19 §5.5); the client pays. */
+  repair(index: number, now: number, asSeat?: number): Promise<CommandResult>;
+  /** Tell the server which lurking camps the player has now seen. */
+  reportSeen(indices: number[], now: number): Promise<CommandResult>;
   takeOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
   withdrawOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
@@ -151,6 +155,14 @@ export class LocalWorldServer implements WorldServerApi {
 
   async tribute(index: number, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => tribute(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async repair(index: number, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => repair(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async reportSeen(indices: number[], now: number): Promise<CommandResult> {
+    return this.run(undefined, (b, seat) => reportSeen(b, seat, indices, now), { ok: false, why: 'NoBoard' });
   }
 
   async postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult> {

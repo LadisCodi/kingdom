@@ -183,6 +183,107 @@ export function tribute(b: ServerBoard, seat: number, index: number, t: number):
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
 }
 
+// ------------------------------------------------------------ camp raids
+
+const RAID_MS = (): number => WORLD_CAMPS.raidHours * HOUR;
+
+/** The next raid after `t`: raids land on the same UTC hours on every
+ *  board, every `raidHours` (19 §5.5). */
+export const nextRaidAt = (t: number): number => (Math.floor(t / RAID_MS()) + 1) * RAID_MS();
+
+/** Whether `seat` can see the camp on `index` — standing, or lurking and
+ *  reported seen by its client. */
+const campSeen = (b: ServerBoard, seat: number, index: number): boolean => {
+  const camp = campAt(b, index);
+  return camp !== null && (!camp.lurking || (b.seenCamps?.[seat] ?? []).includes(index));
+};
+
+/** The camps that will raid `seat`'s district on `index`: beside it,
+ *  unbeaten by `seat`, on ground nobody holds, and seen. */
+export function raidersOf(b: ServerBoard, seat: number, index: number): number[] {
+  return boardNeighbors(index).filter((c) => guarded(b, seat, c) && campSeen(b, seat, c));
+}
+
+/** The client says which lurking camps the player has now seen. */
+export function reportSeen(b: ServerBoard, seat: number, indices: readonly number[], t: number): CommandResult {
+  resolveTo(b, t);
+  const seen = ((b.seenCamps ??= {})[seat] ??= []);
+  for (const i of indices) if (isBoardIndex(i) && campAt(b, i)?.lurking && !seen.includes(i)) seen.push(i);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** What repairing a burnt district costs `seat` now, and how long it takes. */
+export const repairPrice = (b: ServerBoard, seat: number): { gold: number; seconds: number } => ({
+  gold: Math.round(claimGold(Math.max(0, hexesOf(b, seat) - 1)) * WORLD_CAMPS.repairCostShare),
+  seconds: Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare),
+});
+
+/** Start repairing a burnt district. The client pays the Gold and sends the
+ *  builder. */
+export function repair(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  if (!h.burnt) return { ok: false, why: 'NothingThere' };
+  if ((h.repairAt ?? null) !== null) return { ok: false, why: 'Busy' };
+  h.repairAt = t + repairPrice(b, seat).seconds * 1000;
+  return { ok: true, finishesAt: h.repairAt, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Every player's districts beside a camp they have seen are raided at `t`:
+ *  a garrisoned Fortress fights the raiders; otherwise, or if it falls, the
+ *  district burns and the raiders carry off `raidShare` of its stores. The
+ *  stand-in rivals are never raided. */
+function raidAll(b: ServerBoard, t: number): void {
+  const keys = Object.keys(b.hexes).map(Number).sort((x, y) => x - y);
+  for (const index of keys) {
+    const h = b.hexes[index];
+    if (h.owner === null || b.seats[h.owner]?.bot !== false) continue;
+    if (!isHeld(h, t) || h.burnt) continue;
+    const seat = h.owner;
+    for (const c of raidersOf(b, seat, index)) {
+      if (h.burnt) break;
+      const camp = campAt(b, c)!;
+      const who = `the camp of ${CAMP_CREATURE[camp.creature]}`;
+      const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
+      const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
+      if (g !== undefined) {
+        const log = resolveBattle(campBoard(b, c), g.board);
+        const theirs = boardAfter(log, g.board, 'theirs');
+        g.board = theirs.board;
+        addFallen(g.fallen, theirs.fallen);
+        const lost = theirs.fallen.reduce((n, f) => n + f.count, 0);
+        if (log.winner === 'theirs') {
+          report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true);
+          continue;
+        }
+        h.garrison = null;
+        report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false);
+        sendHome(b, g, t);
+      }
+      const keep = 1 - WORLD_CAMPS.raidShare;
+      const taken = Math.floor(h.stored * WORLD_CAMPS.raidShare);
+      h.stored *= keep;
+      if ((h.precious ?? 0) > 0) h.precious = (h.precious ?? 0) * keep;
+      h.burnt = true;
+      const currency = districtRate(boardData(b).hexes[index]).currency;
+      report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false);
+    }
+  }
+}
+
+const capitalise = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Repairs done by `t`: the district stands whole again. */
+function finishRepairs(b: ServerBoard, t: number): void {
+  for (const h of Object.values(b.hexes)) {
+    if ((h.repairAt ?? null) !== null && h.repairAt! <= t) {
+      h.burnt = false;
+      h.repairAt = null;
+    }
+  }
+}
+
 // ------------------------------------------------------------ the Exchange
 
 /** A fair offer is one for one, of two different materials (19 §7.5). */
@@ -296,7 +397,7 @@ export function storedAt(b: ServerBoard, index: number, t: number): number {
   const h = b.hexes[index];
   if (h === undefined) return 0;
   const dt = t - h.storeAt;
-  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return h.stored;
+  if (dt <= 0 || !h.active || h.burnt || !isHeld(h, h.storeAt)) return h.stored;
   const { perHour, cap } = districtRate(boardData(b).hexes[index], boostOf(b, h.owner));
   return Math.min(Math.max(cap, h.stored), h.stored + (perHour * dt) / HOUR);
 }
@@ -307,7 +408,7 @@ export function preciousAt(b: ServerBoard, index: number, t: number): number {
   if (h === undefined) return 0;
   const held = h.precious ?? 0;
   const dt = t - h.storeAt;
-  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return held;
+  if (dt <= 0 || !h.active || h.burnt || !isHeld(h, h.storeAt)) return held;
   const { perHour, cap } = preciousRate(boardData(b), index, boostOf(b, h.owner));
   return Math.min(Math.max(cap, held), held + (perHour * dt) / HOUR);
 }
@@ -362,6 +463,9 @@ function nextEvent(b: ServerBoard, after: number): number {
     consider(o.expiresAt);
     consider(o.takeAt);
   }
+  for (const h of Object.values(b.hexes)) consider(h.repairAt ?? null);
+  // A raid lands only if some player has a district a camp can reach.
+  if (b.seats.some((s) => s?.bot === false)) consider(nextRaidAt(after));
   // The Portal's close pays the ranking and sends its divers home.
   const k = portalEvent(after);
   consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
@@ -381,6 +485,8 @@ function applyDue(b: ServerBoard, t: number): void {
   recomputeChains(b, t);
   closePortal(b, t);
   settleOffers(b, t);
+  finishRepairs(b, t);
+  if (t % RAID_MS() === 0) raidAll(b, t);
   for (const d of dungeonsOf(b)) if (d.returnsAt !== null && d.returnsAt <= t) returnDungeon(b, d, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
@@ -455,7 +561,8 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
   const h = b.hexes[index];
   if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
   const claiming = h.standsAt > t;
-  if (!claiming && h.work === null) return { ok: false, why: 'NothingBuilding' };
+  const repairing = (h.repairAt ?? null) !== null;
+  if (!claiming && h.work === null && !repairing) return { ok: false, why: 'NothingBuilding' };
   // Every store to now first: what stands changes the rates, as at an event.
   settleStores(b, t);
   if (claiming) {
@@ -464,6 +571,9 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
   } else if (h.work !== null) {
     h.fortress = h.work.toLevel;
     h.work = null;
+  } else if (repairing) {
+    h.burnt = false;
+    h.repairAt = null;
   }
   recomputeChains(b, t);
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
@@ -1180,6 +1290,9 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
       stores: mineHex && rate.currency !== null ? { currency: rate.currency, amount: storedAt(b, index, t), cap: rate.cap } : null,
       precious: mineHex && gems.id !== null ? { id: gems.id, amount: preciousAt(b, index, t), cap: gems.cap } : null,
       garrison: garrisonView(b, h),
+      burnt: h.burnt === true,
+      repairAt: h.repairAt ?? null,
+      threat: mineHex && isHeld(h, t) ? threatView(b, seat, index, t) : null,
     };
   }).sort((x, y) => x.index - y.index);
   const armies: ArmyView[] = b.armies.map((a) => ({
@@ -1202,6 +1315,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
     beaten: [...(b.beaten?.[seat] ?? [])],
+    seenCamps: [...(b.seenCamps?.[seat] ?? [])],
     offers: (b.offers ?? []).map((o) => ({
       id: o.id, seat: o.seat, mine: o.seat === seat, give: { ...o.give }, want: { ...o.want }, expiresAt: o.expiresAt,
     })),
@@ -1218,6 +1332,11 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     portal: portalView(b, seat, t),
     effects: [],
   };
+}
+
+function threatView(b: ServerBoard, seat: number, index: number, t: number): HexView['threat'] {
+  const camps = raidersOf(b, seat, index);
+  return camps.length === 0 ? null : { camps, nextRaidAt: nextRaidAt(t) };
 }
 
 function garrisonView(b: ServerBoard, h: ServerHex): HexView['garrison'] {

@@ -3,7 +3,7 @@
 // buttons from this; the server's answer to the command is what counts, so
 // nothing here has to be the final word — only the right offer.
 
-import { WORLD_BUILD } from '../../sim/data/definitions';
+import { WORLD_BUILD, WORLD_CAMPS } from '../../sim/data/definitions';
 import type { Wallet, WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
@@ -29,6 +29,8 @@ export type HexAction =
   | { kind: 'delve'; army: string }
   /** Open a dungeon's delve screen (19 §8.2). */
   | { kind: 'openDelve' }
+  /** Repair a district a camp burnt (19 §5.5). */
+  | { kind: 'repair'; gold: number; seconds: number }
   /** Build an upgrade into the district, or raise it a level (19 §7.2). */
   | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number }
   | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency'] | null; amount: number; ready: boolean };
@@ -36,18 +38,21 @@ export type HexAction =
 /** Is a world build an upgrade rather than a district's claim? */
 export const isUpgrade = (what: WorldBuildWhat): what is WorldUpgrade => (WORLD_UPGRADES as readonly string[]).includes(what);
 
-/** A world build's name: the district's, or the upgrade's. */
+/** A world build's name: the district's, the upgrade's, or a repair. */
 export const worldBuildName = (what: WorldBuildWhat): string =>
-  isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
+  what === 'Repair' ? 'Repair' : isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
 
-/** Seconds a builder spends on a world build: a district, or an upgrade's level. */
+/** Seconds a builder spends on a world build: a district, an upgrade's
+ *  level, or a repair — a share of a district's build (19 §5.5). */
 export const worldBuildSeconds = (what: WorldBuildWhat, level: number): number =>
-  isUpgrade(what) ? WORLD_BUILD.upgrades[what].levels[level - 1]?.buildSeconds ?? 0 : WORLD_BUILD.claim.buildSeconds;
+  what === 'Repair' ? Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare)
+    : isUpgrade(what) ? WORLD_BUILD.upgrades[what].levels[level - 1]?.buildSeconds ?? 0 : WORLD_BUILD.claim.buildSeconds;
 
 /** What the player is told when a world build stands. */
 export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
-  !isUpgrade(what) ? `Your ${worldBuildName(what)} stands — the ground is yours`
-    : level === 1 ? `Your ${worldBuildName(what)} stands` : `${worldBuildName(what)} reached level ${formatCount(level)}`;
+  what === 'Repair' ? 'Your district is repaired, and works again'
+    : !isUpgrade(what) ? `Your ${worldBuildName(what)} stands — the ground is yours`
+      : level === 1 ? `Your ${worldBuildName(what)} stands` : `${worldBuildName(what)} reached level ${formatCount(level)}`;
 
 /** What a scouting reward is called, as a player reads it: "1,000 Gold",
  *  "a Green pack". */
@@ -56,6 +61,11 @@ export function scoutWords(pay: ScoutPay): string {
   return [...Object.entries(pay.wallet), ...Object.entries(pay.goods)]
     .map(([c, n]) => `${formatCount(n as number)} ${c === 'HeroXp' ? 'Hero XP' : c}`).join(', ');
 }
+
+/** What repairing a burnt district costs: a share of what the next claim
+ *  costs, as the server prices it (worldServer/core.ts `repairPrice`). */
+export const repairGold = (source: WorldSource, seat: number): number =>
+  Math.round(claimGold(Math.max(0, hexesHeldBy(source, seat) - 1)) * WORLD_CAMPS.repairCostShare);
 
 /** Hexes `seat` holds or is claiming beyond its city. */
 export const hexesHeldBy = (source: WorldSource, seat: number): number =>
@@ -78,6 +88,10 @@ export function hexWork(h: HexControl): { what: string; startedAt: number; endsA
   if (!h.held) {
     const ms = WORLD_BUILD.claim.buildSeconds * 1000;
     return { what: `Building the ${WORLD_BUILD.districts[h.district].name}`, startedAt: h.standsAt - ms, endsAt: h.standsAt };
+  }
+  if ((h.repairAt ?? null) !== null) {
+    const ms = worldBuildSeconds('Repair', 1) * 1000;
+    return { what: 'Repairing the district', startedAt: h.repairAt! - ms, endsAt: h.repairAt! };
   }
   if (h.work === null) return null;
   const def = WORLD_BUILD.upgrades[h.work.upgrade];
@@ -131,6 +145,13 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
   if ((h.stores !== null && h.stores.cap > 0) || gems > 0) {
     const amount = h.stores === null ? 0 : Math.floor(h.stores.amount);
     out.push({ kind: 'collect', currency: h.stores?.currency ?? null, amount, ready: amount > 0 || gems > 0 });
+  }
+  // Burnt by raiders: repaired before anything is built into it (19 §5.5).
+  if (h.burnt) {
+    if ((h.repairAt ?? null) === null) {
+      out.push({ kind: 'repair', gold: repairGold(source, seat), seconds: worldBuildSeconds('Repair', 1) });
+    }
+    return out;
   }
   if (h.work !== null || !h.active) return out;
   for (const upgrade of WORLD_UPGRADES) {

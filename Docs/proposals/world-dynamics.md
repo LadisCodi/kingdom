@@ -25,8 +25,10 @@
 > camps and scouting, and traded on the Exchange (§3.4, spec 19 §7.5);
 > what they buy is built for buildings and the Fortress (§3.5, spec 19
 > §7.6). The delve (§4) is built — spec 19 §8.2 — with the rooms' precious
-> lumps. Still proposed: the Atlas chapters' prices, the Portal's lumps, and
-> camp raids (§1.6).
+> lumps. Camp raids (§1.6) are built — spec 19 §5.5 — burning the district
+> rather than only emptying its store, a garrisoned Fortress fighting them.
+> Still proposed: the Atlas chapters' prices (on hold for the tech-tree
+> rebuild) and the Portal's lumps.
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);
