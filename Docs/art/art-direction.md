@@ -181,7 +181,7 @@ Every one of these is a treatment of the same asset, never a second asset.
 | **Revealed** | full colour, the default |
 | **Exhausted** (a harvest cell) | the same tile, spent — stumps, bare soil, still clearly the same place |
 | **Under construction** | scaffold and a pit, at the building's own footprint |
-| **Selected / valid target** | a warm rim on the diamond's edge, never a fill |
+| **Selected / valid target** | a warm rim on the diamond's edge, never a fill; painted on the ground, under what stands there |
 | **Inactive** (a world hex off the chain) | greyed toward the Sensed treatment, buildings intact |
 
 - **Unexplored ground is under a sunlit sea of clouds — and still the same
@@ -234,9 +234,10 @@ province under the midday sun. Target:
 - **The world board stands in the same bank**: every Unknown hex and
   everything past the board's edge, at full thickness up to every seen hex.
   The tallest puffs lap over a seen hex's edges — a fifth of a hex over its
-  two near edges, a tenth over its two far ones. Plates, sides and ownership
-  borders are under the clouds; everything that stands on a hex, and every
-  other mark on the board, is over them.
+  two near edges, a tenth over its two far ones. Plates, sides, ownership
+  borders and the selection rim are under the clouds — but the rim of a
+  selected Unknown hex is over them; everything that stands on a hex, and
+  every other mark on the board, is over them.
 - **Art:** the bank is one tileable texture
   (`src/render/fog/cloud_tile.webp`; original and prompt in
   [`fog/`](fog/)); the cushion and the payable patch are sprites.
