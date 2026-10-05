@@ -94,8 +94,9 @@ export function newGame(map: MapData, now: number): GameState {
     // A new kingdom meets every door shut and every scene unplayed.
     tutorial: { veteran: false, seen: {}, startedAt: now },
     abandoned: { repaired: {} },
-    signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [] },
+    signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [], playMs: 0 },
     pendingDiscoveries: [],
+    pendingAnalytics: [],
     // The world board and seat are derived from the kingdom's own seed until
     // a server assigns them (sim/world/explorers.ts).
     world: freshWorld(seed),

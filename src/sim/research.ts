@@ -5,6 +5,7 @@
 // the spot. There are no slots and nothing is ever under study, so research
 // has no boundary source. Tree edges via `requires`.
 
+import { track } from './analytics';
 import { watchtowerClaimed } from './landmarks';
 import {
   DISTRICTS, ERA_REWARDS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
@@ -202,6 +203,7 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
   payGoods(state.city.goods, techGoodsCost(state, id));
   delete state.research.poured[id];
   state.research.completed.push(id);
+  track(state, 'research', { tech: id });
   return 'Researched';
 }
 
@@ -332,5 +334,6 @@ export const freshlyOpenBooks = (state: GameState): TomeId[] => {
 
 /** Remember that a book has been announced open. */
 export function markBookSeen(state: GameState, tome: TomeId): void {
+  if (state.tutorial.seen[bookKey(tome)] !== true) track(state, 'book_opened', { tome });
   state.tutorial.seen[bookKey(tome)] = true;
 }

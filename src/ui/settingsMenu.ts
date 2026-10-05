@@ -91,6 +91,9 @@ export function renderSettingsMenu(
     sectionHead('Start over'),
     reset,
 
+    // Said wherever the analytics are on (Docs/plans/analytics.md §5).
+    ...(game.analytics === null ? [] : [el('div', { class: 'set-print' },
+      'This prototype sends anonymous play data, to learn how it is played.')]),
     el('div', { class: 'set-print' }, `${GAME_VERSION} · save format v${SAVE_VERSION}`),
   );
 

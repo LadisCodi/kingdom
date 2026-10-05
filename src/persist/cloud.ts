@@ -3,6 +3,7 @@
 
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError, createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { WorldCall } from '../worldServer/remote';
+import type { AnalyticsSend } from '../analytics/analytics';
 import type { SaveFile } from '../sim/save';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -86,5 +87,18 @@ export const cloudWorldCall: WorldCall = async (body) => {
     return { ok: false, retry, error: String(error.message ?? error) };
   } catch (err) {
     return { ok: false, retry: true, error: String(err) };
+  }
+};
+
+/** A batch of analytics events into `analytics_events`
+ *  (Docs/plans/analytics.md §5). A row already there is skipped, so a batch
+ *  sent again counts once. */
+export const cloudAnalyticsSend: AnalyticsSend = async (rows) => {
+  if (!client || !userId) return false;
+  try {
+    const { error } = await client.from('analytics_events').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+    return !error;
+  } catch {
+    return false;
   }
 };

@@ -230,7 +230,8 @@ offer_shown → store_opened → sku_viewed → confirm_opened
   price, credit remaining, and three pieces of game context — Townhall level,
   minutes played to date, and what the player was doing when the offer
   appeared.
-- Until the pipeline exists (designed, not built), the save is the log:
+- The pipeline is planned in [`../plans/analytics.md`](../plans/analytics.md).
+- Until it exists, the save is the log:
   `player.payer` keeps every purchase (SKU, price, when) and the refusal
   count. It lacks the game context above and can be reset by the player.
 - Server side, insert-only: a policy that permits insert on rows whose owner is

@@ -3,6 +3,7 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
+import type { SimTrack } from './analytics';
 import { DISTRICTS, type PackTier } from './data/definitions';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
@@ -832,6 +833,9 @@ export interface GameState {
     treasureWaitMs: number;
     /** The first tap of each of the last sessions, and what it was on. */
     returnTaps: Array<{ at: number; kind: string }>;
+    /** How long the game has been on screen, ever, in ms: counted by the
+     *  game while the page is visible (Docs/plans/analytics.md §2). */
+    playMs: number;
   };
   /**
    * The world board as the player's own save knows it
@@ -844,6 +848,9 @@ export interface GameState {
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];
+  /** Analytics events made since the game last drained them (sim/analytics.ts).
+   *  Transient, never saved. */
+  pendingAnalytics: SimTrack[];
   /** The world seed. Every random outcome in the game is a pure function of
    *  this plus the identity of the event asking (see sim/rng.ts) — never of
    *  how many draws came before, which is what makes offline replay and live

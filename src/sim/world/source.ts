@@ -19,8 +19,9 @@ export interface Seat {
   seat: number;
   /** The city hex's board index. */
   index: number;
-  /** The player's own, or a rival's name. */
-  owner: { you: true } | { you: false; name: string; rival: number };
+  /** Whose city it is, and the name every player reads under it: the
+   *  player's nickname, or a rival's (19 §1.3). */
+  owner: { you: true; name: string } | { you: false; name: string; rival: number };
 }
 
 /** A held or claimed hex as the server describes it (worldServer/types.ts
@@ -99,8 +100,9 @@ export function boardOf(ref: BoardRef): Board {
 }
 
 /** The local stand-in for the server: the generated board, the player in
- *  their seat and the authored rivals in the other five, in seat order. */
-export function localWorld(ref: BoardRef): WorldSource {
+ *  their seat under `name` and the authored rivals in the other five, in
+ *  seat order. */
+export function localWorld(ref: BoardRef, name = 'Your kingdom'): WorldSource {
   const seats: Seat[] = [];
   let rival = 0;
   SEAT_INDICES.forEach((index, seat) => {
@@ -108,7 +110,7 @@ export function localWorld(ref: BoardRef): WorldSource {
       seat,
       index,
       owner: seat === ref.seat
-        ? { you: true }
+        ? { you: true, name }
         : { you: false, name: WORLD.rivals[rival % WORLD.rivals.length] ?? `Rival ${seat + 1}`, rival: rival++ },
     });
   });
@@ -142,7 +144,7 @@ export function snapshotWorld(snap: {
   const seats: Seat[] = snap.seats.map((s) => ({
     seat: s.seat,
     index: SEAT_INDICES[s.seat],
-    owner: s.you ? { you: true } : { you: false, name: s.name, rival: rival++ },
+    owner: s.you ? { you: true, name: s.name } : { you: false, name: s.name, rival: rival++ },
   }));
   const hexes = new Map(snap.hexes.map((h) => [h.index, h]));
   return {

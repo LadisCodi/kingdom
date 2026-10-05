@@ -1,6 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
+import { track } from './analytics';
 import { grantStoryHeroes } from './story';
 import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
@@ -467,6 +468,7 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     recordEvent(state, {
       kind: 'districtLevel', district: district.definitionId, level: district.level,
     });
+    if (district.definitionId === 'Townhall') track(state, 'townhall_level', { level: district.level });
   }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
 }
