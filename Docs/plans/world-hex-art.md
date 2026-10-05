@@ -81,6 +81,9 @@ its district's.
 - **The Fortress** is a small keep at the hex's rear corner, 0.3 of the hex's
   width — the `whex_fortress_l1|l3|l5` keep for its levels 1, 2 and 3 — faint
   while its first level goes up. It never replaces the district.
+- **The Chapel** is a small chapel at the other rear corner, 0.2 of the
+  hex's width (`whex_chapel`), faint while it goes up. The world relic it
+  holds hovers over it, small; over a Shrine district, over the Shrine.
 - **Files:** `whex_<feature>[_n].png`, `whex_<district>[_n].png`
   (`src/render/world/hexArt.ts`).
 

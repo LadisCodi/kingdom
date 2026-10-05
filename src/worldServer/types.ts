@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { HeroId, LairId, PreciousId, UnitId } from '../sim/state';
+import type { ArtifactId, HeroId, LairId, PreciousId, UnitId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -24,6 +24,11 @@ export interface ServerHex {
   standsAt: number;
   /** The Fortress built into it: its level, 0 for none (19 §7.2). */
   fortress: number;
+  /** The Chapel built into it: 1, or 0 / missing for none
+   *  (relic-restoration.md §5.2). A Shrine district has one of its own. */
+  chapel?: number;
+  /** The world relic its owner hosts in its Chapel; missing or null for none. */
+  relic?: ArtifactId | null;
   /** An upgrade under construction: it reaches `toLevel` at `at`. */
   work: { upgrade: WorldUpgrade; toLevel: number; at: number } | null;
   /** On the chain back to its owner's city (19 §5.2). */
@@ -131,6 +136,9 @@ export interface ServerSeat {
    *  what each makes an hour and what its store holds. Sent by the client
    *  (`setBoost`); absent = none. */
   boost?: SeatBoost;
+  /** The level of each world relic it has hosted, as its client last sent
+   *  it (`hostRelic`). */
+  relics?: Partial<Record<ArtifactId, number>>;
 }
 
 /** A seat's multipliers on its improvements' output and stores. */
@@ -229,6 +237,10 @@ export interface HexView {
   standsAt: number;
   district: WorldDistrict;
   fortress: number;
+  /** A Chapel stands in it — built, or a Shrine district's own. */
+  chapel: boolean;
+  /** The world relic in its Chapel, and its level: every player sees it. */
+  relic: { id: ArtifactId; level: number } | null;
   work: { upgrade: WorldUpgrade; toLevel: number; at: number } | null;
   active: boolean;
   /** Only on the player's own hexes: its store, in its district's currency. */
@@ -332,6 +344,8 @@ export type Refusal =
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
   | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer'
+  /** A world relic's host (relic-restoration.md §5.2). */
+  | 'NoChapel' | 'TooManyChapels' | 'NotAWorldRelic'
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */

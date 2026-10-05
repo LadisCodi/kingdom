@@ -21,6 +21,13 @@ import { addBuilt, FOREST, freshGame, map } from './helpers';
 const AT = { x: 1, y: 3 };
 const FAR = { x: 15, y: 15 };
 
+/** Every world relic in a Chapel, as the world server would say. */
+const WORLD = ARTIFACT_ORDER.filter((id) => relicKind(id) === 'world');
+const chapels = (state: GameState): GameState => {
+  state.world.chapels = [...WORLD];
+  return state;
+};
+
 /** A Shrine at level 5 (radius 4) beside `AT`, holding `relic`. */
 function host(state: GameState, relic: ArtifactId): void {
   state.city.districts.push({
@@ -31,7 +38,7 @@ function host(state: GameState, relic: ArtifactId): void {
 
 describe('a relic is a permanent passive with no ceiling', () => {
   let state: GameState;
-  beforeEach(() => { state = freshGame(); });
+  beforeEach(() => { state = chapels(freshGame()); });
 
   it('starts with none, and every level is one album closing', () => {
     expect(ownedArtifacts(state)).toEqual([]);
@@ -42,13 +49,18 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(artifactLevel(state, 'GildedLedger')).toBe(2);
   });
 
-  // A WORLD RELIC'S PASSIVE IS KINGDOM-WIDE until its Chapel exists; a city
-  // relic's waits for a Shrine and acts over its aura (sim/hosts.ts).
-  it('puts every world relic in the modifier stack, and no city relic', () => {
+  // A WORLD RELIC'S PASSIVE ACTS WHILE A CHAPEL HOLDS IT; a city relic's
+  // waits for a Shrine and acts over its aura (sim/hosts.ts).
+  it('does nothing for a world relic no Chapel holds', () => {
+    state.world.chapels = [];
+    grantArtifactLevel(state, 'MusterHorn');
+    expect(state.modifiers.filter((m) => m.source === 'artifact')).toHaveLength(0);
+  });
+
+  it('puts every hosted world relic in the modifier stack, and no city relic', () => {
     for (const id of ARTIFACT_ORDER) grantArtifactLevel(state, id);
     const relicMods = state.modifiers.filter((m) => m.source === 'artifact');
-    const world = ARTIFACT_ORDER.filter((id) => relicKind(id) === 'world');
-    const stats = world.reduce((n, id) => n + ARTIFACTS[id].passive.stats.length, 0);
+    const stats = WORLD.reduce((n, id) => n + ARTIFACTS[id].passive.stats.length, 0);
     expect(relicMods).toHaveLength(stats);
     expect(relicMods.every((m) => m.expiresAt === null)).toBe(true);
   });
@@ -153,7 +165,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
 describe('the three relics outside the city', () => {
   const NEW = ['DelversLantern', 'MusterHorn', 'BailiffsTally'] as const;
   let state: GameState;
-  beforeEach(() => { state = freshGame(); });
+  beforeEach(() => { state = chapels(freshGame()); });
 
   it('brings the roster to eight, each moving its own number', () => {
     expect(ARTIFACT_ORDER).toHaveLength(8);

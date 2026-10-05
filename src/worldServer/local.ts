@@ -10,6 +10,7 @@
 // through `handleWorld` (handle.ts) — the one function the real server runs.
 
 import type { WorldUpgrade } from '../sim/world/types';
+import type { ArtifactId } from '../sim/state';
 import { emptyWorld, freshPortal, newBoardSeed } from './core';
 import {
   handleWorld, seatOf, type JoinResult, type SendArmyRequest, type WorldCommand, type WorldCommandKind, type WorldReply,
@@ -49,6 +50,10 @@ export interface WorldServerApi {
   /** Take `seconds` off a builder's work on a hex — a speed-up, paid for by
    *  the client from its Bag. */
   hurry(index: number, seconds: number): Promise<CommandResult>;
+  /** Host a world relic in the Chapel on a hex, at its level — sent again
+   *  when it levels up. */
+  hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult>;
+  unhostRelic(relic: ArtifactId): Promise<CommandResult>;
   collect(index: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult>;
   recall(armyId: string, asSeat?: number): Promise<CommandResult>;
@@ -205,6 +210,14 @@ export class LocalWorldServer implements WorldServerApi {
 
   async hurry(index: number, seconds: number): Promise<CommandResult> {
     return this.ask({ kind: 'hurry', index, seconds });
+  }
+
+  async hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> {
+    return this.ask({ kind: 'hostRelic', index, relic, level });
+  }
+
+  async unhostRelic(relic: ArtifactId): Promise<CommandResult> {
+    return this.ask({ kind: 'unhostRelic', relic });
   }
 
   async collect(index: number, asSeat?: number): Promise<CollectResult> {

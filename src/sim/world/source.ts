@@ -10,7 +10,7 @@
 import { WORLD, WORLD_GEN } from '../data/definitions';
 import { generateBoard, SEAT_INDICES, withDungeons, type Board } from './board';
 import type { WorldDistrict, WorldUpgrade } from './types';
-import type { PreciousId } from '../state';
+import type { ArtifactId, PreciousId } from '../state';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
@@ -48,6 +48,10 @@ export interface HexControl {
   threat?: { camps: number[]; nextRaidAt: number } | null;
   /** The army standing in its Fortress, if any. */
   garrison?: { army: string; owner: number; power: number } | null;
+  /** A Chapel stands in it, and the world relic it holds, which every
+   *  player sees (relic-restoration.md §5.2). */
+  chapel?: boolean;
+  relic?: { id: ArtifactId; level: number } | null;
 }
 
 export interface WorldSource {

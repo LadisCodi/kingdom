@@ -88,11 +88,16 @@ export function relicTab(game: Game): HTMLElement[] {
 function hostLines(game: Game, view: RelicView): HTMLElement[] {
   const host = view.host;
   if (host === null) return [];
+  const world = view.kind === 'world';
   return [el('div', { class: 'rl-host' },
     el('div', { class: `rl-line${host.at === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
-      el('span', {}, host.at === null ? 'Not hosted — it acts only inside a Shrine\u2019s aura' : `Hosted in ${host.at}`)),
+      el('span', {}, host.at !== null ? `Hosted in ${host.at}`
+        : world ? 'Not hosted — it acts only from a Chapel on the world map'
+          : 'Not hosted — it acts only inside a Shrine\u2019s aura')),
     host.shrines.length === 0 && host.at === null
-      ? el('div', { class: 'rl-line is-muted' }, el('span', {}, 'Repair the Shrine in the ruins to host it'))
+      ? el('div', { class: 'rl-line is-muted' }, el('span', {}, world
+        ? 'Build a Chapel into a district you hold to host it'
+        : 'Repair the Shrine in the ruins to host it'))
       : el('div', { class: 'rl-forge' },
         ...host.shrines.map((o) => btn({
           label: 'Host',

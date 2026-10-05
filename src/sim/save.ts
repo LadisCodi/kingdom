@@ -12,6 +12,7 @@
 
 import {
   ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ARTIFACTS, relicKind,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -1192,6 +1193,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Index: b.index, What: b.what, Level: b.level, FinishesAtUtc: iso(b.finishesAt),
         })),
         Sanctuaries: state.world.sanctuaries,
+        Chapels: [...state.world.chapels],
         // What the city lent each army out: the army itself is server state.
         Armies: state.world.armies.map((a) => ({
           ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
@@ -1815,6 +1817,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Explorers?: Array<Record<string, unknown>>;
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
+    Chapels?: unknown;
     Armies?: Array<Record<string, unknown>>;
     EffectSeq?: unknown;
   };
@@ -1859,6 +1862,9 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         finishesAt: ms(b.FinishesAtUtc as string),
       })),
     sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
+    chapels: Array.isArray(d.Chapels)
+      ? (d.Chapels as unknown[]).filter((id): id is ArtifactId => typeof id === 'string' && id in ARTIFACTS && relicKind(id as ArtifactId) === 'world')
+      : [],
     armies: (Array.isArray(d.Armies) ? d.Armies : [])
       .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
         && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve', 'portal', 'clear'].includes(a.Purpose as string))

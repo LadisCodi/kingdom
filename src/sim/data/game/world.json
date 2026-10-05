@@ -113,10 +113,12 @@
           { "gold": 6000, "buildSeconds": 21600, "anyPrecious": 10 },
           { "gold": 14000, "buildSeconds": 43200, "goods": { "Starmetal": 10, "Heartwood": 10, "Moonglass": 10 } }
         ]
-      }
+      },
+      "Chapel": { "name": "Chapel", "levels": [{ "gold": 5000, "buildSeconds": 14400 }] }
     },
     "innerRingMultiplier": 3,
-    "sanctuaryManaCap": 10
+    "sanctuaryManaCap": 10,
+    "chapelsPerHexes": 6
   },
   "worldBots": {
     "actEveryHours": 6,

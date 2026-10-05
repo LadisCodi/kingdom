@@ -41,7 +41,7 @@ import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGri
 import type { HexCamera } from './hexCamera';
 import { featureNudge, hash01, hexDecorations } from './hexScatter';
 import { DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
-import { LAIRS, WORLD_DUNGEON } from '../../sim/data/definitions';
+import { ARTIFACTS, LAIRS, WORLD_DUNGEON } from '../../sim/data/definitions';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -76,6 +76,10 @@ const DISTRICT_STAND_IN: Record<WorldDistrict, string> = {
 const FOOT = 0.62;
 /** The Fortress's keep at the rear corner, as a share of the hex's width. */
 const FORTRESS_WIDTH = 0.3;
+/** The Chapel, at the rear corner the Fortress leaves free. */
+const CHAPEL_SPRITE = 'whex_chapel';
+/** Narrower than the keep: it stands taller. */
+const CHAPEL_WIDTH = 0.2;
 /** Below this many pixels a hex, the strategic zoom (world-hex-art.md §4). */
 const STRATEGIC_PX = 70;
 const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
@@ -945,8 +949,22 @@ function drawHeld(
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
   // The Fortress built into the district, faint while its first level goes up.
-  if (held.fortress > 0 || held.work?.toLevel === 1) {
+  if (held.fortress > 0 || (held.work?.upgrade === 'Fortress' && held.work.toLevel === 1)) {
     drawFortress(ctx, held.fortress, held.fortress === 0, c, hw, r);
+  }
+  // The Chapel at the other rear corner, faint while it goes up; the relic
+  // it holds hovers over it (relic-restoration.md §5.2). A Shrine district's
+  // own Chapel is the Shrine itself.
+  const chapelBuilding = held.work?.upgrade === 'Chapel';
+  if ((held.chapel === true && held.district !== 'Shrine') || chapelBuilding) {
+    ctx.save();
+    if (chapelBuilding) ctx.globalAlpha = 0.45;
+    drawProp(ctx, CHAPEL_SPRITE, c.x - hw * 0.26, c.y - r * 0.1 * TILT, hw * CHAPEL_WIDTH);
+    ctx.restore();
+  }
+  if (held.relic != null) {
+    const x = held.district === 'Shrine' ? c.x : c.x - hw * 0.26;
+    drawProp(ctx, ARTIFACTS[held.relic.id].sprite, x, c.y - r * 0.62 * TILT, hw * 0.12);
   }
   // Cut off from its city: greyed, buildings intact (art-direction §8).
   if (held.held && !held.active) veilHex(ground, ctx, c, r, [CUT_OFF]);

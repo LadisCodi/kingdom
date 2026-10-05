@@ -131,6 +131,8 @@ export function castBlock(
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const active = ARTIFACTS[id].active;
   if (active === null) return 'NoActive';
+  // A world relic's spell waits for a Chapel to hold it.
+  if (relicKind(id) === 'world' && !state.world.chapels.includes(id)) return 'NotHosted';
   // The cycle before the purse: a relic that is still running tells the player
   // to wait, not that they are poor.
   const phase = castState(state, id, now).phase;
