@@ -5,7 +5,9 @@
     "coin": "Gold",
     "seconds": 600,
     "tier": 1,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "GoldChest1h": {
     "name": "Gold chest",
@@ -13,7 +15,9 @@
     "coin": "Gold",
     "seconds": 3600,
     "tier": 2,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "GoldChest8h": {
     "name": "Gold chest",
@@ -21,7 +25,9 @@
     "coin": "Gold",
     "seconds": 28800,
     "tier": 4,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "FoodChest10m": {
     "name": "Food chest",
@@ -29,7 +35,9 @@
     "coin": "Food",
     "seconds": 600,
     "tier": 1,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "FoodChest1h": {
     "name": "Food chest",
@@ -37,7 +45,9 @@
     "coin": "Food",
     "seconds": 3600,
     "tier": 2,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "FoodChest8h": {
     "name": "Food chest",
@@ -45,7 +55,9 @@
     "coin": "Food",
     "seconds": 28800,
     "tier": 4,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "WoodChest10m": {
     "name": "Wood chest",
@@ -53,7 +65,9 @@
     "coin": "Wood",
     "seconds": 600,
     "tier": 1,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "WoodChest1h": {
     "name": "Wood chest",
@@ -61,7 +75,9 @@
     "coin": "Wood",
     "seconds": 3600,
     "tier": 2,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "WoodChest8h": {
     "name": "Wood chest",
@@ -69,7 +85,9 @@
     "coin": "Wood",
     "seconds": 28800,
     "tier": 4,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "StoneChest10m": {
     "name": "Stone chest",
@@ -77,7 +95,9 @@
     "coin": "Stone",
     "seconds": 600,
     "tier": 1,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "StoneChest1h": {
     "name": "Stone chest",
@@ -85,7 +105,9 @@
     "coin": "Stone",
     "seconds": 3600,
     "tier": 2,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "StoneChest8h": {
     "name": "Stone chest",
@@ -93,7 +115,29 @@
     "coin": "Stone",
     "seconds": 28800,
     "tier": 4,
-    "speeds": null
+    "speeds": null,
+    "boost": null,
+    "value": 0
+  },
+  "ChoiceChest1h": {
+    "name": "Choice chest",
+    "kind": "choice",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": null,
+    "boost": null,
+    "value": 0
+  },
+  "ChoiceChest8h": {
+    "name": "Choice chest",
+    "kind": "choice",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 5,
+    "speeds": null,
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup1m": {
     "name": "Speed-up",
@@ -101,7 +145,9 @@
     "coin": null,
     "seconds": 60,
     "tier": 1,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup5m": {
     "name": "Speed-up",
@@ -109,7 +155,9 @@
     "coin": null,
     "seconds": 300,
     "tier": 1,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup15m": {
     "name": "Speed-up",
@@ -117,7 +165,9 @@
     "coin": null,
     "seconds": 900,
     "tier": 2,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup1h": {
     "name": "Speed-up",
@@ -125,7 +175,9 @@
     "coin": null,
     "seconds": 3600,
     "tier": 3,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup3h": {
     "name": "Speed-up",
@@ -133,7 +185,9 @@
     "coin": null,
     "seconds": 10800,
     "tier": 4,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup8h": {
     "name": "Speed-up",
@@ -141,7 +195,9 @@
     "coin": null,
     "seconds": 28800,
     "tier": 4,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "GeneralSpeedup24h": {
     "name": "Speed-up",
@@ -149,7 +205,9 @@
     "coin": null,
     "seconds": 86400,
     "tier": 5,
-    "speeds": "General"
+    "speeds": "General",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup1m": {
     "name": "Construction speed-up",
@@ -157,7 +215,9 @@
     "coin": null,
     "seconds": 60,
     "tier": 1,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup5m": {
     "name": "Construction speed-up",
@@ -165,7 +225,9 @@
     "coin": null,
     "seconds": 300,
     "tier": 1,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup15m": {
     "name": "Construction speed-up",
@@ -173,7 +235,9 @@
     "coin": null,
     "seconds": 900,
     "tier": 2,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup1h": {
     "name": "Construction speed-up",
@@ -181,7 +245,9 @@
     "coin": null,
     "seconds": 3600,
     "tier": 3,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup3h": {
     "name": "Construction speed-up",
@@ -189,7 +255,9 @@
     "coin": null,
     "seconds": 10800,
     "tier": 4,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup8h": {
     "name": "Construction speed-up",
@@ -197,7 +265,9 @@
     "coin": null,
     "seconds": 28800,
     "tier": 4,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "ConstructionSpeedup24h": {
     "name": "Construction speed-up",
@@ -205,7 +275,9 @@
     "coin": null,
     "seconds": 86400,
     "tier": 5,
-    "speeds": "Construction"
+    "speeds": "Construction",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup1m": {
     "name": "Training speed-up",
@@ -213,7 +285,9 @@
     "coin": null,
     "seconds": 60,
     "tier": 1,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup5m": {
     "name": "Training speed-up",
@@ -221,7 +295,9 @@
     "coin": null,
     "seconds": 300,
     "tier": 1,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup15m": {
     "name": "Training speed-up",
@@ -229,7 +305,9 @@
     "coin": null,
     "seconds": 900,
     "tier": 2,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup1h": {
     "name": "Training speed-up",
@@ -237,7 +315,9 @@
     "coin": null,
     "seconds": 3600,
     "tier": 3,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup3h": {
     "name": "Training speed-up",
@@ -245,7 +325,9 @@
     "coin": null,
     "seconds": 10800,
     "tier": 4,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup8h": {
     "name": "Training speed-up",
@@ -253,7 +335,9 @@
     "coin": null,
     "seconds": 28800,
     "tier": 4,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "TrainingSpeedup24h": {
     "name": "Training speed-up",
@@ -261,7 +345,9 @@
     "coin": null,
     "seconds": 86400,
     "tier": 5,
-    "speeds": "Training"
+    "speeds": "Training",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup1m": {
     "name": "Workshop speed-up",
@@ -269,7 +355,9 @@
     "coin": null,
     "seconds": 60,
     "tier": 1,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup5m": {
     "name": "Workshop speed-up",
@@ -277,7 +365,9 @@
     "coin": null,
     "seconds": 300,
     "tier": 1,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup15m": {
     "name": "Workshop speed-up",
@@ -285,7 +375,9 @@
     "coin": null,
     "seconds": 900,
     "tier": 2,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup1h": {
     "name": "Workshop speed-up",
@@ -293,7 +385,9 @@
     "coin": null,
     "seconds": 3600,
     "tier": 3,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup3h": {
     "name": "Workshop speed-up",
@@ -301,7 +395,9 @@
     "coin": null,
     "seconds": 10800,
     "tier": 4,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup8h": {
     "name": "Workshop speed-up",
@@ -309,7 +405,9 @@
     "coin": null,
     "seconds": 28800,
     "tier": 4,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
   },
   "WorkshopSpeedup24h": {
     "name": "Workshop speed-up",
@@ -317,6 +415,78 @@
     "coin": null,
     "seconds": 86400,
     "tier": 5,
-    "speeds": "Workshop"
+    "speeds": "Workshop",
+    "boost": null,
+    "value": 0
+  },
+  "RentBoost8h": {
+    "name": "Rent boost",
+    "kind": "boost",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 3,
+    "speeds": null,
+    "boost": "Rent",
+    "value": 25
+  },
+  "HarvestBoost1h": {
+    "name": "Harvest boost",
+    "kind": "boost",
+    "coin": null,
+    "seconds": 3600,
+    "tier": 3,
+    "speeds": null,
+    "boost": "Harvest",
+    "value": 50
+  },
+  "ManaBoost8h": {
+    "name": "Mana boost",
+    "kind": "boost",
+    "coin": null,
+    "seconds": 28800,
+    "tier": 4,
+    "speeds": null,
+    "boost": "Mana",
+    "value": 50
+  },
+  "ManaFlaskSmall": {
+    "name": "Mana flask",
+    "kind": "flask",
+    "coin": null,
+    "seconds": 0,
+    "tier": 2,
+    "speeds": null,
+    "boost": null,
+    "value": 25
+  },
+  "ManaFlask": {
+    "name": "Mana flask",
+    "kind": "flask",
+    "coin": null,
+    "seconds": 0,
+    "tier": 4,
+    "speeds": null,
+    "boost": null,
+    "value": 100
+  },
+  "KnowledgeTomeSmall": {
+    "name": "Knowledge tome",
+    "kind": "tome",
+    "coin": null,
+    "seconds": 0,
+    "tier": 2,
+    "speeds": null,
+    "boost": null,
+    "value": 2
+  },
+  "KnowledgeTome": {
+    "name": "Knowledge tome",
+    "kind": "tome",
+    "coin": null,
+    "seconds": 0,
+    "tier": 4,
+    "speeds": null,
+    "boost": null,
+    "value": 5
   }
 }

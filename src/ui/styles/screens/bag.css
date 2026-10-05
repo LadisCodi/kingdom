@@ -225,3 +225,45 @@
 .spd-row-name { flex: 1 1 auto; min-width: 0; font-weight: var(--weight-strong); color: var(--ink); }
 .spd-none { margin: 0; text-align: center; color: var(--ink-muted); font-weight: var(--weight-body); }
 .spd-finish { display: flex; justify-content: center; padding-top: calc(var(--px) * 8); border-top: calc(var(--px) * 2) solid var(--section-line); }
+
+/* THE CHOICE CHEST (§3.8): four coins, the picked one gold-rimmed. */
+.bag-choice { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--px) * 6); }
+.bag-choice-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 6) 0;
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: var(--radius-sm);
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.3);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  cursor: pointer;
+}
+.bag-choice-plate > .icon { --icon-size: calc(var(--px) * 30); }
+.bag-choice-plate.is-picked { border-color: var(--gold); outline: calc(var(--px) * 2) solid var(--gold); }
+
+/* A RUNNING BOOST (§3.10): a cloth ribbon over the grid, its time left. */
+.bag-ribbon {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 12);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(rgba(63, 138, 46, 0.85), rgba(46, 104, 34, 0.9)),
+    url('../../assets/tex-cloth.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128);
+  box-shadow: inset 0 calc(var(--px) * 1) 0 rgba(255, 255, 255, 0.25), 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.4);
+  color: var(--ink-inverse);
+  font-weight: var(--weight-title);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(20, 40, 10, 0.8);
+}
+.bag-ribbon .icon { --icon-size: calc(var(--px) * 22); }
+.bag-ribbon-left { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* SHORT OF SOMETHING (§3.9). */
+.sf-line { margin: 0 0 calc(var(--px) * 6); text-align: center; color: var(--ink); font-weight: var(--weight-strong); }

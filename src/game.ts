@@ -3,7 +3,8 @@
 
 import { recordEvent } from './sim/events';
 import {
-  BAG_TABS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, useItem, type BagTab,
+  BAG_TABS, CHEST_COINS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, runningBoosts, useItem,
+  type BagTab,
 } from './sim/bag';
 import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
@@ -20,7 +21,7 @@ import {
   GOODS, ITEMS, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
+  type BoostKind, type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -42,7 +43,7 @@ import { harmonyBlock } from './sim/harmony';
 import {
   committedTroops, finishLineWithGems, healCost, healSecondsAt, healWounded, infirmaries, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
-  itemTrainSeconds, lineRushCost, trainingCompletesAt, trainingProgress,
+  itemTrainSeconds, lineRushCost, trainCost, trainingCompletesAt, trainingProgress,
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
@@ -202,6 +203,8 @@ export type OverlayName =
   | 'bag'
   // The Speed-up picker, opened by a timer's Speed up (ui-inventory.md §3.7).
   | 'speedup'
+  // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
+  | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -2590,7 +2593,9 @@ export class Game {
       // Confirmed from a free builder's row: the sheet was only in the way.
       if (this.openOverlay === 'builder') this.openOverlay = null;
     } else if (result === 'NotEnoughResources') {
-      this.shake(Object.keys(cost) as CurrencyId[]);
+      if (!this.offerShortfall(`Build the ${DISTRICTS[definitionId].name}`, cost, () => this.confirmBuild())) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
     } else if (result === 'NoBuilderFree') {
       this.builderAsk = { kind: 'build' };
       this.offerBuilder();
@@ -2655,15 +2660,114 @@ export class Game {
     this.notify();
   }
 
+  /** The coin a choice chest's popover has picked. */
+  bagChoice: CurrencyId = 'Gold';
+
+  /** What one choice chest gives of each coin, now. */
+  choiceWorth(id: ItemId): Wallet {
+    const out: Wallet = {};
+    for (const c of CHEST_COINS) Object.assign(out, chestValue(this.state, id, c));
+    return out;
+  }
+
+  pickBagChoice(coin: CurrencyId): void {
+    this.bagChoice = coin;
+    this.notify();
+  }
+
+  /** The boosts running, for the Boosts tab's ribbons. */
+  bagBoosts(): Array<{ kind: BoostKind; value: number; endsAt: number }> {
+    return runningBoosts(this.state);
+  }
+
   doUseItem(id: ItemId, n: number): void {
-    const worth = chestValue(this.state, id);
-    if (useItem(this.state, id, n) !== 'Used') return;
+    const choice = ITEMS[id].kind === 'choice' ? this.bagChoice : undefined;
+    const worth = chestValue(this.state, id, choice);
+    const manaBefore = getWallet(this.state.city.wallet, 'Mana');
+    const knowledgeBefore = getWallet(this.state.kingdom.wallet, 'Knowledge');
+    if (useItem(this.state, id, n, this.now(), choice) !== 'Used') return;
     const haul: Wallet = {};
     for (const [c, v] of Object.entries(worth) as Array<[CurrencyId, number]>) haul[c] = v * n;
-    this.reward(haul);
+    const mana = getWallet(this.state.city.wallet, 'Mana') - manaBefore;
+    const knowledge = getWallet(this.state.kingdom.wallet, 'Knowledge') - knowledgeBefore;
+    if (mana > 0) haul.Mana = mana;
+    if (knowledge > 0) haul.Knowledge = knowledge;
+    if (Object.keys(haul).length > 0) this.reward(haul);
+    else playSfx('click');
     if (itemCount(this.state, id) === 0) this.bagPicked = null;
     this.bagQty = 1;
+    this.afterShortfallUse();
     this.notify();
+  }
+
+  // ------------------------------------------------- short of something
+
+  /**
+   * A REFUSAL FOR A COIN THE BAG CAN COVER (Docs/art/ui-inventory.md §3.9):
+   * what the action needs, and the action itself, retried the moment the
+   * chests used in the sheet meet it. Raised only when the Bag holds a chest
+   * of a coin that is short; otherwise the purse shakes as it always has.
+   */
+  shortfallAsk: { title: string; cost: Wallet; retry: () => void } | null = null;
+  private shortfallReturn: OverlayName | null = null;
+
+  /** The chests that pay this coin: its own chests, then the choice chests. */
+  chestsFor(coin: CurrencyId): ItemId[] {
+    return heldItems(this.state).filter((id) => {
+      const def = ITEMS[id];
+      return (def.kind === 'chest' && def.coin === coin) || def.kind === 'choice';
+    }).sort((a, b) => (ITEMS[a].kind === 'choice' ? 1 : 0) - (ITEMS[b].kind === 'choice' ? 1 : 0)
+      || ITEMS[a].seconds - ITEMS[b].seconds);
+  }
+
+  /** Raise the shortfall sheet for `cost`, if the Bag can help with it. */
+  private offerShortfall(title: string, cost: Wallet, retry: () => void): boolean {
+    const short = Object.keys(this.shortfall(cost)) as CurrencyId[];
+    if (!short.some((c) => this.chestsFor(c).length > 0)) return false;
+    if (this.openOverlay !== 'shortfall') this.shortfallReturn = this.openOverlay === 'upgrade' ? null : this.openOverlay;
+    this.setOverlay('shortfall');
+    this.shortfallAsk = { title, cost, retry };
+    return true;
+  }
+
+  /** The sheet as it draws: the first coin still short, what is needed and
+   *  held of it, and the chests that pay it. */
+  shortfallScreen(): { title: string; coin: CurrencyId; need: number; have: number; chests: Array<{ id: ItemId; def: ItemDef; count: number; worth: Wallet }> } | null {
+    const ask = this.shortfallAsk;
+    if (ask === null) return null;
+    const short = Object.keys(this.shortfall(ask.cost)) as CurrencyId[];
+    const coin = short.find((c) => this.chestsFor(c).length > 0) ?? short[0];
+    if (coin === undefined) return null;
+    return {
+      title: ask.title, coin, need: ask.cost[coin] ?? 0, have: this.walletValue(coin),
+      chests: this.chestsFor(coin).map((id) => ({
+        id, def: ITEMS[id], count: itemCount(this.state, id), worth: chestValue(this.state, id, coin),
+      })),
+    };
+  }
+
+  /** A chest used from the shortfall sheet: one of its coin. */
+  doShortfallChest(id: ItemId): void {
+    const view = this.shortfallScreen();
+    if (view === null) return;
+    if (ITEMS[id].kind === 'choice') this.bagChoice = view.coin;
+    this.doUseItem(id, 1);
+  }
+
+  /** After a Use: a shortfall met closes the sheet and does what was asked. */
+  private afterShortfallUse(): void {
+    const ask = this.shortfallAsk;
+    if (ask === null || this.openOverlay !== 'shortfall') return;
+    if (Object.keys(this.shortfall(ask.cost)).length > 0) return;
+    this.closeShortfall();
+    ask.retry();
+  }
+
+  closeShortfall(): void {
+    const back = this.shortfallReturn;
+    this.shortfallAsk = null;
+    this.shortfallReturn = null;
+    this.setOverlay(back);
   }
 
   // ---------------------------------------------------- the Speed-up picker
@@ -3100,7 +3204,8 @@ export class Game {
 
   closeUpgrade(): void {
     this.upgradeDistrictId = null;
-    this.setOverlay(null);
+    // A refusal the Bag can cover has replaced the popup with its own sheet.
+    if (this.openOverlay === 'upgrade') this.setOverlay(null);
   }
 
   /** The building the popup is about, or null if it went away under it. */
@@ -3177,7 +3282,10 @@ export class Game {
 
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
-    if (result === 'NotEnoughResources') this.shake(['Food']);
+    if (result === 'NotEnoughResources') {
+      const cost = trainCost(this.state, 'Villager') as Wallet;
+      if (!this.offerShortfall('Train a villager', cost, () => this.doQueueTraining())) this.shake(['Food']);
+    }
     else if (result === 'AtMax') this.toast(this.atMaxWords());
     this.notify();
   }
@@ -3194,7 +3302,11 @@ export class Game {
     const result = upgradeDistrict(this.state, districtId);
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
-      this.shake(Object.keys(upgradeCost(d.definitionId, d.ordinal, d.level)) as CurrencyId[]);
+      const cost = upgradeCost(d.definitionId, d.ordinal, d.level);
+      if (!this.offerShortfall(`${DISTRICTS[d.definitionId].name} to level ${formatExact(d.level + 1)}`, cost,
+        () => { this.doUpgrade(districtId); })) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
     } else if (result === 'NoBuilderFree') {
       // An upgrade occupies a builder exactly as a build does, so it hits the
       // same wall and deserves the same offer rather than a bare refusal.
@@ -4411,7 +4523,13 @@ export class Game {
   doTrain(unitId: TrainableId, at?: District): void {
     const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
-    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
+    if (result === 'NotEnoughResources') {
+      const cost = trainCost(this.state, unitId) as Wallet;
+      const name = unitId === 'Villager' ? 'a villager' : `a ${UNITS[unitId].name}`;
+      if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
+    }
     if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
@@ -4472,12 +4590,14 @@ export class Game {
       return;
     }
     this.openOverlay = name;
-    // The picker is a sheet over the card it was opened from: the card stays.
-    if (name !== null && name !== 'speedup') {
+    // The picker and the shortfall are sheets over the card they were opened
+    // from: the card stays.
+    if (name !== null && name !== 'speedup' && name !== 'shortfall') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
     if (name !== 'speedup') this.speedJob = null;
+    if (name !== 'shortfall') this.shortfallAsk = null;
     // Building happens on the province: the Build menu takes the player home.
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
     if (name !== 'world' && name !== 'army') this.selectedHex = null;

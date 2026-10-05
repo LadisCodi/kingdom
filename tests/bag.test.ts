@@ -51,8 +51,8 @@ describe('the Bag', () => {
       grantItem(s, 'GoldChest1h', 4);
     }
     const before = gold(once);
-    for (let i = 0; i < 4; i++) expect(useItem(once, 'GoldChest1h', 1)).toBe('Used');
-    expect(useItem(many, 'GoldChest1h', 4)).toBe('Used');
+    for (let i = 0; i < 4; i++) expect(useItem(once, 'GoldChest1h', 1, T0)).toBe('Used');
+    expect(useItem(many, 'GoldChest1h', 4, T0)).toBe('Used');
     expect(gold(many)).toBe(gold(once));
     expect(gold(once) - before).toBe(4 * chestValue(once, 'GoldChest1h').Gold!);
     expect(itemCount(many, 'GoldChest1h')).toBe(0);
@@ -62,16 +62,16 @@ describe('the Bag', () => {
   it('refuses what it does not hold', () => {
     const state = freshGame();
     grantItem(state, 'FoodChest10m', 1);
-    expect(useItem(state, 'FoodChest10m', 2)).toBe('NotHeld');
-    expect(useItem(state, 'FoodChest10m', 0)).toBe('NotHeld');
-    expect(useItem(state, 'WoodChest8h', 1)).toBe('NotHeld');
+    expect(useItem(state, 'FoodChest10m', 2, T0)).toBe('NotHeld');
+    expect(useItem(state, 'FoodChest10m', 0, T0)).toBe('NotHeld');
+    expect(useItem(state, 'WoodChest8h', 1, T0)).toBe('NotHeld');
     expect(itemCount(state, 'FoodChest10m')).toBe(1);
   });
 
   it('records each use for the analytics outbox', () => {
     const state = freshGame();
     grantItem(state, 'FoodChest10m', 2);
-    useItem(state, 'FoodChest10m', 2);
+    useItem(state, 'FoodChest10m', 2, T0);
     expect(state.pendingAnalytics.at(-1)).toMatchObject({ name: 'item_used', props: { item: 'FoodChest10m', count: 2 } });
   });
 

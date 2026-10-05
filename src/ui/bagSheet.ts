@@ -12,8 +12,8 @@
 // notify and only the Use button commits it.
 
 import type { BagScreen, Game } from '../game';
-import { BAG_TABS, type BagTab } from '../sim/bag';
-import { ITEMS, type ItemDef } from '../sim/data/definitions';
+import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
+import { ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, iconEl, knob, sheet, type IconName } from './kit';
@@ -28,8 +28,12 @@ const EMPTY_LINE: Record<BagTab, string> = {
   Other: 'Keys and flasks turn up as rewards',
 };
 
-/** The size printed at the top of a tile: "10m", "1h", "8h". */
-const sizeLabel = (def: ItemDef): string => formatDuration(def.seconds);
+/** The size printed at the top of a tile: "10m", "1h", "8h" — or, for what
+ *  has no duration, its value: "25%", "5". */
+const sizeLabel = (def: ItemDef): string =>
+  def.kind === 'flask' ? `${formatExact(def.value)}%`
+    : def.kind === 'tome' ? formatExact(def.value)
+      : formatDuration(def.seconds);
 
 /** The one coin a chest pays, and how much of it. */
 const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
@@ -48,14 +52,31 @@ const CHEST_ICON: Partial<Record<CurrencyId, IconName>> = {
   Gold: 'chestGold', Food: 'chestFood', Wood: 'chestWood', Stone: 'chestStone',
 };
 
-/** A tile's picture: the chest of its coin, the winged hourglass for a
- *  speed-up, with the speed-up's type badge at its lower left. */
+/** A boost's picture, by what it raises. */
+const BOOST_ICON: Record<BoostKind, IconName> = { Rent: 'boostRent', Harvest: 'boostHarvest', Mana: 'boostMana' };
+
+/** An item's picture: the chest of its coin, the winged hourglass, the boost
+ *  of its kind, the flask, the tome. */
+const itemIcon = (def: ItemDef): IconName => {
+  switch (def.kind) {
+    case 'chest': return (def.coin !== null ? CHEST_ICON[def.coin] : undefined) ?? 'chest';
+    case 'choice': return 'choiceChest';
+    case 'speedup': return 'speedup';
+    case 'boost': return def.boost !== null ? BOOST_ICON[def.boost] : 'speedup';
+    case 'flask': return 'manaFlask';
+    case 'tome': return 'knowledgeTome';
+  }
+};
+
+/** A tile's picture, with a speed-up's type badge at its lower left. */
 export function tileArt(def: ItemDef): Node[] {
-  const art = iconEl(def.kind === 'speedup' ? 'speedup'
-    : (def.coin !== null ? CHEST_ICON[def.coin] : undefined) ?? 'chest', { size: 'lg' });
+  const art = iconEl(itemIcon(def), { size: 'lg' });
   const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
   return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
 }
+
+/** What a boost's popover says it raises. */
+const BOOST_WHAT: Record<BoostKind, string> = { Rent: 'Houses pay', Harvest: 'A tap takes', Mana: 'Mana fills' };
 
 /** What a speed-up's popover says it shortens. */
 const SPEEDS_WHAT: Record<NonNullable<ItemDef['speeds']>, string> = {
@@ -77,6 +98,12 @@ const itemLine = (def: ItemDef, worth: Wallet): string => {
   if (def.kind === 'speedup' && def.speeds !== null) {
     return `Takes ${formatDuration(def.seconds)} off ${SPEEDS_WHAT[def.speeds]}`;
   }
+  if (def.kind === 'choice') return `${formatDuration(def.seconds)} of the coin you pick`;
+  if (def.kind === 'boost' && def.boost !== null) {
+    return `${BOOST_WHAT[def.boost]} +${formatExact(def.value)}% for ${formatDuration(def.seconds)}`;
+  }
+  if (def.kind === 'flask') return `Fills ${formatExact(def.value)}% of the Mana pool`;
+  if (def.kind === 'tome') return `${formatExact(def.value)} Knowledge, past the bar's cap`;
   return '';
 };
 
@@ -149,7 +176,9 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
         ? el('div', { class: 'bag-pop-line' }, 'Nothing of this kind is running')
         : el('div', { class: 'bag-use' }, btn({ label: 'Speed up a timer', onClick: () => game.openSpeedup(job) })));
   }
-  const coin = chestCoin(item.worth);
+  const isChoice = item.def.kind === 'choice';
+  const worth = isChoice ? game.choiceWorth(item.id) : item.worth;
+  const coin = isChoice ? [game.bagChoice, worth[game.bagChoice] ?? 0] as [CurrencyId, number] : chestCoin(worth);
   const total = el('div', { class: 'bag-total' });
   const use = el('div', { class: 'bag-use' });
   const draw = (n: number): void => {
@@ -159,20 +188,46 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
         `×${formatExact(n)} → ${formatExact(coin[1] * n)} `, currencyIcon(coin[0], { size: 'sm' }));
     }
     use.replaceChildren(btn({
-      label: n > 1 ? `Use ×${formatExact(n)}` : 'Use',
+      label: `${isChoice ? 'Open' : 'Use'}${n > 1 ? ` ×${formatExact(n)}` : ''}`,
       kind: 'primary',
       onClick: () => game.doUseItem(item.id, n),
     }));
   };
   const n = Math.max(1, Math.min(game.bagQty, item.count));
+  const running = item.def.kind === 'boost' && item.def.boost !== null
+    && game.bagBoosts().some((b) => b.kind === item.def.boost);
   const node = el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
     el('div', { class: 'bag-pop-name' }, itemName(item.def)),
     el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
+    ...(running ? [el('div', { class: 'bag-pop-line' }, 'Extends the running one')] : []),
+    ...(isChoice ? [choicePlates(game, worth)] : []),
     ...(item.count > 1 ? [quantity(game, item, draw), total] : []),
     use,
   );
   draw(n);
   return node;
+}
+
+/** The choice chest's four coins, each with what it would give now; the
+ *  picked one wears the gold rim (§3.8). */
+function choicePlates(game: Game, worth: Wallet): HTMLElement {
+  return el('div', { class: 'bag-choice', role: 'radiogroup' }, ...CHEST_COINS.map((c) => {
+    const b = el('button', {
+      class: `bag-choice-plate${c === game.bagChoice ? ' is-picked' : ''}`, type: 'button', role: 'radio',
+      'aria-checked': c === game.bagChoice ? 'true' : 'false',
+    }, currencyIcon(c, { size: 'lg' }), el('span', { class: 'bag-choice-amount' }, formatExact(worth[c] ?? 0)));
+    b.addEventListener('click', () => game.pickBagChoice(c));
+    return b;
+  }));
+}
+
+/** The boosts running, as ribbons over the Boosts grid (§3.10). */
+function boostRibbons(game: Game): HTMLElement[] {
+  const now = game.now();
+  return game.bagBoosts().map((b) => el('div', { class: 'bag-ribbon' },
+    iconEl(BOOST_ICON[b.kind], { size: 'sm' }),
+    el('span', {}, `${BOOST_WHAT[b.kind]} +${formatExact(b.value)}%`),
+    el('span', { class: 'bag-ribbon-left' }, formatDuration(Math.ceil((b.endsAt - now) / 1000)))));
 }
 
 /** What the Bag reads, so the host rebuilds it only when that moves. The
@@ -181,7 +236,13 @@ export function bagSignature(game: Game): string {
   const view = game.bagScreen();
   // A picked speed-up's popover says whether anything of its kind runs.
   const job = view.picked !== null && ITEMS[view.picked].kind === 'speedup' ? game.firstJobFor(view.picked) : null;
-  return JSON.stringify([view, job]);
+  // A boost's ribbon counts down: by the minute, or the second in its last.
+  const now = game.now();
+  const boosts = view.tab === 'Boosts' ? game.bagBoosts().map((b) => {
+    const s = Math.ceil((b.endsAt - now) / 1000);
+    return [b.kind, b.value, s < 60 ? s : Math.ceil(s / 60)];
+  }) : [];
+  return JSON.stringify([view, job, boosts, game.bagChoice]);
 }
 
 export function renderBagSheet(game: Game): HTMLElement {
@@ -199,5 +260,6 @@ export function renderBagSheet(game: Game): HTMLElement {
       if (i === rowEnd) grid.append(popover(game, view.items[at], (at % COLUMNS) + 1));
     });
   }
-  return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true }, tabRow(game, view), grid);
+  return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+    tabRow(game, view), ...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid);
 }

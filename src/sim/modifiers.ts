@@ -83,7 +83,7 @@ export type ModifierStat =
   | 'roomHaul'        // a room's Gold and Stone — NOT READ
   | 'worldImprovementYield'; // what a world-map district grants an hour — NOT READ YET
 
-export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
+export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug' | 'item';
 
 /** What a modifier narrows to. `null` means every subject of that stat. */
 export type ModifierScope = CurrencyId | HarvestSourceId | DistrictId | null;
