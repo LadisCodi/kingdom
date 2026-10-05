@@ -15,7 +15,7 @@
 | 1 | A store's bubble is a tap target — **done** | bug | high |
 | 2 | The quest scroll stays blank — **done** | bug | high |
 | 3 | The First Morning does not point at Gems — **done** | design | high |
-| 4 | The hand never covers the line | bug | medium |
+| 4 | The hand never covers the line — **done** | bug | medium |
 | 5 | "Show me where" points with the hand | feature | medium |
 | 6 | A refused fog tap points at the frontier | feature | medium |
 | 7 | One count of revealed cells | design | medium |
