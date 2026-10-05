@@ -12,7 +12,7 @@
 
 | # | Fix | Kind | Priority |
 |---|---|---|---|
-| 1 | A store's bubble is a tap target | bug | high |
+| 1 | A store's bubble is a tap target — **done** | bug | high |
 | 2 | The quest scroll stays blank | bug | high |
 | 3 | The First Morning does not point at Gems | design | high |
 | 4 | The hand never covers the line | bug | medium |

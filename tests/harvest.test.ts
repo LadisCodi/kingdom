@@ -18,6 +18,7 @@ import {
 import {
   coordKey, getWallet, parseCoordKey, type Coord, type TerrainId,
 } from '../src/sim/state';
+import { storageCapacity, storedTotal } from '../src/sim/storage';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
   addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
@@ -467,5 +468,53 @@ describe('an iron mountain does not answer a pick until Mining', () => {
     expect(FEATURES.MountainIron.source).toBe('MountainIron');
     expect(FEATURES.MountainGold.source).toBe('MountainGold');
     expect(Object.keys(DISTRICTS)).not.toContain('Mine');
+  });
+});
+
+// A store's bubble floats above the roof, over whatever cell is behind it on
+// screen. A tap on the bubble is a tap on its building: it collects the store,
+// free, and never harvests the cell behind it (Docs/plans/ux-pass.md §2.1).
+describe('a tap on a collect bubble', () => {
+  const mill: Coord = { x: 2, y: 0 };
+  const withFullMill = () => {
+    const state = canGather(freshGame());
+    reveal(state, [mill]);
+    addBuilt(state, 'Sawmill', mill);
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    sawmill.stored = { Wood: storageCapacity(state, sawmill) };
+    const game = freshPresenter(state);
+    // The renderer drew the bubble over the berries this frame.
+    const [sx, sy] = screenAt(game, BERRIES);
+    game.collectBubbles.place(sawmill.uniqueId, { x: sx - 20, y: sy - 20, w: 40, h: 40 }, performance.now());
+    return { state, game, sawmill, sx, sy };
+  };
+
+  it('collects the store, spends no Mana and leaves the berries alone', () => {
+    const { state, game, sawmill, sx, sy } = withFullMill();
+    const wood = getWallet(state.city.wallet, 'Wood');
+    const food = getWallet(state.city.wallet, 'Food');
+    const before = mana(state);
+    game.handleTap(sx, sy);
+    expect(storedTotal(sawmill)).toBe(0);
+    expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(wood);
+    expect(mana(state)).toBe(before);
+    expect(getWallet(state.city.wallet, 'Food')).toBe(food); // the berries were not picked
+  });
+
+  it('holding on it collects too, not the berries', () => {
+    const { state, game, sawmill, sx, sy } = withFullMill();
+    const before = mana(state);
+    expect(game.handleHold(sx, sy)).toBe(true);
+    expect(storedTotal(sawmill)).toBe(0);
+    expect(mana(state)).toBe(before);
+  });
+
+  it('is gone once it is no longer drawn, and the berries answer again', () => {
+    const { state, game, sawmill, sx, sy } = withFullMill();
+    game.collectBubbles.forget(sawmill.uniqueId);
+    const before = mana(state);
+    game.handleTap(sx, sy);
+    expect(storedTotal(sawmill)).toBeGreaterThan(0);
+    expect(mana(state)).toBe(before - TAP.manaCost);
   });
 });

@@ -1144,7 +1144,7 @@ export class Game {
    *  swallows the tap on release, so one press never acts twice. */
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
-    const cell = this.camera.screenToCell(sx, sy);
+    const cell = this.collectBubbleCell(sx, sy) ?? this.camera.screenToCell(sx, sy);
     if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
     if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a building collects its store once; an empty one holds still.
@@ -5380,14 +5380,26 @@ export class Game {
     return homeIndex(this.state);
   }
 
+  /** The cell of the building whose collect bubble covers (sx, sy), if any. */
+  private collectBubbleCell(sx: number, sy: number): Coord | null {
+    const id = this.collectBubbles.at(sx, sy, performance.now());
+    return id === null ? null : districtById(this.state, id)?.location ?? null;
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
-    // So is a tap on the lair's picture above its own ground — its pixels,
-    // not its box, so the cells round its edges still answer as themselves.
-    const bubbled = this.mode.kind === 'normal'
-      ? lairBubbleAt(sx, sy) ?? lairArtAt(sx, sy) : null;
-    const cell = bubbled !== null ? LAIRS[bubbled].location : this.camera.screenToCell(sx, sy);
+    // A store's collect bubble floats over other cells too: a tap on it is a
+    // tap on its building, which collects it. Checked front to back, in the
+    // order they are drawn — the lair's bubble, the collect bubble, then the
+    // lair's picture above its own ground — its pixels, not its box, so the
+    // cells round its edges still answer as themselves.
+    const normal = this.mode.kind === 'normal';
+    const lairBubble = normal ? lairBubbleAt(sx, sy) : null;
+    const storeCell = normal && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
+    const lair = lairBubble ?? (normal && storeCell === null ? lairArtAt(sx, sy) : null);
+    const cell = lair !== null ? LAIRS[lair].location
+      : storeCell ?? this.camera.screenToCell(sx, sy);
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {

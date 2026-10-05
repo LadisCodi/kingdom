@@ -29,6 +29,7 @@ export class CollectBubbles {
 
   /** The bubble on building `id` was drawn here, now. */
   place(id: string, rect: { x: number; y: number; w: number; h: number }, now: number): void {
+    this.placed.delete(id); // re-inserted, so the map's order is draw order
     this.placed.set(id, { ...rect, at: now });
   }
 
@@ -37,6 +38,18 @@ export class CollectBubbles {
   rectOf(id: string, now: number): { x: number; y: number; w: number; h: number } | null {
     const p = this.placed.get(id);
     return p === undefined || now - p.at > 250 ? null : p;
+  }
+
+  /** The building whose bubble covers (sx, sy) — the bubble floats over
+   *  other cells, and a tap on it is a tap on its building. Where two
+   *  overlap, the one drawn last is in front. */
+  at(sx: number, sy: number, now: number): string | null {
+    let hit: string | null = null;
+    for (const [id, r] of this.placed) {
+      if (now - r.at > 250) continue;
+      if (sx >= r.x && sx <= r.x + r.w && sy >= r.y && sy <= r.y + r.h) hit = id;
+    }
+    return hit;
   }
 
   /** A haul landed in the building at `cell`. */

@@ -217,6 +217,8 @@ the defence.
 - It bobs gently, each building on its own phase; pops in when it appears;
   gives a small hop when a haul lands.
 - Its rim turns **red** when the store is full: the building has stopped.
+- **A tap or hold on the bubble is a tap on its building**: it collects the
+  store, whatever cell lies behind it on screen.
 - Mockup: [`../art/mockups/collect-bubbles-mockup.png`](../art/mockups/collect-bubbles-mockup.png).
 
 **An absence is bounded by the stores.** There is no offline cap: the whole
