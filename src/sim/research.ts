@@ -7,11 +7,13 @@
 
 import { watchtowerClaimed } from './landmarks';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
+  DISTRICTS, ERA_REWARDS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
+  type PackTier,
 } from './data/definitions';
+import { canAffordGoods, payGoods } from './goods';
 import {
   addToWallet, getWallet,
-  type DistrictId, type GameState, type TechId, type TomeId, type UnitId,
+  type DistrictId, type GameState, type GoodsStock, type TechId, type TomeId, type UnitId,
 } from './state';
 
 /** Something a technology puts in the player's hands. */
@@ -65,7 +67,12 @@ export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost,
 export const techKnowledgeCost = (id: TechId): number =>
   getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
 
+/** The refined goods paid with the Gold, when it is completed. */
+export const techGoodsCost = (id: TechId): GoodsStock => TECHNOLOGIES[id].goods;
+
 const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
+const hasGoods = (state: GameState, id: TechId): boolean =>
+  canAffordGoods(state.city.goods, techGoodsCost(id));
 const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
 
 /** Knowledge already poured into a technology. */
@@ -167,14 +174,17 @@ export function pourKnowledge(
   return { result: 'Poured', poured: amount };
 }
 
-export type ResearchResult = ResearchRefusal | 'Researched' | 'NotFilled' | 'NotEnoughGold';
+export type ResearchResult =
+  | ResearchRefusal | 'Researched' | 'NotFilled' | 'NotEnoughGold' | 'NotEnoughGoods';
 
-/** Could the Gold be paid and the technology completed this second? */
+/** Could the Gold and the goods be paid and the technology completed this second? */
 export const canResearchTech = (state: GameState, id: TechId): boolean =>
-  researchRefusal(state, id) === null && isTechFilled(state, id) && gold(state) >= techCost(id);
+  researchRefusal(state, id) === null && isTechFilled(state, id) && gold(state) >= techCost(id)
+  && hasGoods(state, id);
 
 /**
- * Pay the Gold and complete the technology. Its Knowledge must be in.
+ * Pay the Gold and the goods and complete the technology. Its Knowledge must
+ * be in.
  *
  * The pure half: `commands.ts#researchTech` wraps it with what a completion
  * does to the map and the purse (the Farsight sweep, a lump raise paid back).
@@ -184,7 +194,9 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
   if (refusal !== null) return refusal;
   if (!isTechFilled(state, id)) return 'NotFilled';
   if (gold(state) < techCost(id)) return 'NotEnoughGold';
+  if (!hasGoods(state, id)) return 'NotEnoughGoods';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));
+  payGoods(state.city.goods, techGoodsCost(id));
   delete state.research.poured[id];
   state.research.completed.push(id);
   return 'Researched';
@@ -198,7 +210,7 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
 export const canStartTech = (state: GameState, id: TechId): boolean =>
   researchRefusal(state, id) === null
   && (isTechFilled(state, id)
-    ? gold(state) >= techCost(id)
+    ? gold(state) >= techCost(id) && hasGoods(state, id)
     : knowledge(state) >= techKnowledgeMissing(state, id));
 
 /** Anything at all worth a trip to the Research screen. */
@@ -208,6 +220,35 @@ export const anyResearchActionable = (state: GameState): boolean =>
 /** How many technologies can be acted on right now — the Research tab's count. */
 export const researchActionableCount = (state: GameState): number =>
   TECH_ORDER.filter((id) => canStartTech(state, id)).length;
+
+// ----------------------------------------------------- finishing a band
+
+/** A band's key in `research.rewarded`. */
+export const bandKey = (tome: TomeId, era: number): string => `${tome}:${era}`;
+
+/** Is every placed technology of this band researched? A band with none
+ *  placed is not finished — there was nothing to finish. */
+export function isBandFinished(state: GameState, tome: TomeId, era: number): boolean {
+  const cards = TECH_ORDER.filter((id) => TECHNOLOGIES[id].placed
+    && TECHNOLOGIES[id].tome === tome && TECHNOLOGIES[id].era === era);
+  return cards.length > 0 && cards.every((id) => isTechComplete(state, id));
+}
+
+/**
+ * The card pack researching `id` has just earned, if it finished its band
+ * whole and that band pays one it has not paid yet — recorded as paid here,
+ * so it is earned once. The caller grants it (`commands.ts#researchTech`).
+ */
+export function claimBandReward(state: GameState, id: TechId): { tome: TomeId; era: number; tier: PackTier } | null {
+  const { tome, era, placed } = TECHNOLOGIES[id];
+  if (!placed) return null;
+  const tier = ERA_REWARDS[tome]?.[era] ?? null;
+  if (tier === null) return null;
+  const key = bandKey(tome, era);
+  if (state.research.rewarded.includes(key) || !isBandFinished(state, tome, era)) return null;
+  state.research.rewarded.push(key);
+  return { tome, era, tier };
+}
 
 // ------------------------------------------------------------- the states
 

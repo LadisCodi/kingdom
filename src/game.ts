@@ -15,7 +15,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  ERA_REWARDS, TECHNOLOGIES, TOMES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
@@ -3071,9 +3071,18 @@ export class Game {
 
   /** Pay the Gold and complete a technology whose Knowledge is in. */
   doResearchTech(id: TechId): void {
+    const paid = this.state.research.rewarded.length;
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched') playSfx('researchComplete');
-    else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    if (result === 'Researched') {
+      playSfx('researchComplete');
+      // The last card of a band pays its pack; the pile opens it like any other.
+      if (this.state.research.rewarded.length > paid) {
+        const { tome, era } = TECHNOLOGIES[id];
+        const tier = ERA_REWARDS[tome][era];
+        if (tier) this.toast(`${TOMES[tome].name} era ${formatExact(era)} complete — ${packName(tier).toLowerCase()}`);
+      }
+    } else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();

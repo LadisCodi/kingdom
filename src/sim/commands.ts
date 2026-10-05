@@ -11,7 +11,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
+import { closeSeason, grantPack, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -27,7 +27,7 @@ import { accrueMana } from './mana';
 import { accrueKnowledge, payKnowledge, territoryKnowledge } from './knowledge';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
-import { completeTech, isTechComplete, type ResearchResult } from './research';
+import { claimBandReward, completeTech, isTechComplete, type ResearchResult } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay } from './wallet';
 import { canAffordGoods, payGoods } from './goods';
@@ -362,6 +362,9 @@ export type UpgradeResult =
  *    needs no line of its own.
  *  * **A technology that raises a lump pays it back** for every landmark and
  *    lair already held (sim/knowledge.ts `territoryKnowledge`).
+ *  * **The last card of a band pays the band's card pack**, once
+ *    (`research.ts#claimBandReward`). Research takes no time, so this is the
+ *    moment, and no boundary is needed.
  *
  * Bracketed by the tax repricing, because a technology can move the tax rate
  * (Communities) and the anchor must not bank the old rate's time at the new.
@@ -375,6 +378,8 @@ export function researchTech(
     result = completeTech(state, id);
     if (result !== 'Researched') return;
     payKnowledge(state, territoryKnowledge(state) - before);
+    const band = claimBandReward(state, id);
+    if (band !== null) grantPack(state, band.tier, 'research');
     if (TECHNOLOGIES[id].effects.some((e) => e.stat === 'discoverRadius')) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);

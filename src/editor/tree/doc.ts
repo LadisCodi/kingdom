@@ -327,6 +327,10 @@ export class TreeDoc {
       if (node.kind !== 'unlock') delete node.unlocks;
       if (node.kind !== 'bonus') delete node.effects;
       if (node.knowledge === 0) delete node.knowledge;
+      if (node.goods !== undefined) {
+        for (const [g, n] of Object.entries(node.goods)) if (!(n > 0)) delete node.goods[g];
+        if (Object.keys(node.goods).length === 0) delete node.goods;
+      }
       if (node.planned !== true) delete node.planned;
       if (node.unlocks?.length === 0) delete node.unlocks;
       if (node.effects?.length === 0) delete node.effects;

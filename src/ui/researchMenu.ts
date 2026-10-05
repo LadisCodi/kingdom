@@ -17,17 +17,19 @@ import type { Game } from '../game';
 import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled,
-  isFoundTome, isTomeOpen, openTomes, researchRefusal, revealedCellCount, techCost, techKnowledgeCost,
+  isFoundTome, isTomeOpen, openTomes, researchRefusal, revealedCellCount, techCost, techGoodsCost,
+  techKnowledgeCost,
   techPoured, techState,
 } from '../sim/research';
 import { knowledgeHeld } from '../sim/knowledge';
 import { techLine } from '../sim/techProse';
-import { type GameState, type TechId, type TomeId } from '../sim/state';
+import { getGood } from '../sim/goods';
+import { type GameState, type GoodId, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
   type EdgePiece,
 } from './research/layout';
-import { btn, closeKnob, ctaBadge, iconEl, priceLine, progress, sectionHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, priceLine, progress, sectionHead, type IconName } from './kit';
 import { el, formatExact, coach } from './format';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
@@ -437,16 +439,25 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const filled = isTechFilled(state, id);
     const gold = techCost(id);
     const shortGold = game.walletValue('Gold') < gold;
+    // The refined goods beside the Gold, as a building level shows them.
+    const goods = Object.entries(techGoodsCost(id)) as Array<[GoodId, number]>;
+    const shortGoods = goods.some(([g, n]) => getGood(state.city.goods, g) < n);
     const note = filled ? null : 'Assign all its Knowledge to research it';
     page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
       el('div', { class: 'up-buy k-section' },
-        priceLine(gold > 0 ? [{ icon: 'Gold', amount: formatExact(gold), short: shortGold }] : []),
+        priceLine([
+          ...(gold > 0 ? [{ icon: 'Gold' as IconName, amount: formatExact(gold), short: shortGold }] : []),
+          ...goods.map(([g, n]) => ({
+            icon: g as IconName, amount: formatExact(n), short: getGood(state.city.goods, g) < n,
+          })),
+        ]),
         coach(btn({
           label: 'Research',
           kind: 'primary',
           icon: filled ? undefined : 'padlock',
           onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
-          disabledReason: !filled ? note! : shortGold ? 'Not enough Gold' : undefined,
+          disabledReason: !filled ? note! : shortGold ? 'Not enough Gold'
+            : shortGoods ? 'Not enough refined goods' : undefined,
         }), 'tech-research'),
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }

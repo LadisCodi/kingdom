@@ -7,6 +7,13 @@
     "Sagas": [0, 100],
     "Atlas": [0, 220]
   },
+  "eraRewards": {
+    "Civics": [null, null, null],
+    "Warfare": [null, null, null, null],
+    "Magic": [null, null, null, null],
+    "Sagas": [null, null],
+    "Atlas": [null, null]
+  },
   "technologies": {
     "Forestry": {
       "name": "Forestry", "glyph": "🪓", "kind": "unlock",
