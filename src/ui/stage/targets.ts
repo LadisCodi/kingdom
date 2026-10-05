@@ -150,6 +150,15 @@ function firstStandingLair(game: Game): LairId | '' {
  *  open on top (24-dialogue.md §4). */
 export const BACK = 'back';
 
+/**
+ * The controls a line can point at that spend Gems, by their `data-coach`
+ * key. The First Morning never points the hand at one: a beat may name a
+ * paid shortcut, but following the hand must never cost the player Gems
+ * (Docs/features/23-tutorials.md §3). `tests/tutorialGems.test.ts` holds
+ * this list to every Gem button the UI marks for the stage.
+ */
+export const GEM_CONTROLS: ReadonlySet<string> = new Set(['card:finish-training']);
+
 /** Is `node` drawn, not merely in the page? */
 const drawn = (node: HTMLElement): boolean => {
   const r = node.getBoundingClientRect();

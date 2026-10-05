@@ -413,7 +413,7 @@
         "side": "left",
         "text": "They’re on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!",
         "box": "auto",
-        "point": "ui:card:finish-training",
+        "point": "",
         "lock": "none",
         "until": "population",
         "untilTarget": "",
