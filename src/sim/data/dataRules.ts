@@ -71,7 +71,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },
   { id: 'relics', label: 'Relic rules', domain: 'Magic', view: 'form', noun: 'setting',
-    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps', 'fragments'] },
+    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps', 'fragments', 'shrines'] },
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
@@ -172,7 +172,7 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
-  landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
+  landmarkKind: ['StandingStones', 'Leyspring', 'Watchtower'],
   worldTerrain: WORLD_TERRAINS,
   worldFeature: WORLD_FEATURES,
   worldDistrict: WORLD_DISTRICTS,
@@ -562,7 +562,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
       // nothing: its whole contribution is its Harmony.
       if (num(b.harmonySupply) > 0) {
         if (!Number.isInteger(b.harmonySupply)) push(id, ['harmonySupply'], 'is not a whole number');
-        if (b.maxLevel !== 1) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
+        // A relic's host climbs levels for its aura (relic-restoration.md §5.1).
+        if (b.maxLevel !== 1 && b.hostsRelic !== true) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
         for (const f of ['maxWorkersPerLevel', 'populationCapacityPerLevel', 'armyCapPerLevel', 'bedsPerLevel', 'influenceRadiusPerLevel', 'queueLengthPerLevel']) {
           if (list(b[f]).length > 0) push(id, [f], 'a decoration has none');
         }
@@ -570,6 +571,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
         if (list(b.harmonyCostPerLevel).length > 0) push(id, ['harmonyCostPerLevel'], 'a decoration supplies Harmony; it does not demand it');
       }
       neverFalls(push, id, 'harmonyCostPerLevel', b.harmonyCostPerLevel);
+      if ((b.hostsRelic === true) !== (list(b.auraRadiusPerLevel).length > 0)) {
+        push(id, ['auraRadiusPerLevel'], 'a relic\'s host needs its aura, and only a host has one');
+      }
       // The rent bonus is a house's ladder.
       if (list(b.taxBonusPerLevel).length > 0 && list(b.populationCapacityPerLevel).length === 0) {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');

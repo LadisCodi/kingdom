@@ -80,7 +80,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 10, 20, 30]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 10, 20, 30],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Housing": {
     "name": "Housing",
@@ -138,7 +140,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Farm": {
     "name": "Farm",
@@ -205,7 +209,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "FarmLands": {
     "name": "crop plots",
@@ -252,7 +258,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Sawmill": {
     "name": "Sawmill",
@@ -319,7 +327,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Quarry": {
     "name": "Quarry",
@@ -386,7 +396,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Docks": {
     "name": "Docks",
@@ -453,7 +465,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Sanctum": {
     "name": "Sanctum",
@@ -520,7 +534,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Tavern": {
     "name": "Tavern",
@@ -573,7 +589,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Barracks": {
     "name": "Barracks",
@@ -640,7 +658,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "SpearHall": {
     "name": "Spear Hall",
@@ -707,7 +727,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "ShootingGrounds": {
     "name": "Shooting Grounds",
@@ -774,7 +796,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Stables": {
     "name": "Stables",
@@ -841,7 +865,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Infirmary": {
     "name": "Infirmary",
@@ -908,7 +934,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Carpenter": {
     "name": "Carpenter",
@@ -975,7 +1003,9 @@
     "produces": "Planks",
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "MasonsYard": {
     "name": "Mason's Yard",
@@ -1042,7 +1072,9 @@
     "produces": "CutStone",
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Smelter": {
     "name": "Smelter",
@@ -1109,7 +1141,9 @@
     "produces": "Iron",
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "RuneCarver": {
     "name": "Rune Carver",
@@ -1176,7 +1210,9 @@
     "produces": "Runestone",
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Garden": {
     "name": "Garden",
@@ -1223,7 +1259,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 4,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Well": {
     "name": "Well",
@@ -1270,7 +1308,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 6,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Orchard": {
     "name": "Orchard",
@@ -1317,7 +1357,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 12,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Statue": {
     "name": "Statue",
@@ -1364,7 +1406,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 10,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Plaza": {
     "name": "Plaza",
@@ -1411,22 +1455,24 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 30,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   },
   "Shrine": {
     "name": "Shrine",
-    "promise": "A round temple cut through with runes",
-    "description": "A quiet temple of runes that brings the city peace.",
+    "promise": "A temple of runes that holds a relic",
+    "description": "An old temple of runes. Repaired, it holds one city relic, whose power reaches every building in its aura.",
     "glyph": "⛩️",
     "sprite": "shrine",
-    "buildable": true,
+    "buildable": false,
     "buildTab": "Decoration",
     "harvestSources": [],
     "providesHarvestSource": null,
     "trains": [],
     "crew": [],
     "size": { "x": 2, "y": 2 },
-    "maxLevel": 1,
+    "maxLevel": 5,
     "populationCapacityPerLevel": [],
     "taxBonusPerLevel": [],
     "goldPerMinutePerLevel": [],
@@ -1435,7 +1481,7 @@
     "fogRevealRadiusPerLevel": [],
     "fogDiscoverRadius": 0,
     "maxWorkersPerLevel": [],
-    "maxCountPerTownhallLevel": [0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
+    "maxCountPerTownhallLevel": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
     "influenceRadiusPerLevel": [],
     "requiredTownhallLevelPerLevel": [],
     "requiredPopulationPerLevel": [],
@@ -1443,14 +1489,20 @@
     "bedsPerLevel": [],
     "heroXpBonusPerLevel": [],
     "armySlotsPerLevel": [],
-    "costPerLevel": [{ "cost": { "Gold": 600000 }, "goods": { "Runestone": 2 } }],
+    "costPerLevel": [
+      { "cost": { "Gold": 2000 }, "goods": {} },
+      { "cost": { "Gold": 20000, "Stone": 2000 }, "goods": { "CutStone": 4 } },
+      { "cost": { "Gold": 60000, "Stone": 6000 }, "goods": { "CutStone": 10 } },
+      { "cost": { "Gold": 150000, "Stone": 15000 }, "goods": { "CutStone": 20, "Runestone": 2 } },
+      { "cost": { "Gold": 400000, "Stone": 40000 }, "goods": { "CutStone": 40, "Runestone": 5 } }
+    ],
     "instanceLinearGrowth": 0.5,
     "instanceExponentialGrowth": 1,
     "buildDurationSeconds": 600,
     "buildDurationDistrictGrowth": 1.2,
     "buildDurationDistanceGrowth": 1.22,
-    "upgradeDurationSeconds": 0,
-    "upgradeDurationLevelGrowth": 1.5,
+    "upgradeDurationSeconds": 900,
+    "upgradeDurationLevelGrowth": 1.6,
     "upgradeDurationLateSeconds": 0,
     "upgradeDurationLateLevelGrowth": 0,
     "extraUnitsPerDeliveryPerLevel": [],
@@ -1458,7 +1510,9 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 40,
-    "harmonyCostPerLevel": []
+    "harmonyCostPerLevel": [],
+    "hostsRelic": true,
+    "auraRadiusPerLevel": [2, 2, 3, 3, 4]
   },
   "WarCamp": {
     "name": "War Camp",
@@ -1511,6 +1565,8 @@
     "produces": null,
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
-    "harmonyCostPerLevel": [0, 0, 0, 0, 0]
+    "harmonyCostPerLevel": [0, 0, 0, 0, 0],
+    "hostsRelic": false,
+    "auraRadiusPerLevel": []
   }
 }

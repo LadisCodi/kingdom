@@ -824,7 +824,7 @@
       "tome": "Kingdom", "era": 9, "row": 47, "col": 0,
       "requires": ["IronPicksI"],
       "gold": 190000, "knowledge": 14,
-      "unlocks": [{"district":"Shrine"}]
+      "unlocks": [{"districtLevel":{"id":"Shrine","level":2}}]
     },
     "FishersI": {
       "name": "Fishers I", "glyph": "🎣", "kind": "bonus",

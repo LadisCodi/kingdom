@@ -353,3 +353,6 @@
   padding-top: calc(var(--px) * 10);
   border-top: calc(var(--px) * 2) solid var(--section-line);
 }
+.rl-shrines { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 10); font-weight: var(--weight-strong); color: var(--ink); }
+.rl-shrines .icon { --icon-size: calc(var(--px) * 24); }
+.rl-shrines > .k-btn { margin-left: auto; }

@@ -38,7 +38,9 @@ describe('the harmony columns', () => {
   it('never asks one building to both supply and demand', () => {
     // A row that did is a row whose author meant two different buildings.
     for (const [id, def] of districts) {
-      if (def.harmonySupply === 0) continue;
+      // A relic's host supplies Harmony too, but is not a decoration: it
+      // climbs levels for its aura.
+      if (def.harmonySupply === 0 || def.hostsRelic) continue;
       expect(def.harmonyCostPerLevel, `${id} supplies and demands`).toEqual([]);
     }
   });
@@ -47,7 +49,7 @@ describe('the harmony columns', () => {
     // No ladder, no crew, no residents, no queue, no area of influence: a
     // decoration's whole contribution is the one number.
     for (const [id, def] of districts) {
-      if (def.harmonySupply === 0) continue;
+      if (def.harmonySupply === 0 || def.hostsRelic) continue;
       expect(Number.isInteger(def.harmonySupply), `${id} supplies a fraction`).toBe(true);
       expect(def.maxLevel, `${id} has a ladder`).toBe(1);
       expect(def.maxWorkersPerLevel, `${id} has a crew`).toEqual([]);
@@ -93,14 +95,14 @@ describe('the surplus tiers', () => {
   });
 });
 
-describe('the six decorations', () => {
+describe('the five decorations', () => {
   it('opens one Townhall level at a time, and caps each kind', () => {
     // Variety is what prices Harmony now the plot is unbounded (OQ-1): a
     // Townhall's demand cannot be met by spamming the cheapest piece.
     const caps = DECORATIONS.map((id) => DISTRICTS[id].maxCountPerTownhallLevel);
     // Each opens strictly later than the last, and none before Townhall 5.
     const opensAt = caps.map((c) => c.findIndex((n) => n > 0) + 1);
-    expect(opensAt).toEqual([5, 6, 6, 7, 8, 9]);
+    expect(opensAt).toEqual([5, 6, 6, 7, 8]);
     // And every cap only ever grows with the Townhall.
     for (const [i, c] of caps.entries()) {
       const falls = c.some((n, j) => j > 0 && n < c[j - 1]!);
@@ -136,7 +138,9 @@ describe('the six decorations', () => {
       const def = DISTRICTS[id];
       return sum + def.harmonySupply * levelIndexed(def.maxCountPerTownhallLevel, townhallLevel);
     }, 0);
-    expect([5, 6, 7, 8, 9, 10].map(ceiling)).toEqual([16, 48, 90, 162, 274, 386]);
+    // The Shrines supply on top of this (relic-restoration.md §5.1): they are
+    // hosts, found and bought, not decorations to spam.
+    expect([5, 6, 7, 8, 9, 10].map(ceiling)).toEqual([16, 48, 90, 162, 234, 306]);
   });
 });
 

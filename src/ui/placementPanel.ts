@@ -47,7 +47,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     : undefined;
   // Refined goods ride beside the currencies, as everywhere a price is
   // quoted: a move pays nothing, so only a build carries them.
-  const goodsTerms = moving ? [] : (Object.entries(buildGoodsCost(game.state, info.definitionId)) as
+  const goodsTerms = moving || game.mode.kind === 'placing' && game.mode.premium ? [] : (Object.entries(buildGoodsCost(game.state, info.definitionId)) as
     Array<[GoodId, number]>).map(([id, n]) => ({
     icon: id,
     amount: formatExact(n),

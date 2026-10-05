@@ -92,7 +92,7 @@ export function newGame(map: MapData, now: number): GameState {
     tutorial: { veteran: false, seen: {}, startedAt: now },
     abandoned: { repaired: {} },
     bag: { held: {}, fresh: {}, badge: 0 },
-    relics: { held: {}, chests: 0 },
+    relics: { held: {}, chests: 0, premiumShrines: 0 },
     signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [], playMs: 0 },
     pendingDiscoveries: [],
     pendingAnalytics: [],

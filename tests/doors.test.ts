@@ -2,8 +2,8 @@
 // places that open a mechanic when claimed, the heroes the story brings, and
 // what a save from before the doors reads as.
 import { describe, expect, it } from 'vitest';
-import { FOG, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
-import { advance } from '../src/sim/commands';
+import { ABANDONED, FOG, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
+import { advance, repairRefusal } from '../src/sim/commands';
 import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
 import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
 import { lairZoneCells } from '../src/sim/lairZone';
@@ -13,11 +13,11 @@ import { freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect } from '../src
 import { grantItem, useItem } from '../src/sim/bag';
 import { openRelicDoor } from '../src/sim/relics';
 import { townhall } from '../src/sim/state';
-import { coordKey, type TomeId } from '../src/sim/state';
+import { cellsOfRect, coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const TOMES: TomeId[] = ['Kingdom', 'Sagas', 'Atlas'];
-const shrine = LANDMARKS.find((l) => l.id === 'ThornedShrine')!;
+const shrine = ABANDONED.find((a) => a.id === 'ThornedShrine')!;
 const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
 
 describe('the books open on the world', () => {
@@ -54,15 +54,15 @@ describe('the books open on the world', () => {
 });
 
 describe('the places that open a mechanic', () => {
-  it('refuses the Thorned Shrine while the Orcs hold its ground', () => {
+  it('refuses to repair the Thorned Shrine while the Orcs hold its ground', () => {
     const state = freshGame();
     expect(lairZoneCells('Orcs').some((c) => coordKey(c) === coordKey(shrine.location))).toBe(true);
-    reveal(state, [shrine.location]);
+    reveal(state, cellsOfRect(shrine.location, { x: 2, y: 2 }));
     advance(state, map, T0 + 1000); // revealing its ground found the Orcs
     fund(state, { Gold: 99_999 });
-    expect(claimLandmark(state, map, shrine.location)).toBe('LairHeld');
+    expect(repairRefusal(state, map, shrine.id)).toBe('LairHeld');
     clearLair(state, 'Orcs');
-    expect(claimLandmark(state, map, shrine.location)).toBe('Claimed');
+    expect(repairRefusal(state, map, shrine.id)).toBeNull();
   });
 
   it('lets the Watchtower see further than a shrine', () => {
