@@ -6,7 +6,7 @@
 > finishing a chapter whole. Pouring, the Knowledge bar and instant
 > completion stay as they are ([`../features/07-research.md`](../features/07-research.md)).
 >
-> **Status.** Agreed design, 2026-10-05. Nothing built. Open decisions in §8.
+> **Status.** Agreed design, 2026-10-05; being built. Decisions taken in §8.
 
 ## 1. What is there today
 
@@ -114,13 +114,13 @@ quests pay 28.
 - **First Knowledge is poured, then Gold completes the card** — as today. The
   Gold is the sink: priced, like buildings, in days of what the target player
   collects.
-- **From chapter 5 a card may also ask for goods** (Planks, Cut Stone, Iron,
-  Runestone), like Elvenar's later chapters.
+- **Cards also ask for goods** (Planks, Cut Stone, Iron, Runestone) once the
+  workshops that make them are open, like Elvenar's later chapters.
 
 ### 3.5 The chapter reward
 
-- **Researching every card of a chapter, dead ends included, pays a reward**,
-  our Research Diploma (§8, D2).
+- **Researching every card of a chapter, dead ends included, pays a card
+  pack**, our Research Diploma — once per chapter.
 
 ## 4. Fillers
 
@@ -232,13 +232,10 @@ its number is computed.
 | **P6 · Measure** | Rerun the three pacing schedules with a bot that buys Knowledge; tune Knowledge, Gold and cell gates per chapter. | the pacing runner, `tests/thirtyDays.test.ts` |
 | **P7 · Docs** | Rewrite `tech-tree.md` around chapters; update `07-research.md`, `22-progression.md`, `12-quests.md`; close the decisions. | `Docs/` |
 
-## 8. Open decisions
+## 8. Decisions
 
-- **D1 · Refunds.** A player who researched a cut card: lose it, or refund its
-  Knowledge and Gold?
-- **D2 · The chapter reward.** A relic, a card pack, a decoration, or a
-  permanent effect like Elvenar's Cauldron?
-- **D3 · Goods on cards** from chapter 5, or Gold only?
-- **D4 · How many new stats** to build in P4 — all twelve in §4, or the four
-  that add most variety (crew strike speed, stock in trees and plots,
-  workshop slots, world improvement output)?
+- **D1 · No refunds.** This is a prototype: a save from before the rework
+  starts a fresh game.
+- **D2 · The chapter reward is a card pack.**
+- **D3 · Cards ask for goods** as well as Gold, once the goods exist.
+- **D4 · Every new stat in §4 is built.**
