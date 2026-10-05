@@ -7,6 +7,15 @@
     "inputMana": { "type": "int" },
     "inputGood": { "type": "text", "nullable": true, "ref": "good" },
     "inputGoodAmount": { "type": "int" },
-    "workSeconds": { "type": "int", "min": 1 }
+    "workSeconds": {
+      "type": "int",
+      "min": 1,
+      "nullable": true,
+      "doc": "Work one villager does on one item; null for a precious material, which nothing makes."
+    },
+    "precious": {
+      "type": "bool",
+      "doc": "A precious material: found on the world board, never made (Docs/features/19-world-map.md §7.4)."
+    }
   }
 }

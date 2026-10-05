@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { HeroId, UnitId } from '../sim/state';
+import type { HeroId, PreciousId, UnitId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -32,6 +32,9 @@ export interface ServerHex {
    *  `storeAt`. Fractions carry. */
   stored: number;
   storeAt: number;
+  /** A rich district's precious store, settled at the same `storeAt`
+   *  (19 §7.4). Missing on a hex stored before materials: read as 0. */
+  precious?: number;
   /** The army garrisoned in its Fortress, by id. */
   garrison: string | null;
 }
@@ -81,6 +84,8 @@ export type WorldEffect =
   | {
     kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number;
     gems?: number; pack?: 'Rose' | 'Golden';
+    /** A camp's lump of precious material (19 §5.4). */
+    precious?: { id: PreciousId; amount: number };
   };
 
 /** The Dark Portal on one board (19 §10). */
@@ -182,6 +187,8 @@ export interface HexView {
   active: boolean;
   /** Only on the player's own hexes: its store, in its district's currency. */
   stores: { currency: WorldStoreCurrency; amount: number; cap: number } | null;
+  /** A rich district's precious store; only on the player's own hexes. */
+  precious?: { id: PreciousId; amount: number; cap: number } | null;
   /** The army standing in its Fortress: whose, and what it is worth. */
   garrison: { army: string; owner: number; power: number } | null;
 }
@@ -250,7 +257,12 @@ export type CommandResult =
 export type WorldStoreCurrency = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
 
 export type CollectResult =
-  | { ok: true; paid: { currency: WorldStoreCurrency; amount: number } | null; snapshot: WorldSnapshot }
+  | {
+    ok: true; paid: { currency: WorldStoreCurrency; amount: number } | null;
+    /** What the precious store paid, if anything. */
+    precious: { id: PreciousId; amount: number } | null;
+    snapshot: WorldSnapshot;
+  }
   | { ok: false; why: Refusal };
 
 export type SendResult =

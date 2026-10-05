@@ -7,7 +7,7 @@
 // holds it, a Sensed one is shapes in the mist, an Unknown one nothing.
 
 import type { Game } from '../../game';
-import type { BoardHex } from '../../sim/world/board';
+import { materialAt, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
   returnsAt, revealsAt, tripRevealing, type FogState,
@@ -94,6 +94,9 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   }
   if (mine && h.stores !== null && h.stores.cap > 0) {
     lines.push(el('p', { class: 'wd-line' }, `${h.stores.currency} in store ${formatCount(Math.floor(h.stores.amount))}/${formatCount(Math.floor(h.stores.cap))}`));
+  }
+  if (mine && h.precious != null && h.precious.cap > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${h.precious.id} in store ${formatCount(Math.floor(h.precious.amount))}/${formatCount(Math.floor(h.precious.cap))}`));
   }
   return lines;
 }
@@ -240,11 +243,14 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     const holds = [TERRAIN_NAME[bh.terrain ?? 'Grassland'], ...bh.features.map((f) => FEATURE_NAME[f])];
     // Bare ground is already its own title; say what it holds only past that.
     if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
+    // A rich hex: what its district will yield besides (19 §7.4).
+    const material = bh.rich ? materialAt(game.worldSource().board(), index) : null;
+    if (material !== null) lines.push(el('p', { class: 'wd-line' }, `Rich in ${material}`));
   } else if (fog === 'Sensed') {
     lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Explore it before anything can be done there.'));
     // What an explorer sent here brings home (19 §3.2), priced as of now.
     if (bh.scout !== null) {
-      lines.push(el('p', { class: 'wd-line' }, `Exploring it pays ${scoutWords(scoutPay(state, bh.scout, bh.role))}`));
+      lines.push(el('p', { class: 'wd-line' }, `Exploring it pays ${scoutWords(scoutPay(state, bh.scout, bh.role, index))}`));
     }
   } else if (fog === 'Unknown') {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));

@@ -13,9 +13,9 @@
 // simply never fills.
 
 import type { Game } from '../game';
-import { DISTRICTS, GOODS } from '../sim/data/definitions';
+import { DISTRICTS } from '../sim/data/definitions';
 import { getGood } from '../sim/goods';
-import { canAffordGoods } from '../sim/goods';
+import { canAffordGoods, workSecondsOf } from '../sim/goods';
 import { canAfford } from '../sim/wallet';
 import { mana } from '../sim/mana';
 import {
@@ -74,7 +74,7 @@ export function workshopSection(
     const its = game.state.city.workshops[district.uniqueId]?.items ?? [];
     return JSON.stringify([
       its.map((it, i) => [it.good, i < district.assignedWorkers
-        ? Math.round((it.workMs / (GOODS[it.good].workSeconds * 1000)) * 100) : -1]),
+        ? Math.round((it.workMs / (workSecondsOf(it.good) * 1000)) * 100) : -1]),
       itemRemainingSeconds(game.state, district, now),
       itemRushCost(game.state, district, now),
     ]);
@@ -135,7 +135,7 @@ function workshopQueue(game: Game, district: District): HTMLElement {
       iconEl(item.good as GoodId, { size: 'sm' }));
     if (working) {
       const bar = progress('gold');
-      bar.set(item.workMs / (GOODS[item.good].workSeconds * 1000));
+      bar.set(item.workMs / (workSecondsOf(item.good) * 1000));
       slot.append(bar.root);
     }
     slot.append(knob('✕', () => game.doCancelWorkshopItem(district.uniqueId, i),

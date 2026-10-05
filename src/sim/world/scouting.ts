@@ -12,28 +12,36 @@ import { WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/defi
 import { cityGoldPerSecond, grantPack } from '../collection';
 import { addHeroXp } from '../heroes';
 import { payKnowledge } from '../knowledge';
-import { addToWallet, type GameState, type Wallet } from '../state';
+import { addGood } from '../goods';
+import { addToWallet, type GameState, type GoodsStock, type Wallet } from '../state';
 import { cityGatherPerSecond } from '../upgrades';
-import type { BoardHex } from './board';
+import { lumpMaterial, type BoardHex } from './board';
+import { boardOf } from './source';
 
-/** What a hex's promise pays at this moment: a wallet, or a pack. */
-export type ScoutPay = { wallet: Wallet; pack: PackTier | null };
+/** What a hex's promise pays at this moment: a wallet, goods, or a pack. */
+export type ScoutPay = { wallet: Wallet; goods: GoodsStock; pack: PackTier | null };
 
-/** What `scout` on a hex of `role` would pay if the explorer came home now. */
-export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex['role']): ScoutPay {
-  if (scout.reward === 'Pack') return { wallet: {}, pack: scout.pack };
+/** What `scout` on hex `index` of `role` would pay if the explorer came home
+ *  now. A precious lump is mostly the player's own material (19 §7.4). */
+export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex['role'], index = -1): ScoutPay {
+  if (scout.reward === 'Pack') return { wallet: {}, goods: {}, pack: scout.pack };
+  if (scout.reward === 'Precious') {
+    const board = boardOf(state.world.board);
+    const id = lumpMaterial(board, state.world.board.seat, 'scout', index, state.world.board.seat);
+    return { wallet: {}, goods: { [id]: scout.amount }, pack: null };
+  }
   if (scout.reward === 'Gold' || scout.reward === 'Wood' || scout.reward === 'Food' || scout.reward === 'Stone') {
     const hours = role === 'portal' ? 0 : WORLD_SCOUTING.hoursByRole[role];
     const rate = scout.reward === 'Gold' ? cityGoldPerSecond(state) : cityGatherPerSecond(state, scout.reward);
-    return { wallet: { [scout.reward]: Math.round(Math.max(scout.amount, rate * hours * 3600)) }, pack: null };
+    return { wallet: { [scout.reward]: Math.round(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
   }
-  return { wallet: { [scout.reward]: scout.amount }, pack: null };
+  return { wallet: { [scout.reward]: scout.amount }, goods: {}, pack: null };
 }
 
 /** Pay a hex's promise into the purses it belongs to; returns what it paid. */
 export function payScout(state: GameState, bh: BoardHex): ScoutPay | null {
   if (bh.scout === null) return null;
-  const pay = scoutPay(state, bh.scout, bh.role);
+  const pay = scoutPay(state, bh.scout, bh.role, bh.index);
   for (const [c, n] of Object.entries(pay.wallet) as Array<[keyof Wallet, number]>) {
     if (c === 'Knowledge') payKnowledge(state, n);
     else if (c === 'HeroXp') addHeroXp(state, n);
@@ -41,6 +49,7 @@ export function payScout(state: GameState, bh: BoardHex): ScoutPay | null {
     else if (c === 'Gems') addToWallet(state.player.wallet, c, n);
     else addToWallet(state.city.wallet, c, n);
   }
+  for (const [g, n] of Object.entries(pay.goods)) addGood(state.city.goods, g as keyof GoodsStock, n as number);
   if (pay.pack !== null) grantPack(state, pay.pack, 'scouting');
   return pay;
 }

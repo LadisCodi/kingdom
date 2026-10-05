@@ -202,14 +202,24 @@
         { "reward": "Knowledge", "weight": 2, "amount": 2, "pack": null },
         { "reward": "Stardust", "weight": 1, "amount": 10, "pack": null },
         { "reward": "HeroXp", "weight": 1, "amount": 250, "pack": null },
-        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Green" }
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Green" },
+        { "reward": "Precious", "weight": 2, "amount": 4, "pack": null }
       ],
       "inner": [
         { "reward": "Gold", "weight": 2, "amount": 3000, "pack": null },
         { "reward": "Stardust", "weight": 3, "amount": 30, "pack": null },
         { "reward": "Gems", "weight": 1, "amount": 20, "pack": null },
-        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Rose" }
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Rose" },
+        { "reward": "Precious", "weight": 3, "amount": 12, "pack": null }
       ]
     }
+  },
+  "worldPrecious": {
+    "richFeatureShare": 0.2,
+    "richDesertShare": 0.25,
+    "perDay": 4,
+    "storeDays": 1,
+    "ownShare": 0.7,
+    "campPerPower": 0.01
   }
 }

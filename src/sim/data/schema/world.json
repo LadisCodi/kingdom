@@ -461,7 +461,18 @@
                 "fields": {
                   "reward": {
                     "type": "text",
-                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "options": [
+                      "Gold",
+                      "Wood",
+                      "Food",
+                      "Stone",
+                      "HeroXp",
+                      "Knowledge",
+                      "Stardust",
+                      "Gems",
+                      "Pack",
+                      "Precious"
+                    ],
                     "doc": "What the hex pays."
                   },
                   "weight": {
@@ -490,7 +501,18 @@
                 "fields": {
                   "reward": {
                     "type": "text",
-                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "options": [
+                      "Gold",
+                      "Wood",
+                      "Food",
+                      "Stone",
+                      "HeroXp",
+                      "Knowledge",
+                      "Stardust",
+                      "Gems",
+                      "Pack",
+                      "Precious"
+                    ],
                     "doc": "What the hex pays."
                   },
                   "weight": {
@@ -519,7 +541,18 @@
                 "fields": {
                   "reward": {
                     "type": "text",
-                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "options": [
+                      "Gold",
+                      "Wood",
+                      "Food",
+                      "Stone",
+                      "HeroXp",
+                      "Knowledge",
+                      "Stardust",
+                      "Gems",
+                      "Pack",
+                      "Precious"
+                    ],
                     "doc": "What the hex pays."
                   },
                   "weight": {
@@ -548,7 +581,18 @@
                 "fields": {
                   "reward": {
                     "type": "text",
-                    "options": ["Gold", "Wood", "Food", "Stone", "HeroXp", "Knowledge", "Stardust", "Gems", "Pack"],
+                    "options": [
+                      "Gold",
+                      "Wood",
+                      "Food",
+                      "Stone",
+                      "HeroXp",
+                      "Knowledge",
+                      "Stardust",
+                      "Gems",
+                      "Pack",
+                      "Precious"
+                    ],
                     "doc": "What the hex pays."
                   },
                   "weight": {
@@ -571,6 +615,36 @@
               }
             }
           }
+        }
+      }
+    },
+    "worldPrecious": {
+      "type": "object",
+      "doc": "Precious materials: what a rich hex yields, and the lumps camps and scouting pay (Docs/features/19-world-map.md §7.4).",
+      "fields": {
+        "richFeatureShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The share of Forest and Mountain hexes that are rich."
+        },
+        "richDesertShare": { "type": "float", "min": 0, "max": 1, "doc": "The share of bare Desert hexes that are rich." },
+        "perDay": {
+          "type": "float",
+          "min": 0,
+          "doc": "What a rich district yields a day of its wedge’s material — the inner ring multiplies it."
+        },
+        "storeDays": { "type": "float", "min": 0, "doc": "How many days of yield its precious store holds." },
+        "ownShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "How often a camp’s or a scouting lump is the player’s own material; otherwise one of the other two."
+        },
+        "campPerPower": {
+          "type": "float",
+          "min": 0,
+          "doc": "Precious material a beaten camp pays, per point of its power."
         }
       }
     }

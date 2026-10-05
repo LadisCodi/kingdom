@@ -19,7 +19,7 @@
 // edge of a tile, and nothing upright is hidden or under a rim.
 
 import type { GameState } from '../../sim/state';
-import type { BoardHex } from '../../sim/world/board';
+import { lumpMaterial, materialAt, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
@@ -246,6 +246,17 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
   }
 
+  // A rich hex: a sparkle and its material's icon at its right corner
+  // (19 §7.4), on ground the player has explored.
+  for (const bh of board.hexes) {
+    if (!bh.rich || states[bh.index] !== 'Revealed') continue;
+    const material = materialAt(board, bh.index);
+    if (material === null) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    drawRich(ctx, camera, c.x + camera.hexWidth * 0.3, c.y + r * 0.1, material, clock + bh.index * 397);
+  }
+
   // Over every misty hex, what exploring it promises and the Gold it costs
   // (19 §3.2); once an explorer is on its way there, only the promise.
   for (const bh of board.hexes) {
@@ -253,7 +264,10 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
     const going = tripRevealing(state, bh.index) !== null;
-    drawPromise(ctx, camera, c.x, c.y - r * 0.15, bh.scout.reward === 'Pack' ? 'pack' : bh.scout.reward,
+    const seat = state.world.board.seat;
+    const icon = bh.scout.reward === 'Pack' ? 'pack'
+      : bh.scout.reward === 'Precious' ? lumpMaterial(board, seat, 'scout', bh.index, seat) : bh.scout.reward;
+    drawPromise(ctx, camera, c.x, c.y - r * 0.15, icon,
       going ? null : formatCount(exploreGold(state, bh.index)));
   }
 
@@ -909,6 +923,9 @@ function drawHeld(
   const s = held.stores;
   if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, s.currency);
+  } else if (held.precious != null && held.held && held.active && held.precious.amount >= 1) {
+    // Its precious store, ready: a bubble with the material (19 §7.4).
+    drawBubble(ctx, camera, c.x, c.y - r * 0.55, held.precious.id);
   }
 }
 
@@ -929,6 +946,22 @@ function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number,
   ctx.lineTo(x + size * 0.2, y + size * 0.62);
   ctx.fill();
   drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  ctx.restore();
+}
+
+/** A rich hex's mark: its material's icon on a small brass disc, and a
+ *  sparkle that slowly breathes beside it. */
+function drawRich(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, material: string, clock: number): void {
+  const size = Math.max(16, camera.hexWidth * 0.18);
+  ctx.save();
+  ctx.fillStyle = 'rgba(46, 28, 14, 0.55)';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  drawIcon(ctx, material, x - size / 2, y - size / 2, size);
+  const pulse = 0.55 + 0.45 * Math.sin(clock / 700);
+  ctx.globalAlpha = pulse;
+  drawIcon(ctx, 'sparkle', x + size * 0.25, y - size * 0.95, size * 0.7);
   ctx.restore();
 }
 

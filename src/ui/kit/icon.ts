@@ -97,6 +97,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // above, and shares the one cell: the ore and the ingot are the same
   // picture at 16 px.
   Planks: '🪵', CutStone: '🧱', Runestone: '🔯',
+  // The world's precious materials (19 §7.4).
+  Starmetal: '🌠', Heartwood: '🪵', Moonglass: '🔮',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
   Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯', Tavern: '🍺',

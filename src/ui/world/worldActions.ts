@@ -29,7 +29,7 @@ export type HexAction =
   | { kind: 'delve'; army: string }
   /** Build an upgrade into the district, or raise it a level (19 §7.2). */
   | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number }
-  | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency']; amount: number; ready: boolean };
+  | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency'] | null; amount: number; ready: boolean };
 
 /** Is a world build an upgrade rather than a district's claim? */
 export const isUpgrade = (what: WorldBuildWhat): what is WorldUpgrade => (WORLD_UPGRADES as readonly string[]).includes(what);
@@ -51,7 +51,7 @@ export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
  *  "a Green pack". */
 export function scoutWords(pay: ScoutPay): string {
   if (pay.pack !== null) return `a ${pay.pack} pack`;
-  return Object.entries(pay.wallet)
+  return [...Object.entries(pay.wallet), ...Object.entries(pay.goods)]
     .map(([c, n]) => `${formatCount(n as number)} ${c === 'HeroXp' ? 'Hero XP' : c}`).join(', ');
 }
 
@@ -128,9 +128,11 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
     if (h.garrison && h.garrison.owner === seat) out.push({ kind: 'recall', army: h.garrison.army });
     else out.push({ kind: 'army', purpose: 'garrison' });
   }
-  if (h.stores !== null && h.stores.cap > 0) {
-    const amount = Math.floor(h.stores.amount);
-    out.push({ kind: 'collect', currency: h.stores.currency, amount, ready: amount > 0 });
+  // One Collect for both stores: the district's, and a rich one's precious.
+  const gems = h.precious != null && h.precious.cap > 0 ? Math.floor(h.precious.amount) : 0;
+  if ((h.stores !== null && h.stores.cap > 0) || gems > 0) {
+    const amount = h.stores === null ? 0 : Math.floor(h.stores.amount);
+    out.push({ kind: 'collect', currency: h.stores?.currency ?? null, amount, ready: amount > 0 || gems > 0 });
   }
   if (h.work !== null || !h.active) return out;
   for (const upgrade of WORLD_UPGRADES) {

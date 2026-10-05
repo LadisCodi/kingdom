@@ -164,6 +164,7 @@ import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
 import { pay } from './sim/wallet';
+import { addGood } from './sim/goods';
 import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
@@ -4652,6 +4653,11 @@ export class Game {
         addHeroXp(this.state, e.heroXp);
         if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
         if (e.pack) grantPack(this.state, e.pack, 'portal');
+        // A camp's lump of precious material, to the city's goods (19 §7.4).
+        if (e.precious) {
+          addGood(this.state.city.goods, e.precious.id, e.precious.amount);
+          this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
+        }
         this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
       } else this.toast(e.text);
     }
@@ -4942,6 +4948,11 @@ export class Game {
         // Knowledge is the kingdom's; every other coin the city's purse.
         addToWallet(r.paid.currency === 'Knowledge' ? this.state.kingdom.wallet : this.state.city.wallet, r.paid.currency, r.paid.amount);
         this.reward({ [r.paid.currency]: r.paid.amount } as Wallet);
+      }
+      // A rich district's precious store, to the city's goods (19 §7.4).
+      if (r.precious !== null) {
+        addGood(this.state.city.goods, r.precious.id, r.precious.amount);
+        this.toast(`+${formatCount(r.precious.amount)} ${r.precious.id}`);
       }
     }
     this.applyWorldSnapshot(r.snapshot);

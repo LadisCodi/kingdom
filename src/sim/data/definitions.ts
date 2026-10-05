@@ -238,7 +238,10 @@ export interface GoodDef {
   /** The tier-2 recipe: a good made partly of another good. */
   inputGood: GoodId | null;
   inputGoodAmount: number;
-  workSeconds: number;
+  /** Null for a precious material, which nothing makes. */
+  workSeconds: number | null;
+  /** Found on the world board, never made (19 §7.4). */
+  precious: boolean;
 }
 
 export const GOODS: Record<GoodId, GoodDef> = {
@@ -246,6 +249,9 @@ export const GOODS: Record<GoodId, GoodDef> = {
   CutStone: { id: 'CutStone', ...balance.goods.CutStone } as GoodDef,
   Iron: { id: 'Iron', ...balance.goods.Iron } as GoodDef,
   Runestone: { id: 'Runestone', ...balance.goods.Runestone } as GoodDef,
+  Starmetal: { id: 'Starmetal', ...balance.goods.Starmetal } as GoodDef,
+  Heartwood: { id: 'Heartwood', ...balance.goods.Heartwood } as GoodDef,
+  Moonglass: { id: 'Moonglass', ...balance.goods.Moonglass } as GoodDef,
 };
 
 export const GOOD_ORDER: readonly GoodId[] = Object.keys(GOODS) as GoodId[];
@@ -2188,7 +2194,7 @@ export interface WorldCampsDef {
 export const WORLD_CAMPS = balance.worldCamps as unknown as WorldCampsDef;
 
 /** What exploring a hex pays (19 §3.2). */
-export type ScoutKind = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'HeroXp' | 'Knowledge' | 'Stardust' | 'Gems' | 'Pack';
+export type ScoutKind = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'HeroXp' | 'Knowledge' | 'Stardust' | 'Gems' | 'Pack' | 'Precious';
 export interface ScoutRewardDef { reward: ScoutKind; weight: number; amount: number; pack: PackTier | null }
 export interface WorldScoutingDef {
   /** Hours of the city's production a Gold, Wood, Food or Stone reward pays. */
@@ -2197,6 +2203,18 @@ export interface WorldScoutingDef {
 }
 
 export const WORLD_SCOUTING = balance.worldScouting as unknown as WorldScoutingDef;
+
+/** Precious materials on the world board (19 §7.4). */
+export interface WorldPreciousDef {
+  richFeatureShare: number;
+  richDesertShare: number;
+  perDay: number;
+  storeDays: number;
+  ownShare: number;
+  campPerPower: number;
+}
+
+export const WORLD_PRECIOUS = balance.worldPrecious as unknown as WorldPreciousDef;
 
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {

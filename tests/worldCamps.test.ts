@@ -111,6 +111,7 @@ describe('a camp guards its hex', () => {
     expect(claimRefusal(b, 1, camp, r.arrivesAt)).not.toBe(null);
     const loot = drainEffects(b, seat).find((e) => e.kind === 'loot');
     expect(loot).toMatchObject({ gold: Math.round(power * WORLD_CAMPS.goldPerPower) });
+    expect(loot?.kind === 'loot' && loot.precious?.amount).toBeGreaterThan(0);
     expect(snapshotOf(b, seat, r.arrivesAt).beaten).toContain(camp);
     expect(snapshotOf(b, 1, r.arrivesAt).beaten ?? []).not.toContain(camp);
   });

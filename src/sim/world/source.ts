@@ -10,6 +10,7 @@
 import { WORLD, WORLD_GEN } from '../data/definitions';
 import { generateBoard, SEAT_INDICES, withDungeons, type Board } from './board';
 import type { WorldDistrict, WorldUpgrade } from './types';
+import type { PreciousId } from '../state';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
@@ -37,6 +38,8 @@ export interface HexControl {
   active: boolean;
   /** Its store, in its district's currency; only on the player's own hexes. */
   stores: { currency: 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge'; amount: number; cap: number } | null;
+  /** A rich district's precious store (19 §7.4); only on the player's own. */
+  precious?: { id: PreciousId; amount: number; cap: number } | null;
   /** The army standing in its Fortress, if any. */
   garrison?: { army: string; owner: number; power: number } | null;
 }

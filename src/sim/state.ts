@@ -32,7 +32,10 @@ export type CurrencyId =
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
  *  four coins on the plank stays four (Docs/features/17-workshops-and-goods.md §1). */
-export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
+export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone' | PreciousId;
+/** The world's three precious materials: goods nothing makes (19 §7.4). */
+export type PreciousId = 'Starmetal' | 'Heartwood' | 'Moonglass';
+export const PRECIOUS: readonly PreciousId[] = ['Starmetal', 'Heartwood', 'Moonglass'];
 /** What the city holds of each. Absent = none, exactly like a Wallet. */
 export type GoodsStock = Partial<Record<GoodId, number>>;
 
