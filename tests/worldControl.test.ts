@@ -66,12 +66,19 @@ describe('claiming with a builder', () => {
     expect(busyBuilders(game.state)).toBe(1);
     expect(game.worldSource().hexOf(at)?.held).toBe(false);
 
-    // Every builder is busy: a second claim is refused before it is sent.
+    // Every builder is busy: a second claim is refused before it is sent,
+    // and raises the builder sheet with the builder out on the board.
     const second = boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) => n !== at
       && hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[n], SEEN).some((a) => a.kind === 'claim'));
     if (second !== undefined) {
+      const toastsBefore = toasts.length;
       await game.doClaimHex(second, 0);
-      expect(toasts.at(-1)).toBe('Every builder is busy');
+      expect(toasts).toHaveLength(toastsBefore);
+      expect(game.openOverlay).toBe('builder');
+      expect(game.builderWorldJobs()).toHaveLength(1);
+      expect(game.builderWorldJobs()[0].durationMs).toBe(OUTPOST_MS);
+      expect(game.builderAskJob()?.verb).toBe('Claim');
+      expect(busyBuilders(game.state)).toBe(1);
     }
 
     clock.t = T0 + OUTPOST_MS;

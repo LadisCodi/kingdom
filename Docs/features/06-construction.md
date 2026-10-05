@@ -24,17 +24,20 @@
 ## 2. The offer
 
 - A build or upgrade refused for want of a builder opens a sheet. No toast.
+  The same holds on the world map: a claim or a world build refused for want
+  of a builder opens the same sheet.
 - Two states, one sheet:
 
 | State | Shows |
 |---|---|
-| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot |
+| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot. A builder out on the world map shows its job and time left, with no Finish |
 | **At** the ceiling | the same, and **no hire** |
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player
   to the positioned ghost.
 - A job that ends while the sheet is open — on its own or by Finish — turns
-  its builder's row into a Build for the positioned ghost.
+  its builder's row into the job the sheet was raised for: the Build for the
+  positioned ghost, or the claim or world build that was refused.
 
 ## 3. The price
 
