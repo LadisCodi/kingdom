@@ -164,8 +164,8 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 - **A tile has thickness**: a side 16 % of the hex's radius deep under its two
   lower edges, the right face in shade, packed earth. Only revealed and sensed
   hexes are tiles; an Unknown hex is the cloud bank (§8.1).
-- The row in front hides that side, so it shows only where explored ground
-  meets the clouds: the board floats on them.
+- The row in front hides that side, and the clouds hide it where explored
+  ground meets them: the board stands in the clouds, never floats on them.
 - **Hex art is still authored flat** (256 × 296) and squashed when drawn.
 
 ## 8. States the map has to show
@@ -229,9 +229,12 @@ province under the midday sun. Target:
 - **The bank drifts**: the whole field slides slowly across the province,
   one texture repeat every ten minutes, with a slow boil over it; it never
   covers a cell the player can see.
-- **The world board lies on the same bank**, cut to its hexes: every Unknown
-  hex and everything past the board's edge, thinning inside an Unknown hex
-  toward a seen one.
+- **The world board stands in the same bank**: every Unknown hex and
+  everything past the board's edge, at full thickness up to every seen hex.
+  The tallest puffs lap over a seen hex's edges — a fifth of a hex over its
+  two near edges, a tenth over its two far ones. Plates and sides are under
+  the clouds; everything that stands on a hex, and every mark on the board,
+  is over them.
 - **Art:** the bank is one tileable texture
   (`src/render/fog/cloud_tile.webp`; original and prompt in
   [`fog/`](fog/)); the cushion and the payable patch are sprites.

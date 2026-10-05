@@ -9,8 +9,12 @@
 //
 // The three fog states are treatments of the same hex, never a second asset:
 // Revealed is full colour, Sensed is the same hex dimmed under a thin veil,
-// Unknown is under the cloud bank (cloudGrid.ts), a canvas of its own below
-// this one. Ownership is a border on the hex edge.
+// Unknown is under the cloud bank (cloudGrid.ts).
+//
+// Three canvases, bottom to top: the GROUND (plates, sides, seams, veils),
+// the CLOUD BANK, and this one — everything that stands on a hex, and every
+// mark over the board. So the clouds lap over the near edge of a tile while
+// nothing upright is hidden. Ownership is a border on the hex edge.
 
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
@@ -113,12 +117,22 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     canvas.height = Math.round(h * dpr);
   }
   camera.settle();
-  const ctx = canvas.getContext('2d')!;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  const layers = worldLayers(canvas);
+  if (layers.ground.width !== canvas.width || layers.ground.height !== canvas.height) {
+    layers.ground.width = canvas.width;
+    layers.ground.height = canvas.height;
+  }
+  const begin = (c: HTMLCanvasElement): CanvasRenderingContext2D => {
+    const g = c.getContext('2d')!;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    return g;
+  };
+  const ground = begin(layers.ground);
+  const ctx = begin(canvas);
 
   const { state, source, now } = frame;
   const board = source.board();
@@ -126,8 +140,9 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   const r = camera.hexRadius;
   const states = board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog));
 
-  // The clouds, under this canvas: every Unknown hex, and the world past the
-  // board's edge — the board stops and the clouds go on (19 §1).
+  // The clouds, over the ground and under this canvas: every Unknown hex,
+  // and the world past the board's edge — the board stops and the clouds go
+  // on (19 §1).
   const mask = new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
   let seen = '';
   for (const bh of board.hexes) {
@@ -135,7 +150,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     mask[maskIndex(bh.hex)] = 0;
     seen += `${bh.index},`;
   }
-  drawCloudBank(cloudLayer(canvas), HEX_GRID, {
+  drawCloudBank(layers.clouds, HEX_GRID, {
     w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
     mask, maskX: MASK_ORIGIN, maskY: MASK_ORIGIN, maskW: MASK_SPAN, maskH: MASK_SPAN,
     maskSig: seen, clock: performance.now(),
@@ -146,7 +161,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   for (const bh of board.hexes) {
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
-    drawHex(ctx, camera, bh, states[bh.index], c, frame);
+    drawHex(ground, ctx, camera, bh, states[bh.index], c, frame);
   }
 
   // Borders: each kingdom's city and the ground it holds or is claiming, as
@@ -233,20 +248,47 @@ function drawArmy(
 
 // ------------------------------------------------------------------ a hex
 
-/** The bank's canvas, made the first time the board is drawn and laid
- *  under it (`.world-layer`). */
-const cloudLayers = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
+/** The canvases under the board's: the ground, then the clouds — made the
+ *  first time the board is drawn and laid under it (`.world-layer`). */
+interface WorldLayers {
+  ground: HTMLCanvasElement;
+  clouds: HTMLCanvasElement;
+}
+const worldLayerSets = new WeakMap<HTMLCanvasElement, WorldLayers>();
 
-function cloudLayer(canvas: HTMLCanvasElement): HTMLCanvasElement {
-  let layer = cloudLayers.get(canvas);
-  if (layer === undefined) {
-    layer = document.createElement('canvas');
-    layer.className = 'world-layer';
-    layer.setAttribute('aria-hidden', 'true');
-    canvas.parentElement?.insertBefore(layer, canvas);
-    cloudLayers.set(canvas, layer);
+function worldLayers(canvas: HTMLCanvasElement): WorldLayers {
+  let layers = worldLayerSets.get(canvas);
+  if (layers === undefined) {
+    const make = (): HTMLCanvasElement => {
+      const c = document.createElement('canvas');
+      c.className = 'world-layer';
+      c.setAttribute('aria-hidden', 'true');
+      canvas.parentElement?.insertBefore(c, canvas);
+      return c;
+    };
+    layers = { ground: make(), clouds: make() };
+    layers.ground.classList.add('world-ground');
+    worldLayerSets.set(canvas, layers);
   }
-  return layer;
+  return layers;
+}
+
+/** Lay `fills` over a hex: on its ground, and over what this canvas has
+ *  drawn standing on it — never over the clouds between the two. */
+function veilHex(
+  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D,
+  c: { x: number; y: number }, r: number, fills: readonly string[],
+): void {
+  for (const g of [ground, ctx]) {
+    g.save();
+    if (g === ctx) g.globalCompositeOperation = 'source-atop';
+    hexPath(g, c.x, c.y, r);
+    for (const fill of fills) {
+      g.fillStyle = fill;
+      g.fill();
+    }
+    g.restore();
+  }
 }
 
 function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
@@ -258,7 +300,7 @@ function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
 }
 
 function drawHex(
-  ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
+  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
   c: { x: number; y: number }, frame: WorldFrame,
 ): void {
   const r = camera.hexRadius;
@@ -269,7 +311,7 @@ function drawHex(
 
   // The tile's thickness under its two lower edges: hidden by the row in
   // front, it shows only along the board's near rim and over the clouds.
-  drawSkirt(ctx, c.x, c.y, r);
+  drawSkirt(ground, c.x, c.y, r);
 
   // A city's hex and the Portal have their own drawing; every other hex is
   // its plate and its art (world-hex-art.md §2–§3).
@@ -277,17 +319,17 @@ function drawHex(
   const standing = held?.improvement ?? (held?.work !== null && held?.work !== undefined ? { kind: held.work.kind, level: 1 } : null);
   const art = bh.terrain === null ? null : hexArt(bh.terrain, bh.features, standing, hw < STRATEGIC_PX);
 
-  ctx.save();
-  hexPath(ctx, c.x, c.y, r);
-  ctx.clip();
+  ground.save();
+  hexPath(ground, c.x, c.y, r);
+  ground.clip();
   if (bh.role === 'portal') {
-    drawPortalGround(ctx, c.x, c.y, r);
+    drawPortalGround(ground, c.x, c.y, r);
   } else if (bh.terrain !== null && art !== null) {
-    ctx.fillStyle = PLATE_COLOR[bh.terrain];
-    ctx.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
-    drawSprite(ctx, variant(art.plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    ground.fillStyle = PLATE_COLOR[bh.terrain];
+    ground.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    drawSprite(ground, variant(art.plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
   }
-  ctx.restore();
+  ground.restore();
 
   if (bh.seat !== null) {
     const mine = bh.index === homeIndex(frame.state);
@@ -307,23 +349,15 @@ function drawHex(
       ctx.restore();
     }
     if (art.front !== null) drawCombo(ctx, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
-    if (held !== null) drawHeld(ctx, camera, key, held, c, fogState, frame);
+    if (held !== null) drawHeld(ground, ctx, camera, key, held, c, fogState, frame);
   }
 
-  if (fogState === 'Sensed') {
-    ctx.save();
-    hexPath(ctx, c.x, c.y, r);
-    ctx.fillStyle = SENSED_DIM;
-    ctx.fill();
-    ctx.fillStyle = SENSED_VEIL;
-    ctx.fill();
-    ctx.restore();
-  }
+  if (fogState === 'Sensed') veilHex(ground, ctx, c, r, [SENSED_DIM, SENSED_VEIL]);
 
-  hexPath(ctx, c.x, c.y, r * 0.995);
-  ctx.strokeStyle = SEAM;
-  ctx.lineWidth = Math.max(1, r * 0.025);
-  ctx.stroke();
+  hexPath(ground, c.x, c.y, r * 0.995);
+  ground.strokeStyle = SEAM;
+  ground.lineWidth = Math.max(1, r * 0.025);
+  ground.stroke();
 }
 
 /** How thick a tile is, as a share of its radius. */
@@ -466,7 +500,7 @@ function drawOutpost(
 }
 
 function drawHeld(
-  ctx: CanvasRenderingContext2D, camera: HexCamera, key: number,
+  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, key: number,
   held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, frame: WorldFrame,
 ): void {
   const r = camera.hexRadius;
@@ -475,13 +509,7 @@ function drawHeld(
   // its builder is still at it.
   if (hw >= STRATEGIC_PX) drawOutpost(ctx, held.held, key, c, hw, r);
   // Cut off from its city: greyed, buildings intact (art-direction §8).
-  if (held.held && !held.active) {
-    ctx.save();
-    hexPath(ctx, c.x, c.y, r);
-    ctx.fillStyle = CUT_OFF;
-    ctx.fill();
-    ctx.restore();
-  }
+  if (held.held && !held.active) veilHex(ground, ctx, c, r, [CUT_OFF]);
   // A builder at work: an hourglass and the time left.
   const now = frame.now;
   const busyUntil = !held.held ? held.outpostAt : held.work?.at ?? null;
