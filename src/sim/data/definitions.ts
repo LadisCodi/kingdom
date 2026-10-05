@@ -2216,6 +2216,11 @@ export interface WorldPreciousDef {
 
 export const WORLD_PRECIOUS = balance.worldPrecious as unknown as WorldPreciousDef;
 
+/** The Exchange (19 §7.5). */
+export interface WorldExchangeDef { offerHours: number; maxOffers: number; botTakeHours: number; botOfferAmount: number }
+
+export const WORLD_EXCHANGE = balance.worldExchange as unknown as WorldExchangeDef;
+
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
   actEveryHours: number; maxHexes: number; attackChance: number; armyPower: number; garrisonPower: number;

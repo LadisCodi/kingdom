@@ -53,7 +53,9 @@ import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { renderArmySheet } from './ui/world/armySheet';
+import { renderExchangeSheet } from './ui/world/exchangeSheet';
 import { mountExplorerChip } from './ui/world/explorerChip';
+import { mountExchangeChip } from './ui/world/exchangeChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
@@ -198,6 +200,7 @@ async function boot(): Promise<void> {
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
+  mountExchangeChip(game, document.getElementById('worldtrade')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -244,6 +247,7 @@ async function boot(): Promise<void> {
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
     army: renderArmySheet,
+    exchange: renderExchangeSheet,
     builder: renderBuilderSheet,
     pass: renderPassSheet,
     survey: renderSurveySheet,

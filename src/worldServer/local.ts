@@ -13,10 +13,10 @@ import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
   claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  sendArmy, setBoost, snapshotOf, tribute, upgrade,
+  postOffer, sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
 } from './core';
 import type {
-  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard, ServerWorld,
+  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard, ServerWorld, TradeResult,
   WorldSnapshot,
 } from './types';
 
@@ -30,6 +30,11 @@ export interface WorldServerApi {
   upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult>;
   /** Pay a camp off — the tribute paid by the client (19 §5.4). */
   tribute(index: number, now: number, asSeat?: number): Promise<CommandResult>;
+  /** The Exchange (19 §7.5): the client pays what it gives, and is handed
+   *  what it receives. */
+  postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult>;
+  takeOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
+  withdrawOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
   finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
@@ -146,6 +151,18 @@ export class LocalWorldServer implements WorldServerApi {
 
   async tribute(index: number, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => tribute(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult> {
+    return this.run(asSeat, (b, seat) => postOffer(b, seat, give, want, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async takeOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult> {
+    return this.run(asSeat, (b, seat) => takeOffer(b, seat, offerId, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async withdrawOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult> {
+    return this.run(asSeat, (b, seat) => withdrawOffer(b, seat, offerId, now), { ok: false, why: 'NoBoard' });
   }
 
   async finish(index: number, now: number, asSeat?: number): Promise<CommandResult> {
