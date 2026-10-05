@@ -74,7 +74,9 @@ const nodeBlock = (id, n) => {
   lines.push(
     `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
     `      "gold": ${n.gold ?? 0}`
-      + (n.knowledge ? `, "knowledge": ${n.knowledge}` : ''),
+      + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
+      + (Object.keys(n.goods ?? {}).length > 0 ? `, "goods": ${json(n.goods)}` : '')
+      + (n.anyPrecious > 0 ? `, "anyPrecious": ${n.anyPrecious}` : ''),
   );
   if ((n.unlocks ?? []).length > 0) {
     lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);
@@ -98,9 +100,15 @@ export function serialiseTechTree(doc, tomes) {
   const eras = tomes
     .map((tome) => `    ${json(tome)}: [${(doc.eras?.[tome] ?? [0]).join(', ')}]`)
     .join(',\n');
+  // What finishing each band pays, one line per book beside its bands.
+  const rewards = tomes
+    .map((tome) => `    ${json(tome)}: [${(doc.eraRewards?.[tome] ?? (doc.eras?.[tome] ?? [0]).map(() => null))
+      .map(json).join(', ')}]`)
+    .join(',\n');
   const text = '{\n'
     + `  ${json('_note')}: ${json(NOTE)},\n`
     + `  "eras": {\n${eras}\n  },\n`
+    + `  "eraRewards": {\n${rewards}\n  },\n`
     + '  "technologies": {\n'
     + inReadingOrder(nodes, tomes).map((id) => nodeBlock(id, nodes[id])).join(',\n')
     + '\n  }\n}\n';

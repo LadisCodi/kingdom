@@ -40,6 +40,23 @@
   z-index: 3;
 }
 #worldchip[hidden] { display: none; }
+/* The Exchange chip, under the explorers chip. */
+#worldtrade {
+  position: absolute;
+  left: 0;
+  top: calc(var(--hud-h) + var(--rpx) * 108);
+  z-index: 3;
+}
+#worldtrade[hidden] { display: none; }
+.world-chip-label { font-weight: var(--weight-strong); }
+
+/* THE EXCHANGE — what is held, the offers, and an offer to make. */
+.ex-held { display: flex; justify-content: space-around; gap: calc(var(--px) * 8); }
+.ex-lot { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); font-weight: var(--weight-strong); }
+.ex-pick { flex-wrap: nowrap; }
+.ex-pick .k-btn { flex: 1 1 0; min-width: 0; }
+.k-toggles.ex-pick .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: 0; }
+.ex-offer { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--px) * 3); }
 .world-chip.hud-plaque { cursor: pointer; }
 
 /* THE DISPATCH SHEET — a hex, what it holds, and Explore. */
@@ -97,4 +114,227 @@
 @keyframes world-lock-break {
   0% { translate: 0 0; rotate: 0deg; opacity: 1; }
   100% { translate: calc(var(--px) * 10) calc(var(--px) * 40); rotate: 40deg; opacity: 0; }
+}
+
+/* THE DELVE — a dungeon's descent, its race and the army camped there
+   (19 §8.2, mockups m65 and m66). The descent is dark rock lit by torches;
+   the plaques on it are parchment, the banners cloth. */
+.dv-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  min-height: 100%;
+  padding: calc(var(--px) * 6) calc(var(--px) * 8) calc(var(--px) * 10);
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(255, 170, 70, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.35) 100%),
+    url('../../assets/delve-rock.png') 0 0 / calc(var(--px) * 320) calc(var(--px) * 320),
+    #2f2924;
+  border-radius: var(--radius-sm);
+  color: var(--ink-inverse);
+}
+.dv-where { margin: 0; text-align: center; font-weight: var(--weight-strong); font-size: var(--text-helper); }
+
+.dv-race { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
+.dv-rope {
+  position: relative;
+  height: calc(var(--px) * 30);
+  margin: 0 calc(var(--px) * 18);
+  background: linear-gradient(180deg, transparent 45%, #b48a52 45%, #8a6436 55%, transparent 55%);
+}
+.dv-banner {
+  position: absolute;
+  top: calc(var(--px) * 2);
+  transform: translateX(-50%);
+  padding: calc(var(--px) * 3) calc(var(--px) * 7) calc(var(--px) * 6);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+  background: linear-gradient(180deg, #c8463a, #8f2a22);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+.dv-banner.is-you { background: linear-gradient(180deg, #3f7fe0, #24509c); z-index: 1; }
+.dv-race-line { margin: 0; text-align: center; font-size: calc(var(--px) * 11); color: #e9d6b0; }
+
+.dv-tabs { justify-content: center; flex-wrap: nowrap; }
+.dv-tabs .k-btn { flex: 1 1 0; min-width: 0; }
+.k-toggles.dv-tabs .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: 0; }
+
+.dv-descent { position: relative; display: flex; flex-direction: column; gap: calc(var(--px) * 2); }
+/* Two torches on the walls, lighting the way down. */
+.dv-descent::before,
+.dv-descent::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * 40);
+  width: calc(var(--px) * 18);
+  height: calc(var(--px) * 40);
+  background: url('../../assets/delve-torch.png') center / contain no-repeat;
+  filter: drop-shadow(0 0 calc(var(--px) * 8) rgba(255, 170, 60, 0.8));
+  pointer-events: none;
+}
+.dv-descent::before { left: 0; }
+.dv-descent::after { right: 0; top: calc(var(--px) * 220); }
+.dv-room {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  margin-left: 6%;
+  width: 88%;
+}
+.dv-room.is-right { flex-direction: row-reverse; text-align: right; }
+/* The boss stands alone at the foot of the depth, his chest beside him. */
+.dv-room.is-boss { flex-direction: column; margin-left: 0; width: 100%; text-align: center; gap: calc(var(--px) * 4); }
+.dv-room.is-boss .dv-tag { align-items: center; font-size: calc(var(--px) * 14); }
+/* The stair between two rooms: a carved groove down the rock. */
+.dv-room + .dv-room::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * -10);
+  width: 22%;
+  height: calc(var(--px) * 12);
+  height: calc(var(--px) * 26);
+  top: calc(var(--px) * -16);
+  transform: translateX(-50%) scaleX(-1);
+  background: url('../../assets/delve-stair.png') center / contain no-repeat;
+}
+.dv-room.is-right + .dv-room::before { transform: translateX(-50%); }
+.dv-disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 52);
+  height: calc(var(--px) * 52);
+  --portrait-size: calc(var(--px) * 44);
+  background: url('../../assets/delve-node.png') center / contain no-repeat;
+}
+.dv-disc.is-boss {
+  width: calc(var(--px) * 76);
+  height: calc(var(--px) * 70);
+  --portrait-size: calc(var(--px) * 50);
+  background-image: url('../../assets/delve-node-boss.png');
+}
+.dv-disc-n { font-weight: var(--weight-title); color: #d9cbb4; }
+.dv-room.is-cleared { opacity: 0.55; }
+.dv-room.is-frontier .dv-disc:not(.is-boss) { background-image: url('../../assets/delve-node-lit.png'); }
+.dv-room.is-frontier .dv-disc { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 178, 60, 0.75)); }
+.dv-room.is-ahead { filter: saturate(0.5) brightness(0.8); }
+.dv-room.is-ahead .dv-disc { filter: brightness(0.75) blur(calc(var(--px) * 0.6)); }
+.dv-tag { display: flex; flex-direction: column; font-size: calc(var(--px) * 12); color: #e9d6b0; }
+.dv-tag-name { font-weight: var(--weight-strong); }
+.dv-tag-power { opacity: 0.8; }
+.dv-plaque {
+  flex: 1;
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+  border-radius: var(--radius-sm);
+  background: var(--parchment) url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  color: var(--ink);
+  box-shadow: 0 calc(var(--px) * 2) 0 var(--wood-dark);
+  text-align: left;
+}
+.dv-plaque-title { margin: 0; font-weight: var(--weight-title); }
+.dv-plaque-power { margin: 0 0 calc(var(--px) * 4); font-size: var(--text-helper); color: var(--ink-muted); }
+.dv-pay { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 6); }
+.dv-chest {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 4) calc(var(--px) * 6);
+  border-radius: var(--radius-sm);
+  background: rgba(244, 228, 193, 0.92);
+  color: var(--ink);
+}
+
+.dv-dock {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+  margin-top: auto;
+  padding: calc(var(--px) * 8);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--wood-light), var(--wood) 40%, var(--wood-dark));
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 230, 190, 0.35), 0 calc(var(--px) * -4) calc(var(--px) * 12) rgba(0, 0, 0, 0.45);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+.dv-dock .wd-line, .dv-dock .k-reason { color: var(--ink-inverse); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+.dv-army { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--px) * 6); }
+.dv-slot { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); --portrait-size: calc(var(--px) * 40); }
+.dv-slot .k-hp { width: calc(var(--px) * 40); }
+.dv-count { font-weight: var(--weight-strong); font-size: calc(var(--px) * 12); }
+.dv-lost { color: #ffb4a4; font-weight: var(--weight-strong); font-size: calc(var(--px) * 11); }
+.dv-power { margin-left: auto; font-weight: var(--weight-title); }
+.dv-calls { display: flex; gap: calc(var(--px) * 8); justify-content: flex-end; }
+
+.has-spoils { position: relative; }
+.dv-spoils {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 14, 10, 0.55);
+  border-radius: var(--radius-sm);
+  z-index: 2;
+}
+.dv-spoils-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  width: 82%;
+  padding: calc(var(--px) * 12);
+  border-radius: var(--radius);
+  background: var(--parchment) url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  color: var(--ink);
+  box-shadow: 0 0 0 var(--outline) var(--wood-dark), 0 calc(var(--px) * 6) calc(var(--px) * 18) rgba(0, 0, 0, 0.5);
+}
+.dv-spoils-title { margin: 0; font-size: calc(var(--px) * 22); font-weight: var(--weight-title); }
+.dv-spoils .dv-pay { justify-content: center; }
+
+/* ---- the nickname, asked the first time out (19 §1.3) */
+.nick { display: flex; flex-direction: column; gap: calc(var(--px) * 10); }
+.nick-lede {
+  display: flex;
+  gap: calc(var(--px) * 12);
+  align-items: flex-start;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.35;
+}
+.nick-lede p { margin: 0 0 calc(var(--px) * 6); }
+.nick-lede > .icon { --icon-size: calc(var(--px) * 48); flex: none; filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.25)); }
+/* A slip of parchment set INTO the wood: lit from above, so the shadow sits
+   inside its top edge. */
+.nick-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: calc(var(--px) * 10) calc(var(--px) * 12);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  background: var(--parchment);
+  box-shadow: inset 0 calc(var(--px) * 3) calc(var(--px) * 3) rgba(60, 36, 18, 0.28), 0 calc(var(--px) * 1) 0 rgba(255, 255, 255, 0.3);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: var(--weight-strong);
+  font-size: calc(var(--px) * 20);
+  outline: none;
+}
+.nick-field::placeholder { color: var(--ink-muted); font-weight: var(--weight-body); }
+.nick-field:focus { border-color: var(--wood-light); }
+.nick-hint { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; min-height: 1.3em; }
+.nick-hint.is-refused { color: var(--clay); font-weight: var(--weight-strong); }
+.nick > .k-btn { align-self: center; }
+.nick-fine {
+  display: flex;
+  gap: calc(var(--px) * 6);
+  align-items: flex-start;
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  line-height: 1.3;
 }

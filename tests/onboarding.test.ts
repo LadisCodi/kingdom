@@ -27,7 +27,7 @@ import { maxPopulation } from '../src/sim/population';
 import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import {
-  giveBook, isTechComplete, isTomeOpen, revealedCellCount, techCost, techKnowledgeMissing,
+  isTechComplete, revealedCellCount, techCost, techKnowledgeMissing,
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
@@ -293,10 +293,7 @@ describe('a player can actually play the onboarding', () => {
     // a player who has not yet been shown what refills it.
     expect(mana(state)).toBeGreaterThan(0);
 
-    // ---- step 26: further afield — and the book of the army opens on the
-    // first lair FOUND, never before (Docs/features/22-progression.md §4) ----
-    expect(isTomeOpen(state, 'Warfare'), 'Warfare is handed over, not opened by a quest').toBe(false);
-    expect(isTomeOpen(state, 'Magic'), 'Magic opens on a claim').toBe(false);
+    // ---- step 26: further afield ----
     clearNearest(QUESTS.find((q) => q.id === 'FurtherAfield')!.goalAmount - revealedCellCount(state));
     finish('FurtherAfield');
     // ---- step 27: war drums — the chain asks for a lair FOUND, because the
@@ -308,12 +305,8 @@ describe('a player can actually play the onboarding', () => {
       tick(1);
     }
     finish('WarDrums');
-    // The book is Isolde's to give: the `firstLair` scene hands it over once
-    // the camp's card has been opened (Docs/features/23-tutorials.md §4.2).
-    expect(isTomeOpen(state, 'Warfare')).toBe(false);
-    giveBook(state, 'Warfare');
-    expect(isTomeOpen(state, 'Warfare')).toBe(true);
-    expect(isTomeOpen(state, 'Magic')).toBe(false);
+    // The Warrior is a card in the kingdom's one tree, chapter 2: nothing has
+    // to be handed over first.
     // The Warden has been the kingdom's all along, and steps up now.
     expect(state.heroes.owned).toContain('Warden');
     research('Warrior');

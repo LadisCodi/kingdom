@@ -21,28 +21,31 @@ import { COLS, pageRows } from '../src/ui/research/layout';
 const doc = treeDoc as unknown as TechTreeDoc;
 const clone = (): TechTreeDoc => structuredClone(doc);
 
-describe('the Warfare book', () => {
-  const nodes = Object.entries(doc.technologies)
-    .filter(([, n]) => n.tome === 'Warfare')
-    .sort(([, a], [, b]) => (a.row! - b.row!) || (a.col! - b.col!));
+// The army is a LANE of the kingdom's one tree, not a book: its cards sit in
+// the chapters beside the city's (Docs/plans/tech-tree-rework.md §3.1).
+describe('the army lane', () => {
+  const kingdom = Object.entries(doc.technologies).filter(([, n]) => n.tome === 'Kingdom');
+  const unitCards = kingdom
+    .filter(([, n]) => (n.unlocks ?? []).some((u) => 'unit' in u))
+    .sort(([, a], [, b]) => a.row! - b.row!);
 
-  it('costs 500 Gold and up, never cheaper than a card on a row above', () => {
-    let floor = 500;
-    let row = -1;
-    let rowMax = 0;
-    for (const [id, n] of nodes) {
-      if (n.row !== row) { floor = Math.max(floor, rowMax); row = n.row!; rowMax = 0; }
-      expect(n.gold ?? 0, id).toBeGreaterThanOrEqual(floor);
-      rowMax = Math.max(rowMax, n.gold ?? 0);
-    }
+  it('opens a soldier a chapter: Warrior, then Archer, then Lancer, then Cavalry', () => {
+    expect(unitCards.map(([id]) => id)).toEqual(['Warrior', 'Archery', 'Spears', 'Cavalry']);
+    const eras = unitCards.map(([, n]) => n.era!);
+    for (let i = 1; i < eras.length; i++) expect(eras[i]).toBeGreaterThan(eras[i - 1]);
   });
 
-  it('opens its units and halls one at a time, soldiers before the first new arm', () => {
-    const unlocks = nodes.filter(([, n]) => n.kind === 'unlock').map(([id]) => id);
-    expect(unlocks).toEqual(['Warrior', 'Infirmary', 'Archery', 'Spears', 'WarbandII', 'Cavalry', 'WarbandIII']);
-    // Every unlock but the first sits alone on its row: the funnel's neck.
-    for (const [id, n] of nodes.filter(([, x]) => x.kind === 'unlock')) {
-      expect(nodes.filter(([, x]) => x.row === n.row).length, id).toBe(1);
+  it('raises the halls a level a chapter once the halls exist', () => {
+    const hallLevel = (n: (typeof kingdom)[number][1]): number[] => (n.unlocks ?? [])
+      .flatMap((u) => ('districtLevel' in u && u.districtLevel.id === 'Barracks' ? [u.districtLevel.level] : []));
+    const byEra = kingdom
+      .filter(([, n]) => hallLevel(n).length > 0)
+      .map(([, n]) => [n.era!, Math.min(...hallLevel(n))] as const)
+      .sort((a, b) => a[0] - b[0]);
+    expect(byEra.length).toBeGreaterThan(0);
+    for (let i = 1; i < byEra.length; i++) {
+      expect(byEra[i][0]).toBeGreaterThan(byEra[i - 1][0]);
+      expect(byEra[i][1]).toBeGreaterThan(byEra[i - 1][1]);
     }
   });
 });
@@ -226,7 +229,8 @@ describe('what the rules refuse', () => {
 
   it('a requirement that leaves the tome, because the page cannot draw it', () => {
     const d = clone();
-    d.technologies.Forestry.requires = ['WarbandII'];
+    // A found book's card cannot require one in the kingdom's tree.
+    d.technologies.FarsightI.requires = ['Forestry'];
     expect(messages(d).some((m) => m.includes('another tome'))).toBe(true);
   });
 
@@ -469,12 +473,26 @@ describe('what the rules refuse', () => {
   // saves it and the game leaves the card out (`definitions.ts`). What the
   // editor does when it takes a card off the page is exactly this: the slot
   // goes, and so does every requirement at either end of it.
-  it('refuses a card above the last row that nothing below requires', () => {
+  // A DEAD END is legal: a card nothing below requires is optional, the way
+  // Elvenar's are (Docs/plans/tech-tree-rework.md §3.2).
+  it('lets a card above the last row lead nowhere — an optional dead end', () => {
     const d = clone();
     // Masonry is the only card that needs Pickaxes: cut the edge.
     d.technologies.Masonry.requires = (d.technologies.Masonry.requires ?? []).filter((r) => r !== 'Pickaxes');
+    expect(validateTechTree(d).errors.map((e) => e.message)).toEqual([]);
+  });
+
+  // What a band must do instead: end in ONE finale, alone on its last row,
+  // so the next chapter grows from a single card and the chapters run in order.
+  it('refuses a chapter that ends on a row of more than one card', () => {
+    const d = clone();
+    // Magistracy is chapter 3's finale; set a dead end beside it on its row.
+    const finale = d.technologies.Magistracy;
+    d.technologies.IronPicksI.row = finale.row;
+    d.technologies.IronPicksI.col = 0;
+    d.technologies.IronPicksI.requires = ['Fishing'];
     expect(validateTechTree(d).errors.map((e) => e.message))
-      .toContainEqual(expect.stringMatching(/^Pickaxes leads nowhere/));
+      .toContainEqual(expect.stringMatching(/ends on row .* with 2 cards/));
   });
 
   it('a tree with a card in the holding pen still saves', () => {

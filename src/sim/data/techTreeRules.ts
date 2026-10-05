@@ -23,9 +23,13 @@
 // a designer probably did not mean.
 
 import balance from './balance';
-import { COLS } from '../../ui/research/layout';
 import { effectProblems, type TechEffect } from './techEffectRules';
 import type { TomeId } from '../state';
+
+/** Three columns to a tome page. A fourth would not fit a phone, and the
+ *  flow stops reading as a flow past three. The page's geometry
+ *  (ui/research/layout.ts) is drawn from this. */
+export const COLS = 3;
 
 /** What a technology puts in the player's hands. One entry per thing it
  *  opens; every gate the game checks is derived from these. */
@@ -81,6 +85,11 @@ export interface TechNodeDoc {
   /** City Gold and kingdom Knowledge. A technology takes no time. */
   gold: number;
   knowledge?: number;
+  /** Refined goods paid with the Gold, when it is completed. Absent = none. */
+  goods?: Record<string, number>;
+  /** Precious material of any kind, paid from what the player holds most of
+   *  (Docs/features/19-world-map.md §7.6). Absent = none. */
+  anyPrecious?: number;
   /** `kind: 'unlock'` only. */
   unlocks?: TechUnlock[];
   /** `kind: 'bonus'` only: what this technology moves, and what it aims at
@@ -107,6 +116,12 @@ export interface TechTreeDoc {
    * `[0]` is always 0: a book's first band opens with the book.
    */
   eras: Record<string, number[]>;
+  /**
+   * The card pack finishing a band pays: `eraRewards.Civics[i]` is what
+   * researching every placed card of era `i + 1` grants, once, or null for
+   * nothing. Parallel to `eras`; absent = no band of that book pays anything.
+   */
+  eraRewards?: Record<string, Array<string | null>>;
   technologies: Record<string, TechNodeDoc>;
 }
 
@@ -143,7 +158,7 @@ export interface TechTreeValidation {
  *  to know the set, and importing `definitions.ts` from here would be a cycle
  *  (it imports this). Typed against the union, so a typo is a compile error
  *  even though a missing tome is not. */
-export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'];
+export const TOME_IDS: TomeId[] = ['Kingdom', 'Sagas', 'Atlas'];
 
 /**
  * A RANK LADDER is a naming convention, not a field and not a chain: a stem
@@ -184,7 +199,7 @@ export function ladderRank(id: string): { stem: string; rank: number } | null {
  * three books ship four each, and a designer may add or drop one without a
  * code change. This only stops a hand-edited file claiming forty.
  */
-export const ERA_CEILING = 8;
+export const ERA_CEILING = 10;
 
 /** How many bands this book has. */
 export const eraCount = (doc: TechTreeDoc, tome: string): number =>
@@ -203,6 +218,8 @@ export const DISTRICT_IDS = Object.keys(balance.districts);
 export const UNIT_IDS = Object.keys(balance.units);
 export const HARVEST_IDS = Object.keys(balance.harvest);
 export const TERRAIN_IDS = Object.keys(balance.terrain);
+export const GOOD_IDS = Object.keys(balance.goods);
+export const PACK_TIER_IDS = Object.keys(balance.packs);
 const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxLevel: number }>;
 
 /** A technology that HAS a slot — the same object, with the four fields known
@@ -369,6 +386,25 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     if (!TOME_IDS.includes(tome as TomeId)) {
       errors.push({ message: `the bands name "${tome}", which is not a tome` });
     }
+  }
+  // ---- what finishing a band pays ---------------------------------------
+  for (const [tome, rewards] of Object.entries(doc.eraRewards ?? {})) {
+    const ladder = doc.eras?.[tome];
+    if (ladder === undefined) {
+      errors.push({ message: `the band rewards name "${tome}", which has no bands` });
+      continue;
+    }
+    if (!Array.isArray(rewards) || rewards.length !== ladder.length) {
+      errors.push({
+        message: `${tome} has ${ladder.length} bands but ${Array.isArray(rewards) ? rewards.length : 0} band rewards`,
+      });
+      continue;
+    }
+    rewards.forEach((tier, i) => {
+      if (tier !== null && !PACK_TIER_IDS.includes(tier)) {
+        errors.push({ message: `${tome} era ${i + 1} pays a "${tier}", which is not a pack` });
+      }
+    });
   }
 
   // ---- identity ---------------------------------------------------------
@@ -553,24 +589,24 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
-  // ---- nothing leads nowhere ------------------------------------------
-  // Every card above a book's last row is needed by one on the row below it,
-  // so every research ends up on the way down the page — a dead end is a
-  // card the player can skip for good, and a page that reads as a tree
-  // should not have twigs. A `planned` card is the exception: nothing that
-  // works may wait on a no-op, so it leads nowhere until it is built.
-  const lastRow = new Map<string, number>();
+  // ---- every chapter ends in one finale ----------------------------------
+  // A band is a CHAPTER: its spine converges on one card, alone on the band's
+  // last row, and the next band's first row grows from it — which is what
+  // makes the chapters sequential, since a requirement is always the row
+  // above. A card that nothing below requires is a DEAD END: optional, and
+  // legal anywhere above the finale (Docs/plans/tech-tree-rework.md §3.2).
+  const bandRows = new Map<string, number>();
   for (const node of onPage.values()) {
-    lastRow.set(node.tome, Math.max(lastRow.get(node.tome) ?? node.row, node.row));
+    const key = `${node.tome}:${node.era}`;
+    bandRows.set(key, Math.max(bandRows.get(key) ?? node.row, node.row));
   }
-  const needed = new Set<string>();
-  for (const node of onPage.values()) for (const req of node.requires ?? []) needed.add(req);
-  for (const [id, node] of onPage) {
-    if (node.planned !== true && node.row < (lastRow.get(node.tome) ?? node.row) && !needed.has(id)) {
+  for (const [key, row] of bandRows) {
+    const [tome, era] = key.split(':');
+    const finale = [...onPage].filter(([, n]) => n.tome === tome && n.row === row);
+    if (finale.length !== 1) {
       errors.push({
-        message: `${id} leads nowhere — a card on the row below has to require it, `
-          + 'or it belongs on the book\'s last row',
-        tech: id,
+        message: `${tome} era ${era} ends on row ${row} with ${finale.length} cards — `
+          + 'a chapter ends in one finale, alone on its last row',
       });
     }
   }
@@ -608,6 +644,16 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     for (const [what, value] of money) {
       if (!Number.isInteger(value) || value < 0) {
         errors.push({ message: `${id} has ${what} of ${value}`, tech: id });
+      }
+    }
+    if (node.anyPrecious !== undefined && (!Number.isInteger(node.anyPrecious) || node.anyPrecious < 0)) {
+      errors.push({ message: `${id} asks for ${node.anyPrecious} of any precious material — a whole number`, tech: id });
+    }
+    for (const [good, n] of Object.entries(node.goods ?? {})) {
+      if (!GOOD_IDS.includes(good)) {
+        errors.push({ message: `${id} asks for ${good}, which is not a good`, tech: id });
+      } else if (!Number.isInteger(n) || n <= 0) {
+        errors.push({ message: `${id} asks for ${n} ${good} — a whole number above 0`, tech: id });
       }
     }
     // NOTHING is free. A technology that cost neither Gold nor Knowledge

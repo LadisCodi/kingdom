@@ -53,10 +53,16 @@ import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { renderArmySheet } from './ui/world/armySheet';
+import { renderExchangeSheet } from './ui/world/exchangeSheet';
+import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
+import { mountExchangeChip } from './ui/world/exchangeChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
+import { RemoteWorldServer } from './worldServer/remote';
+import { renderNicknameSheet } from './ui/world/nicknameSheet';
+import { cloudWorldCall } from './persist/cloud';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
@@ -161,9 +167,13 @@ async function boot(): Promise<void> {
   const worldCanvas = document.getElementById('world') as HTMLCanvasElement;
   const worldCamera = new HexCamera(worldCanvas);
   game.worldCamera = worldCamera;
-  // World control is server state. Until the server exists, a local stand-in
-  // plays its part, under its own key (worldServer/local.ts).
-  game.worldServer = new LocalWorldServer(browserStore());
+  // World control is server state: the `world` edge function when the cloud
+  // is up (worldServer/remote.ts), else a stand-in in the browser under its
+  // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
+  const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
+  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
+  game.playerId = saveManager.playerId();
+  game.persist = () => saveManager.save(game.state, game.now());
   void game.connectWorld();
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
@@ -198,6 +208,7 @@ async function boot(): Promise<void> {
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
+  mountExchangeChip(game, document.getElementById('worldtrade')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -244,12 +255,15 @@ async function boot(): Promise<void> {
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
     army: renderArmySheet,
+    exchange: renderExchangeSheet,
+    delve: renderDelveScreen,
     builder: renderBuilderSheet,
     pass: renderPassSheet,
     survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,
+    nickname: renderNicknameSheet,
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
@@ -366,7 +380,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -569,6 +583,9 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       game.state.kingdom.lastKnowledgeAt -= delta;
+      // Mana accrues against its own anchor, like rent: without this a warped
+      // absence filled every store and left the well where it was.
+      game.state.city.lastManaAt -= delta;
       // The founding too, so a warp past midnight is a second day.
       game.state.tutorial.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;

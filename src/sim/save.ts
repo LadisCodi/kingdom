@@ -988,6 +988,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.research': {
         Completed: state.research.completed,
         Poured: state.research.poured,
+        Rewarded: state.research.rewarded,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -1106,6 +1107,8 @@ export function serialize(state: GameState, now: number): SaveFile {
         Armies: state.world.armies.map((a) => ({
           ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
         })),
+        // The last world-server effect applied: saved with what it changed.
+        EffectSeq: state.world.effectSeq,
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1408,6 +1411,7 @@ export function deserialize(
       poured: Object.fromEntries(Object.entries((researchDto.Poured ?? {}) as Record<string, number>)
         .filter(([id, n]) => TECHNOLOGIES[id as TechId] !== undefined && n > 0
           && !(researchDto.Completed ?? []).includes(id))) as Partial<Record<TechId, number>>,
+      rewarded: Array.isArray(researchDto.Rewarded) ? (researchDto.Rewarded as string[]) : [],
     };
   }
 
@@ -1715,6 +1719,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
     Armies?: Array<Record<string, unknown>>;
+    EffectSeq?: unknown;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   // A trip's time to leave each hex of its path. (A trip from before v78
@@ -1749,7 +1754,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
       })),
     builds: (Array.isArray(d.Builds) ? d.Builds : [])
       .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
-        && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never)))
+        && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never) || b.What === 'Repair'))
       .map((b) => ({
         index: b.Index as number,
         what: b.What as GameState['world']['builds'][number]['what'],
@@ -1759,7 +1764,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
     armies: (Array.isArray(d.Armies) ? d.Armies : [])
       .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
-        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve', 'portal'].includes(a.Purpose as string))
+        && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve', 'portal', 'clear'].includes(a.Purpose as string))
       .map((a) => ({
         id: a.ID as string,
         heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],
@@ -1768,5 +1773,6 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         target: a.Target as number,
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),
+    effectSeq: Number.isInteger(d.EffectSeq) && (d.EffectSeq as number) >= 0 ? d.EffectSeq as number : 0,
   };
 }

@@ -255,15 +255,26 @@ describe('exploring pays in ground, not in currency', () => {
     // 583,385: the world board's explorers — Scouts I–II and Pathfinding
     // joined the Atlas under Cartography.
     // 592,385: Muster, the War Camp's card, closes the Atlas page.
-    expect(tree).toBe(592_385);
+    // 9,674,305: one tree in nine chapters (2026-10-05), every card past the
+    // tutorial priced in days of the city's Gold; the cut ladders left.
+    // 4,922,305: chapters 5–9 at half the Gold, so their Knowledge, not a
+    // second Gold wall, is what holds them.
+    expect(tree).toBe(4_922_305);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
-    // materials: a full quarry buys no research, which is what keeps the tree
-    // in the same contest as fog and buildings.
+    // raw materials: a full quarry buys no research, which is what keeps the
+    // tree in the same contest as fog and buildings. (Refined GOODS ride
+    // beside the price, in `goods`, from chapter 5 — not in `cost`.)
     for (const id of TECH_ORDER) {
       const keys = Object.keys(TECHNOLOGIES[id].cost);
       expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
-      expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
+      // A FOUND book is paid outside the Knowledge budget, in Gold alone, so it
+      // never draws on a chapter (Docs/plans/tech-tree-rework.md §6).
+      if (TECHNOLOGIES[id].tome === 'Kingdom') {
+        expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
+      } else {
+        expect(keys, `${id} is a found book's card`).toEqual(['Gold']);
+      }
     }
   });
 });

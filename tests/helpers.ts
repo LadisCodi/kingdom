@@ -188,7 +188,7 @@ export const rentStored = (state: GameState): number =>
 
 /** The houses' rent a minute: the city's Gold income less the Townhall's own. */
 export const rentPerMinute = (state: GameState): number =>
-  cityGoldPerMinute(state) - ownGoldPerMinute(townhall(state));
+  cityGoldPerMinute(state) - ownGoldPerMinute(state, townhall(state));
 
 /** The player sweeps the city: every building's store into the wallet at `t`. */
 export const collectAll = (state: GameState, t: number): Wallet => {

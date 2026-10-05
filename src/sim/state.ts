@@ -32,7 +32,10 @@ export type CurrencyId =
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
  *  four coins on the plank stays four (Docs/features/17-workshops-and-goods.md §1). */
-export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
+export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone' | PreciousId;
+/** The world's three precious materials: goods nothing makes (19 §7.4). */
+export type PreciousId = 'Starmetal' | 'Heartwood' | 'Moonglass';
+export const PRECIOUS: readonly PreciousId[] = ['Starmetal', 'Heartwood', 'Moonglass'];
 /** What the city holds of each. Absent = none, exactly like a Wallet. */
 export type GoodsStock = Partial<Record<GoodId, number>>;
 
@@ -83,7 +86,7 @@ export type HeroId =
  *  layout: one bounded page per book, each paced by eras
  *  (Docs/features/07-research.md §2); what opens each is
  *  `sim/research.ts#TOME_OPENS`. */
-export type TomeId = 'Civics' | 'Warfare' | 'Magic' | 'Sagas' | 'Atlas';
+export type TomeId = 'Kingdom' | 'Sagas' | 'Atlas';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
@@ -429,7 +432,9 @@ export interface Mission {
 /** What can stand on a held world hex (sim/world/types.ts). */
 /** What a builder out on the world board is building: a hex's district
  *  (the claim), or an upgrade into one (Docs/features/19-world-map.md §7). */
-export type WorldBuildWhat = WorldDistrict | WorldUpgrade;
+/** A world build: a district's claim, an upgrade's level, or the repair of
+ *  a district a camp burnt (19 §5.5). */
+export type WorldBuildWhat = WorldDistrict | WorldUpgrade | 'Repair';
 
 export interface ExplorerTrip {
   id: string;
@@ -465,6 +470,9 @@ export interface WorldState {
   /** The player's armies out on the board: the client's half — who went and
    *  with what. The army itself is server state (02-map-scopes.md §3.1). */
   armies: WorldArmyOut[];
+  /** The last world-server effect applied (WorldEffect.seq): those at or
+   *  below it are not applied again when the server sends them again. */
+  effectSeq: number;
 }
 
 export interface WorldArmyOut {
@@ -472,7 +480,7 @@ export interface WorldArmyOut {
   heroes: HeroId[];
   troops: Array<{ unitId: UnitId; count: number }>;
   target: number;
-  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
 }
 
 export interface WorldBuild {
@@ -586,6 +594,9 @@ export interface GameState {
     /** Knowledge poured into technologies not yet researched. It stays there
      *  for ever; a technology leaves this map when it is researched. */
     poured: Partial<Record<TechId, number>>;
+    /** Bands finished whole whose card pack has been paid, as `Tome:era` —
+     *  so a band pays once, whatever is researched after. */
+    rewarded: string[];
   };
   /**
    * Scheduled content: seasons, events and gacha banners.

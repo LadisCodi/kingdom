@@ -11,7 +11,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, seasonEndsAt, type SeasonClose } from './collection';
+import { closeSeason, grantPack, seasonEndsAt, type SeasonClose } from './collection';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -27,7 +27,7 @@ import { accrueMana } from './mana';
 import { accrueKnowledge, payKnowledge, territoryKnowledge } from './knowledge';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
-import { completeTech, isTechComplete, type ResearchResult } from './research';
+import { claimBandReward, completeTech, isTechComplete, type ResearchResult } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay } from './wallet';
 import { canAffordGoods, payGoods } from './goods';
@@ -154,7 +154,7 @@ function startBuild(
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
   // goods are paid when the build is QUEUED and refunded in full on cancel —
   // the rule a workshop item already follows.
-  const goods = buildGoodsCost(definitionId);
+  const goods = buildGoodsCost(state, definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
@@ -211,7 +211,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
-  if (!canAffordGoods(state.city.goods, buildGoodsCost(site.districtId))) return 'NotEnoughGoods';
+  if (!canAffordGoods(state.city.goods, buildGoodsCost(state, site.districtId))) return 'NotEnoughGoods';
   return null;
 }
 
@@ -362,6 +362,9 @@ export type UpgradeResult =
  *    needs no line of its own.
  *  * **A technology that raises a lump pays it back** for every landmark and
  *    lair already held (sim/knowledge.ts `territoryKnowledge`).
+ *  * **The last card of a band pays the band's card pack**, once
+ *    (`research.ts#claimBandReward`). Research takes no time, so this is the
+ *    moment, and no boundary is needed.
  *
  * Bracketed by the tax repricing, because a technology can move the tax rate
  * (Communities) and the anchor must not bank the old rate's time at the new.
@@ -375,6 +378,8 @@ export function researchTech(
     result = completeTech(state, id);
     if (result !== 'Researched') return;
     payKnowledge(state, territoryKnowledge(state) - before);
+    const band = claimBandReward(state, id);
+    if (band !== null) grantPack(state, band.tier, 'research');
     if (TECHNOLOGIES[id].effects.some((e) => e.stat === 'discoverRadius')) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);
@@ -410,7 +415,7 @@ export function upgradeRefusal(
   // Two purses, two refusals. Goods are told apart from raw resources because
   // the answer to each is a different errand: one is a trip to the map, the
   // other a queue at a workshop.
-  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
+  const goods = upgradeGoodsCost(state, district.definitionId, district.level + 1);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   // The third errand: the decorations. Asked once, here, and never read
@@ -425,7 +430,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   if (refusal !== null) return refusal;
   const district = districtById(state, districtUniqueId)!;
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
-  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
+  const goods = upgradeGoodsCost(state, district.definitionId, district.level + 1);
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
   state.city.queue.push({
@@ -510,7 +515,7 @@ export function changeWorkers(
   if (delta === 1) {
     const assigned = state.city.districts.reduce((s, d) => s + d.assignedWorkers, 0);
     if (state.city.population - assigned < 1) return 'NoFreeWorkers';
-    if (district.assignedWorkers >= assignableWorkerLimit(district)) return 'AtCapacity';
+    if (district.assignedWorkers >= assignableWorkerLimit(state, district)) return 'AtCapacity';
     addWorker(state, map, district, now);
     return 'Assigned';
   }

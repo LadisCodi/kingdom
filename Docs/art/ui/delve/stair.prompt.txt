@@ -1,0 +1,5 @@
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references (image 1: the game's UI kit pieces, drawn the way your output must be drawn; image 2: a mockup of the screen this piece will be used in).
+
+One game UI piece, square canvas, for a cozy fantasy mobile game: a SHORT STRAIGHT FLIGHT OF CARVED STONE STEPS going diagonally from the top-left corner down to the bottom-right corner, about five steps, seen slightly from above, cool grey cave stone, worn edges, lit from above, hand-painted and textured like image 1 — never flat or glossy. It will be drawn between two round stone discs on a cave wall, so the top-left and bottom-right ends simply stop (no landing, no discs). Centred, with a clear empty margin around it. No torches, no walls, no rock around it, no text.
+
+Do not draw grid lines, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

@@ -1,0 +1,20 @@
+WORLD MONSTER CAMP SPRITES for the game "Kingdom". Follow this file exactly.
+
+GENERATE NEW IMAGES. Do not edit or export the attached files: they are ONLY style and content references.
+- ref-whex.png = sprites that ALREADY SHIP on the world board (forest, game, homestead, logging camp, fortress, mountain). THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same camera, same scale of trees, tents, people and animals. Your sprites stand on the same board next to these: match them.
+- ref-lairs.png = the game's monster lairs. They are the CREATURE AND MATERIAL reference: the same orcs, goblins, harpies, wolf riders and red drake, the same hide tents, bone totems, red cloth banners with a white skull mark, spiked palisade stakes. Draw THOSE creatures and THAT kit — but much smaller and simpler, as a camp on the world map.
+
+WHAT A SPRITE IS
+- A small MONSTER CAMP standing on one hex of the world board, IN FRONT of whatever feature the hex has. The game draws the ground tile and the feature under and behind it. NO ground plate, NO base, NO hex outline, NO drop shadow. Only the camp, on full transparency; a small trodden dirt patch under the fire is fine.
+- About HALF the width of a hex sprite of ref-whex.png: a compact cluster, wider than tall.
+- Camera: from a little south of overhead, objects seen from a high three-quarter angle, standing upright — exactly the camera of ref-whex.png.
+- Draw as if shown about 70 px wide on a phone: big readable shapes, two or three creatures large enough to recognise, no tiny details.
+- Each camp: one or two crude shelters, a totem or a red banner on a pole, a campfire, and two or three of its creatures.
+
+=== THE SHEET === One landscape image, 1536x1024, FOUR sprites in a 2x2 grid. Nothing may cross the vertical or the horizontal midline: keep a clear 60 px band of transparency along both midlines. Each sprite about 70% of its quadrant's width.
+TL: ORC CAMP — two hide tents with bone tusks, a skull totem with a red banner, a campfire, three green orcs with axes.
+TR: GOBLIN CAMP — a rickety wooden lookout platform on stilts, a crate pile with a sack of loot, a small fire, three small green goblins with spears.
+BL: HARPY CAMP — a craggy rock perch with a big twig nest on top, a torn blue banner on a pole, two purple-winged harpies, one perched, one landing.
+BR: WOLF-RIDER CAMP — one dark hide yurt with bone ribs, a hitching post, two grey wolves with saddles and one rider, a small fire.
+
+End of the request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG. Do not re-render to fix a prop count.

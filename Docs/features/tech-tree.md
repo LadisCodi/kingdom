@@ -1,483 +1,295 @@
-# The tech tree — every node, book by book
+# The tech tree — every card, chapter by chapter
 
-> **Scope.** The **content** of the five books: every card, what each opens
-> or moves, the rank ladders, and the price bands that pace them. The
-> **system** — technologies, books, eras, Knowledge, the screen — is
-> [`07-research.md`](07-research.md); what opens each book is
-> [`22-progression.md`](22-progression.md) §4; where a card SITS and what it
-> requires is [`../tech-tree-editor.md`](../tech-tree-editor.md).
+> **Scope.** The **content** of research: the kingdom's one tree in nine
+> chapters, and the two found books. The **system** — Knowledge, pouring,
+> the screen — is [`07-research.md`](07-research.md); what opens a found book
+> is [`22-progression.md`](22-progression.md) §4; where a card sits is
+> [`../tech-tree-editor.md`](../tech-tree-editor.md); the design is
+> [`../plans/tech-tree-rework.md`](../plans/tech-tree-rework.md).
 >
-> **Status.** Built: **167 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **124 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=data#tree`. The tables below are generated from that file.
 
 ## 1. The shape
 
-- A page mixes four kinds of card ([`22-progression.md`](22-progression.md) §9):
-  cards that open a **building**, a **building level**, a **mechanic**, and
-  many small **bonuses**.
-- **Every bonus climbs.** A bonus is a positive percentage — or, for whole
-  things like a bed or a ring of sight, a positive step. A wait is a speed;
-  nothing is a discount ([`07-research.md`](07-research.md) §1.2).
-- A **ladder** is a stem plus a roman numeral; rank N sits one band deeper
-  than rank N−1 or further down the same band. Each rank is an ordinary card
-  gated by the row above it.
-- *(planned)*: on the page, researchable, no effect yet (§9).
+- **One tree, nine chapters, read in order.** Chapter *n* runs from Townhall
+  *n* to *n + 1*; it opens on revealed cells and ends in one **finale**, alone
+  on its last row, that opens the next Townhall level.
+- **A card needs every card its lines come from**, always on the row above.
+- **The spine is required**: every card that leads on, in the end, to the
+  finale. A card nothing below requires is a **dead end**: optional.
+- **Researching every card of a chapter, dead ends included, pays its card
+  pack**, once.
+- **Price: Knowledge is poured, then Gold and goods complete the card.**
+- **From chapter 5, some cards also ask for precious materials**
+  ([`19-world-map.md`](19-world-map.md) §7.6), more cards a chapter and
+  dearer, the deepest cards of each chapter first. None is asked while the
+  world is shut.
+- **Every bonus climbs**: a positive percentage or a positive step; a wait
+  is a speed; nothing is a discount.
 
-| Book | Opens on | Remit | Bands (cells revealed) | Cards |
-|---|---|---|---|---|
-| **Civics** | from the first minute | the city and its purse | 0 · 43 · 100 | 75 |
-| **Warfare** | handed over once the first lair is **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
-| **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
-| **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |
-| **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 13 |
+| Chapter | Townhall | Opens at | Cards | Spine K | Dead-end K | Gold | Pack |
+|---|---|---|---|---|---|---|---|
+| 1 | 1 → 2 | 0 cells | 1 | 2 | 0 | 20 | — |
+| 2 | 2 → 3 | 20 cells | 19 | 38 | 4 | 3,585 | Green |
+| 3 | 3 → 4 | 100 cells | 13 | 96 | 28 | 27,000 | Yellow |
+| 4 | 4 → 5 | 160 cells | 13 | 54 | 18 | 108,000 | Yellow |
+| 5 | 5 → 6 | 220 cells | 13 | 75 | 24 | 122,000 | Rose |
+| 6 | 6 → 7 | 280 cells | 13 | 96 | 28 | 270,000 | Blue |
+| 7 | 7 → 8 | 340 cells | 13 | 149 | 40 | 569,000 | Blue |
+| 8 | 8 → 9 | 400 cells | 13 | 96 | 28 | 1,215,000 | Purple |
+| 9 | 9 → 10 | 460 cells | 13 | 149 | 40 | 2,565,000 | Golden |
 
-## 2. Civics
+## 2. Chapter 1 — Townhall 1 → 2
 
-### 2.1 Era 1 — 19 cards · 30 K · 1,630 Gold
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Forestry** | the Wood tap · the Berries tap · Townhall L2 | 20 G · 2 K | **finale** |
 
-| Card | Opens / does | Price |
+## 3. Chapter 2 — Townhall 2 → 3
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Agriculture** | the crop plots | 25 G · 2 K |  |
+| **Farming** | the Farm | 25 G · 1 K |  |
+| **Hunting** | the Meat tap | 30 G · 1 K |  |
+| **Saws** | the Sawmill | 30 G · 2 K |  |
+| **Sawpits I** | +15% harvestYield — Wood | 120 G · 1 K |  |
+| **Trade Routes I** | +10% taxRate | 100 G · 1 K |  |
+| **Warrior** | the Barracks · the Warrior | 500 G · 2 K |  |
+| **Irrigation I** | +15% harvestYield — crop-plot Food | 120 G · 2 K |  |
+| **Reforesting I** | +25% regrowthSpeed — Wood | 100 G · 1 K |  |
+| **Consecration** | the Sanctum | 400 G · 3 K |  |
+| **Crop Rotation I** | +25% regrowthSpeed — crop-plot Food | 100 G · 4 K | *dead end* |
+| **Urban Planning** | Housing L2 | 200 G · 3 K |  |
+| **Pickaxes** | the Stone tap | 25 G · 2 K |  |
+| **Masonry** | the Quarry | 100 G · 3 K |  |
+| **Hospitality** | the Tavern | 400 G · 3 K |  |
+| **Granaries I** | +25% storageCapacity — Farm | 150 G · 2 K |  |
+| **Carpentry I** | +15% buildSpeed | 60 G · 2 K |  |
+| **Schooling I** | +20% villagerTrainingSpeed | 300 G · 3 K |  |
+| **Bureaucracy** | Townhall L3 | 800 G · 4 K | **finale** |
+
+## 4. Chapter 3 — Townhall 3 → 4
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Aqueducts** | Housing L3 | 2,000 G · 9 K |  |
+| **Mining** | the Smelter · the iron-mountain Stone tap | 2,000 G · 9 K |  |
+| **Infirmary** | the Infirmary | 2,000 G · 9 K |  |
+| **Communities** | +1 populationCapacity | 2,000 G · 9 K |  |
+| **Stonecutting I** | +15% harvestYield — Stone | 2,000 G · 9 K |  |
+| **Archery** | the Shooting Grounds · the Archer | 2,000 G · 9 K |  |
+| **Sailing** | building on Water | 2,000 G · 9 K |  |
+| **Timber Framing** | the producers L3 | 2,000 G · 9 K |  |
+| **Fletching I** | +10% unitAtk — Distance | 2,000 G · 14 K | *dead end* |
+| **Fishing** | the Docks | 2,000 G · 9 K |  |
+| **Trade Routes II** | +10% taxRate | 2,000 G · 9 K |  |
+| **Treasure Hunters I** | +25% treasureYield | 2,000 G · 14 K | *dead end* |
+| **Magistracy** | Townhall L4 | 3,000 G · 6 K | **finale** |
+
+## 5. Chapter 4 — Townhall 4 → 5
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Townhouses** | Housing L4 | 8,000 G · 5 K |  |
+| **Stone Dressing** | the Mason's Yard | 8,000 G · 5 K |  |
+| **Spears** | the Spear Hall · the Lancer | 8,000 G · 5 K |  |
+| **Joinery** | the Carpenter | 8,000 G · 5 K |  |
+| **Architecture** | the producers L4 | 8,000 G · 5 K |  |
+| **Warband II** | the four halls L4 | 8,000 G · 5 K |  |
+| **Guild Halls I** | +15% workshopSpeed | 8,000 G · 5 K |  |
+| **Sawpits II** | +15% harvestYield — Wood | 8,000 G · 5 K |  |
+| **Shield Wall I** | +10% unitDef — Melee | 8,000 G · 9 K | *dead end* |
+| **Carpentry II** | +15% buildSpeed | 8,000 G · 5 K |  |
+| **Lumberjacks I** | +15% crewStrikeSpeed — Sawmill | 8,000 G · 5 K |  |
+| **Woodsheds I** | +25% storageCapacity — Sawmill | 8,000 G · 9 K | *dead end* |
+| **Charter** | Townhall L5 | 12,000 G · 4 K | **finale** |
+
+## 6. Chapter 5 — Townhall 5 → 6
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Terraces** | Housing L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
+| **Ironmongery** | the producers L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
+| **Cavalry** | the Stables · the Cavalry | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
+| **Trade Routes III** | +10% taxRate | 9,000 G · 7 K |  |
+| **Farmhands I** | +15% crewStrikeSpeed — Farm | 9,000 G · 7 K |  |
+| **Warband III** | the four halls L5 | 9,000 G · 7 K |  |
+| **Gardening** | the Garden · the Orchard | 9,000 G · 7 K |  |
+| **Deep Mining** | the mountain Gold tap | 9,000 G · 7 K |  |
+| **Barding I** | +10% unitDef — Mounted | 9,000 G · 12 K | *dead end* |
+| **Rich Soil I** | +25% cellStock — crop-plot Food | 9,000 G · 7 K |  |
+| **Attunement II** | the Rune Carver · Sanctum L4 | 9,000 G · 7 K |  |
+| **Smokehouses I** | +25% storageCapacity — Docks | 9,000 G · 12 K | *dead end* |
+| **Exchequer** | Townhall L6 | 14,000 G · 5 K · 2 Planks · 2 CutStone | **finale** |
+
+## 7. Chapter 6 — Townhall 6 → 7
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Manors** | Housing L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
+| **Waterwheels** | the producers L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
+| **Fortifications** | the four halls L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
+| **Sculpture** | the Well · the Statue | 20,000 G · 9 K |  |
+| **Irrigation II** | +15% harvestYield — crop-plot Food | 20,000 G · 9 K |  |
+| **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 20,000 G · 9 K |  |
+| **Apprentices I** | +1 workshopQueueSlots | 20,000 G · 9 K |  |
+| **Attunement III** | Sanctum L5 | 20,000 G · 9 K |  |
+| **Vigour I** | +10% unitHp | 20,000 G · 14 K | *dead end* |
+| **Carpentry III** | +15% buildSpeed | 20,000 G · 9 K |  |
+| **Poultices I** | +25% healSpeed | 20,000 G · 9 K |  |
+| **Gamekeeping I** | +25% respawnSpeed | 20,000 G · 14 K | *dead end* |
+| **Chancery** | Townhall L7 | 30,000 G · 6 K · 3 Planks · 3 CutStone · 1 Iron | **finale** |
+
+## 8. Chapter 7 — Townhall 7 → 8
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Mansions** | Housing L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
+| **Windmills** | the producers L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
+| **Bastions** | the four halls L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
+| **Trade Routes IV** | +10% taxRate | 42,000 G · 14 K |  |
+| **Sawpits III** | +15% harvestYield — Wood | 42,000 G · 14 K |  |
+| **Second Sanctum** | one more Sanctum | 42,000 G · 14 K |  |
+| **Civic Treasury I** | +25% ownGold | 42,000 G · 14 K |  |
+| **Miners I** | +15% crewStrikeSpeed — Quarry | 42,000 G · 14 K |  |
+| **Warhorns I** | +10% unitAtk | 42,000 G · 20 K | *dead end* |
+| **Old Growth I** | +25% cellStock — Wood | 42,000 G · 14 K |  |
+| **Bunkhouse I** | +1 crewSlots | 42,000 G · 14 K |  |
+| **Frontier Works I** | +15% improvementYield | 42,000 G · 20 K | *dead end* |
+| **Dominion** | Townhall L8 | 65,000 G · 9 K · 4 Planks · 4 CutStone · 2 Iron | **finale** |
+
+## 9. Chapter 8 — Townhall 8 → 9
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Sewers** | Housing L8 | 90,000 G · 9 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
+| **Hydraulics** | the producers L8 | 90,000 G · 9 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
+| **Citadels** | the four halls L8 | 90,000 G · 9 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone |  |
+| **Paving** | the Plaza | 90,000 G · 9 K |  |
+| **Stonecutting II** | +15% harvestYield — Stone | 90,000 G · 9 K |  |
+| **Colours I** | +10% armyCap | 90,000 G · 9 K |  |
+| **Trade Routes V** | +10% taxRate | 90,000 G · 9 K |  |
+| **Surveying I** | +1 influenceRadius | 90,000 G · 9 K |  |
+| **Shield Wall II** | +10% unitDef — Melee | 90,000 G · 14 K | *dead end* |
+| **Guild Halls II** | +15% workshopSpeed | 90,000 G · 9 K |  |
+| **Attunement IV** | Sanctum L6 · Sanctum L7 · Sanctum L8 · Sanctum L9 · Sanctum L10 | 90,000 G · 9 K |  |
+| **Swift Scouts I** | +25% explorerSpeed | 90,000 G · 14 K | *dead end* |
+| **Sovereignty** | Townhall L9 | 135,000 G · 6 K · 5 Planks · 5 CutStone · 3 Iron · 1 Runestone | **finale** |
+
+## 10. Chapter 9 — Townhall 9 → 10
+
+| Card | Opens / moves | Price | |
+|---|---|---|---|
+| **Grand Avenues** | Housing L9 · Housing L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
+| **Mechanics** | the producers L9 · the producers L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
+| **Warlords** | the four halls L9 · the four halls L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
+| **Sacred Grounds** | the Shrine | 190,000 G · 14 K |  |
+| **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 190,000 G · 14 K |  |
+| **Warhorns II** | +10% unitAtk | 190,000 G · 14 K |  |
+| **Flowerbeds I** | +25% decorationHarmony | 190,000 G · 14 K |  |
+| **Fishers I** | +15% crewStrikeSpeed — Docks | 190,000 G · 14 K |  |
+| **Supply Depots I** | +25% improvementStore | 190,000 G · 20 K | *dead end* |
+| **Strongroom I** | +25% storageCapacity — Townhall; +25% storageCapacity — Housing | 190,000 G · 14 K |  |
+| **Granaries II** | +25% storageCapacity — Farm | 190,000 G · 14 K |  |
+| **Forced March I** | +15% armyMarchSpeed | 190,000 G · 20 K | *dead end* |
+| **Golden Age** | Townhall L10 | 285,000 G · 9 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone | **finale** |
+
+## 11. The found books
+
+- **Outside the pacing**: never required by a chapter or a Townhall level,
+  and paid in Gold alone, so they never draw on a chapter's Knowledge.
+- **Sagas** opens on a Tavern standing; **Atlas** on the Watchtower claimed.
+
+### 11.1 Sagas
+
+| Card | Opens / moves | Price |
 |---|---|---|
-| **Forestry** | the Forest tap, the Berries tap | 20 G · 2 K |
-| **Agriculture** | the FarmLands | 25 G · 2 K |
-| **Pickaxes** | the Stone tap | 25 G · 2 K |
-| **Farming** | the Farm | 25 G · 2 K |
-| **Hunting** | the Meat tap | 30 G · 2 K |
-| **Saws** | the Sawmill | 30 G · 2 K |
-| **Urban Planning** | Housing L2 | 200 G · 2 K |
-| **Masonry** | the Quarry | 100 G · 2 K |
+| **Common Room** | Tavern L2 | 600 G |
+| **Tales I** | +10% heroXp | 400 G |
+| **Warm Welcome I** | +10% summonStardust | 400 G |
+| **Guest Rooms** | Tavern L3 | 1,500 G |
+| **Great Hall** | Tavern L4 | 4,000 G |
+| **Minstrels’ Gallery** | Tavern L5 | 8,000 G |
 
-| Rank | Moves | Price |
+### 11.2 Atlas
+
+| Card | Opens / moves | Price |
 |---|---|---|
-| Trade Routes I | +5% tax income | 100 G · 2 K |
-| Irrigation I | +10% Food from crop plots | 120 G · 1 K |
-| Sawpits I | +10% Wood from forests | 120 G · 1 K |
-| Crop Rotation I | +10% regrowth speed — crops | 100 G · 2 K |
-| Reforesting I | +10% regrowth speed — forest | 100 G · 2 K |
-| Carpentry I | +10% build speed | 60 G · 1 K |
-| Stonecutting I | +10% Stone from mountains | 100 G · 1 K |
-| Granaries I | +10% storage in every store | 150 G · 1 K |
-| Tap Power I | +20% out of every tap | 50 G · 1 K |
-| Worker Load I | +10% on every worker delivery | 200 G · 1 K |
-| Quick Hands I | +15% auto-tap speed | 75 G · 1 K |
+| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G |
+| **Farsight I** | +1 discoverRadius | 800 G |
+| **Scouts I** | +1 explorerSlots | 2,500 G |
+| **Farsight II** | +1 discoverRadius | 1,500 G |
+| **Scouts II** | +1 explorerSlots | 4,000 G |
+| **Pathfinding** | +1 worldRevealRadius | 8,000 G |
+| **Muster** | the War Camp | 9,000 G |
 
-### 2.2 Era 2 — 22 cards · 68 K · 14,550 Gold
+## 12. What a bonus can move
 
-| Card | Opens / does | Price |
+The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call site that reads it.
+
+| Stat | How it enters | Cards |
 |---|---|---|
-| **Hospitality** | the Tavern | 400 G · 3 K |
-| **Bureaucracy** | Townhall L3 | 800 G · 2 K |
-| **Communities** | +1 bed in every house | 1,000 G · 4 K |
-| **Mining** | the Smelter, the MountainIron tap | 2,500 G · 6 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Schooling I | +20% villager training speed | 300 G · 2 K |
-| Trade Routes II | +5% tax income | 600 G · 3 K |
-| Butchery I | +10% Food from wild game | 250 G · 2 K |
-| Granaries II | +10% storage in every store | 600 G · 3 K |
-| Iron Picks I | +10% Stone from iron mountains | 250 G · 2 K |
-| Carpentry II | +10% build speed | 525 G · 3 K |
-| Tap Power II | +20% out of every tap | 525 G · 3 K |
-| Iron Picks II | +10% Stone from iron mountains | 800 G · 3 K |
-| Schooling II | +20% villager training speed | 525 G · 3 K |
-| Quick Hands II | +15% auto-tap speed | 525 G · 3 K |
-| Worker Load II | +10% on every worker delivery | 800 G · 4 K |
-| Sawpits II | +10% Wood from forests | 525 G · 3 K |
-| Irrigation II | +10% Food from crop plots | 525 G · 3 K |
-| Stonecutting II | +10% Stone from mountains | 525 G · 3 K |
-| Reforesting II | +10% regrowth speed — forest | 525 G · 3 K |
-| Crop Rotation II | +10% regrowth speed — crops | 525 G · 3 K |
-| Terracing I | +10% regrowth speed — stone | 525 G · 3 K |
-| Trade Routes III | +5% tax income | 1,000 G · 4 K |
-
-### 2.3 Era 3 — 34 cards · 414 K · 153,250 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Magistracy** | Townhall L4 | 5,000 G · 15 K |
-| **Joinery** | the Carpenter | 4,000 G · 10 K |
-| **Aqueducts** | Housing L3 | 6,000 G · 15 K |
-| **Stone Dressing** | the MasonsYard | 4,000 G · 10 K |
-| **Timber Framing** | Sawmill L3 | 5,000 G · 12 K |
-| **Quarry Hoists** | Quarry L2 | 5,000 G · 12 K |
-| **Gardening** | the Garden, the Orchard | 6,000 G · 15 K |
-| **Architecture** | Sawmill L4, Quarry L3 | 8,000 G · 20 K |
-| **Sculpture** | the Well, the Statue | 7,500 G · 18 K |
-| **Deep Mining** | the MountainGold tap | 8,000 G · 20 K |
-| **Roadworks** | +25% worker walking speed | 10,000 G · 20 K |
-| **Paving** | the Plaza | 9,000 G · 20 K |
-| **Sacred Grounds** | the Shrine | 12,000 G · 25 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Guild Halls I | +10% workshop speed | 3,000 G · 8 K |
-| Granaries III | +10% storage in every store | 3,000 G · 8 K |
-| Carpentry III | +10% build speed | 3,250 G · 10 K |
-| Worker Load III | +10% on every worker delivery | 3,250 G · 10 K |
-| Sawpits III | +10% Wood from forests | 3,250 G · 10 K |
-| Irrigation III | +10% Food from crop plots | 3,250 G · 10 K |
-| Stonecutting III | +10% Stone from mountains | 3,250 G · 10 K |
-| Butchery II | +10% Food from wild game | 3,250 G · 10 K |
-| Iron Picks III | +10% Stone from iron mountains | 3,250 G · 10 K |
-| Gold Panning I | +10% Gold from gold mountains | 3,000 G · 10 K |
-| Cartage I | +10% worker walking speed | 1,500 G · 8 K |
-| Tap Power III | +20% out of every tap | 1,500 G · 8 K |
-| Guild Halls II | +10% workshop speed | 3,000 G · 10 K |
-| Cartage II | +10% worker walking speed | 3,250 G · 10 K |
-| Quick Hands III | +15% auto-tap speed | 1,500 G · 8 K |
-| Big Nets I | +10% Food from shoals | 1,500 G · 8 K |
-| Gold Panning II | +10% Gold from gold mountains | 3,250 G · 10 K |
-| Trade Routes IV | +5% tax income | 3,250 G · 10 K |
-| Cartage III | +10% worker walking speed | 5,000 G · 12 K |
-| Tap Power IV | +20% out of every tap | 3,250 G · 10 K |
-| Trade Routes V | +5% tax income | 5,000 G · 12 K |
-
-### 2.4 Ladders
-
-| Ladder | Per rank | Ranks by era |
-|---|---|---|
-| **Big Nets** | +10% Food from shoals | — / — / I |
-| **Butchery** | +10% Food from wild game | — / I / II |
-| **Carpentry** | +10% build speed | I / II / III |
-| **Cartage** | +10% worker walking speed | — / — / I·II·III |
-| **Crop Rotation** | +10% regrowth speed — crops | I / II / — |
-| **Gold Panning** | +10% Gold from gold mountains | — / — / I·II |
-| **Granaries** | +10% storage in every store | I / II / III |
-| **Guild Halls** | +10% workshop speed | — / — / I·II |
-| **Iron Picks** | +10% Stone from iron mountains | — / I·II / III |
-| **Irrigation** | +10% Food from crop plots | I / II / III |
-| **Quick Hands** | +15% auto-tap speed | I / II / III |
-| **Reforesting** | +10% regrowth speed — forest | I / II / — |
-| **Sawpits** | +10% Wood from forests | I / II / III |
-| **Schooling** | +20% villager training speed | — / I·II / — |
-| **Stonecutting** | +10% Stone from mountains | I / II / III |
-| **Tap Power** | +20% out of every tap | I / II / III·IV |
-| **Terracing** | +10% regrowth speed — stone | — / I / — |
-| **Trade Routes** | +5% tax income | I / II·III / IV·V |
-| **Worker Load** | +10% on every worker delivery | I / II / III |
-
-
-## 3. Warfare
-
-### 3.1 Era 1 — 6 cards · 11 K · 4,200 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Warrior** | the Barracks, the Warrior | 500 G · 2 K |
-| **Infirmary** | the Infirmary | 800 G · 3 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Drill Yards I | +15% soldier training speed | 550 G · 1 K |
-| Shield Wall I | +10% defence, Melee units | 550 G · 1 K |
-| Warhorns I | +5% attack, every unit | 900 G · 2 K |
-| Beds I | +20% Infirmary beds | 900 G · 2 K |
-
-### 3.2 Era 2 — 8 cards · 28 K · 13,400 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Archery** | the ShootingGrounds, the Archer | 1,200 G · 4 K |
-| **Spears** | the SpearHall, the Lancer | 1,800 G · 4 K |
-| **Warband II** | Barracks L4, SpearHall L4, ShootingGrounds L4, Stables L4 | 2,500 G · 5 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Colours I | +10% army cap | 1,300 G · 3 K |
-| Fletching I | +10% attack, Distance units | 1,300 G · 3 K |
-| Bounties I | +20% Knowledge per lair cleared | 1,300 G · 3 K |
-| Vigour I | +5% health, every unit | 2,000 G · 3 K |
-| Shield Wall II | +10% defence, Melee units | 2,000 G · 3 K |
-
-### 3.3 Era 3 — 25 cards · 254 K · 195,000 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 3,000 G · 6 K |
-| **Cavalry** | the Stables, the Cavalry | 4,000 G · 15 K |
-| **Warband III** | Barracks L5, SpearHall L5, ShootingGrounds L5, Stables L5 | 7,000 G · 15 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Drill Yards II | +15% soldier training speed | 3,000 G · 6 K |
-| Fletching II | +10% attack, Distance units | 3,000 G · 6 K |
-| Barding I | +10% defence, Mounted units | 4,500 G · 7 K |
-| Warhorns II | +5% attack, every unit | 4,500 G · 7 K |
-| Barding II | +10% defence, Mounted units | 5,000 G · 8 K |
-| Colours II | +10% army cap | 5,000 G · 8 K |
-| Vigour II | +5% health, every unit | 7,500 G · 10 K |
-| Beds II | +20% Infirmary beds | 7,500 G · 10 K |
-| Bounties II | +20% Knowledge per lair cleared | 7,500 G · 10 K |
-| Shield Wall III | +10% defence, Melee units | 8,000 G · 10 K |
-| Drill Yards III | +15% soldier training speed | 8,000 G · 10 K |
-| Fletching III | +10% attack, Distance units | 8,000 G · 10 K |
-| Colours III | +10% army cap | 9,000 G · 11 K |
-| Warhorns III | +5% attack, every unit | 10,000 G · 11 K |
-| Bounties III | +20% Knowledge per lair cleared | 10,000 G · 11 K |
-| Barding III | +10% defence, Mounted units | 10,000 G · 11 K |
-| Vigour III | +5% health, every unit | 11,000 G · 12 K |
-| Beds III | +20% Infirmary beds | 11,000 G · 12 K |
-| Colours IV | +10% army cap | 11,000 G · 12 K |
-| Warhorns IV | +5% attack, every unit | 12,500 G · 12 K |
-| Bounties IV | +20% Knowledge per lair cleared | 12,500 G · 12 K |
-| Colours V | +10% army cap | 12,500 G · 12 K |
-
-### 3.4 Era 4 — 1 cards · 40 K · 30,000 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Warband IV** | Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army. | 30,000 G · 40 K |
-
-### 3.5 Ladders
-
-| Ladder | Per rank | Ranks by era |
-|---|---|---|
-| **Barding** | +10% defence, Mounted units | — / — / I·II·III / — |
-| **Beds** | +20% Infirmary beds | I / — / II·III / — |
-| **Bounties** | +20% Knowledge per lair cleared | — / I / II·III·IV / — |
-| **Colours** | +10% army cap | — / I / II·III·IV·V / — |
-| **Drill Yards** | +15% soldier training speed | I / — / II·III / — |
-| **Fletching** | +10% attack, Distance units | — / I / II·III / — |
-| **Shield Wall** | +10% defence, Melee units | I / II / III / — |
-| **Vigour** | +5% health, every unit | — / I / II·III / — |
-| **Warhorns** | +5% attack, every unit | I / — / II·III·IV / — |
-
-- **The page is a run of funnels**: each unlock on the middle column forks
-  into two or three small bonuses, which merge into the next unlock. Nothing
-  leads nowhere. The unlocks come in this order: Warrior, Infirmary, Archery,
-  Spears, Warband II, Cavalry, Warband III, Warband IV.
-- **Every card costs 500 Gold or more**, and no card costs less than one on a
-  row above it (`tests/techTree.test.ts`).
-
-## 4. Magic
-
-### 4.1 Era 1 — 7 cards · 11 K · 1,030 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Consecration** | the Sanctum | 400 G · 2 K |
-| **Invocation** | Spoken twice — a relic’s active gains a second charge. *(planned)* | 150 G · 2 K |
-| **Meditation** | +20% Mana held | 150 G · 2 K |
-| **Ley Reading** | Reading the lines — a landmark shows what it grants before you pay. *(planned)* | 150 G · 2 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Deep Wells I | +10% Mana held | 60 G · 1 K |
-| Ley Taps I | +10% Mana regeneration | 60 G · 1 K |
-| Scriptorium I | +10% on every lump of Knowledge | 60 G · 1 K |
-
-### 4.2 Era 2 — 10 cards · 36 K · 9,475 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Attunement II** | Sanctum L4, the RuneCarver | 800 G · 3 K |
-| **Sailing** | Water cells | 1,000 G · 4 K |
-| **Ley Lines** | The land’s own current — a district beside the Sanctum produces a tenth more. *(planned)* | 2,200 G · 6 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Deep Wells II | +10% Mana held | 525 G · 2 K |
-| Scriptorium II | +10% on every lump of Knowledge | 525 G · 2 K |
-| Ley Taps II | +10% Mana regeneration | 525 G · 3 K |
-| Scriptorium III | +10% on every lump of Knowledge | 800 G · 3 K |
-| Deep Wells III | +10% Mana held | 800 G · 3 K |
-| Scriptorium IV | +10% on every lump of Knowledge | 1,500 G · 6 K |
-| Ley Taps III | +10% Mana regeneration | 800 G · 4 K |
-
-### 4.3 Era 3 — 10 cards · 143 K · 66,250 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Fishing** | the Docks | 6,000 G · 15 K |
-| **Attunement III** | Sanctum L5 | 5,000 G · 15 K |
-| **Shipbuilding** | Docks L2 | 7,800 G · 18 K |
-| **Second Sanctum** | one more Sanctum | 15,000 G · 25 K |
-| **Ley Storm** | Once a day — a kingdom-wide surge of production for a while. *(planned)* | 13,200 G · 20 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Deep Wells IV | +10% Mana held | 3,250 G · 10 K |
-| Ley Taps IV | +10% Mana regeneration | 3,000 G · 8 K |
-| Scriptorium V | +10% on every lump of Knowledge | 3,000 G · 8 K |
-| Deep Wells V | +10% Mana held | 5,000 G · 12 K |
-| Ley Taps V | +10% Mana regeneration | 5,000 G · 12 K |
-
-### 4.4 Era 4 — 1 cards · 40 K · 30,000 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Attunement IV** | Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from. | 30,000 G · 40 K |
-
-### 4.5 Ladders
-
-| Ladder | Per rank | Ranks by era |
-|---|---|---|
-| **Deep Wells** | +10% Mana held | I / II·III / IV·V / — |
-| **Ley Taps** | +10% Mana regeneration | I / II·III / IV·V / — |
-| **Scriptorium** | +10% on every lump of Knowledge | I / II·III·IV / V / — |
-
-
-## 5. Sagas
-
-### 5.1 Era 1 — 6 cards · 20 K · 4,500 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Common Room** | Tavern L2 | 600 G · 3 K |
-| **Guest Rooms** | Tavern L3 | 1,500 G · 5 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Tales I | +10% Hero XP | 400 G · 2 K |
-| Warm Welcome I | +10% Stardust per call | 400 G · 2 K |
-| Tales II | +10% Hero XP | 800 G · 4 K |
-| Warm Welcome II | +10% Stardust per call | 800 G · 4 K |
-
-### 5.2 Era 2 — 5 cards · 49 K · 21,000 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Great Hall** | Tavern L4 | 4,000 G · 10 K |
-| **Rumours** | Word at the bar — a daily job for the party, paid in production. *(planned)* | 3,000 G · 8 K |
-| **Minstrels’ Gallery** | Tavern L5 | 8,000 G · 15 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Tales III | +10% Hero XP | 3,000 G · 8 K |
-| Warm Welcome III | +10% Stardust per call | 3,000 G · 8 K |
-
-### 5.3 Ladders
-
-| Ladder | Per rank | Ranks by era |
-|---|---|---|
-| **Tales** | +10% Hero XP | I·II / III |
-| **Warm Welcome** | +10% Stardust per call | I·II / III |
-
-
-## 6. Atlas
-
-### 6.1 Era 1 — 9 cards · 53 K · 19,100 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G · 6 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Farsight I | +1 sight into the fog | 800 G · 3 K |
-| Wayposts I | +20% Knowledge per landmark claimed | 800 G · 3 K |
-| Farsight II | +1 sight into the fog | 1,500 G · 5 K |
-| Wayposts II | +20% Knowledge per landmark claimed | 1,500 G · 5 K |
-| Farsight III | +1 sight into the fog | 3,000 G · 8 K |
-| Wayposts III | +20% Knowledge per landmark claimed | 3,000 G · 8 K |
-| Scouts I | +1 explorer out at once | 2,500 G · 6 K |
-| Scouts II | +1 explorer out at once | 4,000 G · 9 K |
-
-### 6.2 Era 2 — 4 cards · 68 K · 29,000 Gold
-
-| Card | Opens / does | Price |
-|---|---|---|
-| **Pathfinding** | +1 hex an explorer sees round its path | 8,000 G · 18 K |
-| **Muster** | Opens the War Camp — more armies out at once | 9,000 G · 20 K |
-
-| Rank | Moves | Price |
-|---|---|---|
-| Farsight IV | +1 sight into the fog | 6,000 G · 15 K |
-| Wayposts IV | +20% Knowledge per landmark claimed | 6,000 G · 15 K |
-
-### 6.3 Ladders
-
-| Ladder | Per rank | Ranks by era |
-|---|---|---|
-| **Farsight** | +1 sight into the fog | I·II·III / IV |
-| **Wayposts** | +20% Knowledge per landmark claimed | I·II·III / IV |
-| **Scouts** | +1 explorer out at once | I·II |
-
-## 7. Prices, in bands
-
-| | Minor (a rank) | Major | 
-|---|---|---|
-| **Era 1** | 50–200 G · 1–2 K | 20–400 G · 2–3 K — the quest chain pays Civics' |
-| **Warfare** | 550–12,500 G, climbing down the page | 500 G (Warrior) to 7,000 G (Warband III) |
-| **Era 2** | 250–1,000 G · 2–4 K | 400–2,500 G · 2–8 K |
-| **Era 3** | 1,500–5,000 G · 8–14 K | 4,000–15,000 G · 10–25 K |
-| **Era 4** | — | Warband IV, Attunement IV — 30,000 G · 40 K |
-
-| Era | Gold | Knowledge |
-|---|---|---|
-| 1 | 30,460 | 125 |
-| 2 | 87,425 | 249 |
-| 3 | 414,500 | 811 |
-| 4 | 60,000 | 80 |
-| **All** | **592,385** | **1,265** |
-
-- The pace these prices set is [`22-progression.md`](22-progression.md) §8.
-- The quest chain funds the **opening** — every era-1 card it asks for — with
-  no drip at all (`tests/quests.test.ts`). Past the opening the drip and the
-  lumps pay.
-
-## 8. What a bonus can move
-
-The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call site that reads it, and `tests/techTree.test.ts` refuses a stat nothing reads. **Two books never move the same stat.**
-
-| Stat | Book | How it enters |
-|---|---|---|
-| `armyCap` | Warfare | multiplies the number |
-| `autoTapSpeed` | Civics | the auto-tap cooldown is divided by it |
-| `buildSpeed` | Civics | build and upgrade times are divided by it |
-| `crewYield` | Civics | multiplies a worker delivery; the fraction carries |
-| `discoverRadius` | Atlas | whole rings, added |
-| `explorerSlots` | Atlas | whole explorers, added to Cartography's |
-| `harvestYield` | Civics | multiplies the chunk a tap and a strike take; the fraction carries |
-| `heroXp` | Sagas | multiplies the number |
-| `infirmaryBeds` | Warfare | multiplies the number |
-| `knowledgeYield` | Magic | multiplies the number |
-| `lairKnowledge` | Warfare | multiplies the number |
-| `landmarkKnowledge` | Atlas | multiplies the number |
-| `manaCap` | Magic | multiplies the number |
-| `manaRegen` | Magic | multiplies the number |
-| `populationCapacity` | Civics | whole beds, added |
-| `recruitSpeed` | Warfare | a soldier’s training time is divided by it |
-| `regrowthSpeed` | Civics | a stump’s wait is divided by it |
-| `storageCapacity` | Civics | multiplies the number |
-| `summonStardust` | Sagas | multiplies the number |
-| `tapWorkSeconds` | Civics | multiplies the number |
-| `taxRate` | Civics | multiplies the number |
-| `unitAtk` | Warfare | multiplies the number |
-| `unitDef` | Warfare | multiplies the number |
-| `unitHp` | Warfare | multiplies the number |
-| `villagerTrainingSpeed` | Civics | a villager’s training time is divided by it |
-| `workerSpeed` | Civics | multiplies the number |
-| `workshopSpeed` | Civics | a workshop item’s work time is divided by it |
-| `worldRevealRadius` | Atlas | whole hexes round an explorer's path, added, capped at 2 |
-
-## 9. Planned cards
-
-On the page, researchable, and doing nothing yet — each a promise of a mechanic still to come. Nothing requires one.
-
-| Card | Book | The promise |
-|---|---|---|
-| **Invocation** | Magic | Spoken twice — a relic’s active gains a second charge. |
-| **Ley Reading** | Magic | Reading the lines — a landmark shows what it grants before you pay. |
-| **Ley Lines** | Magic | The land’s own current — a district beside the Sanctum produces a tenth more. |
-| **Ley Storm** | Magic | Once a day — a kingdom-wide surge of production for a while. |
-| **Rumours** | Sagas | Word at the bar — a daily job for the party, paid in production. |
-
-## 10. Dials, in the order to reach for them
+| `armyCap` | multiplies the number | 1 |
+| `armyMarchSpeed` | an army's time per hex on the world board is divided by it; the city sends the pace with the army | 1 |
+| `autoTapSpeed` | the auto-tap cooldown is divided by it | 0 |
+| `buildSpeed` | build and upgrade times are divided by it | 3 |
+| `cellStock` | multiplies what a cell holds when full; never a mountain, which holds no stock | 2 |
+| `crewSlots` | whole workers, added to a producer's level | 1 |
+| `crewStrikeSpeed` | the time between a building's crew strikes is divided by it | 4 |
+| `crewYield` | multiplies a worker delivery; the fraction carries | 0 |
+| `decorationHarmony` | added to, or multiplying, a decoration's Harmony; whole points, rounded down | 1 |
+| `discoverRadius` | whole rings, added | 2 |
+| `explorerSlots` | whole explorers, added to Cartography's | 2 |
+| `explorerSpeed` | an explorer's time per hex is divided by it, before the Scout's boon | 1 |
+| `harvestYield` | multiplies the chunk a tap and a strike take; the fraction carries | 8 |
+| `healSpeed` | a ward's mending time is divided by it, priced when it starts | 1 |
+| `heroXp` | multiplies the number | 1 |
+| `improvementStore` | multiplies a world improvement's store; the server settles every store when it changes | 1 |
+| `improvementYield` | multiplies what a world improvement makes an hour; the server settles every store when it changes | 1 |
+| `infirmaryBeds` | multiplies the number | 0 |
+| `influenceRadius` | whole tiles, added to a producer's reach | 1 |
+| `knowledgeYield` | multiplies the number | 0 |
+| `lairKnowledge` | multiplies the number | 0 |
+| `landmarkKnowledge` | multiplies the number | 0 |
+| `manaCap` | multiplies the number | 0 |
+| `manaRegen` | multiplies the number | 0 |
+| `ownGold` | multiplies the Gold the Townhall makes by itself | 1 |
+| `populationCapacity` | whole beds, added | 1 |
+| `recruitSpeed` | a soldier’s training time is divided by it | 0 |
+| `regrowthSpeed` | a stump’s wait is divided by it | 2 |
+| `requires` | the shape | 0 |
+| `respawnSpeed` | a consumed feature's wait to come back is divided by it | 1 |
+| `storageCapacity` | multiplies the number | 6 |
+| `summonStardust` | multiplies the number | 1 |
+| `tapWorkSeconds` | multiplies the number | 0 |
+| `taxRate` | multiplies the number | 5 |
+| `treasureYield` | multiplies a fog treasure priced in production; never the first, never Knowledge | 1 |
+| `unitAtk` | multiplies the number | 3 |
+| `unitDef` | multiplies the number | 3 |
+| `unitHp` | multiplies the number | 1 |
+| `villagerTrainingSpeed` | a villager’s training time is divided by it | 1 |
+| `workerSpeed` | multiplies the number | 0 |
+| `workshopQueueSlots` | whole orders, added to a workshop's queue | 1 |
+| `workshopSpeed` | a workshop item’s work time is divided by it | 2 |
+| `worldRevealRadius` | whole hexes round an explorer's path, added, capped at 2 | 1 |
+
+## 13. Dials, in the order to reach for them
 
 | Dial | Where | What it moves |
 |---|---|---|
-| a card's `gold` / `knowledge` | `?dev=data#tree` | one card |
-| a band's cells | `?dev=data#tree` (`eras`) | when a band opens |
-| `requires` | `?dev=data#tree` | the shape |
+| a card's `knowledge`, `gold`, `goods`, `anyPrecious` | `?dev=data#tree` | one card |
+| a chapter's cells | `?dev=data#tree` (`eras`) | when a chapter opens |
+| a chapter's pack | `?dev=data#tree` (`eraRewards`) | what finishing it pays |
+| `requires` | `?dev=data#tree` | the shape; a card nothing requires is a dead end |
 | `kind`, `unlocks`, `effects` | `?dev=data#tree` | what a card IS |
-| what opens a book | `sim/research.ts` `TOME_OPENS` | code, by design |
+| what opens a found book | `sim/research.ts` `TOME_OPENS` | code, by design |
 
-## 11. Deliberately not in this design
+## 14. Deliberately not in this design
 
+- More than one general book: one tree, so a chapter's Knowledge is exact.
+- A card about the tap or the Mana pool.
 - A bonus that shrinks a number, or a card that discounts a price.
-- A flat bonus on a yield ("+1 Wood a strike"): a percentage never goes stale.
-- A technology that opens a book.
-- Exclusive picks — no card forecloses another.
-- A ladder longer than five ranks.
-- A rank ladder hanging off a planned card.
+- A planned card on the page: a card that does nothing is not in the tree.
+- A refund for a card that left the tree.

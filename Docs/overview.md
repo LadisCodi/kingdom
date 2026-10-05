@@ -179,10 +179,11 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   bar is full. Landmarks, lairs, quests and dungeons pay it in lumps that land
   over the cap. More can be bought with Gold, dearer with every point ever
   bought, or with Gems.
-- **General books** — Civics, Warfare, Magic — every kingdom has. They hold
-  the spine of the game: the city, the army, the basic enchantments. Civics
-  is open from the start; the other two open on a fact about the world
-  ([`features/22-progression.md`](features/22-progression.md) §4).
+- **One tree** every kingdom has, read in nine chapters — one per Townhall
+  step — mixing the city, the army and the magic. A chapter opens on revealed
+  cells and ends in a finale that opens the next Townhall level; finishing a
+  chapter whole pays a card pack
+  ([`features/07-research.md`](features/07-research.md) §2.1).
 - **Found books are found, not bought** — the Sagas when a Tavern stands, the
   Atlas when the Watchtower is claimed. A found book is narrow and deep: it
   does one thing no general book does.

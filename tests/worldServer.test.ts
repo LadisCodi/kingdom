@@ -12,7 +12,7 @@ import { snapshotWorld } from '../src/sim/world/source';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
-  portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
+  floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
   recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, upgrade,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
@@ -192,31 +192,43 @@ describe('the stand-in rivals', () => {
 });
 
 describe('the local server', () => {
-  it('seats a player, keeps the board it was handed, and remembers across a reload', async () => {
+  /** The stand-in with a player seated on a board of their own. */
+  async function seatedOn(store = memoryStore(), clock = { t: T0 }) {
+    const server = new LocalWorldServer(store, () => clock.t);
+    expect(await server.connect('me')).toEqual({ kind: 'unseated' });
+    const j = await server.join('Mel');
+    if (!j.ok) throw new Error(j.why);
+    return { server, snap: j.snapshot, clock };
+  }
+
+  it('seats a player under their nickname, and remembers them across a reload', async () => {
     const store = memoryStore();
-    const server = new LocalWorldServer(store);
-    const snap = await server.join({ id: 'me', name: 'Me', prefer: { id: 'mine', seed: 99, seat: 4 } }, T0);
-    expect(snap.board).toEqual({ id: 'mine', seed: 99, seat: 4 });
+    const { server, snap } = await seatedOn(store);
+    const seat = snap.board.seat;
+    expect(snap.board.id).toBe('b-me');
     expect(snap.seats.filter((s) => s.bot)).toHaveLength(5);
-    const next = boardNeighbors(SEAT_INDICES[4])[0];
-    const r = await server.claim(next, T0);
+    expect(snap.seats[seat].name).toBe('Mel');
+    const next = boardNeighbors(SEAT_INDICES[seat])[0];
+    const r = await server.claim(next);
     expect(r.ok || r.why).toBeTruthy();
 
-    const again = new LocalWorldServer(store);
-    const back = await again.join({ id: 'me', name: 'Me' }, T0 + 1000);
-    expect(back.board).toEqual(snap.board);
-    expect(back.hexes.some((h) => h.index === next && h.owner === 4) || !r.ok).toBe(true);
+    const again = new LocalWorldServer(store, () => T0 + 1000);
+    const back = await again.connect('me');
+    expect(back.kind === 'seated' && back.snapshot.board).toEqual(snap.board);
+    expect(back.kind === 'seated' && back.snapshot.hexes.some((h) => h.index === next && h.owner === seat) || !r.ok).toBe(true);
   });
 
   it('acts for another seat, for the dev tool', async () => {
-    const server = new LocalWorldServer(memoryStore());
-    await server.join({ id: 'me', name: 'Me', prefer: { id: 'b', seed: 5, seat: 0 } }, T0);
-    const theirs = boardNeighbors(SEAT_INDICES[2]).find((n) => !generateBoard('b', 5).hexes[n].features.includes('Dungeon'))!;
-    const r = await server.claim(theirs, T0, 2);
+    const { server, snap, clock } = await seatedOn();
+    const rival = snap.seats.find((s) => s.bot)!.seat;
+    const data = generateBoard(snap.board.id, snap.board.seed);
+    const theirs = boardNeighbors(SEAT_INDICES[rival]).find((n) => !data.hexes[n].features.includes('Dungeon'))!;
+    const r = await server.claim(theirs, rival);
     expect(r.ok).toBe(true);
-    const snap = (await server.snapshot(T0 + 1))!;
-    expect(snap.hexes.find((h) => h.index === theirs)?.owner).toBe(2);
-    expect(snap.hexes.find((h) => h.index === theirs)?.stores).toBeNull();
+    clock.t = T0 + 1;
+    const now = (await server.snapshot())!;
+    expect(now.hexes.find((h) => h.index === theirs)?.owner).toBe(rival);
+    expect(now.hexes.find((h) => h.index === theirs)?.stores).toBeNull();
     expect(snapshotOf).toBeDefined();
   });
 });
@@ -459,6 +471,22 @@ describe('the Dark Portal', () => {
     expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY - 1)).toBe(true);
     expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY)).toBe(false);
     expect(portalClosesAt(k + 1) - portalOpensAt(k + 1)).toBe(WORLD_PORTAL.openDays * DAY);
+  });
+
+  it('pays a precious lump on the floors that carry one', () => {
+    const { b, seat } = quietBoard();
+    const opens = portalOpensAt(portalEvent(T0) + 1);
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(500_000, 'p') }, opens);
+    if (!r.ok) throw new Error(r.why);
+    resolveTo(b, r.arrivesAt);
+    // One floor short of the first that pays one, in this opening.
+    b.portal.event = portalEvent(r.arrivesAt);
+    b.portal.floors[seat] = { floor: WORLD_PORTAL.preciousEvery - 1, at: r.arrivesAt };
+    drainEffects(b, seat);
+    const f = descendPortal(b, seat, r.army, r.arrivesAt + 1);
+    expect(f.ok && f.won).toBe(true);
+    const loot = drainEffects(b, seat).find((e) => e.kind === 'loot');
+    expect(loot?.kind === 'loot' && loot.precious?.amount).toBe(floorReward(WORLD_PORTAL.preciousEvery).precious);
   });
 
   it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {

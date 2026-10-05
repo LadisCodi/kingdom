@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, LAIRS, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
+import { changeWorkers, enqueueBuild } from '../src/sim/commands';
+import { HARVEST, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import { CARDS_PER_ALBUM } from '../src/sim/data/seasons';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
@@ -11,7 +11,7 @@ import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, firstGame, completeTech, FOREST, freshGame, fund, map, rankOf, rentStored, reveal, stored, T0, tickAt,
+  addBuilt, firstGame, completeTech, FOREST, freshGame, fund, map, rentStored, reveal, stored, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -300,31 +300,23 @@ describe('save versions', () => {
     expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
   });
 
-  // v24: upgrades stopped being a separate kind of thing. A player mid-flight
-  // holds `UpgradeLevels: { TapPower: 3 }` and must come back holding three
-  // COMPLETED technologies — every level they paid for, and no research time
-  // charged for them a second time.
-  it('turns banked upgrade levels into completed ranks', () => {
+  // v24: upgrades stopped being a separate kind of thing, and the migrator
+  // still turns `UpgradeLevels` into ranks. TapPower left the tree with the
+  // one-tree rework (2026-10, no refunds — this is a prototype), so the ranks
+  // it makes are dropped by the loader like any card the tree no longer has.
+  it('turns banked upgrade levels into ranks, and drops the ranks the tree lost', () => {
     const state = freshGame();
     const save = serialize(state, T0);
     const research = (save.Modules['kingdom.research'] as any);
     research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
-    // Resonance left the tree in 2026-10 (it was a discount); the migrator
-    // still turns it into ranks, and the loader drops what the tree lacks.
     save.SaveVersion = 23;
 
     const restored = deserialize(save, map, T0)!;
     expect(restored).not.toBeNull();
-    expect(rankOf(restored, 'TapPower')).toBe(3);
+    expect(restored.research.completed.some((id) => id.startsWith('TapPower'))).toBe(false);
     expect(restored.research.completed.some((id) => id.startsWith('Resonance'))).toBe(false);
-    // Exactly the ranks paid for, and not one more.
-    expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
-    expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
-    // And the effect the player had actually bought still reaches the SIM —
-    // asserted on the number, not on the tree, because that is the whole
-    // point of restoring the ranks. TapPower buys tap DURATION at +20% a
-    // rank, so three ranks turn 10 seconds into 16.
-    expect(tapWorkSeconds(restored)).toBeCloseTo(TAP.workSeconds * 1.6, 6);
+    // Nothing the player lost reaches the sim: the tap is worth its base.
+    expect(tapWorkSeconds(restored)).toBe(TAP.workSeconds);
   });
 
   // v25: tomes have cover pages, granted rather than researched. A save from
@@ -673,28 +665,6 @@ describe('War drums, in front of Armed men (v73)', () => {
   });
 });
 
-// v74: the Book of Warfare is handed over (Docs/features/23-tutorials.md §4.2).
-describe('the Book of Warfare, handed over (v74)', () => {
-  const v73 = (found: boolean) => {
-    const state = firstGame();
-    if (found) {
-      reveal(state, [LAIRS.Orcs.location]);
-      advance(state, map, T0 + 1000);
-    }
-    const save = serialize(state, T0 + 1000);
-    save.SaveVersion = 73;
-    return save;
-  };
-
-  it('keeps the book open for a kingdom that had found a lair', () => {
-    expect(isTomeOpen(deserialize(v73(true), map, T0 + 1000)!, 'Warfare')).toBe(true);
-  });
-
-  it('leaves it for Isolde to give to one that had not', () => {
-    expect(isTomeOpen(deserialize(v73(false), map, T0 + 1000)!, 'Warfare')).toBe(false);
-  });
-});
-
 // v69: the tree in five books. A researched card that was renamed or split
 // keeps what it bought (Docs/features/22-progression.md §9).
 describe('the tree in five books (v69)', () => {
@@ -707,10 +677,13 @@ describe('the tree in five books (v69)', () => {
     save.SaveVersion = 68;
     const back = deserialize(save, map, T0)!;
     expect(back.research.completed).toEqual(expect.arrayContaining([
-      'Forestry', 'TradeRoutesI', 'Joinery', 'StoneDressing', 'TimberFraming', 'QuarryHoists', 'BountiesI',
+      'Forestry', 'TradeRoutesI', 'Joinery', 'StoneDressing', 'TimberFraming',
     ]));
-    // A discount with no successor is gone, as any card the tree dropped is.
-    expect(back.research.completed).not.toContain('PitonsI');
-    expect(back.research.poured).toEqual({ ReforestingI: 1, TalesII: 2 });
+    // A successor the one-tree rework cut (QuarryHoists, BountiesI, TalesII)
+    // is gone, as any card the tree dropped is — and so is a discount.
+    for (const gone of ['PitonsI', 'QuarryHoists', 'BountiesI']) {
+      expect(back.research.completed).not.toContain(gone);
+    }
+    expect(back.research.poured).toEqual({ ReforestingI: 1 });
   });
 });

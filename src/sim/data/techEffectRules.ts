@@ -164,6 +164,35 @@ const WORKSHOP_DISTRICTS: readonly string[] = Object.entries(balance.districts)
   .filter(([, d]) => (d as { produces?: string | null }).produces != null)
   .map(([id]) => id);
 
+/** Harvest sources that hold a stock at all. A mountain holds none: picking
+ *  at it never uses it up, so a percent of its stock is a percent of nothing. */
+const STOCKED_SOURCES: readonly string[] = Object.entries(balance.harvest)
+  .filter(([, h]) => (h as { stock: number }).stock > 0)
+  .map(([id]) => id);
+
+/** Harvest sources that are CONSUMED and come back somewhere else — the other
+ *  harvest clock, `respawnSeconds`. */
+const RESPAWNING_SOURCES: readonly string[] = Object.entries(balance.harvest)
+  .filter(([, h]) => (h as { respawnSeconds: number }).respawnSeconds > 0)
+  .map(([id]) => id);
+
+/** Districts a crew works out of: something to harvest, and slots for it. */
+const CREWED_PRODUCERS: readonly string[] = Object.entries(balance.districts)
+  .filter(([, d]) => ((d as { harvestSources?: string[] }).harvestSources ?? []).length > 0
+    && ((d as { maxWorkersPerLevel?: number[] }).maxWorkersPerLevel ?? []).length > 0)
+  .map(([id]) => id);
+
+/** Producers whose crew reaches out over an area of influence. */
+const REACHING_PRODUCERS: readonly string[] = Object.entries(balance.districts)
+  .filter(([, d]) => ((d as { harvestSources?: string[] }).harvestSources ?? []).length > 0
+    && ((d as { influenceRadiusPerLevel?: number[] }).influenceRadiusPerLevel ?? []).length > 0)
+  .map(([id]) => id);
+
+/** Districts that supply Harmony: the decorations. */
+const DECORATION_DISTRICTS: readonly string[] = Object.entries(balance.districts)
+  .filter(([, d]) => ((d as { harmonySupply?: number }).harmonySupply ?? 0) > 0)
+  .map(([id]) => id);
+
 export const TECH_STATS = {
   // EVERY STAT HERE CLIMBS. A technology never makes a number smaller: a wait
   // is owned as a TIME and moved as a SPEED the call site divides by, a yield
@@ -209,6 +238,41 @@ export const TECH_STATS = {
     says: { percent: '{v} worker walking speed' },
     reads: 'upgrades.ts#effectiveWorkerSpeed',
   },
+  cellStock: {
+    what: 'the share more a cell holds when full — a tree’s Wood, a plot’s Food; never a mountain, which holds no stock',
+    ops: ['percent'], targets: ['global', 'harvest'], unit: '×',
+    says: { percent: '{v}[ {resource}] held in every cell[ of {target}]' },
+    targetIds: STOCKED_SOURCES,
+    reads: 'harvest.ts#effectiveStock',
+  },
+  respawnSpeed: {
+    what: 'how fast a consumed feature comes back somewhere else — its respawn time is divided by it',
+    ops: ['percent'], targets: ['global', 'harvest'], unit: '×',
+    says: { percent: '{v} speed coming back[ for {target}]' },
+    targetIds: RESPAWNING_SOURCES,
+    reads: 'harvest.ts#effectiveRespawnMs',
+  },
+  crewStrikeSpeed: {
+    what: 'how fast a building’s crew swings — the time between strikes is divided by it',
+    ops: ['percent'], targets: ['global', 'district'], unit: '×',
+    says: { percent: '{v} work speed for the crew[ of the {target}]' },
+    targetIds: CREWED_PRODUCERS,
+    reads: 'upgrades.ts#workerStrikeMs',
+  },
+  crewSlots: {
+    what: 'workers a producer can take on — whole workers, so flat',
+    ops: ['flat'], targets: ['global', 'district'], unit: 'workers',
+    says: { flat: '{v} worker slots[ at the {target}]' },
+    targetIds: CREWED_PRODUCERS,
+    reads: 'workers.ts#assignableWorkerLimit',
+  },
+  influenceRadius: {
+    what: 'how far a producer’s crew reaches for cells to work — whole tiles, so flat',
+    ops: ['flat'], targets: ['global', 'district'], unit: 'tiles',
+    says: { flat: '{v} reach for the crew[ of the {target}]' },
+    targetIds: REACHING_PRODUCERS,
+    reads: 'workers.ts#influenceRadius',
+  },
   // ---- the city
   buildSpeed: {
     what: 'how fast the builders work — build and upgrade times are divided by it',
@@ -248,6 +312,29 @@ export const TECH_STATS = {
     targetIds: WORKSHOP_DISTRICTS,
     reads: 'workshops.ts#queuedWorkMs',
   },
+  workshopQueueSlots: {
+    what: 'orders a workshop can hold in its queue at once — whole orders, so flat',
+    ops: ['flat'], targets: ['global', 'district'], unit: 'orders',
+    says: { flat: '{v} order slots in the queue[ of the {target}]' },
+    targetIds: WORKSHOP_DISTRICTS,
+    reads: 'workshops.ts#queueCapacity',
+  },
+  ownGold: {
+    what: 'the Gold the Townhall makes by itself a minute, with nobody in it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Gold the Townhall makes by itself' },
+    reads: 'population.ts#ownGoldPerMinute',
+  },
+  decorationHarmony: {
+    what: 'Harmony a standing decoration supplies — whole points, so a percent is rounded down',
+    ops: ['flat', 'percent'], targets: ['global', 'district'], unit: 'Harmony',
+    says: {
+      flat: '{v} Harmony from every[ {target}] decoration',
+      percent: '{v} Harmony from every[ {target}] decoration',
+    },
+    targetIds: DECORATION_DISTRICTS,
+    reads: 'harmony.ts#decorationHarmony',
+  },
   // ---- magic and the clock
   manaCap: {
     what: 'the ceiling of the Mana pool, after every landmark and Sanctum level',
@@ -286,6 +373,12 @@ export const TECH_STATS = {
     says: { flat: '{v} sight into the fog for every[ {target}] building' },
     reads: 'fog.ts#effectiveDiscoverRadius',
   },
+  treasureYield: {
+    what: 'the share more a treasure in the fog pays — never the first one, never its Knowledge',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} from every treasure found in the fog' },
+    reads: 'treasures.ts#treasureReward',
+  },
   // ---- the world board
   explorerSlots: {
     what: 'explorers that can be out on the world board at once — whole explorers, so flat',
@@ -298,6 +391,30 @@ export const TECH_STATS = {
     ops: ['flat'], targets: ['global'], unit: 'hexes',
     says: { flat: '{v} to how far an explorer sees round its path' },
     reads: 'explorers.ts#revealRadius',
+  },
+  explorerSpeed: {
+    what: 'how fast an explorer marches over every hex — each hex’s time is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} explorer speed on the world board' },
+    reads: 'explorers.ts#explorerSpeed',
+  },
+  armyMarchSpeed: {
+    what: 'how fast an army marches over every hex — each hex’s time is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} army marching speed on the world board' },
+    reads: 'armies.ts#armyMarchSpeed',
+  },
+  improvementYield: {
+    what: 'the share more a world improvement makes an hour',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} from every improvement on the world board' },
+    reads: 'boost.ts#worldImprovementBoost',
+  },
+  improvementStore: {
+    what: 'the share more a world improvement’s store holds',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} storage in every improvement on the world board' },
+    reads: 'boost.ts#worldImprovementBoost',
   },
   // ---- the army
   armyCap: {
@@ -336,6 +453,12 @@ export const TECH_STATS = {
     says: { percent: '{v} beds in the Infirmary' },
     reads: 'army.ts#woundedCap',
   },
+  healSpeed: {
+    what: 'how fast the Infirmary mends — a ward’s time is divided by it, priced when the mending starts',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} healing speed in the Infirmary' },
+    reads: 'army.ts#healSecondsAt',
+  },
   // ---- the heroes
   heroXp: {
     what: 'the multiplier on every grant of Hero XP',
@@ -367,7 +490,7 @@ export const TARGET_IDS: Record<TargetKind, readonly string[]> = {
   unit: Object.keys(balance.units),
   unitTag: UNIT_TAGS,
   harvest: Object.keys(balance.harvest),
-  tome: ['Civics', 'Warfare', 'Magic', 'Sagas', 'Atlas'],
+  tome: ['Kingdom', 'Sagas', 'Atlas'],
 };
 
 /** Which kind of target this is, or null when it is malformed. */

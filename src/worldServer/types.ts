@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { HeroId, UnitId } from '../sim/state';
+import type { HeroId, LairId, PreciousId, UnitId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -32,14 +32,21 @@ export interface ServerHex {
    *  `storeAt`. Fractions carry. */
   stored: number;
   storeAt: number;
+  /** A rich district's precious store, settled at the same `storeAt`
+   *  (19 §7.4). Missing on a hex stored before materials: read as 0. */
+  precious?: number;
   /** The army garrisoned in its Fortress, by id. */
   garrison: string | null;
+  /** Burnt by a camp's raid (19 §5.5): it makes nothing until repaired. */
+  burnt?: boolean;
+  /** When its repair is done; null or missing while none is under way. */
+  repairAt?: number | null;
 }
 
 export type ArmyPhase = 'out' | 'garrison' | 'camp' | 'home';
 
 /** What an army was sent to do (19 §4, §5.1, §6, §8.1). */
-export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
 
 /** An army out on the board — server state from the moment it leaves
  *  (02-map-scopes.md §3.1). */
@@ -67,9 +74,12 @@ export interface ServerArmy {
   fallen: Array<{ unitId: UnitId; count: number }>;
 }
 
-/** What the server owes a player, delivered with the next snapshot and
- *  applied by the client (15-social.md §1.2). */
-export type WorldEffect =
+/** What the server owes a player, delivered with every snapshot until the
+ *  client acknowledges it, and applied by the client once (15-social.md
+ *  §1.2). `seq` numbers a seat's effects from 1, in the order they were
+ *  owed: the client applies those above the last it saved, and its ack
+ *  lets the server forget the rest. */
+export type WorldEffect = { seq?: number } & (
   | {
     kind: 'armyHome'; armyId: string; at: number;
     troops: Array<{ unitId: UnitId; count: number }>;
@@ -77,11 +87,17 @@ export type WorldEffect =
     heroes: Array<{ id: HeroId; hp: number }>;
   }
   | { kind: 'report'; at: number; text: string; good: boolean }
+  /** Precious material the server hands back or over: an offer taken, or
+   *  one that came back (19 §7.5). */
+  | { kind: 'goods'; at: number; lot: Lot; text: string }
   /** What a cleared dungeon room paid (11-expeditions.md §7). */
   | {
     kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number;
     gems?: number; pack?: 'Rose' | 'Golden';
-  };
+    /** A camp's lump of precious material (19 §5.4). */
+    precious?: { id: PreciousId; amount: number };
+  }
+);
 
 /** The Dark Portal on one board (19 §10). */
 export interface PortalState {
@@ -108,7 +124,14 @@ export interface ServerSeat {
   moves: number;
   /** How many hexes it has ever claimed. */
   claims?: number;
+  /** What its own research does to its improvements — multipliers (≥ 1) on
+   *  what each makes an hour and what its store holds. Sent by the client
+   *  (`setBoost`); absent = none. */
+  boost?: SeatBoost;
 }
+
+/** A seat's multipliers on its improvements' output and stores. */
+export interface SeatBoost { produce: number; store: number }
 
 export interface ServerBoard {
   id: string;
@@ -121,8 +144,14 @@ export interface ServerBoard {
   /** Everything due up to here has been resolved. */
   resolvedTo: number;
   armies: ServerArmy[];
-  /** Owed to each seat, oldest first. */
+  /** Owed to each seat, oldest first, until the seat acknowledges them. */
   effects: Record<number, WorldEffect[]>;
+  /** The last `seq` given to an effect owed to each seat. */
+  effectSeq?: Record<number, number>;
+  /** The commands each seat made most recently, by the id the client gave
+   *  them, with the answer they got: a retry is answered again, never run
+   *  again. */
+  ops?: Record<number, Array<{ id: string; reply: unknown }>>;
   /** The counter army ids are made from. */
   nextId: number;
   /** Rooms each seat has cleared in each dungeon, by hex index. Each player
@@ -133,6 +162,34 @@ export interface ServerBoard {
    *  stored before dungeons moved: it is read from the generated board. */
   dungeons?: ServerDungeon[];
   portal: PortalState;
+  /** The monster camps each seat has beaten, by hex index (19 §5.4): a camp
+   *  is beaten by each player for themselves. */
+  beaten?: Record<number, number[]>;
+  /** When each stand-in rival will have beaten a camp it means to claim. */
+  botCamps?: Record<number, Record<number, number>>;
+  /** The lurking camps each seat has seen, as its client reported them:
+   *  only a camp the player has seen raids them (19 §5.5). */
+  seenCamps?: Record<number, number[]>;
+  /** The Exchange's standing offers (19 §7.5). */
+  offers?: Offer[];
+}
+
+/** An amount of one precious material. */
+export interface Lot { id: PreciousId; amount: number }
+
+/** An offer on the Exchange: `give` is held by the server from the moment
+ *  it is made until it is taken, withdrawn, or comes back. */
+export interface Offer {
+  id: string;
+  seat: number;
+  give: Lot;
+  want: Lot;
+  at: number;
+  /** When it comes back to whoever made it. */
+  expiresAt: number;
+  /** When a stand-in rival takes it — set on a fair offer of what one
+   *  yields; null otherwise. */
+  takeAt: number | null;
 }
 
 /** A sixth's dungeon (19 §8.1): standing on a hex, or closed and coming
@@ -153,6 +210,9 @@ export interface ServerDungeon {
 export interface ServerWorld {
   version: 3;
   boards: ServerBoard[];
+  /** The stand-in's nicknames, by player. The real server keeps them in a
+   *  table of their own: they are unique across every board. */
+  nicknames?: Record<string, string>;
 }
 
 // ------------------------------------------------------------ the view
@@ -170,8 +230,16 @@ export interface HexView {
   active: boolean;
   /** Only on the player's own hexes: its store, in its district's currency. */
   stores: { currency: WorldStoreCurrency; amount: number; cap: number } | null;
+  /** A rich district's precious store; only on the player's own hexes. */
+  precious?: { id: PreciousId; amount: number; cap: number } | null;
   /** The army standing in its Fortress: whose, and what it is worth. */
   garrison: { army: string; owner: number; power: number } | null;
+  /** Burnt by raiders, and when its repair is done if one is under way. */
+  burnt?: boolean;
+  repairAt?: number | null;
+  /** Only on the player's own hexes: the camps beside it that will raid it,
+   *  and when the next raid lands (19 §5.5). */
+  threat?: { camps: number[]; nextRaidAt: number } | null;
 }
 
 /** An army as a player is told about it: where it walks and whose it is.
@@ -188,6 +256,10 @@ export interface ArmyView {
   at: number | null;
   power: number;
   heroes: HeroId[] | null;
+  /** Its own owner sees what it fights with as it stands: each slot, a
+   *  hero's wounds, and the soldiers lost so far. */
+  slots?: Array<{ kind: 'troop' | 'hero'; unitId: UnitId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
+  fallen?: Array<{ unitId: UnitId; count: number }>;
 }
 
 export interface SeatView { seat: number; name: string; you: boolean; bot: boolean }
@@ -213,20 +285,56 @@ export interface WorldSnapshot {
   armies: ArmyView[];
   /** Rooms the player has cleared in each dungeon, by hex index. */
   delves: Record<number, number>;
+  /** The monster camps the player has beaten, by hex index. */
+  beaten?: number[];
+  /** The lurking camps the server knows the player has seen. */
+  seenCamps?: number[];
   /** The hexes a dungeon stands on now. */
   dungeons: number[];
+  /** Each standing dungeon's name, creature and bosses, and the race. */
+  dungeonInfo?: DungeonView[];
   /** The Dark Portal as the player sees it. */
   portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
+  /** Every standing offer on the Exchange. */
+  offers?: OfferView[];
 }
+
+/** A standing dungeon as a player reads it (19 §8.1). */
+export interface DungeonView {
+  index: number;
+  /** What its rolls are keyed on: its sixth and how many times it moved. */
+  key: string;
+  name: string;
+  creature: LairId;
+  /** Who waits at the bottom of each depth. */
+  bosses: string[];
+  /** Every player who has cleared a room in it, furthest first. */
+  race: Array<{ seat: number; cleared: number }>;
+}
+
+/** An offer as a player sees it: whose, and whether it is theirs. */
+export interface OfferView { id: string; seat: number; mine: boolean; give: Lot; want: Lot; expiresAt: number }
+
+/** An Exchange command: what the player received at once, if anything. */
+export type TradeResult =
+  | { ok: true; received: Lot | null; snapshot: WorldSnapshot }
+  | { ok: false; why: Refusal };
 
 /** Why a command was refused, in a word the client turns into a line. */
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
-  | 'NothingBuilding';
+  | 'NothingBuilding' | 'Guarded'
+  | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer'
+  /** The dev tool asked to play a seat that is not a rival's. */
+  | 'NotARival'
+  /** The server could not be reached, however often it was asked. */
+  | 'Offline'
+  /** A nickname of the wrong shape, or one another player has. */
+  | 'BadNickname' | 'NicknameTaken';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }
@@ -236,7 +344,12 @@ export type CommandResult =
 export type WorldStoreCurrency = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
 
 export type CollectResult =
-  | { ok: true; paid: { currency: WorldStoreCurrency; amount: number } | null; snapshot: WorldSnapshot }
+  | {
+    ok: true; paid: { currency: WorldStoreCurrency; amount: number } | null;
+    /** What the precious store paid, if anything. */
+    precious: { id: PreciousId; amount: number } | null;
+    snapshot: WorldSnapshot;
+  }
   | { ok: false; why: Refusal };
 
 export type SendResult =
@@ -246,5 +359,10 @@ export type SendResult =
 /** A dungeon room fought: the fight itself, for the battle screen, and
  *  whether it fell. */
 export type DelveResult =
-  | { ok: true; won: boolean; log: import('../sim/battle').BattleLog; depth: number; room: number; boss: boolean; snapshot: WorldSnapshot }
+  | {
+    ok: true; won: boolean; log: import('../sim/battle').BattleLog; depth: number; room: number; boss: boolean;
+    /** Soldiers this fight cost. */
+    lost: number;
+    snapshot: WorldSnapshot;
+  }
   | { ok: false; why: Refusal };

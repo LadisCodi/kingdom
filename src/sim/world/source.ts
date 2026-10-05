@@ -10,6 +10,7 @@
 import { WORLD, WORLD_GEN } from '../data/definitions';
 import { generateBoard, SEAT_INDICES, withDungeons, type Board } from './board';
 import type { WorldDistrict, WorldUpgrade } from './types';
+import type { PreciousId } from '../state';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
@@ -37,6 +38,13 @@ export interface HexControl {
   active: boolean;
   /** Its store, in its district's currency; only on the player's own hexes. */
   stores: { currency: 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge'; amount: number; cap: number } | null;
+  /** A rich district's precious store (19 §7.4); only on the player's own. */
+  precious?: { id: PreciousId; amount: number; cap: number } | null;
+  /** Burnt by a camp's raid, and when its repair is done (19 §5.5). */
+  burnt?: boolean;
+  repairAt?: number | null;
+  /** The player's own: the camps that will raid it, and when next. */
+  threat?: { camps: number[]; nextRaidAt: number } | null;
   /** The army standing in its Fortress, if any. */
   garrison?: { army: string; owner: number; power: number } | null;
 }
@@ -52,6 +60,8 @@ export interface WorldSource {
   armies(): readonly ArmyControl[];
   /** Rooms the player has cleared in the dungeon on a hex. */
   delved(index: number): number;
+  /** Has the player beaten the monster camp on a hex (19 §5.4)? */
+  campBeaten(index: number): boolean;
   /** The Dark Portal as the server last described it, or null. */
   portal(): PortalControl | null;
 }
@@ -70,7 +80,7 @@ export interface PortalControl {
 export interface ArmyControl {
   id: string;
   owner: number;
-  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+  purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
   phase: 'out' | 'garrison' | 'camp' | 'home';
   target: number;
 }
@@ -109,6 +119,7 @@ export function localWorld(ref: BoardRef): WorldSource {
     hexOf: () => null,
     armies: () => [],
     delved: () => 0,
+    campBeaten: () => false,
     portal: () => null,
   };
 }
@@ -121,6 +132,8 @@ export function snapshotWorld(snap: {
   hexes: ReadonlyArray<HexControl & { index: number }>;
   armies?: readonly ArmyControl[];
   delves?: Readonly<Record<number, number>>;
+  /** The monster camps the player has beaten. */
+  beaten?: readonly number[];
   /** Where the dungeons stand now; the generated board's when not told. */
   dungeons?: readonly number[];
   portal?: PortalControl;
@@ -144,6 +157,7 @@ export function snapshotWorld(snap: {
     hexOf: (index) => hexes.get(index) ?? null,
     armies: () => snap.armies ?? [],
     delved: (index) => snap.delves?.[index] ?? 0,
+    campBeaten: (index) => snap.beaten?.includes(index) ?? false,
     portal: () => snap.portal ?? null,
   };
 }

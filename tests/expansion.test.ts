@@ -60,20 +60,18 @@ describe('stone line (Masonry → Quarry)', () => {
 });
 
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
-  // Exploration lives in the MAGIC tome now (07-research.md §2): the fog is the
-  // surface Kingdom's magic presents to the player, so Sailing and Fishing
-  // sit beside Mana and the lairs rather than beside the farms.
-  it('the exploration branch is in the Magic tome, behind its own eras', () => {
+  // Sailing and Fishing sit in chapter 3 of the kingdom's one tree, past
+  // Bureaucracy: they wait on what they require AND on the chapter's bar,
+  // which is a gate in the world (07-research.md §2.1).
+  it('the exploration branch is in chapter 3 of the one tree, behind its own bar', () => {
     const state = freshGame();
     fund(state, { Gold: 20_000, Knowledge: 5_000 });
-    expect(TECHNOLOGIES.Fishing.tome).toBe('Magic');
-    expect(TECHNOLOGIES.Sailing.tome).toBe('Magic');
-    // Nothing in the tome is reachable until the tome is open.
+    expect(TECHNOLOGIES.Fishing.tome).toBe('Kingdom');
+    expect(TECHNOLOGIES.Sailing.tome).toBe('Kingdom');
+    expect(TECHNOLOGIES.Fishing.era).toBeGreaterThan(TECHNOLOGIES.Bureaucracy.era);
     expect(researchRefusal(state, 'Fishing')).toBe('MissingRequirement');
-    completeTech(state, 'Forestry'); // a Civics era-1 tech opens nothing here
+    completeTech(state, 'Forestry'); // the first chapter's card opens nothing here
     expect(researchRefusal(state, 'Fishing')).toBe('MissingRequirement');
-    // Fishing is two bands down, so it waits on what it requires AND on the
-    // era bars above it, which are gates in the world (07-research.md §2.1).
     for (const req of TECHNOLOGIES.Fishing.requires) completeTech(state, req);
     expect(researchRefusal(state, 'Fishing')).toBe('EraLocked');
     openEveryEra(state);

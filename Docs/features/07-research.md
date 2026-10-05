@@ -1,4 +1,4 @@
-# 7 · Research — the books, eras, and the Knowledge bar
+# 7 · Research — the tree, its chapters, and the Knowledge bar
 
 > **Scope.** The research **system**: technologies, the books and their
 > eras, the Knowledge bar that pays for them, buying Knowledge, the
@@ -66,9 +66,9 @@
 - **Gems never complete a technology.** They buy Knowledge (§3.2), which is
   poured like any other; the Gold is always the city's
   ([`14-monetization.md`](14-monetization.md) §1).
-- The tree has 167 cards: **Civics 75 · Warfare 40 · Magic 28 · Sagas 11 ·
-  Atlas 13**, totalling **592,385 Gold and 1,265 Knowledge**. Price bands per
-  era are in [`tech-tree.md`](tech-tree.md) §7.
+- There are 124 cards: **Kingdom 111 · Sagas 6 · Atlas 7**, totalling
+  **9,674,305 Gold and 607 Knowledge**. Prices per chapter are in
+  [`tech-tree.md`](tech-tree.md) §1.
 
 ### 1.1 Majors and minors
 
@@ -134,78 +134,56 @@ A `bonus` names its effects, and each is four fields:
 - Its info panel says so ("Not yet in the prototype").
 - 5 cards are planned; the list is [`tech-tree.md`](tech-tree.md) §9.
 
-## 2. The shelf — five books, each opened by the world
+## 2. The shelf — one tree and the books you find
 
 | Book | Kind | Opens when | Remit |
 |---|---|---|---|
-| **Civics** | general | from the first minute | the city and its purse |
-| **Warfare** | general | Isolde **hands it over** once the first lair is found (scene `firstLair`) | the army, and the lairs it clears |
-| **Magic** | general | the first landmark is **claimed** | Mana, Knowledge, the Sanctum, the water |
+| **Kingdom** | the tree | from the first minute | everything the kingdom learns, in nine chapters |
 | **Sagas** | found | a **Tavern** stands | heroes, and the Tavern that hosts them |
 | **Atlas** | found | the **Watchtower** is claimed | sight, landmarks, the world beyond |
 
-- **A book opens on a fact about the world, never on a research**, and is
-  open for ever after (`sim/research.ts` `TOME_OPENS`). A card in a shut book
-  answers `TomeClosed`.
-- A shut **general** book hangs a padlocked bookmark; a **found** book has no
-  bookmark until it is found ([`22-progression.md`](22-progression.md) §3).
-- A kingdom saved before the books had doors opens with all five
-  (`tutorial.veteran`).
-- **`TomeId` is the set of books authored in `tech-tree.json`**, the way `TechId`
-  already is; what opens one is code.
-- **A tome is one page**, read top to bottom behind a shelf of bookmarks:
-  three columns of cards with an era bar across the width wherever the next
-  band begins (§2.2).
-- What paces an open book is its era bars, which ask for revealed cells (§2.1).
+- **One tree** holds the city, the army and the magic, mixed in every chapter;
+  its content is [`tech-tree.md`](tech-tree.md).
+- **A found book opens on a fact about the world, never on a research**, and
+  is open for ever after (`sim/research.ts` `TOME_OPENS`). A card in a shut
+  book answers `TomeClosed`. A found book has no bookmark until it is found
+  ([`22-progression.md`](22-progression.md) §3).
+- **`TomeId` is the set of books authored in `tech-tree.json`**; what opens one
+  is code.
+- **A book is one page**, read top to bottom: three columns of cards with a
+  chapter bar across the width wherever the next chapter begins (§2.2).
 - **Nothing is granted and nothing is free.** A fresh kingdom has an empty
-  `completed`, and every technology costs Knowledge and Gold.
-- **No edge crosses tomes.** Townhall level gates the Sanctum and the military
-  halls independently of the tree, so Civics paces the others without an edge.
+  `completed`; every card in the tree costs Knowledge and Gold, from
+  chapter 5 goods, and some from chapter 5 precious materials
+  ([`19-world-map.md`](19-world-map.md) §7.6).
+- **No edge crosses books.**
 - Landmarks and lairs pay the tree in Knowledge (§7).
-- **Two books may aim at the same outcome; they may never move the same
-  stat.** More per strike (`crewYield`, Civics) and more Knowledge per lair
-  (`lairKnowledge`, Warfare) are different stats.
 
-### 2.1 Eras and the bars between them
+### 2.1 Chapters
 
-- **A book carries its own bands**, authored in `?dev=tree`: how many it has
-  and what each asks for are one list per book, so Civics may run to three
-  while Warfare runs to four. A band is a run of rows on the page; the **era
-  bar** spanning the page is the door between two of them, and the book's
-  LAST band is drawn sealed.
-- **A band opens on the world, not on a research.** Era 1 is the top of the
-  page and asks for nothing; every band after it needs a slice of the region
-  revealed. Nothing in a locked band is startable — `startTech` answers
-  `EraLocked` — and the bar says how many cells are left.
-
-| Band | Cells revealed | Civics | Warfare | Magic |
-|---|---|---|---|---|
-| era 1 | 0 — the top of the page | ✓ | ✓ | ✓ |
-| era 2 | **43** in Civics — ring 2 and a quarter of ring 3; **85** in Warfare, past where it opens; 30 in Magic | ✓ | ✓ | ✓ |
-| era 3 | 100 | ✓ (sealed) | ✓ | ✓ |
-| era 4 | 220 | — | ✓ (sealed) | ✓ (sealed) |
-
-- A fresh kingdom opens with 16 cells revealed, so Civics era 2 is about
-  twenty-seven paid reveals away, and the quest chain asks for more than that before it
-  points at an era-2 technology (`tests/quests.test.ts`).
+- **The tree's bands are its chapters**, one per Townhall step: chapter *n*
+  runs from Townhall *n* to *n + 1*. Each band's cells and pack are authored
+  in `?dev=tree` (`eras`, `eraRewards`).
+- **A chapter opens on revealed cells**: 0 · 20 · 100 · 160 · 220 · 280 · 340 ·
+  400 · 460. Nothing in a locked chapter is startable — `startTech` answers
+  `EraLocked` — and the bar says how many cells are left. Each count fits
+  inside the reach of the Townhall that opens the chapter
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §4).
+- **A chapter ends in one finale**, alone on its last row, that opens the next
+  Townhall level (`Forestry` → 2, `Bureaucracy` → 3, `Magistracy` → 4,
+  `Charter` → 5, `Exchequer` → 6, `Chancery` → 7, `Dominion` → 8,
+  `Sovereignty` → 9, `GoldenAge` → 10). The next chapter's first row requires
+  it, so chapters are read in order.
+- **The spine is required; a dead end is optional.** A card that nothing below
+  requires is a dead end. Every other card leads, in the end, to the finale.
+- **Researching every card of a chapter, dead ends included, pays its card
+  pack**, once (`research.rewarded`).
 - The count is **paid reveals only** (`revealedCellCount`): a cell a building
   merely *discovered* has been seen, not opened, and the same count is what
   the `DiscoverCells` quest goal follows.
-- The Townhall's reach bounds the count ([`01-map-and-fog.md`](01-map-and-fog.md)
-  §4): 43 cells fit inside level 1's reach, 100 inside level 2's, 220 inside
-  level 4's. `tests/quests.test.ts` asserts that every era the chain and the
-  Townhall's own gates ask for fits the reach at that beat.
-- The gate is a state condition, not a timer: no boundary source, nothing to
-  settle, and it cannot be bought with Gems or Gold directly — only by
-  clearing fog, which Gold pays for.
-- **Nothing holds a door but the bar.** There is no spine and no keystone: a
-  technology that raises the Townhall's level (`Bureaucracy`, `Magistracy`) is
-  an ordinary card, placed wherever the designer puts it, and the gate is
-  derived from its `unlocks` like every other.
-- A book's last band opens on cells like every other and says how many it
-  still needs.
-- A player may research ahead in one tome; content still gates on Townhall
-  level.
+- The gate is a state condition, not a timer: no boundary source, and it
+  cannot be bought with Gems or Gold directly — only by clearing fog, which
+  Gold pays for.
 
 ### 2.2 The page
 
@@ -221,6 +199,8 @@ A `bonus` names its effects, and each is four fields:
   card that needs it, so the page reads a line at a time and no edge is traced
   past cards it does not touch. One to three requirements per card; a card on
   the page's FIRST ROW requires nothing, because there is nothing above it.
+- **A chapter's last row holds exactly one card**, its finale; a card that
+  nothing below requires is a dead end, legal anywhere above it.
 - **A rank ladder is a name, not a chain.** `Sawpits II` does not require
   `Sawpits I`, nor sit anywhere near it: the numeral tells the player the bonus
   goes further down the book, and every rank is an ordinary card gated by the
@@ -249,10 +229,12 @@ A `bonus` names its effects, and each is four fields:
 
 > **A book is a choice about what kind of kingdom this is.**
 
-- A found book is **the same object as a general one** — one page, three
-  columns, era bars, technologies that cost Knowledge and Gold. What differs is
-  that it is **narrow**: it does one thing no general book does, and it is not
-  on the shelf until the kingdom finds it.
+- A found book is **the same object as the tree** — one page, three columns,
+  bands. What differs is that it is **narrow**: it does one thing the tree
+  does not, and it is not on the shelf until the kingdom finds it.
+- **It is outside the pacing**: never required by a chapter or a Townhall
+  level, and **paid in Gold alone**, so it never draws on a chapter's
+  Knowledge.
 - **The two that ship** are found in the province itself: the **Sagas** with
   the first Tavern, the **Atlas** with the Watchtower.
 - **Later ones** are the pattern for a far lair, an event or the world map.
@@ -295,9 +277,6 @@ A `bonus` names its effects, and each is four fields:
 | a lair's **first clear** | 3, once | `delve.firstClearKnowledge` |
 | every **dungeon room** and **Portal floor** (world map) | at least 1, rising with depth and room ([`19-world-map.md`](19-world-map.md) §8.1, §10) | `worldDungeon.knowledge` (0.25) · `worldPortal` |
 | a held **world-map landmark** | 4 a day into a store of 8, collected with a tap | `worldBuild.landmark` |
-| `Wayposts I–IV` (Atlas) | +20% on every landmark claim, per rank | a `bonus` ladder |
-| `Bounties I–IV` (Warfare) | +20% on every lair cleared, per rank | a `bonus` ladder |
-| `Scriptorium I–V` (Magic) | +10% on every lump, per rank | a `bonus` ladder |
 | `knowledgeYield` modifier | × on every lump | the Necromancer's boon (×1.25, [`10-heroes.md`](10-heroes.md) §2.6) |
 | the **quest chain** | 41 across eighteen quests | `quests` › `rewardKnowledge` |
 | **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
@@ -305,8 +284,7 @@ A `bonus` names its effects, and each is four fields:
 
 - The drip pays **at most 24 a day**, and only to a player who pours before
   the bar is full.
-- A fully held province — eleven landmarks, five lairs — pays **48** in lumps
-  before any ladder, **about 130** with every ladder above.
+- A fully held province — eleven landmarks, five lairs — pays **48** in lumps.
 - A lump is rounded as it is paid, so a +10% rank adds nothing to a lump of 3
   on its own; the second rank adds a point.
 - The drip (at most 24 a day) is the steady source; the lumps and the chain
@@ -343,17 +321,18 @@ A `bonus` names its effects, and each is four fields:
 the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledge.goldPriceExponent
 ```
 
-  - At 100 × n²: the 1st point 100, the 5th 2,500, the 10th 10,000, the
-    20th 40,000.
+  - At 400 × n²: the 1st point 400, the 5th 10,000, the 10th 40,000, the
+    20th 160,000 — a valve for a Gold-rich city, never a second faucet.
 
   - The count is the kingdom's and **never resets** —
     not daily, not at a season, not at a province reset.
   - Buying several at once costs the sum of their prices, shown as one number.
   - Gold is the city's purse: a point bought is fog, a building or a Wonder
     level not bought.
-- **Gems: a fixed price per point**, `knowledge.gemsPerPoint` (270). It
-  never rises: 10 points cost 2,700, a little more than the $4.99 pack's
-  2,500 Gems.
+- **Gems: a fixed price per point**, `knowledge.gemsPerPoint` (200). It
+  never rises: a full bar of 10 costs 2,000 Gems, under the $4.99 pack's
+  2,500. A point is an hour of the bar, so it buys an hour of the tree's
+  gate for 200 Gems, where rushing an hour of building costs 720.
 - Buying never needs a free anything: there is nothing to occupy.
 
 ## 4. Knowledge and Stardust
@@ -385,7 +364,7 @@ The research screen is a book (mockups M43 and M46).
 - **Each open book is a bookmark**: a ribbon hanging from the page's bottom
   edge into the room the nav bar leaves (it steps aside while a menu is open).
   One ribbon, tinted per book, the book's emblem on it; the open one hangs
-  longer. Order: Civics · Magic · Warfare, then found books.
+  longer. Order: the Kingdom's tree, then found books.
 - **An era is a chapter**: *Chapter I* at the top of the page, and a heading
   wherever the next band begins, with *Reveal N more cells* while it is shut.
   One vertical scroll.
@@ -452,15 +431,11 @@ technology's needs, whatever state it is in. It reads top to bottom in three par
   a shut band as *Reveal N more cells* — and nothing else.
 - Buying Knowledge with Gold is the Knowledge sheet's (§3.2), not this one's.
 
-## 6. Magic holds no spells
+## 6. The tree holds no spells
 
-**The Magic tome does not cast.** An ability is a **relic's**, cast from the
-relic that owns it ([`09-relics.md`](09-relics.md) §2.1).
-
-- Magic keeps what is not an ability: **`Invocation`** (a second charge on a
-  relic's active, planned) and **what raises the Mana cap and regen**. Both make every relic's active better without
-  owning any of them, which is what a tome should do for a pillar it does not
-  contain.
+**Research does not cast.** An ability is a **relic's**, cast from the relic
+that owns it ([`09-relics.md`](09-relics.md) §2.1); the tree's magic lane opens
+the Sanctum and its levels.
 - **A relic's level is the ability's ladder.** There is nothing to research, so
   a player who wants a stronger active closes that relic's album — which is the
   collection's whole promise and the reason the split had to go one way.
@@ -488,15 +463,16 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1).
 |---|---|---|
 | Era price bands | [`tech-tree.md`](tech-tree.md) §7 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
 | **The bar** | 1/h up to 10 | `knowledge.basePerHour` · `knowledge.cap` |
-| **Gold price of a point** | 100 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
-| **Gem price of a point** | 270, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
-| Landmark claim lump · per `Wayposts` rank | 3 · +20% | `knowledge.landmarkClaimLump` · `tech-tree.json` |
-| First-clear lump · per `Bounties` rank | 3 · +20% | `delve.firstClearKnowledge` · `tech-tree.json` |
+| **Gold price of a point** | 400 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
+| **Gem price of a point** | 200, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| Landmark claim lump | 3 | `knowledge.landmarkClaimLump` |
+| First-clear lump | 3 | `delve.firstClearKnowledge` |
 | Chain Knowledge | 41 total | `quests` › `rewardKnowledge` |
-| What opens a book | §2 | `sim/research.ts` `TOME_OPENS` |
+| What opens a found book | §2 | `sim/research.ts` `TOME_OPENS` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
-| How many bands a book has, and what each asks for | 3 · 4 · 4 · 2 · 2 bands; 0 · 43 (Civics) or 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
+| How many chapters the tree has, and what each asks for | 9 chapters; 0 · 20 · 100 · 160 · 220 · 280 · 340 · 400 · 460 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
+| What finishing a chapter pays | a card pack per chapter | `tech-tree.json` `eraRewards` |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 
 ## 10. Deliberately not in this design

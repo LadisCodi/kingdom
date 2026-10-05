@@ -63,7 +63,7 @@ describe('a workshop with no crew', () => {
 });
 
 describe('the crew shares the queue', () => {
-  const PLANKS_MIN = GOODS.Planks.workSeconds / 60;
+  const PLANKS_MIN = GOODS.Planks.workSeconds! / 60;
 
   it('one worker, one item: the authored time', () => {
     const { state, shop } = withCarpenter(1);
@@ -117,15 +117,15 @@ describe('the crew shares the queue', () => {
 describe('the queue', () => {
   it('is as long as the level says, and no longer', () => {
     const { state, shop } = withCarpenter(1);
-    const cap = queueCapacity(shop);
+    const cap = queueCapacity(state, shop);
     expect(cap).toBe(DISTRICTS.Carpenter.queueLengthPerLevel[0]);
     queue(state, shop, cap);
     expect(queueGood(state, shop.uniqueId, T0)).toBe('QueueFull');
   });
 
   it('grows with the level, and the crew does too', () => {
-    const { shop } = withCarpenter(0, 10);
-    expect(queueCapacity(shop)).toBeGreaterThan(DISTRICTS.Carpenter.queueLengthPerLevel[0]);
+    const { state, shop } = withCarpenter(0, 10);
+    expect(queueCapacity(state, shop)).toBeGreaterThan(DISTRICTS.Carpenter.queueLengthPerLevel[0]);
   });
 
   it('pays for an item when it is queued, and refunds it in full on cancel', () => {
@@ -188,10 +188,10 @@ describe('the workshop under the engine contract', () => {
     state.city.population = 1;
     expect(changeWorkers(state, map, shop.uniqueId, 1, T0)).toBe('Assigned');
     fund(state, { Gold: 100_000, Stone: 10_000 });
-    queue(state, shop, queueCapacity(shop));
+    queue(state, shop, queueCapacity(state, shop));
     // A day away: all twelve land, and nothing more.
     const loaded = deserialize(serialize(state, T0), map, T0 + 24 * 60 * MIN)!;
-    expect(getGood(loaded.city.goods, 'Iron')).toBe(queueCapacity(shop));
+    expect(getGood(loaded.city.goods, 'Iron')).toBe(queueCapacity(state, shop));
   });
 
   it('keeps its queue and its work through a save', () => {

@@ -15,7 +15,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
@@ -27,7 +27,7 @@ import {
   requiredPopulation,
 } from './sim/districts';
 import {
-  explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
+  explorationGate, fogState, isPayable, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
 } from './sim/fog';
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
@@ -37,7 +37,7 @@ import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
-  committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
+  committedTroops, finishLineWithGems, healCost, healSecondsAt, healWounded, infirmaries, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   itemTrainSeconds, trainingCompletesAt,
 } from './sim/army';
@@ -133,25 +133,28 @@ import {
 } from './sim/missions';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
+import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt } from './sim/world/explorers';
+import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt, type ExplorerHome } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
-import { hexWork, isUpgrade, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
+import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
-import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { nicknameProblem } from './worldServer/nickname';
+import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
+import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
-import type { WorldBuildWhat } from './sim/state';
+import { PRECIOUS, type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -161,6 +164,10 @@ import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
+import { pay } from './sim/wallet';
+import { addGood, getGood } from './sim/goods';
+import { worldUpgradeGoods } from './sim/precious';
+import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
   | { kind: 'normal' }
@@ -198,13 +205,22 @@ export type OverlayName =
   | 'world'
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
-  | 'army';
+  | 'army'
+  // The Exchange: precious materials traded between the board's players
+  // (Docs/features/19-world-map.md §7.5).
+  | 'exchange'
+  // A world dungeon's descent: its rooms, the race, the army camped there
+  // (Docs/features/19-world-map.md §8.2).
+  | 'delve'
+  // The name the player goes out onto the world board under, asked the
+  // first time out (Docs/features/19-world-map.md §1.3).
+  | 'nickname';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
-  world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey',
+  world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -536,8 +552,11 @@ export class Game {
     this.packsSeen = state.collection.packs.length;
   }
 
+  /** The game's clock is the world server's: the device's time moved by
+   *  how far the server's runs ahead of it. One clock means a time the
+   *  server sends — a build done, an army home — is read as it was meant. */
   now(): number {
-    return Date.now();
+    return Date.now() + (this.worldServer?.clockOffset() ?? 0);
   }
 
   // ------------------------------------------------------------ subscriptions
@@ -681,16 +700,16 @@ export class Game {
     // screen, and now and then otherwise (a held Sanctuary moves the Mana
     // ceiling wherever the player is).
     this.worldTicks += 1;
-    if (this.worldServer !== null && (this.scene === 'world' || this.worldTicks % 30 === 0)) void this.refreshWorld();
+    if (this.worldServer !== null) {
+      const every = this.scene === 'world' ? this.worldServer.readEverySeconds() : 30;
+      if (this.worldTicks % every === 0) void this.refreshWorld();
+    }
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
     }
     // An explorer home says what it found; the board already shows where.
-    for (const home of result.explorersHome) {
-      this.toast(home.revealed > 0
-        ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map`
-        : 'Your explorer is home — nothing new out there');
-    }
+    // The target's promise, if it kept one, is paid and named (19 §3.2).
+    for (const home of result.explorersHome) this.explorerHomeToast(home);
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -2645,8 +2664,9 @@ export class Game {
       const seconds = worldBuildSeconds(b.what, b.level);
       return {
         name: worldBuildName(b.what),
-        task: isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
-          : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
+        task: b.what === 'Repair' ? 'Repairing on the world map'
+          : isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
+            : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
         startedAt: b.finishesAt - seconds * 1000,
         durationMs: seconds * 1000,
       };
@@ -2680,6 +2700,9 @@ export class Game {
     if (ask.kind === 'world') {
       const { index, what, level, gold } = ask;
       const name = `the ${worldBuildName(what)}`;
+      if (what === 'Repair') {
+        return { verb: 'Repair', what: 'Ready to repair the burnt district', cost: { Gold: gold }, start: () => void this.doRepairHex(index, gold) };
+      }
       return {
         verb: !isUpgrade(what) ? 'Claim' : level > 1 ? 'Upgrade' : 'Build',
         what: !isUpgrade(what) ? `Ready to claim with ${name}`
@@ -2943,6 +2966,8 @@ export class Game {
       case 'welcome': return 'welcome';
       // A list of profiles and a button each. Nothing on it moves.
       case 'payerProfile': return 'payer';
+      // Rebuilt only when the answer changes: the field keeps what is typed.
+      case 'nickname': return JSON.stringify([this.nicknameRefused, this.joiningWorld]);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -3068,9 +3093,21 @@ export class Game {
 
   /** Pay the Gold and complete a technology whose Knowledge is in. */
   doResearchTech(id: TechId): void {
+    const paid = this.state.research.rewarded.length;
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched') playSfx('researchComplete');
-    else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id].effects)) {
+      void this.worldServer.setBoost(worldImprovementBoost(this.state));
+    }
+    if (result === 'Researched') {
+      playSfx('researchComplete');
+      // The last card of a chapter pays its pack; the pile opens it like any other.
+      if (this.state.research.rewarded.length > paid) {
+        const { tome, era } = TECHNOLOGIES[id];
+        const tier = ERA_REWARDS[tome][era];
+        if (tier) this.toast(`Chapter ${formatExact(era)} complete — ${packName(tier).toLowerCase()}`);
+      }
+    } else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();
@@ -3153,6 +3190,11 @@ export class Game {
     };
     const built = (pred: (d: District) => boolean) =>
       this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
+    // A cell the player can buy THIS tap: dark, on the cleared ground's edge,
+    // inside the Townhall's reach and behind no technology. Pointing anywhere
+    // else answers the tap with a refusal.
+    const buyable = (c: Coord): boolean => fogState(this.state, this.map, c) === 'Discovered'
+      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
@@ -3220,7 +3262,7 @@ export class Game {
         break;
       }
       case 'DiscoverCells':
-        centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        centerCell(this.nearestCell(buyable));
         break;
       case 'DiscoverFeature': {
         // Point at a DARK cell that has the thing on it. This is the whole
@@ -3238,7 +3280,7 @@ export class Game {
         // Nothing of that kind in sight yet — fall back to the frontier,
         // because the answer is still "go and explore".
         centerCell(target
-          ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+          ?? this.nearestCell(buyable));
         break;
       }
       case 'ClaimLandmarks': {
@@ -3257,7 +3299,7 @@ export class Game {
           this.camera.centerOnCell(claimable.location, undefined, CAMERA_GLIDE_MS);
           this.notify();
         } else {
-          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+          centerCell(this.nearestCell(buyable));
         }
         break;
       }
@@ -3283,7 +3325,7 @@ export class Game {
             if (d < bestD) { bestD = d; target = c; }
           }
         }
-        centerCell(target ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        centerCell(target ?? this.nearestCell(buyable));
         break;
       }
       case 'ClearLairs': {
@@ -3292,7 +3334,7 @@ export class Game {
         // one".
         const open = this.openLairViews()[0];
         if (open) this.showLair(open.lairId);
-        else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        else centerCell(this.nearestCell(buyable));
         break;
       }
       case 'OwnArtifacts':
@@ -3402,6 +3444,11 @@ export class Game {
       this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
+    } else if (result === 'LairHeld') {
+      // The ground is a camp's: say whose, so the refusal points at the fight.
+      const lair = lairHolding(this.state, cell);
+      playSfx('error');
+      if (lair) this.toast(holdsThisGround(lairCreature(lair)));
     }
     this.notify();
   }
@@ -4026,7 +4073,8 @@ export class Game {
   }
 
   healWait(unitId: UnitId, count: number): number {
-    return healSeconds(unitId, count);
+    const infirmary = infirmaries(this.state)[0];
+    return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
 
   doTrain(unitId: TrainableId, at?: District): void {
@@ -4166,10 +4214,20 @@ export class Game {
   /** What a building at `cell` would work. `level` matters for a MOVE: an
    *  upgraded Sawmill keeps its bigger radius when it is picked up, and
    *  previewing it at level 1 would understate the spot it is being moved to. */
+  /** How far a producer of this kind reaches at `level`, the tree's
+   *  `influenceRadius` included — what sim/workers.ts#influenceRadius would
+   *  say for a building standing there. */
+  reachAt(definitionId: DistrictId, level: number): number {
+    const def = DISTRICTS[definitionId];
+    if (def.influenceRadiusPerLevel.length === 0) return 0;
+    return Math.floor(techValue(this.state, 'influenceRadius', levelIndexed(def.influenceRadiusPerLevel, level),
+      { district: definitionId }));
+  }
+
   capturedCells(definitionId: DistrictId, cell: Coord, level = 1): Coord[] {
     const def = DISTRICTS[definitionId];
     if (def.harvestSources.length === 0 || def.influenceRadiusPerLevel.length === 0) return [];
-    const radius = levelIndexed(def.influenceRadiusPerLevel, level);
+    const radius = this.reachAt(definitionId, level);
     return cellsWithinRadiusOfRect(this.map, cell, def.size, radius).filter(
       (c) => {
         if (this.state.fog.revealed[coordKey(c)] !== true) return false;
@@ -4260,7 +4318,7 @@ export class Game {
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
-          this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
+          this.map, this.mode.selected, def.size, this.reachAt(this.mode.definitionId, 1),
         ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
@@ -4305,7 +4363,7 @@ export class Game {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
-            levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
+            this.reachAt(this.mode.definitionId, district?.level ?? 1),
           ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
@@ -4363,7 +4421,7 @@ export class Game {
       // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
         if (district.state === 'Built') {
-          layer.influenceCells = withFootprint(influenceCells(this.map, district),
+          layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
         }
       }
@@ -4577,6 +4635,13 @@ export class Game {
   /** The dev tool's "play as": the seat world commands are made for, or
    *  null for the player's own. A rival's commands cost the player nothing. */
   actingSeat: number | null = null;
+  /** Who the player is to the servers: the signed-in user's id, handed over
+   *  by main; a test plays as the stand-in's old fixed id. */
+  playerId = 'local-player';
+  /** Saves the game now — main's save, handed over. A world effect is
+   *  acknowledged to the server only once the state it changed is saved, so
+   *  a crash between the two delivers it again rather than losing it. */
+  persist: (() => void) | null = null;
 
   /** Where the board comes from: the server's snapshot once there is one,
    *  the locally generated board before (sim/world/source.ts). */
@@ -4589,20 +4654,91 @@ export class Game {
     return this.actingSeat ?? this.state.world.board.seat;
   }
 
-  /** Take a seat on the server's board. A player who has already explored
-   *  a locally generated board asks to keep it. */
+  /** Whether the player sits on a world board: null until the server has
+   *  said (19 §1.3). A player is on no board until they first go out. */
+  worldSeated: boolean | null = null;
+
+  /** Find out where the player sits — never taking a seat. */
   async connectWorld(): Promise<void> {
-    if (this.worldServer === null) return;
-    const snap = await this.worldServer.join(
-      { id: 'local-player', name: this.state.city.name, prefer: this.state.world.board }, this.now());
-    this.applyWorldSnapshot(snap);
+    if (this.worldServer === null || this.worldReading) return;
+    this.worldReading = true;
+    try {
+      const r = await this.worldServer.connect(this.playerId);
+      if (r.kind === 'unseated') this.worldSeated = false;
+      if (r.kind === 'seated') await this.seatedOn(r.snapshot);
+    } finally {
+      this.worldReading = false;
+    }
   }
 
-  /** Ask the server for the board as it stands now. */
+  /** On a board: the server's view, the research it should know of, and
+   *  any army the save has out that this server never heard of. */
+  private async seatedOn(snap: WorldSnapshot): Promise<void> {
+    this.worldSeated = true;
+    this.applyWorldSnapshot(snap);
+    this.recallUnknownArmies(snap);
+    await this.worldServer?.setBoost(worldImprovementBoost(this.state));
+  }
+
+  /** A read or a join on its way: the next waits its turn rather than
+   *  piling up behind a slow server. */
+  private worldReading = false;
+
+  /** Ask the server for the board as it stands now — connecting first if
+   *  it could not before. Nothing to read for a player on no board. */
   async refreshWorld(): Promise<void> {
-    if (this.worldServer === null) return;
-    const snap = await this.worldServer.snapshot(this.now());
-    if (snap !== null) this.applyWorldSnapshot(snap);
+    if (this.worldServer === null || this.worldReading || this.worldSeated === false) return;
+    if (this.worldView === null) return this.connectWorld();
+    this.worldReading = true;
+    try {
+      const snap = await this.worldServer.snapshot();
+      if (snap !== null) this.applyWorldSnapshot(snap);
+    } finally {
+      this.worldReading = false;
+    }
+  }
+
+  /** The nickname sheet's state: what was typed, why the server refused it,
+   *  and whether a join is on its way. */
+  nicknameDraft = '';
+  nicknameRefused: string | null = null;
+  joiningWorld = false;
+
+  /** Take a seat on the world board under the nickname chosen, and go out. */
+  async doJoinWorld(nickname: string): Promise<void> {
+    if (this.worldServer === null || this.joiningWorld) return;
+    this.nicknameDraft = nickname;
+    const problem = nicknameProblem(nickname);
+    if (problem !== null) {
+      this.nicknameRefused = problem;
+      this.notify();
+      return;
+    }
+    this.joiningWorld = true;
+    this.nicknameRefused = null;
+    this.notify();
+    const r = await this.worldServer.join(nickname);
+    this.joiningWorld = false;
+    if (!r.ok) {
+      this.nicknameRefused = r.why === 'NicknameTaken' ? 'Another kingdom has that name' : this.worldRefusal(r.why);
+      this.notify();
+      return;
+    }
+    await this.seatedOn(r.snapshot);
+    if (this.openOverlay === 'nickname') this.openOverlay = null;
+    this.goOutToWorld();
+  }
+
+  /** An army this save has out that the server it joined never heard of —
+   *  sent on another server, the stand-in before the real one — comes home
+   *  whole: the server holds the army, and it holds none of these. Only on a
+   *  join, when no army can be on its way out. */
+  private recallUnknownArmies(snap: WorldSnapshot): void {
+    const known = new Set(snap.armies.filter((a) => a.owner === snap.board.seat).map((a) => a.id));
+    for (const out of [...this.state.world.armies]) {
+      if (known.has(out.id)) continue;
+      receiveArmy(this.state, { armyId: out.id, at: snap.at, troops: out.troops, fallen: [], heroes: [] });
+    }
   }
 
   /** Take what the server says. A different board or seat makes the fog
@@ -4614,9 +4750,13 @@ export class Game {
       this.state.world.board = { ...snap.board };
       this.state.world.revealed = emptyBits();
       this.state.world.explorers = [];
+      this.state.world.effectSeq = 0;
     }
     // What the server owed: armies home and the reports of what they did.
-    for (const e of snap.effects) {
+    // Each is sent until acknowledged, so only those past the last one
+    // applied are new.
+    const fresh = snap.effects.filter((e) => (e.seq ?? 0) > this.state.world.effectSeq);
+    for (const e of fresh) {
       if (e.kind === 'armyHome') receiveArmy(this.state, e);
       else if (e.kind === 'loot') {
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
@@ -4627,14 +4767,48 @@ export class Game {
         addHeroXp(this.state, e.heroXp);
         if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
         if (e.pack) grantPack(this.state, e.pack, 'portal');
+        // A camp's lump of precious material, to the city's goods (19 §7.4).
+        if (e.precious) {
+          addGood(this.state.city.goods, e.precious.id, e.precious.amount);
+          this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
+        }
         this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+      } else if (e.kind === 'goods') {
+        // Precious material from the Exchange: an offer taken, or one back.
+        addGood(this.state.city.goods, e.lot.id, e.lot.amount);
+        this.toast(e.text);
       } else this.toast(e.text);
     }
+    if (fresh.length > 0) {
+      this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
+      this.persist?.();
+    }
+    if (this.actingSeat === null) this.worldServer?.acknowledge(this.state.world.effectSeq);
     this.worldView = snap;
+    this.reportSeenCamps(snap);
     const board = snapshotWorld(snap).board();
     this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
       && board.hexes[h.index].features.includes('Sanctuary')).length;
     this.notify();
+  }
+
+  /** A lurking camp raids only once the player has seen it, and only the
+   *  player's fog knows that: tell the server of any it has not been told
+   *  of (19 §5.5). Once at a time. */
+  private seenPending = false;
+  private reportSeenCamps(snap: WorldSnapshot): void {
+    if (this.worldServer === null || this.actingSeat !== null || this.seenPending) return;
+    const told = new Set(snap.seenCamps ?? []);
+    const fog = worldFogAt(this.state, this.now());
+    const fresh = snapshotWorld(snap).board().hexes
+      .filter((h) => h.camp?.lurking === true && !told.has(h.index) && hasBit(fog, h.index))
+      .map((h) => h.index);
+    if (fresh.length === 0) return;
+    this.seenPending = true;
+    void this.worldServer.reportSeen(fresh).then((r) => {
+      this.seenPending = false;
+      if (r.ok) this.applyWorldSnapshot(r.snapshot);
+    });
   }
 
   /** The line a refused world command shows. */
@@ -4652,6 +4826,11 @@ export class Game {
       Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
+      Guarded: 'A camp holds it — beat it, or pay it off, first',
+      NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
+      TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
+      NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
+      BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
     };
     return LINES[why];
   }
@@ -4662,10 +4841,16 @@ export class Game {
     return null;
   }
 
+  /** Repair a district a camp burnt: a builder, and a share of a claim's
+   *  Gold (19 §5.5). */
+  async doRepairHex(index: number, gold: number): Promise<void> {
+    await this.worldCommand(index, 'Repair', 1, gold, (asSeat) => this.worldServer!.repair(index, asSeat));
+  }
+
   /** Claim a hex: build its district, with a builder and its Gold. */
   async doClaimHex(index: number, gold: number): Promise<void> {
     const district = districtOf(this.worldSource().board().hexes[index]) ?? 'Rural';
-    await this.worldCommand(index, district, 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+    await this.worldCommand(index, district, 1, gold, (asSeat) => this.worldServer!.claim(index, asSeat));
   }
 
   /** Finish the builder's work on one of the player's hexes now, with Gems:
@@ -4681,7 +4866,7 @@ export class Game {
       this.notify();
       return;
     }
-    const r = await this.worldServer.finish(index, this.now());
+    const r = await this.worldServer.finish(index);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4697,7 +4882,7 @@ export class Game {
 
   /** Build an upgrade into a district, or raise it a level. */
   async doUpgradeHex(index: number, what: WorldUpgrade, level: number, gold: number): Promise<void> {
-    await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, this.now(), asSeat));
+    await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, asSeat));
   }
 
   private async worldCommand(
@@ -4721,8 +4906,11 @@ export class Game {
       return;
     }
     const refused = this.worldBuilderRefusal(gold);
-    if (refused !== null) {
-      this.toast(refused);
+    // A Fortress level may ask for precious materials too (19 §7.6).
+    const goods = isUpgrade(what) ? worldUpgradeGoods(this.state, what, level) : {};
+    const short = Object.entries(goods).find(([g, n]) => getGood(this.state.city.goods, g as GoodId) < (n as number));
+    if (refused !== null || short !== undefined) {
+      this.toast(refused ?? `Not enough ${short![0]}`);
       this.notify();
       return;
     }
@@ -4733,6 +4921,7 @@ export class Game {
       return;
     }
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
+    for (const [g, n] of Object.entries(goods)) addGood(this.state.city.goods, g as GoodId, -(n as number));
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
     playSfx('click');
     // Started from a free builder's row: the sheet was only in the way.
@@ -4764,6 +4953,9 @@ export class Game {
     const target = this.armyTarget;
     const party = partyOf(this.state, this.expeditionParty.filter((s) => s.count > 0), this.partyHeroes, this.now());
     const attack = partyPower(party);
+    if (target !== null && this.armyPurpose === 'clear') {
+      return { power: this.worldSource().board().hexes[target]?.camp?.power ?? 0, attack, garrisons: 0 };
+    }
     if (target === null || this.armyPurpose !== 'attack') return { power: 0, attack, garrisons: 0 };
     const source = this.worldSource();
     const holder = source.hexOf(target)?.owner ?? null;
@@ -4780,7 +4972,8 @@ export class Game {
    *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
   armyRoute(target: number): Route | null {
     const fog = worldFogAt(this.state, this.now());
-    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i));
+    const speed = armyMarchSpeed(this.state);
+    return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i), () => speed);
   }
 
   /** Why the army cannot set out, in words, or null. */
@@ -4804,8 +4997,8 @@ export class Game {
     const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
     const route = this.armyRoute(target)!;
     const r = await this.worldServer.sendArmy({
-      purpose: this.armyPurpose, target, heroes, board, path: route.path,
-    }, this.now());
+      purpose: this.armyPurpose, target, heroes, board, path: route.path, speed: armyMarchSpeed(this.state),
+    });
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4824,12 +5017,21 @@ export class Game {
   /** Fight the next room of the dungeon an army camps at, and watch it. */
   async doDelveRoom(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.delveRoom(armyId, this.now());
+    const r = await this.worldServer.delveRoom(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
       return;
     }
+    // What the room paid, for the spoils the delve screen shows after the
+    // fight (19 §8.2) — the newest loot owed, read before the snapshot's
+    // effects are spent.
+    const loot = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
+    this.delveSpoils = {
+      won: r.won, depth: r.depth, room: r.room, boss: r.boss, lost: r.lost,
+      loot: loot?.kind === 'loot' ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
+    };
+    this.delveDepth = null;
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, {
       title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
@@ -4842,7 +5044,7 @@ export class Game {
   /** Go down the Portal's next floor, and watch the fight. */
   async doDescendPortal(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.descendPortal(armyId, this.now());
+    const r = await this.worldServer.descendPortal(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4856,7 +5058,7 @@ export class Game {
   /** Call an army home. */
   async doRecallArmy(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.recall(armyId, this.now(), this.actingSeat ?? undefined);
+    const r = await this.worldServer.recall(armyId, this.actingSeat ?? undefined);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4865,10 +5067,141 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
   }
 
+  /** What an explorer home says: what it revealed, and what its target paid. */
+  private explorerHomeToast(home: ExplorerHome): void {
+    const found = home.paid === null ? '' : `, and ${scoutWords(home.paid)}`;
+    this.toast(home.revealed > 0
+      ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
+      : `Your explorer is home — nothing new out there${found}`);
+    if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  }
+
+  /** The dungeon the delve screen is about, the depth it shows (null: the
+   *  player's current one), and what the last room fought there paid. */
+  delveHex: number | null = null;
+  delveDepth: number | null = null;
+  delveSpoils: {
+    won: boolean; depth: number; room: number; boss: boolean; lost: number;
+    loot: { gold: number; heroXp: number; stardust: number; knowledge: number; precious?: { id: PreciousId; amount: number } } | null;
+  } | null = null;
+
+  /** Open a dungeon's descent at the player's current depth. */
+  openDelve(index: number): void {
+    this.delveHex = index;
+    this.delveDepth = null;
+    this.delveSpoils = null;
+    this.setOverlay('delve');
+  }
+
+  /** Close the spoils, back to the descent. */
+  dismissSpoils(): void {
+    this.delveSpoils = null;
+    this.notify();
+  }
+
+  /** What the player is about to offer on the Exchange. */
+  exchangeDraft: { give: PreciousId; giveN: number; want: PreciousId; wantN: number } = {
+    give: 'Starmetal', giveN: 10, want: 'Heartwood', wantN: 10,
+  };
+
+  /** Open the Exchange, the player's own material offered first. */
+  openExchange(): void {
+    const own = this.worldSource().board().materials[this.worldSeat()];
+    if (own !== undefined && this.exchangeDraft.give !== own) {
+      this.exchangeDraft = { ...this.exchangeDraft, give: own, want: PRECIOUS.find((p) => p !== own)! };
+    }
+    this.setOverlay('exchange');
+  }
+
+  /** Put the draft up: what it gives leaves the city's goods now. */
+  async doPostOffer(): Promise<void> {
+    if (this.worldServer === null) return;
+    const d = this.exchangeDraft;
+    if (getGood(this.state.city.goods, d.give) < d.giveN) {
+      this.toast(`Not enough ${d.give}`);
+      this.notify();
+      return;
+    }
+    addGood(this.state.city.goods, d.give, -d.giveN);
+    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN });
+    if (!r.ok) {
+      addGood(this.state.city.goods, d.give, d.giveN);
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    playSfx('click');
+    this.toast('Your offer is up on the Exchange');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Take an offer: pay what it wants, receive what it gives. */
+  async doTakeOffer(offerId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const o = this.worldView?.offers?.find((x) => x.id === offerId);
+    if (o === undefined) return;
+    if (getGood(this.state.city.goods, o.want.id) < o.want.amount) {
+      this.toast(`Not enough ${o.want.id}`);
+      this.notify();
+      return;
+    }
+    addGood(this.state.city.goods, o.want.id, -o.want.amount);
+    const r = await this.worldServer.takeOffer(offerId);
+    if (!r.ok) {
+      addGood(this.state.city.goods, o.want.id, o.want.amount);
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (r.received !== null) {
+      addGood(this.state.city.goods, r.received.id, r.received.amount);
+      this.toast(`+${formatCount(r.received.amount)} ${r.received.id}`);
+    }
+    playSfx('click');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Take one's own offer down: what it held comes back. */
+  async doWithdrawOffer(offerId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.withdrawOffer(offerId);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    if (r.received !== null) addGood(this.state.city.goods, r.received.id, r.received.amount);
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Pay a camp off with its tribute: the camp is beaten for the player,
+   *  and pays nothing (19 §5.4). */
+  async doTributeCamp(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const camp = this.worldSource().board().hexes[index]?.camp;
+    if (!camp) return;
+    const cost = campTribute(camp.power);
+    if (!canAfford(this.state.city.wallet, cost)) {
+      this.shake(Object.keys(cost) as CurrencyId[]);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.tribute(index);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    pay(this.state.city.wallet, cost);
+    playSfx('click');
+    this.toast(`The camp of ${CAMP_CREATURE[camp.creature]} takes the tribute and leaves`);
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
   /** Collect a held hex's stores into the purse. */
   async doCollectHex(index: number): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.collect(index, this.now(), this.actingSeat ?? undefined);
+    const r = await this.worldServer.collect(index, this.actingSeat ?? undefined);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4879,6 +5212,11 @@ export class Game {
         // Knowledge is the kingdom's; every other coin the city's purse.
         addToWallet(r.paid.currency === 'Knowledge' ? this.state.kingdom.wallet : this.state.city.wallet, r.paid.currency, r.paid.amount);
         this.reward({ [r.paid.currency]: r.paid.amount } as Wallet);
+      }
+      // A rich district's precious store, to the city's goods (19 §7.4).
+      if (r.precious !== null) {
+        addGood(this.state.city.goods, r.precious.id, r.precious.amount);
+        this.toast(`+${formatCount(r.precious.amount)} ${r.precious.id}`);
       }
     }
     this.applyWorldSnapshot(r.snapshot);
@@ -4891,6 +5229,22 @@ export class Game {
       this.notify();
       return;
     }
+    // The first time out, the player takes a seat, under a name of their
+    // choosing (19 §1.3); until then they are on no board. With no server
+    // at all there is no seat to take: the board is the one made here.
+    if (this.worldServer !== null && this.worldSeated !== true) {
+      void this.connectWorld().then(() => {
+        if (this.worldSeated === true) this.goOutToWorld();
+        else if (this.worldSeated === false) this.setOverlay('nickname');
+        else this.toast(this.worldRefusal('Offline'));
+        this.notify();
+      });
+      return;
+    }
+    this.goOutToWorld();
+  }
+
+  private goOutToWorld(): void {
     this.dismiss();
     this.scene = 'world';
     // Out onto the board at the player's own city, up close.
@@ -4931,9 +5285,7 @@ export class Game {
     const result = finishExplorerWithGems(this.state, tripId, this.now());
     if (result.kind === 'Finished') {
       playSfx('gemSpend');
-      this.toast(result.home.revealed > 0
-        ? `Your explorer is home — ${formatCount(result.home.revealed)} new hexes on the map`
-        : 'Your explorer is home — nothing new out there');
+      this.explorerHomeToast(result.home);
     } else if (result.kind === 'NotEnoughGems') {
       this.shake(['Gems']);
     }

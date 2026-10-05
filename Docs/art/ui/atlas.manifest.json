@@ -250,6 +250,21 @@
     "typeCavalry"
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-o1-precious.png",
+   "grid": {
+    "rows": 2,
+    "cols": 2
+   },
+   "fill": 0.86,
+   "names": [
+    "Starmetal",
+    "Heartwood",
+    "Moonglass",
+    null
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [

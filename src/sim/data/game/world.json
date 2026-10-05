@@ -110,8 +110,8 @@
         "name": "Fortress",
         "levels": [
           { "gold": 2500, "buildSeconds": 7200 },
-          { "gold": 6000, "buildSeconds": 21600 },
-          { "gold": 14000, "buildSeconds": 43200 }
+          { "gold": 6000, "buildSeconds": 21600, "anyPrecious": 10 },
+          { "gold": 14000, "buildSeconds": 43200, "goods": { "Starmetal": 10, "Heartwood": 10, "Moonglass": 10 } }
         ]
       }
     },
@@ -140,7 +140,20 @@
     "bossRewardMultiplier": 3,
     "closeRewardMultiplier": 2,
     "returnHoursMin": 12,
-    "returnHoursMax": 24
+    "returnHoursMax": 24,
+    "precious": 1,
+    "nameFirst": ["Sunken", "Hollow", "Drowned", "Ashen", "Weeping", "Forgotten", "Silent", "Shattered"],
+    "nameSecond": ["Barrow", "Halls", "Deep", "Vault", "Crypt", "Warren", "Mines", "Catacombs"],
+    "bossNames": [
+      "the Hollow King",
+      "the Bone Matron",
+      "the Pale Warden",
+      "the Ember Wyrm",
+      "the Rot Baron",
+      "the Grey Seer",
+      "the Drowned Queen",
+      "the Iron Abbot"
+    ]
   },
   "worldPortal": {
     "openWeekday": 5,
@@ -156,11 +169,82 @@
     "milestoneEvery": 10,
     "milestoneGems": 100,
     "rankGems": [300, 150, 150, 50, 50, 50],
-    "botFloorChance": 0.6
+    "botFloorChance": 0.6,
+    "preciousEvery": 5,
+    "precious": 4
   },
   "worldTravel": {
     "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5 },
     "feature": { "Forest": 1.5, "Mountain": 3, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
     "portal": 1
+  },
+  "worldCamps": {
+    "share": 0.34,
+    "lurkingShare": 0.4,
+    "powerByRing": [2400, 1500, 1000, 650, 300, 400],
+    "powerJitter": 0.15,
+    "creatures": {
+      "inner": ["Drake"],
+      "corridor": ["Orcs", "Harpies", "WolfRiders", "Goblins"],
+      "home": ["Goblins", "Orcs"],
+      "outer": ["WolfRiders", "Harpies", "Orcs"]
+    },
+    "goldPerPower": 1,
+    "heroXpPerPower": 0.1,
+    "tributePremium": 1.5,
+    "tributeLossShare": 0.35,
+    "botHoursPer1000Power": 6,
+    "raidHours": 8,
+    "raidShare": 0.4,
+    "repairCostShare": 0.1,
+    "repairTimeShare": 0.1
+  },
+  "worldScouting": {
+    "hoursByRole": { "home": 0.5, "outer": 0.75, "corridor": 1.5, "inner": 3 },
+    "rewards": {
+      "home": [
+        { "reward": "Gold", "weight": 4, "amount": 400, "pack": null },
+        { "reward": "Wood", "weight": 2, "amount": 150, "pack": null },
+        { "reward": "Food", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "Stone", "weight": 2, "amount": 150, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 100, "pack": null }
+      ],
+      "outer": [
+        { "reward": "Gold", "weight": 4, "amount": 500, "pack": null },
+        { "reward": "Wood", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "Food", "weight": 2, "amount": 250, "pack": null },
+        { "reward": "Stone", "weight": 2, "amount": 200, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 150, "pack": null }
+      ],
+      "corridor": [
+        { "reward": "Gold", "weight": 4, "amount": 1000, "pack": null },
+        { "reward": "Knowledge", "weight": 2, "amount": 2, "pack": null },
+        { "reward": "Stardust", "weight": 1, "amount": 10, "pack": null },
+        { "reward": "HeroXp", "weight": 1, "amount": 250, "pack": null },
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Green" },
+        { "reward": "Precious", "weight": 2, "amount": 4, "pack": null }
+      ],
+      "inner": [
+        { "reward": "Gold", "weight": 2, "amount": 3000, "pack": null },
+        { "reward": "Stardust", "weight": 3, "amount": 30, "pack": null },
+        { "reward": "Gems", "weight": 1, "amount": 20, "pack": null },
+        { "reward": "Pack", "weight": 1, "amount": 1, "pack": "Rose" },
+        { "reward": "Precious", "weight": 3, "amount": 12, "pack": null }
+      ]
+    }
+  },
+  "worldPrecious": {
+    "richFeatureShare": 0.2,
+    "richDesertShare": 0.25,
+    "perDay": 4,
+    "storeDays": 1,
+    "ownShare": 0.7,
+    "campPerPower": 0.01
+  },
+  "worldExchange": {
+    "offerHours": 24,
+    "maxOffers": 3,
+    "botTakeHours": 2,
+    "botOfferAmount": 10
   }
 }

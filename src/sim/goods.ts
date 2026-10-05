@@ -10,6 +10,10 @@
 import { GOODS, type DistrictDef } from './data/definitions';
 import type { GameState, GoodId, GoodsStock } from './state';
 
+/** What one item takes a villager to make; 0 for a precious material, which
+ *  nothing makes — no workshop may produce one (dataRules). */
+export const workSecondsOf = (id: GoodId): number => GOODS[id].workSeconds ?? 0;
+
 export const getGood = (stock: GoodsStock, id: GoodId): number => stock[id] ?? 0;
 
 export function addGood(stock: GoodsStock, id: GoodId, amount: number): void {
@@ -42,6 +46,10 @@ export const isFreeOfGoods = (cost: GoodsStock): boolean => Object.keys(cost).le
 export function goodsCostForLevel(def: DistrictDef, level: number): GoodsStock {
   return def.costPerLevel[level - 1]?.goods ?? {};
 }
+
+/** What reaching `level` costs in precious material of any kind. */
+export const anyPreciousForLevel = (def: DistrictDef, level: number): number =>
+  def.costPerLevel[level - 1]?.anyPrecious ?? 0;
 
 /** Everything the city holds, in authored order, for a card that lists it. */
 export const goodsHeld = (state: GameState): { id: GoodId; amount: number }[] =>

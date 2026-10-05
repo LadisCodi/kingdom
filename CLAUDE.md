@@ -22,12 +22,13 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 95 suites, keep them all green
+npm test             # vitest run — 109 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
 npm run art:check    # verify it
 npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ (atlas + index)
+npm run server:bundle    # the world server's rules → supabase/functions/_shared/world.js (Deno)
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
@@ -165,10 +166,23 @@ PR, merged with a merge commit.
 - **Finishing a feature or bugfix is one motion**: commit, run the gate,
   push, open the PR into `develop`, merge it. No need to ask.
 - **A release or hotfix to `main` is only on request** — it deploys.
+- **A release or hotfix also deploys the server.** On the release branch,
+  once the gate is green and BEFORE it merges into `main` (the push to
+  `main` ships the client, and a new client must never meet an old server):
+  ```bash
+  npx supabase db push --dry-run   # read what will apply
+  npx supabase db push             # the migrations in supabase/migrations/
+  npm run server:bundle && npx supabase functions deploy world
+  ```
+  The project is the one `supabase link` points at (`supabase/.temp/`,
+  never committed — a fresh worktree links again). A migration must keep
+  the server the live client talks to working, since the server goes
+  first. Nothing changed under `supabase/` or in what `server:bundle`
+  builds → say so, and skip it.
 
 ## Saves
 
-`SAVE_VERSION` is 85; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 87; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -181,6 +195,12 @@ than the build is rejected rather than downgraded.
 
 ## Conventions that are easy to get wrong
 
+- **The world server has one door.** Every world request goes through
+  `handleWorld` (`src/worldServer/handle.ts`), which the stand-in and the
+  edge function both call. A request carries no time — the server's clock is
+  the game's (`Game.now`) — and a command id, so a retry runs once. An effect
+  the server owes is applied past `state.world.effectSeq`, saved, then
+  acknowledged (`Docs/plans/online-server.md` §2).
 - **One tick driver.** The Unity build double-ticked its timer; the web build
   ticks from exactly one place. Do not add a second.
 - **Three distance metrics coexist by design.** Adjacency — fog state, the

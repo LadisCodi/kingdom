@@ -25,7 +25,7 @@ import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type Coord, type FeatureId, type GameState, type LairId, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf, map, T0, tickAt,
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, map, T0, tickAt,
 } from './helpers';
 
 
@@ -501,12 +501,16 @@ describe('quests fund the research tree', () => {
     // 16,215: `WarDrums` at 180 sends the player out to FIND the Orcs before
     // the chain asks for the book that only a found lair opens.
     expect(chain).toBe(16_215);
-    expect(tree).toBe(592_385); // the same sum tests/fog.test.ts freezes, and why
-    // Still enough to carry the player through the OPENING — every era-1
-    // major, which is the whole of the tree as it stood before the eras. The
-    // majors of eras 2 and 3 are the depth the city has to earn for itself.
+    // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
+    // tutorial priced in days of what the city collects, the way buildings are.
+    // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
+    expect(tree).toBe(4_922_305); // the same sum tests/fog.test.ts freezes, and why
+    // Still enough to carry the player through the OPENING — chapters 1 and 2
+    // of the kingdom's tree, which are the tutorial's (Docs/plans/
+    // tech-tree-rework.md §3.3). Every chapter after is the depth the city has
+    // to earn for itself.
     const opening = TECH_ORDER
-      .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
+      .filter((id) => TECHNOLOGIES[id].tome === 'Kingdom' && TECHNOLOGIES[id].era <= 2)
       .reduce((sum, id) => sum + techCost(id), 0);
     // 1,850 across 17 era-1 majors: Civics became a whole book (2026-09-08)
     // and its opening walks a single column down to Bureaucracy, and
@@ -520,7 +524,9 @@ describe('quests fund the research tree', () => {
     // 6,055 with Pickaxes, the card that opens the mountains.
     // 6,705 when the Warfare book was rebuilt (2026-10-01): its era-1
     // majors are Warrior and the Infirmary now, at 500 and 800.
-    expect(opening).toBe(6705);
+    // 3,605 for chapters 1–2 of the one tree (2026-10-05), ranks included,
+    // since a chapter's spine is required whatever kind of card it is.
+    expect(opening).toBe(3605);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

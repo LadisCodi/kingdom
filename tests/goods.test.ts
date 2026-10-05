@@ -74,8 +74,9 @@ describe('the goods stockpile', () => {
 });
 
 describe('the goods recipes', () => {
-  it('names an input for every good', () => {
+  it('names an input for every good that is made', () => {
     for (const good of Object.values(GOODS)) {
+      if (good.precious) continue; // found on the world board, never made
       const raw = Object.keys(good.input).length > 0;
       const refined = good.inputGood !== null;
       const magic = good.inputMana > 0;
@@ -143,7 +144,7 @@ describe('a building level priced in goods', () => {
     addBuilt(state, 'Sawmill', { x: 3, y: 3 });
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     priced('Sawmill', [{ Planks: 3 }]);
-    expect(upgradeGoodsCost('Sawmill', 2)).toEqual({ Planks: 3 });
+    expect(upgradeGoodsCost(state, 'Sawmill', 2)).toEqual({ Planks: 3 });
 
     // Short of both: the raw resources are asked for first, because that is
     // the errand the player can run right now.

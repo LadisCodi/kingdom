@@ -9,8 +9,8 @@ import {
 import { addGood, getGood } from '../src/sim/goods';
 import { effectiveWorkerStrike, tapDraw, workerStrikeMs } from '../src/sim/upgrades';
 import { districtCapacity, maxPopulation } from '../src/sim/population';
-import { DISTRICTS, HARVEST, MANA, levelIndexed } from '../src/sim/data/definitions';
-import { districtById, townhall, type DistrictId, type GoodId } from '../src/sim/state';
+import { DISTRICTS, HARVEST, MANA, TECHNOLOGIES, TECH_ORDER, levelIndexed } from '../src/sim/data/definitions';
+import { districtById, townhall, type DistrictId, type GoodId, type TechId } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, tickAt, T0 } from './helpers';
 
 const HOUSE = { x: 2, y: 0 }; // touches the Townhall
@@ -27,19 +27,26 @@ describe('tech-gated upgrades', () => {
     expect(upgradeDistrict(state, house.uniqueId)).toBe('Started');
   });
 
-  // The Townhall's levels are still gated by TECHNOLOGY, and by an ordinary
-  // one: `Bureaucracy` is a card in Civics era 2 like any other, priced and
-  // placed. It is not what opens the book — nothing opens a book any more —
-  // and nothing about it is special to the code, which reads the gate off its
-  // `unlocks` the way it reads every other.
-  it('Townhall L3 needs Bureaucracy; L2 needs no tech', () => {
-    expect(requiredTechForLevel('Townhall', 2)).toBe(null);
-    expect(requiredTechForLevel('Townhall', 3)).toBe('Bureaucracy');
-    expect(requiredTechForLevel('Townhall', 4)).toBe('Magistracy');
+  // EVERY Townhall level is a chapter's FINALE (Docs/plans/tech-tree-rework.md
+  // §3.1): the card alone on a chapter's last row opens the next level. They
+  // are ordinary cards, and the code reads the gate off their `unlocks` the
+  // way it reads every other.
+  it('asks each Townhall level for its chapter\'s finale', () => {
+    const finales = ['Forestry', 'Bureaucracy', 'Magistracy', 'Charter', 'Exchequer',
+      'Chancery', 'Dominion', 'Sovereignty', 'GoldenAge'];
+    finales.forEach((id, i) => expect(requiredTechForLevel('Townhall', i + 2), `level ${i + 2}`).toBe(id));
+    for (const id of finales) {
+      const { tome, era, row } = TECHNOLOGIES[id as TechId];
+      const band = TECH_ORDER.filter((t) => TECHNOLOGIES[t].placed
+        && TECHNOLOGIES[t].tome === tome && TECHNOLOGIES[t].era === era);
+      expect(Math.max(...band.map((t) => TECHNOLOGIES[t].row)), `${id} ends its chapter`).toBe(row);
+    }
     const state = freshGame();
     fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     state.city.population = 99; // the people are not what this tests
     const th = townhall(state);
+    expect(upgradeDistrict(state, th.uniqueId)).toBe('RequirementsNotMet');
+    completeTech(state, 'Forestry');
     expect(upgradeDistrict(state, th.uniqueId)).toBe('Started');
     tickAt(state, T0);
     tickAt(state, T0 + 31_000); // 30s upgrade
@@ -180,14 +187,22 @@ describe('every upgradable building has something to show for the level', () => 
 
 // ---------------------------------------------------------- the late city
 
-describe('the late levels are gated by goods and the Townhall, not by research', () => {
-  it('asks no technology anywhere above the ladder the tomes already own', () => {
-    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
-      const def = DISTRICTS[id];
-      for (let level = LATE_FROM; level <= def.maxLevel; level++) {
-        expect(requiredTechForLevel(id, level), `${id} level ${level}`).toBe(null);
-      }
+describe('the late levels are gated by goods, the Townhall AND the chapter\'s card', () => {
+  // Each chapter of the one tree opens its Townhall level's Housing level, the
+  // four producers' and the four halls' — so a building's level n is a card in
+  // chapter n, the chapter that runs from Townhall n to n+1.
+  it('opens a building\'s level n in chapter n, for houses, producers and halls', () => {
+    const chapterOf = (id: DistrictId, level: number): number =>
+      TECHNOLOGIES[requiredTechForLevel(id, level)!].era;
+    for (let level = 3; level <= 9; level++) expect(chapterOf('Housing', level), `Housing ${level}`).toBe(level);
+    for (const id of ['Farm', 'Sawmill', 'Quarry', 'Docks'] as DistrictId[]) {
+      for (let level = 3; level <= 9; level++) expect(chapterOf(id, level), `${id} ${level}`).toBe(level);
     }
+    for (const id of ['Barracks', 'SpearHall', 'ShootingGrounds', 'Stables'] as DistrictId[]) {
+      for (let level = 4; level <= 9; level++) expect(chapterOf(id, level), `${id} ${level}`).toBe(level);
+    }
+    // Level 10 rides with 9: there is no tenth chapter.
+    expect(requiredTechForLevel('Housing', 10)).toBe(requiredTechForLevel('Housing', 9));
   });
 
   it('asks a Townhall level for every late level, one per level', () => {
@@ -206,7 +221,7 @@ describe('the late levels are gated by goods and the Townhall, not by research',
     addBuilt(state, 'Sawmill', { x: 4, y: 2 });
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     sawmill.level = 5;
-    completeTech(state, 'Architecture');
+    completeTech(state, requiredTechForLevel('Sawmill', 6)!);
 
     // The Townhall answers first: a trip to the workshop is pointless while
     // the city itself is too small for the level.
@@ -215,7 +230,7 @@ describe('the late levels are gated by goods and the Townhall, not by research',
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('NotEnoughGoods');
 
     // And the goods are the only thing left between the player and the level.
-    for (const [good, n] of Object.entries(upgradeGoodsCost('Sawmill', 6))) {
+    for (const [good, n] of Object.entries(upgradeGoodsCost(state, 'Sawmill', 6))) {
       addGood(state.city.goods, good as GoodId, n);
     }
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
@@ -228,12 +243,11 @@ describe('the late levels are gated by goods and the Townhall, not by research',
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     sawmill.level = 5;
     townhall(state).level = 6;
-    completeTech(state, 'Architecture');
-    completeTech(state, 'Architecture');
+    completeTech(state, requiredTechForLevel('Sawmill', 6)!);
     addGood(state.city.goods, 'Planks', 10);
     addGood(state.city.goods, 'CutStone', 4);
     expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
-    expect(getGood(state.city.goods, 'Planks')).toBe(10 - upgradeGoodsCost('Sawmill', 6).Planks!);
+    expect(getGood(state.city.goods, 'Planks')).toBe(10 - upgradeGoodsCost(state, 'Sawmill', 6).Planks!);
     expect(getGood(state.city.goods, 'CutStone')).toBe(4);
   });
 });
@@ -310,6 +324,7 @@ describe('the Townhall asks for villagers', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     const th = townhall(state);
+    completeTech(state, 'Forestry'); // the level's card is not what this tests
     const need = requiredPopulation('Townhall', 2);
     expect(need).toBeGreaterThan(0);
     state.city.population = need - 1;

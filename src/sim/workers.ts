@@ -14,6 +14,7 @@ import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerSpeed, strikeDraw, workerStrikeMs } from './upgrades';
 import { drawFromCell, harvestSourceAt, harvestSpecAt, isExhausted, recoversForSpec } from './harvest';
 import { isStoreFull, storeInto } from './storage';
+import { techValue } from './techEffects';
 import {
   coordKey, districtById, newId,
   type Coord, type CurrencyId, type District, type GameState,
@@ -22,14 +23,18 @@ import {
 
 // ------------------------------------------------------------ area of influence
 
-export function influenceRadius(district: District): number {
+/** How far the crew reaches: the level's radius, plus the tree's
+ *  `influenceRadius` (whole tiles). A building with no area keeps none. */
+export function influenceRadius(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].influenceRadiusPerLevel;
-  return list.length === 0 ? 0 : levelIndexed(list, district.level);
+  if (list.length === 0) return 0;
+  return Math.floor(techValue(state, 'influenceRadius', levelIndexed(list, district.level),
+    { district: district.definitionId }));
 }
 
-export const influenceCells = (map: MapData, district: District): Coord[] =>
+export const influenceCells = (state: GameState, map: MapData, district: District): Coord[] =>
   cellsWithinRadiusOfRect(
-    map, district.location, DISTRICTS[district.definitionId].size, influenceRadius(district),
+    map, district.location, DISTRICTS[district.definitionId].size, influenceRadius(state, district),
   );
 
 /** Revealed resource cells of the building's source type in its area
@@ -38,7 +43,7 @@ export const influenceCells = (map: MapData, district: District): Coord[] =>
 export function workableCells(state: GameState, map: MapData, district: District): Coord[] {
   const sources = DISTRICTS[district.definitionId].harvestSources;
   if (sources.length === 0) return [];
-  return influenceCells(map, district).filter(
+  return influenceCells(state, map, district).filter(
     (c) => state.fog.revealed[coordKey(c)] === true && worksHere(sources, state, c),
   );
 }
@@ -57,10 +62,12 @@ const worksHere = (
 
 /** The per-level worker cap. Workable cells in range don't limit assignment —
  *  workers beyond the available cells simply wait Idle. */
-export function assignableWorkerLimit(district: District): number {
+export function assignableWorkerLimit(state: GameState, district: District): number {
   const def = DISTRICTS[district.definitionId];
   if (def.maxWorkersPerLevel.length === 0) return 0;
-  return levelIndexed(def.maxWorkersPerLevel, district.level);
+  // The tree's `crewSlots`: whole workers, aimed at the producer.
+  return Math.floor(techValue(state, 'crewSlots', levelIndexed(def.maxWorkersPerLevel, district.level),
+    { district: district.definitionId }));
 }
 
 // ------------------------------------------------------------------------ claims

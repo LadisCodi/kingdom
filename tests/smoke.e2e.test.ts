@@ -189,8 +189,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- Army: a unit sits behind a technology AND behind its own building,
     // and the cap comes from the buildings rather than from the Townhall.
-    expect(trainUnit(state, 'Warrior', now)).toBe('TechRequired');
-    completeTech(state, 'Warrior');
+    // The Warrior is on chapter 2's spine, so the city already has it.
+    expect(isTechComplete(state, 'Warrior')).toBe(true);
     expect(trainUnit(state, 'Warrior', now)).toBe('NoBuilding');
     expect(armyCap(state)).toBe(0);
     addAllTrainers(state);
@@ -231,7 +231,9 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       now += 120_000;
       tickAt(state, now);
     }
-    expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
+    // Two L2 houses (4 each) + two L1 (2 each) — plus Communities' resident in
+    // each, which researching Cavalry pulled in: a chapter's spine is required.
+    expect(maxPopulation(state)).toBe(12 + (isTechComplete(state, 'Communities') ? 4 : 0));
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     now += villagerTrainSeconds(4) * 1000; // a bigger town trains slower
@@ -261,7 +263,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       * techMultiplier(state, 'taxRate', { district: 'Housing' })
       * (1 + DISTRICTS.Housing.taxBonusPerLevel[1]); // both occupied houses are L2
     const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1)
-      + ownGoldPerMinute(townhall(state));
+      + ownGoldPerMinute(state, townhall(state));
     expect(perMinute).toBe(cityGoldPerMinute(state));
     expect(earned).toBeGreaterThanOrEqual(perMinute * 4 - 1);
     expect(earned).toBeLessThanOrEqual(perMinute * 4 + 1);

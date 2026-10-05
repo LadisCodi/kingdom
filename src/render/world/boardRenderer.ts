@@ -19,16 +19,16 @@
 // edge of a tile, and nothing upright is hidden or under a rim.
 
 import type { GameState } from '../../sim/state';
-import type { BoardHex } from '../../sim/world/board';
+import { lumpMaterial, materialAt, type BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
+  arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
-import { formatCountdown } from '../../ui/format';
+import { formatCount, formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
@@ -40,6 +40,8 @@ import { drawCloudBank } from '../fog/fogLayer';
 import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
 import { featureNudge, hash01, hexDecorations } from './hexScatter';
+import { DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
+import { LAIRS, WORLD_DUNGEON } from '../../sim/data/definitions';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -77,6 +79,8 @@ const FORTRESS_WIDTH = 0.3;
 /** Below this many pixels a hex, the strategic zoom (world-hex-art.md §4). */
 const STRATEGIC_PX = 70;
 const CUT_OFF = 'rgba(60, 64, 72, 0.5)';
+/** A district raiders burnt: charred earth and soot. */
+const BURNT = 'rgba(38, 22, 14, 0.55)';
 
 /** The player's colour, then the five rivals', in seat order after it. */
 export const SEAT_COLORS = {
@@ -148,7 +152,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   let held = '';
   for (const bh of board.hexes) {
     const hc = source.hexOf(bh.index);
-    if (hc !== null) held += `${bh.index}:${hc.owner}:${hc.held ? 1 : 0}${hc.active ? 1 : 0};`;
+    if (hc !== null) held += `${bh.index}:${hc.owner}:${hc.held ? 1 : 0}${hc.active ? 1 : 0}${hc.burnt ? 1 : 0};`;
   }
   const groundKey = `${camera.x}|${camera.y}|${camera.zoom}|${w}|${h}|${dpr}|${imageCounts().settled}|${states.join(',')}|${held}`;
   const groundStale = groundKey !== motion.groundKey;
@@ -231,6 +235,66 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // city included — on the ground, over the plates, so what stands on a
   // hex stands over it (19 §7.1).
   if (groundStale) drawRoads(ground, camera, frame, states);
+
+  // Burnt districts: fire at their foot and smoke rising in columns; and on
+  // the player's own districts a camp will raid, crossed swords (19 §5.5).
+  for (const bh of board.hexes) {
+    const hc = source.hexOf(bh.index);
+    if (hc === null || states[bh.index] !== 'Revealed') continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
+    if (hc.burnt) drawFire(ctx, camera, c, bh.index, clock);
+    else if (hc.threat != null) drawThreat(ctx, camera, c.x - camera.hexWidth * 0.28, c.y - r * 0.4);
+  }
+
+  // Over every camp the player can see, how hard it is against the
+  // strongest party they could send (19 §5.4) — on explored ground only,
+  // since a camp in the mist is only a shape.
+  const party = strongestParty(state);
+  for (const bh of board.hexes) {
+    if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const difficulty = campDifficulty(bh.camp.power, party);
+    drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+  }
+
+  // A dungeon: how far the player has gone in it, as a ring and "13/24",
+  // and a badge when their army is camped there and can fight (19 §8.2).
+  const total = WORLD_DUNGEON.depths * WORLD_DUNGEON.roomsPerDepth;
+  for (const bh of board.hexes) {
+    if (!bh.features.includes('Dungeon') || states[bh.index] !== 'Revealed') continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const camped = (frame.armies ?? []).some((a) => a.target === bh.index && a.purpose === 'delve' && a.phase === 'camp'
+      && source.seats()[a.owner]?.owner.you === true);
+    drawProgressRing(ctx, camera, c.x, c.y - r * 0.55, source.delved(bh.index), total, camped);
+  }
+
+  // A rich hex: a sparkle and its material's icon at its right corner
+  // (19 §7.4), on ground the player has explored.
+  for (const bh of board.hexes) {
+    if (!bh.rich || states[bh.index] !== 'Revealed') continue;
+    const material = materialAt(board, bh.index);
+    if (material === null) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    drawRich(ctx, camera, c.x + camera.hexWidth * 0.3, c.y + r * 0.1, material, clock + bh.index * 397);
+  }
+
+  // Over every misty hex, what exploring it promises and the Gold it costs
+  // (19 §3.2); once an explorer is on its way there, only the promise.
+  for (const bh of board.hexes) {
+    if (states[bh.index] !== 'Sensed' || bh.scout === null) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const going = tripRevealing(state, bh.index) !== null;
+    const seat = state.world.board.seat;
+    const icon = bh.scout.reward === 'Pack' ? 'pack'
+      : bh.scout.reward === 'Precious' ? lumpMaterial(board, seat, 'scout', bh.index, seat) : bh.scout.reward;
+    drawPromise(ctx, camera, c.x, c.y - r * 0.15, icon,
+      going ? null : formatCount(exploreGold(state, bh.index)));
+  }
 
   // The Portal's appointment, over its hex: when it opens, or how long it
   // has left (19 §10.1).
@@ -725,9 +789,15 @@ function drawHex(
         g.restore();
       }
       if (held !== null) drawHeld(ground, g, camera, held, c, fogState, frame);
+      // A camp stands at the hex's near left, in front of its feature (19 §5.4).
+      if (campShown(frame.source, bh, fogState) && bh.camp !== null) {
+        const own = `whex_camp_${bh.camp.creature.toLowerCase()}`;
+        const sprite = spriteUrl(own) !== null ? own : LAIRS[bh.camp.creature].sprite;
+        drawProp(g, sprite, c.x - hw * 0.14, c.y + r * 0.78 * TILT, hw * CAMP_WIDTH);
+      }
     }
   };
-  if (veil > 0.01 || (held !== null && held.held && !held.active)) drawSilhouetted(ctx, c, r, hw, veil, stand);
+  if (veil > 0.01 || (held !== null && held.held && (!held.active || held.burnt === true))) drawSilhouetted(ctx, c, r, hw, veil, stand);
   else stand(ctx);
 
 
@@ -736,6 +806,9 @@ function drawHex(
   ground.lineWidth = Math.max(1, r * 0.025);
   ground.stroke();
 }
+
+/** A camp's drawing, as a share of the hex's width. */
+const CAMP_WIDTH = 0.5;
 
 /** How thick a tile is, as a share of its radius. */
 const SKIRT = 0.16;
@@ -867,14 +940,21 @@ function drawHeld(
   }
   // Cut off from its city: greyed, buildings intact (art-direction §8).
   if (held.held && !held.active) veilHex(ground, ctx, c, r, [CUT_OFF]);
+  // Burnt by raiders: charred, its fires drawn over the board (19 §5.5).
+  else if (held.burnt) veilHex(ground, ctx, c, r, [BURNT]);
   // A builder at work: an hourglass and the time left.
   const now = frame.now;
   const busyUntil = !held.held ? held.standsAt : held.work?.at ?? null;
   if (busyUntil !== null && fogState === 'Revealed') drawPill(ctx, camera, c.x, c.y - r * 0.62, formatCountdown(Math.max(0, busyUntil - now) / 1000));
   // The player's own store, ready: a bubble with what it holds.
   const s = held.stores;
-  if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
+  if (held.burnt) {
+    // Burning: the fire says it all; its store waits under it.
+  } else if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, s.currency);
+  } else if (held.precious != null && held.held && held.active && held.precious.amount >= 1) {
+    // Its precious store, ready: a bubble with the material (19 §7.4).
+    drawBubble(ctx, camera, c.x, c.y - r * 0.55, held.precious.id);
   }
 }
 
@@ -898,21 +978,187 @@ function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number,
   ctx.restore();
 }
 
-/** A wooden pill with a short text — a countdown over something at work. */
-function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string): void {
+/** A burnt district's fires: flames flickering at the foot of two or three
+ *  columns of smoke, each puff rising, swelling and thinning as it goes.
+ *  Each hex's columns stand where its own hash puts them. */
+function drawFire(ctx: CanvasRenderingContext2D, camera: HexCamera, c: { x: number; y: number }, key: number, clock: number): void {
+  const hw = camera.hexWidth;
+  const r = camera.hexRadius;
+  const columns = 2 + Math.floor(hash01(key, 91) * 2);
+  ctx.save();
+  for (let k = 0; k < columns; k++) {
+    const x = c.x + (hash01(key, 100 + k) - 0.5) * hw * 0.5;
+    const foot = c.y + (hash01(key, 200 + k) * 0.35) * r * TILT;
+    const rise = r * (2.4 + hash01(key, 300 + k) * 1.0);
+    const period = 2600 + hash01(key, 400 + k) * 1400;
+    // Smoke: puffs evenly out of phase, so the column is always full.
+    for (let p = 0; p < 9; p++) {
+      const f = ((clock / period) + p / 9 + hash01(key, 500 + k)) % 1;
+      const drift = Math.sin(f * Math.PI * 1.5 + k) * hw * 0.06 + f * hw * 0.1;
+      const rad = hw * (0.06 + f * 0.15);
+      // Dark and dense at the fire, grey and thin as it climbs.
+      const shade = Math.round(45 + f * 60);
+      ctx.fillStyle = `rgba(${shade}, ${shade - 4}, ${shade - 8}, ${(0.8 * (1 - f) ** 1.2).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(x + drift, foot - f * rise, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Fire: two tongues, flickering.
+    for (let t = 0; t < 2; t++) {
+      const flick = 0.75 + 0.25 * Math.sin(clock / (90 + t * 37) + k * 2 + t);
+      const fh = hw * 0.2 * flick;
+      const fw = hw * 0.07;
+      const fx = x + (t - 0.5) * fw * 1.2;
+      const grad = ctx.createLinearGradient(0, foot, 0, foot - fh);
+      grad.addColorStop(0, 'rgba(255, 120, 30, 0.95)');
+      grad.addColorStop(0.6, 'rgba(255, 190, 60, 0.85)');
+      grad.addColorStop(1, 'rgba(255, 240, 160, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(fx - fw, foot);
+      ctx.quadraticCurveTo(fx - fw * 0.6, foot - fh * 0.6, fx, foot - fh);
+      ctx.quadraticCurveTo(fx + fw * 0.6, foot - fh * 0.6, fx + fw, foot);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+/** A district a camp will raid: a small red disc with crossed swords. */
+function drawThreat(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number): void {
+  const size = Math.max(14, camera.hexWidth * 0.14);
+  ctx.save();
+  ctx.fillStyle = '#a8231d';
+  ctx.strokeStyle = '#3d0c08';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  drawIcon(ctx, 'atk', x - size / 2, y - size / 2, size);
+  ctx.restore();
+}
+
+/** A dungeon's progress: a ring filled as far as the player has cleared,
+ *  the count in it, and a red badge when their army can fight there. */
+function drawProgressRing(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, cleared: number, total: number, badge: boolean,
+): void {
+  const rad = Math.max(13, camera.hexWidth * 0.12);
+  ctx.save();
+  ctx.fillStyle = 'rgba(46, 28, 14, 0.8)';
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = Math.max(3, rad * 0.22);
+  ctx.strokeStyle = 'rgba(255, 243, 214, 0.25)';
+  ctx.beginPath();
+  ctx.arc(x, y, rad * 0.82, 0, Math.PI * 2);
+  ctx.stroke();
+  if (cleared > 0) {
+    ctx.strokeStyle = '#f2b233';
+    ctx.beginPath();
+    ctx.arc(x, y, rad * 0.82, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.min(cleared, total)) / total);
+    ctx.stroke();
+  }
+  const fs = Math.max(8, rad * 0.62);
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${formatCount(cleared)}/${formatCount(total)}`, x, y + 0.5);
+  if (badge) {
+    ctx.fillStyle = '#d4553e';
+    ctx.strokeStyle = '#5c1e14';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x + rad * 0.8, y - rad * 0.8, rad * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** A rich hex's mark: its material's icon on a small brass disc, and a
+ *  sparkle that slowly breathes beside it. */
+function drawRich(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, material: string, clock: number): void {
+  const size = Math.max(16, camera.hexWidth * 0.18);
+  ctx.save();
+  ctx.fillStyle = 'rgba(46, 28, 14, 0.55)';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  drawIcon(ctx, material, x - size / 2, y - size / 2, size);
+  const pulse = 0.55 + 0.45 * Math.sin(clock / 700);
+  ctx.globalAlpha = pulse;
+  drawIcon(ctx, 'sparkle', x + size * 0.25, y - size * 0.95, size * 0.7);
+  ctx.restore();
+}
+
+/** A scouting promise: a brass-rimmed medallion holding the reward's icon,
+ *  and under it a small plank with the Gold exploring costs, or none. */
+function drawPromise(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, icon: string, cost: string | null): void {
+  const size = Math.max(18, camera.hexWidth * 0.2);
+  const rad = size * 0.72;
+  ctx.save();
+  const brass = ctx.createLinearGradient(0, y - rad, 0, y + rad);
+  brass.addColorStop(0, '#f2d68a');
+  brass.addColorStop(0.5, '#c99a3e');
+  brass.addColorStop(1, '#7c5820');
+  ctx.fillStyle = brass;
+  ctx.strokeStyle = '#3d2810';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  const wood = ctx.createLinearGradient(0, y - rad, 0, y + rad);
+  wood.addColorStop(0, '#7a4f2a');
+  wood.addColorStop(1, '#4e3018');
+  ctx.fillStyle = wood;
+  ctx.beginPath();
+  ctx.arc(x, y, rad * 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  if (cost !== null) {
+    const fs = Math.max(9, Math.min(13, camera.hexWidth * 0.09));
+    ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+    const coin = fs * 1.2;
+    const pw = ctx.measureText(cost).width + coin + fs * 1.1;
+    const ph = fs * 1.55;
+    const py = y + rad + ph * 0.55;
+    ctx.fillStyle = '#5a3a20';
+    ctx.strokeStyle = '#2e1c0e';
+    ctx.beginPath();
+    ctx.roundRect(x - pw / 2, py - ph / 2, pw, ph, ph * 0.3);
+    ctx.fill();
+    ctx.stroke();
+    drawIcon(ctx, 'Gold', x - pw / 2 + fs * 0.35, py - coin / 2, coin);
+    ctx.fillStyle = '#fff3d6';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cost, x - pw / 2 + fs * 0.45 + coin, py + 0.5);
+  }
+  ctx.restore();
+}
+
+/** A wooden pill with a short text — a countdown over something at work —
+ *  or, with `ink`, a parchment one with the text in that colour. */
+function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string, ink?: string): void {
   const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
   ctx.save();
   ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
   const pw = ctx.measureText(text).width + fs * 1.4;
   const ph = fs * 1.6;
-  ctx.fillStyle = '#5a3a20';
+  ctx.fillStyle = ink === undefined ? '#5a3a20' : '#f4e3bc';
   ctx.strokeStyle = '#2e1c0e';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#fff3d6';
+  ctx.fillStyle = ink ?? '#fff3d6';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y + 0.5);

@@ -26,10 +26,11 @@ async function connected(): Promise<{ game: Game; clock: { t: number }; toasts: 
   const clock = { t: T0 };
   game.now = () => clock.t;
   game.worldCamera = new HexCamera({ clientWidth: 390, clientHeight: 844 });
-  game.worldServer = new LocalWorldServer(memoryStore());
+  game.worldServer = new LocalWorldServer(memoryStore(), () => clock.t);
   const toasts: string[] = [];
   game.onToast((m) => toasts.push(m));
   await game.connectWorld();
+  await game.doJoinWorld('Mel');
   // The rivals asleep, so only what the test does moves.
   return { game, clock, toasts };
 }
@@ -44,13 +45,16 @@ function claimable(game: Game): number {
 }
 
 describe('connecting to the world server', () => {
-  it('keeps the board the player already explored', async () => {
+  it('takes no seat until the player chooses a name', async () => {
     const game = freshPresenter(freshGame());
     game.now = () => T0;
-    const before = { ...game.state.world.board };
-    game.worldServer = new LocalWorldServer(memoryStore());
+    game.worldServer = new LocalWorldServer(memoryStore(), () => T0);
     await game.connectWorld();
-    expect(game.state.world.board).toEqual(before);
+    expect(game.worldSeated).toBe(false);
+    expect(game.worldView).toBeNull();
+    await game.doJoinWorld('Mel');
+    expect(game.worldSeated).toBe(true);
+    expect(game.state.world.board.id).toBe('b-local-player');
     expect(game.worldView?.seats.filter((s) => s.bot)).toHaveLength(5);
   });
 });

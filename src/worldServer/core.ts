@@ -17,24 +17,29 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL,
+  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
-import type { HeroId, UnitId } from '../sim/state';
-import { SEAT_INDICES, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import { PRECIOUS, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
+import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
 import { WORLD_DISTRICTS, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SendResult,
-  ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
+  SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
+  Lot, TradeResult,
 } from './types';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
 export const emptyWorld = (): ServerWorld => ({ version: 3, boards: [] });
+
+/** The seed of a board the server opens, from its name. */
+export const newBoardSeed = (id: string): number => randInt(0x5eed, 0x1_0000_0000, 'board', id);
 
 /** The board as generated from its seed: where the dungeons started. */
 const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
@@ -71,12 +76,54 @@ export function districtOf(bh: BoardHex): WorldDistrict | null {
 /** What a district on this hex makes an hour and how much its store holds,
  *  in its currency: the inner ring multiplies both, so its store lasts the
  *  same hours. */
-export function districtRate(bh: BoardHex): { currency: WorldStoreCurrency | null; perHour: number; cap: number } {
+export function districtRate(
+  bh: BoardHex, boost: SeatBoost = NO_BOOST,
+): { currency: WorldStoreCurrency | null; perHour: number; cap: number } {
   const d = districtOf(bh);
   const def = d === null ? null : WORLD_BUILD.districts[d];
   if (def === null || def.produces === '') return { currency: null, perHour: 0, cap: 0 };
   const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
-  return { currency: def.produces, perHour: def.perHour * mult, cap: def.store * mult };
+  return { currency: def.produces, perHour: def.perHour * mult * boost.produce, cap: def.store * mult * boost.store };
+}
+
+const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
+
+/** What a rich district yields an hour of its wedge's precious material and
+ *  how much its precious store holds (19 §7.4); nothing on other ground. The
+ *  inner ring and a seat's research move it as they move the district. */
+export function preciousRate(
+  board: Board, index: number, boost: SeatBoost = NO_BOOST,
+): { id: PreciousId | null; perHour: number; cap: number } {
+  const bh = board.hexes[index];
+  const id = bh.rich && districtOf(bh) !== null ? materialAt(board, index) : null;
+  if (id === null) return { id: null, perHour: 0, cap: 0 };
+  const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
+  return {
+    id,
+    perHour: (WORLD_PRECIOUS.perDay / 24) * mult * boost.produce,
+    cap: WORLD_PRECIOUS.perDay * WORLD_PRECIOUS.storeDays * mult * boost.store,
+  };
+}
+
+/** What a seat's research does to its districts' output and stores; none for
+ *  a free hex. */
+const boostOf = (b: ServerBoard, owner: number | null): SeatBoost =>
+  (owner === null ? undefined : b.seats[owner]?.boost) ?? NO_BOOST;
+
+/**
+ * Take a seat's multipliers on its districts' output and stores. A rate
+ * changes only at an event, so every store is settled to `t` first: what was
+ * made before the research is not repriced, and nothing after it is missed.
+ */
+export function setBoost(b: ServerBoard, seat: number, boost: SeatBoost, t: number): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined) return;
+  const next = { produce: Math.max(1, boost.produce), store: Math.max(1, boost.store) };
+  const now = s.boost ?? NO_BOOST;
+  if (now.produce === next.produce && now.store === next.store) return;
+  resolveTo(b, t);
+  settleStores(b, t);
+  s.boost = next;
 }
 
 /** What the next claim costs a seat that already holds or claims `held`
@@ -94,7 +141,238 @@ export function claimRefusal(b: ServerBoard, seat: number, index: number, t: num
   const bh = boardData(b).hexes[index];
   if (bh.role === 'portal' || bh.features.includes('Dungeon')) return 'NeverHeld';
   if (SEAT_INDICES.includes(index) || b.hexes[index] !== undefined) return 'Taken';
-  return touches(b, seat, index, t) ? null : 'NotAdjacent';
+  if (!touches(b, seat, index, t)) return 'NotAdjacent';
+  return guarded(b, seat, index) ? 'Guarded' : null;
+}
+
+// ------------------------------------------------------------- camps
+
+/** The monster camp on a hex as the board was made (19 §5.4), or null. */
+export const campAt = (b: ServerBoard, index: number) => boardData(b).hexes[index]?.camp ?? null;
+
+/** Has `seat` beaten the camp on `index`? Each player beats a camp for
+ *  themselves. */
+export const hasBeaten = (b: ServerBoard, seat: number, index: number): boolean =>
+  b.beaten?.[seat]?.includes(index) ?? false;
+
+/** Does a camp still stand between `seat` and claiming `index`? Once anyone
+ *  holds the hex, its camp no longer matters. */
+const guarded = (b: ServerBoard, seat: number, index: number): boolean =>
+  b.hexes[index] === undefined && campAt(b, index) !== null && !hasBeaten(b, seat, index);
+
+function beat(b: ServerBoard, seat: number, index: number): void {
+  const list = ((b.beaten ??= {})[seat] ??= []);
+  if (!list.includes(index)) list.push(index);
+}
+
+/** The camp's army: its creature's lair is its formation's type, as a lair's
+ *  garrison is (18 §2), rolled under the hex. */
+function campBoard(b: ServerBoard, index: number): FightBoard {
+  const camp = campAt(b, index)!;
+  const plan = generateEnemy({
+    seed: b.seed, parts: ['camp', index], budget: camp.power, affinity: LAIRS[camp.creature].guard.threat,
+  });
+  return buildBoard(plan.squads, plan.fighters);
+}
+
+/** Pay a camp off: the client paid its tribute; the camp is beaten for this
+ *  seat, and pays nothing. */
+export function tribute(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  if (!isBoardIndex(index)) return { ok: false, why: 'NoSuchHex' };
+  if (b.hexes[index] !== undefined) return { ok: false, why: 'Taken' };
+  if (!guarded(b, seat, index)) return { ok: false, why: 'NothingThere' };
+  beat(b, seat, index);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+// ------------------------------------------------------------ camp raids
+
+const RAID_MS = (): number => WORLD_CAMPS.raidHours * HOUR;
+
+/** The next raid after `t`: raids land on the same UTC hours on every
+ *  board, every `raidHours` (19 §5.5). */
+export const nextRaidAt = (t: number): number => (Math.floor(t / RAID_MS()) + 1) * RAID_MS();
+
+/** Whether `seat` can see the camp on `index` — standing, or lurking and
+ *  reported seen by its client. */
+const campSeen = (b: ServerBoard, seat: number, index: number): boolean => {
+  const camp = campAt(b, index);
+  return camp !== null && (!camp.lurking || (b.seenCamps?.[seat] ?? []).includes(index));
+};
+
+/** The camps that will raid `seat`'s district on `index`: beside it,
+ *  unbeaten by `seat`, on ground nobody holds, and seen. */
+export function raidersOf(b: ServerBoard, seat: number, index: number): number[] {
+  return boardNeighbors(index).filter((c) => guarded(b, seat, c) && campSeen(b, seat, c));
+}
+
+/** The client says which lurking camps the player has now seen. */
+export function reportSeen(b: ServerBoard, seat: number, indices: readonly number[], t: number): CommandResult {
+  resolveTo(b, t);
+  const seen = ((b.seenCamps ??= {})[seat] ??= []);
+  for (const i of indices) if (isBoardIndex(i) && campAt(b, i)?.lurking && !seen.includes(i)) seen.push(i);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** What repairing a burnt district costs `seat` now, and how long it takes. */
+export const repairPrice = (b: ServerBoard, seat: number): { gold: number; seconds: number } => ({
+  gold: Math.round(claimGold(Math.max(0, hexesOf(b, seat) - 1)) * WORLD_CAMPS.repairCostShare),
+  seconds: Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare),
+});
+
+/** Start repairing a burnt district. The client pays the Gold and sends the
+ *  builder. */
+export function repair(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  if (!h.burnt) return { ok: false, why: 'NothingThere' };
+  if ((h.repairAt ?? null) !== null) return { ok: false, why: 'Busy' };
+  h.repairAt = t + repairPrice(b, seat).seconds * 1000;
+  return { ok: true, finishesAt: h.repairAt, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Every player's districts beside a camp they have seen are raided at `t`:
+ *  a garrisoned Fortress fights the raiders; otherwise, or if it falls, the
+ *  district burns and the raiders carry off `raidShare` of its stores. The
+ *  stand-in rivals are never raided. */
+function raidAll(b: ServerBoard, t: number): void {
+  const keys = Object.keys(b.hexes).map(Number).sort((x, y) => x - y);
+  for (const index of keys) {
+    const h = b.hexes[index];
+    if (h.owner === null || b.seats[h.owner]?.bot !== false) continue;
+    if (!isHeld(h, t) || h.burnt) continue;
+    const seat = h.owner;
+    for (const c of raidersOf(b, seat, index)) {
+      if (h.burnt) break;
+      const camp = campAt(b, c)!;
+      const who = `the camp of ${CAMP_CREATURE[camp.creature]}`;
+      const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
+      const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
+      if (g !== undefined) {
+        const log = resolveBattle(campBoard(b, c), g.board);
+        const theirs = boardAfter(log, g.board, 'theirs');
+        g.board = theirs.board;
+        addFallen(g.fallen, theirs.fallen);
+        const lost = theirs.fallen.reduce((n, f) => n + f.count, 0);
+        if (log.winner === 'theirs') {
+          report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true);
+          continue;
+        }
+        h.garrison = null;
+        report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false);
+        sendHome(b, g, t);
+      }
+      const keep = 1 - WORLD_CAMPS.raidShare;
+      const taken = Math.floor(h.stored * WORLD_CAMPS.raidShare);
+      h.stored *= keep;
+      if ((h.precious ?? 0) > 0) h.precious = (h.precious ?? 0) * keep;
+      h.burnt = true;
+      const currency = districtRate(boardData(b).hexes[index]).currency;
+      report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false);
+    }
+  }
+}
+
+const capitalise = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Repairs done by `t`: the district stands whole again. */
+function finishRepairs(b: ServerBoard, t: number): void {
+  for (const h of Object.values(b.hexes)) {
+    if ((h.repairAt ?? null) !== null && h.repairAt! <= t) {
+      h.burnt = false;
+      h.repairAt = null;
+    }
+  }
+}
+
+// ------------------------------------------------------------ the Exchange
+
+/** A fair offer is one for one, of two different materials (19 §7.5). */
+const isFair = (o: { give: Lot; want: Lot }): boolean => o.give.amount === o.want.amount && o.give.id !== o.want.id;
+
+/** The stand-in rival that yields what an offer wants, if one sits at the
+ *  board — it is who takes a fair offer. */
+function botYielding(b: ServerBoard, id: PreciousId, not: number): number | null {
+  const materials = boardData(b).materials;
+  const seat = b.seats.findIndex((s, i) => s?.bot === true && i !== not && materials[i] === id);
+  return seat < 0 ? null : seat;
+}
+
+const lotLine = (l: Lot): string => `${l.amount} ${l.id}`;
+
+/** Put an offer up. The client has paid `give`; the server holds it. */
+export function postOffer(b: ServerBoard, seat: number, give: Lot, want: Lot, t: number): TradeResult {
+  resolveTo(b, t);
+  const why = placeOffer(b, seat, give, want, t);
+  return why !== null ? { ok: false, why } : { ok: true, received: null, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** An offer onto the board at `t`, already resolved to — or why not. */
+function placeOffer(b: ServerBoard, seat: number, give: Lot, want: Lot, t: number): Refusal | null {
+  const whole = (l: Lot) => Number.isInteger(l.amount) && l.amount > 0 && (PRECIOUS as readonly string[]).includes(l.id);
+  if (!whole(give) || !whole(want) || give.id === want.id) return 'BadOffer';
+  const offers = (b.offers ??= []);
+  if (offers.filter((o) => o.seat === seat).length >= WORLD_EXCHANGE.maxOffers) return 'TooManyOffers';
+  const taker = isFair({ give, want }) ? botYielding(b, want.id, seat) : null;
+  offers.push({
+    id: `offer_${b.nextId++}`, seat, give: { ...give }, want: { ...want }, at: t,
+    expiresAt: t + WORLD_EXCHANGE.offerHours * HOUR,
+    takeAt: taker === null || b.seats[seat]?.bot ? null : t + WORLD_EXCHANGE.botTakeHours * HOUR,
+  });
+  return null;
+}
+
+/** Take someone's offer. The client has paid its `want`; it receives the
+ *  `give` at once, and the offer's maker is owed the `want`. */
+export function takeOffer(b: ServerBoard, seat: number, offerId: string, t: number): TradeResult {
+  resolveTo(b, t);
+  const o = b.offers?.find((x) => x.id === offerId);
+  if (o === undefined) return { ok: false, why: 'NoSuchOffer' };
+  if (o.seat === seat) return { ok: false, why: 'OwnOffer' };
+  b.offers = b.offers!.filter((x) => x !== o);
+  const name = b.seats[seat]?.name ?? 'Someone';
+  owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.want }, text: `${name} took your offer — ${lotLine(o.want)} for ${lotLine(o.give)}` });
+  return { ok: true, received: { ...o.give }, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Take back one's own offer: what it held comes back at once. */
+export function withdrawOffer(b: ServerBoard, seat: number, offerId: string, t: number): TradeResult {
+  resolveTo(b, t);
+  const o = b.offers?.find((x) => x.id === offerId);
+  if (o === undefined) return { ok: false, why: 'NoSuchOffer' };
+  if (o.seat !== seat) return { ok: false, why: 'NotYours' };
+  b.offers = b.offers!.filter((x) => x !== o);
+  return { ok: true, received: { ...o.give }, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Offers due at `t`: a rival takes a fair one, or one comes back. */
+function settleOffers(b: ServerBoard, t: number): void {
+  if (b.offers === undefined) return;
+  const due = b.offers.filter((o) => (o.takeAt !== null && o.takeAt <= t) || o.expiresAt <= t);
+  for (const o of due) {
+    b.offers = b.offers.filter((x) => x !== o);
+    if (o.takeAt !== null && o.takeAt <= t && o.takeAt < o.expiresAt) {
+      const by = botYielding(b, o.want.id, o.seat);
+      const name = by === null ? 'A rival' : b.seats[by]?.name ?? 'A rival';
+      owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.want }, text: `${name} took your offer — ${lotLine(o.want)} for ${lotLine(o.give)}` });
+    } else if (!b.seats[o.seat]?.bot) {
+      owe(b, o.seat, { kind: 'goods', at: t, lot: { ...o.give }, text: `Nobody took your offer — ${lotLine(o.give)} came back` });
+    }
+  }
+}
+
+/** A stand-in rival keeps one offer up: its own material, one for one, for
+ *  one of the other two. */
+function botOffer(b: ServerBoard, seat: number, t: number): void {
+  if ((b.offers ?? []).some((o) => o.seat === seat)) return;
+  const own = boardData(b).materials[seat];
+  if (own === undefined) return;
+  const others = PRECIOUS.filter((p) => p !== own);
+  const want = others[randInt(b.seed, others.length, 'botOffer', seat, b.nextId)];
+  const n = WORLD_EXCHANGE.botOfferAmount;
+  placeOffer(b, seat, { id: own, amount: n }, { id: want, amount: n }, t);
 }
 
 /** Whether a hex lies beside `seat`'s city or its held, active ground. */
@@ -122,15 +400,28 @@ export function storedAt(b: ServerBoard, index: number, t: number): number {
   const h = b.hexes[index];
   if (h === undefined) return 0;
   const dt = t - h.storeAt;
-  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return h.stored;
-  const { perHour, cap } = districtRate(boardData(b).hexes[index]);
+  if (dt <= 0 || !h.active || h.burnt || !isHeld(h, h.storeAt)) return h.stored;
+  const { perHour, cap } = districtRate(boardData(b).hexes[index], boostOf(b, h.owner));
   return Math.min(Math.max(cap, h.stored), h.stored + (perHour * dt) / HOUR);
+}
+
+/** What a rich hex's precious store holds at `t`, from the same anchor. */
+export function preciousAt(b: ServerBoard, index: number, t: number): number {
+  const h = b.hexes[index];
+  if (h === undefined) return 0;
+  const held = h.precious ?? 0;
+  const dt = t - h.storeAt;
+  if (dt <= 0 || !h.active || h.burnt || !isHeld(h, h.storeAt)) return held;
+  const { perHour, cap } = preciousRate(boardData(b), index, boostOf(b, h.owner));
+  return Math.min(Math.max(cap, held), held + (perHour * dt) / HOUR);
 }
 
 /** Move one hex's anchor to `t`. */
 function settleHex(b: ServerBoard, index: number, t: number): void {
   const h = b.hexes[index];
   if (h === undefined || t <= h.storeAt) return;
+  const precious = preciousAt(b, index, t);
+  if (precious > 0) h.precious = precious;
   h.stored = storedAt(b, index, t);
   h.storeAt = t;
 }
@@ -171,6 +462,13 @@ function nextEvent(b: ServerBoard, after: number): number {
   for (const s of b.seats) consider(s?.bot ? s.nextMoveAt : null);
   for (const a of b.armies) consider(a.at);
   for (const d of dungeonsOf(b)) consider(d.returnsAt);
+  for (const o of b.offers ?? []) {
+    consider(o.expiresAt);
+    consider(o.takeAt);
+  }
+  for (const h of Object.values(b.hexes)) consider(h.repairAt ?? null);
+  // A raid lands only if some player has a district a camp can reach.
+  if (b.seats.some((s) => s?.bot === false)) consider(nextRaidAt(after));
   // The Portal's close pays the ranking and sends its divers home.
   const k = portalEvent(after);
   consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
@@ -189,6 +487,9 @@ function applyDue(b: ServerBoard, t: number): void {
   }
   recomputeChains(b, t);
   closePortal(b, t);
+  settleOffers(b, t);
+  finishRepairs(b, t);
+  if (t % RAID_MS() === 0) raidAll(b, t);
   for (const d of dungeonsOf(b)) if (d.returnsAt !== null && d.returnsAt <= t) returnDungeon(b, d, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
@@ -263,7 +564,8 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
   const h = b.hexes[index];
   if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
   const claiming = h.standsAt > t;
-  if (!claiming && h.work === null) return { ok: false, why: 'NothingBuilding' };
+  const repairing = (h.repairAt ?? null) !== null;
+  if (!claiming && h.work === null && !repairing) return { ok: false, why: 'NothingBuilding' };
   // Every store to now first: what stands changes the rates, as at an event.
   settleStores(b, t);
   if (claiming) {
@@ -272,6 +574,9 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
   } else if (h.work !== null) {
     h.fortress = h.work.toLevel;
     h.work = null;
+  } else if (repairing) {
+    h.burnt = false;
+    h.repairAt = null;
   }
   recomputeChains(b, t);
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
@@ -287,9 +592,13 @@ export function collect(b: ServerBoard, seat: number, index: number, t: number):
   const whole = Math.floor(h.stored);
   h.stored -= whole;
   const { currency } = districtRate(boardData(b).hexes[index]);
+  const gem = Math.floor(h.precious ?? 0);
+  if (gem > 0) h.precious = (h.precious ?? 0) - gem;
+  const material = preciousRate(boardData(b), index).id;
   return {
     ok: true,
     paid: currency === null || whole === 0 ? null : { currency, amount: whole },
+    precious: material === null || gem === 0 ? null : { id: material, amount: gem },
     snapshot: snapshotOf(b, seat, t),
   };
 }
@@ -302,9 +611,15 @@ const walksFrom = (from: number, to: number, path: readonly number[]): boolean =
   path.length >= 2 && path[0] === from && path[path.length - 1] === to && path.every(isBoardIndex)
   && path.every((i, k) => k === 0 || hexDistance(hexAt(path[k - 1]), hexAt(i)) === 1);
 
-/** Owed to a seat: delivered with its next snapshot. */
+/** Owed to a seat: delivered with every snapshot until it is acknowledged. */
 function owe(b: ServerBoard, seat: number, effect: WorldEffect): void {
-  (b.effects[seat] ??= []).push(effect);
+  (b.effects[seat] ??= []).push({ ...effect, seq: nextSeq(b, seat) });
+}
+
+function nextSeq(b: ServerBoard, seat: number): number {
+  const seqs = (b.effectSeq ??= {});
+  seqs[seat] = (seqs[seat] ?? 0) + 1;
+  return seqs[seat];
 }
 
 const report = (b: ServerBoard, seat: number, t: number, text: string, good: boolean): void =>
@@ -392,6 +707,35 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     } else turnHome(a, t);
     return;
   }
+  if (a.purpose === 'clear') {
+    // A camp is fought on arrival, as an attack is; won, it is beaten for
+    // this seat and pays its loot (19 §5.4).
+    const camp = campAt(b, a.target);
+    if (camp !== null && guarded(b, a.owner, a.target)) {
+      const log = resolveBattle(a.board, campBoard(b, a.target));
+      const after = boardAfter(log, a.board, 'ours');
+      a.board = after.board;
+      addFallen(a.fallen, after.fallen);
+      const name = CAMP_CREATURE[camp.creature];
+      if (log.winner === 'ours') {
+        beat(b, a.owner, a.target);
+        owe(b, a.owner, {
+          kind: 'loot', at: t, knowledge: 0, stardust: 0,
+          gold: Math.round(camp.power * WORLD_CAMPS.goldPerPower),
+          heroXp: Math.round(camp.power * WORLD_CAMPS.heroXpPerPower),
+          precious: {
+            id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
+            amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
+          },
+        });
+        report(b, a.owner, t, `Your army beat the camp of ${name}`, true);
+      } else {
+        report(b, a.owner, t, `Your army was beaten back by the camp of ${name}`, false);
+      }
+    } else report(b, a.owner, t, 'Your army found no camp there and turned back', false);
+    turnHome(a, t);
+    return;
+  }
   if (a.purpose === 'claim') {
     if (h !== undefined && h.owner === null && touches(b, a.owner, a.target, t)) {
       h.owner = a.owner;
@@ -465,6 +809,11 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
     return h.garrison !== null || heading ? 'Garrisoned' : null;
   }
   if (purpose === 'claim') return h !== undefined && h.owner === null ? null : 'NothingThere';
+  if (purpose === 'clear') {
+    if (!guarded(b, seat, index)) return 'NothingThere';
+    return b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'clear' && a.phase !== 'home')
+      ? 'Busy' : null;
+  }
   if (h === undefined || h.owner === null) return 'NothingThere';
   return h.owner === seat ? 'OwnGround' : null;
 }
@@ -473,7 +822,7 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
  *  its troops off the roster; the server trusts what it was sent. */
 export function sendArmy(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[] },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path?: number[]; speed?: number },
   t: number,
 ): SendResult {
   resolveTo(b, t);
@@ -489,12 +838,14 @@ export function sendArmy(
 /** Put an army on the road — inside the resolve loop as well as from it. */
 function launch(
   b: ServerBoard, seat: number,
-  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[] },
+  req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: FightBoard; path: number[]; speed?: number },
   t: number,
 ): ServerArmy {
   const path = req.path;
-  // Every hex adds its own time as it is left; the server prices it.
-  const stepMs = stepTimes(boardData(b).hexes, path, 'army');
+  // Every hex adds its own time as it is left; the server prices it, at the
+  // pace the client sent.
+  const speed = Math.max(1, req.speed ?? 1);
+  const stepMs = stepTimes(boardData(b).hexes, path, 'army', () => speed);
   const a: ServerArmy = {
     id: `army_${b.nextId++}`, owner: seat, heroes: [...req.heroes], board: req.board, path,
     departedAt: t, stepMs, purpose: req.purpose,
@@ -548,6 +899,7 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
     kind: 'loot', at: t,
     gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
     heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
+    precious: { id: lumpMaterial(boardData(b), closer, 'close', dungeonKey(b, index)), amount: Math.round(last.precious * k) },
   });
   report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true);
   for (const a of b.armies) {
@@ -601,7 +953,9 @@ export function roomPower(depth: number, room: number): number {
 }
 
 /** What a room pays (11-expeditions.md §7.1); a boss, a multiple of it. */
-export function roomReward(depth: number, room: number): { gold: number; knowledge: number; heroXp: number; stardust: number } {
+export function roomReward(
+  depth: number, room: number,
+): { gold: number; knowledge: number; heroXp: number; stardust: number; precious: number } {
   const d = WORLD_DUNGEON;
   const boss = room === d.roomsPerDepth ? d.bossRewardMultiplier : 1;
   const scale = d.rewardBase[depth] * d.rewardGrowth ** (room - 1) * boss;
@@ -610,6 +964,28 @@ export function roomReward(depth: number, room: number): { gold: number; knowled
     knowledge: Math.max(1, Math.round(d.knowledge * scale)),
     heroXp: Math.round(d.heroXp * scale),
     stardust: Math.round(d.stardust * scale),
+    precious: Math.max(1, Math.round(d.precious * scale)),
+  };
+}
+
+/** A dungeon as a player reads it: its name, the creature that holds it,
+ *  who waits at the bottom of each depth — all rolled with the dungeon, so
+ *  one that comes back is a new one (19 §8.1). */
+export function dungeonInfo(b: ServerBoard, index: number): { name: string; creature: LairId; bosses: string[] } {
+  const d = WORLD_DUNGEON;
+  const key = dungeonKey(b, index);
+  const word = (list: readonly string[], part: string) => list[randInt(b.seed, list.length, 'dungeonName', key, part)];
+  // Each sixth keeps its own first word — a board-wide offset plus the
+  // sixth — so two standing at once never share a name; one that comes back
+  // is told apart by its second.
+  const wedge = dungeonAt(b, index)?.wedge ?? 0;
+  const first = d.nameFirst[(randInt(b.seed, d.nameFirst.length, 'dungeonFirst') + wedge) % d.nameFirst.length];
+  const unit = dungeonAffinity(b, index);
+  const creature = (Object.keys(LAIRS) as LairId[]).find((l) => LAIRS[l].guard.threat === unit) ?? 'Orcs';
+  return {
+    name: `The ${first} ${word(d.nameSecond, 'second')}`,
+    creature,
+    bosses: Array.from({ length: d.depths }, (_, depth) => d.bossNames[randInt(b.seed, d.bossNames.length, 'dungeonBoss', key, depth)]),
   };
 }
 
@@ -638,16 +1014,21 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   const after = boardAfter(log, a.board, 'ours');
   a.board = after.board;
   addFallen(a.fallen, after.fallen);
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
   const won = log.winner === 'ours';
   if (won) {
     progress[a.target] = cleared + 1;
-    owe(b, seat, { kind: 'loot', at: t, ...roomReward(next.depth, next.room) });
+    const { precious, ...pay } = roomReward(next.depth, next.room);
+    owe(b, seat, {
+      kind: 'loot', at: t, ...pay,
+      precious: { id: lumpMaterial(boardData(b), seat, 'room', dungeonKey(b, a.target), next.depth, next.room), amount: precious },
+    });
   }
   // The last boss down: the dungeon closes for everyone, this army too.
   if (won && nextRoom(cleared + 1) === null) closeDungeon(b, a.target, seat, t);
   // Nothing left to fight with: what is left walks home.
   else if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
-  return { ok: true, won, log, ...next, snapshot: snapshotOf(b, seat, t) };
+  return { ok: true, won, log, ...next, lost, snapshot: snapshotOf(b, seat, t) };
 }
 
 // ------------------------------------------------------------ the Portal
@@ -706,7 +1087,9 @@ export const floorPower = (floor: number): number =>
 
 /** What a floor pays: the dungeon room formula on the Portal's own scale,
  *  and a pack on the floors that carry one. */
-export function floorReward(floor: number): { gold: number; knowledge: number; heroXp: number; stardust: number; pack?: 'Rose' | 'Golden' } {
+export function floorReward(
+  floor: number,
+): { gold: number; knowledge: number; heroXp: number; stardust: number; pack?: 'Rose' | 'Golden'; precious: number } {
   const scale = WORLD_PORTAL.rewardBase * WORLD_PORTAL.rewardGrowth ** (floor - 1);
   const d = WORLD_DUNGEON;
   const pack = floor % WORLD_PORTAL.goldenEvery === 0 ? 'Golden' : floor % WORLD_PORTAL.roseEvery === 0 ? 'Rose' : undefined;
@@ -714,6 +1097,8 @@ export function floorReward(floor: number): { gold: number; knowledge: number; h
     gold: Math.round(d.gold * scale), knowledge: Math.max(1, Math.round(d.knowledge * scale)),
     heroXp: Math.round(d.heroXp * scale), stardust: Math.round(d.stardust * scale),
     ...(pack ? { pack } : {}),
+    // Every `preciousEvery` floors, a lump of precious material (19 §10.4).
+    precious: floor % WORLD_PORTAL.preciousEvery === 0 ? Math.max(1, Math.round(WORLD_PORTAL.precious * scale)) : 0,
   };
 }
 
@@ -746,10 +1131,15 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
       gems = WORLD_PORTAL.milestoneGems;
       report(b, seat, t, `First to floor ${floor} of the Portal`, true);
     }
-    owe(b, seat, { kind: 'loot', at: t, ...floorReward(floor), ...(gems > 0 ? { gems } : {}) });
+    const { precious, ...pay } = floorReward(floor);
+    owe(b, seat, {
+      kind: 'loot', at: t, ...pay, ...(gems > 0 ? { gems } : {}),
+      ...(precious > 0 ? { precious: { id: lumpMaterial(boardData(b), seat, 'portal', p.event, floor), amount: precious } } : {}),
+    });
   }
   if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
-  return { ok: true, won, log, depth: 0, room: floor, boss: false, snapshot: snapshotOf(b, seat, t) };
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
+  return { ok: true, won, log, depth: 0, room: floor, boss: false, lost, snapshot: snapshotOf(b, seat, t) };
 }
 
 function portalView(b: ServerBoard, seat: number, t: number): PortalView {
@@ -766,9 +1156,22 @@ function portalView(b: ServerBoard, seat: number, t: number): PortalView {
   };
 }
 
-/** What the server owes a seat, handed over once. */
+/** What the server still owes a seat once it has acknowledged every effect
+ *  up to `ack`: those are forgotten, the rest delivered again. An effect
+ *  owed before effects were numbered is numbered now. */
+export function owedTo(b: ServerBoard, seat: number, ack: number): WorldEffect[] {
+  const owed = b.effects[seat];
+  if (owed === undefined) return [];
+  for (const e of owed) e.seq ??= nextSeq(b, seat);
+  const left = owed.filter((e) => e.seq! > ack);
+  if (left.length === 0) delete b.effects[seat];
+  else b.effects[seat] = left;
+  return left.map((e) => ({ ...e }));
+}
+
+/** Everything owed to a seat, acknowledged as it is handed over. */
 export function drainEffects(b: ServerBoard, seat: number): WorldEffect[] {
-  const out = b.effects[seat] ?? [];
+  const out = owedTo(b, seat, 0);
   delete b.effects[seat];
   return out;
 }
@@ -787,6 +1190,7 @@ function botBoard(b: ServerBoard, seat: number, move: number, power: number): Fi
  *  Fortress into one of its districts and raise it. It pays nothing. */
 function botMove(b: ServerBoard, seat: number, t: number): void {
   const s = b.seats[seat]!;
+  botOffer(b, seat, t);
   const roll = (what: string, max: number) => randInt(b.seed, max, 'bot', seat, s.moves, what);
   const data = boardData(b);
   const mine = Object.entries(b.hexes).map(([k, h]) => [Number(k), h] as const).filter(([, h]) => h.owner === seat);
@@ -822,6 +1226,14 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
     }
   }
   if (!done && (s.claims ?? 0) < WORLD_BOTS.maxHexes) {
+    // A rival beats a camp in its way after a while, by the camp's power,
+    // without a fight being played out (19 §5.4).
+    const pending = ((b.botCamps ??= {})[seat] ??= {});
+    for (let i = 0; i < data.hexes.length; i++) {
+      if (claimRefusal(b, seat, i, t) !== 'Guarded') continue;
+      pending[i] ??= t + Math.round((campAt(b, i)!.power / 1000) * WORLD_CAMPS.botHoursPer1000Power * HOUR);
+      if (pending[i] <= t) beat(b, seat, i);
+    }
     const open: number[] = [];
     for (let i = 0; i < data.hexes.length; i++) if (claimRefusal(b, seat, i, t) === null) open.push(i);
     if (open.length > 0) {
@@ -854,8 +1266,15 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
  * `prefer` lets a player who already explored a locally generated board keep
  * it — its id, seed and seat — so their fog still means something.
  */
+/**
+ * Seat a player (19 §1.3): where they already sit; else in a rival's city on
+ * the newest board that still has a rival, the rival leaving it; else on a
+ * new board of their own with five rivals, named `fresh` when the server
+ * names it. `prefer` makes that new board a given one, and skips the rivals'
+ * cities — the tests' way to a known board.
+ */
 export function join(
-  w: ServerWorld, player: { id: string; name: string; prefer?: BoardRef }, t: number,
+  w: ServerWorld, player: { id: string; name: string; prefer?: BoardRef; fresh?: { id: string; seed: number } }, t: number,
 ): { board: ServerBoard; seat: number } {
   for (const b of w.boards) {
     const seat = b.seats.findIndex((s) => s?.playerId === player.id);
@@ -868,11 +1287,20 @@ export function join(
       return { board: b, seat };
     }
   }
-  const seed = player.prefer?.seed ?? randInt(t >>> 0, 0x1_0000_0000, 'board', player.id);
+  if (player.prefer === undefined) {
+    for (const b of [...w.boards].reverse()) {
+      const seat = b.seats.findIndex((s) => s?.bot === true);
+      if (seat >= 0) {
+        takeOver(b, seat, player, t);
+        return { board: b, seat };
+      }
+    }
+  }
+  const seed = player.prefer?.seed ?? player.fresh?.seed ?? randInt(t >>> 0, 0x1_0000_0000, 'board', player.id);
   const seat = player.prefer?.seat ?? randInt(seed, 6, 'seat', player.id);
   let rival = 0;
   const b: ServerBoard = {
-    id: player.prefer?.id ?? `local-${seed.toString(36)}`,
+    id: player.prefer?.id ?? player.fresh?.id ?? `local-${seed.toString(36)}`,
     seed,
     seats: Array.from({ length: 6 }, (_, i) => i === seat
       ? { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 }
@@ -892,6 +1320,37 @@ export function join(
   return { board: b, seat };
 }
 
+/**
+ * A player takes a rival's city (19 §1.3). The rival leaves the board with
+ * everything that was only its own — armies, offers, plans, claims still
+ * being built — and its districts stand on, nobody's, to be claimed. Its
+ * stores go with it.
+ */
+function takeOver(b: ServerBoard, seat: number, player: { id: string; name: string }, t: number): void {
+  resolveTo(b, t);
+  settleStores(b, t);
+  const gone = new Set(b.armies.filter((a) => a.owner === seat).map((a) => a.id));
+  b.armies = b.armies.filter((a) => a.owner !== seat);
+  for (const [key, h] of Object.entries(b.hexes)) {
+    if (h.garrison !== null && gone.has(h.garrison)) h.garrison = null;
+    if (h.owner !== seat) continue;
+    if (!isHeld(h, t)) {
+      delete b.hexes[Number(key)];
+      continue;
+    }
+    h.owner = null;
+    h.stored = 0;
+    h.precious = 0;
+    h.work = null;
+  }
+  b.offers = (b.offers ?? []).filter((o) => o.seat !== seat);
+  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
+    if (perSeat !== undefined) delete perSeat[seat];
+  }
+  b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };
+  recomputeChains(b, t);
+}
+
 // ------------------------------------------------------------------ views
 
 export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapshot {
@@ -900,18 +1359,30 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     const index = Number(k);
     const bh = data.hexes[index];
     const mineHex = h.owner === seat;
-    const rate = districtRate(bh);
+    const rate = districtRate(bh, boostOf(b, h.owner));
+    const gems = preciousRate(data, index, boostOf(b, h.owner));
     return {
       index, owner: h.owner, held: isHeld(h, t), standsAt: h.standsAt,
       district: districtOf(bh) ?? 'Rural', fortress: h.fortress, work: h.work, active: h.active,
       stores: mineHex && rate.currency !== null ? { currency: rate.currency, amount: storedAt(b, index, t), cap: rate.cap } : null,
+      precious: mineHex && gems.id !== null ? { id: gems.id, amount: preciousAt(b, index, t), cap: gems.cap } : null,
       garrison: garrisonView(b, h),
+      burnt: h.burnt === true,
+      repairAt: h.repairAt ?? null,
+      threat: mineHex && isHeld(h, t) ? threatView(b, seat, index, t) : null,
     };
   }).sort((x, y) => x.index - y.index);
   const armies: ArmyView[] = b.armies.map((a) => ({
     id: a.id, owner: a.owner, purpose: a.purpose, phase: a.phase, path: a.path,
     departedAt: a.departedAt, stepMs: a.stepMs, target: a.target, at: a.at,
     power: boardPower(a.board), heroes: a.owner === seat ? [...a.heroes] : null,
+    ...(a.owner === seat ? {
+      slots: a.board.slots.map((s) => ({
+        kind: s.kind, unitId: s.unitId, fighterId: s.fighterId, name: s.name, count: s.count,
+        hp: s.hpPool, hpMax: s.hpUnit * Math.max(1, s.count),
+      })),
+      fallen: a.fallen.map((f) => ({ ...f })),
+    } : {}),
   }));
   return {
     board: { id: b.id, seed: b.seed, seat },
@@ -920,10 +1391,29 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
+    beaten: [...(b.beaten?.[seat] ?? [])],
+    seenCamps: [...(b.seenCamps?.[seat] ?? [])],
+    offers: (b.offers ?? []).map((o) => ({
+      id: o.id, seat: o.seat, mine: o.seat === seat, give: { ...o.give }, want: { ...o.want }, expiresAt: o.expiresAt,
+    })),
     dungeons: standingDungeons(b),
+    // Every standing dungeon: its name, and the race — how far each player
+    // has gone in it (19 §8.1).
+    dungeonInfo: standingDungeons(b).map((index) => ({
+      index, key: dungeonKey(b, index), ...dungeonInfo(b, index),
+      race: Object.entries(b.delves)
+        .map(([s, p]) => ({ seat: Number(s), cleared: p[index] ?? 0 }))
+        .filter((r) => r.cleared > 0)
+        .sort((x, y) => y.cleared - x.cleared || x.seat - y.seat),
+    })),
     portal: portalView(b, seat, t),
     effects: [],
   };
+}
+
+function threatView(b: ServerBoard, seat: number, index: number, t: number): HexView['threat'] {
+  const camps = raidersOf(b, seat, index);
+  return camps.length === 0 ? null : { camps, nextRaidAt: nextRaidAt(t) };
 }
 
 function garrisonView(b: ServerBoard, h: ServerHex): HexView['garrison'] {

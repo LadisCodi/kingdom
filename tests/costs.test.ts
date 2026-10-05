@@ -6,7 +6,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
 import { DISTRICTS } from '../src/sim/data/definitions';
-import { townhall, type DistrictId } from '../src/sim/state';
+import { PRECIOUS, townhall, type DistrictId } from '../src/sim/state';
 import { enqueueBuild, gemRushCost, grantBuilder } from '../src/sim/commands';
 
 // A build is the level 1 row of `DistrictCosts` times the instance
@@ -93,10 +93,14 @@ describe('the ordinal prices every level', () => {
   });
 
   it('never multiplies the refined goods', () => {
+    // With the world shut, no precious term is asked (19 §7.6).
+    const state = freshGame();
+    const precious = new Set<string>(PRECIOUS);
     for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
       for (let level = 1; level <= DISTRICTS[id].maxLevel; level += 1) {
-        expect(upgradeGoodsCost(id, level), `${id} level ${level}`)
-          .toEqual(DISTRICTS[id].costPerLevel[level - 1].goods);
+        const authored = Object.fromEntries(Object.entries(DISTRICTS[id].costPerLevel[level - 1].goods)
+          .filter(([g]) => !precious.has(g)));
+        expect(upgradeGoodsCost(state, id, level), `${id} level ${level}`).toEqual(authored);
       }
     }
   });

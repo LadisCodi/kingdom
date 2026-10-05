@@ -69,6 +69,10 @@ export interface TechnologyDef {
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
   cost: Wallet; // city Gold and kingdom Knowledge
+  /** Refined goods paid with the Gold when it is completed; empty = none. */
+  goods: GoodsStock;
+  /** Precious material of any kind it costs (19 §7.6); 0 = none. */
+  anyPrecious: number;
   requires: TechId[]; // tree edges — all must be completed first
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
@@ -110,7 +114,7 @@ export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) a
  * the page does not draw one, `canStartTech` refuses one and `GATES` below
  * skips one. These four numbers only exist so the fields stay non-optional.
  */
-const NO_SLOT = { tome: 'Civics' as TomeId, era: 1, row: 0, col: 0 };
+const NO_SLOT = { tome: 'Kingdom' as TomeId, era: 1, row: 0, col: 0 };
 
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
   TECH_ORDER.map((id) => {
@@ -131,6 +135,8 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
+      goods: (node.goods ?? {}) as GoodsStock,
+      anyPrecious: node.anyPrecious ?? 0,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];
@@ -235,7 +241,10 @@ export interface GoodDef {
   /** The tier-2 recipe: a good made partly of another good. */
   inputGood: GoodId | null;
   inputGoodAmount: number;
-  workSeconds: number;
+  /** Null for a precious material, which nothing makes. */
+  workSeconds: number | null;
+  /** Found on the world board, never made (19 §7.4). */
+  precious: boolean;
 }
 
 export const GOODS: Record<GoodId, GoodDef> = {
@@ -243,6 +252,9 @@ export const GOODS: Record<GoodId, GoodDef> = {
   CutStone: { id: 'CutStone', ...balance.goods.CutStone } as GoodDef,
   Iron: { id: 'Iron', ...balance.goods.Iron } as GoodDef,
   Runestone: { id: 'Runestone', ...balance.goods.Runestone } as GoodDef,
+  Starmetal: { id: 'Starmetal', ...balance.goods.Starmetal } as GoodDef,
+  Heartwood: { id: 'Heartwood', ...balance.goods.Heartwood } as GoodDef,
+  Moonglass: { id: 'Moonglass', ...balance.goods.Moonglass } as GoodDef,
 };
 
 export const GOOD_ORDER: readonly GoodId[] = Object.keys(GOODS) as GoodId[];
@@ -647,7 +659,8 @@ export interface DistrictDef {
    *  per level: index 0 is the BUILD, index 1 what reaching level 2 costs.
    *  Authored on the `DistrictCosts` sheet, never derived from a curve
    *  (Docs/features/05-city-and-districts.md §3). Exactly `maxLevel` long. */
-  costPerLevel: readonly { cost: Wallet; goods: GoodsStock }[];
+  /** `anyPrecious`: so many of any precious material (19 §7.6). */
+  costPerLevel: readonly { cost: Wallet; goods: GoodsStock; anyPrecious?: number | null }[];
   /** How much dearer a LATER instance is:
    *  `M(N) = linear × (N − 1) + growth^(N − 1)`, which is exactly 1 at N = 1,
    *  so the first one pays the table. The linear term prices the early
@@ -902,25 +915,17 @@ export interface TomeDef {
 }
 
 /**
- * The shelf, in reading order: the three general books, then the found ones.
+ * The shelf, in reading order: the kingdom's one tree, then the found books.
  *
- * Civics is open from the first minute; every other book opens on a fact
- * about the world, never on a research (`sim/research.ts#TOME_OPENS`,
- * Docs/features/22-progression.md §4). What paces an open book is its era
- * bars, which ask for revealed cells.
+ * The tree is open from the first minute and read in CHAPTERS — its bands —
+ * one per Townhall step, each opened by revealed cells and closed by a finale
+ * that opens the next Townhall level (Docs/plans/tech-tree-rework.md). A found
+ * book opens on a fact about the world (`sim/research.ts#TOME_OPENS`).
  */
 export const TOMES: Record<TomeId, TomeDef> = {
-  Civics: {
-    id: 'Civics', name: 'Civics', glyph: '🏛️',
-    blurb: 'The city and its purse.',
-  },
-  Magic: {
-    id: 'Magic', name: 'Magic', glyph: '🔯',
-    blurb: 'The land’s magic, and what you can see of it.',
-  },
-  Warfare: {
-    id: 'Warfare', name: 'Warfare', glyph: '🚩',
-    blurb: 'The army, and the lairs it clears.',
+  Kingdom: {
+    id: 'Kingdom', name: 'Kingdom', glyph: '🏛️',
+    blurb: 'Everything the kingdom learns, chapter by chapter.',
   },
   Sagas: {
     id: 'Sagas', name: 'Sagas', glyph: '📖',
@@ -974,6 +979,21 @@ export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
       { length: ERA_COUNT[tome] },
       (_, i) => eraCells(treeDoc as unknown as TechTreeDoc, tome, i + 1),
     )];
+  }
+  return out;
+})();
+
+/**
+ * THE CARD PACK FINISHING A BAND PAYS — `ERA_REWARDS[tome][era]`, indexed by
+ * era like `ERA_UNLOCK_CELLS`, so `[0]` is unused. Null = that band pays
+ * nothing; a book the file names no rewards for pays nothing in any band.
+ */
+export const ERA_REWARDS: Record<TomeId, Array<PackTier | null>> = (() => {
+  const authored = (treeDoc as unknown as TechTreeDoc).eraRewards ?? {};
+  const out = {} as Record<TomeId, Array<PackTier | null>>;
+  for (const tome of TOME_ORDER) {
+    const list = authored[tome] ?? [];
+    out[tome] = [null, ...Array.from({ length: ERA_COUNT[tome] }, (_, i) => (list[i] ?? null) as PackTier | null)];
   }
   return out;
 })();
@@ -2093,7 +2113,8 @@ export interface WorldDistrictDef {
 /** An upgrade built into a district that stands, and its levels (19 §7.2). */
 export interface WorldUpgradeDef {
   name: string;
-  levels: ReadonlyArray<{ gold: number; buildSeconds: number }>;
+  /** `goods` and `anyPrecious`: the precious materials a level costs (19 §7.6). */
+  levels: ReadonlyArray<{ gold: number; buildSeconds: number; goods?: GoodsStock | null; anyPrecious?: number | null }>;
 }
 
 /** What is built on a held world hex and what it pays (19 §5.1, §7). */
@@ -2135,6 +2156,12 @@ export interface WorldDungeonDef {
   /** A closed dungeon comes back after a roll between these many hours. */
   returnHoursMin: number;
   returnHoursMax: number;
+  /** Precious material a room pays, scaled as its other rewards. */
+  precious: number;
+  /** A dungeon's name: "The <first> <second>"; and its depths' bosses. */
+  nameFirst: readonly string[];
+  nameSecond: readonly string[];
+  bossNames: readonly string[];
 }
 
 export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;
@@ -2155,9 +2182,63 @@ export interface WorldPortalDef {
   milestoneGems: number;
   rankGems: readonly number[];
   botFloorChance: number;
+  /** Every `preciousEvery` floors, a lump of precious material (19 §10.4). */
+  preciousEvery: number;
+  precious: number;
 }
 
 export const WORLD_PORTAL: WorldPortalDef = balance.worldPortal;
+
+/** Monster camps on the world board (19 §5.4): where they stand, how strong,
+ *  what they pay, and what paying one off costs. */
+export interface WorldCampsDef {
+  share: number;
+  lurkingShare: number;
+  /** Power on rings 1 to 6, the inner ring first. */
+  powerByRing: readonly number[];
+  powerJitter: number;
+  creatures: Record<'inner' | 'corridor' | 'home' | 'outer', readonly LairId[]>;
+  goldPerPower: number;
+  heroXpPerPower: number;
+  tributePremium: number;
+  tributeLossShare: number;
+  botHoursPer1000Power: number;
+  /** Camp raids (19 §5.5): how often, how much, and what a repair costs. */
+  raidHours: number;
+  raidShare: number;
+  repairCostShare: number;
+  repairTimeShare: number;
+}
+
+export const WORLD_CAMPS = balance.worldCamps as unknown as WorldCampsDef;
+
+/** What exploring a hex pays (19 §3.2). */
+export type ScoutKind = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'HeroXp' | 'Knowledge' | 'Stardust' | 'Gems' | 'Pack' | 'Precious';
+export interface ScoutRewardDef { reward: ScoutKind; weight: number; amount: number; pack: PackTier | null }
+export interface WorldScoutingDef {
+  /** Hours of the city's production a Gold, Wood, Food or Stone reward pays. */
+  hoursByRole: Record<'inner' | 'corridor' | 'home' | 'outer', number>;
+  rewards: Record<'inner' | 'corridor' | 'home' | 'outer', readonly ScoutRewardDef[]>;
+}
+
+export const WORLD_SCOUTING = balance.worldScouting as unknown as WorldScoutingDef;
+
+/** Precious materials on the world board (19 §7.4). */
+export interface WorldPreciousDef {
+  richFeatureShare: number;
+  richDesertShare: number;
+  perDay: number;
+  storeDays: number;
+  ownShare: number;
+  campPerPower: number;
+}
+
+export const WORLD_PRECIOUS = balance.worldPrecious as unknown as WorldPreciousDef;
+
+/** The Exchange (19 §7.5). */
+export interface WorldExchangeDef { offerHours: number; maxOffers: number; botTakeHours: number; botOfferAmount: number }
+
+export const WORLD_EXCHANGE = balance.worldExchange as unknown as WorldExchangeDef;
 
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
@@ -2405,4 +2486,6 @@ export const GAME_VERSION = '0.2.0';
 // v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
 // v85: the world board is radius 6 — the save's world fog, trips, builds,
 // Sanctuaries and armies are reset, the armies' troops sent home.
-export const SAVE_VERSION = 85;
+// v87: the last world-server effect applied (`EffectSeq` on `kingdom.world`),
+// additive.
+export const SAVE_VERSION = 87;

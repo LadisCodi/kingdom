@@ -7,7 +7,7 @@
 // holds it, a Sensed one is shapes in the mist, an Unknown one nothing.
 
 import type { Game } from '../../game';
-import type { BoardHex } from '../../sim/world/board';
+import { materialAt, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
   returnsAt, revealsAt, tripRevealing, type FogState,
@@ -16,12 +16,16 @@ import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
-import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
-import { getWallet, type CurrencyId } from '../../sim/state';
+import { WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
+import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
+import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
+import { getGood } from '../../sim/goods';
+import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
-import { hexActions, hexWork, type HexAction } from './worldActions';
+import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
+import { scoutPay } from '../../sim/world/scouting';
 import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
@@ -86,6 +90,21 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (h.fortress > 0) {
     lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.upgrades.Fortress.name} · level ${formatCount(h.fortress)}`));
   }
+  // Burnt by raiders (19 §5.5): it makes nothing until it is repaired.
+  if (h.burnt) {
+    lines.push(el('p', { class: 'wd-line is-cut' }, 'Burnt by raiders — it makes nothing until it is repaired'));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
+  }
+  // A camp beside it will raid it (19 §5.5).
+  if (mine && !h.burnt && h.threat != null) {
+    const creatures = h.threat.camps
+      .map((c) => game.worldSource().board().hexes[c]?.camp?.creature)
+      .filter((c): c is NonNullable<typeof c> => c !== undefined)
+      .map((c) => CAMP_CREATURE[c]);
+    const guard = h.garrison != null && h.garrison.owner === game.worldSeat() ? ' — your garrison will fight them' : '';
+    lines.push(el('p', { class: 'wd-line is-cut' },
+      `${creatures.join(' and ')} next door raid it in ${formatCountdown(Math.max(0, h.threat.nextRaidAt - now) / 1000)}${guard}`));
+  }
   if (h.work !== null) {
     if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     else lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
@@ -93,15 +112,38 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (mine && h.stores !== null && h.stores.cap > 0) {
     lines.push(el('p', { class: 'wd-line' }, `${h.stores.currency} in store ${formatCount(Math.floor(h.stores.amount))}/${formatCount(Math.floor(h.stores.cap))}`));
   }
+  if (mine && h.precious != null && h.precious.cap > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${h.precious.id} in store ${formatCount(Math.floor(h.precious.amount))}/${formatCount(Math.floor(h.precious.cap))}`));
+  }
   return lines;
 }
 
-const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend' } as const;
+const ARMY_VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'Attack' } as const;
 const ARMY_INFO = {
   attack: 'Send an army', claim: 'Send an army to take it', garrison: 'Station an army here',
   delve: 'An army camps here and fights room by room',
   portal: 'An army goes down, a floor at a time',
+  clear: 'Beat the camp, and take its loot',
 } as const;
+
+/** A camp: whose, how strong, and how hard against the player's best party. */
+function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
+  if (!campShown(game.worldSource(), bh, fog) || bh.camp === null) return [];
+  const difficulty = campDifficulty(bh.camp.power, strongestParty(game.state));
+  const lines = [el('p', { class: 'wd-line' },
+    `A camp of ${CAMP_CREATURE[bh.camp.creature]} · Power ${formatCount(bh.camp.power)} · `,
+    el('b', { style: `color: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty))];
+  // Which of the player's districts it will raid (19 §5.5).
+  const source = game.worldSource();
+  const raided = source.board().hexes
+    .map((h) => source.hexOf(h.index))
+    .filter((h): h is NonNullable<typeof h> => h !== null && h.threat != null && h.threat.camps.includes(bh.index) && !h.burnt);
+  if (raided.length > 0) {
+    lines.push(el('p', { class: 'wd-line is-cut' },
+      `It raids ${raided.length === 1 ? `your ${WORLD_BUILD.districts[raided[0].district].name}` : `${formatCount(raided.length)} of your districts`} every ${formatCount(WORLD_CAMPS.raidHours)} hours`));
+  }
+  return lines;
+}
 
 /** The Portal: shut with its countdown, or open with the player's floor,
  *  the clears left today and the ranking. */
@@ -147,10 +189,21 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           info: `${WORLD_BUILD.districts[a.district].name} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doClaimHex(bh.index, asRival ? 0 : a.gold),
         });
+      case 'repair':
+        return action({
+          label: 'Repair', kind: 'primary', cost: { Gold: a.gold }, have,
+          info: `The raiders' damage · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doRepairHex(bh.index, asRival ? 0 : a.gold),
+        });
       case 'upgrade':
         return action({
           label: a.level === 1 ? 'Build' : 'Upgrade', kind: 'secondary',
           cost: { Gold: a.gold }, have,
+          // Its precious materials, beside the Gold (19 §7.6).
+          costExtra: asRival ? [] : Object.entries(worldUpgradeGoods(game.state, a.upgrade, a.level)).map(([g, n]) => ({
+            icon: g as GoodId, amount: formatCount(n as number),
+            short: getGood(game.state.city.goods, g as GoodId) < (n as number),
+          })),
           info: `${WORLD_BUILD.upgrades[a.upgrade].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doUpgradeHex(bh.index, a.upgrade, a.level, asRival ? 0 : a.gold),
         });
@@ -165,7 +218,8 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         const floor = (p?.floor ?? 0) + 1;
         return action({
           label: 'Descend', kind: 'destructive',
-          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power`,
+          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power${
+            floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''}`,
           disabledReason: p === null || !p.open ? 'The Portal is shut'
             : p.attemptsLeft === 0 ? 'No clears left today' : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
           onClick: () => void game.doDescendPortal(a.army),
@@ -182,6 +236,17 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           onClick: () => void game.doDelveRoom(a.army),
         });
       }
+      case 'tribute':
+        return action({
+          label: 'Pay off', kind: 'secondary', cost: a.cost, have,
+          info: 'The camp leaves, and pays nothing',
+          onClick: () => void game.doTributeCamp(bh.index),
+        });
+      case 'openDelve':
+        return action({
+          label: 'Delve', kind: 'primary', info: 'The descent, its rooms and what they pay',
+          onClick: () => game.openDelve(bh.index),
+        });
       case 'recall':
         return action({
           label: 'Recall', kind: 'secondary', info: 'The garrison marches home',
@@ -222,13 +287,20 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     const holds = [TERRAIN_NAME[bh.terrain ?? 'Grassland'], ...bh.features.map((f) => FEATURE_NAME[f])];
     // Bare ground is already its own title; say what it holds only past that.
     if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
+    // A rich hex: what its district will yield besides (19 §7.4).
+    const material = bh.rich ? materialAt(game.worldSource().board(), index) : null;
+    if (material !== null) lines.push(el('p', { class: 'wd-line' }, `Rich in ${material}`));
   } else if (fog === 'Sensed') {
     lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Explore it before anything can be done there.'));
+    // What an explorer sent here brings home (19 §3.2), priced as of now.
+    if (bh.scout !== null) {
+      lines.push(el('p', { class: 'wd-line' }, `Exploring it pays ${scoutWords(scoutPay(state, bh.scout, bh.role, index))}`));
+    }
   } else if (fog === 'Unknown') {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
 
-  lines.push(...controlLines(game, bh, fog), ...dungeonLines(game, bh), ...portalLines(game, bh));
+  lines.push(...controlLines(game, bh, fog), ...campLines(game, bh, fog), ...dungeonLines(game, bh), ...portalLines(game, bh));
   if (game.actingSeat !== null) {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }

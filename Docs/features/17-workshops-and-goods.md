@@ -18,6 +18,9 @@
   one ([`buildings.md`](buildings.md) §4.11), so no city reaches level 10
   without a workshop.
 - Goods are city-scoped, and no part of the wallet.
+- **The world's precious materials are goods too** — Starmetal, Heartwood,
+  Moonglass, `precious` in `goods`: no recipe, no work time, made by no
+  workshop, found only on the world board ([`19`](19-world-map.md) §7.4).
 
 ## 2. The four goods
 

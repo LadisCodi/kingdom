@@ -9,12 +9,15 @@
 >
 > **Status: built against a local stand-in for the world server**:
 > the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
-> the explorers (§3); claiming a district, its store, its roads and the
+> the explorers and their scouting rewards (§3, §3.2); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
-> (§4, §6); Dungeons (§8.1) and the Dark Portal (§10), which opens on
-> Fridays (UTC) for three days, its numbers in `worldPortal`. Five stand-in
-> rivals claim, build, man a Fortress and now and then attack on their own.
+> (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
+> `worldCamps`; Dungeons
+> and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
+> days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
+> camps, trade on the Exchange (§7.5), man a Fortress and now and then
+> attack on their own.
 > The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
@@ -22,8 +25,7 @@
 - **A pointy-top hex board, radius 6 from the centre: 127 hexes.**
 - **Six players a board.** A seventh player opens a new instance; for the
   prototype that is enough.
-- **A player joins the first board with a free city**, on its first free
-  corner, assigned at random.
+- **A player joins when they first go out onto the board** (§1.3).
 - Rings are roles, not decoration:
 
 | Ring | Hexes | Its job |
@@ -64,6 +66,20 @@
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**
+
+### 1.3 Joining
+
+- A player is on no board until they first go out onto the world map.
+- The first time out, they choose a **nickname**:
+  - 3–16 letters, numbers, spaces, `_` or `-`;
+  - unique across the game, whatever its case;
+  - never changed. It is the name every other player reads on the board.
+- The server then seats them:
+  - **in a rival's city on the newest board that still has a rival.** The
+    rival leaves with its armies, offers and claims under way; its districts
+    stand on, nobody's, their stores empty;
+  - **else on a new board of their own**, with five rivals.
+- A board with no rival left is full.
 
 ## 2. The anatomy of a hex
 
@@ -127,6 +143,24 @@
   `rush.secondsPerGem` like every other wait. Finished, its hexes are
   revealed and the explorer is home.
 
+### 3.2 Scouting rewards
+
+- **Every hex has a promise**, rolled with the board by its kind of ring
+  (`worldScouting.rewards`, by weight): Gold, Wood, Food, Stone, Hero XP,
+  Knowledge, Stardust, Gems, a card pack or a lump of precious material
+  (§7.4). None on a city, the Portal or a
+  dungeon. Past the inner ring every wedge has the same promises.
+- **A Sensed hex shows it**: a brass medallion with the reward's icon, and
+  under it a plank with the Gold its exploring costs. The hex's sheet says
+  what it pays. Once an explorer is on its way there, the plank goes.
+- **Paid when the explorer sent to it is home** (or finished with Gems), and
+  named in the toast that says it is home.
+- **Only the target pays.** The hexes revealed round it pay nothing, and a
+  hex revealed that way has lost its promise.
+- **Gold, Wood, Food and Stone are priced in production** when paid:
+  `hoursByRole` hours of the city's own production of it, floored at the
+  reward's `amount`. Every other reward pays its `amount`.
+
 ## 4. Armies
 
 > **How many armies a player has is the balancing lever for the whole board.**
@@ -177,7 +211,9 @@
 - *Example, an explorer*: leaving open plain 1 min, a plain with forest
   1 min 30 s, a mountain on grassland 3 min.
 - **A speed divides one hex's time** and never lengthens it — the hook for a
-  hero or technology that is quicker over some ground.
+  hero or technology that is quicker over some ground. The tree's
+  `explorerSpeed` and `armyMarchSpeed` are two; an army's is priced by the
+  city and sent with it, like its board.
 - **Your explorers and armies show their way**: footprints along the hexes
   walked, a dashed line along the hexes still to go, ringed on the hex it is
   bound for — the target out, the city home. A rival's army shows only itself.
@@ -190,6 +226,8 @@
   active, and **can never be attacked**.
 - **Adjacency is always required.** A player may only take a hex adjacent to an
   **active** hex of their own.
+- **A camp the player has not beaten guards its hex** (§5.4): the claim is
+  refused *Guarded*.
 - **A neutral hex with nothing on it is claimed by building its district**:
   its Gold and a builder's time. There is no choice to make — **the hex's
   feature decides which district it is** (§7).
@@ -240,6 +278,66 @@ the ground** — to own it you still take the hexes one at a time. With six
 neighbours per hex, a corridor with one hex of redundancy does not fall to a
 single attack: **cutting is a deliberate operation of several hexes, never an
 accident.**
+
+### 5.4 Monster camps
+
+- **A camp is a monster army standing on a neutral hex**, fought once
+  through the ordinary resolver ([`combat.md`](combat.md)). Its creatures are
+  the province's lairs' (Orcs, Harpies, Goblins, Wolf-riders, a Drake); its
+  lair's threat is its formation's type, as a lair's garrison is
+  ([`18`](18-garrisons-and-raids.md) §2).
+- **Rolled with the board**, in the wedge (§9): every seat faces the same
+  camps at the same distances.
+  - About a third (`share`) of the hexes on rings 2–6, never beside a city,
+    never on a Dungeon, Sanctuary or Landmark.
+  - **Every inner-ring hex has one**, the strongest: the inner ring's bonus
+    is earned.
+  - Power by ring (`powerByRing`), ± `powerJitter`; which creatures by role.
+- **Each player beats a camp for themselves.** Beating it opens the hex to
+  that player only. Once anyone holds the hex its camp no longer matters.
+  A camp never comes back.
+- **Seen or lurking.** A standing camp shows on a Sensed hex as a silhouette;
+  a lurking one (`lurkingShare`) shows only once the hex is Revealed. On
+  explored ground a pill over the camp says how hard it is against the
+  strongest party the player could send: **Very easy · Easy · Fair · Hard ·
+  Deadly**.
+- **Fighting it**: an army sent to *clear* it — the party screen, march and
+  slot of an attack (§4) — fights on arrival.
+  - Won: the camp is beaten for that player, and pays Gold
+    (`goldPerPower`), Hero XP (`heroXpPerPower`) and a lump of precious
+    material (§7.4) by its power when the army is home.
+  - Lost: the army walks home with its survivors; the camp stands, whole.
+- **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
+  It is the training cost of the soldiers a winning army would lose
+  (`tributeLossShare` of the camp's power, in Warriors), times
+  `tributePremium` — **always dearer than the fight**. A paid camp pays no
+  loot.
+- **A rival beats a camp in its way** after `botHoursPer1000Power` hours per
+  1,000 of the camp's power, without a fight.
+
+### 5.5 Camp raids
+
+- **A camp raids the player's districts beside it** every `raidHours` (8),
+  on the same UTC hours on every board — while the player has not beaten it
+  and nobody holds its hex.
+- **Only a camp the player has seen raids**: a standing one always; a
+  lurking one once the player's client has told the server it was revealed.
+- **A garrisoned Fortress fights the raiders** — the camp's army against the
+  garrison, as an attack is fought (§6).
+  - The garrison holds: the district is spared; its losses stand.
+  - The garrison falls: what is left of it walks home, and the raid goes on.
+- **A raided district burns**: the raiders carry off `raidShare` (40%) of its
+  stores, its precious store included, and it makes nothing until it is
+  repaired. It is still its owner's and still carries the chain. A burning
+  district is not raided again.
+- **Repairing** takes a builder `repairTimeShare` (10%) of a district's
+  build time and `repairCostShare` (10%) of what a claim costs now; Gems
+  finish it like any wait.
+- **On the map**: a burnt district is charred, with fire at its foot and
+  smoke rising; a district a camp will raid carries crossed swords. Its sheet
+  says who raids it and when; the camp's sheet says which districts it
+  raids.
+- The stand-in rivals are never raided.
 
 ## 6. Attacking
 
@@ -331,10 +429,89 @@ gates them; *Cartography* opens the first explorer.
 - **A producing district fills a store of its own**, as a province building
   does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
 - **A tap on its hex collects the store into the city's wallet**, free.
-- **Yield and store size are authored amounts per district.**
+- **Yield and store size are authored amounts per district**, times what the
+  owner's research adds (`improvementYield`, `improvementStore`). The city
+  sends that boost when it joins and after a research that moves it; the
+  server settles every store at that moment, so nothing already made is
+  repriced.
 - An inactive hex's store stops filling and can still be collected.
 - **The store goes with the hex.** A conquest hands it to the conqueror; a
   denial empties it. Collecting is the defence.
+
+### 7.4 Precious materials
+
+- **Three materials only the world yields**: Starmetal, Heartwood and
+  Moonglass. They are goods ([`17`](17-workshops-and-goods.md) §1), kept with
+  the refined goods, never made.
+- **Each seat is dealt one**, two seats each, shuffled by the board's seed.
+- **A rich hex** is one Forest or Mountain hex in five (`richFeatureShare`)
+  and one bare Desert hex in four (`richDesertShare`) — counted per wedge,
+  at least one of each kind there is, so every wedge has the same rich
+  ground. An inner hex is rich by its own roll.
+  It yields **its wedge's seat's material** — whoever holds it. Explored, it
+  shows its material's icon and a sparkle; its sheet says *Rich in …*.
+- **A rich district fills a second store** with that material:
+  `perDay` a day (the inner ring multiplies it, as research does), holding
+  `storeDays` of it. One Collect empties both stores.
+- **Lumps** are mostly the player's own material (`ownShare`), otherwise one
+  of the other two:
+  - a beaten camp pays `campPerPower` of its power (§5.4);
+  - a scouting reward may be one (§3.2);
+  - every dungeon room pays one (§8.1), and every fifth Portal floor
+    (§10.4).
+
+### 7.5 The Exchange
+
+- **A sheet on the world board**, from the *Exchange* chip under the
+  explorers: what the player holds of the three, the offers standing, and an
+  offer to make.
+- **An offer gives so many of one material for so many of another.** What
+  it gives leaves the player's goods when it is made; the server holds it.
+- **Taken by a player**: the taker pays what it wants and receives what it
+  gives at once; its maker is paid what it wanted.
+- **A fair offer — one for one — is taken by a rival** that yields what it
+  wants, `botTakeHours` after it is made. An uneven one waits for a player.
+- **Withdrawn**, or after `offerHours` with nobody taking it, it comes back
+  whole.
+- Up to `maxOffers` standing per player.
+- **Each rival keeps one offer up**: `botOfferAmount` of its own material,
+  one for one, for one of the other two.
+
+### 7.6 What they buy
+
+- **Never while the world is shut.** Until the Watchtower is claimed, no
+  price asks for precious material: its terms are left off.
+- **Early: a few of any.** A building's level 5 asks `anyPrecious` (5; the
+  Townhall 10) of any material, and Fortress level 2 asks 10. *Any* is paid
+  from what the player holds most of, after the named terms, and the price
+  shows the materials it will take.
+- **Late: each of the three, named.** Levels 8–10 of every building but
+  Housing name all three materials, the two the player does not yield
+  included:
+
+  | Buildings | Level 8 | Level 9 | Level 10 |
+  |---|---|---|---|
+  | producers and workshops | 2 each | 4 each | 6 each |
+  | the Sanctum, the Tavern, the halls, the Infirmary, the War Camp | 4 each | 8 each | 12 each |
+  | the Townhall | 10 each | 20 each | 30 each |
+
+  Fortress level 3 asks 10 of each.
+- **Research, from the middle of the tree on** — the deepest cards of each
+  Kingdom chapter, more of them and dearer as the tree goes on:
+
+  | Chapter | Cards | Each asks |
+  |---|---|---|
+  | 5 | 2 | 5 of any |
+  | 6 | 3 | 10 of any |
+  | 7 | 4 | 5 of each |
+  | 8 | 5 | 10 of each |
+  | 9 | 6 | 15 of each |
+
+  A card's `goods` name materials; its `anyPrecious` asks for any
+  (`tech-tree.json`, at `?dev=data#tree`).
+- They are goods terms on a price: `buildings` › `costPerLevel` (`goods`,
+  `anyPrecious`), `worldBuild.upgrades` › `levels`, and a technology's
+  `goods` and `anyPrecious`.
 
 ## 8. Features
 
@@ -372,7 +549,7 @@ A hex holds **none or one**. A feature decides the district built there
 - Where every dungeon stands is server state.
 - A dungeon hex is never owned and needs no adjacency: any army can march to
   it.
-- **An army camps at the dungeon.** From the dungeon's sheet the player
+- **An army camps at the dungeon.** From the delve screen (§8.2) the player
   attacks its rooms one at a time; each fight resolves at once.
   - The camped army's losses and its heroes' wounds carry from room to room.
   - Recalling it marches it home, to be reinforced and sent again.
@@ -380,8 +557,40 @@ A hex holds **none or one**. A feature decides the district built there
 - **Every dungeon is 3 depths of 8 rooms**; the last room of a depth is its
   boss, which fields more and pays a multiple of a room.
 - **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
-  room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
+  room ([`11-expeditions.md`](11-expeditions.md) §7.1), and a lump of
+  precious material on the same scale (`precious`, §7.4). What a dungeon pays
   beyond its rooms — the found book — is **OQ-122**.
+- **A dungeon is named when it appears** — *The Sunken Barrow* — from
+  `nameFirst` and `nameSecond`; each sixth keeps its own first word, so no
+  two standing share a name. It is held by the creature its rooms' formation
+  fights as, and each depth has its boss (`bossNames`).
+
+### 8.2 The delve
+
+- **The dungeon's sheet has one button, Delve**, which opens the delve: a
+  full-height menu.
+- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8* and
+  who holds it.
+- **The race**: a rope with a banner per player who has cleared a room, at
+  how far they have gone, the player's own blue; and who closes it and is
+  paid for it.
+- **Depth tabs**: one per depth; a depth not yet reached is locked.
+- **The descent**: the depth's rooms down a stair in the rock, one node each:
+  - cleared — dimmed, ticked;
+  - **the frontier** — lit, the creature's portrait, its power against the
+    army's, and what it pays, its precious lump included;
+  - ahead — hazed, its power only;
+  - **the boss** at the foot — larger, named, his chest open with what he
+    pays.
+- **The army**, docked at the foot: its heroes with their HP, its squads
+  with their counts and the soldiers lost so far, its power; **Fight** (the
+  frontier) and **Recall**. On its way: when it arrives, and Recall. None
+  there: **Send**.
+- **After a fight**, once it has played: the spoils over the descent — what
+  the room paid and the soldiers it cost — with **Fight next** (or **Fight
+  again** after a defeat) and **Back**.
+- **On the map**, a dungeon's hex carries a ring filled as far as the player
+  has gone, *13/24*, and a red badge while their army is camped there.
 
 ## 9. Generation
 
@@ -467,6 +676,9 @@ finishing instantly.
 - **By depth** — an immediate reward for clearing each floor: **Knowledge,
   Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
   This is the main line.
+- **Every `preciousEvery` (5) floors, a lump of precious material** —
+  `precious` on the floors' scale, mostly the player's own (§7.4). The
+  Descend button says when the next floor pays one.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
 - **By final rank** — Top 1 / Top 2–3 / Top 4–6.
@@ -496,9 +708,15 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Precious prices** — level 5's *any*, levels 8–10 each (§7.6) | how much the late city needs the world and trade | the late city stalls, or ignores the world |
+| **Rich shares** and **precious yield** (4 a day) | how much of the world's materials the board makes | late prices go unpaid, or the materials pile up |
+| **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
+| **Camp power by ring** and **share** (a third) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
+| **Raid interval and share** (8 h, 40%) | how hard a neighbouring camp presses | border camps are ignored, or the board feels like a chore |
+| **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |

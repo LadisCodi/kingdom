@@ -23,11 +23,12 @@ import { randInt } from '../rng';
 import {
   getWallet, newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState,
 } from '../state';
-import { techFlat } from '../techEffects';
+import { techFlat, techMultiplier } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
 import { PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
 import { boardOf } from './source';
+import { payScout, type ScoutPay } from './scouting';
 import { fastestRoute, homeboundMs, outboundMs, type Route } from './travel';
 
 /** A new kingdom's world: a board and a seat derived from the kingdom's own
@@ -42,6 +43,7 @@ export function freshWorld(seed: number): WorldState {
     builds: [],
     sanctuaries: 0,
     armies: [],
+    effectSeq: 0,
   };
 }
 
@@ -68,7 +70,9 @@ export function revealRadius(state: GameState): number {
 
 /** How much faster an explorer marches over every hex: `worldRevealSpeed`
  *  (a speed — it never slows a march). */
-export const explorerSpeed = (state: GameState): number => Math.max(1, resolve(state, 'worldRevealSpeed', 1));
+export const explorerSpeed = (state: GameState): number =>
+  // The tree at the base stage (`explorerSpeed`), the hero's boon on top.
+  Math.max(1, resolve(state, 'worldRevealSpeed', techMultiplier(state, 'explorerSpeed')));
 
 /**
  * The quickest way an explorer can take to a hex: through Revealed ground
@@ -209,9 +213,10 @@ export function finishWorldBuilds(state: GameState, t: number): WorldBuild[] {
   return done.sort((a, b) => a.finishesAt - b.finishesAt || a.index - b.index);
 }
 
-/** An explorer that came home, and how many hexes its trip added to the
- *  fog. */
-export interface ExplorerHome { id: string; target: number; revealed: number }
+/** An explorer that came home, how many hexes its trip added to the fog,
+ *  and what its target's promise paid (19 §3.2) — null when the target was
+ *  already revealed, or promised nothing. */
+export interface ExplorerHome { id: string; target: number; revealed: number; paid: ScoutPay | null }
 
 /** Fold every trip home by `t` into the stored fog and free its slot, in
  *  the order they came home. */
@@ -229,11 +234,15 @@ export function returnExplorers(state: GameState, t: number): ExplorerHome[] {
 /** A trip's reveal, folded into the stored fog. */
 function foldHome(state: GameState, trip: ExplorerTrip): ExplorerHome {
   const before = countBits(state.world.revealed);
+  // Its target pays its promise, once: only if the stored fog had not
+  // revealed it yet.
+  const fresh = !hasBit(state.world.revealed, trip.target) && trip.target !== homeIndex(state) && trip.target !== PORTAL_INDEX;
   revealInto(state.world.revealed, trip);
   // The city and the Portal are always revealed; they are never stored.
   clearBit(state.world.revealed, homeIndex(state));
   clearBit(state.world.revealed, PORTAL_INDEX);
-  return { id: trip.id, target: trip.target, revealed: countBits(state.world.revealed) - before };
+  const paid = fresh ? payScout(state, boardOf(state.world.board).hexes[trip.target]) : null;
+  return { id: trip.id, target: trip.target, revealed: countBits(state.world.revealed) - before, paid };
 }
 
 /** The trip out that will reveal a hex — sent to it, or to a hex beside it

@@ -26,6 +26,10 @@
   units, resolve a siege.
 - Every mutation is idempotent, keyed on a client-supplied id. A retry cannot
   double-spend a daily action or double-count a contribution.
+- The server keeps the time. A request carries none; the client keeps its
+  clock on the server's.
+- The protocol and the steps to the real server:
+  [`../plans/online-server.md`](../plans/online-server.md).
 
 ### 1.1 The limit
 
@@ -39,6 +43,8 @@
 ### 1.2 Server effects and the deterministic sim
 
 - Server effects are drained at load, **before** the offline advance.
+- An effect is sent with every answer until the client acknowledges it, and
+  the client acknowledges only what it has saved. Each is applied once.
 - A drained effect enters the state as an ordinary modifier with an explicit
   expiry: a live command with a definite timestamp. After it lands the replay
   is pure again.
@@ -48,8 +54,10 @@
 
 ## 2. Identity
 
-- One anonymous account per browser (built).
-- A **display name**, chosen once, unique-ish.
+- One anonymous account per browser (built). Its id is who the player is to
+  the world server (built).
+- A **nickname**, chosen the first time out onto the world map, unique and
+  never changed ([`19-world-map.md`](19-world-map.md) §1.3) (built).
 - **Optional email linking** on the anonymous account, for recovery. The
   *just play* path survives.
 - Not in scope: avatars, friend requests, chat, moderation.

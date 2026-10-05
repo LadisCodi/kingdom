@@ -22,7 +22,7 @@ import {
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
-import { ERA_CEILING } from '../../sim/data/techTreeRules';
+import { ERA_CEILING, GOOD_IDS } from '../../sim/data/techTreeRules';
 import {
   TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
   type TargetKind, type TechEffect, type TechEffectOp, type TechStat, type TechTarget,
@@ -73,7 +73,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
 
   const doc = new TreeDoc(treeJson as unknown as TechTreeDoc);
 
-  let tome: TomeId = 'Civics';
+  let tome: TomeId = 'Kingdom';
   let selected: string | null = null;
   /** While on, clicking a card adds or removes it as the selection's
    *  requirement — the gesture for the edges a drop's default got wrong. */
@@ -755,6 +755,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     el('span', { class: 'tre-card-says' }, says),
     el('span', { class: 'tre-card-meta' },
       `${node.gold}g${node.knowledge ? `·${node.knowledge}k` : ''}`
+      + (Object.keys(node.goods ?? {}).length > 0 ? '·goods' : '')
       + ` ${node.requires.length}/${MAX_REQUIRES}`));
     card.addEventListener('dragstart', (e) => {
       dragging = id;
@@ -842,6 +843,13 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     card.append(field('gold', number(node.gold, (v) => doc.update(id, { gold: v }))));
     card.append(field('knowledge',
       number(node.knowledge ?? 0, (v) => doc.update(id, { knowledge: v }))));
+    // The refined goods paid with the Gold — one box per good, 0 = none.
+    for (const good of GOOD_IDS) {
+      card.append(field(good, number(node.goods?.[good] ?? 0,
+        (v) => doc.update(id, { goods: { ...(doc.node(id)?.goods ?? {}), [good]: v } }))));
+    }
+    // Precious material of any kind (19 §7.6) — 0 = none.
+    card.append(field('anyPrecious', number(node.anyPrecious ?? 0, (v) => doc.update(id, { anyPrecious: v }))));
 
     // ---- what kind of thing it is
     const kind = select([...TECH_KINDS], node.kind);
