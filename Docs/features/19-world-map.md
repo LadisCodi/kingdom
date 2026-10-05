@@ -84,7 +84,7 @@
 | State | Looks like | Province equivalent |
 |---|---|---|
 | **Revealed** | full terrain, contents, borders | Revealed |
-| **Sensed** | dimmed and half-veiled, faint silhouettes showing through | Discovered |
+| **Sensed** | under a thin veil of cloud, what stands on it a pale silhouette (art-direction §8.1) | Discovered |
 | **Unknown** | under the cloud bank (art-direction §8.1): the hex is not there | Undiscovered |
 
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**

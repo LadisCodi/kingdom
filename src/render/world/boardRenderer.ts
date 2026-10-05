@@ -8,15 +8,15 @@
 // sprites stand in for it.
 //
 // The three fog states are treatments of the same hex, never a second asset:
-// Revealed is full colour, Sensed is the same hex dimmed under a thin veil,
-// Unknown is under the cloud bank (cloudGrid.ts).
+// Revealed is full colour; Sensed is under a thin veil (cloudGrid.ts), what
+// stands on it rising out as a pale silhouette; Unknown is under the cloud
+// bank. A reveal eases a hex from one to the next.
 //
-// Three canvases, bottom to top: the GROUND (plates, sides, seams, veils,
-// ownership borders, the selection rim), the CLOUD BANK, and this one —
-// everything that stands on a hex, and every mark over the board. So the
-// clouds lap over the near edge of a tile while nothing upright is hidden.
-// Ownership and selection are rims painted on the hex edge, under what
-// stands there.
+// Three canvases, bottom to top: the GROUND (plates, sides, seams, the grey
+// of a cut-off hex), the CLOUD BANK and its veil, and this one — first the
+// rims on the hex edges (ownership, selection), then everything that stands
+// on a hex, then every mark over the board. So the clouds lap over the near
+// edge of a tile, and nothing upright is hidden or under a rim.
 
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
@@ -37,7 +37,7 @@ import {
 } from './hexArt';
 import { TILT, hexCorners, regionEdges } from './hexLayout';
 import { drawCloudBank } from '../fog/fogLayer';
-import { HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
+import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
 
 /** A flat colour under the plate, for the frames before it loads. */
@@ -96,8 +96,15 @@ export const SEAT_COLORS = {
 const SEAM = 'rgba(40, 52, 30, 0.28)';
 /** A tile's side: packed earth. */
 const SKIRT_EARTH = { lit: '#7a5a3a', shade: '#5c4129' };
-const SENSED_DIM = 'rgba(24, 32, 44, 0.48)';
-const SENSED_VEIL = 'rgba(225, 232, 238, 0.28)';
+/** What stands on a Sensed hex rises out of its veil as a silhouette: pale
+ *  in the cloud-shadow tone, paler still and hazy at its foot
+ *  (art-direction §8.1). */
+const SILHOUETTE_TOP = [171, 181, 243, 0.62] as const;
+const SILHOUETTE_FOOT = [223, 216, 235, 0.8] as const;
+/** How long a hex takes to ease from the bank to clear ground, and how long
+ *  a tap's flash on a hex lasts. */
+const REVEAL_MS = 1100;
+const PRESS_MS = 320;
 
 export interface WorldFrame {
   state: GameState;
@@ -141,35 +148,37 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   const fog = worldFogAt(state, now);
   const r = camera.hexRadius;
   const states = board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog));
+  const clock = performance.now();
+  const motion = motionOf(canvas);
+  const density = easeDensities(motion, states.map((st) => DENSITY[st]), clock);
+  /** How much veil a hex carries, 0 clear to 1 Sensed or thicker. */
+  const veilAt = (i: number): number => Math.min(1, density[i] / DENSITY.Sensed);
+  /** How much of the bank still stands on a hex, 0 to 1. */
+  const bankAt = (i: number): number => Math.max(0, (density[i] - DENSITY.Sensed) / (1 - DENSITY.Sensed));
 
   // The clouds, over the ground and under this canvas: every Unknown hex,
   // and the world past the board's edge — the board stops and the clouds go
-  // on (19 §1).
+  // on (19 §1) — and the veil over every Sensed one.
   const mask = new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
-  let seen = '';
+  let sig = '';
   for (const bh of board.hexes) {
-    if (states[bh.index] === 'Unknown') continue;
-    mask[maskIndex(bh.hex)] = 0;
-    seen += `${bh.index},`;
+    const byte = Math.round(density[bh.index] * 255);
+    mask[maskIndex(bh.hex)] = byte;
+    sig += `${byte},`;
   }
   drawCloudBank(layers.clouds, HEX_GRID, {
     w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
     mask, maskX: MASK_ORIGIN, maskY: MASK_ORIGIN, maskW: MASK_SPAN, maskH: MASK_SPAN,
-    maskSig: seen, clock: performance.now(),
+    maskSig: sig, clock,
+    // Far out, the puffs grow so they stay calm: the texture at twice the
+    // size takes over between these zooms.
+    far: smoothstep(FAR_FROM_ZOOM, FAR_FULL_ZOOM, camera.zoom),
   });
-
-  // Row by row, top to bottom, so a prop that rises over the hex above is
-  // drawn after it.
-  for (const bh of board.hexes) {
-    const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
-    drawHex(ground, ctx, camera, bh, states[bh.index], c, frame);
-  }
 
   // Borders: each kingdom's city and the ground it holds or is claiming, as
   // far as the player can see it, in its owner's colour — dashed round a hex
-  // whose Outpost is still building. Painted on the ground, so what stands on
-  // a hex stands over it.
+  // whose Outpost is still building. Drawn before anything stands on the
+  // board, so it lies over the land and its veil and under what stands there.
   for (const seat of source.seats()) {
     const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
       .filter((i) => states[i] !== 'Unknown');
@@ -177,15 +186,34 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
     const seen = region.some((i) => states[i] === 'Revealed');
     const claiming = (h: Hex): boolean => source.hexOf(hexIndex(h))?.held === false;
-    drawBorder(ground, camera, region.map(hexAt), color, seen ? 1 : 0.55, 3, claiming);
+    drawBorder(ctx, camera, region.map(hexAt), color, seen ? 1 : 0.55, 3, claiming);
   }
 
-  // The selected hex's rim: on the ground like a border, so what stands on
-  // the hex stands over it — but over the clouds on an Unknown hex, which
-  // has nothing standing and would hide it.
+  // The selected hex's rim, the same way. A tap flashes the hex and swells
+  // its rim for a moment, so it is answered before the sheet is read.
+  if (frame.selected !== motion.selected) {
+    motion.selected = frame.selected;
+    motion.pressAt = clock;
+  }
   if (frame.selected !== null) {
-    const on = states[frame.selected] === 'Unknown' ? ctx : ground;
-    drawBorder(on, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4);
+    const press = Math.max(0, 1 - (clock - motion.pressAt) / PRESS_MS);
+    if (press > 0) {
+      const c = camera.hexToScreen(hexAt(frame.selected));
+      ctx.save();
+      hexPath(ctx, c.x, c.y, r);
+      ctx.fillStyle = `rgba(255, 244, 214, ${(0.5 * press * press).toFixed(3)})`;
+      ctx.fill();
+      ctx.restore();
+    }
+    drawBorder(ctx, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4 * (1 + 0.8 * press));
+  }
+
+  // Row by row, top to bottom, so a prop that rises over the hex above is
+  // drawn after it.
+  for (const bh of board.hexes) {
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    drawHex(ground, ctx, camera, bh, states[bh.index], veilAt(bh.index), c, frame);
   }
 
   // The Portal's appointment, over its hex: when it opens, or how long it
@@ -198,7 +226,9 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
   }
 
-  for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now);
+  // A route fades as it goes into the bank.
+  const routeAlpha = (i: number): number => 1 - 0.65 * bankAt(i);
+  for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now, routeAlpha);
   for (const army of frame.armies ?? []) {
     const seat = source.seats()[army.owner];
     const color = seat === undefined ? '#888' : seat.owner.you ? SEAT_COLORS.you
@@ -207,7 +237,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     // A rival's army is seen only where the player can see.
     const near = states[at.from] !== 'Unknown' || states[at.to] !== 'Unknown';
     // Only the player's own armies show the way they are taking.
-    if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now, seat?.owner.you === true);
+    if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now, seat?.owner.you === true, routeAlpha);
   }
 }
 
@@ -229,6 +259,7 @@ function armyPosition(a: ArmyView, now: number): { from: number; to: number; f: 
 function drawArmy(
   ctx: CanvasRenderingContext2D, camera: HexCamera, a: ArmyView,
   at: ReturnType<typeof armyPosition>, color: string, now: number, trail: boolean,
+  routeAlpha: (index: number) => number,
 ): void {
   const p = camera.hexToScreen(hexAt(at.from));
   const q = camera.hexToScreen(hexAt(at.to));
@@ -236,7 +267,7 @@ function drawArmy(
   const garrisoned = a.phase === 'garrison';
   const y = p.y + (q.y - p.y) * at.f + (garrisoned ? camera.hexRadius * 0.35 * TILT : 0);
   // The way it has walked and the way still to go, as an explorer's.
-  if (trail && at.moving) drawTrail(ctx, camera, a.path, at.step, at.outbound, { x: p.x + (q.x - p.x) * at.f, y: p.y + (q.y - p.y) * at.f });
+  if (trail && at.moving) drawTrail(ctx, camera, a.path, at.step, at.outbound, { x: p.x + (q.x - p.x) * at.f, y: p.y + (q.y - p.y) * at.f }, routeAlpha);
   const size = Math.max(16, camera.hexWidth * (garrisoned ? 0.22 : 0.3));
   // A banner in its owner's colour under the soldier, so whose it is reads first.
   ctx.save();
@@ -256,6 +287,54 @@ function drawArmy(
 }
 
 // ------------------------------------------------------------------ a hex
+
+/** Far out, the cloud texture at twice the size takes over between these
+ *  zooms, so the puffs never shrink to a busy speckle. */
+const FAR_FROM_ZOOM = 0.75;
+const FAR_FULL_ZOOM = 0.45;
+
+const smoothstep = (a: number, b: number, x: number): number => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** What the board remembers between frames, for what moves on screen
+ *  alone: each hex's density as it eases toward its fog state, and the tap
+ *  on the selected hex. */
+interface Motion {
+  density: Float32Array | null;
+  at: number;
+  selected: number | null;
+  pressAt: number;
+}
+const motions = new WeakMap<HTMLCanvasElement, Motion>();
+
+function motionOf(canvas: HTMLCanvasElement): Motion {
+  let m = motions.get(canvas);
+  if (m === undefined) {
+    m = { density: null, at: 0, selected: null, pressAt: -Infinity };
+    motions.set(canvas, m);
+  }
+  return m;
+}
+
+/** Ease every hex's density toward `target`, a whole step in REVEAL_MS. The
+ *  first frame, or one after the board was not drawn for a while, starts
+ *  where it is going: a reveal is watched, not replayed. */
+function easeDensities(m: Motion, target: readonly number[], clock: number): Float32Array {
+  const dt = clock - m.at;
+  m.at = clock;
+  if (m.density === null || m.density.length !== target.length || dt > 500) {
+    m.density = Float32Array.from(target);
+    return m.density;
+  }
+  const step = dt / REVEAL_MS;
+  for (let i = 0; i < target.length; i++) {
+    const d = target[i] - m.density[i];
+    m.density[i] += Math.sign(d) * Math.min(Math.abs(d), step);
+  }
+  return m.density;
+}
 
 /** The canvases under the board's: the ground, then the clouds — made the
  *  first time the board is drawn and laid under it (`.world-layer`). */
@@ -300,6 +379,61 @@ function veilHex(
   }
 }
 
+/** A canvas the size of the board's, for drawing what stands on a Sensed
+ *  hex before it is turned into a silhouette. */
+const scratches = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
+
+/**
+ * Draw what stands on a hex apart, then lay it on the board — so a wash over
+ * it reaches nothing already there. With `amount` (0 to 1) it becomes a
+ * silhouette rising out of its veil: washed in the veil's tones, palest at
+ * its foot.
+ */
+function drawSilhouetted(
+  ctx: CanvasRenderingContext2D, c: { x: number; y: number }, r: number, hw: number, amount: number,
+  draw: (g: CanvasRenderingContext2D) => void,
+): void {
+  const board = ctx.canvas;
+  let scratch = scratches.get(board);
+  if (scratch === undefined) {
+    scratch = document.createElement('canvas');
+    scratches.set(board, scratch);
+  }
+  if (scratch.width !== board.width || scratch.height !== board.height) {
+    scratch.width = board.width;
+    scratch.height = board.height;
+  }
+  const g = scratch.getContext('2d')!;
+  const m = ctx.getTransform();
+  // The box everything on the hex stands in, in backing pixels, on the canvas.
+  const x0 = Math.max(0, Math.floor((c.x - hw * 0.75) * m.a));
+  const y0 = Math.max(0, Math.floor((c.y - r * 3.2) * m.d));
+  const x1 = Math.min(board.width, Math.ceil((c.x + hw * 0.75) * m.a));
+  const y1 = Math.min(board.height, Math.ceil((c.y + r * 1.1) * m.d));
+  if (x1 <= x0 || y1 <= y0) return;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(x0, y0, x1 - x0, y1 - y0);
+  g.setTransform(m);
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = 'high';
+  draw(g);
+  if (amount > 0.01) {
+    g.save();
+    g.globalCompositeOperation = 'source-atop';
+    const rgba = (t: readonly number[]) => `rgba(${t[0]}, ${t[1]}, ${t[2]}, ${(t[3] * amount).toFixed(3)})`;
+    const wash = g.createLinearGradient(0, c.y + r * 0.4 * TILT, 0, c.y - r * 2.2);
+    wash.addColorStop(0, rgba(SILHOUETTE_FOOT));
+    wash.addColorStop(1, rgba(SILHOUETTE_TOP));
+    g.fillStyle = wash;
+    g.fillRect(x0 / m.a, y0 / m.d, (x1 - x0) / m.a, (y1 - y0) / m.d);
+    g.restore();
+  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(scratch, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+  ctx.restore();
+}
+
 function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   const corners = hexCorners(cx, cy, r);
   ctx.beginPath();
@@ -310,7 +444,7 @@ function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
 
 function drawHex(
   ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
-  c: { x: number; y: number }, frame: WorldFrame,
+  veil: number, c: { x: number; y: number }, frame: WorldFrame,
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
@@ -340,28 +474,35 @@ function drawHex(
   }
   ground.restore();
 
-  if (bh.seat !== null) {
-    const mine = bh.index === homeIndex(frame.state);
-    drawProp(ctx, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
-  } else if (bh.role === 'portal') {
-    drawPortal(ctx, c.x, c.y, r);
-  } else if (art !== null) {
-    // Behind, what the improvement does not work; then the combination or
-    // the improvement; then Game in front of it.
-    const key = bh.index;
-    if (art.behind !== null) drawCombo(ctx, art.behind, key, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
-    if (art.main !== null && 'combo' in art.main) drawCombo(ctx, art.main.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
-    if (art.main !== null && 'improvement' in art.main) {
-      ctx.save();
-      if (held?.improvement === null) ctx.globalAlpha = 0.45; // its first level still building
-      drawImprovement(ctx, art.main.improvement, art.main.sprite, standing!.level, c, hw, r);
-      ctx.restore();
+  // What stands on the hex: as itself, or on a Sensed hex as a silhouette
+  // rising out of its veil. It is drawn apart whenever it is washed — the
+  // veil, or the grey of a hex cut off from its city — so the wash never
+  // reaches the rims drawn under it.
+  const stand = (g: CanvasRenderingContext2D): void => {
+    if (bh.seat !== null) {
+      const mine = bh.index === homeIndex(frame.state);
+      drawProp(g, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
+    } else if (bh.role === 'portal') {
+      drawPortal(g, c.x, c.y, r);
+    } else if (art !== null) {
+      // Behind, what the improvement does not work; then the combination or
+      // the improvement; then Game in front of it.
+      const key = bh.index;
+      if (art.behind !== null) drawCombo(g, art.behind, key, c.x - hw * 0.2, c.y + r * 0.1 * TILT, hw * 0.6, r);
+      if (art.main !== null && 'combo' in art.main) drawCombo(g, art.main.combo, key, c.x, c.y + r * FOOT * TILT, hw, r);
+      if (art.main !== null && 'improvement' in art.main) {
+        g.save();
+        if (held?.improvement === null) g.globalAlpha = 0.45; // its first level still building
+        drawImprovement(g, art.main.improvement, art.main.sprite, standing!.level, c, hw, r);
+        g.restore();
+      }
+      if (art.front !== null) drawCombo(g, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
+      if (held !== null) drawHeld(ground, g, camera, key, held, c, fogState, frame);
     }
-    if (art.front !== null) drawCombo(ctx, art.front, key, c.x - hw * 0.2, c.y + r * 0.85 * TILT, hw * 0.45, r);
-    if (held !== null) drawHeld(ground, ctx, camera, key, held, c, fogState, frame);
-  }
+  };
+  if (veil > 0.01 || (held !== null && held.held && !held.active)) drawSilhouetted(ctx, c, r, hw, veil, stand);
+  else stand(ctx);
 
-  if (fogState === 'Sensed') veilHex(ground, ctx, c, r, [SENSED_DIM, SENSED_VEIL]);
 
   hexPath(ground, c.x, c.y, r * 0.995);
   ground.strokeStyle = SEAM;
@@ -628,29 +769,40 @@ function drawFootprints(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: n
 
 /** The way still to go: a dashed line, dark-edged so it reads on grass and
  *  on mist alike, and a ring on the hex it ends at. */
-function drawRoute(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number; y: number }>, unit: number): void {
+function drawRoute(ctx: CanvasRenderingContext2D, pts: readonly RoutePoint[], unit: number): void {
   if (pts.length < 2) return;
   const width = Math.max(2, unit * 0.028);
   const end = pts[pts.length - 1];
   ctx.save();
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  const path = () => {
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-  };
+  // Leg by leg, each as faint as the fainter of its two ends, the dashes
+  // running on unbroken from one leg to the next.
+  let along = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    ctx.globalAlpha = Math.min(a.a, b.a);
+    const leg = () => {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    };
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(46, 28, 14, 0.45)';
+    ctx.lineWidth = width + 2.5;
+    leg();
+    ctx.stroke();
+    ctx.setLineDash([width * 3, width * 2.2]);
+    ctx.lineDashOffset = -along;
+    ctx.strokeStyle = 'rgba(255, 246, 220, 0.95)';
+    ctx.lineWidth = width;
+    leg();
+    ctx.stroke();
+    along += Math.hypot(b.x - a.x, b.y - a.y);
+  }
   ctx.setLineDash([]);
-  ctx.strokeStyle = 'rgba(46, 28, 14, 0.45)';
-  ctx.lineWidth = width + 2.5;
-  path();
-  ctx.stroke();
-  ctx.setLineDash([width * 3, width * 2.2]);
-  ctx.strokeStyle = 'rgba(255, 246, 220, 0.95)';
-  ctx.lineWidth = width;
-  path();
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.globalAlpha = end.a;
   const ring = Math.max(6, unit * 0.13);
   ctx.strokeStyle = 'rgba(46, 28, 14, 0.5)';
   ctx.lineWidth = width + 2.5;
@@ -664,6 +816,9 @@ function drawRoute(ctx: CanvasRenderingContext2D, pts: ReadonlyArray<{ x: number
   ctx.stroke();
   ctx.restore();
 }
+
+/** A point of a route, and how opaque the route is there. */
+interface RoutePoint { x: number; y: number; a: number }
 
 /** Where a trip is at `now`: between step `step` and the next of its path,
  *  `f` of the way, and whether it is still on its way out. While it works the
@@ -689,20 +844,21 @@ function tripPosition(
  */
 function drawTrail(
   ctx: CanvasRenderingContext2D, camera: HexCamera, path: readonly number[], step: number, outbound: boolean,
-  here: { x: number; y: number },
+  here: { x: number; y: number }, routeAlpha: (index: number) => number,
 ): void {
   const at = (k: number) => camera.hexToScreen(hexAt(path[k]));
+  const stop = (k: number) => ({ ...at(k), a: routeAlpha(path[k]) });
   const last = path.length - 1;
   const walked: Array<{ x: number; y: number }> = [];
-  const ahead: Array<{ x: number; y: number }> = [here];
+  const ahead: RoutePoint[] = [{ ...here, a: routeAlpha(path[step]) }];
   if (outbound) {
     for (let k = 0; k <= step; k++) walked.push(at(k));
     walked.push(here);
-    for (let k = step + 1; k <= last; k++) ahead.push(at(k));
+    for (let k = step + 1; k <= last; k++) ahead.push(stop(k));
   } else {
     for (let k = last; k > step; k--) walked.push(at(k));
     walked.push(here);
-    for (let k = step; k >= 0; k--) ahead.push(at(k));
+    for (let k = step; k >= 0; k--) ahead.push(stop(k));
   }
   drawFootprints(ctx, walked, camera.hexWidth);
   drawRoute(ctx, ahead, camera.hexWidth);
@@ -710,6 +866,7 @@ function drawTrail(
 
 function drawExplorer(
   ctx: CanvasRenderingContext2D, camera: HexCamera, trip: GameState['world']['explorers'][number], now: number,
+  routeAlpha: (index: number) => number,
 ): void {
   const pos = tripPosition(trip, now);
   const a = camera.hexToScreen(hexAt(pos.from));
@@ -718,7 +875,7 @@ function drawExplorer(
   const y = a.y + (b.y - a.y) * pos.f;
   const unit = camera.hexWidth;
 
-  drawTrail(ctx, camera, trip.path, pos.step, pos.outbound, { x, y });
+  drawTrail(ctx, camera, trip.path, pos.step, pos.outbound, { x, y }, routeAlpha);
 
   // The scout, gameplay-sized: a figure on the board, not a portrait.
   const fw = Math.max(18, unit * 0.32);
