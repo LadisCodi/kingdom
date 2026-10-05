@@ -45,9 +45,9 @@
 
 - Max level **10**. Fog ring: reveal 0, discover 2. Movable.
 - A tap opens the queue. It does not hurry the work and costs no Mana.
-- Build cost: Carpenter 450 Gold + 300 Wood · Mason's Yard 600 Gold + 250
-  Wood + 150 Stone · Smelter 1,000 Gold + 300 Stone · Rune Carver 2,000 Gold +
-  500 Stone. Each level's price is authored (`costPerLevel`)
+- Build cost: Carpenter 5,400 Gold + 300 Wood · Mason's Yard 7,200 Gold +
+  250 Wood + 150 Stone · Smelter 12,000 Gold + 300 Stone · Rune Carver 24,000
+  Gold + 500 Stone. Each level's price is authored (`costPerLevel`)
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3).
 
 ## 4. The crew is the engine

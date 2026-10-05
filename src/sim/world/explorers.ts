@@ -19,7 +19,9 @@ import { WORLD } from '../data/definitions';
 import { resolve } from '../modifiers';
 import { isTechComplete } from '../research';
 import { randInt } from '../rng';
-import { newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState } from '../state';
+import {
+  getWallet, newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState,
+} from '../state';
 import { techFlat } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
@@ -86,6 +88,12 @@ export function explorerRoute(state: GameState, target: number, now: number): Ro
 export const exploreWorkMs = (state: GameState, target: number): number =>
   (WORLD.exploreWorkSeconds + WORLD.exploreWorkSecondsPerHex * hexDistance(hexAt(homeIndex(state)), hexAt(target))) * 1000;
 
+/** Gold to send an explorer to a hex, paid when it leaves: dearer the
+ *  further the hex lies from the city. */
+export const exploreGold = (state: GameState, target: number): number =>
+  Math.round(WORLD.exploreGoldBase
+    * WORLD.exploreGoldGrowth ** Math.max(0, hexDistance(hexAt(homeIndex(state)), hexAt(target)) - 1));
+
 // ------------------------------------------------------------- a trip
 
 export const arrivesAt = (trip: ExplorerTrip): number => trip.departedAt + outboundMs(trip.stepMs);
@@ -136,7 +144,8 @@ export type DispatchResult =
   | { kind: 'NoCartography' }
   | { kind: 'NoExplorerFree'; nextFreeAt: number }
   /** No way there through explored ground. */
-  | { kind: 'NoRoute' };
+  | { kind: 'NoRoute' }
+  | { kind: 'NotEnoughGold'; gold: number };
 
 /** Send an explorer to a hex. Everything about the trip is priced now. */
 export function dispatchExplorer(state: GameState, target: number, now: number): DispatchResult {
@@ -150,6 +159,9 @@ export function dispatchExplorer(state: GameState, target: number, now: number):
   }
   const route = explorerRoute(state, target, now);
   if (route === null) return { kind: 'NoRoute' };
+  const gold = exploreGold(state, target);
+  if (getWallet(state.city.wallet, 'Gold') < gold) return { kind: 'NotEnoughGold', gold };
+  state.city.wallet.Gold = getWallet(state.city.wallet, 'Gold') - gold;
   const trip: ExplorerTrip = {
     id: newId(state, 'explorer'),
     target,

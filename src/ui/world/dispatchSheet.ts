@@ -9,7 +9,7 @@
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  exploreWorkMs, explorerRoute, explorerSlots, fogStateOf, freeExplorers, returnsAt, type FogState,
+  exploreGold, exploreWorkMs, explorerRoute, explorerSlots, fogStateOf, freeExplorers, returnsAt, type FogState,
 } from '../../sim/world/explorers';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
@@ -252,6 +252,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
         stat('hourglass', formatDuration(work), 'to explore'))]),
       action({
         label: 'Explore', kind: 'primary', icon: 'compass',
+        cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => getWallet(state.city.wallet, c),
         onClick: () => game.doSendExplorer(),
         disabledReason: reason,
         info: slots > 0 ? `Explorers ${formatCount(free)}/${formatCount(slots)}` : undefined,

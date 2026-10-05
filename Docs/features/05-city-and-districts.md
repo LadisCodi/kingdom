@@ -92,8 +92,13 @@ costPerLevel: [ { cost: { Wood: 20 }, goods: {} }, { cost: { Wood: 60 }, goods: 
 
 How the table is shaped:
 
-- **Every build and every level asks for Gold**, about 1.5× its Wood + Stone +
-  Food. A building that was already priced in Gold keeps Gold as its main line.
+- **Gold is the main line of every price.** The first two levels of a basic
+  building ask about 1.5× their Wood + Stone + Food in Gold, so the opening
+  stays on its purse; every other level, and every level of an advanced
+  building, asks about 12 times that. The Townhall asks 6,000 · 31,000 ·
+  170,000 · 380,000 · 850,000 · 1.8M · 4M · 8.3M Gold for levels 3–10:
+  about a day of what a three-visits-a-day player collects at the level
+  below.
 - **Levels steepen.** A level costs about `1 + 0.1 × (L − 1)²` times the old
   ×1.5–1.8 ladder: ×1.1 at level 2, ×2.6 at 5, ×9 at 10. From level 6 each
   level is about ×2.2 the one before.

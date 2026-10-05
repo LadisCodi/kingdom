@@ -7,7 +7,7 @@
     "squadSize": 100,
     "frontage": 50,
     "cooldown": 10,
-    "recruitCost": { "Gold": 20, "Wood": 5, "Food": 8 },
+    "recruitCost": { "Gold": 100, "Wood": 5, "Food": 8 },
     "trainDurationSeconds": 15
   },
   "Lancer": {
@@ -18,7 +18,7 @@
     "squadSize": 100,
     "frontage": 60,
     "cooldown": 10,
-    "recruitCost": { "Gold": 40, "Wood": 12, "Food": 4 },
+    "recruitCost": { "Gold": 200, "Wood": 12, "Food": 4 },
     "trainDurationSeconds": 20
   },
   "Archer": {
@@ -29,7 +29,7 @@
     "squadSize": 80,
     "frontage": 80,
     "cooldown": 12,
-    "recruitCost": { "Gold": 25, "Wood": 12 },
+    "recruitCost": { "Gold": 130, "Wood": 12 },
     "trainDurationSeconds": 12
   },
   "Cavalry": {
@@ -40,7 +40,7 @@
     "squadSize": 60,
     "frontage": 30,
     "cooldown": 15,
-    "recruitCost": { "Gold": 60, "Food": 16, "Stone": 24 },
+    "recruitCost": { "Gold": 300, "Food": 16, "Stone": 24 },
     "trainDurationSeconds": 30
   }
 }

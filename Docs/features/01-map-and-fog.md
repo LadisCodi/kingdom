@@ -275,11 +275,11 @@ fallback past ring 14. The province reaches ring 23.
 
 | Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
-| **Gold** | 4 | 8 | 20 | 55 | 110 | 330 | 800 |
+| **Gold** | 4 | 8 | 20 | 85 | 220 | 990 | 2,400 |
 
 | Distance | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15+ |
 |---|---|---|---|---|---|---|---|---|
-| **Gold** | 2,200 | 5,900 | 15,000 | 43,000 | 105,000 | 330,000 | 925,000 | ×1.37/ring |
+| **Gold** | 6,600 | 18,000 | 45,000 | 130,000 | 320,000 | 990,000 | 2,800,000 | ×1.37/ring |
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
@@ -492,7 +492,7 @@ them, to be found and repaired.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 4 → 925,000, ×1.37 past ring 14 | `fog.rings` |
+| Fog price per ring | 4 → 2,800,000, ×1.37 past ring 14 | `fog.rings` |
 | How far each Townhall level lets the fog be paid for | 3 · 5 · 7 · 8 · 10 · 11 · 13 · 15 · 17 · 23 rings | `fog.reachPerTownhallLevel` |
 | How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.countStep`, `fog.countGrowth` |
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |

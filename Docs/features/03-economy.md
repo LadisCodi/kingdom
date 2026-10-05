@@ -155,20 +155,21 @@ running. Research already worked this way.
 - Capacity is per building, per level, in units: `buildings` ›
   `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
   Stone and Gold in one store.
-- Capacity is authored as **5 minutes** of the building at full strength at
-  level 1, rising by the same factor each level to **6 hours** at level 10
-  (×1.61 a level: 5 · 8 · 13 · 21 · 33 · 54 · 87 · 139 · 224 · 360 min).
+- Capacity is authored as **1 hour** of the building at full strength at
+  level 1, rising by the same factor each level to **12 hours** at level 10
+  (×1.32 a level: 1 h · 1 h 19 · 1 h 44 · 2 h 17 · 3 h · 4 h · 5 h 16 ·
+  6 h 56 · 9 h 8 · 12 h).
   Full strength is a full house, a full crew, or the Townhall's own income at
   that level. Nothing but the building's level raises it (OQ-108).
 
 | Building | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Townhall | 50 Gold | 35,000 | 1,900,000 |
-| Housing | 300 Gold | 20,000 | 700,000 |
-| Farm | 110 | 2,800 | 180,000 |
-| Sawmill | 90 | 2,200 | 140,000 |
-| Quarry | 35 | 850 | 55,000 |
-| Docks | 90 | 2,200 | 83,000 |
+| Townhall | 600 Gold | 190,000 | 3,900,000 |
+| Housing | 3,600 Gold | 110,000 | 1,400,000 |
+| Farm | 1,400 | 15,000 | 360,000 |
+| Sawmill | 1,100 | 12,000 | 290,000 |
+| Quarry | 420 | 4,600 | 110,000 |
+| Docks | 1,100 | 12,000 | 170,000 |
 
 - A data rule requires a store on anything that makes Gold or harvests, and
   forbids one on anything else.
@@ -292,7 +293,7 @@ and research**.
 | The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
-| Store capacity per level | 5 min of the building at level 1, ×1.61 a level to 6 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Store capacity per level | 1 h of the building at level 1, ×1.32 a level to 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | 2 · 4 · 6 … 20 — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,20,45,100,250,500,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |

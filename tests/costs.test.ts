@@ -61,9 +61,9 @@ describe('build cost by instance', () => {
 // (Docs/features/05-city-and-districts.md §3.1).
 describe('the ordinal prices every level', () => {
   it('Housing level 5 costs 260 Wood for #1, 637 for #2, 1,020 for #3', () => {
-    expect(upgradeCost('Housing', 1, 4)).toEqual({ Gold: 520, Wood: 260, Stone: 86 });
-    expect(upgradeCost('Housing', 2, 4)).toEqual({ Gold: 1270, Wood: 637, Stone: 211 });
-    expect(upgradeCost('Housing', 3, 4)).toEqual({ Gold: 2050, Wood: 1020, Stone: 339 });
+    expect(upgradeCost('Housing', 1, 4)).toEqual({ Gold: 6200, Wood: 260, Stone: 86 });
+    expect(upgradeCost('Housing', 2, 4)).toEqual({ Gold: 15200, Wood: 637, Stone: 211 });
+    expect(upgradeCost('Housing', 3, 4)).toEqual({ Gold: 24400, Wood: 1020, Stone: 339 });
   });
 
   it('is one curve for the whole ladder: every level scales by the same M(N)', () => {
@@ -160,7 +160,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   it('Sawmill upgrades: 66 then 210 Wood, 30 s then 45 s', () => {
     expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Gold: 99, Wood: 66 });
     expect(upgradeDuration(base, 'Sawmill', 1)).toBe(30);
-    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Gold: 320, Wood: 210 });
+    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Gold: 3800, Wood: 210 });
     expect(upgradeDuration(base, 'Sawmill', 2)).toBe(45);
   });
   // No Stone, deliberately: the onboarding chain reaches Townhall 2 before
@@ -170,7 +170,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   it('Townhall L1→L2 = 66 Wood in 30 s; L2→L3 = 330 Wood in 120 s', () => {
     expect(upgradeCost('Townhall', 1, 1)).toEqual({ Gold: 99, Wood: 66 });
     expect(upgradeDuration(base, 'Townhall', 1)).toBe(30);
-    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Gold: 500, Wood: 330 });
+    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Gold: 6000, Wood: 330 });
     expect(upgradeDuration(base, 'Townhall', 2)).toBe(120);
   });
   it('Housing L1→L2 = 33 Wood + 11 Stone in 20 s', () => {
