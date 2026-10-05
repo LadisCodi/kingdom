@@ -37,11 +37,12 @@ describe('the world door', () => {
     expect(toasts).toEqual([DOOR_HINT.world]);
   });
 
-  it('opens onto the whole board, and the knob goes home', () => {
+  it('opens on the city, up close, and the knob goes home', () => {
     const { game } = world();
     game.enterWorld();
     expect(game.scene).toBe('world');
-    expect(game.worldCamera!.zoom).toBeCloseTo(game.worldCamera!.minZoom);
+    expect(game.worldCamera!.zoom).toBeCloseTo(game.worldCamera!.maxZoom);
+    expect(hexIndex(game.worldCamera!.screenToHex(390 / 2, 844 / 2))).toBe(game.homeHex());
     game.leaveWorld();
     expect(game.scene).toBe('province');
   });
