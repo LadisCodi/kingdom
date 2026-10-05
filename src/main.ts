@@ -77,6 +77,7 @@ import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
+import { ToastShelf } from './ui/toasts';
 import { choosePayerProfile, PAYER_PROFILES } from './sim/store';
 import type { PayerProfile } from './sim/state';
 import { renderIapSheet } from './ui/iapSheet';
@@ -477,11 +478,17 @@ async function boot(): Promise<void> {
     if (e.target === overlayRoot && overlayRoot.querySelector('.k-sheet')) game.dismiss();
   });
 
-  game.onToast((msg) => {
+  // One slip per message: the same refusal twice restarts the one on screen.
+  const toasts = new ToastShelf((msg) => {
     const t = el('div', { class: 'toast-msg' }, msg);
     toastRoot.append(t);
-    setTimeout(() => t.remove(), 2600);
-  });
+    return {
+      // Its CSS fade starts over: dropped, laid out, given back.
+      restart: () => { t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; },
+      remove: () => t.remove(),
+    };
+  }, 2600);
+  game.onToast((msg) => toasts.show(msg));
 
   // Background music can only start on a user gesture; keep nudging it on
   // every pointerdown until the browser lets it through (then it's a no-op).
