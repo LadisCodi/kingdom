@@ -257,7 +257,9 @@ describe('exploring pays in ground, not in currency', () => {
     // 592,385: Muster, the War Camp's card, closes the Atlas page.
     // 9,674,305: one tree in nine chapters (2026-10-05), every card past the
     // tutorial priced in days of the city's Gold; the cut ladders left.
-    expect(tree).toBe(9_674_305);
+    // 4,922,305: chapters 5–9 at half the Gold, so their Knowledge, not a
+    // second Gold wall, is what holds them.
+    expect(tree).toBe(4_922_305);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // raw materials: a full quarry buys no research, which is what keeps the

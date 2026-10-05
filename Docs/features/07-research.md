@@ -320,17 +320,18 @@ A `bonus` names its effects, and each is four fields:
 the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledge.goldPriceExponent
 ```
 
-  - At 100 × n²: the 1st point 100, the 5th 2,500, the 10th 10,000, the
-    20th 40,000.
+  - At 400 × n²: the 1st point 400, the 5th 10,000, the 10th 40,000, the
+    20th 160,000 — a valve for a Gold-rich city, never a second faucet.
 
   - The count is the kingdom's and **never resets** —
     not daily, not at a season, not at a province reset.
   - Buying several at once costs the sum of their prices, shown as one number.
   - Gold is the city's purse: a point bought is fog, a building or a Wonder
     level not bought.
-- **Gems: a fixed price per point**, `knowledge.gemsPerPoint` (270). It
-  never rises: 10 points cost 2,700, a little more than the $4.99 pack's
-  2,500 Gems.
+- **Gems: a fixed price per point**, `knowledge.gemsPerPoint` (200). It
+  never rises: a full bar of 10 costs 2,000 Gems, under the $4.99 pack's
+  2,500. A point is an hour of the bar, so it buys an hour of the tree's
+  gate for 200 Gems, where rushing an hour of building costs 720.
 - Buying never needs a free anything: there is nothing to occupy.
 
 ## 4. Knowledge and Stardust
@@ -461,8 +462,8 @@ the Sanctum and its levels.
 |---|---|---|
 | Era price bands | [`tech-tree.md`](tech-tree.md) §7 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
 | **The bar** | 1/h up to 10 | `knowledge.basePerHour` · `knowledge.cap` |
-| **Gold price of a point** | 100 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
-| **Gem price of a point** | 270, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| **Gold price of a point** | 400 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
+| **Gem price of a point** | 200, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
 | Landmark claim lump | 3 | `knowledge.landmarkClaimLump` |
 | First-clear lump | 3 | `delve.firstClearKnowledge` |
 | Chain Knowledge | 41 total | `quests` › `rewardKnowledge` |

@@ -31,9 +31,9 @@
     "cap": 10,
     "landmarkClaimLump": 3,
     "conquestFirstClearLump": 15,
-    "goldPriceBase": 100,
+    "goldPriceBase": 400,
     "goldPriceExponent": 2,
-    "gemsPerPoint": 270
+    "gemsPerPoint": 200
   },
   "raid": {
     "takeFractionMax": 0.5,
