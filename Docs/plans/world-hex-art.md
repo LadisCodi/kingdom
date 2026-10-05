@@ -16,7 +16,11 @@
   composed from loose props.
 - **A district works the feature it stands on** and its art includes it: the
   Logging Camp among its trees, the Quarry cut into its rock (§3).
-- **Roads are one texture, laid by the game**, under every district alike (§5).
+- **The board reads as land, not tiles**: features spill past their hex,
+  small decorations fill the ground, terrains blend where they meet, and
+  the seam between hexes is faint (§3.1).
+- **Roads are one texture, laid by the game** along winding curves, under
+  every district alike (§5).
 - **The strategic zoom draws only the main things** (§6).
 
 ## 1. Which features roll where
@@ -80,6 +84,33 @@ its district's.
 - **Files:** `whex_<feature>[_n].png`, `whex_<district>[_n].png`
   (`src/render/world/hexArt.ts`).
 
+### 3.1 Land, not tiles
+
+- **Decorations** — grass tufts, clover and wildflowers, bushes and a fern,
+  rocks, lone trees (`wdeco_*.png`, sixteen) — are scattered over every hex
+  without a district, by a hash of its index, so a hex always looks the
+  same (`src/render/world/hexScatter.ts`):
+
+| The hex holds | How many | Mostly |
+|---|---|---|
+| nothing | 11, anywhere | grass, flowers, bushes |
+| Forest | 8, round its edge | lone trees, bushes |
+| Mountain | 7, round its edge | rocks |
+| Fertile land, Game | 6–7, round its edge | grass, flowers, bushes |
+| a site | 6, round its edge | rocks, flowers |
+
+- A decoration may stand a little past its hex's edge, so neighbours blend,
+  but never where the cloud bank lies. None at the strategic zoom.
+- **A feature's drawing is nudged** off the middle and drawn 1.08–1.18 of
+  the hex's width, so it reaches the edges and the rows do not line up.
+- **Terrains blend where they meet**: the rarer ground's plate is drawn again
+  over the edge, feathered — Plains over Grassland, Desert over both.
+- **The seam between hexes is faint**; borders and the selection rim are
+  what outline a hex.
+- **Art:** one ChatGPT sheet of sixteen
+  ([`../art/world/decorations.prompt.txt`](../art/world/decorations.prompt.txt)),
+  cut by [`../art/world/cut_decos.py`](../art/world/cut_decos.py).
+
 ## 4. Fog
 
 - **Sensed:** the plate and sprite under the veil, what stands a pale
@@ -93,8 +124,11 @@ its district's.
   ([`../art/world/norm_road.py`](../art/world/norm_road.py) heals the seam).
 - The game lays it **from hex centre to hex centre** between every two
   neighbouring hexes one seat holds — a standing district, or its city —
-  turned to point along them and squashed with the ground, 0.3 of a hex
-  wide. Two roads meet under the district at their hex.
+  along a curve: its two bends swing aside by up to a third of its length,
+  by a hash of the pair, so some roads arc and some snake. The strip is laid
+  along the curve piece by piece, squashed with the ground, about 0.2 of a
+  hex wide, each road a little wider or narrower and starting somewhere else
+  on the strip. Roads meet under the district at their hex.
 - Drawn on the ground, after the plates, so the districts stand over it.
 
 ## 6. The strategic zoom
@@ -105,9 +139,10 @@ its district's.
 ## 7. Draw order on a hex
 
 1. The tile's side (art-direction §7.1).
-2. The plate, the seam, then every road on the board.
+2. The plate, the seam, then the blended edges and every road on the board.
 3. The rims on the hex edges: borders, the selection.
-4. The feature, or the district; the Fortress's keep.
+4. The decorations behind the middle, the feature or the district, the
+   decorations in front; the Fortress's keep.
 5. Pills and store bubbles.
 6. Over the whole board: armies and explorers.
 
@@ -118,3 +153,4 @@ its district's.
 - A separate drawing per terrain for the same feature or district.
 - Hex plates of their own: the province's terrain set serves the board.
 - Road pieces drawn per direction: one texture, laid by the game.
+- Hex outlines drawn strongly: the board is land with hexes in it.
