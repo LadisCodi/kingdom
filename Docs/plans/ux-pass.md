@@ -19,8 +19,8 @@
 | 5 | "Show me where" points with the hand — **done** | feature | medium |
 | 6 | A refused fog tap points at the frontier — **done** | feature | medium |
 | 7 | One count of revealed cells — **done** | design | medium |
-| 8 | The level plaque replaces `L3` | art | low |
-| 9 | Gems are blue | art | low |
+| 8 | The level plaque replaces `L3` — **done** | art | low |
+| 9 | Gems are blue — **done** | art | low |
 | 10 | The payer profile out of the first screen | design | low |
 | 11 | One toast per message | bug | low |
 

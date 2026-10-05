@@ -163,6 +163,33 @@ export function drawSprite(
   return true;
 }
 
+/**
+ * Draw sprite `key` as a THREE-SLICE across (x, y, w, h): its two ends, each
+ * `capFraction` of its width, kept at their own shape and scaled to `h`, and
+ * the middle stretched between them — so a plaque stays round-ended at any
+ * width. Returns false when the image is not loaded.
+ */
+export function drawSpriteThreeSlice(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  capFraction: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): boolean {
+  const s = sprite(key);
+  if (!s?.ready) return false;
+  const iw = s.img.naturalWidth;
+  const ih = s.img.naturalHeight;
+  const cap = iw * capFraction;
+  const dcap = Math.min(w / 2, cap * (h / ih));
+  ctx.drawImage(s.img, 0, 0, cap, ih, x, y, dcap, h);
+  ctx.drawImage(s.img, cap, 0, iw - cap * 2, ih, x + dcap, y, w - dcap * 2, h);
+  ctx.drawImage(s.img, iw - cap, 0, cap, ih, x + w - dcap, y, dcap, h);
+  return true;
+}
+
 // ----------------------------------------------------------- baked looks
 //
 // `ctx.filter` re-filters every draw it is set for, every frame, and it is
