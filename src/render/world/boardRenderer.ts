@@ -22,7 +22,7 @@ import type { BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
-import { PORTAL_INDEX, hexAt, type Hex } from '../../sim/world/hex';
+import { PORTAL_INDEX, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldImprovement, WorldTerrain } from '../../sim/world/types';
@@ -166,15 +166,17 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
 
   // Borders: each kingdom's city and the ground it holds or is claiming, as
-  // far as the player can see it, in its owner's colour. Painted on the
-  // ground, so what stands on a hex stands over it.
+  // far as the player can see it, in its owner's colour — dashed round a hex
+  // whose Outpost is still building. Painted on the ground, so what stands on
+  // a hex stands over it.
   for (const seat of source.seats()) {
     const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
       .filter((i) => states[i] !== 'Unknown');
     if (region.length === 0) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
     const seen = region.some((i) => states[i] === 'Revealed');
-    drawBorder(ground, camera, region.map(hexAt), color, seen ? 1 : 0.55);
+    const claiming = (h: Hex): boolean => source.hexOf(hexIndex(h))?.held === false;
+    drawBorder(ground, camera, region.map(hexAt), color, seen ? 1 : 0.55, 3, claiming);
   }
 
   if (frame.selected !== null) {
@@ -571,25 +573,32 @@ function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y
 
 function drawBorder(
   ctx: CanvasRenderingContext2D, camera: HexCamera, region: Hex[], color: string, alpha: number, width = 3,
+  dashed: (h: Hex) => boolean = () => false,
 ): void {
   const r = camera.hexRadius;
+  const lineWidth = Math.max(2, width * camera.zoom * 1.4);
+  const edges = regionEdges(region);
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
   ctx.shadowColor = color;
   ctx.shadowBlur = Math.max(2, r * 0.12);
-  ctx.lineWidth = Math.max(2, width * camera.zoom * 1.4);
-  ctx.beginPath();
-  for (const { hex, edge } of regionEdges(region)) {
-    const c = camera.hexToScreen(hex);
-    const corners = hexCorners(c.x, c.y, r * 0.96);
-    const a = corners[edge];
-    const b = corners[(edge + 1) % 6];
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
+  ctx.lineWidth = lineWidth;
+  for (const dash of [false, true]) {
+    ctx.beginPath();
+    for (const { hex, edge } of edges) {
+      if (dashed(hex) !== dash) continue;
+      const c = camera.hexToScreen(hex);
+      const corners = hexCorners(c.x, c.y, r * 0.96);
+      const a = corners[edge];
+      const b = corners[(edge + 1) % 6];
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.lineCap = dash ? 'butt' : 'round';
+    ctx.setLineDash(dash ? [lineWidth * 2.5, lineWidth * 1.8] : []);
+    ctx.stroke();
   }
-  ctx.stroke();
   ctx.restore();
 }
 

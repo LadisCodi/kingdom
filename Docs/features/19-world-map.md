@@ -178,6 +178,8 @@
 - **A neutral hex with nothing on it** is claimed by building an **Outpost**,
   paying its Gold and a builder's time. Each Outpost costs more than the last,
   by the hexes already held.
+- **While its Outpost is building, the hex is claimed but not held**: its
+  owner's border runs round it dashed, and turns solid when the Outpost stands.
 - **World builds use the province's builders**: an Outpost or an improvement
   level holds a builder until it stands, like a building in the city.
 - **A neutral hex that still carries buildings** — someone held it and lost it —
