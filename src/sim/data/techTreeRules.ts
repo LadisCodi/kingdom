@@ -83,6 +83,9 @@ export interface TechNodeDoc {
   knowledge?: number;
   /** Refined goods paid with the Gold, when it is completed. Absent = none. */
   goods?: Record<string, number>;
+  /** Precious material of any kind, paid from what the player holds most of
+   *  (Docs/features/19-world-map.md §7.6). Absent = none. */
+  anyPrecious?: number;
   /** `kind: 'unlock'` only. */
   unlocks?: TechUnlock[];
   /** `kind: 'bonus'` only: what this technology moves, and what it aims at
@@ -638,6 +641,9 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       if (!Number.isInteger(value) || value < 0) {
         errors.push({ message: `${id} has ${what} of ${value}`, tech: id });
       }
+    }
+    if (node.anyPrecious !== undefined && (!Number.isInteger(node.anyPrecious) || node.anyPrecious < 0)) {
+      errors.push({ message: `${id} asks for ${node.anyPrecious} of any precious material — a whole number`, tech: id });
     }
     for (const [good, n] of Object.entries(node.goods ?? {})) {
       if (!GOOD_IDS.includes(good)) {

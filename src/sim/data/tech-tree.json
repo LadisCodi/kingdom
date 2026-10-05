@@ -444,7 +444,7 @@
       "name": "Rich Soil I", "glyph": "🌱", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 0,
       "requires": ["Gardening"],
-      "gold": 9000, "knowledge": 7,
+      "gold": 9000, "knowledge": 7, "anyPrecious": 5,
       "effects": [
         {"stat":"cellStock","op":"percent","value":25,"target":{"harvest":"Crops"}}
       ]
@@ -469,7 +469,7 @@
       "name": "Exchequer", "glyph": "💰", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 23, "col": 1,
       "requires": ["RichSoilI", "AttunementII"],
-      "gold": 14000, "knowledge": 5, "goods": {"Planks":2,"CutStone":2},
+      "gold": 14000, "knowledge": 5, "goods": {"Planks":2,"CutStone":2}, "anyPrecious": 5,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":6}}]
     },
     "Manors": {
@@ -545,7 +545,7 @@
       "name": "Carpentry III", "glyph": "🔨", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 0,
       "requires": ["ApprenticesI"],
-      "gold": 20000, "knowledge": 9,
+      "gold": 20000, "knowledge": 9, "anyPrecious": 10,
       "effects": [
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
@@ -554,7 +554,7 @@
       "name": "Poultices I", "glyph": "🩹", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 1,
       "requires": ["AttunementIII"],
-      "gold": 20000, "knowledge": 9,
+      "gold": 20000, "knowledge": 9, "anyPrecious": 10,
       "effects": [
         {"stat":"healSpeed","op":"percent","value":25}
       ]
@@ -572,7 +572,7 @@
       "name": "Chancery", "glyph": "🖋️", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 28, "col": 1,
       "requires": ["CarpentryIII", "PoulticesI"],
-      "gold": 30000, "knowledge": 6, "goods": {"Planks":3,"CutStone":3,"Iron":1},
+      "gold": 30000, "knowledge": 6, "goods": {"Planks":3,"CutStone":3,"Iron":1}, "anyPrecious": 10,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":7}}]
     },
     "Mansions": {
@@ -652,7 +652,7 @@
       "name": "Old Growth I", "glyph": "🌳", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 0,
       "requires": ["CivicTreasuryI"],
-      "gold": 42000, "knowledge": 14,
+      "gold": 42000, "knowledge": 14, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
       "effects": [
         {"stat":"cellStock","op":"percent","value":25,"target":{"harvest":"Forest"}}
       ]
@@ -661,7 +661,7 @@
       "name": "Bunkhouse I", "glyph": "🛏️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 1,
       "requires": ["MinersI"],
-      "gold": 42000, "knowledge": 14,
+      "gold": 42000, "knowledge": 14, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
       "effects": [
         {"stat":"crewSlots","op":"flat","value":1}
       ]
@@ -670,7 +670,7 @@
       "name": "Frontier Works I", "glyph": "🏕️", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 32, "col": 2,
       "requires": ["MinersI"],
-      "gold": 42000, "knowledge": 20,
+      "gold": 42000, "knowledge": 20, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
       "effects": [
         {"stat":"improvementYield","op":"percent","value":15}
       ]
@@ -679,7 +679,7 @@
       "name": "Dominion", "glyph": "👑", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 33, "col": 1,
       "requires": ["OldGrowthI", "BunkhouseI"],
-      "gold": 65000, "knowledge": 9, "goods": {"Planks":4,"CutStone":4,"Iron":2},
+      "gold": 65000, "knowledge": 9, "goods": {"Planks":4,"CutStone":4,"Iron":2,"Starmetal":5,"Heartwood":5,"Moonglass":5},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":8}}]
     },
     "Sewers": {
@@ -732,7 +732,7 @@
       "name": "Trade Routes V", "glyph": "💰", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 36, "col": 0,
       "requires": ["Paving"],
-      "gold": 90000, "knowledge": 9,
+      "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -759,7 +759,7 @@
       "name": "Guild Halls II", "glyph": "⚙️", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 0,
       "requires": ["TradeRoutesV"],
-      "gold": 90000, "knowledge": 9,
+      "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "effects": [
         {"stat":"workshopSpeed","op":"percent","value":15}
       ]
@@ -768,14 +768,14 @@
       "name": "Attunement IV", "glyph": "💫", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 1,
       "requires": ["SurveyingI"],
-      "gold": 90000, "knowledge": 9,
+      "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":6}}, {"districtLevel":{"id":"Sanctum","level":7}}, {"districtLevel":{"id":"Sanctum","level":8}}, {"districtLevel":{"id":"Sanctum","level":9}}, {"districtLevel":{"id":"Sanctum","level":10}}]
     },
     "SwiftScoutsI": {
       "name": "Swift Scouts I", "glyph": "🏃", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 37, "col": 2,
       "requires": ["SurveyingI"],
-      "gold": 90000, "knowledge": 14,
+      "gold": 90000, "knowledge": 14, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "effects": [
         {"stat":"explorerSpeed","op":"percent","value":25}
       ]
@@ -784,7 +784,7 @@
       "name": "Sovereignty", "glyph": "🦁", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 38, "col": 1,
       "requires": ["GuildHallsII", "AttunementIV"],
-      "gold": 135000, "knowledge": 6, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1},
+      "gold": 135000, "knowledge": 6, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1,"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":9}}]
     },
     "GrandAvenues": {
@@ -837,7 +837,7 @@
       "name": "Flowerbeds I", "glyph": "🌷", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 0,
       "requires": ["SacredGrounds"],
-      "gold": 190000, "knowledge": 14,
+      "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"decorationHarmony","op":"percent","value":25}
       ]
@@ -846,7 +846,7 @@
       "name": "Fishers I", "glyph": "🎣", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 41, "col": 1,
       "requires": ["IronPicksI", "WarhornsII"],
-      "gold": 190000, "knowledge": 14,
+      "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Docks"}}
       ]
@@ -864,7 +864,7 @@
       "name": "Strongroom I", "glyph": "🔐", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 0,
       "requires": ["FlowerbedsI"],
-      "gold": 190000, "knowledge": 14,
+      "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Townhall"}},
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Housing"}}
@@ -874,7 +874,7 @@
       "name": "Granaries II", "glyph": "📦", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 1,
       "requires": ["FishersI"],
-      "gold": 190000, "knowledge": 14,
+      "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Farm"}}
       ]
@@ -883,7 +883,7 @@
       "name": "Forced March I", "glyph": "🥾", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 42, "col": 2,
       "requires": ["FishersI"],
-      "gold": 190000, "knowledge": 20,
+      "gold": 190000, "knowledge": 20, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"armyMarchSpeed","op":"percent","value":15}
       ]
@@ -892,7 +892,7 @@
       "name": "Golden Age", "glyph": "🌟", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 43, "col": 1,
       "requires": ["StrongroomI", "GranariesII"],
-      "gold": 285000, "knowledge": 9, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
+      "gold": 285000, "knowledge": 9, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2,"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":10}}]
     },
     "CommonRoom": {

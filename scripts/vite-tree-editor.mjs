@@ -75,7 +75,8 @@ const nodeBlock = (id, n) => {
     `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
     `      "gold": ${n.gold ?? 0}`
       + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
-      + (Object.keys(n.goods ?? {}).length > 0 ? `, "goods": ${json(n.goods)}` : ''),
+      + (Object.keys(n.goods ?? {}).length > 0 ? `, "goods": ${json(n.goods)}` : '')
+      + (n.anyPrecious > 0 ? `, "anyPrecious": ${n.anyPrecious}` : ''),
   );
   if ((n.unlocks ?? []).length > 0) {
     lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);

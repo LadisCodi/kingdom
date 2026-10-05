@@ -848,6 +848,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
       card.append(field(good, number(node.goods?.[good] ?? 0,
         (v) => doc.update(id, { goods: { ...(doc.node(id)?.goods ?? {}), [good]: v } }))));
     }
+    // Precious material of any kind (19 §7.6) — 0 = none.
+    card.append(field('anyPrecious', number(node.anyPrecious ?? 0, (v) => doc.update(id, { anyPrecious: v }))));
 
     // ---- what kind of thing it is
     const kind = select([...TECH_KINDS], node.kind);

@@ -153,8 +153,9 @@ A `bonus` names its effects, and each is four fields:
 - **A book is one page**, read top to bottom: three columns of cards with a
   chapter bar across the width wherever the next chapter begins (§2.2).
 - **Nothing is granted and nothing is free.** A fresh kingdom has an empty
-  `completed`; every card in the tree costs Knowledge and Gold, and from
-  chapter 5 goods.
+  `completed`; every card in the tree costs Knowledge and Gold, from
+  chapter 5 goods, and some from chapter 5 precious materials
+  ([`19-world-map.md`](19-world-map.md) §7.6).
 - **No edge crosses books.**
 - Landmarks and lairs pay the tree in Knowledge (§7).
 
